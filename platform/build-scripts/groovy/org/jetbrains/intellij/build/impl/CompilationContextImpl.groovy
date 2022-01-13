@@ -45,7 +45,6 @@ final class CompilationContextImpl implements CompilationContext {
   final Map<String, String> oldToNewModuleName
   final Map<String, String> newToOldModuleName
   JpsCompilationData compilationData
-  KotlinBinaries kotlinBinaries
 
   @SuppressWarnings("GrUnresolvedAccess")
   @CompileDynamic
@@ -69,12 +68,12 @@ final class CompilationContextImpl implements CompilationContext {
     def gradleJdk = toCanonicalPath(JdkUtils.computeJdkHome(messages, '1.8', null, "JDK_18_x64"))
     GradleRunner gradle = new GradleRunner(dependenciesProjectDir, projectHome, messages, gradleJdk)
     projectHome = toCanonicalPath(projectHome)
-    def kotlinBinaries = new KotlinBinaries(projectHome, communityHome, options, messages)
+    def kotlinBinaries = new KotlinBinaries(communityHome, options, messages)
     kotlinBinaries.setUpCompilerIfRequired(gradle, ant)
     def model = loadProject(projectHome, kotlinBinaries, messages)
     def jdkHome = defineJavaSdk(model, projectHome, options, messages)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
-    def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdkHome, kotlinBinaries, messages, oldToNewModuleName,
+    def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdkHome, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
     context.prepareForBuild()
     messages.debugLogPath = context.paths.logDir.resolve("debug.log")
@@ -146,7 +145,7 @@ final class CompilationContextImpl implements CompilationContext {
   }
 
   private CompilationContextImpl(AntBuilder ant, GradleRunner gradle, JpsModel model, String communityHome,
-                                 String projectHome, String jdkHome, KotlinBinaries kotlinBinaries, BuildMessages messages,
+                                 String projectHome, String jdkHome, BuildMessages messages,
                                  Map<String, String> oldToNewModuleName,
                                  BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
     this.ant = ant
@@ -161,13 +160,12 @@ final class CompilationContextImpl implements CompilationContext {
     String buildOutputRoot = options.outputRootPath ?: buildOutputRootEvaluator.apply(project, messages)
     Path logDir = options.logPath != null ? Path.of(options.logPath) : Path.of(buildOutputRoot, "log")
     this.paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdkHome, logDir)
-    this.kotlinBinaries = kotlinBinaries
   }
 
   CompilationContextImpl createCopy(AntBuilder ant, BuildMessages messages, BuildOptions options,
                                     BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator) {
     def copy = new CompilationContextImpl(ant, gradle, projectModel, paths.communityHome, paths.projectHome, paths.jdkHome,
-                                      kotlinBinaries, messages, oldToNewModuleName, buildOutputRootEvaluator, options)
+                                          messages, oldToNewModuleName, buildOutputRootEvaluator, options)
     copy.compilationData = compilationData
     return copy
   }

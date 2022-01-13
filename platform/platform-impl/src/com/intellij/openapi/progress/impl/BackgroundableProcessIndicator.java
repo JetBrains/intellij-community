@@ -35,7 +35,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   @Deprecated
   public BackgroundableProcessIndicator(@Nullable Project project,
                                         @NotNull TaskInfo info,
-                                        @SuppressWarnings("unused") @NotNull PerformInBackgroundOption option) {
+                                        @NotNull PerformInBackgroundOption option) {
     this(project, info);
   }
 
@@ -83,7 +83,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   @Deprecated
   public BackgroundableProcessIndicator(@Nullable Project project,
                                         @NlsContexts.ProgressTitle final String progressTitle,
-                                        @SuppressWarnings("unused") @NotNull PerformInBackgroundOption option,
+                                        @NotNull PerformInBackgroundOption option,
                                         @Nullable @NlsContexts.Button final String cancelButtonText,
                                         @NlsContexts.Tooltip final String backgroundStopTooltip,
                                         final boolean cancellable) {

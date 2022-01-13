@@ -47,7 +47,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
     LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred();
 
-    setHasPty(isPtyProcess(getProcess()));
+    setHasPty(ProcessService.getInstance().isLocalPtyProcess(getProcess()));
     myHasErrorStream = !commandLine.isRedirectErrorStream();
     myFilesToDelete = commandLine.getUserData(DELETE_FILES_ON_TERMINATION);
     myModality = getDefaultModality();
@@ -85,7 +85,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    */
   public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset, @Nullable Set<File> filesToDelete) {
     super(process, commandLine, charset);
-    setHasPty(isPtyProcess(process));
+    setHasPty(ProcessService.getInstance().isLocalPtyProcess(getProcess()));
     myFilesToDelete = filesToDelete;
     myHasErrorStream = true;
     myModality = getDefaultModality();
@@ -187,17 +187,6 @@ public class OSProcessHandler extends BaseOSProcessHandler {
         LOG.error("failed to delete temp. files", t);
       }
     }
-  }
-
-  private static boolean isPtyProcess(Process process) {
-    Class<?> c = process.getClass();
-    while (c != null) {
-      if ("com.pty4j.unix.UnixPtyProcess".equals(c.getName()) || "com.pty4j.windows.WinPtyProcess".equals(c.getName())) {
-        return true;
-      }
-      c = c.getSuperclass();
-    }
-    return false;
   }
 
   @Override

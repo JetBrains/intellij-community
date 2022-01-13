@@ -3,6 +3,7 @@ package com.intellij.execution.runToolbar
 
 import com.intellij.execution.*
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -61,6 +62,9 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
       e.mainState()?.let {
         e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
       }
+    }
+    e.presentation.description = e.runToolbarData()?.let {
+      RunToolbarData.prepareDescription(e.presentation.text, ActionsBundle.message("action.RunToolbarShowHidePopupAction.click.to.open.combo.text"))
     }
   }
 

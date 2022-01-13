@@ -64,6 +64,20 @@ cp -r "info.plist" "$ROOT/lib/bundles/kotlin/"
 cp -r "snippets" "$ROOT/lib/bundles/kotlin/"
 cp -r "syntaxes" "$ROOT/lib/bundles/kotlin/"
 
+cd ..
+
+# jsp
+git clone https://github.com/pthorsson/vscode-jsp
+cd vscode-jsp
+
+echo "Adding jsp"
+mkdir -p "$ROOT/lib/bundles/jsp"
+cp -r "LICENSE" "$ROOT/lib/bundles/jsp"
+cp -r "package.json" "$ROOT/lib/bundles/jsp"
+cp -r "jsp-configuration.json" "$ROOT/lib/bundles/jsp"
+cp -r "README.md" "$ROOT/lib/bundles/jsp"
+cp -r "syntaxes" "$ROOT/lib/bundles/jsp"
+
 cd $ROOT
 
 rm -rf $ROOT/temp

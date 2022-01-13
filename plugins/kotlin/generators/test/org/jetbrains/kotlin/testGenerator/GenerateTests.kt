@@ -840,6 +840,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("refactoring/introduceJavaParameter", pattern = JAVA, testMethodName = "doIntroduceJavaParameterTest")
             model("refactoring/introduceTypeParameter", pattern = KT_OR_KTS, testMethodName = "doIntroduceTypeParameterTest")
             model("refactoring/introduceTypeAlias", pattern = KT_OR_KTS, testMethodName = "doIntroduceTypeAliasTest")
+            model("refactoring/introduceConstant", pattern = KT_OR_KTS, testMethodName = "doIntroduceConstantTest")
             model("refactoring/extractSuperclass", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doExtractSuperclassTest")
             model("refactoring/extractInterface", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doExtractInterfaceTest")
         }
@@ -1144,7 +1145,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractKotlinMavenInspectionTest> {
-            model("maven-inspections", pattern = "^([\\w\\-]+).xml$".toRegex(), flatten = true)
+            val mavenInspections = "maven-inspections"
+            val pattern = "^([\\w\\-]+).xml$".toRegex()
+            testDataRoot.resolve(mavenInspections).listFiles()!!.onEach { check(it.isDirectory) }.sorted().forEach {
+                model("$mavenInspections/${it.name}", pattern = pattern, flatten = true)
+            }
         }
     }
 

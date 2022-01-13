@@ -2,6 +2,8 @@
 package com.jetbrains.python.codeInsight.testIntegration
 
 import com.intellij.openapi.module.ModuleUtil
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
@@ -11,6 +13,7 @@ import com.jetbrains.python.codeInsight.testIntegration.PyTestCreationModel.Comp
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.testing.PythonUnitTestDetectorsBasedOnSettings
 
 /**
@@ -77,7 +80,13 @@ class PyTestCreationModel(var fileName: String,
 
     private fun getTestFolder(element: PsiElement): VirtualFile =
       ModuleUtil.findModuleForPsiElement(element)?.let { module ->
-        FilenameIndex.getVirtualFilesByName( "tests", module.moduleContentScope).firstOrNull()
+        // No need to create tests in site-packages (aka classes root)
+        val roots = module.pythonSdk?.rootProvider?.getFiles(OrderRootType.CLASSES) ?: return@let null
+        return@let FilenameIndex.getVirtualFilesByName("tests", module.moduleContentScope).firstOrNull { possibleRoot ->
+          possibleRoot.isDirectory && roots.none {
+            VfsUtil.isAncestor(it, possibleRoot, false)
+          }
+        }
       } ?: element.containingFile.containingDirectory.virtualFile
 
   }

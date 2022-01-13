@@ -16,6 +16,7 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindSettings;
+import com.intellij.ide.util.scopeChooser.ScopeIdMapper;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
@@ -59,7 +60,12 @@ public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> exte
     FeatureUsageData data = new FeatureUsageData();
     data.addData("usages", options.isUsages);
     data.addData("textOccurrences", options.isSearchForTextOccurrences);
-    addScopeData(data, options.searchScope);
+
+    String serializedName = ScopeIdMapper.getInstance().getScopeSerializationId(options.searchScope.getDisplayName());
+    if (ScopeIdMapper.getStandardNames().contains(serializedName)) {
+      data.addData("searchScope", serializedName);
+    }
+
     return data;
   }
 

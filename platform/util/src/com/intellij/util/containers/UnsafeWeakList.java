@@ -262,7 +262,7 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
    * this method considered dangerous, misleading, error-inducing and is not supported.
    */
   @Deprecated
-  public T get(@SuppressWarnings("unused") int index) {
+  public T get(int index) {
     throwNotAllowedException();
     return null;
   }

@@ -280,7 +280,7 @@ public class WindowWrapperBuilder {
 
     @Override
     public void show() {
-      TouchbarSupport.showDialogButtons(myFrame, myComponent);
+      TouchbarSupport.showWindowActions(myFrame, myComponent);
       myFrame.show();
       if (myOnShowCallback != null) myOnShowCallback.run();
     }

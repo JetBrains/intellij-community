@@ -31,7 +31,9 @@ public class JBTerminalSchemeColorPalette extends ColorPalette {
     if (backgroundColor != null) {
       return backgroundColor;
     }
-    LOG.error("No foreground color for ANSI color index #" + colorIndex);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Default foreground color will be used for ANSI color index #" + colorIndex);
+    }
     return myColorsScheme.getDefaultForeground();
   }
 
@@ -46,7 +48,9 @@ public class JBTerminalSchemeColorPalette extends ColorPalette {
     if (foregroundColor != null) {
       return foregroundColor;
     }
-    LOG.error("No background color for ANSI color index #" + colorIndex);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Default background color will be used for ANSI color index #" + colorIndex);
+    }
     return myColorsScheme.getDefaultBackground();
   }
 }

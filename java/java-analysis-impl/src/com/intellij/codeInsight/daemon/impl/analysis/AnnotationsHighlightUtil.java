@@ -396,7 +396,13 @@ public final class AnnotationsHighlightUtil {
     if (applicable == null) {
       String target = JavaAnalysisBundle.message("annotation.target." + targets[0]);
       String message = JavaErrorBundle.message("annotation.not.applicable", nameRef.getText(), target);
-      return annotationError(annotation, message);
+      HighlightInfo info = annotationError(annotation, message);
+      if (Objects.requireNonNull(annotation.resolveAnnotationType()).isWritable()) {
+        for (PsiAnnotation.TargetType targetType : targets) {
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddAnnotationTargetFix(annotation, targetType));
+        }
+      }
+      return info;
     }
 
     if (applicable == PsiAnnotation.TargetType.TYPE_USE) {

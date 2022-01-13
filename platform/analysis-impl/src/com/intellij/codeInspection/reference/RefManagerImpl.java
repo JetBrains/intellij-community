@@ -69,7 +69,7 @@ public class RefManagerImpl extends RefManager {
 
   private final Set<VirtualFile> myUnprocessedFiles = VfsUtilCore.createCompactVirtualFileSet();
   private final boolean processExternalElements = Registry.is("batch.inspections.process.external.elements");
-  private final ConcurrentMap<PsiAnchor, RefElement> myRefTable = new ConcurrentHashMap<>();
+  private final Map<PsiAnchor, RefElement> myRefTable = new ConcurrentHashMap<>();
 
   private volatile List<RefElement> myCachedSortedRefs; // holds cached values from myPsiToRefTable/myRefTable sorted by containing virtual file; benign data race
 

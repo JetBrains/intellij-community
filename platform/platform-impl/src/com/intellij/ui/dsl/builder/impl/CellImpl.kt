@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -33,6 +34,9 @@ internal class CellImpl<T : JComponent>(
     private set
 
   var label: JLabel? = null
+    private set
+
+  var labelPosition: LabelPosition = LabelPosition.LEFT
     private set
 
   var customGaps: Gaps? = null
@@ -125,13 +129,13 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  override fun label(label: String): CellImpl<T> {
-    this.label = Label(label)
-    return this
+  override fun label(label: String, position: LabelPosition): CellImpl<T> {
+    return label(Label(label), position)
   }
 
-  override fun label(label: JLabel): Cell<T> {
+  override fun label(label: JLabel, position: LabelPosition): CellImpl<T> {
     this.label = label
+    labelPosition = position
     return this
   }
 
@@ -164,10 +168,14 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  override fun validationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T> {
+  override fun validationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
     val origin = component.origin
     dialogPanelConfig.validateCallbacks.add { callback(ValidationInfoBuilder(origin), component) }
     return this
+  }
+
+  override fun errorOnApply(message: String, condition: (T) -> Boolean): CellImpl<T> {
+    return validationOnApply { if (condition(it)) error(message) else null }
   }
 
   override fun validationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {

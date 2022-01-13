@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.documentation
 
-import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.util.AsyncSupplier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -20,8 +19,6 @@ internal class AsyncDocumentation(
 
 internal fun <X> Supplier<X>.asAsyncSupplier(): AsyncSupplier<X> = {
   withContext(Dispatchers.IO) {
-    runUnderIndicator {
-      this@asAsyncSupplier.get()
-    }
+    this@asAsyncSupplier.get()
   }
 }

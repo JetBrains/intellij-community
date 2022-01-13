@@ -23,6 +23,7 @@ import git4idea.index.GitStageTracker
 import git4idea.index.GitStageTrackerListener
 import git4idea.index.KindTag
 import git4idea.index.createTwoSidesDiffRequestProducer
+import java.util.*
 import java.util.stream.Stream
 
 class GitStageDiffPreview(project: Project,
@@ -101,6 +102,26 @@ class GitStageDiffPreview(project: Project,
 
     override fun createProducer(project: Project?): DiffRequestProducer? {
       return createTwoSidesDiffRequestProducer(project!!, node)
+    }
+
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (javaClass != other?.javaClass) return false
+
+      other as GitFileStatusNodeWrapper
+
+      if (node.kind != other.node.kind) return false
+      if (node.filePath != other.node.filePath) return false
+
+      return true
+    }
+
+    override fun hashCode(): Int {
+      return Objects.hash(node.kind, node.filePath)
+    }
+
+    override fun toString(): String {
+      return "GitFileStatusNodeWrapper(node=$node)"
     }
   }
 }

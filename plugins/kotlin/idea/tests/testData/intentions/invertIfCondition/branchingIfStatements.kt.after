@@ -1,3 +1,4 @@
+// AFTER-WARNING: The expression is unused
 fun main() {
     val a = 10
 

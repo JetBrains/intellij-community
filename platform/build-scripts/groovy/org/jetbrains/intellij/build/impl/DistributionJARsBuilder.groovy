@@ -739,6 +739,13 @@ final class DistributionJARsBuilder {
         }
       }
 
+      for (Pair<String, ResourcesGenerator> item : plugin.moduleOutputPatches) {
+        File resources = item.second.generateResources(buildContext)
+        if (resources != null) {
+          layoutBuilder.patchModuleOutput(item.first, resources.toPath())
+        }
+      }
+
       Path pluginDir = targetDirectory.resolve(getActualPluginDirectoryName(plugin, buildContext))
       processPluginLayout(plugin, layoutBuilder, pluginDir, generatedResources, parentMapping, true)
       if (!plugin.pathsToScramble.isEmpty()) {
@@ -802,7 +809,7 @@ final class DistributionJARsBuilder {
       ? buildContext.buildNumber + ".${new SimpleDateFormat('yyyyMMdd').format(new Date())}"
       : buildContext.buildNumber
 
-    def pluginVersion = plugin.versionEvaluator.apply(patchedPluginXmlFile, defaultPluginVersion)
+    def pluginVersion = plugin.versionEvaluator.evaluate(patchedPluginXmlFile, defaultPluginVersion, buildContext)
 
     Pair<String, String> sinceUntil = getCompatiblePlatformVersionRange(compatibleBuildRange, buildContext.buildNumber)
 
@@ -815,6 +822,7 @@ final class DistributionJARsBuilder {
         pluginsToPublish.contains(plugin),
         plugin.retainProductDescriptorForBundledPlugin,
       )
+      plugin.pluginXmlPatcher.accept(patchedPluginXmlFile)
     }
     catch (Throwable t) {
       throw new RuntimeException("Could not patch $pluginXmlPath: ${t.message}", t)

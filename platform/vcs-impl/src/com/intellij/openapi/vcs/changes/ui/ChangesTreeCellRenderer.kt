@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.ui.CellRendererPanel
@@ -40,8 +40,7 @@ open class ChangesTreeCellRenderer(private val textRenderer: ChangesBrowserNodeR
     tree as ChangesTree
     value as ChangesBrowserNode<*>
 
-    background = null
-    isSelected = selected
+    customize(this, selected)
 
     textRenderer.apply {
       isOpaque = false
@@ -92,4 +91,11 @@ open class ChangesTreeCellRenderer(private val textRenderer: ChangesBrowserNodeR
   override fun getPreferredSize(): Dimension = layout.preferredLayoutSize(this)
 
   override fun getToolTipText(): String? = textRenderer.toolTipText
+
+  companion object {
+    fun customize(panel: CellRendererPanel, selected: Boolean) {
+      panel.background = null
+      panel.isSelected = selected
+    }
+  }
 }

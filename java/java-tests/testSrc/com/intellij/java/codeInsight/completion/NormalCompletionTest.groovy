@@ -10,6 +10,7 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.impl.LookupActionHandler
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
@@ -2590,5 +2591,16 @@ class Abc {
                           "      }\n" +
                           "  }\n" +
                           "}")
+  }
+
+  void testLookupUpDownActions() {
+    myFixture.configureByText("Test.java", "class Test {<caret>}")
+    myFixture.completeBasic() // 'abstract' selected
+    myFixture.assertPreferredCompletionItems(0, "abstract", "boolean", "byte", "char", "class")
+    myFixture.performEditorAction("EditorLookupSelectionDown") // 'boolean' selected
+    myFixture.performEditorAction("EditorLookupSelectionDown") // 'byte' selected
+    myFixture.performEditorAction("EditorLookupSelectionUp") // 'boolean' selected
+    myFixture.type('\n')
+    myFixture.checkResult("class Test {boolean}")
   }
 }

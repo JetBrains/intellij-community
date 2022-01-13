@@ -29,7 +29,7 @@ class GradleGroovyProperty(
     val value = myProperty.value
     val result = StringBuilder()
     result.append("<PRE>")
-    JavaDocInfoGeneratorFactory.create(context.project, null, false).generateType(result, propertyType, context, true)
+    JavaDocInfoGeneratorFactory.create(context.project, null).generateType(result, propertyType, context, true)
     result.append(" " + myProperty.name)
     val hasInitializer = !value.isNullOrBlank()
     if (hasInitializer) {

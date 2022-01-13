@@ -203,7 +203,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
   private fun executeActivityFromExtensionPoint(
     descriptor: PluginDescriptor,
     extensionPointName: String,
-    supplier: Supplier<StartupActivity?>,
+    supplier: Supplier<out StartupActivity?>,
     indicator: ProgressIndicator?,
   ) {
     if (project.isDisposed) {

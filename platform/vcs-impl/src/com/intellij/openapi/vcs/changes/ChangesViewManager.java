@@ -748,7 +748,7 @@ public class ChangesViewManager implements ChangesViewEx,
         if (myDisposed || !myProject.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) return;
 
         ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
-        List<LocalChangeList> changeLists = changeListManager.getChangeListsCopy();
+        List<LocalChangeList> changeLists = changeListManager.getChangeLists();
         List<FilePath> unversionedFiles = changeListManager.getUnversionedFilesPaths();
 
         boolean skipSingleDefaultChangeList = Registry.is("vcs.skip.single.default.changelist") ||

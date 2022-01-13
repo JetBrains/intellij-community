@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit2.inspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -10,11 +10,11 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static com.siyeh.ig.junit.JUnitCommonClassNames.*;
 
@@ -37,15 +37,13 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
     if (!(element instanceof PsiMethod)) return false;
     PsiMethod method = (PsiMethod) element;
     if (method.getAnnotation(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE) != null) return false;
+    if (method.getParameterList().getParametersCount() != 0) return false;
     PsiClass psiClass = method.getContainingClass();
     if (psiClass == null) return false;
-    SearchScope useScope = psiClass.getUseScope();
     String methodName = method.getName();
-    if (isExpensiveSearch(psiClass, methodName, useScope)) return false;
-    Stream<PsiMethod> methodStream = Arrays.stream(psiClass.findMethodsByName(methodName, true))
-      .filter(it -> it.getAnnotation(ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST) != null
-    && it.getAnnotation(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE) != null);
-    return methodStream.findAny().isPresent();
+    return ContainerUtil.exists(psiClass.findMethodsByName(methodName, false),
+                                it -> it.getAnnotation(ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST) != null &&
+                                      it.getAnnotation(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE) != null);
   }
   private static boolean isReferencedInsideEnumSourceAnnotation(@NotNull PsiElement element) {
     if (element instanceof PsiEnumConstant) {
@@ -71,10 +69,10 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
     return false;
   }
 
-  private static boolean isExpensiveSearch(PsiClass psiClass, String className, SearchScope useScope) {
+  private static boolean isExpensiveSearch(PsiClass psiClass, String name, SearchScope useScope) {
     if (!(useScope instanceof LocalSearchScope)) {
       PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(psiClass.getProject());
-      PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(className, (GlobalSearchScope)useScope, null, null);
+      PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, null, null);
       if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES ||
           cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
         return true;

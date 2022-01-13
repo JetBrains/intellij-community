@@ -171,8 +171,9 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   @NotNull
   @Override
   public String getText() {
-    String text = myDocument.getText();
-    LineSeparator separator = LINE_SEPARATOR_KEY.get(myDocument);
+    Document document = getDocument();
+    String text = document.getText();
+    LineSeparator separator = LINE_SEPARATOR_KEY.get(document);
     if (separator != null) {
       return StringUtil.convertLineSeparators(text, separator.getSeparatorString());
     }

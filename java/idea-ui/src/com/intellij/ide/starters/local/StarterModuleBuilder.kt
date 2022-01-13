@@ -142,7 +142,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
 
     private fun loadTestDependencyConfig(starter: Starter): DependencyConfig {
       val starterDependencyDom = starter.versionConfigUrl.openStream().use { JDOMUtil.load(it) }
-      return StarterUtils.parseDependencyConfig(starterDependencyDom, starter.versionConfigUrl.path, false)
+      return StarterUtils.parseDependencyConfig(starterDependencyDom, starter.versionConfigUrl.path, true)
     }
   }
 

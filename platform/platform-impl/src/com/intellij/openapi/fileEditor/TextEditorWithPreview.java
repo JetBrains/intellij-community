@@ -221,7 +221,6 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
   }
 
-  @SuppressWarnings("unused")
   protected void onLayoutChange(Layout oldValue, Layout newValue) { }
 
   private void adjustEditorsVisibility() {

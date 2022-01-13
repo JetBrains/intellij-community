@@ -35,7 +35,7 @@ public class FakeRerunAction extends AnAction  {
       return;
     }
 
-    presentation.setEnabled(false);
+    presentation.setEnabledAndVisible(false);
   }
 
   @Override

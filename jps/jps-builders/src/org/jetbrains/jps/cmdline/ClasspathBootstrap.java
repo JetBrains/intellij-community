@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.cmdline;
 
 import com.google.gson.Gson;
@@ -11,7 +11,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import io.netty.buffer.ByteBufAllocator;
@@ -34,8 +33,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -83,42 +81,61 @@ public final class ClasspathBootstrap {
   private static final String EXTERNAL_JAVAC_MODULE_NAME = "intellij.platform.jps.build.javac.rt.rpc";
   private static final String EXTERNAL_JAVAC_JAR_NAME = "jps-javac-rt-rpc.jar";
 
-  public static List<String> getBuildProcessApplicationClasspath() {
-    final Set<String> cp = new HashSet<>();
+  private static final String IDE_LIB_UBER_JAR = PathManager.getLibPath() + "/3rd-party.jar";
 
-    cp.add(getResourcePath(BuildMain.class));
-    cp.add(getResourcePath(ExternalJavacProcess.class));  // intellij.platform.jps.build.javac.rt part
-    cp.add(getResourcePath(JavacReferenceCollector.class));  // jps-javac-extension library
-
-    cp.addAll(ClassPathUtil.getUtilClassPath()); // intellij.platform.util
-
-    for (Class<?> aClass : COMMON_REQUIRED_CLASSES) {
-      cp.add(getResourcePath(aClass));
+  private static void addToClassPath(Class<?> aClass, Set<String> result) {
+    String path = PathManager.getJarPathForClass(aClass);
+    if (path == null) {
+      return;
     }
 
-    cp.add(getResourcePath(Message.class));  // protobuf
-    cp.add(getResourcePath(ClassWriter.class));  // asm
-    cp.add(getResourcePath(ClassVisitor.class));  // asm-commons
-    cp.add(getResourcePath(JpsModel.class));  // intellij.platform.jps.model
-    cp.add(getResourcePath(JpsModelImpl.class));  // intellij.platform.jps.model.impl
-    cp.add(getResourcePath(JpsProjectLoader.class));  // intellij.platform.jps.model.serialization
-    cp.add(getResourcePath(AlienFormFileException.class));  // intellij.java.guiForms.compiler
-    cp.add(getResourcePath(GridConstraints.class));  // intellij.java.guiForms.rt
-    cp.add(getResourcePath(CellConstraints.class));  // jGoodies-forms
-    cp.addAll(getInstrumentationUtilRoots());
-    cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
-    cp.add(getResourcePath(JavaProjectBuilder.class));  // QDox lightweight java parser
-    cp.add(getResourcePath(Gson.class));  // gson
+    if (result.add(path) && path.equals(IDE_LIB_UBER_JAR)) {
+      LOG.error("Due to " + aClass.getName() + " requirement, inappropriate 3rd-party.jar is added to build process classpath");
+    }
+  }
 
-    cp.addAll(ContainerUtil.map(ArtifactRepositoryManager.getClassesFromDependencies(), ClasspathBootstrap::getResourcePath));
+  private static void addToClassPath(Set<String> cp, @NotNull Class<?> @NotNull [] classes) {
+    for (Class<?> aClass : classes) {
+      addToClassPath(aClass, cp);
+    }
+  }
+
+  public static @NotNull Collection<String> getBuildProcessApplicationClasspath() {
+    // predictable order
+    Set<String> cp = new LinkedHashSet<>();
+
+    addToClassPath(BuildMain.class, cp);
+    addToClassPath(ExternalJavacProcess.class, cp);  // intellij.platform.jps.build.javac.rt part
+    addToClassPath(JavacReferenceCollector.class, cp);  // jps-javac-extension library
+
+    // intellij.platform.util
+    addToClassPath(cp, ClassPathUtil.getUtilClasses());
+    ClassPathUtil.addKotlinStdlib(cp);
+    addToClassPath(cp, COMMON_REQUIRED_CLASSES);
+
+    addToClassPath(Message.class, cp);  // protobuf
+    addToClassPath(ClassWriter.class, cp);  // asm
+    addToClassPath(ClassVisitor.class, cp);  // asm-commons
+    addToClassPath(JpsModel.class, cp);  // intellij.platform.jps.model
+    addToClassPath(JpsModelImpl.class, cp);  // intellij.platform.jps.model.impl
+    addToClassPath(JpsProjectLoader.class, cp);  // intellij.platform.jps.model.serialization
+    addToClassPath(AlienFormFileException.class, cp);  // intellij.java.guiForms.compiler
+    addToClassPath(GridConstraints.class, cp);  // intellij.java.guiForms.rt
+    addToClassPath(CellConstraints.class, cp);  // jGoodies-forms
+    cp.addAll(getInstrumentationUtilRoots());
+    addToClassPath(IXMLBuilder.class, cp);  // nano-xml
+    addToClassPath(JavaProjectBuilder.class, cp);  // QDox lightweight java parser
+    addToClassPath(Gson.class, cp);  // gson
+
+    addToClassPath(cp, ArtifactRepositoryManager.getClassesFromDependencies());
 
     try {
-      final Class<?> cmdLineWrapper = Class.forName("com.intellij.rt.execution.CommandLineWrapper");
-      cp.add(getResourcePath(cmdLineWrapper));  // idea_rt.jar
+      Class<?> cmdLineWrapper = Class.forName("com.intellij.rt.execution.CommandLineWrapper");
+      addToClassPath(cmdLineWrapper, cp);  // idea_rt.jar
     }
     catch (Throwable ignored) { }
 
-    return new ArrayList<>(cp);
+    return cp;
   }
 
   public static void appendJavaCompilerClasspath(Collection<? super String> cp, boolean includeEcj) {
@@ -225,8 +242,7 @@ public final class ClasspathBootstrap {
     return userHome != null ? new File(userHome, DEFAULT_MAVEN_REPOSITORY_PATH) : new File(DEFAULT_MAVEN_REPOSITORY_PATH);
   }
 
-  @Nullable
-  public static String getResourcePath(Class<?> aClass) {
+  public static @Nullable String getResourcePath(Class<?> aClass) {
     return PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
   }
 

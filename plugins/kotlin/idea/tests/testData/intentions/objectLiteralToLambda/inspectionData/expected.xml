@@ -1,7 +1,7 @@
 <problems>
     <problem>
         <file>StatementAndReturn.kt</file>
-        <line>8</line>
+        <line>9</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="StatementAndReturn.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Convert object literal to lambda</problem_class>
@@ -10,7 +10,7 @@
 
     <problem>
         <file>SingleReturn.kt</file>
-        <line>8</line>
+        <line>9</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="SingleReturn.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Convert object literal to lambda</problem_class>
@@ -19,7 +19,7 @@
 
     <problem>
         <file>Simple.kt</file>
-        <line>6</line>
+        <line>7</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="Simple.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Convert object literal to lambda</problem_class>
@@ -28,7 +28,7 @@
 
     <problem>
         <file>ParametersNotUsed.kt</file>
-        <line>8</line>
+        <line>9</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="ParametersNotUsed.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Convert object literal to lambda</problem_class>
@@ -36,7 +36,7 @@
     </problem>
     <problem>
         <file>ParametersNotUsedMoreThanOne.kt</file>
-        <line>8</line>
+        <line>11</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="ParametersNotUsedMoreThanOne.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Convert object literal to lambda</problem_class>
@@ -54,7 +54,7 @@
 
     <problem>
         <file>MultipleParameters.kt</file>
-        <line>8</line>
+        <line>10</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="MultipleParameters.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Convert object literal to lambda</problem_class>
@@ -63,7 +63,7 @@
 
     <problem>
         <file>ExpressionBody.kt</file>
-        <line>8</line>
+        <line>9</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="ExpressionBody.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Convert object literal to lambda</problem_class>
@@ -72,7 +72,7 @@
 
     <problem>
         <file>EmptyBody.kt</file>
-        <line>6</line>
+        <line>7</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="EmptyBody.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Convert object literal to lambda</problem_class>
@@ -99,7 +99,7 @@
 
     <problem>
         <file>ThisReference.kt</file>
-        <line>12</line>
+        <line>20</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="ThisReference.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Convert object literal to lambda</problem_class>
@@ -107,7 +107,7 @@
     </problem>
     <problem>
         <file>ThisReference.kt</file>
-        <line>19</line>
+        <line>13</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="ThisReference.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Convert object literal to lambda</problem_class>

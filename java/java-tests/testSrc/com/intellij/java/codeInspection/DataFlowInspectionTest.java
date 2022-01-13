@@ -354,7 +354,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   }
 
   public void testTypeQualifierNickname() {
-    myFixture.addClass("package javax.annotation.meta; public @interface TypeQualifierNickname {}");
     addJavaxNullabilityAnnotations(myFixture);
     myFixture.addClass(barNullableNick());
 
@@ -386,6 +385,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   }
 
   public static void addJavaxNullabilityAnnotations(final JavaCodeInsightTestFixture fixture) {
+    fixture.addClass("package javax.annotation.meta; public @interface TypeQualifierNickname {}");
     fixture.addClass("package javax.annotation.meta;" +
                      "public @interface TypeQualifierDefault { java.lang.annotation.ElementType[] value() default {};}");
     fixture.addClass("package javax.annotation.meta;" +
@@ -713,4 +713,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNestedUnrolledLoopNotComplex() { doTest(); }
   public void testEnumOrdinal() { doTest(); }
   public void testThisInEnumSubclass() { doTest(); }
+  public void testVarargConstructorNoArgs() { doTest(); }
 }

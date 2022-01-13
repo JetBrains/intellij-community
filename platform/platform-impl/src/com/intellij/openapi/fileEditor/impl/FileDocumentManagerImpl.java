@@ -59,6 +59,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FileContentUtilCore;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -517,6 +518,15 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
     List<Document> list = new ArrayList<>(myUnsavedDocuments);
     return list.toArray(Document.EMPTY_ARRAY);
+  }
+
+  @Override
+  public boolean processUnsavedDocuments(Processor<? super Document> processor) {
+    for (Document doc : myUnsavedDocuments) {
+      if (!processor.process(doc)) return false;
+    }
+
+    return true;
   }
 
   @Override

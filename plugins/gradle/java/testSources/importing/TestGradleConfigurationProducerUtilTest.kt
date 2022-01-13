@@ -6,7 +6,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiManager
 import org.jetbrains.plugins.gradle.execution.test.runner.applyTestConfiguration
 import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
-import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil
+import org.jetbrains.plugins.gradle.util.createTestFilterFrom
 import org.jetbrains.plugins.gradle.util.findChildByType
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.junit.Test
@@ -114,9 +114,7 @@ class TestGradleConfigurationProducerUtilTest : GradleImportingTestCase() {
 
   private fun assertClassRunConfigurationSettings(expectedSettings: String, vararg classes: PsiClass) {
     val settings = ExternalSystemTaskExecutionSettings()
-    val isApplied = settings.applyTestConfiguration(getModule("project"), *classes) { psiClass ->
-      GradleExecutionSettingsUtil.createTestFilterFrom(psiClass, false)
-    }
+    val isApplied = settings.applyTestConfiguration(getModule("project"), *classes) { createTestFilterFrom(it) }
     assertTrue(isApplied)
     assertEquals(expectedSettings, settings.toString().trim())
   }

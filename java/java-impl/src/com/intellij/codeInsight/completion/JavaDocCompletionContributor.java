@@ -31,6 +31,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -38,6 +39,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -194,6 +196,20 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
   @Override
   public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
+    if (position instanceof PsiDocToken && ((PsiDocToken)position).getTokenType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
+      PsiElement parent = position.getParent();
+      if (parent instanceof PsiDocTagValue && !(parent instanceof PsiDocParamRef) && !(parent instanceof PsiDocMethodOrFieldRef)) {
+        PsiDocTag docTag = ObjectUtils.tryCast(parent.getParent(), PsiDocTag.class);
+        if (docTag != null) {
+          JavadocManager docManager = JavadocManager.SERVICE.getInstance(parameters.getOriginalFile().getProject());
+          JavadocTagInfo info = docManager.getTagInfo(docTag.getName());
+          if (info != null) {
+            // Avoid suggesting standard tags inside custom tag value, as custom tag may require custom value (e.g., reference)
+            suggestTags(parameters, result, position, true);
+          }
+        }
+      }
+    }
     if (PsiJavaPatterns.psiElement(JavaDocTokenType.DOC_COMMENT_DATA).accepts(position)) {
       final PsiParameter param = getDocTagParam(position.getParent());
       if (param != null) {
@@ -206,25 +222,32 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
 
       suggestCodeLiterals(result, position);
 
-      TextRange rangeBefore = new TextRange(position.getTextRange().getStartOffset(), parameters.getOffset());
-      boolean hasOpeningBrace = rangeBefore.isEmpty() && position.getPrevSibling() != null &&
-                                position.getPrevSibling().textMatches("{");
-      boolean isInline = hasOpeningBrace || !parameters.getEditor().getDocument().getText(rangeBefore).isBlank();
-      List<String> tags = getTags(position, isInline);
-      for (String tag : tags) {
-        if (isInline) {
-          String lookupString = hasOpeningBrace ? "@" + tag : "{@" + tag + "}";
-          result.addElement(LookupElementDecorator.withInsertHandler(LookupElementBuilder.create(lookupString), new InlineInsertHandler()));
-        }
-        else {
-          result.addElement(TailTypeDecorator.withTail((LookupElement)LookupElementBuilder.create("@" + tag), TailType.INSERT_SPACE));
-        }
-      }
+      suggestTags(parameters, result, position, false);
 
       return;
     }
 
     super.fillCompletionVariants(parameters, result);
+  }
+
+  private static void suggestTags(@NotNull CompletionParameters parameters,
+                                  @NotNull CompletionResultSet result,
+                                  @NotNull PsiElement position,
+                                  boolean forceInlineTag) {
+    TextRange rangeBefore = new TextRange(position.getTextRange().getStartOffset(), parameters.getOffset());
+    boolean hasOpeningBrace = rangeBefore.isEmpty() && position.getPrevSibling() != null &&
+                              position.getPrevSibling().textMatches("{");
+    boolean isInline = hasOpeningBrace || forceInlineTag || !parameters.getEditor().getDocument().getText(rangeBefore).isBlank();
+    List<String> tags = getTags(position, isInline);
+    for (String tag : tags) {
+      if (isInline) {
+        String lookupString = hasOpeningBrace ? "@" + tag : "{@" + tag + "}";
+        result.addElement(LookupElementDecorator.withInsertHandler(LookupElementBuilder.create(lookupString), new InlineInsertHandler()));
+      }
+      else {
+        result.addElement(TailTypeDecorator.withTail((LookupElement)LookupElementBuilder.create("@" + tag), TailType.INSERT_SPACE));
+      }
+    }
   }
 
   private static void suggestCodeLiterals(@NotNull CompletionResultSet result, PsiElement position) {

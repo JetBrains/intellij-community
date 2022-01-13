@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -38,6 +39,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerManager
 import org.fest.swing.timing.Timeout
 import org.jetbrains.annotations.Nls
+import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.ui.*
@@ -302,6 +304,17 @@ fun LessonContext.firstLessonCompletedMessage() {
   text(LessonsBundle.message("goto.action.propose.to.go.next.new.ui", LessonUtil.rawEnter()))
 }
 
+fun LessonContext.highlightDebugActionsToolbar() {
+  task {
+    val needAction = ActionManager.getInstance().getAction("Resume")
+    triggerByUiComponentAndHighlight(highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
+      val b = ui.size.let { it.width > 0 && it.height > 0 } && ui.place == "MainSingleContentToolbar"
+      if (!b) return@triggerByUiComponentAndHighlight false
+      ui.components.filterIsInstance<ActionButton>().any { it.action == needAction }
+    }
+  }
+}
+
 fun TaskContext.proceedLink(additionalAbove: Int = 0) {
   val gotIt = CompletableFuture<Boolean>()
   runtimeText {
@@ -310,6 +323,14 @@ fun TaskContext.proceedLink(additionalAbove: Int = 0) {
     LessonsBundle.message("proceed.to.the.next.step", LearningUiManager.addCallback { gotIt.complete(true) })
   }
   addStep(gotIt)
+}
+
+fun TaskContext.proposeRestoreForInvalidText(needToType: String) {
+  proposeRestore {
+    checkExpectedStateOfEditor(previous.sample) {
+      needToType.contains(it.replace(" ", ""))
+    }
+  }
 }
 
 fun TaskContext.checkToolWindowState(toolWindowId: String, isShowing: Boolean) {

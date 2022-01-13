@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -22,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 public final class PsiTypesUtil {
+  private static final Logger LOG = Logger.getInstance(PsiTypesUtil.class);
   @NonNls private static final Map<String, String> ourUnboxedTypes = new HashMap<>();
   @NonNls private static final Map<String, String> ourBoxedTypes = new HashMap<>();
 
@@ -199,6 +202,9 @@ public final class PsiTypesUtil {
         if (parent != null) {
           qualifierType = JavaPsiFacade.getElementFactory(project).createType((PsiClass)parent);
         }
+      }
+      if (PsiType.NULL.equals(qualifierType)) {
+        LOG.error("Unexpected null qualifier", new Attachment("expression.txt", call.getText()));
       }
       return createJavaLangClassType(methodExpression, qualifierType, true);
     }

@@ -299,6 +299,43 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
     });
   }
 
+  /**
+   * test should be launched from __init__.py
+   */
+  @Test
+  public void testTestInInit() {
+
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/testInInit", "") {
+
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() {
+        return new PyUnitTestProcessRunner("", 0) {
+          @Override
+          protected void configurationCreatedAndWillLaunch(@NotNull final PyUnitTestConfiguration configuration) throws IOException {
+            super.configurationCreatedAndWillLaunch(configuration);
+            configuration.getTarget().setTargetType(PyRunTargetVariant.PYTHON);
+            configuration.getTarget().setTarget("mymodule.ExampleModuleTestCase");
+          }
+        };
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all, int exitCode) {
+        assertEquals("wrong test launched", "Test tree:\n" +
+                                            "[root](+)\n" +
+                                            ".mymodule(+)\n" +
+                                            "..ExampleModuleTestCase(+)\n" +
+                                            "...test1(+)\n" +
+                                            "...test2(+)\n", runner.getFormattedTestTree());
+        assertEquals("wrong exit code", 0, exitCode);
+      }
+    });
+  }
+
 
   /**
    * check non-ascii (127+) chars are supported in skip messaged

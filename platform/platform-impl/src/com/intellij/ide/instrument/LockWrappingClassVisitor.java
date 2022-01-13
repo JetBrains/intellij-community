@@ -109,7 +109,6 @@ public final class LockWrappingClassVisitor extends ClassVisitor {
    * @param invokedClassFqn fully qualified name of the class requiring the write intent lock.
    * @return {@code true} if IW lock was acquired, or {@code false} if it is held by the current thread already.
    */
-  @SuppressWarnings("unused")
   public static boolean acquireWriteIntentLockIfNeeded(@NotNull String invokedClassFqn) {
     if (!isCurrentThreadEdt()) return false; // do not do anything for non-EDT calls
 
@@ -127,7 +126,6 @@ public final class LockWrappingClassVisitor extends ClassVisitor {
    *
    * @param needed whether IW lock should be released or not
    */
-  @SuppressWarnings("unused")
   public static void releaseWriteIntentLockIfNeeded(boolean needed) {
     if (needed) {
       getApplicationEx().releaseWriteIntentLock();

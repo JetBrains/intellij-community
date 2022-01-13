@@ -30,7 +30,6 @@ import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.LocalVariableOccurrenceManager;
-import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
 import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
 import com.intellij.usageView.UsageInfo;
@@ -63,7 +62,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   private final PsiLocalVariable myLocalVariable;
   private final boolean myRemoveLocalVariable;
   private final String myParameterName;
-  private final boolean myReplaceAllOccurrences;
+  private final IntroduceVariableBase.JavaReplaceChoice myReplaceOccurrencesChoice;
 
   private int myReplaceFieldsWithGetters;
   private final boolean myDeclareFinal;
@@ -86,7 +85,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
                                      PsiLocalVariable localVariable,
                                      boolean removeLocalVariable,
                                      String parameterName,
-                                     boolean replaceAllOccurrences,
+                                     IntroduceVariableBase.JavaReplaceChoice replaceOccurrencesChoice,
                                      int replaceFieldsWithGetters,
                                      boolean declareFinal,
                                      boolean generateDelegate,
@@ -103,7 +102,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     myLocalVariable = localVariable;
     myRemoveLocalVariable = removeLocalVariable;
     myParameterName = parameterName;
-    myReplaceAllOccurrences = replaceAllOccurrences;
+    myReplaceOccurrencesChoice = replaceOccurrencesChoice;
     myReplaceFieldsWithGetters = replaceFieldsWithGetters;
     myDeclareFinal = declareFinal;
     myGenerateDelegate = generateDelegate;
@@ -127,14 +126,15 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
                                      PsiLocalVariable localVariable,
                                      boolean removeLocalVariable,
                                      String parameterName,
-                                     boolean replaceAllOccurrences,
+                                     IntroduceVariableBase.JavaReplaceChoice replaceOccurrencesChoice,
                                      int replaceFieldsWithGetters,
                                      boolean declareFinal,
                                      boolean generateDelegate,
                                      boolean replaceWithLambda,
                                      PsiType forcedType,
                                      @NotNull TIntArrayList parametersToRemove) {
-    this(project, methodToReplaceIn, methodToSearchFor, parameterInitializer, expressionToSearch, localVariable, removeLocalVariable, parameterName, replaceAllOccurrences,
+    this(project, methodToReplaceIn, methodToSearchFor, parameterInitializer, expressionToSearch, localVariable, removeLocalVariable, parameterName,
+         replaceOccurrencesChoice,
          replaceFieldsWithGetters, declareFinal, generateDelegate, replaceWithLambda, forcedType, new IntArrayList(parametersToRemove.toNativeArray()));
   }
 
@@ -200,8 +200,11 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       }
     }
 
-    if (myReplaceAllOccurrences) {
-      for (PsiElement expr : getOccurrences()) {
+    if (myReplaceOccurrencesChoice != null && myReplaceOccurrencesChoice.isAll()) {
+      PsiExpression[] occurrences = myLocalVariable == null 
+                                    ? myReplaceOccurrencesChoice.filter(new ExpressionOccurrenceManager(myExpressionToSearch, myMethodToReplaceIn, null))
+                                    : new LocalVariableOccurrenceManager(myLocalVariable, null).getOccurrences();
+      for (PsiElement expr : occurrences) {
         result.add(new InternalUsageInfo(expr));
       }
     }
@@ -215,16 +218,6 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
-  protected PsiElement[] getOccurrences() {
-    final OccurrenceManager occurrenceManager;
-    if (myLocalVariable == null) {
-      occurrenceManager = new ExpressionOccurrenceManager(myExpressionToSearch, myMethodToReplaceIn, null);
-    }
-    else {
-      occurrenceManager = new LocalVariableOccurrenceManager(myLocalVariable, null);
-    }
-    return occurrenceManager.getOccurrences();
-  }
 
   public boolean hasConflicts() {
     return myHasConflicts;

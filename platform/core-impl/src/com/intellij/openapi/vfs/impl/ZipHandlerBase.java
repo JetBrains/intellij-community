@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.ResourceHandle;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -26,6 +27,19 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
   @ApiStatus.Internal
   @SuppressWarnings("StaticNonFinalField")
   public static volatile boolean USE_CRC_INSTEAD_OF_TIMESTAMP = getUseCrcInsteadOfTimestampPropertyValue();
+
+  public @NotNull Map<String, Long> getArchiveCrcHashes() throws IOException {
+    try (@NotNull ResourceHandle<ZipFile> handle = acquireZipHandle()) {
+      ZipFile file = handle.get();
+      Enumeration<? extends ZipEntry> entries = file.entries();
+      Map<String, Long> result = new Object2LongOpenHashMap<>();
+      while (entries.hasMoreElements()) {
+        ZipEntry entry = entries.nextElement();
+        result.put(normalizeName(entry.getName()), entry.getCrc());
+      }
+      return result;
+    }
+  }
 
   private static boolean getUseCrcInsteadOfTimestampPropertyValue() {
     return Boolean.getBoolean("zip.handler.uses.crc.instead.of.timestamp");

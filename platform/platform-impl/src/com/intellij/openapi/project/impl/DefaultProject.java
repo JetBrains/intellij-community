@@ -197,7 +197,6 @@ final class DefaultProject extends UserDataHolderBase implements Project {
     return true;
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   @Deprecated
   public BaseComponent getComponent(@NotNull String name) {

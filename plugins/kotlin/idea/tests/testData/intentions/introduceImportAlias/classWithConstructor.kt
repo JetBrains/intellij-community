@@ -1,3 +1,5 @@
+// AFTER-WARNING: Variable 'b' is never used
+// AFTER-WARNING: Variable 'i' is never used
 class Outer {
     class Middle {
         class Inner(val outer: Outer) {

@@ -26,7 +26,7 @@ import java.awt.event.KeyEvent
 import kotlin.properties.Delegates
 
 @ApiStatus.Internal
-class FloatingToolbar(val editor: Editor, private val actionGroupId: String) : Disposable {
+open class FloatingToolbar(val editor: Editor, private val actionGroupId: String) : Disposable {
   private val mouseListener = MouseListener()
   private val keyboardListener = KeyboardListener()
   private val mouseMotionListener = MouseMotionListener()
@@ -103,7 +103,7 @@ class FloatingToolbar(val editor: Editor, private val actionGroupId: String) : D
     return elementAtStart?.let(::hasIgnoredParent) == false && elementAtEnd?.let(::hasIgnoredParent) == false
   }
 
-  private fun hasIgnoredParent(element: PsiElement): Boolean {
+  protected open fun hasIgnoredParent(element: PsiElement): Boolean {
     if (element.containingFile !is MarkdownFile) {
       return true
     }

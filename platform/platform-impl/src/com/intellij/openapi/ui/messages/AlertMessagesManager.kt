@@ -17,7 +17,7 @@ import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.mac.MacMessages
-import com.intellij.ui.mac.TouchbarDataKeys
+import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.*
 import com.intellij.util.ui.UIUtil.JBWordWrapHtmlEditorKit
@@ -425,19 +425,8 @@ private class AlertDialog(project: Project?,
       myButtonsPanel.add(button, HorizontalLayout.RIGHT)
     }
 
-    if (SystemInfoRt.isMac) {
-      val buttonMap = buttonMap
-      buttonMap.clear()
-
-      for ((index, button) in myButtons.withIndex()) {
-        buttonMap[button.action] = button
-        button.putClientProperty(TouchbarDataKeys.DIALOG_BUTTON_DESCRIPTOR_KEY, null)
-        val descriptor = TouchbarDataKeys.putDialogButtonDescriptor(button, index + 1, true)
-        if (button.action.getValue(DEFAULT_ACTION) != null) {
-          descriptor.isDefault = true
-        }
-      }
-    }
+    if (SystemInfoRt.isMac)
+      Touchbar.setButtonActions(myButtonsPanel, null, myButtons, myButtons.find { b -> b.action.getValue(DEFAULT_ACTION) != null });
 
     mySouthPanel.add(myButtonsPanel)
 

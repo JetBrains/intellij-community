@@ -30,7 +30,7 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
    * @deprecated use {@link IntentionWrapper#IntentionWrapper(IntentionAction)}
    */
   @Deprecated
-  public IntentionWrapper(@NotNull IntentionAction action, @SuppressWarnings("unused") @NotNull PsiFile file) {
+  public IntentionWrapper(@NotNull IntentionAction action, @NotNull PsiFile file) {
     myAction = action;
   }
 

@@ -151,12 +151,14 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
         return Paths.get("__not_existent_path__")
       }
 
-      val projectFileDir = (project.stateStore as? IProjectStore)?.directoryStorePath
-      if (projectFileDir == null) {
-        return Paths.get(project.basePath!!, ".$path")
+      val projectStore = project.stateStore as? IProjectStore
+      val projectFileDir = projectStore?.directoryStorePath
+      return if (projectFileDir == null) {
+        if (projectStore != null) projectStore.projectBasePath.resolve(".$path")
+        else Paths.get(project.basePath!!, ".$path")
       }
       else {
-        return projectFileDir.resolve(path)
+        projectFileDir.resolve(path)
       }
     }
   }

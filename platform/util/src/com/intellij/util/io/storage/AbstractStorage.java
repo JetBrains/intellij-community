@@ -29,12 +29,10 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public abstract class AbstractStorage implements Disposable, Forceable {
-  protected static final Logger LOG = Logger.getInstance(Storage.class);
+  protected static final Logger LOG = Logger.getInstance(AbstractStorage.class);
 
   @NonNls public static final String INDEX_EXTENSION = ".storageRecordIndex";
   @NonNls public static final String DATA_EXTENSION = ".storageData";
-
-  private static final int MAX_PAGES_TO_FLUSH_AT_A_TIME = 50;
 
   private final ReadWriteLock myScalableLock = new ReentrantReadWriteLock();
 
@@ -223,15 +221,6 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     withWriteLock(() -> {
       myDataTable.force();
       myRecordsTable.force();
-    });
-  }
-
-  public boolean flushSome() {
-    return withWriteLock(() -> {
-      boolean okRecords = myRecordsTable.flushSome(MAX_PAGES_TO_FLUSH_AT_A_TIME);
-      boolean okData = myDataTable.flushSome(MAX_PAGES_TO_FLUSH_AT_A_TIME);
-
-      return okRecords && okData;
     });
   }
 

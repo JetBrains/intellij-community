@@ -20,9 +20,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageToPsiElementProvider;
-import com.intellij.usages.impl.GroupNode;
-import com.intellij.usages.impl.UsageAdapter;
-import com.intellij.usages.impl.UsageNode;
+import com.intellij.usages.impl.*;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
@@ -158,7 +156,13 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
       if (usages != null) {
         for (Object usage : usages) {
           if (usage instanceof UsageInfo) {
-            UsageViewUtil.navigateTo((UsageInfo)usage, true);
+            UsageInfo usageInfo = (UsageInfo)usage;
+            UsageViewUtil.navigateTo(usageInfo, true);
+
+            PsiElement element = usageInfo.getElement();
+            if (element != null) {
+              UsageViewStatisticsCollector.logItemChosen(element.getProject(), CodeNavigateSource.ShowUsagesPopup, element.getLanguage());
+            }
           }
           else if (usage instanceof Navigatable) {
             ((Navigatable)usage).navigate(true);

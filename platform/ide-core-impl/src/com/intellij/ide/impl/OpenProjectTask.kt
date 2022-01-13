@@ -106,6 +106,14 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
     }
 
     @JvmStatic
+    fun withProjectToClose(newProject: Project?, projectToClose: Project?, forceOpenInNewFrame: Boolean): OpenProjectTask {
+      return OpenProjectTask(
+        forceOpenInNewFrame = forceOpenInNewFrame,
+        projectToClose = projectToClose,
+        project = newProject)
+    }
+
+    @JvmStatic
     fun withCreatedProject(project: Project?): OpenProjectTask {
       return OpenProjectTask(project = project)
     }

@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.ui.*;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.usageView.UsageInfo;
@@ -51,6 +52,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
 
   private final IntroduceParameterSettingsPanel myPanel;
   private boolean myHasWriteAccess;
+  private IntroduceVariableBase.JavaReplaceChoice myReplaceChoice = IntroduceVariableBase.JavaReplaceChoice.ALL;
 
   IntroduceParameterDialog(@NotNull Project project,
                            @NotNull List<? extends UsageInfo> classMembersList,
@@ -262,7 +264,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       myProject, myMethodToReplaceIn, myMethodToSearchFor,
       parameterInitializer, myExpression,
       myLocalVar, isDeleteLocalVariable,
-      getParameterName(), myPanel.isReplaceAllOccurences(),
+      getParameterName(), myPanel.isReplaceAllOccurences() ? myReplaceChoice : IntroduceVariableBase.JavaReplaceChoice.NO,
       myPanel.getReplaceFieldsWithGetters(), isDeclareFinal(), myPanel.isGenerateDelegate(),
       myCbCollapseToLambda.isVisible() && myCbCollapseToLambda.isSelected(), selectedType, myPanel.getParametersToRemove());
     invokeRefactoring(processor);
@@ -286,8 +288,9 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     }
   }
 
-  public void setReplaceAllOccurrences(boolean replaceAllOccurrences) {
-    myPanel.setReplaceAllOccurrences(replaceAllOccurrences);
+  public void setReplaceAllOccurrences(IntroduceVariableBase.JavaReplaceChoice replaceChoice) {
+    myReplaceChoice = replaceChoice;
+    myPanel.setReplaceAllOccurrences(replaceChoice.isAll());
   }
 
   public void setGenerateDelegate(boolean delegate) {

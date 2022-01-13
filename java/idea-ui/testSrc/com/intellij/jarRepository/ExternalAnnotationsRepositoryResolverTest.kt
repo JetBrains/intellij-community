@@ -174,10 +174,10 @@ class ExternalAnnotationsRepositoryResolverTest: UsefulTestCase() {
     val resolver = ExternalAnnotationsRepositoryResolver()
     val library = createLibrary()
     val modifiableModel = library.modifiableModel
-    modifiableModel.addRoot("file://fake.url", AnnotationOrderRootType.getInstance())
+    modifiableModel.addRoot("file:///fake.url", AnnotationOrderRootType.getInstance())
     runWriteAction { modifiableModel.commit() }
 
-    assertTrue(library.getUrls(AnnotationOrderRootType.getInstance()).single() == "file://fake.url")
+    assertTrue(library.getUrls(AnnotationOrderRootType.getInstance()).single() == "file:///fake.url")
 
     RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(myTestRepo)
 

@@ -40,7 +40,12 @@ interface Panel : CellBase<Panel> {
   /**
    * Adds specified columns in a row
    */
-  fun twoColumnRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)? = null): Row
+  fun twoColumnsRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)? = null): Row
+
+  /**
+   * Adds specified columns in a row
+   */
+  fun threeColumnsRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)? = null, column3: (Row.() -> Unit)? = null): Row
 
   /**
    * Creates sub-panel that occupies whole width and uses own grid inside
@@ -56,20 +61,27 @@ interface Panel : CellBase<Panel> {
    * Adds panel with independent grid, title and some vertical space before the group.
    * Grouped radio buttons and checkboxes should use [Panel.buttonGroup] method, which uses different title gaps
    *
-   * @param indent true left indent is needed
+   * @param indent true if left indent is needed
+   * @param topGroupGap true if standard gap before the group is needed
    */
-  fun group(@NlsContexts.BorderTitle title: String? = null, indent: Boolean = true, init: Panel.() -> Unit): Panel
+  fun group(@NlsContexts.BorderTitle title: String? = null,
+            indent: Boolean = true,
+            topGroupGap: Boolean = true,
+            init: Panel.() -> Unit): Panel
 
   /**
    * Similar to [Panel.group] but uses the same grid as parent.
    * See [RowsRange]
    */
-  fun groupRowsRange(@NlsContexts.BorderTitle title: String? = null, init: Panel.() -> Unit): RowsRange
+  fun groupRowsRange(@NlsContexts.BorderTitle title: String? = null,
+                     indent: Boolean = true,
+                     topGroupGap: Boolean = true,
+                     init: Panel.() -> Unit): RowsRange
 
   /**
    * Adds collapsible panel with independent grid, title and some vertical space before the group.
    *
-   * @param indent true left indent is needed
+   * @param indent true if left indent is needed
    */
   fun collapsibleGroup(@NlsContexts.BorderTitle title: String, indent: Boolean = true, init: Panel.() -> Unit): CollapsiblePanel
 

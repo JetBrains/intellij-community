@@ -11,7 +11,7 @@ class C implements J {}
 class Test1 implements I { { Runnable r = I.super::a; } }
 class Test2 implements J { { Runnable r = <error descr="'I' is not an enclosing class">I.super</error>::a; } }
 class Test3 implements I, J { { Runnable r = <error descr="Bad type qualifier in default super call: redundant interface I is extended by J">I</error>.super::a; } }
-class Test5 extends A implements I { { Runnable r = I.super::a; } }
+class Test5 extends A implements I { { Runnable r = <error descr="Bad type qualifier in default super call: redundant interface I is extended by A">I</error>.super::a; } }
 class Test6 extends A implements J { { Runnable r = <error descr="'I' is not an enclosing class">I.super</error>::a; } }
 class Test7 extends B { { Runnable r = <error descr="'I' is not an enclosing class">I.super</error>::a; } }
 class Test8 extends C { { Runnable r = <error descr="'I' is not an enclosing class">I.super</error>::a; } }
@@ -22,7 +22,7 @@ class Test {
     }
     class Test3 extends LocalJ implements I {
       {
-        Runnable r = I.super::a;
+        Runnable r = <error descr="Bad type qualifier in default super call: redundant interface I is extended by LocalJ">I</error>.super::a;
       }
     }
 
@@ -52,15 +52,15 @@ class Test {
   
   class F extends E implements I {
     void bar() {
-      <error descr="Bad type qualifier in default super call: method a is overridden in Test.E">I</error>.super.a();
-      Runnable r = <error descr="Bad type qualifier in default super call: method a is overridden in Test.E">I</error>.super::a;
+      <error descr="Bad type qualifier in default super call: redundant interface I is extended by Test.E">I</error>.super.a();
+      Runnable r = <error descr="Bad type qualifier in default super call: redundant interface I is extended by Test.E">I</error>.super::a;
     }
   }
   
   class G extends A implements I {
     void bar() {
-      I.super.a();
-      Runnable r = I.super::a;
+      <error descr="Bad type qualifier in default super call: redundant interface I is extended by A">I</error>.super.a();
+      Runnable r = <error descr="Bad type qualifier in default super call: redundant interface I is extended by A">I</error>.super::a;
     }
   }
 }

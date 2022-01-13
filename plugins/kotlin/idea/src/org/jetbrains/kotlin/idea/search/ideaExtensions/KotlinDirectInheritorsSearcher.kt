@@ -19,14 +19,14 @@ open class KotlinDirectInheritorsSearcher : QueryExecutorBase<PsiClass, DirectCl
     override fun processQuery(queryParameters: DirectClassInheritorsSearch.SearchParameters, consumer: Processor<in PsiClass>) {
         val baseClass = queryParameters.classToProcess
 
-        val name = baseClass.name ?: return
+        val baseClassName = baseClass.name ?: return
 
         val file = if (baseClass is KtFakeLightClass) baseClass.kotlinOrigin.containingFile else baseClass.containingFile
 
         val originalScope = queryParameters.scope
-        val scope = originalScope as? GlobalSearchScope ?: file.fileScope() ?: return
+        val scope = originalScope as? GlobalSearchScope ?: file.fileScope()
 
-        val names = mutableSetOf(name)
+        val names = mutableSetOf(baseClassName)
         val project = file.project
 
         val typeAliasIndex = KotlinTypeAliasByExpansionShortNameIndex.getInstance()
@@ -41,15 +41,21 @@ open class KotlinDirectInheritorsSearcher : QueryExecutorBase<PsiClass, DirectCl
                 .forEach(::searchForTypeAliasesRecursively)
         }
 
-        searchForTypeAliasesRecursively(name)
+        searchForTypeAliasesRecursively(baseClassName)
 
-        val noLibrarySourceScope = KotlinSourceFilterScope.projectSourceAndClassFiles(scope, baseClass.project)
+        val noLibrarySourceScope = KotlinSourceFilterScope.projectSourceAndClassFiles(scope, project)
         names.forEach { name ->
             ProgressManager.checkCanceled()
             KotlinSuperClassIndex.getInstance()
-                .get(name, baseClass.project, noLibrarySourceScope).asSequence()
-                .mapNotNull { candidate -> candidate.toLightClassWithBuiltinMapping() ?: KtFakeLightClass(candidate) }
-                .filter { candidate -> candidate.isInheritor(baseClass, false) }
+                .get(name, project, noLibrarySourceScope).asSequence()
+                .mapNotNull { candidate ->
+                    ProgressManager.checkCanceled()
+                    candidate.toLightClassWithBuiltinMapping() ?: KtFakeLightClass(candidate)
+                }
+                .filter { candidate ->
+                    ProgressManager.checkCanceled()
+                    candidate.isInheritor(baseClass, false)
+                }
                 .forEach { candidate ->
                     ProgressManager.checkCanceled()
                     consumer.process(candidate)

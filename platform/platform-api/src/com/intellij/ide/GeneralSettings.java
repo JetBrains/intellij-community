@@ -229,7 +229,7 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void setConfirmExtractFiles(@SuppressWarnings("unused") boolean value) { }
+  public void setConfirmExtractFiles(boolean value) { }
 
   public boolean isConfirmExit() {
     return myConfirmExit;

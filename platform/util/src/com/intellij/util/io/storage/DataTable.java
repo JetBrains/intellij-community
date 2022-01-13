@@ -96,15 +96,6 @@ final class DataTable implements Disposable, Forceable {
     myFile.force();
   }
 
-  public boolean flushSome(int maxPages) {
-    myFile.flushSomePages(maxPages);
-    if (!myFile.isDirty()) {
-      force();
-      return true;
-    }
-    return false;
-  }
-
   @Override
   public boolean isDirty() {
     return myIsDirty || myFile.isDirty();

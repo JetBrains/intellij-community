@@ -194,8 +194,8 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                 if (testType != FindUsageTestType.FIR) {
                     (configurator.file as? KtFile)?.let { ktFile ->
                         val diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithAllCompilerChecks().bindingContext.diagnostics }
-                        DirectiveBasedActionUtils.checkForUnexpectedWarnings(ktFile, diagnosticsProvider)
-                        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, diagnosticsProvider)
+                        DirectiveBasedActionUtils.checkForUnexpectedWarnings(ktFile, diagnosticsProvider = diagnosticsProvider)
+                        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, diagnosticsProvider = diagnosticsProvider)
                     }
                 }
 

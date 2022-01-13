@@ -26,11 +26,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class DependenciesImportingTest extends MavenMultiVersionImportingTestCase {
-  @Override
-  protected boolean runInDispatchThread() {
-    return false;
-  }
-
   @Test
   public void testLibraryDependency() {
     importProject("<groupId>test</groupId>" +
@@ -2416,5 +2411,51 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     finally {
       value.resetToDefault();
     }
+  }
+
+  @Test
+  public void testTransitiveProfileDependency() {
+    assumeVersionMoreThan("3.1.0");
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<profiles>" +
+                          "  <profile>" +
+                          "    <id>test</id>" +
+                          "    <dependencies>" +
+                          "      <dependency>" +
+                          "        <groupId>junit</groupId>" +
+                          "        <artifactId>junit</artifactId>" +
+                          "        <version>4.0</version>" +
+                          "      </dependency>" +
+                          "    </dependencies>" +
+                          "  </profile>" +
+                          "</profiles>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m1</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    importProjectWithProfiles("test");
+    assertModuleLibDeps("m2", "Maven: junit:junit:4.0");
   }
 }

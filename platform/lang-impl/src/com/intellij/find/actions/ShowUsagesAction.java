@@ -19,6 +19,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
+import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
@@ -91,6 +92,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -364,6 +366,16 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         newOptions.searchScope = searchScope;
         return createActionHandler(handler, newOptions);
       }
+
+      @Override
+      public Language getTargetLanguage() {
+        return handler.getPsiElement().getLanguage();
+      }
+
+      @Override
+      public @NotNull Class<?> getTargetClass() {
+        return handler.getPsiElement().getClass();
+      }
     };
   }
 
@@ -484,6 +496,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     MessageBusConnection messageBusConnection = project.getMessageBus().connect(usageView);
     messageBusConnection.subscribe(UsageFilteringRuleProvider.RULES_CHANGED, () -> rulesChanged(usageView, pingEDT, popup));
 
+    AtomicLong firstUsageAddedTS = new AtomicLong();
+    AtomicBoolean tooManyResults = new AtomicBoolean();
     Processor<Usage> collect = usage -> {
       if (!UsageViewManagerImpl.isInScope(usage, searchScope)) {
         if (outOfScopeUsages.getAndIncrement() == 0) {
@@ -493,9 +507,15 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         return true;
       }
       synchronized (usages) {
-        if (visibleUsages.size() >= parameters.maxUsages) return false;
+        if (visibleUsages.size() >= parameters.maxUsages) {
+          tooManyResults.set(true);
+          return false;
+        }
+
         UsageNode nodes = ReadAction.compute(() -> usageView.doAppendUsage(usage));
         usages.add(usage);
+        firstUsageAddedTS.compareAndSet(0, System.nanoTime()); // Successes only once - at first assignment
+
         if (nodes != null) {
           visibleUsages.add(nodes.getUsage());
           boolean continueSearch = true;
@@ -514,6 +534,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     };
 
     UsageSearcher usageSearcher = actionHandler.createUsageSearcher();
+    long searchStarted = System.nanoTime();
     FindUsagesManager.startProcessUsages(indicator, project, usageSearcher, collect, () -> ApplicationManager.getApplication().invokeLater(
       () -> {
         Disposer.dispose(processIcon);
@@ -558,6 +579,14 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
             }
           }
         }
+
+        long current = System.nanoTime();
+        UsageViewStatisticsCollector.logSearchFinished(project,
+           actionHandler.getTargetClass(), searchScope, actionHandler.getTargetLanguage(), usages.size(),
+           TimeUnit.MILLISECONDS.convert(current - firstUsageAddedTS.get(), TimeUnit.NANOSECONDS),
+           TimeUnit.MILLISECONDS.convert(current - searchStarted, TimeUnit.NANOSECONDS),
+           tooManyResults.get(),
+           CodeNavigateSource.ShowUsagesPopup);
       },
       project.getDisposed()
     ));
@@ -766,6 +795,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       if (event.getStateChange() == ItemEvent.SELECTED) {
         SearchScope scope = scopeChooserCombo.getSelectedScope();
         if (scope != null) {
+          UsageViewStatisticsCollector.logScopeChanged(project, actionHandler.getSelectedScope(), scope,
+                                                       actionHandler.getTargetClass());
           cancel(popupRef.get());
           showElementUsages(parameters, actionHandler.withScope(scope));
         }

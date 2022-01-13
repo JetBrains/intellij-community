@@ -36,12 +36,12 @@ public final class AnnotationBasedBlockingMethodChecker implements BlockingMetho
 
   @Override
   public boolean isMethodBlocking(@NotNull MethodContext context) {
-    return isMethodOrClassAnnotated(context.getMethod(), myBlockingAnnotations, myNonBlockingAnnotations);
+    return isMethodOrClassAnnotated(context.getElement(), myBlockingAnnotations, myNonBlockingAnnotations);
   }
 
   @Override
   public boolean isMethodNonBlocking(@NotNull MethodContext context) {
-    return isMethodOrClassAnnotated(context.getMethod(), myNonBlockingAnnotations, myBlockingAnnotations);
+    return isMethodOrClassAnnotated(context.getElement(), myNonBlockingAnnotations, myBlockingAnnotations);
   }
 
   private static boolean isMethodOrClassAnnotated(@NotNull PsiMethod method,

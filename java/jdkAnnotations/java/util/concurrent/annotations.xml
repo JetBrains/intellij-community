@@ -52,7 +52,19 @@
     name='java.util.concurrent.AbstractExecutorService java.util.concurrent.Future&lt;T&gt; submit(java.util.concurrent.Callable&lt;T&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name='java.util.concurrent.BlockingDeque E element()'>
+  <item name='java.util.concurrent.ArrayBlockingQueue ArrayBlockingQueue(int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.concurrent.ArrayBlockingQueue ArrayBlockingQueue(int, boolean) 0'>
+        <annotation name='org.jetbrains.annotations.Range'>
+            <val name="from" val="1"/>
+            <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+        </annotation>
+    </item>
+    <item name='java.util.concurrent.BlockingDeque E element()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.concurrent.BlockingDeque E poll(long, java.util.concurrent.TimeUnit)'>

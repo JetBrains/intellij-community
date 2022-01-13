@@ -2,6 +2,7 @@
 package com.intellij.execution.runToolbar
 
 import com.intellij.icons.AllIcons
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -11,7 +12,7 @@ import java.awt.Point
 import javax.swing.JComponent
 
 
-class RunToolbarShowHidePopupAction : AnAction(), CustomComponentAction, DumbAware, RTBarAction {
+class RunToolbarShowHidePopupAction : AnAction(ActionsBundle.message("action.RunToolbarShowHidePopupAction.show.popup.text")), CustomComponentAction, DumbAware, RTBarAction {
 
   override fun actionPerformed(e: AnActionEvent) {
 
@@ -22,9 +23,8 @@ class RunToolbarShowHidePopupAction : AnAction(), CustomComponentAction, DumbAwa
   }
 
   override fun update(e: AnActionEvent) {
-    e.arrowData()?.let {
-      e.presentation.text = it.second
-      e.presentation.icon = it.first
+    e.arrowIcon()?.let {
+      e.presentation.icon = it
     }
 
     if (!RunToolbarProcess.experimentalUpdating()) {

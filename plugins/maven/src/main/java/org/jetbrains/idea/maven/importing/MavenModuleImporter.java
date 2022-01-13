@@ -57,8 +57,10 @@ public final class MavenModuleImporter {
   private final MavenProjectChanges myMavenProjectChanges;
   private final Map<MavenProject, String> myMavenProjectToModuleName;
   private final MavenImportingSettings mySettings;
-  private final IdeModifiableModelsProvider myModifiableModelsProvider;
+  private final ModifiableModelsProviderProxy myModifiableModelsProvider;
   private MavenRootModelAdapter myRootModelAdapter;
+
+  private IdeModifiableModelsProvider myProviderForExtensions;
 
   public MavenModuleImporter(Module module,
                              MavenProjectsTree mavenTree,
@@ -66,7 +68,7 @@ public final class MavenModuleImporter {
                              @Nullable MavenProjectChanges changes,
                              Map<MavenProject, String> mavenProjectToModuleName,
                              MavenImportingSettings settings,
-                             IdeModifiableModelsProvider modifiableModelsProvider) {
+                             ModifiableModelsProviderProxy modifiableModelsProvider) {
     myModule = module;
     myMavenTree = mavenTree;
     myMavenProject = mavenProject;
@@ -115,7 +117,7 @@ public final class MavenModuleImporter {
           }
 
           if (importer.getModuleType() == moduleType) {
-            importer.preProcess(myModule, myMavenProject, changes, myModifiableModelsProvider);
+            importer.preProcess(myModule, myMavenProject, changes, myProviderForExtensions);
           }
         }
         catch (Exception e) {
@@ -144,7 +146,7 @@ public final class MavenModuleImporter {
 
           if (importer.getModuleType() == moduleType) {
             try {
-              importer.process(myModifiableModelsProvider,
+              importer.process(myProviderForExtensions,
                                myModule,
                                myRootModelAdapter,
                                myMavenTree,
@@ -180,7 +182,7 @@ public final class MavenModuleImporter {
           }
 
           if (importer.getModuleType() == moduleType) {
-            importer.postProcess(myModule, myMavenProject, changes, myModifiableModelsProvider);
+            importer.postProcess(myModule, myMavenProject, changes, myProviderForExtensions);
           }
         } catch(Exception e) {
           MavenLog.LOG.error(e);
@@ -367,6 +369,17 @@ public final class MavenModuleImporter {
     }
   }
 
+  public IdeModifiableModelsProvider getModifiableModelsProvider() {
+    return myProviderForExtensions;
+  }
+
+  public void setModifiableModelsProvider(IdeModifiableModelsProvider providerForExtensions) {
+    myProviderForExtensions = providerForExtensions;
+    MavenRootModelAdapter mavenRootModelAdapter = new MavenRootModelAdapter(
+      new MavenRootModelAdapterLegacyImpl(myMavenProject, myModule, new ModifiableModelsProviderProxyWrapper(myProviderForExtensions)));
+    setRootModelAdapter(mavenRootModelAdapter);
+  }
+
   @NotNull
   public static String getAttachedJarsLibName(@NotNull MavenArtifact artifact) {
     String libraryName = artifact.getLibraryName();
@@ -456,5 +469,9 @@ public final class MavenModuleImporter {
 
   private static boolean isPreviewText(Element child) {
     return JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY.equals(child.getTextTrim());
+  }
+
+  public boolean isModuleDisposed() {
+    return myModule.isDisposed();
   }
 }

@@ -24,6 +24,13 @@ class RenameKotlinFileProcessor : RenamePsiFileProcessor() {
         private val file: KtFile
     ) : KtLightClass by psiClass {
         override fun isValid() = file.isValid
+        override fun equals(other: Any?): Boolean = other === this ||
+                other is FileRenamingPsiClassWrapper &&
+                other.psiClass == psiClass &&
+                other.file == file
+
+        override fun hashCode(): Int = psiClass.hashCode() * 31 + file.hashCode()
+        override fun getSourceElement(): PsiElement? = psiClass.sourceElement
     }
 
     override fun canProcessElement(element: PsiElement) =

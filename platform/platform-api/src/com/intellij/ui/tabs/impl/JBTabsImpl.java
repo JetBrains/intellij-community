@@ -2280,7 +2280,7 @@ public class JBTabsImpl extends JComponent
   private void processRemove(final TabInfo info, boolean forcedNow) {
     TabLabel tabLabel = myInfo2Label.get(info);
     ObjectUtils.consumeIfNotNull(tabLabel, label -> remove(label));
-    remove(myInfo2Toolbar.get(info));
+    ObjectUtils.consumeIfNotNull(myInfo2Toolbar.get(info), toolbar -> remove(toolbar));
 
     JComponent tabComponent = info.getComponent();
 

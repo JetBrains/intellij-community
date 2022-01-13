@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.icons.AllIcons;
@@ -70,6 +70,7 @@ public class RegistryUi implements Disposable {
     myModel = new MyTableModel();
     myTable = new JBTable(myModel);
     myTable.setShowGrid(false);
+    myTable.setVisibleRowCount(15);
     myTable.setCellSelectionEnabled(true);
     myTable.setEnableAntialiasing(true);
     final MyRenderer r = new MyRenderer();
@@ -81,10 +82,12 @@ public class RegistryUi implements Disposable {
     c0.setHeaderValue(null);
 
     final TableColumn c1 = myTable.getColumnModel().getColumn(1);
+    c1.setPreferredWidth(JBUI.scale(400));
     c1.setCellRenderer(r);
     c1.setHeaderValue("Key");
 
     final TableColumn c2 = myTable.getColumnModel().getColumn(2);
+    c2.setPreferredWidth(JBUI.scale(100));
     c2.setCellRenderer(r);
     c2.setHeaderValue("Value");
     c2.setCellEditor(new MyEditor());

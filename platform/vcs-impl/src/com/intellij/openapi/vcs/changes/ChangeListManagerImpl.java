@@ -321,7 +321,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
   private void startUpdater() {
     myUpdater.initialized();
-    BackgroundTaskUtil.syncPublisher(myProject, LISTS_LOADED).processLoadedLists(getChangeListsCopy());
+    BackgroundTaskUtil.syncPublisher(myProject, LISTS_LOADED).processLoadedLists(getChangeLists());
 
     MessageBusConnection connection = myProject.getMessageBus().connect(this);
     connection.subscribe(VCS_CONFIGURATION_CHANGED, () -> VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty());

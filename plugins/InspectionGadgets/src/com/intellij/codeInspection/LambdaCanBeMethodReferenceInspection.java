@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
@@ -20,6 +20,7 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -29,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.stream.Stream;
 
 public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(LambdaCanBeMethodReferenceInspection.class);
@@ -110,7 +110,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
                                                           final PsiExpression methodRefCandidate) {
     if (functionalInterfaceType == null) return null;
     // Do not suggest for annotated lambda, as annotation will be lost during the conversion
-    if (Stream.of(parameters).anyMatch(LambdaCanBeMethodReferenceInspection::hasAnnotation)) return null;
+    if (ContainerUtil.or(parameters, LambdaCanBeMethodReferenceInspection::hasAnnotation)) return null;
     if (methodRefCandidate instanceof PsiNewExpression) {
       final PsiNewExpression newExpression = (PsiNewExpression)methodRefCandidate;
       if (newExpression.getAnonymousClass() != null || newExpression.getArrayInitializer() != null) {
@@ -315,7 +315,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     if (qualifier == null) {
       return true;
     }
-    final Condition<PsiElement> callExpressionCondition = Conditions.instanceOf(PsiCallExpression.class, PsiArrayAccessExpression.class);
+    final Condition<PsiElement> callExpressionCondition = Conditions.instanceOf(PsiCallExpression.class, PsiArrayAccessExpression.class, PsiTypeCastExpression.class);
     final Condition<PsiElement> nonFinalFieldRefCondition = expression -> {
       if (expression instanceof PsiReferenceExpression && !(expression.getParent() instanceof PsiCallExpression)) {
         PsiElement element = ((PsiReferenceExpression)expression).resolve();

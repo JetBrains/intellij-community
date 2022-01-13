@@ -7,9 +7,9 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ex.EntryPointsManager
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiNameIdentifierOwner
-import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -73,6 +73,7 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
         val descriptor = (declaration.toDescriptor() as? DeclarationDescriptorWithVisibility) ?: return false
         when (descriptor.effectiveVisibility()) {
             EffectiveVisibility.Private, EffectiveVisibility.Local -> return false
+            else -> { }
         }
 
         val entryPointsManager = EntryPointsManager.getInstance(declaration.project) as EntryPointsManagerBase
@@ -102,9 +103,9 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
 
         var otherUsageFound = false
         var inClassUsageFound = false
-        ReferencesSearch.search(declaration, restrictedScope).forEach(Processor<PsiReference> {
+        ReferencesSearch.search(declaration, restrictedScope).forEach(Processor {
             val usage = it.element
-            if (classOrObject != usage.getParentOfType<KtClassOrObject>(false)) {
+            if (usage.isOutside(classOrObject)) {
                 otherUsageFound = true
                 return@Processor false
             }
@@ -129,7 +130,14 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
                 true
             }
         })
+
         return inClassUsageFound && !otherUsageFound
+    }
+
+    private fun PsiElement.isOutside(classOrObject: KtClassOrObject): Boolean {
+        if (classOrObject != getParentOfType<KtClassOrObject>(false)) return true
+        val annotationEntry = getStrictParentOfType<KtAnnotationEntry>() ?: return false
+        return classOrObject.annotationEntries.any { it == annotationEntry }
     }
 
     private fun KtModifierListOwner?.insideInline() = this?.let { it.hasModifier(KtTokens.INLINE_KEYWORD) && !it.isPrivate() } ?: false
@@ -140,12 +148,13 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
             is KtNamedFunction -> KotlinBundle.message("text.Function")
             else -> KotlinBundle.message("text.Property")
         }
+
         val nameElement = (declaration as? PsiNameIdentifierOwner)?.nameIdentifier ?: return
         holder.registerProblem(
             declaration.visibilityModifier() ?: nameElement,
             KotlinBundle.message("0.1.could.be.private", member, declaration.getName().toString()),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-            IntentionWrapper(AddModifierFix(modifierListOwner, KtTokens.PRIVATE_KEYWORD), declaration.containingKtFile)
+            IntentionWrapper(AddModifierFix(modifierListOwner, KtTokens.PRIVATE_KEYWORD))
         )
     }
 }

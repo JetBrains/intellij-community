@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +80,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
   @Override
   public String getPercentage(int columnIndex, AbstractTreeNode node) {
-    final Object value = node.getValue();
+    final Object value = SlowOperations.allowSlowOperations(() -> node.getValue());
     PackageAnnotator.SummaryCoverageInfo info = getSummaryCoverageForNodeValue(value);
 
     if (columnIndex == 1) {
@@ -178,7 +179,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     final List<AbstractTreeNode<?>> topLevelNodes = new ArrayList<>();
     for (PsiPackage aPackage : packages) {
       final GlobalSearchScope searchScope = mySuitesBundle.getSearchScope(myProject);
-      if (aPackage.getClasses(searchScope).length != 0) {
+      if (ReadAction.compute(() -> aPackage.getClasses(searchScope)).length != 0) {
         final CoverageListNode node = new CoverageListNode(myProject, aPackage, mySuitesBundle, myStateBean);
         topLevelNodes.add(node);
       }

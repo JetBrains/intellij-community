@@ -11,6 +11,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ProblemDescriptorUtil.ProblemPresentation;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.concurrency.JobLauncher;
@@ -208,10 +209,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     List<Divider.DividedElements> allDivided = new ArrayList<>();
     Divider.divideInsideAndOutsideAllRoots(myFile, myRestrictRange, myPriorityRange, SHOULD_INSPECT_FILTER, new CommonProcessors.CollectProcessor<>(allDivided));
     List<PsiElement> inside = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> d.inside));
-    TextRange finalPriorityRange = allDivided.isEmpty() ? myPriorityRange : allDivided.get(0).priorityRange; // might be different from myPriorityRange because DividedElements can cache not exact but containing ranges
+    long finalPriorityRange = allDivided.isEmpty() ? Divider.toScalarRange(myPriorityRange) : allDivided.get(0).priorityRange; // might be different from myPriorityRange because DividedElements can cache not exact but containing ranges
     for (int i = 1; i < allDivided.size(); i++) {
       Divider.DividedElements dividedElements = allDivided.get(i);
-      finalPriorityRange = finalPriorityRange.union(dividedElements.priorityRange);
+      finalPriorityRange = Divider.union(finalPriorityRange, dividedElements.priorityRange);
     }
     List<PsiElement> outside = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.outside, d.parents)));
 
@@ -231,7 +232,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       // do not save stats for batch process, there could be too many files
       InspectionProfilerDataHolder.getInstance(myProject).saveStats(getFile(), init, System.nanoTime() - start);
     }
-    reportStatsToQodana(isOnTheFly, init);
+    reportStatsToQodana(isOnTheFly, getFile(), init);
     inspectInjectedPsi(outside, isOnTheFly, progress, iManager, false, toolWrappers, alreadyVisitedInjected);
     ProgressManager.checkCanceled();
 
@@ -277,13 +278,14 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     });
   }
 
-  private void reportStatsToQodana(boolean isOnTheFly, @NotNull List<? extends InspectionContext> contexts) {
+  private void reportStatsToQodana(boolean isOnTheFly, PsiFile file, @NotNull List<? extends InspectionContext> contexts) {
     if (!isOnTheFly) {
       for (InspectionContext context : contexts) {
         InspectionProblemsHolder holder = context.holder;
         long durationMs = TimeUnit.NANOSECONDS.toMillis(holder.finishTimeStamp - holder.initTimeStamp);
         int problemCount = context.holder.getResultCount();
-        myInspectTopicPublisher.inspectionFinished(durationMs, 0, problemCount, context.tool, InspectListener.InspectionKind.LOCAL, myProject);
+        myInspectTopicPublisher.inspectionFinished(durationMs, 0, problemCount, context.tool, InspectListener.InspectionKind.LOCAL,
+                                                   file, myProject);
       }
     }
   }
@@ -340,7 +342,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                                         boolean isOnTheFly,
                                                                         @NotNull ProgressIndicator indicator,
                                                                         @NotNull List<? extends PsiElement> inside,
-                                                                        @NotNull TextRange finalPriorityRange,
+                                                                        long finalPriorityRange,
                                                                         @NotNull LocalInspectionToolSession session,
                                                                         @NotNull InspectionContext TOMB_STONE) {
     PsiFile file = session.getFile();
@@ -397,7 +399,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private void processInOrder(@NotNull List<? extends InspectionContext> init,
                               @NotNull List<? extends PsiElement> elements,
                               boolean inside,
-                              @NotNull TextRange finalPriorityRange,
+                              long finalPriorityRange,
                               @NotNull PsiFile file,
                               @NotNull InspectionContext TOMB_STONE,
                               @NotNull ProgressIndicator indicator,
@@ -417,7 +419,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
               PsiElement favoriteElement = context.myFavoriteElement;
 
               // accept favoriteElement only if it belongs to the correct inside/outside list
-              if (favoriteElement != null && inside == favoriteElement.getTextRange().intersects(finalPriorityRange)) {
+              if (favoriteElement != null && inside == favoriteElement.getTextRange().intersects(Divider.startOffset(finalPriorityRange), Divider.endOffset(finalPriorityRange))) {
                 context.myFavoriteElement = null; // null the element to make sure it will hold the new favorite after this method finished
                 // run first for the element we know resulted in the diagnostics during previous run
                 favoriteElement.accept(context.visitor);
@@ -471,7 +473,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   private void visitRestElementsAndCleanup(@NotNull ProgressIndicator indicator,
                                            @NotNull List<? extends PsiElement> outside,
-                                           @NotNull TextRange finalPriorityRange,
+                                           long finalPriorityRange,
                                            @NotNull LocalInspectionToolSession session,
                                            @NotNull List<? extends InspectionContext> init,
                                            @NotNull InspectionContext TOMB_STONE) {
@@ -720,7 +722,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                              @NotNull ProblemDescriptor descriptor,
                                              @NotNull PsiElement element) {
     HighlightInfoType level = ProblemDescriptorUtil.highlightTypeFromDescriptor(descriptor, severity, mySeverityRegistrar);
-    var presentation = ProblemDescriptorUtil.renderDescriptor(descriptor, element, ProblemDescriptorUtil.NONE);
+    ProblemPresentation presentation = ProblemDescriptorUtil.renderDescriptor(descriptor, element, ProblemDescriptorUtil.NONE);
     String message = presentation.getDescription();
 
     ProblemGroup problemGroup = descriptor.getProblemGroup();
@@ -799,7 +801,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       }
       HighlightInfo patched = builder.createUnconditionally();
       if (patched.startOffset != patched.endOffset || info.startOffset == info.endOffset) {
-        patched.setFromInjection(true);
+        patched.markFromInjection();
         registerQuickFixes(patched, fixes, shortName);
         outInfos.add(patched);
       }

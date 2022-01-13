@@ -1,3 +1,5 @@
+// AFTER-WARNING: Parameter 'f' is never used
+// AFTER-WARNING: Parameter 'i' is never used
 fun foo(f: <caret>Int.() -> String) {
     1.f()
     bar(f)

@@ -1,4 +1,5 @@
 // WITH_RUNTIME
+// AFTER-WARNING: Parameter 's' is never used
 
 fun test() {
     foo(<caret>"bar")

@@ -17,16 +17,13 @@ import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtCallElement
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.kotlin.psi.KtValueArgument
-import org.jetbrains.kotlin.psi.ValueArgument
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.calls.callUtil.getParameterForArgument
+import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.types.KotlinType
-import java.util.*
 
 object NamedArgumentCompletion {
     fun isOnlyNamedArgumentExpected(nameExpression: KtSimpleNameExpression, resolutionFacade: ResolutionFacade): Boolean {
@@ -78,7 +75,16 @@ object NamedArgumentCompletion {
  * Checks whether argument in the [resolvedCall] can be used without its name (as positional argument).
  */
 fun KtValueArgument.canBeUsedWithoutNameInCall(resolvedCall: ResolvedCall<out CallableDescriptor>): Boolean {
-    val argumentsBeforeThis = resolvedCall.call.valueArguments.takeWhile { it != this }
+    val valueArguments = resolvedCall.call.valueArguments
+
+    if (getArgumentExpression() is KtCollectionLiteralExpression && resolvedCall.getParameterForArgument(this)?.isVararg == true) {
+        val argumentIndex = valueArguments.indexOf(this)
+        if (argumentIndex == -1) return false
+        val nextArgument = valueArguments.getOrNull(argumentIndex + 1)
+        if (nextArgument != null && !nextArgument.isNamed()) return false
+    }
+
+    val argumentsBeforeThis = valueArguments.takeWhile { it != this }
     return if (languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition)) {
         argumentsBeforeThis.none { it.isNamed() && !it.placedOnItsOwnPositionInCall(resolvedCall) }
     } else {

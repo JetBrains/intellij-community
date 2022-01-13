@@ -18,7 +18,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -26,7 +25,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.mac.TouchbarDataKeys;
+import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.EventDispatcher;
@@ -271,6 +270,13 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     new TransferFocusAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)), this);
     new TransferFocusBackwardAction()
       .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK)), this);
+
+    if (SystemInfo.isMac) {
+      myTouchbarActions = new DefaultActionGroup();
+      myTouchbarActions.add(new PrevOccurrenceAction());
+      myTouchbarActions.add(new NextOccurrenceAction());
+      Touchbar.setActions(this, myTouchbarActions);
+    }
   }
 
   public void resetUndoRedoActions() {
@@ -337,14 +343,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   public Object getData(@NotNull @NonNls String dataId) {
     if (SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY.is(dataId)) {
       return mySearchTextComponent.getText();
-    }
-    if (TouchbarDataKeys.ACTIONS_KEY.is(dataId)) {
-      if (myTouchbarActions == null) {
-        myTouchbarActions = new DefaultActionGroup();
-        myTouchbarActions.add(new PrevOccurrenceAction());
-        myTouchbarActions.add(new NextOccurrenceAction());
-      }
-      return myTouchbarActions;
     }
     return myDataProviderDelegate != null ? myDataProviderDelegate.getData(dataId) : null;
   }

@@ -106,15 +106,15 @@ public final class AsyncEventSupport {
     return appliers;
   }
 
-  public static void markAsynchronouslyProcessedEvents(@NotNull List<VFileEvent> events) {
+  public static void markAsynchronouslyProcessedEvents(@NotNull List<? extends VFileEvent> events) {
     ourAsyncProcessedEvents.add(events);
   }
 
-  public static void unmarkAsynchronouslyProcessedEvents(@NotNull List<VFileEvent> events) {
+  public static void unmarkAsynchronouslyProcessedEvents(@NotNull List<? extends VFileEvent> events) {
     LOG.assertTrue(ourAsyncProcessedEvents.remove(events));
   }
 
-  private static void beforeVfsChange(List<AsyncFileListener.ChangeApplier> appliers) {
+  private static void beforeVfsChange(@NotNull List<? extends AsyncFileListener.ChangeApplier> appliers) {
     for (AsyncFileListener.ChangeApplier applier : appliers) {
       PingProgress.interactWithEdtProgress();
       try {
@@ -126,7 +126,7 @@ public final class AsyncEventSupport {
     }
   }
 
-  private static void afterVfsChange(List<AsyncFileListener.ChangeApplier> appliers) {
+  private static void afterVfsChange(@NotNull List<? extends AsyncFileListener.ChangeApplier> appliers) {
     for (AsyncFileListener.ChangeApplier applier : appliers) {
       PingProgress.interactWithEdtProgress();
       try {
@@ -141,8 +141,8 @@ public final class AsyncEventSupport {
     }
   }
 
-  static void processEventsFromRefresh(@NotNull List<CompoundVFileEvent> events,
-                                       @NotNull List<AsyncFileListener.ChangeApplier> appliers,
+  static void processEventsFromRefresh(@NotNull List<? extends CompoundVFileEvent> events,
+                                       @NotNull List<? extends AsyncFileListener.ChangeApplier> appliers,
                                        boolean asyncProcessing) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     beforeVfsChange(appliers);

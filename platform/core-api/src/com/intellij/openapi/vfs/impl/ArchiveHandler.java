@@ -221,7 +221,7 @@ public abstract class ArchiveHandler {
                                     @Nullable Logger logger,
                                     @NotNull String entryName,
                                     @SuppressWarnings("BoundedWildcard") @Nullable BiFunction<@NotNull EntryInfo, @NotNull String, @NotNull ? extends EntryInfo> entryFun) {
-    String normalizedName = StringUtil.trimTrailing(StringUtil.trimLeading(FileUtil.normalize(entryName), '/'), '/');
+    String normalizedName = normalizeName(entryName);
     if (normalizedName.isEmpty() || normalizedName.contains("..") && ArrayUtil.contains("..", normalizedName.split("/"))) {
       if (logger != null) logger.trace("invalid entry: " + getFile() + "!/" + entryName);
       return;
@@ -241,6 +241,11 @@ public abstract class ArchiveHandler {
     Pair<String, String> path = split(normalizedName);
     EntryInfo parent = directoryEntry(map, logger, path.first);
     map.put(normalizedName, entryFun.apply(parent, path.second));
+  }
+
+  @NotNull
+  protected String normalizeName(@NotNull String entryName) {
+    return StringUtil.trimTrailing(StringUtil.trimLeading(FileUtil.normalize(entryName), '/'), '/');
   }
 
   private EntryInfo directoryEntry(Map<String, EntryInfo> map, @Nullable Logger logger, String normalizedName) {

@@ -255,6 +255,7 @@ public final class IdempotenceChecker {
     if (existing instanceof Map && fresh instanceof Map && isOrderedMap(existing) == isOrderedMap(fresh)) return true;
     if (existing instanceof Set && fresh instanceof Set && isOrderedSet(existing) == isOrderedSet(fresh)) return true;
     if (existing instanceof List && fresh instanceof List) return true;
+    if (existing instanceof PsiNamedElement && fresh instanceof PsiNamedElement) return true; // ClsClassImpl might be equal to PsiClass
     return ContainerUtil.intersects(allSupersWithEquals.get(existing.getClass()), allSupersWithEquals.get(fresh.getClass()));
   }
 

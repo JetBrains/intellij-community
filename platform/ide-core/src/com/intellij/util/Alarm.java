@@ -50,7 +50,6 @@ public class Alarm implements Disposable {
   private final Object LOCK = new Object();
   private final ThreadToUse myThreadToUse;
 
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private JComponent myActivationComponent; // accessed in EDT only
 
   @Override

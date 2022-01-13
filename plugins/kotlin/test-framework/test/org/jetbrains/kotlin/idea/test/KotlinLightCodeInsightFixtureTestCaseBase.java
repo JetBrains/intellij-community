@@ -11,12 +11,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.TempFiles;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.intellij.util.ThrowableRunnable;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -58,7 +56,7 @@ public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJav
     @NotNull
     public VirtualFile createTempFile(
             @NonNls @NotNull String ext,
-            @Nullable byte[] bom,
+            byte @Nullable[] bom,
             @NonNls @NotNull String content,
             @NotNull Charset charset
     ) throws IOException {
@@ -71,7 +69,7 @@ public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJav
         return file;
     }
 
-    public static void setContentOnDisk(@NotNull File file, @Nullable byte[] bom, @NotNull String content, @NotNull Charset charset)
+    public static void setContentOnDisk(@NotNull File file, byte @Nullable[] bom, @NotNull String content, @NotNull Charset charset)
             throws IOException {
         FileOutputStream stream = new FileOutputStream(file);
         if (bom != null) {

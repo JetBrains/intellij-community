@@ -1577,7 +1577,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       "getTooltipText", "getToolTipText", "cursor",
       "isShowing", "isEnabled", "isVisible", "isDoubleBuffered",
       "isFocusable", "isFocusCycleRoot", "isFocusOwner",
-      "isValid", "isDisplayable", "isLightweight", "getClientProperties", "getMouseListeners"
+      "isValid", "isDisplayable", "isLightweight", "getClientProperties", "getMouseListeners", "getFocusListeners"
     );
 
     final List<String> CHECKERS = Arrays.asList(

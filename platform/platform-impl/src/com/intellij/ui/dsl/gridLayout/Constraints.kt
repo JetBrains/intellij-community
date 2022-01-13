@@ -84,7 +84,7 @@ data class Constraints(
    * 1. Layout manager aligns components by their visual bounds
    * 2. Cell size with gaps is calculated as component.bounds + [gaps] - [visualPaddings]
    */
-  val visualPaddings: Gaps = Gaps.EMPTY
+  var visualPaddings: Gaps = Gaps.EMPTY
 ) {
 
   init {

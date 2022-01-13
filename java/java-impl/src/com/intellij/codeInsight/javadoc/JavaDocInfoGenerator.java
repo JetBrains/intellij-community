@@ -2,23 +2,23 @@
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.CommonBundle;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightNamesUtil;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
-import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.java.JavaBundle;
 import com.intellij.javadoc.JavadocGeneratorRunProfile;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -61,8 +61,6 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import static com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil.*;
 
 
 public class JavaDocInfoGenerator {
@@ -111,17 +109,28 @@ public class JavaDocInfoGenerator {
 
   private final @NotNull Project myProject;
   private final @Nullable PsiElement myElement;
-  private final boolean myIsRendered;
+  private final @NotNull JavaDocHighlightingManager myHighlightingManager;
   private final @Nullable JavaSdkVersion mySdkVersion;
 
+  private final boolean myIsRendered;
+  private final boolean myDoSyntaxHighlighting;
+
   public JavaDocInfoGenerator(@NotNull Project project, @Nullable PsiElement element) {
-    this(project, element, false);
+    this(project, element, new JavaDocHighlightingManagerImpl(), false, true);
   }
 
-  public JavaDocInfoGenerator(@NotNull Project project, @Nullable PsiElement element, boolean isGenerationForRenderedDoc) {
+  public JavaDocInfoGenerator(
+    @NotNull Project project,
+    @Nullable PsiElement element,
+    @NotNull JavaDocHighlightingManager highlightingManager,
+    boolean isGenerationForRenderedDoc,
+    boolean doSyntaxHighlighting
+  ) {
     myProject = project;
     myElement = element;
     myIsRendered = isGenerationForRenderedDoc;
+    myDoSyntaxHighlighting = doSyntaxHighlighting;
+    myHighlightingManager = highlightingManager;
 
     Sdk jdk = JavadocGeneratorRunProfile.getSdk(myProject);
     mySdkVersion = jdk == null ? null : JavaSdk.getInstance().getVersion(jdk);
@@ -130,7 +139,56 @@ public class JavaDocInfoGenerator {
   public boolean isRendered() {
     return myIsRendered;
   }
-  
+
+  public boolean doSyntaxHighlighting() {
+    return myDoSyntaxHighlighting;
+  }
+
+  public @NotNull JavaDocHighlightingManager getHighlightingManager() {
+    return myHighlightingManager;
+  }
+
+  protected @NotNull StringBuilder appendStyledSpan(
+    @NotNull StringBuilder buffer,
+    @NotNull TextAttributes attributes,
+    @Nullable String value
+  ) {
+    if (doSyntaxHighlighting()) {
+      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributes, value);
+    }
+    else {
+      buffer.append(value);
+    }
+    return buffer;
+  }
+
+  protected @NotNull StringBuilder appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+    @NotNull StringBuilder buffer,
+    @NotNull Project project,
+    @NotNull Language language,
+    @Nullable String codeSnippet
+  ) {
+    if (doSyntaxHighlighting()) {
+      HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(buffer, project, language, codeSnippet);
+    }
+    else {
+      buffer.append(codeSnippet);
+    }
+    return buffer;
+  }
+
+  public @NotNull String getStyledSpan(@NotNull TextAttributes attributes, @Nullable String value) {
+    return appendStyledSpan(new StringBuilder(), attributes, value).toString();
+  }
+
+  public @NotNull String getHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+    @NotNull Project project,
+    @NotNull Language language,
+    @Nullable String codeSnippet
+  ) {
+    return appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(new StringBuilder(), project, language, codeSnippet).toString();
+  }
+
   private static InheritDocProvider<PsiElement[]> mapProvider(InheritDocProvider<PsiDocTag> i, boolean dropFirst) {
     return new InheritDocProvider<>() {
       @Override
@@ -490,16 +548,6 @@ public class JavaDocInfoGenerator {
     if (!isRendered()) {
       buffer.append(DocumentationMarkup.DEFINITION_START);
       if (generateClassSignature(buffer, aClass, SignaturePlace.Javadoc)) return;
-
-      PsiFile file = aClass.getContainingFile();
-      if (file instanceof PsiJavaFile) {
-        String packageName = ((PsiJavaFile)file).getPackageName();
-        if (!packageName.isEmpty()) {
-          appendDefinedInClause(buffer);
-          PsiPackage aPackage = JavaPsiFacade.getInstance(file.getProject()).findPackage(packageName);
-          appendMaybeUnresolvedLink(buffer, aPackage, packageName, file.getProject(), false);
-        }
-      }
       buffer.append(DocumentationMarkup.DEFINITION_END);
     }
 
@@ -517,7 +565,7 @@ public class JavaDocInfoGenerator {
     }
 
     if (!isRendered()) {
-      new NonCodeAnnotationGenerator(aClass, buffer).explainAnnotations();
+      new NonCodeAnnotationGenerator(aClass, buffer).explainAnnotations(isRendered(), doSyntaxHighlighting());
     }
     buffer.append(DocumentationMarkup.SECTIONS_END);
   }
@@ -536,14 +584,6 @@ public class JavaDocInfoGenerator {
     generateParametersSection(buffer, CodeInsightBundle.message("javadoc.parameters"), collectedTags);
   }
 
-  public static TextAttributesKey getClassTextAttributes(PsiClass aClass) {
-    if (aClass.isInterface()) return JavaHighlightingColors.INTERFACE_NAME_ATTRIBUTES;
-    if (aClass.isEnum()) return JavaHighlightingColors.ENUM_NAME_ATTRIBUTES;
-    if (aClass instanceof PsiAnonymousClass) return JavaHighlightingColors.ANONYMOUS_CLASS_NAME_ATTRIBUTES;
-    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) return JavaHighlightingColors.ABSTRACT_CLASS_NAME_ATTRIBUTES;
-    return JavaHighlightingColors.CLASS_NAME_ATTRIBUTES;
-  }
-
   private boolean generateClassSignature(StringBuilder buffer, PsiClass aClass, SignaturePlace place) {
     boolean generateLink = place == SignaturePlace.Javadoc;
     String classKeyword =
@@ -551,9 +591,9 @@ public class JavaDocInfoGenerator {
       aClass.isEnum() ? PsiKeyword.ENUM :
       aClass.isRecord() ? PsiKeyword.RECORD : PsiKeyword.CLASS;
 
-    generateAnnotations(buffer, aClass, place, true, false);
+    generateAnnotations(buffer, aClass, place, true, false, true);
     generateModifiers(buffer, aClass, false);
-    appendStyledSpan(buffer, JavaHighlightingColors.KEYWORD, classKeyword);
+    appendStyledSpan(buffer, getHighlightingManager().getKeywordAttributes(), classKeyword);
     buffer.append(' ');
     String refText = JavaDocUtil.getReferenceText(aClass.getProject(), aClass);
     if (refText == null) {
@@ -561,28 +601,29 @@ public class JavaDocInfoGenerator {
       return true;
     }
     String className = JavaDocUtil.getLabelText(aClass.getProject(), aClass.getManager(), refText, aClass);
-    appendStyledSpan(buffer, getClassTextAttributes(aClass), className);
+    appendStyledSpan(buffer, getHighlightingManager().getClassDeclarationAttributes(aClass), className);
 
     buffer.append(generateTypeParameters(aClass, false));
 
     buffer.append('\n');
 
     PsiClassType[] refs = aClass.getExtendsListTypes();
-    if (refs.length > 0 || !aClass.isInterface() && !CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
-      appendStyledSpan(buffer, JavaHighlightingColors.KEYWORD, "extends ");
-      if (refs.length == 0) {
-        generateLink(buffer, CommonClassNames.JAVA_LANG_OBJECT, null, aClass, false);
-      }
-      else {
-        generateRefList(buffer, aClass, generateLink, refs);
-      }
+    if (aClass.isEnum()) {
+      refs = Arrays.stream(refs)
+        .filter(it -> {
+          PsiClass resolved = it.resolve();
+          return resolved == null || !"java.lang.Enum".equals(resolved.getQualifiedName());
+        })
+        .toArray(PsiClassType[]::new);
+    }
+    if (refs.length > 0) {
+      generateRefList(buffer, aClass, generateLink, refs, "extends");
       buffer.append('\n');
     }
 
     refs = aClass.getImplementsListTypes();
     if (refs.length > 0) {
-      appendStyledSpan(buffer, JavaHighlightingColors.KEYWORD, "implements ");
-      generateRefList(buffer, aClass, generateLink, refs);
+      generateRefList(buffer, aClass, generateLink, refs, "implements");
       buffer.append('\n');
     }
     if (buffer.charAt(buffer.length() - 1) == '\n') {
@@ -591,12 +632,20 @@ public class JavaDocInfoGenerator {
     return false;
   }
 
-  private void generateRefList(StringBuilder buffer, PsiClass aClass, boolean generateLink, PsiClassType[] refs) {
+  private void generateRefList(StringBuilder buffer, PsiClass aClass, boolean generateLink, PsiClassType[] refs, String keyword) {
+    appendStyledSpan(buffer, getHighlightingManager().getKeywordAttributes(), keyword);
+    buffer.append(" ");
     for (int i = 0; i < refs.length; i++) {
       generateType(buffer, refs[i], aClass, generateLink);
       if (i < refs.length - 1) {
-        appendStyledSpan(buffer, JavaHighlightingColors.COMMA, ",");
-        buffer.append(NBSP);
+        appendStyledSpan(buffer, getHighlightingManager().getCommaAttributes(), ",");
+        if (refs.length <= 3) {
+          buffer.append(NBSP);
+        }
+        else {
+          buffer.append('\n');
+          buffer.append(NBSP.repeat(keyword.length() + 1));
+        }
       }
     }
   }
@@ -623,22 +672,22 @@ public class JavaDocInfoGenerator {
   }
 
   @NotNull
-  private static String generateOneParameterPresentableName(PsiNamedElement parameter) {
+  private String generateOneParameterPresentableName(PsiNamedElement parameter) {
     StringBuilder paramName = new StringBuilder();
     appendStyledSpan(
       paramName,
-      JavaHighlightingColors.PARAMETER_ATTRIBUTES,
+      getHighlightingManager().getParameterAttributes(),
       Objects.requireNonNullElse(parameter.getName(), CommonBundle.getErrorTitle()));
     return paramName.toString();
   }
 
   @NotNull
-  private static String generateOneTypeParameterPresentableName(PsiTypeParameter typeParameter) {
+  private String generateOneTypeParameterPresentableName(PsiTypeParameter typeParameter) {
     StringBuilder paramName = new StringBuilder();
     paramName.append(LT);
     appendStyledSpan(
       paramName,
-      JavaHighlightingColors.TYPE_PARAMETER_NAME_ATTRIBUTES,
+      getHighlightingManager().getTypeParameterNameAttributes(),
       Objects.requireNonNullElse(typeParameter.getName(), CommonBundle.getErrorTitle()));
     paramName.append(GT);
     return paramName.toString();
@@ -702,7 +751,6 @@ public class JavaDocInfoGenerator {
     if (!isRendered()) {
       buffer.append(DocumentationMarkup.DEFINITION_START);
       generateFieldSignature(buffer, field, SignaturePlace.Javadoc);
-      generateLinkToParentIfNeeded(buffer, field);
       enumConstantOrdinal(buffer, field, field.getContainingClass(), "\n");
       buffer.append(DocumentationMarkup.DEFINITION_END);
     }
@@ -720,37 +768,21 @@ public class JavaDocInfoGenerator {
 
     if (!isRendered()) {
       JavaDocColorUtil.appendColorPreview(field, buffer);
-      new NonCodeAnnotationGenerator(field, buffer).explainAnnotations();
+      new NonCodeAnnotationGenerator(field, buffer).explainAnnotations(isRendered(), doSyntaxHighlighting());
     }
 
     buffer.append(DocumentationMarkup.SECTIONS_END);
   }
 
-  public static TextAttributesKey getFieldTextAttributes(PsiField field) {
-    boolean isFinal = field.hasModifierProperty(PsiModifier.FINAL);
-    boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
-    boolean isImported = HighlightNamesUtil.isStaticallyImported(field);
-    if (isImported) {
-      return isFinal ? JavaHighlightingColors.STATIC_FINAL_FIELD_IMPORTED_ATTRIBUTES
-                     : JavaHighlightingColors.STATIC_FIELD_IMPORTED_ATTRIBUTES;
-    }
-    else if (isStatic) {
-      return isFinal ? JavaHighlightingColors.STATIC_FINAL_FIELD_ATTRIBUTES
-                     : JavaHighlightingColors.STATIC_FIELD_ATTRIBUTES;
-    }
-    else {
-      return isFinal ? JavaHighlightingColors.INSTANCE_FINAL_FIELD_ATTRIBUTES
-                     : JavaHighlightingColors.INSTANCE_FIELD_ATTRIBUTES;
-    }
-  }
-
   private void generateFieldSignature(StringBuilder buffer, PsiField field, SignaturePlace place) {
-    generateAnnotations(buffer, field, place, true, false);
-    generateModifiers(buffer, field, false);
-    generateType(buffer, field.getType(), field, place == SignaturePlace.Javadoc);
-    buffer.append(" ");
-    appendStyledSpan(buffer, getFieldTextAttributes(field), field.getName());
-    appendInitializer(buffer, field);
+    StringBuilder signatureBuffer = new StringBuilder();
+    generateAnnotations(signatureBuffer, field, place, true, false, true);
+    generateModifiers(signatureBuffer, field, false);
+    generateType(signatureBuffer, field.getType(), field, place == SignaturePlace.Javadoc);
+    signatureBuffer.append(" ");
+    appendStyledSpan(signatureBuffer, getHighlightingManager().getFieldDeclarationAttributes(field), field.getName());
+    buffer.append(signatureBuffer);
+    appendInitializer(buffer, field, StringUtil.removeHtmlTags(signatureBuffer.toString()).length());
   }
 
   public static void enumConstantOrdinal(@Nls StringBuilder buffer, PsiField field, PsiClass parentClass, String newLine) {
@@ -760,6 +792,7 @@ public class JavaDocInfoGenerator {
       if (idx >= 0) {
         buffer.append(newLine);
         buffer.append(DocumentationMarkup.GRAYED_START);
+        buffer.append("// ");
         buffer.append(JavaBundle.message("enum.constant.ordinal"));
         buffer.append(idx);
         buffer.append(DocumentationMarkup.GRAYED_END);
@@ -810,9 +843,9 @@ public class JavaDocInfoGenerator {
 
     if (!isRendered()) {
       buffer.append(DocumentationMarkup.DEFINITION_START);
-      generateAnnotations(buffer, module, SignaturePlace.Javadoc, true, false);
-      appendStyledSpan(buffer, JavaHighlightingColors.KEYWORD, "module ");
-      appendStyledSpan(buffer, JavaHighlightingColors.CLASS_NAME_ATTRIBUTES, module.getName());
+      generateAnnotations(buffer, module, SignaturePlace.Javadoc, true, false, true);
+      appendStyledSpan(buffer, getHighlightingManager().getKeywordAttributes(), "module ");
+      appendStyledSpan(buffer, getHighlightingManager().getClassNameAttributes(), module.getName());
       buffer.append(DocumentationMarkup.DEFINITION_END);
     }
 
@@ -923,8 +956,8 @@ public class JavaDocInfoGenerator {
     return null;
   }
 
-  public static void appendExpressionValue(StringBuilder buffer, PsiExpression initializer) {
-    appendStyledSpan(buffer, JavaHighlightingColors.OPERATION_SIGN, " = ");
+  public void appendExpressionValue(StringBuilder buffer, PsiExpression initializer) {
+    appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), " = ");
     String text = initializer.getText().trim();
     int index = newLineIndex(text);
     boolean trunc = index < text.length();
@@ -937,26 +970,36 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  private void appendInitializer(StringBuilder buffer, PsiVariable variable) {
+  private void appendInitializer(StringBuilder buffer, PsiVariable variable, int variableSignatureLength) {
     PsiExpression initializer = variable.getInitializer();
-    if (initializer != null) {
-      appendStyledSpan(buffer, JavaHighlightingColors.OPERATION_SIGN, " = ");
-      String text = initializer.getText().trim();
-      int index = newLineIndex(text);
-      if (index < text.length()) {
-        text = text.substring(0, index);
-        buffer.append(StringUtil.escapeXmlEntities(text));
-        buffer.append("...");
-      }
-      else {
-        initializer.accept(new MyVisitor(buffer));
-      }
-      PsiExpression constantInitializer = calcInitializerExpression(variable);
-      if (constantInitializer != null) {
-        buffer.append(DocumentationMarkup.GRAYED_START);
-        appendExpressionValue(buffer, constantInitializer);
-        buffer.append(DocumentationMarkup.GRAYED_END);
-      }
+    if (initializer == null) return;
+
+    String initializerText = initializer.getText().trim();
+    if (variableSignatureLength + initializerText.length() < 80) {
+      // initializer should be printed on the same line
+      buffer.append(" ");
+    }
+    else {
+      // initializer should be printed on the new line
+      buffer.append("\n");
+      buffer.append(NBSP.repeat(CodeStyle.getIndentSize(variable.getContainingFile())));
+    }
+    appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), "= ");
+
+    int index = newLineIndex(initializerText);
+    if (index < initializerText.length()) {
+      initializerText = initializerText.substring(0, index);
+      buffer.append(StringUtil.escapeXmlEntities(initializerText));
+      buffer.append("...");
+    }
+    else {
+      initializer.accept(new MyVisitor(buffer));
+    }
+    PsiExpression constantInitializer = calcInitializerExpression(variable);
+    if (constantInitializer != null) {
+      buffer.append(DocumentationMarkup.GRAYED_START);
+      appendExpressionValue(buffer, constantInitializer);
+      buffer.append(DocumentationMarkup.GRAYED_END);
     }
   }
 
@@ -968,16 +1011,22 @@ public class JavaDocInfoGenerator {
     return Math.min(index1, index2);
   }
 
-  public static int generateModifiers(StringBuilder buffer, PsiModifierListOwner owner, boolean nbsp) {
+  public int generateModifiers(StringBuilder buffer, PsiModifierListOwner owner, boolean nbsp) {
     String modifiers = PsiFormatUtil.formatModifiers(owner, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
     if (!modifiers.isEmpty()) {
-      appendStyledSpan(buffer, JavaHighlightingColors.KEYWORD, modifiers);
+      appendStyledSpan(buffer, getHighlightingManager().getKeywordAttributes(), modifiers);
       buffer.append(nbsp ? NBSP : ' ');
     }
     return modifiers.length();
   }
 
-  private static int generateTypeAnnotations(StringBuilder buffer, PsiAnnotationOwner owner, PsiElement context, boolean leadingSpace) {
+  private int generateTypeAnnotations(
+    StringBuilder buffer,
+    PsiAnnotationOwner owner,
+    PsiElement context,
+    boolean generateLink,
+    boolean leadingSpace
+  ) {
     int len = 0;
     List<AnnotationDocGenerator> generators = AnnotationDocGenerator.getAnnotationsToShow(owner, context);
     if (leadingSpace && !generators.isEmpty()) {
@@ -986,7 +1035,7 @@ public class JavaDocInfoGenerator {
     }
     for (AnnotationDocGenerator anno : generators) {
       StringBuilder buf = new StringBuilder();
-      anno.generateAnnotation(buf, AnnotationFormat.JavaDocShort);
+      anno.generateAnnotation(buf, AnnotationFormat.JavaDocShort, generateLink, isRendered(), doSyntaxHighlighting());
       len += StringUtil.unescapeXmlEntities(StringUtil.stripHtml(buf.toString(), true)).length() + 1;
       buffer.append(buf);
       buffer.append(NBSP);
@@ -994,15 +1043,18 @@ public class JavaDocInfoGenerator {
     return len;
   }
 
-  private static void generateAnnotations(StringBuilder buffer,
-                                          PsiModifierListOwner owner,
-                                          SignaturePlace place,
-                                          boolean splitAnnotations,
-                                          boolean ignoreNonSourceAnnotations) {
+  private void generateAnnotations(
+    StringBuilder buffer,
+    PsiModifierListOwner owner,
+    SignaturePlace place,
+    boolean splitAnnotations,
+    boolean ignoreNonSourceAnnotations,
+    boolean generateLink
+  ) {
     AnnotationFormat format = place == SignaturePlace.Javadoc ? AnnotationFormat.JavaDocShort : AnnotationFormat.ToolTip;
     for (AnnotationDocGenerator anno : AnnotationDocGenerator.getAnnotationsToShow(owner)) {
       if (ignoreNonSourceAnnotations && (anno.isInferred() || anno.isExternal())) continue;
-      anno.generateAnnotation(buffer, format);
+      anno.generateAnnotation(buffer, format, generateLink, isRendered(), doSyntaxHighlighting());
 
       buffer.append(NBSP);
       if (splitAnnotations) buffer.append('\n');
@@ -1020,14 +1072,20 @@ public class JavaDocInfoGenerator {
 
   private void generateVariableDefinition(StringBuilder buffer, PsiVariable variable, boolean annotations) {
     buffer.append(DocumentationMarkup.DEFINITION_START);
-    generateModifiers(buffer, variable, false);
+
+    StringBuilder signatureBuffer = new StringBuilder();
+    generateModifiers(signatureBuffer, variable, false);
     if (annotations) {
-      generateAnnotations(buffer, variable, SignaturePlace.Javadoc, true, false);
+      generateAnnotations(signatureBuffer, variable, SignaturePlace.Javadoc, true, false, true);
     }
-    generateType(buffer, variable.getType(), variable);
-    buffer.append(" ");
-    appendStyledSpan(buffer, JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES, variable.getName());
-    appendInitializer(buffer, variable);
+    generateType(signatureBuffer, variable.getType(), variable);
+    signatureBuffer.append(" ");
+    appendStyledSpan(signatureBuffer, getHighlightingManager().getLocalVariableAttributes(), variable.getName());
+
+    buffer.append(signatureBuffer);
+
+    appendInitializer(buffer, variable, StringUtil.removeHtmlTags(signatureBuffer.toString()).length());
+
     buffer.append(DocumentationMarkup.DEFINITION_END);
   }
 
@@ -1051,7 +1109,7 @@ public class JavaDocInfoGenerator {
     }
 
     buffer.append(DocumentationMarkup.SECTIONS_START);
-    new NonCodeAnnotationGenerator(parameter, buffer).explainAnnotations();
+    new NonCodeAnnotationGenerator(parameter, buffer).explainAnnotations(isRendered(), doSyntaxHighlighting());
     buffer.append(DocumentationMarkup.SECTIONS_END);
   }
 
@@ -1091,8 +1149,6 @@ public class JavaDocInfoGenerator {
     if (!isRendered()) {
       buffer.append(DocumentationMarkup.DEFINITION_START);
       generateMethodSignature(buffer, method, SignaturePlace.Javadoc);
-
-      generateLinkToParentIfNeeded(buffer, method);
       buffer.append(DocumentationMarkup.DEFINITION_END);
     }
 
@@ -1129,7 +1185,8 @@ public class JavaDocInfoGenerator {
             startHeaderSection(buffer, JavaBundle.message(aClass.isInterface() ? "javadoc.description.copied.from.interface"
                                                                                : "javadoc.description.copied.from.class"))
               .append("<p>");
-            generateLink(buffer, aClass, getStyledSpan(getClassTextAttributes(aClass), JavaDocUtil.getShortestClassName(aClass, method)),
+            generateLink(buffer, aClass, getStyledSpan(getHighlightingManager().getClassDeclarationAttributes(aClass),
+                                                       JavaDocUtil.getShortestClassName(aClass, method)),
                          false);
             buffer.append(BR_TAG);
             generateValue(buffer, elements, pair.second);
@@ -1147,7 +1204,8 @@ public class JavaDocInfoGenerator {
             if (fieldDocComment != null && !isEmptyDescription(fieldDocComment)) {
               startHeaderSection(buffer, JavaBundle.message("javadoc.description.copied.from.field"))
                 .append("<p>");
-              generateLink(buffer, field, getStyledSpan(getFieldTextAttributes(field), field.getName()), false);
+              generateLink(buffer, field, getStyledSpan(getHighlightingManager().getFieldDeclarationAttributes(field), field.getName()),
+                           false);
               buffer.append(BR_TAG);
               generateValue(buffer, fieldDocComment.getDescriptionElements(), ourEmptyElementsProvider);
               buffer.append(DocumentationMarkup.SECTION_END);
@@ -1181,7 +1239,7 @@ public class JavaDocInfoGenerator {
     }
 
     if (!isRendered()) {
-      new NonCodeAnnotationGenerator(method, buffer).explainAnnotations();
+      new NonCodeAnnotationGenerator(method, buffer).explainAnnotations(isRendered(), doSyntaxHighlighting());
     }
 
     buffer.append(DocumentationMarkup.SECTIONS_END);
@@ -1193,83 +1251,64 @@ public class JavaDocInfoGenerator {
       .append(DocumentationMarkup.SECTION_SEPARATOR);
   }
 
-  private void generateLinkToParentIfNeeded(StringBuilder buffer, PsiMember member) {
-    PsiClass parentClass = member.getContainingClass();
-    if (parentClass != null && !PsiUtil.isArrayClass(parentClass)) {
-      String qName = parentClass.getQualifiedName();
-      if (qName != null) {
-        appendDefinedInClause(buffer);
-        generateLink(buffer, qName, qName + generateTypeParameters(parentClass, true), member, false);
-      }
-    }
-  }
-
-  private static void appendDefinedInClause(StringBuilder buffer) {
-    buffer.append(BR_TAG);
-    buffer.append(DocumentationMarkup.GRAYED_START);
-    buffer.append(JavaBundle.message("javadoc.generate.defined.in"));
-    buffer.append(" ");
-    buffer.append(DocumentationMarkup.GRAYED_END);
-  }
-
-  public static @NotNull TextAttributesKey getMethodDeclarationTextAttributes(PsiMethod method) {
-    return method.isConstructor()
-           ? JavaHighlightingColors.CONSTRUCTOR_DECLARATION_ATTRIBUTES
-           : JavaHighlightingColors.METHOD_DECLARATION_ATTRIBUTES;
-  }
-
   private void generateMethodSignature(StringBuilder buffer, PsiMethod method, SignaturePlace place) {
     boolean isTooltip = place == SignaturePlace.ToolTip;
     boolean generateLink = place == SignaturePlace.Javadoc;
 
-    generateAnnotations(buffer, method, place, true, false);
+    generateAnnotations(buffer, method, place, true, false, true);
 
-    int modLength = isTooltip ? 0 : generateModifiers(buffer, method, true);
-    int indent = modLength == 0 ? 0 : modLength + 1;
+    if (!isTooltip) {
+      generateModifiers(buffer, method, true);
+    }
 
     String typeParamsString = generateTypeParameters(method, isTooltip);
-    indent += StringUtil.unescapeXmlEntities(StringUtil.stripHtml(typeParamsString, true)).length();
     if (!typeParamsString.isEmpty()) {
       buffer.append(typeParamsString);
       buffer.append(NBSP);
-      indent++;
     }
 
     if (method.getReturnType() != null) {
-      indent += generateType(buffer, method.getReturnType(), method, generateLink, isTooltip);
+      generateType(buffer, method.getReturnType(), method, generateLink, isTooltip);
       buffer.append(NBSP);
-      indent++;
     }
     String name = method.getName();
-    appendStyledSpan(buffer, getMethodDeclarationTextAttributes(method), name);
-    indent += name.length();
+    appendStyledSpan(buffer, getHighlightingManager().getMethodDeclarationAttributes(method), name);
 
-    appendStyledSpan(buffer, JavaHighlightingColors.PARENTHESES, "(");
+    appendStyledSpan(buffer, getHighlightingManager().getParenthesesAttributes(), "(");
     PsiParameter[] parameters = method.getParameterList().getParameters();
+    PsiFile file = method.getContainingFile();
+    int indent = isTooltip ? 0 : file != null ? CodeStyle.getIndentSize(file) : 4;
+    if (parameters.length > 0 && !isTooltip) {
+      buffer.append(BR_TAG);
+    }
     for (int i = 0; i < parameters.length; i++) {
+      buffer.append(StringUtil.repeatSymbol(' ', indent));
       PsiParameter parm = parameters[i];
-      generateAnnotations(buffer, parm, place, false, false);
+      generateAnnotations(buffer, parm, place, false, false, true);
       generateType(buffer, parm.getType(), method, generateLink, isTooltip);
       if (!isTooltip) {
         buffer.append(NBSP);
-        appendStyledSpan(buffer, JavaHighlightingColors.PARAMETER_ATTRIBUTES, parm.getName());
+        appendStyledSpan(buffer, getHighlightingManager().getParameterAttributes(), parm.getName());
       }
       if (i < parameters.length - 1) {
-        appendStyledSpan(buffer, JavaHighlightingColors.COMMA, ",\n ");
-        buffer.append(StringUtil.repeatSymbol(' ', indent));
+        appendStyledSpan(buffer, getHighlightingManager().getCommaAttributes(), ",");
+        buffer.append("\n");
       }
     }
-    appendStyledSpan(buffer, JavaHighlightingColors.PARENTHESES, ")");
+    if (parameters.length > 0 && !isTooltip) {
+      buffer.append(BR_TAG);
+    }
+    appendStyledSpan(buffer, getHighlightingManager().getParenthesesAttributes(), ")");
 
     PsiClassType[] refs = method.getThrowsList().getReferencedTypes();
     if (refs.length > 0) {
       buffer.append('\n');
-      appendStyledSpan(buffer, JavaHighlightingColors.KEYWORD, "throws");
+      appendStyledSpan(buffer, getHighlightingManager().getKeywordAttributes(), "throws");
       buffer.append(NBSP);
       for (int i = 0; i < refs.length; i++) {
         generateLink(buffer, isTooltip ? refs[i].getPresentableText() : refs[i].getCanonicalText(), null, method, false);
         if (i < refs.length - 1) {
-          appendStyledSpan(buffer, JavaHighlightingColors.COMMA, ",");
+          appendStyledSpan(buffer, getHighlightingManager().getCommaAttributes(), ",");
           buffer.append(NBSP);
         }
       }
@@ -1741,8 +1780,12 @@ public class JavaDocInfoGenerator {
     String text = elements[0].getText();
     StringBuilder buffer = new StringBuilder();
     buffer.append(tag.presentableName);
-    buffer.append(" &ndash; ");
-    generateValue(buffer, tag, elements, text);
+    StringBuilder descriptionBuffer = new StringBuilder();
+    generateValue(descriptionBuffer, tag, elements, text);
+    if (!StringUtil.isEmptyOrSpaces(descriptionBuffer)) {
+      buffer.append(" &ndash; ");
+      buffer.append(descriptionBuffer);
+    }
     return buffer.toString();
   }
 
@@ -1814,7 +1857,7 @@ public class JavaDocInfoGenerator {
 
     LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>> collectedTags = new LinkedList<>();
     List<PsiClassType> declaredThrows = isRendered() ? Collections.emptyList()
-                                                 : new ArrayList<>(Arrays.asList(method.getThrowsList().getReferencedTypes()));
+                                                     : new ArrayList<>(Arrays.asList(method.getThrowsList().getReferencedTypes()));
 
     for (int i = thrownTags.length - 1; i > -1; i--) {
       PsiDocTagValue valueElement = thrownTags[i].getValueElement();
@@ -1830,7 +1873,8 @@ public class JavaDocInfoGenerator {
         }
 
         Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> tag = isRendered() ? null
-                                                                      : findInheritDocTag(method, exceptionLocator(valueElement.getText()));
+                                                                          : findInheritDocTag(method,
+                                                                                              exceptionLocator(valueElement.getText()));
         collectedTags.addFirst(new Pair<>(thrownTags[i], new InheritDocProvider<>() {
           @Override
           public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
@@ -1931,9 +1975,11 @@ public class JavaDocInfoGenerator {
 
       StringBuilder methodBuffer = new StringBuilder();
       generateLink(
-        methodBuffer, superMethod, getStyledSpan(JavaHighlightingColors.METHOD_DECLARATION_ATTRIBUTES, superMethod.getName()), false);
+        methodBuffer, superMethod,
+        getStyledSpan(getHighlightingManager().getMethodDeclarationAttributes(superMethod), superMethod.getName()), false);
       StringBuilder classBuffer = new StringBuilder();
-      generateLink(classBuffer, superClass, getStyledSpan(getClassTextAttributes(superClass), superClass.getName()), false);
+      generateLink(classBuffer, superClass,
+                   getStyledSpan(getHighlightingManager().getClassDeclarationAttributes(superClass), superClass.getName()), false);
       if (superClass.isInterface()) {
         buffer.append(JavaBundle.message("javadoc.method.in.interface", methodBuffer.toString(), classBuffer.toString()));
       }
@@ -1980,7 +2026,7 @@ public class JavaDocInfoGenerator {
     return StringUtil.stripHtml(label, true).length();
   }
 
-  private void appendMaybeUnresolvedLink(
+  public void appendMaybeUnresolvedLink(
     StringBuilder buffer,
     @Nullable PsiElement target,
     String label,
@@ -1998,27 +2044,29 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  private static @NotNull String tryHighlightLinkLabel(@NotNull PsiElement element, @NotNull String label) {
+  private @NotNull String tryHighlightLinkLabel(@NotNull PsiElement element, @NotNull String label) {
     if (element instanceof PsiClass) {
-      return getStyledSpan(getClassTextAttributes((PsiClass)element), label);
+      return getStyledSpan(getHighlightingManager().getClassDeclarationAttributes((PsiClass)element), label);
     }
     if (element instanceof PsiPackage) {
-      return getStyledSpan(JavaHighlightingColors.CLASS_NAME_ATTRIBUTES, label);
+      return getStyledSpan(getHighlightingManager().getClassNameAttributes(), label);
     }
     else if (element instanceof PsiMethod) {
-      return tryHighlightLinkOnClassMember((PsiMember)element, getMethodDeclarationTextAttributes((PsiMethod)element), label);
+      return tryHighlightLinkOnClassMember((PsiMember)element, getHighlightingManager().getMethodDeclarationAttributes((PsiMethod)element),
+                                           label);
     }
     else if (element instanceof PsiField) {
-      return tryHighlightLinkOnClassMember((PsiField)element, getFieldTextAttributes((PsiField)element), label);
+      return tryHighlightLinkOnClassMember((PsiField)element, getHighlightingManager().getFieldDeclarationAttributes((PsiField)element),
+                                           label);
     }
     else {
       return getHighlightedByLexerAndEncodedAsHtmlCodeSnippet(element.getProject(), element.getLanguage(), label);
     }
   }
 
-  private static @NotNull String tryHighlightLinkOnClassMember(
+  private @NotNull String tryHighlightLinkOnClassMember(
     @NotNull PsiMember member,
-    @NotNull TextAttributesKey attributesKey,
+    @NotNull TextAttributes labelAttributes,
     @NotNull String label
   ) {
     StringBuilder buffer = new StringBuilder();
@@ -2027,13 +2075,14 @@ public class JavaDocInfoGenerator {
     int classNameIndex = label.substring(0, openParenIndex).lastIndexOf(".");
     if (classNameIndex != -1) {
       PsiClass containingClass = member.getContainingClass();
-      TextAttributesKey containingClassAttributes =
-        containingClass != null ? getClassTextAttributes(containingClass) : JavaHighlightingColors.CLASS_NAME_ATTRIBUTES;
+      TextAttributes containingClassAttributes =
+        containingClass != null ? getHighlightingManager().getClassDeclarationAttributes(containingClass)
+                                : getHighlightingManager().getClassNameAttributes();
       appendStyledSpan(buffer, containingClassAttributes, label.substring(0, classNameIndex));
-      appendStyledSpan(buffer, JavaHighlightingColors.DOT, ".");
+      appendStyledSpan(buffer, getHighlightingManager().getDotAttributes(), ".");
     }
     classNameIndex++;
-    appendStyledSpan(buffer, attributesKey, label.substring(classNameIndex, openParenIndex));
+    appendStyledSpan(buffer, labelAttributes, label.substring(classNameIndex, openParenIndex));
     if (openParenIndex == label.length()) return buffer.toString();
     appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
       buffer, member.getProject(), member.getLanguage(), label.substring(openParenIndex));
@@ -2061,22 +2110,22 @@ public class JavaDocInfoGenerator {
     if (type instanceof PsiArrayType) {
       int rest = generateType(buffer, ((PsiArrayType)type).getComponentType(), context, generateLink, useShortNames);
 
-      int len = generateTypeAnnotations(buffer, type, context, true);
+      int len = generateTypeAnnotations(buffer, type, context, generateLink, true);
       if (type instanceof PsiEllipsisType) {
         buffer.append("...");
         return len + rest + 3;
       }
       else {
-        appendStyledSpan(buffer, JavaHighlightingColors.BRACKETS, "[]");
+        appendStyledSpan(buffer, getHighlightingManager().getBracketsAttributes(), "[]");
         return len + rest + 2;
       }
     }
 
-    int typAnnoLength = generateTypeAnnotations(buffer, type, context, false);
+    int typAnnoLength = generateTypeAnnotations(buffer, type, context, generateLink, false);
 
     if (type instanceof PsiPrimitiveType) {
       String text = type.getCanonicalText();
-      appendStyledSpan(buffer, JavaHighlightingColors.KEYWORD, StringUtil.escapeXmlEntities(text));
+      appendStyledSpan(buffer, getHighlightingManager().getKeywordAttributes(), StringUtil.escapeXmlEntities(text));
       return typAnnoLength + text.length();
     }
 
@@ -2086,11 +2135,11 @@ public class JavaDocInfoGenerator {
 
     if (type instanceof PsiWildcardType) {
       PsiWildcardType wt = (PsiWildcardType)type;
-      appendStyledSpan(buffer, JavaHighlightingColors.OPERATION_SIGN, "?");
+      appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), "?");
       PsiType bound = wt.getBound();
       if (bound != null) {
         String keyword = wt.isExtends() ? " extends " : " super ";
-        appendStyledSpan(buffer, JavaHighlightingColors.KEYWORD, keyword);
+        appendStyledSpan(buffer, getHighlightingManager().getKeywordAttributes(), keyword);
         return typAnnoLength + generateType(buffer, bound, context, generateLink, useShortNames) + 1 + keyword.length();
       }
       else {
@@ -2127,7 +2176,7 @@ public class JavaDocInfoGenerator {
       if (qName == null || psiClass instanceof PsiTypeParameter) {
         String typeText = useShortNames ? type.getPresentableText() : type.getCanonicalText();
         appendStyledSpan(
-          buffer, JavaHighlightingColors.TYPE_PARAMETER_NAME_ATTRIBUTES, StringUtil.escapeXmlEntities(typeText));
+          buffer, getHighlightingManager().getTypeParameterNameAttributes(), StringUtil.escapeXmlEntities(typeText));
         return typAnnoLength + typeText.length();
       }
 
@@ -2138,7 +2187,7 @@ public class JavaDocInfoGenerator {
         length += generateLink(buffer, name, null, context, false);
       }
       else {
-        appendStyledSpan(buffer, getClassTextAttributes(psiClass), name);
+        appendStyledSpan(buffer, getHighlightingManager().getClassDeclarationAttributes(psiClass), name);
         length += name.length();
       }
 
@@ -2147,7 +2196,7 @@ public class JavaDocInfoGenerator {
 
         PsiTypeParameter[] params = psiClass.getTypeParameters();
 
-        appendStyledSpan(subst, JavaHighlightingColors.OPERATION_SIGN, LT);
+        appendStyledSpan(subst, getHighlightingManager().getOperationSignAttributes(), LT);
         length += 1;
         boolean goodSubst = true;
         for (int i = 0; i < params.length; i++) {
@@ -2161,12 +2210,12 @@ public class JavaDocInfoGenerator {
           length += generateType(subst, t, context, generateLink, useShortNames);
 
           if (i < params.length - 1) {
-            appendStyledSpan(subst, JavaHighlightingColors.COMMA, ", ");
+            appendStyledSpan(subst, getHighlightingManager().getCommaAttributes(), ", ");
             length += 2;
           }
         }
 
-        appendStyledSpan(subst, JavaHighlightingColors.OPERATION_SIGN, GT);
+        appendStyledSpan(subst, getHighlightingManager().getOperationSignAttributes(), GT);
         length++;
         if (goodSubst) {
           buffer.append(subst);
@@ -2194,7 +2243,7 @@ public class JavaDocInfoGenerator {
         int length = typAnnoLength;
         for (PsiType psiType : componentTypes) {
           if (length > 0) {
-            appendStyledSpan(buffer, JavaHighlightingColors.OPERATION_SIGN, separator);
+            appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), separator);
             length += 3;
           }
           length += generateType(buffer, psiType, context, true, useShortNames);
@@ -2222,35 +2271,35 @@ public class JavaDocInfoGenerator {
       PsiTypeParameter[] parameters = owner.getTypeParameters();
 
       StringBuilder buffer = new StringBuilder();
-      appendStyledSpan(buffer, JavaHighlightingColors.OPERATION_SIGN, LT);
+      appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), LT);
 
       for (int i = 0; i < parameters.length; i++) {
         PsiTypeParameter p = parameters[i];
 
-        generateTypeAnnotations(buffer, p, p, false);
+        generateTypeAnnotations(buffer, p, p, true, false);
 
         appendStyledSpan(
           buffer,
-          JavaHighlightingColors.TYPE_PARAMETER_NAME_ATTRIBUTES,
+          getHighlightingManager().getTypeParameterNameAttributes(),
           Objects.requireNonNullElse(p.getName(), CommonBundle.getErrorTitle()));
 
         PsiClassType[] refs = JavaDocUtil.getExtendsList(p);
         if (refs.length > 0) {
-          appendStyledSpan(buffer, JavaHighlightingColors.KEYWORD, " extends ");
+          appendStyledSpan(buffer, getHighlightingManager().getKeywordAttributes(), " extends ");
           for (int j = 0; j < refs.length; j++) {
             generateType(buffer, refs[j], owner, true, useShortNames);
             if (j < refs.length - 1) {
-              appendStyledSpan(buffer, JavaHighlightingColors.OPERATION_SIGN, " & ");
+              appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), " & ");
             }
           }
         }
 
         if (i < parameters.length - 1) {
-          appendStyledSpan(buffer, JavaHighlightingColors.COMMA, ", ");
+          appendStyledSpan(buffer, getHighlightingManager().getCommaAttributes(), ", ");
         }
       }
 
-      appendStyledSpan(buffer, JavaHighlightingColors.OPERATION_SIGN, GT);
+      appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), GT);
       return buffer.toString();
     }
 
@@ -2429,7 +2478,7 @@ public class JavaDocInfoGenerator {
 
     @Override
     public void visitNewExpression(PsiNewExpression expression) {
-      appendStyledSpan(myBuffer, JavaHighlightingColors.KEYWORD, "new ");
+      appendStyledSpan(myBuffer, getHighlightingManager().getKeywordAttributes(), "new ");
       PsiType type = expression.getType();
       if (type != null) {
         generateType(myBuffer, type, expression);
@@ -2443,9 +2492,9 @@ public class JavaDocInfoGenerator {
         for (int i = 0; i < dimensions.length; i++) {
           PsiExpression dimension = dimensions[i];
           dimension.accept(this);
-          if (i + 1 != dimensions.length) appendStyledSpan(myBuffer, JavaHighlightingColors.COMMA, ", ");
+          if (i + 1 != dimensions.length) appendStyledSpan(myBuffer, getHighlightingManager().getCommaAttributes(), ", ");
         }
-        appendStyledSpan(myBuffer, JavaHighlightingColors.BRACKETS, "]");
+        appendStyledSpan(myBuffer, getHighlightingManager().getBracketsAttributes(), "]");
       }
       else {
         expression.acceptChildren(this);
@@ -2454,22 +2503,22 @@ public class JavaDocInfoGenerator {
 
     @Override
     public void visitExpressionList(PsiExpressionList list) {
-      appendStyledSpan(myBuffer, JavaHighlightingColors.PARENTHESES, "(");
+      appendStyledSpan(myBuffer, getHighlightingManager().getParenthesesAttributes(), "(");
       String separator = ", ";
       PsiExpression[] expressions = list.getExpressions();
       for (int i = 0; i < expressions.length; i++) {
         PsiExpression expression = expressions[i];
         expression.accept(this);
-        if (i + 1 != expressions.length) appendStyledSpan(myBuffer, JavaHighlightingColors.COMMA, separator);
+        if (i + 1 != expressions.length) appendStyledSpan(myBuffer, getHighlightingManager().getCommaAttributes(), separator);
       }
-      appendStyledSpan(myBuffer, JavaHighlightingColors.PARENTHESES, ")");
+      appendStyledSpan(myBuffer, getHighlightingManager().getParenthesesAttributes(), ")");
     }
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       appendStyledSpan(
         myBuffer,
-        JavaHighlightingColors.METHOD_CALL_ATTRIBUTES,
+        getHighlightingManager().getMethodCallAttributes(),
         StringUtil.escapeXmlEntities(expression.getMethodExpression().getText()));
       expression.getArgumentList().accept(this);
     }
@@ -2487,8 +2536,8 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  public static void generateTooltipAnnotations(PsiModifierListOwner owner, @Nls StringBuilder buffer) {
-    generateAnnotations(buffer, owner, SignaturePlace.ToolTip, true, true);
+  public void generateTooltipAnnotations(PsiModifierListOwner owner, @Nls StringBuilder buffer) {
+    generateAnnotations(buffer, owner, SignaturePlace.ToolTip, true, true, false);
   }
 
   private enum SignaturePlace {

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
+import com.google.common.base.Ascii;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.Set;
 
@@ -33,16 +35,16 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
 
   public KillableProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
-    myMediatedProcess = RunnerMediator.isRunnerCommandInjected(commandLine);
+    myMediatedProcess = WinRunnerMediator.isRunnerCommandInjected(commandLine);
   }
 
   protected KillableProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
     super(process, commandLine.getCommandLineString(), commandLine.getCharset());
-    myMediatedProcess = RunnerMediator.isRunnerCommandInjected(commandLine);
+    myMediatedProcess = WinRunnerMediator.isRunnerCommandInjected(commandLine);
   }
 
   /**
-   * Starts a process with a {@link RunnerMediator mediator} when {@code withMediator} is set to {@code true} and the platform is Windows.
+   * Starts a process with a {@link WinRunnerMediator mediator} when {@code withMediator} is set to {@code true} and the platform is Windows.
    */
   public KillableProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
     this(mediate(commandLine, withMediator, false));
@@ -74,7 +76,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   @NotNull
   protected static GeneralCommandLine mediate(@NotNull GeneralCommandLine commandLine, boolean withMediator, boolean showConsole) {
     if (withMediator && SystemInfo.isWindows) {
-      RunnerMediator.injectRunnerCommand(commandLine, showConsole);
+      WinRunnerMediator.injectRunnerCommand(commandLine, showConsole);
     }
     return commandLine;
   }
@@ -96,15 +98,15 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   }
 
   /**
-   * This method shouldn't be overridden, see shouldKillProcessSoftly
+   * This method shouldn't be overridden, see {@link #shouldKillProcessSoftly}
+   * @see #destroyProcessGracefully
    */
-  private boolean canKillProcessSoftly() {
+  private boolean canDestroyProcessGracefully() {
     if (processCanBeKilledByOS(myProcess)) {
       if (SystemInfo.isWindows) {
-        return myMediatedProcess || canTerminateGracefullyWithWinP();
+        return hasPty() || myMediatedProcess || canTerminateGracefullyWithWinP();
       }
-      else if (SystemInfo.isUnix) {
-        // 'kill -SIGINT <pid>' will be executed
+      if (SystemInfo.isUnix) {
         return true;
       }
     }
@@ -138,7 +140,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
 
   @Override
   protected void doDestroyProcess() {
-    boolean gracefulTerminationAttempted = shouldKillProcessSoftly() && canKillProcessSoftly() && destroyProcessGracefully();
+    boolean gracefulTerminationAttempted = shouldKillProcessSoftly() && canDestroyProcessGracefully() && destroyProcessGracefully();
     if (!gracefulTerminationAttempted) {
       // execute default process destroy
       super.doDestroyProcess();
@@ -190,9 +192,12 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   }
 
   protected boolean destroyProcessGracefully() {
+    if (hasPty() && sendInterruptToPtyProcess()) {
+      return true;
+    }
     if (SystemInfo.isWindows) {
       if (myMediatedProcess) {
-        return RunnerMediator.destroyProcess(myProcess, true);
+        return WinRunnerMediator.destroyProcess(myProcess, true);
       }
       if (canTerminateGracefullyWithWinP() && !Registry.is("disable.winp")) {
         try {
@@ -231,6 +236,32 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
     }
     else if (SystemInfo.isUnix) {
       return UnixProcessManager.sendSigIntToProcessTree(myProcess);
+    }
+    return false;
+  }
+
+  /**
+   * Writes the INTR (interrupt) character to process's stdin (PTY). When a PTY receives the INTR character,
+   * it raises a SIGINT signal for all processes in the foreground job associated with the PTY. The character itself is then discarded.
+   * <p>A proper way to get INTR is `termios.c_cc[VINTR]`. However, unlikely, the default (003, ETX) is changed.
+   * <p>Works on Unix and Windows.
+   * 
+   * @see <a href="https://man7.org/linux/man-pages/man3/tcflow.3.html">termios(3)</a>
+   * @see <a href="https://www.gnu.org/software/libc/manual/html_node/Signal-Characters.html">Characters that Cause Signals</a>
+   * 
+   * @return true if the character has been written successfully
+   */
+  private boolean sendInterruptToPtyProcess() {
+    OutputStream outputStream = myProcess.getOutputStream();
+    if (outputStream != null) {
+      try {
+        outputStream.write(Ascii.ETX);
+        outputStream.flush();
+        return true;
+      }
+      catch (IOException e) {
+        LOG.info("Failed to send Ctrl+C to PTY process. Fallback to default graceful termination.", e);
+      }
     }
     return false;
   }

@@ -26,17 +26,13 @@ class NonIncrementalCellLines private constructor(private val document: Document
 
   init {
     document.addDocumentListener(documentListener)
-    updateIntervalsAndMarkers()
+    intervals = intervalsGenerator(document)
   }
 
   override fun intervalsIterator(startLine: Int): ListIterator<NotebookCellLines.Interval> {
     ApplicationManager.getApplication().assertReadAccessAllowed()
     val ordinal = intervals.find { startLine <= it.lines.last }?.ordinal ?: intervals.size
     return intervals.listIterator(ordinal)
-  }
-
-  private fun updateIntervalsAndMarkers() {
-    intervals = intervalsGenerator(document)
   }
 
   private fun notifyChanged(oldCells: List<NotebookCellLines.Interval>,
@@ -75,7 +71,7 @@ class NonIncrementalCellLines private constructor(private val document: Document
     override fun documentChanged(event: DocumentEvent) {
       ApplicationManager.getApplication().assertWriteAccessAllowed()
       val oldIntervals = intervals
-      updateIntervalsAndMarkers()
+      intervals = intervalsGenerator(document)
 
       val newAffectedCells = getAffectedCells(intervals, document, TextRange(event.offset, event.offset + event.newLength))
       notifyChanged(oldIntervals, oldAffectedCells, intervals, newAffectedCells)

@@ -45,7 +45,7 @@ public class JavaConvertNumericBaseTest extends IPPTestCase {
   
   @Override
   protected String getIntentionName() {
-    return "Convert number to...";
+    return "Convert number to…";
   }
 
   @Override

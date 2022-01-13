@@ -385,7 +385,7 @@ internal sealed class AbstractRefsTable {
     for ((connectionId, bimap) in filteredOneToMany) {
       if (!bimap.containsKey(childArrayId)) continue
       val value = bimap.get(childArrayId)
-      val existingValue = res.putIfAbsent(connectionId, EntityId(value, connectionId.parentClass).asParent())
+      val existingValue = res.putIfAbsent(connectionId, createEntityId(value, connectionId.parentClass).asParent())
       if (existingValue != null) thisLogger().error("This parent already exists")
     }
 
@@ -393,7 +393,7 @@ internal sealed class AbstractRefsTable {
     for ((connectionId, bimap) in filteredOneToOne) {
       if (!bimap.containsKey(childArrayId)) continue
       val value = bimap.get(childArrayId)
-      val existingValue = res.putIfAbsent(connectionId, EntityId(value, connectionId.parentClass).asParent())
+      val existingValue = res.putIfAbsent(connectionId, createEntityId(value, connectionId.parentClass).asParent())
       if (existingValue != null) thisLogger().error("This parent already exists")
     }
 
@@ -429,7 +429,7 @@ internal sealed class AbstractRefsTable {
     for ((connectionId, bimap) in filteredOneToOne) {
       if (!bimap.containsKey(childArrayId)) continue
       val value = bimap.get(childArrayId)
-      val existingValue = res.putIfAbsent(connectionId, EntityId(value, connectionId.parentClass).asParent())
+      val existingValue = res.putIfAbsent(connectionId, createEntityId(value, connectionId.parentClass).asParent())
       if (existingValue != null) thisLogger().error("This parent already exists")
     }
 
@@ -456,7 +456,7 @@ internal sealed class AbstractRefsTable {
     for ((connectionId, bimap) in filteredOneToMany) {
       val keys = bimap.getKeys(parentArrayId)
       if (!keys.isEmpty()) {
-        val children = keys.map { EntityId(it, connectionId.childClass) }.mapTo(ArrayList()) { it.asChild() }
+        val children = keys.map { createEntityId(it, connectionId.childClass) }.mapTo(ArrayList()) { it.asChild() }
         val existingValue = res.putIfAbsent(connectionId, children)
         if (existingValue != null) thisLogger().error("These children already exist")
       }
@@ -466,7 +466,7 @@ internal sealed class AbstractRefsTable {
     for ((connectionId, bimap) in filteredOneToOne) {
       if (!bimap.containsValue(parentArrayId)) continue
       val key = bimap.getKey(parentArrayId)
-      val existingValue = res.putIfAbsent(connectionId, listOf(EntityId(key, connectionId.childClass).asChild()))
+      val existingValue = res.putIfAbsent(connectionId, listOf(createEntityId(key, connectionId.childClass).asChild()))
       if (existingValue != null) thisLogger().error("These children already exist")
     }
 
@@ -503,7 +503,7 @@ internal sealed class AbstractRefsTable {
     for ((connectionId, bimap) in filteredOneToOne) {
       if (!bimap.containsValue(parentArrayId)) continue
       val key = bimap.getKey(parentArrayId)
-      val existingValue = res.putIfAbsent(connectionId, EntityId(key, connectionId.childClass).asChild())
+      val existingValue = res.putIfAbsent(connectionId, createEntityId(key, connectionId.childClass).asChild())
       if (existingValue != null) thisLogger().error("These children already exist")
     }
 

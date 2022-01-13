@@ -49,10 +49,10 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   //
 
   @NotNull
-  public abstract Stream<Wrapper> getSelectedChanges();
+  public abstract Stream<? extends Wrapper> getSelectedChanges();
 
   @NotNull
-  public abstract Stream<Wrapper> getAllChanges();
+  public abstract Stream<? extends Wrapper> getAllChanges();
 
   protected abstract void selectChange(@NotNull Wrapper change);
 
@@ -224,7 +224,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   private PrevNextDifferenceIterable getSelectionStrategy(boolean fromUpdate) {
     if (myCurrentChange == null) return null;
 
-    List<Wrapper> selectedChanges = toListIfNotMany(getSelectedChanges(), fromUpdate);
+    List<? extends Wrapper> selectedChanges = toListIfNotMany(getSelectedChanges(), fromUpdate);
     if (selectedChanges == null) return DumbPrevNextDifferenceIterable.INSTANCE;
     if (selectedChanges.size() > 1) {
       return new ChangesNavigatable(selectedChanges, selectedChanges.get(0), false);
@@ -233,7 +233,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
       return null;
     }
 
-    List<Wrapper> allChanges = toListIfNotMany(getAllChanges(), fromUpdate);
+    List<? extends Wrapper> allChanges = toListIfNotMany(getAllChanges(), fromUpdate);
     if (allChanges == null) return DumbPrevNextDifferenceIterable.INSTANCE;
     if (allChanges.isEmpty()) return null;
 

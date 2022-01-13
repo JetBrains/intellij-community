@@ -3,7 +3,6 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.completion.CompletionMemory
 import com.intellij.codeInsight.completion.JavaMethodCallElement
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
@@ -288,7 +287,7 @@ private class CallInfo(val regularArgs: List<CallArgumentInfo>, val varArg: PsiP
     
     for (callInfo in regularArgs) {
       val inlay = when {
-        isErroneousArg(callInfo) -> null
+        isErroneousArg(callInfo) || isArgWithComment(callInfo) -> null
         shouldShowHintsForExpression(callInfo.argument) -> inlayInfo(callInfo)
         !callInfo.isAssignable(substitutor) -> inlayInfo(callInfo, showOnlyIfExistedBefore = true)
         else -> null
@@ -310,15 +309,33 @@ private class CallInfo(val regularArgs: List<CallArgumentInfo>, val varArg: PsiP
     }
 
     return regularArgs
-      .filterNot { isErroneousArg(it) }
+      .filterNot { isErroneousArg(it) || isArgWithComment(it) }
       .filter { duplicated.contains(it.parameter.typeText()) && it.argument.text != it.parameter.name }
       .mapNotNull { inlayInfo(it) }
   }
 
-  fun isErroneousArg(arg : CallArgumentInfo): Boolean {
+  private fun isErroneousArg(arg : CallArgumentInfo): Boolean {
     return arg.argument is PsiEmptyExpressionImpl || arg.argument.prevSibling is PsiEmptyExpressionImpl
   }
-  
+
+  private fun isArgWithComment(arg : CallArgumentInfo): Boolean {
+    return hasComment(arg.argument, PsiElement::getNextSibling) || hasComment(arg.argument, PsiElement::getPrevSibling)
+  }
+
+  private fun hasComment(e: PsiElement, next: (PsiElement) -> PsiElement?) : Boolean {
+    var current = next(e)
+    while (current != null) {
+      if (current is PsiComment) {
+        return true
+      }
+      if (current !is PsiWhiteSpace) {
+        break
+      }
+      current = next(current)
+    }
+    return false
+  }
+
   fun varargsInlay(substitutor: PsiSubstitutor): InlayInfo? {
     if (varArg == null) return null
 

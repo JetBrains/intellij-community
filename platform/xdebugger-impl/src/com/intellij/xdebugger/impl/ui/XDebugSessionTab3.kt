@@ -106,20 +106,11 @@ class XDebugSessionTab3(
   override fun initToolbars(session: XDebugSessionImpl) {
     (myUi as? RunnerLayoutUiImpl)?.setLeftToolbarVisible(false)
 
-    val gearActions = DefaultActionGroup().apply {
-      templatePresentation.text = ActionsBundle.message("group.XDebugger.settings.text")
-      templatePresentation.icon = AllIcons.General.Settings
-      isPopup = true
-      addAll(*myUi.options.settingsActionsList)
-      registerAdditionalActions(DefaultActionGroup(), DefaultActionGroup(), this)
-    }
-
     val toolbar = DefaultActionGroup()
     toolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP))
 
     val more = MoreActionGroup()
     more.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_EXTRA_GROUP))
-    toolbar.add(more)
     more.addSeparator()
 
     fun addWithConstraints(actions: List<AnAction>, constraints: Constraints) {
@@ -139,7 +130,18 @@ class XDebugSessionTab3(
     addWithConstraints(session.extraStopActions, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
 
     more.addSeparator()
-    more.add(gearActions)
+
+    val gear = DefaultActionGroup().apply {
+      templatePresentation.text = ActionsBundle.message("group.XDebugger.settings.text")
+      templatePresentation.icon = AllIcons.General.Settings
+      isPopup = true
+      addAll(*myUi.options.settingsActionsList)
+    }
+
+    registerAdditionalActions(more, toolbar, gear)
+    // Constrains are required as a workaround that puts these actions into the end anyway
+    more.add(gear, Constraints(Anchor.BEFORE, ""))
+    toolbar.add(more, Constraints(Anchor.BEFORE, ""))
 
     myUi.options.setTopLeftToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 

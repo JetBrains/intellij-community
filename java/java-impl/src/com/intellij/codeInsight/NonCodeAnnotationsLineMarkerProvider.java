@@ -13,6 +13,7 @@ import com.intellij.codeInsight.intention.impl.AnnotateIntentionAction;
 import com.intellij.codeInsight.intention.impl.DeannotateIntentionAction;
 import com.intellij.codeInsight.javadoc.AnnotationDocGenerator;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
+import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.codeInsight.javadoc.NonCodeAnnotationGenerator;
 import com.intellij.codeInspection.dataFlow.EditContractIntention;
 import com.intellij.icons.AllIcons;
@@ -92,7 +93,7 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
 
     String tooltip = XmlStringUtil.wrapInHtml(
       NonCodeAnnotationGenerator.getNonCodeHeaderAvalable(nonCodeAnnotations) + CommonXmlStrings.NBSP + JavaBundle.message("non.code.annotations.explanation.full.signature") + "<p>\n" +
-      new JavaDocInfoGenerator(owner.getProject(), owner, false).generateSignature(owner));
+      JavaDocInfoGeneratorFactory.create(owner.getProject(), owner).generateSignature(owner));
     return new LineMarkerInfo<>(element, element.getTextRange(), AllIcons.Gutter.ExtAnnotation, __ -> tooltip, MyIconGutterHandler.INSTANCE,
                                 GutterIconRenderer.Alignment.RIGHT);
   }

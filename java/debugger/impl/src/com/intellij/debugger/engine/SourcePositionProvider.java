@@ -7,7 +7,6 @@ import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,10 +33,7 @@ public abstract class SourcePositionProvider {
                                                  boolean nearest
   ) {
     try {
-      return StreamEx.of(EP_NAME.getExtensionList())
-        .map(provider -> provider.computeSourcePosition(descriptor, project, context, nearest))
-        .nonNull()
-        .findFirst().orElse(null);
+      return EP_NAME.computeSafeIfAny(provider -> provider.computeSourcePosition(descriptor, project, context, nearest));
     }
     catch (IndexNotReadyException e) {
       return null;

@@ -11998,7 +11998,7 @@ com/intellij/psi/stubs/EmptyStubElementType.class:lib/platform-api.jar
 org/jetbrains/plugins/groovy/lang/psi/stubs/elements/GrAnnotationArgumentListElementType.class:plugins/Groovy/lib/Groovy.jar
 com/intellij/javascript/nodejs/library/NodeModulesExcludePolicy.class:plugins/JavaScriptLanguage/lib/JavaScriptLanguage.jar
 org/jetbrains/kotlin/console/actions/RunKotlinConsoleAction.class:plugins/Kotlin/lib/kotlin-plugin.jar
-icons/KotlinIdeaIcons.class:plugins/Kotlin/lib/kotlin-plugin.jar
+icons/KotlinIcons.class:plugins/Kotlin/lib/kotlin-plugin.jar
 com/intellij/psi/PsiAnnotationParameterList.class:plugins/java/lib/java-api.jar
 org/jetbrains/plugins/groovy/lang/psi/api/auxiliary/modifiers/annotation/GrAnnotationArgumentList.class:plugins/Groovy/lib/Groovy.jar
 com/jetbrains/rd/platform/codeWithMe/editors/CodeWithMeEditorService$Companion.class:plugins/cwm-plugin/lib/cwm-common.jar

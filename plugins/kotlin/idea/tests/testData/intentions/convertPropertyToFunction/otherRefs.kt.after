@@ -1,4 +1,5 @@
 // WITH_RUNTIME
+// AFTER-WARNING: Variable 't' is never used
 package p
 
 import p.getFoo

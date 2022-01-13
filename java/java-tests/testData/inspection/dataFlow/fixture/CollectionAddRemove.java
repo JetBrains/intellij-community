@@ -83,7 +83,7 @@ public class CollectionAddRemove {
     list.remove("bar");
     list.remove("baz");
     if (<warning descr="Condition 'list.size() > 3' is always 'false'">list.size() > 3</warning>) {}
-    list.<warning descr="The call to 'remove' always fails as index is out of bounds">remove</warning>(100);
+    list.<warning descr="The call to 'remove' always fails as an argument is out of bounds">remove</warning>(100);
   }
 
   void testRemoveByIndex() {

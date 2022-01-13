@@ -118,10 +118,10 @@ public class UnsupportedFeaturesUtil {
     return false;
   }
 
-  public static boolean visitPyListCompExpression(final PyListCompExpression node, LanguageLevel versionToProcess) {
-    final List<PyComprehensionForComponent> forComponents = node.getForComponents();
+  public static boolean listComprehensionIteratesOverNonParenthesizedTuple(@NotNull PyListCompExpression node,
+                                                                           @NotNull LanguageLevel versionToProcess) {
     if (versionToProcess.isPy3K()) {
-      for (PyComprehensionForComponent forComponent : forComponents) {
+      for (PyComprehensionForComponent forComponent : node.getForComponents()) {
         final PyExpression iteratedList = forComponent.getIteratedList();
         if (iteratedList instanceof PyTupleExpression) {
           return true;

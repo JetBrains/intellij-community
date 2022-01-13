@@ -30,7 +30,14 @@ class CoroutineNonBlockingContextDetectionTest : KotlinLightCodeInsightFixtureTe
 
     override fun setUp() {
         super.setUp()
-        myFixture.addClass("""package org.jetbrains.annotations; public @interface BlockingContext {}""")
+        myFixture.addFileToProject(
+            "org/jetbrains/annotations/BlockingContext.java",
+            """package org.jetbrains.annotations; public @interface BlockingContext {}"""
+        )
+        myFixture.addFileToProject(
+            "org/jetbrains/annotations/NonBlockingContext.java",
+            """package org.jetbrains.annotations; public @interface NonBlockingContext {}"""
+        )
         myFixture.enableInspections(BlockingMethodInNonBlockingContextInspection::class.java)
     }
 
@@ -44,10 +51,6 @@ class CoroutineNonBlockingContextDetectionTest : KotlinLightCodeInsightFixtureTe
 
     fun testLambdaReceiverType() {
         doTest("LambdaReceiverTypeCheck.kt")
-    }
-
-    fun testNestedFunctionsInsideSuspendLambda() {
-        doTest("NestedFunctionsInsideSuspendLambda.kt")
     }
 
     fun testDispatchersTypeDetection() {
@@ -66,6 +69,6 @@ class CoroutineNonBlockingContextDetectionTest : KotlinLightCodeInsightFixtureTe
 
     fun testFlowOn() {
         myFixture.configureByFile("FlowOn.kt")
-        myFixture.testHighlighting("FlowOn.kt")
+        myFixture.testHighlighting(true, false, false, "FlowOn.kt")
     }
 }

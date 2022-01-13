@@ -21,7 +21,6 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
-import kotlin.math.absoluteValue
 
 class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): ActiveListener {
   private val manager = RunToolbarSlotManager.getInstance(project)
@@ -61,10 +60,6 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
 
   override fun disabled() {
     manager.removeListener(managerListener)
-  }
-
-  private fun updateImmediately() {
-  //  components.map { it.bar }.forEach { it.updateActionsImmediately(true) }
   }
 
   private var added = false
@@ -149,15 +144,9 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
 
   private fun build() {
     val count = manager.slotsCount()
-    if(count == 0) {
-      slotPane.removeAll()
-      components.clear()
-      return
-    } else {
-      val diff = count - components.size
-      repeat(diff.absoluteValue) { if(diff > 0) addNewSlot() else removeComponent(components[it])}
-    }
-    updateImmediately()
+    slotPane.removeAll()
+    components.clear()
+    repeat(count) { addNewSlot()}
   }
 
   private fun addSingleSlot() {

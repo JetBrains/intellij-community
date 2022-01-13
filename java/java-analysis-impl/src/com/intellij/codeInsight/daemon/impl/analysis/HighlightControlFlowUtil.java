@@ -288,7 +288,7 @@ public final class HighlightControlFlowUtil {
       PsiElement scope = variable instanceof PsiField
                                ? ((PsiField)variable).getContainingClass()
                                : variable.getParent() != null ? variable.getParent().getParent() : null;
-      while (scope instanceof PsiCodeBlock && scope.getParent() instanceof PsiSwitchStatement) {
+      while (scope instanceof PsiCodeBlock && scope.getParent() instanceof PsiSwitchBlock) {
         scope = PsiTreeUtil.getParentOfType(scope, PsiCodeBlock.class);
       }
 

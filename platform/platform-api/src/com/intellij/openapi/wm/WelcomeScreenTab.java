@@ -4,6 +4,8 @@ package com.intellij.openapi.wm;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This interface represents components to be added on the {@link WelcomeScreen} tab view
@@ -22,4 +24,11 @@ public interface WelcomeScreenTab {
    */
   @NotNull
   JComponent getAssociatedComponent();
+
+  /**
+   * @return list of children welcome screen tabs
+   */
+  default List<WelcomeScreenTab> getChildTabs() {
+    return new ArrayList<>();
+  }
 }

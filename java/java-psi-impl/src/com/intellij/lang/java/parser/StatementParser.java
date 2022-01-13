@@ -13,11 +13,11 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.lang.PsiBuilderUtil.*;
-import static com.intellij.lang.java.parser.ExpressionParser.CASE_LABEL;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
 public class StatementParser {
@@ -435,22 +435,16 @@ public class StatementParser {
    */
   @NotNull
   Pair<PsiBuilder.@Nullable Marker, Boolean> parseCaseLabel(PsiBuilder builder) {
-    CASE_LABEL.set(builder, Boolean.TRUE);
-    try {
-      if (builder.getTokenType() == JavaTokenType.DEFAULT_KEYWORD) {
-        PsiBuilder.Marker defaultElement = builder.mark();
-        builder.advanceLexer();
-        done(defaultElement, JavaElementType.DEFAULT_CASE_LABEL_ELEMENT);
-        return Pair.create(defaultElement, false);
-      }
-      if (myParser.getPatternParser().isPattern(builder)) {
-        return Pair.create(myParser.getPatternParser().parsePattern(builder), false);
-      }
-      return Pair.create(myParser.getExpressionParser().parseAssignment(builder), true);
+    if (builder.getTokenType() == JavaTokenType.DEFAULT_KEYWORD) {
+      PsiBuilder.Marker defaultElement = builder.mark();
+      builder.advanceLexer();
+      done(defaultElement, JavaElementType.DEFAULT_CASE_LABEL_ELEMENT);
+      return Pair.create(defaultElement, false);
     }
-    finally {
-      CASE_LABEL.set(builder, null);
+    if (myParser.getPatternParser().isPattern(builder)) {
+      return Pair.create(myParser.getPatternParser().parsePattern(builder), false);
     }
+    return Pair.create(myParser.getExpressionParser().parseAssignment(builder, BitUtil.set(0, ExpressionParser.FORBID_LAMBDA_MASK, true)), true);
   }
 
   private PsiBuilder.Marker parseSwitchLabelStatement(PsiBuilder builder) {

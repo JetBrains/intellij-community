@@ -16,7 +16,6 @@ public interface ApplicationLoadListener {
   /**
    * @deprecated Use {@link #beforeApplicationLoaded(Application, Path)}
    */
-  @SuppressWarnings("unused")
   @Deprecated
   default void beforeApplicationLoaded(@NotNull Application application, @NotNull String configPath) {
   }

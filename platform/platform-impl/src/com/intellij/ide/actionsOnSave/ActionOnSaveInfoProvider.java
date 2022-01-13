@@ -23,7 +23,7 @@ import java.util.List;
 @ApiStatus.Experimental
 public abstract class ActionOnSaveInfoProvider {
 
-  private static final ExtensionPointName<ActionOnSaveInfoProvider> EP_NAME =
+  public static final ExtensionPointName<ActionOnSaveInfoProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.actionOnSaveInfoProvider");
 
   static List<ActionOnSaveInfo> getAllActionOnSaveInfos(@NotNull ActionOnSaveContext context) {

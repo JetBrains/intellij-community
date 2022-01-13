@@ -363,6 +363,7 @@
     <projectService serviceImplementation="org.jetbrains.idea.devkit.inspections.missingApi.resolve.LibrariesWithIntellijClassesSetting"/>
 
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.IconsGeneratedSourcesFilter"/>
+    <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.KotlinTestGeneratedSourcesFilter"/>
 
     <psi.referenceContributor
         language="XML"

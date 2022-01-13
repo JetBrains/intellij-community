@@ -6,8 +6,10 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,8 +19,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.concurrent.Future;
 
 public final class Helpers {
@@ -28,22 +33,14 @@ public final class Helpers {
   private static final boolean FORCE_PHYSICAL_ESC = Boolean.getBoolean("touchbar.physical.esc");
   private static Boolean ourIsPhysicalEsc = null;
   private static Future<?> ourIsPhysicalEscFuture = null;
-  private static Robot ourRobot = null;
 
   static void emulateKeyPress(int javaKeyEventCode) {
-    if (ourRobot == null) {
-      try {
-        ourRobot = new Robot();
-      }
-      catch (AWTException e) {
-        LOG.debug(e);
-      }
-    }
-    if (ourRobot == null)
-      return;
-
-    ourRobot.keyPress(javaKeyEventCode);
-    ourRobot.keyRelease(javaKeyEventCode);
+    Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(
+      new KeyEvent(new JPanel(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, javaKeyEventCode, KeyEvent.CHAR_UNDEFINED)
+    );
+    Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(
+      new KeyEvent(new JPanel(), KeyEvent.KEY_RELEASED, System.currentTimeMillis(), 0, javaKeyEventCode, KeyEvent.CHAR_UNDEFINED)
+    );
   }
 
   static boolean isTouchBarServerRunning() {
@@ -187,5 +184,23 @@ public final class Helpers {
     String actionId =
       ActionManager.getInstance().getId(action instanceof CustomisedActionGroup ? ((CustomisedActionGroup)action).getOrigin() : action);
     return actionId == null ? action.toString() : actionId;
+  }
+
+  static void collectLeafActions(@NotNull ActionGroup actionGroup, @NotNull Collection<AnAction> out) {
+    AnAction[] actions = actionGroup.getChildren(null);
+    for (AnAction childAction : actions) {
+      if (childAction == null) {
+        continue;
+      }
+      if (childAction instanceof ActionGroup) {
+        final ActionGroup childGroup = (ActionGroup)childAction;
+        collectLeafActions(childGroup, out);
+        continue;
+      }
+      if (childAction instanceof Separator) {
+        continue;
+      }
+      out.add(childAction);
+    }
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditor;
 import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
+import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
 import com.intellij.application.options.codeStyle.properties.IntegerAccessor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -25,6 +26,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Field;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.io.StreamUtil.readText;
@@ -470,6 +473,30 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
       }
     }
     return super.getAccessor(codeStyleObject, field);
+  }
+
+  @Override
+  public List<CodeStylePropertyAccessor> getAdditionalAccessors(@NotNull Object codeStyleObject) {
+    if (codeStyleObject instanceof GroovyCodeStyleSettings) {
+      try {
+        Field onDemandPackagesField = codeStyleObject.getClass().getField("PACKAGES_TO_USE_IMPORT_ON_DEMAND");
+        return Collections.singletonList(new JavaPackageEntryTableAccessor(codeStyleObject, onDemandPackagesField) {
+          @Override
+          public boolean set(@NotNull List<String> extVal) {
+            PackageEntryTable entryTable = fromExternal(extVal);
+            if (entryTable != null) {
+              ((GroovyCodeStyleSettings)codeStyleObject).getPackagesToUseImportOnDemand().copyFrom(entryTable);
+              return true;
+            }
+            return false;
+          }
+        });
+      }
+      catch (NoSuchFieldException e) {
+        // Ignore
+      }
+    }
+    return super.getAdditionalAccessors(codeStyleObject);
   }
 
   @Override

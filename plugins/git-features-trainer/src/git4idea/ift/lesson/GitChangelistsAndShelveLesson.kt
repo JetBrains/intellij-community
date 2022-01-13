@@ -4,8 +4,12 @@ package git4idea.ift.lesson
 import com.intellij.CommonBundle
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -21,10 +25,10 @@ import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.components.DropDownLink
 import com.intellij.util.DocumentUtil
 import git4idea.ift.GitLessonsBundle
-import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.openCommitWindowText
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
@@ -37,7 +41,7 @@ import javax.swing.JButton
 
 class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLessonsBundle.message("git.changelists.shelf.lesson.name")) {
   override val existedFile = "git/martian_cat.yml"
-  private val branchName = "main"
+  override val branchName = "main"
   private val commentingLineText = "fur_type: long haired"
   private val commentText = "# debug: check another types (short haired, hairless)"
 
@@ -53,21 +57,24 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   override val lessonContent: LessonContext.() -> Unit = {
-    checkoutBranch(branchName)
-
     val defaultChangelistName = VcsBundle.message("changes.default.changelist.name")
-    prepareRuntimeTask {
+    prepareRuntimeTask(ModalityState.NON_MODAL) {
       resetChangelistsState(project)
       removeShelvedChangeLists(project)
       modifyFile(virtualFile)
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
     }
 
     showWarningIfModalCommitEnabled()
 
     task {
       triggerByPartOfComponent(highlightInside = true, usePulsation = true) l@{ ui: EditorGutterComponentEx ->
+        if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
         val offset = editor.document.charsSequence.indexOf(commentText)
-        if (offset == -1) return@l null
+        if (offset == -1) {
+          thisLogger().warn("Failed to find '${commentText}' in the editor text:\n${editor.document.charsSequence}")
+          return@l null
+        }
         val line = editor.offsetToVisualLine(offset, true)
         val y = editor.visualLineToY(line)
         return@l Rectangle(ui.x + ui.width - 15, y, 10, editor.lineHeight)
@@ -220,7 +227,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       }
       text(GitLessonsBundle.message("git.changelists.shelf.unshelve.changelist", strong(unshelveChangesButtonText)))
       stateCheck { editor.document.text.contains(commentText) }
-      restoreByUi(delayMillis = defaultRestoreDelay)
+      restoreByUi(delayMillis = 4 * defaultRestoreDelay)
     }
 
     task {

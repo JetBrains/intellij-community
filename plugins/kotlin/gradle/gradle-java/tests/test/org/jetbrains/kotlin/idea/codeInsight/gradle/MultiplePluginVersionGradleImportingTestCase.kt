@@ -89,11 +89,12 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
     companion object {
         val masterKotlinPluginVersion: String = System.getenv("KOTLIN_GRADLE_PLUGIN_VERSION") ?: "1.6.255-SNAPSHOT"
+        const val kotlinAndGradleParametersName: String = "{index}: Gradle-{0}, KotlinGradlePlugin-{1}"
         private val safePushParams: Collection<Array<Any>> = listOf(arrayOf("6.8.2", "master"))
 
         @JvmStatic
         @Suppress("ACCIDENTAL_OVERRIDE")
-        @Parameterized.Parameters(name = "{index}: Gradle-{0}, KotlinGradlePlugin-{1}")
+        @Parameterized.Parameters(name = kotlinAndGradleParametersName)
         fun data(): Collection<Array<Any>> {
             if (IS_UNDER_SAFE_PUSH)
                 return safePushParams
@@ -105,7 +106,8 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
                         arrayOf("6.7.1", "1.4.0"),
                         arrayOf("6.8.2", "1.4.32"),
                         arrayOf("7.0.2", "1.5.10"),
-                        arrayOf("7.0.2", "1.5.20-RC-238"),
+                        arrayOf("7.0.2", "1.5.21"),
+                        arrayOf("7.0.2", "1.5.31"),
                         arrayOf("7.0.2", "master")
                     )
                 )

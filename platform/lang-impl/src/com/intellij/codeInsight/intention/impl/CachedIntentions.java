@@ -283,9 +283,7 @@ public final class CachedIntentions {
         markInvoked(action);
       }
     });
-    final List<IntentionAction> options = descriptor.getOptions(element, containingEditor);
-    if (options == null) return cachedAction;
-    for (IntentionAction option : options) {
+    for (IntentionAction option : descriptor.getOptions(element, containingEditor)) {
       Editor editor = ObjectUtils.chooseNotNull(myEditor, containingEditor);
       if (editor == null) continue;
       Pair<PsiFile, Editor> availableIn = ShowIntentionActionsHandler

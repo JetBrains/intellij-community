@@ -9,7 +9,7 @@
     </problem>
     <problem>
         <file>firstProperties.kt</file>
-        <line>5</line>
+        <line>7</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/firstProperties.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Use destructuring declaration</problem_class>
@@ -73,7 +73,7 @@
     </problem>
     <problem>
         <file>visible.kt</file>
-        <line>7</line>
+        <line>8</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/visible.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Use destructuring declaration</problem_class>
@@ -81,7 +81,7 @@
     </problem>
     <problem>
         <file>sameNameReferences.kt</file>
-        <line>9</line>
+        <line>10</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/sameNameReferences.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Use destructuring declaration</problem_class>
@@ -89,7 +89,7 @@
     </problem>
     <problem>
         <file>mapEntry.kt</file>
-        <line>5</line>
+        <line>6</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/mapEntry.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Use destructuring declaration</problem_class>
@@ -97,7 +97,7 @@
     </problem>
     <problem>
         <file>hasShadowedVariable2.kt</file>
-        <line>7</line>
+        <line>10</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="method" FQNAME="hasShadowedVariable2.HasShadowedVariable2Kt void test()" />
         <problem_class id="Destructure" severity="INFO" attribute_key="INFO_ATTRIBUTES">Use destructuring declaration</problem_class>

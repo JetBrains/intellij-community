@@ -27,15 +27,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.UIBundle;
+import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.mac.TouchbarDataKeys;
+import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
@@ -555,16 +552,18 @@ public abstract class DialogWrapper {
     List<JButton> rightSideButtons = createButtons(actions);
 
     myButtonMap.clear();
-    int index = 0;
     for (JButton button : ContainerUtil.concat(leftSideButtons, rightSideButtons)) {
       myButtonMap.put(button.getAction(), button);
       if (button instanceof JBOptionButton) {
         myOptionsButtons.add((JBOptionButton)button);
       }
-      TouchbarDataKeys.putDialogButtonDescriptor(button, index++).setMainGroup(index >= leftSideButtons.size());
     }
 
-    return createSouthPanel(leftSideButtons, rightSideButtons, addHelpToLeftSide);
+    JComponent result = createSouthPanel(leftSideButtons, rightSideButtons, addHelpToLeftSide);
+    if (ApplicationManager.getApplication() != null) {
+      Touchbar.setButtonActions(result, leftSideButtons, rightSideButtons, null);
+    }
+    return result;
   }
 
   protected @NotNull JButton createHelpButton(@NotNull Insets insets) {
@@ -1659,6 +1658,8 @@ public abstract class DialogWrapper {
   }
 
   private void doShow() {
+    if (UiInterceptors.tryIntercept(this)) return;
+
     ensureEventDispatchThread();
     registerKeyboardShortcuts();
 
@@ -2022,7 +2023,6 @@ public abstract class DialogWrapper {
     return null;
   }
 
-  @SuppressWarnings("unused")
   public static @Nullable DialogWrapper findInstanceFromFocus() {
     return findInstance(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner());
   }

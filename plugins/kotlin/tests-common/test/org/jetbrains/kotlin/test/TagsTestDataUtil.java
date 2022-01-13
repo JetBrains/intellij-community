@@ -142,8 +142,8 @@ public class TagsTestDataUtil {
                 return 0;
             }
 
-            String thisTag = this.getName();
-            String otherTag = other.getName();
+            String thisTag = this.getName() + this.getAttributesString();
+            String otherTag = other.getName() + other.getAttributesString();
 
             // Invert order for end tags
             return thisTag.compareTo(otherTag) * (isStart ? -1 : 1);

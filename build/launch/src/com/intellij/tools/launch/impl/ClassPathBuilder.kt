@@ -41,15 +41,15 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modules: Mo
       .resolve(".m2")
       .resolve("repository")
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", m2HomePath.canonicalPath)
-    val kotlinPath = paths.ultimateRootFolder
-      .resolve("out")
-      .resolve("artifacts")
-      .resolve("KotlinPlugin")
-      .resolve("kotlinc")
-    if (!kotlinPath.exists()) {
-      error("$kotlinPath doesn't exist")
-    }
-    pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", kotlinPath.canonicalPath)
+    //val kotlinPath = paths.ultimateRootFolder
+    //  .resolve("out")
+    //  .resolve("artifacts")
+    //  .resolve("KotlinPlugin")
+    //  .resolve("kotlinc")
+    //if (!kotlinPath.exists()) {
+    //  error("$kotlinPath doesn't exist")
+    //}
+    //pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", kotlinPath.canonicalPath)
 
     val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
     JpsProjectLoader.loadProject(model.project, pathVariables, paths.ultimateRootFolder.canonicalPath)
@@ -89,6 +89,8 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modules: Mo
         logger.info("  $path")
       }
       logger.info("-- END")
+    } else {
+      logger.warn("Verbose classpath logging is disabled, set logClasspath to true to see it.")
     }
 
     return createClassPathArgFile(paths, classpath)

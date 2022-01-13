@@ -11,6 +11,7 @@ import com.intellij.refactoring.IntroduceParameterRefactoring
 import com.intellij.refactoring.introduceField.ElementToWorkOn
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor
 import com.intellij.refactoring.introduceParameter.Util
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.jetbrains.annotations.NonNls
@@ -30,13 +31,13 @@ class IntroduceParameterTest extends LightJavaCodeInsightFixtureTestCase {
     final String afterGroovy = getTestName(false) + "After.groovy"
     final String javaClass = getTestName(false) + "MyClass.java"
     myFixture.configureByFiles(javaClass, beforeGroovy)
-    executeRefactoring(true, replaceFieldsWithGetters, "anObject", searchForSuper, declareFinal, removeUnusedParameters, conflicts)
+    executeRefactoring(IntroduceVariableBase.JavaReplaceChoice.ALL, replaceFieldsWithGetters, "anObject", searchForSuper, declareFinal, removeUnusedParameters, conflicts)
     PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
     myFixture.checkResultByFile(beforeGroovy, afterGroovy, true)
   }
 
 
-  private boolean executeRefactoring(boolean replaceAllOccurrences,
+  private boolean executeRefactoring(IntroduceVariableBase.JavaReplaceChoice replaceAllOccurrences,
                                      int replaceFieldsWithGetters,
                                      @NonNls String parameterName,
                                      boolean searchForSuper,

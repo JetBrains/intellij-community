@@ -32,7 +32,6 @@ public abstract class SearchableOptionsRegistrar{
   /**
    * @deprecated Use {@link SearchableOptionContributor}
    */
-  @SuppressWarnings("unused")
   @Deprecated
   public void addOption(@NotNull String option, @Nullable String path, String hit, @NotNull String configurableId, String configurableDisplayName) {
   }

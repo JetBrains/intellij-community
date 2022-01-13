@@ -15,27 +15,31 @@
  */
 package com.siyeh.ig.junit;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.ChangeModifierFix;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreSupers = true;
 
   @Pattern(VALID_ID_PATTERN)
@@ -50,6 +54,11 @@ public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "test.case.with.no.test.methods.problem.descriptor");
+  }
+
+  @Override
+  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
+    return (Boolean)infos[0] ? new ChangeModifierFix(PsiModifier.ABSTRACT) : null;
   }
 
   @Override
@@ -74,7 +83,8 @@ public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
           || aClass.isEnum()
           || aClass.isAnnotationType()
           || PsiUtil.isLocalOrAnonymousClass(aClass)
-          || aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          || aClass.hasModifierProperty(PsiModifier.ABSTRACT)
+          || AnnotationUtil.isAnnotated(aClass, JUnitCommonClassNames.ORG_JUNIT_IGNORE, 0)) {
         return;
       }
       if (aClass instanceof PsiTypeParameter) {
@@ -103,7 +113,7 @@ public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
           superClass = superClass.getSuperClass();
         }
       }
-      registerClassError(aClass);
+      registerClassError(aClass, ClassInheritorsSearch.search(aClass, aClass.getUseScope(), false).findFirst() != null);
     }
 
     private boolean hasTestMethods(@NotNull PsiClass aClass,
@@ -118,7 +128,7 @@ public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
           return true;
         }
 
-        if (Arrays.stream(methods).anyMatch(method -> framework.isTestMethod(method, false))) {
+        if (ContainerUtil.exists(methods, method -> framework.isTestMethod(method, false))) {
           return true;
         }
       }

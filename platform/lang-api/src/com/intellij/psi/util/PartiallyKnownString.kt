@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.SmartList
-import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.headTailOrNull
 import org.jetbrains.annotations.ApiStatus
 
@@ -80,14 +79,15 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
     return -1
   }
 
-  private fun buildSegmentWithMappedRange(value: String, sourcePsi: PsiElement?, rangeInPks: TextRange): StringEntry.Known =
-    StringEntry.Known(
-      value,
-      sourcePsi,
-      sourcePsi.castSafelyTo<PsiLanguageInjectionHost>()?.let { host ->
-        mapRangeToHostRange(host, getRangeInHost(host) ?: ElementManipulators.getValueTextRange(host), rangeInPks)
-      } ?: rangeInPks
-    )
+  private fun rangeForSubElement(parent: StringEntry, partRange: TextRange): TextRange =
+    parent.rangeAlignedToHost
+      ?.let { (host, hostRange) ->
+        mapRangeToHostRange(host, hostRange, partRange)?.shiftLeft(parent.sourcePsi!!.startOffset - host.startOffset)
+      }
+    ?: partRange.shiftRight(parent.range.startOffset)
+
+  private fun buildSegmentWithMappedRange(parent: StringEntry, value: String, rangeInPks: TextRange): StringEntry.Known =
+    StringEntry.Known(value, parent.sourcePsi, rangeForSubElement(parent, rangeInPks))
 
   fun splitAtInKnown(splitAt: Int): Pair<PartiallyKnownString, PartiallyKnownString> {
     var accumulated = 0
@@ -102,12 +102,12 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
           else {
             val leftPart = segment.value.substring(0, splitAt - accumulated)
             val rightPart = segment.value.substring(splitAt - accumulated)
-            left.add(buildSegmentWithMappedRange(leftPart, segment.sourcePsi, TextRange.from(0, leftPart.length)))
+            left.add(buildSegmentWithMappedRange(segment, leftPart, TextRange.from(0, leftPart.length)))
 
             return PartiallyKnownString(left) to PartiallyKnownString(
               ArrayList<StringEntry>(segments.lastIndex - i + 1).apply {
                 if (rightPart.isNotEmpty())
-                  add(buildSegmentWithMappedRange(rightPart, segment.sourcePsi, TextRange.from(leftPart.length, rightPart.length)))
+                  add(buildSegmentWithMappedRange(segment, rightPart, TextRange.from(leftPart.length, rightPart.length)))
                 addAll(segments.subList(i + 1, segments.size))
               }
             )
@@ -132,13 +132,6 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
         add(PartiallyKnownString(pending))
       }
 
-      fun rangeForSubElement(partRange: TextRange): TextRange =
-        head.rangeAlignedToHost
-          ?.let { (host, hostRange) ->
-            mapRangeToHostRange(host, hostRange, partRange)?.shiftLeft(head.sourcePsi!!.startOffset - host.startOffset)
-          }
-        ?: partRange.shiftRight(head.range.startOffset)
-
       when (head) {
         is StringEntry.Unknown -> return collectPaths(result, pending.apply { add(head) }, tail)
         is StringEntry.Known -> {
@@ -154,14 +147,14 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
                 add(PartiallyKnownString(
                   pending.apply {
                     add(StringEntry.Known(stringParts.first().substring(value), head.sourcePsi,
-                                          rangeForSubElement(stringParts.first())))
+                      rangeForSubElement(head, stringParts.first())))
                   }))
                 addAll(stringParts.subList(1, stringParts.size - 1).map {
-                  PartiallyKnownString(it.substring(value), head.sourcePsi, rangeForSubElement(it))
+                  PartiallyKnownString(it.substring(value), head.sourcePsi, rangeForSubElement(head, it))
                 })
               },
               mutableListOf(StringEntry.Known(stringParts.last().substring(value), head.sourcePsi,
-                                              rangeForSubElement(stringParts.last()))),
+                rangeForSubElement(head, stringParts.last()))),
               tail
             )
           }

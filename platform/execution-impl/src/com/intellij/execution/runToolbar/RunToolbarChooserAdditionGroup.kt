@@ -22,7 +22,7 @@ internal class RunToolbarChooserAdditionGroup(val executorGroup: ExecutorGroup<*
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.project?.let {
-      e.presentation.isEnabledAndVisible = e.environment() == null
+      e.presentation.isEnabledAndVisible = !e.isActiveProcess()
     }
   }
 }

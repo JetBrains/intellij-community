@@ -110,7 +110,7 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
     final String text = "\\ LONG_HTML <!--<li>something go here</li>"
                         + StringUtil.repeat("<li>next content</li>", 1000000)
                         + "foooo barrrr <p> text -->";
-    doSplitterPerformanceTest(text, CommentSplitter.getInstance(), 4000);
+    doSplitterPerformanceTest(text, CommentSplitter.getInstance(), 5000);
   }
 
   public void testVeryLongIdentifier() {
@@ -130,7 +130,7 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
 
   public void testVeryLongList() {
     final String text = StringUtil.repeat("properties,test,properties", 1000000);
-    doSplitterPerformanceTest(text, PlainTextSplitter.getInstance(), 2000);
+    doSplitterPerformanceTest(text, PlainTextSplitter.getInstance(), 3000);
   }
 
   private static void doSplitterPerformanceTest(String text, Splitter splitter, int expectedTime) {

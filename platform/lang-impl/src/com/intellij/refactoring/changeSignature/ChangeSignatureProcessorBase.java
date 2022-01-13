@@ -22,7 +22,9 @@ import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,7 +122,19 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
   @Override
   protected RefactoringEventData getBeforeData() {
     RefactoringEventData data = new RefactoringEventData();
-    data.addElement(getChangeInfo().getMethod());
+    ChangeInfo changeInfo = getChangeInfo();
+    data.addElement(changeInfo.getMethod());
+    List<String> defaultValues = new ArrayList<>();
+    for (ParameterInfo parameter : changeInfo.getNewParameters()) {
+      if (parameter.getOldIndex() == -1) {
+        ContainerUtil.addIfNotNull(defaultValues, parameter.getDefaultValue());
+      }
+    }
+
+    if (!defaultValues.isEmpty()) {
+      data.addStringProperties(ArrayUtil.toStringArray(defaultValues));
+    }
+
     return data;
   }
 

@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.UiInterceptors;
 import com.intellij.ui.popup.async.AsyncPopupImpl;
 import com.intellij.ui.popup.async.AsyncPopupStep;
 import com.intellij.ui.popup.list.ComboBoxPopup;
@@ -182,8 +183,9 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
   @Override
   public void show(@NotNull final Component owner, final int aScreenX, final int aScreenY, final boolean considerForcedXY) {
-    LOG.assertTrue (!isDisposed());
+    if (UiInterceptors.tryIntercept(this)) return;
 
+    LOG.assertTrue (!isDisposed());
     Rectangle targetBounds = new Rectangle(new Point(aScreenX, aScreenY), getContent().getPreferredSize());
 
     if (getParent() != null) {

@@ -33,10 +33,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -461,10 +457,9 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
         myPreviewEditor.getMarkupModel().removeAllHighlighters();
       }
       else {
-        myPreviewEditor = (EditorEx)EditorFactory.getInstance().createEditor(document, getProject(), file.getVirtualFile(), false);
+        myPreviewEditor = (EditorEx)EditorFactory.getInstance().createEditor(document, getProject(), file.getVirtualFile(), false, EditorKind.PREVIEW);
         DiffUtil.setFoldingModelSupport(myPreviewEditor);
         final EditorSettings settings = myPreviewEditor.getSettings();
-        settings.setLineNumbersShown(EditorSettingsExternalizable.getInstance().getOptions().ARE_LINE_NUMBERS_SHOWN);
         settings.setFoldingOutlineShown(true);
         settings.setLineMarkerAreaShown(true);
         settings.setGutterIconsShown(false);

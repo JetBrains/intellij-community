@@ -20,6 +20,8 @@ import kotlin.reflect.KMutableProperty0
 
 private const val EXTENSION_POINT_NAME = "com.intellij.codeInsight.inlayProvider"
 
+const val CODE_VISION_GROUP = "code.vision"
+const val TYPES_GROUP = "types"
 
 object InlayHintsProviderExtension : LanguageExtension<InlayHintsProvider<*>>(EXTENSION_POINT_NAME) {
   private fun findLanguagesWithHintsSupport(): List<Language> {
@@ -64,11 +66,15 @@ interface InlayHintsProvider<T : Any> {
   fun createSettings(): T
 
   @get:Nls(capitalization = Nls.Capitalization.Sentence)
-    /**
-     * Name of this kind of hints. It will be used in settings and in context menu.
-     * Please, do not use word "hints" to avoid duplication
-     */
+
+  /**
+   * Name of this kind of hints. It will be used in settings and in context menu.
+   * Please, do not use word "hints" to avoid duplication
+   */
   val name: String
+
+  @JvmDefault
+  val groupId: String get() = CODE_VISION_GROUP
 
   /**
    * Used for persisting settings.

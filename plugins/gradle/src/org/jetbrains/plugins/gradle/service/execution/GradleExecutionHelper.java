@@ -44,7 +44,6 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
-import org.jetbrains.plugins.gradle.util.GradleCommandLine;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -194,7 +193,6 @@ public class GradleExecutionHelper {
     });
   }
 
-  @SuppressWarnings("deprecation")
   private void ensureInstalledWrapper(@NotNull ExternalSystemTaskId id,
                                       @NotNull String projectPath,
                                       @NotNull GradleExecutionSettings settings,
@@ -203,10 +201,8 @@ public class GradleExecutionHelper {
                                       @NotNull ProjectConnection connection,
                                       @NotNull CancellationToken cancellationToken) {
     long ttlInMs = settings.getRemoteProcessIdleTtlInMs();
-    List<String> arguments = settings.getArguments();
     try {
       settings.setRemoteProcessIdleTtlInMs(100);
-      settings.setArguments(GradleCommandLine.parse(arguments).getScriptParameters());
 
       if (ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings) != null) {
         // todo add the support for org.jetbrains.plugins.gradle.settings.DistributionType.WRAPPED
@@ -243,7 +239,6 @@ public class GradleExecutionHelper {
     }
     finally {
       settings.setRemoteProcessIdleTtlInMs(ttlInMs);
-      settings.setArguments(arguments);
     }
   }
 
@@ -381,10 +376,11 @@ public class GradleExecutionHelper {
 
     final Application application = ApplicationManager.getApplication();
     if (application != null && application.isUnitTestMode()) {
-      if (!settings.getArguments().contains("--quiet")) {
-        if (!settings.getArguments().contains("--debug")) {
-          settings.withArgument("--info");
-        }
+      var arguments = settings.getArguments();
+      var options = GradleCommandLineOptionsProvider.LOGGING_OPTIONS.getOptions();
+      var optionsNames = GradleCommandLineOptionsProvider.getAllOptionsNames(options);
+      if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it))) {
+        settings.withArgument("--info");
       }
     }
 
@@ -487,7 +483,6 @@ public class GradleExecutionHelper {
     if (environmentConfiguration != null && !LOCAL_TARGET_TYPE_ID.equals(environmentConfiguration.getTypeId())) {
       if (settings.isPassParentEnvs()) {
         LOG.warn("Host system environment variables will not be passed for the target run.");
-        listener.onTaskOutput(taskId, GradleBundle.message("gradle.target.execution.pass.parent.envs.warning") + "\n", false);
       }
       operation.setEnvironmentVariables(settings.getEnv());
       return;

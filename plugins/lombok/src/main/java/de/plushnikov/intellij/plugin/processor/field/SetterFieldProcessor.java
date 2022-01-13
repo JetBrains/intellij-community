@@ -15,7 +15,6 @@ import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -52,7 +51,7 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
     if (result) {
       result = validateVisibility(psiAnnotation);
       if (result) {
-        result = validateExistingMethods(psiField, builder);
+        result = validateExistingMethods(psiField, builder, false);
         if (result) {
           result = validateAccessorPrefix(psiField, builder);
         }
@@ -74,29 +73,6 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
   private boolean validateVisibility(@NotNull PsiAnnotation psiAnnotation) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     return null != methodVisibility;
-  }
-
-  private boolean validateExistingMethods(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
-    boolean result = true;
-    final PsiClass psiClass = psiField.getContainingClass();
-    if (null != psiClass) {
-      final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
-      filterToleratedElements(classMethods);
-
-      final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
-      final Collection<String> methodNames = getAllSetterNames(psiField, isBoolean);
-
-      for (String methodName : methodNames) {
-        if (PsiMethodUtil.hasSimilarMethod(classMethods, methodName, 1)) {
-          final String setterMethodName = LombokUtils.getSetterName(psiField, isBoolean);
-
-          builder.addWarning(LombokBundle.message("inspection.message.not.generated.s.method.with.similar.name.s.already.exists"),
-                             setterMethodName, methodName);
-          result = false;
-        }
-      }
-    }
-    return result;
   }
 
   private boolean validateAccessorPrefix(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {

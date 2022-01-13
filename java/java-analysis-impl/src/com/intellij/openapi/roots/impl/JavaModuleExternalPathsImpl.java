@@ -22,7 +22,6 @@ public final class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
   private final Map<OrderRootType, VirtualFilePointerContainer> myOrderRootPointerContainers = new HashMap<>();
   private final JavaModuleExternalPathsImpl mySource;
 
-  @SuppressWarnings("unused")
   public JavaModuleExternalPathsImpl() {
     this(null);
   }

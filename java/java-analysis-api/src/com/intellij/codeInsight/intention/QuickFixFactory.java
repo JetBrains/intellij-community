@@ -13,7 +13,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyMemberType;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -473,6 +472,11 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createAddMissingEnumBranchesFix(@NotNull PsiSwitchBlock switchBlock, @NotNull Set<String> missingCases);
 
   @NotNull
+  public abstract IntentionAction createAddMissingSealedClassBranchesFix(@NotNull PsiSwitchBlock switchBlock,
+                                                                         @NotNull Set<String> missingCases,
+                                                                         @NotNull List<String> allNames);
+
+  @NotNull
   public abstract IntentionAction createAddSwitchDefaultFix(@NotNull PsiSwitchBlock switchBlock, @Nullable String message);
 
   @Nullable
@@ -541,4 +545,6 @@ public abstract class QuickFixFactory {
 
   @Nullable
   public abstract IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @Nullable Object highlightInfo);
+
+  public abstract @NotNull IntentionAction createAddAnnotationTargetFix(@NotNull PsiAnnotation annotation, PsiAnnotation.TargetType target);
 }

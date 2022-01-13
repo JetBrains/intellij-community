@@ -22,6 +22,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 /**
  * Calculates some data based on {@link VirtualFile} content, persists it between IDE restarts,
  * and updates it when the content is changed. The data is calculated lazily, when needed, and can be different for different projects.<p/>
@@ -49,6 +51,11 @@ public interface VirtualFileGist<Data> {
    * Calculate or get the cached data by the current virtual file content in the given project (or null, if the data is project-independent).
    */
   Data getFileData(@Nullable Project project, @NotNull VirtualFile file);
+
+  /**
+   * Get the cached data by the virtual file content in the given project (or null, if the data is project-independent).
+   */
+  @Nullable Supplier<Data> getUpToDateOrNull(@Nullable Project project, @NotNull VirtualFile file);
 
   /**
    * Used by {@link VirtualFileGist} to calculate the data when it's needed and to recalculate it after file changes.

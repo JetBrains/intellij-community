@@ -6,7 +6,6 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runUnderIndicator
 import kotlinx.coroutines.*
 
 internal fun DocumentationTarget.documentationRequest(): DocumentationRequest {
@@ -19,20 +18,20 @@ internal fun CoroutineScope.computeDocumentationAsync(targetPointer: Pointer<out
     val documentationResult: DocumentationResult? = readAction {
       targetPointer.dereference()?.computeDocumentation()
     }
+    @Suppress("REDUNDANT_ELSE_IN_WHEN")
     when (documentationResult) {
       is DocumentationData -> documentationResult
       is AsyncDocumentation -> documentationResult.supplier.invoke() as DocumentationData?
       null -> null
+      else -> error("Unexpected result: $documentationResult") // this fixes Kotlin incremental compilation
     }
   }
 }
 
 internal suspend fun resolveLink(targetPointer: Pointer<out DocumentationTarget>, url: String): InternalLinkResult {
   return withContext(Dispatchers.Default) {
-    readAction { progress ->
-      runUnderIndicator(progress) {
-        doResolveLink(targetPointer, url)
-      }
+    readAction {
+      doResolveLink(targetPointer, url)
     }
   }
 }

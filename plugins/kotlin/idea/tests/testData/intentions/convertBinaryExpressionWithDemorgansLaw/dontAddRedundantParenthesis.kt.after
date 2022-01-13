@@ -1,3 +1,5 @@
+// AFTER-WARNING: Parameter 'p1' is never used
+// AFTER-WARNING: Parameter 'p2' is never used
 object O {
     fun foo(): Boolean = true
     fun bar(): Boolean = true

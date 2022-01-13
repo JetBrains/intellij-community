@@ -497,8 +497,8 @@ object DynamicPlugins {
           jdomSerializer.clearSerializationCaches()
           TypeFactory.defaultInstance().clearCache()
           app.getServiceIfCreated(TopHitCache::class.java)?.clear()
-          PresentationFactory.clearPresentationCaches()
           ActionToolbarImpl.resetAllToolbars()
+          PresentationFactory.clearPresentationCaches()
           TouchbarSupport.reloadAllActions()
           (serviceIfCreated<NotificationsManager>() as? NotificationsManagerImpl)?.expireAll()
           MessagePool.getInstance().clearErrors()
@@ -593,6 +593,8 @@ object DynamicPlugins {
     if (!classLoaderUnloaded) {
       setClassLoaderState(pluginDescriptor, PluginAwareClassLoader.ACTIVE)
     }
+
+    ActionToolbarImpl.updateAllToolbarsImmediately(true)
 
     return classLoaderUnloaded
   }

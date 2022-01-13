@@ -31,7 +31,7 @@ class Retry {
         if (i == retries) {
           throw new RuntimeException("Failed all $retries attempts, see nested exception for details", e)
         }
-        if (i > 1) delayMs = backOff(delayMs, i, e)
+        delayMs = backOff(delayMs, i, e)
       }
     }
     throw new RuntimeException("Should not be reached")
@@ -43,13 +43,14 @@ class Retry {
   private Random random = new Random()
 
   private long backOff(long delayMs, int attempt, Exception e) {
-    delayMs = Math.min(delayMs, backOffLimitMs)
-    def nextDelay = Math.min(delayMs * backOffFactor, backOffLimitMs) +
-                    (random.nextGaussian() * delayMs * backOffJitter).toLong()
-    if (nextDelay > 0) {
-      log.info("Attempt $attempt of $retries failed with '$e.message'. Retrying in ${nextDelay}ms")
-      Thread.sleep(nextDelay)
+    def rawDelay = Math.min(delayMs, backOffLimitMs)
+    def jitter = (random.nextGaussian() * rawDelay * backOffJitter).toLong()
+
+    def effectiveDelay = rawDelay + jitter
+    if (effectiveDelay > 0) {
+      log.info("Attempt $attempt of $retries failed with '$e.message'. Retrying in ${effectiveDelay}ms")
+      Thread.sleep(effectiveDelay)
     }
-    return nextDelay
+    return effectiveDelay * backOffFactor
   }
 }

@@ -48,8 +48,9 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.mac.TouchbarDataKeys;
+import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -90,6 +91,9 @@ public abstract class DiffRequestProcessor implements Disposable {
   @NotNull private final Wrapper myToolbarStatusPanel;
   @NotNull private final MyProgressBar myProgressBar;
 
+  @NotNull private final EventDispatcher<DiffRequestProcessorListener> myEventDispatcher =
+    EventDispatcher.create(DiffRequestProcessorListener.class);
+
   @NotNull private DiffRequest myActiveRequest;
 
   @NotNull private ViewerState myState;
@@ -126,6 +130,8 @@ public abstract class DiffRequestProcessor implements Disposable {
     // UI
 
     myMainPanel = new MyPanel();
+    Touchbar.setActions(myMainPanel, myTouchbarActionGroup);
+
     myContentPanel = new Wrapper();
     myToolbarStatusPanel = new Wrapper();
     myProgressBar = new MyProgressBar();
@@ -164,6 +170,15 @@ public abstract class DiffRequestProcessor implements Disposable {
   //
   // Update
   //
+
+  public void addListener(@NotNull DiffRequestProcessorListener listener, @Nullable Disposable disposable) {
+    if (disposable != null) {
+      myEventDispatcher.addListener(listener, disposable);
+    }
+    else {
+      myEventDispatcher.addListener(listener);
+    }
+  }
 
   @RequiresEdt
   protected void reloadRequest() {
@@ -357,6 +372,8 @@ public abstract class DiffRequestProcessor implements Disposable {
         }
       });
     });
+
+    myEventDispatcher.getMulticaster().onViewerChanged();
   }
 
   protected void setWindowTitle(@NotNull @NlsContexts.DialogTitle String title) {
@@ -999,9 +1016,6 @@ public abstract class DiffRequestProcessor implements Disposable {
       }
       else if (DiffDataKeys.DIFF_CONTEXT.is(dataId)) {
         return myContext;
-      }
-      else if (TouchbarDataKeys.ACTIONS_KEY.is(dataId)) {
-        return myTouchbarActionGroup;
       }
 
       data = myState.getData(dataId);

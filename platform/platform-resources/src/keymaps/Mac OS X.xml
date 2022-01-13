@@ -205,7 +205,8 @@
   <action id="ActivateProjectToolWindow">
     <keyboard-shortcut first-keystroke="meta 1"/>
   </action>
-  <action id="ActivateFavoritesToolWindow">
+  <action id="ActivateFavoritesToolWindow"/>
+  <action id="ActivateBookmarksToolWindow">
     <keyboard-shortcut first-keystroke="meta 2"/>
   </action>
   <action id="ActivateFindToolWindow">

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.inferNullity;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -72,7 +58,7 @@ import java.util.*;
 
 public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   @NonNls private static final String ANNOTATE_LOCAL_VARIABLES = "checkbox.annotate.local.variables";
-  private JCheckBox myAnnotateLocalVariablesCb;
+  private InferNullityAdditionalUi myUi = new InferNullityAdditionalUi();
 
   public InferNullityAnnotationsAction() {
     super(JavaBundle.messagePointer("dialog.title.infer.nullity"), JavaBundle.messagePointer("action.description.infer.nullity.annotations"));
@@ -80,7 +66,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
 
   @Override
   protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
-    PropertiesComponent.getInstance().setValue(ANNOTATE_LOCAL_VARIABLES, myAnnotateLocalVariablesCb.isSelected());
+    PropertiesComponent.getInstance().setValue(ANNOTATE_LOCAL_VARIABLES, myUi.getCheckBox().isSelected());
 
     final ProgressManager progressManager = ProgressManager.getInstance();
     final Set<Module> modulesWithoutAnnotations = new HashSet<>();
@@ -223,7 +209,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   }
 
   protected boolean isAnnotateLocalVariables() {
-    return myAnnotateLocalVariablesCb.isSelected();
+    return myUi.getCheckBox().isSelected();
   }
 
   private static Runnable applyRunnable(final Project project, final Computable<UsageInfo[]> computable) {
@@ -310,16 +296,12 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
 
   @Override
   protected JComponent getAdditionalActionSettings(Project project, BaseAnalysisActionDialog dialog) {
-    final JPanel panel = new JPanel(new VerticalFlowLayout());
-    panel.add(new TitledSeparator());
-    myAnnotateLocalVariablesCb = new JCheckBox(JavaBundle.message("checkbox.annotate.local.variables"), PropertiesComponent.getInstance().getBoolean(ANNOTATE_LOCAL_VARIABLES));
-    panel.add(myAnnotateLocalVariablesCb);
-    return panel;
+    myUi.getCheckBox().setSelected(PropertiesComponent.getInstance().getBoolean(ANNOTATE_LOCAL_VARIABLES));
+    return myUi.getPanel();
   }
 
   @Override
   protected void canceled() {
     super.canceled();
-    myAnnotateLocalVariablesCb = null;
   }
 }

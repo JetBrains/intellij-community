@@ -1,4 +1,5 @@
 // WITH_RUNTIME
+// AFTER-WARNING: Variable 's' is never used
 data class Foo(val name: String)
 
 fun test(foo: Foo?) {

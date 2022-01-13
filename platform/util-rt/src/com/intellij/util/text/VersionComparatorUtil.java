@@ -18,6 +18,8 @@ import java.util.regex.Pattern;
  */
 public final class VersionComparatorUtil {
   private static final Pattern WORDS_SPLITTER = Pattern.compile("\\d+|[^\\d]+");
+  private static final Pattern ZERO_PATTERN = Pattern.compile("0+");
+  private static final Pattern DIGITS_PATTERN = Pattern.compile("\\d+");
   private static final VersionTokenType[] VALUES = VersionTokenType.values();
 
   public static final Comparator<String> COMPARATOR = new Comparator<String>() {
@@ -81,11 +83,11 @@ public final class VersionComparatorUtil {
         }
       }
 
-      if (str.matches("0+")) {
+      if (ZERO_PATTERN.matcher(str).matches()) {
         return _WS;
       }
 
-      if (str.matches("\\d+")) {
+      if (DIGITS_PATTERN.matcher(str).matches()) {
         return _DIGITS;
       }
 

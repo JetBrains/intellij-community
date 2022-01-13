@@ -46,7 +46,7 @@ abstract class AbstractHighlightingPassBase(
         //  (HighlightingSessionImpl impl is closed) and/or UpdateHighlightersUtil.addHighlighterToEditorIncrementally is closed as well.
         //  therefore direct usage of AnnotationHolderImpl is the smallest evil
 
-        val annotationHolder = object : AnnotationHolderImpl(AnnotationSession(file)) {
+        val annotationHolder = object : AnnotationHolderImpl(AnnotationSession(file), false) {
             override fun add(element: Annotation?): Boolean {
                 element?.let { annotationCallback?.invoke(it) }
                 return super.add(element)

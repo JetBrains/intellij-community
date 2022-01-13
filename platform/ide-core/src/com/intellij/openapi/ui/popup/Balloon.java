@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.Disposable;
@@ -41,6 +41,8 @@ public interface Balloon extends Disposable, PositionTracker.Client<Balloon>, Li
   boolean isDisposed();
 
   void setTitle(String title);
+
+  default void setId(String id) {}
 
   enum Position {
     below, above, atLeft, atRight

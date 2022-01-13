@@ -18,7 +18,10 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.target.*;
+import com.intellij.execution.target.TargetEnvironment;
+import com.intellij.execution.target.TargetEnvironmentRequest;
+import com.intellij.execution.target.TargetProgressIndicator;
+import com.intellij.execution.target.TargetedCommandLine;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.facet.Facet;
@@ -59,6 +62,7 @@ import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.library.PythonLibraryType;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.run.target.PySdkTargetPaths;
+import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
@@ -292,26 +296,27 @@ public abstract class PythonCommandLineState extends CommandLineState {
   @NotNull
   protected ProcessHandler startProcess(@NotNull PythonScriptTargetedCommandLineBuilder builder)
     throws ExecutionException {
-    TargetEnvironmentRequest targetEnvironmentRequest = createTargetEnvironmentRequest();
+    HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest = getPythonTargetInterpreter();
 
     Sdk sdk = getSdk();
     if (sdk != null) {
       PythonRunConfigurationTargetEnvironmentAdjuster adjuster =
         PythonRunConfigurationTargetEnvironmentAdjuster.findTargetEnvironmentRequestAdjuster(sdk);
       if (adjuster != null) {
-        adjuster.adjust(targetEnvironmentRequest, myConfig);
+        adjuster.adjust(helpersAwareTargetRequest.getTargetEnvironmentRequest(), myConfig);
       }
     }
 
     // The original Python script to be executed
-    PythonExecution pythonScript = buildPythonExecutionFinal(targetEnvironmentRequest);
+    PythonExecution pythonScript = buildPythonExecutionFinal(helpersAwareTargetRequest);
 
     // Python script that may be the debugger script that runs the original script
-    PythonExecution realPythonExecution = builder.build(targetEnvironmentRequest, pythonScript);
+    PythonExecution realPythonExecution = builder.build(helpersAwareTargetRequest, pythonScript);
 
     // TODO [Targets API] [major] Meaningful progress indicator should be taken
     EmptyProgressIndicator progressIndicator = new EmptyProgressIndicator();
-    TargetEnvironment targetEnvironment = targetEnvironmentRequest.prepareEnvironment(TargetProgressIndicator.EMPTY);
+    TargetEnvironment targetEnvironment =
+      helpersAwareTargetRequest.getTargetEnvironmentRequest().prepareEnvironment(TargetProgressIndicator.EMPTY);
 
     List<String> interpreterParameters = getConfiguredInterpreterParameters();
     TargetedCommandLine targetedCommandLine =
@@ -328,8 +333,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   @NotNull
-  private PythonExecution buildPythonExecutionFinal(@NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
-    PythonExecution pythonExecution = buildPythonExecution(targetEnvironmentRequest);
+  private PythonExecution buildPythonExecutionFinal(HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest) {
+    TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareTargetRequest.getTargetEnvironmentRequest();
+    PythonExecution pythonExecution = buildPythonExecution(helpersAwareTargetRequest);
     pythonExecution.setWorkingDir(getPythonExecutionWorkingDir(targetEnvironmentRequest));
     initEnvironment(myConfig.getProject(), pythonExecution, myConfig, createRemotePathMapper(), isDebug(), targetEnvironmentRequest);
     customizePythonExecutionEnvironmentVars(targetEnvironmentRequest, pythonExecution.getEnvs(), myConfig.isPassParentEnvs());
@@ -484,11 +490,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * User volumes (including the volumes for project files) are expected to be
    * already requested.
    *
-   * @param targetEnvironment
+   * @param helpersAwareRequest the request
    * @return the representation of Python script or module execution
    */
   @NotNull
-  protected PythonExecution buildPythonExecution(@NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
+  protected PythonExecution buildPythonExecution(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareRequest) {
     throw new UnsupportedOperationException("The implementation of Run Configuration based on Targets API is absent");
   }
 
@@ -946,17 +952,22 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   @NotNull
-  private TargetEnvironmentRequest createTargetEnvironmentRequest() {
-    Sdk sdk = getSdk();
+  private HelpersAwareTargetEnvironmentRequest getPythonTargetInterpreter() {
+    return getPythonTargetInterpreter(myConfig.getProject(), getSdk());
+  }
+
+  @NotNull
+  public static HelpersAwareTargetEnvironmentRequest getPythonTargetInterpreter(@NotNull Project project, @Nullable Sdk sdk) {
     if (sdk == null) {
       throw new IllegalStateException("SDK is not defined for Run Configuration");
     }
     else {
-      TargetEnvironmentRequest environmentRequest = PythonInterpreterTargetEnvironmentFactory.findTargetEnvironmentRequest(sdk);
-      if (environmentRequest == null) {
+      HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest =
+        PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project);
+      if (helpersAwareTargetRequest == null) {
         throw new IllegalStateException("Cannot find execution environment for SDK " + sdk);
       }
-      return environmentRequest;
+      return helpersAwareTargetRequest;
     }
   }
 

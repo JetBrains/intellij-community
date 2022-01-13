@@ -5,9 +5,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadConstraints
 import com.intellij.openapi.application.constraints.ConstrainedExecution
 import com.intellij.openapi.application.ex.ApplicationEx
-import com.intellij.openapi.progress.JobProgress
-import com.intellij.openapi.progress.Progress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.progress.withJob
 import kotlinx.coroutines.*
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
@@ -15,7 +14,7 @@ import kotlin.coroutines.resume
 internal class ReadAction<T>(
   private val constraints: ReadConstraints,
   private val blocking: Boolean,
-  private val action: (Progress) -> T
+  private val action: () -> T
 ) {
 
   private val application: ApplicationEx = ApplicationManager.getApplication() as ApplicationEx
@@ -29,7 +28,7 @@ internal class ReadAction<T>(
       check(unsatisfiedConstraint == null) {
         "Cannot suspend until constraints are satisfied while holding the read lock: $unsatisfiedConstraint"
       }
-      return action(JobProgress(coroutineContext.job))
+      return withJob(coroutineContext.job, action)
     }
     return coroutineScope {
       readLoop(this)
@@ -72,7 +71,7 @@ internal class ReadAction<T>(
     application.tryRunReadAction {
       val unsatisfiedConstraint = constraints.findUnsatisfiedConstraint()
       result = if (unsatisfiedConstraint == null) {
-        ReadResult.Successful(action(JobProgress(readJob)))
+        ReadResult.Successful(withJob(readJob, action))
       }
       else {
         ReadResult.UnsatisfiedConstraint(waitForConstraint(rootScope, unsatisfiedConstraint))

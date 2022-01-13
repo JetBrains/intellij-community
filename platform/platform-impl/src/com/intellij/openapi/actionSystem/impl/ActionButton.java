@@ -445,12 +445,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
-  @SuppressWarnings("unused")  // used in Rider
   protected void onMouseReleased(@NotNull MouseEvent e) {
     // Extension point
   }
 
-  @SuppressWarnings("unused")  // used in Rider
   protected void onMousePressed(@NotNull MouseEvent e) {
     // Extension point
   }

@@ -8,12 +8,14 @@ import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.lang.properties.references.I18nUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.SchemeConvertorEPBase;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
@@ -28,14 +30,15 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.*;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.NameUtilCore;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import org.jetbrains.annotations.Nls;
@@ -188,9 +191,13 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       resourceBundleManager = null;
     }
     @NotNull Set<Module> contextModules = ContainerUtil.map2Set(tags, x -> ModuleUtilCore.findModuleForPsiElement(x));
-    List<String> files = resourceBundleManager != null ? resourceBundleManager.suggestPropertiesFiles(contextModules)
-                                                       : I18nUtil.defaultSuggestPropertiesFiles(project, contextModules);
-    if (files.isEmpty()) return;
+    ResourceBundleManager finalResourceBundleManager = resourceBundleManager;
+    List<String> files = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.compute(() -> finalResourceBundleManager != null ? finalResourceBundleManager.suggestPropertiesFiles(contextModules) 
+                                                                        : I18nUtil.defaultSuggestPropertiesFiles(project, contextModules)),
+      DevKitBundle.message("progress.title.calculate.target.properties.file"), true, project);
+
+    if (files == null || files.isEmpty()) return;
 
     if (files.size() == 1) {
       doFixConsumer.accept(files.get(0));
@@ -231,6 +238,12 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
         if (e instanceof XmlTag) {
           tags.add((XmlTag)e);
         }
+        else if (e instanceof XmlAttributeValue) {
+          PsiElement parent = e.getParent();
+          if (parent instanceof XmlAttribute) {
+            ContainerUtil.addIfNotNull(tags, ((XmlAttribute)parent).getParent());
+          }
+        }
       }
     }
     return tags;
@@ -255,7 +268,15 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      XmlTag xml = (XmlTag)descriptor.getPsiElement();
+      PsiElement element = descriptor.getPsiElement();
+      XmlTag xml = null;
+      if (element instanceof XmlTag) {
+        xml = (XmlTag)element;
+      }
+      else if (element instanceof XmlAttributeValue) {
+        PsiElement parent = element.getParent();
+        xml = parent instanceof XmlAttribute ? ((XmlAttribute)parent).getParent() : null;
+      }
       if (xml == null) return;
       doFix(project, Collections.singletonList(xml));
     }

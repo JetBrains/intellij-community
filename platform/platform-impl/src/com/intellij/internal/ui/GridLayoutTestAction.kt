@@ -173,8 +173,8 @@ class GridLayoutTestAction : DumbAwareAction("Show GridLayout Test") {
     val grid = layoutManager.rootGrid
     grid.resizableColumns.addAll(0..4)
     grid.resizableRows.addAll(0..3)
-    grid.columnsGaps.addAll((0..4).map { ColumnGaps(it * 20, it * 20 + 10) })
-    grid.rowsGaps.addAll((0..3).map { RowGaps(it * 5 + 5, it * 5 + 15) })
+    grid.columnsGaps.addAll((0..4).map { HorizontalGaps(it * 20, it * 20 + 10) })
+    grid.rowsGaps.addAll((0..3).map { VerticalGaps(it * 5 + 5, it * 5 + 15) })
     val panel = JPanel(layoutManager)
 
     fillGridByCompoundLabels(panel, grid)

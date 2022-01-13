@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.project.Project;
@@ -50,6 +50,13 @@ public final class JavaResolveUtil {
                                      @NotNull PsiElement place,
                                      @Nullable PsiClass accessObjectClass,
                                      @Nullable PsiElement fileResolveScope) {
+    if (place instanceof PsiDirectory && 
+        modifierList != null && 
+        accessObjectClass == null &&
+        PsiUtil.getAccessLevel(modifierList) == PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL) {
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)place);
+      return aPackage != null && JavaPsiFacade.getInstance(member.getProject()).isInPackage(member, aPackage);
+    }
     return isAccessible(member, memberClass, modifierList, place, accessObjectClass, fileResolveScope, place.getContainingFile());
   }
 

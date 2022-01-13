@@ -3,6 +3,7 @@ fun test() {
         while (true)
             foo(1)
     //comment about foo(2)
+// AFTER-WARNING: Parameter 'i' is never used
     foo(2)
 }
 

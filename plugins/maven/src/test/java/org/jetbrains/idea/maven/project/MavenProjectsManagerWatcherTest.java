@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -139,9 +139,9 @@ public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingT
   private void scheduleProjectImportAndWait() {
     assertTrue(myNotificationAware.isNotificationVisible());
     myProjectTracker.scheduleProjectRefresh();
+    waitForImportCompletion();
     MavenUtil.invokeAndWait(myProject, () -> {
       // Do not save documents here, MavenProjectAware should do this before import
-      myProjectsManager.waitForImportFinishCompletion();
       myProjectsManager.performScheduledImportInTests();
     });
     assertFalse(myNotificationAware.isNotificationVisible());
@@ -153,7 +153,7 @@ public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingT
 
   private void addManagedFiles(@NotNull VirtualFile pom) {
     myProjectsManager.addManagedFiles(Collections.singletonList(pom));
-    myProjectsManager.waitForResolvingCompletion();
+    waitForImportCompletion();
     myProjectsManager.performScheduledImportInTests();
   }
 

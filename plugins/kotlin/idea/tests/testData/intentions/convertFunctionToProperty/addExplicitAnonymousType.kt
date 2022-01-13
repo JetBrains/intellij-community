@@ -1,3 +1,4 @@
+// AFTER-WARNING: Variable 't' is never used
 interface T {
     fun bar()
 }

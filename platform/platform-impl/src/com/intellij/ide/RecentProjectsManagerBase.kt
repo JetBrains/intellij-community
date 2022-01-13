@@ -756,7 +756,10 @@ private fun readProjectName(path: String): String {
 
   val file = Path.of(path)
   if (!file.isDirectory()) {
-    return FileUtilRt.getNameWithoutExtension(file.fileName.toString())
+    val fileName = file.fileName
+    if (fileName != null) {
+      return FileUtilRt.getNameWithoutExtension(fileName.toString())
+    }
   }
 
   val projectDir = file.resolve(Project.DIRECTORY_STORE_FOLDER)

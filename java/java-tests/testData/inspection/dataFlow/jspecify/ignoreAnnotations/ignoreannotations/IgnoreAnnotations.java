@@ -16,11 +16,11 @@
 
 package ignoreannotations;
 
-import org.jspecify.annotations.DefaultNonNull;
-import org.jspecify.annotations.Nullable;
-import org.jspecify.annotations.NullnessUnspecified;
+import org.jspecify.nullness.NullMarked;
+import org.jspecify.nullness.Nullable;
+import org.jspecify.nullness.NullnessUnspecified;
 
-@DefaultNonNull
+@NullMarked
 public class IgnoreAnnotations {
   public @Nullable Derived field = null;
 
@@ -49,7 +49,7 @@ class Base {
 
 class Derived extends Base {}
 
-@DefaultNonNull
+@NullMarked
 class Instances {
   static final IgnoreAnnotations IGNORE_ANNOTATIONS = new IgnoreAnnotations();
   static final Derived DERIVED = new Derived();

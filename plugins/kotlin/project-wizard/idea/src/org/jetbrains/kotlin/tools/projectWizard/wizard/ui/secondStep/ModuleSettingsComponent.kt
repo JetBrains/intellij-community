@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingRefe
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.CommonTargetConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.getConfiguratorSettings
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
-import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.plugins.templates.TemplatesPlugin
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
@@ -94,17 +93,9 @@ private class ModuleNameComponent(context: Context, private val module: Module) 
 
     override val title: String = KotlinNewProjectWizardUIBundle.message("module.settings.name")
 
-    override fun onInit() {
-        super.onInit()
+    override fun shouldBeShown(): Boolean {
         val isSingleRootMode = read { KotlinPlugin.modules.settingValue }.size == 1
-        when {
-            isSingleRootMode && module.isRootModule -> {
-                textField.disable(KotlinNewProjectWizardUIBundle.message("module.settings.name.same.as.project"))
-            }
-            module.configurator == CommonTargetConfigurator -> {
-                textField.disable(KotlinNewProjectWizardUIBundle.message("module.settings.name.0.can.not.be.modified", ModuleType.common.name))
-            }
-        }
+        return super.shouldBeShown() && !(isSingleRootMode && module.isRootModule) && (module.configurator != CommonTargetConfigurator)
     }
 
     companion object {

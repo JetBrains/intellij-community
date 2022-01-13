@@ -40,21 +40,19 @@ import java.util.function.Predicate;
 public class NewProjectWizard extends AbstractProjectWizard {
 
   private final StepSequence mySequence = new StepSequence();
-  private boolean myCreatingModule;
 
   public NewProjectWizard(@Nullable Project project, @NotNull ModulesProvider modulesProvider, @Nullable String defaultPath) {
     super(IdeCoreBundle.message(project == null ? "title.new.project" : "title.add.module"), project, defaultPath);
-    init(modulesProvider, project != null);
+    init(modulesProvider);
   }
 
   public NewProjectWizard(Project project, Component dialogParent, ModulesProvider modulesProvider, String defaultModuleName) {
     super(IdeCoreBundle.message("title.add.module"), project, dialogParent);
     myWizardContext.setDefaultModuleName(defaultModuleName);
-    init(modulesProvider, project != null);
+    init(modulesProvider);
   }
 
-  protected void init(@NotNull ModulesProvider modulesProvider, boolean isCreatingModule) {
-    myCreatingModule = isCreatingModule;
+  protected void init(@NotNull ModulesProvider modulesProvider) {
     myWizardContext.setModulesProvider(modulesProvider);
     ProjectTypeStep projectTypeStep = new ProjectTypeStep(myWizardContext, this, modulesProvider);
     Disposer.register(getDisposable(), projectTypeStep);
@@ -64,7 +62,7 @@ public class NewProjectWizard extends AbstractProjectWizard {
       chooseTemplateStep = new ChooseTemplateStep(myWizardContext, projectTypeStep);
       mySequence.addCommonStep(chooseTemplateStep);
     }
-    //hacky: new wizard module ID should start with newWizard, to be removed later, on migrating on new API.
+    //hacky: new wizard module ID should starts with newWizard, to be removed later, on migrating on new API.
     Predicate<Set<String>> predicate = strings -> !isNewWizard() ||
                                                   !ContainerUtil.exists(strings, type -> type.startsWith("newWizard"));
     mySequence.addCommonFinishingStep(new ProjectSettingsStep(myWizardContext), predicate);
@@ -77,12 +75,8 @@ public class NewProjectWizard extends AbstractProjectWizard {
     super.init();
   }
 
-  private boolean isNewWizard() {
-    return Experiments.getInstance().isFeatureEnabled("new.project.wizard") && !myCreatingModule;
-  }
-
-  public boolean isCreatingModule() {
-    return myCreatingModule;
+  private static boolean isNewWizard() {
+    return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
   }
 
   @Override

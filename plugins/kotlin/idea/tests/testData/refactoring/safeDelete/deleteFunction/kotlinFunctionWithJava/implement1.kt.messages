@@ -1,1 +1,1 @@
-fun foo(): kotlin.Unit in final class B : A implements [Java] void foo() in interface A.
+fun foo(): Unit in final class B : A implements [Java] void foo() in interface A.

@@ -107,9 +107,9 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
     for (PsiRecordComponent component : components) {
       PsiField recordField = createRecordField(component, factory);
       if (recordField == null) continue;
-      LightRecordField field = new LightRecordField(aClass.getManager(), recordField, aClass, component);
-      //noinspection unchecked
-      fields.add((Psi)field);
+      @SuppressWarnings("unchecked")
+      Psi field = (Psi)new LightRecordField(aClass.getManager(), recordField, aClass, component);
+      fields.add(field);
     }
     return fields;
   }

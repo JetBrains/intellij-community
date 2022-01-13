@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import org.jspecify.annotations.DefaultNonNull;
-import org.jspecify.annotations.Nullable;
-import org.jspecify.annotations.NullnessUnspecified;
+import org.jspecify.nullness.NullMarked;
+import org.jspecify.nullness.Nullable;
+import org.jspecify.nullness.NullnessUnspecified;
 
 /*
  * For the moment, we don't require support for parameter contravariance:
@@ -26,7 +26,7 @@ import org.jspecify.annotations.NullnessUnspecified;
  * we deviate from JLS rules:
  * https://github.com/jspecify/jspecify/blob/e55eb43f3bc1e7493b8b28a9dadd2b9b254e3335/samples/README.md#what-sample-inputs-demonstrate)
  */
-@DefaultNonNull
+@NullMarked
 class OverrideParameters {
   interface Super {
     void useObject(Object o);

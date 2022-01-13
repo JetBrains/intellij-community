@@ -1,3 +1,4 @@
+// AFTER-WARNING: Parameter 'kf' is never used
 fun interface KotlinFace {
     fun single()
 }

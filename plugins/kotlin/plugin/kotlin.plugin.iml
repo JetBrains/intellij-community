@@ -62,11 +62,11 @@
     <orderEntry type="module" module-name="kotlin.maven" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.ml-completion" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.native" scope="PROVIDED" />
-    <orderEntry type="module" module-name="kotlin.project-wizard.cli" scope="PROVIDED" />
-    <orderEntry type="module" module-name="kotlin.project-wizard.core" scope="PROVIDED" />
-    <orderEntry type="module" module-name="kotlin.project-wizard.gradle" scope="PROVIDED" />
-    <orderEntry type="module" module-name="kotlin.project-wizard.idea" scope="PROVIDED" />
-    <orderEntry type="module" module-name="kotlin.project-wizard.maven" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.idea" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.cli" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.properties" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.refIndex" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.repl" scope="PROVIDED" />

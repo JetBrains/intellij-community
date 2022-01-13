@@ -67,7 +67,7 @@ public final class SealedUtils {
   private static @NotNull <T> Collection<T> getClasses(@NotNull PsiClass psiClass,
                                                        Function<PsiClass, T> mapper,
                                                        PsiClass @NotNull ... classesToExclude) {
-    GlobalSearchScope fileScope = GlobalSearchScope.fileScope(psiClass.getContainingFile());
+    GlobalSearchScope fileScope = GlobalSearchScope.fileScope(psiClass.getContainingFile().getOriginalFile());
     return DirectClassInheritorsSearch.search(psiClass, fileScope)
       .filtering(inheritor -> !ArrayUtil.contains(inheritor, classesToExclude))
       .mapping(mapper)

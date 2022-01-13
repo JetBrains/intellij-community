@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -15,8 +15,8 @@ public class MavenRelativePathResolutionTest extends MavenDomWithIndicesTestCase
 
 
   @Override
-  protected void setUpInWriteAction() throws Exception {
-    super.setUpInWriteAction();
+  protected void setUp() throws Exception {
+    super.setUp();
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");

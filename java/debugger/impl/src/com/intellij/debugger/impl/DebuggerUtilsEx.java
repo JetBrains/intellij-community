@@ -84,16 +84,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
    * @return all CodeFragmentFactoryProviders that provide code fragment factories suitable in the context given
    */
   public static List<CodeFragmentFactory> getCodeFragmentFactories(@Nullable PsiElement context) {
-    final DefaultCodeFragmentFactory defaultFactory = DefaultCodeFragmentFactory.getInstance();
-    final List<CodeFragmentFactory> providers = CodeFragmentFactory.EXTENSION_POINT_NAME.getExtensionList();
-    final List<CodeFragmentFactory> suitableFactories = new ArrayList<>(providers.size());
-    if (providers.size() > 0) {
-      for (CodeFragmentFactory factory : providers) {
-        if (factory != defaultFactory && factory.isContextAccepted(context)) {
-          suitableFactories.add(factory);
-        }
+    DefaultCodeFragmentFactory defaultFactory = DefaultCodeFragmentFactory.getInstance();
+    List<CodeFragmentFactory> suitableFactories = new SmartList<>();
+    CodeFragmentFactory.EXTENSION_POINT_NAME.forEachExtensionSafe(factory -> {
+      if (factory != defaultFactory && factory.isContextAccepted(context)) {
+        suitableFactories.add(factory);
       }
-    }
+    });
     suitableFactories.add(defaultFactory); // let default factory be the last one
     return suitableFactories;
   }

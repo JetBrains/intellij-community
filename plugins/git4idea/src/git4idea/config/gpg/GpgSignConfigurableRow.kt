@@ -95,6 +95,7 @@ class GpgSignConfigurableRow(val project: Project, val disposable: Disposable) {
   }
 
   private fun scheduleUpdate() {
+    if (alarm.isDisposed) return
     alarm.cancelAllRequests()
     alarm.addRequest(Runnable {
       updateRepoList()

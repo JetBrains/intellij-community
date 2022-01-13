@@ -59,7 +59,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
 
           <properties>
               <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-              <junit.version>${dlr}{junit.version}</junit.version>
+              <junit.version>5.8.1</junit.version>
           </properties>
 
           <dependencies>
@@ -102,7 +102,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
                   <plugin>
                       <groupId>org.openjfx</groupId>
                       <artifactId>javafx-maven-plugin</artifactId>
-                      <version>0.0.6</version>
+                      <version>0.0.7</version>
                       <executions>
                           <execution>
                               <!-- Default configuration for running with: mvn clean javafx:run -->

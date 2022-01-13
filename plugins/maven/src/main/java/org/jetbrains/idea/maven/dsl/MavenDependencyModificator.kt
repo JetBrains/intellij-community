@@ -370,12 +370,12 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
     return scope
   }
 
-  override fun declaredDependencies(module: Module): List<DeclaredDependency>? {
+  override fun declaredDependencies(module: Module): List<DeclaredDependency> {
     val project = MavenProjectsManager.getInstance(module.project).findProject(module) ?: return emptyList()
-    return declaredDependencies(project.file) ?: throw IllegalStateException(MavenProjectBundle.message("maven.model.error", module.name))
+    return declaredDependencies(project.file) ?: emptyList()
   }
 
-  //for faster tesing
+  //for faster testing
   internal fun declaredDependencies(file: VirtualFile): List<DeclaredDependency>? {
     return ReadAction.compute<List<DeclaredDependency>?, Throwable> {
       val model = MavenDomUtil.getMavenDomProjectModel(myProject, file) ?: return@compute null
@@ -403,8 +403,8 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
   override fun declaredRepositories(module: Module): List<UnifiedDependencyRepository> {
     val project = MavenProjectsManager.getInstance(module.project).findProject(module) ?: return emptyList()
     return ReadAction.compute<List<UnifiedDependencyRepository>, Throwable> {
-      val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.file) ?: throw IllegalStateException(
-        MavenProjectBundle.message("maven.model.error", module.name))
+      val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.file)
+                  ?: return@compute emptyList()
       model.repositories.repositories.map {
         UnifiedDependencyRepository(it.id.stringValue, it.name.stringValue, it.url.stringValue ?: "")
       }

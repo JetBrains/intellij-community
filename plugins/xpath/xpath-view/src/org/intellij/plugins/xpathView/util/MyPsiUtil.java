@@ -156,7 +156,7 @@ public final class MyPsiUtil {
         file.accept(new PsiRecursiveElementVisitor() {
             @Override
             public void visitElement(@NotNull PsiElement element) {
-                AnnotationHolderImpl holder = new AnnotationHolderImpl(new AnnotationSession(file));
+                AnnotationHolderImpl holder = new AnnotationHolderImpl(new AnnotationSession(file), false);
                 holder.runAnnotatorWithContext(element, annotator);
                 for (Annotation annotation : holder) {
                     if (annotation.getSeverity() == HighlightSeverity.ERROR) {

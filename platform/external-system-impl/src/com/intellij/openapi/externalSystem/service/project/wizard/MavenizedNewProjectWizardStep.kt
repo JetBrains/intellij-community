@@ -21,10 +21,9 @@ import java.util.Comparator.comparing
 import java.util.function.Function
 import javax.swing.JList
 
-abstract class MavenizedNewProjectWizardStep<Data : Any, P>(
-  parent: P
-) : AbstractNewProjectWizardChildStep<P>(parent)
-  where P : NewProjectWizardBaseData, P : NewProjectWizardStep {
+abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(parent: ParentStep)
+  : AbstractNewProjectWizardChildStep<ParentStep>(parent)
+  where ParentStep : NewProjectWizardBaseData, ParentStep : NewProjectWizardStep {
 
   abstract fun createView(data: Data): DataView<Data>
 
@@ -68,7 +67,7 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, P>(
           comboBox(parentComboBoxModel, ParentRenderer())
             .bindItem(parentProperty)
             .columns(COLUMNS_MEDIUM)
-        }.bottomGap(BottomGap.SMALL)
+        }.topGap(TopGap.SMALL)
       }
       collapsibleGroup(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.coordinates.title")) {
         row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.label")) {

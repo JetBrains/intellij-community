@@ -28,6 +28,4 @@ class MarkdownSettingsState: BaseState() {
 
   var fontSize by property(MarkdownSettings.defaultFontSize)
   var fontFamily by string(MarkdownSettings.defaultFontFamily)
-
-  var stateVersion by property(0)
 }

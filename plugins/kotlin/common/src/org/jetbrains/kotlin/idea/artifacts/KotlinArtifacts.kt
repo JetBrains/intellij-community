@@ -15,7 +15,8 @@ abstract class KotlinArtifacts(val kotlincDistDir: File) {
     companion object {
         @get:JvmStatic
         val instance: KotlinArtifacts by lazy {
-            if (File(PathManager.getHomePath(), ".idea/libraries/$KOTLINC_DIST_JPS_LIB_XML_NAME").exists()) KotlinArtifactsFromSources
+            val homePath = PathManager.getHomePath(false)
+            if (homePath != null && File(homePath, ".idea/libraries/$KOTLINC_DIST_JPS_LIB_XML_NAME").exists()) KotlinArtifactsFromSources
             else ProductionKotlinArtifacts
         }
     }

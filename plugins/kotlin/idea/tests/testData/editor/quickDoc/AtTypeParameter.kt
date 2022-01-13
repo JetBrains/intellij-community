@@ -5,4 +5,4 @@ interface Base
  */
 class Some<<caret>T: Base>
 
-//INFO: <div class='definition'><pre><a href="psi_element://Some"><code style='font-size:96%;'>Some</code></a><br>&lt;<b>T</b> : <a href="psi_element://Base">Base</a>&gt;</pre></div><div class='content'><p>this is docs for T</p></div><table class='sections'></table>
+//INFO: <div class='definition'><pre><span style="">&lt;</span><span style="color:#20999d;">T</span><span style=""> : </span><span style="color:#000000;"><a href="psi_element://Base">Base</a></span><span style="">&gt;</span></pre></div><div class='content'><p>this is docs for T</p></div><table class='sections'></table>

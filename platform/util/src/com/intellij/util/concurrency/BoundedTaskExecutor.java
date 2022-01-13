@@ -1,9 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.JobFutureTask;
+import com.intellij.openapi.progress.JobRunnable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
@@ -22,9 +26,11 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * ExecutorService which limits the number of tasks running simultaneously.
  * The number of submitted tasks is unrestricted.
+ *
  * @see AppExecutorUtil#createBoundedApplicationPoolExecutor(String, Executor, int) instead
  */
 public final class BoundedTaskExecutor extends AbstractExecutorService {
+
   private volatile boolean myShutdown;
   @NotNull
   private final String myName;
@@ -52,10 +58,10 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     myName = name;
     myBackendExecutor = backendExecutor;
     if (maxThreads < 1) {
-      throw new IllegalArgumentException("maxThreads must be >=1 but got: "+maxThreads);
+      throw new IllegalArgumentException("maxThreads must be >=1 but got: " + maxThreads);
     }
     if (backendExecutor instanceof BoundedTaskExecutor) {
-      throw new IllegalArgumentException("backendExecutor is already BoundedTaskExecutor: "+backendExecutor);
+      throw new IllegalArgumentException("backendExecutor is already BoundedTaskExecutor: " + backendExecutor);
     }
     myMaxThreads = maxThreads;
     myChangeThreadName = changeThreadName;
@@ -122,7 +128,31 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
   }
 
   @Override
-  public void execute(@NotNull @Async.Schedule Runnable task) {
+  protected <T> RunnableFuture<T> newTaskFor(Runnable runnable, T value) {
+    return newTaskFor(Executors.callable(runnable, value));
+  }
+
+  @Override
+  protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
+    if (LoadingState.APP_STARTED.isOccurred() && Registry.is("ide.cancellation.propagate")) {
+      return JobFutureTask.jobRunnableFuture(callable);
+    }
+    else {
+      return super.newTaskFor(callable);
+    }
+  }
+
+  @Override
+  public void execute(@NotNull Runnable command) {
+    if (LoadingState.APP_STARTED.isOccurred() && Registry.is("ide.cancellation.propagate")) {
+      executeRaw(JobRunnable.jobRunnable(command));
+    }
+    else {
+      executeRaw(command);
+    }
+  }
+
+  private void executeRaw(@NotNull Runnable task) {
     if (isShutdown() && !(task instanceof LastTask)) {
       throw new RejectedExecutionException("Already shutdown");
     }
@@ -227,7 +257,8 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     }
   }
 
-  public synchronized void waitAllTasksExecuted(long timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
+  public synchronized void waitAllTasksExecuted(long timeout, @NotNull TimeUnit unit)
+    throws ExecutionException, InterruptedException, TimeoutException {
     CountDownLatch started = new CountDownLatch(myMaxThreads);
     CountDownLatch readyToFinish = new CountDownLatch(1);
     Runnable runnable = new Runnable() {
@@ -249,7 +280,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     };
     // Submit 'myMaxTasks' runnables and wait for them all to start.
     // They will spread to all executor threads and ensure the previously submitted tasks are completed.
-    // Wait for all empty runnables to finish to free up the threads.
+    // Wait for all empty runnables to finish freeing up the threads.
     List<Future<?>> futures = ContainerUtil.map(Collections.nCopies(myMaxThreads, null), __ -> {
       LastTask wait = new LastTask(runnable);
       execute(wait);
@@ -295,7 +326,11 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
   public String toString() {
     return "BoundedExecutor(" + myMaxThreads + ")" + (isShutdown() ? " SHUTDOWN " : "") +
            "; inProgress: " + (int)myStatus.get() +
-           (myTaskQueue.isEmpty() ? "" : "; queue: " + myTaskQueue.size() + "[" + ContainerUtil.map(myTaskQueue, BoundedTaskExecutor::info) + "]") +
+           (
+             myTaskQueue.isEmpty()
+             ? ""
+             : "; queue: " + myTaskQueue.size() + "[" + ContainerUtil.map(myTaskQueue, BoundedTaskExecutor::info) + "]"
+           ) +
            "; name: " + myName;
   }
 }

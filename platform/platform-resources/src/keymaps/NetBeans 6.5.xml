@@ -5,6 +5,7 @@
     <keyboard-shortcut first-keystroke="control Y"/>
   </action>
   <action id="ActivateFavoritesToolWindow"/>
+  <action id="ActivateBookmarksToolWindow"/>
   <action id="ActivateFindToolWindow">
     <keyboard-shortcut first-keystroke="shift alt U"/>
     <keyboard-shortcut first-keystroke="shift control 0"/>

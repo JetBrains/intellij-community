@@ -6,7 +6,9 @@ import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class EmptyProgressIndicatorBase implements ProgressIndicator {
+  @NotNull
   private final ModalityState myModalityState;
+  @NotNull
   private volatile RunState myRunState = RunState.VIRGIN;
 
   private enum RunState {

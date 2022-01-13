@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -116,6 +117,18 @@ public final class CompositeDocumentationProvider implements DocumentationProvid
       String result = provider.getQuickNavigateInfo(element, originalElement);
       if (result != null) {
         LOG.debug("getQuickNavigateInfo: ", provider);
+        return result;
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public @Nullable HtmlChunk getLocationInfo(@Nullable PsiElement element) {
+    for (DocumentationProvider provider : getAllProviders()) {
+      HtmlChunk result = provider.getLocationInfo(element);
+      if (result != null) {
+        LOG.debug("getLocationInfo: ", provider);
         return result;
       }
     }

@@ -1,3 +1,4 @@
+// AFTER-WARNING: Parameter 's' is never used
 class C {
     companion object {
         fun foo(s: String) = 1

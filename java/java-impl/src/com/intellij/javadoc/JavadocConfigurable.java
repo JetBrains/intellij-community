@@ -13,7 +13,7 @@ import javax.swing.*;
 import java.io.File;
 
 public final class JavadocConfigurable implements Configurable {
-  private JavadocGenerationPanel myPanel;
+  private JavadocGenerationAdditionalUi myPanel;
   private final JavadocConfiguration myConfiguration;
   private final Project myProject;
 
@@ -29,9 +29,9 @@ public final class JavadocConfigurable implements Configurable {
 
   @Override
   public JComponent createComponent() {
-    myPanel = new JavadocGenerationPanel();
+    myPanel = new JavadocGenerationAdditionalUi();
     myPanel.myLinkToJdkDocs.setEnabled(sdkHasJavadocUrls(myProject));
-    return myPanel.myPanel;
+    return myPanel.getPanel();
   }
 
   public void applyTo(JavadocConfiguration configuration) {

@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
 import org.jetbrains.kotlin.tools.projectWizard.core.Writer
+import org.jetbrains.kotlin.tools.projectWizard.core.compute
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ModuleConfiguratorSetting
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ModuleConfiguratorSettingReference
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
@@ -250,5 +251,14 @@ object JsComposeMppConfigurator : JsBrowserBasedConfigurator, SimpleTargetConfig
             listOf(GradlePropertyAccessIR("IR"))
         )
     }
+
+    override fun Writer.runArbitraryTask(
+        configurationData: ModulesToIrConversionData,
+        module: Module,
+        modulePath: Path,
+    ): TaskResult<Unit> = compute {
+        GradlePlugin.gradleProperties.addValues("kotlin.js.webpack.major.version" to 4) //workaround for KT-48273 TODO:remove once 1.5.31 is released
+    }
+
 }
 

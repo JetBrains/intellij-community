@@ -10,6 +10,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -222,7 +223,7 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
         }
         myLocalBranchesWithIncoming.put(r, calcBranchesWithIncoming(r));
       }
-      myProject.getMessageBus().syncPublisher(GIT_INCOMING_OUTGOING_CHANGED).incomingOutgoingInfoChanged();
+      BackgroundTaskUtil.syncPublisher(myProject, GIT_INCOMING_OUTGOING_CHANGED).incomingOutgoingInfoChanged();
     }));
   }
 

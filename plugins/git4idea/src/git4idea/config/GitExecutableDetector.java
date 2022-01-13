@@ -4,13 +4,11 @@ package git4idea.config;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.wsl.WSLDistribution;
-import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ThreeState;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -193,7 +191,7 @@ public class GitExecutableDetector {
 
   @Nullable
   private static String checkWslDistribution(@NotNull WSLDistribution distribution) {
-    if (WSLUtil.isWsl1(distribution) != ThreeState.NO) return null;
+    if (distribution.getVersion() != 2) return null;
 
     File root = distribution.getUNCRoot();
     for (String p : UNIX_PATHS) {

@@ -285,6 +285,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
               super.configurationCreatedAndWillLaunch(configuration);
               configuration.getTarget().setTarget("test_pytest_parametrized.test_eval");
               configuration.getTarget().setTargetType(PyRunTargetVariant.PYTHON);
+              configuration.setAdditionalArguments("--debug");
               configuration.setMetaInfo("test_eval[three plus file-8]");
             }
           };
@@ -385,7 +386,49 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   }
 
   @Test
+  public void testKeywords() {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/keywords",
+                                                                SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() {
+          return new PyTestTestProcessRunner("test_test.py", 0) {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull final PyTestConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              configuration.setKeywords("not spam");
+            }
+          };
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all,
+                                        final int exitCode) {
+          assertEquals("Test tree:\n" +
+                       "[root](+)\n" +
+                       ".test_test(+)\n" +
+                       "..test_eggs(+)\n", runner.getFormattedTestTree());
+          assertEquals(0, exitCode);
+        }
+      });
+  }
+
+  @Test
+  public void testKeywordsIgnoredInCustom() {
+    runTestWithJunkKeywords(true);
+  }
+
+  @Test
   public void testTestEmptySuite() {
+    runTestWithJunkKeywords(false);
+  }
+
+  private void runTestWithJunkKeywords(boolean useCustomMode) {
     runPythonTest(
       new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/testNameBeforeTestStarted",
                                                                 SdkCreationType.EMPTY_SDK) {
@@ -398,6 +441,9 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
             protected void configurationCreatedAndWillLaunch(@NotNull final PyTestConfiguration configuration) throws IOException {
               super.configurationCreatedAndWillLaunch(configuration);
               configuration.setKeywords("asdasdasd");
+              if (useCustomMode) {
+                configuration.getTarget().setTargetType(PyRunTargetVariant.CUSTOM);
+              }
             }
           };
         }
@@ -408,13 +454,29 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                         @NotNull final String stderr,
                                         @NotNull final String all,
                                         final int exitCode) {
-          assertEquals("Wrong message for empty suite",
-                       PyBundle.message("runcfg.tests.empty_suite"),
-                       runner.getTestProxy().getPresentation());
-          assertEquals("Wrong empty suite tree", "Test tree:\n" +
-                                                 "[root](-)\n", runner.getFormattedTestTree());
-
-          runner.getFormattedTestTree();
+          if (useCustomMode) {
+            assertEquals("Wrong test launched", "Test tree:\n" +
+                                                "[root](+)\n" +
+                                                ".test_test(+)\n" +
+                                                "..SampleTest1(+)\n" +
+                                                "...test_sample_1(+)\n" +
+                                                "...test_sample_2(+)\n" +
+                                                "...test_sample_3(+)\n" +
+                                                "...test_sample_4(+)\n" +
+                                                "..SampleTest2(+)\n" +
+                                                "...test_sample_5(+)\n" +
+                                                "...test_sample_6(+)\n" +
+                                                "...test_sample_7(+)\n" +
+                                                "...test_sample_8(+)\n", runner.getFormattedTestTree());
+            runner.getFormattedTestTree();
+          }
+          else {
+            assertEquals("Wrong message for empty suite",
+                         PyBundle.message("runcfg.tests.empty_suite"),
+                         runner.getTestProxy().getPresentation());
+            assertEquals("Wrong empty suite tree", "Test tree:\n" +
+                                                   "[root](-)\n", runner.getFormattedTestTree());
+          }
         }
       });
   }

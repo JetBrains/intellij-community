@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
@@ -92,7 +93,7 @@ class ModuleStoreTest {
         ModuleRootModificationUtil.addContentRoot(this, moduleFile.parent.systemIndependentPath)
         project.stateStore.save()
         assertThat(moduleFile).isRegularFile
-        assertThat(moduleFile.readText()).startsWith("""
+        assertThat(StringUtil.convertLineSeparators(moduleFile.readText())).startsWith("""
         <?xml version="1.0" encoding="UTF-8"?>
         <module type="JAVA_MODULE" version="4">""".trimIndent())
 

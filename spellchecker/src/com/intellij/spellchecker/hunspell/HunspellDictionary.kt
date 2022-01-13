@@ -3,10 +3,12 @@ package com.intellij.spellchecker.hunspell
 
 import ai.grazie.spell.lists.hunspell.HunspellWordList
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.VfsUtil.findFileByIoFile
 import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.util.Consumer
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.InputStreamReader
 
 internal data class HunspellBundle(val dic: File, val aff: File)
 
@@ -29,6 +31,7 @@ class HunspellDictionary(path: String, name: String? = null) : Dictionary {
 
   private val name: String
   private val dict: HunspellWordList
+  private val alphabet: HashSet<Int> = HashSet()
 
   init {
     this.name = name ?: path
@@ -40,6 +43,13 @@ class HunspellDictionary(path: String, name: String? = null) : Dictionary {
           this.dict = HunspellWordList(aff, dic)
         }
       }
+
+      val file = findFileByIoFile(bundle.dic, true)!!
+      InputStreamReader(file.inputStream, file.charset).use { reader ->
+        reader.forEachLine { line ->
+          line.takeWhile { it != ' ' && it != '/' }.lowercase().chars().forEach { this.alphabet.add(it) }
+        }
+      }
     }
     else throw FileNotFoundException("File '$path' not found")
   }
@@ -48,8 +58,11 @@ class HunspellDictionary(path: String, name: String? = null) : Dictionary {
 
   override fun getName() = name
 
-  override fun contains(word: String): Boolean {
-    return dict.contains(word, false)
+  override fun contains(word: String): Boolean? {
+    if (dict.contains(word, false)) return true
+    // mark a word as alien if it contains non-alphabetical characters
+    if (word.lowercase().chars().anyMatch { it !in this.alphabet }) return null
+    return false
   }
 
   override fun consumeSuggestions(word: String, consumer: Consumer<String>) {

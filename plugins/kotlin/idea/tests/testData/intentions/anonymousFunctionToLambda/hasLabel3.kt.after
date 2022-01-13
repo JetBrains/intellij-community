@@ -1,3 +1,4 @@
+// AFTER-WARNING: Parameter 'a' is never used
 inline fun block(block: () -> String) = block()
 
 val test = block2@{ i: Int, s: String ->

@@ -1,3 +1,4 @@
+// AFTER-WARNING: Parameter 's' is never used
 fun log(s: String) {
 }
 

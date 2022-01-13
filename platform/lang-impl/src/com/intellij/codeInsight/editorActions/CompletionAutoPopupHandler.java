@@ -61,7 +61,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
    * @deprecated can be emulated with {@link AppUIExecutor}
    */
   @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void runLaterWithCommitted(@NotNull Project project, @SuppressWarnings("unused") Document document, @NotNull Runnable runnable) {
+  public static void runLaterWithCommitted(@NotNull Project project, Document document, @NotNull Runnable runnable) {
     AppUIExecutor.onUiThread().later().withDocumentsCommitted(project).execute(runnable);
   }
 }

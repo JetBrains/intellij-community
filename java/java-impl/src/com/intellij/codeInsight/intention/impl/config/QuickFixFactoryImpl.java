@@ -50,7 +50,8 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.controlflow.UnnecessaryDefaultInspection;
 import com.siyeh.ig.fixes.CreateDefaultBranchFix;
-import com.siyeh.ig.fixes.CreateMissingSwitchBranchesFix;
+import com.siyeh.ig.fixes.CreateEnumMissingSwitchBranchesFix;
+import com.siyeh.ig.fixes.CreateSealedClassMissingSwitchBranchesFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ipp.modifiers.ChangeModifierIntention;
 import org.jetbrains.annotations.Nls;
@@ -954,7 +955,15 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddMissingEnumBranchesFix(@NotNull PsiSwitchBlock switchBlock, @NotNull Set<String> missingCases) {
-    return new CreateMissingSwitchBranchesFix(switchBlock, missingCases);
+    return new CreateEnumMissingSwitchBranchesFix(switchBlock, missingCases);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createAddMissingSealedClassBranchesFix(@NotNull PsiSwitchBlock switchBlock,
+                                                                @NotNull Set<String> missingCases,
+                                                                @NotNull List<String> allNames) {
+    return new CreateSealedClassMissingSwitchBranchesFix(switchBlock, missingCases, allNames);
   }
 
   @NotNull
@@ -1095,5 +1104,12 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     ProblemDescriptor descriptor = ProblemDescriptorUtil.toProblemDescriptor(file, (HighlightInfo)highlightInfo);
     if (descriptor == null) return null;
     return new LocalQuickFixAsIntentionAdapter(new UnnecessaryDefaultInspection.DeleteDefaultFix(), descriptor);
+  }
+
+
+  @Override
+  public @NotNull IntentionAction createAddAnnotationTargetFix(@NotNull PsiAnnotation annotation,
+                                                               @NotNull PsiAnnotation.TargetType target) {
+    return new AddAnnotationTargetFix(annotation, target);
   }
 }

@@ -17,6 +17,12 @@ import javax.swing.event.HyperlinkEvent
 
 internal const val DSL_INT_TEXT_RANGE_PROPERTY = "dsl.intText.range"
 
+enum class LabelPosition {
+  LEFT,
+
+  TOP
+}
+
 @ApiStatus.Experimental
 interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
@@ -45,8 +51,11 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun bold(): Cell<T>
 
   /**
-   * Adds comment under the cell. Visibility and enabled state of the cell affects comment as well.
-   * Only one comment for a row is supported now
+   * Adds comment under the cell aligned by left edge. The comment occupies available width before next comment (if present) or
+   * whole remaining width. Visibility and enabled state of the cell affects comment as well.
+   *
+   * For layout [RowLayout.LABEL_ALIGNED] comment after second columns is placed in second column (there are technical problems,
+   * can be implemented later)
    */
   fun comment(@NlsContexts.DetailedDescription comment: String?,
               maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH): Cell<T>
@@ -60,12 +69,16 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   /**
    * See doc for overloaded method
    */
-  fun label(@NlsContexts.Label label: String): Cell<T>
+  fun label(@NlsContexts.Label label: String, position: LabelPosition = LabelPosition.LEFT): Cell<T>
 
   /**
-   * Adds label before the cell. Visibility and enabled state of the cell affects label as well
+   * Adds label at specified [position]. [LabelPosition.TOP] labels occupy available width before next top label (if present) or
+   * whole remaining width. Visibility and enabled state of the cell affects label as well.
+   *
+   * For layout [RowLayout.LABEL_ALIGNED] labels for two first columns are supported only (there are technical problems,
+   * can be implemented later)
    */
-  fun label(label: JLabel): Cell<T>
+  fun label(label: JLabel, position: LabelPosition = LabelPosition.LEFT): Cell<T>
 
   /**
    * If this method is called, the value of the component will be stored to the backing property only if the component is enabled
@@ -81,6 +94,11 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun graphProperty(property: GraphProperty<*>): Cell<T>
 
   fun validationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
+
+  /**
+   * Shows [message] if [condition] is true
+   */
+  fun errorOnApply(@NlsContexts.DialogMessage message: String, condition: (T) -> Boolean): Cell<T>
 
   fun validationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
 

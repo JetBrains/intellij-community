@@ -72,7 +72,8 @@ import static com.intellij.vcs.commit.AbstractCommitWorkflow.getCommitHandlerFac
 import static com.intellij.vcs.commit.SingleChangeListCommitWorkflowKt.getPresentableText;
 import static java.lang.Math.max;
 import static java.util.Arrays.asList;
-import static java.util.Collections.*;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 public abstract class CommitChangeListDialog extends DialogWrapper implements SingleChangeListCommitWorkflowUi, ComponentContainer {
   public static final @NlsContexts.DialogTitle String DIALOG_TITLE = message("commit.dialog.title");
@@ -191,7 +192,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
                                       boolean cancelIfNoChanges) {
     ChangeListManager manager = ChangeListManager.getInstance(project);
     LocalChangeList defaultList = manager.getDefaultChangeList();
-    List<LocalChangeList> changeLists = manager.getChangeListsCopy();
+    List<LocalChangeList> changeLists = manager.getChangeLists();
 
     Set<AbstractVcs> affectedVcses = new HashSet<>();
     if (forceCommitInVcs != null) affectedVcses.add(forceCommitInVcs);

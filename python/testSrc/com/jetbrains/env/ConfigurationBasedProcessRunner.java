@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -13,6 +10,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.runners.DefaultProgramRunnerKt;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
@@ -26,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -106,23 +103,25 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
         }
       }
     }
+    ExecutionResult executionResult =
+      executionEnvironment.getState().execute(executionEnvironment.getExecutor(), executionEnvironment.getRunner());
+    ProcessHandler handler = executionResult.getProcessHandler();
 
-    executionEnvironment.setCallback(new ProgramRunner.Callback() {
+    handler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processStarted(final RunContentDescriptor descriptor) {
-        final ProcessHandler handler = descriptor.getProcessHandler();
-        assert handler != null : "No process handler";
-        handler.addProcessListener(consolePostprocessor);
-        handler.addProcessListener(processListener);
-        myConsole = null;
-        fetchConsoleAndSetToField(descriptor);
-        assert myConsole != null : "fetchConsoleAndSetToField did not set console!";
-        final JComponent component = myConsole.getComponent(); // Console does not work with out of this method
-        assert component != null;
-        myLastProcessDescriptor = descriptor;
+      public void startNotified(@NotNull ProcessEvent event) {
+        super.startNotified(event);
       }
     });
-    executionEnvironment.getRunner().execute(executionEnvironment);
+    RunContentDescriptor descriptor = DefaultProgramRunnerKt.showRunContent(executionResult, executionEnvironment);
+    handler.addProcessListener(processListener, project);
+    handler.addProcessListener(consolePostprocessor, project);
+    fetchConsoleAndSetToField(descriptor);
+    assert myConsole != null : "fetchConsoleAndSetToField did not set console!";
+    final var component = myConsole.getComponent(); // Console does not work without of this method
+    assert component != null;
+    myLastProcessDescriptor = descriptor;
+    handler.startNotify();
   }
 
   /**

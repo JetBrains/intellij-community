@@ -20,6 +20,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationSession;
+import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.Disposable;
@@ -294,8 +295,22 @@ public final class CodeInsightTestUtil {
                                                                 @NotNull Consumer<? super Out> resultChecker) {
     Out result = annotator.doAnnotate(in);
     resultChecker.accept(result);
-    AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl(new AnnotationSession(psiFile));
+    AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl(new AnnotationSession(psiFile), false);
     ApplicationManager.getApplication().runReadAction(() -> annotationHolder.applyExternalAnnotatorWithContext(psiFile, annotator, result));
+    annotationHolder.assertAllAnnotationsCreated();
+    return ContainerUtil.immutableList(annotationHolder);
+  }
+
+  /**
+   * Create AnnotationHolder, run {@code annotator} in it on passed {@code elements} and return created Annotations
+   */
+  @NotNull
+  public static List<Annotation> testAnnotator(@NotNull Annotator annotator, @NotNull PsiElement @NotNull... elements) {
+    PsiFile file = elements[0].getContainingFile();
+    AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl(new AnnotationSession(file), false);
+    for (PsiElement element : elements) {
+      annotationHolder.runAnnotatorWithContext(element, annotator);
+    }
     annotationHolder.assertAllAnnotationsCreated();
     return ContainerUtil.immutableList(annotationHolder);
   }

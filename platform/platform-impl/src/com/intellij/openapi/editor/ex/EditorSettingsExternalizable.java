@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex;
 
+import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -67,6 +68,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean SHOW_BREADCRUMBS_ABOVE = false;
     public boolean SHOW_BREADCRUMBS = true;
     public boolean ENABLE_RENDERED_DOC = false;
+    public boolean ENABLE_DOC_SYNTAX_HIGHLIGHTING = true;
 
     public boolean SMART_HOME = true;
 
@@ -343,6 +345,14 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     }
   }
 
+  public boolean isDocSyntaxHighlightingEnabled() {
+    return myOptions.ENABLE_DOC_SYNTAX_HIGHLIGHTING;
+  }
+
+  public void setDocSyntaxHighlightingEnabled(boolean value) {
+    myOptions.ENABLE_DOC_SYNTAX_HIGHLIGHTING = value;
+  }
+
   public boolean isBlockCursor() {
     return myOptions.IS_BLOCK_CURSOR;
   }
@@ -478,7 +488,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public boolean isShowQuickDocOnMouseOverElement() {
-    return myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT;
+    return myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT && !AccessibilityUtils.isScreenReaderDetected();
   }
 
   public void setShowQuickDocOnMouseOverElement(boolean show) {

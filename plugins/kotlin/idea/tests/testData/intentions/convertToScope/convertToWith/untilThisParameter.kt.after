@@ -1,4 +1,5 @@
 // WITH_RUNTIME
+// AFTER-WARNING: Parameter 'a' is never used
 
 class MyClass {
     fun foo1() = Unit

@@ -85,11 +85,6 @@ public class EditorConfigEncodingCache implements PersistentStateComponent<Eleme
   }
 
   @Nullable
-  public Charset getEncoding(@Nullable Project project, @NotNull VirtualFile virtualFile) {
-    return ObjectUtils.doIfNotNull(getCharsetData(project, virtualFile), CharsetData::getCharset);
-  }
-
-  @Nullable
   private CharsetData getCharsetData(@Nullable Project project, @NotNull VirtualFile virtualFile) {
     if (!Utils.isApplicableTo(virtualFile) || Utils.isEditorConfigFile(virtualFile)) return null;
     CharsetData cached = getCachedCharsetData(virtualFile);
@@ -108,12 +103,13 @@ public class EditorConfigEncodingCache implements PersistentStateComponent<Eleme
     return null;
   }
 
-  private void cacheEncoding(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+  public void cacheEncoding(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     final String key = getKey(virtualFile);
     if (!myCharsetMap.containsKey(key)) {
       final CharsetData charsetData = getCharsetData(project, virtualFile);
       if (charsetData != null) {
         myCharsetMap.put(key, charsetData);
+        virtualFile.setCharset(charsetData.charset);
       }
     }
   }
@@ -155,9 +151,11 @@ public class EditorConfigEncodingCache implements PersistentStateComponent<Eleme
     }
   }
 
-  public static class FileEditorListener implements FileEditorManagerListener {
+  public static class FileEditorListener implements FileEditorManagerListener.Before {
+
     @Override
-    public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+    public void beforeFileOpened(@NotNull FileEditorManager source,
+                                 @NotNull VirtualFile file) {
       getInstance().cacheEncoding(source.getProject(), file);
     }
   }

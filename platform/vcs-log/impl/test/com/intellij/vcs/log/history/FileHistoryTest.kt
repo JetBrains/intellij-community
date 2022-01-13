@@ -17,7 +17,6 @@ import com.intellij.vcs.log.graph.impl.facade.BaseController
 import com.intellij.vcs.log.graph.impl.facade.FilteredController
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.junit.Assert
 import org.junit.Assume.assumeFalse
 import org.junit.Test
@@ -28,7 +27,7 @@ class FileHistoryTest {
     val baseController = BaseController(permanentGraphInfo)
     val filteredController = object : FilteredController(baseController, permanentGraphInfo, fileNamesData.getCommits()) {}
 
-    val historyBuilder = FileHistoryBuilder(startCommit, startPath, fileNamesData, EMPTY_HISTORY)
+    val historyBuilder = FileHistoryBuilder(startCommit, startPath, fileNamesData, FileHistory.EMPTY)
     historyBuilder.accept(filteredController, permanentGraphInfo)
 
     val expectedResultGraph = graph(result)

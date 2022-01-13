@@ -32,6 +32,7 @@ import com.intellij.ui.AppUIUtil
 import com.intellij.ui.BalloonLayout
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.FrameState
+import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
@@ -56,7 +57,6 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
   private var onCloseHandler: BooleanGetter? = null
   private var frame: Window? = null
   private var project: Project? = null
-  private var focusWatcher: FocusWatcher? = null
   private var isDisposing = false
 
   var isDisposed = false
@@ -170,8 +170,6 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
         doBindAppMenuOfParent(frame, parentFrame)
       }
     }
-    focusWatcher = FocusWatcher()
-    focusWatcher!!.install(component!!)
   }
 
   fun show(restoreBounds: Boolean) {
@@ -184,6 +182,8 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
       loadFrameState(state)
     }
 
+    if (SystemInfo.isMac)
+      TouchbarSupport.showWindowActions(this, frame)
     frame.isVisible = true
   }
 
@@ -210,10 +210,6 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     this.frame = null
     preferredFocusedComponent = null
     project = null
-    if (component != null && focusWatcher != null) {
-      focusWatcher!!.deinstall(component)
-    }
-    focusWatcher = null
     component = null
     images = emptyList()
     isDisposed = true

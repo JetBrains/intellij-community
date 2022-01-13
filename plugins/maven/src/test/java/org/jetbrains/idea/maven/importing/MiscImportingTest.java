@@ -258,42 +258,6 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
   }
 
   @Test
-  public void testClearUnresolvedPluginsAfterPluginResolution() {
-    try {
-      File repo = new File(myDir, "repo");
-      setRepositoryPath(repo.getPath());
-
-      createProjectPom("<groupId>test</groupId>" +
-                       "<artifactId>project</artifactId>" +
-                       "<version>1</version>" +
-                       "" +
-                       "<build>" +
-                       "  <plugins>" +
-                       "    <plugin>" +
-                       "      <artifactId>maven-surefire-plugin</artifactId>" +
-                       "    </plugin>" +
-                       "  </plugins>" +
-                       "</build>");
-      importProjectWithErrors();
-
-      List<MavenProjectProblem> problems = myProjectsTree.getRootProjects().get(0).getProblems();
-      assertTrue(problems.size() > 0);
-
-      for (MavenProjectProblem problem : problems) {
-        assertTrue(problem.getDescription(), problem.getDescription().contains("Unresolved plugin"));
-      }
-
-      resolvePlugins();
-
-      assertEquals(0, myProjectsTree.getRootProjects().get(0).getProblems().size());
-    }
-    finally {
-      // do not lock files by maven process
-      MavenServerManager.getInstance().shutdown(true);
-    }
-  }
-
-  @Test
   public void testMavenExtensionsAreLoadedAndAfterProjectsReadIsCalled() throws Exception {
     try {
       MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "plugins");

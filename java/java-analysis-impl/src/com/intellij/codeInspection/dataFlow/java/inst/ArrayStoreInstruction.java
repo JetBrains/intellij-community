@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow.java.inst;
 
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.IndexOutOfBoundsProblem;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
@@ -58,6 +59,7 @@ public class ArrayStoreInstruction extends ExpressionPushingInstruction {
       myIndexProblem.processOutOfBounds(interpreter, stateBefore, index, array, myOutOfBoundsTransfer);
     if (states != null) return states;
 
+    JavaDfaHelpers.dropLocality(valueToStore, stateBefore);
     checkArrayElementAssignability(interpreter, stateBefore, valueToStore, array);
 
     LongRangeSet rangeSet = DfIntType.extractRange(stateBefore.getDfType(index));

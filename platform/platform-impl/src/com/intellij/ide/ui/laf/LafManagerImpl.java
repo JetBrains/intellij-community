@@ -737,6 +737,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     if (SystemInfoRt.isMac) {
       installMacOSXFonts(UIManager.getLookAndFeelDefaults());
     }
+    else if (SystemInfoRt.isLinux) {
+      installLinuxFonts(UIManager.getLookAndFeelDefaults());
+    }
     return false;
   }
 
@@ -904,6 +907,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     defaults.put("MenuItem.font", menuFont);
     defaults.put("MenuItem.acceleratorFont", menuFont);
     defaults.put("PasswordField.font", defaults.getFont("TextField.font"));
+  }
+
+  private static void installLinuxFonts(UIDefaults defaults) {
+    defaults.put("MenuItem.acceleratorFont", defaults.get("MenuItem.font"));
   }
 
   private static void patchTreeUI(UIDefaults defaults) {

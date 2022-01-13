@@ -683,7 +683,7 @@ public class AnalysisScope {
       case FILE:
         return GlobalSearchScope.fileScope((PsiFile)myElement);
       case INVALID:
-        return GlobalSearchScope.EMPTY_SCOPE;
+        return LocalSearchScope.EMPTY;
       case MODULE:
         GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(myModule);
         return myIncludeTestSource ? moduleScope : GlobalSearchScope.notScope(GlobalSearchScopesCore.projectTestScope(myModule.getProject())).intersectWith(moduleScope);
@@ -710,7 +710,7 @@ public class AnalysisScope {
         };
       default:
         LOG.error("invalid type " + myType);
-        return GlobalSearchScope.EMPTY_SCOPE;
+        return LocalSearchScope.EMPTY;
     }
   }
 

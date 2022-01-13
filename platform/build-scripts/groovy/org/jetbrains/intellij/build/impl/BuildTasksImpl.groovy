@@ -228,14 +228,6 @@ final class BuildTasksImpl extends BuildTasks {
       }
     }
 
-    //todo remove this when KTIJ-11539 is fixed; currently if we add kotlin.idea module to the classpath as a transitive dependency of some other module,
-    //     it'll cause conflicts with Kotlin plugin loaded from JAR
-    String pathToIgnore = new File(context.projectOutputDirectory, "production/kotlin.idea").absolutePath
-    if (ideClasspath.remove(pathToIgnore)) {
-      context.messages.debug(" remove $pathToIgnore from classpath to avoid conflicts")
-    }
-
-
     List<String> jvmArgs = new ArrayList<>(BuildUtils.propertiesToJvmArgs(new HashMap<String, Object>([
       "idea.home.path"   : context.paths.projectHome,
       "idea.system.path" : "${FileUtilRt.toSystemIndependentName(tempDir.toString())}/system",
@@ -1021,25 +1013,26 @@ idea.fatal.error.notification=disabled
   }
 
   @Override
-  @CompileStatic(TypeCheckingMode.SKIP)
+  @CompileStatic
   void buildUpdaterJar() {
-    new LayoutBuilder(buildContext, false).layout(buildContext.paths.artifacts) {
-      jar("updater.jar") {
-        module("intellij.platform.updater")
-      }
-    }
+    doBuildUpdaterJar("updater.jar")
   }
 
   @Override
-  @CompileStatic(TypeCheckingMode.SKIP)
+  @CompileStatic
   void buildFullUpdaterJar() {
+    doBuildUpdaterJar("updater-full.jar")
+  }
+
+  @CompileStatic(TypeCheckingMode.SKIP)
+  private void doBuildUpdaterJar(String artifactName) {
     String updaterModule = "intellij.platform.updater"
     List<File> libraryFiles = JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(updaterModule))
       .productionOnly()
       .runtimeOnly()
-      .libraries.collectMany {it.getFiles(JpsOrderRootType.COMPILED)}
-    new LayoutBuilder(buildContext, false).layout(buildContext.paths.artifacts) {
-      jar("updater-full.jar", true) {
+      .libraries.collectMany { it.getFiles(JpsOrderRootType.COMPILED) }
+    new LayoutBuilder(buildContext, true).layout(buildContext.paths.artifacts) {
+      jar(artifactName, true) {
         module(updaterModule)
         for (file in libraryFiles) {
           ant.zipfileset(src: file.absolutePath)

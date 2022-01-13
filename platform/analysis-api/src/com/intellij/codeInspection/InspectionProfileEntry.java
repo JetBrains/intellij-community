@@ -350,7 +350,6 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * @param node to read settings from.
    * @throws InvalidDataException if the loaded data was not valid.
    */
-  @SuppressWarnings("deprecation")
   public void readSettings(@NotNull Element node) {
     if (useNewSerializer()) {
       try {
@@ -361,6 +360,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
       }
     }
     else {
+      //noinspection deprecation
       DefaultJDOMExternalizer.readExternal(this, node);
     }
   }

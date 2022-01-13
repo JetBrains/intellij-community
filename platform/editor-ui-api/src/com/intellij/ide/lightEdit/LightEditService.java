@@ -39,6 +39,7 @@ public interface LightEditService {
 
   void showEditorWindow();
 
+  @Nullable
   Project getProject();
 
   @NotNull

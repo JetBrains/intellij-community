@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.gridLayout
 
+import com.intellij.ui.dsl.*
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import org.junit.Assert
 import org.junit.Test
@@ -8,12 +9,9 @@ import java.awt.Dimension
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.border.EmptyBorder
+import kotlin.math.max
 import kotlin.random.Random
 import kotlin.test.assertEquals
-
-const val PREFERRED_WIDTH = 60
-const val PREFERRED_HEIGHT = 40
-val PREFERRED_SIZE = Dimension(PREFERRED_WIDTH, PREFERRED_HEIGHT)
 
 class GridLayoutTest {
 
@@ -50,9 +48,10 @@ class GridLayoutTest {
     RowsGridBuilder(panel)
       .cell(label, visualPaddings = visualPaddings)
     doLayout(panel, 200, 100)
-    assertEquals(-visualPaddings.left, label.x)
-    assertEquals(-visualPaddings.top, label.y)
-    assertEquals(panel.preferredSize, Dimension(PREFERRED_WIDTH - visualPaddings.width, PREFERRED_HEIGHT - visualPaddings.height))
+    // Visual paddings are compensated by layout, so whole component is fit
+    assertEquals(0, label.x)
+    assertEquals(0, label.y)
+    assertEquals(panel.preferredSize, PREFERRED_SIZE)
     assertEquals(PREFERRED_SIZE, label.size)
 
     panel.removeAll()
@@ -61,10 +60,11 @@ class GridLayoutTest {
       .cell(label, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.BOTTOM,
             resizableColumn = true, visualPaddings = visualPaddings)
     doLayout(panel, 200, 100)
-    assertEquals(-visualPaddings.left, label.x)
-    assertEquals(100 - PREFERRED_HEIGHT + visualPaddings.bottom, label.y)
-    assertEquals(panel.preferredSize, Dimension(PREFERRED_WIDTH - visualPaddings.width, PREFERRED_HEIGHT - visualPaddings.height))
-    assertEquals(200 + visualPaddings.width, label.width)
+    // Visual paddings are compensated by layout, so whole component is fit
+    assertEquals(0, label.x)
+    assertEquals(100 - PREFERRED_HEIGHT, label.y)
+    assertEquals(panel.preferredSize, PREFERRED_SIZE)
+    assertEquals(200, label.width)
     assertEquals(PREFERRED_HEIGHT, label.height)
   }
 
@@ -150,7 +150,8 @@ class GridLayoutTest {
             visualPaddings = visualPaddings)
     doLayout(panel, 200, 100)
     assertEquals(PREFERRED_SIZE, label.preferredSize)
-    assertEquals(gaps.left - visualPaddings.left, label.x)
+    // Visual paddings are compensated by layout, so whole component is fit
+    assertEquals(max(0, gaps.left - visualPaddings.left), label.x)
     assertEquals(gaps.top + (100 - PREFERRED_HEIGHT - gaps.height + visualPaddings.height) / 2 - visualPaddings.top, label.y)
 
     panel.removeAll()
@@ -159,9 +160,10 @@ class GridLayoutTest {
       .cell(label, horizontalAlign = HorizontalAlign.RIGHT, verticalAlign = VerticalAlign.FILL, resizableColumn = true, gaps = gaps,
             visualPaddings = visualPaddings)
     doLayout(panel, 200, 100)
-    assertEquals(Dimension(PREFERRED_WIDTH, 100 - gaps.height + visualPaddings.height), label.size)
-    assertEquals(200 - PREFERRED_WIDTH - gaps.right + visualPaddings.right, label.x)
-    assertEquals(gaps.top - visualPaddings.top, label.y)
+    // Visual paddings are compensated by layout, so whole component is fit
+    assertEquals(Dimension(PREFERRED_WIDTH, 100), label.size)
+    assertEquals(200 - PREFERRED_WIDTH, label.x)
+    assertEquals(0, label.y)
   }
 
   @Test
@@ -203,12 +205,12 @@ class GridLayoutTest {
     val labels = mutableListOf<List<JLabel>>()
     val columnsCount = 4
     val rowsCount = 5
-    val columnGaps = (0 until columnsCount).map { ColumnGaps(it * 20, it * 20 + 10) }
+    val columnGaps = (0 until columnsCount).map { HorizontalGaps(it * 20, it * 20 + 10) }
     val builder = RowsGridBuilder(panel)
       .columnsGaps(columnGaps)
 
     for (y in 0 until rowsCount) {
-      builder.row(RowGaps(y * 15, y * 15 + 5))
+      builder.row(VerticalGaps(y * 15, y * 15 + 5))
       val row = mutableListOf<JLabel>()
       for (x in 1..columnsCount) {
         val label = label()
@@ -240,87 +242,5 @@ class GridLayoutTest {
 
       assertEquals(Dimension(preferredWidth, preferredHeight), panel.preferredSize)
     }
-  }
-
-  @Test
-  fun testBaseline() {
-    for (verticalAlign in VerticalAlign.values()) {
-      if (verticalAlign == VerticalAlign.FILL) {
-        continue
-      }
-
-      val panel = JPanel(GridLayout())
-      val builder = RowsGridBuilder(panel)
-        .defaultBaselineAlign(true)
-
-      for (i in 10..16) {
-        builder.label(verticalAlign, i)
-      }
-
-      doLayout(panel, 1600, 800)
-      var baseline: Int? = null
-      for (component in panel.components) {
-        val size = component.size
-        val componentBaseline = component.getBaseline(size.width, size.height)
-        if (baseline == null) {
-          baseline = component.y + componentBaseline
-        }
-        else {
-          assertEquals(baseline, component.y + componentBaseline)
-        }
-      }
-    }
-  }
-
-  @Test
-  fun testBaselineWithSubPanels() {
-    for (verticalAlign in VerticalAlign.values()) {
-      if (verticalAlign == VerticalAlign.FILL) {
-        continue
-      }
-
-      val panel = JPanel(GridLayout())
-      val builder = RowsGridBuilder(panel)
-        .defaultBaselineAlign(true)
-
-      builder
-        .label(verticalAlign, 14)
-        .subGridBuilder(verticalAlign = verticalAlign)
-        .label(verticalAlign, 12)
-        .subGridBuilder(verticalAlign = verticalAlign)
-        .label(verticalAlign, 16)
-        .label(verticalAlign, 10)
-
-      doLayout(panel, 1600, 800)
-      var baseline: Int? = null
-      for (component in panel.components) {
-        val size = component.size
-        val componentBaseline = component.getBaseline(size.width, size.height)
-        if (baseline == null) {
-          baseline = component.y + componentBaseline
-        }
-        else {
-          assertEquals(baseline, component.y + componentBaseline)
-        }
-      }
-    }
-  }
-
-  private fun doLayout(panel: JPanel, width: Int, height: Int) {
-    panel.setSize(width, height)
-    (panel.layout as GridLayout).layoutContainer(panel)
-  }
-
-  private fun label(preferredWidth: Int = PREFERRED_WIDTH, preferredHeight: Int = PREFERRED_HEIGHT): JLabel {
-    val result = JLabel("Label")
-    result.preferredSize = Dimension(preferredWidth, preferredHeight)
-    return result
-  }
-
-  fun RowsGridBuilder.label(verticalAlign: VerticalAlign, size: Int): RowsGridBuilder {
-    val label = JLabel("${verticalAlign.name} $size")
-    label.font = label.font.deriveFont(size.toFloat())
-    cell(label, verticalAlign = verticalAlign)
-    return this
   }
 }

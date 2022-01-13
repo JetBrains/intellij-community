@@ -14,7 +14,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class AnalyzeDependenciesAction extends BaseAnalysisAction {
-  private AnalyzeDependenciesSettingPanelUi myPanel;
+  private AnalyzeDependenciesAdditionalUi myPanel;
 
   public AnalyzeDependenciesAction() {
     super(CodeInsightBundle.messagePointer("action.forward.dependency.analysis"), CodeInsightBundle.messagePointer("action.analysis.noun"));
@@ -29,7 +29,7 @@ public class AnalyzeDependenciesAction extends BaseAnalysisAction {
   @Override
   @Nullable
   protected JComponent getAdditionalActionSettings(final Project project, final BaseAnalysisActionDialog dialog) {
-    myPanel = new AnalyzeDependenciesSettingPanelUi();
+    myPanel = new AnalyzeDependenciesAdditionalUi();
     myPanel.getTransitiveCB().setText(CodeInsightBundle.message("analyze.dependencies.transitive.dependencies.checkbox"));
     myPanel.getTransitiveCB().addActionListener(new ActionListener() {
       @Override

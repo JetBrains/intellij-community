@@ -604,12 +604,12 @@ class MoveConflictChecker(
             is DeclarationDescriptor -> when (a) {
                 is FunctionDescriptor -> b is FunctionDescriptor
                         && equivalent(a.name, b.name) && a.valueParameters.zip(b.valueParameters).all { equivalent(it.first, it.second) }
+                is ValueParameterDescriptor -> b is ValueParameterDescriptor
+                        && equivalent(a.type, b.type)
                 else -> b is DeclarationDescriptor && equivalent(a.name, b.name)
             }
             is Name -> b is Name && a.asString() == b.asString()
-            is FqName -> b is Name && a.asString() == b.asString()
-            is ValueParameterDescriptor -> b is ValueParameterDescriptor
-                    && equivalent(a.type, b.type)
+            is FqName -> b is FqName && a.asString() == b.asString()
             is KotlinType -> {
                 if (b !is KotlinType) false
                 else {

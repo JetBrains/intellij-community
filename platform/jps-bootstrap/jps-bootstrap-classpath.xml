@@ -1,0 +1,128 @@
+<!-- Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<project name="Prepare classpath for jps bootstrap" xmlns:resolver="antlib:org.apache.maven.resolver.ant" default="jps-bootstrap-classpath">
+  <dirname property="jps.bootstrap.dir" file="${ant.file}"/>
+  <property name="community.home" value="${jps.bootstrap.dir}/../.."/>
+  <property name="build.dir" value="${community.home}/out/jps-bootstrap" />
+  <property name="classes.dir" value="${build.dir}/jps-bootstrap.classes" />
+  <property name="uber.jar" value="${build.dir}/jps-bootstrap-all.jar" />
+  <property name="m2.dir" value="${build.dir}/m2" />
+  <property environment="env"/>
+  <property prefix="dependencies" file="${community.home}/build/dependencies/gradle.properties" />
+
+  <mkdir dir="${build.dir}" />
+
+  <property name="maven.resolver.ant.tasks.version" value="1.2.1"/>
+  <property name="maven.resolver.ant.tasks.file.name" value="maven-resolver-ant-tasks-${maven.resolver.ant.tasks.version}-uber.jar"/>
+  <property name="maven.resolver.ant.tasks.file.path" value="${build.dir}/${maven.resolver.ant.tasks.file.name}"/>
+
+  <available file="${maven.resolver.ant.tasks.file.path}" property="maven.resolver.ant.tasks.file.exists"/>
+
+  <xmlproperty file="${community.home}/.idea/libraries/kotlinc_kotlin_compiler.xml" prefix="kotlinc.library.xml"/>
+  <loadresource property="kotlin.channel">
+  <string value="${dependencies.kotlinCompilerBuild}" />
+    <filterchain>
+      <tokenfilter>
+        <replaceregex pattern="^.*:([a-zA-Z\-0-9.]+)$" replace="\1"/>
+      </tokenfilter>
+    </filterchain>
+  </loadresource>
+  <loadresource property="kotlin.version">
+    <string value="${dependencies.kotlinCompilerBuild}" />
+    <filterchain>
+      <tokenfilter>
+        <replaceregex pattern="^([a-zA-Z\-0-9.]+):.*$" replace="\1"/>
+      </tokenfilter>
+    </filterchain>
+  </loadresource>
+
+  <property name="kotlin.home" value="${build.dir}/kotlin" />
+  <property name="kotlin.url" value="https://cache-redirector.jetbrains.com/plugins.jetbrains.com/maven/${kotlin.channel}/com/jetbrains/plugins/org.jetbrains.kotlin/${kotlin.version}/org.jetbrains.kotlin-${kotlin.version}.zip" />
+
+  <condition property="kotlin.home.ok">
+    <resourcecontains resource="${kotlin.home}/.flag" substring="${kotlin.url}"/>
+  </condition>
+
+  <target name="download.and.extract.kotlin" unless="kotlin.home.ok">
+    <echo message="Downloading Kotlin ${kotlin.version} channel ${kotlin.channel} to ${kotlin.home}" />
+
+    <delete dir="${kotlin.home}" />
+    <mkdir dir="${kotlin.home}" />
+    <get src="${kotlin.url}" dest="${kotlin.home}/kotlin.zip" />
+    <unzip src="${kotlin.home}/kotlin.zip" dest="${kotlin.home}" />
+    <delete file="${kotlin.home}/kotlin.zip" />
+
+    <echo file="${kotlin.home}/.flag" message="${kotlin.url}" />
+  </target>
+
+  <target name="download.resolver" unless="maven.resolver.ant.tasks.file.exists">
+    <get
+      src="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-ant-tasks/${maven.resolver.ant.tasks.version}/maven-resolver-ant-tasks-${maven.resolver.ant.tasks.version}-uber.jar"
+      dest="${maven.resolver.ant.tasks.file.path}.tmp"
+      verbose="true"/>
+    <move
+      file="${maven.resolver.ant.tasks.file.path}.tmp"
+      tofile="${maven.resolver.ant.tasks.file.path}"
+      overwrite="true"/>
+  </target>
+
+  <target name="jps-bootstrap-classpath" depends="download.resolver,download.and.extract.kotlin">
+    <taskdef uri="antlib:org.apache.maven.resolver.ant" resource="org/apache/maven/resolver/ant/antlib.xml"
+             classpath="${maven.resolver.ant.tasks.file.path}"/>
+
+    <resolver:remoterepos id="remoterepos.buildscript">
+      <resolver:remoterepo id="central" url="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2"/>
+      <resolver:remoterepo id="intellij-dependencies" url="https://cache-redirector.jetbrains.com/intellij-dependencies"/>
+      <resolver:remoterepo id="kotlin-ide-plugin-dependencies" url="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies"/>
+    </resolver:remoterepos>
+
+    <resolver:pom file="${jps.bootstrap.dir}/pom.xml" id="jps.bootstrap.pom"/>
+
+    <resolver:resolve failOnMissingAttachments="true">
+      <resolver:localrepo dir="${m2.dir}" />
+      <resolver:remoterepos refid="remoterepos.buildscript"/>
+      <resolver:dependencies pomRef="jps.bootstrap.pom" />
+      <resolver:path refid="classpath.buildscripts" classpath="runtime"/>
+    </resolver:resolve>
+
+    <delete dir="${classes.dir}" />
+    <mkdir dir="${classes.dir}" />
+    <javac
+      srcdir="${jps.bootstrap.dir}/src/main/java"
+      destdir="${classes.dir}"
+      encoding="UTF-8"
+      release="11"
+      includeantruntime="false"
+      classpathref="classpath.buildscripts"
+    />
+
+    <path id="whole.classpath.id" cache="true">
+      <path refid="classpath.buildscripts" />
+      <pathelement path="${kotlin.home}/Kotlin/lib/jps/kotlin-jps-plugin.jar" />
+      <pathelement path="${kotlin.home}/Kotlin/lib/kotlin-jps-common.jar" />
+      <pathelement path="${kotlin.home}/Kotlin/lib/kotlin-plugin.jar" />
+      <pathelement path="${kotlin.home}/Kotlin/lib/kotlin-common.jar" />
+      <pathelement path="${kotlin.home}/Kotlin/lib/kotlin-reflect.jar" />
+    </path>
+
+    <pathconvert pathsep="${path.separator}" property="whole.classpath.property" refid="whole.classpath.id"/>
+    <echo file="${build.dir}/classpath.pathlist" message="&quot;${whole.classpath.property}${path.separator}${classes.dir}&quot;" />
+    <echo message="JpsBootstrapMain classpath: see ${build.dir}/classpath.pathlist" />
+
+  </target>
+
+  <target name="jps-bootstrap-all-jar" depends="jps-bootstrap-classpath">
+    <delete dir="${build.dir}/libs"/>
+    <mkdir dir="${build.dir}/libs"/>
+    <copy todir="${build.dir}/libs" flatten="true">
+      <path refid="whole.classpath.id" />
+    </copy>
+
+    <jar destfile="${uber.jar}" basedir="${classes.dir}">
+      <manifest>
+        <attribute name="Main-Class" value="JpsBootstrapMain"/>
+      </manifest>
+      <zipgroupfileset dir="${build.dir}/libs"/>
+    </jar>
+  </target>
+
+</project>

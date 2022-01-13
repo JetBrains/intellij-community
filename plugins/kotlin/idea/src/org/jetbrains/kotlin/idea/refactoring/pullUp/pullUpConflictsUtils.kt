@@ -2,7 +2,10 @@
 
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
@@ -49,9 +52,32 @@ fun checkConflicts(
 ) {
     val conflicts = MultiMap<PsiElement, String>()
 
+    val conflictsCollected = runProcessWithProgressSynchronously(RefactoringBundle.message("detecting.possible.conflicts"), project) {
+        runReadAction { collectConflicts(sourceClass, targetClass, memberInfos, conflicts) }
+    }
+
+    if (conflictsCollected) {
+        project.checkConflictsInteractively(conflicts, onShowConflicts, onAccept)
+    } else {
+        onShowConflicts()
+    }
+}
+
+private fun runProcessWithProgressSynchronously(
+    progressTitle: @NlsContexts.ProgressTitle String,
+    project: Project?,
+    process: Runnable,
+): Boolean = ProgressManager.getInstance().runProcessWithProgressSynchronously(process, progressTitle, true, project)
+
+private fun collectConflicts(
+    sourceClass: KtClassOrObject,
+    targetClass: PsiNamedElement,
+    memberInfos: List<KotlinMemberInfo>,
+    conflicts: MultiMap<PsiElement, String>
+) {
     val pullUpData = KotlinPullUpData(sourceClass,
                                       targetClass,
-                                      memberInfos.mapNotNull { it.member })
+                                       memberInfos.mapNotNull { it.member })
 
     with(pullUpData) {
         for (memberInfo in memberInfos) {
@@ -65,8 +91,6 @@ fun checkConflicts(
         }
     }
     checkVisibilityInAbstractedMembers(memberInfos, pullUpData.resolutionFacade, conflicts)
-
-    project.checkConflictsInteractively(conflicts, onShowConflicts, onAccept)
 }
 
 internal fun checkVisibilityInAbstractedMembers(

@@ -18,7 +18,7 @@ public interface UsageGroup extends Comparable<UsageGroup>, Navigatable {
    */
   @ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
-  default @Nullable Icon getIcon(@SuppressWarnings("unused") boolean isOpen) {
+  default @Nullable Icon getIcon(boolean isOpen) {
     if (ReflectionUtil.getMethodDeclaringClass(getClass(), "getIcon") == UsageGroup.class) {
       return null;
     }
@@ -34,7 +34,7 @@ public interface UsageGroup extends Comparable<UsageGroup>, Navigatable {
    */
   @ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
-  default @ListItem @NotNull String getText(@SuppressWarnings("unused") @Nullable UsageView view) {
+  default @ListItem @NotNull String getText(@Nullable UsageView view) {
     if (ReflectionUtil.getMethodDeclaringClass(getClass(), "getPresentableGroupText") == UsageGroup.class) {
       throw new AbstractMethodError("getPresentableGroupText() must be implemented");
     }

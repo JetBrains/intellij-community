@@ -16,7 +16,7 @@
 
 package packagedefault;
 
-import org.jspecify.annotations.Nullable;
+import org.jspecify.nullness.Nullable;
 
 class Bar {
   Object x(@Nullable Object o) {

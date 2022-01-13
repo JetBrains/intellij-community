@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runToolbar
 
+import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.KillableProcess
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.ui.RunContentDescriptor
@@ -27,10 +28,15 @@ class RunToolbarStopAction : AnAction(AllIcons.Actions.Suspend), DumbAware, RTBa
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.environment()?.let {
-
-      e.presentation.icon = e.environment()?.getRunToolbarProcess()?.getStopIcon() ?: templatePresentation.icon
-      it.contentToReuse?.let {
-        canBeStopped(it)
+      it.contentToReuse?.processHandler?.let {
+        if(it.isProcessTerminating) {
+          e.presentation.icon = AllIcons.Debugger.KillProcess
+          e.presentation.description = ExecutionBundle.message("action.terminating.process.progress.kill.description")
+        } else {
+          e.presentation.icon = templatePresentation.icon
+          e.presentation.description = templatePresentation.description
+        }
+        true
       }
     } ?: false
 
@@ -44,7 +50,7 @@ class RunToolbarStopAction : AnAction(AllIcons.Actions.Suspend), DumbAware, RTBa
   private fun canBeStopped(descriptor: RunContentDescriptor?): Boolean {
     val processHandler = descriptor?.processHandler
     return (processHandler != null && !processHandler.isProcessTerminated
-            && (!processHandler.isProcessTerminating
-                || processHandler is KillableProcess && (processHandler as KillableProcess).canKillProcess()))
+           && (!processHandler.isProcessTerminating
+               || processHandler is KillableProcess && (processHandler as KillableProcess).canKillProcess()))
   }
 }

@@ -18,6 +18,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 
 /**
@@ -1273,7 +1274,8 @@ public final class ContainerUtil {
   @SafeVarargs
   @Contract(pure = true)
   public static @NotNull <T> List<T> append(@NotNull List<? extends T> list, T @NotNull ... values) {
-    return concat(list, Arrays.asList(values));
+    //noinspection unchecked
+    return values.length == 0 ? (List<T>)list : concat(list, Arrays.asList(values));
   }
 
   /**
@@ -1283,7 +1285,8 @@ public final class ContainerUtil {
   @SafeVarargs
   @Contract(pure = true)
   public static @NotNull <T> List<T> prepend(@NotNull List<? extends T> list, T @NotNull ... values) {
-    return concat(Arrays.asList(values), list);
+    //noinspection unchecked
+    return values.length == 0 ? (List<T>)list : concat(Arrays.asList(values), list);
   }
 
   /**
@@ -2924,5 +2927,13 @@ public final class ContainerUtil {
     }
     //noinspection unchecked
     return immutableList((T[])list.toArray());
+  }
+
+  public static <T> T reduce(@NotNull List<? extends T> list, T identity, @NotNull BinaryOperator<T> accumulator) {
+    T result = identity;
+    for (T t : list) {
+      result = accumulator.apply(result, t);
+    }
+    return result;
   }
 }

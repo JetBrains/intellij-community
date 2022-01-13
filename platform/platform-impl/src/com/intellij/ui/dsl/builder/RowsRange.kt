@@ -12,6 +12,8 @@ interface RowsRange {
 
   fun visible(isVisible: Boolean): RowsRange
 
+  fun visibleIf(predicate: ComponentPredicate): RowsRange
+
   fun enabled(isEnabled: Boolean): RowsRange
 
   fun enabledIf(predicate: ComponentPredicate): RowsRange

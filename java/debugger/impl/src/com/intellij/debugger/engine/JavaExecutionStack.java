@@ -141,6 +141,15 @@ public class JavaExecutionStack extends XExecutionStack {
     }
   }
 
+  /**
+   * @deprecated Use {@link #createStackFrames(StackFrameProxyImpl)} instead.
+   */
+  @NotNull
+  @Deprecated(forRemoval = true)
+  public XStackFrame createStackFrame(@NotNull StackFrameProxyImpl stackFrameProxy) {
+    return createStackFrames(stackFrameProxy).get(0);
+  }
+
   @NotNull
   public List<XStackFrame> createStackFrames(@NotNull StackFrameProxyImpl stackFrameProxy) {
     StackFrameDescriptorImpl descriptor = new StackFrameDescriptorImpl(stackFrameProxy, myTracker);
@@ -257,7 +266,7 @@ public class JavaExecutionStack extends XExecutionStack {
 
     @Override
     public Priority getPriority() {
-      return myAdded <= StackFrameProxyImpl.FRAMES_BATCH_MAX? Priority.NORMAL : Priority.LOW;
+      return myAdded <= StackFrameProxyImpl.FRAMES_BATCH_MAX ? Priority.NORMAL : Priority.LOW;
     }
 
     private void addFrameIfNeeded(XStackFrame frame, boolean last) {
@@ -311,12 +320,11 @@ public class JavaExecutionStack extends XExecutionStack {
           if (AsyncStacksToggleAction.isAsyncStacksEnabled(
             (XDebugSessionImpl)suspendContext.getDebugProcess().getXdebugProcess().getSession()) &&
               topFrame instanceof JavaStackFrame) {
-            for (AsyncStackTraceProvider asyncStackTraceProvider : AsyncStackTraceProvider.EP.getExtensionList()) {
-              relatedStack = asyncStackTraceProvider.getAsyncStackTrace(((JavaStackFrame)topFrame), suspendContext);
-              if (relatedStack != null) {
-                appendRelatedStack(relatedStack);
-                return;
-              }
+            relatedStack =
+              AsyncStackTraceProvider.EP.computeSafeIfAny(p -> p.getAsyncStackTrace(((JavaStackFrame)topFrame), suspendContext));
+            if (relatedStack != null) {
+              appendRelatedStack(relatedStack);
+              return;
             }
             // append agent stack after the next frame
             relatedStack = AsyncStacksUtils.getAgentRelatedStack(frameProxy, suspendContext);
@@ -340,7 +348,8 @@ public class JavaExecutionStack extends XExecutionStack {
           addFrameIfNeeded(new XStackFrame() {
             @Override
             public void customizePresentation(@NotNull ColoredTextContainer component) {
-              component.append(JavaDebuggerBundle.message("label.too.many.frames.rest.truncated"), SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
+              component.append(JavaDebuggerBundle.message("label.too.many.frames.rest.truncated"),
+                               SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
             }
           }, true);
           return;
@@ -374,7 +383,7 @@ public class JavaExecutionStack extends XExecutionStack {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     String name = thread.name();
     ThreadGroupReferenceProxyImpl gr = thread.threadGroupProxy();
-    final String grname = (gr != null)? gr.name() : null;
+    final String grname = (gr != null) ? gr.name() : null;
     final String threadStatusText = DebuggerUtilsEx.getThreadStatusText(thread.status());
     //noinspection HardCodedStringLiteral
     if (grname != null && !"SYSTEM".equalsIgnoreCase(grname)) {

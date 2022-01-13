@@ -283,7 +283,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       content.putUserData(CLOSE_LISTENER_KEY, CloseListener(content, executor))
     }
     if (descriptor.isSelectContentWhenAdded /* also update selection when reused content is already selected  */
-        || oldDescriptor != null && contentManager.isSelected(content)) {
+        || oldDescriptor != null && content.manager!!.isSelected(content)) {
       content.manager!!.setSelectedContent(content)
     }
 
@@ -359,10 +359,6 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   private fun getOrCreateContentManagerForToolWindow(id: String, executor: Executor): ContentManager {
     val contentManager = getContentManagerByToolWindowId(id)
     if (contentManager != null) {
-      if (contentManager is ContentManagerImpl && contentManager.contentCount == 0 && !contentManager.isEmpty) {
-        val activeNestedManager = contentManager.activeNestedManager
-        if (activeNestedManager != null) return activeNestedManager
-      }
       return contentManager
     }
 
@@ -444,7 +440,14 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   private fun getDescriptorBy(handler: ProcessHandler, runnerInfo: Executor): RunContentDescriptor? {
-    fun find(contents: Array<Content>): RunContentDescriptor? {
+    fun find(manager: ContentManager?): RunContentDescriptor? {
+      if (manager == null) return null
+      val contents =
+      if (manager is ContentManagerImpl) {
+        manager.contentsRecursively
+      } else {
+        manager.contents.toList()
+      }
       for (content in contents) {
         val runContentDescriptor = getRunContentDescriptorByContent(content)
         if (runContentDescriptor?.processHandler === handler) {
@@ -454,10 +457,10 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       return null
     }
 
-    find(getContentManagerForRunner(runnerInfo, null).contents)?.let {
+    find(getContentManagerForRunner(runnerInfo, null))?.let {
       return it
     }
-    find(getContentManagerByToolWindowId(project.serviceIfCreated<RunDashboardManager>()?.toolWindowId ?: return null)?.contents ?: return null)?.let {
+    find(getContentManagerByToolWindowId(project.serviceIfCreated<RunDashboardManager>()?.toolWindowId ?: return null) ?: return null)?.let {
       return it
     }
     return null
@@ -556,8 +559,16 @@ private fun chooseReuseContentForDescriptor(contentManager: ContentManager,
     // stage two: try to get content from descriptor itself
     val attachedContent = descriptor.attachedContent
     if (attachedContent != null && attachedContent.isValid
-        && contentManager.getIndexOfContent(attachedContent) != -1 && (descriptor.displayName == attachedContent.displayName || !attachedContent.isPinned)) {
-      content = attachedContent
+        && (descriptor.displayName == attachedContent.displayName || !attachedContent.isPinned)) {
+      val contents =
+      if (contentManager is ContentManagerImpl) {
+        contentManager.contentsRecursively
+      } else {
+        contentManager.contents.toList()
+      }
+      if (contents.contains(attachedContent)) {
+        content = attachedContent
+      }
     }
   }
 
@@ -583,7 +594,12 @@ private fun getContentFromManager(contentManager: ContentManager,
                                   preferredName: String?,
                                   executionId: Long,
                                   reuseCondition: Predicate<in Content>?): Content? {
-  val contents = contentManager.contents.toMutableList()
+  val contents =
+    if (contentManager is ContentManagerImpl) {
+      contentManager.contentsRecursively
+    } else {
+      contentManager.contents.toMutableList()
+    }
   val first = contentManager.selectedContent
   if (first != null && contents.remove(first)) {
     //selected content should be checked first

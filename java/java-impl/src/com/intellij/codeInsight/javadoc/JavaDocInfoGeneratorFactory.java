@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -13,20 +14,37 @@ public class JavaDocInfoGeneratorFactory {
   }
 
   protected JavaDocInfoGenerator createImpl(@NotNull Project project, @Nullable PsiElement element) {
-    return new JavaDocInfoGenerator(project, element, false);
+    return new JavaDocInfoGenerator(
+      project,
+      element,
+      JavaDocHighlightingManagerImpl.getInstance(),
+      false,
+      EditorSettingsExternalizable.getInstance().isDocSyntaxHighlightingEnabled());
   }
 
-  protected JavaDocInfoGenerator createImpl(@NotNull Project project, @Nullable PsiElement element, boolean isGenerationForRenderedDoc) {
-    return new JavaDocInfoGenerator(project, element, isGenerationForRenderedDoc);
+  protected JavaDocInfoGenerator createImpl(
+    @NotNull Project project,
+    @Nullable PsiElement element,
+    @NotNull JavaDocHighlightingManager highlightingManager,
+    boolean isGenerationForRenderedDoc,
+    boolean doSyntaxHighlighting
+  ) {
+    return new JavaDocInfoGenerator(project, element, highlightingManager, isGenerationForRenderedDoc, doSyntaxHighlighting);
   }
 
   @NotNull
   public static JavaDocInfoGenerator create(@NotNull Project project, @Nullable PsiElement element) {
-    return getInstance().createImpl(project, element, false);
+    return getInstance().createImpl(project, element);
   }
 
   @NotNull
-  public static JavaDocInfoGenerator create(@NotNull Project project, @Nullable PsiElement element, boolean isGenerationForRenderedDoc) {
-    return getInstance().createImpl(project, element, isGenerationForRenderedDoc);
+  public static JavaDocInfoGenerator create(
+    @NotNull Project project,
+    @Nullable PsiElement element,
+    @NotNull JavaDocHighlightingManager highlightingManager,
+    boolean isGenerationForRenderedDoc,
+    boolean doSyntaxHighlighting
+  ) {
+    return getInstance().createImpl(project, element, highlightingManager, isGenerationForRenderedDoc, doSyntaxHighlighting);
   }
 }

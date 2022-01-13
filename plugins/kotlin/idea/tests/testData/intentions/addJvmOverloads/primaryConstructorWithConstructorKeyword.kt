@@ -1,4 +1,5 @@
 // WITH_RUNTIME
 // INTENTION_TEXT: "Add '@JvmOverloads' annotation to primary constructor"
+// AFTER-WARNING: Parameter 'b' is never used
 
 class A constructor(val a: String = ""<caret>, b: Int)

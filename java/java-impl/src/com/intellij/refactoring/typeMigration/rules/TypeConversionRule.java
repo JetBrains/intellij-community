@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.rules;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -26,10 +12,21 @@ import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author anna
+ * Defines a rule how one type can be converted to another, providing {@link TypeConversionDescriptorBase}.
+ * 
+ * @see com.intellij.refactoring.typeMigration.TypeConversionDescriptor
  */
 public abstract class TypeConversionRule {
   public static final ExtensionPointName<TypeConversionRule> EP_NAME = ExtensionPointName.create("com.intellij.conversion.rule");
+
+  /**
+   * Defines the conversion
+   * 
+   * @param member member which is called on {@code from} in this {@code context}; can be used to map methods in {@code from} to methods in {@code to}
+   * 
+   * @return null when it's impossible to convert {@code from} type to {@code to} type by this rule,
+   *         conversion description otherwise
+   */
   @Nullable
   public abstract TypeConversionDescriptorBase findConversion(final PsiType from,
                                                               final PsiType to,
@@ -38,12 +35,18 @@ public abstract class TypeConversionRule {
                                                               final TypeMigrationLabeler labeler);
 
 
+  /**
+   * @return type parameters mapping between {@code from} and {@code to}
+   */
   @Nullable
   public Pair<PsiType, PsiType> bindTypeParameters(PsiType from, PsiType to, final PsiMethod method, final PsiExpression context,
                                                    final TypeMigrationLabeler labeler) {
     return null;
   }
 
+  /**
+   * @return true if {@code null} initializer should be migrated as well
+   */
   public boolean shouldConvertNullInitializer(PsiType from, PsiType to, PsiExpression context) {
     return false;
   }

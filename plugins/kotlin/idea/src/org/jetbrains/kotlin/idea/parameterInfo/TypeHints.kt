@@ -70,7 +70,7 @@ fun provideTypeHint(element: KtCallableDeclaration, offset: Int): InlayInfoDetai
 
     return if (isUnclearType(type, element)) {
         val settings = element.containingKtFile.kotlinCustomSettings
-        val renderedType = HintsTypeRenderer.getInlayHintsTypeRenderer(element.analyze(), element).renderType(type)
+        val renderedType = HintsTypeRenderer.getInlayHintsTypeRenderer(element.analyze(), element).renderTypeIntoInlayInfo(type)
         val prefix = buildString {
             if (settings.SPACE_BEFORE_TYPE_COLON) {
                 append(" ")

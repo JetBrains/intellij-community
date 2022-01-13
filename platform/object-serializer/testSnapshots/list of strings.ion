@@ -6,5 +6,8 @@
     bar
   ],
   children:[
+  ],
+  singletonSet:[
+    a
   ]
 }

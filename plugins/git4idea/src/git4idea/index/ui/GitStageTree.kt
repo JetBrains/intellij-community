@@ -411,7 +411,7 @@ data class GitFileStatusNode(val root: VirtualFile, val status: GitFileStatus, v
   val fileStatus: FileStatus get() = kind.status(status)
 
   override fun toString(): @NonNls String {
-    return "GitFileStatusNode(root=$root, status=$fileStatus, kind=$kind)"
+    return "GitFileStatusNode(root=${root.name}, status=$fileStatus, kind=$kind, path=$filePath)"
   }
 }
 

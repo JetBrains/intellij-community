@@ -3,10 +3,12 @@ package com.intellij.codeInspection.ex
 
 import java.util.concurrent.Callable
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFile
 
 fun reportWhenInspectionFinished(inspectListener: InspectListener,
                                  toolWrapper: InspectionToolWrapper<*, *>,
                                  kind: InspectListener.InspectionKind,
+                                 file: PsiFile?,
                                  project: Project,
                                  inspectAction: Callable<Int>) {
   val start = System.currentTimeMillis()
@@ -16,7 +18,7 @@ fun reportWhenInspectionFinished(inspectListener: InspectListener,
   }
   finally {
     inspectListener.inspectionFinished(System.currentTimeMillis() - start, Thread.currentThread().id, problemsCount, toolWrapper,
-                                       kind, project)
+                                       kind, file, project)
   }
 }
 

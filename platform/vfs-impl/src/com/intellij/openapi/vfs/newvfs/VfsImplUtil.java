@@ -14,12 +14,14 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -125,6 +127,13 @@ public final class VfsImplUtil {
   }
 
   private static @Nullable Pair<NewVirtualFile, Iterable<String>> prepare(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
+    Pair<NewVirtualFile, String> pair = extractRootFromPath(vfs, path);
+    if (pair == null) return null;
+    Iterable<String> parts = StringUtil.tokenize(pair.second, FILE_SEPARATORS);
+    return new Pair<>(pair.first, parts);
+  }
+
+  public static Pair<NewVirtualFile, String> extractRootFromPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
     String normalizedPath = vfs.normalize(path);
     if (StringUtil.isEmptyOrSpaces(normalizedPath)) {
       return null;
@@ -141,8 +150,7 @@ public final class VfsImplUtil {
       return null;
     }
 
-    Iterable<String> parts = StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS);
-    return new Pair<>(root, parts);
+    return Pair.create(root, normalizedPath.substring(basePath.length()));
   }
 
   public static void refresh(@NotNull NewVirtualFileSystem vfs, boolean asynchronous) {
@@ -433,5 +441,28 @@ public final class VfsImplUtil {
       }
     }
     return events;
+  }
+
+  @ApiStatus.Internal
+  @NotNull
+  public static String getRecordPath(int record) {
+    StringBuilder name = new StringBuilder(FSRecords.getName(record));
+    int parent = FSRecords.getParent(record);
+    while (parent > 0) {
+      name.insert(0, FSRecords.getName(parent) + "/");
+      parent = FSRecords.getParent(parent);
+    }
+    return name.toString();
+  }
+
+  @ApiStatus.Internal
+  public static String getRecordIdPath(int record) {
+    StringBuilder name = new StringBuilder(String.valueOf(record));
+    int parent = FSRecords.getParent(record);
+    while (parent > 0) {
+      name.insert(0, parent + " -> ");
+      parent = FSRecords.getParent(parent);
+    }
+    return name.toString();
   }
 }

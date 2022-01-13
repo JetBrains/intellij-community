@@ -5,6 +5,8 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.FormatTextRanges;
 import com.intellij.formatting.FormattingRangesInfo;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.ImportOptimizer;
+import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -20,7 +22,8 @@ import java.util.Set;
 public final class CoreFormattingService implements FormattingService {
 
   private static final Set<Feature> FEATURES = EnumSet.of(Feature.AD_HOC_FORMATTING,
-                                                          Feature.FORMAT_FRAGMENTS);
+                                                          Feature.FORMAT_FRAGMENTS,
+                                                          Feature.OPTIMIZE_IMPORTS);
 
   @Override
   public boolean canFormat(@NotNull PsiFile file) {
@@ -65,6 +68,11 @@ public final class CoreFormattingService implements FormattingService {
     if (infos != null) {
       CoreCodeStyleUtil.postProcessRanges(file, infos, range -> CoreCodeStyleUtil.postProcessText(file, range));
     }
+  }
+
+  @Override
+  public @NotNull Set<ImportOptimizer> getImportOptimizers(@NotNull PsiFile file) {
+    return LanguageImportStatements.INSTANCE.forFile(file);
   }
 
   private static CodeStyleSettings getSettings(@NotNull PsiFile file) {

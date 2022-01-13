@@ -33,6 +33,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
@@ -280,7 +281,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         NodeDescriptor descriptor = (NodeDescriptor)value;
         setIcon(descriptor.getIcon());
         setText(descriptor.toString());
-        if (!isSelected) setForeground(((CoverageListNode)descriptor).getFileStatus().getColor());
+        if (!isSelected) setForeground(SlowOperations.allowSlowOperations(() -> ((CoverageListNode)descriptor).getFileStatus()).getColor());
       }
       return component;
     }

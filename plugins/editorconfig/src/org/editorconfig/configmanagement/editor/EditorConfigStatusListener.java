@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.ConfigEncodingManager;
 import org.editorconfig.configmanagement.EditorConfigEncodingCache;
@@ -102,7 +103,7 @@ public class EditorConfigStatusListener implements CodeStyleSettingsListener, Di
   }
 
   private static boolean containsValidEncodings(@NotNull Set<String> encodings) {
-    return encodings.stream().allMatch(encoding->ConfigEncodingManager.toCharset(encoding) != null);
+    return ContainerUtil.and(encodings, encoding->ConfigEncodingManager.toCharset(encoding) != null);
   }
 
   private class MyReloadTask extends Task.Backgroundable {
@@ -134,7 +135,14 @@ public class EditorConfigStatusListener implements CodeStyleSettingsListener, Di
         }
       );
       ApplicationManager.getApplication().invokeLater(
-        () -> fileDocumentManager.reloadFiles(filesToReload.toArray(VirtualFile.EMPTY_ARRAY)));
+        () -> {
+          if (myProject != null) {
+            filesToReload.forEach(file -> {
+              EditorConfigEncodingCache.getInstance().cacheEncoding(myProject, file);
+            });
+          }
+          fileDocumentManager.reloadFiles(filesToReload.toArray(VirtualFile.EMPTY_ARRAY));
+        });
     }
 
 

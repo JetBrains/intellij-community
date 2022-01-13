@@ -17,10 +17,7 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.templates.*
-import org.jetbrains.kotlin.tools.projectWizard.templates.compose.ComposeAndroidTemplate
-import org.jetbrains.kotlin.tools.projectWizard.templates.compose.ComposeJvmDesktopTemplate
-import org.jetbrains.kotlin.tools.projectWizard.templates.compose.ComposeMppModuleTemplate
-import org.jetbrains.kotlin.tools.projectWizard.templates.compose.ComposeWebModuleTemplate
+import org.jetbrains.kotlin.tools.projectWizard.templates.compose.*
 import org.jetbrains.kotlin.tools.projectWizard.templates.mpp.MobileMppTemplate
 
 abstract class ProjectTemplate : DisplayableSettingItem {
@@ -108,6 +105,28 @@ private fun createDefaultSourceSets() =
 
 private fun ModuleType.createDefaultTarget(name: String = this.name, permittedTemplateIds: Set<String>? = null) =
     MultiplatformTargetModule(name, defaultTarget, createDefaultSourceSets(), permittedTemplateIds)
+
+
+object EmptySingleModuleProjectTemplate : ProjectTemplate() {
+    override val title = ""
+    override val description = ""
+    override val id = "emptyProject"
+
+    @NonNls
+    override val suggestedProjectName = "myEmptyProject"
+    override val projectKind = ProjectKind.Singleplatform
+
+    override val setsPluginSettings: List<SettingWithValue<*, *>>
+        get() = listOf(
+            KotlinPlugin.modules.reference withValue listOf(
+                SinglePlatformModule(
+                    "moduleName",
+                    createDefaultSourceSets(),
+                    permittedTemplateIds = setOf()
+                )
+            )
+        )
+}
 
 object ConsoleApplicationProjectTemplate : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.empty.jvm.console.title")
@@ -422,7 +441,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
                     Module(
                         "android",
                         AndroidTargetConfigurator,
-                        template = null,
+                        template = ComposeCommonAndroidTemplate(),
                         sourceSets = createDefaultSourceSets(),
                         subModules = emptyList()
                     ).withConfiguratorSettings<AndroidTargetConfigurator> {

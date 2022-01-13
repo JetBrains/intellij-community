@@ -31,6 +31,8 @@ interface ModuleBridge : ModuleEx {
 
   fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean)
 
+  fun onImlFileMoved(newModuleFileUrl: VirtualFileUrl)
+
   fun registerComponents(corePlugin: IdeaPluginDescriptor?,
                          modules: Sequence<IdeaPluginDescriptorImpl>,
                          precomputedExtensionModel: PrecomputedExtensionModel?,

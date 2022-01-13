@@ -54,4 +54,5 @@ class <warning descr="Test class 'Test5WithInner1' has no tests">Test5WithInner1
     void test1() {}
   }
 }
-
+@org.junit.Ignore
+class IgnoredTest extends junit.framework.TestCase {}

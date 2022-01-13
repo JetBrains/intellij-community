@@ -11,6 +11,7 @@ public interface DiffPlaces {
   @NonNls String CHANGES_VIEW = "ChangesView";
   @NonNls String VCS_LOG_VIEW = "VcsLogView";
   @NonNls String VCS_FILE_HISTORY_VIEW = "VcsFileHistoryView";
+  @NonNls String SHELVE_VIEW = "ShelveView";
   @NonNls String COMMIT_DIALOG = "CommitDialog";
   @NonNls String TESTS_FAILED_ASSERTIONS = "TestsFiledAssertions";
   @NonNls String MERGE = "Merge";

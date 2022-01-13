@@ -74,20 +74,20 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     @Override
     public void visitPyReturnStatement(@NotNull PyReturnStatement node) {
-      final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
+      ScopeOwner owner = ScopeUtil.getScopeOwner(node);
       if (owner instanceof PyFunction) {
-        final PyFunction function = (PyFunction)owner;
-        final PyAnnotation annotation = function.getAnnotation();
-        final String typeCommentAnnotation = function.getTypeCommentAnnotation();
+        PyFunction function = (PyFunction)owner;
+        PyAnnotation annotation = function.getAnnotation();
+        String typeCommentAnnotation = function.getTypeCommentAnnotation();
         if (annotation != null || typeCommentAnnotation != null) {
-          final PyExpression returnExpr = node.getExpression();
-          final PyType expected = getExpectedReturnType(function);
-          final PyType actual = returnExpr != null ? tryPromotingType(returnExpr, expected) : PyNoneType.INSTANCE;
+          PyExpression returnExpr = node.getExpression();
+          PyType expected = getExpectedReturnType(function);
+          PyType actual = returnExpr != null ? tryPromotingType(returnExpr, expected) : PyNoneType.INSTANCE;
           if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
-            final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
-            final String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
-            PyMakeFunctionReturnTypeQuickFix localQuickFix = new PyMakeFunctionReturnTypeQuickFix(function, actualName, myTypeEvalContext);
-            PyMakeFunctionReturnTypeQuickFix globalQuickFix = new PyMakeFunctionReturnTypeQuickFix(function, null, myTypeEvalContext);
+            String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
+            String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
+            var localQuickFix = new PyMakeFunctionReturnTypeQuickFix(function, returnExpr, actual, myTypeEvalContext);
+            var globalQuickFix = new PyMakeFunctionReturnTypeQuickFix(function, returnExpr, null, myTypeEvalContext);
             registerProblem(returnExpr != null ? returnExpr : node,
                             PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedName, actualName),
                             localQuickFix, globalQuickFix);
@@ -98,13 +98,25 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     @Nullable
     private PyType getExpectedReturnType(@NotNull PyFunction function) {
-      final PyType returnType = myTypeEvalContext.getReturnType(function);
+      return getExpectedReturnType(function, myTypeEvalContext);
+    }
+
+    @Nullable
+    public static PyType getExpectedReturnType(@NotNull PyFunction function, @NotNull TypeEvalContext typeEvalContext) {
+      final PyType returnType = typeEvalContext.getReturnType(function);
 
       if (function.isAsync() || function.isGenerator()) {
         return Ref.deref(PyTypingTypeProvider.coroutineOrGeneratorElementType(returnType));
       }
 
       return returnType;
+    }
+
+    @Nullable
+    public static PyType getActualReturnType(@NotNull PyFunction function, @Nullable PyExpression returnExpr,
+                                             @NotNull TypeEvalContext context) {
+      PyType returnTypeExpected = getExpectedReturnType(function, context);
+      return returnExpr != null ? tryPromotingType(returnExpr, returnTypeExpected, context) : PyNoneType.INSTANCE;
     }
 
     @Override
@@ -125,9 +137,14 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     @Nullable
     private PyType tryPromotingType(@NotNull PyExpression value, @Nullable PyType expected) {
-      final PyType promotedToLiteral = PyLiteralType.Companion.promoteToLiteral(value, expected, myTypeEvalContext, null);
+      return tryPromotingType(value, expected, myTypeEvalContext);
+    }
+
+    @Nullable
+    public static PyType tryPromotingType(@NotNull PyExpression value, @Nullable PyType expected, @NotNull TypeEvalContext context) {
+      final PyType promotedToLiteral = PyLiteralType.Companion.promoteToLiteral(value, expected, context, null);
       if (promotedToLiteral != null) return promotedToLiteral;
-      return myTypeEvalContext.getType(value);
+      return context.getType(value);
     }
 
     @Override

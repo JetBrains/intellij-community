@@ -461,7 +461,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     addProblemsToView(globalSimpleTools);
   }
 
-  private static TextRange getEffectiveRange(SearchScope searchScope, PsiFile file) {
+  private static @NotNull TextRange getEffectiveRange(@NotNull SearchScope searchScope, @NotNull PsiFile file) {
     if (searchScope instanceof LocalSearchScope) {
       List<PsiElement> scopeFileElements = ContainerUtil.filter(((LocalSearchScope)searchScope).getScope(), e -> e.getContainingFile() == file);
       if (!scopeFileElements.isEmpty()) {
@@ -541,6 +541,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
             getEventPublisher(),
             toolWrapper,
             GLOBAL_SIMPLE,
+            file,
             getProject(),
             () -> {
               tool.checkFile(file, inspectionManager, holder, this, problemDescriptionProcessor);
@@ -688,6 +689,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
               eventPublisher,
               toolWrapper,
               GLOBAL,
+              null,
               getProject(),
               () -> {
                 tool.runInspection(scopeForState, inspectionManager, this, toolPresentation);
@@ -788,7 +790,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     }
   }
 
-  private static @NotNull <T extends InspectionToolWrapper<?, ?>> List<T> getWrappersFromTools(@NotNull List<? extends Tools> localTools,
+  public @NotNull <T extends InspectionToolWrapper<?, ?>> List<T> getWrappersFromTools(@NotNull List<? extends Tools> localTools,
                                                                                                @NotNull PsiFile file,
                                                                                                boolean includeDoNotShow,
                                                                                                @NotNull Predicate<? super T> filter) {

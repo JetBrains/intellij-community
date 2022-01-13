@@ -1,4 +1,6 @@
 // WITH_RUNTIME
+// AFTER-WARNING: Variable 'x' is never used
+// AFTER-WARNING: Variable 'y' is never used
 
 data class XY(val x: Int, val y: Int)
 

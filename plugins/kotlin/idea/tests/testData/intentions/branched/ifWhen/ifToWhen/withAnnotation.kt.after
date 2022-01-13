@@ -1,3 +1,4 @@
+// AFTER-WARNING: Parameter 's' is never used
 var b = true
 
 @Target(AnnotationTarget.EXPRESSION)

@@ -1,7 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.settings
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.SimplePersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.project.Project
@@ -94,7 +97,8 @@ class MarkdownSettings(val project: Project): SimplePersistentStateComponent<Mar
   private fun possiblyMigrateSettings(from: MarkdownSettingsState): MarkdownSettingsState {
     @Suppress("DEPRECATION")
     val old = MarkdownApplicationSettings.getInstance().takeIf { it.state != null }
-    if (old == null || from.stateVersion == 1) {
+    val migration = MarkdownSettingsMigration.getInstance(project)
+    if (old == null || migration.state.stateVersion == 1) {
       return from
     }
     logger.info("Migrating Markdown settings")
@@ -116,9 +120,9 @@ class MarkdownSettings(val project: Project): SimplePersistentStateComponent<Mar
       areInjectionsEnabled = !old.isDisableInjections
       hideErrorsInCodeBlocks = old.isHideErrors
       isEnhancedEditingEnabled = old.isEnhancedEditingEnabled
-      stateVersion = 1
       resetModificationCount()
     }
+    migration.state.stateVersion = 1
     return migrated
   }
 
@@ -132,17 +136,6 @@ class MarkdownSettings(val project: Project): SimplePersistentStateComponent<Mar
       val TOPIC = Topic.create("MarkdownSettingsChanged", ChangeListener::class.java)
     }
   }
-
-  //@State(name = "MarkdownSettingsMigration", storages = [(Storage("markdown.xml"))])
-  //internal class SettingsMigration: SimplePersistentStateComponent<SettingsMigration.State>(State()) {
-  //  class State: BaseState() {
-  //    var version by property(0)
-  //  }
-  //
-  //  companion object {
-  //    fun getInstance(project: Project): SettingsMigration = project.service()
-  //  }
-  //}
 
   companion object {
     private val logger = logger<MarkdownSettings>()

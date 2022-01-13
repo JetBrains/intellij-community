@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,6 +6,7 @@ import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.targets.AliasingPsiTarget;
 import com.intellij.psi.targets.AliasingPsiTargetMapper;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +32,9 @@ public class RenameAliasingPomTargetProcessor extends RenamePsiElementProcessor 
     }
 
     if (target != null) {
+      if (target instanceof AliasingPsiTarget) {
+        prepareAliasingPsiTargetRenaming((AliasingPsiTarget)target, newName, allRenames);
+      }
       for (AliasingPsiTargetMapper mapper : AliasingPsiTargetMapper.EP_NAME.getExtensionList()) {
         for (AliasingPsiTarget psiTarget : mapper.getTargets(target)) {
           PsiElement psiElement = PomService.convertToPsi(psiTarget);
@@ -44,9 +48,22 @@ public class RenameAliasingPomTargetProcessor extends RenamePsiElementProcessor 
                                                      "mapper: " + mapper);
           }
           else {
-            prepareRenaming(psiElement, name, allRenames);
+            if (name != null) prepareRenaming(psiElement, name, allRenames);
           }
         }
+      }
+    }
+  }
+
+
+  public static void prepareAliasingPsiTargetRenaming(@NotNull AliasingPsiTarget aliasingPsiTarget,
+                                                      @NotNull String newName,
+                                                      @NotNull Map<PsiElement, String> allRenames) {
+    PsiElement psiElement = aliasingPsiTarget.getNavigationElement();
+    if (psiElement instanceof PsiNamedElement) {
+      String newTargetName = aliasingPsiTarget.getTargetName(newName);
+      if (!newTargetName.equals(((PsiNamedElement)psiElement).getName())) {
+        allRenames.put(psiElement, newTargetName);
       }
     }
   }

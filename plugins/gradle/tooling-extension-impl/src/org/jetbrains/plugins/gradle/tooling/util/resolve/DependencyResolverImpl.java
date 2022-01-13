@@ -181,6 +181,18 @@ public final class DependencyResolverImpl implements DependencyResolver {
     if (configuration == null) {
       return emptySet();
     }
+
+    // following statement should trigger parallel resolution of configurations artifacts
+    // all subsequent iteration are expected to use cached results.
+    try {
+      configuration.getIncoming().artifactView(new Action<ArtifactView.ViewConfiguration>() {
+        @Override
+        public void execute(@NotNull ArtifactView.ViewConfiguration configuration) {
+          configuration.setLenient(true);
+        }
+      }).getArtifacts().getArtifacts();
+    } catch (Exception ignore) {}
+
     LenientConfiguration lenientConfiguration = configuration.getResolvedConfiguration().getLenientConfiguration();
     ResolutionResult resolutionResult = configuration.getIncoming().getResolutionResult();
     List<ComponentIdentifier> components = new ArrayList<ComponentIdentifier>();

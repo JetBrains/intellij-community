@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.AbstractList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;

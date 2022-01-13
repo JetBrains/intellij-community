@@ -174,13 +174,13 @@ public final class SortContentAction extends PsiElementBaseIntentionAction {
 
     @Override
     public boolean isSuitableElements(List<? extends PsiElement> elements) {
-      Set<String> names = elements.stream().map(element -> ((PsiEnumConstant)element).getName()).collect(Collectors.toSet());
+      Set<PsiEnumConstant> constants = ContainerUtil.map2Set(elements, el -> (PsiEnumConstant)el);
       for (PsiElement element: elements) {
         PsiEnumConstant enumConstant = (PsiEnumConstant)element;
-        if(StreamEx.ofTree((PsiElement)enumConstant.getArgumentList(), el -> StreamEx.of(el.getChildren()))
-                .select(PsiReferenceExpression.class)
-                .map(ref -> ref.getReferenceName())
-                .anyMatch(refName -> names.contains(refName))) return false;
+        boolean entriesHaveDependencies = StreamEx.ofTree((PsiElement)enumConstant.getArgumentList(), el -> StreamEx.of(el.getChildren()))
+          .select(PsiReferenceExpression.class)
+          .anyMatch(ref -> constants.contains(ref.resolve()));
+        if(entriesHaveDependencies) return false;
       }
       return true;
     }

@@ -1,6 +1,6 @@
-import org.jspecify.annotations.DefaultNonNull;
+import org.jspecify.nullness.NullMarked;
 
-@DefaultNonNull
+@NullMarked
 class X {
   void m(X x) {}
   

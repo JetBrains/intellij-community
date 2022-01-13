@@ -30,11 +30,10 @@ public class CommitAnnotator implements Annotator {
 
     List<TextChecker> checkers = TextChecker.allCheckers();
     CheckerRunner runner = new CheckerRunner(text);
-    List<TextProblem> descriptors = runner.run(checkers);
-    for (var problem : descriptors) {
+    runner.run(checkers, problem -> {
       if (problem.fitsGroup(RuleGroup.UNDECORATED_SINGLE_SENTENCE) &&
           Text.isSingleSentence(Text.findParagraphRange(text, problem.getReplacementRange()).subSequence(text))) {
-        continue;
+        return null;
       }
 
       AnnotationBuilder annotation = holder
@@ -46,7 +45,8 @@ public class CommitAnnotator implements Annotator {
         annotation = annotation.withFix((IntentionAction)fix);
       }
       annotation.create();
-    }
+      return null;
+    });
   }
 
 }

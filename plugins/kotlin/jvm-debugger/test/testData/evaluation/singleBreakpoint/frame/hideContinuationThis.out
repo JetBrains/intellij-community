@@ -2,7 +2,7 @@ LineBreakpoint created at hideContinuationThis.kt:9
 Run Java
 Connected to the target VM
 hideContinuationThis.kt:9
-CoroutinePreflightFrame (hideContinuationThis.kt:9)
+CoroutinePreflightFrame invokeSuspend (hideContinuationThis.kt:9)
     JavaValue[local] $result: java.lang.Object = kotlin.Unit
         DummyMessageValueNode = No fields to display
 Disconnected from the target VM

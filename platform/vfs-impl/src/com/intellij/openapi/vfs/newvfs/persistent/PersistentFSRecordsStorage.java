@@ -1,10 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.io.ResizeableMappedFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public final class PersistentFSRecordsStorage {
   private static final int PARENT_OFFSET = 0;
@@ -27,6 +30,28 @@ public final class PersistentFSRecordsStorage {
   static final int RECORD_SIZE = LENGTH_OFFSET + LENGTH_SIZE;
   private static final byte[] ZEROES = new byte[RECORD_SIZE];
 
+  private final ReadWriteLock myLock = new ReentrantReadWriteLock();
+
+  private <V, E extends Throwable> V read(ThrowableComputable<V, E> action) throws E {
+    myLock.readLock().lock();
+    try {
+      return action.compute();
+    }
+    finally {
+      myLock.readLock().unlock();
+    }
+  }
+
+  private <V, E extends Throwable> V write(ThrowableComputable<V, E> action) throws E {
+    myLock.writeLock().lock();
+    try {
+      return action.compute();
+    }
+    finally {
+      myLock.writeLock().unlock();
+    }
+  }
+
   @NotNull
   private final ResizeableMappedFile myFile;
 
@@ -35,123 +60,185 @@ public final class PersistentFSRecordsStorage {
   }
 
   int getGlobalModCount() throws IOException {
-    return myFile.getInt(PersistentFSHeaders.HEADER_GLOBAL_MOD_COUNT_OFFSET);
+    return read(() -> {
+      return myFile.getInt(PersistentFSHeaders.HEADER_GLOBAL_MOD_COUNT_OFFSET);
+    });
   }
 
   int incGlobalModCount() throws IOException {
-    final int count = getGlobalModCount() + 1;
-    myFile.putInt(PersistentFSHeaders.HEADER_GLOBAL_MOD_COUNT_OFFSET, count);
-    return count;
+    return write(() -> {
+      final int count = getGlobalModCount() + 1;
+      myFile.putInt(PersistentFSHeaders.HEADER_GLOBAL_MOD_COUNT_OFFSET, count);
+      return count;
+    });
   }
 
   long getTimestamp() throws IOException {
-    return myFile.getLong(PersistentFSHeaders.HEADER_TIMESTAMP_OFFSET);
+    return read(() -> {
+      return myFile.getLong(PersistentFSHeaders.HEADER_TIMESTAMP_OFFSET);
+    });
   }
 
   void setVersion(int version) throws IOException {
-    myFile.putInt(PersistentFSHeaders.HEADER_VERSION_OFFSET, version);
-    myFile.putLong(PersistentFSHeaders.HEADER_TIMESTAMP_OFFSET, System.currentTimeMillis());
+    write(() -> {
+      myFile.putInt(PersistentFSHeaders.HEADER_VERSION_OFFSET, version);
+      myFile.putLong(PersistentFSHeaders.HEADER_TIMESTAMP_OFFSET, System.currentTimeMillis());
+      return null;
+    });
   }
 
   int getVersion() throws IOException {
-    return myFile.getInt(PersistentFSHeaders.HEADER_VERSION_OFFSET);
+    return read(() -> {
+      return myFile.getInt(PersistentFSHeaders.HEADER_VERSION_OFFSET);
+    });
   }
 
   void setConnectionStatus(int connectionStatus) throws IOException {
-    myFile.putInt(PersistentFSHeaders.HEADER_CONNECTION_STATUS_OFFSET, connectionStatus);
+    write(() -> {
+      myFile.putInt(PersistentFSHeaders.HEADER_CONNECTION_STATUS_OFFSET, connectionStatus);
+      return null;
+    });
   }
 
   int getConnectionStatus() throws IOException {
-    return myFile.getInt(PersistentFSHeaders.HEADER_CONNECTION_STATUS_OFFSET);
+    return read(() -> {
+      return myFile.getInt(PersistentFSHeaders.HEADER_CONNECTION_STATUS_OFFSET);
+    });
   }
 
   int getNameId(int id) throws IOException {
-    assert id > 0 : id;
-    return getRecordInt(id, NAME_OFFSET);
+    return read(() -> {
+      assert id > 0 : id;
+      return getRecordInt(id, NAME_OFFSET);
+    });
   }
 
   void setNameId(int id, int nameId) throws IOException {
-    PersistentFSConnection.ensureIdIsValid(nameId);
-    putRecordInt(id, NAME_OFFSET, nameId);
+    write(() -> {
+      PersistentFSConnection.ensureIdIsValid(nameId);
+      putRecordInt(id, NAME_OFFSET, nameId);
+      return null;
+    });
   }
 
   int getParent(int id) throws IOException {
-    return getRecordInt(id, PARENT_OFFSET);
+    return read(() -> {
+      return getRecordInt(id, PARENT_OFFSET);
+    });
   }
 
   void setParent(int id, int parent) throws IOException {
-    putRecordInt(id, PARENT_OFFSET, parent);
+    write(() -> {
+      putRecordInt(id, PARENT_OFFSET, parent);
+      return null;
+    });
   }
 
   int getModCount(int id) throws IOException {
-    return getRecordInt(id, MOD_COUNT_OFFSET);
+    return read(() -> {
+      return getRecordInt(id, MOD_COUNT_OFFSET);
+    });
   }
 
   @PersistentFS.Attributes
   int doGetFlags(int id) throws IOException {
-    return getRecordInt(id, FLAGS_OFFSET);
+    return read(() -> {
+      return getRecordInt(id, FLAGS_OFFSET);
+    });
   }
 
   void setFlags(int id, @PersistentFS.Attributes int flags) throws IOException {
-    putRecordInt(id, FLAGS_OFFSET, flags);
+    write(() -> {
+      putRecordInt(id, FLAGS_OFFSET, flags);
+      return null;
+    });
   }
 
   void setModCount(int id, int value) throws IOException {
-    putRecordInt(id, MOD_COUNT_OFFSET, value);
+    write(() -> {
+      putRecordInt(id, MOD_COUNT_OFFSET, value);
+      return null;
+    });
   }
 
   int getContentRecordId(int fileId) throws IOException {
-    return getRecordInt(fileId, CONTENT_OFFSET);
+    return read(() -> {
+      return getRecordInt(fileId, CONTENT_OFFSET);
+    });
   }
 
   void setContentRecordId(int id, int value) throws IOException {
-    putRecordInt(id, CONTENT_OFFSET, value);
+    write(() -> {
+      putRecordInt(id, CONTENT_OFFSET, value);
+      return null;
+    });
   }
 
   int getAttributeRecordId(int id) throws IOException {
-    return getRecordInt(id, ATTR_REF_OFFSET);
+    return read(() -> {
+      return getRecordInt(id, ATTR_REF_OFFSET);
+    });
   }
 
   void setAttributeRecordId(int id, int value) throws IOException {
-    putRecordInt(id, ATTR_REF_OFFSET, value);
+    write(() -> {
+      putRecordInt(id, ATTR_REF_OFFSET, value);
+      return null;
+    });
   }
 
   long getTimestamp(int id) throws IOException {
-    return myFile.getLong(getOffset(id, TIMESTAMP_OFFSET));
+    return read(() -> {
+      return myFile.getLong(getOffset(id, TIMESTAMP_OFFSET));
+    });
   }
 
   boolean putTimeStamp(int id, long value) throws IOException {
-    int timeStampOffset = getOffset(id, TIMESTAMP_OFFSET);
-    if (myFile.getLong(timeStampOffset) != value) {
-      myFile.putLong(timeStampOffset, value);
-      return true;
-    }
-    return false;
+    return write(() -> {
+      int timeStampOffset = getOffset(id, TIMESTAMP_OFFSET);
+      if (myFile.getLong(timeStampOffset) != value) {
+        myFile.putLong(timeStampOffset, value);
+        return true;
+      }
+      return false;
+    });
   }
 
   long getLength(int id) throws IOException {
-    return myFile.getLong(getOffset(id, LENGTH_OFFSET));
+    return read(() -> {
+      return myFile.getLong(getOffset(id, LENGTH_OFFSET));
+    });
   }
 
   boolean putLength(int id, long value) throws IOException {
-    int lengthOffset = getOffset(id, LENGTH_OFFSET);
-    if (myFile.getLong(lengthOffset) != value) {
-      myFile.putLong(lengthOffset, value);
-      return true;
-    }
-    return false;
+    return write(() -> {
+      int lengthOffset = getOffset(id, LENGTH_OFFSET);
+      if (myFile.getLong(lengthOffset) != value) {
+        myFile.putLong(lengthOffset, value);
+        return true;
+      }
+      return false;
+    });
   }
 
   void cleanRecord(int id) throws IOException {
-    myFile.put(((long)id) * RECORD_SIZE, ZEROES, 0, RECORD_SIZE);
+    write(() -> {
+      myFile.put(((long)id) * RECORD_SIZE, ZEROES, 0, RECORD_SIZE);
+      return null;
+    });
   }
 
   private int getRecordInt(int id, int offset) throws IOException {
-    return myFile.getInt(getOffset(id, offset));
+    return read(() -> {
+      return myFile.getInt(getOffset(id, offset));
+    });
   }
 
   private void putRecordInt(int id, int offset, int value) throws IOException {
-    myFile.putInt(getOffset(id, offset), value);
+    write(() -> {
+      myFile.putInt(getOffset(id, offset), value);
+      return null;
+    });
   }
 
   private static int getOffset(int id, int offset) {
@@ -159,25 +246,33 @@ public final class PersistentFSRecordsStorage {
   }
 
   long length() {
-    return myFile.length();
+    return read(() -> {
+      return myFile.length();
+    });
   }
 
   void close() {
-    try {
-      myFile.close();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    write(() -> {
+      try {
+        myFile.close();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      return null;
+    });
   }
 
   void force() {
-    try {
-      myFile.force();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    write(() -> {
+      try {
+        myFile.force();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      return null;
+    });
   }
 
   boolean isDirty() {

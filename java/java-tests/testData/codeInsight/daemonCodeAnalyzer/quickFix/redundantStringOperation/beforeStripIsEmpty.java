@@ -1,4 +1,4 @@
-// "Use 'isBlank()' and remove redundant 'strip()' call" "true"
+// "Fix all 'Redundant String operation' problems in file" "true"
 class X {
   boolean testStrip(String s) {
     return s.st<caret>rip().isEmpty();

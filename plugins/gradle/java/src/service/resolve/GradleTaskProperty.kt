@@ -27,7 +27,7 @@ class GradleTaskProperty(
   private val doc by lazyPub {
     val result = StringBuilder()
     result.append("<PRE>")
-    JavaDocInfoGeneratorFactory.create(context.project, null, false).generateType(result, propertyType, myContext, true)
+    JavaDocInfoGeneratorFactory.create(context.project, null).generateType(result, propertyType, myContext, true)
     result.append(" " + task.name)
     result.append("</PRE>")
     task.description?.let(result::append)

@@ -95,6 +95,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @ApiStatus.Internal
   public static void resetAllToolbars() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    ActionUpdater.cancelAllUpdates("reset-all-toolbars requested");
+    ActionUpdater.waitForAllUpdatesToFinish();
+    PreCachedDataContext.clearAllCaches();
     boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
     for (ActionToolbarImpl toolbar : new ArrayList<>(ourToolbars)) {
       CancellablePromise<List<AnAction>> promise = toolbar.myLastUpdate;
@@ -105,7 +108,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       toolbar.removeAll();
       if (image != null) toolbar.myCachedImage = image;
       else if (!isTestMode) toolbar.addLoadingIcon();
-      toolbar.updateActionsImmediately(true);
     }
   }
 

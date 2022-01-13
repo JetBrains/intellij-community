@@ -1,3 +1,4 @@
+// AFTER-WARNING: Parameter 'size' is never used
 class Foo(size: Int)
 
 class Test(height: Int, width: Int) {

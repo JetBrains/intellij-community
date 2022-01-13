@@ -66,6 +66,8 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
                                              : AppExecutorUtil.createBoundedApplicationPoolExecutor("Project Root Manager", 1);
   private @NotNull Future<?> myCollectWatchRootsFuture = CompletableFuture.completedFuture(null); // accessed in EDT only
 
+  private final RootChangesLogger myRootsChangedLogger = new RootChangesLogger(LOG);
+
   private boolean myPointerChangesDetected;
   private int myInsideWriteAction;
   private @NotNull Set<LocalFileSystem.WatchRequest> myRootsToWatch = CollectionFactory.createSmallMemoryFootprintSet();
@@ -297,12 +299,12 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     if (!myStartupActivityPerformed) return;
 
     if (!indexingInfos.isEmpty()) {
-      LOG.debug("Project roots of " + myProject.getName() + " will be partially reindexed");
+      logRootChanges(false);
       EntityIndexingService.getInstance().indexChanges(myProject, indexingInfos);
       return;
     }
 
-    logRootChanges("Project roots of " + myProject.getName() + " have changed");
+    logRootChanges(true);
 
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
     if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
@@ -310,12 +312,17 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     }
   }
 
-  private static void logRootChanges(@NotNull String message) {
+  private void logRootChanges(boolean isFullReindex) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      LOG.debug(message, new Throwable());
+      if (LOG.isDebugEnabled()) {
+        String message = isFullReindex ?
+                         "Project roots of " + myProject.getName() + " have changed" :
+                         "Project roots of " + myProject.getName() + " will be partially reindexed";
+        LOG.debug(message, new Throwable());
+      }
     }
     else {
-      LOG.debug(message);
+      myRootsChangedLogger.info(myProject, isFullReindex);
     }
   }
 

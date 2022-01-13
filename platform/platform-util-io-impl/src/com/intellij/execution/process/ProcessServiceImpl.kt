@@ -5,6 +5,7 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
+import com.pty4j.PtyProcess
 import com.pty4j.PtyProcessBuilder
 import com.pty4j.windows.WinPtyProcess
 import org.jetbrains.annotations.ApiStatus
@@ -68,8 +69,8 @@ class ProcessServiceImpl: ProcessService {
     createWinProcess(process).killRecursively();
   }
 
-  override fun isWinPty(process: Process): Boolean {
-    return process is WinPtyProcess;
+  override fun isLocalPtyProcess(process: Process): Boolean {
+    return process is PtyProcess
   }
 
   override fun winPtyChildProcessId(process: Process): Int? {

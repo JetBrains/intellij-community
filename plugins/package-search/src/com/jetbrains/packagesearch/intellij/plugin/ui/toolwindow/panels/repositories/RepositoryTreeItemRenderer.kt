@@ -4,16 +4,15 @@ import com.intellij.icons.AllIcons
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.speedSearch.SpeedSearchUtil
+import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import javax.swing.JTree
-import javax.swing.tree.DefaultMutableTreeNode
 
 internal class RepositoryTreeItemRenderer : ColoredTreeCellRenderer() {
 
     override fun customizeCellRenderer(tree: JTree, value: Any?, selected: Boolean, expanded: Boolean, leaf: Boolean, row: Int, hasFocus: Boolean) {
-        if (value !is DefaultMutableTreeNode) return
-        val item = value.userObject as? RepositoryTreeItem ?: return
+        val item = TreeUtil.getUserObject(RepositoryTreeItem::class.java, value) ?: return
         clear()
 
         @Suppress("MagicNumber") // Swing dimension constants

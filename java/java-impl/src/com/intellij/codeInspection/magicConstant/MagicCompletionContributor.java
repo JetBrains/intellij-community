@@ -58,7 +58,7 @@ public final class MagicCompletionContributor extends CompletionContributor impl
   public static MagicConstantUtils.AllowedValues getAllowedValues(@NotNull PsiElement pos) {
     MagicConstantUtils.AllowedValues allowedValues = null;
     for (Pair<PsiModifierListOwner, PsiType> pair : getMembersWithAllowedValues(pos)) {
-      MagicConstantUtils.AllowedValues values = MagicConstantUtils.getAllowedValues(pair.first, pair.second);
+      MagicConstantUtils.AllowedValues values = MagicConstantUtils.getAllowedValues(pair.first, pair.second, pos);
       if (values == null) continue;
       if (allowedValues == null) {
         allowedValues = values;
@@ -89,15 +89,10 @@ public final class MagicCompletionContributor extends CompletionContributor impl
     Set<Pair<PsiModifierListOwner, PsiType>> result = new HashSet<>();
     if (IN_METHOD_CALL_ARGUMENT.accepts(pos)) {
       PsiCall call = PsiTreeUtil.getParentOfType(pos, PsiCall.class);
-      if (!(call instanceof PsiExpression)) return Collections.emptyList();
-      PsiType type = ((PsiExpression)call).getType();
+      if (call == null) return Collections.emptyList();
 
       PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(call.getProject()).getResolveHelper();
-      JavaResolveResult[] methods = call instanceof PsiMethodCallExpression
-                                    ? ((PsiMethodCallExpression)call).getMethodExpression().multiResolve(true)
-                                    : call instanceof PsiNewExpression && type instanceof PsiClassType
-                                      ? resolveHelper.multiResolveConstructor((PsiClassType)type, call.getArgumentList(), call)
-                                      : JavaResolveResult.EMPTY_ARRAY;
+      JavaResolveResult[] methods = getMethodCandidates(call, resolveHelper);
       for (JavaResolveResult resolveResult : methods) {
         PsiElement element = resolveResult.getElement();
         if (!(element instanceof PsiMethod)) return Collections.emptyList();
@@ -178,6 +173,26 @@ public final class MagicCompletionContributor extends CompletionContributor impl
       }
     }
     return new ArrayList<>(result);
+  }
+
+  private static @NotNull JavaResolveResult @NotNull [] getMethodCandidates(PsiCall call, PsiResolveHelper resolveHelper) {
+    if (call instanceof PsiMethodCallExpression) {
+      return ((PsiMethodCallExpression)call).getMethodExpression().multiResolve(true);
+    }
+    if (call instanceof PsiNewExpression) {
+      PsiType type = ((PsiExpression)call).getType();
+      PsiExpressionList argumentList = call.getArgumentList();
+      if (type instanceof PsiClassType && argumentList != null) {
+        return resolveHelper.multiResolveConstructor((PsiClassType)type, argumentList, call);
+      }
+    }
+    if (call instanceof PsiEnumConstant) {
+      JavaResolveResult result = call.resolveMethodGenerics();
+      if (result != JavaResolveResult.EMPTY) {
+        return new JavaResolveResult[]{result};
+      }
+    }
+    return JavaResolveResult.EMPTY_ARRAY;
   }
 
   private static void addCompletionVariants(@NotNull final CompletionParameters parameters,

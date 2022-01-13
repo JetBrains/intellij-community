@@ -89,7 +89,8 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       new RewrappingCase(RewrappingCase.Type.OptionalGet),
       new RewrappingCase(RewrappingCase.Type.OrElseNull),
       new MapOrElseCase(OrElseType.OrElseGet),
-      new MapOrElseCase(OrElseType.OrElse)
+      new MapOrElseCase(OrElseType.OrElse),
+      new OptionalOfNullableOrElseNullCase()
     );
     ourMapper = new CallMapper<>();
     for (ChainSimplificationCase<?> theCase : cases) {
@@ -927,6 +928,52 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
         myMapLambdaBodyAfter = mapLambdaBodyAfter;
         myOuterIfPresentVarName = outerIfPresentVarName;
         myInnerIfPresentArgument = innerIfPresentArgument;
+      }
+    }
+  }
+
+  private static class OptionalOfNullableOrElseNullCase implements ChainSimplificationCase<OptionalOfNullableOrElseNullCase.Context> {
+    @Override
+    public @NotNull String getName(@NotNull Context context) {
+      return JavaBundle.message("simplify.optional.chain.inspection.fix.name.remove.redundant.optional.chain");
+    }
+
+    @Override
+    public @NotNull String getDescription(@NotNull Context context) {
+      return JavaBundle.message("simplify.optional.chain.inspection.fix.description.optional.chain.can.be.eliminated");
+    }
+
+    @Override
+    public @Nullable OptionalOfNullableOrElseNullCase.Context extractContext(@NotNull Project project,
+                                                                             @NotNull PsiMethodCallExpression call) {
+      PsiMethodCallExpression outerCall = ExpressionUtils.getCallForQualifier(call);
+      PsiExpression wrappingArgument = call.getArgumentList().getExpressions()[0];
+      if (!OPTIONAL_OR_ELSE.test(outerCall)) return null;
+      PsiExpression argument = outerCall.getArgumentList().getExpressions()[0];
+      if (!ExpressionUtils.isNullLiteral(argument)) return null;
+      return new Context(wrappingArgument, outerCall);
+    }
+
+    @Override
+    public void apply(@NotNull Project project,
+                      @NotNull PsiMethodCallExpression call,
+                      @NotNull Context context) {
+      CommentTracker ct = new CommentTracker();
+      ct.replaceAndRestoreComments(context.outerCall, context.wrappingArgument);
+    }
+
+    @Override
+    public @NotNull CallMatcher getMatcher() {
+      return OPTIONAL_OF_NULLABLE;
+    }
+
+    static class Context {
+      final PsiExpression wrappingArgument;
+      final PsiMethodCallExpression outerCall;
+
+      Context(PsiExpression wrappingArgument, PsiMethodCallExpression outerCall) {
+        this.wrappingArgument = wrappingArgument;
+        this.outerCall = outerCall;
       }
     }
   }

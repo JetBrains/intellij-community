@@ -14,40 +14,40 @@
  * limitations under the License.
  */
 
-import org.jspecify.annotations.DefaultNonNull;
-import org.jspecify.annotations.Nullable;
-import org.jspecify.annotations.NullnessUnspecified;
+import org.jspecify.nullness.NullMarked;
+import org.jspecify.nullness.Nullable;
+import org.jspecify.nullness.NullnessUnspecified;
 
 class NotNullAwareTypeVariableBound {
   class UnspecBounded1<T> {
-    @DefaultNonNull
+    @NullMarked
     abstract class Nested {
       abstract T get();
     }
   }
 
   class UnspecBounded2<T extends Object> {
-    @DefaultNonNull
+    @NullMarked
     abstract class Nested {
       abstract T get();
     }
   }
 
   class UnspecBounded3<T extends @NullnessUnspecified Object> {
-    @DefaultNonNull
+    @NullMarked
     abstract class Nested {
       abstract T get();
     }
   }
 
   class NullBounded<T extends @Nullable Object> {
-    @DefaultNonNull
+    @NullMarked
     abstract class Nested {
       abstract T get();
     }
   }
 
-  @DefaultNonNull
+  @NullMarked
   class Callers {
     Object x0(UnspecBounded1<?>.Nested x) {
       // jspecify_nullness_not_enough_information

@@ -81,7 +81,6 @@ public abstract class PsiAugmentProvider {
   /**
    * @deprecated invoke and override {@link #getAugments(PsiElement, Class, String)}.
    */
-  @SuppressWarnings("unused")
   @Deprecated
   @NotNull
   protected <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {

@@ -2,6 +2,7 @@
 package com.intellij.execution.runToolbar
 
 import com.intellij.icons.AllIcons
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
@@ -47,7 +48,7 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
         e.presentation.putClientProperty(PROP_ACTIVE_PROCESS_COLOR, it.pillColor)
       }
 
-      e.presentation.putClientProperty(RunToolbarMainSlotActive.ARROW_DATA, e.arrowData())
+      e.presentation.putClientProperty(RunToolbarMainSlotActive.ARROW_DATA, e.arrowIcon())
 
       activeProcesses.getText()?.let {
         e.presentation.setText(it, false)
@@ -153,8 +154,8 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
 
     private fun updateArrow() {
       presentation.getClientProperty(RunToolbarMainSlotActive.ARROW_DATA)?.let {
-        arrow.icon = it.first
-        toolTipText = it.second
+        arrow.icon = it
+        toolTipText = ActionsBundle.message("action.RunToolbarShowHidePopupAction.click.to.show.popup.text")
       } ?: run {
         arrow.icon = null
         toolTipText = null

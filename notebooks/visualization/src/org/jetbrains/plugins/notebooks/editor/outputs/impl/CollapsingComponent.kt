@@ -111,6 +111,12 @@ internal class CollapsingComponent(
     }
   }
 
+  fun updateStubIfCollapsed() {
+    if (!isSeen) {
+      (stubComponent as StubComponent).text = collapsedTextSupplier()
+    }
+  }
+
   private class StubComponent(private val editor: EditorImpl) : JLabel("...") {
     init {
       border = IdeBorderFactory.createEmptyBorder(Insets(7, 0, 7, 0))

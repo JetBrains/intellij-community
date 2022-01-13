@@ -240,9 +240,9 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         val rightIt = rightColumnControls.iterator()
         while (leftIt.hasNext() || rightIt.hasNext()) {
           when {
-            leftIt.hasNext() && rightIt.hasNext() -> twoColumnRow(leftIt.next(), rightIt.next())
-            leftIt.hasNext() -> twoColumnRow(leftIt.next())
-            rightIt.hasNext() -> twoColumnRow(rightIt.next()) // move from right to left
+            leftIt.hasNext() && rightIt.hasNext() -> twoColumnsRow(leftIt.next(), rightIt.next())
+            leftIt.hasNext() -> twoColumnsRow(leftIt.next())
+            rightIt.hasNext() -> twoColumnsRow(rightIt.next()) // move from right to left
           }
         }
 
@@ -286,7 +286,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       }
 
       groupRowsRange(message("group.antialiasing.mode")) {
-        twoColumnRow(
+        twoColumnsRow(
           {
             val ideAAOptions =
               if (!AntialiasingType.canUseSubpixelAAForIDE())
@@ -322,15 +322,15 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       }
 
       groupRowsRange(message("group.window.options")) {
-        twoColumnRow(
+        twoColumnsRow(
           { checkBox(cdShowToolWindowBars) },
           { checkBox(cdShowToolWindowNumbers) }
         )
-        twoColumnRow(
+        twoColumnsRow(
           { checkBox(cdLeftToolWindowLayout) },
           { checkBox(cdRightToolWindowLayout) }
         )
-        twoColumnRow(
+        twoColumnsRow(
           {
             checkBox(cdWidescreenToolWindowLayout)
               .gap(RightGap.SMALL)

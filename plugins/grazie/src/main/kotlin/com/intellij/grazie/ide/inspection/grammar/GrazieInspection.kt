@@ -43,8 +43,9 @@ class GrazieInspection : LocalInspectionTool() {
         if (extracted.length > 50_000) return // too large text
 
         val runner = CheckerRunner(extracted)
-        val warnings = runner.toProblemDescriptors(runner.run(checkers), isOnTheFly)
-        warnings.forEach(holder::registerProblem)
+        runner.run(checkers) { problem ->
+          runner.toProblemDescriptors(problem, isOnTheFly).forEach(holder::registerProblem)
+        }
       }
     }
   }
@@ -53,7 +54,7 @@ class GrazieInspection : LocalInspectionTool() {
     fun ignoreGrammarChecking(file: PsiFile): Boolean =
       SpellCheckingEditorCustomization.isSpellCheckingDisabled(file) // they probably don't want grammar checks as well
 
-    internal fun checkedDomains(): Set<TextContent.TextDomain> {
+    fun checkedDomains(): Set<TextContent.TextDomain> {
       val result = EnumSet.of(TextContent.TextDomain.PLAIN_TEXT)
       if (GrazieConfig.get().checkingContext.isCheckInStringLiteralsEnabled) {
         result.add(TextContent.TextDomain.LITERALS)

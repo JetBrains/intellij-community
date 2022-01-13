@@ -245,12 +245,20 @@ class BuildOptions {
   boolean validateModuleStructure = System.getProperty(VALIDATE_MODULES_STRUCTURE, "false").toBoolean()
 
   /**
-   * Path to prebuilt Kotlin plugin (not zipped).
-   * Currently fully-fledged Kotlin plugin distribution is being on TeamCity only via kombo.gant script.
-   * If this path is not specified then distribution without LLDB debugger is going to be built locally (for tests only).
+   * Max attempts of dependencies resolution on fault. Default is 1 (no retries).
+   *
+   * @see {@link org.jetbrains.intellij.build.impl.JpsCompilationRunner#resolveProjectDependencies}
    */
-  static final String PREBUILT_KOTLIN_PLUGIN_PATH = "intellij.build.kotlin.plugin.path"
-  String prebuiltKotlinPluginPath = System.getProperty(PREBUILT_KOTLIN_PLUGIN_PATH)
+  public static final String RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY = "intellij.build.dependencies.resolution.retry.max.attempts"
+  int resolveDependenciesMaxAttempts = System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY, "1").toInteger()
+
+  /**
+   * Initial delay in milliseconds between dependencies resolution retries on fault. Default is 1000
+   *
+   * @see {@link org.jetbrains.intellij.build.impl.JpsCompilationRunner#resolveProjectDependencies}
+   */
+  public static final String RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY = "intellij.build.dependencies.resolution.retry.delay.ms"
+  long resolveDependenciesDelayMs = System.getProperty(RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY, "1000").toLong()
 
   static final String TARGET_OS = "intellij.build.target.os"
 

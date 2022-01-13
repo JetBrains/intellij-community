@@ -1,3 +1,6 @@
+// AFTER-WARNING: Parameter 'fn' is never used
+// AFTER-WARNING: Parameter 'p' is never used
+// AFTER-WARNING: Parameter 'q' is never used
 fun overloadFun(p: Int, q: Long) {}
 
 fun <T, U> foo(fn: (T, U) -> Unit) {}

@@ -14,19 +14,22 @@ import com.intellij.structuralsearch.impl.matcher.handlers.LiteralWithSubstituti
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
 import com.intellij.util.containers.reverse
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
+import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
 import org.jetbrains.kotlin.fir.builder.toUnaryName
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.intentions.calleeName
 import org.jetbrains.kotlin.idea.intentions.getCallableDescriptor
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
-import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
@@ -45,7 +48,9 @@ import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.psi2ir.deparenthesize
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyClassDescriptor
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.typeUtil.supertypes
@@ -71,6 +76,13 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
             myMatchingVisitor.result = false
             null
         }
+    }
+    
+    private inline fun <reified T:KtElement> factory(context: PsiElement, f: KtPsiFactory.() -> T): T {
+        val psiFactory = KtPsiFactory(context, true)
+        val result = psiFactory.f()
+        (result.containingFile as KtFile).analysisContext = context
+        return result
     }
 
     private fun GlobalMatchingVisitor.matchSequentially(elements: List<PsiElement?>, elements2: List<PsiElement?>) =
@@ -161,7 +173,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
                     && otherRight is KtBinaryExpression
                     && myMatchingVisitor.match(right, otherRight.left)
                     && otherRight.operationToken == KtTokens.EQEQEQ
-                    && myMatchingVisitor.match(KtPsiFactory(other, true).createExpression("null"), otherRight.right)
+                    && myMatchingVisitor.match(factory(other) {createExpression("null")}, otherRight.right)
         }
 
         val other = getTreeElementDepar<KtExpression>() ?: return
@@ -180,7 +192,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
                         myMatchingVisitor.result = left is KtDotQualifiedExpression
                                 && left.match(OperatorNameConventions.COMPARE_TO, expression.left, expression.right)
                                 && expression.operationToken == other.operationToken
-                                && myMatchingVisitor.match(other.right, KtPsiFactory(other, true).createExpression("0"))
+                                && myMatchingVisitor.match(other.right, factory(other) {createExpression("0")})
 
                     }
                     in augmentedAssignmentsMap.keys -> { // x OP= y with x = x OP y
@@ -301,20 +313,21 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
 
         val exprHandler = getHandler(expression)
         if (other is KtReferenceExpression && exprHandler is SubstitutionHandler) {
-            try {
-                val referenced = other.mainReference.resolve()
-                if (referenced is KtClass || referenced is KtTypeAlias) {
-                    val fqName = referenced.getKotlinFqName()
-                    val predicate = exprHandler.findRegExpPredicate()
-                    if (predicate != null && fqName != null &&
-                        predicate.doMatch(fqName.asString(), myMatchingVisitor.matchContext, other)
-                    ) {
-                        myMatchingVisitor.result = true
-                        exprHandler.addResult(other, myMatchingVisitor.matchContext)
-                        return
-                    }
+            val ref = other.mainReference
+            val bindingContext = ref.element.analyze(BodyResolveMode.PARTIAL)
+            val referenced = ref.resolveToDescriptors(bindingContext).firstOrNull()?.let {
+                if (it is ConstructorDescriptor) it.constructedClass else it
+            }
+            if (referenced is ClassifierDescriptor) {
+                val fqName = referenced.fqNameOrNull()
+                val predicate = exprHandler.findRegExpPredicate()
+                if (predicate != null && fqName != null &&
+                    predicate.doMatch(fqName.asString(), myMatchingVisitor.matchContext, other)
+                ) {
+                    myMatchingVisitor.result = true
+                    exprHandler.addResult(other, myMatchingVisitor.matchContext)
+                    return
                 }
-            } catch (e: Error) {
             }
         }
 
@@ -403,8 +416,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         val type = other.resolveKotlinType()
         if (type != null) {
             val fqType = DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(type)
-            val factory = KtPsiFactory(other, true)
-            val analzyableFile = factory.createAnalyzableFile("${other.hashCode()}.kt", "val x: $fqType = TODO()", other)
+            val analzyableFile = factory(other) {createAnalyzableFile("${other.hashCode()}.kt", "val x: $fqType = TODO()", other)}
             return myMatchingVisitor.match(typeReference, (analzyableFile.lastChild as KtProperty).typeReference)
         }
         return false
@@ -546,8 +558,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
                 } else i++
             }
         }
-        val psiFactory = KtPsiFactory(myMatchingVisitor.element)
-        params.filterNotNull().forEach { add(psiFactory.createArgument(it.defaultValue, it.nameAsName, reformat = false)) }
+        params.filterNotNull().forEach { add(factory(myMatchingVisitor.element) {createArgument(it.defaultValue, it.nameAsName, reformat = false) }) }
     }
 
     private fun matchValueArguments(
@@ -625,12 +636,10 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         return true
     }
 
-    private fun resolveParameters(other: KtElement): List<KtParameter> = try {
-        other.resolveToCall()?.candidateDescriptor?.original?.valueParameters?.map {
-            it.source.getPsi() as KtParameter
+    private fun resolveParameters(other: KtElement): List<KtParameter> {
+        return other.resolveToCall()?.candidateDescriptor?.original?.valueParameters?.mapNotNull {
+            it.source.getPsi() as? KtParameter
         } ?: emptyList()
-    } catch (e: Exception) {
-        emptyList()
     }
 
     override fun visitCallExpression(expression: KtCallExpression) {

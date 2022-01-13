@@ -270,7 +270,7 @@ public class CharSymbol {
 public class Test {
   public void main(boolean isActive, boolean requestFocus, int xoo) {
     System.out.println("AAA");
-    main(<hint text="isActive:"/>true,<hint text="requestFocus:"/>false, /*comment*/<hint text="xoo:"/>2);
+    main(<hint text="isActive:"/>true,<hint text="requestFocus:"/>false, <hint text="xoo:"/>2);
   }
 }
 """)
@@ -356,7 +356,7 @@ class QCmp<E> {
 
 public class Test {
   public void main(QCmp<Integer> c, QList<String> l) {
-    c.cmpre(<hint text="oe1:"/>0, /** ddd */<hint text="oq2:"/>3);
+    c.cmpre(<hint text="oe1:"/>0, <hint text="oq2:"/>3);
     l.add(<hint text="query:"/>1, <hint text="obj:"/>"uuu");
   }
 }
@@ -907,7 +907,7 @@ class Test {
     myFixture.doHighlighting()
     
     inlays = getHints()
-    assert(inlays.size == 1 && inlays.first() == "qas:", { "Real inlays ${inlays.size}" })
+    assert(inlays.size == 1 && inlays.first() == "qas:") { "Real inlays ${inlays.size}" }
   }
 
 
@@ -1154,6 +1154,19 @@ public class Test {
 }""")
   }
 
+  fun `test parameters have comments`() {
+    check("""
+public class Test {
+    static class A {
+      A(boolean leadingComment, boolean middleWithoutComments, boolean trailingComment){}
+    }
+
+    void foo() {
+      new A(/* comment not necessarily related to name */ true, <hint text="middleWithoutComments:"/>false, true /**/);
+    }
+}""")
+  }
+
   fun `test undo after typing space`() {
     check("""
 class C {
@@ -1187,7 +1200,7 @@ class C {
   }
 
   
-  fun assertSingleInlayWithText(expectedText: String) {
+  private fun assertSingleInlayWithText(expectedText: String) {
     val inlays = ParameterHintsPresentationManager.getInstance().getParameterHintsInRange(
       editor,
       0,

@@ -1,4 +1,5 @@
 // "Create expected function in common module testModule_Common" "false"
+// ACTION: Apply all 'Remove modifier' fixes in file
 // ACTION: Convert member to extension
 // ACTION: Convert to block body
 // ACTION: Create expected class in common module testModule_Common

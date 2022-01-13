@@ -364,11 +364,11 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     Set<String> alreadyCollected = new HashSet<>(usedVars.first);
     usedVars.second.stream().map(TextWithImports::getText).forEach(alreadyCollected::add);
     Set<TextWithImports> extra = new HashSet<>();
-    for (FrameExtraVariablesProvider provider : FrameExtraVariablesProvider.EP_NAME.getExtensionList()) {
+    FrameExtraVariablesProvider.EP_NAME.forEachExtensionSafe(provider -> {
       if (provider.isAvailable(sourcePosition, evalContext)) {
         extra.addAll(provider.collectVariables(sourcePosition, evalContext, alreadyCollected));
       }
-    }
+    });
     return extra;
   }
 

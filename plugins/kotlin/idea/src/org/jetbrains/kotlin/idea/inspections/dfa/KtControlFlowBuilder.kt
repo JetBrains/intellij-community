@@ -2,9 +2,6 @@
 package org.jetbrains.kotlin.idea.inspections.dfa
 
 import com.intellij.codeInsight.Nullability
-import com.intellij.codeInsight.NullableNotNullManager
-import com.intellij.codeInspection.dataFlow.DfaPsiUtil
-import com.intellij.codeInspection.dataFlow.NullabilityUtil
 import com.intellij.codeInspection.dataFlow.TypeConstraint
 import com.intellij.codeInspection.dataFlow.TypeConstraints
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter
@@ -22,12 +19,12 @@ import com.intellij.codeInspection.dataFlow.types.*
 import com.intellij.codeInspection.dataFlow.value.*
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.TransferTarget
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.Trap
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.*
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.FList
@@ -35,8 +32,13 @@ import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
+import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
+import org.jetbrains.kotlin.contracts.description.CallsEffectDeclaration
+import org.jetbrains.kotlin.contracts.description.ContractProviderKey
+import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.*
@@ -50,11 +52,14 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
+import org.jetbrains.kotlin.resolve.calls.model.ExpressionValueArgument
+import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
+import org.jetbrains.kotlin.resolve.calls.model.VarargValueArgument
 import org.jetbrains.kotlin.resolve.constants.IntegerLiteralTypeConstructor
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.TypeProjection
 import org.jetbrains.kotlin.types.typeUtil.*
+import org.jetbrains.kotlin.utils.addIfNotNull
 import java.util.concurrent.ConcurrentHashMap
 
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
@@ -108,8 +113,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             is KtTryExpression -> processTryExpression(expr)
             is KtDestructuringDeclaration -> processDestructuringDeclaration(expr)
             is KtObjectLiteralExpression -> processObjectLiteral(expr)
-            is KtNamedFunction -> pushUnknown()
-            is KtClass -> pushUnknown()
+            is KtNamedFunction -> processCodeDeclaration(expr)
+            is KtClass -> processCodeDeclaration(expr)
             else -> {
                 // unsupported construct
                 if (LOG.isDebugEnabled) {
@@ -124,7 +129,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         flow.finishElement(expr)
     }
 
+    private fun processCodeDeclaration(expr: KtExpression) {
+        processEscapes(expr)
+        pushUnknown()
+    }
+
     private fun processObjectLiteral(expr: KtObjectLiteralExpression) {
+        processEscapes(expr)
         for (superTypeListEntry in expr.objectDeclaration.superTypeListEntries) {
             if (superTypeListEntry is KtSuperTypeCallEntry) {
                 // super-constructor call: may be impure
@@ -173,7 +184,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
 
             processExpression(tryBlock)
-            addInstruction(SimpleAssignmentInstruction(null, tempVar))
+            addInstruction(JvmAssignmentInstruction(null, tempVar))
 
             val gotoEnd = createTransfer(statement, tryBlock, tempVar, true)
             val singleFinally = FList.createFromReversed<Trap>(ContainerUtil.createMaybeSingletonList(finallyDescriptor))
@@ -189,7 +200,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 setOffset(offset)
                 val catchBlock = section.catchBody
                 processExpression(catchBlock)
-                addInstruction(SimpleAssignmentInstruction(null, tempVar))
+                addInstruction(JvmAssignmentInstruction(null, tempVar))
                 controlTransfer(gotoEnd, singleFinally)
             }
 
@@ -207,9 +218,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     private fun processCallableReference(expr: KtCallableReferenceExpression) {
         processExpression(expr.receiverExpression)
-        addInstruction(PopInstruction())
-        val dfType = expr.getKotlinType().toDfType(expr)
-        addInstruction(PushValueInstruction(dfType, KotlinExpressionAnchor(expr)))
+        addInstruction(KotlinCallableReferenceInstruction(expr))
     }
 
     private fun processThisExpression(expr: KtThisExpression) {
@@ -217,7 +226,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val descriptor = expr.analyze(BodyResolveMode.FULL)[BindingContext.REFERENCE_TARGET, expr.instanceReference]
         if (descriptor != null) {
             val varDesc = KtThisDescriptor(descriptor, dfType)
-            addInstruction(PushInstruction(factory.varFactory.createVariableValue(varDesc), KotlinExpressionAnchor(expr)))
+            addInstruction(JvmPushInstruction(factory.varFactory.createVariableValue(varDesc), KotlinExpressionAnchor(expr)))
         } else {
             addInstruction(PushValueInstruction(dfType, KotlinExpressionAnchor(expr)))
         }
@@ -262,13 +271,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
         if (ref.text == "as?") {
             val tempVariable: DfaVariableValue = flow.createTempVariable(DfTypes.OBJECT_OR_NULL)
-            addInstruction(SimpleAssignmentInstruction(null, tempVariable))
+            addInstruction(JvmAssignmentInstruction(null, tempVariable))
             addInstruction(PushValueInstruction(type, null))
             addInstruction(InstanceofInstruction(null, false))
             val offset = DeferredOffset()
             addInstruction(ConditionalGotoInstruction(offset, DfTypes.FALSE))
             val anchor = KotlinExpressionAnchor(expr)
-            addInstruction(PushInstruction(tempVariable, anchor))
+            addInstruction(JvmPushInstruction(tempVariable, anchor))
             val endOffset = DeferredOffset()
             addInstruction(GotoInstruction(endOffset))
             setOffset(offset)
@@ -315,13 +324,16 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
                 }
                 val transfer = trapTracker.maybeTransferValue("java.lang.ArrayIndexOutOfBoundsException")
+                val elementType = expr.builtIns.getArrayElementType(curType)
                 if (lastIndex && storedValue != null) {
                     processExpression(storedValue)
+                    addImplicitConversion(storedValue, storedValue.getKotlinType(), curType.getArrayElementType(expr))
                     addInstruction(ArrayStoreInstruction(anchor, KotlinArrayIndexProblem(SpecialField.ARRAY_LENGTH, idx), transfer, null))
                 } else {
                     addInstruction(ArrayAccessInstruction(anchor, KotlinArrayIndexProblem(SpecialField.ARRAY_LENGTH, idx), transfer, null))
+                    addImplicitConversion(expr, curType.getArrayElementType(expr), elementType)
                 }
-                curType = expr.builtIns.getArrayElementType(curType)
+                curType = elementType
             } else {
                 if (KotlinBuiltIns.isString(kotlinType)) {
                     if (indexType.canBeNull()) {
@@ -409,12 +421,58 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processLambda(expr: KtLambdaExpression) {
         val element = expr.bodyExpression
         if (element != null) {
+            processEscapes(element)
             addInstruction(ClosureInstruction(listOf(element)))
         }
         pushUnknown()
     }
 
+    private fun processEscapes(expr: KtExpression) {
+        val vars = mutableSetOf<DfaVariableValue>()
+        val existingVars = factory.values.asSequence()
+            .filterIsInstance<DfaVariableValue>()
+            .filter { v -> v.qualifier == null }
+            .map { v -> v.descriptor }
+            .filterIsInstance<KtVariableDescriptor>()
+            .map { v -> v.variable }
+            .toSet()
+        PsiTreeUtil.processElements(expr, KtSimpleNameExpression::class.java) { ref ->
+            val target = ref.mainReference.resolve()
+            if (target != null && existingVars.contains(target)) {
+                vars.addIfNotNull(KtVariableDescriptor.createFromSimpleName(factory, ref))
+            }
+            return@processElements true
+        }
+        if (vars.isNotEmpty()) {
+            addInstruction(EscapeInstruction(vars))
+        }
+    }
+
     private fun processCallExpression(expr: KtCallExpression, qualifierOnStack: Boolean = false) {
+        val call = expr.resolveToCall()
+        var argCount: Int
+        if (call != null) {
+            argCount = pushResolvedCallArguments(call, expr)
+        } else {
+            argCount = pushUnresolvedCallArguments(expr)
+        }
+        if (inlineKnownMethod(expr, argCount, qualifierOnStack)) return
+        val lambda = getInlineableLambda(expr)
+        if (lambda != null) {
+            if (qualifierOnStack && inlineKnownLambdaCall(expr, lambda.lambda)) return
+            val kind = getLambdaOccurrenceRange(expr, lambda.descriptor.original)
+            inlineLambda(lambda.lambda, kind)
+        } else {
+            for (lambdaArg in expr.lambdaArguments) {
+                processExpression(lambdaArg.getLambdaExpression())
+                argCount++
+            }
+        }
+
+        addCall(expr, argCount, qualifierOnStack)
+    }
+
+    private fun pushUnresolvedCallArguments(expr: KtCallExpression): Int {
         val args = expr.valueArgumentList?.arguments
         var argCount = 0
         if (args != null) {
@@ -426,21 +484,153 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 }
             }
         }
-        val lambda = getInlineableLambda(expr)
-        if (lambda != null) {
-            inlineLambda(lambda)
-        } else {
-            for(lambdaArg in expr.lambdaArguments) {
-                processExpression(lambdaArg.getLambdaExpression())
-                argCount++
-            }
-        }
-
-        addCall(expr, argCount, qualifierOnStack)
+        return argCount
     }
 
-    private fun inlineLambda(lambda: KtLambdaExpression) {
-        // TODO: check callsInPlace Kotlin contract and use it here
+    private fun pushResolvedCallArguments(call: ResolvedCall<out CallableDescriptor>, expr: KtCallExpression): Int {
+        val valueArguments = call.valueArguments
+        var argCount = 0
+        for ((descriptor, valueArg) in valueArguments) {
+            when (valueArg) {
+                is VarargValueArgument -> {
+                    val arguments = valueArg.arguments
+                    val singleArg = arguments.singleOrNull()
+                    if (singleArg?.getSpreadElement() != null) {
+                        processExpression(singleArg.getArgumentExpression())
+                    } else {
+                        for (arg in arguments) {
+                            processExpression(arg.getArgumentExpression())
+                        }
+                        addInstruction(FoldArrayInstruction(null, descriptor.type.toDfType(expr), arguments.size))
+                    }
+                    argCount++
+                }
+                is ExpressionValueArgument -> {
+                    val valueArgument = valueArg.valueArgument
+                    if (valueArgument !is KtLambdaArgument) {
+                        processExpression(valueArgument?.getArgumentExpression())
+                        argCount++
+                    }
+                }
+                else -> {
+                    pushUnknown()
+                    argCount++
+                }
+            }
+        }
+        return argCount
+    }
+
+    private fun inlineKnownMethod(expr: KtCallExpression, argCount: Int, qualifierOnStack: Boolean): Boolean {
+        if (argCount == 0 && qualifierOnStack) {
+            val descriptor = expr.resolveToCall()?.resultingDescriptor ?: return false
+            val name = descriptor.name.asString()
+            if (name == "isEmpty" || name == "isNotEmpty") {
+                val containingDeclaration = descriptor.containingDeclaration
+                val containingPackage = if (containingDeclaration is PackageFragmentDescriptor) containingDeclaration.fqName
+                else (containingDeclaration as? ClassDescriptor)?.containingPackage()
+                if (containingPackage?.asString() == "kotlin.collections") {
+                    addInstruction(UnwrapDerivedVariableInstruction(SpecialField.COLLECTION_SIZE))
+                    addInstruction(PushValueInstruction(DfTypes.intValue(0)))
+                    addInstruction(
+                        BooleanBinaryInstruction(
+                            if (name == "isEmpty") RelationType.EQ else RelationType.NE, false,
+                            KotlinExpressionAnchor(expr)
+                        )
+                    )
+                    val kotlinType = expr.getKotlinType()
+                    if (kotlinType?.isMarkedNullable == true) {
+                        addInstruction(WrapDerivedVariableInstruction(kotlinType.toDfType(expr), SpecialField.UNBOX))
+                    }
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
+    private fun inlineKnownLambdaCall(expr: KtCallExpression, lambda: KtLambdaExpression): Boolean {
+        // TODO: this-binding methods (apply, run)
+        // TODO: non-qualified methods (run, repeat)
+        // TODO: collection methods (forEach, map, etc.)
+        val resolvedCall = expr.resolveToCall() ?: return false
+        val descriptor = resolvedCall.resultingDescriptor
+        val packageFragment = descriptor.containingDeclaration as? PackageFragmentDescriptor ?: return false
+        val bodyExpression = lambda.bodyExpression
+        val receiver = (expr.parent as? KtQualifiedExpression)?.receiverExpression
+        if (packageFragment.fqName.asString() == "kotlin" && resolvedCall.valueArguments.size == 1) {
+            val name = descriptor.name.asString()
+            if (name == "let" || name == "also" || name == "takeIf" || name == "takeUnless") {
+                val parameter = KtVariableDescriptor.getSingleLambdaParameter(factory, lambda) ?: return false
+                // qualifier is on stack
+                val receiverType = receiver?.getKotlinType()
+                val argType = if (expr.parent is KtSafeQualifiedExpression) receiverType?.makeNotNullable() else receiverType
+                addImplicitConversion(receiver, argType)
+                addInstruction(JvmAssignmentInstruction(null, parameter))
+                when (name) {
+                    "let" -> {
+                        addInstruction(PopInstruction())
+                        val lambdaResultType = lambda.resolveType()?.getReturnTypeFromFunctionType()
+                        val result = flow.createTempVariable(lambdaResultType.toDfType(expr))
+                        inlinedBlock(lambda) {
+                            processExpression(bodyExpression)
+                            flow.finishElement(lambda.functionLiteral)
+                            addInstruction(JvmAssignmentInstruction(null, result))
+                            addInstruction(PopInstruction())
+                        }
+                        addInstruction(JvmPushInstruction(result, null))
+                        addImplicitConversion(expr, lambdaResultType, expr.getKotlinType())
+                    }
+                    "also" -> {
+                        inlinedBlock(lambda) {
+                            processExpression(bodyExpression)
+                            flow.finishElement(lambda.functionLiteral)
+                            addInstruction(PopInstruction())
+                        }
+                        addImplicitConversion(receiver, argType, expr.getKotlinType())
+                        addInstruction(ResultOfInstruction(KotlinExpressionAnchor(expr)))
+                    }
+                    "takeIf", "takeUnless" -> {
+                        val result = flow.createTempVariable(DfTypes.BOOLEAN)
+                        inlinedBlock(lambda) {
+                            processExpression(bodyExpression)
+                            flow.finishElement(lambda.functionLiteral)
+                            addInstruction(JvmAssignmentInstruction(null, result))
+                            addInstruction(PopInstruction())
+                        }
+                        addInstruction(JvmPushInstruction(result, null))
+                        val offset = DeferredOffset()
+                        addInstruction(ConditionalGotoInstruction(offset, DfTypes.booleanValue(name == "takeIf")))
+                        addInstruction(PopInstruction())
+                        addInstruction(PushValueInstruction(DfTypes.NULL))
+                        val endOffset = DeferredOffset()
+                        addInstruction(GotoInstruction(endOffset))
+                        setOffset(offset)
+                        addImplicitConversion(receiver, argType, expr.getKotlinType())
+                        setOffset(endOffset)
+                    }
+                }
+                addInstruction(ResultOfInstruction(KotlinExpressionAnchor(expr)))
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun getLambdaOccurrenceRange(expr: KtCallExpression, descriptor: ValueParameterDescriptor): EventOccurrencesRange {
+        val contractDescription = expr.resolveToCall()?.resultingDescriptor?.getUserData(ContractProviderKey)?.getContractDescription()
+        if (contractDescription != null) {
+            val callEffect = contractDescription.effects
+                .singleOrNull { e -> e is CallsEffectDeclaration && e.variableReference.descriptor == descriptor }
+                    as? CallsEffectDeclaration
+            if (callEffect != null) {
+                return callEffect.kind
+            }
+        }
+        return EventOccurrencesRange.UNKNOWN
+    }
+
+    private fun inlineLambda(lambda: KtLambdaExpression, kind: EventOccurrencesRange) {
         /*
             We encode unknown call with inlineable lambda as
             unknownCode()
@@ -453,24 +643,24 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
          */
         addInstruction(FlushFieldsInstruction())
         val offset = ControlFlow.FixedOffset(flow.instructionCount)
-        pushUnknown()
         val endOffset = DeferredOffset()
-        addInstruction(ConditionalGotoInstruction(endOffset, DfTypes.TRUE))
+        if (kind != EventOccurrencesRange.EXACTLY_ONCE && kind != EventOccurrencesRange.MORE_THAN_ONCE &&
+                kind != EventOccurrencesRange.AT_LEAST_ONCE) {
+            pushUnknown()
+            addInstruction(ConditionalGotoInstruction(endOffset, DfTypes.TRUE))
+        }
 
         inlinedBlock(lambda) {
             val functionLiteral = lambda.functionLiteral
             val bodyExpression = lambda.bodyExpression
             if (bodyExpression != null) {
-                val valueParameters = lambda.valueParameters
-                if (valueParameters.isEmpty()) {
-                    val kotlinType = lambda.resolveType()?.getValueParameterTypesFromFunctionType()?.singleOrNull()?.type
-                    if (kotlinType != null) {
-                        val itVar = factory.varFactory.createVariableValue(KtItVariableDescriptor(functionLiteral, kotlinType))
-                        addInstruction(FlushVariableInstruction(itVar))
+                val singleParameter = KtVariableDescriptor.getSingleLambdaParameter(factory, lambda)
+                if (singleParameter != null) {
+                    addInstruction(FlushVariableInstruction(singleParameter))
+                } else {
+                    for (parameter in lambda.valueParameters) {
+                        flushParameter(parameter)
                     }
-                }
-                for (parameter in valueParameters) {
-                    flushParameter(parameter)
                 }
             }
             processExpression(bodyExpression)
@@ -480,8 +670,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
         setOffset(endOffset)
         addInstruction(FlushFieldsInstruction())
-        pushUnknown()
-        addInstruction(ConditionalGotoInstruction(offset, DfTypes.TRUE))
+        if (kind != EventOccurrencesRange.AT_MOST_ONCE && kind != EventOccurrencesRange.EXACTLY_ONCE) {
+            pushUnknown()
+            addInstruction(ConditionalGotoInstruction(offset, DfTypes.TRUE))
+        }
     }
 
     private inline fun inlinedBlock(element: KtElement, fn : () -> Unit) {
@@ -588,7 +780,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                         if (dfVar != null) {
                             addInstruction(PushValueInstruction(dfType.meetRange(LongRangeSet.point(1))))
                             addInstruction(NumericBinaryInstruction(if (ref == "++") LongRangeBinOp.PLUS else LongRangeBinOp.MINUS, null))
-                            addInstruction(SimpleAssignmentInstruction(anchor, dfVar))
+                            addInstruction(JvmAssignmentInstruction(anchor, dfVar))
                             return
                         }
                     }
@@ -629,7 +821,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                         addInstruction(DupInstruction())
                         addInstruction(PushValueInstruction(dfType.meetRange(LongRangeSet.point(1))))
                         addInstruction(NumericBinaryInstruction(if (ref == "++") LongRangeBinOp.PLUS else LongRangeBinOp.MINUS, null))
-                        addInstruction(SimpleAssignmentInstruction(anchor, dfVar))
+                        addInstruction(JvmAssignmentInstruction(anchor, dfVar))
                         addInstruction(PopInstruction())
                     } else {
                         // Custom inc/dec may update the variable
@@ -642,9 +834,12 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
         } else if (ref == "!!") {
             val transfer: DfaControlTransferValue? = trapTracker.maybeTransferValue("java.lang.NullPointerException")
-            addInstruction(EnsureInstruction(KotlinNullCheckProblem(expr), RelationType.NE, DfTypes.NULL, transfer))
-            // Probably unbox
-            addImplicitConversion(expr, operand?.getKotlinType(), expr.getKotlinType())
+            val operandType = operand?.getKotlinType()
+            if (operandType?.canBeNull() == true) {
+                addInstruction(EnsureInstruction(KotlinNullCheckProblem(expr), RelationType.NE, DfTypes.NULL, transfer))
+                // Probably unbox
+                addImplicitConversion(expr, operandType, expr.getKotlinType())
+            }
         } else {
             addInstruction(EvalUnknownInstruction(anchor, 1))
         }
@@ -730,22 +925,22 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                         processExpression(left)
                         val leftVar = flow.createTempVariable(parameterVar.dfType)
                         addImplicitConversion(left, parameterType)
-                        addInstruction(SimpleAssignmentInstruction(null, leftVar))
+                        addInstruction(JvmAssignmentInstruction(null, leftVar))
                         addInstruction(PopInstruction())
                         processExpression(right)
                         val rightVar = flow.createTempVariable(parameterVar.dfType)
                         addImplicitConversion(right, parameterType)
-                        addInstruction(SimpleAssignmentInstruction(null, rightVar))
+                        addInstruction(JvmAssignmentInstruction(null, rightVar))
                         addInstruction(PopInstruction())
                         return {
                             val forAnchor = KotlinForVisitedAnchor(expr)
-                            addInstruction(PushInstruction(parameterVar, null))
-                            addInstruction(PushInstruction(leftVar, null))
+                            addInstruction(JvmPushInstruction(parameterVar, null))
+                            addInstruction(JvmPushInstruction(leftVar, null))
                             addInstruction(BooleanBinaryInstruction(leftRelation, false, null))
                             val offset = DeferredOffset()
                             addInstruction(ConditionalGotoInstruction(offset, DfTypes.FALSE))
-                            addInstruction(PushInstruction(parameterVar, null))
-                            addInstruction(PushInstruction(rightVar, null))
+                            addInstruction(JvmPushInstruction(parameterVar, null))
+                            addInstruction(JvmPushInstruction(rightVar, null))
                             addInstruction(BooleanBinaryInstruction(rightRelation, false, forAnchor))
                             val finalOffset = DeferredOffset()
                             addInstruction(GotoInstruction(finalOffset))
@@ -763,10 +958,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             val lengthField = findSpecialField(kotlinType)
             if (lengthField != null) {
                 val collectionVar = flow.createTempVariable(kotlinType.toDfType(range))
-                addInstruction(SimpleAssignmentInstruction(null, collectionVar))
+                addInstruction(JvmAssignmentInstruction(null, collectionVar))
                 addInstruction(PopInstruction())
                 return {
-                    addInstruction(PushInstruction(lengthField.createValue(factory, collectionVar), null))
+                    addInstruction(JvmPushInstruction(lengthField.createValue(factory, collectionVar), null))
                     addInstruction(PushValueInstruction(DfTypes.intValue(0)))
                     addInstruction(BooleanBinaryInstruction(RelationType.GT, false, null))
                     pushUnknown()
@@ -810,7 +1005,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
         processExpression(initializer)
         addImplicitConversion(initializer, variable.type())
-        addInstruction(SimpleAssignmentInstruction(KotlinExpressionAnchor(variable), dfaVariable))
+        addInstruction(JvmAssignmentInstruction(KotlinExpressionAnchor(variable), dfaVariable))
     }
 
     private fun processReturnExpression(expr: KtReturnExpression) {
@@ -822,7 +1017,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 val transfer: InstructionTransfer
                 if (returnedExpression != null) {
                     val retVar = flow.createTempVariable(returnedExpression.getKotlinType().toDfType(expr))
-                    addInstruction(SimpleAssignmentInstruction(null, retVar))
+                    addInstruction(JvmAssignmentInstruction(null, retVar))
                     transfer = createTransfer(targetFunction, targetFunction, retVar)
                 } else {
                     transfer = createTransfer(targetFunction, targetFunction, factory.unknown)
@@ -1097,7 +1292,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addImplicitConversion(right, leftType)
         }
         // TODO: support overloaded assignment
-        addInstruction(SimpleAssignmentInstruction(KotlinExpressionAnchor(expr), dfVar))
+        addInstruction(JvmAssignmentInstruction(KotlinExpressionAnchor(expr), dfVar))
         addInstruction(FinishElementInstruction(expr))
     }
 
@@ -1128,9 +1323,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (!mathOp.isShift) {
             addImplicitConversion(right, resultType)
         }
-        if (mathOp == LongRangeBinOp.DIV || mathOp == LongRangeBinOp.MOD) {
+        if ((mathOp == LongRangeBinOp.DIV || mathOp == LongRangeBinOp.MOD) && resultType != null &&
+            (resultType.isLong() || resultType.isInt())) {
             val transfer: DfaControlTransferValue? = trapTracker.maybeTransferValue("java.lang.ArithmeticException")
-            val zero = if (resultType?.isLong() == true) DfTypes.longValue(0) else DfTypes.intValue(0)
+            val zero = if (resultType.isLong()) DfTypes.longValue(0) else DfTypes.intValue(0)
             addInstruction(EnsureInstruction(null, RelationType.NE, zero, transfer, true))
         }
         addInstruction(NumericBinaryInstruction(mathOp, KotlinExpressionAnchor(expr)))
@@ -1268,7 +1464,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 kotlinType = subjectExpression.getKotlinType()
                 dfVar = flow.createTempVariable(kotlinType.toDfType(expr))
             }
-            addInstruction(SimpleAssignmentInstruction(null, dfVar))
+            addInstruction(JvmAssignmentInstruction(null, dfVar))
             addInstruction(PopInstruction())
         }
         val endOffset = DeferredOffset()
@@ -1304,7 +1500,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 if (dfVar != null) {
                     val balancedType = balanceType(exprType, dfVarType, true)
                     addImplicitConversion(expr, exprType, balancedType)
-                    addInstruction(PushInstruction(dfVar, null))
+                    addInstruction(JvmPushInstruction(dfVar, null))
                     addImplicitConversion(null, dfVarType, balancedType)
                     addInstruction(BooleanBinaryInstruction(RelationType.EQ, true, KotlinWhenConditionAnchor(condition)))
                 } else if (exprType?.canBeNull() == true) {
@@ -1313,7 +1509,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
             is KtWhenConditionIsPattern -> {
                 if (dfVar != null) {
-                    addInstruction(PushInstruction(dfVar, null))
+                    addInstruction(JvmPushInstruction(dfVar, null))
                     val type = getTypeCheckDfType(condition.typeReference)
                     if (type == DfType.TOP) {
                         pushUnknown()
@@ -1332,7 +1528,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
             is KtWhenConditionInRange -> {
                 if (dfVar != null) {
-                    addInstruction(PushInstruction(dfVar, null))
+                    addInstruction(JvmPushInstruction(dfVar, null))
                 } else {
                     pushUnknown()
                 }

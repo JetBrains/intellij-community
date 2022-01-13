@@ -3,10 +3,11 @@ package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.core.JavaPsiBundle
 import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.wizard.getCanonicalPath
 import com.intellij.ide.wizard.getPresentablePath
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.observable.properties.map
+import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl
@@ -15,10 +16,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.project.isDirectoryBased
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.bindText
-import com.intellij.ui.dsl.builder.columns
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.ui.JBUI
 import javax.swing.JPanel
@@ -29,7 +27,7 @@ internal class ProjectConfigurableUi(private val myProjectConfigurable: ProjectC
   private val propertyGraph = PropertyGraph()
 
   private val nameProperty = propertyGraph.graphProperty { myProject.name }
-  private val compilerOutputProperty = propertyGraph.graphProperty { "" }.map(::getPresentablePath)
+  private val compilerOutputProperty = propertyGraph.graphProperty { "" }
 
   var projectName by nameProperty
   var projectCompilerOutput by compilerOutputProperty
@@ -88,10 +86,11 @@ internal class ProjectConfigurableUi(private val myProjectConfigurable: ProjectC
       group(JavaUiBundle.message("project.structure.java")) {
         row(JavaUiBundle.message("module.module.language.level")) {
           cell(myLanguageLevelCombo)
-        }
+          cell()
+        }.layout(RowLayout.PARENT_GRID)
         row(JavaUiBundle.message("project.structure.compiler.output")) {
           textFieldWithBrowseButton()
-            .bindText(compilerOutputProperty)
+            .bindText(compilerOutputProperty.transform(::getPresentablePath, ::getCanonicalPath))
             .onIsModified {
               if (!myProjectConfigurable.isFrozen)
                 LanguageLevelProjectExtensionImpl.getInstanceImpl(myProject).currentLevel = myLanguageLevelCombo.selectedLevel
@@ -99,7 +98,8 @@ internal class ProjectConfigurableUi(private val myProjectConfigurable: ProjectC
             }
             .horizontalAlign(HorizontalAlign.FILL)
             .comment(JavaUiBundle.message("project.structure.compiler.output.comment"), 84)
-        }
+          cell()
+        }.layout(RowLayout.PARENT_GRID)
       }
     }.apply {
       withBorder(JBUI.Borders.empty(20, 20))

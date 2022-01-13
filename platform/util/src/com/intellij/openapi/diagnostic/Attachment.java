@@ -18,6 +18,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
 
+/**
+ * @see com.intellij.diagnostic.AttachmentFactory
+ */
 public final class Attachment {
   private static final Logger LOG = Logger.getInstance(Attachment.class);
 

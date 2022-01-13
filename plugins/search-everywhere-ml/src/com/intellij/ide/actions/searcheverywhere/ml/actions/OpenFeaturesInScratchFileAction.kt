@@ -65,7 +65,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
     }
 
     return mapOf(
-      SHOULD_ORDER_BY_ML_KEY to mlSessionService.shouldOrderByMl(),
+      SHOULD_ORDER_BY_ML_KEY to mlSessionService.shouldOrderByMl(searchEverywhereUI.selectedTabID),
       CONTEXT_INFO_KEY to searchSession.cachedContextInfo,
       FOUND_ELEMENTS_KEY to features
     )

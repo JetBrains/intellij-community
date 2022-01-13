@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 public abstract class ConfigurationTypeRunDashboardAdvertiserBase implements RunManagerListener, Disposable {
   private static final String DASHBOARD_NOTIFICATION_GROUP_ID = "Services Tool Window";
@@ -47,15 +48,16 @@ public abstract class ConfigurationTypeRunDashboardAdvertiserBase implements Run
     }
   }
 
-  public final void subscribe() {
+  public final void subscribe(Supplier<? extends Disposable> parentDisposableSupplier) {
     if (myProject.isDefault() || ApplicationManager.getApplication().isUnitTestMode() || myProject.isDisposed()) {
       return;
     }
 
     if (!isEnabled(myProject)) return;
 
-    MessageBusConnection connection = myProject.getMessageBus().connect();
-    Disposer.register(connection, this);
+    Disposable parentDisposable = parentDisposableSupplier.get();
+    MessageBusConnection connection = myProject.getMessageBus().connect(parentDisposable);
+    Disposer.register(parentDisposable, this);
     connection.subscribe(RunManagerListener.TOPIC, this);
     checkRunDashboardAvailability();
   }

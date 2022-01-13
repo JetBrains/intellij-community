@@ -44,6 +44,6 @@ fun example(): CharSequence? {
 
 ## Customize User-Agent
 
-By default header `User-Agent` is not set, 
+By default, `User-Agent` header is not set, 
 * use `productNameAsUserAgent()` to set to current product name and version (e.g. `IntelliJ IDEA/2018.2`).
 * or use `userAgent(String)` to set to arbitrary value.

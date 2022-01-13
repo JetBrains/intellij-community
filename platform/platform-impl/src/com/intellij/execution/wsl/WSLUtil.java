@@ -18,7 +18,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.WindowsRegistryUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jna.platform.win32.Advapi32Util;
 import com.sun.jna.platform.win32.WinReg;
@@ -170,16 +169,11 @@ public final class WSLUtil {
     return FileUtil.toSystemDependentName(Character.toUpperCase(wslPath.charAt(driveLetterIndex)) + ":" + wslPath.substring(slashIndex));
   }
 
-  public static @NotNull ThreeState isWsl1(@NotNull WSLDistribution distribution) {
-    int version = getWslVersion(distribution);
-    return version < 0 ? ThreeState.UNSURE : ThreeState.fromBoolean(version == 1);
-  }
-
   /**
    * @param distribution
    * @return version if it can be determined or -1 instead
    */
-  public static int getWslVersion(@NotNull WSLDistribution distribution) {
+  static int getWslVersion(@NotNull WSLDistribution distribution) {
     int version = getVersionFromWslCli(distribution);
     if (version < 0) {
       version = getVersionByUname(distribution);
@@ -247,7 +241,7 @@ public final class WSLUtil {
     return WindowsRegistryUtil.readRegistryValue("HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ReleaseId");
   }
 
-  public static class WSLToolFlags {
+  static class WSLToolFlags {
     public final boolean isQuietFlagAvailable;
     public final boolean isVerboseFlagAvailable;
 

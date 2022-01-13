@@ -16,6 +16,7 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runInEdt
@@ -46,6 +47,7 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
+import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.ui.PyUiUtil
 import java.io.File
 import java.io.IOException
@@ -203,6 +205,17 @@ fun PyDetectedSdk.setup(existingSdks: List<Sdk>): Sdk? {
   return SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeDir, PythonSdkType.getInstance(), false, null, null)
 }
 
+fun PyDetectedSdk.setupTargetAware(existingSdks: List<Sdk>, targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): Sdk? {
+  val homeDir = homeDirectory ?: return null
+  val sdk = SdkConfigurationUtil.createSdk(existingSdks, homeDir, PythonSdkType.getInstance(), null, null)
+  sdk.sdkAdditionalData = PyTargetAwareAdditionalData(flavor = null)
+    .also {
+      it.targetEnvironmentConfiguration = targetEnvironmentConfiguration
+    }
+  PythonSdkType.getInstance().setupSdkPaths(sdk)
+  return sdk
+}
+
 fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath: String?): Sdk? {
   val homeDir = homeDirectory ?: return null
   val suggestedName = homePath?.let { suggestAssociatedSdkName(it, associatedModulePath) }
@@ -351,3 +364,5 @@ private fun filterSuggestedPaths(suggestedPaths: Collection<String>,
     )
     .toList()
 }
+
+fun Sdk?.isTargetBased(): Boolean = this != null && sdkAdditionalData is PyTargetAwareAdditionalData

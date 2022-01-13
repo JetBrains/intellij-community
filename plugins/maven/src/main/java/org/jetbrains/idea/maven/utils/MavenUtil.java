@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
@@ -238,7 +238,10 @@ public class MavenUtil {
   }
 
   public static boolean isNoBackgroundMode() {
-    return (MavenUtil.isMavenUnitTestModeEnabled()
+    if (shouldRunTasksAsynchronouslyInTests()) {
+      return false;
+    }
+    return (ApplicationManager.getApplication().isUnitTestMode()
             || ApplicationManager.getApplication().isHeadlessEnvironment() &&
                !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode());
   }
@@ -1111,8 +1114,7 @@ public class MavenUtil {
   }
 
   public static boolean newModelEnabled(Project project) {
-    return Boolean.valueOf(System.getProperty(MAVEN_NEW_PROJECT_MODEL_KEY))
-           || Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY);
+    return Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY, false);
   }
 
   public static boolean isProjectTrustedEnoughToImport(Project project, boolean askConfirmation) {
@@ -1467,10 +1469,14 @@ public class MavenUtil {
   @ApiStatus.Internal
   //temporary api
   public static boolean isMavenUnitTestModeEnabled() {
-    if (System.getProperty("maven.unit.tests.remove") != null) {
+    if (shouldRunTasksAsynchronouslyInTests()) {
       return false;
     }
     return ApplicationManager.getApplication().isUnitTestMode();
+  }
+
+  private static boolean shouldRunTasksAsynchronouslyInTests() {
+    return Boolean.getBoolean("maven.unit.tests.remove");
   }
 
   @NotNull

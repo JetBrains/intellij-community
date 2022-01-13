@@ -206,7 +206,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
     if (!validateSdk(sdkProperty, sdkModel)) {
       return false
     }
-    if (!validateJavaVersion(sdkProperty, moduleBuilder.getMinJavaVersionInternal()?.toFeatureString())) {
+    if (!validateJavaVersion(sdkProperty, moduleBuilder.getMinJavaVersionInternal()?.toFeatureString(), moduleBuilder.presentableName)) {
       return false
     }
     return true

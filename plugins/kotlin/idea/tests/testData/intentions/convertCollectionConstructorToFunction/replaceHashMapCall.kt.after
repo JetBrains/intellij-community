@@ -1,4 +1,5 @@
 // WITH_RUNTIME
+// AFTER-WARNING: Variable 'list' is never used
 import java.util.HashMap
 
 fun foo() {

@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.importing;
 
 import com.intellij.openapi.externalSystem.model.project.ProjectCoordinate;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemWorkspaceContributor;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.ApiStatus;
@@ -13,8 +12,7 @@ import org.jetbrains.annotations.Nullable;
 public class JpsDependencyContributor implements ExternalSystemWorkspaceContributor {
 
   @Override
-  public @Nullable ProjectCoordinate findProjectId(Module module,
-                                                   IdeModifiableModelsProvider modelsProvider) {
+  public @Nullable ProjectCoordinate findProjectId(Module module) {
     if (Registry.is("external.system.map.jps.to.gav", false)) {
       GAVStateComponent gavStateComponent = module.getProject().getService(GAVStateComponent.class);
       return gavStateComponent.getMapping().get(module.getName());

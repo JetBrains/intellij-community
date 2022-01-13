@@ -54,7 +54,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
         if (keyValuePairs.isEmpty()) return null;
         return I18nizeMultipleStringsDialog.getResourceBundleManager(project, contextFiles);
       })
-      .finishOnUiThread(ModalityState.any(), bundleManager -> {
+      .finishOnUiThread(ModalityState.NON_MODAL, bundleManager -> {
         if (keyValuePairs.isEmpty()) return;
         showI18nizeMultipleStringsDialog(project, keyValuePairs, contextFiles, bundleManager);
       })

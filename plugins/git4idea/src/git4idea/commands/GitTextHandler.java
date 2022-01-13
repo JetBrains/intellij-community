@@ -119,17 +119,20 @@ public abstract class GitTextHandler extends GitHandler {
   @Override
   protected void waitForProcess() {
     if (myHandler != null) {
-      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      ProgressManager progressManager = ProgressManager.getInstance();
       while (!myHandler.waitFor(WAIT_TIMEOUT_MS)) {
         try {
+          ProgressIndicator indicator = progressManager.getProgressIndicator();
           if (indicator != null) {
             indicator.checkCanceled();
           }
         }
         catch (ProcessCanceledException pce) {
-          if (!tryKill()) {
-            LOG.error("Could not terminate [" + printableCommandLine() + "].");
-          }
+          progressManager.executeNonCancelableSection(() -> {
+            if (!tryKill()) {
+              LOG.warn("Could not terminate [" + printableCommandLine() + "].");
+            }
+          });
           throw pce;
         }
       }

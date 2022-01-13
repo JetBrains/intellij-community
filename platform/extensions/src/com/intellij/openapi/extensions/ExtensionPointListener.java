@@ -11,8 +11,8 @@ public interface ExtensionPointListener<T> {
 
   default void extensionRemoved(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor) { }
 
-  @SuppressWarnings("unchecked")
   static <T> ExtensionPointListener<T> @NotNull [] emptyArray() {
+    //noinspection unchecked
     return (ExtensionPointListener<T>[])EMPTY_ARRAY;
   }
 

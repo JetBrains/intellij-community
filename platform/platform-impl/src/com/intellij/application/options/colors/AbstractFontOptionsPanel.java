@@ -307,10 +307,9 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
 
   @NotNull
   private static JEditorPane createReaderModeComment() {
-    return UtilsKt.createHtmlComment(ApplicationBundle.message("comment.use.ligatures.with.reader.mode"), event -> {
-      goToReaderMode();
-      return null;
-    });
+    return UtilsKt.createHtmlComment(ApplicationBundle.message("comment.use.ligatures.with.reader.mode"),
+                                     e -> goToReaderMode()
+    );
   }
 
   protected static void goToReaderMode() {

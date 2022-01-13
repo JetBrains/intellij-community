@@ -30,10 +30,9 @@ abstract class CoroutineInfoData(val descriptor: CoroutineDescriptor) {
 }
 
 class LazyCoroutineInfoData(
-    descriptor: CoroutineDescriptor,
     private val mirror: MirrorOfCoroutineInfo,
     private val stackTraceProvider: CoroutineStackTraceProvider
-) : CoroutineInfoData(descriptor) {
+) : CoroutineInfoData(CoroutineDescriptor.instance(mirror)) {
     val stackFrames: CoroutineStackTraceProvider.CoroutineStackFrames? by lazy {
         stackTraceProvider.findStackFrames(mirror)
     }

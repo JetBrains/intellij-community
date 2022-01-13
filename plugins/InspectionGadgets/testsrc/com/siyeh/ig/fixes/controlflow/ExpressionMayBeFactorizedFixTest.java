@@ -115,6 +115,25 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  public void testNumericOperation() {
+    doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+                 "int fullHeight(int rowHeight, int rowCount, int rowMargin) {\n" +
+                 "  return rowHeight * rowCount + /**/rowMargin * rowCount;\n" +
+                 "}",
+                 "int fullHeight(int rowHeight, int rowCount, int rowMargin) {\n" +
+                 "  return (rowHeight + rowMargin) * rowCount;\n" +
+                 "}");
+  }
+
+  public void testNumericOperation2() {
+    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+                               "class X {\n" +
+                               "  int fullHeight(int rowHeight, int rowCount, int rowMargin) {\n" +
+                               "    return rowHeight + rowCount * /**/rowMargin + rowCount;\n" +
+                               "  }" +
+                               "}");
+  }
+
   public void testComparison() {
     doTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
            "class X {\n" +

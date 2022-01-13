@@ -33,7 +33,7 @@ public interface ProcessService {
 
   void killWinProcessRecursively(@NotNull Process process);
 
-  boolean isWinPty(@NotNull Process process);
+  boolean isLocalPtyProcess(@NotNull Process process);
 
   @Nullable
   Integer winPtyChildProcessId(@NotNull Process process);

@@ -178,8 +178,8 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
     return myVal - highlightSeverity.myVal;
   }
 
-  @SuppressWarnings("deprecation")
   public void writeExternal(Element element) throws WriteExternalException {
+    //noinspection deprecation
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 

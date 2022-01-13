@@ -333,7 +333,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     List<VirtualFile> targets = ReadAction.compute(() -> ContainerUtil.filter(session.getTargetVirtualFiles(), scope::contains));
     List<@NotNull VirtualFile> directories;
-    if (!targets.isEmpty()) {
+    if (targets.isEmpty()) {
+      directories = Collections.emptyList();
+    }
+    else {
       priorities.add(targets);
       allFiles.removeAll(targets);
 
@@ -353,9 +356,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         priorities.add(directoryNearTargetFiles);
         allFiles.removeAll(directoryNearTargetFiles);
       }
-    }
-    else {
-      directories = Collections.emptyList();
     }
     if (containerName != null) {
       Set<VirtualFile> intersectionWithContainerFiles = new HashSet<>();

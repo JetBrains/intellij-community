@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieAddExceptionQuickFix
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
@@ -15,55 +16,90 @@ import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.utils.toLinkedSet
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.runSuspendingAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.parents
 import com.intellij.refactoring.suggested.startOffset
+import kotlinx.coroutines.*
 
 internal class CheckerRunner(val text: TextContent) {
   private val sentences by lazy { SRXSentenceTokenizer.tokenize(text.toString()) }
 
-  fun run(checkers: List<TextChecker>): List<TextProblem> {
-    val filtered = ArrayList<TextProblem>()
-    for (checker in checkers) {
-      for (problem in checker.check(text)) {
-        require(problem.text == text)
-
-        if (isSuppressed(problem) ||
-            hasIgnoredCategory(problem) ||
-            isIgnoredByStrategies(problem) ||
-            isIgnoredByFilters(problem)) {
-          continue
-        }
-
-        if (filtered.none { it.highlightRange.intersects(problem.highlightRange) }) {
-          filtered.add(problem)
+  fun run(checkers: List<TextChecker>, consumer: (TextProblem) -> Unit) {
+    runSuspendingAction {
+      val deferred: List<Deferred<Collection<TextProblem>>> = checkers.map { checker ->
+        when (checker) {
+          is ExternalTextChecker -> async { checker.checkExternally(text) }
+          else -> async(start = CoroutineStart.LAZY) { checker.check(text) }
         }
       }
-    }
+      launch {
+        for (job in deferred) {
+          yield() // allow the main coroutine to process the available results as soon as possible
+          job.start()
+        }
+      }
 
-    return filtered
-  }
-
-  fun toProblemDescriptors(problems: List<TextProblem>, isOnTheFly: Boolean): List<ProblemDescriptor> {
-    val parent = text.commonParent
-    return problems.flatMap { problem ->
-      val tooltip = problem.tooltipTemplate
-      val description = problem.getDescriptionTemplate(isOnTheFly)
-      fileHighlightRanges(problem).map { range ->
-        object : ProblemDescriptorBase(
-          parent, parent, description,
-          if (isOnTheFly) toFixes(problem) else LocalQuickFix.EMPTY_ARRAY,
-          ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false,
-          range.shiftLeft(parent.startOffset),
-          true, isOnTheFly) {
-          override fun getTooltipTemplate(): String {
-            return tooltip
+      val filtered = ArrayList<TextProblem>()
+      for (job in deferred) {
+        val problems = job.await()
+        for (problem in problems) {
+          if (processProblem(problem, filtered)) {
+            consumer(problem)
           }
         }
       }
+    }
+  }
+
+  private fun processProblem(problem: TextProblem, filtered: MutableList<TextProblem>): Boolean {
+    require(problem.text == text)
+
+    if (isSuppressed(problem) ||
+        hasIgnoredCategory(problem) ||
+        isIgnoredByStrategies(problem) ||
+        isIgnoredByFilters(problem)) {
+      return false
+    }
+
+    if (filtered.none { it.highlightRange.intersects(problem.highlightRange) }) {
+      filtered.add(problem)
+      return true
+    }
+    return false
+  }
+
+  fun toProblemDescriptors(problem: TextProblem, isOnTheFly: Boolean): List<ProblemDescriptor> {
+    val parent = text.commonParent
+    val tooltip = problem.tooltipTemplate
+    val description = problem.getDescriptionTemplate(isOnTheFly)
+    return fileHighlightRanges(problem).map { range ->
+      GrazieProblemDescriptor(
+        parent, description,
+        if (isOnTheFly) toFixes(problem) else LocalQuickFix.EMPTY_ARRAY,
+        range.shiftLeft(parent.startOffset), isOnTheFly,
+        tooltip)
+    }
+  }
+
+  // a non-anonymous class to work around KT-48784
+  private class GrazieProblemDescriptor(psi: PsiElement,
+                                        @InspectionMessage descriptionTemplate: String,
+                                        fixes: Array<out LocalQuickFix>?,
+                                        rangeInElement: TextRange?,
+                                        onTheFly: Boolean,
+                                        @NlsContexts.Tooltip private val tooltip: String
+  ): ProblemDescriptorBase(
+    psi, psi, descriptionTemplate, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false,
+    rangeInElement, true, onTheFly
+  ) {
+    override fun getTooltipTemplate(): String {
+      return tooltip
     }
   }
 

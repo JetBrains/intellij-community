@@ -34,10 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.PathMappingSettings;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
@@ -49,6 +46,7 @@ import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.io.File;
@@ -66,10 +64,17 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   private static final Object ourLock = new Object();
   private static final Set<String> ourUnderRefresh = new HashSet<>();
   private static final Map<String, PyUpdateSdkRequestData> ourToBeRefreshed = new HashMap<>();
+  private static volatile boolean ourEnabledInTests = false;
 
   static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup(
     "Python SDK Updater",
     PyBundle.message("python.sdk.updater.notifications.group.title"));
+
+  @ApiStatus.Internal
+  @TestOnly
+  public static void setEnabledInTests(boolean enabled) {
+    ourEnabledInTests = enabled;
+  }
 
   /**
    * Schedules a background refresh of the SDKs of the modules for the open project.
@@ -318,7 +323,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   }
 
   private static void scheduleUpdate(@NotNull Sdk sdk, @NotNull Project project, @NotNull PyUpdateSdkRequestData requestData) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ourEnabledInTests && ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.info("Skipping background update for '" + sdk + "' in unit test mode");
       return;
     }

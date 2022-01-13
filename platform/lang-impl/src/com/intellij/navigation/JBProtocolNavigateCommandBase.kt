@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.PsiNavigateUtil
+import com.intellij.util.containers.ComparatorUtil.max
 import java.io.File
 import java.nio.file.Path
 import java.util.regex.Pattern
@@ -117,9 +118,9 @@ private const val FILE_PROTOCOL = "file://"
 
 private const val PATH_GROUP = "path"
 private const val LINE_GROUP = "line"
-private const val COLUMN_GROUP = "column"
+private const val OFFSET_IN_LINE_GROUP = "offset"
 private const val REVISION = "revision"
-private val PATH_WITH_LOCATION = Pattern.compile("(?<${PATH_GROUP}>[^:]*)(:(?<${LINE_GROUP}>[\\d]+))?(:(?<${COLUMN_GROUP}>[\\d]+))?")
+private val PATH_WITH_LOCATION = Pattern.compile("(?<${PATH_GROUP}>[^:]*)(:(?<${LINE_GROUP}>[\\d]+))?(:(?<${OFFSET_IN_LINE_GROUP}>[\\d]+))?")
 
 private fun findFile(project: Project, absolutePath: String?, revision: String?): VirtualFile? {
   absolutePath ?: return null
@@ -203,7 +204,7 @@ private fun parsePosition(range: String): LogicalPosition? {
 class PathNavigator(val project: Project, val parameters: Map<String, String>, val pathText: String) {
   fun navigate() {
 
-    var (path, line, column) = parseNavigatePath(pathText)
+    var (path, line, offsetInLine) = parseNavigatePath(pathText)
 
     if (path == null) {
       return
@@ -221,18 +222,20 @@ class PathNavigator(val project: Project, val parameters: Map<String, String>, v
       ApplicationManager.getApplication().invokeLater {
         FileEditorManager.getInstance(project).openFile(virtualFile, true)
           .filterIsInstance<TextEditor>().first().let { textEditor ->
-            performEditorAction(textEditor, line, column)
+            performEditorAction(textEditor, line, offsetInLine)
           }
       }
     }
   }
 
-  fun performEditorAction(textEditor: TextEditor, line: String?, column: String?) {
+  fun performEditorAction(textEditor: TextEditor, line: String?, offsetInLine: String?) {
     val editor = textEditor.editor
 
-    val position = LogicalPosition(line?.toInt() ?: 0, column?.toInt() ?: 0)
+    val lineLogicalCoords = line?.let {max(it.toInt() - 1, 0)} ?: 0
+    val offsetOfLine = editor.logicalPositionToOffset(LogicalPosition(lineLogicalCoords, 0))
+
     editor.caretModel.removeSecondaryCarets()
-    editor.caretModel.moveToLogicalPosition(position)
+    editor.caretModel.moveToOffset(offsetOfLine + (offsetInLine?.toInt() ?: 0))
     editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
     editor.selectionModel.removeSelection()
     IdeFocusManager.getGlobalInstance().requestFocus(editor.contentComponent, true)
@@ -249,7 +252,7 @@ fun parseNavigatePath(pathText: String): Triple<String?, String?, String?> {
 
   var path: String? = matcher.group(PATH_GROUP)
   val line: String? = matcher.group(LINE_GROUP)
-  val column: String? = matcher.group(COLUMN_GROUP)
+  val offsetInLine: String? = matcher.group(OFFSET_IN_LINE_GROUP)
 
-  return Triple(path, line, column)
+  return Triple(path, line, offsetInLine)
 }

@@ -67,6 +67,7 @@
     <keyboard-shortcut first-keystroke="alt 1"/>
   </action>
   <action id="ActivateFavoritesToolWindow"/>
+  <action id="ActivateBookmarksToolWindow"/>
   <action id="ActivateFindToolWindow">
     <keyboard-shortcut first-keystroke="alt 2"/>
   </action>

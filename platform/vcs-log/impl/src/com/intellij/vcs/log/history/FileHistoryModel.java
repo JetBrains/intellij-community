@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.vcs.FilePath;
@@ -58,14 +58,22 @@ public abstract class FileHistoryModel {
   @Nullable
   public Change getSelectedChange(int @NotNull [] rows) {
     if (rows.length == 0) return null;
+
     int row = rows[0];
+    VisiblePack visiblePack = getVisiblePack();
     List<Integer> parentRows;
     if (rows.length == 1) {
-      parentRows = getVisiblePack().getVisibleGraph().getRowInfo(row).getAdjacentRows(true);
+      if (FileHistoryFilterer.NO_PARENTS_INFO.get(visiblePack, false) &&
+          row + 1 < visiblePack.getVisibleGraph().getVisibleCommitCount()) {
+        parentRows = Collections.singletonList(row + 1);
+      }
+      else {
+        parentRows = visiblePack.getVisibleGraph().getRowInfo(row).getAdjacentRows(true);
+      }
     }
     else {
       parentRows = Collections.singletonList(rows[rows.length - 1]);
     }
-    return FileHistoryUtil.createChangeToParents(row, parentRows, getVisiblePack(), myDiffHandler, myLogData);
+    return FileHistoryUtil.createChangeToParents(row, parentRows, visiblePack, myDiffHandler, myLogData);
   }
 }

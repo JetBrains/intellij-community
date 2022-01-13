@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
@@ -143,16 +144,21 @@ public final class Utils extends DataContextUtils {
     BlockingQueue<Runnable> queue0 = async && !asyncUI ? new LinkedBlockingQueue<>() : null;
     ActionUpdater updater = new ActionUpdater(
       isInModalContext, presentationFactory, context, place, isContextMenu, false, null, queue0 != null ? queue0::offer : null);
+    ActionGroupExpander expander = ActionGroupExpander.getInstance();
+    Project project = CommonDataKeys.PROJECT.getData(context);
     List<AnAction> list;
     if (async) {
-      Set<String> missedKeys = new HashSet<>();
-      list = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, missedKeys::add);
-      if (list != null && missedKeys.isEmpty()) {
-        if (onProcessed != null) onProcessed.run();
-        return list;
+      if (expander.allowsFastUpdate(project, place)) {
+        Set<String> missedKeys = new HashSet<>();
+        list = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, missedKeys::add);
+        if (list != null && missedKeys.isEmpty()) {
+          if (onProcessed != null) onProcessed.run();
+          return list;
+        }
       }
       IdeEventQueue queue = IdeEventQueue.getInstance();
-      CancellablePromise<List<AnAction>> promise = updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
+      CancellablePromise<List<AnAction>> promise = expander.expandActionGroupAsync(
+        project, place, group, group instanceof CompactActionGroup, updater::expandActionGroupAsync);
       if (onProcessed != null) promise.onProcessed(__ -> onProcessed.run());
       try (AccessToken ignore = cancelOnUserActivityInside(promise, PlatformDataKeys.CONTEXT_COMPONENT.getData(context), menuItem)) {
         list = runLoopAndWaitForFuture(promise, Collections.emptyList(), true, () -> {

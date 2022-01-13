@@ -22,7 +22,7 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
   }
 
   /**
-   * Starts a process with a {@link RunnerMediator mediator} when {@code withMediator} is set to {@code true} and the platform is Windows.
+   * Starts a process with a {@link WinRunnerMediator mediator} when {@code withMediator} is set to {@code true} and the platform is Windows.
    */
   public KillableColoredProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
     super(KillableProcessHandler.mediate(commandLine, withMediator, false));

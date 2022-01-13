@@ -78,11 +78,10 @@ public class CompilerManagerImpl extends CompilerManager {
   private final Set<LocalFileSystem.WatchRequest> myWatchRoots;
   private volatile ExternalJavacManager myExternalJavacManager;
 
-  @SuppressWarnings("MissingDeprecatedAnnotation")
   @NonInjectable
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public CompilerManagerImpl(@NotNull Project project, @SuppressWarnings("unused") @NotNull MessageBus messageBus) {
+  public CompilerManagerImpl(@NotNull Project project, @NotNull MessageBus messageBus) {
     this(project);
   }
 

@@ -1,3 +1,15 @@
+// AFTER-WARNING: Parameter 'a' is never used
+// AFTER-WARNING: Parameter 'a' is never used
+// AFTER-WARNING: Parameter 'a' is never used
+// AFTER-WARNING: Parameter 'a' is never used
+// AFTER-WARNING: Parameter 'a' is never used
+// AFTER-WARNING: Parameter 'b' is never used
+// AFTER-WARNING: Parameter 'b' is never used
+// AFTER-WARNING: Parameter 'b' is never used
+// AFTER-WARNING: Parameter 'c' is never used
+// AFTER-WARNING: Parameter 'c' is never used
+// AFTER-WARNING: Parameter 'f' is never used
+// AFTER-WARNING: Parameter 'i' is never used
 open class Foo {
     constructor(f: (Int, <caret>Boolean) -> String){
         f(1, false)

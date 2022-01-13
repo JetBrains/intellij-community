@@ -1,4 +1,5 @@
 // WITH_RUNTIME
+// AFTER-WARNING: Variable 'sql' is never used
 data class Column(val name: String)
 
 fun test(columns: List<Column>) {

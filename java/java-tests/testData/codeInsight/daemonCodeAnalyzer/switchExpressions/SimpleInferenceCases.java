@@ -105,6 +105,11 @@ class MyTest {
     Runnable r = () -> <error descr="Target type for switch expression cannot be void">switch</error>(0) {
       default -> throw new IllegalArgumentException();
     };
+
+    var rv = switch (0) {
+      case 0 -> 42;
+      default -> <error descr="Expression type should not be 'void'">System.out.println(42)</error>;
+    };
   }
 
   static void test(boolean b, int i) {

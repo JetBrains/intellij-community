@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.aether;
 
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
@@ -204,8 +204,8 @@ public final class ArtifactRepositoryManager {
    * Returns list of classes corresponding to classpath entries for this this module.
    */
   @SuppressWarnings("UnnecessaryFullyQualifiedName")
-  public static List<Class<?>> getClassesFromDependencies() {
-    return Arrays.asList(
+  public static Class<?>[] getClassesFromDependencies() {
+    return new Class<?>[]{
       org.jetbrains.idea.maven.aether.ArtifactRepositoryManager.class, //this module
       org.apache.maven.repository.internal.VersionsMetadataGeneratorFactory.class, //maven-aether-provider
       org.apache.maven.artifact.Artifact.class, //maven-artifact
@@ -230,7 +230,7 @@ public final class ArtifactRepositoryManager {
       org.apache.commons.logging.LogFactory.class, // commons-logging
       org.slf4j.Marker.class, // slf4j
       org.apache.commons.codec.binary.Base64.class // commons-codec
-    );
+    };
   }
 
   public @NotNull Collection<File> resolveDependency(String groupId,

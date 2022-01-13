@@ -27,8 +27,8 @@ class FileHistoryEditorDiffPreview(project: Project, private val fileHistoryPane
 
   override fun getOwnerComponent(): JComponent = fileHistoryPanel.graphTable
 
-  override fun getEditorTabName(): @Nls String = VcsLogBundle.message("file.history.diff.preview.editor.tab.name",
-                                                                      fileHistoryPanel.filePath.name)
+  override fun getEditorTabName(processor: DiffRequestProcessor?): @Nls String =
+    VcsLogBundle.message("file.history.diff.preview.editor.tab.name", fileHistoryPanel.filePath.name)
 
   override fun addSelectionListener(listener: () -> Unit) {
     val selectionListener = ListSelectionListener {

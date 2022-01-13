@@ -152,7 +152,6 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @SuppressWarnings("unused")
   public void setSetupButton(final JButton setUpButton,
                                 @Nullable final Project project,
                                 final ProjectSdksModel jdksModel,

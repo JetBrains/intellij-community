@@ -183,10 +183,7 @@ public final class RegisteredIndexes {
       try {
         future.get();
       }
-      catch (InterruptedException e) {
-        FileBasedIndexImpl.LOG.error(e);
-      }
-      catch (ExecutionException e) {
+      catch (InterruptedException | ExecutionException e) {
         FileBasedIndexImpl.LOG.error(e);
       }
     }

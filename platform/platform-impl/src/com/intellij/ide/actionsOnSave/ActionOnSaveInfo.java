@@ -44,7 +44,7 @@ public abstract class ActionOnSaveInfo {
    * {@link ActionOnSaveInfo#isModified()} and all getters (like {@link #isActionOnSaveEnabled()} should be implemented accordingly.
    * <br/><br/>
    * Setter implementations ({@link #setActionOnSaveEnabled(boolean)}), as well as handlers of {@link #getActivatedOnDropDownLink()},
-   * {@link #getInPlaceConfigDropDownLink()}, and {@link #getActivatedOnDropDownLink()} should store their state in {@link ActionOnSaveContext}.
+   * {@link #getDropDownLinks()}, and {@link #getActivatedOnDropDownLink()} should store their state in {@link ActionOnSaveContext}.
    * This way, new instances of <code>ActionOnSaveInfo</code> will be able to restore their state when they are re-created next time.
    */
   protected ActionOnSaveInfo(@NotNull ActionOnSaveContext context) {
@@ -109,12 +109,12 @@ public abstract class ActionOnSaveInfo {
    * <br/><br/>
    * <b>Note:</b> do not return {@link DropDownLink}s. The problem with them is that they show a popup on click, and the popup is higher
    * than the current table row. When user clicks something in this popup - the original {@link DropDownLink} is not visible anymore
-   * because the mouse pointer hovers a different table row at this moment. Implement {@link #getInPlaceConfigDropDownLink()} if needed - it is visible
+   * because the mouse pointer hovers a different table row at this moment. Implement {@link #getDropDownLinks()} if needed - it is visible
    * always, not ony on hover.
    *
    * @see #createGoToPageInSettingsLink(String)
    * @see #createGoToPageInSettingsLink(String, String)
-   * @see #getInPlaceConfigDropDownLink()
+   * @see #getDropDownLinks()
    */
   public @NotNull List<? extends ActionLink> getActionLinks() { return Collections.emptyList(); }
 
@@ -133,10 +133,12 @@ public abstract class ActionOnSaveInfo {
   }
 
   /**
-   * Implementations may return a {@link DropDownLink} for quick in-place configuration of the corresponding 'action on save'.
-   * Unlike {@link #getActionLinks()} all {@link DropDownLink}s are always visible for all rows of the 'actions on save' table.
+   * Implementations may return a list of {@link DropDownLink}s for quick in-place configuration of the corresponding 'action on save'.
+   * Unlike {@link #getActionLinks()} all {@link DropDownLink}s here are always visible for all rows of the 'actions on save' table.
    */
-  public @Nullable DropDownLink<?> getInPlaceConfigDropDownLink() { return null; }
+  public @NotNull List<? extends DropDownLink<?>> getDropDownLinks() {
+    return Collections.emptyList();
+  }
 
   /**
    * This component is shown in the 'Activated on' column. This is either a label (if there is no choice) or a {@link DropDownLink} with

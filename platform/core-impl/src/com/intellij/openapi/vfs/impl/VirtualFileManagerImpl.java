@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
@@ -106,11 +106,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
       return null;
     }
 
-    List<VirtualFileSystem> systems = myCollector.forKey(protocol);
-    return selectFileSystem(protocol, systems);
-  }
-
-  protected @Nullable VirtualFileSystem selectFileSystem(@NotNull String protocol, @NotNull List<? extends VirtualFileSystem> candidates) {
+    List<? extends VirtualFileSystem> candidates = getFileSystemsForProtocol(protocol);
     int size = candidates.size();
     if (size == 0) {
       return null;
@@ -120,6 +116,10 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
       LOG.error(protocol + ": " + candidates);
     }
     return candidates.get(0);
+  }
+
+  protected @NotNull List<? extends VirtualFileSystem> getFileSystemsForProtocol(@NotNull String protocol) {
+    return myCollector.forKey(protocol);
   }
 
   @Override

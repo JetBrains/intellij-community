@@ -73,7 +73,7 @@ class TestingOptions {
   /**
    * Specifies if ant or junit 5 direct runner should be used 
    */
-  boolean preferAntRunner = SystemProperties.getBooleanProperty("intellij.build.test.ant.runner", true)
+  boolean preferAntRunner = SystemProperties.getBooleanProperty("intellij.build.test.ant.runner", false)
 
   /**
    * Enables capturing traces with IntelliJ test discovery agent.

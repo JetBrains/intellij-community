@@ -271,7 +271,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @Deprecated
-  protected final void setFocusBorderEnabled(@SuppressWarnings("unused") boolean enabled) { }
+  protected final void setFocusBorderEnabled(boolean enabled) { }
 
   protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,
                                                        JList list,

@@ -107,8 +107,7 @@ import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -433,12 +432,8 @@ public final class BuildManager implements Disposable {
     mySuspendBackgroundTasksCounter.decrementAndGet();
   }
 
-  @Nullable
-  private static String getFallbackSdkHome() {
+  private static @NotNull String getFallbackSdkHome() {
     String home = SystemProperties.getJavaHome(); // should point either to jre or jdk
-    if (home == null) {
-      return null;
-    }
     if (!JdkUtil.checkForJdk(home)) {
       String parent = new File(home).getParent();
       if (parent != null && JdkUtil.checkForJdk(parent)) {

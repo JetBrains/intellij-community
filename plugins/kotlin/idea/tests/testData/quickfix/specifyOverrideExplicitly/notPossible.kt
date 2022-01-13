@@ -1,4 +1,5 @@
 // "Specify override for 'foo(): Unit' explicitly" "false"
+// ACTION: Compiler warning 'DELEGATED_MEMBER_HIDES_SUPERTYPE_OVERRIDE' options
 // ACTION: Create test
 // ACTION: Make primary constructor internal
 // ACTION: Make primary constructor private

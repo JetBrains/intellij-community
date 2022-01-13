@@ -33,6 +33,14 @@ import static org.junit.Assert.*;
 import static org.junit.Assume.assumeFalse;
 
 public class UtilsTest {
+  static {
+    setRequiredDiskSpace();
+  }
+
+  static void setRequiredDiskSpace() {
+    System.setProperty("idea.required.space", Long.toString(20_000_000));
+  }
+
   @Rule public TempDirectory tempDir = new TempDirectory();
 
   @Test

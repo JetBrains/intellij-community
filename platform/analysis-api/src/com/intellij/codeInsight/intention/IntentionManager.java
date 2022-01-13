@@ -32,7 +32,7 @@ public abstract class IntentionManager  {
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @Deprecated
-  public static IntentionManager getInstance(@SuppressWarnings("unused") Project project) {
+  public static IntentionManager getInstance(Project project) {
     return getInstance();
   }
 

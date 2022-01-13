@@ -48,6 +48,13 @@ public final class FileCollectionFactory {
   /**
    * Create linked map with canonicalized key hash strategy.
    */
+  public static @NotNull <V> Map<Path, V> createCanonicalPathLinkedMap() {
+    return new Object2ObjectLinkedOpenCustomHashMap<>(new PathSerializableHashStrategy());
+  }
+
+  /**
+   * Create linked map with canonicalized key hash strategy.
+   */
   public static @NotNull <V> Map<String, V> createCanonicalFilePathLinkedMap() {
     return new Object2ObjectLinkedOpenCustomHashMap<>(new Hash.Strategy<String>() {
       @Override

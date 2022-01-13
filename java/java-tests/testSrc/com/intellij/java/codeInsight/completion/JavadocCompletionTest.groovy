@@ -774,6 +774,16 @@ interface Bar<T> extends Foo<T> {
     myFixture.checkResult("interface Foo { /** Hello {@link <caret>} */void foo(int a); }")
   }
 
+  void "test tags after return"() {
+    myFixture.configureByText 'a.java', "interface Foo { /** @return <caret> */int foo(int a); }"
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['{@code}', '{@docRoot}', '{@inheritDoc}', '{@linkplain}', '{@link}', '{@literal}', '{@value}']
+    def element = myFixture.lookupElements[4]
+    assert element.lookupString == "{@link}"
+    selectItem(element)
+    myFixture.checkResult("interface Foo { /** @return {@link <caret>} */int foo(int a); }")
+  }
+
   void "test tags at top level inline in brace"() {
     myFixture.configureByText 'a.java', "interface Foo { /** Hello {<caret>} */void foo(int a); }"
     myFixture.completeBasic()

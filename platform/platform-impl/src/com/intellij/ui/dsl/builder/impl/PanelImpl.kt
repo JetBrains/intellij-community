@@ -53,7 +53,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
     return result
   }
 
-  override fun twoColumnRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)?): Row {
+  override fun twoColumnsRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)?): Row {
     if (column1 == null && column2 == null) {
       throw UiDslException("Both columns cannot be null")
     }
@@ -82,6 +82,45 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
     }.layout(RowLayout.PARENT_GRID)
   }
 
+  override fun threeColumnsRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)?, column3: (Row.() -> Unit)?): Row {
+    if (column1 == null && column2 == null && column3 == null) {
+      throw UiDslException("All columns cannot be null")
+    }
+
+    return row {
+      panel {
+        row {
+          if (column1 == null) {
+            cell()
+          }
+          else {
+            column1()
+          }
+        }
+      }.gap(RightGap.COLUMNS)
+      panel {
+        row {
+          if (column2 == null) {
+            cell()
+          }
+          else {
+            column2()
+          }
+        }
+      }.gap(RightGap.COLUMNS)
+      panel {
+        row {
+          if (column3 == null) {
+            cell()
+          }
+          else {
+            column3()
+          }
+        }
+      }
+    }.layout(RowLayout.PARENT_GRID)
+  }
+
   override fun panel(init: Panel.() -> Unit): PanelImpl {
     lateinit var result: PanelImpl
     row {
@@ -97,7 +136,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
     return result
   }
 
-  override fun group(title: String?, indent: Boolean, init: Panel.() -> Unit): PanelImpl {
+  override fun group(title: String?, indent: Boolean, topGroupGap: Boolean, init: Panel.() -> Unit): PanelImpl {
     val component = createSeparator(title)
     val groupTopGap = dialogPanelConfig.spacing.groupTopGap
     val result = panel {
@@ -105,7 +144,9 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
         cell(component)
           .horizontalAlign(HorizontalAlign.FILL)
       } as RowImpl
-      row.internalTopGap = groupTopGap
+      if (topGroupGap) {
+        row.internalTopGap = groupTopGap
+      }
     }
 
     if (indent) {
@@ -116,15 +157,22 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
     return result
   }
 
-  override fun groupRowsRange(title: String?, init: Panel.() -> Unit): RowsRangeImpl {
+  override fun groupRowsRange(title: String?, indent: Boolean, topGroupGap: Boolean, init: Panel.() -> Unit): RowsRangeImpl {
     val result = RowsRangeImpl(this, _rows.size)
     val component = createSeparator(title)
     val row = row {
       cell(component)
         .horizontalAlign(HorizontalAlign.FILL)
     }
-    row.internalTopGap = dialogPanelConfig.spacing.groupTopGap
-    indent(init)
+    if (topGroupGap) {
+      row.internalTopGap = dialogPanelConfig.spacing.groupTopGap
+    }
+    if (indent) {
+      indent(init)
+    }
+    else {
+      init()
+    }
     result.endIndex = _rows.size - 1
     return result
   }

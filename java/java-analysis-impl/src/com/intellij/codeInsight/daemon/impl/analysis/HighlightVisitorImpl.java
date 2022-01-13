@@ -146,7 +146,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected HighlightVisitorImpl(@SuppressWarnings("unused") @NotNull PsiResolveHelper psiResolveHelper) {
+  protected HighlightVisitorImpl(@NotNull PsiResolveHelper psiResolveHelper) {
   }
 
   @NotNull

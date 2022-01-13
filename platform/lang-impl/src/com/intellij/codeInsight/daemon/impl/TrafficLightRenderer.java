@@ -57,7 +57,9 @@ import java.util.stream.Collectors;
 import static com.intellij.analysis.problemsView.toolWindow.ProblemsView.toggleCurrentFileProblems;
 
 public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
+  @NotNull
   private final Project myProject;
+  @NotNull
   private final Document myDocument;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
   private final SeverityRegistrar mySeverityRegistrar;

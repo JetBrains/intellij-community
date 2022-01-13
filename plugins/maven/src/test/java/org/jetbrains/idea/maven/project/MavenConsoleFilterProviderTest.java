@@ -17,6 +17,8 @@ public class MavenConsoleFilterProviderTest extends CodeInsightFixtureTestCase {
   private Filter @NotNull [] filters;
   private String javaFilePath;
   private String ktFilePath;
+  private String scalaFilePath;
+  private String groovyFilePath;
 
   @Override
   public void setUp() throws Exception {
@@ -32,6 +34,20 @@ public class MavenConsoleFilterProviderTest extends CodeInsightFixtureTestCase {
     ktFilePath = myFixture.configureByText("main.kt",
                                            "fun main(args: Array<String>) {ff\n" +
                                            "}")
+      .getVirtualFile()
+      .getCanonicalPath();
+
+    scalaFilePath = myFixture.configureByText("main.scala",
+                                           "object HelloWorld {" +
+                                           "  def main(args: Array[String]): Unit = {ff}" +
+                                           "}")
+      .getVirtualFile()
+      .getCanonicalPath();
+
+    groovyFilePath = myFixture.configureByText("main.groovy",
+                                              "class HelloWorld {" +
+                                              "  String getMessage(boolean bigger) {{}" +
+                                              "}")
       .getVirtualFile()
       .getCanonicalPath();
   }
@@ -54,6 +70,16 @@ public class MavenConsoleFilterProviderTest extends CodeInsightFixtureTestCase {
 
   public void testMavenFilterKtBad2() {
     assertError("[ERROR] " + getFilePath(ktFilePath) + ":(1,32) Unresolved reference: ff");
+  }
+
+  public void testMavenFilterScala() {
+    assertSuccess("[ERROR] " + getFilePath(scalaFilePath) + ":1: error: not found: value ff", scalaFilePath);
+  }
+
+  public void testMavenFilterGroovy() {
+    assertSuccess("[ERROR] " + getFilePath(groovyFilePath)
+                  + ": 1: Ambiguous expression could be either a parameterless closure expression or an isolated open code block;",
+                  groovyFilePath);
   }
 
   private static String getFilePath(String path) {

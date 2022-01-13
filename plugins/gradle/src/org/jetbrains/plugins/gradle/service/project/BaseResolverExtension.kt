@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project
 
 import com.amazon.ion.IonType
@@ -56,7 +56,7 @@ internal class BaseResolverExtension : GradleProjectResolverExtension {
       THash::class.java,  // trove4j jar
       ObjectOpenHashSet::class.java,  // fastutil jar
       IonType::class.java,  // ion-java jar
-      SystemInfoRt::class.java // util-rt jar, !!! do not replace it with SystemInfo.class from util module
+      SystemInfoRt::class.java // jar containing classes of `intellij.platform.util.rt` module
     )
   }
 

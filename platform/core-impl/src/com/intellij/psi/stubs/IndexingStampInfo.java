@@ -60,7 +60,6 @@ class IndexingStampInfo {
            contentLengthMatches(file.getLength(), document.getTextLength());
   }
 
-  @SuppressWarnings("unused")
   public boolean contentLengthMatches(long byteContentLength, int charContentLength) {
     if (this.indexingCharLength >= 0 && charContentLength >= 0) {
       return this.indexingCharLength == charContentLength;

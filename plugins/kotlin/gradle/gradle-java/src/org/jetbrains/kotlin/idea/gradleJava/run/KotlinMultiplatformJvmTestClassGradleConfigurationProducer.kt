@@ -13,5 +13,4 @@ class KotlinMultiplatformJvmTestClassGradleConfigurationProducer : AbstractKotli
     override fun isApplicable(module: Module, platform: TargetPlatform) = platform.isJvm()
 
     override fun getPsiClassForLocation(contextLocation: Location<*>) = getTestClassForJvm(contextLocation)
-    override fun getPsiMethodForLocation(contextLocation: Location<*>) = getTestMethodForJvm(contextLocation)
 }

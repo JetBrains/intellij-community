@@ -37,7 +37,7 @@ public final class TextChunk {
    * @deprecated use {@link #TextChunk(TextAttributes, String)}
    */
   @Deprecated
-  public TextChunk(@NotNull TextAttributes attributes, @NotNull String text, @SuppressWarnings("unused") @Nullable UsageType type) {
+  public TextChunk(@NotNull TextAttributes attributes, @NotNull String text, @Nullable UsageType type) {
     this(attributes, text);
   }
 

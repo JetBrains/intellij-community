@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.MaximizeEditorInSplitAction;
 import com.intellij.ide.actions.SplitAction;
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -1966,6 +1967,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
 
     private void changeHappened() {
+      if (LightEdit.owns(myProject)) return;
       AppUIExecutor
         .onUiThread(ModalityState.any())
         .expireWith(myProject)

@@ -33,11 +33,7 @@ public class FileStatusColorsConfigurable implements SearchableConfigurable, Con
 
   private final static String FILE_STATUS_COLORS_ID = "file.status.colors";
 
-  private final FileStatusColorsPanel myPanel;
-
-  public FileStatusColorsConfigurable() {
-    myPanel = new FileStatusColorsPanel(FileStatusFactory.getInstance().getAllFileStatuses());
-  }
+  @Nullable private FileStatusColorsPanel myPanel;
 
   @NotNull
   @Override
@@ -59,25 +55,39 @@ public class FileStatusColorsConfigurable implements SearchableConfigurable, Con
   @Nullable
   @Override
   public JComponent createComponent() {
+    if (myPanel == null) {
+      myPanel = new FileStatusColorsPanel(FileStatusFactory.getInstance().getAllFileStatuses());
+    }
     return myPanel.getComponent();
   }
 
   @Override
+  public void disposeUIResources() {
+    if (myPanel != null) {
+      myPanel = null;
+    }
+  }
+
+  @Override
   public boolean isModified() {
-    return myPanel.getModel().isModified();
+    return myPanel != null && myPanel.getModel().isModified();
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    myPanel.getModel().apply();
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      FileStatusManager.getInstance(project).fileStatusesChanged();
+    if (myPanel != null) {
+      myPanel.getModel().apply();
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        FileStatusManager.getInstance(project).fileStatusesChanged();
+      }
     }
   }
 
   @Override
   public void reset() {
-    myPanel.getModel().reset();
+    if (myPanel != null) {
+      myPanel.getModel().reset();
+    }
   }
 
   @Override

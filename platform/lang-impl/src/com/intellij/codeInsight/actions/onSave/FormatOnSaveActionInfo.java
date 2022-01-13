@@ -11,10 +11,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.DropDownLink;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collections;
 import java.util.List;
 
 public class FormatOnSaveActionInfo extends ActionOnSaveInfoBase {
@@ -57,8 +57,8 @@ public class FormatOnSaveActionInfo extends ActionOnSaveInfoBase {
   }
 
   @Override
-  public @Nullable DropDownLink<?> getInPlaceConfigDropDownLink() {
-    if (!VcsFacade.getInstance().hasActiveVcss(getProject())) return null;
+  public @NotNull List<? extends DropDownLink<?>> getDropDownLinks() {
+    if (!VcsFacade.getInstance().hasActiveVcss(getProject())) return Collections.emptyList();
 
     String wholeFile = CodeInsightBundle.message("actions.on.save.page.label.whole.file");
     String onlyChangedLines = CodeInsightBundle.message("actions.on.save.page.label.changed.lines");
@@ -67,8 +67,8 @@ public class FormatOnSaveActionInfo extends ActionOnSaveInfoBase {
     boolean onlyChangedLinesOnly = onlyChangedLinesFromUi != null ? onlyChangedLinesFromUi : isReformatOnlyChangedLinesOnSave(getProject());
     String current = onlyChangedLinesOnly ? onlyChangedLines : wholeFile;
 
-    return new DropDownLink<>(current, List.of(wholeFile, onlyChangedLines),
-                              choice -> getContext().putUserData(ONLY_CHANGED_LINES_KEY, choice == onlyChangedLines));
+    return List.of(new DropDownLink<>(current, List.of(wholeFile, onlyChangedLines),
+                                      choice -> getContext().putUserData(ONLY_CHANGED_LINES_KEY, choice == onlyChangedLines)));
   }
 
   @Override

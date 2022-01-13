@@ -1,3 +1,5 @@
+// AFTER-WARNING: Variable 'i' is never used
+// AFTER-WARNING: Variable 'i' is never used
 import Outer.Middle as Middle1
 
 class Outer {

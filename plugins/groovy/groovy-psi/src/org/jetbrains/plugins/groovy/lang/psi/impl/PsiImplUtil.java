@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.lang.groovydoc.highlighter.GroovyDocSyntaxHighlighter;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.*;
@@ -798,7 +799,7 @@ public final class PsiImplUtil {
 
   public static void appendTypeString(StringBuilder buffer, final PsiType type, PsiElement context) {
     if (type != null) {
-      JavaDocInfoGeneratorFactory.create(context.getProject(), null, false).generateType(buffer, type, context);
+      JavaDocInfoGeneratorFactory.create(context.getProject(), null).generateType(buffer, type, context);
     }
     else {
       buffer.append(GrModifier.DEF);

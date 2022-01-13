@@ -124,7 +124,8 @@ fun isProjectDirectoryExistsUsingIo(parent: VirtualFile): Boolean {
  *
  *  There is no strict definition of what is a project directory, since a project can contain multiple modules located in different places,
  *  and the `.idea` directory can be located elsewhere (making the popular [Project.getBaseDir] method not applicable to get the "project
- *  directory"). This method should be preferred, although it can't provide perfect accuracy either.
+ *  directory"). This method should be preferred, although it can't provide perfect accuracy either. So its results shouldn't be used for
+ *  real actions as is, user should be able to review and change it. For example, it can be used as a default selection in a file chooser.
  */
 fun Project.guessProjectDir() : VirtualFile? {
   if (isDefault) {
@@ -142,8 +143,8 @@ fun Project.guessProjectDir() : VirtualFile? {
  *
  * There is no such thing as "base directory" for a module in IntelliJ project model. A module may have multiple content roots, or not have
  * content roots at all. The module configuration file (.iml) may be located far away from the module files or doesn't exist at all. So this
- * method tries to suggest some directory which is related to the module but due to its heuristics nature its result shouldn't be used for
- * real actions as is, user should be able to review and change it. For example it can be used as a default selection in a file chooser.
+ * method tries to suggest some directory which is related to the module but due to its heuristic nature its result shouldn't be used for
+ * real actions as is, user should be able to review and change it. For example, it can be used as a default selection in a file chooser.
  */
 fun Module.guessModuleDir(): VirtualFile? {
   val contentRoots = rootManager.contentRoots.filter { it.isDirectory }

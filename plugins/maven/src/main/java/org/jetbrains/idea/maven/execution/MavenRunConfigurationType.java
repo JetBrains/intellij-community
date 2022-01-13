@@ -217,10 +217,9 @@ public final class MavenRunConfigurationType implements ConfigurationType {
     }
     MavenGeneralSettings generalSettingsToRun =
       generalSettings != null ? generalSettings : MavenWorkspaceSettingsComponent.getInstance(project).getSettings().getGeneralSettings();
+    MavenRunnerSettings runnerSettingsToRun = runnerSettings != null ? runnerSettings : MavenRunner.getInstance(project).getState();
     runConfiguration.setRunnerParameters(params);
     runConfiguration.setGeneralSettings(generalSettingsToRun);
-    MavenRunnerSettings runnerSettingsToRun =
-      runnerSettings != null ? runnerSettings : MavenRunner.getInstance(project).getState();
     runConfiguration.setRunnerSettings(runnerSettingsToRun);
     return settings;
   }

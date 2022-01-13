@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomePopupAction;
-import com.intellij.ui.mac.TouchbarDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,8 +83,8 @@ class ActionsLoader {
           butt.setText(presentation.getText());
           butt.setIconFromPresentation(presentation);
         } else {
-          TouchbarDataKeys.ActionDesc pd = parentInfo == null ? null : parentInfo.getDesc();
-          butt.setIconAndTextFromPresentation(presentation, pd);
+          TouchbarActionCustomizations customizations = parentInfo == null ? null : parentInfo.getCustomizations();
+          butt.setIconAndTextFromPresentation(presentation, customizations);
         }
 
         if (isRunConfigPopover) {

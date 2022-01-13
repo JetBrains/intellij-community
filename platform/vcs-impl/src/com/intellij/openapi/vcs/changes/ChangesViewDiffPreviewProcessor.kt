@@ -83,7 +83,7 @@ private class ChangesViewDiffPreviewProcessor(private val changesView: ChangesLi
   override fun showAllChangesForEmptySelection(): Boolean = false
 
   override fun selectChange(change: Wrapper) {
-    changesView.findNodePathInTree(change.userObject, (change.tag as? ChangesBrowserNode.WrapperTag)?.value)
+    changesView.findNodePathInTree(change.userObject, (change.tag as? ChangesViewUserObjectTag)?.userObject)
       ?.let {
         TreeUtil.selectPath(changesView, it, false)
         // Explicit refresh needed, since TreeUtil.selectPath will trigger refresh based on the current focused editor component.
@@ -122,36 +122,40 @@ private class ChangesViewDiffPreviewProcessor(private val changesView: ChangesLi
   }
 }
 
-private class AmendChangeWrapper(private val commitDetails: EditedCommitDetails) : ChangesBrowserNode.WrapperTag(commitDetails) {
+private class AmendChangeWrapper(override val userObject: EditedCommitDetails) : ChangesViewUserObjectTag {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
     other as AmendChangeWrapper
 
-    if (commitDetails.commit.id != other.commitDetails.commit.id) return false
+    if (userObject.commit.id != other.userObject.commit.id) return false
 
     return true
   }
 
-  override fun toString(): String = commitDetails.commit.subject
+  override fun toString(): String = userObject.commit.subject
 
-  override fun hashCode(): Int = commitDetails.commit.id.hashCode()
+  override fun hashCode(): Int = userObject.commit.id.hashCode()
 }
 
-private class ChangeListWrapper(private val changeList: ChangeList) : ChangesBrowserNode.WrapperTag(changeList) {
+private class ChangeListWrapper(override val userObject: ChangeList) : ChangesViewUserObjectTag {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
     other as ChangeListWrapper
 
-    if (changeList.name != other.changeList.name) return false
+    if (userObject.name != other.userObject.name) return false
 
     return true
   }
 
-  override fun hashCode(): Int = changeList.name.hashCode()
+  override fun hashCode(): Int = userObject.name.hashCode()
 
-  override fun toString(): String = changeList.name
+  override fun toString(): String = userObject.name
+}
+
+interface ChangesViewUserObjectTag : ChangesBrowserNode.Tag {
+  val userObject: Any
 }

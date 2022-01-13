@@ -1,3 +1,4 @@
+// AFTER-WARNING: Parameter 's' is never used
 fun test(v: Boolean): (String) -> Int {
     return when (v) {
         true -> { { <caret>x -> taskOne(x) } }

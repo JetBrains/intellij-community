@@ -1,4 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:JvmName("GradleExecutionSettingsUtil")
+
 package org.jetbrains.plugins.gradle.util
 
 import com.intellij.execution.Location
@@ -7,104 +9,84 @@ import com.intellij.execution.junit2.PsiMemberParameterizedLocation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPackage
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
-object GradleExecutionSettingsUtil {
+private fun createTestFilter(filter: String): String {
+  return String.format("--tests %s", filter)
+}
 
-  private fun createTestFilter(filter: String, hasSuffix: Boolean): String {
-    return if (hasSuffix) {
-      String.format("--tests %s ", filter)
-    }
-    else {
-      String.format("--tests %s", filter)
-    }
-  }
+private fun createTestFilterFrom(filter: String): String {
+  val escaped = filter.replace('"', '*')
+  val wrapped = String.format("\"%s\"", escaped)
+  return createTestFilter(wrapped)
+}
 
-  private fun createTestFilterFrom(filter: String, hasSuffix: Boolean): String {
-    val escaped = filter.replace('"', '*')
-    val wrapped = String.format("\"%s\"", escaped)
-    return createTestFilter(wrapped, hasSuffix)
-  }
+private fun createLocationName(aClass: String?, method: String?): String {
+  if (aClass == null) return ""
+  val escapedMethod = method?.replace('.', '*')
+  return aClass + if (escapedMethod == null) "" else ".$escapedMethod"
+}
 
-  private fun createLocationName(aClass: String?, method: String?): String {
-    if (aClass == null) return ""
-    val escapedMethod = method?.replace('.', '*')
-    return aClass + if (escapedMethod == null) "" else ".$escapedMethod"
-  }
+fun createTestFilterFromMethod(aClass: String?, method: String?): String {
+  return createTestFilterFrom(createLocationName(aClass, method))
+}
 
-  @JvmStatic
-  fun createTestFilterFromMethod(aClass: String?, method: String?, hasSuffix: Boolean): String {
-    return createTestFilterFrom(createLocationName(aClass, method), hasSuffix)
-  }
+fun createTestFilterFromClass(aClass: String?): String {
+  if (aClass == null) return ""
+  return createTestFilterFrom(aClass)
+}
 
-  @JvmStatic
-  fun createTestFilterFromClass(aClass: String?, hasSuffix: Boolean): String {
-    if (aClass == null) return ""
-    return createTestFilterFrom(aClass, hasSuffix)
-  }
+fun createTestWildcardFilter(): String {
+  return createTestFilter("*")
+}
 
-  @JvmStatic
-  fun createTestWildcardFilter(hasSuffix: Boolean): String {
-    return createTestFilter("*", hasSuffix)
-  }
+fun createTestFilterFromPackage(aPackage: String): String {
+  if (aPackage.isEmpty()) return createTestWildcardFilter()
+  val packageFilter = String.format("%s.*", aPackage)
+  return createTestFilterFrom(packageFilter)
+}
 
-  @JvmStatic
-  fun createTestFilterFromPackage(aPackage: String, hasSuffix: Boolean): String {
-    if (aPackage.isEmpty()) return createTestWildcardFilter(hasSuffix)
-    val packageFilter = String.format("%s.*", aPackage)
-    return createTestFilterFrom(packageFilter, hasSuffix)
-  }
+fun createTestFilterFrom(psiClass: PsiClass): String {
+  return createTestFilterFromClass(psiClass.getRuntimeQualifiedName())
+}
 
-  @JvmStatic
-  fun createTestFilterFrom(psiClass: PsiClass, hasSuffix: Boolean): String {
-    return createTestFilterFromClass(psiClass.getRuntimeQualifiedName(), hasSuffix)
-  }
+fun createTestFilterFrom(psiClass: PsiClass, methodName: String?): String {
+  return createTestFilterFromMethod(psiClass.getRuntimeQualifiedName(), methodName)
+}
 
-  @JvmStatic
-  fun createTestFilterFrom(psiClass: PsiClass, methodName: String?, hasSuffix: Boolean): String {
-    return createTestFilterFromMethod(psiClass.getRuntimeQualifiedName(), methodName, hasSuffix)
-  }
+fun createTestFilterFrom(psiClass: PsiClass, psiMethod: PsiMethod): String {
+  return createTestFilterFrom(psiClass, psiMethod.name)
+}
 
-  @JvmStatic
-  fun createTestFilterFrom(psiClass: PsiClass, psiMethod: PsiMethod, hasSuffix: Boolean): String {
-    return createTestFilterFrom(psiClass, psiMethod.name, hasSuffix)
-  }
+fun createTestFilterFrom(psiPackage: PsiPackage): String {
+  return createTestFilterFromPackage(psiPackage.qualifiedName)
+}
 
-  @JvmStatic
-  fun createTestFilterFrom(psiPackage: PsiPackage, hasSuffix: Boolean): String {
-    return createTestFilterFromPackage(psiPackage.qualifiedName, hasSuffix)
-  }
-
-  @JvmStatic
-  fun createTestFilterFrom(location: Location<*>?, psiClass: PsiClass?, psiMethod: PsiMethod?, hasSuffix: Boolean): String {
-    val className = psiClass?.getRuntimeQualifiedName()
-    val methodName = psiMethod?.name
-    var locationName = createLocationName(className, methodName)
-    if (location is PsiMemberParameterizedLocation) {
-      val wrappedParamSetName = location.paramSetName
-      if (wrappedParamSetName.isNotEmpty()) {
-        val paramSetName = wrappedParamSetName
-          .removeSurrounding("[", "]")
-        locationName += "[*$paramSetName*]"
-      }
-    }
-    else if (psiClass != null && psiClass.isParameterized()) {
-      locationName += "[*]"
-    }
-    return createTestFilterFrom(locationName, hasSuffix)
-  }
-
-  private fun PsiClass.getRuntimeQualifiedName(): String? {
-    val parent = parent
-    return when (parent) {
-      is PsiClass -> parent.getRuntimeQualifiedName() + "$" + name
-      else -> qualifiedName
+fun createTestFilterFrom(location: Location<*>?, psiClass: PsiClass?, psiMethod: PsiMethod?): String {
+  val className = psiClass?.getRuntimeQualifiedName()
+  val methodName = psiMethod?.name
+  var locationName = createLocationName(className, methodName)
+  if (location is PsiMemberParameterizedLocation) {
+    val wrappedParamSetName = location.paramSetName
+    if (wrappedParamSetName.isNotEmpty()) {
+      val paramSetName = wrappedParamSetName
+        .removeSurrounding("[", "]")
+      locationName += "[*$paramSetName*]"
     }
   }
-
-  private fun PsiClass.isParameterized(): Boolean {
-    val annotation = JUnitUtil.getRunWithAnnotation(this)
-    return annotation != null && JUnitUtil.isParameterized(annotation)
+  else if (psiClass != null && psiClass.isParameterized()) {
+    locationName += "[*]"
   }
+  return createTestFilterFrom(locationName)
+}
+
+private fun PsiClass.getRuntimeQualifiedName(): String? {
+  return when (val parent = parent) {
+    is PsiClass -> parent.getRuntimeQualifiedName() + "$" + name
+    else -> qualifiedName
+  }
+}
+
+private fun PsiClass.isParameterized(): Boolean {
+  val annotation = JUnitUtil.getRunWithAnnotation(this)
+  return annotation != null && JUnitUtil.isParameterized(annotation)
 }

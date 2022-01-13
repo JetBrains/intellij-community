@@ -38,7 +38,7 @@ public abstract class SplitAction extends AnAction implements DumbAware {
       window.closeFile(file, false, false);
     }
 
-    window.split(myOrientation, true, file, false);
+    window.split(myOrientation, true, file, true);
   }
 
   @Override

@@ -9,6 +9,7 @@ public interface ToolWindowId {
   String PROJECT_VIEW = "Project";
   String STRUCTURE_VIEW = "Structure";
   String FAVORITES_VIEW = "Favorites";
+  String BOOKMARKS = "Bookmarks";
   String ANT_BUILD = "Ant";
   String DEBUG = "Debug";
   String RUN = "Run";

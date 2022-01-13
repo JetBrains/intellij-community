@@ -43,7 +43,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.mac.TouchbarDataKeys;
+import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -122,6 +122,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     }, this);
 
     setName(myExternalSystemId.getReadableName() + " tool window");
+    Touchbar.setActions(this, "ExternalSystem.RefreshAllProjects");
   }
 
   @Nullable
@@ -144,7 +145,6 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     if (ExternalSystemDataKeys.SELECTED_NODES.is(dataId)) return getSelectedNodes(ExternalSystemNode.class);
     if (ExternalSystemDataKeys.PROJECTS_TREE.is(dataId)) return myTree;
     if (ExternalSystemDataKeys.NOTIFICATION_GROUP.is(dataId)) return myNotificationGroup;
-    if (TouchbarDataKeys.ACTIONS_KEY.is(dataId)) return new DefaultActionGroup(ActionManager.getInstance().getAction("ExternalSystem.RefreshAllProjects"));
 
     return super.getData(dataId);
   }

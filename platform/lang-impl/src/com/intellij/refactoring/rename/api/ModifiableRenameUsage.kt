@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.api
 
 import com.intellij.model.Pointer
-import com.intellij.openapi.progress.Progress
+import com.intellij.openapi.progress.ProgressManager
 
 /**
  * Implement this interface to consider the usage modifiable.
@@ -42,12 +42,11 @@ interface ModifiableRenameUsage : RenameUsage {
      */
     @JvmDefault
     fun prepareFileUpdateBatch(
-      progress: Progress,
       usages: Collection<ModifiableRenameUsage>,
       newName: String
     ): Collection<FileOperation> {
       return usages.flatMap { usage ->
-        progress.checkCancelled()
+        ProgressManager.checkCanceled()
         prepareFileUpdate(usage, newName)
       }
     }
@@ -69,9 +68,9 @@ interface ModifiableRenameUsage : RenameUsage {
   interface ModelUpdater {
 
     @JvmDefault
-    fun prepareModelUpdateBatch(progress: Progress, usages: Collection<ModifiableRenameUsage>): Collection<ModelUpdate> {
+    fun prepareModelUpdateBatch(usages: Collection<ModifiableRenameUsage>): Collection<ModelUpdate> {
       return usages.mapNotNull { usage ->
-        progress.checkCancelled()
+        ProgressManager.checkCanceled()
         prepareModelUpdate(usage)
       }
     }

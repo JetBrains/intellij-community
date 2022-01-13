@@ -4,6 +4,11 @@ package com.intellij.ide.projectWizard.generators
 import com.intellij.ide.wizard.NewProjectWizardMultiStepFactory
 import com.intellij.openapi.extensions.ExtensionPointName
 
+/**
+ * Describes java build system step in new project wizard.
+ *
+ * @see NewProjectWizardMultiStepFactory
+ */
 interface JavaBuildSystemType : NewProjectWizardMultiStepFactory<JavaNewProjectWizard.Step> {
   companion object {
     var EP_NAME = ExtensionPointName<JavaBuildSystemType>("com.intellij.newProjectWizard.buildSystem.java")

@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.impl.retry.Retry
 import org.jetbrains.jps.api.CmdlineRemoteProto
 import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.build.Standalone
@@ -69,7 +70,15 @@ class JpsCompilationRunner {
   }
 
   void resolveProjectDependencies() {
-    runBuild([] as Set, false, [], false, true)
+    new Retry(context.messages, context.options.resolveDependenciesMaxAttempts, context.options.resolveDependenciesDelayMs).call {
+      try {
+        runBuild([] as Set, false, [], false, true)
+      }
+      catch (BuildException e) {
+        compilationData.projectDependenciesResolved = false
+        throw e
+      }
+    }
   }
 
   void buildModuleTests(JpsModule module) {

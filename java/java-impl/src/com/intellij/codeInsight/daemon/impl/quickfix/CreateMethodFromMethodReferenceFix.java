@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -134,19 +120,6 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
     expression = getMethodReference();
     LOG.assertTrue(expression.isValid());
 
-    boolean shouldBeAbstract = false;
-    if (!expression.isConstructor()) {
-      if (shouldCreateStaticMember(expression, targetClass)) {
-        PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true);
-      }
-      else if (targetClass.isInterface()) {
-        shouldBeAbstract = true;
-        PsiCodeBlock body = method.getBody();
-        assert body != null;
-        body.delete();
-      }
-    }
-
     final PsiElement context = PsiTreeUtil.getParentOfType(expression, PsiClass.class, PsiMethod.class);
 
     final PsiType functionalInterfaceType = getFunctionalExpressionType(expression);
@@ -159,8 +132,32 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
 
     final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, classResolveResult);
     final ExpectedTypeInfo[] expectedTypes = {new ExpectedTypeInfoImpl(interfaceReturnType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, interfaceReturnType, TailType.NONE, null, ExpectedTypeInfoImpl.NULL)};
+    PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
+    List<Pair<PsiExpression, PsiType>> arguments = ContainerUtil.map2List(parameters, parameter -> Pair.create(null, substitutor.substitute(parameter.getType())));
+    
+    boolean shouldBeAbstract = false;
+    if (!expression.isConstructor()) {
+      PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(expression);
+      boolean secondSearchPossible = PsiMethodReferenceUtil.isSecondSearchPossible(arguments.stream().map(p -> p.second).toArray(PsiType[]::new), 
+                                                                                   qualifierResolveResult, expression);
+      if (!secondSearchPossible && shouldCreateStaticMember(expression, targetClass)) {
+        PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true);
+      }
+      else {
+        if (secondSearchPossible) {
+          arguments.remove(0);
+        }
+        if (targetClass.isInterface()) {
+          shouldBeAbstract = true;
+          PsiCodeBlock body = method.getBody();
+          assert body != null;
+          body.delete();
+        }
+      }
+    }
+
     CreateMethodFromUsageFix.doCreate(targetClass, method, shouldBeAbstract,
-                                      ContainerUtil.map2List(interfaceMethod.getParameterList().getParameters(), parameter -> Pair.create(null, substitutor.substitute(parameter.getType()))),
+                                      arguments,
                                       PsiSubstitutor.EMPTY,
                                       expectedTypes, context);
   }

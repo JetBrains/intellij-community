@@ -13498,7 +13498,7 @@ org/jetbrains/kotlin/console/actions/RunKotlinConsoleAction.class:plugins/Kotlin
 org/jetbrains/kotlin/psi/KtContinueExpression.class:plugins/Kotlin/lib/kotlinc_kotlin-compiler.jar
 com/intellij/util/io/storage/AbstractStorage$AppenderStream.class:lib/util.jar
 com/siyeh/ig/callMatcher/CallMatcher$Simple.class:plugins/java/lib/java-impl.jar
-icons/KotlinIdeaIcons.class:plugins/Kotlin/lib/kotlin-plugin.jar
+icons/KotlinIcons.class:plugins/Kotlin/lib/kotlin-plugin.jar
 org/jetbrains/kotlin/psi/KtBreakExpression.class:plugins/Kotlin/lib/kotlinc_kotlin-compiler.jar
 com/intellij/psi/PsiCall.class:plugins/java/lib/java-api.jar
 com/intellij/formatting/fileSet/FileSetDescriptor$State.class:lib/platform-api.jar

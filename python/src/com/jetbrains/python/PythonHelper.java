@@ -24,6 +24,10 @@ import static com.jetbrains.python.PythonHelpersLocator.getHelpersRoot;
 public enum PythonHelper implements HelperPackage {
   GENERATOR3("generator3/__main__.py"),
 
+  // Packaging tools
+  PACKAGING_TOOL("packaging_tool.py"),
+  VIRTUALENV_ZIPAPP("virtualenv.pyz"),
+
   COVERAGEPY("coveragepy", ""),
   COVERAGE("coverage_runner", "run_coverage"),
   DEBUGGER("pydev", "pydevd", HelperDependency.THRIFTPY),

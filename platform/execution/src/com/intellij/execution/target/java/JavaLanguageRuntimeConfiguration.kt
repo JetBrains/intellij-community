@@ -4,11 +4,8 @@ package com.intellij.execution.target.java
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.RuntimeConfigurationException
 import com.intellij.execution.target.LanguageRuntimeConfiguration
-import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
-import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.util.xmlb.annotations.Transient
 
 class JavaLanguageRuntimeConfiguration : LanguageRuntimeConfiguration(JavaLanguageRuntimeType.TYPE_ID),
                                          PersistentStateComponent<JavaLanguageRuntimeConfiguration.MyState> {
@@ -19,11 +16,11 @@ class JavaLanguageRuntimeConfiguration : LanguageRuntimeConfiguration(JavaLangua
     it.homePath = this.homePath
     it.javaVersionString = this.javaVersionString
 
-    it.saveInState(JavaLanguageRuntimeType.CLASS_PATH_VOLUME) { volumeState ->
-      classpathFolder = volumeState
+    saveInState(JavaLanguageRuntimeType.CLASS_PATH_VOLUME) { volumeState ->
+      it.classpathFolder = volumeState
     }
-    it.saveInState(JavaLanguageRuntimeType.AGENTS_VOLUME) { volumeState ->
-      agentFolder = volumeState
+    saveInState(JavaLanguageRuntimeType.AGENTS_VOLUME) { volumeState ->
+      it.agentFolder = volumeState
     }
   }
 
@@ -43,21 +40,6 @@ class JavaLanguageRuntimeConfiguration : LanguageRuntimeConfiguration(JavaLangua
     }
   }
 
-  private fun MyState.saveInState(volumeDescriptor: VolumeDescriptor, doSave: MyState.(VolumeState?) -> Unit) {
-    val volumeState = VolumeState().also {
-      it.remotePath = getTargetPathValue(volumeDescriptor)
-      it.targetSpecificData = getTargetSpecificData(volumeDescriptor)
-    }
-    doSave(volumeState)
-  }
-
-  private fun loadVolumeState(volumeDescriptor: VolumeDescriptor, volumeState: VolumeState?) {
-    volumeState?.let {
-      setTargetPath(volumeDescriptor, it.remotePath)
-      setTargetSpecificData(volumeDescriptor, it.targetSpecificData)
-    }
-  }
-
   class MyState : BaseState() {
     var homePath by string()
     var javaVersionString by string()
@@ -65,24 +47,5 @@ class JavaLanguageRuntimeConfiguration : LanguageRuntimeConfiguration(JavaLangua
     var applicationFolder by property<VolumeState>()
     var classpathFolder by property<VolumeState>()
     var agentFolder by property<VolumeState>()
-  }
-
-  /**
-   * Proposed serialization format for the volume data, including both the target path and target specific data configured by the user
-   * TODO: candidate to be moved to API
-   */
-  class VolumeState : BaseState() {
-    var remotePath by string()
-    var targetSpecificBits by map<String, String>()
-
-    var targetSpecificData: TargetEnvironmentType.TargetSpecificVolumeData?
-      @Transient
-      get() = object : TargetEnvironmentType.TargetSpecificVolumeData {
-        override fun toStorableMap(): Map<String, String> = targetSpecificBits.toMap()
-      }
-      set(data) {
-        val dataAsMap = data?.toStorableMap() ?: emptyMap()
-        targetSpecificBits = dataAsMap.toMutableMap()
-      }
   }
 }

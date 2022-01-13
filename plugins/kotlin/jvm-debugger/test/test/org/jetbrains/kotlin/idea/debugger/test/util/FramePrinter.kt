@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.debugger.test.util
 
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebuggerUtils
+import com.intellij.debugger.engine.JavaStackFrame
 import com.intellij.debugger.engine.SourcePositionProvider
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
@@ -21,6 +22,7 @@ import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants
 import org.jetbrains.kotlin.idea.debugger.GetterDescriptor
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.ContinuationVariableValueDescriptorImpl
 import org.jetbrains.kotlin.idea.debugger.invokeInManagerThread
+import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.test.KOTLIN_LIBRARY_NAME
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.concurrent.TimeUnit
@@ -71,8 +73,7 @@ class FramePrinter(private val suspendContext: SuspendContextImpl) {
     )
 
     private fun computeInfo(container: XValueContainer): ValueInfo {
-        val name = if (container is XNamedValue) container.name.takeIf { it.isNotEmpty() } else null
-
+        val name = container.getName()
         when (container) {
             is XValue -> {
                 val node = XTestValueNode()
@@ -95,6 +96,13 @@ class FramePrinter(private val suspendContext: SuspendContextImpl) {
             }
         }
     }
+
+    private fun XValueContainer.getName() =
+        when (this) {
+            is XNamedValue -> name.takeIf { it.isNotEmpty() }
+            is JavaStackFrame -> descriptor.name
+            else -> null
+        }
 
     private fun computeValue(descriptor: NodeDescriptorImpl?): String? {
         val valueDescriptor = descriptor as? ValueDescriptorImpl ?: return null

@@ -1,3 +1,4 @@
+// AFTER-WARNING: Parameter 'args' is never used
 class Bar {
     operator fun get(vararg args: Int) {}
 }

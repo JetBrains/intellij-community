@@ -39,8 +39,14 @@ interface CellBase<out T : CellBase<T>> {
    */
   fun enabled(isEnabled: Boolean): CellBase<T>
 
+  /**
+   * Horizontal align of content inside the cell
+   */
   fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T>
 
+  /**
+   * Vertical align of content inside the cell
+   */
   fun verticalAlign(verticalAlign: VerticalAlign): CellBase<T>
 
   /**

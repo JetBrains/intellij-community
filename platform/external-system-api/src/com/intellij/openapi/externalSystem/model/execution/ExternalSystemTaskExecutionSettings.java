@@ -105,25 +105,6 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     myScriptParameters = scriptParameters;
   }
 
-  @Transient
-  public void setCommandLine(@NotNull String commandLine) {
-    setTaskNames(new ArrayList<>());
-    setScriptParameters(commandLine);
-  }
-
-  @Transient
-  public @NotNull String getCommandLine() {
-    StringJoiner commandLine = new StringJoiner(" ");
-    for (String taskName : getTaskNames()) {
-      commandLine.add(taskName);
-    }
-    String scriptParameters = getScriptParameters();
-    if (StringUtil.isNotEmpty(scriptParameters)) {
-      commandLine.add(scriptParameters);
-    }
-    return commandLine.toString();
-  }
-
   @NotNull
   public List<@NlsSafe String> getTaskNames() {
     return myTaskNames;

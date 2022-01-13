@@ -2,14 +2,13 @@
 package org.jetbrains.idea.maven.execution.run.configuration
 
 import com.intellij.ide.util.BrowseFilesListener
-import com.intellij.openapi.externalSystem.service.ui.distribution.AbstractDistributionInfo
-import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionInfo
-import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionsInfo
-import com.intellij.openapi.externalSystem.service.ui.distribution.LocalDistributionInfo
+import com.intellij.openapi.externalSystem.service.ui.util.DistributionsInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.roots.ui.distribution.AbstractDistributionInfo
+import com.intellij.openapi.roots.ui.distribution.DistributionInfo
+import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.containers.addIfNotNull
-import com.intellij.util.ui.JBUI
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.server.MavenServerManager

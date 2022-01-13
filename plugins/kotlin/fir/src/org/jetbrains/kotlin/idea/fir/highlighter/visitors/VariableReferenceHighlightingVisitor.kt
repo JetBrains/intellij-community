@@ -13,7 +13,7 @@ import com.intellij.psi.PsiVariable
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
-import org.jetbrains.kotlin.idea.fir.highlighter.textAttributesKeyForPropertyDeclaration
+import org.jetbrains.kotlin.idea.highlighter.textAttributesKeyForPropertyDeclaration
 import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.highlighter.NameHighlighter
 import org.jetbrains.kotlin.idea.references.mainReference

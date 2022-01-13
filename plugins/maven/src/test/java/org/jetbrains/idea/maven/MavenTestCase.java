@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven;
 
 import com.intellij.execution.wsl.WSLDistribution;
@@ -162,6 +162,13 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected void tearDown() throws Exception {
     String basePath = myProject.getBasePath();
     new RunAll(
+      () -> {
+        MavenProgressIndicator.MavenProgressTracker mavenProgressTracker =
+          myProject.getServiceIfCreated(MavenProgressIndicator.MavenProgressTracker.class);
+        if (mavenProgressTracker != null) {
+          mavenProgressTracker.assertProgressTasksCompleted();
+        }
+      },
       () -> MavenServerManager.getInstance().shutdown(true),
       () -> checkAllMavenConnectorsDisposed(),
       () -> MavenArtifactDownloader.awaitQuiescence(100, TimeUnit.SECONDS),

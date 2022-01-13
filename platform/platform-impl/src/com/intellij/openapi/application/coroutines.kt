@@ -19,7 +19,7 @@ import kotlin.coroutines.CoroutineContext
  *
  * @see readActionBlocking
  */
-suspend fun <T> readAction(action: (progress: Progress) -> T): T {
+suspend fun <T> readAction(action: () -> T): T {
   return constrainedReadAction(ReadConstraints.unconstrained(), action)
 }
 
@@ -30,7 +30,7 @@ suspend fun <T> readAction(action: (progress: Progress) -> T): T {
  *
  * @see smartReadActionBlocking
  */
-suspend fun <T> smartReadAction(project: Project, action: (progress: Progress) -> T): T {
+suspend fun <T> smartReadAction(project: Project, action: () -> T): T {
   return constrainedReadAction(ReadConstraints.inSmartMode(project), action)
 }
 
@@ -49,7 +49,7 @@ suspend fun <T> smartReadAction(project: Project, action: (progress: Progress) -
  *
  * @see constrainedReadActionBlocking
  */
-suspend fun <T> constrainedReadAction(constraints: ReadConstraints, action: (progress: Progress) -> T): T {
+suspend fun <T> constrainedReadAction(constraints: ReadConstraints, action: () -> T): T {
   return ReadAction(constraints, blocking = false, action).runReadAction()
 }
 
@@ -60,7 +60,7 @@ suspend fun <T> constrainedReadAction(constraints: ReadConstraints, action: (pro
  *
  * @see readAction
  */
-suspend fun <T> readActionBlocking(action: (progress: Progress) -> T): T {
+suspend fun <T> readActionBlocking(action: () -> T): T {
   return constrainedReadActionBlocking(ReadConstraints.unconstrained(), action)
 }
 
@@ -71,7 +71,7 @@ suspend fun <T> readActionBlocking(action: (progress: Progress) -> T): T {
  *
  * @see smartReadAction
  */
-suspend fun <T> smartReadActionBlocking(project: Project, action: (progress: Progress) -> T): T {
+suspend fun <T> smartReadActionBlocking(project: Project, action: () -> T): T {
   return constrainedReadActionBlocking(ReadConstraints.inSmartMode(project), action)
 }
 
@@ -89,7 +89,7 @@ suspend fun <T> smartReadActionBlocking(project: Project, action: (progress: Pro
  *
  * @see constrainedReadAction
  */
-suspend fun <T> constrainedReadActionBlocking(constraints: ReadConstraints, action: (progress: Progress) -> T): T {
+suspend fun <T> constrainedReadActionBlocking(constraints: ReadConstraints, action: () -> T): T {
   return ReadAction(constraints, blocking = true, action).runReadAction()
 }
 
