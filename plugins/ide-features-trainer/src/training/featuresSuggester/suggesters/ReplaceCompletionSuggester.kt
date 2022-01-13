@@ -64,6 +64,7 @@ class ReplaceCompletionSuggester : AbstractFeatureSuggester() {
       }
       is EditorCodeCompletionAction -> {
         val caretOffset = action.caretOffset
+        if (caretOffset == 0) return NoSuggestion
         if (action.document.getText(TextRange(caretOffset - 1, caretOffset)) == ".") {
           editedStatementData = langSupport.createEditedStatementData(action, action.caretOffset)?.apply {
             isCompletionStarted = true
