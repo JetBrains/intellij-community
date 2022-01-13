@@ -12,7 +12,7 @@ import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModuleSetter
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import java.awt.datatransfer.StringSelection
@@ -30,41 +30,41 @@ internal class ModulesTree(
     private var latestTargetModules: TargetModules? = null
 
     init {
-        addTreeSelectionListener {
-            val node = lastSelectedPathComponent as DefaultMutableTreeNode?
-            if (node == null) {
-                setTargetModules(TargetModules.None, TraceInfo(TraceInfo.TraceSource.TARGET_MODULES_SELECTION_CHANGE))
-                return@addTreeSelectionListener
-            }
-
-            val targetModules = checkNotNull(node.userObject as? TargetModules) {
-                "Node '${node.path}' has invalid data: ${node.userObject}"
-            }
-            PackageSearchEventsLogger.logTargetModuleSelected(targetModules)
-
-            setTargetModules(targetModules, TraceInfo(TraceInfo.TraceSource.TARGET_MODULES_SELECTION_CHANGE))
+      addTreeSelectionListener {
+        val node = lastSelectedPathComponent as DefaultMutableTreeNode?
+        if (node == null) {
+          setTargetModules(TargetModules.None, TraceInfo(TraceInfo.TraceSource.TARGET_MODULES_SELECTION_CHANGE))
+          return@addTreeSelectionListener
         }
 
-        setCellRenderer(ModulesTreeItemRenderer())
-        selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
+        val targetModules = checkNotNull(node.userObject as? TargetModules) {
+          "Node '${node.path}' has invalid data: ${node.userObject}"
+        }
+        PackageSearchEventsLogger.logTargetModuleSelected(targetModules)
 
-        showsRootHandles = true
-        emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.modulesTree.empty")
+        setTargetModules(targetModules, TraceInfo(TraceInfo.TraceSource.TARGET_MODULES_SELECTION_CHANGE))
+      }
 
-        @Suppress("MagicNumber") // Swing dimension constants
-        border = scaledEmptyBorder(left = 8)
+      setCellRenderer(ModulesTreeItemRenderer())
+      selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
 
-        addKeyListener(object : KeyAdapter() {
-            override fun keyPressed(e: KeyEvent?) {
-                if (e?.keyCode == KeyEvent.VK_ENTER) {
-                    val item = getTargetModulesFrom(selectionPath)
-                    setTargetModules(item, TraceInfo(TraceInfo.TraceSource.TARGET_MODULES_KEYPRESS))
-                }
-            }
-        })
+      showsRootHandles = true
+      emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.modulesTree.empty")
 
-        TreeUIHelper.getInstance().installTreeSpeedSearch(this)
-        TreeUtil.installActions(this)
+      @Suppress("MagicNumber") // Swing dimension constants
+      border = emptyBorder(left = 8)
+
+      addKeyListener(object : KeyAdapter() {
+        override fun keyPressed(e: KeyEvent?) {
+          if (e?.keyCode == KeyEvent.VK_ENTER) {
+            val item = getTargetModulesFrom(selectionPath)
+            setTargetModules(item, TraceInfo(TraceInfo.TraceSource.TARGET_MODULES_KEYPRESS))
+          }
+        }
+      })
+
+      TreeUIHelper.getInstance().installTreeSpeedSearch(this)
+      TreeUtil.installActions(this)
     }
 
     fun display(treeModel: TreeModel) {
