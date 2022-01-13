@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaapi
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -240,9 +240,12 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
 
     private const val EFFECTIVE_LL = "effectiveLL"
 
-    private val ignored6ClassesApi = LanguageLevelUtil.loadSignatureList(
-      JavaApiUsageInspection::class.java.getResource("ignore6List.txt")
-    )
+    private val ignored6ClassesApi = JavaApiUsageInspection::class.java.getResource("ignore6List.txt")?.let {
+      LanguageLevelUtil.loadSignatureList(it)
+    } ?: run {
+      logger.warn("Could not load ignore list.")
+      emptySet<String>()
+    }
 
     private val generifiedClasses = hashSetOf("javax.swing.JComboBox", "javax.swing.ListModel", "javax.swing.JList")
 
