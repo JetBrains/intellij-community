@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,7 +22,6 @@ import java.util.stream.Stream;
  * State of flow typing in Groovy Type DFA.
  * <p>
  * This class is immutable. Its usage heavily relies on referential equality, so be cautious while creating new instances.
- * Prefer using builder methods (<b>with*</b>)
  */
 class TypeDfaState {
 
@@ -31,7 +30,7 @@ class TypeDfaState {
   static final TypeDfaState EMPTY_STATE = new TypeDfaState(new Int2ObjectOpenHashMap<>(), new BitSet(), null);
 
   /**
-   * Mapping of variable descriptor IDs to their types. The mapping of descriptors to IDs is resides in {@link InferenceCache#myVarIndexes}.
+   * Mapping of variable descriptor IDs to their types. The mapping of descriptors to IDs resides in {@link InferenceCache#myVarIndexes}.
    */
   private final Int2ObjectMap<DFAType> myVarTypes;
 

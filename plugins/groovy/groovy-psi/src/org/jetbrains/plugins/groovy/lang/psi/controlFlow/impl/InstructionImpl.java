@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.psi.PsiElement;
@@ -106,11 +106,15 @@ public class InstructionImpl implements Instruction {
   }
 
   public void addSuccessor(InstructionImpl instruction) {
-    mySuccessors.add(instruction);
+    if (!mySuccessors.contains(instruction)) {
+      mySuccessors.add(instruction);
+    }
   }
 
   public void addPredecessor(InstructionImpl instruction) {
-    myPredecessors.add(instruction);
+    if (!mySuccessors.contains(instruction)) {
+      myPredecessors.add(instruction);
+    }
   }
 
   void addNegationsFrom(Instruction instruction) {

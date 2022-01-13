@@ -68,7 +68,7 @@ public final class DFAEngine<E> {
   @Nullable
   private List<@Nullable E> performDFA(boolean timeout) {
     final int n = myFlow.length;
-    final List<Optional<E>> info = new ArrayList<>(Collections.nCopies(n, Optional.empty()));
+    final List<Optional<E>> info = getEmptyInfo(n);
     final CallEnvironment env = new MyCallEnvironment(n);
 
     final WorkList workList = new WorkList(n, getFlowOrder());
@@ -91,6 +91,14 @@ public final class DFAEngine<E> {
     }
     // each of the elements of `info` has been visited at least once, therefore there are no Optional.empty() elements
     return ContainerUtil.map(info, e -> e.orElse(null));
+  }
+
+  @NotNull
+  private List<Optional<E>> getEmptyInfo(int n) {
+    //noinspection unchecked
+    Optional<E>[] optionals = new Optional[n];
+    Arrays.fill(optionals, Optional.empty());
+    return Arrays.asList(optionals);
   }
 
   private int @NotNull [] getFlowOrder() {

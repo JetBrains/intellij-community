@@ -232,8 +232,8 @@ public final class TypeInferenceHelper {
   }
 
   public static boolean isSimpleEnoughForAugmenting(Instruction @NotNull [] flow) {
-    // in large flows there is a lot of variables, so minor inability to infer type for a parameter should not be noticeable.
+    // in large flows there are a lot of variables, so minor inability to infer type for a parameter should not be noticeable.
     // on the other side, people may omit types of parameters in short methods, so augmenting may be useful there
-    return flow.length < 50;
+    return flow.length < 20;
   }
 }
