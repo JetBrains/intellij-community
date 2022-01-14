@@ -1,3 +1,3 @@
-actual class <!LINE_MARKER("descr='Has declaration in common module'")!>ActualizedInSharedAndLeaf<!>
+actual class <!LINE_MARKER("descr='Has expects in common module'")!>ActualizedInSharedAndLeaf<!>
 
-actual class <!LINE_MARKER("descr='Has declaration in common module'")!>ActualizedInLeaves<!>
+actual class <!LINE_MARKER("descr='Has expects in common module'")!>ActualizedInLeaves<!>
