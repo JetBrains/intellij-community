@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes
 
 import com.intellij.openapi.diagnostic.Logger
-import kotlinx.parcelize.Parceler
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
@@ -34,7 +33,7 @@ import org.jetbrains.kotlin.types.TypeUtils
 
 class ParcelMigrateToParcelizeQuickFix(function: KtClass) : AbstractParcelizeQuickFix<KtClass>(function) {
     companion object {
-        private val PARCELER_FQNAME = FqName(Parceler::class.java.name)
+        private val PARCELER_FQNAME = FqName("kotlinx.parcelize.Parceler")
         private val PARCELER_WRITE_FUNCTION_NAME = Name.identifier("write")
         private val PARCELER_CREATE_FUNCTION_NAME = Name.identifier("create")
         private val LOG = Logger.getInstance(ParcelMigrateToParcelizeQuickFix::class.java)
