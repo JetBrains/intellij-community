@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -264,7 +264,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (body == null) return;
     if (isFlatFlow) {
       FunctionalBlockBeginInstruction startClosure = new FunctionalBlockBeginInstruction(expression);
-      myFunctionalScopeStack.add(expression);
+      myFunctionalScopeStack.addLast(expression);
       addNode(startClosure);
       addFunctionalExpressionParameters(expression);
       if (body instanceof GrBlockLambdaBody) {
@@ -275,7 +275,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       InstructionImpl endClosure = new FunctionalBlockEndInstruction(startClosure);
       addNode(endClosure);
       checkPending(expression, endClosure);
-      myFunctionalScopeStack.pop();
+      myFunctionalScopeStack.removeLast();
     } else {
       ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(body.getControlFlow(), false);
       addReadFromNestedControlFlow(expression, reads);
@@ -286,14 +286,14 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   public void visitClosure(@NotNull GrClosableBlock closure) {
     if (isFlatFlow) {
       FunctionalBlockBeginInstruction startClosure = new FunctionalBlockBeginInstruction(closure);
-      myFunctionalScopeStack.add(closure);
+      myFunctionalScopeStack.addLast(closure);
       addNode(startClosure);
       addFunctionalExpressionParameters(closure);
       addControlFlowInstructions(closure);
       InstructionImpl endClosure = new FunctionalBlockEndInstruction(startClosure);
       addNode(endClosure);
       checkPending(closure, endClosure);
-      myFunctionalScopeStack.pop();
+      myFunctionalScopeStack.removeLast();
     } else {
       //do not go inside closures except gstring injections
       if (closure.getParent() instanceof GrStringInjection) {
@@ -416,17 +416,21 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     interruptFlow();
     final PsiType type = getNominalTypeNoRecursion(exception);
+
+    // it is impossible to follow the consequences of throwing in closure, so throw will just interrupt the closure it was invoked within
+    final GroovyPsiElement scopeElement = myFunctionalScopeStack.isEmpty() ? null : throwStatement;
+
     if (type != null) {
       ExceptionInfo info = findCatch(type);
       if (info != null) {
         info.myThrowers.add(throwInstruction);
       }
       else {
-        addPendingEdge(null, throwInstruction);
+        addPendingEdge(scopeElement, throwInstruction);
       }
     }
     else {
-      addPendingEdge(null, throwInstruction);
+      addPendingEdge(scopeElement, throwInstruction);
     }
   }
 
