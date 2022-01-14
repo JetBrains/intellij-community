@@ -3,7 +3,7 @@ package com.intellij.openapi.externalSystem.dependency.analyzer.util
 
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.ide.plugins.newui.HorizontalLayout
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Dependency.Scope
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency.Scope
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty

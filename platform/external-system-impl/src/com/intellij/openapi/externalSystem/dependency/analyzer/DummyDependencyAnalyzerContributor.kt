@@ -1,10 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.*
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Dependency.Data.Artifact
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Dependency.Data.Module
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Dependency.Status.Omitted
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency.Data.Artifact
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency.Data.Module
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency.Status.Omitted
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -15,12 +14,12 @@ import com.intellij.util.PathUtil
 abstract class DummyDependencyAnalyzerContributor(private val project: Project) : DependencyAnalyzerContributor {
 
   private fun externalProject(externalProjectPath: String) =
-    ExternalProject(externalProjectPath, PathUtil.getFileName(externalProjectPath))
+    DependencyAnalyzerProject(externalProjectPath, PathUtil.getFileName(externalProjectPath))
 
   private fun scope(id: String) =
-    Dependency.Scope(id, StringUtil.toLowerCase(id), StringUtil.toTitleCase(id))
+    DependencyAnalyzerDependency.Scope(id, StringUtil.toLowerCase(id), StringUtil.toTitleCase(id))
 
-  override fun getExternalProjects() = listOf(
+  override fun getProjects() = listOf(
     externalProject(project.basePath!! + "/parent1"),
     externalProject(project.basePath!! + "/parent2"),
     externalProject(project.basePath!! + "/module"),
@@ -37,11 +36,11 @@ abstract class DummyDependencyAnalyzerContributor(private val project: Project) 
     scope("scope" + LocalTimeCounter.currentTime())
   )
 
-  private fun getRoot(externalProjectPath: String): Dependency {
+  private fun getRoot(externalProjectPath: String): DependencyAnalyzerDependency {
     return createDependency(Module(PathUtil.getFileName(externalProjectPath)), scope("compile"), null)
   }
 
-  private fun getDependencies(dependency: Dependency): List<Dependency> {
+  private fun getDependencies(dependency: DependencyAnalyzerDependency): List<DependencyAnalyzerDependency> {
     return when (dependency.data.id) {
       "parent1" -> listOf(
         createDependency(Artifact("org.hamcrest", "hamcrest", "2.2"), scope("compile"), dependency),
@@ -86,9 +85,9 @@ abstract class DummyDependencyAnalyzerContributor(private val project: Project) 
     }
   }
 
-  override fun getDependencies(externalProjectPath: String): List<Dependency> {
-    val dependencies = ArrayList<Dependency>()
-    val queue = ArrayDeque<Dependency>()
+  override fun getDependencies(externalProjectPath: String): List<DependencyAnalyzerDependency> {
+    val dependencies = ArrayList<DependencyAnalyzerDependency>()
+    val queue = ArrayDeque<DependencyAnalyzerDependency>()
     queue.add(getRoot(externalProjectPath))
     while (queue.isNotEmpty()) {
       val dependency = queue.removeFirst()
@@ -99,7 +98,7 @@ abstract class DummyDependencyAnalyzerContributor(private val project: Project) 
     return dependencies
   }
 
-  private fun getStatus(data: Dependency.Data, usage: Dependency?): List<Dependency.Status> {
+  private fun getStatus(data: DependencyAnalyzerDependency.Data, usage: DependencyAnalyzerDependency?): List<DependencyAnalyzerDependency.Status> {
     when (data.id) {
       "org.hamcrest:hamcrest-core:1.3" ->
         if (matchesUsagePathPrefix(usage, "parent2", "module")) {
@@ -153,19 +152,19 @@ abstract class DummyDependencyAnalyzerContributor(private val project: Project) 
     return emptyList()
   }
 
-  private fun createDependency(data: Dependency.Data, scope: Dependency.Scope, usage: Dependency?) =
-    Dependency(data, scope, usage, getStatus(data, usage))
+  private fun createDependency(data: DependencyAnalyzerDependency.Data, scope: DependencyAnalyzerDependency.Scope, usage: DependencyAnalyzerDependency?) =
+    DependencyAnalyzerDependency(data, scope, usage, getStatus(data, usage))
 
   private fun createVersionConflict(conflictedVersion: String) =
-    Dependency.Status.Warning(ExternalSystemBundle.message("external.system.dependency.analyzer.warning.version.conflict", conflictedVersion))
+    DependencyAnalyzerDependency.Status.Warning(ExternalSystemBundle.message("external.system.dependency.analyzer.warning.version.conflict", conflictedVersion))
 
-  private fun matchesUsagePathPrefix(dependency: Dependency?, vararg ids: String): Boolean {
+  private fun matchesUsagePathPrefix(dependency: DependencyAnalyzerDependency?, vararg ids: String): Boolean {
     if (ids.isEmpty()) return true
     return dependency?.data?.id == ids.first() &&
            matchesUsagePathPrefix(dependency.parent, *ids.drop(1).toTypedArray())
   }
 
-  private val Dependency.Data.id
+  private val DependencyAnalyzerDependency.Data.id
     get() = when (this) {
       is Module -> name
       is Artifact -> "$groupId:$artifactId:$version"

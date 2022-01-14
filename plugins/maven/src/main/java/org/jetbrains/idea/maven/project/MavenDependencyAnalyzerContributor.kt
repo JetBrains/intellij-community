@@ -3,6 +3,8 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerProject
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle.message
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -23,13 +25,13 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
     }, parentDisposable)
   }
 
-  override fun getExternalProjects(): List<DependencyAnalyzerContributor.ExternalProject> {
+  override fun getProjects(): List<DependencyAnalyzerProject> {
     return MavenProjectsManager.getInstance(project)
       .projects
-      .map { DependencyAnalyzerContributor.ExternalProject(it.path, it.displayName) }
+      .map { DependencyAnalyzerProject(it.path, it.displayName) }
   }
 
-  override fun getDependencyScopes(externalProjectPath: String): List<DependencyAnalyzerContributor.Dependency.Scope> {
+  override fun getDependencyScopes(externalProjectPath: String): List<DependencyAnalyzerDependency.Scope> {
     return listOf(scope(MavenConstants.SCOPE_COMPILE),
                   scope(MavenConstants.SCOPE_PROVIDED),
                   scope(MavenConstants.SCOPE_RUNTIME),
@@ -38,26 +40,26 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
                   scope(MavenConstants.SCOPE_TEST))
   }
 
-  override fun getDependencies(externalProjectPath: String): List<DependencyAnalyzerContributor.Dependency> {
+  override fun getDependencies(externalProjectPath: String): List<DependencyAnalyzerDependency> {
     return LocalFileSystem.getInstance().findFileByPath(externalProjectPath)
              ?.let { MavenProjectsManager.getInstance(project).findProject(it) }
              ?.let { createDependencyList(it) }
            ?: emptyList()
   }
 
-  private fun createDependencyList(mavenProject: MavenProject): List<DependencyAnalyzerContributor.Dependency> {
-    val root = DependencyAnalyzerContributor.Dependency.Data.Module(mavenProject.displayName)
-    val rootDependency = DependencyAnalyzerContributor.Dependency(root, scope(MavenConstants.SCOPE_COMPILE), null, emptyList())
-    val result = mutableListOf<DependencyAnalyzerContributor.Dependency>()
+  private fun createDependencyList(mavenProject: MavenProject): List<DependencyAnalyzerDependency> {
+    val root = DependencyAnalyzerDependency.Data.Module(mavenProject.displayName)
+    val rootDependency = DependencyAnalyzerDependency(root, scope(MavenConstants.SCOPE_COMPILE), null, emptyList())
+    val result = mutableListOf<DependencyAnalyzerDependency>()
     collectDependency(mavenProject.dependencyTree, rootDependency, result)
     return result
   }
 
   private fun collectDependency(nodes: List<MavenArtifactNode>,
-                                parentDependency: DependencyAnalyzerContributor.Dependency,
-                                result: MutableList<DependencyAnalyzerContributor.Dependency>) {
+                                parentDependency: DependencyAnalyzerDependency,
+                                result: MutableList<DependencyAnalyzerDependency>) {
     for (mavenArtifactNode in nodes) {
-      val dependency = DependencyAnalyzerContributor.Dependency(
+      val dependency = DependencyAnalyzerDependency(
         getDependencyData(mavenArtifactNode),
         scope(mavenArtifactNode.originalScope ?: MavenConstants.SCOPE_COMPILE), parentDependency,
         getStatus(mavenArtifactNode))
@@ -68,32 +70,32 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
     }
   }
 
-  private fun getDependencyData(mavenArtifactNode: MavenArtifactNode): DependencyAnalyzerContributor.Dependency.Data {
-    return DependencyAnalyzerContributor.Dependency.Data.Artifact(
+  private fun getDependencyData(mavenArtifactNode: MavenArtifactNode): DependencyAnalyzerDependency.Data {
+    return DependencyAnalyzerDependency.Data.Artifact(
       mavenArtifactNode.artifact.groupId, mavenArtifactNode.artifact.artifactId, mavenArtifactNode.artifact.version
     )
   }
 
-  private fun getStatus(mavenArtifactNode: MavenArtifactNode): List<DependencyAnalyzerContributor.Dependency.Status> {
-    val status = mutableListOf<DependencyAnalyzerContributor.Dependency.Status>()
+  private fun getStatus(mavenArtifactNode: MavenArtifactNode): List<DependencyAnalyzerDependency.Status> {
+    val status = mutableListOf<DependencyAnalyzerDependency.Status>()
     if (mavenArtifactNode.getState() == MavenArtifactState.CONFLICT) {
-      status.add(DependencyAnalyzerContributor.Dependency.Status.Omitted)
+      status.add(DependencyAnalyzerDependency.Status.Omitted)
       mavenArtifactNode.relatedArtifact?.version?.also {
         val message = message("external.system.dependency.analyzer.warning.version.conflict", it)
-        status.add(DependencyAnalyzerContributor.Dependency.Status.Warning(message))
+        status.add(DependencyAnalyzerDependency.Status.Warning(message))
       }
     }
     else if (mavenArtifactNode.getState() == MavenArtifactState.DUPLICATE) {
-      status.add(DependencyAnalyzerContributor.Dependency.Status.Omitted)
+      status.add(DependencyAnalyzerDependency.Status.Omitted)
     }
     if (!mavenArtifactNode.artifact.isResolvedArtifact) {
-      status.add(DependencyAnalyzerContributor.Dependency.Status.Warning(message("external.system.dependency.analyzer.warning.unresolved")))
+      status.add(DependencyAnalyzerDependency.Status.Warning(message("external.system.dependency.analyzer.warning.unresolved")))
     }
     return status
   }
 
   companion object {
     @Suppress("HardCodedStringLiteral")
-    fun scope(id: String) = DependencyAnalyzerContributor.Dependency.Scope(id, StringUtil.toLowerCase(id), StringUtil.toTitleCase(id))
+    fun scope(id: String) = DependencyAnalyzerDependency.Scope(id, StringUtil.toLowerCase(id), StringUtil.toTitleCase(id))
   }
 }

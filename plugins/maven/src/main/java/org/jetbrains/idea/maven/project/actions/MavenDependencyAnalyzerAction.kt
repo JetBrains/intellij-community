@@ -4,8 +4,8 @@ package org.jetbrains.idea.maven.project.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.externalSystem.dependency.analyzer.AbstractDependencyAnalyzerAction
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Dependency
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Dependency.Scope
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency.Scope
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
@@ -54,9 +54,9 @@ class MavenDependencyAnalyzerAction : AbstractDependencyAnalyzerAction() {
     return MavenProjectsManager.getInstance(project).projectsFiles.firstOrNull()?.path
   }
 
-  private fun getDependencyData(selectedNode: SimpleNode): Dependency.Data? {
+  private fun getDependencyData(selectedNode: SimpleNode): DependencyAnalyzerDependency.Data? {
     if (selectedNode is MavenProjectsStructure.DependencyNode) {
-      return Dependency.Data.Artifact(
+      return DependencyAnalyzerDependency.Data.Artifact(
         selectedNode.artifact.groupId,
         selectedNode.artifact.artifactId,
         selectedNode.artifact.version

@@ -8,7 +8,6 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.*
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView.Companion.ACTION_PLACE
 import com.intellij.openapi.externalSystem.dependency.analyzer.util.*
 import com.intellij.openapi.externalSystem.dependency.analyzer.util.bind
@@ -50,7 +49,7 @@ class DependencyAnalyzerViewImpl(
   private val dependencyLoadingOperation = AnonymousParallelOperationTrace("DA: Dependency loading")
   private val dependencyLoadingProperty = dependencyLoadingOperation.asProperty()
 
-  private val externalProjectProperty = AtomicObservableProperty<ExternalProject?>(null)
+  private val externalProjectProperty = AtomicObservableProperty<DependencyAnalyzerProject?>(null)
   private val dependencyDataFilterProperty = AtomicObservableProperty("")
   private val dependencyScopeFilterProperty = AtomicObservableProperty(emptyList<ScopeItem>())
   private val showDependencyWarningsProperty = AtomicObservableProperty(false)
@@ -58,7 +57,7 @@ class DependencyAnalyzerViewImpl(
     .bindBooleanStorage(SHOW_GROUP_ID_PROPERTY)
 
   private val dependencyModelProperty = AtomicObservableProperty(emptyList<DependencyGroup>())
-  private val dependencyProperty = AtomicObservableProperty<Dependency?>(null)
+  private val dependencyProperty = AtomicObservableProperty<DependencyAnalyzerDependency?>(null)
   private val showDependencyTreeProperty = AtomicObservableProperty(false)
     .bindBooleanStorage(SHOW_AS_TREE_PROPERTY)
   private val dependencyEmptyTextProperty = AtomicObservableProperty("")
@@ -75,7 +74,7 @@ class DependencyAnalyzerViewImpl(
   private var dependencyEmptyState by dependencyEmptyTextProperty
   private var usagesTitle by usagesTitleProperty
 
-  private val externalProjects = ArrayList<ExternalProject>()
+  private val externalProjects = ArrayList<DependencyAnalyzerProject>()
 
   private val dependencyListModel = CollectionListModel<DependencyGroup>()
   private val dependencyTreeModel = DefaultTreeModel(null)
@@ -85,19 +84,19 @@ class DependencyAnalyzerViewImpl(
     setSelectedExternalProject(externalProjectPath) {}
   }
 
-  override fun setSelectedDependency(externalProjectPath: String, dependency: Dependency) {
+  override fun setSelectedDependency(externalProjectPath: String, dependency: DependencyAnalyzerDependency) {
     setSelectedExternalProject(externalProjectPath) {
       this.dependency = dependency
     }
   }
 
-  override fun setSelectedDependency(externalProjectPath: String, data: Dependency.Data) {
+  override fun setSelectedDependency(externalProjectPath: String, data: DependencyAnalyzerDependency.Data) {
     setSelectedExternalProject(externalProjectPath) {
       dependency = findDependency { it.data == data }
     }
   }
 
-  override fun setSelectedDependency(externalProjectPath: String, data: Dependency.Data, scope: Dependency.Scope) {
+  override fun setSelectedDependency(externalProjectPath: String, data: DependencyAnalyzerDependency.Data, scope: DependencyAnalyzerDependency.Scope) {
     setSelectedExternalProject(externalProjectPath) {
       dependency = findDependency { it.data == data && it.scope == scope }
     }
@@ -112,7 +111,7 @@ class DependencyAnalyzerViewImpl(
     }
   }
 
-  private fun findDependency(predicate: (Dependency) -> Boolean): Dependency? {
+  private fun findDependency(predicate: (DependencyAnalyzerDependency) -> Boolean): DependencyAnalyzerDependency? {
     return dependencyListModel.items.flatMap { it.variances }.find(predicate)
            ?: dependencyModel.flatMap { it.variances }.find(predicate)
   }
@@ -133,7 +132,7 @@ class DependencyAnalyzerViewImpl(
     }
   }
 
-  private fun Iterable<Dependency>.filterDependencies(): List<Dependency> {
+  private fun Iterable<DependencyAnalyzerDependency>.filterDependencies(): List<DependencyAnalyzerDependency> {
     val dependencyDataFilter = dependencyDataFilter
     val dependencyScopeFilter = dependencyScopeFilter
       .filter { it.isSelected }
@@ -141,14 +140,14 @@ class DependencyAnalyzerViewImpl(
     val showDependencyWarnings = showDependencyWarnings
     return filter { dependency -> dependencyDataFilter in dependency.data.getDisplayText(showDependencyGroupId) }
       .filter { dependency -> dependency.scope in dependencyScopeFilter }
-      .filter { dependency -> if (showDependencyWarnings) dependency.status.any { it is Dependency.Status.Warning } else true }
+      .filter { dependency -> if (showDependencyWarnings) dependency.status.any { it is DependencyAnalyzerDependency.Status.Warning } else true }
   }
 
   private fun updateExternalProjectsModel() {
     externalProjects.clear()
     executeLoadingTask(
       onBackgroundThread = {
-        contributor.getExternalProjects()
+        contributor.getProjects()
       },
       onUiThread = { projects ->
         externalProjects.addAll(projects)
@@ -245,7 +244,7 @@ class DependencyAnalyzerViewImpl(
     }
   }
 
-  private fun buildTree(dependencies: Iterable<Dependency>): DefaultMutableTreeNode? {
+  private fun buildTree(dependencies: Iterable<DependencyAnalyzerDependency>): DefaultMutableTreeNode? {
     val dependenciesForTree = dependencies.flatMap { getTreePath(it) }.toSet()
 
     if (dependenciesForTree.isEmpty()) {
@@ -261,7 +260,7 @@ class DependencyAnalyzerViewImpl(
       return null
     }
 
-    val nodeMap = LinkedHashMap<Dependency, MutableList<Dependency>>()
+    val nodeMap = LinkedHashMap<DependencyAnalyzerDependency, MutableList<DependencyAnalyzerDependency>>()
     for (dependency in dependenciesForTree) {
       val usage = dependency.parent ?: continue
       val children = nodeMap.getOrPut(usage) { ArrayList() }
@@ -286,9 +285,9 @@ class DependencyAnalyzerViewImpl(
     return rootNode
   }
 
-  private fun getTreePath(dependency: Dependency): List<Dependency> {
-    val dependencyPath = ArrayList<Dependency>()
-    var current: Dependency? = dependency
+  private fun getTreePath(dependency: DependencyAnalyzerDependency): List<DependencyAnalyzerDependency> {
+    val dependencyPath = ArrayList<DependencyAnalyzerDependency>()
+    var current: DependencyAnalyzerDependency? = dependency
     while (current != null) {
       dependencyPath.add(current)
       current = current.parent
@@ -296,12 +295,12 @@ class DependencyAnalyzerViewImpl(
     return dependencyPath
   }
 
-  private fun Dependency.Data.getGroup(): String = when (this) {
-    is Dependency.Data.Module -> name
-    is Dependency.Data.Artifact -> "$groupId:$artifactId"
+  private fun DependencyAnalyzerDependency.Data.getGroup(): String = when (this) {
+    is DependencyAnalyzerDependency.Data.Module -> name
+    is DependencyAnalyzerDependency.Data.Artifact -> "$groupId:$artifactId"
   }
 
-  private fun Iterable<Dependency>.createDependencyGroups(): List<DependencyGroup> =
+  private fun Iterable<DependencyAnalyzerDependency>.createDependencyGroups(): List<DependencyGroup> =
     groupBy { it.data.getGroup() }
       .map { DependencyGroup(it.value) }
 

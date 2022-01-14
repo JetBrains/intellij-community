@@ -4,8 +4,8 @@ package com.intellij.openapi.externalSystem.dependency.analyzer.util
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Dependency
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Dependency.Status
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency.Status
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.*
@@ -26,10 +26,10 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeModel
 
 
-internal fun Dependency.Data.getDisplayText(showGroupId: Boolean): @NlsSafe String =
+internal fun DependencyAnalyzerDependency.Data.getDisplayText(showGroupId: Boolean): @NlsSafe String =
   when (this) {
-    is Dependency.Data.Module -> name
-    is Dependency.Data.Artifact -> when (showGroupId) {
+    is DependencyAnalyzerDependency.Data.Module -> name
+    is DependencyAnalyzerDependency.Data.Artifact -> when (showGroupId) {
       true -> "$groupId:$artifactId:$version"
       else -> "$artifactId:$version"
     }
@@ -39,8 +39,8 @@ private fun SimpleColoredComponent.customizeCellRenderer(group: DependencyGroup,
   icon = when {
     group.hasWarnings -> AllIcons.General.Warning
     else -> when (group.data) {
-      is Dependency.Data.Module -> AllIcons.Nodes.Module
-      is Dependency.Data.Artifact -> AllIcons.Nodes.PpLib
+      is DependencyAnalyzerDependency.Data.Module -> AllIcons.Nodes.Module
+      is DependencyAnalyzerDependency.Data.Artifact -> AllIcons.Nodes.PpLib
     }
   }
   val dataText = group.data.getDisplayText(showGroupId)
@@ -55,10 +55,10 @@ internal abstract class AbstractDependencyList(
   private val dataProvider: DataProvider
 ) : JBList<DependencyGroup>(model), DataProvider {
 
-  private val dependencyProperty = AtomicObservableProperty<Dependency?>(null)
+  private val dependencyProperty = AtomicObservableProperty<DependencyAnalyzerDependency?>(null)
   private val dependencyGroupProperty = AtomicObservableProperty<DependencyGroup?>(null)
 
-  fun bindDependency(property: ObservableMutableProperty<Dependency?>) = apply {
+  fun bindDependency(property: ObservableMutableProperty<DependencyAnalyzerDependency?>) = apply {
     dependencyProperty.bind(property)
   }
 
@@ -89,10 +89,10 @@ internal abstract class AbstractDependencyTree(
   private val dataProvider: DataProvider
 ) : SimpleTree(model), DataProvider {
 
-  private val dependencyProperty = AtomicObservableProperty<Dependency?>(null)
+  private val dependencyProperty = AtomicObservableProperty<DependencyAnalyzerDependency?>(null)
   private val dependencyGroupProperty = AtomicObservableProperty<DependencyGroup?>(null)
 
-  fun bindDependency(property: ObservableMutableProperty<Dependency?>) = apply {
+  fun bindDependency(property: ObservableMutableProperty<DependencyAnalyzerDependency?>) = apply {
     dependencyProperty.bind(property)
   }
 
@@ -206,7 +206,7 @@ private class UsagesTreeRenderer(private val showGroupIdProperty: ObservableProp
   }
 }
 
-internal class DependencyGroup(val variances: List<Dependency>) {
+internal class DependencyGroup(val variances: List<DependencyAnalyzerDependency>) {
   val data by lazy { variances.first().data }
   val scopes by lazy { variances.map { it.scope }.toSet() }
   val parents by lazy { variances.map { it.parent }.toSet() }
