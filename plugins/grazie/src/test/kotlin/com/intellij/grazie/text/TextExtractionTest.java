@@ -54,6 +54,10 @@ public class TextExtractionTest extends BasePlatformTestCase {
     assertEquals("first line\nsecond line", unknownOffsets(extracted));
   }
 
+  public void testMarkdownStyles() {
+    assertEquals("bold italic strikethrough", unknownOffsets(extractText("a.md", "**bold** *italic* ~~strikethrough~~", 3)));
+  }
+
   public void testMarkdownInlineCode() {
     TextContent extracted = extractText("a.md", "you can use a number of predefined fields (e.g. `EventFields.InputEvent`)", 0);
     assertEquals("you can use a number of predefined fields (e.g. |)", unknownOffsets(extracted));
