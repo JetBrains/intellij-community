@@ -33,9 +33,6 @@
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradlePropertiesChangedSignalProvider"/>
 
         <packagesearch.flowModuleChangesSignalProvider
-                implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.LocalPropertiesChangedSignalProvider"/>
-
-        <packagesearch.flowModuleChangesSignalProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GlobalGradlePropertiesChangedSignalProvider"/>
 
         <packagesearch.configurableContributor
