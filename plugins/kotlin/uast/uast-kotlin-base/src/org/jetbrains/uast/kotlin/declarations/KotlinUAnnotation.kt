@@ -7,9 +7,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
-import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -79,7 +77,7 @@ class KotlinUAnnotation(
 ) : KotlinUAnnotationBase<KtAnnotationEntry>(annotationEntry, givenParent), UAnnotation {
 
     override val javaPsi: PsiAnnotation? by lz {
-        annotationEntry.actionUnderSafeAnalyzeBlock({ annotationEntry.toLightAnnotation() }, { null })
+        baseResolveProviderService.convertToPsiAnnotation(annotationEntry)
     }
 
     override fun annotationUseSiteTarget() = sourcePsi.useSiteTarget?.getAnnotationUseSiteTarget()
@@ -104,7 +102,9 @@ class KotlinUNestedAnnotation private constructor(
     givenParent: UElement?
 ) : KotlinUAnnotationBase<KtCallExpression>(original, givenParent) {
 
-    override val javaPsi: PsiAnnotation? by lz { original.toLightAnnotation() }
+    override val javaPsi: PsiAnnotation? by lz {
+        baseResolveProviderService.convertToPsiAnnotation(original)
+    }
 
     override fun annotationUseSiteTarget(): AnnotationUseSiteTarget? = null
 
