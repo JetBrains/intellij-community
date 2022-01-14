@@ -45,11 +45,14 @@ public final class JBCefClient implements JBCefDisposable {
     /**
      * Defines the size of the pool used by {@link JBCefJSQuery} after a native browser has been created.
      * <p>
-     * Accepts {@link Integer} values. JCEF does not allow to register new JavaScript queries after a native browser
-     * has been created. To workaround this limitation a pool of JS query slots can be reserved ahead. One slot
+     * Accepts {@link Integer} values. JCEF does not allow registering new JavaScript queries after a native browser
+     * has been created. To work around this limitation a pool of JS query slots can be reserved ahead. One slot
      * corresponds to a single {@link JBCefJSQuery} instance. The pool is not created by default unless it is explicitly
      * requested via this property. The property should be added to a client before the first browser associated
      * with the client is added to a UI hierarchy, otherwise it will have no effect.
+     *
+     * When a {@link JBCefJSQuery} is disposed, its JS query function ({@link JBCefJSQuery#getFuncName}) is returned
+     * to the pool as a free slot and is then reused by a newly created {@link JBCefJSQuery}.
      */
     public static final @NotNull String JS_QUERY_POOL_SIZE = "JBCefClient.JSQuery.poolSize";
 
@@ -172,8 +175,8 @@ public final class JBCefClient implements JBCefDisposable {
   }
 
   static class JSQueryPool {
-    private final JSQueryFunc[] pool;
-    private int currentFreeSlot;
+    private final LinkedList<JSQueryFunc> myPool;
+    private final int mySizeLimit;
 
     @Nullable
     static JSQueryPool create(@NotNull JBCefClient client) {
@@ -186,19 +189,25 @@ public final class JBCefClient implements JBCefDisposable {
     }
 
     JSQueryPool(@NotNull JBCefClient client, int poolSize) {
-      pool = new JSQueryFunc[poolSize];
-      for (int i = 0; i < pool.length; i++) {
-        pool[i] = new JSQueryFunc(client, i, true);
+      mySizeLimit = poolSize;
+      myPool = new LinkedList<>();
+      // populate all the slots ahead
+      for (int i = 0; i < poolSize; i++) {
+        myPool.add(i, new JSQueryFunc(client, i, true));
       }
     }
 
     @Nullable
-    public JSQueryFunc getFreeSlot() {
-      if (currentFreeSlot >= pool.length) {
-        LOG.warn("JavaScript query pool is over [size: " + pool.length + "]", new Throwable());
+    public JSQueryFunc useFreeSlot() {
+      if (myPool.isEmpty()) {
+        LOG.warn("JavaScript query pool is over [size: " + mySizeLimit + "]", new Throwable());
         return null;
       }
-      return pool[currentFreeSlot++];
+      return myPool.removeFirst();
+    }
+
+    public void releaseUsedSlot(@NotNull JSQueryFunc func) {
+      myPool.addLast(func);
     }
   }
 
@@ -366,9 +375,10 @@ public final class JBCefClient implements JBCefDisposable {
                                                       String requesting_url,
                                                       int requested_permissions,
                                                       CefMediaAccessCallback callback) {
-          return myMediaAccessHandler.handle(browser, handler -> {
+          Boolean res = myMediaAccessHandler.handle(browser, handler -> {
             return handler.onRequestMediaAccessPermission(browser, frame, requesting_url, requested_permissions, callback);
           });
+          return ObjectUtils.notNull(res, false);
         }
       });
     });
