@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.components.Interpolable;
+import com.intellij.util.MathUtil;
 import com.intellij.util.animation.Animations;
 import com.intellij.util.animation.Easing;
 import com.intellij.util.animation.JBAnimator;
@@ -465,12 +466,24 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
           })
           .setDuration(getScrollDuration())
           .setEasing(Easing.EASE_OUT)
-          .runWhenExpiredOrCancelled(() -> finish(true))
+          .runWhenExpired(() -> finish(true))
       );
     }
 
     int getScrollDuration() {
-      return Registry.intValue("idea.editor.smooth.scrolling.navigation.duration", 100);
+      var defaultDuration = Registry.intValue("idea.editor.smooth.scrolling.navigation.duration", 100);
+      if (defaultDuration < 0) {
+        return 0;
+      }
+      // old calculation for animation duration decreasing
+      int HDist = Math.abs(myEndHOffset - myStartHOffset);
+      int VDist = Math.abs(myEndVOffset - myStartVOffset);
+      double totalDist = Math.hypot(HDist, VDist);
+
+      int lineHeight = mySupplier.getEditor().getLineHeight();
+      double lineDist = totalDist / lineHeight;
+      double part = MathUtil.clamp((lineDist - 1) / 10, 0, 1);
+      return (int)Math.round(part * defaultDuration);
     }
 
     @NotNull
