@@ -667,7 +667,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   @NotNull
   protected String getRunner() {
     if (myRunner == null) {
-      myRunner = ReadAction.compute(this::getRunnerInner);
+      myRunner = ReadAction.nonBlocking(this::getRunnerInner).executeSynchronously();
     }
     return myRunner;
   }
