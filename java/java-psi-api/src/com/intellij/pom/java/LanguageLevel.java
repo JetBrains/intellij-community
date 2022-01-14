@@ -44,6 +44,9 @@ public enum LanguageLevel {
   JDK_18_PREVIEW(JavaPsiBundle.messagePointer("jdk.18.preview.language.level.description"), 18),
   JDK_X(JavaPsiBundle.messagePointer("jdk.X.language.level.description"), 19);
 
+  /**
+   * Should point to the last released JDK.
+   */
   public static final LanguageLevel HIGHEST = JDK_17;
   public static final Key<LanguageLevel> KEY = Key.create("LANGUAGE_LEVEL");
 
