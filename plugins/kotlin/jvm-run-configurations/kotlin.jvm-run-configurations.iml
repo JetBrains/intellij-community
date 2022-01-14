@@ -38,7 +38,6 @@
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-ir" level="project" />
     <orderEntry type="module" module-name="kotlin.common" />
     <orderEntry type="module" module-name="intellij.junit" />
-    <orderEntry type="module" module-name="kotlin.jps-common" />
     <orderEntry type="module" module-name="intellij.testng" />
   </component>
 </module>
