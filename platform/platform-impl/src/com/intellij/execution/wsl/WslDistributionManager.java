@@ -126,8 +126,8 @@ public abstract class WslDistributionManager implements Disposable {
   }
 
   private @NotNull List<WSLDistribution> loadInstalledDistributions() {
-    final int releaseId = StringUtil.parseInt(SystemInfo.getWinRelease(), -1);
-    if (releaseId > 0 && releaseId < 2004) {
+    final Long windowsBuild = SystemInfo.getWinBuildNumber();
+    if ( windowsBuild != null && windowsBuild > 0 && windowsBuild < 19041) {
       final WSLUtil.WSLToolFlags wslTool = WSLUtil.getWSLToolFlags();
       if (wslTool == null || (!wslTool.isVerboseFlagAvailable && !wslTool.isQuietFlagAvailable)) {
         //noinspection deprecation

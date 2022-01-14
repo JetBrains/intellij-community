@@ -1,12 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
 import com.sun.jna.platform.win32.Advapi32Util;
+import com.sun.jna.platform.win32.Win32Exception;
 import com.sun.jna.platform.win32.WinReg;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -90,15 +92,24 @@ public final class SystemInfo {
   }
 
   private static final NotNullLazyValue<Boolean> ourHasXdgMime = PathExecLazyValue.create("xdg-mime");
-  private static final NullableLazyValue<String> ourWindowsRelease = new NullableLazyValue<String>() {
+  private static final NullableLazyValue<Long> ourWindowsBuild = new NullableLazyValue<Long>() {
     @Override
-    protected @Nullable String compute() {
+    protected @Nullable Long compute() {
       if (!isWin10OrNewer) {
         return null;
       }
-      return Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE,
-                                                 "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
-                                                 "ReleaseId");
+      try {
+        // This key is undocumented, but mentioned heavily over the Internet and used by lots of people
+        // It was there since NT: https://web.archive.org/web/20220113230741/https://i.imgur.com/sGCtErh.png
+        // Exists in XP, 10 and 11
+        return Long.parseLong(Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE,
+                                                                  "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+                                                                  "CurrentBuildNumber"));
+      }
+      catch (NumberFormatException | Win32Exception formatException) {
+        Logger.getInstance(SystemInfo.class).warn("Bad win version", formatException);
+        return null;
+      }
     }
   };
 
@@ -116,11 +127,17 @@ public final class SystemInfo {
   public static final boolean isMacOSMonterey = isMac && isOsVersionAtLeast("12.0");
 
   /**
-   * <a href="https://en.wikipedia.org/wiki/Windows_10_version_history#Channels">See "Version" column in wiki</a>
-   * @return release or null of OS != Win10+
+   * Build number is the only more or less stable approach to get comparable win version.
+   * See <a href="https://www.gaijin.at/en/infos/windows-version-numbers">list of builds</a>.
+   * There is also <a href="https://en.wikipedia.org/wiki/Windows_10_version_history">Wikipedia article</a>.
+   * And <a href="https://en.wikipedia.org/wiki/Windows_11_version_history">another one for Windows 11</a>.
+   *
+   * ReleaseID (1903, 2004 e.t.c.) is marketing term which is not a number since 20H2 while build numbers
+   * grow since NT 3.1 (see the first link) and this trend is unlikely to change
+   *
    */
-  public static @Nullable String getWinRelease() {
-    return ourWindowsRelease.getValue();
+  public static @Nullable Long getWinBuildNumber() {
+    return ourWindowsBuild.getValue();
   }
 
   public static @NotNull String getMacOSMajorVersion() {

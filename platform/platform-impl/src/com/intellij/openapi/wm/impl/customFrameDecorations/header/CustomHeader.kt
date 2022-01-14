@@ -46,8 +46,6 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     val LABEL_BORDER: JBEmptyBorder
       get() = JBUI.Borders.empty(V, 0)
 
-    val WINDOWS_VERSION = SystemInfo.getWinRelease()
-
     fun create(window: Window): CustomHeader {
       return if (window is JFrame) {
         DefaultFrameHeader(window)
@@ -270,8 +268,8 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     private var activeColor: Color = defaultActiveBorder
 
     private fun calculateAffectsBorders(): Boolean {
-      val windowsVersion = WINDOWS_VERSION?.toIntOrNull() ?: 0
-      if (windowsVersion < 1809) return true // should always be active on older versions on Windows
+      val windowsBuild = SystemInfo.getWinBuildNumber() ?: 0
+      if (windowsBuild < 17763) return true // should always be active on older versions on Windows
       return Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor.affects.borders") as Boolean? ?: true
     }
 

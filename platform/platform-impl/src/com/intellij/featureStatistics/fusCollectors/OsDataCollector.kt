@@ -33,7 +33,7 @@ internal class OsDataCollector : ApplicationUsagesCollector(), AllowedDuringStar
     "parrot", "pop", "pureos", "raspbian", "rhel", "rocky", "rosa", "sabayon", "slackware", "solus", "ubuntu", "void", "zorin",
     "other", "unknown")
 
-  private val GROUP = EventLogGroup("system.os", 13)
+  private val GROUP = EventLogGroup("system.os", 14)
   private val OS_NAME = String("name", OS_NAMES)
   private val OS_LANG = String("locale", LOCALES)
   private val OS_TZ = StringValidatedByRegexp("time_zone", "time_zone")
@@ -42,7 +42,7 @@ internal class OsDataCollector : ApplicationUsagesCollector(), AllowedDuringStar
   @Suppress("MissingDeprecatedAnnotationOnScheduledForRemovalApi")
   private val TIMEZONE = GROUP.registerEvent("os.timezone", StringValidatedByRegexp("value", "time_zone"))  // backward compatibility
   private val LINUX = GROUP.registerEvent("linux", String("distro", DISTROS), StringValidatedByRegexp("release", "version"), EventFields.Boolean("wsl"))
-  private val WINDOWS = GROUP.registerEvent("windows", EventFields.Int("release"))
+  private val WINDOWS = GROUP.registerEvent("windows", EventFields.Long("build"))
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -51,13 +51,17 @@ internal class OsDataCollector : ApplicationUsagesCollector(), AllowedDuringStar
     val metrics = mutableSetOf(
       OS.metric(OS_NAME.with(getOSName()), Version.with(SystemInfo.OS_VERSION), OS_LANG.with(getLanguage()), OS_TZ.with(tz)),
       TIMEZONE.metric(tz))
-    if (SystemInfo.isLinux) {
-      val (distro, release) = getReleaseData()
-      val isUnderWsl = detectIsUnderWsl()
-      metrics += LINUX.metric(distro, release, isUnderWsl)
-    }
-    SystemInfo.getWinRelease()?.toInt()?.let { win10Release ->
-      metrics += WINDOWS.metric(win10Release)
+
+    when {
+      SystemInfo.isLinux -> {
+        val (distro, release) = getReleaseData()
+        val isUnderWsl = detectIsUnderWsl()
+        metrics += LINUX.metric(distro, release, isUnderWsl)
+      }
+      SystemInfo.isWin10OrNewer -> {
+        // -1 is unknown
+        metrics += WINDOWS.metric(SystemInfo.getWinBuildNumber() ?: -1)
+      }
     }
     return metrics
   }
