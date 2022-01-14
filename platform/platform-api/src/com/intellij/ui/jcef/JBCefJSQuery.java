@@ -3,6 +3,7 @@ package com.intellij.ui.jcef;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.jcef.JBCefClient.JSQueryPool;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.browser.CefMessageRouter;
@@ -13,9 +14,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -24,11 +23,12 @@ import java.util.function.Function;
  * @author tav
  */
 public final class JBCefJSQuery implements JBCefDisposable {
-  @NotNull private final JSQueryFunc myFunc;
-  @NotNull private final JBCefClient myJBCefClient;
-  @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
+  private final @NotNull JSQueryFunc myFunc;
+  private final @NotNull JBCefClient myJBCefClient;
+  private final @NotNull DisposeHelper myDisposeHelper = new DisposeHelper();
 
-  @NotNull private final Map<Function<? super String, ? extends Response>, CefMessageRouterHandler> myHandlerMap = Collections.synchronizedMap(new HashMap<>());
+  private final @NotNull Map<Function<? super String, ? extends Response>, CefMessageRouterHandler> myHandlerMap =
+    Collections.synchronizedMap(new HashMap<>());
 
   private JBCefJSQuery(@NotNull JBCefBrowserBase browser, @NotNull JBCefJSQuery.JSQueryFunc func) {
     myFunc = func;
@@ -58,7 +58,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
     if (!browser.isCefBrowserCreateStarted()) {
       return create.apply(null);
     }
-    JBCefClient.JSQueryPool pool = browser.getJBCefClient().getJSQueryPool();
+    JSQueryPool pool = browser.getJBCefClient().getJSQueryPool();
     JSQueryFunc slot;
     if (pool != null && (slot = pool.useFreeSlot()) != null) {
       return new JBCefJSQuery(browser, slot);
@@ -98,7 +98,8 @@ public final class JBCefJSQuery implements JBCefDisposable {
    */
   @NotNull
   public String inject(@Nullable String queryResult, @NotNull String onSuccessCallback, @NotNull String onFailureCallback) {
-    if (isDisposed()) throw new IllegalStateException("the JS query has been disposed");
+    checkDisposed();
+
     if (queryResult != null && queryResult.isEmpty()) queryResult = "''";
     return "window." + myFunc.myFuncName +
            "({request: '' + " + queryResult + "," +
@@ -108,6 +109,8 @@ public final class JBCefJSQuery implements JBCefDisposable {
   }
 
   public void addHandler(@NotNull Function<? super String, ? extends Response> handler) {
+    checkDisposed();
+
     CefMessageRouterHandler cefHandler;
     myFunc.myRouter.addHandler(cefHandler = new CefMessageRouterHandlerAdapter() {
       @Override
@@ -134,24 +137,29 @@ public final class JBCefJSQuery implements JBCefDisposable {
     myHandlerMap.put(handler, cefHandler);
   }
 
-  public void removeHandler(@NotNull Function<? super String, ? extends Response> handler) {
-    CefMessageRouterHandler cefHandler = myHandlerMap.remove(handler);
+  public void removeHandler(@NotNull Function<? super String, ? extends Response> function) {
+    CefMessageRouterHandler cefHandler;
+    synchronized (myHandlerMap) {
+      cefHandler = myHandlerMap.remove(function);
+    }
     if (cefHandler != null) {
       myFunc.myRouter.removeHandler(cefHandler);
     }
   }
 
   public void clearHandlers() {
-    for (Function<? super String, ? extends Response> func : myHandlerMap.keySet()) {
-      removeHandler(func);
+    List<Function<? super String, ? extends Response>> functions = new ArrayList<>(myHandlerMap.size());
+    synchronized (myHandlerMap) {
+      myHandlerMap.forEach((func, handler) -> functions.add(func));
     }
+    functions.forEach(func -> removeHandler(func));
   }
 
   @Override
   public void dispose() {
     myDisposeHelper.dispose(() -> {
       if (myFunc.myIsSlot) {
-        JBCefClient.JSQueryPool pool = myJBCefClient.getJSQueryPool();
+        JSQueryPool pool = myJBCefClient.getJSQueryPool();
         if (pool != null) {
           clearHandlers();
           pool.releaseUsedSlot(myFunc);
@@ -167,6 +175,10 @@ public final class JBCefJSQuery implements JBCefDisposable {
   @Override
   public boolean isDisposed() {
     return myDisposeHelper.isDisposed();
+  }
+
+  private void checkDisposed() {
+    if (isDisposed()) throw new IllegalStateException("the JS query has been disposed");
   }
 
   /**

@@ -99,7 +99,7 @@ public final class JBCefClient implements JBCefDisposable {
     };
     addPropertyChangeListener(Properties.JS_QUERY_POOL_SIZE, evt -> {
       if (evt.getNewValue() != null) {
-        createPool.run();
+        createPool.run(); // no need to sync it as the property change firing is sync'ed
       }
     });
     if (JS_QUERY_POOL_DEFAULT_SIZE > 0) {
@@ -175,7 +175,7 @@ public final class JBCefClient implements JBCefDisposable {
   }
 
   static class JSQueryPool {
-    private final LinkedList<JSQueryFunc> myPool;
+    private final List<JSQueryFunc> myPool;
     private final int mySizeLimit;
 
     @Nullable
@@ -190,7 +190,7 @@ public final class JBCefClient implements JBCefDisposable {
 
     JSQueryPool(@NotNull JBCefClient client, int poolSize) {
       mySizeLimit = poolSize;
-      myPool = new LinkedList<>();
+      myPool = Collections.synchronizedList(new LinkedList<>());
       // populate all the slots ahead
       for (int i = 0; i < poolSize; i++) {
         myPool.add(i, new JSQueryFunc(client, i, true));
@@ -203,11 +203,11 @@ public final class JBCefClient implements JBCefDisposable {
         LOG.warn("JavaScript query pool is over [size: " + mySizeLimit + "]", new Throwable());
         return null;
       }
-      return myPool.removeFirst();
+      return myPool.remove(0);
     }
 
     public void releaseUsedSlot(@NotNull JSQueryFunc func) {
-      myPool.addLast(func);
+      myPool.add(func);
     }
   }
 
