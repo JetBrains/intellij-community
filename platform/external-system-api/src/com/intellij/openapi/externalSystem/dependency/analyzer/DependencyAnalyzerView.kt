@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Dependency
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Scope
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Dependency.Scope
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import javax.swing.JComponent
 

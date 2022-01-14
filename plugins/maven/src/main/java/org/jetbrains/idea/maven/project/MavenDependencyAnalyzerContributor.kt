@@ -29,13 +29,13 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
       .map { DependencyAnalyzerContributor.ExternalProject(it.path, it.displayName) }
   }
 
-  override fun getDependencyScopes(externalProjectPath: String): List<DependencyAnalyzerContributor.Scope> {
+  override fun getDependencyScopes(externalProjectPath: String): List<DependencyAnalyzerContributor.Dependency.Scope> {
     return listOf(scope(MavenConstants.SCOPE_COMPILE),
                   scope(MavenConstants.SCOPE_PROVIDED),
                   scope(MavenConstants.SCOPE_RUNTIME),
                   scope(MavenConstants.SCOPE_SYSTEM),
                   scope(MavenConstants.SCOPE_IMPORT),
-                  scope(MavenConstants.SCOPE_TEST));
+                  scope(MavenConstants.SCOPE_TEST))
   }
 
   override fun getDependencies(externalProjectPath: String): List<DependencyAnalyzerContributor.Dependency> {
@@ -50,7 +50,7 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
     val rootDependency = DependencyAnalyzerContributor.Dependency(root, scope(MavenConstants.SCOPE_COMPILE), null, emptyList())
     val result = mutableListOf<DependencyAnalyzerContributor.Dependency>()
     collectDependency(mavenProject.dependencyTree, rootDependency, result)
-    return result;
+    return result
   }
 
   private fun collectDependency(nodes: List<MavenArtifactNode>,
@@ -74,26 +74,26 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
     )
   }
 
-  private fun getStatus(mavenArtifactNode: MavenArtifactNode): List<DependencyAnalyzerContributor.Status> {
-    val status = mutableListOf<DependencyAnalyzerContributor.Status>()
+  private fun getStatus(mavenArtifactNode: MavenArtifactNode): List<DependencyAnalyzerContributor.Dependency.Status> {
+    val status = mutableListOf<DependencyAnalyzerContributor.Dependency.Status>()
     if (mavenArtifactNode.getState() == MavenArtifactState.CONFLICT) {
-      status.add(DependencyAnalyzerContributor.Status.Omitted)
+      status.add(DependencyAnalyzerContributor.Dependency.Status.Omitted)
       mavenArtifactNode.relatedArtifact?.version?.also {
         val message = message("external.system.dependency.analyzer.warning.version.conflict", it)
-        status.add(DependencyAnalyzerContributor.Status.Warning(message))
+        status.add(DependencyAnalyzerContributor.Dependency.Status.Warning(message))
       }
     }
     else if (mavenArtifactNode.getState() == MavenArtifactState.DUPLICATE) {
-      status.add(DependencyAnalyzerContributor.Status.Omitted)
+      status.add(DependencyAnalyzerContributor.Dependency.Status.Omitted)
     }
     if (!mavenArtifactNode.artifact.isResolvedArtifact) {
-      status.add(DependencyAnalyzerContributor.Status.Warning(message("external.system.dependency.analyzer.warning.unresolved")))
+      status.add(DependencyAnalyzerContributor.Dependency.Status.Warning(message("external.system.dependency.analyzer.warning.unresolved")))
     }
-    return status;
+    return status
   }
 
   companion object {
     @Suppress("HardCodedStringLiteral")
-    fun scope(id: String) = DependencyAnalyzerContributor.Scope(id, StringUtil.toLowerCase(id), StringUtil.toTitleCase(id))
+    fun scope(id: String) = DependencyAnalyzerContributor.Dependency.Scope(id, StringUtil.toLowerCase(id), StringUtil.toTitleCase(id))
   }
 }

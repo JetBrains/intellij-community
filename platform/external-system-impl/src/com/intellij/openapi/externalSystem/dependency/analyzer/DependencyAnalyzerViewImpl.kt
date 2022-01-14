@@ -97,7 +97,7 @@ class DependencyAnalyzerViewImpl(
     }
   }
 
-  override fun setSelectedDependency(externalProjectPath: String, data: Dependency.Data, scope: Scope) {
+  override fun setSelectedDependency(externalProjectPath: String, data: Dependency.Data, scope: Dependency.Scope) {
     setSelectedExternalProject(externalProjectPath) {
       dependency = findDependency { it.data == data && it.scope == scope }
     }
@@ -141,7 +141,7 @@ class DependencyAnalyzerViewImpl(
     val showDependencyWarnings = showDependencyWarnings
     return filter { dependency -> dependencyDataFilter in dependency.data.getDisplayText(showDependencyGroupId) }
       .filter { dependency -> dependency.scope in dependencyScopeFilter }
-      .filter { dependency -> if (showDependencyWarnings) dependency.status.any { it is Status.Warning } else true }
+      .filter { dependency -> if (showDependencyWarnings) dependency.status.any { it is Dependency.Status.Warning } else true }
   }
 
   private fun updateExternalProjectsModel() {

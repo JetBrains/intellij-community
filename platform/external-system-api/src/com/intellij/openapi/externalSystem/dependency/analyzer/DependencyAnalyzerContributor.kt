@@ -26,45 +26,63 @@ interface DependencyAnalyzerContributor {
   /**
    * Gets scopes/configurations (e.g. compile, runtime, test, etc.) for specified external project.
    */
-  fun getDependencyScopes(externalProjectPath: String): List<Scope>
+  fun getDependencyScopes(externalProjectPath: String): List<Dependency.Scope>
 
   /**
    * Gets dependencies for specified external project.
    */
   fun getDependencies(externalProjectPath: String): List<Dependency>
 
-  class ExternalProject(val path: String, val title: @Nls String) {
+  class ExternalProject(
+    val path: String,
+    val title: @Nls String
+  ) {
     override fun equals(other: Any?) = other is ExternalProject && path == other.path
     override fun hashCode() = path.hashCode()
     override fun toString() = title
   }
 
-  class Scope(val id: String, val name: @Nls String, val title: @Nls(capitalization = Nls.Capitalization.Title) String) {
-    override fun equals(other: Any?) = other is Scope && id == other.id
-    override fun hashCode() = id.hashCode()
-    override fun toString() = title
-  }
-
-  data class Dependency(val data: Data, val scope: Scope, val parent: Dependency?, val status: List<Status>) {
+  data class Dependency(
+    val data: Data,
+    val scope: Scope,
+    val parent: Dependency?,
+    val status: List<Status>
+  ) {
 
     override fun toString() = "($scope) $data -> $parent"
 
     sealed interface Data {
 
-      data class Module(val name: String) : Data {
+      data class Module(
+        val name: @Nls String
+      ) : Data {
         override fun toString() = name
       }
 
-      data class Artifact(val groupId: String, val artifactId: String, val version: String) : Data {
+      data class Artifact(
+        val groupId: @Nls String,
+        val artifactId: @Nls String,
+        val version: @Nls String
+      ) : Data {
         override fun toString() = "$groupId:$artifactId:$version"
       }
     }
-  }
 
-  sealed interface Status {
+    class Scope(
+      val id: String,
+      val name: @Nls String,
+      val title: @Nls(capitalization = Nls.Capitalization.Title) String
+    ) {
+      override fun equals(other: Any?) = other is Scope && id == other.id
+      override fun hashCode() = id.hashCode()
+      override fun toString() = title
+    }
 
-    object Omitted : Status
+    sealed interface Status {
 
-    class Warning(val message: @Nls String) : Status
+      object Omitted : Status
+
+      class Warning(val message: @Nls String) : Status
+    }
   }
 }

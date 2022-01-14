@@ -4,22 +4,21 @@ package com.intellij.openapi.externalSystem.dependency.analyzer
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.*
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Dependency.Data.Artifact
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Dependency.Data.Module
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Status.Omitted
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Dependency.Status.Omitted
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.LocalTimeCounter
 import com.intellij.util.PathUtil
 
+@Suppress("HardCodedStringLiteral", "unused")
 abstract class DummyDependencyAnalyzerContributor(private val project: Project) : DependencyAnalyzerContributor {
 
-  @Suppress("HardCodedStringLiteral")
   private fun externalProject(externalProjectPath: String) =
     ExternalProject(externalProjectPath, PathUtil.getFileName(externalProjectPath))
 
-  @Suppress("HardCodedStringLiteral")
   private fun scope(id: String) =
-    Scope(id, StringUtil.toLowerCase(id), StringUtil.toTitleCase(id))
+    Dependency.Scope(id, StringUtil.toLowerCase(id), StringUtil.toTitleCase(id))
 
   override fun getExternalProjects() = listOf(
     externalProject(project.basePath!! + "/parent1"),
@@ -100,7 +99,7 @@ abstract class DummyDependencyAnalyzerContributor(private val project: Project) 
     return dependencies
   }
 
-  private fun getStatus(data: Dependency.Data, usage: Dependency?): List<Status> {
+  private fun getStatus(data: Dependency.Data, usage: Dependency?): List<Dependency.Status> {
     when (data.id) {
       "org.hamcrest:hamcrest-core:1.3" ->
         if (matchesUsagePathPrefix(usage, "parent2", "module")) {
@@ -154,11 +153,11 @@ abstract class DummyDependencyAnalyzerContributor(private val project: Project) 
     return emptyList()
   }
 
-  private fun createDependency(data: Dependency.Data, scope: Scope, usage: Dependency?) =
+  private fun createDependency(data: Dependency.Data, scope: Dependency.Scope, usage: Dependency?) =
     Dependency(data, scope, usage, getStatus(data, usage))
 
   private fun createVersionConflict(conflictedVersion: String) =
-    Status.Warning(ExternalSystemBundle.message("external.system.dependency.analyzer.warning.version.conflict", conflictedVersion))
+    Dependency.Status.Warning(ExternalSystemBundle.message("external.system.dependency.analyzer.warning.version.conflict", conflictedVersion))
 
   private fun matchesUsagePathPrefix(dependency: Dependency?, vararg ids: String): Boolean {
     if (ids.isEmpty()) return true
