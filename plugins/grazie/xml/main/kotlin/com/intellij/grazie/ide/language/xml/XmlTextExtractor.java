@@ -35,7 +35,7 @@ import java.util.function.Function;
 import static com.intellij.grazie.text.TextContent.TextDomain.*;
 
 public class XmlTextExtractor extends TextExtractor {
-  private static final TextContentBuilder builder = TextContentBuilder.FromPsi.removingIndents(" \t");
+  private static final TextContentBuilder builder = TextContentBuilder.FromPsi.removingIndents(" \t").removingLineSuffixes(" \t");
   private final Set<Class<? extends Language>> myEnabledDialects;
 
   protected XmlTextExtractor(Class<? extends Language>... enabledDialects) {

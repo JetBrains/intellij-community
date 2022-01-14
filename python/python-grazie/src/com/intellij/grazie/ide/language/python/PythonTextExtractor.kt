@@ -18,7 +18,7 @@ internal class PythonTextExtractor : TextExtractor() {
     val elementType = PsiUtilCore.getElementType(root)
     if (elementType in PyTokenTypes.STRING_NODES) {
       val domain = if (elementType == PyTokenTypes.DOCSTRING) TextContent.TextDomain.DOCUMENTATION else TextContent.TextDomain.LITERALS
-      return TextContentBuilder.FromPsi.removingIndents(" \t").withUnknown(this::isUnknownFragment).build(root.parent, domain)
+      return TextContentBuilder.FromPsi.removingIndents(" \t").removingLineSuffixes(" \t").withUnknown(this::isUnknownFragment).build(root.parent, domain)
     }
 
     if (root is PsiCommentImpl) {
