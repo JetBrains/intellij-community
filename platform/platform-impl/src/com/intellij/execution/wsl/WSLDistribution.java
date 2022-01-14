@@ -89,9 +89,10 @@ public class WSLDistribution {
 
   /**
    * @return executable file, null for WSL distributions parsed from `wsl.exe --list` output
-   * @deprecated please don't use it, to be removed
+   * @deprecated please don't use it, to be will be removed after we collect statistics and make sure versions before 1903 aren't used.
+   * Check statistics and remove in the next version
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Deprecated
   public @Nullable Path getExecutablePath() {
     return myExecutablePath;

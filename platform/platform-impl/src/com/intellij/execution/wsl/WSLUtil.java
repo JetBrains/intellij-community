@@ -45,10 +45,11 @@ public final class WSLUtil {
   private final static String WSL_PATH_TO_REMOVE = "wsl://";
 
   /**
-   * @deprecated use {@link WslDistributionManager#getInstalledDistributions()} instead
+   * @deprecated use {@link WslDistributionManager#getInstalledDistributions()} instead.
+   * Method will be removed after we check statistics and make sure versions before 1903 aren't used.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @NotNull
   public static List<WSLDistribution> getAvailableDistributions() {
     if (!isSystemCompatible()) return Collections.emptyList();
