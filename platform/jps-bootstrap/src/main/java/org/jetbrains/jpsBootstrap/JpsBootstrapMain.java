@@ -49,7 +49,7 @@ public class JpsBootstrapMain {
       System.exit(0);
     }
     catch (Throwable t) {
-      fatal("jps-bootstrap exited due to exception:\n" + ExceptionUtil.getThrowableText(t));
+      fatal(ExceptionUtil.getThrowableText(t));
       System.exit(1);
     }
   }
