@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
@@ -13,6 +13,7 @@ import com.intellij.codeInspection.dataFlow.fix.SurroundWithRequireNonNullFix;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.codeInspection.ui.InspectionOptionContainer;
 import com.intellij.codeInspection.ui.OptionAccessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -47,6 +48,7 @@ import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
 import static javax.swing.SwingConstants.TOP;
 
 public class DataFlowInspection extends DataFlowInspectionBase {
+  private static final Logger LOG = Logger.getInstance(DataFlowInspection.class);
 
   @Override
   protected LocalQuickFix[] createConditionalAssignmentFixes(boolean evaluatesToTrue, PsiAssignmentExpression assignment, final boolean onTheFly) {
