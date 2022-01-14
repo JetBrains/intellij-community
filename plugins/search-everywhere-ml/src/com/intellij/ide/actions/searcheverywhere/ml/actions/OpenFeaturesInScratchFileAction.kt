@@ -55,23 +55,28 @@ class OpenFeaturesInScratchFileAction : AnAction() {
     val searchSession = mlSessionService.getCurrentSession()!!
 
     val features = searchEverywhereUI.foundElementsInfo.map { info ->
+      val rankingWeight = info.priority
+      val contributor = info.contributor.searchProviderId
       val elementName = StringUtil.notNullize(info.element.toString(), "undefined")
       if (searchSession.itemIdProvider.isElementSupported(info.element)) {
         val id = searchSession.itemIdProvider.getId(info.element)
         val mlWeight = if (isTabWithMl(searchEverywhereUI.selectedTabID)) {
-          mlSessionService.getMlWeight(info.contributor, info.element, info.priority)
+          mlSessionService.getMlWeight(info.contributor, info.element, rankingWeight)
         } else {
           null
         }
 
+        val state = searchSession.getCurrentSearchState()
         return@map ElementFeatures(
           elementName,
           mlWeight,
-          searchSession.getCurrentSearchState()!!.getElementFeatures(id, info.element, info.contributor, info.priority).features.toSortedMap()
+          rankingWeight,
+          contributor,
+          state!!.getElementFeatures(id, info.element, info.contributor, rankingWeight).features.toSortedMap()
         )
       }
       else {
-        return@map ElementFeatures(elementName, null, emptyMap())
+        return@map ElementFeatures(elementName, null, rankingWeight, contributor, emptyMap())
       }
     }
 
@@ -101,6 +106,10 @@ class OpenFeaturesInScratchFileAction : AnAction() {
     FileEditorManager.getInstance(project).openFile(file, true)
   }
 
-  @JsonPropertyOrder("name", "mlWeight", "features")
-  private data class ElementFeatures(val name: String, val mlWeight: Double?, val features: Map<String, Any>)
+  @JsonPropertyOrder("name", "mlWeight", "rankingWeight", "contributor", "features")
+  private data class ElementFeatures(val name: String,
+                                     val mlWeight: Double?,
+                                     val rankingWeight: Int,
+                                     val contributor: String,
+                                     val features: Map<String, Any>)
 }
