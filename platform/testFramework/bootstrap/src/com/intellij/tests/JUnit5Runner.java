@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
 import jetbrains.buildServer.messages.serviceMessages.MapSerializerUtil;
@@ -45,7 +45,12 @@ public class JUnit5Runner {
       else {
         selector = DiscoverySelectors.selectMethod(aClass, args[1]);
       }
-      launcher.execute(LauncherDiscoveryRequestBuilder.request().selectors(selector).build(), new TCExecutionListener());
+      TCExecutionListener listener = new TCExecutionListener();
+      launcher.execute(LauncherDiscoveryRequestBuilder.request().selectors(selector).build(), listener);
+      if (!listener.smthExecuted()) {
+        //see org.jetbrains.intellij.build.impl.TestingTasksImpl.NO_TESTS_ERROR
+        System.exit(42);
+      }
     }
     finally {
       System.exit(0);
@@ -92,12 +97,16 @@ public class JUnit5Runner {
   static class TCExecutionListener implements TestExecutionListener {
     private final PrintStream myPrintStream;
     private TestPlan myTestPlan;
-    private long myCurrentTestStart;
+    private long myCurrentTestStart = 0;
     private int myFinishCount = 0;
     
     TCExecutionListener() {
       myPrintStream = System.out;
       myPrintStream.println("##teamcity[enteredTheMatrix]");
+    }
+    
+    boolean smthExecuted() {
+      return myCurrentTestStart > 0;
     }
   
     @Override

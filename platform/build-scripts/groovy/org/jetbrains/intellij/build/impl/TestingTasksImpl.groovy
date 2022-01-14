@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.TestCaseLoader
@@ -578,13 +578,20 @@ class TestingTasksImpl extends TestingTasks {
               }
 
               try {
+                def noTests = true 
                 UrlClassLoader loader = UrlClassLoader.build().files(files).get()
                 Class<?> aClazz = Class.forName(qName, false, loader)
                 Class<?> testAnnotation = Class.forName(Test.class.getName(), false, loader)
                 for (Method m : aClazz.getDeclaredMethods()) {
                   if (m.isAnnotationPresent(testAnnotation as Class<? extends Annotation>) && Modifier.isPublic(m.getModifiers())) {
-                    runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, qName, m.getName())
+                    def exitCode =
+                      runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, qName, m.getName())
+                    noTests &= exitCode == NO_TESTS_ERROR
                   }
+                }
+                
+                if (noTests) {
+                   context.messages.error("No tests were found in the configuration")
                 }
               }
               catch (Throwable e) {
@@ -599,16 +606,22 @@ class TestingTasksImpl extends TestingTasks {
     }
     else {
       context.messages.info("Run junit 5 tests")
-      runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, null, null)
+      def exitCode5 = runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, null, null)
       context.messages.info("Finish junit 5 task")
 
       context.messages.info("Run junit 3 tests")
-      runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, options.bootstrapSuite, null)
+      def exitCode3 =
+        runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, options.bootstrapSuite, null)
       context.messages.info("Finish junit 3 task")
+      
+      if (exitCode5 == NO_TESTS_ERROR && exitCode3 == NO_TESTS_ERROR) {
+        context.messages.error("No tests were found in the configuration")
+      }
     }
   }
   
-  private void runJUnit5Engine(Map<String, String> systemProperties,
+  private static final int NO_TESTS_ERROR = 42
+  private int runJUnit5Engine(Map<String, String> systemProperties,
                                List<String> jvmArgs,
                                Map<String, String> envVariables,
                                List<String> bootstrapClasspath,
@@ -668,9 +681,10 @@ class TestingTasksImpl extends TestingTasks {
     
     errorReader.join(360_000)
     outputReader.join(360_000)
-    if (exitCode != 0) {
+    if (exitCode != 0 && exitCode != NO_TESTS_ERROR) {
       context.messages.error("Tests failed with exit code $exitCode")
     }
+     return exitCode
   }
 
   private Runnable createInputReader(final InputStream inputStream, final PrintStream outputStream) {
