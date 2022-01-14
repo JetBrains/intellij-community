@@ -3,11 +3,13 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
+import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.backend.common.descriptors.explicitParameters
 import org.jetbrains.kotlin.builtins.createFunctionType
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -46,6 +48,10 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
 
     override val baseKotlinConverter: BaseKotlinConverter
         get() = KotlinConverter
+
+    override fun convertToPsiAnnotation(ktElement: KtElement): PsiAnnotation? {
+        return ktElement.actionUnderSafeAnalyzeBlock({ ktElement.toLightAnnotation() }, { null })
+    }
 
     private fun getResolvedCall(sourcePsi: KtCallElement): ResolvedCall<*>? {
         val annotationEntry = sourcePsi.getParentOfType<KtAnnotationEntry>(false) ?: return null
@@ -149,6 +155,10 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
                 parent
             )
         }
+    }
+
+    override fun getPsiAnnotations(psiElement: PsiModifierListOwner): Array<PsiAnnotation> {
+        return psiElement.actionUnderSafeAnalyzeBlock({ psiElement.annotations }, { emptyArray() })
     }
 
     override fun resolveBitwiseOperators(ktBinaryExpression: KtBinaryExpression): UastBinaryOperator {

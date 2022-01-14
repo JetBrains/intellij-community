@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
+import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.SpecialNames
@@ -42,6 +43,10 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     private val KtExpression.parentValueArgument: ValueArgument?
         get() = parents.firstOrNull { it is ValueArgument } as? ValueArgument
+
+    override fun convertToPsiAnnotation(ktElement: KtElement): PsiAnnotation? {
+        return ktElement.toLightAnnotation()
+    }
 
     override fun convertValueArguments(ktCallElement: KtCallElement, parent: UElement): List<UNamedExpression>? {
         analyseForUast(ktCallElement) {
@@ -155,6 +160,10 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 )
             }
         }
+    }
+
+    override fun getPsiAnnotations(psiElement: PsiModifierListOwner): Array<PsiAnnotation> {
+        return psiElement.annotations
     }
 
     override fun resolveBitwiseOperators(ktBinaryExpression: KtBinaryExpression): UastBinaryOperator {
