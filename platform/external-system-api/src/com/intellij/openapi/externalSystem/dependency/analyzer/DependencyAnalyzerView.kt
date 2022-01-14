@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Dependency
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Scope
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import javax.swing.JComponent
 
@@ -25,8 +26,21 @@ interface DependencyAnalyzerView : DataProvider {
 
   /**
    * Sets selected external project and selected dependency in analyzer dependency list/tree.
+   * @see setSelectedExternalProject
    */
   fun setSelectedDependency(externalProjectPath: String, dependency: Dependency)
+
+  /**
+   * Sets selected external project, finds and selects dependency with corresponding [data].
+   * @see setSelectedExternalProject
+   */
+  fun setSelectedDependency(externalProjectPath: String, data: Dependency.Data)
+
+  /**
+   * Sets selected external project, finds and selects dependency with corresponding [data] and [scope].
+   * @see setSelectedExternalProject
+   */
+  fun setSelectedDependency(externalProjectPath: String, data: Dependency.Data, scope: Scope)
 
   companion object {
     const val ACTION_PLACE = "ExternalSystem.DependencyAnalyzerView.ActionPlace"

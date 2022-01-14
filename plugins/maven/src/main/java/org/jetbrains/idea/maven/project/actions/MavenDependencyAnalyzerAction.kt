@@ -4,8 +4,12 @@ package org.jetbrains.idea.maven.project.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.externalSystem.dependency.analyzer.AbstractDependencyAnalyzerAction
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Dependency
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Scope
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.project.Project
+import com.intellij.ui.treeStructure.SimpleNode
 import com.intellij.ui.treeStructure.SimpleTree
 import org.jetbrains.idea.maven.navigator.MavenProjectsStructure
 import org.jetbrains.idea.maven.project.MavenDependencyAnalyzerContributor
@@ -15,34 +19,56 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 class MavenDependencyAnalyzerAction : AbstractDependencyAnalyzerAction() {
   override fun getSystemId(e: AnActionEvent): ProjectSystemId = MavenUtil.SYSTEM_ID
 
-  override fun getExternalProjectPath(e: AnActionEvent): String? {
-    val data = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
-    if (data is SimpleTree && data.selectedNode is MavenProjectsStructure.ProjectNode) {
-      return (data.selectedNode as MavenProjectsStructure.ProjectNode).mavenProject.path
+  override fun setSelectedState(e: AnActionEvent, view: DependencyAnalyzerView) {
+    val project = e.project ?: return
+    val selectedNode = getSelectedNode(e) ?: return
+    val externalProjectPath = getExternalProjectPath(project, selectedNode) ?: return
+    val dependencyData = getDependencyData(selectedNode)
+    val dependencyScope = getDependencyScope(selectedNode)
+    if (dependencyData != null && dependencyScope != null) {
+      view.setSelectedDependency(externalProjectPath, dependencyData, dependencyScope)
     }
-    if (data is SimpleTree && data.selectedNode is MavenProjectsStructure.MavenSimpleNode) {
-      val selectedNode = data.selectedNode as MavenProjectsStructure.MavenSimpleNode
+    else if (dependencyData != null) {
+      view.setSelectedDependency(externalProjectPath, dependencyData)
+    }
+    else {
+      view.setSelectedExternalProject(externalProjectPath)
+    }
+  }
+
+  private fun getSelectedNode(e: AnActionEvent): SimpleNode? {
+    val data = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
+    return (data as? SimpleTree)?.selectedNode
+  }
+
+  private fun getExternalProjectPath(project: Project, selectedNode: SimpleNode): String? {
+    if (selectedNode is MavenProjectsStructure.ProjectNode) {
+      return selectedNode.mavenProject.path
+    }
+    if (selectedNode is MavenProjectsStructure.MavenSimpleNode) {
       val projectNode = selectedNode.findParent(MavenProjectsStructure.ProjectNode::class.java)
       if (projectNode != null) {
         return projectNode.mavenProject.path
       }
     }
-    return e.project?.let { MavenProjectsManager.getInstance(it).projectsFiles.firstOrNull()?.path }
+    return MavenProjectsManager.getInstance(project).projectsFiles.firstOrNull()?.path
   }
 
-  override fun getDependency(e: AnActionEvent): DependencyAnalyzerContributor.Dependency? {
-    val data = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
-    if (data is SimpleTree && data.selectedNode is MavenProjectsStructure.DependencyNode) {
-      val selectedNode = data.selectedNode as MavenProjectsStructure.DependencyNode
+  private fun getDependencyData(selectedNode: SimpleNode): Dependency.Data? {
+    if (selectedNode is MavenProjectsStructure.DependencyNode) {
+      return Dependency.Data.Artifact(
+        selectedNode.artifact.groupId,
+        selectedNode.artifact.artifactId,
+        selectedNode.artifact.version
+      )
+    }
+    return null
+  }
 
-      return DependencyAnalyzerContributor.Dependency(
-        DependencyAnalyzerContributor.Dependency.Data.Artifact(
-          selectedNode.artifact.groupId,
-          selectedNode.artifact.artifactId,
-          selectedNode.artifact.version),
-        MavenDependencyAnalyzerContributor.scope(selectedNode.artifact.scope),
-        null,
-        listOf()
+  private fun getDependencyScope(selectedNode: SimpleNode): Scope? {
+    if (selectedNode is MavenProjectsStructure.DependencyNode) {
+      return MavenDependencyAnalyzerContributor.scope(
+        selectedNode.artifact.scope
       )
     }
     return null

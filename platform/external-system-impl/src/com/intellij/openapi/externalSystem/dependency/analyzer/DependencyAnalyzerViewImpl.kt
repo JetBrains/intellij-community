@@ -3,8 +3,8 @@ package com.intellij.openapi.externalSystem.dependency.analyzer
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction
@@ -17,6 +17,7 @@ import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
 import com.intellij.openapi.observable.operations.asProperty
+import com.intellij.openapi.observable.operations.whenOperationCompleted
 import com.intellij.openapi.observable.properties.AtomicObservableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.and
@@ -81,14 +82,39 @@ class DependencyAnalyzerViewImpl(
   private val usagesTreeModel = DefaultTreeModel(null)
 
   override fun setSelectedExternalProject(externalProjectPath: String) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    externalProject = externalProjects.find { it.path == externalProjectPath }
+    setSelectedExternalProject(externalProjectPath) {}
   }
 
   override fun setSelectedDependency(externalProjectPath: String, dependency: Dependency) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    setSelectedExternalProject(externalProjectPath)
-    this.dependency = dependency
+    setSelectedExternalProject(externalProjectPath) {
+      this.dependency = dependency
+    }
+  }
+
+  override fun setSelectedDependency(externalProjectPath: String, data: Dependency.Data) {
+    setSelectedExternalProject(externalProjectPath) {
+      dependency = findDependency { it.data == data }
+    }
+  }
+
+  override fun setSelectedDependency(externalProjectPath: String, data: Dependency.Data, scope: Scope) {
+    setSelectedExternalProject(externalProjectPath) {
+      dependency = findDependency { it.data == data && it.scope == scope }
+    }
+  }
+
+  private fun setSelectedExternalProject(externalProjectPath: String, onReady: () -> Unit) {
+    whenLoadingOperationCompleted {
+      externalProject = externalProjects.find { it.path == externalProjectPath }
+      whenLoadingOperationCompleted {
+        onReady()
+      }
+    }
+  }
+
+  private fun findDependency(predicate: (Dependency) -> Boolean): Dependency? {
+    return dependencyListModel.items.flatMap { it.variances }.find(predicate)
+           ?: dependencyModel.flatMap { it.variances }.find(predicate)
   }
 
   override fun getData(dataId: String): Any? {
@@ -102,7 +128,7 @@ class DependencyAnalyzerViewImpl(
   }
 
   private fun updateViewModel() {
-    invokeLater {
+    executeLoadingTaskOnEdt {
       updateExternalProjectsModel()
     }
   }
@@ -192,6 +218,14 @@ class DependencyAnalyzerViewImpl(
     usagesTreeModel.setRoot(buildTree(dependencies))
   }
 
+  private fun executeLoadingTaskOnEdt(onUiThread: () -> Unit) {
+    dependencyLoadingOperation.startTask()
+    runInEdt {
+      onUiThread()
+      dependencyLoadingOperation.finishTask()
+    }
+  }
+
   private fun <R> executeLoadingTask(onBackgroundThread: () -> R, onUiThread: (R) -> Unit) {
     dependencyLoadingOperation.startTask()
     BackgroundTaskUtil.execute(backgroundExecutor, parentDisposable) {
@@ -199,6 +233,14 @@ class DependencyAnalyzerViewImpl(
       invokeLater {
         onUiThread(result)
         dependencyLoadingOperation.finishTask()
+      }
+    }
+  }
+
+  private fun whenLoadingOperationCompleted(onUiThread: () -> Unit) {
+    dependencyLoadingOperation.whenOperationCompleted(parentDisposable) {
+      runInEdt {
+        onUiThread()
       }
     }
   }
