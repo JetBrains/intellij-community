@@ -6,7 +6,6 @@ import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -317,10 +316,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   }
 
   public static Font getCommentFont(Font font) {
-    if (SystemInfo.isMac) {
-      return new FontUIResource(RelativeFont.NORMAL.fromResource("ContextHelp.fontSizeOffset", -2).derive(font));
-    }
-    return font;
+    return new FontUIResource(RelativeFont.NORMAL.fromResource("ContextHelp.fontSizeOffset", -2).derive(font));
   }
 
   private static void setCommentText(@NotNull JLabel component,
@@ -360,10 +356,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     @Override
     public void setUI(LabelUI ui) {
       super.setUI(ui);
-
-      if (SystemInfo.isMac) {
-        setFont(getCommentFont(getFont()));
-      }
+      setFont(getCommentFont(getFont()));
     }
   }
 

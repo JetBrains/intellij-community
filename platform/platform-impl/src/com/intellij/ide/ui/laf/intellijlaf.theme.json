@@ -201,6 +201,12 @@
       "iconColor": "#7f8b917f"
     },
 
+    "ContextHelp": {
+      "fontSizeOffset": {
+        "os.windows": 0
+      }
+    },
+
     "Counter": {
       "background": "#9aa7b0cc",
       "foreground": "white"

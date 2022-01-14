@@ -127,6 +127,12 @@
       "warningFocusColor": "#AC7920"
     },
 
+    "ContextHelp": {
+      "fontSizeOffset": {
+        "os.windows": 0
+      }
+    },
+
     "BookmarkMnemonicCurrent": {
       "background": "#345F85",
       "borderColor": "#345F85",

@@ -126,6 +126,11 @@
       "deprecated": true
     },
     {
+      "key": "ContextHelp.fontSizeOffset",
+      "description": "Font size offset for comments (usually gray description text under components)",
+      "since": "2022.1"
+    },
+    {
       "key": "Counter.background",
       "description": "An oval with a number on the right of a tree item. For example, the number of updates in Plugins or problems in the Project Structure view."
     },

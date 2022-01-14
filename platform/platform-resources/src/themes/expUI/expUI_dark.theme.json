@@ -152,6 +152,12 @@
       "ArrowButton.background": "Grey2"
     },
 
+    "ContextHelp": {
+      "fontSizeOffset": {
+        "os.windows": 0
+      }
+    },
+
     "FileColor": {
       "Yellow": "Yellow1",
       "Green": "Green1"

@@ -153,6 +153,12 @@
       "ArrowButton.background": "Grey13"
     },
 
+    "ContextHelp": {
+      "fontSizeOffset": {
+        "os.windows": 0
+      }
+    },
+
     "TextField.background": "Grey13",
 
     "Component": {
