@@ -1,9 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
+import com.intellij.openapi.util.UserDataHolder
 import org.jetbrains.annotations.Nls
 
-interface DependencyAnalyzerDependency {
+interface DependencyAnalyzerDependency : UserDataHolder {
 
   val data: Data
 
@@ -13,7 +14,7 @@ interface DependencyAnalyzerDependency {
 
   val status: List<Status>
 
-  sealed interface Data {
+  sealed interface Data : UserDataHolder {
 
     interface Module : Data {
 
@@ -30,14 +31,14 @@ interface DependencyAnalyzerDependency {
     }
   }
 
-  interface Scope {
+  interface Scope : UserDataHolder {
 
     val name: @Nls String
 
     val title: @Nls(capitalization = Nls.Capitalization.Title) String
   }
 
-  sealed interface Status {
+  sealed interface Status : UserDataHolder {
 
     interface Omitted : Status
 

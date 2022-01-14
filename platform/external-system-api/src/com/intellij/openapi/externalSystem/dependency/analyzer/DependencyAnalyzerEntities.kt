@@ -3,13 +3,14 @@
 
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 import org.jetbrains.annotations.Nls
 
 class DAProject(
   override val path: String,
   override val title: @Nls String
-) : DependencyAnalyzerProject {
+) : UserDataHolderBase(), DependencyAnalyzerProject {
   override fun equals(other: Any?) = other is DependencyAnalyzerProject && path == other.path
   override fun hashCode() = path.hashCode()
   override fun toString() = title
@@ -20,13 +21,13 @@ data class DADependency(
   override val scope: Dependency.Scope,
   override val parent: Dependency?,
   override val status: List<Dependency.Status>
-) : Dependency {
+) : UserDataHolderBase(), Dependency {
   override fun toString() = "($scope) $data -> $parent"
 }
 
 data class DAModule(
   override val name: @Nls String
-) : Dependency.Data.Module {
+) : UserDataHolderBase(), Dependency.Data.Module {
   override fun toString() = name
 }
 
@@ -34,19 +35,19 @@ data class DAArtifact(
   override val groupId: @Nls String,
   override val artifactId: @Nls String,
   override val version: @Nls String
-) : Dependency.Data.Artifact {
+) : UserDataHolderBase(), Dependency.Data.Artifact {
   override fun toString() = "$groupId:$artifactId:$version"
 }
 
 data class DAScope(
   override val name: @Nls String,
   override val title: @Nls(capitalization = Nls.Capitalization.Title) String
-) : Dependency.Scope {
+) : UserDataHolderBase(), Dependency.Scope {
   override fun toString() = title
 }
 
-object DAOmitted : Dependency.Status.Omitted
+object DAOmitted : UserDataHolderBase(), Dependency.Status.Omitted
 
 class DAWarning(
   override val message: @Nls String
-) : Dependency.Status.Warning
+) : UserDataHolderBase(), Dependency.Status.Warning
