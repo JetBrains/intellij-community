@@ -18,6 +18,8 @@ interface BaseKotlinUastResolveProviderService {
 
     val baseKotlinConverter: BaseKotlinConverter
 
+    fun convertToPsiAnnotation(ktElement: KtElement): PsiAnnotation?
+
     fun convertParent(uElement: UElement): UElement? {
         return convertParentImpl(this, uElement)
     }
@@ -41,6 +43,8 @@ interface BaseKotlinUastResolveProviderService {
         parent: UElement,
         includeExplicitParameters: Boolean = false
     ): List<KotlinUParameter>
+
+    fun getPsiAnnotations(psiElement: PsiModifierListOwner): Array<PsiAnnotation>
 
     // ----------
     // Resolution
