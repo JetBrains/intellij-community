@@ -11,14 +11,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.SmartList
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.completion.*
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.idea.util.isAlmostEverything
@@ -477,9 +475,7 @@ class SmartCompletion(
     }
 
     private fun MutableCollection<LookupElement>.addArrayLiteralsInAnnotationsCompletions() {
-        if (expression.languageVersionSettings.supportsFeature(LanguageFeature.ArrayLiteralsInAnnotations)) {
-            this.addAll(ArrayLiteralsInAnnotationItems.collect(expectedInfos, expression))
-        }
+        this.addAll(ArrayLiteralsInAnnotationItems.collect(expectedInfos, expression))
     }
 
     companion object {
