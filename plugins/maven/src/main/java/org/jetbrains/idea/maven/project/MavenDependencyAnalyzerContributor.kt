@@ -14,7 +14,14 @@ import org.jetbrains.idea.maven.model.MavenConstants
 
 class MavenDependencyAnalyzerContributor(private val project: Project) : DependencyAnalyzerContributor {
 
-  override fun whenDataChanged(listener: () -> Unit, parentDisposable: Disposable) {}
+  override fun whenDataChanged(listener: () -> Unit, parentDisposable: Disposable) {
+    val projectsManager = MavenProjectsManager.getInstance(project)
+    projectsManager.addProjectsTreeListener(object : MavenProjectsTree.Listener {
+      override fun resolutionCompleted() {
+        listener()
+      }
+    }, parentDisposable)
+  }
 
   override fun getExternalProjects(): List<DependencyAnalyzerContributor.ExternalProject> {
     return MavenProjectsManager.getInstance(project)
