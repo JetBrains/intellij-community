@@ -38,13 +38,10 @@ data class DAArtifact(
   override fun toString() = "$groupId:$artifactId:$version"
 }
 
-class DAScope(
-  override val id: String,
+data class DAScope(
   override val name: @Nls String,
   override val title: @Nls(capitalization = Nls.Capitalization.Title) String
 ) : Dependency.Scope {
-  override fun equals(other: Any?) = other is Dependency.Scope && id == other.id
-  override fun hashCode() = id.hashCode()
   override fun toString() = title
 }
 

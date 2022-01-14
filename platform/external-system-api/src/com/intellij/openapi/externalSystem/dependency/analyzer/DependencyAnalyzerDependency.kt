@@ -32,8 +32,6 @@ interface DependencyAnalyzerDependency {
 
   interface Scope {
 
-    val id: String
-
     val name: @Nls String
 
     val title: @Nls(capitalization = Nls.Capitalization.Title) String

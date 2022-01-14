@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyze
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerProject
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle.message
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.idea.maven.model.MavenArtifactNode
@@ -96,7 +97,6 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
   }
 
   companion object {
-    @Suppress("HardCodedStringLiteral")
-    fun scope(id: String) = DAScope(id, StringUtil.toLowerCase(id), StringUtil.toTitleCase(id))
+    fun scope(name: @NlsSafe String) = DAScope(name, StringUtil.toTitleCase(name))
   }
 }

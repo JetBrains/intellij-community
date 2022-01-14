@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.dependency.analyzer
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.LocalTimeCounter
 import com.intellij.util.PathUtil
@@ -14,8 +15,8 @@ abstract class DummyDependencyAnalyzerContributor(private val project: Project) 
   private fun externalProject(externalProjectPath: String) =
     DAProject(externalProjectPath, PathUtil.getFileName(externalProjectPath))
 
-  private fun scope(id: String) =
-    DAScope(id, StringUtil.toLowerCase(id), StringUtil.toTitleCase(id))
+  private fun scope(name: @NlsSafe String) =
+    DAScope(name, StringUtil.toTitleCase(name))
 
   override fun getProjects() = listOf(
     externalProject(project.basePath!! + "/parent1"),

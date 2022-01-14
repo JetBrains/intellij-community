@@ -165,9 +165,9 @@ class DependencyAnalyzerViewImpl(
         externalProject?.path?.let(contributor::getDependencyScopes) ?: emptyList()
       },
       onUiThread = { scopes ->
-        val scopesIndex = dependencyScopeFilter.associate { it.scope.id to it.isSelected }
+        val scopesIndex = dependencyScopeFilter.associate { it.scope to it.isSelected }
         val isAny = scopesIndex.all { it.value }
-        dependencyScopeFilter = scopes.map { ScopeItem(it, scopesIndex[it.id] ?: isAny) }
+        dependencyScopeFilter = scopes.map { ScopeItem(it, scopesIndex[it] ?: isAny) }
       }
     )
   }

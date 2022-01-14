@@ -19,6 +19,7 @@ import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
@@ -153,9 +154,7 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
   }
 
   companion object {
-    @Suppress("HardCodedStringLiteral")
-    internal val defaultConfiguration = DAScope("default", "default", "Default")
-
+    internal val defaultConfiguration = scope("default")
 
     private fun GradleModuleData.getDependencies(project: Project): List<DependencyScopeNode> {
       var dependencyScopeNodes: List<DependencyScopeNode> = emptyList()
@@ -188,6 +187,8 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
       return dependencyScopeNodes
     }
 
-    private fun DependencyScopeNode.toScope() = DAScope(scope, scope, StringUtil.toTitleCase(scope))
+    private fun DependencyScopeNode.toScope() = scope(scope)
+
+    private fun scope(name: @NlsSafe String) = DAScope(name, StringUtil.toTitleCase(name))
   }
 }
