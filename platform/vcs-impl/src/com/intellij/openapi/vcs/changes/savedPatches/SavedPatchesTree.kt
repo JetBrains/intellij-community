@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
 import com.intellij.util.Processor
+import com.intellij.util.containers.isEmpty
 import com.intellij.util.ui.tree.TreeUtil
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.Nls
@@ -52,10 +53,15 @@ class SavedPatchesTree(project: Project,
   }
 
   override fun rebuildTree() {
+    val wasEmpty = VcsTreeModelData.all(this).userObjectsStream().isEmpty()
+
     val modelBuilder = TreeModelBuilder(project, groupingSupport.grouping)
     savedPatchesProviders.forEach { provider -> provider.buildPatchesTree(modelBuilder) }
     updateTreeModel(modelBuilder.build())
 
+    if (!VcsTreeModelData.all(this).userObjectsStream().isEmpty() && wasEmpty) {
+      expandDefaults()
+    }
     if (selectionCount == 0) {
       TreeUtil.selectFirstNode(this)
     }
