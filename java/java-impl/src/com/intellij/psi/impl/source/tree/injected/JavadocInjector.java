@@ -30,8 +30,13 @@ public class JavadocInjector implements MultiHostInjector {
 
     final PsiSnippetDocTagImpl snippet = (PsiSnippetDocTagImpl)context;
 
-    registrar.startInjecting(getLanguage(snippet))
-      .addPlace(null, null, snippet, innerRangeStrippingQuotes(snippet))
+    final Language language = getLanguage(snippet);
+
+    final String prefix = language == JavaLanguage.INSTANCE ? "class ___JavadocSnippetPlaceholder { " : null;
+    final String suffix = language == JavaLanguage.INSTANCE ? " }" : null;
+
+    registrar.startInjecting(language)
+      .addPlace(prefix, suffix, snippet, innerRangeStrippingQuotes(snippet))
       .doneInjecting();
   }
 

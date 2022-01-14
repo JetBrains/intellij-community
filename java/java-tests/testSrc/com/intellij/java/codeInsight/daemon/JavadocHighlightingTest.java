@@ -127,6 +127,8 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testThrowsInheritDoc() { doTest(); }
   public void testSnippetInlineTag() {  doTest(); }
   public void testSnippet() { doTest(); }
+  public void testSnippetMethod() { doTest(); }
+  public void testSnippetInstructions() { doTest(); }
 
   public void testIssueLinksInJavaDoc() {
     IssueNavigationConfiguration navigationConfiguration = IssueNavigationConfiguration.getInstance(getProject());
@@ -143,7 +145,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
       }
       else {
         List<WebReference> refs = PlatformTestUtil.collectWebReferences(getFile());
-        assertTrue(refs.stream().allMatch(PsiReferenceBase::isSoft));
+        assertTrue(ContainerUtil.and(refs, PsiReferenceBase::isSoft));
         assertEquals(expected, ContainerUtil.map(refs, WebReference::getUrl));
       }
     }
@@ -165,7 +167,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
     }
     else {
       List<WebReference> refs = PlatformTestUtil.collectWebReferences(getFile());
-      assertTrue(refs.stream().allMatch(PsiReferenceBase::isSoft));
+      assertTrue(ContainerUtil.and(refs, PsiReferenceBase::isSoft));
       assertEquals(expected, refs.stream().map(PsiReferenceBase::getCanonicalText).collect(Collectors.toSet()));
     }
   }
