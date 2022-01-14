@@ -41,6 +41,11 @@ final class BundledRuntime {
   @NotNull
   Path getHomeForCurrentOsAndArch() {
     String prefix = "jbr_dcevm-"
+    def os = OsFamily.currentOs
+    def arch = JvmArchitecture.currentJvmArch
+    if (os == OsFamily.LINUX && arch == JvmArchitecture.aarch64) {
+      prefix = "jbr-"
+    }
     if (System.getProperty("intellij.build.jbr.setupSdk", "false").toBoolean()) {
       // required as a runtime for debugger tests
       prefix = "jbrsdk-"
@@ -48,10 +53,10 @@ final class BundledRuntime {
     else if (context.options.bundledRuntimePrefix != null) {
       prefix = context.options.bundledRuntimePrefix
     }
-    def path = extract(prefix, OsFamily.currentOs, JvmArchitecture.currentJvmArch)
+    def path = extract(prefix, os, arch)
 
     Path home
-    if (OsFamily.currentOs == OsFamily.MACOS) {
+    if (os == OsFamily.MACOS) {
       home = path.resolve("jbr/Contents/Home")
     }
     else {
