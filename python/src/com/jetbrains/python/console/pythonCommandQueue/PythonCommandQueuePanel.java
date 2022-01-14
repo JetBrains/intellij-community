@@ -112,7 +112,9 @@ public final class PythonCommandQueuePanel extends JPanel {
         repaintAll();
         return;
       }
-      tooltip.show(getActionButton(), GotItTooltip.BOTTOM_MIDDLE);
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        tooltip.show(getActionButton(), GotItTooltip.BOTTOM_MIDDLE);
+      }
     }
     repaintAll();
   }
