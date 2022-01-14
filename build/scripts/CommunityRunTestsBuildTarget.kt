@@ -15,7 +15,7 @@ import org.jetbrains.intellij.build.impl.CompilationContextImpl
 object CommunityRunTestsBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
-    val communityHome = IdeaProjectLoaderUtil.guessUltimateHome(javaClass)
+    val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
     val outputDir = "$communityHome/out/tests"
     val context = CompilationContextImpl.create(communityHome.toString(), communityHome.toString(), outputDir)
     TestingTasks.create(context).runTests(emptyList(), "intellij.idea.community.main", null)
