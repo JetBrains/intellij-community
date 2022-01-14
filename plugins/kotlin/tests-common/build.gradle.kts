@@ -30,21 +30,19 @@ dependencies {
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("intellij-core-analysis-deprecated") }) // 'intellij.platform.core' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("util") }) // 'intellij.platform.core' dependency
     jpsLikeJarDependency("org.jetbrains:annotations:20.1.0", JpsDepScope.TEST) // 'intellij.platform.core' dependency
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.255/kotlin-stdlib-jdk8-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib/1.6.255/kotlin-stdlib-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.255/kotlin-stdlib-common-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.255/kotlin-stdlib-jdk7-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-reflect/1.6.255/kotlin-reflect-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":kotlin-reflect"), JpsDepScope.TEST)
     jpsLikeJarDependency("com.google.guava:guava:30.1-jre", JpsDepScope.TEST)
     jpsLikeJarDependency("org.jetbrains.intellij.deps:trove4j:1.0.20200330", JpsDepScope.TEST)
     jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-test:1.4.32", JpsDepScope.TEST)
     jpsLikeJarDependency("junit:junit:4.12", JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/1.6.255/kotlin-compiler-ir-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/1.6.255/kotlin-compiler-common-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/1.6.255/kotlin-compiler-fe10-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/1.6.255/kotlin-compiler-cli-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-scripting-compiler/1.6.255/kotlin-scripting-compiler-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/1.6.255/kotlin-compiler-tests-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.TEST, exported = true)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-ir-for-ide"), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-common-for-ide"), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-fe10-for-ide"), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-cli-for-ide"), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":kotlin-scripting-compiler"), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-tests-for-ide"), JpsDepScope.TEST, exported = true)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.common", JpsDepScope.TEST)
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("bootstrap") }) // 'intellij.platform.boot' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("testFramework") }) // 'intellij.platform.testFramework' dependency

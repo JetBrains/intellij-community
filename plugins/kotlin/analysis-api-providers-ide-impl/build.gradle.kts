@@ -30,17 +30,15 @@ dependencies {
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("intellij-core-analysis-deprecated") }) // 'intellij.platform.core' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("util") }) // 'intellij.platform.core' dependency
     jpsLikeJarDependency("org.jetbrains:annotations:20.1.0", JpsDepScope.COMPILE) // 'intellij.platform.core' dependency
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.255/kotlin-stdlib-jdk8-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib/1.6.255/kotlin-stdlib-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.255/kotlin-stdlib-common-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.255/kotlin-stdlib-jdk7-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/1.6.255/kotlin-compiler-ir-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.RUNTIME, exported = true)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/1.6.255/kotlin-compiler-cli-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/1.6.255/kotlin-compiler-tests-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/low-level-api-fir-for-ide/1.6.255/low-level-api-fir-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-ir-for-ide"), JpsDepScope.RUNTIME, exported = true)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-cli-for-ide"), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-tests-for-ide"), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:low-level-api-fir-for-ide"), JpsDepScope.COMPILE)
     jpsLikeJarDependency("com.google.code.gson:gson:2.8.6", JpsDepScope.TEST)
     jpsLikeJarDependency("org.opentest4j:opentest4j:1.2.0", JpsDepScope.COMPILE)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/1.6.255/kotlin-compiler-fir-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-fir-for-ide"), JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.resources-fir", JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.tests-common", JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.test-framework", JpsDepScope.TEST)
@@ -54,7 +52,9 @@ dependencies {
     jpsLikeModuleDependency(":kotlin-ide.kotlin.common", JpsDepScope.TEST)
     jpsLikeJarDependency("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.1", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.fir", JpsDepScope.RUNTIME)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/analysis-api-providers-for-ide/1.6.255/analysis-api-providers-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:analysis-api-providers-for-ide"), JpsDepScope.COMPILE)
+    jpsLikeModuleDependency(":kotlin-ide.kotlin.fir.analysis-project-structure-ide-impl", JpsDepScope.COMPILE)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:analysis-project-structure-for-ide"), JpsDepScope.COMPILE)
 }
 
 configurations.all {

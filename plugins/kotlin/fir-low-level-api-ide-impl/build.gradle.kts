@@ -30,16 +30,14 @@ dependencies {
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("intellij-core-analysis-deprecated") }) // 'intellij.platform.core' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("util") }) // 'intellij.platform.core' dependency
     jpsLikeJarDependency("org.jetbrains:annotations:20.1.0", JpsDepScope.COMPILE) // 'intellij.platform.core' dependency
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.255/kotlin-stdlib-jdk8-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib/1.6.255/kotlin-stdlib-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.255/kotlin-stdlib-common-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.255/kotlin-stdlib-jdk7-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/1.6.255/kotlin-compiler-common-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE, exported = true)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/1.6.255/kotlin-compiler-ir-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.RUNTIME, exported = true)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/1.6.255/kotlin-compiler-fir-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE, exported = true)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/1.6.255/kotlin-compiler-cli-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/1.6.255/kotlin-compiler-tests-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/low-level-api-fir-for-ide/1.6.255/low-level-api-fir-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-common-for-ide"), JpsDepScope.COMPILE, exported = true)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-ir-for-ide"), JpsDepScope.RUNTIME, exported = true)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-fir-for-ide"), JpsDepScope.COMPILE, exported = true)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-cli-for-ide"), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-tests-for-ide"), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:low-level-api-fir-for-ide"), JpsDepScope.COMPILE)
     jpsLikeJarDependency("com.google.code.gson:gson:2.8.6", JpsDepScope.TEST)
     jpsLikeJarDependency("org.opentest4j:opentest4j:1.2.0", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.resources-fir", JpsDepScope.TEST)
@@ -55,6 +53,7 @@ dependencies {
     jpsLikeModuleDependency(":kotlin-ide.kotlin.common", JpsDepScope.TEST)
     jpsLikeJarDependency("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.1", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.fir", JpsDepScope.RUNTIME)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:analysis-project-structure-for-ide"), JpsDepScope.COMPILE)
 }
 
 configurations.all {
@@ -66,7 +65,7 @@ sourceSets {
         java.srcDir("src")
     }
     "test" {
-        
+        java.srcDir("test")
     }
 }
 
@@ -81,5 +80,4 @@ tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompile> {
     kotlinOptions.useOldBackend = true // KT-45697
 }
 
-// Fake empty configuration in order to make `DependencyHandler.projectTests(name: String)` work
-configurations.getOrCreate("tests-jar")
+testsJar()

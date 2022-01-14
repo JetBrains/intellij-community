@@ -30,13 +30,11 @@ dependencies {
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("intellij-core-analysis-deprecated") }) // 'intellij.platform.core' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("util") }) // 'intellij.platform.core' dependency
     jpsLikeJarDependency("org.jetbrains:annotations:20.1.0", JpsDepScope.TEST) // 'intellij.platform.core' dependency
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.255/kotlin-stdlib-jdk8-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib/1.6.255/kotlin-stdlib-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.255/kotlin-stdlib-common-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.255/kotlin-stdlib-jdk7-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.COMPILE)
     jpsLikeJarDependency("io.javaslang:javaslang:2.0.6", JpsDepScope.TEST)
     jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-test:1.4.32", JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/android-extensions-compiler-plugin-for-ide/1.6.255/android-extensions-compiler-plugin-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:android-extensions-compiler-plugin-for-ide"), JpsDepScope.TEST)
     jpsLikeJarDependency("com.google.code.gson:gson:2.8.6", JpsDepScope.TEST)
     jpsLikeJarDependency("org.jetbrains.intellij.deps:trove4j:1.0.20200330", JpsDepScope.TEST)
     jpsLikeJarDependency("com.google.guava:guava:30.1-jre", JpsDepScope.TEST)
@@ -48,29 +46,38 @@ dependencies {
     jpsLikeModuleDependency(":kotlin-ide.kotlin.line-indent-provider", JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.jvm-debugger.util", JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.native", JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/1.6.255/kotlin-compiler-ir-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/1.6.255/kotlin-compiler-common-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/1.6.255/kotlin-compiler-fe10-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/1.6.255/kotlin-compiler-cli-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/1.6.255/kotlin-compiler-tests-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-ir-for-ide"), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-common-for-ide"), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-fe10-for-ide"), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-cli-for-ide"), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-tests-for-ide"), JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.core", JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.common", JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.fir.frontend-independent", JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.fir.frontend-independent.tests", JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/1.6.255/sam-with-receiver-compiler-plugin-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-reflect/1.6.255/kotlin-reflect-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-scripting-compiler/1.6.255/kotlin-scripting-compiler-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-scripting-common/1.6.255/kotlin-scripting-common-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-scripting-jvm/1.6.255/kotlin-scripting-jvm-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:sam-with-receiver-compiler-plugin-for-ide"), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":kotlin-reflect"), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":kotlin-scripting-compiler"), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":kotlin-scripting-common"), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":kotlin-scripting-jvm"), JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.idea", JpsDepScope.TEST)
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-scripting-compiler/1.6.255/kotlin-scripting-compiler-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(project(":kotlin-scripting-compiler"), JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.gradle.gradle-idea", JpsDepScope.RUNTIME)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.gradle.gradle-native", JpsDepScope.RUNTIME)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.sam-with-receiver.common", JpsDepScope.RUNTIME)
+    jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.sam-with-receiver.gradle", JpsDepScope.RUNTIME)
+    jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.sam-with-receiver.maven", JpsDepScope.RUNTIME)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.noarg.common", JpsDepScope.RUNTIME)
+    jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.noarg.gradle", JpsDepScope.RUNTIME)
+    jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.noarg.maven", JpsDepScope.RUNTIME)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.kotlinx-serialization.common", JpsDepScope.RUNTIME)
+    jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.kotlinx-serialization.gradle", JpsDepScope.RUNTIME)
+    jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.kotlinx-serialization.maven", JpsDepScope.RUNTIME)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.allopen.common", JpsDepScope.RUNTIME)
+    jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.allopen.gradle", JpsDepScope.RUNTIME)
+    jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.allopen.maven", JpsDepScope.RUNTIME)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.parcelize.common", JpsDepScope.RUNTIME)
+    jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.parcelize.gradle", JpsDepScope.RUNTIME)
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("structuralsearch") }) // 'intellij.platform.structuralSearch' dependency
     jpsLikeJarDependency(intellijPluginDep("gradle", forIde = true), JpsDepScope.TEST) // 'intellij.gradle.common' dependency
     jpsLikeJarDependency("org.jetbrains.intellij.deps:gradle-api:7.1", JpsDepScope.TEST) // 'intellij.gradle.common' dependency
@@ -81,13 +88,11 @@ dependencies {
     jpsLikeJarDependency("org.codehaus.groovy:groovy:2.4.17", JpsDepScope.TEST) // 'intellij.gradle.common' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("jps-model") }) // 'intellij.platform.duplicates.analysis' dependency
     jpsLikeJarDependency("org.jetbrains.intellij.deps:jdom:2.0.6", JpsDepScope.TEST) // 'intellij.platform.duplicates.analysis' dependency
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.255/kotlin-stdlib-jdk8-1.6.255.jar").canonicalPath), JpsDepScope.TEST) // 'intellij.platform.duplicates.analysis' dependency
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib/1.6.255/kotlin-stdlib-1.6.255.jar").canonicalPath), JpsDepScope.TEST) // 'intellij.platform.duplicates.analysis' dependency
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.255/kotlin-stdlib-common-1.6.255.jar").canonicalPath), JpsDepScope.TEST) // 'intellij.platform.duplicates.analysis' dependency
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.255/kotlin-stdlib-jdk7-1.6.255.jar").canonicalPath), JpsDepScope.TEST) // 'intellij.platform.duplicates.analysis' dependency
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.TEST) // 'intellij.platform.duplicates.analysis' dependency
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.TEST) // 'intellij.platform.duplicates.analysis' dependency
     jpsLikeModuleDependency(":kotlin-ide.kotlin.uast.uast-kotlin", JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.formatter", JpsDepScope.TEST)
-    jpsLikeModuleDependency(":kotlin-ide.kotlin.jps-common", JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-jps-common-for-ide"), JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.jvm-debugger.evaluation", JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.j2k.services", JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.i18n", JpsDepScope.TEST)
@@ -112,7 +117,7 @@ dependencies {
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("idea_rt") }) // 'intellij.grazie.tests' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("testFramework.core") }) // 'intellij.grazie.tests' dependency
     jpsLikeJarDependency("org.jetbrains:jetCheck:0.2.2", JpsDepScope.TEST, { isTransitive = false }) // 'intellij.grazie.tests' dependency
-    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-script-runtime/1.6.255/kotlin-script-runtime-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(project(":kotlin-script-runtime"), JpsDepScope.COMPILE)
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("intellij-core-analysis-deprecated") }) // 'intellij.platform.codeStyle.impl' dependency
 }
 

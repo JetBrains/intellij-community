@@ -58,8 +58,6 @@ dependencies {
     jpsLikeModuleDependency(":kotlin-ide.kotlin.j2k.new", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.j2k.old", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.j2k.services", JpsDepScope.COMPILE)
-    jpsLikeModuleDependency(":kotlin-ide.kotlin.jps-common", JpsDepScope.COMPILE)
-    jpsLikeModuleDependency(":kotlin-ide.kotlin.jps-plugin", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.i18n", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.jvm", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.jvm-debugger.core", JpsDepScope.COMPILE)
