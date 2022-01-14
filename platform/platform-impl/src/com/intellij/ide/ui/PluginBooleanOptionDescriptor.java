@@ -17,6 +17,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -87,8 +88,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
                                                  @NotNull @Nls String content,
                                                  boolean enabled) {
     String title = IdeBundle.message(enabled ? "plugins.auto.enabled.notification.title" : "plugins.auto.disabled.notification.title");
-    Notification switchNotification = NotificationGroupManager.getInstance()
-      .getNotificationGroup("Plugin Update Results")
+    Notification switchNotification = UpdateChecker.getNotificationGroupForPluginUpdateResults()
       .createNotification(content, NotificationType.INFORMATION)
       .setDisplayId("plugin.auto.switch")
       .setTitle(title)
@@ -180,8 +180,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
       return;
     }
 
-    Notification newNotification = NotificationGroupManager.getInstance()
-      .getNotificationGroup("IDE and Plugin Updates")
+    Notification newNotification = UpdateChecker.getNotificationGroupForIdeUpdateResults()
       .createNotification(
         IdeBundle.message("plugins.changed.notification.content", ApplicationNamesInfo.getInstance().getFullProductName()),
         NotificationType.INFORMATION)

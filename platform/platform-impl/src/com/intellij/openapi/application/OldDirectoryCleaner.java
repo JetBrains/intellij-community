@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.EventId;
 import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.eventLog.events.EventId2;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ConfigImportHelper.ConfigDirsSearchResult;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -105,13 +106,13 @@ public final class OldDirectoryCleaner {
       Stats.completed(groups.size(), groups.stream().mapToLong(g -> g.size).sum());
     }
     else if (!groups.isEmpty()) {
-      UpdateChecker.getNotificationGroup()
+      NotificationGroupManager.getInstance().getNotificationGroup("notification.group.leftover.directories")
         .createNotification(message("old.dirs.notification.text"), NotificationType.INFORMATION)
         .addAction(createSimpleExpiring(message("old.dirs.notification.action"), () -> confirmAndDelete(project, groups)))
         .notify(project);
     }
     else {
-      UpdateChecker.getNotificationGroup()
+      NotificationGroupManager.getInstance().getNotificationGroup("notification.group.leftover.directories")
         .createNotification(message("old.dirs.not.found.notification.text"), NotificationType.INFORMATION)
         .notify(project);
     }
@@ -263,7 +264,7 @@ public final class OldDirectoryCleaner {
 
             if (!errors.isEmpty()) {
               @NlsSafe String content = String.join("<br>", errors);
-              UpdateChecker.getNotificationGroup()
+              NotificationGroupManager.getInstance().getNotificationGroup("notification.group.leftover.directories")
                 .createNotification(message("old.dirs.delete.error"), content, NotificationType.WARNING)
                 .addAction(ShowLogAction.notificationAction())
                 .notify(project);
