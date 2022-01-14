@@ -2,7 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 public class FoundItemDescriptor<I> {
-  private final static int MAX_WEIGHT = 15_000;
+  private final static int MAX_WEIGHT = 10_000;
   private final static int ML_WEIGHT_DISABLED_VALUE = -1;
 
   private final I item;
@@ -18,7 +18,7 @@ public class FoundItemDescriptor<I> {
   public FoundItemDescriptor(I item, int weight, double mlWeight) {
     this.item = item;
     this.weight = weight;
-    this.mlWeight = (int)(mlWeight * MAX_WEIGHT);
+    this.mlWeight = (int)(mlWeight * MAX_WEIGHT) * 100_000 + this.weight;
   }
   
   public int getMlWeight() {
