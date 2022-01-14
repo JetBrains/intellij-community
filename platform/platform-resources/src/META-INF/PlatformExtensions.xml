@@ -907,7 +907,7 @@
     <cachesInvalidator implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidator"/>
     <recoveryAction implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelRecoveryAction"/>
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidatorBackgroundActivity"/>
-    <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer" order="last"/>
+    <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer" order="last"/>
 
     <ui.suitableFontProvider implementation="com.intellij.ui.SuitableFontProviderImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.impl.FontFamilyService"

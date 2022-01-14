@@ -2,11 +2,14 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
+import org.jetbrains.annotations.TestOnly
 import kotlin.system.measureTimeMillis
 
 /**
@@ -15,7 +18,7 @@ import kotlin.system.measureTimeMillis
  * Initially IJ loads the state of workspace model from the cache. In this startup activity it synchronizes the state
  * of workspace model with project model files (iml/xml).
  */
-internal class DelayedProjectSynchronizer : StartupActivity.DumbAware {
+class DelayedProjectSynchronizer : StartupActivity.Background {
   override fun runActivity(project: Project) {
     val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project) ?: return
     if ((WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
@@ -26,6 +29,18 @@ internal class DelayedProjectSynchronizer : StartupActivity.DumbAware {
       logger<DelayedProjectSynchronizer>().info(
         "Workspace model loaded from cache. Syncing real project state into workspace model in $loadingTime ms. ${Thread.currentThread()}"
       )
+    }
+  }
+
+  companion object {
+    @TestOnly
+    fun backgroundPostStartupProjectLoading(project: Project) {
+      // Due to making [DelayedProjectSynchronizer] as backgroundPostStartupActivity we should have this hack because
+      // background activity doesn't start in the tests
+      val startupManager = StartupManager.getInstance(project)
+      while (!startupManager.postStartupActivityPassed()) { }
+      val extensionPointName = ExtensionPointName<StartupActivity.Background>("com.intellij.backgroundPostStartupActivity")
+      extensionPointName.extensionList.filterIsInstance<DelayedProjectSynchronizer>().single().runActivity(project)
     }
   }
 }
