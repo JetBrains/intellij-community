@@ -35,5 +35,8 @@ interface MavenProjectImporter {
 
     @JvmStatic
     fun isImportToWorkspaceModelEnabled(): Boolean = Registry.`is`("maven.import.to.workspace.model")
+
+    @JvmStatic
+    fun isImportToTreeStructureEnabled(): Boolean = Registry.`is`("maven.import.tree.structure")
   }
 }
