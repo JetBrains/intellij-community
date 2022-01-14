@@ -27,7 +27,7 @@ public abstract class FE1UastDeclarationTestGenerated extends AbstractFE1UastDec
 
         @TestMetadata("annotationOnElvis.kt")
         public void testAnnotationOnElvis() throws Exception {
-            runTest("../uast-kotlin-fir/testData/declaration/annotationOnElvis.kt");
+            runTest("../../uast-kotlin-fir/testData/declaration/annotationOnElvis.kt");
         }
 
         @TestMetadata("doWhile.kt")

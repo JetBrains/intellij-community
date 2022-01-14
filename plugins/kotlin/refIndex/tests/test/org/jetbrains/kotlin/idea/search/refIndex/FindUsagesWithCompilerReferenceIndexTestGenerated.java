@@ -44,6 +44,11 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
 
+                @TestMetadata("inContainingClassNoErrors.0.kt")
+                public void testInContainingClassNoErrors() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/companionObject/inContainingClassNoErrors.0.kt");
+                }
+
                 @TestMetadata("javaUsage.0.kt")
                 public void testJavaUsage() throws Exception {
                     runTest("../../idea/tests/testData/findUsages/kotlin/companionObject/javaUsage.0.kt");
