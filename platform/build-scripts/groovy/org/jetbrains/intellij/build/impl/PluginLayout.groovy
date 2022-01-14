@@ -251,7 +251,15 @@ final class PluginLayout extends BaseLayout {
      * @param relativeOutputFile target path relative to the plugin root directory
      */
     void withResourceArchive(String resourcePath, String relativeOutputFile) {
-      layout.resourcePaths.add(new ModuleResourceData(layout.mainModule, resourcePath, relativeOutputFile, true))
+      withResourceArchiveFromModule(layout.mainModule, resourcePath, relativeOutputFile)
+    }
+
+    /**
+     * @param resourcePath path to resource file or directory relative to {@code moduleName} module content root
+     * @param relativeOutputFile target path relative to the plugin root directory
+     */
+    void withResourceArchiveFromModule(String moduleName, String resourcePath, String relativeOutputFile) {
+      layout.resourcePaths.add(new ModuleResourceData(moduleName, resourcePath, relativeOutputFile, true))
     }
 
     /**

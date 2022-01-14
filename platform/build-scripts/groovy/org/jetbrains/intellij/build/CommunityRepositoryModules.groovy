@@ -226,15 +226,23 @@ final class CommunityRepositoryModules {
     }
   )
 
-  static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {
+  static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars,
+                                    String mainModuleName = "intellij.android.plugin",
+                                    @DelegatesTo(PluginLayout.PluginLayoutSpec) Closure addition = {}) {
     // the following is adapted from https://android.googlesource.com/platform/tools/adt/idea/+/refs/heads/studio-main/studio/BUILD
-    plugin("intellij.android.plugin") {
+    plugin(mainModuleName) {
       directoryName = "android"
       mainJarName = "android.jar"
       withCustomVersion({pluginXmlFile, ideVersion, _ ->
         String text = Files.readString(pluginXmlFile)
-        def declaredVersion = text.substring(text.indexOf("<version>") + "<version>".length(), text.indexOf("</version>"))
-        return "$declaredVersion.$ideVersion".toString()
+        String version = ideVersion;
+
+        if (text.indexOf("<version>") != -1) {
+          def declaredVersion = text.substring(text.indexOf("<version>") + "<version>".length(), text.indexOf("</version>"))
+          version = "$declaredVersion.$ideVersion".toString()
+        }
+
+        return version
       })
 
       withModule("intellij.android.adt.ui", "adt-ui.jar")
@@ -450,7 +458,7 @@ final class CommunityRepositoryModules {
       //  "//tools/adt/idea/artwork:device-art-resources-bundle",  # duplicated in android.jar
       withResourceFromModule("intellij.android.artwork", "resources/device-art-resources", "resources/device-art-resources")
       //  "//tools/adt/idea/android/annotations:androidAnnotations",
-      withResourceArchive("../android/annotations", "resources/androidAnnotations.jar")
+      withResourceArchiveFromModule("intellij.android.plugin", "../android/annotations", "resources/androidAnnotations.jar")
       //  "//tools/base/app-inspection/inspectors/network:bundle",
       //  "//tools/base/dynamic-layout-inspector/agent/appinspection:bundle",
       //  "//tools/base/profiler/transform:profilers-transform",
@@ -494,6 +502,9 @@ final class CommunityRepositoryModules {
           }
         }
       })
+
+      addition.delegate = delegate
+      addition()
     }
   }
 
