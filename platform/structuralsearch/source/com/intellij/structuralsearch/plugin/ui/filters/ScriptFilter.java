@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.structuralsearch.plugin.ui.modifier;
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -23,10 +23,10 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-class ScriptModifier extends ModifierAction {
+class ScriptFilter extends FilterAction {
 
-  ScriptModifier() {
-    super(SSRBundle.messagePointer("script.modifier.name"));
+  ScriptFilter() {
+    super(SSRBundle.messagePointer("script.filter.name"));
   }
 
   @Override
@@ -35,13 +35,13 @@ class ScriptModifier extends ModifierAction {
   }
 
   @Override
-  public boolean hasModifier() {
+  public boolean hasFilter() {
     final NamedScriptableDefinition variable = myTable.getVariable();
     return variable != null && !StringUtil.isEmpty(variable.getScriptCodeConstraint());
   }
 
   @Override
-  public void clearModifier() {
+  public void clearFilter() {
     myTable.getVariable().setScriptCodeConstraint("");
   }
 
@@ -56,8 +56,8 @@ class ScriptModifier extends ModifierAction {
   }
 
   @Override
-  public ModifierEditor<NamedScriptableDefinition> getEditor() {
-    return new ModifierEditor<>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
+  public FilterEditor<NamedScriptableDefinition> getEditor() {
+    return new FilterEditor<>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
 
       private final JLabel myLabel = new JLabel(SSRBundle.message("script.label"));
       private final EditorTextField myTextField = UIUtil.createScriptComponent("", myTable.getProject());
@@ -78,10 +78,10 @@ class ScriptModifier extends ModifierAction {
 
         final String variableText = String.join(", ", variableNames);
         if (myConstraint instanceof MatchVariableConstraint) {
-          myHelpLabel = ContextHelpLabel.create(SSRBundle.message("script.modifier.match.variable.help.text", variableText));
+          myHelpLabel = ContextHelpLabel.create(SSRBundle.message("script.filter.match.variable.help.text", variableText));
         }
         else {
-          myHelpLabel = ContextHelpLabel.create(SSRBundle.message("script.modifier.replacement.variable.help.text", variableText));
+          myHelpLabel = ContextHelpLabel.create(SSRBundle.message("script.filter.replacement.variable.help.text", variableText));
         }
 
         final GroupLayout layout = new GroupLayout(this);

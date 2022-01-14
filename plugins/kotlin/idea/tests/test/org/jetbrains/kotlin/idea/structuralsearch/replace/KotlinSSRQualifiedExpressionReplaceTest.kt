@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.structuralsearch.replace
 
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSRReplaceTest
 
 class KotlinSSRQualifiedExpressionReplaceTest : KotlinSSRReplaceTest() {
-    fun testQualifiedExpressionReceiverWithCountModifier() {
+    fun testQualifiedExpressionReceiverWithCountFilter() {
         doTest(
             searchPattern = "'_BEFORE{0,1}.'_FUN()",
             replacePattern = "'_BEFORE.foo('_ARG)",

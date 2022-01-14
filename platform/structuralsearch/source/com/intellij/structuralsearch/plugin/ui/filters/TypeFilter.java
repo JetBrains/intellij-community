@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.structuralsearch.plugin.ui.modifier;
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
@@ -23,12 +23,13 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class TypeModifier extends ModifierAction {
+@SuppressWarnings("ComponentNotRegistered")
+public class TypeFilter extends FilterAction {
 
   boolean myShowRegex;
 
-  public TypeModifier() {
-    super(SSRBundle.messagePointer("type.filter.modifier.name"));
+  public TypeFilter() {
+    super(SSRBundle.messagePointer("type.filter.name"));
   }
 
   @Override
@@ -47,13 +48,13 @@ public class TypeModifier extends ModifierAction {
   }
 
   @Override
-  public boolean hasModifier() {
+  public boolean hasFilter() {
     final MatchVariableConstraint variable = myTable.getMatchVariable();
     return variable != null && !StringUtil.isEmpty(variable.getNameOfExprType());
   }
 
   @Override
-  public void clearModifier() {
+  public void clearFilter() {
     final MatchVariableConstraint variable = myTable.getMatchVariable();
     if (variable == null) {
       return;
@@ -87,8 +88,8 @@ public class TypeModifier extends ModifierAction {
   }
 
   @Override
-  public ModifierEditor<MatchVariableConstraint> getEditor() {
-    return new ModifierEditor<>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
+  public FilterEditor<MatchVariableConstraint> getEditor() {
+    return new FilterEditor<>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
 
       private final EditorTextField myTextField = UIUtil.createTextComponent("", myTable.getProject());
       private final JLabel myTypeLabel = new JLabel(SSRBundle.message("type.label"));
@@ -103,7 +104,7 @@ public class TypeModifier extends ModifierAction {
         });
       }
 
-      private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(SSRBundle.message("type.filter.modifier.help.text"));
+      private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(SSRBundle.message("type.filter.help.text"));
 
       @Override
       protected void layoutComponents() {

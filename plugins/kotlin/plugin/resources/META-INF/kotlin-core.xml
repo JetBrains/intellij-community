@@ -551,7 +551,7 @@
     <targetElementUtilExtender implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinTargetElementEvaluator"/>
 
     <structuralsearch.profile implementation="org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchProfile"/>
-    <structuralsearch.modifierProvider implementation="org.jetbrains.kotlin.idea.structuralsearch.modifiers.KotlinModifierProvider"/>
+    <structuralsearch.filterProvider implementation="org.jetbrains.kotlin.idea.structuralsearch.filters.KotlinFilterProvider"/>
 
     <elementDescriptionProvider order="first" implementation="org.jetbrains.kotlin.idea.findUsages.KotlinElementDescriptionProvider"/>
     <elementDescriptionProvider implementation="org.jetbrains.kotlin.idea.findUsages.KotlinNonCodeSearchElementDescriptionProvider"/>

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
@@ -12,7 +12,7 @@ import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
-import com.intellij.structuralsearch.plugin.ui.modifier.ShortModifierTextProvider;
+import com.intellij.structuralsearch.plugin.ui.filters.ShortFilterTextProvider;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,7 @@ import java.util.List;
  * @author Maxim.Mossienko
  */
 public class SelectTemplateDialog extends DialogWrapper {
-  private final ShortModifierTextProvider myShortFilterTextProvider;
+  private final ShortFilterTextProvider myShortFilterTextProvider;
   private final boolean showHistory;
   private Editor searchPatternEditor;
   private Editor replacePatternEditor;
@@ -48,7 +48,7 @@ public class SelectTemplateDialog extends DialogWrapper {
   @NonNls private static final String PREVIEW_CARD = "Preview";
   @NonNls private static final String SELECT_TEMPLATE_CARD = "SelectCard";
 
-  public SelectTemplateDialog(Project project, ShortModifierTextProvider provider, boolean showHistory, boolean replace) {
+  public SelectTemplateDialog(Project project, ShortFilterTextProvider provider, boolean showHistory, boolean replace) {
     super(project, true);
 
     this.project = project;

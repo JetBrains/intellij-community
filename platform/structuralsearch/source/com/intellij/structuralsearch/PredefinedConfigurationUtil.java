@@ -1,13 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 public final class PredefinedConfigurationUtil {
 
@@ -56,7 +53,7 @@ public final class PredefinedConfigurationUtil {
    * This creates a predefined search configuration.
    * The language name will be added to the provided refName.
    * @param name localizable name of the template
-   * @param refName unique template identifier (within the configurations of its language) used by the reference modifier
+   * @param refName unique template identifier (within the configurations of its language) used by the reference filter
    */
   @NotNull
   public static Configuration createConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,

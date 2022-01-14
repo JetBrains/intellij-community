@@ -1,5 +1,5 @@
- // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.structuralsearch.plugin.ui.modifier;
+ // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -22,20 +22,20 @@ import java.util.Collections;
 import java.util.List;
 
 @SuppressWarnings("ComponentNotRegistered")
-public class ContextModifier extends ModifierAction {
+public class ContextFilter extends FilterAction {
 
-  public ContextModifier() {
-    super(SSRBundle.messagePointer("context.filter.modifier.name"));
+  public ContextFilter() {
+    super(SSRBundle.messagePointer("context.filter.name"));
   }
 
   @Override
-  public boolean hasModifier() {
+  public boolean hasFilter() {
     final MatchVariableConstraint variable = myTable.getMatchVariable();
     return variable != null && !StringUtil.isEmpty(variable.getContextConstraint());
   }
 
   @Override
-  public void clearModifier() {
+  public void clearFilter() {
     final MatchVariableConstraint constraint = myTable.getMatchVariable();
     if (constraint == null) {
       return;
@@ -59,8 +59,8 @@ public class ContextModifier extends ModifierAction {
   }
 
   @Override
-  public ModifierEditor<MatchVariableConstraint> getEditor() {
-    return new ModifierEditor<>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
+  public FilterEditor<MatchVariableConstraint> getEditor() {
+    return new FilterEditor<>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
       private final JLabel myLabel = new JLabel(SSRBundle.message("context.label"));
       private final TextFieldWithAutoCompletion<String> textField =
         TextFieldWithAutoCompletion.create(myTable.getProject(), Collections.emptyList(), false, "");

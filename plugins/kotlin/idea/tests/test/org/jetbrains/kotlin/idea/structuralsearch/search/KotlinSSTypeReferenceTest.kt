@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
@@ -15,7 +15,7 @@ class KotlinSSTypeReferenceTest : KotlinSSResourceInspectionTest() {
 
     fun testNullableType() { doTest("fun '_('_ : '_ ?) { '_* }") }
     
-    fun testFqTextModifier() { doTest("""fun '_('_ : '_:[regex( kotlin\.Int )])""") }
+    fun testFqTextFilter() { doTest("""fun '_('_ : '_:[regex( kotlin\.Int )])""") }
 
     fun testStandaloneNullable() { doTest("Int?") }
 

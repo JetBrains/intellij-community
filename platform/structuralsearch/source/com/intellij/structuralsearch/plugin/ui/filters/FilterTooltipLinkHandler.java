@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.structuralsearch.plugin.ui.modifier;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.codeInsight.highlighting.TooltipLinkHandler;
 import com.intellij.openapi.editor.Editor;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class ModifierTooltipLinkHandler extends TooltipLinkHandler {
+public class FilterTooltipLinkHandler extends TooltipLinkHandler {
 
   @Override
   public boolean handleLink(@NotNull String refSuffix, @NotNull Editor editor) {

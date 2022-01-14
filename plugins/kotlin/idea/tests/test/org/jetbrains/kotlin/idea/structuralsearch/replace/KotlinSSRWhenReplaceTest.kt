@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.structuralsearch.replace
 
@@ -36,7 +36,7 @@ class KotlinSSRWhenReplaceTest : KotlinSSRReplaceTest() {
         )
     }
 
-    fun testWhenConditionCountModifier() {
+    fun testWhenConditionCountFilter() {
         doTest(
             searchPattern = """
                 when ('_VAR{0,1}) {

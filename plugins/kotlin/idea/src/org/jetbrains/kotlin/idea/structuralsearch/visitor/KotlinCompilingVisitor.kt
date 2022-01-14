@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.structuralsearch.visitor
 
@@ -19,7 +19,7 @@ import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler
 import org.jetbrains.kotlin.idea.structuralsearch.getCommentText
 import org.jetbrains.kotlin.idea.structuralsearch.handler.CommentedDeclarationHandler
-import org.jetbrains.kotlin.idea.structuralsearch.withinHierarchyTextModifierSet
+import org.jetbrains.kotlin.idea.structuralsearch.withinHierarchyTextFilterSet
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
@@ -135,7 +135,7 @@ class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisi
                                 filter = NodeFilter { it is KDocTag }
                             }
                         )
-                        leafPsiElement.resetCountModifier()
+                        leafPsiElement.resetCountFilter()
                     }
                 }
             }
@@ -222,7 +222,7 @@ class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisi
         super.visitNamedDeclaration(declaration)
 
         declaration.nameIdentifier?.let { identifier ->
-            if (getHandler(identifier).withinHierarchyTextModifierSet && declaration.parent is KtClassBody) {
+            if (getHandler(identifier).withinHierarchyTextFilterSet && declaration.parent is KtClassBody) {
                 val klass = declaration.parent.parent
                 if (klass is KtClassOrObject) {
                     klass.nameIdentifier?.putUserData(WITHIN_HIERARCHY, true)
@@ -234,10 +234,10 @@ class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisi
     override fun visitParameter(parameter: KtParameter) {
         super.visitParameter(parameter)
         getHandler(parameter).filter = ParameterFilter
-        parameter.typeReference?.resetCountModifier()
-        parameter.typeReference?.typeElement?.resetCountModifier()
-        parameter.typeReference?.typeElement?.firstChild?.resetCountModifier()
-        parameter.typeReference?.typeElement?.firstChild?.firstChild?.resetCountModifier()
+        parameter.typeReference?.resetCountFilter()
+        parameter.typeReference?.typeElement?.resetCountFilter()
+        parameter.typeReference?.typeElement?.firstChild?.resetCountFilter()
+        parameter.typeReference?.typeElement?.firstChild?.firstChild?.resetCountFilter()
     }
 
     override fun visitComment(comment: PsiComment) {
@@ -266,8 +266,8 @@ class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisi
                     false
                 )
             )
-            calleeExpression.resetCountModifier()
-            calleeExpression.constructorReferenceExpression?.resetCountModifier()
+            calleeExpression.resetCountFilter()
+            calleeExpression.constructorReferenceExpression?.resetCountFilter()
         }
     }
 
@@ -275,10 +275,10 @@ class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisi
         super.visitTypeProjection(typeProjection)
         val handler = getHandler(typeProjection)
         if (handler is SubstitutionHandler) {
-            typeProjection.typeReference?.resetCountModifier()
-            typeProjection.typeReference?.typeElement?.resetCountModifier()
-            typeProjection.typeReference?.typeElement?.firstChild?.resetCountModifier()
-            typeProjection.typeReference?.typeElement?.firstChild?.firstChild?.resetCountModifier()
+            typeProjection.typeReference?.resetCountFilter()
+            typeProjection.typeReference?.typeElement?.resetCountFilter()
+            typeProjection.typeReference?.typeElement?.firstChild?.resetCountFilter()
+            typeProjection.typeReference?.typeElement?.firstChild?.firstChild?.resetCountFilter()
         }
     }
 
@@ -325,15 +325,15 @@ class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisi
             if (handler !is SubstitutionHandler) return
 
             setHandler(ktWhenEntry, SubstitutionHandler(handler.name, false, handler.minOccurs, handler.maxOccurs, false))
-            condition.parent.resetCountModifier()
-            condition.resetCountModifier()
-            condition.firstChild.resetCountModifier()
+            condition.parent.resetCountFilter()
+            condition.resetCountFilter()
+            condition.firstChild.resetCountFilter()
         }
     }
 
     override fun visitWhenConditionWithExpression(condition: KtWhenConditionWithExpression) {
         super.visitWhenConditionWithExpression(condition)
-        getHandler(condition).filter = WhenConditionFilter
+        getHandler(condition).filter = WhenConditionFiler
     }
 
     override fun visitConstructorCalleeExpression(expression: KtConstructorCalleeExpression) {
@@ -386,7 +386,7 @@ class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisi
             return handler is SubstitutionHandler && handler.minOccurs == 0
         }
 
-    private fun PsiElement.resetCountModifier() {
+    private fun PsiElement.resetCountFilter() {
         val handler = getHandler(this)
         if (handler is SubstitutionHandler && (handler.minOccurs != 1 || handler.maxOccurs != 1)) {
             val newHandler = SubstitutionHandler(handler.name, handler.isTarget, 1, 1, false)
@@ -458,7 +458,7 @@ class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisi
             it is PsiComment || DeclarationFilter.accepts(it)
         }
 
-        val WhenConditionFilter: NodeFilter = NodeFilter {
+        val WhenConditionFiler: NodeFilter = NodeFilter {
             it is KtWhenCondition
         }
 
