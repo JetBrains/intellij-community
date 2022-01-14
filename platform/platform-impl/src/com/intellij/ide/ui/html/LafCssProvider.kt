@@ -134,6 +134,10 @@ internal object LafCssProvider {
           margin-right-rtl: 12px;
           -bullet-gap: 10px;
       }
+      
+      ul li p {
+          margin-top: 0;
+      }
   
       ul li ul {
           margin-left-ltr: 25px;
