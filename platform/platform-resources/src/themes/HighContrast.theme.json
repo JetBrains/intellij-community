@@ -182,6 +182,16 @@
       "parentFocusedFrameForeground": "#FFFFFF"
     },
 
+    "IconBadge": {
+      "borderWidth": 2.0,
+      "dotRadius": 5.0,
+      "dotX": 5.0,
+      "dotY": 5.0,
+      "errorBackground": "Actions.Red",
+      "infoBackground": "Actions.Blue",
+      "successBackground": "Actions.Green"
+    },
+
     "InplaceRefactoringPopup": {
       "background": "#450073",
       "borderColor": "#E6E6E6"

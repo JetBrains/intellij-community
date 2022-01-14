@@ -580,6 +580,12 @@ public final class JBUI {
       }
     }
 
+    public interface IconBadge {
+      Color ERROR = JBColor.namedColor("IconBadge.errorBackground", 0xE35252, 0xDB5C5C);
+      Color INFORMATION = JBColor.namedColor("IconBadge.infoBackground", 0x588CF3, 0x548AF7);
+      Color SUCCESS = JBColor.namedColor("IconBadge.successBackground", 0x5FB865, 0x5FAD65);
+    }
+
     public interface Notification {
       Color FOREGROUND = JBColor.namedColor("Notification.foreground", Label.foreground());
       Color BACKGROUND = JBColor.namedColor("Notification.background", 0xFFF8D1, 0x1D3857);
