@@ -7,7 +7,6 @@ import com.intellij.analysis.problemsView.Problem
 import com.intellij.analysis.problemsView.ProblemsCollector
 import com.intellij.analysis.problemsView.ProblemsListener
 import com.intellij.analysis.problemsView.ProblemsProvider
-import com.intellij.icons.AllIcons.Toolwindows
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -16,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
-import com.intellij.ui.AppUIUtil
 import java.util.concurrent.atomic.AtomicInteger
 
 private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
@@ -105,12 +103,12 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
       SetUpdateState.ADDED -> {
         project.messageBus.syncPublisher(ProblemsListener.TOPIC).problemAppeared(problem)
         val emptyBefore = problemCount.getAndIncrement() == 0
-        if (emptyBefore) updateToolWindowIcon()
+        if (emptyBefore) ProblemsViewIconUpdater.update(project)
       }
       SetUpdateState.REMOVED -> {
         project.messageBus.syncPublisher(ProblemsListener.TOPIC).problemDisappeared(problem)
         val emptyAfter = problemCount.decrementAndGet() == 0
-        if (emptyAfter) updateToolWindowIcon()
+        if (emptyAfter) ProblemsViewIconUpdater.update(project)
       }
       SetUpdateState.UPDATED -> {
         project.messageBus.syncPublisher(ProblemsListener.TOPIC).problemUpdated(problem)
@@ -118,15 +116,6 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
       SetUpdateState.IGNORED -> {
       }
     }
-  }
-
-  private fun updateToolWindowIcon() {
-    AppUIUtil.invokeLaterIfProjectAlive(project) { ProblemsView.getToolWindow(project)?.setIcon(getToolWindowIcon()) }
-  }
-
-  private fun getToolWindowIcon() = when (getProblemCount() == 0) {
-    true -> Toolwindows.ToolWindowProblemsEmpty
-    else -> Toolwindows.ToolWindowProblems
   }
 
   private fun onVfsChanges(events: List<VFileEvent>) = events
