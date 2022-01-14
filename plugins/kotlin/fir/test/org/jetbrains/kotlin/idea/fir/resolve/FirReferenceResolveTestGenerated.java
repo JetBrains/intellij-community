@@ -373,6 +373,16 @@ public class FirReferenceResolveTestGenerated extends AbstractFirReferenceResolv
         runTest("../idea/tests/testData/resolve/references/SeveralOverrides.kt");
     }
 
+    @TestMetadata("SuperTypePrimaryConstructor.kt")
+    public void testSuperTypePrimaryConstructor() throws Exception {
+        runTest("../idea/tests/testData/resolve/references/SuperTypePrimaryConstructor.kt");
+    }
+
+    @TestMetadata("SuperTypeSecondaryConstructor.kt")
+    public void testSuperTypeSecondaryConstructor() throws Exception {
+        runTest("../idea/tests/testData/resolve/references/SuperTypeSecondaryConstructor.kt");
+    }
+
     @TestMetadata("SyntheticProperty.kt")
     public void testSyntheticProperty() throws Exception {
         runTest("../idea/tests/testData/resolve/references/SyntheticProperty.kt");

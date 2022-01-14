@@ -14,3 +14,5 @@ fun test() {
     A()
     A(1)
 }
+
+// FIR_COMPARISON
