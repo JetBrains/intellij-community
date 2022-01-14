@@ -142,8 +142,8 @@ public final class JBCefJSQuery implements JBCefDisposable {
   }
 
   public void clearHandlers() {
-    for (CefMessageRouterHandler cefHandler : myHandlerMap.values()) {
-      myFunc.myRouter.removeHandler(cefHandler);
+    for (Function<? super String, ? extends Response> func : myHandlerMap.keySet()) {
+      removeHandler(func);
     }
   }
 
