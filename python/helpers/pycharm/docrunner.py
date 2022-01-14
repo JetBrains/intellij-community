@@ -205,13 +205,8 @@ runner = DocTestRunner()
 
 def _load_file(moduleName, fileName):
     if sys.version_info >= (3, 5):
-        from importlib import machinery
-        from types import ModuleType
-
-        loader = machinery.SourceFileLoader(moduleName, fileName)
-        module = ModuleType(loader.name)
-        loader.exec_module(module)
-        return module
+        import importlib
+        return importlib.import_module(moduleName, fileName)
     else:
         import imp
         return imp.load_source(moduleName, fileName)
