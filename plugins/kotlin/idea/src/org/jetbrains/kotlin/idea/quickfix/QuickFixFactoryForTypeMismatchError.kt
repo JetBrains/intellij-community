@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isKFunctionType
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -18,7 +17,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.quickfix.QuickFixUtil
 import org.jetbrains.kotlin.idea.intentions.branches
 import org.jetbrains.kotlin.idea.intentions.reflectToRegularFunctionType
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.approximateWithResolvableType
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.name.FqName
@@ -34,7 +32,6 @@ import org.jetbrains.kotlin.resolve.calls.util.*
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.constants.IntegerValueTypeConstant
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.types.CommonSupertypes
 import org.jetbrains.kotlin.types.KotlinType
@@ -272,9 +269,7 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
                 || KotlinBuiltIns.isPrimitiveArray(expectedType)
             ) {
                 actions.add(AddArrayOfTypeFix(diagnosticElement, expectedType))
-                if (diagnosticElement.languageVersionSettings.supportsFeature(LanguageFeature.ArrayLiteralsInAnnotations)) {
-                    actions.add(WrapWithArrayLiteralFix(diagnosticElement))
-                }
+                actions.add(WrapWithArrayLiteralFix(diagnosticElement))
             }
         }
 
