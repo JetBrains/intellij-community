@@ -54,6 +54,17 @@ public class JBCefJSQueryPoolSlotReuseTest {
     Disposer.dispose(jsQuery1); // should return the query function to the free slot
 
     /*
+     * Make sure the query is invalid.
+     */
+    boolean isIllegal = false;
+    try {
+      jsQuery1.inject("");
+    } catch (IllegalStateException ex) {
+      isIllegal = true;
+    }
+    TestCase.assertTrue(isIllegal);
+
+    /*
      * Create and use a JS query again and make sure it reuses the same function under the hood.
      */
     var jsQuery2 = JBCefJSQuery.create((JBCefBrowserBase)browser);

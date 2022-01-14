@@ -98,6 +98,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
    */
   @NotNull
   public String inject(@Nullable String queryResult, @NotNull String onSuccessCallback, @NotNull String onFailureCallback) {
+    if (isDisposed()) throw new IllegalStateException("the JS query has been disposed");
     if (queryResult != null && queryResult.isEmpty()) queryResult = "''";
     return "window." + myFunc.myFuncName +
            "({request: '' + " + queryResult + "," +
@@ -148,15 +149,15 @@ public final class JBCefJSQuery implements JBCefDisposable {
 
   @Override
   public void dispose() {
-    if (myFunc.myIsSlot) {
-      JBCefClient.JSQueryPool pool = myJBCefClient.getJSQueryPool();
-      if (pool != null) {
-        clearHandlers();
-        pool.releaseUsedSlot(myFunc);
-        return;
-      }
-    }
     myDisposeHelper.dispose(() -> {
+      if (myFunc.myIsSlot) {
+        JBCefClient.JSQueryPool pool = myJBCefClient.getJSQueryPool();
+        if (pool != null) {
+          clearHandlers();
+          pool.releaseUsedSlot(myFunc);
+          return;
+        }
+      }
       myJBCefClient.getCefClient().removeMessageRouter(myFunc.myRouter);
       myFunc.myRouter.dispose();
       myHandlerMap.clear();
