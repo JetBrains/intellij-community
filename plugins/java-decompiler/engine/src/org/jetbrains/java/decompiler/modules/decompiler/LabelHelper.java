@@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -90,9 +91,9 @@ public final class LabelHelper {
     boolean ok = (stat.type != Statement.TYPE_DO);
     if (!ok) {
       DoStatement dostat = (DoStatement)stat;
-      ok = dostat.getLooptype() == DoStatement.LOOP_DO ||
-           dostat.getLooptype() == DoStatement.LOOP_WHILE ||
-           (dostat.getLooptype() == DoStatement.LOOP_FOR && dostat.getIncExprent() == null);
+      ok = dostat.getLoopType() == LoopType.DO ||
+           dostat.getLoopType() == LoopType.WHILE ||
+           (dostat.getLoopType() == LoopType.FOR && dostat.getIncExprent() == null);
     }
 
     if (ok) {
@@ -304,7 +305,7 @@ public final class LabelHelper {
     }
 
     // no next for a do statement
-    if (stat.type == Statement.TYPE_DO && ((DoStatement)stat).getLooptype() == DoStatement.LOOP_DO) {
+    if (stat.type == Statement.TYPE_DO && ((DoStatement)stat).getLoopType() == LoopType.DO) {
       next = null;
     }
 

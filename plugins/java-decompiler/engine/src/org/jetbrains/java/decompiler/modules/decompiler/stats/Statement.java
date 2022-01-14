@@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.StrongConnectivityHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
 import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
@@ -794,7 +795,7 @@ public class Statement implements IMatchable {
 
     return type == TYPE_BASIC_BLOCK || (type == TYPE_IF &&
                                                         ((IfStatement)this).iftype == IfStatement.IFTYPE_IF) ||
-           (type == TYPE_DO && ((DoStatement)this).getLooptype() != DoStatement.LOOP_DO);
+           (type == TYPE_DO && ((DoStatement)this).getLoopType() != LoopType.DO);
   }
 
 

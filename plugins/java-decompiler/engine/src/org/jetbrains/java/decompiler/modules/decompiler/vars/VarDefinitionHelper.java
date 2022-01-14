@@ -10,6 +10,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
@@ -124,7 +125,7 @@ public class VarDefinitionHelper {
       // special case for
       if (stat.type == Statement.TYPE_DO) {
         DoStatement dstat = (DoStatement)stat;
-        if (dstat.getLooptype() == DoStatement.LOOP_FOR) {
+        if (dstat.getLoopType() == LoopType.FOR) {
 
           if (dstat.getInitExprent() != null && setDefinition(dstat.getInitExprent(), index)) {
             continue;
@@ -251,14 +252,14 @@ public class VarDefinitionHelper {
           Statement st = (Statement)obj;
           childVars.addAll(initStatement(st));
 
-          if (st.type == DoStatement.TYPE_DO) {
+          if (st.type == Statement.TYPE_DO) {
             DoStatement dost = (DoStatement)st;
-            if (dost.getLooptype() != DoStatement.LOOP_FOR &&
-                dost.getLooptype() != DoStatement.LOOP_DO) {
+            if (dost.getLoopType() != LoopType.FOR &&
+                dost.getLoopType() != LoopType.DO) {
               currVars.add(dost.getConditionExprent());
             }
           }
-          else if (st.type == DoStatement.TYPE_CATCH_ALL) {
+          else if (st.type == Statement.TYPE_CATCH_ALL) {
             CatchAllStatement fin = (CatchAllStatement)st;
             if (fin.isFinally() && fin.getMonitor() != null) {
               currVars.add(fin.getMonitor());

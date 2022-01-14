@@ -6,6 +6,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode.DirectNodeType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionEdge;
@@ -168,10 +169,10 @@ public class StackVarsProcessor {
         if (nd.statement.type == Statement.TYPE_DO) {
           DoStatement loop = (DoStatement)nd.statement;
 
-          if (loop.getLooptype() == DoStatement.LOOP_FOR &&
+          if (loop.getLoopType() == LoopType.FOR &&
               loop.getInitExprent() == null &&
               loop.getIncExprent() == null) { // "downgrade" loop to 'while'
-            loop.setLooptype(DoStatement.LOOP_WHILE);
+            loop.setLoopType(LoopType.WHILE);
           }
         }
       }

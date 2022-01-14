@@ -5,6 +5,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode.DirectNodeType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -164,25 +165,25 @@ public class FlattenStatementsHelper {
             nd = graph.nodes.getWithKey(mapDestinationNodes.get(stat.getFirst().id)[0]);
 
             DoStatement dostat = (DoStatement)stat;
-            int looptype = dostat.getLooptype();
+            LoopType loopType = dostat.getLoopType();
 
-            if (looptype == DoStatement.LOOP_DO) {
+            if (loopType == LoopType.DO) {
               mapDestinationNodes.put(stat.id, new String[]{nd.id, nd.id});
               break;
             }
 
             lstSuccEdges.add(stat.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL).get(0));  // exactly one edge
 
-            switch (looptype) {
-              case DoStatement.LOOP_WHILE:
-              case DoStatement.LOOP_DOWHILE:
+            switch (loopType) {
+              case WHILE:
+              case DO_WHILE:
                 node = new DirectNode(DirectNodeType.CONDITION, stat, stat.id + "_cond");
                 node.exprents = dostat.getConditionExprentList();
                 graph.nodes.putWithKey(node, node.id);
 
                 listEdges.add(new Edge(node.id, stat.getFirst().id, StatEdge.TYPE_REGULAR));
 
-                if (looptype == DoStatement.LOOP_WHILE) {
+                if (loopType == LoopType.WHILE) {
                   mapDestinationNodes.put(stat.id, new String[]{node.id, node.id});
                 }
                 else {
@@ -201,7 +202,7 @@ public class FlattenStatementsHelper {
                 }
                 sourcenode = node;
                 break;
-              case DoStatement.LOOP_FOR:
+              case FOR:
                 DirectNode nodeinit = new DirectNode(DirectNodeType.INIT, stat, stat.id + "_init");
                 if (dostat.getInitExprent() != null) {
                   nodeinit.exprents = dostat.getInitExprentList();
