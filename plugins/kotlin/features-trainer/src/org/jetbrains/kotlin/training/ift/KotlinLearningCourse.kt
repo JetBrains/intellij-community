@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.training.ift
 
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.training.ift.lesson.basic.KotlinBasicCompletionLesson
 import org.jetbrains.kotlin.training.ift.lesson.basic.KotlinContextActionsLesson
 import org.jetbrains.kotlin.training.ift.lesson.basic.KotlinSelectLesson
 import org.jetbrains.kotlin.training.ift.lesson.navigation.KotlinFileStructureLesson
@@ -29,6 +30,7 @@ class KotlinLearningCourse : LearningCourseBase(KotlinLanguage.INSTANCE.id) {
                 KotlinContextActionsLesson(),
                 GotoActionLesson(ls("Actions.kt.sample"), firstLesson = false),
                 KotlinSearchEverywhereLesson(),
+                KotlinBasicCompletionLesson(),
             )
         },
         LearningModule(
@@ -39,6 +41,15 @@ class KotlinLearningCourse : LearningCourseBase(KotlinLanguage.INSTANCE.id) {
             moduleType = LessonType.SCRATCH
         ) {
             listOf(KotlinSelectLesson())
+        },
+        LearningModule(
+            id = "Kotlin.CodeCompletion",
+            name = LessonsBundle.message("code.completion.module.name"),
+            description = LessonsBundle.message("code.completion.module.description"),
+            primaryLanguage = langSupport,
+            moduleType = LessonType.SINGLE_EDITOR  // todo: change to SCRATCH when KTIJ-20742 will be resolved
+        ) {
+            listOf(KotlinBasicCompletionLesson())
         },
         LearningModule(
             id = "Kotlin.Navigation",
