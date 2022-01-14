@@ -4,8 +4,7 @@ package com.intellij.openapi.externalSystem.dependency.analyzer.util
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency.Status
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.*
@@ -26,10 +25,10 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeModel
 
 
-internal fun DependencyAnalyzerDependency.Data.getDisplayText(showGroupId: Boolean): @NlsSafe String =
+internal fun Dependency.Data.getDisplayText(showGroupId: Boolean): @NlsSafe String =
   when (this) {
-    is DependencyAnalyzerDependency.Data.Module -> name
-    is DependencyAnalyzerDependency.Data.Artifact -> when (showGroupId) {
+    is Dependency.Data.Module -> name
+    is Dependency.Data.Artifact -> when (showGroupId) {
       true -> "$groupId:$artifactId:$version"
       else -> "$artifactId:$version"
     }
@@ -39,8 +38,8 @@ private fun SimpleColoredComponent.customizeCellRenderer(group: DependencyGroup,
   icon = when {
     group.hasWarnings -> AllIcons.General.Warning
     else -> when (group.data) {
-      is DependencyAnalyzerDependency.Data.Module -> AllIcons.Nodes.Module
-      is DependencyAnalyzerDependency.Data.Artifact -> AllIcons.Nodes.PpLib
+      is Dependency.Data.Module -> AllIcons.Nodes.Module
+      is Dependency.Data.Artifact -> AllIcons.Nodes.PpLib
     }
   }
   val dataText = group.data.getDisplayText(showGroupId)
@@ -55,10 +54,10 @@ internal abstract class AbstractDependencyList(
   private val dataProvider: DataProvider
 ) : JBList<DependencyGroup>(model), DataProvider {
 
-  private val dependencyProperty = AtomicObservableProperty<DependencyAnalyzerDependency?>(null)
+  private val dependencyProperty = AtomicObservableProperty<Dependency?>(null)
   private val dependencyGroupProperty = AtomicObservableProperty<DependencyGroup?>(null)
 
-  fun bindDependency(property: ObservableMutableProperty<DependencyAnalyzerDependency?>) = apply {
+  fun bindDependency(property: ObservableMutableProperty<Dependency?>) = apply {
     dependencyProperty.bind(property)
   }
 
@@ -89,10 +88,10 @@ internal abstract class AbstractDependencyTree(
   private val dataProvider: DataProvider
 ) : SimpleTree(model), DataProvider {
 
-  private val dependencyProperty = AtomicObservableProperty<DependencyAnalyzerDependency?>(null)
+  private val dependencyProperty = AtomicObservableProperty<Dependency?>(null)
   private val dependencyGroupProperty = AtomicObservableProperty<DependencyGroup?>(null)
 
-  fun bindDependency(property: ObservableMutableProperty<DependencyAnalyzerDependency?>) = apply {
+  fun bindDependency(property: ObservableMutableProperty<Dependency?>) = apply {
     dependencyProperty.bind(property)
   }
 
@@ -206,12 +205,12 @@ private class UsagesTreeRenderer(private val showGroupIdProperty: ObservableProp
   }
 }
 
-internal class DependencyGroup(val variances: List<DependencyAnalyzerDependency>) {
+internal class DependencyGroup(val variances: List<Dependency>) {
   val data by lazy { variances.first().data }
   val scopes by lazy { variances.map { it.scope }.toSet() }
   val parents by lazy { variances.map { it.parent }.toSet() }
-  val warnings by lazy { variances.flatMap { it.status }.filterIsInstance<Status.Warning>() }
-  val isOmitted by lazy { variances.all { Status.Omitted in it.status } }
+  val warnings by lazy { variances.flatMap { it.status }.filterIsInstance<Dependency.Status.Warning>() }
+  val isOmitted by lazy { variances.flatMap { it.status }.filterIsInstance<Dependency.Status.Omitted>().isNotEmpty() }
   val hasWarnings by lazy { warnings.isNotEmpty() }
 
   override fun toString() = "s${scopes.size} v${variances.size} $data"

@@ -4,8 +4,8 @@ package org.jetbrains.idea.maven.project.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.externalSystem.dependency.analyzer.AbstractDependencyAnalyzerAction
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency.Scope
+import com.intellij.openapi.externalSystem.dependency.analyzer.DAArtifact
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
@@ -54,9 +54,9 @@ class MavenDependencyAnalyzerAction : AbstractDependencyAnalyzerAction() {
     return MavenProjectsManager.getInstance(project).projectsFiles.firstOrNull()?.path
   }
 
-  private fun getDependencyData(selectedNode: SimpleNode): DependencyAnalyzerDependency.Data? {
+  private fun getDependencyData(selectedNode: SimpleNode): Dependency.Data? {
     if (selectedNode is MavenProjectsStructure.DependencyNode) {
-      return DependencyAnalyzerDependency.Data.Artifact(
+      return DAArtifact(
         selectedNode.artifact.groupId,
         selectedNode.artifact.artifactId,
         selectedNode.artifact.version
@@ -65,7 +65,7 @@ class MavenDependencyAnalyzerAction : AbstractDependencyAnalyzerAction() {
     return null
   }
 
-  private fun getDependencyScope(selectedNode: SimpleNode): Scope? {
+  private fun getDependencyScope(selectedNode: SimpleNode): Dependency.Scope? {
     if (selectedNode is MavenProjectsStructure.DependencyNode) {
       return MavenDependencyAnalyzerContributor.scope(
         selectedNode.artifact.scope

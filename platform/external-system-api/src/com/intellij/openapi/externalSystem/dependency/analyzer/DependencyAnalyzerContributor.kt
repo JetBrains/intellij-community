@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
 /**
  * Contributor dependencies data for dependency analyzer.
@@ -25,10 +26,10 @@ interface DependencyAnalyzerContributor {
   /**
    * Gets scopes/configurations (e.g. compile, runtime, test, etc.) for specified external project.
    */
-  fun getDependencyScopes(externalProjectPath: String): List<DependencyAnalyzerDependency.Scope>
+  fun getDependencyScopes(externalProjectPath: String): List<Dependency.Scope>
 
   /**
    * Gets dependencies for specified external project.
    */
-  fun getDependencies(externalProjectPath: String): List<DependencyAnalyzerDependency>
+  fun getDependencies(externalProjectPath: String): List<Dependency>
 }

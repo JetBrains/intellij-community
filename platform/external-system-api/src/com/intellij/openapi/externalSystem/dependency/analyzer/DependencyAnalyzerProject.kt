@@ -3,11 +3,9 @@ package com.intellij.openapi.externalSystem.dependency.analyzer
 
 import org.jetbrains.annotations.Nls
 
-class DependencyAnalyzerProject(
-  val path: String,
+interface DependencyAnalyzerProject {
+
+  val path: String
+
   val title: @Nls String
-) {
-  override fun equals(other: Any?) = other is DependencyAnalyzerProject && path == other.path
-  override fun hashCode() = path.hashCode()
-  override fun toString() = title
 }

@@ -3,9 +3,9 @@ package org.jetbrains.plugins.gradle.dependency.analyzer
 
 import com.google.gson.GsonBuilder
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.externalSystem.dependency.analyzer.*
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency.Data.Artifact
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerProject
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.dependencies.*
@@ -34,7 +34,7 @@ import kotlin.collections.ArrayList
 class GradleDependencyAnalyzerContributor(private val project: Project) : DependencyAnalyzerContributor {
   private val projects = ConcurrentHashMap<String, GradleModuleData>()
   private val configurationNodesMap = ConcurrentHashMap<String, List<DependencyScopeNode>>()
-  private val dependencyMap = ConcurrentHashMap<Long, DependencyAnalyzerDependency>()
+  private val dependencyMap = ConcurrentHashMap<Long, Dependency>()
 
   override fun whenDataChanged(listener: () -> Unit, parentDisposable: Disposable) {
     val progressManager = ExternalSystemProgressNotificationManager.getInstance()
@@ -59,15 +59,15 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
         .filterNot(GradleModuleData::isBuildSrcModule)
         .associateByTo(projects, GradleModuleData::gradleProjectDir)
     }
-    return projects.values.map { DependencyAnalyzerProject(it.gradleProjectDir, it.moduleName) }
+    return projects.values.map { DAProject(it.gradleProjectDir, it.moduleName) }
   }
 
-  override fun getDependencyScopes(externalProjectPath: String): List<DependencyAnalyzerDependency.Scope> {
+  override fun getDependencyScopes(externalProjectPath: String): List<Dependency.Scope> {
     val gradleModuleData = projects[externalProjectPath] ?: return emptyList()
     return getOrRefreshData(gradleModuleData).map { it.toScope() }
   }
 
-  override fun getDependencies(externalProjectPath: String): List<DependencyAnalyzerDependency> {
+  override fun getDependencies(externalProjectPath: String): List<Dependency> {
     val gradleModuleData = projects[externalProjectPath] ?: return emptyList()
     val scopeNodes = getOrRefreshData(gradleModuleData)
     return getDependencies(gradleModuleData, scopeNodes)
@@ -80,12 +80,12 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
   }
 
   private fun getDependencies(moduleData: GradleModuleData,
-                              scopeNodes: List<DependencyScopeNode>): List<DependencyAnalyzerDependency> {
+                              scopeNodes: List<DependencyScopeNode>): List<Dependency> {
     if (scopeNodes.isEmpty()) return emptyList()
-    val dependencies = ArrayList<DependencyAnalyzerDependency>()
-    val root = DependencyAnalyzerDependency.Data.Module(moduleData.moduleName)
+    val dependencies = ArrayList<Dependency>()
+    val root = DAModule(moduleData.moduleName)
 
-    val rootDependency = DependencyAnalyzerDependency(root, defaultConfiguration, null, emptyList())
+    val rootDependency = DADependency(root, defaultConfiguration, null, emptyList())
     dependencies.add(rootDependency)
     for (scopeNode in scopeNodes) {
       val scope = scopeNode.toScope()
@@ -96,10 +96,10 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
     return dependencies
   }
 
-  private fun addDependencies(usage: DependencyAnalyzerDependency,
-                              scope: DependencyAnalyzerDependency.Scope,
+  private fun addDependencies(usage: Dependency,
+                              scope: Dependency.Scope,
                               dependencyNode: DependencyNode,
-                              dependencies: MutableList<DependencyAnalyzerDependency>,
+                              dependencies: MutableList<Dependency>,
                               gradleProjectDir: String) {
     val dependency = createDependency(dependencyNode, scope, usage) ?: return
     dependencies.add(dependency)
@@ -108,45 +108,45 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
     }
   }
 
-  private fun createDependency(dependencyNode: DependencyNode, scope: DependencyAnalyzerDependency.Scope, usage: DependencyAnalyzerDependency): DependencyAnalyzerDependency? {
+  private fun createDependency(dependencyNode: DependencyNode, scope: Dependency.Scope, usage: Dependency): Dependency? {
     when (dependencyNode) {
       is ReferenceNode -> {
         val dependency = dependencyMap[dependencyNode.id] ?: return null
-        return DependencyAnalyzerDependency(dependency.data, scope, usage, dependency.status)
+        return DADependency(dependency.data, scope, usage, dependency.status)
       }
       else -> {
         val dependencyData = dependencyNode.getDependencyData() ?: return null
         val status = dependencyNode.getStatus(dependencyData)
-        return DependencyAnalyzerDependency(dependencyData, scope, usage, status)
+        return DADependency(dependencyData, scope, usage, status)
           .also { dependencyMap[dependencyNode.id] = it }
       }
     }
   }
 
-  private fun DependencyNode.getStatus(data: DependencyAnalyzerDependency.Data): List<DependencyAnalyzerDependency.Status> {
-    val status = mutableListOf<DependencyAnalyzerDependency.Status>()
+  private fun DependencyNode.getStatus(data: Dependency.Data): List<Dependency.Status> {
+    val status = mutableListOf<Dependency.Status>()
     if (resolutionState == ResolutionState.UNRESOLVED) {
       val message = ExternalSystemBundle.message("external.system.dependency.analyzer.warning.unresolved")
-      status.add(DependencyAnalyzerDependency.Status.Warning(message))
+      status.add(DAWarning(message))
     }
     val selectionReason = selectionReason
-    if (data is Artifact && selectionReason != null && selectionReason.startsWith("between versions")) {
+    if (data is Dependency.Data.Artifact && selectionReason != null && selectionReason.startsWith("between versions")) {
       val conflictedVersion = selectionReason.substringAfter("between versions ${data.version} and ", "")
       if (conflictedVersion.isNotEmpty()) {
         val message = ExternalSystemBundle.message("external.system.dependency.analyzer.warning.version.conflict", conflictedVersion)
-        status.add(DependencyAnalyzerDependency.Status.Warning(message))
+        status.add(DAWarning(message))
       }
     }
     return status
   }
 
-  private fun DependencyNode.getDependencyData(): DependencyAnalyzerDependency.Data? {
+  private fun DependencyNode.getDependencyData(): Dependency.Data? {
     return when (this) {
       is ProjectDependencyNode -> {
-        DependencyAnalyzerDependency.Data.Module(projectName)
+        DAModule(projectName)
       }
       is ArtifactDependencyNode -> {
-        Artifact(group, module, version)
+        DAArtifact(group, module, version)
       }
       else -> null
     }
@@ -154,7 +154,7 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
 
   companion object {
     @Suppress("HardCodedStringLiteral")
-    internal val defaultConfiguration = DependencyAnalyzerDependency.Scope("default", "default", "Default")
+    internal val defaultConfiguration = DAScope("default", "default", "Default")
 
 
     private fun GradleModuleData.getDependencies(project: Project): List<DependencyScopeNode> {
@@ -188,6 +188,6 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
       return dependencyScopeNodes
     }
 
-    private fun DependencyScopeNode.toScope() = DependencyAnalyzerDependency.Scope(scope, scope, StringUtil.toTitleCase(scope))
+    private fun DependencyScopeNode.toScope() = DAScope(scope, scope, StringUtil.toTitleCase(scope))
   }
 }
