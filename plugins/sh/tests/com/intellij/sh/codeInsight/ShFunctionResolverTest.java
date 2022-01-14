@@ -24,7 +24,7 @@ public class ShFunctionResolverTest extends BasePlatformTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("sh") + "/testData/resolve/file_scope";
+    return PluginPathManager.getPluginHomePath("sh") + "/testData/resolve/function_file_scope";
   }
 
   public void testSimpleFunction() {

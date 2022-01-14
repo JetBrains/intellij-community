@@ -10,6 +10,7 @@ import com.intellij.sh.psi.ShIncludeCommand;
 import com.intellij.sh.psi.ShSimpleCommandElement;
 import com.intellij.sh.psi.ShString;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -26,9 +27,17 @@ abstract class ShIncludeCommandMixin extends ShCommandImpl implements ShIncludeC
     List<ShSimpleCommandElement> commandsList = getSimpleCommandElementList();
     if (commandsList.size() <= 0) return true;
     ShSimpleCommandElement simpleCommandElement = commandsList.get(0);
-    String relativeFilePath = simpleCommandElement.getText();
-    if (simpleCommandElement instanceof ShString) {
-      ShString shString = (ShString)simpleCommandElement;
+    PsiFile includedPsiFile = getReferencingFile(simpleCommandElement);
+    if (includedPsiFile == null) return true;
+    VirtualFile sourceFile = place.getContainingFile().getVirtualFile();
+    if (includedPsiFile.getVirtualFile().equals(sourceFile)) return true;
+    return includedPsiFile.processDeclarations(processor, state, this, place);
+  }
+
+  public @Nullable PsiFile getReferencingFile(@NotNull PsiElement element) {
+    String relativeFilePath = element.getText();
+    if (element instanceof ShString) {
+      ShString shString = (ShString)element;
       if (relativeFilePath.length() >= 2 &&
           (shString.getOpenQuote() != null && shString.getCloseQuote() != null) ||
           (shString.getRawString() != null && relativeFilePath.startsWith("'") && relativeFilePath.endsWith("'"))) {
@@ -41,13 +50,9 @@ abstract class ShIncludeCommandMixin extends ShCommandImpl implements ShIncludeC
     }
 
     PsiDirectory containingDirectory = getContainingFile().getContainingDirectory();
-    if (containingDirectory == null) return true;
+    if (containingDirectory == null) return null;
     VirtualFile relativeFile = VfsUtilCore.findRelativeFile(relativeFilePath, containingDirectory.getVirtualFile());
-    if (relativeFile == null) return true;
-    VirtualFile sourceFile = place.getContainingFile().getVirtualFile();
-    if (relativeFile.equals(sourceFile)) return true;
-    PsiFile includedPsiFile = PsiManager.getInstance(getProject()).findFile(relativeFile);
-    if (includedPsiFile == null) return true;
-    return includedPsiFile.processDeclarations(processor, state, this, place);
+    if (relativeFile == null) return null;
+    return PsiManager.getInstance(getProject()).findFile(relativeFile);
   }
 }

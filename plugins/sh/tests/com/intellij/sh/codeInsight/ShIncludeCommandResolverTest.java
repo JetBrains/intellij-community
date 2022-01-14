@@ -1,16 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.sh.codeInsight;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
-public class ShFunctionResolverInImportedFileTest extends BasePlatformTestCase {
+public class ShIncludeCommandResolverTest extends BasePlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myFixture.setTestDataPath(PluginPathManager.getPluginHomePath("sh") + "/testData/resolve/function_imported_scope");
+    myFixture.setTestDataPath(PluginPathManager.getPluginHomePath("sh") + "/testData/resolve/include_command");
     myFixture.copyDirectoryToProject(getTestName(true), "");
   }
 
@@ -32,11 +33,11 @@ public class ShFunctionResolverInImportedFileTest extends BasePlatformTestCase {
   public void testCaseSix() {
     doTest("./parent folder/source.sh");
   }
-  public void testCaseEight() {
-    doNullTest();
-  }
   public void testCaseNine() {
     doTest();
+  }
+  public void testSameFile() {
+    doTest("source.sh", "source.sh");
   }
   public void testSameFolder() {
     doTest();
@@ -44,16 +45,10 @@ public class ShFunctionResolverInImportedFileTest extends BasePlatformTestCase {
   public void testWithParams() {
     doTest();
   }
-  public void testCyclicImport() {
+  public void testWithParamsCaseTwo() {
     doNullTest();
   }
-  public void testCyclicImportCaseTwo() {
-    doNullTest();
-  }
-  public void testTransitiveImport() {
-    doTest();
-  }
-  public void testDotTransitiveImport() {
+  public void testDotImport() {
     doTest();
   }
 
@@ -76,6 +71,7 @@ public class ShFunctionResolverInImportedFileTest extends BasePlatformTestCase {
     PsiReference reference = myFixture.getFile().findReferenceAt(myFixture.getCaretOffset());
     PsiElement targetElement = reference.resolve();
     assertNotNull(targetElement);
-    assertEquals(targetFilePath, targetElement.getContainingFile().getVirtualFile().getName());
+    assertTrue(targetElement instanceof PsiFile);
+    assertEquals(targetFilePath, ((PsiFile)targetElement).getVirtualFile().getName());
   }
 }
