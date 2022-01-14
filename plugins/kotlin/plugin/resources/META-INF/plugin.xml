@@ -18,6 +18,17 @@ The Kotlin plugin provides language support in IntelliJ IDEA and Android Studio.
 
   <!--suppress PluginXmlValidity -->
   <change-notes><![CDATA[
+    <h3>1.6.20-M1</h3>
+    <ul>
+      <li>Language: prototype of context receivers</li>
+      <li>Kotlin/JVM: experimental parallel compilation of a single module, deprecation of old `-Xjvm-default` modes, new `@JvmDefaultWithCompatibility` annotation</li>
+      <li>Kotlin/Native: concurrent sweep phase in the new memory manager, support for Xcode 13 SDKs, instantiation of annotation classes, support for resolving source locations with `libbacktrace`, improved "could not build module" cinterop report, performance improvements</li>
+      <li>CocoaPods Gradle plugin: customization of podspec properties, accepting version when configuring CocoaPods for Kotlin/Native, new task for generating a suitable podspec for a built XCFramework</li>
+      <li>Kotlin/JS: incremental compilation in the IR backend, lazy initialization of top-level properties by default, inline `Char` class, ability to use inline classes in external types, export improvements</li>
+      <li>Gradle: new flexible way of defining a Kotlin compiler execution strategy, removed `kotlin.parallel.tasks.in.project` build option, deprecated `kapt.use.worker.api` and `kotlin.coroutines` build options</li>
+    </ul>
+    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.6.20-M1">changelog</a>.
+    <br><br>
     <h3>1.6.0</h3>
     <ul>
       <li>Language: stable exhaustive `when` statements for enum, sealed and Boolean subjects, stable conversions from regular to suspending functional types, stable instantiation of annotation classes, improvements to type inference and builder inference</li>
