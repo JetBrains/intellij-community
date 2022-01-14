@@ -27,7 +27,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.tooling.MessageReporter
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
-import org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder
 
 import static java.util.Collections.unmodifiableMap
 import static org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider
@@ -55,29 +54,6 @@ class SourceSetCachedFinder {
 
   private ArtifactsMap myArtifactsMap
   private Map<String, Set<File>> mySourcesMap
-
-  @Deprecated
-  SourceSetCachedFinder(@NotNull Project project) {
-    def context = ExtraModelBuilder.CURRENT_CONTEXT.get()
-    if (context != null) {
-      init(context)
-    }
-    else {
-      def extraProperties = project.rootProject.extensions.extraProperties
-      def key = "$SourceSetCachedFinder.name${System.identityHashCode(SourceSetCachedFinder.class)}"
-      if (extraProperties.has(key)) {
-        def cached = extraProperties.get(key)
-        if (cached instanceof SourceSetCachedFinder) {
-          myArtifactsMap = (cached as SourceSetCachedFinder).myArtifactsMap
-          mySourcesMap = (cached as SourceSetCachedFinder).mySourcesMap
-          return
-        }
-      }
-      myArtifactsMap = createArtifactsMap(project.gradle)
-      mySourcesMap = [:]
-      extraProperties.set(key, this)
-    }
-  }
 
   SourceSetCachedFinder(@NotNull ModelBuilderContext context) {
     init(context)
