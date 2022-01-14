@@ -34,7 +34,7 @@ public class JavaTextExtractor extends TextExtractor {
   private static final TextContentBuilder javadocBuilder = TextContentBuilder.FromPsi
     .withUnknown(e -> e instanceof PsiInlineDocTag)
     .excluding(e -> EXCLUDED.contains(PsiUtilCore.getElementType(e)))
-    .removingIndents(" \t");
+    .removingIndents(" \t").removingLineSuffixes(" \t");
 
   @Override
   public TextContent buildTextContent(@NotNull PsiElement root, @NotNull Set<TextContent.TextDomain> allowedDomains) {
@@ -51,7 +51,7 @@ public class JavaTextExtractor extends TextExtractor {
       List<PsiElement> roots = PsiUtilsKt.getNotSoDistantSimilarSiblings(root, e ->
         JAVA_PLAIN_COMMENT_BIT_SET.contains(PsiUtilCore.getElementType(e)));
       return TextContent.joinWithWhitespace('\n', ContainerUtil.mapNotNull(roots, c ->
-        TextContentBuilder.FromPsi.removingIndents(" \t*/").build(c, COMMENTS)));
+        TextContentBuilder.FromPsi.removingIndents(" \t*/").removingLineSuffixes(" \t").build(c, COMMENTS)));
     }
 
     if (root instanceof PsiLiteralExpression &&

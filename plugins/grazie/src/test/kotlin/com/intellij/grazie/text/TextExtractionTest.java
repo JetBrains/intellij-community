@@ -50,7 +50,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
   }
 
   public void testMarkdownIndent() {
-    TextContent extracted = extractText("a.md", "* first line\n  second line", 3);
+    TextContent extracted = extractText("a.md", "* first line \n  second line", 3);
     assertEquals("first line\nsecond line", unknownOffsets(extracted));
   }
 
