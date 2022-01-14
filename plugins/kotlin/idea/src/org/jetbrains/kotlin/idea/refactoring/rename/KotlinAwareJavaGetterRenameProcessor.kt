@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
 
 class KotlinAwareJavaGetterRenameProcessor : RenameJavaMethodProcessor() {
     override fun canProcessElement(element: PsiElement) =
-        super.canProcessElement(element) && element !is KtLightMethod && JvmAbi.isGetterName((element as PsiMethod).name)
+        super.canProcessElement(element) && element !is KtLightMethod && element is PsiMethod && JvmAbi.isGetterName(element.name)
 
     override fun findReferences(
         element: PsiElement,
