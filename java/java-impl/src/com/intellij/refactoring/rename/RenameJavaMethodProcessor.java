@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -39,7 +40,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
 
   @Override
   public boolean canProcessElement(@NotNull final PsiElement element) {
-    return element instanceof PsiMethod;
+    return element instanceof PsiMethod && !(element instanceof LightMethodBuilder);
   }
 
   @Override
@@ -172,10 +173,9 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     findCollisionsAgainstNewName(methodToRename, newName, result);
     findHidingMethodWithOtherSignature(methodToRename, newName, result);
     final PsiClass containingClass = methodToRename.getContainingClass();
-    if (containingClass != null) {
-      final PsiMethod patternMethod = (PsiMethod)methodToRename.copy();
+    final PsiMethod patternMethod = getPrototypeWithNewName(methodToRename, newName);
+    if (containingClass != null && patternMethod != null) {
       try {
-        patternMethod.setName(newName);
         final PsiMethod methodInBaseClass = containingClass.findMethodBySignature(patternMethod, true);
         if (methodInBaseClass != null && methodInBaseClass.getContainingClass() != containingClass) {
           if (methodInBaseClass.hasModifierProperty(PsiModifier.FINAL)) {
@@ -241,12 +241,14 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
 
   private static PsiMethod getPrototypeWithNewName(PsiMethod methodToRename, String newName) {
     final PsiMethod prototype = (PsiMethod)methodToRename.copy();
-    try {
-      prototype.setName(newName);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-      return null;
+    if (prototype != null) {
+      try {
+        prototype.setName(newName);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+        return null;
+      }
     }
     return prototype;
   }
