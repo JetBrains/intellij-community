@@ -16,10 +16,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Analyze overwritten fields based on DFA-CFG (unlike usual CFG, it includes method calls, so we can know when field value may leak)
@@ -60,6 +57,8 @@ final class OverwrittenFieldAnalyzer extends BaseVariableAnalyzer {
   }
 
   Set<AssignInstruction> getOverwrittenFields() {
+    // Contains instructions where overwrite without read is detected
+    // Initially: all assignment instructions; during DFA traverse, some are removed
     Set<AssignInstruction> overwrites = StreamEx.of(myInstructions).select(AssignInstruction.class).toSet();
     if (overwrites.isEmpty()) return Collections.emptySet();
     boolean hasFieldWrite = StreamEx.of(overwrites).map(AssignInstruction::getAssignedValue)
@@ -68,26 +67,31 @@ final class OverwrittenFieldAnalyzer extends BaseVariableAnalyzer {
       .anyMatch(f -> f instanceof PsiField);
     if (!hasFieldWrite) return Collections.emptySet();
     Set<AssignInstruction> visited = new HashSet<>();
-    boolean ok = runDfa(false, (instruction, nextVars) -> {
+    boolean ok = runDfa(false, (instruction, beforeVars) -> {
+      // beforeVars: IDs of variables that were written but not read yet
+      if (beforeVars.isEmpty() && !(instruction instanceof AssignInstruction)) return beforeVars;
+      if (instruction instanceof FlushFieldsInstruction) {
+        return new BitSet();
+      }
+      BitSet afterVars = (BitSet)beforeVars.clone();
+      boolean skipDependent = false;
+      StreamEx<DfaVariableValue> readVariables;
       if (instruction instanceof AssignInstruction) {
         visited.add((AssignInstruction)instruction);
         DfaValue value = ((AssignInstruction)instruction).getAssignedValue();
         if (value instanceof DfaVariableValue) {
           int id = value.getID();
-          if (!nextVars.get(id)) {
+          readVariables = StreamEx.of(((DfaVariableValue)value).getDependentVariables());
+          if (!beforeVars.get(id)) {
             overwrites.remove(instruction);
-            BitSet clone = (BitSet)nextVars.clone();
-            clone.set(id);
-            return clone;
+            afterVars.set(id);
           }
+        } else {
+          readVariables = StreamEx.empty();
         }
+        skipDependent = true;
       }
-      if (nextVars.isEmpty()) return nextVars;
-      if (instruction instanceof FlushFieldsInstruction) {
-        return new BitSet();
-      }
-      StreamEx<DfaVariableValue> readVariables;
-      if (instruction instanceof MethodCallInstruction) {
+      else if (instruction instanceof MethodCallInstruction) {
         if (!((MethodCallInstruction)instruction).getMutationSignature().isPure()) {
           return new BitSet();
         }
@@ -104,22 +108,18 @@ final class OverwrittenFieldAnalyzer extends BaseVariableAnalyzer {
       else {
         readVariables = getReadVariables(instruction);
       }
-      BitSet clone = (BitSet)nextVars.clone();
-      boolean qualifierPush = false;
       if (instruction instanceof PushInstruction) {
         // Avoid forgetting about qualifier.field on qualifier.field = x;
         DfaAnchor anchor = ((PushInstruction)instruction).getDfaAnchor();
         PsiExpression expression = anchor instanceof JavaExpressionAnchor ? ((JavaExpressionAnchor)anchor).getExpression() : null;
-        if (expression != null && PsiUtil.skipParenthesizedExprUp(expression).getParent() instanceof PsiReferenceExpression
-            && ExpressionUtils.getCallForQualifier(expression) == null) {
-          qualifierPush = true;
-        }
+        skipDependent = expression != null && PsiUtil.skipParenthesizedExprUp(expression).getParent() instanceof PsiReferenceExpression
+                      && ExpressionUtils.getCallForQualifier(expression) == null;
       }
-      if (!qualifierPush) {
+      if (!skipDependent) {
         readVariables = readVariables.flatMap(v -> StreamEx.of(v.getDependentVariables()).prepend(v)).distinct();
       }
-      readVariables.forEach(v -> clone.clear(v.getID()));
-      return clone;
+      readVariables.forEach(v -> afterVars.clear(v.getID()));
+      return afterVars;
     });
     overwrites.retainAll(visited);
     return ok ? overwrites : Collections.emptySet();
