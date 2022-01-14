@@ -97,12 +97,20 @@ object VcsLogNavigationUtil {
     val selectedUis = manager.getVisibleLogUis(VcsLogTabLocation.TOOL_WINDOW).filterIsInstance<MainVcsLogUi>()
     selectedUis.find { ui -> predicate(ui) && ui.showCommit(hash, root, requestFocus) }?.let { return it }
 
-    val mainLogUi = VcsLogContentProvider.getInstance(project)!!.waitMainUiCreation().await()
-    if (!selectedUis.contains(mainLogUi)) {
-      mainLogUi.refresher.setValid(true, false) // since main ui is not visible, it needs to be validated to find the commit
-      if (predicate(mainLogUi) && mainLogUi.showCommit(hash, root, requestFocus)) {
-        VcsLogContentUtil.selectMainLog(window.contentManager)
-        return mainLogUi
+    val mainLogContent = VcsLogContentUtil.findMainLog(window.contentManager)
+    if (mainLogContent != null) {
+      ChangesViewContentManager.getInstanceImpl(project)?.initLazyContent(mainLogContent)
+
+      val mainLogContentProvider = VcsLogContentProvider.getInstance(project)
+      if (mainLogContentProvider != null) {
+        val mainLogUi = mainLogContentProvider.waitMainUiCreation().await()
+        if (!selectedUis.contains(mainLogUi)) {
+          mainLogUi.refresher.setValid(true, false) // since main ui is not visible, it needs to be validated to find the commit
+          if (predicate(mainLogUi) && mainLogUi.showCommit(hash, root, requestFocus)) {
+            window.contentManager.setSelectedContent(mainLogContent)
+            return mainLogUi
+          }
+        }
       }
     }
 

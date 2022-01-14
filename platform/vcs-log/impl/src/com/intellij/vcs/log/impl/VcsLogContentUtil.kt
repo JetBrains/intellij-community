@@ -98,17 +98,16 @@ object VcsLogContentUtil {
     VcsBalloonProblemNotifier.showOverChangesView(project, VcsLogBundle.message("vcs.log.is.not.available"), MessageType.WARNING)
   }
 
+  internal fun findMainLog(cm: ContentManager): Content? {
+    // here tab name is used instead of log ui id to select the correct tab
+    // it's done this way since main log ui may not be created when this method is called
+    return cm.contents.find { VcsLogContentProvider.TAB_NAME == it.tabName }
+  }
+
   internal fun selectMainLog(cm: ContentManager): Boolean {
-    val contents = cm.contents
-    for (content in contents) {
-      // here tab name is used instead of log ui id to select the correct tab
-      // it's done this way since main log ui may not be created when this method is called
-      if (VcsLogContentProvider.TAB_NAME == content.tabName) {
-        cm.setSelectedContent(content)
-        return true
-      }
-    }
-    return false
+    val mainContent = findMainLog(cm) ?: return false
+    cm.setSelectedContent(mainContent)
+    return true
   }
 
   fun selectMainLog(project: Project): Boolean {

@@ -178,13 +178,16 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     return content.resolveToolWindowId()
   }
 
+  fun initLazyContent(content: Content) {
+    val provider = content.getUserData(CONTENT_PROVIDER_SUPPLIER_KEY)?.invoke() ?: return
+    content.putUserData(CONTENT_PROVIDER_SUPPLIER_KEY, null)
+    provider.initTabContent(content)
+    IJSwingUtilities.updateComponentTreeUI(content.component)
+  }
+
   private inner class ContentProvidersListener : ContentManagerListener {
     override fun selectionChanged(event: ContentManagerEvent) {
-      val content = event.content
-      val provider = content.getUserData(CONTENT_PROVIDER_SUPPLIER_KEY)?.invoke() ?: return
-      provider.initTabContent(content)
-      IJSwingUtilities.updateComponentTreeUI(content.component)
-      content.putUserData(CONTENT_PROVIDER_SUPPLIER_KEY, null)
+      initLazyContent(event.content)
     }
   }
 
