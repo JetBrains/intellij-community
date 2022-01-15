@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.CommonBundle;
@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -73,22 +74,21 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     }, null);
   }
 
-  @NotNull
   @Override
-  public Key<EditorNotificationPanel> getKey() {
+  public @NotNull Key<EditorNotificationPanel> getKey() {
     return KEY;
   }
 
   @Override
-  public EditorNotificationPanel createNotificationPanel(@NotNull final VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
-    if (!FileTypeRegistry.getInstance().isFileOfType(file, JavaClassFileType.INSTANCE)) return null;
+  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file,
+                                                         @NotNull FileEditor fileEditor,
+                                                         @NotNull Project project) {
+    if (!FileTypeRegistry.getInstance().isFileOfType(file, JavaClassFileType.INSTANCE)) {
+      return null;
+    }
 
-    final EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor);
-
-    String text = JavaUiBundle.message("class.file.decompiled.text");
-    String classInfo = getClassFileInfo(file);
-    if (classInfo != null) text += ", " + classInfo;
-    panel.setText(text);
+    final EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor)
+      .text(getTextWithClassFileInfo(file));
 
     final VirtualFile sourceFile = JavaEditorFileSwapper.findSourceFile(project, file);
     if (sourceFile == null) {
@@ -102,7 +102,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
           for (AttachSourcesProvider.AttachSourcesAction action : each.getActions(libraries, clsFile)) {
             if (hasNonLightAction) {
               if (action instanceof AttachSourcesProvider.LightAttachSourcesAction) {
-                continue; // Don't add LightAttachSourcesAction if non light action exists.
+                continue; // Don't add LightAttachSourcesAction if non-light action exists.
               }
             }
             else {
@@ -117,28 +117,28 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
 
         actions.sort((o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
 
-        AttachSourcesProvider.AttachSourcesAction defaultAction;
-        if (findSourceFileInSameJar(file) != null) {
-          defaultAction = new AttachJarAsSourcesAction(file);
-        }
-        else {
-          defaultAction = new ChooseAndAttachSourcesAction(project, panel);
-        }
+        AttachSourcesProvider.AttachSourcesAction defaultAction = findSourceFileInSameJar(file) != null ?
+                                                                  new AttachJarAsSourcesAction(file) :
+                                                                  new ChooseAndAttachSourcesAction(project, panel);
         actions.add(defaultAction);
 
-        String originalText = text;
         for (final AttachSourcesProvider.AttachSourcesAction action : actions) {
           String escapedName = GuiUtils.getTextWithoutMnemonicEscaping(action.getName());
           panel.createActionLabel(escapedName, () -> {
             List<LibraryOrderEntry> entries = findLibraryEntriesForFile(file, project);
             if (!Comparing.equal(libraries, entries)) {
-              Messages.showErrorDialog(project, JavaUiBundle.message("can.t.find.library.for.0", file.getName()), CommonBundle.message("title.error"));
+              Messages.showErrorDialog(project,
+                                       JavaUiBundle.message("can.t.find.library.for.0", file.getName()),
+                                       CommonBundle.message("title.error"));
               return;
             }
 
+            String originalText = panel.getText();
             panel.setText(action.getBusyText());
 
-            action.perform(entries).doWhenProcessed(() -> panel.setText(originalText));
+            action.perform(entries).doWhenProcessed(() -> {
+              panel.setText(originalText);
+            });
           });
         }
       }
@@ -155,8 +155,9 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     return panel;
   }
 
-  @Nullable
-  private static String getClassFileInfo(VirtualFile file) {
+  private static @NotNull @NlsContexts.Label String getTextWithClassFileInfo(@NotNull VirtualFile file) {
+    StringBuilder info = new StringBuilder(JavaUiBundle.message("class.file.decompiled.text"));
+
     try {
       byte[] data = file.contentsToByteArray(false);
       if (data.length > 8) {
@@ -164,25 +165,34 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
           if (stream.readInt() == 0xCAFEBABE) {
             int minor = stream.readUnsignedShort();
             int major = stream.readUnsignedShort();
-            StringBuilder info = new StringBuilder().append("bytecode version: ").append(major).append('.').append(minor);
+            info.append(", ")
+              .append(JavaUiBundle.message("class.file.decompiled.bytecode.version.text"))
+              .append(": ")
+              .append(major)
+              .append('.')
+              .append(minor);
+
             JavaSdkVersion sdkVersion = ClsParsingUtil.getJdkVersionByBytecode(major);
             if (sdkVersion != null) {
               info.append(" (Java ");
               info.append(sdkVersion.getDescription());
-              if (sdkVersion.isAtLeast(JavaSdkVersion.JDK_11) && ClsParsingUtil.isPreviewLevel(minor)) info.append("-preview");
+              if (sdkVersion.isAtLeast(JavaSdkVersion.JDK_11) && ClsParsingUtil.isPreviewLevel(minor)) {
+                info.append("-preview");
+              }
               info.append(')');
             }
-            return info.toString();
           }
         }
       }
     }
-    catch (IOException ignored) { }
-    return null;
+    catch (IOException ignored) {
+    }
+
+    return info.toString(); //NON-NLS
   }
 
-  @Nullable
-  private static List<LibraryOrderEntry> findLibraryEntriesForFile(VirtualFile file, @NotNull Project project) {
+  private static @Nullable List<LibraryOrderEntry> findLibraryEntriesForFile(@NotNull VirtualFile file,
+                                                                             @NotNull Project project) {
     List<LibraryOrderEntry> entries = null;
 
     ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
@@ -196,8 +206,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     return entries;
   }
 
-  @Nullable
-  private static VirtualFile findSourceFileInSameJar(VirtualFile classFile) {
+  private static @Nullable VirtualFile findSourceFileInSameJar(@NotNull VirtualFile classFile) {
     String name = classFile.getName();
     int i = name.indexOf('$');
     if (i != -1) name = name.substring(0, i);
@@ -245,8 +254,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
       return ActionCallback.DONE;
     }
 
-    @Nullable
-    private VirtualFile findRoot(Library library) {
+    private @Nullable VirtualFile findRoot(Library library) {
       for (VirtualFile classesRoot : library.getFiles(OrderRootType.CLASSES)) {
         if (VfsUtilCore.isAncestor(classesRoot, myClassFile, true)) {
           return classesRoot;
@@ -304,9 +312,8 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
             return value == null ? new ListSeparator() : null;
           }
 
-          @NotNull
           @Override
-          public String getTextFor(LibraryOrderEntry value) {
+          public @NotNull String getTextFor(LibraryOrderEntry value) {
             return value == null ? CommonBundle.message("action.text.all")
                                  : value.getPresentableName() + " (" + value.getOwnerModule().getName() + ")";
           }

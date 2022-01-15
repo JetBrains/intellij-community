@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.intention.*;
@@ -19,7 +19,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.Label;
 import com.intellij.openapi.util.NlsContexts.LinkLabel;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.util.text.StringUtil;
@@ -175,16 +175,16 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     return UIUtil.getPanelBackground();
   }
 
-  public void setText(@LinkLabel String text) {
+  public void setText(@NotNull @Label String text) {
     myLabel.setText(text);
   }
 
-  public EditorNotificationPanel text(@NotNull @NlsContexts.Label String text) {
+  public EditorNotificationPanel text(@NotNull @Label String text) {
     myLabel.setText(text);
     return this;
   }
 
-  public @NotNull String getText() {
+  public @NotNull @Label String getText() {
     return myLabel.getText();
   }
 
