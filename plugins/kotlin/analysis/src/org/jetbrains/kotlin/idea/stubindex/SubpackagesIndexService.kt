@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceScope
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinPackageModificationListener
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
+import org.jetbrains.kotlin.idea.vfilefinder.KotlinPartialPackageNamesIndex
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -117,12 +118,12 @@ class SubpackagesIndexService(private val project: Project): Disposable {
                     size > 1 && run {
                 val partialFqName = KotlinPartialPackageNamesIndex.toPartialFqName(fqName)
 
-                val cachedPartialFqNames =
+                val cachedPartialFqNames: MutableMap<FqName, Boolean>? =
                     scope.safeAs<ModuleSourceScope>()?.module?.cacheByProvider(dependencies) {
                         Collections.synchronizedMap(mutableMapOf<FqName, Boolean>())
                     }
                 cachedPartialFqNames?.get(partialFqName)?.let { return@run it }
-                val notContains = !PackageIndexUtil.containsFilesWithPartialPackage(partialFqName, scope, project)
+                val notContains = !PackageIndexUtil.containsFilesWithPartialPackage(partialFqName, scope)
                 cachedPartialFqNames?.put(partialFqName, notContains)
                 notContains
             })

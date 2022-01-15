@@ -5,6 +5,8 @@ package org.jetbrains.kotlin.idea.stubindex
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
+import org.jetbrains.kotlin.idea.vfilefinder.KotlinPartialPackageNamesIndex
+import org.jetbrains.kotlin.idea.vfilefinder.hasSomethingInPackage
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
@@ -56,16 +58,8 @@ object PackageIndexUtil {
     @JvmStatic
     fun containsFilesWithPartialPackage(
         partialFqName: FqName,
-        searchScope: GlobalSearchScope,
-        project: Project
-    ): Boolean {
-        return StubIndex.getInstance().getContainingFiles(
-            KotlinPartialPackageNamesIndex.getInstance().key,
-            partialFqName.asString(),
-            project,
-            searchScope
-        ).hasNext()
-    }
+        searchScope: GlobalSearchScope
+    ): Boolean = KotlinPartialPackageNamesIndex.hasSomethingInPackage(partialFqName, searchScope)
 
     @JvmStatic
     fun containsFilesWithExactPackage(
