@@ -21,7 +21,7 @@ public class BekBaseController implements LinearGraphController {
   @NotNull private final BekIntMap myBekIntMap;
   @NotNull private final LinearGraph myBekGraph;
 
-  public BekBaseController(@NotNull PermanentGraphInfo permanentGraphInfo, @NotNull BekIntMap bekIntMap) {
+  public BekBaseController(@NotNull PermanentGraphInfo<?> permanentGraphInfo, @NotNull BekIntMap bekIntMap) {
     myBekIntMap = bekIntMap;
     myBekGraph = new BekLinearGraph(myBekIntMap, permanentGraphInfo.getLinearGraph());
 

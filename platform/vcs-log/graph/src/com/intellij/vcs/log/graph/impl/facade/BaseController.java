@@ -7,9 +7,9 @@ import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class BaseController implements LinearGraphController {
-  @NotNull private final PermanentGraphInfo myPermanentGraphInfo;
+  @NotNull private final PermanentGraphInfo<?> myPermanentGraphInfo;
 
-  public BaseController(@NotNull PermanentGraphInfo permanentGraphInfo) {
+  public BaseController(@NotNull PermanentGraphInfo<?> permanentGraphInfo) {
     myPermanentGraphInfo = permanentGraphInfo;
   }
 

@@ -10,9 +10,9 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class CascadeController implements LinearGraphController {
   private final @NotNull LinearGraphController myDelegateController;
-  @NotNull protected final PermanentGraphInfo myPermanentGraphInfo;
+  @NotNull protected final PermanentGraphInfo<?> myPermanentGraphInfo;
 
-  protected CascadeController(@NotNull LinearGraphController delegateController, @NotNull PermanentGraphInfo permanentGraphInfo) {
+  protected CascadeController(@NotNull LinearGraphController delegateController, @NotNull PermanentGraphInfo<?> permanentGraphInfo) {
     myDelegateController = delegateController;
     myPermanentGraphInfo = permanentGraphInfo;
   }
@@ -62,7 +62,7 @@ public abstract class CascadeController implements LinearGraphController {
   }
 
   @NotNull
-  public PermanentGraphInfo getPermanentGraphInfo() {
+  public PermanentGraphInfo<?> getPermanentGraphInfo() {
     return myPermanentGraphInfo;
   }
 
