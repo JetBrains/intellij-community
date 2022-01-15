@@ -56,6 +56,9 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.base.KotlinPluginKindProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.fir.FirKotlinPluginKindProvider"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.completion.handlers.SmartCompletionTailOffsetProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.completion.handlers.SmartCompletionTailOffsetProviderFE10Impl"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.PluginStartupService"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.core.KotlinPluginDisposable"/>
