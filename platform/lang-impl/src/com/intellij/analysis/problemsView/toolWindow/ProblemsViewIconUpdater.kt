@@ -4,15 +4,15 @@ package com.intellij.analysis.problemsView.toolWindow
 import com.intellij.analysis.problemsView.ProblemsCollector
 import com.intellij.icons.AllIcons.Toolwindows
 import com.intellij.openapi.project.Project
+import com.intellij.ui.BadgeIcon
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.DotBadgeIcon
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.JBUI
 
 internal class ProblemsViewIconUpdater(private val project: Project) {
   private val alarm = SingleAlarm({ ProblemsView.getToolWindow(project)?.setIcon(getIcon()) }, 50, project)
   private val empty = Toolwindows.ToolWindowProblemsEmpty
-  private val badge by lazy { DotBadgeIcon(empty, JBUI.CurrentTheme.IconBadge.ERROR) }
+  private val badge by lazy { BadgeIcon(empty, JBUI.CurrentTheme.IconBadge.ERROR) }
 
   private fun getIcon() = getIcon(ProblemsCollector.getInstance(project).getProblemCount() == 0)
   private fun getIcon(noErrors: Boolean) = when {

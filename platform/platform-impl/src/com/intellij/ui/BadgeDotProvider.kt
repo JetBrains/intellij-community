@@ -2,13 +2,11 @@
 package com.intellij.ui
 
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Paint
 import java.awt.geom.Ellipse2D
-import javax.swing.Icon
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-open class DotBadgeIcon(icon: Icon, paint: Paint) : BadgeIcon(icon, paint) {
+open class BadgeDotProvider : BadgeShapeProvider() {
 
   protected open fun getX() = getDouble("IconBadge.dotX", 16.5) / 20
   protected open fun getY() = getDouble("IconBadge.dotY", 3.5) / 20

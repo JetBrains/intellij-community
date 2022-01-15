@@ -2,13 +2,11 @@
 package com.intellij.ui
 
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Paint
 import java.awt.geom.RoundRectangle2D
-import javax.swing.Icon
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-open class RectBadgeIcon(icon: Icon, paint: Paint) : BadgeIcon(icon, paint) {
+open class BadgeRectProvider : BadgeShapeProvider() {
 
   protected open fun getArc() = 0.5
   protected open fun getTop() = 0.0
