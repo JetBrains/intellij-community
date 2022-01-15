@@ -283,7 +283,7 @@ public final class GitFileAnnotation extends FileAnnotation {
           if (ex != null) {
             LOG.error(ex);
           }
-          else if (!success) {
+          if (!Boolean.TRUE.equals(success)) {
             AbstractVcsHelperImpl.loadAndShowCommittedChangesDetails(myProject, info.getRevisionNumber(), myFilePath, false,
                                                                      () -> getRevisionsChangesProvider().getChangesIn(lineNum));
           }
