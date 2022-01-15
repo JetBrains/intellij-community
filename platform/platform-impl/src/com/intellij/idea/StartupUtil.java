@@ -138,10 +138,6 @@ public final class StartupUtil {
     }, forkJoinPool);
 
     CompletableFuture<@Nullable("if accepted") Object> euaDocumentFuture = isHeadless ? null : scheduleEuaDocumentLoading();
-    CompletableFuture<Runnable> splashTaskFuture = isHeadless || Main.isLightEdit() ? null : CompletableFuture.supplyAsync(() -> {
-      return prepareSplash(args);
-    }, forkJoinPool);
-
     if (args.length > 0 && (Main.CWM_HOST_COMMAND.equals(args[0]) || Main.CWM_HOST_NO_LOBBY_COMMAND.equals(args[0]))) {
       activity = activity.endAndStart("cwm host init");
       try {
@@ -166,6 +162,13 @@ public final class StartupUtil {
     Thread busyThread = Thread.currentThread();
     // LookAndFeel type is not specified to avoid class loading
     CompletableFuture<Object/*LookAndFeel*/> initUiFuture = scheduleInitUi(busyThread, isHeadless);
+
+    // splash instance must be not created before base LaF is created,
+    // it is important on Linux, where GTK LaF must be initialized (to properly setup scale factor).
+    // https://youtrack.jetbrains.com/issue/IDEA-286544
+    CompletableFuture<Runnable> splashTaskFuture = isHeadless || Main.isLightEdit() ? null : initUiFuture.thenApplyAsync(__ -> {
+      return prepareSplash(args);
+    }, forkJoinPool);
 
     activity = activity.endAndStart("log4j configuration");
     configureLog4j();
