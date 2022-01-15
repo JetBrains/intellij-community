@@ -31,13 +31,13 @@ fun Method.isOldBackendLateinitVariableGetter() =
 
 fun Method.isIRBackendLateinitVariableGetterReturningAny() =
     verifyMethod(
-        expectedNumOfBytecodes = 20,
+        expectedNumOfBytecodes = 19,
         MethodBytecodeVerifierFromArray(lateinitVarReturningAnyBytecodes)
     )
 
 fun Method.isIRBackendLateinitVariableGetter() =
     verifyMethod(
-        expectedNumOfBytecodes = 18,
+        expectedNumOfBytecodes = 17,
         MethodBytecodeVerifierFromArray(lateinitVarPropertyBytecodes)
     )
 
@@ -45,11 +45,10 @@ private val commonLateinitVarPropertyBytecodes =
     intArrayOf(
         Opcodes.ALOAD,
         Opcodes.GETFIELD,
-        Opcodes.ASTORE,
-        Opcodes.ALOAD,
+        Opcodes.DUP,
         Opcodes.IFNULL,
-        Opcodes.ALOAD,
         Opcodes.ARETURN,
+        Opcodes.POP,
         Opcodes.LDC,
         Opcodes.INVOKESTATIC,
     )
