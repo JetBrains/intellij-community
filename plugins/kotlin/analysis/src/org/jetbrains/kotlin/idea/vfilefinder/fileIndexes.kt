@@ -48,7 +48,7 @@ abstract class KotlinFileIndexBase<T>(classOfIndex: Class<T>) : ScalarIndexExten
         override fun isEqual(val1: FqName?, val2: FqName?) = val1 == val2
     }
 
-    private val LOG = Logger.getInstance(classOfIndex)
+    protected val LOG = Logger.getInstance(classOfIndex)
 
     override fun getName() = KEY
 
@@ -89,13 +89,24 @@ object KotlinPartialPackageNamesIndex: KotlinFileIndexBase<KotlinPartialPackageN
 
     private const val VERSION = 1
 
-    private val INDEXER = indexer { fileContent ->
-        val packageFqName =
-            fileContent.takeIf { it.fileType == KotlinFileType.INSTANCE }?.psiFile.safeAs<KtFile>()?.packageFqName?.asString()
-                ?: IDEKotlinBinaryClassCache.getInstance()
-                    .getKotlinBinaryClassHeaderData(fileContent.file, fileContent.content)?.packageName
-        packageFqName?.let(::toPartialFqName)
+    private val INDEXER = DataIndexer<FqName, Void, FileContent> { fileContent ->
+        try {
+            val fqName =
+                fileContent.takeIf { it.fileType == KotlinFileType.INSTANCE }?.psiFile.safeAs<KtFile>()?.packageFqName?.asString()
+                    ?: IDEKotlinBinaryClassCache.getInstance()
+                        .getKotlinBinaryClassHeaderData(fileContent.file, fileContent.content)?.packageName
+            fqName?.let {
+                val voidValue = null as Void?
+                mapOf<FqName, Void?>(FqName(it) to voidValue, toPartialFqName(it) to voidValue)
+            } ?: emptyMap()
+        } catch (e: ProcessCanceledException) {
+            throw e
+        } catch (e: Throwable) {
+            LOG.warn("Error while indexing file " + fileContent.fileName, e)
+            emptyMap()
+        }
     }
+
 
     fun toPartialFqName(fqName: FqName): FqName = toPartialFqName(fqName.asString())
 
