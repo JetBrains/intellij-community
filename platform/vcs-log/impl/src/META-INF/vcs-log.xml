@@ -108,7 +108,6 @@
       <action class="com.intellij.vcs.log.ui.actions.GoToChildRowAction" id="Vcs.Log.GoToChild">
         <keyboard-shortcut first-keystroke="LEFT" keymap="$default"/>
       </action>
-      <action class="com.intellij.vcs.log.ui.actions.IntelliSortChooserToggleAction" id="Vcs.Log.IntelliSortChooser"/>
       <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log" icon="AllIcons.Toolwindows.ToolWindowChanges">
         <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
       </action>
@@ -162,6 +161,9 @@
       </action>
     </group>
 
+    <group id="Vcs.Log.SortTypeGroup" class="com.intellij.vcs.log.ui.actions.VcsLogSortTypeChooserGroup" popup="false"
+           icon="VcsLogIcons.IntelliSort"/>
+
     <group id="Vcs.Log.PresentationSettings" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
            icon="AllIcons.Actions.GroupBy" popup="true">
       <separator key="action.vcs.log.show.separator"/>
@@ -174,9 +176,9 @@
       <reference id="Vcs.Log.ToggleColumns"/>
       <separator/>
       <reference id="Vcs.Log.HighlightersActionGroup"/>
-      <separator/>
+      <separator key="action.vcs.log.sort.type.separator"/>
+      <reference ref="Vcs.Log.SortTypeGroup"/>
       <separator key="action.vcs.log.branches.separator"/>
-      <reference ref="Vcs.Log.IntelliSortChooser"/>
       <reference id="Vcs.Log.CollapseAll"/>
       <reference id="Vcs.Log.ExpandAll"/>
     </group>
