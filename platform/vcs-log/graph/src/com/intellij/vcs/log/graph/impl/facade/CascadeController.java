@@ -21,12 +21,12 @@ public abstract class CascadeController implements LinearGraphController {
   @Override
   public LinearGraphAnswer performLinearGraphAction(@NotNull LinearGraphAction action) {
     LinearGraphAnswer answer = performAction(action);
-    if (answer == null) {
-      answer = myDelegateController.performLinearGraphAction(
-        new VisibleGraphImpl.LinearGraphActionImpl(convertToDelegate(action.getAffectedElement()), action.getType()));
-      answer = delegateGraphChanged(answer);
+    if (answer != null) {
+      return answer;
     }
-    return answer;
+    VisibleGraphImpl.LinearGraphActionImpl delegateAction =
+      new VisibleGraphImpl.LinearGraphActionImpl(convertToDelegate(action.getAffectedElement()), action.getType());
+    return delegateGraphChanged(myDelegateController.performLinearGraphAction(delegateAction));
   }
 
   @Nullable
