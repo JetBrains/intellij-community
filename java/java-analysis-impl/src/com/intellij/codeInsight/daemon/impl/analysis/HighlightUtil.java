@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -1593,11 +1593,6 @@ public final class HighlightUtil {
     }
     List<HighlightInfo> infos = new ArrayList<>();
     PsiType switchExpressionType = switchExpression.getType();
-
-    PsiElement parent = PsiUtil.skipParenthesizedExprUp(switchExpression.getParent());
-    PsiMethod method =
-      parent instanceof PsiReturnStatement ? PsiTreeUtil.getParentOfType(parent, PsiMethod.class, false, PsiLambdaExpression.class) : null;
-
     if (switchExpressionType != null) {
       for (PsiExpression expression : PsiUtil.getSwitchResultExpressions(switchExpression)) {
         PsiType expressionType = expression.getType();
@@ -1606,9 +1601,7 @@ public final class HighlightUtil {
             .message("bad.type.in.switch.expression", expressionType.getCanonicalText(), switchExpressionType.getCanonicalText());
           HighlightInfo info =
             HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(text).create();
-          if (method != null) {
-            QuickFixAction.registerQuickFixAction(info, getFixFactory().createMethodReturnFix(method, expressionType, true));
-          }
+          registerTypeFixes(info, PsiUtil.skipParenthesizedExprUp(switchExpression.getParent()), expressionType);
           infos.add(info);
         }
       }
@@ -1622,6 +1615,24 @@ public final class HighlightUtil {
     }
 
     return infos;
+  }
+
+  private static void registerTypeFixes(@Nullable HighlightInfo info,
+                                        @Nullable PsiElement element,
+                                        @NotNull PsiType expressionType) {
+    if (info == null) return;
+    if (element instanceof PsiReturnStatement) {
+      PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false, PsiLambdaExpression.class);
+      if (method != null) {
+        registerReturnTypeFixes(info, method, expressionType);
+      }
+    }
+    else if (element instanceof PsiLocalVariable) {
+      HighlightFixUtil.registerChangeVariableTypeFixes((PsiLocalVariable)element, expressionType, null, info);
+    }
+    else if (element instanceof PsiAssignmentExpression) {
+      HighlightFixUtil.registerChangeVariableTypeFixes(((PsiAssignmentExpression)element).getLExpression(), expressionType, null, info);
+    }
   }
 
   static HighlightInfo checkRecordComponentName(@NotNull PsiRecordComponent component) {
