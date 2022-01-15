@@ -12,16 +12,18 @@ class KotlinJpsClasspathProviderTest : LightPlatformTestCase() {
     private val KOTLIN_COMPILER_COMMON_FOR_IDE_PREFIX = "kotlin-compiler-common-for-ide"
     private val KOTLIN_COMPILER_FE10_FOR_IDE_PREFIX = "kotlin-compiler-fe10-for-ide"
     private val KOTLIN_COMPILER_IR_FOR_IDE_PREFIX = "kotlin-compiler-ir-for-ide"
+    private val INTELLIJ_PLATFORM_CORE = "intellij.platform.core"
 
     fun testGetClassPath() {
         val inst = KotlinJpsClasspathProvider()
         val jars = inst.classPath
 
-        assertEquals(4, jars.size)
+        assertEquals(5, jars.size)
         assertJar(jars[0], KOTLIN_REFLECT_PREFIX)
         assertJar(jars[1], KOTLIN_COMPILER_COMMON_FOR_IDE_PREFIX)
         assertJar(jars[2], KOTLIN_COMPILER_FE10_FOR_IDE_PREFIX)
         assertJar(jars[3], KOTLIN_COMPILER_IR_FOR_IDE_PREFIX)
+        assertJar(jars[4], INTELLIJ_PLATFORM_CORE)
     }
 
     private fun assertJar(jar: String?, prefix: String) {
