@@ -132,8 +132,9 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
               })
             }
         }.bottomGap(BottomGap.SMALL)
+
+        customAdditionalOptions()
       }.topGap(TopGap.MEDIUM)
-      customAdditionalOptions()
     }
   }
 
