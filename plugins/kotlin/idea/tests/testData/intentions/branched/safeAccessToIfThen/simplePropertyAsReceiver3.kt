@@ -1,5 +1,6 @@
-// AFTER-WARNING: Unnecessary safe call on a non-null receiver of type B?. This expression will have nullable type in future releases
 // AFTER-WARNING: Parameter 'args' is never used
+// AFTER-WARNING: Safe call on a non-null receiver will have nullable type in future releases
+// AFTER-WARNING: Unnecessary safe call on a non-null receiver of type B?
 // AFTER-WARNING: Variable 'x' is never used
 class B {
     val c = C()
