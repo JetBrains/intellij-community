@@ -14,6 +14,7 @@ import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.StartupAbortedException;
+import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -179,8 +180,8 @@ public final class StartupUtil {
       showEuaIfNeededFuture = initUiFuture.thenApply(__ -> true);
     }
     else {
-      showEuaIfNeededFuture = initUiFuture.thenCompose(o -> {
-        return euaDocumentFuture.thenComposeAsync(StartupUtil::showEuaIfNeeded, forkJoinPool);
+      showEuaIfNeededFuture = initUiFuture.thenCompose(baseLaF -> {
+        return euaDocumentFuture.thenComposeAsync(euaDocument -> showEuaIfNeeded(euaDocument, baseLaF), forkJoinPool);
       });
 
       if (splashTaskFuture != null) {
@@ -260,7 +261,7 @@ public final class StartupUtil {
         List<String> argsAsList = List.of(args);
         if (!isHeadless && configImportNeeded) {
           showEuaIfNeededFuture.join();
-          importConfig(argsAsList, log, appStarter, showEuaIfNeededFuture);
+          importConfig(argsAsList, log, appStarter, showEuaIfNeededFuture, initUiFuture);
         }
         return appStarter.start(argsAsList, showEuaIfNeededFuture.thenApply(__ -> initUiFuture.join()));
       })
@@ -411,7 +412,11 @@ public final class StartupUtil {
     }
   }
 
-  private static void importConfig(List<String> args, Logger log, AppStarter appStarter, CompletableFuture<Boolean> agreementShown) {
+  private static void importConfig(List<String> args,
+                                   Logger log,
+                                   AppStarter appStarter,
+                                   CompletableFuture<Boolean> agreementShown,
+                                   CompletableFuture<Object> initUiFuture) {
     Activity activity = StartUpMeasurer.startActivity("screen reader checking");
     try {
       EventQueue.invokeAndWait(AccessibilityUtils::enableScreenReaderSupportIfNecessary);
@@ -423,7 +428,10 @@ public final class StartupUtil {
     appStarter.beforeImportConfigs();
     Path newConfigDir = PathManager.getConfigDir();
     try {
-      EventQueue.invokeAndWait(() -> ConfigImportHelper.importConfigsTo(agreementShown.join(), newConfigDir, args, log));
+      EventQueue.invokeAndWait(() -> {
+        setLafToShowPreAppStartUpDialogIfNeeded(initUiFuture.join());
+        ConfigImportHelper.importConfigsTo(agreementShown.join(), newConfigDir, args, log);
+      });
     }
     catch (InvocationTargetException e) {
       throw new CompletionException(e.getCause());
@@ -437,6 +445,17 @@ public final class StartupUtil {
 
     if (!PlatformUtils.isRider() || ConfigImportHelper.isConfigImported()) {
       PluginManagerCore.scheduleDescriptorLoading();
+    }
+  }
+
+  private static void setLafToShowPreAppStartUpDialogIfNeeded(@NotNull Object baseLaF) {
+    if (DarculaLaf.setPreInitializedBaseLaf((LookAndFeel)baseLaF)) {
+      try {
+        UIManager.setLookAndFeel(new IntelliJLaf());
+      }
+      catch (UnsupportedLookAndFeelException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 
@@ -584,7 +603,7 @@ public final class StartupUtil {
   }
 
   // executed not in EDT
-  private static CompletableFuture<Boolean> showEuaIfNeeded(@Nullable Object euaDocument) {
+  private static CompletableFuture<Boolean> showEuaIfNeeded(@Nullable Object euaDocument, @NotNull Object baseLaF) {
     Activity activity = StartUpMeasurer.startActivity("eua showing");
     EndUserAgreement.Document document = (EndUserAgreement.Document)euaDocument;
 
@@ -593,6 +612,7 @@ public final class StartupUtil {
     try {
       if (document != null) {
         euaFuture = CompletableFuture.supplyAsync(() -> {
+          setLafToShowPreAppStartUpDialogIfNeeded(baseLaF);
           Agreements.showEndUserAndDataSharingAgreements(document);
           return true;
         }, EventQueue::invokeLater);
@@ -600,6 +620,7 @@ public final class StartupUtil {
       }
       else if (ConsentOptions.needToShowUsageStatsConsent()) {
         euaFuture = CompletableFuture.supplyAsync(() -> {
+          setLafToShowPreAppStartUpDialogIfNeeded(baseLaF);
           Agreements.showDataSharingAgreement();
           return false;
         }, EventQueue::invokeLater);

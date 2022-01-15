@@ -48,9 +48,8 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
   private static final AtomicReference<LookAndFeel> preInitializedBaseLaf = new AtomicReference<>();
 
-  public static void setPreInitializedBaseLaf(@NotNull LookAndFeel value) {
-    boolean isSet = preInitializedBaseLaf.compareAndSet(null, value);
-    assert isSet;
+  public static boolean setPreInitializedBaseLaf(@NotNull LookAndFeel value) {
+    return preInitializedBaseLaf.compareAndSet(null, value);
   }
 
   private LookAndFeel base;
@@ -287,7 +286,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       log(e);
     }
 
-    LoadingState.COMPONENTS_REGISTERED.checkOccurred();
+    LoadingState.BASE_LAF_INITIALIZED.checkOccurred();
     ideEventQueueInitialized(IdeEventQueue.getInstance());
   }
 
@@ -328,7 +327,9 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   private void ideEventQueueInitialized(@NotNull IdeEventQueue eventQueue) {
     if (disposable == null) {
       disposable = Disposer.newDisposable();
-      Disposer.register(ApplicationManager.getApplication(), disposable);
+      if (LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
+        Disposer.register(ApplicationManager.getApplication(), disposable);
+      }
     }
 
     eventQueue.addDispatcher(new IdeEventQueue.EventDispatcher() {
