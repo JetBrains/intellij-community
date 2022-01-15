@@ -14,8 +14,6 @@ import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.internal.inspector.UiInspectorAction
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionManager
@@ -147,7 +145,9 @@ open class IdeStarter : ApplicationStarter {
           }
       }
     }
-    return CompletableFuture.completedFuture(null)
+    return CompletableFuture.completedFuture(null).thenRun {
+      WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
+    }
   }
 
   private fun showWelcomeFrame(lifecyclePublisher: AppLifecycleListener): Boolean {
