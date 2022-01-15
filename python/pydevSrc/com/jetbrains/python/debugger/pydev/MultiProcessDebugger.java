@@ -33,7 +33,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
 
   private final RemoteDebugger myMainDebugger;
   private final List<RemoteDebugger> myOtherDebuggers = new ArrayList<>();
-  private ServerSocket myDebugServerSocket;
+  private final @NotNull ServerSocket myDebugServerSocket;
   private DebuggerProcessAcceptor myDebugProcessAcceptor;
   private final List<DebuggerProcessListener> myOtherDebuggerCloseListener = new ArrayList<>();
 
@@ -51,7 +51,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
       myDebugServerSocket = createServerSocket();
     }
     catch (ExecutionException e) {
-      LOG.error("Failed to start debugger:", e);
+      throw new RuntimeException("Failed to start debugger", e);
     }
     myMainDebugger = new RemoteDebugger(myDebugProcess, myDebugServerSocket, myTimeoutInMillis);
   }
@@ -186,7 +186,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public  List<Pair<String, Boolean>> getSmartStepIntoVariants(String threadId, String frameId, int startContextLine, int endContextLine)
+  public List<Pair<String, Boolean>> getSmartStepIntoVariants(String threadId, String frameId, int startContextLine, int endContextLine)
     throws PyDebuggerException {
     return debugger(threadId).getSmartStepIntoVariants(threadId, frameId, startContextLine, endContextLine);
   }
