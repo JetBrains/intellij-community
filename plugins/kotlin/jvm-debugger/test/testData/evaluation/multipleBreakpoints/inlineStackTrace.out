@@ -1,4 +1,3 @@
-// IGNORE_BACKEND: JVM_WITH_IR_EVALUATOR, JVM_IR_WITH_IR_EVALUATOR
 LineBreakpoint created at inlineStackTrace.kt:8
 LineBreakpoint created at inlineStackTrace.kt:16
 LineBreakpoint created at inlineStackTrace.kt:25
