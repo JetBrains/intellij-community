@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
+import com.intellij.openapi.wm.impl.InternalDecoratorImpl
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.awt.RelativePoint
@@ -25,6 +26,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.content.AlertIcon
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
+import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.tabs.*
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.MorePopupAware
@@ -77,7 +79,11 @@ internal class SingleContentLayout(
   }
 
   private fun getSingleContentOrNull(): Content? {
-    return if (myTabs.size == 1) myTabs[0].content else null
+    return findTopLevelContentManager()?.contentsRecursively?.singleOrNull()
+  }
+
+  private fun findTopLevelContentManager(): ContentManagerImpl? {
+    return InternalDecoratorImpl.findTopLevelDecorator(myUi.component)?.contentManager as? ContentManagerImpl
   }
 
   private fun tryUpdateContentView() {
@@ -126,7 +132,7 @@ internal class SingleContentLayout(
     assert(toolbars.isEmpty())
     supplier.getToolbarActions()?.let { mainActionGroup ->
       toolbars[ToolbarType.MAIN] = createToolbar(
-        "MainSingleContentToolbar",
+        supplier.getMainToolbarPlace(),
         mainActionGroup,
         content.component
       )
@@ -140,7 +146,7 @@ internal class SingleContentLayout(
       contentActions.add(MyInvisibleAction())
 
       toolbars[ToolbarType.CLOSE_GROUP] = createToolbar(
-        "CloseSingleContentGroup",
+        supplier.getContentToolbarPlace(),
         contentActions,
         content.component
       ).apply {
@@ -305,7 +311,7 @@ internal class SingleContentLayout(
         if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
           val tabLabel = e.component as? MyContentTabLabel
           if (tabLabel != null && tabLabel.content.isCloseable) {
-            retrieveInfo(tabLabel).let(jbTabs::removeTab)
+            tabLabel?.closeContent()
           }
         }
       }
@@ -334,7 +340,7 @@ internal class SingleContentLayout(
 
       val tabList = ActionManager.getInstance().getAction("TabList")
       val tabListGroup = DefaultActionGroup(tabList, Separator.create(), MyInvisibleAction())
-      popupToolbar = createToolbar("TabAdapterGroup", tabListGroup, this).apply {
+      popupToolbar = createToolbar(ActionPlaces.TOOLWINDOW_POPUP, tabListGroup, this).apply {
         setReservePlaceAutoPopupIcon(false)
         layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
       }.component
@@ -465,8 +471,10 @@ internal class SingleContentLayout(
         retrieveInfo(this).let { jbTabs.select(it, true) }
       }
 
-      override fun closeContent() {
-        retrieveInfo(this).let(jbTabs::removeTab)
+      public override fun closeContent() {
+        retrieveInfo(this).let { info ->
+          getSingleContentOrNull()?.getSupplier()?.close(info)
+        }
       }
 
       override fun getData(dataId: String): Any? {

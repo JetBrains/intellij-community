@@ -43,7 +43,7 @@ internal class PackageSearchApiClient(
     private val maxRequestResultsCount = 25
     private val maxMavenCoordinatesParts = 3
 
-    private val serializer = Json {
+    private val json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = false
     }
@@ -76,7 +76,7 @@ internal class PackageSearchApiClient(
         }
 
         return requestString(requestUrl, contentType.standard, timeoutInSeconds, headers)
-            .mapSuccess { serializer.decodeFromString(it) }
+            .mapSuccess { json.decodeFromString(it) }
     }
 
     suspend fun packagesByRange(range: List<String>): ApiResult<ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>> {
@@ -94,12 +94,12 @@ internal class PackageSearchApiClient(
         val requestUrl = "$baseUrl/package?range=$joinedRange"
 
         return requestString(requestUrl, contentType.standard, timeoutInSeconds, headers)
-            .mapSuccess { serializer.decodeFromString(it) }
+            .mapSuccess { json.decodeFromString(it) }
     }
 
     private fun <T : Any> argumentError(message: String) = ApiResult.Failure<T>(IllegalArgumentException(message))
 
     suspend fun repositories(): ApiResult<ApiRepositoriesResponse> =
         requestString("$baseUrl/repositories", contentType.standard, timeoutInSeconds, headers)
-            .mapSuccess { serializer.decodeFromString(it) }
+            .mapSuccess { json.decodeFromString(it) }
 }

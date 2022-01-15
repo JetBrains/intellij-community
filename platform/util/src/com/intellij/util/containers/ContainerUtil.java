@@ -2031,16 +2031,15 @@ public final class ContainerUtil {
     return element == null ? Collections.emptySet() : Collections.singleton(element);
   }
 
+  /**
+   * @deprecated Use {@link Map#computeIfAbsent(Object, java.util.function.Function)}
+   */
   public static @NotNull <T, V> V getOrCreate(@NotNull Map<T, V> result, final T key, @NotNull V defaultValue) {
     return result.computeIfAbsent(key, __ -> defaultValue);
   }
 
   public static <T, V> V getOrCreate(@NotNull Map<T, V> result, final T key, @NotNull Factory<? extends V> factory) {
-    V value = result.get(key);
-    if (value == null) {
-      result.put(key, value = factory.create());
-    }
-    return value;
+    return result.computeIfAbsent(key, __ -> factory.create());
   }
 
   @Contract(pure = true)

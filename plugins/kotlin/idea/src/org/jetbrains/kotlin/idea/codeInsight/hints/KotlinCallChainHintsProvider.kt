@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.hints.InlayInfo
+import com.intellij.codeInsight.hints.METHOD_CHAINS_GROUP
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.codeInsight.hints.chain.AbstractCallChainHintsProvider
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
@@ -24,6 +25,10 @@ import org.jetbrains.kotlin.types.KotlinType
  * Test - [org.jetbrains.kotlin.idea.codeInsight.hints.KotlinCallChainHintsProviderTest]
  */
 class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedExpression, KotlinType, BindingContext>() {
+
+    override val groupId: String
+        get() = METHOD_CHAINS_GROUP
+
     override val previewText: String
         get() = """
             fun main() {

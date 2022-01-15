@@ -34,6 +34,9 @@ class GroovyParameterTypeHintsInlayProvider : InlayHintsProvider<GroovyParameter
   override val key: SettingsKey<Settings>
     get() = ourKey
 
+  override val groupId: String
+    get() = TYPES_GROUP
+
   override val previewText: String?
     get() = "def foo(a) {}\n" +
             "foo(1)\n\n\n" +

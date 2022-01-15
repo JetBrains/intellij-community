@@ -35,7 +35,7 @@ public class JavaAnonymousClassesNodeProvider
   @Override
   public Collection<JavaAnonymousClassTreeElement> provideNodes(@NotNull TreeElement node) {
     if (node instanceof PsiMethodTreeElement || node instanceof PsiFieldTreeElement || node instanceof ClassInitializerTreeElement) {
-      final PsiElement el = ((PsiTreeElementBase)node).getElement();
+      final PsiElement el = ((PsiTreeElementBase<?>)node).getElement();
       if (el != null) {
         for (AnonymousElementProvider provider : AnonymousElementProvider.EP_NAME.getExtensionList()) {
           final PsiElement[] elements = provider.getAnonymousElements(el);

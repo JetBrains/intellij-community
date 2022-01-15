@@ -12,7 +12,6 @@ import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.AnnotateIntentionAction;
 import com.intellij.codeInsight.intention.impl.DeannotateIntentionAction;
 import com.intellij.codeInsight.javadoc.AnnotationDocGenerator;
-import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.codeInsight.javadoc.NonCodeAnnotationGenerator;
 import com.intellij.codeInspection.dataFlow.EditContractIntention;
@@ -182,7 +181,7 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
       List<AnAction> actions = new ArrayList<>();
       for (PsiParameter parameter: method.getParameterList().getParameters()) {
         MakeInferredAnnotationExplicit intention = new MakeInferredAnnotationExplicit();
-        if (intention.isAvailable(project, file, parameter)) {
+        if (intention.isAvailable(file, parameter)) {
           actions.add(new AnAction(JavaBundle.message("action.text.0.on.parameter.1", intention.getText(), parameter.getName())) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {

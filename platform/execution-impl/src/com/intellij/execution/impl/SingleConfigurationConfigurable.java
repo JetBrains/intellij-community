@@ -93,7 +93,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         if (!myChangingNameFromCode) {
           RunConfiguration runConfiguration = getSettings().getConfiguration();
           if (runConfiguration instanceof LocatableConfigurationBase) {
-            ((LocatableConfigurationBase)runConfiguration).setNameChangedByUser(true);
+            ((LocatableConfigurationBase<?>)runConfiguration).setNameChangedByUser(true);
           }
         }
       }

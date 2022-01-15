@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
 import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.shouldNotConvertToProperty
@@ -137,7 +137,7 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
 
     override fun applyTo(element: KtCallExpression, editor: Editor?) {
         val propertyName = detectPropertyNameToUse(element) ?: return
-        runWriteAction {
+        runWriteActionIfPhysical(element) {
             applyTo(element, propertyName, reformat = true)
         }
     }

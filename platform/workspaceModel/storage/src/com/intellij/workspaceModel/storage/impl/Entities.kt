@@ -98,7 +98,7 @@ abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
   override lateinit var entitySource: EntitySource
     internal set
 
-  internal lateinit var id: EntityId
+  internal var id: EntityId = 0
 
   internal lateinit var snapshot: AbstractEntityStorage
 
@@ -249,13 +249,10 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
   abstract class WithCalculablePersistentId<E : WorkspaceEntity> : WorkspaceEntityData<E>() {
     abstract fun persistentId(): PersistentEntityId<*>
   }
-
-  abstract class WithPersistentId<E : WorkspaceEntity> : WorkspaceEntityData<E>()
 }
 
-fun WorkspaceEntityData<*>.persistentId(snapshot: WorkspaceEntityStorage): PersistentEntityId<*>? = when (this) {
+fun WorkspaceEntityData<*>.persistentId(): PersistentEntityId<*>? = when (this) {
   is WorkspaceEntityData.WithCalculablePersistentId -> this.persistentId()
-  is WorkspaceEntityData.WithPersistentId -> (this.createEntity(snapshot) as WorkspaceEntityWithPersistentId).persistentId()
   else -> null
 }
 

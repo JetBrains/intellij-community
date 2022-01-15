@@ -162,7 +162,7 @@ public class BreakpointsDialog extends DialogWrapper {
           if (!(lastPathComponent instanceof BreakpointsGroupNode)) {
             return TreeVisitor.Action.CONTINUE;
           }
-          return ((BreakpointsGroupNode) lastPathComponent).getGroup().expandedByDefault() ?
+          return ((BreakpointsGroupNode<?>) lastPathComponent).getGroup().expandedByDefault() ?
             TreeVisitor.Action.CONTINUE :
             TreeVisitor.Action.SKIP_CHILDREN;
         },
@@ -276,8 +276,8 @@ public class BreakpointsDialog extends DialogWrapper {
         res.add(group);
         Object component = tree.getLastSelectedPathComponent();
         if (tree.getSelectionCount() == 1 && component instanceof BreakpointsGroupNode &&
-            ((BreakpointsGroupNode)component).getGroup() instanceof XBreakpointCustomGroup) {
-          res.add(new SetAsDefaultGroupAction((XBreakpointCustomGroup)((BreakpointsGroupNode)component).getGroup()));
+            ((BreakpointsGroupNode<?>)component).getGroup() instanceof XBreakpointCustomGroup) {
+          res.add(new SetAsDefaultGroupAction((XBreakpointCustomGroup)((BreakpointsGroupNode<?>)component).getGroup()));
         }
         if (tree.getSelectionCount() == 1 && component instanceof BreakpointItemNode) {
           res.add(new EditDescriptionAction((XBreakpointBase)((BreakpointItemNode)component).getBreakpointItem().getBreakpoint()));
@@ -479,7 +479,7 @@ public class BreakpointsDialog extends DialogWrapper {
       for (BreakpointItem item : myTreeController.getSelectedBreakpoints(true)) {
         Object breakpoint = item.getBreakpoint();
         if (breakpoint instanceof XBreakpointBase) {
-          ((XBreakpointBase)breakpoint).setGroup(groupName);
+          ((XBreakpointBase<?, ?, ?>)breakpoint).setGroup(groupName);
         }
       }
       myTreeController.rebuildTree(myBreakpointItems);

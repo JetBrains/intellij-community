@@ -296,7 +296,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
             @Nullable
             @Override
             public Comparable getSortKey() {
-              return ((ProjectViewNode)child).getSortKey();
+              return ((ProjectViewNode<?>)child).getSortKey();
             }
 
             @Nullable
@@ -308,18 +308,18 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
             @Nullable
             @Override
             public String getQualifiedNameSortKey() {
-              return ((ProjectViewNode)child).getQualifiedNameSortKey();
+              return ((ProjectViewNode<?>)child).getQualifiedNameSortKey();
             }
 
             @Nullable
             @Override
             public Comparable getTypeSortKey() {
-              return ((ProjectViewNode)child).getTypeSortKey();
+              return ((ProjectViewNode<?>)child).getTypeSortKey();
             }
 
             @Override
             public int getTypeSortWeight(boolean sortByType) {
-              return ((ProjectViewNode)child).getTypeSortWeight(sortByType);
+              return ((ProjectViewNode<?>)child).getTypeSortWeight(sortByType);
             }
 
             @Override
@@ -329,7 +329,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
 
             @Override
             public boolean contains(@NotNull VirtualFile file) {
-              return ((ProjectViewNode)child).contains(file);
+              return ((ProjectViewNode<?>)child).contains(file);
             }
 
             @Override

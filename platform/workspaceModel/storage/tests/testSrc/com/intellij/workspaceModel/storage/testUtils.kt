@@ -2,9 +2,8 @@
 package com.intellij.workspaceModel.storage
 
 import com.google.common.collect.HashBiMap
-import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.workspaceModel.storage.impl.*
-import com.intellij.workspaceModel.storage.impl.containers.copy
+import com.intellij.workspaceModel.storage.impl.containers.BidirectionalLongMultiMap
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.TestCase.*
 import org.junit.Assert
@@ -74,7 +73,7 @@ object SerializationRoundTripChecker {
     assertEquals(4, RefsTable::class.memberProperties.size)
 
     // Assert indexes
-    assertBiMultiMap(expected.indexes.softLinks.index, actual.indexes.softLinks.index)
+    assertBiLongMultiMap(expected.indexes.softLinks.index, actual.indexes.softLinks.index)
     assertBiMap(expected.indexes.persistentIdIndex.index, actual.indexes.persistentIdIndex.index)
     // External index should not be persisted
     assertTrue(actual.indexes.externalMappings.isEmpty())
@@ -121,16 +120,16 @@ object SerializationRoundTripChecker {
     }
   }
 
-  private fun <A, B> assertBiMultiMap(expected: BidirectionalMultiMap<A, B>, actual: BidirectionalMultiMap<A, B>) {
+  private fun <B> assertBiLongMultiMap(expected: BidirectionalLongMultiMap<B>, actual: BidirectionalLongMultiMap<B>) {
     val local = expected.copy()
-    for (key in actual.keys) {
+    actual.keys.forEach { key ->
       val value = actual.getValues(key)
       val expectedValue = local.getValues(key)
       local.removeKey(key)
 
-      assertOrderedEquals(expectedValue, value) { a, b -> a == b }
+      assertOrderedEquals(expectedValue.sortedBy { it.toString() }, value.sortedBy { it.toString() }) { a, b -> a == b }
     }
-    if (!local.isEmpty) {
+    if (!local.isEmpty()) {
       Assert.fail("No mappings found for the following keys: " + local.keys)
     }
   }

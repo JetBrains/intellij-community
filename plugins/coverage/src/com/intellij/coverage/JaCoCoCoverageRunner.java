@@ -56,7 +56,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
         RunConfigurationBase configuration = ((BaseCoverageSuite)baseCoverageSuite).getConfiguration();
 
         Module mainModule = configuration instanceof ModuleBasedConfiguration
-                            ? ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule()
+                            ? ((ModuleBasedConfiguration<?, ?>)configuration).getConfigurationModule().getModule()
                             : null;
 
         loadExecutionData(sessionDataFile, data, mainModule, project, baseCoverageSuite);
@@ -270,7 +270,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
     File coverageFile = new File(suite.getSuites()[0].getCoverageDataFileName());
     RunConfigurationBase runConfiguration = suite.getRunConfiguration();
     Module module = runConfiguration instanceof ModuleBasedConfiguration
-                    ? ((ModuleBasedConfiguration)runConfiguration).getConfigurationModule().getModule()
+                    ? ((ModuleBasedConfiguration<?, ?>)runConfiguration).getConfigurationModule().getModule()
                     : null;
 
     ExecFileLoader loader = new ExecFileLoader();

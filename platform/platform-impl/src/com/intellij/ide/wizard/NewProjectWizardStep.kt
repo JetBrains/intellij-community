@@ -11,7 +11,6 @@ import com.intellij.ui.dsl.builder.Panel
  * Represents small part of UI [setupUI] and rules how this UI applies [setupProject] on new project.
  * All steps form tree of steps that applies in order from root to leaf.
  *
- * @see NewProjectWizardChildStep
  * @see NewProjectWizardMultiStepFactory
  */
 interface NewProjectWizardStep {
@@ -43,12 +42,6 @@ interface NewProjectWizardStep {
 
   /**
    * Applies data from UI into project model or settings.
-   * Use [context] to get UI data from parent steps.
    */
   fun setupProject(project: Project)
-
-  interface Factory {
-
-    fun createStep(context: WizardContext): NewProjectWizardStep
-  }
 }

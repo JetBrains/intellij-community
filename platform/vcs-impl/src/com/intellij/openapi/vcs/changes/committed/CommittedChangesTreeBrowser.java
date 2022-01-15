@@ -566,18 +566,13 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
 
     MyRepositoryChangesViewer(Project project) {
       super(project);
+      setViewerBorder(RIGHT_BORDER);
     }
 
     @Nullable
     @Override
     protected JComponent createHeaderPanel() {
       return myHeaderPanel;
-    }
-
-    @NotNull
-    @Override
-    protected Border createViewerBorder() {
-      return RIGHT_BORDER;
     }
 
     public void syncSizeWithToolbar(@NotNull JComponent toolbar) {

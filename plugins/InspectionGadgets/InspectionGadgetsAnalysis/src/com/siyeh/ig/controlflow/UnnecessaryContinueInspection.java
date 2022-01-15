@@ -71,8 +71,8 @@ public class UnnecessaryContinueInspection extends BaseInspection {
       final PsiStatement continuedStatement = statement.findContinuedStatement();
       PsiStatement body = null;
       if (continuedStatement instanceof PsiLoopStatement) {
-        final PsiLoopStatement foreachStatement = (PsiLoopStatement)continuedStatement;
-        body = foreachStatement.getBody();
+        final PsiLoopStatement loopStatement = (PsiLoopStatement)continuedStatement;
+        body = loopStatement.getBody();
       }
       if (body == null) {
         return;

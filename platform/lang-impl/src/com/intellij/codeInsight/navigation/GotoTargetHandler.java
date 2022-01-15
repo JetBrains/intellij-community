@@ -166,7 +166,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       setAdText(getAdText(gotoData.source, targets.length));
     final JBPopup popup = builder.createPopup();
 
-    JScrollPane pane = builder instanceof PopupChooserBuilder ? ((PopupChooserBuilder)builder).getScrollPane() : null;
+    JScrollPane pane = builder instanceof PopupChooserBuilder ? ((PopupChooserBuilder<?>)builder).getScrollPane() : null;
     if (pane != null) {
       pane.setBorder(null);
       pane.setViewportBorder(null);

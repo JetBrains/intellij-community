@@ -47,8 +47,8 @@
 
     <cachesInvalidator implementation="com.intellij.vcs.log.impl.VcsLogCachesInvalidator"/>
 
-    <applicationService serviceInterface="com.intellij.vcs.log.VcsLogFileHistoryProvider"
-                        serviceImplementation="com.intellij.vcs.log.history.VcsLogFileHistoryProviderImpl"/>
+    <projectService serviceInterface="com.intellij.vcs.log.VcsLogFileHistoryProvider"
+                    serviceImplementation="com.intellij.vcs.log.history.VcsLogFileHistoryProviderImpl"/>
 
     <getDataRule key="Vcs.FileHistory.Ui" implementationClass="com.intellij.vcs.log.history.FileHistoryUiDataRule"/>
     <getDataRule key="Vcs.Log.Main.Ui" implementationClass="com.intellij.vcs.log.ui.MainVcsLogUiDataRule"/>

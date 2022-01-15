@@ -21,7 +21,18 @@ import kotlin.reflect.KMutableProperty0
 private const val EXTENSION_POINT_NAME = "com.intellij.codeInsight.inlayProvider"
 
 const val CODE_VISION_GROUP = "code.vision"
+const val PARAMETERS_GROUP = "parameters"
 const val TYPES_GROUP = "types"
+const val VALUES_GROUP = "values"
+const val ANNOTATIONS_GROUP = "annotations"
+const val METHOD_CHAINS_GROUP = "method.chains"
+const val LAMBDAS_GROUP = "lambdas"
+const val CODE_AUTHOR_GROUP = "code.author"
+const val URL_PATH_GROUP = "url.path"
+const val OTHER_GROUP = "other"
+
+val sortedGroups = arrayOf(CODE_VISION_GROUP, PARAMETERS_GROUP, TYPES_GROUP, VALUES_GROUP, ANNOTATIONS_GROUP, METHOD_CHAINS_GROUP,
+  LAMBDAS_GROUP, CODE_AUTHOR_GROUP, URL_PATH_GROUP, OTHER_GROUP)
 
 object InlayHintsProviderExtension : LanguageExtension<InlayHintsProvider<*>>(EXTENSION_POINT_NAME) {
   private fun findLanguagesWithHintsSupport(): List<Language> {
@@ -74,12 +85,18 @@ interface InlayHintsProvider<T : Any> {
   val name: String
 
   @JvmDefault
-  val groupId: String get() = CODE_VISION_GROUP
+  val groupId: String get() = OTHER_GROUP
 
   /**
    * Used for persisting settings.
    */
   val key: SettingsKey<T>
+
+  @JvmDefault
+  val description: String?
+    get() {
+      return getProperty("inlay." + key.id + ".description")
+    }
 
   /**
    * Text, that will be used in the settings as a preview.
@@ -101,6 +118,10 @@ interface InlayHintsProvider<T : Any> {
     val factory = PsiFileFactory.getInstance(project)
     return factory.createFileFromText("dummy", fileType, document.text)
   }
+
+  @Nls
+  @JvmDefault
+  fun getProperty(key: String): String? = null
 
   val isVisibleInSettings: Boolean
     get() = true

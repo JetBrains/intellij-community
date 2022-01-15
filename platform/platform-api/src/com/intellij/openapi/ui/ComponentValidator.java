@@ -59,7 +59,7 @@ public class ComponentValidator {
    * ComponentWithBrowseButton isn't a {@link ErrorBorderCapable} component so it needs a special provider.
    * Suitable for {@link ComponentWithBrowseButton} and it's descendants.
    */
-  public static final Function<JComponent, JComponent> CWBB_PROVIDER = c -> ((ComponentWithBrowseButton)c).getChildComponent();
+  public static final Function<JComponent, JComponent> CWBB_PROVIDER = c -> ((ComponentWithBrowseButton<?>)c).getChildComponent();
 
   private final Disposable parentDisposable;
   private Supplier<? extends ValidationInfo> validator;
@@ -385,7 +385,7 @@ public class ComponentValidator {
   }
 
   private static Optional<Component> getFocusable(Component source) {
-    return (source instanceof JComboBox && !((JComboBox)source).isEditable() ||
+    return (source instanceof JComboBox && !((JComboBox<?>)source).isEditable() ||
             source instanceof JCheckBox ||
             source instanceof JRadioButton ||
             source instanceof TagButton) ?

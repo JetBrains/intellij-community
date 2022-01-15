@@ -221,7 +221,7 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
     ElementContext elementContext = new ElementContext(element, settings);
     for (NonBlockingContextChecker checker : nonBlockingContextCheckers) {
       ProgressIndicatorProvider.checkCanceled();
-      ContextType checkResult = checker.isContextNonBlockingFor(elementContext);
+      ContextType checkResult = checker.computeContextType(elementContext);
       effectiveContextType = chooseType(effectiveContextType, checkResult);
       if (effectiveContextType instanceof ContextType.NONBLOCKING) return effectiveContextType;
     }

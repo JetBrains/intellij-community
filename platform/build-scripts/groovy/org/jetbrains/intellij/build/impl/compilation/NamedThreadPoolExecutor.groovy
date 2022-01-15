@@ -22,7 +22,7 @@ class NamedThreadPoolExecutor extends ThreadPoolExecutor {
   private final ConcurrentLinkedDeque<Throwable> errors = new ConcurrentLinkedDeque<Throwable>()
 
   NamedThreadPoolExecutor(String threadNamePrefix, int maximumPoolSize) {
-    super(maximumPoolSize, maximumPoolSize, 1, TimeUnit.MINUTES, new LinkedBlockingDeque(2048))
+    super(maximumPoolSize, maximumPoolSize, 1, TimeUnit.MINUTES, new LinkedBlockingDeque(4096))
     setThreadFactory(new ThreadFactory() {
       @NotNull
       @Override

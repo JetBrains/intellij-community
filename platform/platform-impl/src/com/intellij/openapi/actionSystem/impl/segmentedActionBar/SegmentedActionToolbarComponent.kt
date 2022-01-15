@@ -150,12 +150,13 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
   }
 
   private fun paintActiveBorder(g: Graphics) {
-    if(isActive || paintBorderForSingleItem) {
+    if((isActive || paintBorderForSingleItem) && visibleActions != null) {
       SegmentedBarPainter.paintActionBarBorder(this, g)
     }
   }
 
   override fun paintBorder(g: Graphics) {
+    super.paintBorder(g)
     paintActiveBorder(g)
   }
 
@@ -181,7 +182,7 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
   protected open fun logNeeded() = false
 
   protected fun forceUpdate() {
-    if(logNeeded()) LOG.info("MAIN SLOT forceUpdate allActions: $visibleActions")
+    if(logNeeded()) LOG.info("RunToolbar MAIN SLOT forceUpdate allActions: $visibleActions")
     visibleActions?.let {
       update(true, it)
 
@@ -197,7 +198,8 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
 
   private fun update(forced: Boolean, newVisibleActions: MutableList<out AnAction>) {
     val filtered = newVisibleActions.filter { isSuitableAction(it) }
-    if(logNeeded()) LOG.info("MAIN SLOT filtered actions: $filtered")
+
+    if(logNeeded()) LOG.info("RunToolbar MAIN SLOT filtered actions: ${filtered.map{it.templateText ?: it.javaClass}}")
     isActive = filtered.size > 1
     super.actionsUpdated(forced, if (isActive) filtered else newVisibleActions)
   }

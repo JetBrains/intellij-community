@@ -190,28 +190,28 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
   @Override
   public V put(@Nullable K key, @NotNull V value) {
-    processQueue();
     KeyReference<K> weakKey = createKeyReference(key);
-    return myMap.put(weakKey, value);
+    V prev = myMap.put(weakKey, value);
+    processQueue();
+    return prev;
   }
 
   @Override
   public V remove(@Nullable Object key) {
-    processQueue();
-
     HardKey<?> hardKey = createHardKey(key);
     try {
       return myMap.remove(hardKey);
     }
     finally {
+      processQueue();
       hardKey.clear();
     }
   }
 
   @Override
   public void clear() {
-    processQueue();
     myMap.clear();
+    processQueue();
   }
 
   private static final class RefEntry<K, V> implements Map.Entry<K, V> {
@@ -313,7 +313,6 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
     @Override
     public boolean remove(Object o) {
-      processQueue();
       if (!(o instanceof Map.Entry)) return false;
       //noinspection unchecked
       Map.Entry<K,V> e = (Map.Entry<K,V>)o;
@@ -332,6 +331,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
       finally {
         key.clear();
       }
+      processQueue();
 
       return toRemove;
     }
@@ -361,27 +361,31 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
   @Override
   public V putIfAbsent(@Nullable final K key, @NotNull V value) {
+    V prev = myMap.putIfAbsent(createKeyReference(key), value);
     processQueue();
-    return myMap.putIfAbsent(createKeyReference(key), value);
+    return prev;
   }
 
   @Override
   public boolean remove(@Nullable final Object key, @NotNull Object value) {
-    processQueue();
     //noinspection unchecked
-    return myMap.remove(createKeyReference((K)key), value);
+    boolean removed = myMap.remove(createKeyReference((K)key), value);
+    processQueue();
+    return removed;
   }
 
   @Override
   public boolean replace(@Nullable final K key, @NotNull final V oldValue, @NotNull final V newValue) {
+    boolean replaced = myMap.replace(createKeyReference(key), oldValue, newValue);
     processQueue();
-    return myMap.replace(createKeyReference(key), oldValue, newValue);
+    return replaced;
   }
 
   @Override
   public V replace(@Nullable final K key, @NotNull final V value) {
+    V replaced = myMap.replace(createKeyReference(key), value);
     processQueue();
-    return myMap.replace(createKeyReference(key), value);
+    return replaced;
   }
 
   // MAKE SURE IT CONSISTENT WITH com.intellij.util.containers.ConcurrentHashMap

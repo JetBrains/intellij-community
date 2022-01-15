@@ -331,13 +331,13 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     importProject(config, null);
   }
 
-  protected @NotNull GradleBuildScriptBuilder createBuildScriptBuilder() {
-    return new GradleBuildScriptBuilder(getCurrentGradleVersion())
+  protected @NotNull TestGradleBuildScriptBuilder createBuildScriptBuilder() {
+    return new TestGradleBuildScriptBuilder(getCurrentGradleVersion())
       .addPrefix(MAVEN_REPOSITORY_PATCH_PLACE, "");
   }
 
-  protected @NotNull String script(@NotNull Consumer<GradleBuildScriptBuilder> configure) {
-    return GradleBuildScriptBuilder.Companion.buildscript(this, configure);
+  protected @NotNull String script(@NotNull Consumer<TestGradleBuildScriptBuilder> configure) {
+    return TestGradleBuildScriptBuilder.Companion.buildscript(this, configure);
   }
 
   protected @NotNull String getJUnitTestAnnotationClass() {

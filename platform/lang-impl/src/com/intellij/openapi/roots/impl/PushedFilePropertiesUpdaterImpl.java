@@ -222,10 +222,15 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     myProject.getMessageBus().connect(task).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
-        DumbService.getInstance(myProject).cancelTask(task);
+        for (RootsChangeIndexingInfo info : ((ModuleRootEventImpl)event).getInfos()) {
+          if (info == RootsChangeIndexingInfo.TOTAL_REINDEX) {
+            DumbService.getInstance(myProject).cancelTask(task);
+            return;
+          }
+        }
       }
     });
-    DumbService.getInstance(myProject).queueTask(task);
+    task.queue(myProject);
   }
 
   public void performDelayedPushTasks() {
@@ -320,7 +325,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     //noinspection deprecation
     if (DefaultProjectIndexableFilesContributor.indexProjectBasedOnIndexableEntityProviders()) {
       Sequence<ModuleEntity> modulesSequence = ReadAction.compute(() ->
-                                                                    WorkspaceModel.Companion.getInstance(project).getEntityStorage().
+                                                                    WorkspaceModel.getInstance(project).getEntityStorage().
                                                                       getCurrent().entities(ModuleEntity.class));
       List<ModuleEntity> moduleEntities = SequencesKt.toList(modulesSequence);
       IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();

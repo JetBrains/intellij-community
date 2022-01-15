@@ -15,10 +15,14 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.UnnamedConfigurable
+import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
 import com.intellij.util.PlatformUtils
+import javax.swing.JSpinner
+import javax.swing.SpinnerNumberModel
+import kotlin.math.roundToInt
 
 // @formatter:off
 private val model = EditorSettingsExternalizable.getInstance()
@@ -39,7 +43,6 @@ private val myFocusModeCheckBox                       get() = CheckboxDescriptor
 private val myCbShowIntentionBulbCheckBox             get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.intention.bulb"), PropertyBinding(model::isShowIntentionBulb, model::setShowIntentionBulb))
 private val myCodeLensCheckBox                        get() = CheckboxDescriptor(IdeBundle.message("checkbox.show.editor.preview.popup"), uiSettings::showEditorToolTip)
 private val myRenderedDocCheckBox                     get() = CheckboxDescriptor(IdeBundle.message("checkbox.show.rendered.doc.comments"), PropertyBinding(model::isDocCommentRenderingEnabled, model::setDocCommentRenderingEnabled))
-private val myDocSyntaxHighlightingCheckBox           get() = CheckboxDescriptor(IdeBundle.message("checkbox.enable.doc.syntax.highlighting"), PropertyBinding(model::isDocSyntaxHighlightingEnabled, model::setDocSyntaxHighlightingEnabled))
 // @formatter:on
 
 class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
@@ -94,15 +97,13 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
       row {
         checkBox(myCbShowIntentionBulbCheckBox)
       }
-      row {
-        checkBox(myCodeLensCheckBox)
-      }
       fullRow {
         checkBox(myRenderedDocCheckBox)
         component(createReaderModeComment()).withLargeLeftGap()
       }
       row {
-        checkBox(myDocSyntaxHighlightingCheckBox)
+        checkBox(myCodeLensCheckBox)
+        largeGapAfter()
       }
 
       for (configurable in configurables) {

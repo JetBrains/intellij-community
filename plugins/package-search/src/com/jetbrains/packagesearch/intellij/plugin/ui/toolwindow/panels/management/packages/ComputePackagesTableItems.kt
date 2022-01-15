@@ -5,27 +5,14 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageM
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
-import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
-import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 
 internal fun computePackagesTableItems(
     project: Project,
     packages: List<UiPackageModel<*>>,
-    selectedPackage: UiPackageModel<*>?,
     targetModules: TargetModules,
-    traceInfo: TraceInfo
 ): PackagesTable.ViewModel.TableItems {
-    logDebug(traceInfo, "PackagesTable#computeDisplayItems()") { "Creating item models for ${packages.size} item(s)" }
-
     if (targetModules is TargetModules.None) {
-        logDebug(traceInfo, "PackagesTable#computeDisplayItems()") {
-            "Current target modules is None, no items models to compute"
-        }
         return PackagesTable.ViewModel.TableItems.EMPTY
-    }
-    logDebug(traceInfo, "PackagesTable#computeDisplayItems()") {
-        "Current target modules value: ${targetModules.javaClass.simpleName} " +
-            "${targetModules.modules.map { it.projectModule.name }}"
     }
 
     val modules = targetModules.modules
@@ -39,12 +26,30 @@ internal fun computePackagesTableItems(
 
     val items = packages.map { uiPackageModel ->
         when (uiPackageModel) {
-            is UiPackageModel.Installed -> PackagesTableItem.InstalledPackage(uiPackageModel, defaultScope)
-            is UiPackageModel.SearchResult -> PackagesTableItem.InstallablePackage(uiPackageModel, defaultScope)
+            is UiPackageModel.Installed -> {
+                val scopes = uiPackageModel.packageModel.usageInfo
+                    .flatMap { usageInfo ->
+                        val availableModules = usageInfo.projectModule.availableScopes.map { PackageScope.from(it) }
+                        availableModules + usageInfo.userDefinedScopes
+                    }
+                    .distinct()
+                    .sorted()
+
+                PackagesTableItem.InstalledPackage(uiPackageModel, defaultScope, scopes)
+            }
+            is UiPackageModel.SearchResult -> {
+                val scopes = targetModules.modules.flatMap {
+                    val userScopes = it.projectModule.moduleType.userDefinedScopes(project)
+                        .map { rawScope -> PackageScope.from(rawScope) }
+                    val availableScopes = it.projectModule.availableScopes.map { PackageScope.from(it) }
+                    availableScopes + userScopes
+                }.distinct().sorted()
+
+                PackagesTableItem.InstallablePackage(uiPackageModel, defaultScope, scopes)
+            }
         }
     }
-    val selectedItemIndex = findItemToSelect(items, selectedPackage)
-    return PackagesTable.ViewModel.TableItems(items, indexToSelect = selectedItemIndex)
+    return PackagesTable.ViewModel.TableItems(items)
 }
 
 private fun findItemToSelect(

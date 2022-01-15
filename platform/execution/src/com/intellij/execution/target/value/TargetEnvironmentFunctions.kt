@@ -3,10 +3,7 @@
 
 package com.intellij.execution.target.value
 
-import com.intellij.execution.target.HostPort
-import com.intellij.execution.target.TargetEnvironment
-import com.intellij.execution.target.TargetEnvironmentRequest
-import com.intellij.execution.target.TargetPlatform
+import com.intellij.execution.target.*
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
@@ -43,12 +40,34 @@ fun <T> Iterable<TargetEnvironmentFunction<T>>.joinToStringFunction(separator: C
 
 fun TargetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentFunction<String> {
   if (this is LocalTargetEnvironmentRequest) return constant(localPath)
-  val (uploadRoot, relativePath) = getUploadRootForLocalPath(localPath) ?: throw IllegalArgumentException("Local path \"$localPath\" is not registered within uploads in the request")
   return TargetEnvironmentFunction { targetEnvironment ->
+    if (targetEnvironment is ExternallySynchronized) {
+      val pathForSynchronizedVolume = targetEnvironment.tryMapToSynchronizedVolume(localPath)
+      if (pathForSynchronizedVolume != null) return@TargetEnvironmentFunction pathForSynchronizedVolume
+    }
+    val (uploadRoot, relativePath) = getUploadRootForLocalPath(localPath) ?: throw IllegalArgumentException(
+      "Local path \"$localPath\" is not registered within uploads in the request")
     val volume = targetEnvironment.uploadVolumes[uploadRoot]
                  ?: throw IllegalStateException("Upload root \"$uploadRoot\" is expected to be created in the target environment")
     return@TargetEnvironmentFunction joinPaths(volume.targetRoot, relativePath, targetEnvironment.targetPlatform)
   }
+}
+
+private fun ExternallySynchronized.tryMapToSynchronizedVolume(localPath: String): String? {
+  // TODO [targets] Does not look nice
+  this as TargetEnvironment
+  val targetFileSeparator = targetPlatform.platform.fileSeparator
+  val (volume, relativePath) = synchronizedVolumes.firstNotNullOfOrNull { volume ->
+    getRelativePathIfAncestor(ancestor = volume.localPath.toString(), file = localPath)?.let { relativePath ->
+      volume to if (File.separatorChar != targetFileSeparator) {
+        relativePath.replace(File.separatorChar, targetFileSeparator)
+      }
+      else {
+        relativePath
+      }
+    }
+  } ?: return null
+  return joinPaths(volume.targetPath, relativePath, targetPlatform)
 }
 
 fun TargetEnvironmentRequest.getUploadRootForLocalPath(localPath: String): Pair<TargetEnvironment.UploadRoot, String>? {

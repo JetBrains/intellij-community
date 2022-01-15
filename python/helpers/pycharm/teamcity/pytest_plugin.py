@@ -12,18 +12,22 @@ tests under TeamCity build.
 """
 
 import os
-import sys
 import re
+import sys
 import traceback
 from datetime import timedelta
 
-from teamcity.messages import TeamcityServiceMessages
-from teamcity.common import convert_error_to_string, dump_test_stderr, dump_test_stdout
-from teamcity import is_running_under_teamcity
 from teamcity import diff_tools
+from teamcity import is_running_under_teamcity
+from teamcity.common import convert_error_to_string, dump_test_stderr, dump_test_stdout
+from teamcity.messages import TeamcityServiceMessages
 
 diff_tools.patch_unittest_diff()
 _ASSERTION_FAILURE_KEY = '_teamcity_assertion_failure'
+
+
+def _repr_if_needed(obj):
+    return repr(obj) if '_JB_REPR_DIFF' in os.environ else obj
 
 
 def pytest_addoption(parser):
@@ -282,7 +286,7 @@ class EchoTeamCityMessages(object):
         self.report_test_finished(test_id, duration)
 
     def pytest_assertrepr_compare(self, config, op, left, right):
-        setattr(self.current_test_item, _ASSERTION_FAILURE_KEY, (op, left, right))
+        setattr(self.current_test_item, _ASSERTION_FAILURE_KEY, (op, _repr_if_needed(left), _repr_if_needed(right)))
 
     def pytest_runtest_logreport(self, report):
         """

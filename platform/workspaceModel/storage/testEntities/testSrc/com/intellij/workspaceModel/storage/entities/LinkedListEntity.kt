@@ -7,8 +7,6 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 
 data class LinkedListEntityId(val name: String) : PersistentEntityId<LinkedListEntity>() {
-  override val parentId: PersistentEntityId<*>?
-    get() = null
   override val presentableName: String
     get() = name
 }

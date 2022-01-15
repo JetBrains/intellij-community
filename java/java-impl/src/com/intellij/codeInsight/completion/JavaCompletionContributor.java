@@ -407,7 +407,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       List<LookupElement> refSuggestions = Collections.emptyList();
       if (parent instanceof PsiJavaCodeReferenceElement && mayCompleteReference) {
         PsiJavaCodeReferenceElement parentRef = (PsiJavaCodeReferenceElement)parent;
-        if (IN_PERMITS_LIST.accepts(parent) && parameters.getInvocationCount() <= 1) {
+        if (IN_PERMITS_LIST.accepts(parent) && parameters.getInvocationCount() <= 1 && !parentRef.isQualified()) {
           refSuggestions = completePermitsListReference(parameters, parentRef, matcher);
         }
         else {

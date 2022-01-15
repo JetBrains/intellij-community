@@ -186,14 +186,14 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
     }
     else if (parentComponent instanceof JList) {
       ((JList)parentComponent).getModel().addListDataListener(myListDataListener);
-      ((JList)parentComponent).addListSelectionListener(myListSelectionListener);
+      if (trackListSelection()) ((JList<?>)parentComponent).addListSelectionListener(myListSelectionListener);
     }
     else if (parentComponent instanceof JTree) {
       ((JTree)parentComponent).getModel().addTreeModelListener(myTreeModelListener);
     }
 
     if (parentComponent instanceof JComboBox) {
-      ComboBoxEditor editor = ((JComboBox)parentComponent).getEditor();
+      ComboBoxEditor editor = ((JComboBox<?>)parentComponent).getEditor();
       if (editor != null) {
         register(editor.getEditorComponent());
       }
@@ -216,6 +216,10 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
     if (parentComponent instanceof UserActivityProviderComponent) {
       ((UserActivityProviderComponent)parentComponent).addChangeListener(myChangeListener);
     }
+  }
+
+  protected boolean trackListSelection() {
+    return true;
   }
 
   @Override

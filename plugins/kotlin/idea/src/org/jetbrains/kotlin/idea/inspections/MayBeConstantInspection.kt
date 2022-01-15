@@ -50,7 +50,7 @@ class MayBeConstantInspection : AbstractKotlinInspection() {
                         else
                             KotlinBundle.message("might.be.const"),
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                        IntentionWrapper(AddConstModifierFix(property), property.containingFile)
+                        IntentionWrapper(AddConstModifierFix(property))
                     )
                 }
             }

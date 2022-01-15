@@ -1294,6 +1294,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       else if (alignment == GutterIconRenderer.Alignment.CENTER) {
         middleCount++;
         middleSize += icon.getIconWidth() + getGapBetweenIcons();
+      } else if (alignment == GutterIconRenderer.Alignment.LINE_NUMBERS) {
+        processor.process(getLineNumberAreaOffset() + getLineNumberAreaWidth() - icon.getIconWidth(), y + getTextAlignmentShift(icon), r);
       }
     }
 

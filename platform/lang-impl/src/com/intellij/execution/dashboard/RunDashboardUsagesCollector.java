@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.configurations.ConfigurationType;
@@ -16,7 +16,6 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class RunDashboardUsagesCollector extends ProjectUsagesCollector {
+final class RunDashboardUsagesCollector extends ProjectUsagesCollector {
   public static final EventLogGroup GROUP = new EventLogGroup("run.dashboard", 5);
   public static final EventId1<Boolean> RUN_DASHBOARD = GROUP.registerEvent("run.dashboard", EventFields.Boolean("enabled"));
   public static final VarargEventId ADDED_RUN_CONFIGURATION = GROUP.registerVarargEvent("added.run.configuration",
@@ -42,8 +41,8 @@ public class RunDashboardUsagesCollector extends ProjectUsagesCollector {
   public Set<MetricEvent> getMetrics(@NotNull Project project) {
     final Set<MetricEvent> metricEvents = new HashSet<>();
     RunDashboardManagerImpl runDashboardManager = (RunDashboardManagerImpl)RunDashboardManager.getInstance(project);
-    final Set<String> dashboardTypes = new THashSet<>(runDashboardManager.getTypes());
-    Set<String> removedDefaultType = new THashSet<>(runDashboardManager.getEnableByDefaultTypes());
+    final Set<String> dashboardTypes = new HashSet<>(runDashboardManager.getTypes());
+    Set<String> removedDefaultType = new HashSet<>(runDashboardManager.getEnableByDefaultTypes());
     dashboardTypes.removeAll(removedDefaultType); // do not report enable by default types
     removedDefaultType.removeAll(runDashboardManager.getTypes());
     metricEvents.add(RUN_DASHBOARD.metric(!dashboardTypes.isEmpty()));

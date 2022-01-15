@@ -35,6 +35,7 @@ public abstract class SplitAction extends AnAction implements DumbAware {
     final VirtualFile file = window.getSelectedFile();
 
     if (myCloseSource && file != null) {
+      file.putUserData(EditorWindow.DRAG_START_PINNED_KEY, window.isFilePinned(file));
       window.closeFile(file, false, false);
     }
 

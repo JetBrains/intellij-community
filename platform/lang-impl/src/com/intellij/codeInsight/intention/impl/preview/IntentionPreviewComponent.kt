@@ -7,11 +7,12 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBLoadingPanel
+import com.intellij.util.ui.JBHtmlEditorKit
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import javax.swing.JComponent
+import javax.swing.JEditorPane
 import javax.swing.JLabel
-import javax.swing.JPanel
 
 internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(BorderLayout(),
                                                                             { panel -> IntentionPreviewLoadingDecorator(panel, project) }) {
@@ -19,12 +20,14 @@ internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(Bord
   private var LOADING_LABEL = JLabel(CodeInsightBundle.message("intention.preview.loading.preview") + "     ").also { setupLabel(it) }
 
   var editors: List<EditorEx> = emptyList()
+  val htmlContent = JEditorPane().also { pane -> pane.editorKit = JBHtmlEditorKit() }
 
   val multiPanel: MultiPanel = object : MultiPanel() {
     override fun create(key: Int): JComponent {
       return when (key) {
         NO_PREVIEW -> NO_PREVIEW_LABEL
         LOADING_PREVIEW -> LOADING_LABEL
+        HTML_PREVIEW -> htmlContent
         else -> {
           if (editors.isEmpty()) return NO_PREVIEW_LABEL
 
@@ -42,20 +45,11 @@ internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(Bord
   companion object {
     const val NO_PREVIEW = -1
     const val LOADING_PREVIEW = -2
+    const val HTML_PREVIEW = -3
 
     private fun setupLabel(label: JLabel) {
       label.border = JBUI.Borders.empty(3)
       label.background = EditorColorsManager.getInstance().globalScheme.defaultBackground
-    }
-
-    private fun wrapWithPlaceholder(content: JComponent): JPanel {
-      val panel = JPanel(BorderLayout())
-      panel.add(content, BorderLayout.CENTER)
-      val placeholder = JLabel("     ")
-      panel.add(placeholder, BorderLayout.EAST)
-      panel.background = EditorColorsManager.getInstance().globalScheme.defaultBackground
-
-      return panel
     }
   }
 }

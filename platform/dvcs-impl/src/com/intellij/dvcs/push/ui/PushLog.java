@@ -42,7 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.*;
 import javax.swing.tree.*;
 import java.awt.*;
@@ -228,13 +227,8 @@ public final class PushLog extends JPanel implements DataProvider {
     ToolTipManager.sharedInstance().registerComponent(myTree);
     PopupHandler.installPopupMenu(myTree, VcsLogActionIds.POPUP_ACTION_GROUP, CONTEXT_MENU);
 
-    myChangesBrowser = new SimpleChangesBrowser(project, false, false) {
-      @NotNull
-      @Override
-      protected Border createViewerBorder() {
-        return IdeBorderFactory.createBorder(SideBorder.TOP);
-      }
-    };
+    myChangesBrowser = new SimpleChangesBrowser(project, false, false);
+    myChangesBrowser.hideViewerBorder();
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), myTree);
     final EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(myChangesBrowser);
     editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myChangesBrowser);

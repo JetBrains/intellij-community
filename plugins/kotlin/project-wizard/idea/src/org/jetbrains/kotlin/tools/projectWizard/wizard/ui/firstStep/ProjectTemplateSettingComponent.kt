@@ -101,7 +101,6 @@ private val ProjectTemplate.icon: Icon?
         NativeApplicationProjectTemplate -> KotlinIcons.Wizard.NATIVE
         FrontendApplicationProjectTemplate -> KotlinIcons.Wizard.JS
         ReactApplicationProjectTemplate -> KotlinIcons.Wizard.REACT_JS
-        MultiplatformMobileApplicationProjectTemplate -> KotlinIcons.Wizard.MULTIPLATFORM_MOBILE
         NodeJsApplicationProjectTemplate -> KotlinIcons.Wizard.NODE_JS
         ComposeDesktopApplicationProjectTemplate -> KotlinIcons.Wizard.COMPOSE
         ComposeMultiplatformApplicationProjectTemplate -> KotlinIcons.Wizard.COMPOSE

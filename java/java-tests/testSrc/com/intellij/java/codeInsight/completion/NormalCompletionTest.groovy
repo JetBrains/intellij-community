@@ -10,7 +10,6 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.codeInsight.lookup.impl.LookupActionHandler
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
@@ -1620,7 +1619,7 @@ class XInternalError {}
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   void testImplementViaOverrideCompletion() {
     configure()
-    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods...', 'public void run'
+    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods…', 'public void run'
     lookup.currentItem = lookup.items[2]
     myFixture.type('\n')
     checkResult()
@@ -1629,7 +1628,7 @@ class XInternalError {}
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   void testSuggestToOverrideMethodsWhenTypingOverrideAnnotation() {
     configure()
-    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods...'
+    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods…'
     lookup.currentItem = lookup.items[1]
     myFixture.type('\n')
     checkResult()
@@ -1638,7 +1637,7 @@ class XInternalError {}
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   void testSuggestToOverrideMethodsWhenTypingOverrideAnnotationBeforeMethod() {
     configure()
-    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods...'
+    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods…'
     lookup.currentItem = lookup.items[1]
     myFixture.type('\n')
     checkResult()
@@ -1647,7 +1646,7 @@ class XInternalError {}
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   void testSuggestToOverrideMethodsInMulticaretMode() {
     configure()
-    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods...'
+    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods…'
     lookup.currentItem = lookup.items[1]
     myFixture.type('\n')
     checkResult()

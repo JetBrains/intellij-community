@@ -6,12 +6,21 @@ import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.InsetPresentation
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.java.JavaBundle
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.siyeh.ig.psiutils.ExpressionUtils
 
 class MethodChainsInlayProvider : AbstractCallChainHintsProvider<PsiMethodCallExpression, PsiType, Unit>() {
+
+  override val groupId: String
+    get() = METHOD_CHAINS_GROUP
+
+  override fun getProperty(key: String): String {
+    return JavaBundle.message(key)
+  }
+
   override fun PsiType.getInlayPresentation(
     expression: PsiElement,
     factory: PresentationFactory,

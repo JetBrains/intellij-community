@@ -21,12 +21,15 @@ import java.util.List;
  * Manages the version control systems used by a specific project.
  */
 public abstract class ProjectLevelVcsManager {
-  // project level
-  public static final Topic<VcsListener> VCS_CONFIGURATION_CHANGED = new Topic<>(VcsListener.class, Topic.BroadcastDirection.NONE);
+  @Topic.ProjectLevel
+  public static final Topic<VcsMappingListener> VCS_CONFIGURATION_CHANGED =
+    new Topic<>(VcsMappingListener.class, Topic.BroadcastDirection.NONE);
   /**
-   * VCS configuration changed in VCS plugin. Project level.
+   * VCS configuration changed in VCS plugin.
    */
-  public static final Topic<VcsListener> VCS_CONFIGURATION_CHANGED_IN_PLUGIN = new Topic<>(VcsListener.class, Topic.BroadcastDirection.NONE);
+  @Topic.ProjectLevel
+  public static final Topic<PluginVcsMappingListener> VCS_CONFIGURATION_CHANGED_IN_PLUGIN =
+    new Topic<>(PluginVcsMappingListener.class, Topic.BroadcastDirection.NONE);
 
   public abstract void iterateVfUnderVcsRoot(VirtualFile file, Processor<? super VirtualFile> processor);
 

@@ -356,7 +356,7 @@ public final class PyTypeHintGenerationUtil {
         symbols.add(target);
       }
     }
-    if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
+    if (type instanceof PyInstantiableType && ((PyInstantiableType<?>)type).isDefinition()) {
       typingTypes.add("Type");
     }
   }

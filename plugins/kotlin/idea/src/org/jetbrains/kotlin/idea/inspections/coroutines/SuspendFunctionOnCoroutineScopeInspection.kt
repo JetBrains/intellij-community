@@ -76,14 +76,13 @@ class SuspendFunctionOnCoroutineScopeInspection : AbstractKotlinInspection() {
                     WrapWithCoroutineScopeFix(removeReceiver = false, wrapCallOnly = true)
                 )
                 fixes += WrapWithCoroutineScopeFix(removeReceiver = extensionOfCoroutineScope, wrapCallOnly = false)
-                val file = function.containingKtFile
                 if (extensionOfCoroutineScope) {
-                    fixes += IntentionWrapper(ConvertReceiverToParameterIntention(), file)
+                    fixes += IntentionWrapper(ConvertReceiverToParameterIntention())
                 }
                 if (memberOfCoroutineScope) {
                     val containingDeclaration = function.containingClassOrObject
                     if (containingDeclaration is KtClass && !containingDeclaration.isInterface() && function.hasBody()) {
-                        fixes += IntentionWrapper(MoveMemberToCompanionObjectIntention(), file)
+                        fixes += IntentionWrapper(MoveMemberToCompanionObjectIntention())
                     }
                 }
 

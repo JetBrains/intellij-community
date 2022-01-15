@@ -48,6 +48,7 @@ internal val DataNode<GradleSourceSetData>.kotlinGradleSourceSetDataOrNull: Kotl
 
 class KotlinGradleSourceSetData @PropertyMapping("externalName") constructor(externalName: String) :
     AbstractNamedData(GradleConstants.SYSTEM_ID, externalName), ImplementedModulesAware {
+
     val sourceSetName: String
         get() = externalName.substringAfterLast(":")
 

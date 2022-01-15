@@ -81,7 +81,7 @@ implements ClassGenerator
     }
 
     private Set getClassNameCache(ClassLoader loader) {
-        return (Set)((Map)source.cache.get(loader)).get(NAME_KEY);
+        return (Set)((Map<?, ?>)source.cache.get(loader)).get(NAME_KEY);
     }
 
     /**

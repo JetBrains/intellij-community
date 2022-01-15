@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -108,6 +112,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (!(block.getParent() instanceof GrBlockStatement && block.getParent().getParent() instanceof GrLoopStatement)) {
       final GrStatement[] statements = block.getStatements();
       if (statements.length > 0) {
+        handlePossibleYield(statements[statements.length - 1]);
         handlePossibleReturn(statements[statements.length - 1]);
       }
     }
@@ -905,22 +910,46 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
-  @Override
-  public void visitSwitchStatement(@NotNull GrSwitchStatement switchStatement) {
-    final GrCondition condition = switchStatement.getCondition();
+  private void visitSwitchElement(@NotNull GrSwitchElement switchElement) {
+    final GrCondition condition = switchElement.getCondition();
     if (condition != null) {
       condition.accept(this);
     }
-    final InstructionImpl instruction = startNode(switchStatement);
-    final GrCaseSection[] sections = switchStatement.getCaseSections();
-    if (!containsAllCases(switchStatement)) {
-      addPendingEdge(switchStatement, instruction);
+    final InstructionImpl instruction = startNode(switchElement);
+    final GrCaseSection[] sections = switchElement.getCaseSections();
+    if (!containsAllCases(switchElement)) {
+      addPendingEdge(switchElement, instruction);
     }
+    FList<ConditionInstruction> conditionsBefore = myConditions;
     for (GrCaseSection section : sections) {
+      myConditions = conditionsBefore;
       myHead = instruction;
+      GrExpression[] expressionPatterns = section.getExpressions();
+      if (!section.isDefault() &&
+          expressionPatterns.length > 0 &&
+          ContainerUtil.and(expressionPatterns, expr -> expr instanceof GrReferenceExpression &&
+                                                        ((GrReferenceExpression)expr).resolve() instanceof PsiClass)) {
+        GrExpression expressionPattern = expressionPatterns[0];
+        if (expressionPattern != null && expressionPattern.getParent() instanceof GrExpressionList) {
+          ConditionInstruction cond = registerCondition(section, false);
+          addNodeAndCheckPending(cond);
+          addNode(new InstanceOfInstruction((GroovyPsiElement)expressionPattern.getParent(), cond));
+        }
+      }
       section.accept(this);
     }
+    myConditions = conditionsBefore;
     finishNode(instruction);
+  }
+
+  @Override
+  public void visitSwitchStatement(@NotNull GrSwitchStatement switchStatement) {
+    visitSwitchElement(switchStatement);
+  }
+
+  @Override
+  public void visitSwitchExpression(@NotNull GrSwitchExpression switchExpression) {
+    visitSwitchElement(switchExpression);
   }
 
   @Override
@@ -968,7 +997,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
-  private static boolean containsAllCases(GrSwitchStatement statement) {
+  private static boolean containsAllCases(GrSwitchElement statement) {
     final GrCaseSection[] sections = statement.getCaseSections();
     for (GrCaseSection section : sections) {
       if (section.isDefault()) return true;
@@ -998,14 +1027,13 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         if (sections.length == enumConstantCount) return true;
       }
     }
-
+    // todo: sealed classes
     return false;
   }
 
   @Override
   public void visitCaseSection(@NotNull GrCaseSection caseSection) {
-    for (GrCaseLabel label : caseSection.getCaseLabels()) {
-      GrExpression value = label.getValue();
+    for (GrExpression value : caseSection.getExpressions()) {
       if (value != null) {
         value.accept(this);
       }
@@ -1025,9 +1053,41 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       if (j == i) handlePossibleReturn(statement);
     }
 
+    if (statements.length > 0) {
+      handlePossibleYield(statements[statements.length - 1]);
+    }
+
     if (myHead != null) {
       addPendingEdge(caseSection, myHead);
     }
+    if (caseSection.getArrow() != null) {
+      // arrow-style switch expressions are not fall-through
+      var parent = caseSection.getParent();
+      if (parent instanceof GrSwitchElement) {
+        readdPendingEdge((GroovyPsiElement)parent);
+      }
+      interruptFlow();
+    }
+  }
+
+  private void handlePossibleYield(GrStatement statement) {
+    if (statement instanceof GrExpression && ControlFlowBuilderUtil.isCertainlyYieldStatement(statement)) {
+      addNodeAndCheckPending(new MaybeYieldInstruction((GrExpression)statement));
+    }
+  }
+
+  @Override
+  public void visitYieldStatement(@NotNull GrYieldStatement yieldStatement) {
+    GrExpression value = yieldStatement.getYieldedValue();
+    if (value != null) {
+      value.accept(this);
+    }
+    if (myHead != null) {
+      GrSwitchElement correspondingSwitch = PsiTreeUtil.getParentOfType(yieldStatement, GrSwitchElement.class);
+      addNode(new InstructionImpl(yieldStatement));
+      addPendingEdge(correspondingSwitch, myHead);
+    }
+    interruptFlow();
   }
 
   @Override

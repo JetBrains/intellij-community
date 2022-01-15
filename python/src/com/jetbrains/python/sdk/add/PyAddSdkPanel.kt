@@ -141,11 +141,25 @@ fun addInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
     finally {
       executor.execute {
         sdkComboBox.setBusy(false)
-        sdkComboBox.childComponent.removeAllItems()
-        sdks.forEach(sdkComboBox.childComponent::addItem)
+        sdkComboBox.removeAllItems()
+        sdks.forEach(sdkComboBox::addSdkItem)
         onAdded()
       }
     }
+  }
+}
+
+/**
+ * Keeps [NewPySdkComboBoxItem] if it is present in the combobox.
+ */
+private fun PySdkPathChoosingComboBox.removeAllItems() {
+  if (childComponent.itemCount > 0 && childComponent.getItemAt(0) is NewPySdkComboBoxItem) {
+    while (childComponent.itemCount > 1) {
+      childComponent.removeItemAt(1)
+    }
+  }
+  else {
+    childComponent.removeAllItems()
   }
 }
 
@@ -166,7 +180,7 @@ fun addBaseInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
         val preferredSdk = PyProjectVirtualEnvConfiguration.findPreferredVirtualEnvBaseSdk(items)
         if (preferredSdk != null) {
           if (items.find { it.homePath == preferredSdk.homePath } == null) {
-            childComponent.insertItemAt(preferredSdk, 0)
+            addSdkItemOnTop(preferredSdk)
           }
           selectedSdk = preferredSdk
         }

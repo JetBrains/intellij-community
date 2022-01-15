@@ -75,7 +75,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     else if (node.getTokenType() == JavaElementType.ENUM_CONSTANT_INITIALIZER) {
       isAnonymous = isEnumConst = true;
       classKindFound = true;
-      baseRef = ((PsiClassStub)parentStub.getParentStub()).getName();
+      baseRef = ((PsiClassStub<?>)parentStub.getParentStub()).getName();
     }
 
     for (final LighterASTNode child : tree.getChildren(node)) {
@@ -190,7 +190,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     }
     else {
       final String shortName = stub.getName();
-      if (shortName != null && (!(stub instanceof PsiClassStubImpl) || !((PsiClassStubImpl)stub).isAnonymousInner())) {
+      if (shortName != null && (!(stub instanceof PsiClassStubImpl) || !((PsiClassStubImpl<?>)stub).isAnonymousInner())) {
         sink.occurrence(JavaStubIndexKeys.CLASS_SHORT_NAMES, shortName);
       }
 

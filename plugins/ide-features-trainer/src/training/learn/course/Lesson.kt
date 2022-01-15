@@ -12,6 +12,7 @@ import training.learn.CourseManager
 import training.learn.lesson.LessonListener
 import training.learn.lesson.LessonState
 import training.learn.lesson.LessonStateManager
+import training.util.filterUnseenLessons
 import training.util.findLanguageByID
 
 abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
@@ -78,7 +79,12 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
   internal fun isNewLesson(): Boolean {
     val availableSince = properties.availableSince ?: return false
     val lessonVersion = BuildNumber.fromString(availableSince) ?: return false
-    val previousOpenedVersion = CourseManager.instance.previousOpenedVersion ?: return true
-    return previousOpenedVersion < lessonVersion
+
+    val previousOpenedVersion = CourseManager.instance.previousOpenedVersion
+    if (previousOpenedVersion  != null) {
+      return previousOpenedVersion < lessonVersion
+    } else {
+      return filterUnseenLessons(module.lessons).contains(this)
+    }
   }
 }

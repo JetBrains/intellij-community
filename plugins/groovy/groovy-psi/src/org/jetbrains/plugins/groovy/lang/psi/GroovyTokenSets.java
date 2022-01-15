@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.psi.tree.TokenSet;
@@ -22,7 +22,7 @@ public interface GroovyTokenSets {
     KW_NEW, KW_NULL, KW_PACKAGE, KW_RETURN,
     KW_SUPER, KW_SWITCH, KW_THIS, KW_THROW,
     KW_THROWS, KW_TRAIT, KW_TRUE, KW_TRY,
-    KW_WHILE
+    KW_WHILE, KW_YIELD
   );
 
   TokenSet STRING_LITERALS = create(STRING_SQ, STRING_TSQ, STRING_DQ, STRING_TDQ);

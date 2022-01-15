@@ -70,6 +70,8 @@ abstract class Template : SettingsOwner, EntitiesOwnerDescriptor, DisplayableSet
     abstract val title: String
     abstract val description: String
 
+    open val filesToOpenInEditor: List<String>? = null
+
     fun isSupportedByModuleType(module: Module, projectKind: ProjectKind): Boolean {
          return isPermittedForModule(module) && isApplicableTo(module, projectKind)
     }

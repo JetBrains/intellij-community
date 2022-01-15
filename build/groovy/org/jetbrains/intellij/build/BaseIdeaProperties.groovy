@@ -83,6 +83,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.maven",
     "intellij.java.guiForms.designer",
     "intellij.packageSearch",
+    "intellij.platform.tracing.ide",
     "intellij.searchEverywhereMl",
     "intellij.statsCollector",
     "intellij.xpath",

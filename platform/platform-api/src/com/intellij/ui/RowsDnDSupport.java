@@ -147,7 +147,7 @@ public final class RowsDnDSupport {
       return ((JTable)component).rowAtPoint(point);
     }
     else if (component instanceof JList) {
-      return ((JList)component).locationToIndex(point);
+      return ((JList<?>)component).locationToIndex(point);
     }
     else if (component instanceof JTree) {
       return ((JTree)component).getClosestRowForLocation(point.x, point.y);
@@ -179,7 +179,7 @@ public final class RowsDnDSupport {
       return rectangle;
     }
     else if (component instanceof JList) {
-      return ((JList)component).getCellBounds(row, row);
+      return ((JList<?>)component).getCellBounds(row, row);
     }
     else if (component instanceof JTree) {
       return ((JTree)component).getRowBounds(row);
@@ -194,7 +194,7 @@ public final class RowsDnDSupport {
       ((JTable)component).getSelectionModel().setSelectionInterval(row, row);
     }
     else if (component instanceof JList) {
-      ((JList)component).setSelectedIndex(row);
+      ((JList<?>)component).setSelectedIndex(row);
     }
     else if (component instanceof JTree) {
       ((JTree)component).setSelectionRow(row);

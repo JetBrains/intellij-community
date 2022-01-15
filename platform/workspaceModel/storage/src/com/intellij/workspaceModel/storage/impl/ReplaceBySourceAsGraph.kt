@@ -60,7 +60,7 @@ internal object ReplaceBySourceAsGraph {
     thisBuilder.indexes.entitySourceIndex.entries().filter { sourceFilter(it) }.forEach { entitySource ->
       thisBuilder.indexes.entitySourceIndex.getIdsByEntry(entitySource)?.forEach {
         val entityData = thisBuilder.entityDataByIdOrDie(it)
-        localMatchedEntities.put(entityData.identificator(thisBuilder), entityData to it.asThis())
+        localMatchedEntities.put(entityData.identificator(), entityData to it.asThis())
       }
     }
 
@@ -78,7 +78,7 @@ internal object ReplaceBySourceAsGraph {
         }
         else {
           // Save the entity for restoring reference to it later
-          localUnmatchedReferencedNodes.put(parentEntity.identificator(thisBuilder), parentId.id.asThis())
+          localUnmatchedReferencedNodes.put(parentEntity.identificator(), parentId.id.asThis())
         }
       }
 
@@ -93,7 +93,7 @@ internal object ReplaceBySourceAsGraph {
           }
           else {
             // Save the entity for restoring reference to it later
-            localUnmatchedReferencedNodes.put(childEntity.identificator(thisBuilder), childId.id.asThis())
+            localUnmatchedReferencedNodes.put(childEntity.identificator(), childId.id.asThis())
           }
         }
       }
@@ -111,10 +111,10 @@ internal object ReplaceBySourceAsGraph {
                              ?.mapTo(ArrayList()) { replaceWith.entityDataByIdOrDie(it) to it.notThis() } ?: continue
       if (reverseEntities) entityDataList.reverse()
       for ((matchedEntityData, matchedEntityId) in entityDataList) {
-        replaceWithMatchedEntities.put(matchedEntityData.identificator(replaceWith), matchedEntityId)
+        replaceWithMatchedEntities.put(matchedEntityData.identificator(), matchedEntityId)
 
         // Find if the entity exists in local store
-        val localNodeAndId = localMatchedEntities.find(matchedEntityData, replaceWith)
+        val localNodeAndId = localMatchedEntities.find(matchedEntityData)
 
         // We should check if the issue still exists in this builder because it can be removed if it's referenced by another entity
         //   that had persistent id clash.
@@ -136,8 +136,7 @@ internal object ReplaceBySourceAsGraph {
           if (localNode.entitySource !is DummyParentEntitySource && matchedEntityData.entitySource !is DummyParentEntitySource) {
             thisBuilder.removeEntitiesByOneToOneRef(sourceFilter, replaceWith, replaceMap, matchedEntityId, localNodeEntityId)
               .forEach { removedEntityData ->
-                localUnmatchedReferencedNodes.removeAll(removedEntityData.identificator(
-                  thisBuilder))
+                localUnmatchedReferencedNodes.removeAll(removedEntityData.identificator())
               }
           }
 
@@ -145,12 +144,12 @@ internal object ReplaceBySourceAsGraph {
             thisBuilder.indexes.updateExternalMappingForEntityId(matchedEntityId.id, localNodeEntityId.id, replaceWith.indexes)
           }
           // Remove added entity
-          localMatchedEntities.remove(localNode.identificator(thisBuilder), localNodeAndId)
+          localMatchedEntities.remove(localNode.identificator(), localNodeAndId)
         }
         else {
           // This is a new entity for this store. Perform add operation
 
-          val persistentId = matchedEntityData.persistentId(thisBuilder)
+          val persistentId = matchedEntityData.persistentId()
           if (persistentId != null) {
             val existingEntityId = thisBuilder.indexes.persistentIdIndex.getIdsByEntry(persistentId)?.asThis()
             if (existingEntityId != null) {
@@ -170,8 +169,7 @@ internal object ReplaceBySourceAsGraph {
               // To make a store consistent in such case, we will clean up all refer to this entity
               thisBuilder.removeEntitiesByOneToOneRef(sourceFilter, replaceWith, replaceMap, matchedEntityId, existingEntityId)
                 .forEach { removedEntityData ->
-                  localUnmatchedReferencedNodes.removeAll(removedEntityData.identificator(
-                    thisBuilder))
+                  localUnmatchedReferencedNodes.removeAll(removedEntityData.identificator())
                 }
 
               replaceMap[existingEntityId] = matchedEntityId
@@ -363,14 +361,13 @@ internal object ReplaceBySourceAsGraph {
     LOG.debug { "Replace by source finished" }
   }
 
-  private fun WorkspaceEntityData<*>.identificator(storage: AbstractEntityStorage): Any {
-    return this.persistentId(storage) ?: this.hashCode()
+  private fun WorkspaceEntityData<*>.identificator(): Any {
+    return this.persistentId() ?: this.hashCode()
   }
 
-  private fun <T> HashMultimap<Any, Pair<WorkspaceEntityData<out WorkspaceEntity>, T>>.find(entity: WorkspaceEntityData<out WorkspaceEntity>,
-                                                                                            storage: AbstractEntityStorage): Pair<WorkspaceEntityData<out WorkspaceEntity>, T>? {
-    val possibleValues = this[entity.identificator(storage)]
-    val persistentId = entity.persistentId(storage)
+  private fun <T> HashMultimap<Any, Pair<WorkspaceEntityData<out WorkspaceEntity>, T>>.find(entity: WorkspaceEntityData<out WorkspaceEntity>): Pair<WorkspaceEntityData<out WorkspaceEntity>, T>? {
+    val possibleValues = this[entity.identificator()]
+    val persistentId = entity.persistentId()
     return if (persistentId != null) {
       possibleValues.singleOrNull()
     }
@@ -392,7 +389,7 @@ internal object ReplaceBySourceAsGraph {
                                dataDiffersByProperties: Boolean,
                                dataDiffersByEntitySource: Boolean) {
     val clonedEntity = matchedEntityData.clone()
-    val persistentIdBefore = matchedEntityData.persistentId(replaceWith) ?: error("PersistentId expected for $matchedEntityData")
+    val persistentIdBefore = matchedEntityData.persistentId() ?: error("PersistentId expected for $matchedEntityData")
     clonedEntity.id = localNode.id
     val clonedEntityId = matchedEntityId.id.copy(arrayId = clonedEntity.id)
     thisBuilder.entitiesByType.replaceById(clonedEntity, clonedEntityId.clazz)

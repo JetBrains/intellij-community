@@ -141,4 +141,7 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
   public void testThroughAnonymous() throws Exception {
     doJavaCallerTypeHierarchyTest("com.hierarchytest.AcmClientImpl", "getUser", "X.java");
   }
+  public void testThroughAnonymousCalledByOther() throws Exception {
+    doJavaCallerTypeHierarchyTest("x.AcmClientImpl", "returnSomething", "X.java");
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.mocks
 
 import com.intellij.completion.ml.experiment.ExperimentInfo
@@ -11,45 +11,43 @@ import org.mockito.Mockito
 import java.io.File
 
 internal class TestRequestService : RequestService() {
+  companion object {
+    var mock: RequestService = Mockito.mock(RequestService::class.java)
+  }
 
-    companion object {
-        var mock: RequestService = Mockito.mock(RequestService::class.java)
-    }
+  override fun postZipped(url: String, file: File) = mock.postZipped(url, file)
 
-    override fun postZipped(url: String, file: File) = mock.postZipped(url, file)
-    override fun get(url: String) = mock.get(url)
-
+  override fun get(url: String) = mock.get(url)
 }
 
-
 internal class TestStatisticSender : StatisticSender {
-    override fun sendStatsData(url: String) {
-    }
+  override fun sendStatsData(url: String) {
+  }
 }
 
 internal class TestExperimentStatus : ExperimentStatus {
-    companion object {
-        const val VERSION = 0
-    }
-    private var inExperiment = false
-    private var shouldRank = false
-    private var shouldShowArrows = false
-    private var shouldCalculateFeatures = false
+  companion object {
+    private const val VERSION = 0
+  }
 
-    override fun forLanguage(language: Language): ExperimentInfo =
-      ExperimentInfo(inExperiment, VERSION, shouldRank, shouldShowArrows, shouldCalculateFeatures)
+  private var inExperiment = false
+  private var shouldRank = false
+  private var shouldShowArrows = false
+  private var shouldCalculateFeatures = false
 
-    override fun disable() = Unit
+  override fun forLanguage(language: Language): ExperimentInfo =
+    ExperimentInfo(inExperiment, VERSION, shouldRank, shouldShowArrows, shouldCalculateFeatures)
 
-    override fun isDisabled(): Boolean = false
+  override fun disable() = Unit
 
-    fun updateExperimentSettings(inExperiment: Boolean, shouldRank: Boolean, shouldShowArrows: Boolean, shouldCalculateFeatures: Boolean) {
-        this.inExperiment = inExperiment
-        this.shouldRank = shouldRank
-        this.shouldShowArrows = shouldShowArrows
-        this.shouldCalculateFeatures = shouldCalculateFeatures
-    }
+  override fun isDisabled(): Boolean = false
+
+  fun updateExperimentSettings(inExperiment: Boolean, shouldRank: Boolean, shouldShowArrows: Boolean, shouldCalculateFeatures: Boolean) {
+    this.inExperiment = inExperiment
+    this.shouldRank = shouldRank
+    this.shouldShowArrows = shouldShowArrows
+    this.shouldCalculateFeatures = shouldCalculateFeatures
+  }
 }
 
-
-internal class TestFilePathProvider: UniqueFilesProvider("chunk", ".", "logs-data")
+internal class TestFilePathProvider : UniqueFilesProvider("chunk", ".", "logs-data")

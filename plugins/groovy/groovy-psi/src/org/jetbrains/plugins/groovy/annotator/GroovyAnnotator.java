@@ -132,7 +132,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       return;
     }
 
-    final GroovyResolveResult resolveResult = ((GrReferenceElement)parent).advancedResolve();
+    final GroovyResolveResult resolveResult = ((GrReferenceElement<?>)parent).advancedResolve();
     final PsiElement resolved = resolveResult.getElement();
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
 

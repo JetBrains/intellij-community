@@ -7,6 +7,7 @@ import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.rd.createLifetime
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.NonUrgentExecutor
@@ -19,7 +20,7 @@ class RdCoroutineHost(lifetime: Lifetime) : RdCoroutineScope(lifetime) {
   companion object {
     private val logger = logger<RdCoroutineHost>()
 
-    val instance by lazy { RdCoroutineHost(Lifetime.Eternal) }
+    val instance by lazy { RdCoroutineHost(application.createLifetime() /* When shutting down the application we have to cancel and wait for all coroutines */) }
 
     fun init() { instance }
     fun initAsync() = AppExecutorUtil.getAppExecutorService().execute { init() }

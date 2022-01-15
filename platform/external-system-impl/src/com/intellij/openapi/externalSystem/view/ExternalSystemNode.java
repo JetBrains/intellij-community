@@ -324,8 +324,8 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
       return getExternalProjectsView().getErrorLevelRecursively(myDataNode);
     } else {
       ExternalProjectsStructure.ErrorLevel result = ExternalProjectsStructure.ErrorLevel.NONE;
-      for (SimpleNode each : getChildren()) {
-        ExternalProjectsStructure.ErrorLevel eachLevel = ((ExternalSystemNode<?>)each).getTotalErrorLevel();
+      for (ExternalSystemNode<?> each : getChildren()) {
+        ExternalProjectsStructure.ErrorLevel eachLevel = each.getTotalErrorLevel();
         if (eachLevel.compareTo(result) > 0) result = eachLevel;
         if (result == ExternalProjectsStructure.ErrorLevel.ERROR) break;
       }

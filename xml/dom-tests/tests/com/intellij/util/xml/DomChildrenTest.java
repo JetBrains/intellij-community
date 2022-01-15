@@ -582,7 +582,7 @@ public class DomChildrenTest extends DomTestCase {
 
     @Override
     public void distinguishTag(final XmlTag tag, final Type aClass) throws IncorrectOperationException {
-      tag.setAttribute("foo", ((Class)aClass).getName());
+      tag.setAttribute("foo", ((Class<?>)aClass).getName());
     }
 
     @Override

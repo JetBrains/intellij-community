@@ -156,7 +156,7 @@ class KotlinDslGradleKotlinJavaFrameworkSupportProvider :
                 )
         else {
             buildScriptData
-                .addImport("import org.jetbrains.kotlin.gradle.tasks.KotlinCompile")
+                .addImport("org.jetbrains.kotlin.gradle.tasks.KotlinCompile")
                 .addOther("tasks.withType<KotlinCompile> {\n    kotlinOptions.jvmTarget = \"1.8\"\n}\n")
         }
 

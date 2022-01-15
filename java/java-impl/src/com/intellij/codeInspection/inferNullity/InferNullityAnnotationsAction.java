@@ -29,7 +29,6 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.NlsContexts;
@@ -41,7 +40,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.ui.TitledSeparator;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
@@ -52,6 +50,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.util.*;
@@ -107,10 +107,11 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       return;
     }
     if (!modulesWithoutAnnotations.isEmpty()) {
-      if (addAnnotationsDependency(project, modulesWithoutAnnotations, defaultNullable,
-                                   JavaBundle.message("action.description.infer.nullity.annotations"))) {
-        restartAnalysis(project, scope);
-      }
+      addAnnotationsDependency(project, modulesWithoutAnnotations, defaultNullable,
+                                                       JavaBundle.message("action.description.infer.nullity.annotations"))
+        .onSuccess(__ -> {
+          restartAnalysis(project, scope);
+        });
       return;
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -129,9 +130,9 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     }
   }
 
-  public static boolean addAnnotationsDependency(@NotNull final Project project,
-                                                 @NotNull final Set<? extends Module> modulesWithoutAnnotations,
-                                                 @NotNull String annoFQN, final @NlsContexts.DialogTitle String title) {
+  public static Promise<Void> addAnnotationsDependency(@NotNull final Project project,
+                                                       @NotNull final Set<? extends Module> modulesWithoutAnnotations,
+                                                       @NotNull String annoFQN, final @NlsContexts.DialogTitle String title) {
     final Library annotationsLib = LibraryUtil.findLibraryByClass(annoFQN, project);
     if (annotationsLib != null) {
       String message = JavaBundle.message("dialog.message.modules.dont.refer.to.existing.annotations.library",
@@ -144,20 +145,19 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
             ModuleRootModificationUtil.addDependency(module, annotationsLib);
           }
         });
-        return true;
+        return Promises.resolvedPromise();
       }
-      return false;
+      return Promises.rejectedPromise();
     }
     
     if (Messages.showOkCancelDialog(project, JavaBundle.message(
       "dialog.message.jetbrains.annotations.library.is.missing"),
                                     title, Messages.getErrorIcon()) == Messages.OK) {
       Module firstModule = modulesWithoutAnnotations.iterator().next();
-      JavaProjectModelModificationService.getInstance(project).addDependency(modulesWithoutAnnotations, JetBrainsAnnotationsExternalLibraryResolver.getAnnotationsLibraryDescriptor(firstModule),
+      return JavaProjectModelModificationService.getInstance(project).addDependency(modulesWithoutAnnotations, JetBrainsAnnotationsExternalLibraryResolver.getAnnotationsLibraryDescriptor(firstModule),
                                                                              DependencyScope.COMPILE);
-      return true;
     }
-    return false;
+    return Promises.rejectedPromise();
   }
 
   protected UsageInfo @Nullable [] findUsages(@NotNull final Project project,

@@ -595,7 +595,9 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     ApplicationManager.getApplication().assertIsDispatchThread();
     that.myPreviewPopupUpdateProcessor.setup((@NlsContexts.PopupAdvertisement var text) -> {
       ApplicationManager.getApplication().assertIsDispatchThread();
-      that.myPopup.setAdText(text, SwingConstants.LEFT);
+      if (!that.myPopup.isDisposed()) {
+        that.myPopup.setAdText(text, SwingConstants.LEFT);
+      }
       return Unit.INSTANCE;
     }, index);
     that.myPreviewPopupUpdateProcessor.updatePopup(action);

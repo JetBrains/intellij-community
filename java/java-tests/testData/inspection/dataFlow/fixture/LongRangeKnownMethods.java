@@ -115,7 +115,7 @@ public class LongRangeKnownMethods {
 
   void testMin(long x, long y) {
     if (x < 10 && y > 10) {
-      y = Long.<warning descr="Result of min is the same as the first argument making the call meaningless">min</warning>(x, y);
+      y = Long.<warning descr="Result of 'min' is the same as the first argument making the call meaningless">min</warning>(x, y);
       if (<warning descr="Condition 'y > 20' is always 'false'">y > 20</warning>) {
         System.out.println("Impossible");
       }

@@ -3,6 +3,9 @@ package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.hints.VcsCodeAuthorInlayHintsProvider
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector.Companion.CLASS_LOCATION
+import org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector.Companion.FUNCTION_LOCATION
+import org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector.Companion.logCodeAuthorClicked
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
@@ -23,4 +26,11 @@ internal class KotlinCodeAuthorInlayHintsProvider : VcsCodeAuthorInlayHintsProvi
             is KtObjectDeclaration -> !element.isObjectLiteral()
             else -> false
         }
+
+    override fun getClickHandler(element: PsiElement): () -> Unit {
+        val project = element.project
+        val location = if (element is KtClassOrObject) CLASS_LOCATION else FUNCTION_LOCATION
+
+        return { logCodeAuthorClicked(project, location) }
+    }
 }

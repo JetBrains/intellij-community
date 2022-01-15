@@ -47,7 +47,7 @@ public class ExtractIncludeAction extends BasePlatformRefactoringAction {
   protected boolean isAvailableForFile(PsiFile file) {
     final RefactoringActionHandler handler = LanguageExtractInclude.INSTANCE.forLanguage(file.getViewProvider().getBaseLanguage());
     if (handler instanceof ExtractIncludeFileBase<?>) {
-      return ((ExtractIncludeFileBase)handler).isAvailableForFile(file);
+      return ((ExtractIncludeFileBase<?>)handler).isAvailableForFile(file);
     }
     return handler != null;
   }

@@ -182,4 +182,18 @@ class Bar extends Foo {
 class Bar extends Foo {}
 '''
   }
+
+  void 'test switch expression'() {
+    highlightingTest """
+def x = <error>switch</error> (10) {
+}"""
+  }
+
+  void 'test switch with multiple expressions'() {
+    highlightingTest """
+switch (10) {
+  case <error>20, 30</error>:
+    break
+}"""
+  }
 }

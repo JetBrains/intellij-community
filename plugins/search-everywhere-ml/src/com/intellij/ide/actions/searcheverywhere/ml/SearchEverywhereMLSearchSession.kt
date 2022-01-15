@@ -40,12 +40,12 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
       val searchReason = if (prevState == null) SearchRestartReason.SEARCH_STARTED else reason
       val nextSearchIndex = (prevState?.searchIndex ?: 0) + 1
       SearchEverywhereMlSearchState(sessionStartTime, startTime, nextSearchIndex, searchReason, tabId, keysTyped, backspacesTyped,
-                                    queryLength, providersCaches)
+        queryLength, providersCaches)
     }
 
     if (prevState != null && isMLSupportedTab(tabId)) {
       logger.onSearchRestarted(project, sessionId, prevState.searchIndex, itemIdProvider, cachedContextInfo, prevState,
-                               previousElementsProvider)
+        previousElementsProvider)
     }
   }
 

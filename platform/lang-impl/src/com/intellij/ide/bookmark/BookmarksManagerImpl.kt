@@ -40,6 +40,12 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
       notifier.defaultGroupChanged(old, group)
     }
 
+  private val sortedProviders: List<BookmarkProvider>
+    get() = when {
+      project.isDisposed -> emptyList()
+      else -> BookmarkProvider.EP.getExtensions(project).sortedByDescending { it.weight }
+    }
+
   internal val snapshot: List<BookmarkOccurrence>
     get() = mutableListOf<BookmarkOccurrence>().also {
       synchronized(notifier) {
@@ -60,13 +66,9 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
   override fun loadState(state: ManagerState) {
     remove() // see com.intellij.tasks.context.BookmarkContextProvider
     if (state.groups.isNotEmpty()) {
-      val pairs = mutableListOf<Pair<BookmarkState, Group>>()
       state.groups.forEach {
         val group = addOrReuseGroup(it.name, it.isDefault)
-        it.bookmarks.forEach { bookmark -> pairs.add(bookmark to group) }
-      }
-      for (pair in pairs) {
-        invoker.invokeLater { createBookmark(pair.first)?.let { pair.second.add(it, pair.first.type, pair.first.description, -1) } }
+        it.bookmarks.forEach { bookmark -> group.addLater(bookmark, bookmark.type, bookmark.description) }
       }
     }
   }
@@ -75,8 +77,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     val group = addOrReuseGroup(project.name, true)
     val listener = object : BookmarksListener {
       override fun bookmarkAdded(old: com.intellij.ide.bookmarks.Bookmark) {
-        val bookmark = LineBookmarkProvider.find(project)?.createBookmark(old.file, old.line) ?: return
-        group.add(bookmark, old.type, old.description, -1)
+        group.addLater(old, old.type, old.description)
       }
     }
     project.messageBus.connect().subscribe(BookmarksListener.TOPIC, listener)
@@ -88,8 +89,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     for (name in manager.availableFavoritesListNames) {
       val group = addOrReuseGroup(name, false)
       for (item in manager.getFavoritesListRootUrls(name)) {
-        val bookmark = LineBookmarkProvider.find(project)?.createBookmark(item.data.first) ?: continue
-        group.add(bookmark, BookmarkType.DEFAULT, item.data.second ?: "", -1)
+        group.addLater(item.data.first, BookmarkType.DEFAULT, null)
       }
     }
   }
@@ -98,17 +98,12 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     allGroups.find { it.hash == hash && it.name == name }
   }
 
-  private fun createBookmark(state: BookmarkState): Bookmark? {
-    if (project.isDisposed) return null
-    val name = state.provider ?: return null
-    val provider = BookmarkProvider.EP.findFirstSafe(project) { it::class.java.name == name }
-    return provider?.createBookmark(state.attributes)
+  override fun createBookmark(context: Any?) = when (context is BookmarkState) {
+    true -> sortedProviders.firstOrNull { it::class.java.name == context.provider }?.createBookmark(context.attributes)
+    else -> sortedProviders.firstNotNullOfOrNull { it.createBookmark(context) }
   }
 
-  override fun createBookmark(context: Any?) = when {
-    project.isDisposed -> null
-    else -> BookmarkProvider.EP.getExtensions(project).sortedByDescending { it.weight }.firstNotNullOfOrNull { it.createBookmark(context) }
-  }
+  private fun createDescription(bookmark: Bookmark) = LineBookmarkProvider.readLineText(bookmark as? LineBookmark)?.trim() ?: ""
 
   override fun getBookmarks() = synchronized(notifier) { allBookmarks.keys.toList() }
 
@@ -170,8 +165,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
   override fun add(bookmark: Bookmark, type: BookmarkType) {
     val groups = findGroupsToAdd(bookmark) ?: return
     val group = chooseGroupToAdd(groups) ?: return
-    val text = LineBookmarkProvider.readLineText(bookmark as? LineBookmark)
-    group.add(bookmark, type, text?.trim() ?: "")
+    group.add(bookmark, type, createDescription(bookmark))
   }
 
   private fun findGroupsToAdd(bookmark: Bookmark) = synchronized(notifier) {
@@ -430,6 +424,15 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
       info.bookmarkAdded(this, added)
       info.changeType(type)
       return true
+    }
+
+    /**
+     * Creates a bookmark from the specified context and adds it to the group if possible.
+     * It is intended to restore bookmark state or to migrate old bookmarks and favorites.
+     * Each bookmark is created separately that allows to wait for the end of indexing.
+     */
+    internal fun addLater(context: Any, type: BookmarkType, description: String?) {
+      invoker.invokeLater { createBookmark(context)?.let { add(it, type, description ?: createDescription(it), -1) } }
     }
 
     override fun canRemove(bookmark: Bookmark) = synchronized(notifier) {

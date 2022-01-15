@@ -23,8 +23,10 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBRadioButton
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
-import com.intellij.util.ui.JBUI
 
 class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurable>(
   ApplicationBundle.message("title.code.completion"), "reference.settingsdialog.IDE.editor.code.completion"),
@@ -106,13 +108,14 @@ class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurabl
 
     return panel {
       buttonGroup {
-        fullRow {
-          cbMatchCase = checkBox(ApplicationBundle.message("completion.option.match.case")).component
+        row {
+          cbMatchCase = checkBox(ApplicationBundle.message("completion.option.match.case"))
+            .component
           rbLettersOnly = radioButton(ApplicationBundle.message("completion.option.first.letter.only"))
-            .enableIf(cbMatchCase.selected)
+            .enabledIf(cbMatchCase.selected)
             .component.apply { isSelected = true }
           rbAllOnly = radioButton(ApplicationBundle.message("completion.option.all.letters"))
-            .enableIf(cbMatchCase.selected)
+            .enabledIf(cbMatchCase.selected)
             .component
         }
       }
@@ -121,83 +124,84 @@ class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurabl
       val smartTypeCompletion = OptionsApplicabilityFilter.isApplicable(OptionId.COMPLETION_SMART_TYPE)
 
       if (codeCompletion || smartTypeCompletion) {
-        row {
-          label(ApplicationBundle.message("label.autocomplete.when.only.one.choice"))
-
+        buttonGroup(ApplicationBundle.message("label.autocomplete.when.only.one.choice")) {
           if (codeCompletion) {
-            fullRow {
-              checkBox(ApplicationBundle.message("checkbox.autocomplete.basic"), prop = settings::AUTOCOMPLETE_ON_CODE_COMPLETION)
-              label(KeymapUtil.getFirstKeyboardShortcutText(actionManager.getAction(IdeActions.ACTION_CODE_COMPLETION)))
-                .component.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+            row {
+              checkBox(ApplicationBundle.message("checkbox.autocomplete.basic"))
+                .bindSelected(settings::AUTOCOMPLETE_ON_CODE_COMPLETION)
+                .gap(RightGap.SMALL)
+              comment(KeymapUtil.getFirstKeyboardShortcutText(actionManager.getAction(IdeActions.ACTION_CODE_COMPLETION)))
             }
           }
 
           if (smartTypeCompletion) {
-            fullRow {
-              checkBox(ApplicationBundle.message("checkbox.autocomplete.smart.type"),
-                       prop = settings::AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION)
-              label(KeymapUtil.getFirstKeyboardShortcutText(actionManager.getAction(IdeActions.ACTION_SMART_TYPE_COMPLETION)))
-                .component.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+            row {
+              checkBox(ApplicationBundle.message("checkbox.autocomplete.smart.type"))
+                .bindSelected(settings::AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION)
+                .gap(RightGap.SMALL)
+              comment(KeymapUtil.getFirstKeyboardShortcutText(actionManager.getAction(IdeActions.ACTION_SMART_TYPE_COMPLETION)))
             }
           }
         }
       }
 
       row {
-        checkBox(ApplicationBundle.message("completion.option.sort.suggestions.alphabetically"),
-                 prop = instance::sortLookupElementsLexicographically)
+        checkBox(ApplicationBundle.message("completion.option.sort.suggestions.alphabetically"))
+          .bindSelected(instance::sortLookupElementsLexicographically)
       }
 
-      lateinit var cbAutocompletion: CellBuilder<JBCheckBox>
-
+      lateinit var cbAutocompletion: Cell<JBCheckBox>
       row {
         cbAutocompletion = checkBox(ApplicationBundle.message("editbox.auto.complete") +
-                                    if (PowerSaveMode.isEnabled()) LangBundle.message("label.not.available.in.power.save.mode") else "",
-                                    prop = settings::AUTO_POPUP_COMPLETION_LOOKUP)
+                                    if (PowerSaveMode.isEnabled()) LangBundle.message("label.not.available.in.power.save.mode") else "")
+          .bindSelected(settings::AUTO_POPUP_COMPLETION_LOOKUP)
       }
 
-      row {
+      indent {
         row {
-          checkBox(IdeUICustomization.getInstance().selectAutopopupByCharsText,
-                   getter = settings::isSelectAutopopupSuggestionsByChars,
-                   setter = settings::setSelectAutopopupSuggestionsByChars)
-            .enableIf(cbAutocompletion.selected)
+          checkBox(IdeUICustomization.getInstance().selectAutopopupByCharsText)
+            .bindSelected(settings::isSelectAutopopupSuggestionsByChars, settings::setSelectAutopopupSuggestionsByChars)
+            .enabledIf(cbAutocompletion.selected)
         }
       }
 
-      fullRow {
-        val cbAutopopupJavaDoc = checkBox(ApplicationBundle.message("editbox.autopopup.javadoc.in"),
-                                          prop = settings::AUTO_POPUP_JAVADOC_INFO)
-        intTextField(prop = settings::JAVADOC_INFO_DELAY,
-                     columns = 4,
-                     range = CodeInsightSettings.JAVADOC_INFO_DELAY_RANGE.asRange(),
-                     step = 100)
-          .enableIf(cbAutopopupJavaDoc.selected)
+      row {
+        val cbAutopopupJavaDoc = checkBox(ApplicationBundle.message("editbox.autopopup.javadoc.in"))
+          .bindSelected(settings::AUTO_POPUP_JAVADOC_INFO)
+          .gap(RightGap.SMALL)
+        intTextField(CodeInsightSettings.JAVADOC_INFO_DELAY_RANGE.asRange(), 100)
+          .bindIntText(settings::JAVADOC_INFO_DELAY)
+          .columns(4)
+          .enabledIf(cbAutopopupJavaDoc.selected)
+          .gap(RightGap.SMALL)
         label(ApplicationBundle.message("editbox.ms"))
       }
 
       addOptions()
 
-      titledRow(ApplicationBundle.message("title.parameter.info")) {
+      group(ApplicationBundle.message("title.parameter.info")) {
         if (OptionsApplicabilityFilter.isApplicable(OptionId.SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION)) {
           row {
-            checkBox(ApplicationBundle.message("editbox.complete.with.parameters"),
-                     prop = settings::SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION)
+            checkBox(ApplicationBundle.message("editbox.complete.with.parameters"))
+              .bindSelected(settings::SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION)
           }
         }
 
-        fullRow {
-          val cbParameterInfoPopup = checkBox(ApplicationBundle.message("editbox.autopopup.in"), prop = settings::AUTO_POPUP_PARAMETER_INFO)
-          intTextField(prop = settings::PARAMETER_INFO_DELAY,
-                       columns = 4,
-                       range = CodeInsightSettings.PARAMETER_INFO_DELAY_RANGE.asRange(),
-                       step = 100)
-            .enableIf(cbParameterInfoPopup.selected)
+        row {
+          val cbParameterInfoPopup = checkBox(ApplicationBundle.message("editbox.autopopup.in"))
+            .bindSelected(settings::AUTO_POPUP_PARAMETER_INFO)
+            .gap(RightGap.SMALL)
+          intTextField(CodeInsightSettings.PARAMETER_INFO_DELAY_RANGE.asRange(), 100)
+            .bindIntText(settings::PARAMETER_INFO_DELAY)
+            .columns(4)
+            .enabledIf(cbParameterInfoPopup.selected)
+            .gap(RightGap.SMALL)
           label(ApplicationBundle.message("editbox.ms"))
         }
 
         row {
-          checkBox(ApplicationBundle.message("checkbox.show.full.signatures"), prop = settings::SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO)
+          checkBox(ApplicationBundle.message("checkbox.show.full.signatures"))
+            .bindSelected(settings::SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO)
         }
       }
 
@@ -205,16 +209,16 @@ class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurabl
     }
   }
 
-  private fun RowBuilder.addOptions() {
+  private fun Panel.addOptions() {
     configurables.filter { it !is CodeCompletionOptionsCustomSection }
-      .forEach { appendDslConfigurableRow(it) }
+      .forEach { appendDslConfigurable(it) }
   }
 
-  private fun RowBuilder.addSections() {
+  private fun Panel.addSections() {
     configurables.filterIsInstance<CodeCompletionOptionsCustomSection>()
       .sortedWith(Comparator.comparing { c ->
         (c as? Configurable)?.displayName ?: ""
       })
-      .forEach { appendDslConfigurableRow(it) }
+      .forEach { appendDslConfigurable(it) }
   }
 }

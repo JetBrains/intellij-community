@@ -48,14 +48,6 @@ internal object GrazieDynamic : DynamicPluginListener {
     }
   }
 
-  override fun checkUnloadPlugin(pluginDescriptor: IdeaPluginDescriptor) {
-    if (pluginDescriptor.pluginId?.idString == GraziePlugin.id) {
-      if (Lang.isAnyLanguageLoadExceptEnglish()) {
-        throw CannotUnloadPluginException("Grazie can unload only English language")
-      }
-    }
-  }
-
   fun addDynClassLoader(classLoader: ClassLoader) = myDynClassLoaders.add(classLoader)
 
   private val dynClassLoaders: Set<ClassLoader>

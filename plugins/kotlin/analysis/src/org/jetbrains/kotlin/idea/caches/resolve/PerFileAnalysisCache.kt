@@ -338,6 +338,12 @@ private class StackedCompositeBindingContextTrace(
         filtered
     }
 
+    override fun setCallback(callback: DiagnosticSink.DiagnosticsCallback) {
+        if (diagnosticsCallback == null) {
+            super.setCallback(callback)
+        }
+    }
+
     inner class StackedCompositeBindingContext : BindingContext {
         var cachedDiagnostics: Diagnostics? = null
 
@@ -476,7 +482,6 @@ private object KotlinResolveDataProvider {
             val targetPlatform = moduleInfo.platform
 
             try {
-                trace.resetCallback()
                 callback?.let {
                     trace.setCallback(it)
                 }

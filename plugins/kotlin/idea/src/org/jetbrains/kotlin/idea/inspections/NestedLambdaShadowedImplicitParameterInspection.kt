@@ -53,7 +53,7 @@ class NestedLambdaShadowedImplicitParameterInspection : AbstractKotlinInspection
                         KotlinBundle.message("implicit.parameter.it.of.enclosing.lambda.is.shadowed"),
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                         AddExplicitParameterToOuterLambdaFix(),
-                        IntentionWrapper(ReplaceItWithExplicitFunctionLiteralParamIntention(), containingFile)
+                        IntentionWrapper(ReplaceItWithExplicitFunctionLiteralParamIntention())
                     )
                 }
             }

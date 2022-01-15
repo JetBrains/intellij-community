@@ -1,12 +1,12 @@
 @file:Suppress("UNUSED_PARAMETER")
 
 import kotlin.coroutines.*
-import org.jetbrains.annotations.BlockingContext
-import org.jetbrains.annotations.NonBlockingContext
+import org.jetbrains.annotations.BlockingExecutor
+import org.jetbrains.annotations.NonBlockingExecutor
 import java.lang.Thread
 
 suspend fun testFunction() {
-    @BlockingContext
+    @BlockingExecutor
     val ctx = getContext()
     // no warnings with @BlockingContext annotation on ctx object
     withContext(ctx) { Thread.sleep(1) }
@@ -23,12 +23,12 @@ suspend fun testFunction() {
     }
 }
 
-@BlockingContext
+@BlockingExecutor
 fun getContext(): CoroutineContext = TODO()
 
 fun getNonBlockingContext(): CoroutineContext = TODO()
 
-@NonBlockingContext
+@NonBlockingExecutor
 fun getExplicitlyNonBlockingContext(): CoroutineContext = TODO()
 
 suspend fun <T> withContext(

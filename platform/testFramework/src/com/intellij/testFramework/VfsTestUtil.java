@@ -24,6 +24,7 @@ import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -118,12 +119,46 @@ public final class VfsTestUtil {
   }
 
   public static void overwriteTestData(@NotNull String filePath, @NotNull String actual) {
+    overwriteTestData(filePath, actual, false);
+  }
+
+  public static void overwriteTestData(@NotNull String filePath, @NotNull String actual, boolean preserveSpaces) {
     try {
-      FileUtil.writeToFile(new File(filePath), actual);
+      File file = new File(filePath);
+      if (preserveSpaces) {
+        try {
+          actual = preserveSpacesFromFile(file, actual);
+        }
+        catch (Throwable e) {
+          //noinspection UseOfSystemOutOrSystemErr
+          System.err.println("Failed to preserve spaces: " + e.getMessage());
+        }
+      }
+      FileUtil.writeToFile(file, actual);
     }
     catch (IOException e) {
       throw new AssertionError(e);
     }
+  }
+
+  private static String preserveSpacesFromFile(@NotNull File file, @NotNull String actual) throws IOException {
+    if (!file.exists()) {
+      return actual;
+    }
+    String existing = FileUtil.loadFile(file, StandardCharsets.UTF_8);
+    int eLen = existing.length();
+    int lead = 0;
+    while (lead < eLen && Character.isWhitespace(existing.charAt(lead))) {
+      ++lead;
+    }
+    int trail = eLen;
+    if (lead != eLen) {
+      while (trail > 0 && Character.isWhitespace(existing.charAt(trail - 1))) {
+        --trail;
+      }
+    }
+    actual = existing.substring(0, lead) + actual.trim() + existing.substring(trail, eLen);
+    return actual;
   }
 
   @NotNull

@@ -13,10 +13,10 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import javax.swing.DefaultComboBoxModel
 
 
-abstract class AbstractNewProjectWizardMultiStep<P : NewProjectWizardStep, S : NewProjectWizardStep>(
-  parent: P,
+abstract class AbstractNewProjectWizardMultiStep<S : NewProjectWizardStep>(
+  parent: NewProjectWizardStep,
   epName: ExtensionPointName<out NewProjectWizardMultiStepFactory<S>>
-) : AbstractNewProjectWizardChildStep<P>(parent) {
+) : AbstractNewProjectWizardStep(parent) {
 
   protected abstract val self: S
 
@@ -31,8 +31,6 @@ abstract class AbstractNewProjectWizardMultiStep<P : NewProjectWizardStep, S : N
       .associateTo(LinkedHashMap()) { it.name to it.createStep(self) }
   }
 
-  open fun setupCommonUI(builder: Panel) {}
-
   final override fun setupUI(builder: Panel) {
     with(builder) {
       row(label) {
@@ -44,8 +42,6 @@ abstract class AbstractNewProjectWizardMultiStep<P : NewProjectWizardStep, S : N
           segmentedButton(steps.map { it.key }, stepProperty) { it }
         }
       }.bottomGap(BottomGap.SMALL)
-
-      setupCommonUI(this)
 
       val panelBuilder = NewProjectWizardPanelBuilder.getInstance(context)
       val stepsPanels = HashMap<String, DialogPanel>()

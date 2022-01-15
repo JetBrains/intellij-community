@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.ui.table.VcsLogIconCellRenderer
 import git4idea.GitIcons
+import git4idea.commit.signature.GitCommitSignature
 import git4idea.i18n.GitBundle.message
 import javax.swing.Icon
 

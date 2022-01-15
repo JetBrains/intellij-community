@@ -811,6 +811,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     if (session instanceof DefaultRepositorySystemSession) {
       Map<MavenId, Model> cacheMavenModelMap = new HashMap<MavenId, Model>((int)(buildingResults.size() * 1.5));
       for (ProjectBuildingResult result : buildingResults) {
+        if (result.getProblems() != null && !result.getProblems().isEmpty()) continue;
         Model model = result.getProject().getModel();
         cacheMavenModelMap.put(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()), model);
       }

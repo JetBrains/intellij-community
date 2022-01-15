@@ -198,7 +198,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
         if (!strict && !"inside".equals(condition.getDebugMethodName())) return null;
 
         result.setApplyToSubTags(!strict);
-        ElementPattern<?> insidePattern = ((PatternConditionPlus)condition).getValuePattern();
+        ElementPattern<?> insidePattern = ((PatternConditionPlus<?, ?>)condition).getValuePattern();
         if (!XmlTag.class.equals(insidePattern.getCondition().getInitialCondition().getAcceptedClass())) return null;
         for (PatternCondition<?> insideCondition : insidePattern.getCondition().getConditions()) {
           String tagValue = extractValue(insideCondition);
@@ -222,7 +222,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
   @Nullable
   private static String extractValue(PatternCondition<?> condition) {
     if (!(condition instanceof PatternConditionPlus)) return null;
-    final ElementPattern valuePattern = ((PatternConditionPlus)condition).getValuePattern();
+    final ElementPattern valuePattern = ((PatternConditionPlus<?, ?>)condition).getValuePattern();
     final ElementPatternCondition<?> rootCondition = valuePattern.getCondition();
     if (!String.class.equals(rootCondition.getInitialCondition().getAcceptedClass())) return null;
     if (rootCondition.getConditions().size() != 1) return null;

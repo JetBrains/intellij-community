@@ -4,7 +4,7 @@ import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleType
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleTypeTerm
-import com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.packageSearchGradleConfigurationForProject
+import com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.PackageSearchGradleConfiguration
 import icons.GradleIcons
 import javax.swing.Icon
 
@@ -20,7 +20,8 @@ internal object GradleProjectModuleType : ProjectModuleType {
         PackageSearchBundle.message("packagesearch.terminology.dependency.configuration")
 
     override fun defaultScope(project: Project): String =
-        packageSearchGradleConfigurationForProject(project).determineDefaultGradleScope()
+        PackageSearchGradleConfiguration.getInstance(project).determineDefaultGradleScope()
 
-    override fun scopes(project: Project): List<String> = packageSearchGradleConfigurationForProject(project).getGradleScopes()
+    override fun userDefinedScopes(project: Project): List<String> =
+        PackageSearchGradleConfiguration.getInstance(project).getGradleScopes()
 }

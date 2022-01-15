@@ -4,6 +4,7 @@ package com.intellij.testFramework.fixtures.kotlin
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import com.intellij.util.text.VersionComparatorUtil
 import org.junit.Assume
@@ -39,4 +40,10 @@ object KotlinTester {
     MavenDependencyUtil.addFromMaven(model, KT_STD_MAVEN_ID)
     MavenDependencyUtil.addFromMaven(model, KT_STD_JDK_8_MAVEN_ID)
   }
+}
+
+fun DefaultLightProjectDescriptor.withKotlinStdlib(): DefaultLightProjectDescriptor {
+  withRepositoryLibrary(KotlinTester.KT_STD_MAVEN_ID)
+  withRepositoryLibrary(KotlinTester.KT_STD_JDK_8_MAVEN_ID)
+  return this
 }

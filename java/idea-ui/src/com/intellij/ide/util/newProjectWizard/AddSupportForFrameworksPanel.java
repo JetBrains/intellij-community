@@ -447,7 +447,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
       if (provider instanceof OldFrameworkSupportProviderWrapper) {
         final FrameworkSupportProvider oldProvider = ((OldFrameworkSupportProviderWrapper)provider).getProvider();
         if (oldProvider instanceof FacetBasedFrameworkSupportProvider && !addedLibraries.isEmpty()) {
-          ((FacetBasedFrameworkSupportProvider)oldProvider).processAddedLibraries(module, addedLibraries);
+          ((FacetBasedFrameworkSupportProvider<?>)oldProvider).processAddedLibraries(module, addedLibraries);
         }
       }
     }

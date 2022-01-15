@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -20,56 +21,12 @@ public final class JDOMInterner {
   private final ObjectOpenCustomHashSet<Element> myElements = new ObjectOpenCustomHashSet<>(new Hash.Strategy<Element>() {
     @Override
     public int hashCode(Element e) {
-      if (e == null) {
-        return 0;
-      }
-      int result = e.getName().hashCode() * 31;
-      result += computeAttributesHashCode(e);
-      List<Content> content = e.getContent();
-      result = result * 31 + content.size();
-      for (Content child : content) {
-        if (child instanceof Text) {
-          result = result * 31 + computeTextHashCode((Text)child);
-        }
-        else if (child instanceof Element) {
-          result = result * 31 + hashCode((Element)child);
-          break;
-        }
-      }
-      return result;
+      return JDOMInterner.hashCode(e);
     }
 
     @Override
     public boolean equals(Element o1, Element o2) {
-      if (o1 == o2) {
-        return true;
-      }
-
-      if (o1 == null || o2 == null || !Comparing.strEqual(o1.getName(), o2.getName()) || !attributesEqual(o1, o2)) {
-        return false;
-      }
-
-      List<Content> content1 = o1.getContent();
-      List<Content> content2 = o2.getContent();
-      if (content1.size() != content2.size()) return false;
-      for (int i = 0; i < content1.size(); i++) {
-        Content c1 = content1.get(i);
-        Content c2 = content2.get(i);
-        if (c1 instanceof Text) {
-          if (!(c2 instanceof Text) || !Comparing.strEqual(c1.getValue(), c2.getValue())) {
-            return false;
-          }
-        }
-        else if (c1 instanceof Element) {
-          if (!(c2 instanceof Element) || !equals((Element)c1, (Element)c2)) {
-            return false;
-          }
-        }
-        else {
-          throw new RuntimeException(c1.toString());
-        }
-      }
-      return true;
+      return JDOMInterner.equals(o1, o2);
     }
   });
 
@@ -161,5 +118,57 @@ public final class JDOMInterner {
 
   synchronized String internString(String s) {
     return myStrings.intern(s);
+  }
+
+  public static int hashCode(@Nullable Element e) {
+    if (e == null) {
+      return 0;
+    }
+    int result = e.getName().hashCode() * 31;
+    result += computeAttributesHashCode(e);
+    List<Content> content = e.getContent();
+    result = result * 31 + content.size();
+    for (Content child : content) {
+      if (child instanceof Text) {
+        result = result * 31 + computeTextHashCode((Text)child);
+      }
+      else if (child instanceof Element) {
+        result = result * 31 + hashCode((Element)child);
+        break;
+      }
+    }
+    return result;
+  }
+
+  public static boolean equals(@Nullable Element o1, @Nullable Element o2) {
+    if (o1 == o2) {
+      return true;
+    }
+
+    if (o1 == null || o2 == null || !Comparing.strEqual(o1.getName(), o2.getName()) || !attributesEqual(o1, o2)) {
+      return false;
+    }
+
+    List<Content> content1 = o1.getContent();
+    List<Content> content2 = o2.getContent();
+    if (content1.size() != content2.size()) return false;
+    for (int i = 0; i < content1.size(); i++) {
+      Content c1 = content1.get(i);
+      Content c2 = content2.get(i);
+      if (c1 instanceof Text) {
+        if (!(c2 instanceof Text) || !Comparing.strEqual(c1.getValue(), c2.getValue())) {
+          return false;
+        }
+      }
+      else if (c1 instanceof Element) {
+        if (!(c2 instanceof Element) || !equals((Element)c1, (Element)c2)) {
+          return false;
+        }
+      }
+      else {
+        throw new RuntimeException(c1.toString());
+      }
+    }
+    return true;
   }
 }

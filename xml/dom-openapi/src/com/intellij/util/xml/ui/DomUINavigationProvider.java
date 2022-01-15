@@ -81,7 +81,7 @@ public class DomUINavigationProvider extends DomElementNavigationProvider {
     final List<Committable> list = compositCommitable.getChildren();
     for (Committable committable : list) {
       if (committable instanceof DomUIControl) {
-          if(((DomUIControl)committable).canNavigate(domElement)) {
+          if(((DomUIControl<?>)committable).canNavigate(domElement)) {
             return (DomUIControl)committable;
           }
       } else if (committable instanceof CompositeCommittable) {

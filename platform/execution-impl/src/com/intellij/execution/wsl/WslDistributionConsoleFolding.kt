@@ -32,10 +32,10 @@ class WslDistributionConsoleFolding : ConsoleFolding() {
       return false
     }
 
-    // check if line contains `--exec` or `$SHELL -c`, and it's located after `wsl.exe --distribution`
-    var execIndex = line.indexOf(EXEC_PARAMETER, wslExeIndex + 1)
+    // check if line contains `--exec` and it's located after `wsl.exe --distribution`
+    val execIndex = line.indexOf(EXEC_PARAMETER, wslExeIndex + 1)
     if (execIndex < 0) {
-      execIndex = line.indexOf(SHELL_C)
+      return false
     }
 
     // check if line contains `&& `. If yes, then it should be located after `--exec`
@@ -79,7 +79,7 @@ class WslDistributionConsoleFolding : ConsoleFolding() {
     distributionLine = distributionLine.trim('"')
 
     // Find user command-line.
-    // It starts either at the last `&& ` or after `--exec` (`$SHELL -c`)
+    // It starts either at the last `&& ` or after `--exec`
     // It ends either at the end of line or at the `; exitcode=$?`
     val indexOfAmp = line.lastIndexOf("&& ")
     val indexOfExec = line.indexOf(EXEC_PARAMETER)
@@ -87,10 +87,7 @@ class WslDistributionConsoleFolding : ConsoleFolding() {
     if (userCLStart <= 2) {
       userCLStart = indexOfExec + EXEC_PARAMETER.length + 1
       if (userCLStart <= EXEC_PARAMETER.length) {
-        userCLStart = line.indexOf(SHELL_C) + SHELL_PARAMETER.length + 4
-        if (userCLStart <= SHELL_PARAMETER.length + 3) {
-          return null
-        }
+        return null
       }
     }
 
@@ -124,7 +121,5 @@ class WslDistributionConsoleFolding : ConsoleFolding() {
 
   companion object {
     private const val WSL_EXE_DISTRIBUTION = "$WSL_EXE $DISTRIBUTION_PARAMETER"
-
-    private const val SHELL_C = "$SHELL_PARAMETER -c"
   }
 }

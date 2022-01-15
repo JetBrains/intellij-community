@@ -223,14 +223,16 @@ public final class LightEditServiceImpl implements LightEditService,
 
   private void logStartupTime() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ObjectUtils.consumeIfNotNull(
-        getEditPanel().getTabs().getSelectedInfo(),
-        tabInfo ->
-          UiNotifyConnector
-            .doWhenFirstShown(tabInfo.getComponent(), () -> ApplicationManager.getApplication().invokeLater(() -> {
-              LOG.info("Startup took: " + ManagementFactory.getRuntimeMXBean().getUptime() + " ms");
-            }))
-      );
+      if (myFrameWrapper != null) {
+        ObjectUtils.consumeIfNotNull(
+          getEditPanel().getTabs().getSelectedInfo(),
+          tabInfo ->
+            UiNotifyConnector
+              .doWhenFirstShown(tabInfo.getComponent(), () -> ApplicationManager.getApplication().invokeLater(() -> {
+                LOG.info("Startup took: " + ManagementFactory.getRuntimeMXBean().getUptime() + " ms");
+              }))
+        );
+      }
     }
   }
 

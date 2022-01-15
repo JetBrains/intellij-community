@@ -59,7 +59,7 @@ public class DefaultStubBuilder implements StubBuilder {
     protected void visitNode(StubElement parentStub, ASTNode node, boolean immediateParentStubbed) {
       StubElement stub = createStub(parentStub, node);
       if (stub != null && !immediateParentStubbed) {
-        ((ObjectStubBase)stub).markDangling();
+        ((ObjectStubBase<?>)stub).markDangling();
       }
 
       pushChildren(node, node instanceof FileElement || stub != null, stub != null ? stub : parentStub);

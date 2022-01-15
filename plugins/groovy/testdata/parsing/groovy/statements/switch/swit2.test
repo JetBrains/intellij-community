@@ -13,9 +13,9 @@ Groovy script
     PsiElement({)('{')
     PsiWhiteSpace('\n')
     Case section
-      Case label
-        PsiElement(case)('case')
-        PsiWhiteSpace(' ')
+      PsiElement(case)('case')
+      PsiWhiteSpace(' ')
+      Expression list
         Unary expression
           PsiElement(~)('~')
           Literal
@@ -23,15 +23,16 @@ Groovy script
               PsiElement(regex begin)('/')
               PsiElement(regex content)('....')
               PsiElement(regex end)('/')
-        PsiWhiteSpace(' ')
-        PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      PsiElement(:)(':')
       PsiElement(new line)('\n')
-      Case label
-        PsiElement(case)('case')
-        PsiWhiteSpace(' ')
+    Case section
+      PsiElement(case)('case')
+      PsiWhiteSpace(' ')
+      Expression list
         Literal
           PsiElement(Integer)('2')
-        PsiElement(:)(':')
+      PsiElement(:)(':')
       PsiWhiteSpace(' ')
       ASSERT statement
         PsiElement(assert)('assert')

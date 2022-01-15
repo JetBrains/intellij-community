@@ -103,8 +103,8 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     for (GutterMark renderer : renderers) {
       if (renderer instanceof LineMarkerInfo.LineMarkerGutterIconRenderer) {
         LineMarkerInfo.LineMarkerGutterIconRenderer lineMarkerRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer)renderer;
-        AnAction clickAction = ((LineMarkerInfo.LineMarkerGutterIconRenderer)renderer).getClickAction();
-        if (clickAction instanceof NavigateAction && actionId.equals(((NavigateAction)clickAction).getOriginalActionId())) {
+        AnAction clickAction = ((LineMarkerInfo.LineMarkerGutterIconRenderer<?>)renderer).getClickAction();
+        if (clickAction instanceof NavigateAction && actionId.equals(((NavigateAction<?>)clickAction).getOriginalActionId())) {
           elementCandidates.add(lineMarkerRenderer.getLineMarkerInfo().getElement());
         }
       }

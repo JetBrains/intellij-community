@@ -88,9 +88,10 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
   @Override
   public JComponent createComponent() {
     if (myJdkPanel == null) {
-      myJdkPanel = new JPanel(new GridBagLayout());
-      myCbProjectJdk = new JdkComboBox(myProject, myJdksModel, SimpleJavaSdkType.notSimpleJavaSdkType(),
-                                       WslSdkFilter.filterSdkByWsl(myProject), WslSdkFilter.filterSdkSuggestionByWsl(myProject), null, null);
+      final var ui = new ProjectJdkConfigurableUi();
+      myJdkPanel = ui.panel(myProject, myJdksModel);
+      myCbProjectJdk = ui.getJdkComboBox();
+
       myCbProjectJdk.showNoneSdkItem();
       myCbProjectJdk.addActionListener(new ActionListener() {
         @Override
@@ -102,11 +103,9 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
           clearCaches();
         }
       });
-      myJdkPanel.add(myCbProjectJdk, new GridBagConstraints(0, 0, 1, 1, 0, 1.0, NORTHWEST, NONE, JBUI.emptyInsets(), 0, 0));
-      final JButton editButton = new JButton(ApplicationBundle.message("button.edit"));
-      myCbProjectJdk.setEditButton(editButton, myProject, myJdksModel::getProjectSdk);
 
-      myJdkPanel.add(editButton, new GridBagConstraints(RELATIVE, 0, 1, 1, 1.0, 0, NORTHWEST, NONE, JBUI.insetsLeft(4), 0, 0));
+      final JButton editButton = ui.getEditButton();
+      myCbProjectJdk.setEditButton(editButton, myProject, myJdksModel::getProjectSdk);
     }
     return myJdkPanel;
   }

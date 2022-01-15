@@ -4,7 +4,7 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.injected.editor.EditorWindow
-import com.intellij.lang.documentation.ide.EditorDocumentationTargetProvider
+import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
@@ -34,7 +34,7 @@ internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, h
     val request = readAction {
       val targets = injectedThenHost(
         project, hostEditor, hostOffset,
-        EditorDocumentationTargetProvider.getInstance()::documentationTargets
+        IdeDocumentationTargetProvider.getInstance(project)::documentationTargets
       )
       targets?.singleOrNull()?.documentationRequest()
     }

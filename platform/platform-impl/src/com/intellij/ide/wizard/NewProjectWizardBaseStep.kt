@@ -6,6 +6,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.openapi.GitRepositoryInitializer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
@@ -13,10 +14,12 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.properties.transform
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
@@ -26,12 +29,7 @@ import java.io.File
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
-class NewProjectWizardBaseStep(
-  override val context: WizardContext,
-  factory: NewProjectWizardChildStep.Factory<NewProjectWizardBaseStep>?
-) : NewProjectWizardStep, NewProjectWizardBaseData {
-
-  private val childStep by lazy { factory?.createStep(this) }
+class NewProjectWizardBaseStep(override val context: WizardContext) : NewProjectWizardStep, NewProjectWizardBaseData {
 
   override val propertyGraph = PropertyGraph("New project wizard")
 
@@ -80,14 +78,12 @@ class NewProjectWizardBaseStep(
           .validationOnApply { validateLocation() }
           .validationOnInput { validateLocation() }
       }.bottomGap(BottomGap.SMALL)
-      if (context.isCreatingNewProject) {
+      if (context.isCreatingNewProject && GitRepositoryInitializer.getInstance() != null) {
         row("") {
           checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"))
             .bindSelected(gitProperty)
         }.bottomGap(BottomGap.SMALL)
       }
-
-      childStep?.setupUI(this)
 
       onApply {
         context.projectName = name
@@ -150,12 +146,13 @@ class NewProjectWizardBaseStep(
   }
 
   override fun setupProject(project: Project) {
-    childStep?.setupProject(project)
-  }
-
-  class Factory(
-    private val childFactory: NewProjectWizardChildStep.Factory<NewProjectWizardBaseStep>? = null
-  ) : NewProjectWizardStep.Factory {
-    override fun createStep(context: WizardContext) = NewProjectWizardBaseStep(context, childFactory)
+    if (git) {
+      val projectBaseDirectory = LocalFileSystem.getInstance().findFileByNioFile(projectPath)
+      if (projectBaseDirectory != null) {
+        runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project )  {
+          GitRepositoryInitializer.getInstance()!!.initRepository(project, projectBaseDirectory)
+        }
+      }
+    }
   }
 }

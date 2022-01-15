@@ -6,7 +6,9 @@ import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver.ExternalClassResolveResult;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.MoveToTestRootFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
@@ -141,6 +143,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     Map<Library, String> librariesToAdd = new HashMap<>();
     Set<VirtualFile> jars = new HashSet<>();
     Set<Library> excluded = new HashSet<>();
+    Set<Library> withTestScope = new HashSet<>();
     ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(currentModule).getFileIndex();
     for (PsiClass aClass : allowedDependencies) {
       if (!facade.getResolveHelper().isAccessible(aClass, psiElement, aClass)) continue;
@@ -166,11 +169,16 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
             continue;
           }
           OrderEntry entryForFile = moduleFileIndex.getOrderEntryForFile(virtualFile);
-          if (entryForFile != null &&
-              !(entryForFile instanceof ExportableOrderEntry &&
-                ((ExportableOrderEntry)entryForFile).getScope() == DependencyScope.TEST &&
-                !moduleFileIndex.isInTestSourceContent(refVFile))) {
-            excluded.add(library);
+          if (entryForFile != null) {
+            boolean testScopeLibraryInProduction = entryForFile instanceof ExportableOrderEntry && 
+                                                   ((ExportableOrderEntry)entryForFile).getScope() == DependencyScope.TEST && 
+                                                   !moduleFileIndex.isInTestSourceContent(refVFile);
+            if (testScopeLibraryInProduction) {
+              withTestScope.add(library);
+            }
+            else {
+              excluded.add(library);
+            }
           }
         }
       }
@@ -178,10 +186,30 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       excluded.forEach(librariesToAdd::remove);
       
       if (!librariesToAdd.isEmpty()) {
-        OrderEntryFix fix = new AddLibraryDependencyFix(reference, currentModule, librariesToAdd, scope, false);
+        class AddLibraryFix extends AddLibraryDependencyFix implements PriorityAction {
+          AddLibraryFix(PsiReference reference,
+                        Module currentModule,
+                        Map<Library, String> libraries, DependencyScope scope, boolean exported) {
+            super(reference, currentModule, libraries, scope, exported);
+          }
+          @Override
+          public @NotNull Priority getPriority() {
+            return withTestScope.isEmpty() ? Priority.NORMAL : Priority.LOW;
+          }
+        }
+        OrderEntryFix fix = new AddLibraryFix(reference, currentModule, librariesToAdd, scope, false);
         registrar.register(fix);
         result.add(fix);
       }
+      
+      if (!withTestScope.isEmpty()) {
+        MoveToTestRootFix fix = new MoveToTestRootFix(containingFile);
+        if (fix.isAvailable(containingFile)) {
+          registrar.register(fix);
+          result.add(fix);
+        }
+      }
+      
     }
 
     return result;
@@ -262,7 +290,8 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
           facade.findClass(resolveResult.getQualifiedClassName(), currentModule.getModuleWithDependenciesAndLibrariesScope(true)) == null) {
         fix = new AddExtLibraryDependencyFix(reference, currentModule, resolveResult.getLibrary(), scope, resolveResult.getQualifiedClassName());
       }
-      else if (!fullReferenceText.equals(shortReferenceName)) {
+      else if (!fullReferenceText.equals(shortReferenceName) && 
+               facade.findClass(fullReferenceText, currentModule.getModuleWithDependenciesAndLibrariesScope(true)) == null) {
         ExternalLibraryDescriptor descriptor = resolver.resolvePackage(fullReferenceText);
         if (descriptor != null) {
           fix = new AddExtLibraryDependencyFix(reference, currentModule, descriptor, scope, null);

@@ -196,7 +196,7 @@ public final class PyTypeChecker {
         return Optional.of(true);
       }
       if (expected.equals(builtinCache.getTypeType()) &&
-          actual instanceof PyInstantiableType && ((PyInstantiableType)actual).isDefinition()) {
+          actual instanceof PyInstantiableType && ((PyInstantiableType<?>)actual).isDefinition()) {
         return Optional.of(true);
       }
     }

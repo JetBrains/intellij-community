@@ -4,6 +4,7 @@ package com.intellij.ide.projectWizard;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.newProjectWizard.SelectTemplateSettings;
 import com.intellij.ide.util.projectWizard.*;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.NlsContexts;
@@ -73,6 +74,10 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
     return myExpertPlaceholder;
   }
 
+  private static boolean isNewWizard() {
+    return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
+  }
+
   private JPanel getModulePanel() {
     return myModuleNameLocationComponent.getModulePanel();
   }
@@ -103,6 +108,9 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
     }
     mySettingsPanel.revalidate();
     mySettingsPanel.repaint();
+    if (isNewWizard()) {
+      myPanel.setBorder(JBUI.Borders.empty(10));
+    }
   }
 
   private static void restorePanel(JPanel component, int i) {

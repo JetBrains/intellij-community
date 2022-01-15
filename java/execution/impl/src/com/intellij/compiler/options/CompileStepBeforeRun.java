@@ -114,7 +114,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     final RunProfileWithCompileBeforeLaunchOption runConfiguration = (RunProfileWithCompileBeforeLaunchOption)configuration;
     //noinspection deprecation
     if (runConfiguration.isExcludeCompileBeforeLaunchOption() ||
-        (configuration instanceof RunConfigurationBase && ((RunConfigurationBase)configuration).excludeCompileBeforeLaunchOption())) {
+        (configuration instanceof RunConfigurationBase && ((RunConfigurationBase<?>)configuration).excludeCompileBeforeLaunchOption())) {
       return true;
     }
 

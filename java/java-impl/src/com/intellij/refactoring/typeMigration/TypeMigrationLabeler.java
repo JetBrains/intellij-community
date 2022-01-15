@@ -1141,8 +1141,8 @@ public class TypeMigrationLabeler {
     for (final PsiElement expr : myConversions.keySet()) {
       final Object conversion = myConversions.get(expr);
 
-      if (conversion instanceof Pair && ((Pair)conversion).first == null) {
-        conversions[k++] = (expr.getText() + " -> " + ((Pair)conversion).second + "\n");
+      if (conversion instanceof Pair && ((Pair<?, ?>)conversion).first == null) {
+        conversions[k++] = (expr.getText() + " -> " + ((Pair<?, ?>)conversion).second + "\n");
       } else {
         conversions[k++] = (expr.getText() + " -> " + conversion + "\n");
       }

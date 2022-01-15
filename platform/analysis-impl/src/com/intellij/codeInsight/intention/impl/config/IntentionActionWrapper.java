@@ -72,8 +72,8 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
   }
 
   @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return getDelegate().getFileModifierForPreview(target);
+  public boolean invokeForPreview(@NotNull Project project, Editor editor, PsiFile file) {
+    return getDelegate().invokeForPreview(project, editor, file);
   }
 
   @Nullable

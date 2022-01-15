@@ -407,19 +407,21 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     BlockingQueue<InspectionContext> contexts = new ArrayBlockingQueue<>(init.size() + 1, false, init);
     boolean added = contexts.offer(TOMB_STONE);
     assert added;
+    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+    boolean shouldFailFastAcquiringReadAction = application.isInImpatientReader();
 
     boolean processed =
       ((JobLauncherImpl)JobLauncher.getInstance()).processQueue(contexts, new LinkedBlockingQueue<>(), new SensitiveProgressWrapper(indicator), TOMB_STONE, context ->
         AstLoadingFilter.disallowTreeLoading(() -> AstLoadingFilter.<Boolean, RuntimeException>forceAllowTreeLoading(file, () -> {
-          ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-          application.executeByImpatientReader(() -> {
-            if (!application.tryRunReadAction(() -> {
+          Runnable runnable = () ->
+            application.runReadAction(() -> { // equivalent to tryRunReadAction() in impatient mode but shorter
               InspectionProblemsHolder holder = context.holder;
               int resultCount = holder.getResultCount();
               PsiElement favoriteElement = context.myFavoriteElement;
 
               // accept favoriteElement only if it belongs to the correct inside/outside list
-              if (favoriteElement != null && inside == favoriteElement.getTextRange().intersects(Divider.startOffset(finalPriorityRange), Divider.endOffset(finalPriorityRange))) {
+              if (favoriteElement != null &&
+                  inside == favoriteElement.getTextRange().intersects(Divider.startOffset(finalPriorityRange), Divider.endOffset(finalPriorityRange))) {
                 context.myFavoriteElement = null; // null the element to make sure it will hold the new favorite after this method finished
                 // run first for the element we know resulted in the diagnostics during previous run
                 favoriteElement.accept(context.visitor);
@@ -440,10 +442,14 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                   resultCount = -1; // mark as "new favorite element is stored"
                 }
               }
-            })) {
-              throw new ProcessCanceledException();
-            }
-          });
+            });
+
+          if (shouldFailFastAcquiringReadAction) {
+            application.executeByImpatientReader(runnable);
+          }
+          else {
+            runnable.run();
+          }
           advanceProgress(1);
           afterProcessCallback.accept(context);
           return true;

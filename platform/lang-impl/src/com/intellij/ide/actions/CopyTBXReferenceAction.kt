@@ -3,11 +3,10 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.actions.CopyReferenceUtil.*
 import com.intellij.navigation.JBProtocolNavigateCommand.Companion.NAVIGATE_COMMAND
-import com.intellij.navigation.JBProtocolNavigateCommandBase.Companion.FQN_KEY
-import com.intellij.navigation.JBProtocolNavigateCommandBase.Companion.PATH_KEY
-import com.intellij.navigation.JBProtocolNavigateCommandBase.Companion.PROJECT_NAME_KEY
-import com.intellij.navigation.JBProtocolNavigateCommandBase.Companion.REFERENCE_TARGET
-import com.intellij.navigation.JBProtocolNavigateCommandBase.Companion.SELECTION
+import com.intellij.navigation.NavigatorWithinProject
+import com.intellij.navigation.PROJECT_NAME_KEY
+import com.intellij.navigation.REFERENCE_TARGET
+import com.intellij.navigation.SELECTION
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.JBProtocolCommand.PROTOCOL
 import com.intellij.openapi.diagnostic.Logger
@@ -74,7 +73,10 @@ object CopyTBXReferenceAction {
 
   private fun parameterIndex(index: Int, size: Int) = if (size == 1) "" else "${index + 1}"
 
-  private fun createRefs(isFile: Boolean, reference: String?, index: String) = "&${if (isFile) PATH_KEY else FQN_KEY}${index}=$reference"
+  private fun createRefs(isFile: Boolean, reference: String?, index: String): String {
+    val navigationKey = if (isFile) NavigatorWithinProject.NavigationKeyPrefix.PATH else NavigatorWithinProject.NavigationKeyPrefix.FQN
+    return "&${navigationKey}${index}=$reference"
+  }
 
   private fun createLink(editor: Editor?, project: Project, refsParameters: String?): String? {
     if (refsParameters == null) return null

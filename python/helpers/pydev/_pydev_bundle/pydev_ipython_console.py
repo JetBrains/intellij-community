@@ -33,11 +33,11 @@ class IPythonInterpreterInterface(BaseInterpreterInterface):
         if code_fragment.text.rstrip().endswith('??'):
             print('IPython-->')
         try:
-            res = bool(self.interpreter.add_exec(code_fragment.text))
+            more, exception_occurred = self.interpreter.add_exec(code_fragment.text)
         finally:
             if code_fragment.text.rstrip().endswith('??'):
                 print('<--IPython')
-        return res
+        return bool(more), exception_occurred
 
     def get_namespace(self):
         return self.interpreter.get_namespace()

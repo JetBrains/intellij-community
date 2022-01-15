@@ -8,12 +8,17 @@ import javax.swing.text.JTextComponent
 import kotlin.reflect.KMutableProperty0
 
 /**
- * Columns for text components for short width (used instead of deprecated [GrowPolicy.SHORT_TEXT]
+ * Columns for text components with tiny width. Used for [Row.intTextField] by default
+ */
+const val COLUMNS_TINY = 6
+
+/**
+ * Columns for text components with short width (used instead of deprecated [GrowPolicy.SHORT_TEXT])
  */
 const val COLUMNS_SHORT = 18
 
 /**
- * Columns for text components for medium width (used instead of deprecated [GrowPolicy.MEDIUM_TEXT]
+ * Columns for text components with medium width (used instead of deprecated [GrowPolicy.MEDIUM_TEXT])
  */
 const val COLUMNS_MEDIUM = 25
 
@@ -45,6 +50,12 @@ fun <T : JTextComponent> Cell<T>.bindIntText(binding: PropertyBinding<Int>): Cel
     })
 }
 
+fun <T : JTextComponent> Cell<T>.bindIntText(property: GraphProperty<Int>): Cell<T> {
+  component.text = property.get().toString()
+  return graphProperty(property)
+    .applyToComponent { bindIntProperty(property) }
+}
+
 fun <T : JTextComponent> Cell<T>.bindIntText(prop: KMutableProperty0<Int>): Cell<T> {
   return bindIntText(prop.toBinding())
 }
@@ -53,9 +64,15 @@ fun <T : JTextComponent> Cell<T>.bindIntText(getter: () -> Int, setter: (Int) ->
   return bindIntText(PropertyBinding(getter, setter))
 }
 
+fun <T : JTextComponent> Cell<T>.text(text: String): Cell<T> {
+  component.text = text
+  return this
+}
+
 /**
  * Minimal width of text field in chars
  *
+ * @see COLUMNS_TINY
  * @see COLUMNS_SHORT
  * @see COLUMNS_MEDIUM
  */

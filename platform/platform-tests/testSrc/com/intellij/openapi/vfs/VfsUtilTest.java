@@ -554,7 +554,10 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     assumeTrue("No WSL distributions found", !distributions.isEmpty());
 
     String wslName = distributions.get(0);
-    VirtualFile usrBin = LocalFileSystem.getInstance().findFileByIoFile(new File("\\\\wsl$\\" + wslName + "\\usr\\bin\\"));
+    File usrBinFile = new File("\\\\wsl$\\" + wslName + "\\usr\\bin\\");
+    assertTrue(usrBinFile + " doesn't exist, despite " +distributions.size()+
+               " WSL distributions found: " + distributions, usrBinFile.exists());
+    VirtualFile usrBin = LocalFileSystem.getInstance().findFileByIoFile(usrBinFile);
     assertTrue(VfsUtilCore.pathEqualsTo(usrBin, "\\\\wsl$\\" + wslName + "\\usr\\bin\\"));
     assertTrue(VfsUtilCore.pathEqualsTo(usrBin, "//wsl$/" + wslName + "/usr/bin"));
     assertTrue(VfsUtilCore.pathEqualsTo(usrBin, "//wsl$/" + wslName + "/usr/bin/"));

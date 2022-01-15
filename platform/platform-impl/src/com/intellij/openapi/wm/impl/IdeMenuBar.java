@@ -45,8 +45,6 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ForkJoinPool;
-import java.util.function.Consumer;
 
 /**
  * @author Anton Katilin
@@ -274,7 +272,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   @Override
   public void addNotify() {
     super.addNotify();
-    doWithLazyActionManager(actionManager -> {
+    ActionManager.doWithLazyActionManager(actionManager -> {
       doUpdateMenuActions(false, actionManager);
       for (AnAction action : myVisibleActions) {
         if (!(action instanceof ActionGroup)) continue;
@@ -286,19 +284,6 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
     IdeEventQueue.getInstance().addDispatcher(this, myDisposable);
-  }
-
-  private static void doWithLazyActionManager(@NotNull Consumer<? super ActionManager> whatToDo) {
-    ActionManager created = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
-    if (created == null) {
-      ForkJoinPool.commonPool().execute(() -> {
-        ActionManager actionManager = ActionManager.getInstance();
-        ApplicationManager.getApplication().invokeLater(() -> whatToDo.accept(actionManager), ModalityState.any());
-      });
-    }
-    else {
-      whatToDo.accept(created);
-    }
   }
 
   @Override
@@ -376,7 +361,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   public void updateMenuActionsLazily(boolean forceRebuild) {
-    doWithLazyActionManager(manager -> doUpdateMenuActions(forceRebuild, manager));
+    ActionManager.doWithLazyActionManager(manager -> doUpdateMenuActions(forceRebuild, manager));
   }
 
   private void doUpdateMenuActions(boolean forceRebuild, @NotNull ActionManager manager) {

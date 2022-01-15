@@ -195,6 +195,11 @@ public final class FSRecords {
     return readAndHandleErrors(() -> ourConnection.getRecords().doGetFlags(id));
   }
 
+  @ApiStatus.Internal
+  public static boolean isDeleted(int id) {
+    return readAndHandleErrors(() -> ourRecordAccessor.isDeleted(id));
+  }
+
   static int findRootRecord(@NotNull String rootUrl) {
     return writeAndHandleErrors(() -> ourTreeAccessor.findOrCreateRootRecord(rootUrl, () -> createRecord()));
   }

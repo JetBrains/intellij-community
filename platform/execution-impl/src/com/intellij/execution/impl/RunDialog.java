@@ -135,7 +135,7 @@ public class RunDialog extends DialogWrapper implements RunDialogBase {
            JComponent cp = component.getComponent();
             if (cp instanceof ComboBox) {
               ApplicationManager.getApplication().invokeLater(() -> {
-                ComboPopup popup = ((ComboBox)cp).getPopup();
+                ComboPopup popup = ((ComboBox<?>)cp).getPopup();
                 if (popup != null && cp.isShowing()) {
                   popup.show();
                 }

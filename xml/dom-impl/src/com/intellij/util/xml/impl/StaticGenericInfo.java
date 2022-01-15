@@ -200,7 +200,7 @@ public final class StaticGenericInfo extends DomGenericInfoEx {
   public String getElementName(DomElement element) {
     buildMethodMaps();
     Object o = getNameObject(element);
-    return o == null || o instanceof String ? (String)o : ((GenericValue)o).getStringValue();
+    return o == null || o instanceof String ? (String)o : ((GenericValue<?>)o).getStringValue();
   }
 
   @Override

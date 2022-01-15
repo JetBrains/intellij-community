@@ -1,0 +1,14 @@
+{
+  "roots": [
+    {
+      "path": "по-русски",
+      "zip_name": "по-русски.zip",
+      "valid_entries": {
+        "балалайка.py": {
+          "mtime": 0
+        }
+      },
+      "invalid_entries": []
+    }
+  ]
+}

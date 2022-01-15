@@ -117,11 +117,11 @@ public class PyParameterTableModel extends ParameterTableModelBase<PyParameterIn
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, final boolean hasFocus, int row, int column) {
       JPanel panel = new JPanel();
-      final Component component = super.getTableCellRendererComponent(table, ((Pair)value).getFirst(), isSelected, hasFocus, row, column);
+      final Component component = super.getTableCellRendererComponent(table, ((Pair<?, ?>)value).getFirst(), isSelected, hasFocus, row, column);
       panel.add(component);
 
       final Component component1 =
-        new BooleanTableCellRenderer().getTableCellRendererComponent(table, ((Pair)value).getSecond(), isSelected, hasFocus, row, column);
+        new BooleanTableCellRenderer().getTableCellRendererComponent(table, ((Pair<?, ?>)value).getSecond(), isSelected, hasFocus, row, column);
       panel.add(component1);
       return panel;
     }
@@ -141,7 +141,7 @@ public class PyParameterTableModel extends ParameterTableModelBase<PyParameterIn
 
     @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-      myCodeFragment = (PsiCodeFragment)((Pair)value).getFirst();
+      myCodeFragment = (PsiCodeFragment)((Pair<?, ?>)value).getFirst();
 
       myDocument = PsiDocumentManager.getInstance(myProject).getDocument(myCodeFragment);
       JPanel panel = new JPanel();

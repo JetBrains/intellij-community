@@ -108,14 +108,14 @@ public abstract class CompletionService {
       @Override
       public void startBatch() {
         if (consumer instanceof BatchConsumer) {
-          ((BatchConsumer)consumer).startBatch();
+          ((BatchConsumer<?>)consumer).startBatch();
         }
       }
 
       @Override
       public void endBatch() {
         if (consumer instanceof BatchConsumer) {
-          ((BatchConsumer)consumer).endBatch();
+          ((BatchConsumer<?>)consumer).endBatch();
         }
       }
 

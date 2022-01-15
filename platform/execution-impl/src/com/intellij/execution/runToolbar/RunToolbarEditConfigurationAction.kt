@@ -5,6 +5,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
 class RunToolbarEditConfigurationAction : DumbAwareAction() {
+  companion object{
+    const val ACTION_ID = "RunToolbarEditConfigurationAction"
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     e.dataContext.editConfiguration()
   }

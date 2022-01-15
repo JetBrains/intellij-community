@@ -25,16 +25,24 @@ public enum MavenConfigSettings {
   ALTERNATE_GLOBAL_SETTINGS("gs", "global-settings", b -> b.hasArg());
 
   final String key;
-  final String description;
+  final String longKey;
   final Function<Option.Builder, Option.Builder> builderFunction;
 
-  MavenConfigSettings(String key, String description, Function<Option.Builder, Option.Builder> builderFunction) {
+  MavenConfigSettings(String key, String longKey, Function<Option.Builder, Option.Builder> builderFunction) {
     this.key = key;
-    this.description = description;
+    this.longKey = longKey;
     this.builderFunction = builderFunction;
   }
 
   Option toOption() {
-    return builderFunction.apply(Option.builder(key).longOpt(description)).build();
+    return builderFunction.apply(Option.builder(key).longOpt(longKey)).build();
+  }
+
+  public String getKey() {
+    return "-" + key;
+  }
+
+  public String getLongKey() {
+    return "--" + longKey;
   }
 }

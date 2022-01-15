@@ -671,7 +671,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       NodeDescriptor descriptor = (NodeDescriptor)userObject;
       element = descriptor.getElement();
       if (element instanceof AbstractTreeNode) {
-        element = ((AbstractTreeNode)element).getValue();
+        element = ((AbstractTreeNode<?>)element).getValue();
       }
     }
     else if (userObject != null) {
@@ -885,7 +885,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       }
     }
     else if (userObject instanceof ProjectViewNode) {
-      VirtualFile file = ((ProjectViewNode)userObject).getVirtualFile();
+      VirtualFile file = ((ProjectViewNode<?>)userObject).getVirtualFile();
       if (file != null && file.isValid() && file.isDirectory()) {
         PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(file);
         if (directory != null) {

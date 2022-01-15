@@ -24,7 +24,7 @@ class RedundantReturnLabelInspection : AbstractKotlinInspection() {
                 label,
                 KotlinBundle.message("redundant.0", labelName),
                 ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                IntentionWrapper(RemoveReturnLabelFix(returnExpression, labelName), returnExpression.containingKtFile),
+                IntentionWrapper(RemoveReturnLabelFix(returnExpression, labelName)),
             )
         },
     )

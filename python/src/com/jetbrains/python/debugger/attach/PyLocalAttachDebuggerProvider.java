@@ -69,7 +69,7 @@ public class PyLocalAttachDebuggerProvider implements XAttachDebuggerProvider {
     if (settings != null) {
       RunConfiguration runConfiguration = settings.getConfiguration();
       if (runConfiguration instanceof AbstractPythonRunConfiguration) {
-        selected = ((AbstractPythonRunConfiguration)runConfiguration).getSdk();
+        selected = ((AbstractPythonRunConfiguration<?>)runConfiguration).getSdk();
       }
     }
 

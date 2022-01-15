@@ -66,7 +66,7 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
   protected void updateAvailableVersions(List<? extends FrameworkVersion> versions) {
     if (versions.size() > 0) {
       String maxValue = "";
-      ((DefaultComboBoxModel)myVersionComboBox.getModel()).removeAllElements();
+      ((DefaultComboBoxModel<?>)myVersionComboBox.getModel()).removeAllElements();
       FrameworkVersion defaultVersion = versions.get(versions.size() - 1);
       for (FrameworkVersion version : versions) {
         myVersionComboBox.addItem(version);

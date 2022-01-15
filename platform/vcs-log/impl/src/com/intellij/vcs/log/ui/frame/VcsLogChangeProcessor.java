@@ -5,25 +5,20 @@ import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor;
-import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider;
-import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeNode;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
@@ -67,32 +62,6 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
     return wrap(VcsTreeModelData.all(myBrowser.getViewer()));
   }
 
-  @Override
-  protected @Nullable AnAction createGoToChangeAction() {
-    return new MyGoToChangePopupProvider().createGoToChangeAction();
-  }
-
-  private class MyGoToChangePopupProvider extends SelectionAwareGoToChangePopupActionProvider {
-    @Override
-    public @NotNull List<? extends PresentableChange> getChanges() {
-      return getAllChanges()
-        .map(wrapper -> ObjectUtils.tryCast(wrapper.createProducer(getProject()), ChangeDiffRequestChain.Producer.class))
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
-    }
-
-    @Override
-    public void select(@NotNull PresentableChange change) {
-      selectChange(change);
-    }
-
-    @Nullable
-    @Override
-    public PresentableChange getSelectedChange() {
-      return VcsLogChangeProcessor.this.getCurrentChange();
-    }
-  }
-
   @NotNull
   private Stream<Wrapper> wrap(@NotNull VcsTreeModelData modelData) {
     return StreamEx.of(modelData.nodesStream()).select(ChangesBrowserChangeNode.class)
@@ -102,15 +71,6 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   @Override
   protected void selectChange(@NotNull Wrapper change) {
     myBrowser.selectChange(change.getUserObject(), change.getTag());
-  }
-
-  private void selectChange(@NotNull PresentableChange change) {
-    Wrapper changeToSelect =
-      ContainerUtil.find(getAllChanges().iterator(), c -> c.getFilePath().equals(change.getFilePath()) &&
-                                                          Objects.equals(change.getTag(), c.getTag()));
-    if (changeToSelect != null) {
-      selectChange(changeToSelect);
-    }
   }
 
   private void updatePreviewLater() {

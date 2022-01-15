@@ -172,7 +172,7 @@ public final class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
       AbstractTreeNode favorite = (AbstractTreeNode)child;
       Object currentValue = favorite.getValue();
       if (currentValue instanceof SmartPsiElementPointer) {
-        currentValue = ((SmartPsiElementPointer)favorite.getValue()).getElement();
+        currentValue = ((SmartPsiElementPointer<?>)favorite.getValue()).getElement();
       }
        /*else if (currentValue instanceof PsiJavaFile) {
         final PsiClass[] classes = ((PsiJavaFile)currentValue).getClasses();

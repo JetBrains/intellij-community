@@ -23,6 +23,7 @@ from generator3_tests import GeneratorTestCase, python2_only, python3_only, test
 
 # Such version implies that skeletons are always regenerated
 TEST_GENERATOR_VERSION = '1000.0'
+ARGPARSE_ERROR_CODE = 2
 _helpers_root = os.path.dirname(os.path.dirname(os.path.abspath(generator3.__file__)))
 
 ProcessResult = collections.namedtuple('GeneratorResults', ('exit_code', 'stdout', 'stderr'))
@@ -87,9 +88,6 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
         print("\nLaunched processes stdout:\n" + self.process_stdout.getvalue() + '-' * 80)
         print("\nLaunched processes stderr:\n" + self.process_stderr.getvalue() + '-' * 80)
 
-    def get_test_data_path(self, rel_path):
-        return os.path.join(self.test_data_dir, rel_path)
-
     def run_generator(self, mod_qname=None,
                       mod_path=None,
                       extra_syspath=None,
@@ -109,7 +107,8 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
         if not extra_syspath:
             extra_syspath = [self.test_data_dir]
 
-        extra_syspath = [p if os.path.isabs(p) else self.get_test_data_path(p) for p in extra_syspath]
+        extra_syspath = [p if os.path.isabs(p) else self.resolve_in_test_data(p)
+                         for p in extra_syspath]
 
         if mod_path and not os.path.isabs(mod_path):
             mod_path = os.path.join(extra_syspath[0], mod_path)
@@ -167,27 +166,12 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
 
     def check_generator_output(self, mod_name=None, mod_path=None, custom_required_gen=False, success=True, **kwargs):
         if custom_required_gen:
-            kwargs.setdefault('required_gen_version_file_path', self.get_test_data_path('required_gen_version'))
+            kwargs.setdefault('required_gen_version_file_path',
+                              self.resolve_in_test_data('required_gen_version'))
 
         with self.comparing_dirs(tmp_subdir=self.PYTHON_STUBS_DIR):
             result = self.run_generator(mod_name, mod_path=mod_path, **kwargs)
             self.assertEqual(success, result.exit_code == 0)
-
-    def assertDirLayoutEquals(self, dir_path, expected_layout):
-        def format_dir(dir_path, indent=''):
-            for child_name in sorted(os.listdir(dir_path)):
-                child_path = os.path.join(dir_path, child_name)
-                if os.path.isdir(child_path):
-                    yield indent + child_name + '/'
-                    for line in format_dir(child_path, indent + '    '):
-                        yield line
-                else:
-                    yield indent + child_name
-
-        formatted_dir_tree = '\n'.join(format_dir(dir_path))
-        expected = textwrap.dedent(expected_layout).strip() + '\n'
-        actual = formatted_dir_tree.strip() + '\n'
-        self.assertMultiLineEqual(expected, actual)
 
 
 class SkeletonGenerationTest(FunctionalGeneratorTestCase):
@@ -202,7 +186,7 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
         """.format(hash=generator3.core.module_hash('_ast', None)))
 
     def test_layout_for_toplevel_physical_module(self):
-        mod_path = self.get_test_data_path('mod.py')
+        mod_path = self.resolve_in_test_data('mod.py')
         self.run_generator(mod_qname='mod', mod_path=mod_path)
         self.assertDirLayoutEquals(self.temp_python_stubs_root, """
         cache/
@@ -213,7 +197,7 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
         """.format(hash=generator3.core.module_hash('mod', mod_path)))
 
     def test_layout_for_physical_module_inside_package(self):
-        mod_path = self.get_test_data_path('pkg/subpkg/mod.py')
+        mod_path = self.resolve_in_test_data('pkg/subpkg/mod.py')
         self.run_generator(mod_qname='pkg.subpkg.mod', mod_path=mod_path)
         self.assertDirLayoutEquals(self.temp_python_stubs_root, """
         cache/
@@ -454,7 +438,8 @@ class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
 
 
 class StatePassingGenerationTest(FunctionalGeneratorTestCase):
-    default_generator_extra_args = ['--state-file-policy', 'readwrite', '--name-pattern', 'mod?']
+    default_generator_extra_args = ['--state-file', '-',
+                                    '--name-pattern', 'mod?']
     default_generator_extra_syspath = ['mocks', 'binaries']
 
     def test_existing_updated_due_to_required_gen_version(self):
@@ -494,8 +479,10 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
                                     gen_version='0.2')
 
     def test_existing_updated_due_to_modified_binary(self):
-        mod1_mtime = file_modification_timestamp(self.get_test_data_path('binaries/mod1.so'))
-        mod2_mtime = file_modification_timestamp(self.get_test_data_path('binaries/mod2.so'))
+        mod1_mtime = file_modification_timestamp(
+            self.resolve_in_test_data('binaries/mod1.so'))
+        mod2_mtime = file_modification_timestamp(
+            self.resolve_in_test_data('binaries/mod2.so'))
         state = {
             'sdk_skeletons': {
                 'mod1': {
@@ -516,8 +503,8 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
                                     gen_version='0.2')
 
     def test_failed_updated_due_to_modified_binary(self):
-        mod1_mtime = file_modification_timestamp(self.get_test_data_path('binaries/mod1.so'))
-        mod2_mtime = file_modification_timestamp(self.get_test_data_path('binaries/mod2.so'))
+        mod1_mtime = file_modification_timestamp(self.resolve_in_test_data('binaries/mod1.so'))
+        mod2_mtime = file_modification_timestamp(self.resolve_in_test_data('binaries/mod2.so'))
         state = {
             'sdk_skeletons': {
                 'mod1': {
@@ -538,7 +525,7 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
                                     gen_version='0.1')
 
     def test_failed_skeleton_skipped(self):
-        mod_mtime = file_modification_timestamp(self.get_test_data_path('binaries/mod.so'))
+        mod_mtime = file_modification_timestamp(self.resolve_in_test_data('binaries/mod.so'))
         state = {
             'sdk_skeletons': {
                 'mod': {
@@ -548,10 +535,13 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
                 }
             }
         }
-        self.check_generator_output(extra_args=['--state-file-policy', 'readwrite', '--name-pattern', 'mod'],
-                                    gen_version='0.1',
-                                    custom_required_gen=True,
-                                    input=json.dumps(state))
+        self.check_generator_output(
+            extra_args=['--state-file', '-',
+                        '--name-pattern', 'mod'],
+            gen_version='0.1',
+            custom_required_gen=True,
+            input=json.dumps(state)
+        )
 
     def test_new_modules_are_added_to_state_json(self):
         state = {
@@ -582,16 +572,19 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
         self.check_generator_output(input=json.dumps(state), gen_version='0.1', custom_required_gen=True)
 
     def test_only_leaving_state_file_no_read(self):
-        self.check_generator_output(extra_args=['--state-file-policy', 'write', '--name-pattern', 'mod?'])
+        self.check_generator_output(extra_args=['--init-state-file',
+                                                '--name-pattern', 'mod?'])
 
     def test_state_indication_for_builtin_module(self):
-        result = self.run_generator(extra_args=['--state-file-policy', 'write', '--name-pattern', '_ast'])
+        result = self.run_generator(extra_args=['--init-state-file',
+                                                '--name-pattern', '_ast'])
         self.assertIsNotNone(result.state_json)
         self.assertIn('_ast', result.state_json['sdk_skeletons'])
         self.assertEqual('GENERATED', result.state_json['sdk_skeletons']['_ast']['status'])
 
     def test_modification_time_left_in_state_json_for_new_binaries(self):
-        result = self.run_generator(extra_args=['--state-file-policy', 'write', '--name-pattern', 'mod'],
+        result = self.run_generator(extra_args=['--init-state-file',
+                                                '--name-pattern', 'mod'],
                                     extra_env={ENV_TEST_MODE_FLAG: None})
         self.assertIsNotNone(result.state_json)
         self.assertIn('bin_mtime', result.state_json['sdk_skeletons']['mod'])
@@ -612,6 +605,15 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
                                     input=json.dumps(state))
 
     def test_state_json_for_up_to_date_skeletons_retains_original_gen_version(self):
-        self.check_generator_output(extra_args=['--state-file-policy', 'write', '--name-pattern', 'mod'],
+        self.check_generator_output(extra_args=['--init-state-file',
+                                                '--name-pattern', 'mod'],
                                     gen_version='0.2',
                                     custom_required_gen=True)
+
+    def test_state_json_accepted_as_path_to_file(self):
+        self.check_generator_output(
+            extra_args=[
+                '--state-file', self.resolve_in_test_data('.state.json'),
+                '--name-pattern', 'mod*',
+            ],
+        )

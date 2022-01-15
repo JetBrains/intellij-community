@@ -587,7 +587,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         XExpressionImpl expression = XExpressionImpl.fromText(logMessage);
         XDebuggerHistoryManager.getInstance(myProject).addRecentExpression(XBreakpointActionsPanel.LOG_EXPRESSION_HISTORY_ID, expression);
         myXBreakpoint.setLogExpressionObject(expression);
-        ((XBreakpointBase)myXBreakpoint).setLogExpressionEnabled(Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "LOG_EXPRESSION_ENABLED")));
+        ((XBreakpointBase<?, ?, ?>)myXBreakpoint).setLogExpressionEnabled(Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "LOG_EXPRESSION_ENABLED")));
       }
     }
     catch (Exception ignored) {
@@ -772,6 +772,6 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   protected void fireBreakpointChanged() {
-    ((XBreakpointBase)myXBreakpoint).fireBreakpointChanged();
+    ((XBreakpointBase<?, ?, ?>)myXBreakpoint).fireBreakpointChanged();
   }
 }

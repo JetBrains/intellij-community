@@ -13,6 +13,7 @@ class GradleRunner {
   private final BuildMessages messages
   private final String javaHome
   private final List<String> additionalParams
+  private final BuildOptions options
 
   @Lazy
   private volatile GradleRunner modularGradleRunner = {
@@ -23,10 +24,12 @@ class GradleRunner {
     File gradleProjectDir,
     String projectDir,
     BuildMessages messages,
+    BuildOptions options,
     String javaHome,
     List<String> additionalParams = getDefaultAdditionalParams()
   ) {
     this.messages = messages
+    this.options = options
     this.projectDir = projectDir
     this.gradleProjectDir = gradleProjectDir
     this.javaHome = javaHome
@@ -68,7 +71,7 @@ class GradleRunner {
   }
 
   GradleRunner withParams(List<String> additionalParams) {
-    return new GradleRunner(gradleProjectDir, projectDir, messages, javaHome, this.additionalParams + additionalParams)
+    return new GradleRunner(gradleProjectDir, projectDir, messages, options, javaHome, this.additionalParams + additionalParams)
   }
 
   private static List<String> getDefaultAdditionalParams() {
@@ -103,6 +106,8 @@ class GradleRunner {
     List<String> command = new ArrayList()
     command.add("${gradleProjectDir.absolutePath}/$gradleScript".toString())
     command.add("-Djava.io.tmpdir=${System.getProperty('java.io.tmpdir')}".toString())
+    command.add("-Dorg.gradle.internal.repository.max.tentatives=${options.resolveDependenciesMaxAttempts}".toString())
+    command.add("-Dorg.gradle.internal.repository.initial.backoff=${options.resolveDependenciesDelayMs}".toString())
     command.add('--stacktrace')
     if (System.getProperty("intellij.build.use.gradle.daemon", "false").toBoolean()) {
       command.add('--daemon')
@@ -140,6 +145,6 @@ class GradleRunner {
       modularRuntime += '/Contents/Home'
     }
     modularRuntime = FileUtil.toSystemIndependentName(new File(modularRuntime).canonicalPath)
-    return new GradleRunner(gradleProjectDir, projectDir, messages, modularRuntime)
+    return new GradleRunner(gradleProjectDir, projectDir, messages, options, modularRuntime)
   }
 }

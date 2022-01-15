@@ -176,7 +176,7 @@
       "maxGutterIconWidth": 18
     },
 
-    "MnemonicIcon": {
+    "BookmarkMnemonicIcon": {
       "background": "#FEF7EC",
       "borderColor": "#F4AF3D",
       "foreground": "#000000"

@@ -262,7 +262,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     final Object object = treeNode.getUserObject();
     assertNotNull(object);
     if (!(object instanceof NodeDescriptor)) return null;
-    final NodeElement element = (NodeElement)((NodeDescriptor)object).getElement();
+    final NodeElement element = (NodeElement)((NodeDescriptor<?>)object).getElement();
     if (toFind.equals(element)) return treeNode;
 
     for (int i = 0; i < treeNode.getChildCount(); i++) {

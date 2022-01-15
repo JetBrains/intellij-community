@@ -48,7 +48,7 @@ public final class ModelAnnotator implements Annotator, DomElementsAnnotator {
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     if (psiElement instanceof CommonElement) {
-      ((CommonElement)psiElement).accept(new MyAnnotator<>(CommonAnnotationHolder.create(holder)));
+      ((CommonElement<?>)psiElement).accept(new MyAnnotator<>(CommonAnnotationHolder.create(holder)));
     }
   }
 

@@ -135,7 +135,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
       }
 
       jreHome = StringUtil.trimEnd(jreHome, "/Contents/Home");
-      showNotification("bundled.jre.version.message", true, switchAction, JavaVersion.current(), System.getProperty("java.vendor"), jreHome);
+      showNotification("bundled.jre.version.message", false, switchAction, JavaVersion.current(), System.getProperty("java.vendor"), jreHome);
     }
   }
 

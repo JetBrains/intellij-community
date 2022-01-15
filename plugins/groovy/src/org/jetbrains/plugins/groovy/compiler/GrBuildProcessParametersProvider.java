@@ -47,7 +47,7 @@ final class GrBuildProcessParametersProvider extends BuildProcessParametersProvi
   public @NotNull Iterable<String> getAdditionalPluginPaths() {
     final Path jarPath = PathManager.getJarForClass(GroovyBuilder.class);
     if (jarPath != null) {
-      final Supplier<List<String>> roots = lazy(() -> GroovyRtJarPaths.getGroovyRtRoots(jarPath.toFile()));
+      final Supplier<List<String>> roots = lazy(() -> GroovyRtJarPaths.getGroovyRtRoots(jarPath.toFile(), false));
       return () -> roots.get().iterator();
     }
     return Collections.emptyList();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints;
 
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
@@ -7,46 +7,47 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.util.Key;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Stream;
 
-public class ParameterHintsUpdater {
+public final class ParameterHintsUpdater {
   private static final Key<Boolean> HINT_REMOVAL_DELAYED = Key.create("hint.removal.delayed");
   private static final Key<Boolean> REPEATED_PASS = Key.create("RepeatedParameterHintsPass");
 
   private final ParameterHintsPresentationManager myHintsManager = ParameterHintsPresentationManager.getInstance();
-  private final TIntObjectHashMap<Caret> myCaretMap;
+  private final Int2ObjectMap<Caret> myCaretMap;
 
-  private final TIntObjectHashMap<List<ParameterHintsPass.HintData>> myNewHints;
-  private final TIntObjectHashMap<String> myHintsToPreserve;
+  private final Int2ObjectMap<List<ParameterHintsPass.HintData>> myNewHints;
+  private final Int2ObjectMap<String> myHintsToPreserve;
   private final boolean myForceImmediateUpdate;
 
   private final Editor myEditor;
-  private final @NotNull List<? extends Inlay> myEditorInlays;
+  private final @NotNull List<? extends Inlay<?>> myEditorInlays;
   private List<InlayUpdateInfo> myUpdateList;
 
   ParameterHintsUpdater(@NotNull Editor editor,
-                        @NotNull List<? extends Inlay> editorInlays,
-                        @NotNull TIntObjectHashMap<List<ParameterHintsPass.HintData>> newHints,
-                        @NotNull TIntObjectHashMap<String> hintsToPreserve,
+                        @NotNull List<? extends Inlay<?>> editorInlays,
+                        @NotNull Int2ObjectMap<List<ParameterHintsPass.HintData>> newHints,
+                        @NotNull Int2ObjectMap<String> hintsToPreserve,
                         boolean forceImmediateUpdate) {
     myEditor = editor;
     myNewHints = newHints;
     myHintsToPreserve = hintsToPreserve;
     myForceImmediateUpdate = forceImmediateUpdate;
 
-    myCaretMap = new TIntObjectHashMap<>();
+    myCaretMap = new Int2ObjectOpenHashMap<>();
     List<Caret> allCarets = myEditor.getCaretModel().getAllCarets();
     allCarets.forEach(caret -> myCaretMap.put(caret.getOffset(), caret));
 
     myEditorInlays = editorInlays;
   }
 
-  private @NotNull List<InlayUpdateInfo> getInlayUpdates(@NotNull List<? extends Inlay> editorHints) {
+  private @NotNull List<InlayUpdateInfo> getInlayUpdates(@NotNull List<? extends Inlay<?>> editorHints) {
     myEditor.putUserData(HINT_REMOVAL_DELAYED, Boolean.FALSE);
 
     List<InlayUpdateInfo> updates = new ArrayList<>();
@@ -63,7 +64,7 @@ public class ParameterHintsUpdater {
       updates.add(new InlayUpdateInfo(offset, editorHint, newHint));
     });
 
-    Arrays.stream(myNewHints.keys()).forEach(offset -> {
+    myNewHints.keySet().forEach(offset -> {
       for (ParameterHintsPass.HintData hint : myNewHints.get(offset)) {
         updates.add(new InlayUpdateInfo(offset, null, hint));
       }
@@ -79,7 +80,7 @@ public class ParameterHintsUpdater {
 
   @Nullable
   private static ParameterHintsPass.HintData findAndRemoveMatchingHint(int offset, boolean relatesToPrecedingText,
-                                                                       TIntObjectHashMap<List<ParameterHintsPass.HintData>> data) {
+                                                                       Int2ObjectMap<List<ParameterHintsPass.HintData>> data) {
     List<ParameterHintsPass.HintData> newHintList = data.get(offset);
     ParameterHintsPass.HintData newHint = null;
     if (newHintList != null) {
@@ -122,7 +123,7 @@ public class ParameterHintsUpdater {
       InlayUpdateInfo.Action action = info.action();
       if (action == InlayUpdateInfo.Action.ADD) {
         boolean useAnimation = !myForceImmediateUpdate && !firstTime && !isSameHintRemovedNear(newText, infoIndex) && !isInBulkMode;
-        Inlay inlay = myHintsManager.addHint(myEditor, info.offset, info.relatesToPrecedingText, newText, info.widthAdjustment, useAnimation);
+        Inlay<?> inlay = myHintsManager.addHint(myEditor, info.offset, info.relatesToPrecedingText, newText, info.widthAdjustment, useAnimation);
         if (inlay != null && !isInBulkMode) {
           VisualPosition inlayPosition = inlay.getVisualPosition();
           VisualPosition visualPosition = new VisualPosition(inlayPosition.line,
@@ -164,7 +165,7 @@ public class ParameterHintsUpdater {
   }
 
 
-  private boolean delayRemoval(@NotNull Inlay inlay) {
+  private boolean delayRemoval(@NotNull Inlay<?> inlay) {
     int offset = inlay.getOffset();
     Caret caret = myCaretMap.get(offset);
     if (caret == null) return false;
@@ -184,13 +185,13 @@ public class ParameterHintsUpdater {
     }
 
     public final int offset;
-    public final Inlay inlay;
+    public final Inlay<?> inlay;
     public final String newText;
     public final String oldText;
     public final boolean relatesToPrecedingText;
     public final HintWidthAdjustment widthAdjustment;
 
-    InlayUpdateInfo(int offset, @Nullable Inlay current, @Nullable ParameterHintsPass.HintData newHintData) {
+    InlayUpdateInfo(int offset, @Nullable Inlay<?> current, @Nullable ParameterHintsPass.HintData newHintData) {
       this.offset = offset;
       inlay = current;
       oldText = inlay == null ? null : ParameterHintsPresentationManager.getInstance().getHintText(inlay);

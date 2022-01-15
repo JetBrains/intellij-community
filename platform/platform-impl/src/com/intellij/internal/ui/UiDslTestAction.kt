@@ -77,7 +77,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
         checkBox("checkBox")
           .label("Long label occupies two columns", position = LabelPosition.TOP)
         intTextField()
-          .applyToComponent { text = "No labeled text field" }
+          .text("No labeled text field")
         intTextField()
           .columns(10)
           .label("Third column", position = LabelPosition.TOP)
@@ -152,7 +152,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
       lateinit var group1: Panel
       lateinit var group1Row: Row
       lateinit var group2: RowsRange
-      group(title = "Group at top") {
+      group(title = "Group at top, no gap before") {
         row {
           checkBox("Group1 visibility")
             .applyToComponent {
@@ -167,7 +167,6 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
                 isSelected = true
                 addItemListener { group1Row.visible(this.isSelected) }
               }
-
           }
         }
         row {
@@ -183,7 +182,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
         textField()
       }
 
-      group1 = group(title = "Group1 title") {
+      group1 = group(title = "Group1, gaps around") {
         group1Row = row("label1") {
           textField()
         }
@@ -191,6 +190,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
           textField()
         }
       }
+
       group2 = groupRowsRange(title = "Group RowsRange title") {
         row("label1") {
           textField()
@@ -215,17 +215,35 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
           textField()
         }
       }
-      group("Group, indent = false", indent = false) {
+
+      row("separator") {}
+
+      collapsibleGroup("CollapsibleGroup") {
         row("Row with label") {}
       }
-      group("Group, topGroupGap = false", topGroupGap = false) {
-        row("Row with label2") {}
-      }
-      groupRowsRange("GroupRowsRange, indent = false", indent = false) {
+
+      row("separator") {}
+
+      group("Group, indent = false, no gaps", indent = false, topGroupGap = false, bottomGroupGap = false) {
         row("Row with label") {}
       }
-      groupRowsRange("GroupRowsRange, topGroupGap = false", topGroupGap = false) {
-        row("Row with label2") {}
+
+      row("separator") {}
+
+      groupRowsRange("GroupRowsRange, indent = false, no gaps", indent = false, topGroupGap = false, bottomGroupGap = false) {
+        row("Row with label") {}
+      }
+
+      row("separator") {}
+
+      collapsibleGroup("CollapsibleGroup, indent = false, no gaps", indent = false, topGroupGap = false, bottomGroupGap = false) {
+        row("Row with label") {}
+      }
+
+      row("separator") {}
+
+      group("Group at bottom, no gap after") {
+        row("Row with label") {}
       }
     }
   }
@@ -278,14 +296,14 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
         panel {
           entities["Row 1"] = row("Row 1") {
             entities["textField1"] = textField()
-              .applyToComponent { text = "textField1" }
+              .text("textField1")
 
           }
 
           entities["Group"] = group("Group") {
             entities["Row 2"] = row("Row 2") {
               entities["textField2"] = textField()
-                .applyToComponent { text = "textField2" }
+                .text("textField2")
             }
 
             entities["Row 3"] = row("Row 3") {
@@ -296,7 +314,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
 
                 entities["Row 4"] = row("Row 4") {
                   entities["textField3"] = textField()
-                    .applyToComponent { text = "textField3" }
+                    .text("textField3")
                 }
               }
             }
@@ -314,7 +332,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
                 .applyToComponent {
                   isSelected = true
                   addItemListener {
-                    when(entity) {
+                    when (entity) {
                       is Cell<*> -> entity.visible(this.isSelected)
                       is Row -> entity.visible(this.isSelected)
                       is Panel -> entity.visible(this.isSelected)
@@ -325,7 +343,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
                 .applyToComponent {
                   isSelected = true
                   addItemListener {
-                    when(entity) {
+                    when (entity) {
                       is Cell<*> -> entity.enabled(this.isSelected)
                       is Row -> entity.enabled(this.isSelected)
                       is Panel -> entity.enabled(this.isSelected)
@@ -350,7 +368,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
 
         row("visibleIf test row") {
           textField()
-            .applyToComponent { text = "textField" }
+            .text("textField")
             .visibleIf(checkBoxText.selected)
           label("some label")
         }.visibleIf(checkBoxRow.selected)
@@ -369,7 +387,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
           row {
             textField()
               .columns(20)
-              .applyToComponent { text = "Sub-Paneled Row" }
+              .text("Sub-Paneled Row")
           }
         }
         cell(subPanel)
@@ -383,7 +401,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
           row {
             textField()
               .horizontalAlign(HorizontalAlign.FILL)
-              .applyToComponent { text = "Sub-Paneled Row" }
+              .text("Sub-Paneled Row")
           }
         }
         cell(subPanel)
@@ -491,8 +509,8 @@ private class CommentPanelBuilder(val type: CommentComponentType) {
   private fun Row.customComponent(text: String): Cell<JComponent> {
     return when (type) {
       CommentComponentType.CHECKBOX -> checkBox(text)
-      CommentComponentType.TEXT_FIELD -> textField().applyToComponent { setText(text) }
-      CommentComponentType.TEXT_FIELD_WITH_BROWSE_BUTTON -> textFieldWithBrowseButton().applyToComponent { setText(text) }
+      CommentComponentType.TEXT_FIELD -> textField().text(text)
+      CommentComponentType.TEXT_FIELD_WITH_BROWSE_BUTTON -> textFieldWithBrowseButton().text(text)
     }
   }
 }

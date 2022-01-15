@@ -99,7 +99,7 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
           ListSelectionListener listener = event -> {
             if (event.getValueIsAdjusting()) return;
 
-            Object item = ((JList)event.getSource()).getSelectedValue();
+            Object item = ((JList<?>)event.getSource()).getSelectedValue();
 
             // if a sub-list is closed, fallback to the selected value from the main list
             if (item == null) {

@@ -10,16 +10,22 @@ import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.annotator.intentions.AddToPermitsList
+import org.jetbrains.plugins.groovy.annotator.intentions.GrReplaceReturnWithYield
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchElement
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrYieldStatement
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitchExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
-import org.jetbrains.plugins.groovy.lang.psi.util.getAllPermittedClassElements
-import org.jetbrains.plugins.groovy.lang.psi.util.getAllPermittedClasses
-import org.jetbrains.plugins.groovy.lang.psi.util.getSealedElement
+import org.jetbrains.plugins.groovy.lang.psi.util.*
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVisitor() {
@@ -155,5 +161,62 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
         }
         .create()
     }
+  }
+
+  override fun visitSwitchStatement(switchStatement: GrSwitchStatement) {
+    visitSwitchElement(switchStatement)
+    super.visitSwitchStatement(switchStatement)
+  }
+
+  override fun visitSwitchExpression(switchExpression: GrSwitchExpression) {
+    visitSwitchElement(switchExpression)
+    super.visitSwitchExpression(switchExpression)
+  }
+
+  private fun visitSwitchElement(switchElement : GrSwitchElement) {
+    if (PsiUtil.isPlainSwitchStatement(switchElement)) {
+      // old-style switch statements are handled within the other classes
+      return
+    }
+    val caseSections = switchElement.caseSections ?: emptyArray()
+    if (caseSections.isEmpty()) {
+      switchElement.firstChild?.let {
+        holder.newAnnotation(HighlightSeverity.ERROR,
+          GroovyBundle.message("inspection.message.case.or.default.branches.are.expected")).range(it).create()
+      }
+    }
+    checkArrowColonConsistency(caseSections)
+    caseSections.forEach(this::visitCaseSection)
+    val jointFlow = caseSections.asSequence().flatMap { ControlFlowUtils.getCaseSectionInstructions(it).asSequence() }
+    if (!(switchElement is GrSwitchStatement && caseSections.all { it.colon != null }) &&
+        caseSections.isNotEmpty() &&
+        caseSections.all { it.colon != null } &&
+        jointFlow.all { it.element !is GrYieldStatement && it.element !is GrThrowStatement }) {
+      val errorOwner = switchElement.firstChild ?: switchElement // try to hang the error on switch keyword
+      holder.newAnnotation(HighlightSeverity.ERROR,
+        GroovyBundle.message("inspection.message.yield.or.throw.expected.in.case.section")).range(errorOwner).create()
+    }
+  }
+
+  private fun checkArrowColonConsistency(caseSections: Array<GrCaseSection>) {
+    val arrows = caseSections.mapNotNull(GrCaseSection::getArrow).takeIf(List<*>::isNotEmpty) ?: return
+    val colons = caseSections.mapNotNull(GrCaseSection::getColon).takeIf(List<*>::isNotEmpty) ?: return
+    for (element in arrows + colons) {
+      holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("inspection.message.mixing.arrows.colons.not.allowed")).range(element).create()
+    }
+  }
+
+  override fun visitCaseSection(caseSection: GrCaseSection) {
+    if (caseSection.parentOfType<GrSwitchElement>()?.let(PsiUtil::isPlainSwitchStatement) == true) {
+      return
+    }
+    val flow = ControlFlowUtils.getCaseSectionInstructions(caseSection)
+    val returns = ControlFlowUtils.collectReturns(flow, false)
+    for (returnStatement in returns.filterIsInstance<GrReturnStatement>()) {
+      holder.newAnnotation(HighlightSeverity.ERROR,
+        GroovyBundle.message("inspection.message.switch.expressions.do.not.support.return"))
+        .range(returnStatement).withFix(GrReplaceReturnWithYield()).create()
+    }
+    return super.visitCaseSection(caseSection)
   }
 }

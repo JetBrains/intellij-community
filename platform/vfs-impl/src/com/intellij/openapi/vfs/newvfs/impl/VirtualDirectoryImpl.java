@@ -538,6 +538,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
 
+  @ApiStatus.Internal
   public VirtualFileSystemEntry doFindChildById(int id) {
     int i = ArrayUtil.indexOf(myData.myChildrenIds, id);
     if (i >= 0) {
@@ -551,20 +552,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     String name = ourPersistence.getName(id);
     VirtualFileSystemEntry fileByName = findChild(name, false, false, getFileSystem());
     if (fileByName != null && fileByName.getId() != id) {
-      String message =
-        "Name storage is in inconsistent state: name id consistency = " + (fileByName.getNameId() == FSRecords.getNameId(name));
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        int actualId = fileByName.getId();
-        String childrenIds;
-        synchronized (myData) {
-          childrenIds = Arrays.toString(myData.myChildrenIds);
-        }
-        message += "\nexpected path = " + VfsImplUtil.getRecordPath(id) + ", id path = " + VfsImplUtil.getRecordIdPath(id) +
-                   "\nactual path = " + VfsImplUtil.getRecordPath(actualId) + ", id path = " + VfsImplUtil.getRecordIdPath(actualId) +
-                   "\ncontaining dir children ids = " + childrenIds +
-                   "\ncontaining dir children = " + ContainerUtil.map(getChildren(), f -> f.getName());
-      }
-      LOG.error(message);
+      // child with the same name and different id was recreated after refresh session
+      // it doesn't make sense to check it earlier because it is executed outside vfs r-w lock
+      LOG.assertTrue(FSRecords.isDeleted(id));
+      return null;
     }
     return fileByName;
   }

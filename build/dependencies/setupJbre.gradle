@@ -2,6 +2,7 @@
 import java.util.concurrent.TimeUnit
 
 apply from: 'archivesCleanup.gradle'
+apply from: 'retries.gradle'
 
 ext.jbreOutputDir = "$project.buildDir/jbre"
 def deleteObsoleteJbreArchives = ext.deleteObsoleteArchivesTask('Jbre', jbreOutputDir)
@@ -62,13 +63,14 @@ def downloadJbrTask(String artifactName, String build) {
     outputs.file(outputFile)
     doLast {
       logger.info("Downloading $artifactName to $outputFile")
-      download {
-        src "https://cache-redirector.jetbrains.com/intellij-jbr/${artifactName}.tar.gz"
-        dest outputFile
-        tempAndMove true
-        connectTimeout TimeUnit.SECONDS.toMillis(30).toInteger()
-        readTimeout TimeUnit.MINUTES.toMillis(5).toInteger()
-        retries 10
+      project.ext.retry {
+        download {
+          src "https://cache-redirector.jetbrains.com/intellij-jbr/${artifactName}.tar.gz"
+          dest outputFile
+          tempAndMove true
+          connectTimeout TimeUnit.SECONDS.toMillis(30).toInteger()
+          readTimeout TimeUnit.MINUTES.toMillis(5).toInteger()
+        }
       }
     }
     setupJbre.dependsOn(it)

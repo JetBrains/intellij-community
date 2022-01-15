@@ -54,7 +54,7 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
     switchAlarm.cancelAllRequests();
     if (Registry.is("ide.instant.theme.switch")) {
       popup.addListSelectionListener(event -> {
-        Object item = ((JList)event.getSource()).getSelectedValue();
+        Object item = ((JList<?>)event.getSource()).getSelectedValue();
         if (item instanceof AnActionHolder) {
           AnAction anAction = ((AnActionHolder)item).getAction();
           if (anAction instanceof LafChangeAction) {

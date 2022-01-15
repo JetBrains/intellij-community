@@ -18,16 +18,13 @@ open class RunToolbarRerunAction : FakeRerunAction(), RTBarAction, DumbAware {
 
   override fun update(e: AnActionEvent) {
     e.presentation.text = ExecutionBundle.message("run.dashboard.rerun.action.name")
-    e.presentation.isEnabledAndVisible =
-      e.presentation.isEnabled
-      && e.presentation.isVisible
-      && e.isActiveProcess()
-      && !e.isProcessTerminating()
-      && e.presentation.isVisible
+    e.presentation.isVisible = e.isActiveProcess()
+
+    e.presentation.isEnabled = !e.isProcessTerminating()
 
     if (!RunToolbarProcess.experimentalUpdating()) {
       e.mainState()?.let {
-        e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
+        e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
       }
     }
   }

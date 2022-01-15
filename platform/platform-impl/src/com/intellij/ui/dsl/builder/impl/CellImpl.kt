@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.gridLayout.Gaps
@@ -18,7 +19,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
 import javax.swing.JComponent
 import javax.swing.JLabel
-import javax.swing.event.HyperlinkEvent
 
 @ApiStatus.Internal
 internal class CellImpl<T : JComponent>(
@@ -124,7 +124,7 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  override fun commentHtml(comment: String?, action: (HyperlinkEvent) -> Unit): Cell<T> {
+  override fun commentHtml(comment: String?, action: HyperlinkEventAction): Cell<T> {
     this.comment = if (comment == null) null else createHtmlComment(comment, action)
     return this
   }

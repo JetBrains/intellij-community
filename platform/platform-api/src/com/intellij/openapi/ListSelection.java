@@ -47,6 +47,11 @@ public final class ListSelection<T> {
     return createAt(Collections.singletonList(element), 0);
   }
 
+  @NotNull
+  public static <V> ListSelection<V> empty() {
+    return new ListSelection<>(Collections.emptyList(), -1);
+  }
+
 
   @NotNull
   public List<T> getList() {

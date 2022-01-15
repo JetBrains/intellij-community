@@ -18,6 +18,8 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/test-resources" type="java-test-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/test-src" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/http_specs" />
       <excludeFolder url="file://$MODULE_DIR$/pkgs-tests" />
     </content>
@@ -76,5 +78,7 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
+    <orderEntry type="library" scope="TEST" name="org.junit.jupiter:junit-jupiter-params:5.7.0" level="project" />
   </component>
 </module>

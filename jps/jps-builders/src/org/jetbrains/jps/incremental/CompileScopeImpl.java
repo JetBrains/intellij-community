@@ -115,9 +115,9 @@ public class CompileScopeImpl extends CompileScope {
 
   private boolean isAffectedByAssociatedModule(BuildTarget<?> target) {
     if (target instanceof ModuleBasedTarget) {
-      final JpsModule module = ((ModuleBasedTarget)target).getModule();
+      final JpsModule module = ((ModuleBasedTarget<?>)target).getModule();
       // this target is associated with module
-      JavaModuleBuildTargetType targetType = JavaModuleBuildTargetType.getInstance(((ModuleBasedTarget)target).isTests());
+      JavaModuleBuildTargetType targetType = JavaModuleBuildTargetType.getInstance(((ModuleBasedTarget<?>)target).isTests());
       if (myTypes.contains(targetType) || myTargets.contains(new ModuleBuildTarget(module, targetType))) {
         return true;
       }

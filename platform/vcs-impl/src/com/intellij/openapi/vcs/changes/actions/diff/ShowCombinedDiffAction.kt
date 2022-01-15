@@ -5,6 +5,7 @@ import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
 
@@ -13,7 +14,8 @@ class ShowCombinedDiffAction : DumbAwareAction() {
     val changes = e.getData(VcsDataKeys.CHANGES)
     val project = e.project
 
-    e.presentation.isEnabledAndVisible = project != null && changes != null && changes.size > 1
+    e.presentation.isEnabledAndVisible = Registry.`is`("enable.combined.diff") &&
+                                         project != null && changes != null && changes.size > 1
   }
 
   override fun actionPerformed(e: AnActionEvent) {

@@ -41,7 +41,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitchExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache;
 
 import java.util.ArrayList;
@@ -89,7 +92,52 @@ public class GroovyPositionManager implements PositionManager {
     if (!(file instanceof GroovyFileBase)) return null;
     PsiElement element = file.findElementAt(position.getOffset());
     if (element == null) return null;
-    return PsiTreeUtil.getParentOfType(element, GrFunctionalExpression.class, GrTypeDefinition.class);
+    return getEnclosingPsiForElement(element);
+  }
+
+  /**
+   * In Groovy, there are some transformations performed before compiling or interpreting the source code.
+   * <br>
+   * First, all closures and lambdas are transformed to a local class extending {@code groovy.lang.Closure}. Therefore, code inside closures
+   * does not correspond to the class of the methods where the closure is defined.
+   * <br>
+   * Second, there is no such thing as a "switch expression".
+   * The following
+   * <code>
+   * <pre>
+   * switch(10) {
+   *   case 20 -> 30
+   *   case 30 -> {
+   *      40
+   *   }
+   * }
+   * </pre>
+   * </code>
+   * is transformed to
+   * <code>
+   * <pre>
+   * { ->
+   *   switch(10) {
+   *     case 20: return 30
+   *     case 30: return {->
+   *        return 40
+   *     }()
+   *   }
+   * }()
+   * </pre>
+   * </code>
+   * So the code inside switch expressions corresponds to a separate local class too.
+   */
+  private static GroovyPsiElement getEnclosingPsiForElement(PsiElement element) {
+    while (true) {
+      GroovyPsiElement parent = PsiTreeUtil.getParentOfType(element, GrSwitchExpression.class, GrFunctionalExpression.class, GrTypeDefinition.class);
+      if (!(parent instanceof GrSwitchElement && PsiUtil.isPlainSwitchStatement((GrSwitchElement)parent))) {
+        return parent;
+      } else {
+        element = parent;
+      }
+    }
+
   }
 
   @Nullable

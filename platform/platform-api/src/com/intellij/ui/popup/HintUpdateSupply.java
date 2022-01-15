@@ -145,7 +145,7 @@ public abstract class HintUpdateSupply {
       public void valueChanged(final ListSelectionEvent e) {
         if (!shouldUpdateHint()) return;
 
-        Object[] selectedValues = ((JList)e.getSource()).getSelectedValues();
+        Object[] selectedValues = ((JList<?>)e.getSource()).getSelectedValues();
         if (selectedValues.length != 1) return;
 
         PsiElement element = getPsiElementForHint(selectedValues[0]);

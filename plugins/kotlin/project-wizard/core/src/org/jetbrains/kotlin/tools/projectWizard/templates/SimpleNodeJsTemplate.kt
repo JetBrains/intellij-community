@@ -32,6 +32,9 @@ object SimpleNodeJsTemplate : Template() {
     @NonNls
     override val id: String = "simpleNodeJs"
 
+    private const val mainFile = "Main.kt"
+    override val filesToOpenInEditor = listOf(mainFile)
+
     override fun isApplicableTo(
         reader: Reader,
         module: Module
@@ -69,7 +72,7 @@ object SimpleNodeJsTemplate : Template() {
     override fun Reader.getFileTemplates(module: ModuleIR): List<FileTemplateDescriptorWithPath> =
         withSettingsOf(module.originalModule) {
             buildList {
-                +(FileTemplateDescriptor("$id/main.kt.vm", "Main.kt".asPath()) asSrcOf SourcesetType.main)
+                +(FileTemplateDescriptor("$id/main.kt.vm", mainFile.asPath()) asSrcOf SourcesetType.main)
                 +(FileTemplateDescriptor("$id/GreetingTest.kt.vm") asSrcOf SourcesetType.test)
             }
         }

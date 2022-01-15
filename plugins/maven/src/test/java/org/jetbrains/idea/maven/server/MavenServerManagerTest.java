@@ -15,11 +15,9 @@
  */
 package org.jetbrains.idea.maven.server;
 
-import com.google.common.util.concurrent.Uninterruptibles;
 import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ReflectionUtil;
@@ -30,6 +28,7 @@ import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -88,24 +87,30 @@ public class MavenServerManagerTest extends MavenTestCase {
   public void testShouldRestartConnectorAutomaticallyIfFailed() {
     MavenServerConnector connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath());
     ensureConnected(connector);
-    RemoteProcessSupport support =
-      ReflectionUtil.getField(MavenServerConnectorImpl.class, connector, RemoteProcessSupport.class, "mySupport");
-    AtomicReference<RemoteProcessSupport.Heartbeat> heartbeat =
-      ReflectionUtil.getField(RemoteProcessSupport.class, support, AtomicReference.class, "myHeartbeatRef");
-    heartbeat.get().kill(1);
-    new WaitFor(10_000){
-      @Override
-      protected boolean condition() {
-        return !connector.checkConnected();
-      }
-    };
-    assertFalse(connector.checkConnected());
+    kill(connector);
     MavenServerConnector newConnector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath());
     ensureConnected(newConnector);
     assertNotSame(connector, newConnector);
   }
 
-  public void testShouldDropConnectorForMultiplyDirs() throws IOException {
+
+
+  public void testShouldStopPullingIfConnectorIsFailing() {
+    MavenServerConnector connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath());
+    ensureConnected(connector);
+    ScheduledFuture loggerFuture =
+      ReflectionUtil.getField(MavenServerConnectorImpl.class, connector, ScheduledFuture.class, "myLoggerFuture");
+    kill(connector);
+    new WaitFor(1_000) {
+      @Override
+      protected boolean condition() {
+        return loggerFuture.isCancelled();
+      }
+    };
+    assertTrue(loggerFuture.isCancelled());
+  }
+
+  public void testShouldDropConnectorForMultiplyDirs() {
     File topDir = myProjectRoot.toNioPath().toFile();
     File first = new File(topDir, "first/.mvn");
     File second = new File(topDir, "second/.mvn");
@@ -120,5 +125,18 @@ public class MavenServerManagerTest extends MavenTestCase {
     connectorFirst.shutdown(true);
   }
 
-
+  private static void kill(MavenServerConnector connector) {
+    RemoteProcessSupport support =
+      ReflectionUtil.getField(MavenServerConnectorImpl.class, connector, RemoteProcessSupport.class, "mySupport");
+    AtomicReference<RemoteProcessSupport.Heartbeat> heartbeat =
+      ReflectionUtil.getField(RemoteProcessSupport.class, support, AtomicReference.class, "myHeartbeatRef");
+    heartbeat.get().kill(1);
+    new WaitFor(10_000) {
+      @Override
+      protected boolean condition() {
+        return !connector.checkConnected();
+      }
+    };
+    assertFalse(connector.checkConnected());
+  }
 }

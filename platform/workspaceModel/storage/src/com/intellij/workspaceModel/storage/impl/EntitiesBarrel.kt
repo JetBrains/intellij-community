@@ -126,7 +126,7 @@ internal sealed class EntitiesBarrel {
 
         // Assert unique of persistent id
         if (hasPersistentId) {
-          val persistentId = entityData.persistentId(WorkspaceEntityStorageImpl.EMPTY)
+          val persistentId = entityData.persistentId()
           assert(persistentId != null) { "Persistent id expected for $clazz" }
           assert(persistentId !in persistentIds) { "Duplicated persistent ids: $persistentId" }
           persistentIds.add(persistentId!!)

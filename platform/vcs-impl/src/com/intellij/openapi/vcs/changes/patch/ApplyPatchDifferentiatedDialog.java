@@ -1220,6 +1220,19 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     public FileStatus getFileStatus() {
       return myChange.getFileStatus();
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      MyProducerWrapper wrapper = (MyProducerWrapper)o;
+      return Objects.equals(myProducer, wrapper.myProducer);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myProducer);
+    }
   }
 
   private class MyChangeComparator implements Comparator<AbstractFilePatchInProgress.PatchChange> {

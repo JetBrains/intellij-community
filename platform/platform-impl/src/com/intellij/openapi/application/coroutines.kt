@@ -6,6 +6,7 @@ package com.intellij.openapi.application
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
 import com.intellij.openapi.application.rw.ReadAction
 import com.intellij.openapi.progress.Progress
+import com.intellij.openapi.progress.withJob
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.*
@@ -98,7 +99,7 @@ suspend fun <T> constrainedReadActionBlocking(constraints: ReadConstraints, acti
  */
 suspend fun <T> smartAction(project: Project, action: (ctx: CoroutineContext) -> T): T {
   return suspendCancellableCoroutine { continuation ->
-    DumbService.getInstance(project).runWhenSmart(SmartRunnable(action, continuation))
+    DumbService.getInstance(project).runWhenSmart(SmartRunnable({ ctx -> withJob(ctx.job) { action(ctx) } }, continuation))
   }
 }
 

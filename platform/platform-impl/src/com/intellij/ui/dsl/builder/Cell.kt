@@ -13,7 +13,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.JLabel
-import javax.swing.event.HyperlinkEvent
 
 internal const val DSL_INT_TEXT_RANGE_PROPERTY = "dsl.intText.range"
 
@@ -64,7 +63,8 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * Adds html comment under the cell.
    * See doc for comment method
    */
-  fun commentHtml(@NlsContexts.DetailedDescription comment: String?, action: (HyperlinkEvent) -> Unit): Cell<T>
+  fun commentHtml(@NlsContexts.DetailedDescription comment: String?,
+                  action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<T>
 
   /**
    * See doc for overloaded method

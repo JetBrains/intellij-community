@@ -128,7 +128,7 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
     while (children.hasMoreElements()) {
       Object element = children.nextElement();
       if (element instanceof BreakpointsGroupNode) {
-        nodes.add(((BreakpointsGroupNode)element).getGroup());
+        nodes.add(((BreakpointsGroupNode<?>)element).getGroup());
       }
     }
     return nodes;
@@ -140,7 +140,7 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
     while (children.hasMoreElements()) {
       Object element = children.nextElement();
       if (element instanceof BreakpointsGroupNode) {
-        XBreakpointGroup groupFound = ((BreakpointsGroupNode)element).getGroup();
+        XBreakpointGroup groupFound = ((BreakpointsGroupNode<?>)element).getGroup();
         if (groupFound.equals(group)) {
           return (BreakpointsGroupNode)element;
         }

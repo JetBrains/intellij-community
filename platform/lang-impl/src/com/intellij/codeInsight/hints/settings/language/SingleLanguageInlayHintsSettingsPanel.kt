@@ -292,11 +292,9 @@ fun createEditor(language: Language, project: Project, updateHints: ()->Any): Ed
   editorField.addSettingsProvider { editor ->
     editor.setVerticalScrollbarVisible(true)
     editor.setHorizontalScrollbarVisible(true)
-    editor.setBorder(JBUI.Borders.empty(4))
     with(editor.settings) {
-      additionalLinesCount = 2
+      additionalLinesCount = 0
       isAutoCodeFoldingEnabled = false
-      isLineNumbersShown = true
     }
     // Sadly, but we can't use daemon here, because we need specific kind of settings instance here.
     editor.document.addDocumentListener(object : DocumentListener {

@@ -258,7 +258,7 @@ public class CompletionData {
         }
         else {
           if (completion instanceof LookupItem) {
-            final Object o = ((LookupItem)completion).getObject();
+            final Object o = ((LookupItem<?>)completion).getObject();
             if (o instanceof PsiElement) {
               if (!filter.isClassAcceptable(o.getClass()) || !filter.isAcceptable(o, position)) continue;
             }

@@ -31,12 +31,12 @@ public class RefJavaUtilImpl extends RefJavaUtil {
     UDeclaration decl = UastContextKt.toUElement(psiFrom, UDeclaration.class);
     UElement uFindIn = UastContextKt.toUElement(findIn);
     if (decl != null && findIn != null) {
-      addReferencesTo(decl, ref, new UElement[]{uFindIn});
+      addReferencesTo(decl, ref, uFindIn);
     }
   }
 
   @Override
-  public void addReferencesTo(@NotNull final UDeclaration decl, @NotNull final RefJavaElement ref, final UElement @Nullable [] findIn) {
+  public void addReferencesTo(@NotNull final UDeclaration decl, @NotNull final RefJavaElement ref, final UElement @Nullable ... findIn) {
     final RefJavaElementImpl refFrom = (RefJavaElementImpl)ref;
     if (findIn == null) {
       return;

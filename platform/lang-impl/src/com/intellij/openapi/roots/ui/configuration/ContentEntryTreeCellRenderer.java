@@ -62,7 +62,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
     if (editor != null) {
       final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
       if (userObject instanceof NodeDescriptor) {
-        final Object element = ((NodeDescriptor)userObject).getElement();
+        final Object element = ((NodeDescriptor<?>)userObject).getElement();
         if (element instanceof FileElement) {
           final VirtualFile file = ((FileElement)element).getFile();
           if (file != null && file.isDirectory()) {

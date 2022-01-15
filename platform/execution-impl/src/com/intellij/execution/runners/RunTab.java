@@ -11,6 +11,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.execution.ui.layout.impl.GridImpl;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.icons.AllIcons;
@@ -220,6 +221,18 @@ public abstract class RunTab implements DataProvider, Disposable {
     public boolean isClosable(@NotNull TabInfo tab) {
       List<Content> gridContents = ((GridImpl)tab.getComponent()).getContents();
       return gridContents.size() > 0 && gridContents.get(0).isCloseable();
+    }
+
+    @Override
+    public void close(@NotNull TabInfo tab) {
+      GridImpl grid = (GridImpl)tab.getComponent();
+      ViewContext context = ViewContext.CONTEXT_KEY.getData(grid);
+      Content[] content = ViewContext.CONTENT_KEY.getData(grid);
+      if (context == null || content == null || content.length == 0) {
+        SingleContentSupplier.super.close(tab);
+        return;
+      }
+      context.getContentManager().removeContent(content[0], context.isToDisposeRemovedContent());
     }
 
     public boolean isMoveToolbar() {

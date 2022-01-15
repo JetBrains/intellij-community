@@ -388,7 +388,7 @@ public final class MethodSignatureUtil {
       return r1.equals(r2);
     }
 
-    if (r1 instanceof PsiClassType && r2 != null) {
+    if ((r1 instanceof PsiClassType || r1 instanceof PsiArrayType) && r2 != null) {
 
       //R1, adapted to the type parameters of d2 (p8.4.4), is a subtype of R2.
       final PsiSubstitutor adaptingSubstitutor = getSuperMethodSignatureSubstitutor(d2, d1);

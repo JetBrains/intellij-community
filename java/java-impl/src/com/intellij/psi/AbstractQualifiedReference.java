@@ -169,7 +169,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     if (refElement instanceof PsiClass) {
       final PsiQualifiedReference reference = JavaReferenceAdjuster.getClassReferenceToShorten((PsiClass)refElement, false, this);
       if (reference instanceof AbstractQualifiedReference) {
-        ((AbstractQualifiedReference)reference).dequalify();
+        ((AbstractQualifiedReference<?>)reference).dequalify();
       }
     }
     return this;

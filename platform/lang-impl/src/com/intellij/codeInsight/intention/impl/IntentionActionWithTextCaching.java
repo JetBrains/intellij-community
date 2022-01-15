@@ -222,8 +222,8 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     }
 
     @Override
-    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-      return myAction.getFileModifierForPreview(target);
+    public boolean invokeForPreview(@NotNull Project project, Editor editor, PsiFile file) {
+      return myAction.invokeForPreview(project, editor, file);
     }
 
     @Nullable

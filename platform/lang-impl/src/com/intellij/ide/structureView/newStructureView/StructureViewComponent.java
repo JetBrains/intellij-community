@@ -394,7 +394,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       Object userObject = unwrapNavigatable(last);
       Object value = unwrapValue(last);
       if (Comparing.equal(value, element) ||
-          userObject instanceof AbstractTreeNode && ((AbstractTreeNode)userObject).canRepresent(element)) {
+          userObject instanceof AbstractTreeNode && ((AbstractTreeNode<?>)userObject).canRepresent(element)) {
         return TreeVisitor.Action.INTERRUPT;
       }
       if (value instanceof PsiElement && element instanceof PsiElement) {

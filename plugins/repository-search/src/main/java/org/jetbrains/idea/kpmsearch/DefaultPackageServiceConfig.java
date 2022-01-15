@@ -93,9 +93,9 @@ public final class DefaultPackageServiceConfig implements PackageSearchEndpointC
   private static String extract(String fulltext, Map<Object, Object> idea) {
     Object urlMap = idea.get(fulltext);
     if (urlMap instanceof Map) {
-      Object enabled = ((Map)urlMap).get("enabled");
+      Object enabled = ((Map<?, ?>)urlMap).get("enabled");
       if (Boolean.valueOf(String.valueOf(enabled))) {
-        Object url = ((Map)urlMap).get("url");
+        Object url = ((Map<?, ?>)urlMap).get("url");
         if (url instanceof String) {
           return url.toString();
         }

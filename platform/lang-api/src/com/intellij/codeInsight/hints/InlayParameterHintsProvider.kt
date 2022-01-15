@@ -4,16 +4,16 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
+import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
-import com.intellij.util.KeyedLazyInstance
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.util.function.Supplier
 
-val PARAMETER_NAME_HINTS_EP = ExtensionPointName.create<KeyedLazyInstance<InlayParameterHintsProvider>>("com.intellij.codeInsight.parameterNameHints")
+val PARAMETER_NAME_HINTS_EP = ExtensionPointName.create<LanguageExtensionPoint<InlayParameterHintsProvider>>("com.intellij.codeInsight.parameterNameHints")
 
 object InlayParameterHintsExtension : LanguageExtension<InlayParameterHintsProvider>(PARAMETER_NAME_HINTS_EP)
 

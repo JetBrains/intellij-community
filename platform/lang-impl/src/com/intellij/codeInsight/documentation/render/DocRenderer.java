@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -273,7 +273,7 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
     }
     group.add(new DocRenderItem.ChangeFontSize());
 
-    for (DocumentationActionProvider provider: DocumentationActionProvider.EP_NAME.getExtensions()) {
+    for (DocumentationActionProvider provider : DocumentationActionProvider.EP_NAME.getExtensions()) {
       provider.additionalActions(myItem.editor, myItem.getComment(), myItem.textToRender).forEach(group::add);
     }
 
@@ -332,8 +332,9 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
     AppUIUtil.targetToDevice(pane, editor.getContentComponent());
     pane.setSize(width, 10_000_000 /* Arbitrary large value, that doesn't lead to overflows and precision loss */);
     if (newInstance) {
-      pane.getPreferredSize(); // trigger internal layout, so that image elements are created
-                                 // this is done after 'targetToDevice' call to take correct graphics context into account
+      // trigger internal layout, so that image elements are created
+      // this is done after 'targetToDevice' call to take correct graphics context into account
+      pane.getPreferredSize();
       pane.startImageTracking();
     }
     return pane;
@@ -403,7 +404,8 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
     try {
       location = ((JEditorPane)event.getSource()).modelToView2D(element.getStartOffset());
     }
-    catch (BadLocationException ignored) {}
+    catch (BadLocationException ignored) {
+    }
     if (location == null) return;
 
     PsiDocCommentBase comment = myItem.getComment();
@@ -509,7 +511,7 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
         "body {overflow-wrap: anywhere}" + // supported by JetBrains Runtime
         "code {font-family: \"" + editorFontNamePlaceHolder + "\"}" +
         "pre {font-family: \"" + editorFontNamePlaceHolder + "\";" +
-             "white-space: pre-wrap}" + // supported by JetBrains Runtime
+        "white-space: pre-wrap}" + // supported by JetBrains Runtime
         "h1, h2, h3, h4, h5, h6 {margin-top: 0; padding-top: 1}" +
         "a {color: #" + linkColorHex + "; text-decoration: none}" +
         "p {padding: 7 0 2 0}" +
@@ -764,7 +766,7 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
     }
 
     private int getAvailableWidth() {
-      for (View v = this; v != null;) {
+      for (View v = this; v != null; ) {
         View parent = v.getParent();
         if (parent instanceof FlowView) {
           int childCount = parent.getViewCount();

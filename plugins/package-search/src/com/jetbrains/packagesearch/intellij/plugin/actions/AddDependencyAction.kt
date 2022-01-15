@@ -16,7 +16,8 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOp
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
-import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
+import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
+import com.jetbrains.packagesearch.intellij.plugin.util.uiStateModifier
 
 class AddDependencyAction : AnAction(
     PackageSearchBundle.message("packagesearch.actions.addDependency.text"),
@@ -36,8 +37,7 @@ class AddDependencyAction : AnAction(
                 return@run false
             }
 
-            val rootModel = project.packageSearchDataService
-            val modules = rootModel.dataModelFlow.value.moduleModels
+            val modules = project.packageSearchProjectService.moduleModelsStateFlow.value
             findSelectedModule(e, modules) != null
         }
     }
@@ -45,14 +45,13 @@ class AddDependencyAction : AnAction(
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
 
-        val rootModel = project.packageSearchDataService
-        val modules = rootModel.dataModelFlow.value.moduleModels
+        val modules = project.packageSearchProjectService.moduleModelsStateFlow.value
         if (modules.isEmpty()) return
 
         val selectedModule = findSelectedModule(e, modules) ?: return
 
         PackageSearchToolWindowFactory.activateToolWindow(project) {
-            rootModel.setTargetModules(TargetModules.One(selectedModule))
+            project.uiStateModifier.setTargetModules(TargetModules.One(selectedModule))
         }
     }
 

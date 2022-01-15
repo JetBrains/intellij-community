@@ -67,7 +67,7 @@ public class PythonParserDefinition implements ParserDefinition {
       return pyElType.createElement(node);
     }
     else if (type instanceof PyStubElementType) {
-      return ((PyStubElementType)type).createElement(node);
+      return ((PyStubElementType<?, ?>)type).createElement(node);
     }
     return new ASTWrapperPsiElement(node);
   }

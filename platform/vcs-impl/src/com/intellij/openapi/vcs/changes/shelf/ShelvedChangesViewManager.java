@@ -34,7 +34,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
-import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider;
 import com.intellij.openapi.vcs.changes.patch.PatchFileType;
 import com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider.PatchesPreloader;
 import com.intellij.openapi.vcs.changes.ui.*;
@@ -453,7 +452,7 @@ public class ShelvedChangesViewManager implements Disposable {
   @NotNull
   static ListSelection<ShelvedWrapper> getSelectedChangesOrAll(@NotNull DataContext dataContext) {
     ChangesTree tree = dataContext.getData(SHELVED_CHANGES_TREE);
-    if (tree == null) return ListSelection.createAt(Collections.emptyList(), 0);
+    if (tree == null) return ListSelection.empty();
 
     ListSelection<ShelvedWrapper> wrappers = ListSelection.createAt(VcsTreeModelData.selected(tree).userObjects(ShelvedWrapper.class), 0);
 
@@ -738,7 +737,7 @@ public class ShelvedChangesViewManager implements Disposable {
       if (isEditorPreview) {
         myEditorChangeProcessor = new MyShelvedPreviewProcessor(myProject, myTree);
         Disposer.register(this, myEditorChangeProcessor);
-        myEditorDiffPreview = installEditorPreview(myEditorChangeProcessor);
+        myEditorDiffPreview = installEditorPreview(myEditorChangeProcessor, hasSplitterPreview);
       }
       else {
         myEditorDiffPreview = null;
@@ -755,8 +754,15 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     @NotNull
-    private EditorTabPreview installEditorPreview(@NotNull MyShelvedPreviewProcessor changeProcessor) {
-      EditorTabPreview editorPreview = new EditorTabPreview(changeProcessor) {
+    private EditorTabPreview installEditorPreview(@NotNull MyShelvedPreviewProcessor changeProcessor, boolean hasSplitterPreview) {
+      return new SimpleTreeEditorDiffPreview(changeProcessor, myTree, myTreeScrollPane,
+                                             isOpenEditorDiffPreviewWithSingleClick.asBoolean() && !hasSplitterPreview) {
+        @Override
+        public void returnFocusToTree() {
+          ToolWindow toolWindow = getToolWindowFor(myProject, SHELF);
+          if (toolWindow != null) toolWindow.activate(null);
+        }
+
         @Override
         public void updateAvailability(@NotNull AnActionEvent event) {
           DiffShelvedChangesActionProvider.updateAvailability(event);
@@ -771,11 +777,6 @@ public class ShelvedChangesViewManager implements Disposable {
         }
 
         @Override
-        protected boolean hasContent() {
-          return changeProcessor.getCurrentChange() != null;
-        }
-
-        @Override
         protected boolean skipPreviewUpdate() {
           if (super.skipPreviewUpdate()) return true;
           if (!myTree.equals(IdeFocusManager.getInstance(myProject).getFocusOwner())) return true;
@@ -784,16 +785,6 @@ public class ShelvedChangesViewManager implements Disposable {
           return false;
         }
       };
-      editorPreview.setEscapeHandler(() -> {
-        editorPreview.closePreview();
-
-        ToolWindow toolWindow = getToolWindowFor(myProject, SHELF);
-        if (toolWindow != null) toolWindow.activate(null);
-      });
-      editorPreview.installListeners(myTree, isOpenEditorDiffPreviewWithSingleClick.asBoolean());
-      editorPreview.installNextDiffActionOn(myTreeScrollPane);
-
-      return editorPreview;
     }
 
     @NotNull
@@ -928,32 +919,6 @@ public class ShelvedChangesViewManager implements Disposable {
       }
 
       return super.loadRequestFast(provider);
-    }
-
-    @Override
-    protected @Nullable AnAction createGoToChangeAction() {
-      return new MyGoToChangePopupProvider().createGoToChangeAction();
-    }
-
-    private class MyGoToChangePopupProvider extends SelectionAwareGoToChangePopupActionProvider {
-      @NotNull
-      @Override
-      public List<? extends PresentableChange> getChanges() {
-        return getAllChanges().collect(Collectors.toList());
-      }
-
-      @Override
-      public void select(@NotNull PresentableChange presentableChange) {
-        if (presentableChange instanceof Wrapper) {
-          selectChange((Wrapper)presentableChange);
-        }
-      }
-
-      @Nullable
-      @Override
-      public PresentableChange getSelectedChange() {
-        return getCurrentChange();
-      }
     }
   }
 

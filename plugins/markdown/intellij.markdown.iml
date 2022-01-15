@@ -82,5 +82,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="Velocity" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.collaborationTools.auth" />
   </component>
 </module>

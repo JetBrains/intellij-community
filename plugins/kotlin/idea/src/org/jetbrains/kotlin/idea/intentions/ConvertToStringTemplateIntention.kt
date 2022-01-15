@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
@@ -37,7 +37,9 @@ open class ConvertToStringTemplateIntention : SelfTargetingOffsetIndependentInte
 
     override fun applyTo(element: KtBinaryExpression, editor: Editor?) {
         val replacement = buildReplacement(element)
-        element.replaced(replacement)
+        runWriteActionIfPhysical(element) {
+            element.replaced(replacement)
+        }
     }
 
     companion object {

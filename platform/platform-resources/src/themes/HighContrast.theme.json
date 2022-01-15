@@ -303,7 +303,7 @@
     "BookmarkIcon": {
       "background": "#E0861F"
     },
-    "MnemonicIcon": {
+    "BookmarkMnemonicIcon": {
       "foreground": "#FFFFFF",
       "background": "#000000",
       "borderColor": "#E0861F"

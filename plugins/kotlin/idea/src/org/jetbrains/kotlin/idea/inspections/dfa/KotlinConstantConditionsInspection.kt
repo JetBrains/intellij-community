@@ -322,11 +322,11 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         val templateRight = template.right
         if (templateLeft == null || templateRight == null) return false
         if (templateRight === expression) {
-            return areEquivalent(left, templateLeft) && areEquivalent(right.negate(), templateRight)
+            return areEquivalent(left, templateLeft) && areEquivalent(right.negate(false), templateRight)
         }
         if (!areEquivalent(right, templateRight)) return false
         if (templateLeft === expression) {
-            return areEquivalent(left.negate(), templateLeft)
+            return areEquivalent(left.negate(false), templateLeft)
         }
         if (templateLeft !is KtBinaryExpression || templateLeft.operationToken !== KtTokens.ANDAND) return false
         return isOppositeCondition(left, templateLeft, expression)

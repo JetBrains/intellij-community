@@ -3,6 +3,7 @@ package com.intellij.vcs.changes
 import com.intellij.codeInsight.actions.VcsFacade
 import com.intellij.ide.util.treeView.WeighedItem
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.changes.ChangeListManager
@@ -21,6 +22,10 @@ class VcsChangesLocalSearchScope(private val myProject: Project,
                                  private val myGivenVirtualFiles: Array<VirtualFile>?,
                                  ignoreInjectedPsi: Boolean) : RangeBasedLocalSearchScope(displayName, ignoreInjectedPsi), WeighedItem {
 
+  companion object {
+    private val logger = Logger.getInstance(VcsChangesLocalSearchScope::class.java)
+  }
+
   private val rangeMap: HashMap<VirtualFile, List<TextRange>> by lazy {
     ReadAction.compute<HashMap<VirtualFile, List<TextRange>>, RuntimeException> {
       val changeListManager = ChangeListManager.getInstance(myProject)
@@ -30,12 +35,17 @@ class VcsChangesLocalSearchScope(private val myProject: Project,
         (myGivenVirtualFiles ?: changeListManager.affectedFiles.toTypedArray())
           .mapNotNull { psiManager.findFile(it) }.toMutableList()
 
+      if (logger.isTraceEnabled)
+        logger.trace("PSI files for VcsChangesLocalSearchScope: ${psiFiles.joinToString()}")
+
       val result = HashMap<VirtualFile, List<TextRange>>()
       for (file in psiFiles) {
         val info = vcsFacade.getChangedRangesInfo(file)
         if (info != null) {
           val document = file.viewProvider.document
           val ranges = ArrayList<TextRange>()
+          if (logger.isTraceEnabled)
+            logger.trace("Changed ranges for a file $file: ${info.allChangedRanges.joinToString()}")
 
           for (range in info.allChangedRanges) {
             val startLine = document.getLineNumber(range.startOffset)
@@ -50,6 +60,10 @@ class VcsChangesLocalSearchScope(private val myProject: Project,
           }
 
           result[file.virtualFile] = ranges
+        }
+        else {
+          if (logger.isTraceEnabled)
+            logger.trace("No changes for file $file")
         }
       }
       result

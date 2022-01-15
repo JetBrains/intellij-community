@@ -53,9 +53,9 @@ public class WSLDistribution {
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
   static final int DEFAULT_TIMEOUT = SystemProperties.getIntProperty("ide.wsl.probe.timeout", 20_000);
+  private static final String SHELL_PARAMETER = "$SHELL";
   public static final String WSL_EXE = "wsl.exe";
   public static final String DISTRIBUTION_PARAMETER = "--distribution";
-  public static final String SHELL_PARAMETER = "$SHELL";
   public static final String EXIT_CODE_PARAMETER = "; exitcode=$?";
   public static final String EXEC_PARAMETER = "--exec";
 

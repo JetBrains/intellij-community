@@ -55,8 +55,10 @@ internal class GroupNode(project: Project, group: BookmarkGroup) : AbstractTreeN
     }
 
     // reuse cached nodes
-    val nodes = cache.getNodes(bookmarks)
-    nodes.forEach { if (it is FileNode) it.removeChildren() }
+    val nodes = cache.getNodes(bookmarks).onEach {
+      if (it is BookmarkNode) it.bookmarkGroup = value
+      if (it is FileNode) it.removeChildren()
+    }
     if (provider == null) return nodes
 
     // group line bookmarks within corresponding file bookmarks

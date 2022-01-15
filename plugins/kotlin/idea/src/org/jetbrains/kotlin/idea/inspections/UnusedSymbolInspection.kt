@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSuppo
 import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.findUsages.handlers.KotlinFindClassUsagesHandler
+import org.jetbrains.kotlin.idea.highlighter.isAnnotationClass
 import org.jetbrains.kotlin.idea.intentions.isFinalizeMethod
 import org.jetbrains.kotlin.idea.intentions.isReferenceToBuiltInEnumFunction
 import org.jetbrains.kotlin.idea.isMainFunction
@@ -106,6 +107,15 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
                 is KtNamedFunction, is KtSecondaryConstructor -> LightClassUtil.getLightClassMethod(declaration as KtFunction)
                 is KtProperty, is KtParameter -> {
                     if (declaration is KtParameter && !declaration.hasValOrVar()) return false
+                    // we may handle only annotation parameters so far
+                    if (declaration is KtParameter && isAnnotationParameter(declaration)) {
+                        val lightAnnotationMethods = LightClassUtil.getLightClassPropertyMethods(declaration).toList()
+                        for (javaParameterPsi in lightAnnotationMethods) {
+                            if (javaInspection.isEntryPoint(javaParameterPsi)) {
+                                return true
+                            }
+                        }
+                    }
                     // can't rely on light element, check annotation ourselves
                     val entryPointsManager = EntryPointsManager.getInstance(declaration.project) as EntryPointsManagerBase
                     return checkAnnotatedUsingPatterns(
@@ -119,6 +129,14 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
             if (isCheapEnough.value == TOO_MANY_OCCURRENCES) return false
 
             return javaInspection.isEntryPoint(lightElement)
+        }
+
+        private fun isAnnotationParameter(parameter: KtParameter): Boolean {
+            val ktConstructor = parameter.ownerFunction
+            if (ktConstructor !is KtConstructor<*>) return false
+
+            val containingClass = ktConstructor.containingClass()
+            return containingClass?.isAnnotationClass() ?: false
         }
 
         private fun isCheapEnoughToSearchUsages(declaration: KtNamedDeclaration): SearchCostResult {

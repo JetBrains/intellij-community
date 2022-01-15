@@ -74,7 +74,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -876,8 +875,7 @@ public final class HighlightUtil {
     return null;
   }
 
-  static HighlightInfo checkYieldExpressionType(@NotNull PsiYieldStatement statement) {
-    PsiExpression expression = statement.getExpression();
+  static HighlightInfo checkYieldExpressionType(PsiExpression expression) {
     if (expression != null && PsiType.VOID.equals(expression.getType())) {
       String message = JavaErrorBundle.message("yield.void");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
@@ -1580,14 +1578,7 @@ public final class HighlightUtil {
   @NotNull
   static Collection<HighlightInfo> checkSwitchExpressionReturnTypeCompatible(@NotNull PsiSwitchExpression switchExpression) {
     if (!PsiPolyExpressionUtil.isPolyExpression(switchExpression)) {
-      return PsiUtil.getSwitchResultExpressions(switchExpression).stream().map(expression -> {
-        if (PsiType.VOID.equals(expression.getType())) {
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-            .range(expression)
-            .descriptionAndTooltip(JavaErrorBundle.message("yield.void")).create();
-        }
-        return null;
-      }).filter(Objects::nonNull).collect(Collectors.toList());
+      return Collections.emptyList();
     }
     List<HighlightInfo> infos = new ArrayList<>();
     PsiType switchExpressionType = switchExpression.getType();

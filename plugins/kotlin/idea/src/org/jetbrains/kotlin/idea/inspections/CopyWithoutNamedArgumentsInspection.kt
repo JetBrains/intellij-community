@@ -37,7 +37,7 @@ class CopyWithoutNamedArgumentsInspection : AbstractKotlinInspection() {
                 expression.calleeExpression ?: return,
                 KotlinBundle.message("copy.method.of.data.class.is.called.without.named.arguments"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                IntentionWrapper(AddNamesToCallArgumentsIntention(), expression.containingKtFile)
+                IntentionWrapper(AddNamesToCallArgumentsIntention())
             )
         })
     }

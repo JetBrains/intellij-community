@@ -129,7 +129,7 @@ public class FailedTestsNavigator implements OccurenceNavigator {
       if (node == null) return;
       Object elementFor = TreeUtil.getUserObject(node);
       if (elementFor instanceof BaseTestProxyNodeDescriptor) {
-        elementFor = ((BaseTestProxyNodeDescriptor)elementFor).getElement();
+        elementFor = ((BaseTestProxyNodeDescriptor<?>)elementFor).getElement();
       }
       if (elementFor instanceof AbstractTestProxy) tests.add((AbstractTestProxy)elementFor);
       for(int i = 0; i < node.getChildCount(); i++) {

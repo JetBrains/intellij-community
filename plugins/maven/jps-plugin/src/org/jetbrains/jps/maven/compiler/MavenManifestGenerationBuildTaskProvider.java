@@ -125,7 +125,7 @@ public class MavenManifestGenerationBuildTaskProvider extends ArtifactBuildTaskP
               final LinkedList<String> pathParts = new LinkedList<>();
               pathParts.add(fileCopyPackagingElement.getRenamedOutputFileName());
 
-              JpsElementBase parent = ((JpsElementBase)fileCopyPackagingElement).getParent();
+              JpsElementBase parent = ((JpsElementBase<?>)fileCopyPackagingElement).getParent();
               while (parent != null) {
                 if (parent instanceof JpsDirectoryPackagingElement) {
                   pathParts.addFirst(((JpsDirectoryPackagingElement)parent).getDirectoryName());

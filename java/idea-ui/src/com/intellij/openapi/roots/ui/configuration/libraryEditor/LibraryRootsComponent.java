@@ -352,7 +352,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     if (!(userObject instanceof NodeDescriptor)) {
       return null;
     }
-    final Object element = ((NodeDescriptor)userObject).getElement();
+    final Object element = ((NodeDescriptor<?>)userObject).getElement();
     if (!(element instanceof LibraryTableTreeContentElement)) {
       return null;
     }

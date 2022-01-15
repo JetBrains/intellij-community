@@ -84,10 +84,14 @@ fun waitAssertCancelled(job: Job) {
 
 fun assertCurrentJobIsChildOf(parent: Job): Job {
   val current = requireNotNull(Cancellation.currentJob())
-  val children = parent.children.toSet()
-  current.ensureActive()
-  assertTrue(current in children)
+  assertJobIsChildOf(current, parent)
   return current
+}
+
+fun assertJobIsChildOf(job: Job, parent: Job) {
+  val children = parent.children.toSet()
+  job.ensureActive()
+  assertTrue(job in children)
 }
 
 fun loggedError(canThrow: Semaphore): Throwable {

@@ -12,8 +12,8 @@ class SearchTargetsDataRule : GetDataRule {
 
   override fun getData(dataProvider: DataProvider): Collection<SearchTarget>? {
     val project = CommonDataKeys.PROJECT.getData(dataProvider) ?: return null
-    val symbols = CommonDataKeys.SYMBOLS.getData(dataProvider) ?: return null
     try {
+      val symbols = CommonDataKeys.SYMBOLS.getData(dataProvider) ?: return null
       return symbolSearchTargets(project, symbols).takeIf {
         it.isNotEmpty()
       }

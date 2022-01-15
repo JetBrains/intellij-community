@@ -277,7 +277,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
     tab = new TabInfo(component)
       .setText(SlowOperations.allowSlowOperations(() -> EditorTabPresentationUtil.getEditorTabTitle(myProject, file)))
-      .setTabColor(EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file))
+      .setTabColor(ExperimentalUI.isNewEditorTabs() ? null : EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file))
       .setIcon(UISettings.getInstance().getShowFileIconInTabs() ? icon : null)
       .setTooltipText(tooltip)
       .setObject(file)

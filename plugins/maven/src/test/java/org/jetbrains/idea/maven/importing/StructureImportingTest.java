@@ -1009,7 +1009,7 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     assertModules("project");
     Module module = getModule("project");
     String targetLevel = CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(module);
-    assertEquals("1.9", targetLevel);
+    assertEquals(LanguageLevel.JDK_1_9, LanguageLevel.parse(targetLevel));
   }
 
   @Test

@@ -32,7 +32,6 @@ import kotlin.io.path.*
 import kotlin.streams.asSequence
 
 class IndexDiagnosticDumper : Disposable {
-
   companion object {
     @JvmStatic
     fun getInstance(): IndexDiagnosticDumper = service()
@@ -40,6 +39,8 @@ class IndexDiagnosticDumper : Disposable {
     val diagnosticTimestampFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss.SSS")
 
     private const val fileNamePrefix = "diagnostic-"
+
+    private val projectIndexingHistoryListenerEpName = ExtensionPointName.create<ProjectIndexingHistoryListener>("com.intellij.projectIndexingHistoryListener")
 
     @JvmStatic
     private val shouldDumpDiagnosticsForInterruptedUpdaters: Boolean
@@ -91,21 +92,11 @@ class IndexDiagnosticDumper : Disposable {
 
   private var isDisposed = false
 
-  interface ProjectIndexingHistoryListener {
-    companion object {
-      val EP_NAME = ExtensionPointName.create<ProjectIndexingHistoryListener>("com.intellij.projectIndexingHistoryListener")
-    }
-
-    fun onStartedIndexing(projectIndexingHistory: ProjectIndexingHistory) = Unit
-
-    fun onFinishedIndexing(projectIndexingHistory: ProjectIndexingHistory)
-  }
-
-  fun onIndexingStarted(projectIndexingHistory: ProjectIndexingHistory) {
+  fun onIndexingStarted(projectIndexingHistory: ProjectIndexingHistoryImpl) {
     runAllListenersSafely { onStartedIndexing(projectIndexingHistory) }
   }
 
-  fun onIndexingFinished(projectIndexingHistory: ProjectIndexingHistory) {
+  fun onIndexingFinished(projectIndexingHistory: ProjectIndexingHistoryImpl) {
     try {
       if (ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode) {
         return
@@ -122,7 +113,7 @@ class IndexDiagnosticDumper : Disposable {
 
   private fun runAllListenersSafely(block: ProjectIndexingHistoryListener.() -> Unit) {
     val listeners = ProgressManager.getInstance().computeInNonCancelableSection<List<ProjectIndexingHistoryListener>, Exception> {
-      ProjectIndexingHistoryListener.EP_NAME.extensionList
+      projectIndexingHistoryListenerEpName.extensionList
     }
     for (listener in listeners) {
       try {
@@ -139,7 +130,7 @@ class IndexDiagnosticDumper : Disposable {
   }
 
   @Synchronized
-  private fun dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory: ProjectIndexingHistory) {
+  private fun dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory: ProjectIndexingHistoryImpl) {
     try {
       check(!isDisposed)
 

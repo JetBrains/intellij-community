@@ -12,23 +12,24 @@ import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger.Companion.preferencesDefaultGradleScopeChangedField
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger.Companion.preferencesGradleScopeCountField
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger.Companion.preferencesUpdateScopesOnUsageField
+import com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.PackageSearchGradleConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.PackageSearchGradleConfigurationDefaults
-import com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.packageSearchGradleConfigurationForProject
 import javax.swing.JCheckBox
 import javax.swing.JLabel
 import javax.swing.JTextField
 import javax.swing.event.ChangeListener
 import javax.swing.event.DocumentEvent
 
-class GradleConfigurableContributor(private val project: Project) : ConfigurableContributor {
+internal class GradleConfigurableContributor(private val project: Project) : ConfigurableContributor {
 
     override fun createDriver() = GradleConfigurableContributorDriver(project)
 }
 
-class GradleConfigurableContributorDriver(project: Project) : ConfigurableContributorDriver {
+internal class GradleConfigurableContributorDriver(private val project: Project) : ConfigurableContributorDriver {
 
     private var modified: Boolean = false
-    private val configuration = packageSearchGradleConfigurationForProject(project)
+    private val configuration
+        get() = PackageSearchGradleConfiguration.getInstance(project)
 
     private val textFieldChangeListener = object : DocumentAdapter() {
         override fun textChanged(e: DocumentEvent) {
@@ -93,7 +94,7 @@ class GradleConfigurableContributorDriver(project: Project) : ConfigurableContri
     override fun restoreDefaults() {
         gradleScopesEditor.text = PackageSearchGradleConfigurationDefaults.GradleScopes.replace(",", ", ")
         updateScopesOnUsageEditor.isSelected = true
-        gradleDefaultScopeEditor.text = PackageSearchGradleConfigurationDefaults.GradleScope
+        gradleDefaultScopeEditor.text = PackageSearchGradleConfigurationDefaults.GradleDefaultScope
 
         modified = true
     }
@@ -103,7 +104,7 @@ class GradleConfigurableContributorDriver(project: Project) : ConfigurableContri
         configuration.updateScopesOnUsage = updateScopesOnUsageEditor.isSelected
         configuration.defaultGradleScope = gradleDefaultScopeEditor.text
 
-        val hasChangedDefaultScope = configuration.defaultGradleScope != PackageSearchGradleConfigurationDefaults.GradleScope
+        val hasChangedDefaultScope = configuration.defaultGradleScope != PackageSearchGradleConfigurationDefaults.GradleDefaultScope
         logPreferencesChanged(
             preferencesGradleScopeCountField.with(configuration.getGradleScopes().size),
             preferencesUpdateScopesOnUsageField.with(configuration.updateScopesOnUsage),

@@ -60,10 +60,7 @@ class RedundantVisibilityModifierInspection : AbstractKotlinInspection(), Cleanu
                 visibilityModifier,
                 KotlinBundle.message("redundant.visibility.modifier"),
                 ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                IntentionWrapper(
-                    RemoveModifierFix(declaration, redundantVisibility, isRedundant = true),
-                    declaration.containingFile
-                )
+                IntentionWrapper(RemoveModifierFix(declaration, redundantVisibility, isRedundant = true))
             )
         })
     }

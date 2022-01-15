@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repositorie
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
 import org.jetbrains.kotlin.tools.projectWizard.settings.javaPackage
 import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.InterceptionPoint
+import java.nio.file.Path
 
 object KtorServerTemplate : Template() {
     override val title: String = KotlinNewProjectWizardBundle.message("module.template.ktor.server.title")
@@ -32,6 +33,9 @@ object KtorServerTemplate : Template() {
 
     @NonNls
     override val id: String = "ktorServer"
+
+    private const val fileToCreate = "Server.kt"
+    override val filesToOpenInEditor: List<String> = listOf(fileToCreate)
 
     override fun Writer.getRequiredLibraries(module: ModuleIR): List<DependencyIR> =
         withSettingsOf(module.originalModule) {
@@ -60,7 +64,7 @@ object KtorServerTemplate : Template() {
 
     override fun Reader.getFileTemplates(module: ModuleIR): List<FileTemplateDescriptorWithPath> {
         val packageName = module.originalModule.javaPackage(pomIR()).asCodePackage()
-        return listOf(FileTemplateDescriptor("$id/server.kt.vm", packageName / "Server.kt") asSrcOf SourcesetType.main)
+        return listOf(FileTemplateDescriptor("$id/server.kt.vm", packageName / fileToCreate) asSrcOf SourcesetType.main)
     }
 
     val imports = InterceptionPoint("imports", emptyList<String>())

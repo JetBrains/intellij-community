@@ -9,7 +9,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory
+import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CompletableFuture
 
@@ -22,9 +22,9 @@ internal class RescanIndexesAction : RecoveryAction {
     get() = "rescan"
 
   override fun performSync(project: Project): List<CacheInconsistencyProblem> {
-    val historyFuture = CompletableFuture<ProjectIndexingHistory>()
-    val updater = object : UnindexedFilesUpdater(project, "Rescanning indexes recovery action") {
-      override fun performScanningAndIndexing(indicator: ProgressIndicator): ProjectIndexingHistory {
+    val historyFuture = CompletableFuture<ProjectIndexingHistoryImpl>()
+    object : UnindexedFilesUpdater(project, "Rescanning indexes recovery action") {
+      override fun performScanningAndIndexing(indicator: ProgressIndicator): ProjectIndexingHistoryImpl {
         try {
           IndexingFlag.cleanupProcessedFlag()
           val history = super.performScanningAndIndexing(indicator)
@@ -36,8 +36,7 @@ internal class RescanIndexesAction : RecoveryAction {
           throw e
         }
       }
-    }
-    DumbService.getInstance(project).queueTask(updater)
+    }.queue(project)
     try {
       return ProgressIndicatorUtils.awaitWithCheckCanceled(historyFuture).extractConsistencyProblems()
     }
@@ -46,7 +45,7 @@ internal class RescanIndexesAction : RecoveryAction {
     }
   }
 
-  private fun ProjectIndexingHistory.extractConsistencyProblems(): List<CacheInconsistencyProblem> =
+  private fun ProjectIndexingHistoryImpl.extractConsistencyProblems(): List<CacheInconsistencyProblem> =
     scanningStatistics.filter { it.numberOfFilesForIndexing != 0 }.map {
       UnindexedFilesInconsistencyProblem(it.numberOfFilesForIndexing, it.providerName)
     }

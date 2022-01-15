@@ -45,7 +45,7 @@ class CanBeValInspection : AbstractKotlinInspection() {
                     KotlinBundle.message("variable.is.never.modified.and.can.be.declared.immutable.using.val"),
                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                     isOnTheFly,
-                    IntentionWrapper(ChangeVariableMutabilityFix(declaration, false), declaration.containingFile)
+                    IntentionWrapper(ChangeVariableMutabilityFix(declaration, false))
                 )
                 holder.registerProblem(problemDescriptor)
             }

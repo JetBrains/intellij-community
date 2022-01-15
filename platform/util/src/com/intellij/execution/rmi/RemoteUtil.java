@@ -176,7 +176,7 @@ public final class RemoteUtil {
       }
     }
     else if (value instanceof List && methodReturnType.isInterface()) {
-      result = Arrays.asList(handleRemoteResult(((List)value).toArray(), Object.class, classLoader, substituteClassLoader));
+      result = Arrays.asList(handleRemoteResult(((List<?>)value).toArray(), Object.class, classLoader, substituteClassLoader));
     }
     else if (value instanceof Object[]) {
       Object[] array = (Object[])value;

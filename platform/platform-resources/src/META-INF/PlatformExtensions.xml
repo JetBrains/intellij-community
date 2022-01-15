@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <extensions defaultExtensionNs="com.intellij">
     <!-- must be first - adds activity listener (to track, when reporting should be stopped) -->
     <startupActivity id="performanceReporter" implementation="com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter" order="first"/>
@@ -339,6 +339,8 @@
     <applicationService serviceInterface="com.intellij.featureStatistics.ProductivityFeaturesRegistry"
                         serviceImplementation="com.intellij.featureStatistics.ProductivityFeaturesRegistryImpl"/>
 
+    <applicationService serviceInterface="com.intellij.util.graph.GraphFactory"
+                        serviceImplementation="com.intellij.util.graph.impl.GraphFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.util.graph.GraphAlgorithms"
                         serviceImplementation="com.intellij.util.graph.impl.GraphAlgorithmsImpl"/>
 
@@ -1165,7 +1167,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <postStartupActivity implementation="com.intellij.ide.cds.CDSStartupActivity" order="last"/>
     <statistics.counterUsagesCollector groupId="intellij.cds" version="2"/>
 
-    <statistics.counterUsagesCollector groupId="startup" version="1"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.startUpPerformanceReporter.StartupPerformanceCollector"/>
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.startUpPerformanceReporter.StartupMetricCollector"/>
 
     <postStartupActivity implementation="com.intellij.ide.startup.CheckProjectActivity" order="last"/>
@@ -1305,6 +1307,10 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <advancedSetting id="terminal.escape.moves.focus.to.editor" default="true" groupKey="group.advanced.settings.terminal"/>
     <advancedSetting id="terminal.type.ahead" default="true" groupKey="group.advanced.settings.terminal"/>
     <advancedSetting id="terminal.type.ahead.latency.threshold" default="100" groupKey="group.advanced.settings.terminal"/>
+    <advancedSetting id="documentation.components.enable.doc.syntax.highlighting" default="true" groupKey="group.advanced.settings.documentation.components"/>
+    <advancedSetting id="documentation.components.enable.doc.syntax.highlighting.of.inline.code.blocks" default="true" groupKey="group.advanced.settings.documentation.components"/>
+    <advancedSetting id="documentation.components.enable.doc.syntax.highlighting.of.links" default="true" groupKey="group.advanced.settings.documentation.components"/>
+    <advancedSetting id="documentation.components.doc.syntax.highlighting.saturation" default="65" groupKey="group.advanced.settings.documentation.components"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.ide.plugins.DependencyFeatureCollector"/>
     <projectService serviceInterface="com.intellij.presentation.FilePresentationService"

@@ -43,13 +43,11 @@ internal class IntentionPreviewModel {
       })
     }
 
-    fun createEditors(project: Project, result: IntentionPreviewResult?): List<EditorEx> {
+    fun createEditors(project: Project, result: IntentionPreviewDiffResult?): List<EditorEx> {
       if (result == null) return emptyList()
 
-      val psiFileCopy: PsiFile? = result.psiFile
+      val psiFileCopy: PsiFile = result.psiFile
       val lines: List<LineFragment> = result.lineFragments
-
-      if (psiFileCopy == null) return emptyList()
 
       lines.forEach { lineFragment -> reformatRange(project, psiFileCopy, lineFragment) }
 
@@ -144,10 +142,10 @@ internal class IntentionPreviewModel {
       editor.scrollingModel.disableAnimation()
 
       editor.gutterComponentEx.apply {
-        setPaintBackground(false)
+        isPaintBackground = false
         setLineNumberConverter(object : LineNumberConverter {
-          override fun convert(editor: Editor, line: Int): Int? = line + lineShift
-          override fun getMaxLineNumber(editor: Editor): Int? = maxLine
+          override fun convert(editor: Editor, line: Int): Int = line + lineShift
+          override fun getMaxLineNumber(editor: Editor): Int = maxLine
         })
       }
 

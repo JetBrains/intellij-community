@@ -873,8 +873,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return myFilesModCount.get();
   }
 
-  void filesUpdateStarted(Project project) {
-    myIndexableFilesFilterHolder.entireProjectUpdateStarted(project);
+  void filesUpdateStarted(Project project, boolean isFullUpdate) {
+    if (isFullUpdate) {
+      myIndexableFilesFilterHolder.entireProjectUpdateStarted(project);
+    }
     ensureStaleIdsDeleted();
     getChangedFilesCollector().ensureUpToDate();
     incrementFilesModCount();
@@ -955,7 +957,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private static void scheduleIndexRebuild(String reason) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, reason));
+      new UnindexedFilesUpdater(project, reason).queue(project);
     }
   }
 
@@ -1332,13 +1334,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       if (setIndexedStatus) {
         IndexingFlag.setFileIndexed(file);
       }
-      if (VfsEventsMerger.LOG != null) {
-        VfsEventsMerger.LOG.info("File " + file +
-                                 " indexes have been updated for indexes " + indexingStatistics.getPerIndexerUpdateTimes().keySet() +
-                                 " and deleted for " + indexingStatistics.getPerIndexerDeleteTimes().keySet() +
-                                 ". Indexes was wiped = " + isIndexesDeleted +
-                                 "; is file valid = " + isValid);
-      }
+      VfsEventsMerger.tryLog("INDEX_UPDATED", file,
+                             () -> " updated_indexes=" + indexingStatistics.getPerIndexerUpdateTimes().keySet() +
+                                   " deleted_indexes=" + indexingStatistics.getPerIndexerDeleteTimes().keySet() +
+                                   " valid=" + isValid);
       getChangedFilesCollector().removeFileIdFromFilesScheduledForUpdate(fileId);
       return indexingStatistics;
     }
@@ -1951,6 +1950,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   public IntPredicate getAccessibleFileIdFilter(@Nullable Project project) {
     boolean dumb = ActionUtil.isDumbMode(project);
     if (!dumb) return f -> true;
+
+    if (DumbServiceImpl.ALWAYS_SMART && project != null && UnindexedFilesUpdater.isIndexUpdateInProgress(project)) {
+      return f -> true;
+    }
 
     DumbModeAccessType dumbModeAccessType = getCurrentDumbModeAccessType();
     if (dumbModeAccessType == null) {

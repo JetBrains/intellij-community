@@ -4,18 +4,19 @@ package com.intellij.ide.bookmark.ui
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.bookmark.*
-import com.intellij.ide.bookmark.ui.tree.BookmarkNode
 import com.intellij.ide.bookmark.ui.tree.BookmarksTreeStructure
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
 import com.intellij.openapi.application.ModalityState.stateForComponent
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OPEN_IN_PREVIEW_TAB
+import com.intellij.openapi.project.LightEditActionFactory
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import com.intellij.ui.OnePixelSplitter
@@ -59,14 +60,11 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   private val leadSelectionNode
     get() = TreeUtil.getAbstractTreeNode(tree.leadSelectionPath)
 
-  private val selectedOccurrence
-    get() = (selectedNode as? BookmarkNode)?.bookmarkOccurrence
-
   private val previousOccurrence
-    get() = selectedOccurrence?.previous { it.bookmark is LineBookmark }
+    get() = selectedNode?.bookmarkOccurrence?.previous { it.bookmark is LineBookmark }
 
   private val nextOccurrence
-    get() = selectedOccurrence?.next { it.bookmark is LineBookmark }
+    get() = selectedNode?.bookmarkOccurrence?.next { it.bookmark is LineBookmark }
 
 
   override fun dispose() = preview.close()
@@ -162,6 +160,13 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     }
   }
 
+  /**
+   * Creates an action that navigates to a bookmark by a digit or a letter.
+   */
+  private fun registerActionFor(type: BookmarkType) = LightEditActionFactory
+    .create { BookmarksManager.getInstance(project)?.getBookmark(type)?.run { if (canNavigate()) navigate(true) } }
+    .registerCustomShortcutSet(CustomShortcutSet.fromString(type.mnemonic.toString()), this, this)
+
   init {
     panel.addToCenter(createScrollPane(tree, true))
     panel.putClientProperty(OPEN_IN_PREVIEW_TAB, true)
@@ -170,7 +175,11 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
     tree.isRootVisible = false
     tree.showsRootHandles = true // TODO: fix auto-expand
-    if (!isPopup) {
+    if (isPopup) {
+      BookmarkType.values().forEach { if (it != BookmarkType.DEFAULT) registerActionFor(it) }
+    }
+    else {
+      TreeSpeedSearch(tree)
       val handler = DragAndDropHandler(this)
       DnDSupport.createBuilder(tree)
         .setDisposableParent(this)
@@ -184,7 +193,6 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     tree.addTreeSelectionListener(RestoreSelectionListener())
     tree.addTreeSelectionListener { selectionAlarm.cancelAndRequest() }
 
-    TreeSpeedSearch(tree)
     TreeUtil.promiseSelectFirstLeaf(tree)
     EditSourceOnEnterKeyHandler.install(tree)
     EditSourceOnDoubleClickHandler.install(tree)

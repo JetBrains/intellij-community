@@ -238,7 +238,7 @@ public class CreateFieldFromParameterDialog extends DialogWrapper {
       myNameField.requestFocusInWindow();
     }
     else {
-      ((JComboBox)myNameField).getEditor().getEditorComponent().requestFocusInWindow();
+      ((JComboBox<?>)myNameField).getEditor().getEditorComponent().requestFocusInWindow();
     }
   }
 

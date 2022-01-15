@@ -674,8 +674,12 @@ public class SwitchBlockHighlightingModel {
           }
         }
       }
-      alreadyDominatedLabels.forEach((overWhom, who) -> results.add(
-        createError(overWhom, JavaErrorBundle.message("switch.dominance.of.preceding.label", who.getText()))));
+      alreadyDominatedLabels.forEach((overWhom, who) -> {
+        HighlightInfo info = createError(overWhom, JavaErrorBundle.message("switch.dominance.of.preceding.label", who.getText()));
+        QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteSwitchLabelFix(overWhom));
+        results.add(
+          info);
+      });
     }
 
     /**
@@ -762,16 +766,7 @@ public class SwitchBlockHighlightingModel {
         while (!nonVisited.isEmpty()) {
           PsiClass psiClass = nonVisited.peek();
           if (psiClass.hasModifierProperty(SEALED) && psiClass.hasModifierProperty(ABSTRACT)) {
-            PsiReferenceList permitsList = psiClass.getPermitsList();
-            Collection<PsiClass> permittedClasses;
-            if (permitsList == null) {
-              GlobalSearchScope fileScope = GlobalSearchScope.fileScope(psiClass.getContainingFile());
-              permittedClasses = new ArrayList<>(DirectClassInheritorsSearch.search(psiClass, fileScope).findAll());
-            }
-            else {
-              permittedClasses = ContainerUtil.map(permitsList.getReferencedTypes(), type -> type.resolve());
-            }
-            for (PsiClass permittedClass : permittedClasses) {
+            for (PsiClass permittedClass : getPermittedClasses(psiClass)) {
               if (!visited.add(permittedClass)) continue;
               PsiPattern pattern = patternClasses.get(permittedClass);
               if (pattern == null || !JavaPsiPatternUtil.isTotalForType(pattern, TypeUtils.getType(permittedClass))) {
@@ -796,6 +791,16 @@ public class SwitchBlockHighlightingModel {
         QuickFixAction.registerQuickFixAction(info, fix);
       }
       results.add(info);
+    }
+
+    @NotNull
+    private static Collection<PsiClass> getPermittedClasses(@NotNull PsiClass psiClass) {
+      PsiReferenceList permitsList = psiClass.getPermitsList();
+      if (permitsList == null) {
+        GlobalSearchScope fileScope = GlobalSearchScope.fileScope(psiClass.getContainingFile());
+        return new ArrayList<>(DirectClassInheritorsSearch.search(psiClass, fileScope).findAll());
+      }
+      return ContainerUtil.map(permitsList.getReferencedTypes(), type -> type.resolve());
     }
 
     @Nullable

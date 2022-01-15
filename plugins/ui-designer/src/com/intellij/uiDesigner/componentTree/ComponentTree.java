@@ -311,9 +311,9 @@ public final class ComponentTree extends Tree implements DataProvider {
     for (TreePath path : paths) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       Object userObject = node.getUserObject();
-      if (userObject instanceof NodeDescriptor && elementClass.isInstance(((NodeDescriptor) userObject).getElement())) {
+      if (userObject instanceof NodeDescriptor && elementClass.isInstance(((NodeDescriptor<?>) userObject).getElement())) {
         //noinspection unchecked
-        result.add((T)((NodeDescriptor) node.getUserObject()).getElement());
+        result.add((T)((NodeDescriptor<?>) node.getUserObject()).getElement());
       }
     }
     return result;

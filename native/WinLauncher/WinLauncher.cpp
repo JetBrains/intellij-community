@@ -921,7 +921,7 @@ int CheckSingleInstance()
     // It is theoretically possible for this code to spin forever in a loop.
     //
     // There's a race condition when the process we talked to in SendCommandLineToFirstInstance was terminated, another
-    // one started, took over the file mapping, but have no idea about our command (because we only send it once).
+    // one started, took over the file mapping, but has no idea about our command (because we only send it once).
     //
     // For now, this problem is unresolved, though it should very rarely happen in practice.
     const DWORD waitTimeoutMs = 1000;

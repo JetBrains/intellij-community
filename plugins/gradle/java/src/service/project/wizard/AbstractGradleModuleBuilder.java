@@ -54,9 +54,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle;
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder;
-import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder;
-import org.jetbrains.plugins.gradle.frameworkSupport.script.KotlinScriptBuilder;
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptBuilder;
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GroovyDslGradleBuildScriptBuilder;
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.KotlinDslGradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionUtil;
 import org.jetbrains.plugins.gradle.service.project.open.GradleProjectImportUtil;
@@ -73,10 +73,8 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.MODAL_SYNC;
 import static com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl.setupCreatedProject;
@@ -115,6 +113,10 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   private boolean isCreatingNewProject;
   private boolean isCreatingNewLinkedProject;
   private GradleVersion gradleVersion;
+
+  private VirtualFile buildScriptFile;
+  private GradleBuildScriptBuilder<?> buildScriptBuilder;
+  private final List<Consumer<GradleBuildScriptBuilder<?>>> buildScriptConfigurators = new ArrayList<>();
 
   public AbstractGradleModuleBuilder() {
     super(GradleConstants.SYSTEM_ID, new GradleProjectSettings());
@@ -160,7 +162,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       rootProjectPath = isCreatingNewProject ? Paths.get(Objects.requireNonNull(project.getBasePath())) : modelContentRootDir.toNioPath();
     }
 
-    final VirtualFile gradleBuildFile = setupGradleBuildFile(modelContentRootDir);
+    buildScriptFile = setupGradleBuildFile(modelContentRootDir);
     setupGradleSettingsFile(
       rootProjectPath, modelContentRootDir, project.getName(),
       myProjectId == null ? module.getName() : myProjectId.getArtifactId(),
@@ -169,9 +171,13 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       myUseKotlinDSL
     );
 
-    ScriptBuilder scriptBuilder = myUseKotlinDSL ? new KotlinScriptBuilder() : new GroovyScriptBuilder();
-    BuildScriptDataBuilder builder = new BuildScriptDataBuilder(gradleBuildFile, scriptBuilder, gradleVersion);
-    modifiableRootModel.getModule().putUserData(BUILD_SCRIPT_DATA, builder);
+    buildScriptBuilder = myUseKotlinDSL
+                         ? new KotlinDslGradleBuildScriptBuilder(gradleVersion)
+                         : GroovyDslGradleBuildScriptBuilder.create(gradleVersion);
+    buildScriptConfigurators.forEach(it -> it.accept(buildScriptBuilder));
+
+    var scriptDataBuilder = new BuildScriptDataBuilder(buildScriptFile, buildScriptBuilder);
+    modifiableRootModel.getModule().putUserData(BUILD_SCRIPT_DATA, scriptDataBuilder);
   }
 
   @Override
@@ -179,7 +185,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     super.setupModule(module);
     assert rootProjectPath != null;
 
-    VirtualFile buildScriptFile = createAndConfigureBuildScriptFile(module);
+    VirtualFile buildScriptFile = createAndConfigureBuildScriptFile();
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -252,16 +258,18 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     GradleExecutionUtil.ensureInstalledWrapper(project, rootProjectPath, gradleVersion, callback);
   }
 
-  @Nullable
-  private static VirtualFile createAndConfigureBuildScriptFile(@NotNull Module module) {
-    final BuildScriptDataBuilder buildScriptDataBuilder = getBuildScriptData(module);
-    if (buildScriptDataBuilder == null) return null;
+  public void configureBuildScript(@NotNull Consumer<GradleBuildScriptBuilder<?>> configure) {
+    buildScriptConfigurators.add(configure);
+  }
+
+  private @Nullable VirtualFile createAndConfigureBuildScriptFile() {
     try {
-      VirtualFile buildScriptFile = buildScriptDataBuilder.getBuildScriptFile();
-      buildScriptDataBuilder.addPrefix(StringUtil.trimTrailing(VfsUtilCore.loadText(buildScriptFile)));
-      String content = StringUtil.convertLineSeparators(buildScriptDataBuilder.generate(), lineSeparator(buildScriptFile));
-      VfsUtil.saveText(buildScriptFile, content);
-      return buildScriptFile;
+      if (buildScriptFile != null && buildScriptBuilder != null) {
+        buildScriptBuilder.addPrefix(StringUtil.trimTrailing(VfsUtilCore.loadText(buildScriptFile)));
+        String content = StringUtil.convertLineSeparators(buildScriptBuilder.generate(), lineSeparator(buildScriptFile));
+        VfsUtil.saveText(buildScriptFile, content);
+        return buildScriptFile;
+      }
     }
     catch (IOException e) {
       LOG.warn("Unexpected exception on applying frameworks templates", e);

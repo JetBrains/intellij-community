@@ -249,7 +249,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
       return;
     }
 
-    DumbService.getInstance(project).queueTask(new MyDumbModeTask(project, sdks));
+    new MyDumbModeTask(project, sdks).queue(project);
   }
 
   private List<Runnable> getRootUpdateTasks(@NotNull Project project, @NotNull Set<Sdk> sdks) {

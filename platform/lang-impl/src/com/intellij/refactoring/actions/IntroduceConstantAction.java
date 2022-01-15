@@ -21,6 +21,9 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import org.jetbrains.annotations.NotNull;
 
 public class IntroduceConstantAction extends IntroduceActionBase {
+  public IntroduceConstantAction() {
+    super();
+  }
   @Override
   protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider) {
     return provider.getIntroduceConstantHandler();

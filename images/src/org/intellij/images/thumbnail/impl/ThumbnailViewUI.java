@@ -313,7 +313,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     }
 
     public boolean isSelected(VirtualFile file) {
-        int index = ((DefaultListModel) list.getModel()).indexOf(file);
+        int index = ((DefaultListModel<?>) list.getModel()).indexOf(file);
         return index != -1 && list.isSelectedIndex(index);
     }
 
@@ -641,7 +641,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         public void contentsChanged(@NotNull VirtualFileEvent event) {
             VirtualFile file = event.getFile();
             if (list != null) {
-                int index = ((DefaultListModel) list.getModel()).indexOf(file);
+                int index = ((DefaultListModel<?>) list.getModel()).indexOf(file);
                 if (index != -1) {
                     Rectangle cellBounds = list.getCellBounds(index, index);
                     list.repaint(cellBounds);
@@ -657,7 +657,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                 refresh();
             }
             if (list != null) {
-                ((DefaultListModel) list.getModel()).removeElement(file);
+                ((DefaultListModel<?>) list.getModel()).removeElement(file);
             }
         }
 

@@ -2,21 +2,30 @@
 package com.intellij.ide.actions.searcheverywhere.ml.model
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService
 import com.intellij.internal.ml.DecisionFunction
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
+import com.intellij.openapi.extensions.ExtensionPointName
 
 /**
  * Provides model to predict relevance of each element in Search Everywhere tab
  */
-@ApiStatus.Internal
-interface SearchEverywhereMLRankingModelProvider {
-  val model: DecisionFunction
+internal abstract class SearchEverywhereMLRankingModelProvider {
+  companion object {
+    private val EP_NAME: ExtensionPointName<SearchEverywhereMLRankingModelProvider>
+      = ExtensionPointName.create("com.intellij.searcheverywhere.ml.rankingModelProvider")
 
-  val displayNameInSettings: @Nls(capitalization = Nls.Capitalization.Title) String
+    fun getForTab(contributorId: String): SearchEverywhereMLRankingModelProvider {
+      return EP_NAME.findFirstSafe {
+        it.supportedContributor.simpleName == contributorId
+      } ?: throw IllegalArgumentException("Unsupported contributor $contributorId")
+    }
+  }
 
-  val isEnabledByDefault: Boolean
-    get() = false
+  abstract val model: DecisionFunction
 
-  fun isContributorSupported(contributor: SearchEverywhereContributor<*>): Boolean
+  protected abstract val supportedContributor: Class<out SearchEverywhereContributor<*>>
+
+  protected fun shouldProvideExperimentalModel(): Boolean {
+    return SearchEverywhereMlSessionService.getService().shouldUseExperimentalModel(supportedContributor.simpleName)
+  }
 }

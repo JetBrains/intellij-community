@@ -459,10 +459,10 @@ public class PyEvaluator {
       return !((String)result).isEmpty();
     }
     else if (result instanceof Collection) {
-      return !((Collection)result).isEmpty();
+      return !((Collection<?>)result).isEmpty();
     }
     else if (result instanceof Map) {
-      return !((Map)result).isEmpty();
+      return !((Map<?, ?>)result).isEmpty();
     }
 
     return null;

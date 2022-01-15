@@ -1,10 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Generator: Adobe Illustrator 24.1.2, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<svg version="1.2" baseProfile="tiny" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-	 x="0px" y="0px" viewBox="0 0 16 16" overflow="visible" xml:space="preserve">
-<g>
-	<path fill-rule="evenodd" fill="#9AA7B0" fill-opacity="0.8" d="M14,8h-1V4H2v9h6v1H1V1h13V8z M3,5h9v1H3V5z M3,7h9v1H3V7z M3,9h5
-		v1H3V9z M3,11h5v1H3V11z"/>
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="kotlin_launch_configuration">
+<path id="Combined Shape" fill-rule="evenodd" clip-rule="evenodd" d="M1 1H14V8H13V4H2V13H8V14H1V1ZM8 12V11H3V12H8ZM8 10V9H3V10H8ZM8 8H12V7H3V8H8ZM12 5H3V6H12V5Z" fill="#9AA7B0" fill-opacity="0.8"/>
+<path id="Vector" d="M16 16H9V9H16L12.5 12.5L16 16Z" fill="#B99BF8"/>
 </g>
-<polygon fill="#7F52FF" points="16,16 9,16 9,9 16,9 12.5,12.5 "/>
 </svg>

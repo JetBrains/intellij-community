@@ -240,8 +240,6 @@ class ModuleGroupPathEntity(
 }
 
 data class ModuleId(val name: String) : PersistentEntityId<ModuleEntity>() {
-  override val parentId: PersistentEntityId<*>?
-    get() = null
   override val presentableName: String
     get() = name
 
@@ -636,8 +634,6 @@ class LibraryEntity(
 }
 
 data class LibraryId(val name: String, val tableId: LibraryTableId) : PersistentEntityId<LibraryEntity>() {
-  override val parentId: PersistentEntityId<*>?
-    get() = null
   override val presentableName: String
     get() = name
 
@@ -835,7 +831,7 @@ class FacetEntity(
   override fun persistentId(): FacetId = FacetId(name, facetType, moduleId)
 }
 
-data class FacetId(val name: String, val type: String, override val parentId: ModuleId) : PersistentEntityId<FacetEntity>() {
+data class FacetId(val name: String, val type: String, val parentId: ModuleId) : PersistentEntityId<FacetEntity>() {
   override val presentableName: String
     get() = name
 }
@@ -848,8 +844,6 @@ val ModuleEntity.facets: Sequence<FacetEntity>
 
 
 data class ArtifactId(val name: String) : PersistentEntityId<ArtifactEntity>() {
-  override val parentId: PersistentEntityId<*>?
-    get() = null
   override val presentableName: String
     get() = name
 }

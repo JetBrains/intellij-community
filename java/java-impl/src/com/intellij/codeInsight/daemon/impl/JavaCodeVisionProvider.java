@@ -32,9 +32,19 @@ import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
+import static com.intellij.codeInsight.daemon.impl.JavaCodeVisionUsageCollector.CLASS_LOCATION;
+import static com.intellij.codeInsight.daemon.impl.JavaCodeVisionUsageCollector.METHOD_LOCATION;
+import static com.intellij.codeInsight.hints.InlayHintsProviderKt.CODE_VISION_GROUP;
+
 public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVisionSettings> {
   private static final String CODE_LENS_ID = "JavaLens";
   private static final SettingsKey<JavaCodeVisionSettings> KEY = new SettingsKey<>(CODE_LENS_ID);
+
+  @NotNull
+  @Override
+  public String getGroupId() {
+    return CODE_VISION_GROUP;
+  }
 
   interface InlResult {
     void onClick(@NotNull Editor editor, @NotNull PsiElement element, @NotNull MouseEvent event);
@@ -87,7 +97,7 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
                 @Override
                 public void onClick(@NotNull Editor editor, @NotNull PsiElement element, @NotNull MouseEvent event) {
                   GutterIconNavigationHandler<PsiElement> navigationHandler = MarkerType.SUBCLASSED_CLASS.getNavigationHandler();
-                  JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(element.getProject(), "class");
+                  JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(element.getProject(), CLASS_LOCATION);
                   navigationHandler.navigate(event, ((PsiClass)element).getNameIdentifier());
                 }
 
@@ -108,7 +118,7 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
               hints.add(new InlResult() {
                 @Override
                 public void onClick(@NotNull Editor editor, @NotNull PsiElement element, @NotNull MouseEvent event) {
-                  JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(element.getProject(), "method");
+                  JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(element.getProject(), METHOD_LOCATION);
                   GutterIconNavigationHandler<PsiElement> navigationHandler = MarkerType.OVERRIDDEN_METHOD.getNavigationHandler();
                   navigationHandler.navigate(event, ((PsiMethod)element).getNameIdentifier());
                 }
@@ -244,5 +254,12 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
   @Override
   public boolean isVisibleInSettings() {
     return true;
+  }
+
+  @Nls
+  @Nullable
+  @Override
+  public String getProperty(@NotNull String key) {
+    return JavaBundle.message(key);
   }
 }

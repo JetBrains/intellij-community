@@ -207,7 +207,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   @Nullable
   private PsiElement getPsiElement() {
     if (myDomElement instanceof DomFileElement) {
-      return ((DomFileElement)myDomElement).getFile();
+      return ((DomFileElement<?>)myDomElement).getFile();
     }
 
     if (myDomElement instanceof GenericAttributeValue) {

@@ -75,7 +75,7 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure{
   boolean isAutoExpandNode(NodeDescriptor descriptor){
     Object element=descriptor.getElement();
     if (element instanceof AbstractTreeNode) {
-      element = ((AbstractTreeNode)element).getValue();
+      element = ((AbstractTreeNode<?>)element).getValue();
     }
     if(element==myFile){
       return true;

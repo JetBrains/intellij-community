@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -140,11 +139,6 @@ public class HgVcs extends AbstractVcs {
   @Override
   public String getShortNameWithMnemonic() {
     return HgBundle.message("hg4idea.vcs.short.name.with.mnemonic");
-  }
-
-  @Override
-  public Configurable getConfigurable() {
-    return null;
   }
 
   @NotNull

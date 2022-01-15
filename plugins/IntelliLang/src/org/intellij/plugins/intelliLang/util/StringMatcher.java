@@ -288,6 +288,6 @@ public abstract class StringMatcher<T> {
   public boolean equals(Object obj) {
     if (obj == null) return false;
     if (obj.getClass() != getClass()) return false;
-    return ((StringMatcher)obj).myTarget.equals(myTarget);
+    return ((StringMatcher<?>)obj).myTarget.equals(myTarget);
   }
 }

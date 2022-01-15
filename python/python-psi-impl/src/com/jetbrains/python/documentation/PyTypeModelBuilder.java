@@ -263,8 +263,8 @@ public class PyTypeModelBuilder {
         result = NamedType.nameOrAny(type);
       }
     }
-    else if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
-      final PyInstantiableType instanceType = ((PyInstantiableType)type).toInstance();
+    else if (type instanceof PyInstantiableType && ((PyInstantiableType<?>)type).isDefinition()) {
+      final PyInstantiableType instanceType = ((PyInstantiableType<?>)type).toInstance();
       // Special case: render Type[type] as just type
       if (type instanceof PyClassType && instanceType.equals(PyBuiltinCache.getInstance(((PyClassType)type).getPyClass()).getTypeType())) {
         result = NamedType.nameOrAny(type);

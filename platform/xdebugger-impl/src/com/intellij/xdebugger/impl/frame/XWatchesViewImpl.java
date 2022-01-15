@@ -12,7 +12,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.ComboBox;
@@ -39,6 +41,7 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.evaluate.DebuggerEvaluationStatisticsCollector;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
 import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.InlineWatchNode;
@@ -60,10 +63,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.*;
 
 public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget, XWatchesView, XInlineWatchesView {
   protected WatchesRootNode myRootNode;
@@ -154,6 +155,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
                 public void actionPerformed(@NotNull AnActionEvent e) {
                   myEvaluateComboBox.saveTextInHistory();
                   addWatchExpression(getExpression(), -1, false);
+                  DebuggerEvaluationStatisticsCollector.WATCH_FROM_INLINE_ADD.log(e);
                 }
 
                 @Override
@@ -176,6 +178,23 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
           protected void prepareEditor(EditorEx editor) {
             super.prepareEditor(editor);
             editor.setPlaceholder(XDebuggerBundle.message("debugger.evaluate.expression.or.add.a.watch.hint"));
+            editor.addFocusListener(new FocusChangeListener() {
+              private final Set<FocusEvent.Cause> myCauses = Set.of(
+                FocusEvent.Cause.UNKNOWN,
+                FocusEvent.Cause.TRAVERSAL_FORWARD,
+                FocusEvent.Cause.TRAVERSAL_BACKWARD
+              );
+
+              @Override
+              public void focusGained(@NotNull Editor editor, @NotNull FocusEvent event) {
+                if (myCauses.contains(event.getCause())) {
+                  boolean shouldBeIgnored = myEvaluateComboBox.getComboBox().isPopupVisible();
+                  if (!shouldBeIgnored) {
+                    DebuggerEvaluationStatisticsCollector.INPUT_FOCUS.log(getTree().getProject());
+                  }
+                }
+              }
+            });
           }
         };
       final JComponent editorComponent = myEvaluateComboBox.getEditorComponent();
@@ -195,9 +214,20 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
         }
       });
       myEvaluateComboBox.getComboBox().addPopupMenuListener(new PopupMenuListenerAdapter() {
+        private int selectedIndexOnPopupOpen = -1;
+
         @Override
         public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+          selectedIndexOnPopupOpen = myEvaluateComboBox.getComboBox().getSelectedIndex();
           myEvaluateComboBox.requestFocusInEditor();
+          DebuggerEvaluationStatisticsCollector.HISTORY_SHOW.log(getTree().getProject());
+        }
+
+        @Override
+        public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+          if (myEvaluateComboBox.getComboBox().getSelectedIndex() != selectedIndexOnPopupOpen) {
+            DebuggerEvaluationStatisticsCollector.HISTORY_CHOOSE.log(getTree().getProject());
+          }
         }
       });
       addToWatchesActionRef.get()
@@ -216,6 +246,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       myEvaluateComboBox.saveTextInHistory();
       XDebugSession session = getSession(getTree());
       myRootNode.addResultNode(session != null ? session.getCurrentStackFrame() : null, expression);
+      DebuggerEvaluationStatisticsCollector.INLINE_EVALUATE.log(getTree().getProject());
     }
   }
 

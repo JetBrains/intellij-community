@@ -3,9 +3,11 @@ package com.intellij.codeInsight.intention.impl.preview
 
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
+import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings
 import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.fragments.LineFragment
@@ -21,13 +23,38 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
+import java.io.IOException
 import java.util.concurrent.Callable
 
 internal class IntentionPreviewComputable(private val project: Project,
                                           private val action: IntentionAction,
                                           private val originalFile: PsiFile,
-                                          private val originalEditor: Editor) : Callable<IntentionPreviewResult?> {
-  override fun call(): IntentionPreviewResult? {
+                                          private val originalEditor: Editor) : Callable<IntentionPreviewContent> {
+  override fun call(): IntentionPreviewContent {
+    val diffContent = tryCreateDiffContent()
+    if (diffContent != null) {
+      return diffContent
+    }
+    val descriptionContent = tryCreateDescriptionContent()
+    if (descriptionContent != null) {
+      return descriptionContent
+    }
+    return IntentionPreviewEmptyResult
+  }
+
+  private fun tryCreateDescriptionContent(): IntentionPreviewHtmlResult? {
+    val originalAction = IntentionActionDelegate.unwrap(action)
+    val actionMetaData = IntentionManagerSettings.getInstance().metaData.singleOrNull {
+      md -> IntentionActionDelegate.unwrap(md.action) === originalAction
+    } ?: return null
+    return try {
+      IntentionPreviewHtmlResult(actionMetaData.description.text.replace(Regex("<!--.+-->"), ""))
+    } catch(ex: IOException) {
+      null
+    }
+  }
+
+  private fun tryCreateDiffContent(): IntentionPreviewDiffResult? {
     try {
       return generatePreview()
     }
@@ -43,7 +70,7 @@ internal class IntentionPreviewComputable(private val project: Project,
     }
   }
 
-  fun generatePreview(): IntentionPreviewResult? {
+  fun generatePreview(): IntentionPreviewDiffResult? {
     val origPair = ShowIntentionActionsHandler.chooseFileForAction(originalFile, originalEditor, action) ?: return null
     val origFile: PsiFile
     val caretOffset: Int
@@ -59,20 +86,26 @@ internal class IntentionPreviewComputable(private val project: Project,
     val psiFileCopy = origFile.copy() as PsiFile
     ProgressManager.checkCanceled()
     val editorCopy = IntentionPreviewEditor(psiFileCopy, caretOffset)
-    val action = findCopyIntention(project, editorCopy, psiFileCopy, action) ?: return null
 
     val writable = originalEditor.document.isWritable
     try {
       originalEditor.document.setReadOnly(true)
       ProgressManager.checkCanceled()
-      action.invoke(project, editorCopy, psiFileCopy)
+      if (!action.invokeForPreview(project, editorCopy, psiFileCopy)) {
+        if (!action.startInWriteAction() || action.getElementToMakeWritable(originalFile)?.containingFile !== originalFile) {
+          return null
+        }
+        val action = findCopyIntention(project, editorCopy, psiFileCopy, action) ?: return null
+        LOG.error("Intention preview fallback is used for action " + action::class.java + "|" + action.familyName)
+        action.invoke(project, editorCopy, psiFileCopy)
+      }
       ProgressManager.checkCanceled()
     }
     finally {
       originalEditor.document.setReadOnly(!writable)
     }
 
-    return IntentionPreviewResult(
+    return IntentionPreviewDiffResult(
       psiFileCopy,
       origFile,
       ComparisonManager.getInstance().compareLines(origFile.text, editorCopy.document.text, ComparisonPolicy.TRIM_WHITESPACES,
@@ -103,7 +136,7 @@ internal class IntentionPreviewComputable(private val project: Project,
   companion object {
     private val LOG = Logger.getInstance(IntentionPreviewComputable::class.java)
 
-    fun getFixes(cachedIntentions: CachedIntentions): Sequence<IntentionActionWithTextCaching> =
+    private fun getFixes(cachedIntentions: CachedIntentions): Sequence<IntentionActionWithTextCaching> =
       sequenceOf<IntentionActionWithTextCaching>()
         .plus(cachedIntentions.intentions)
         .plus(cachedIntentions.inspectionFixes)
@@ -113,8 +146,6 @@ internal class IntentionPreviewComputable(private val project: Project,
                                   editorCopy: Editor,
                                   psiFileCopy: PsiFile,
                                   originalAction: IntentionAction): IntentionAction? {
-      val transferred = originalAction.getFileModifierForPreview(psiFileCopy) as? IntentionAction
-      if (transferred != null) return transferred
       val actionsToShow = ShowIntentionsPass.getActionsToShow(editorCopy, psiFileCopy, false)
       val cachedIntentions = CachedIntentions.createAndUpdateActions(project, psiFileCopy, editorCopy, actionsToShow)
 
@@ -123,4 +154,8 @@ internal class IntentionPreviewComputable(private val project: Project,
   }
 }
 
-internal data class IntentionPreviewResult(val psiFile: PsiFile, val origFile: PsiFile, val lineFragments: List<LineFragment>)
+internal sealed interface IntentionPreviewContent
+
+internal data class IntentionPreviewDiffResult(val psiFile: PsiFile, val origFile: PsiFile, val lineFragments: List<LineFragment>): IntentionPreviewContent
+internal data class IntentionPreviewHtmlResult(val html: String): IntentionPreviewContent
+internal object IntentionPreviewEmptyResult : IntentionPreviewContent

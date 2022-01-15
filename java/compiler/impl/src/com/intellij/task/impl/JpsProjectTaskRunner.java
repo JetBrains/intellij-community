@@ -22,6 +22,7 @@ import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.packaging.impl.compiler.ArtifactsCompiler;
 import com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings;
 import com.intellij.task.*;
+import com.intellij.tracing.Tracer;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,6 +52,7 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
                   @NotNull ProjectTaskContext context,
                   @Nullable ProjectTaskNotification callback,
                   @NotNull Collection<? extends ProjectTask> tasks) {
+    Tracer.Span jpsRunnerStart = Tracer.start("jps runner");
     context.putUserData(JPS_BUILD_DATA_KEY, new MyJpsBuildData());
     SimpleMessageBusConnection fileGeneratedTopicConnection;
     if (context.isCollectionOfGeneratedFilesEnabled()) {
@@ -79,12 +81,13 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
         runArtifactsBuildTasks(project, context, notificationCollector, taskMap);
       }
     });
+    jpsRunnerStart.complete();
   }
 
   @Override
   public boolean canRun(@NotNull ProjectTask projectTask) {
     return projectTask instanceof ModuleBuildTask || projectTask instanceof EmptyCompileScopeBuildTask ||
-           (projectTask instanceof ProjectModelBuildTask && ((ProjectModelBuildTask)projectTask).getBuildableElement() instanceof Artifact);
+           (projectTask instanceof ProjectModelBuildTask && ((ProjectModelBuildTask<?>)projectTask).getBuildableElement() instanceof Artifact);
   }
 
   @Override
@@ -376,6 +379,7 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
 
     private final MyNotificationCollector myCollector;
     private final AtomicBoolean finished = new AtomicBoolean();
+    private final Tracer.Span mySpan = Tracer.start("jps task"); // which?
 
     private MyCompileStatusNotification(@NotNull MyNotificationCollector collector) {
       myCollector = collector;
@@ -386,6 +390,7 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
     public void finished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
       if (finished.compareAndSet(false, true)) {
         myCollector.appendJpsBuildResult(aborted, errors, warnings, compileContext, this);
+        mySpan.complete();
       } else {
         // can be invoked by CompileDriver for rerun action
         LOG.debug("Multiple invocation of the same CompileStatusNotification.");

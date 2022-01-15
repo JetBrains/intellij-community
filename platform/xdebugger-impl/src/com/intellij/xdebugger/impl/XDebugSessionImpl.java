@@ -467,7 +467,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   public boolean isBreakpointActive(@NotNull XBreakpoint<?> b) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    return !areBreakpointsMuted() && b.isEnabled() && !isInactiveSlaveBreakpoint(b) && !((XBreakpointBase)b).isDisposed();
+    return !areBreakpointsMuted() && b.isEnabled() && !isInactiveSlaveBreakpoint(b) && !((XBreakpointBase<?, ?, ?>)b).isDisposed();
   }
 
   @Override
@@ -789,7 +789,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
     positionReachedInternal(suspendContext, true);
 
-    if (doProcessing && breakpoint instanceof XLineBreakpoint<?> && ((XLineBreakpoint)breakpoint).isTemporary()) {
+    if (doProcessing && breakpoint instanceof XLineBreakpoint<?> && ((XLineBreakpoint<?>)breakpoint).isTemporary()) {
       handleTemporaryBreakpointHit(breakpoint);
     }
     return true;

@@ -12,7 +12,7 @@ import com.intellij.openapi.util.NlsContexts
  *
  * @see NewProjectWizardStep
  */
-interface NewProjectWizardMultiStepFactory<P : NewProjectWizardStep> : NewProjectWizardChildStep.Factory<P> {
+interface NewProjectWizardMultiStepFactory<P : NewProjectWizardStep> {
   /**
    * Name of step and label that should be used in multistep switcher.
    */
@@ -25,4 +25,10 @@ interface NewProjectWizardMultiStepFactory<P : NewProjectWizardStep> : NewProjec
    * Use [WizardContext.isCreatingNewProject] to filter factory if that cannot create new module.
    */
   fun isEnabled(context: WizardContext): Boolean = true
+
+  /**
+   * Creates new project wizard step with parent step.
+   * Parent is needed to transfer data from parents into children steps.
+   */
+  fun createStep(parent: P): NewProjectWizardStep
 }

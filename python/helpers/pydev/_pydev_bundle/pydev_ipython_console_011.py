@@ -357,20 +357,27 @@ class _PyDevIPythonFrontEnd:
 
             if self.is_complete(buf):
                 self._curr_exec_line += 1
-                self.ipython.run_cell(buf)
+                res = self.ipython.run_cell(buf)
                 del self._curr_exec_lines[:]
-                return False #execute complete (no more)
+                if res.error_in_exec is not None:
+                    return False, True
+                else:
+                    return False, False #execute complete (no more)
 
-            return True #needs more
+            return True, False #needs more
         else:
 
             if not self.is_complete(line):
                 #Did not execute
                 self._curr_exec_lines.append(line)
-                return True #needs more
+                return True, False #needs more
             else:
                 self._curr_exec_line += 1
-                self.ipython.run_cell(line, store_history=True)
+                res = self.ipython.run_cell(line, store_history=True)
+                if res.error_in_exec is not None:
+                    return False, True
+                else:
+                    return False, False #execute complete (no more)
                 #hist = self.ipython.history_manager.output_hist_reprs
                 #rep = hist.get(self._curr_exec_line, None)
                 #if rep is not None:

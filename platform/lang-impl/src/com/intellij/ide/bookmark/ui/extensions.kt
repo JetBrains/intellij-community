@@ -2,7 +2,9 @@
 package com.intellij.ide.bookmark.ui
 
 import com.intellij.ide.bookmark.BookmarkBundle
+import com.intellij.ide.bookmark.BookmarkOccurrence
 import com.intellij.ide.bookmark.BookmarksListProvider
+import com.intellij.ide.bookmark.ui.tree.BookmarkNode
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -11,6 +13,9 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.StatusText
 import java.awt.Component
+
+internal val AbstractTreeNode<*>.bookmarkOccurrence
+  get() = (this as? BookmarkNode<*>)?.run { bookmarkGroup?.let { BookmarkOccurrence(it, value) } }
 
 internal val AbstractTreeNode<*>.asDescriptor: OpenFileDescriptor?
   get() {

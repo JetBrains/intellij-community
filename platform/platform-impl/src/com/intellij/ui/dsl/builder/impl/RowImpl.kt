@@ -54,15 +54,18 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   var topGap: TopGap? = null
     private set
 
-  var internalTopGap: Int = 0
+  /**
+   * Used if topGap is not set, skipped for first row
+   */
+  var internalTopGap = 0
 
   var bottomGap: BottomGap? = null
     private set
 
-  var internalBottomGap: Int = 0
-
-  var customRowGaps: VerticalGaps? = null
-    private set
+  /**
+   * Used if bottomGap is not set, skipped for last row
+   */
+  var internalBottomGap = 0
 
   val cells = mutableListOf<CellBaseImpl<*>?>()
 
@@ -91,11 +94,6 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   override fun <T : JComponent> cell(component: T, viewComponent: JComponent): CellImpl<T> {
     val result = CellImpl(dialogPanelConfig, component, this, viewComponent)
     cells.add(result)
-
-    if (component is JRadioButton) {
-      dialogPanelConfig.context.getButtonGroup()?.add(component)
-    }
-
     return result
   }
 
@@ -179,19 +177,30 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun radioButton(text: String): Cell<JBRadioButton> {
-    return cell(JBRadioButton(text))
+    val group = dialogPanelConfig.context.getButtonGroup() ?: throw UiDslException(
+      "Button group must be defined before using radio button")
+    if (group is BindButtonGroup<*>) {
+      throw UiDslException("Parent button group provides binding but value for radioButton is not provided")
+    }
+    val result = cell(JBRadioButton(text))
+    group.add(result.component)
+    return result
   }
 
   override fun radioButton(text: String, value: Any): Cell<JBRadioButton> {
     val group = dialogPanelConfig.context.getButtonGroup() ?: throw UiDslException(
       "Button group must be defined before using radio button with value")
+    if (group !is BindButtonGroup<*>) {
+      throw UiDslException("Parent button group doesn't provide binding for $value")
+    }
     if (value::class.java != group.type) {
       throw UiDslException("Value $value is incompatible with button group binding class ${group.type.simpleName}")
     }
     val binding = group.binding
-    val result = radioButton(text)
-    result.component.isSelected = binding.get() == value
+    val result = cell(JBRadioButton(text))
     val component = result.component
+    group.add(component)
+    component.isSelected = binding.get() == value
     result.onApply { if (component.isSelected) group.set(value) }
     result.onReset { component.isSelected = binding.get() == value }
     result.onIsModified { component.isSelected != (binding.get() == value) }
@@ -297,19 +306,22 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun textField(): CellImpl<JBTextField> {
-    return cell(JBTextField())
+    val result = cell(JBTextField())
+    result.columns(COLUMNS_SHORT)
+    return result
   }
 
   override fun textFieldWithBrowseButton(browseDialogTitle: String?,
                                          project: Project?,
                                          fileChooserDescriptor: FileChooserDescriptor,
                                          fileChosen: ((chosenFile: VirtualFile) -> String)?): Cell<TextFieldWithBrowseButton> {
-    val result = textFieldWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, fileChosen)
-    return cell(result)
+    val result = cell(textFieldWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, fileChosen))
+    result.columns(COLUMNS_SHORT)
+    return result
   }
 
   override fun intTextField(range: IntRange?, keyboardStep: Int?): CellImpl<JBTextField> {
-    val result = textField()
+    val result = cell(JBTextField())
       .validationOnInput {
         val value = it.text.toIntOrNull()
         when {
@@ -318,6 +330,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
           else -> null
         }
       }
+    result.columns(COLUMNS_TINY)
     result.component.putClientProperty(DSL_INT_TEXT_RANGE_PROPERTY, range)
 
     keyboardStep?.let {
@@ -362,7 +375,11 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun customize(customRowGaps: VerticalGaps): Row {
-    this.customRowGaps = customRowGaps
+    internalTopGap = customRowGaps.top
+    internalBottomGap = customRowGaps.bottom
+    topGap = null
+    bottomGap = null
+
     return this
   }
 

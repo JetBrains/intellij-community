@@ -9,7 +9,8 @@ import org.jetbrains.annotations.NonNls
 
 sealed class PackageVersion(
     open val versionName: String,
-    open val isStable: Boolean
+    open val isStable: Boolean,
+    open val releasedAt: Long?
 ) : Comparable<PackageVersion> {
 
     @get:Nls
@@ -18,7 +19,7 @@ sealed class PackageVersion(
     override fun compareTo(other: PackageVersion): Int =
         VersionComparatorUtil.compare(versionName, other.versionName)
 
-    object Missing : PackageVersion("", isStable = true) {
+    object Missing : PackageVersion("", isStable = true, releasedAt = null) {
 
         @Nls
         override val displayName = PackageSearchBundle.message("packagesearch.ui.missingVersion")
@@ -27,7 +28,11 @@ sealed class PackageVersion(
         override fun toString() = "[Missing version]"
     }
 
-    data class Named(override val versionName: String, override val isStable: Boolean) : PackageVersion(versionName, isStable) {
+    data class Named(
+        override val versionName: String,
+        override val isStable: Boolean,
+        override val releasedAt: Long?
+    ) : PackageVersion(versionName, isStable, releasedAt) {
 
         init {
             require(versionName.isNotBlank()) { "A Named version name cannot be blank." }
@@ -39,18 +44,32 @@ sealed class PackageVersion(
 
         @NonNls
         override fun toString() = versionName
+
+        internal fun semanticVersionComponent(): SemVerComponent? {
+            val groupValues = SEMVER_REGEX.find(versionName)?.groupValues ?: return null
+            if (groupValues.size <= 1) return null
+            val semanticVersion = groupValues[1].takeIf { it.isNotBlank() } ?: return null
+            return SemVerComponent(semanticVersion, this)
+        }
+
+        internal data class SemVerComponent(val semanticVersion: String, val named: Named)
+
+        companion object {
+
+            private val SEMVER_REGEX = "^((?:\\d+\\.){0,3}\\d+)".toRegex(option = RegexOption.IGNORE_CASE)
+        }
     }
 
     companion object {
 
         internal fun from(rawVersion: ApiStandardPackage.ApiStandardVersion): PackageVersion {
             if (rawVersion.version.isBlank()) return Missing
-            return Named(rawVersion.version.trim(), rawVersion.stable)
+            return Named(versionName = rawVersion.version.trim(), isStable = rawVersion.stable, releasedAt = rawVersion.lastChanged)
         }
 
         fun from(rawVersion: String?): PackageVersion {
             if (rawVersion.isNullOrBlank()) return Missing
-            return Named(rawVersion.trim(), isStable = PackageVersionUtils.evaluateStability(rawVersion))
+            return Named(rawVersion.trim(), isStable = PackageVersionUtils.evaluateStability(rawVersion), releasedAt = null)
         }
     }
 }

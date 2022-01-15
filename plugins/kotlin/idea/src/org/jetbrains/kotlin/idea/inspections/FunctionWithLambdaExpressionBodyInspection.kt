@@ -41,11 +41,10 @@ class FunctionWithLambdaExpressionBodyInspection : AbstractKotlinInspection() {
             if (functionLiteral.arrow != null || functionLiteral.valueParameterList != null) return
             val lambdaBody = functionLiteral.bodyBlockExpression ?: return
 
-            val file = element.containingKtFile
             val used = ReferencesSearch.search(callableDeclaration).any()
             val fixes = listOfNotNull(
-                IntentionWrapper(SpecifyTypeExplicitlyFix(), file),
-                IntentionWrapper(AddArrowIntention(), file),
+                IntentionWrapper(SpecifyTypeExplicitlyFix()),
+                IntentionWrapper(AddArrowIntention()),
                 if (!used &&
                     lambdaBody.statements.size == 1 &&
                     lambdaBody.allChildren.none { it is PsiComment }

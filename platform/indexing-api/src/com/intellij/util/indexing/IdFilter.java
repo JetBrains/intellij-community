@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.BitSet;
 
-@ApiStatus.Internal
 public abstract class IdFilter {
   private static final Logger LOG = Logger.getInstance(IdFilter.class);
   private static final Key<CachedValue<IdFilter>> INSIDE_PROJECT = Key.create("INSIDE_PROJECT");
@@ -111,6 +110,7 @@ public abstract class IdFilter {
 
   public abstract boolean containsFileId(int id);
 
+  @ApiStatus.Internal
   @NotNull
   public FilterScopeType getFilteringScopeType() {
     return FilterScopeType.OTHER;

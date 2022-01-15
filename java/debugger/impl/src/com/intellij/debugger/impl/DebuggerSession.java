@@ -577,7 +577,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
         for (Pair<Breakpoint, com.sun.jdi.event.Event> eventDescriptor : eventDescriptors) {
           Breakpoint breakpoint = eventDescriptor.getFirst();
           if (breakpoint instanceof LineBreakpoint) {
-            final SourcePosition breakpointPosition = ((BreakpointWithHighlighter)breakpoint).getSourcePosition();
+            final SourcePosition breakpointPosition = ((BreakpointWithHighlighter<?>)breakpoint).getSourcePosition();
             if (breakpointPosition == null || (!sourceMissing && breakpointPosition.getLine() != position.getLine())) {
               requestsManager.deleteRequest(breakpoint);
               requestsManager.setInvalid(breakpoint, JavaDebuggerBundle.message("error.invalid.breakpoint.source.changed"));

@@ -100,7 +100,7 @@ public class HtmlUnknownBooleanAttributeInspectionBase extends HtmlUnknownElemen
             String error = null;
             if (html5) {
               if (attributeDescriptor instanceof XmlEnumerationDescriptor &&
-                  ((XmlEnumerationDescriptor)attributeDescriptor).getValueDeclaration(attribute, "") == null) {
+                  ((XmlEnumerationDescriptor<?>)attributeDescriptor).getValueDeclaration(attribute, "") == null) {
                 error = XmlPsiBundle.message("xml.inspections.wrong.value", "attribute");
               }
             } else {

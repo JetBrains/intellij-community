@@ -137,6 +137,7 @@ final class PlatformModules {
     PlatformLayout layout = new PlatformLayout()
     // used only in modules that packed into Java
     layout.excludedProjectLibraries.add("jps-javac-extension")
+    layout.excludedProjectLibraries.add("Eclipse")
     productLayout.platformLayoutCustomizer.accept(layout)
 
     Set<String> alreadyPackedModules = new HashSet<>()
@@ -175,6 +176,7 @@ final class PlatformModules {
       "intellij.platform.ide.util.io.impl",
       "intellij.platform.ide.util.netty",
       "intellij.platform.extensions",
+      "intellij.platform.tracing.rt"
       ), productLayout, layout)
 
     jar(BaseLayout.PLATFORM_JAR, PLATFORM_IMPLEMENTATION_MODULES, productLayout, layout)
@@ -193,6 +195,7 @@ final class PlatformModules {
       "intellij.platform.vcs.log.impl",
 
       "intellij.platform.collaborationTools",
+      "intellij.platform.collaborationTools.auth",
 
       "intellij.platform.icons",
       "intellij.platform.resources",

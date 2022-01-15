@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remote.RemoteSdkAdditionalData;
+import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.NullableConsumer;
@@ -460,7 +461,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private class PyRemotePathEditor extends PythonPathEditor {
-    private final PyRemoteSdkAdditionalDataBase myRemoteSdkData;
+    private final RemoteSdkProperties myRemoteSdkData;
     private final Sdk mySdk;
 
     private final List<PathMappingSettings.PathMapping> myNewMappings = new ArrayList<>();
@@ -469,7 +470,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       super(PyBundle.message("python.sdk.configuration.tab.title"), OrderRootType.CLASSES,
             FileChooserDescriptorFactory.createAllButJarContentsDescriptor());
       mySdk = sdk;
-      myRemoteSdkData = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
+      myRemoteSdkData = (RemoteSdkProperties)mySdk.getSdkAdditionalData();
     }
 
     @Override

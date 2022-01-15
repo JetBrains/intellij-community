@@ -153,7 +153,6 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
 
       AdvancedSettingType.Int -> {
         val textField = intTextField()
-          .columns(10)
           .bindIntText({ AdvancedSettings.getInt(extension.id) }, { AdvancedSettings.setInt(extension.id, it) })
         AdvancedSettingControl(
           textField,

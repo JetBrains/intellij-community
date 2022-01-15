@@ -15,7 +15,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -427,7 +426,8 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
                 })
                 .inSmartMode(project)
                 .wrapProgress(indicator)
-                .expireWhen { smartPsiElementPointer.element == null || Disposer.isDisposed(project) }
+                .expireWhen { smartPsiElementPointer.element == null }
+                .expireWith(KotlinPluginDisposable.getInstance(project))
                 .executeSynchronously()?.let { mainReference ->
                     runReadAction {
                         val textRange = mainReference.element.textRange
@@ -458,7 +458,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
             """
             package $fakePackageName
             
-            ${buildDummySourceScope(sourcePackageName, imports, fakePackageName, file, transferableData, ctxFile)}
+            ${buildDummySourceScope(sourcePackageName, indicator, imports, fakePackageName, file, transferableData, ctxFile)}
              
             """.trimIndent()
 
@@ -522,6 +522,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
 
     private fun buildDummySourceScope(
         sourcePkgName: String,
+        indicator: ProgressIndicator,
         imports: List<String>,
         fakePkgName: String,
         file: KtFile,
@@ -557,13 +558,16 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
                 )
         }
 
-        val dummyFileImports = project.runReadActionInSmartMode {
+        val dummyFileImports = ReadAction.nonBlocking(Callable {
             dummyImportsFile.collectDescendantsOfType<KtImportDirective>().mapNotNull { directive ->
                 val importedReference =
                     directive.importedReference?.getQualifiedElementSelector()?.mainReference?.resolve() as? KtNamedDeclaration
                 importedReference?.let { directive.text }
             }
-        }
+        }).inSmartMode(project)
+            .wrapProgress(indicator)
+            .expireWith(KotlinPluginDisposable.getInstance(project))
+            .executeSynchronously()
 
         val dummyFileImportsSet = dummyFileImports.toSet()
         val filteredImports = imports.filter {

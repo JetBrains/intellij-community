@@ -167,7 +167,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
     changed = properties.setCallerExclusionFilters(myCallerFilters.getClassExclusionFilters()) || changed;
 
     if (changed) {
-      ((XBreakpointBase)breakpoint).fireBreakpointChanged();
+      ((XBreakpointBase<?, ?, ?>)breakpoint).fireBreakpointChanged();
     }
   }
 

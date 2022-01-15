@@ -38,6 +38,7 @@ import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -327,7 +328,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       // refresh will fire write actions interfering with highlighting
       // heavy ops are bad, but VFS refresh is ok
     }
-    while (RefreshQueueImpl.isRefreshInProgress() || HeavyProcessLatch.INSTANCE.isRunningAnythingBut(HeavyProcessLatch.Type.Syncing));
+    while (RefreshQueueImpl.isRefreshInProgress() || postponeBecauseOfHeavyProcess());
     long dstart = System.currentTimeMillis();
     while (mustWaitForSmartMode && DumbService.getInstance(myProject).isDumb()) {
       if (System.currentTimeMillis() > dstart + 100000) {
@@ -889,7 +890,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       }
 
       // wait for heavy processing to stop, re-schedule daemon but not too soon
-      if (rainCheckBecauseOfHeavyProcess()) {
+      if (postponeBecauseOfHeavyProcess()) {
         boolean hasPasses = false;
         for (Map.Entry<FileEditor, HighlightingPass[]> entry : passes.entrySet()) {
           HighlightingPass[] dumbAwarePasses = Arrays.stream(entry.getValue()).filter(DumbService::isDumbAware).toArray(HighlightingPass[]::new);
@@ -908,15 +909,16 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       dca.myPassExecutorService.submitPasses(passes, progress);
     }
 
-    // return true if a heavy op is running
-    private static boolean rainCheckBecauseOfHeavyProcess() {
-      // VFS refresh is OK
-      return HeavyProcessLatch.INSTANCE.isRunningAnythingBut(HeavyProcessLatch.Type.Syncing);
-    }
-
     private void clearFieldsOnDispose() {
       myProject = null;
     }
+  }
+
+  // return true if a heavy op is running
+  private static boolean postponeBecauseOfHeavyProcess() {
+    if (DumbServiceImpl.ALWAYS_SMART) return false;
+    // VFS refresh is OK
+    return HeavyProcessLatch.INSTANCE.isRunningAnythingBut(HeavyProcessLatch.Type.Syncing);
   }
 
   @NotNull

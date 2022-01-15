@@ -101,7 +101,7 @@ class LibraryTreeStructure extends AbstractTreeStructure {
 
   @Override
   public Object getParentElement(@NotNull Object element) {
-    return ((NodeDescriptor)element).getParentDescriptor();
+    return ((NodeDescriptor<?>)element).getParentDescriptor();
   }
 
   @Override

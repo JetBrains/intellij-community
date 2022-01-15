@@ -134,10 +134,10 @@ public final class PsiImplUtil {
                      " parameterList' parent: " + parameterList.getParent() + ";" +
                      " parameter.isValid()=" + parameter.isValid() + ";" +
                      " parameterList.isValid()= " + parameterList.isValid() + ";" +
-                     " parameterList stub: " + (parameterList instanceof StubBasedPsiElement ? ((StubBasedPsiElement)parameterList).getStub() : "---") + "; " +
-                     " parameter stub: "+(parameter instanceof StubBasedPsiElement ? ((StubBasedPsiElement)parameter).getStub() : "---") + ";" +
-                     " suspect: " + suspect +" (index="+i+"); " + (suspect==null?null:suspect.getClass()) +
-                     " suspect stub: "+(suspect instanceof StubBasedPsiElement ? ((StubBasedPsiElement)suspect).getStub() : suspect == null ? "-null-" : "---"+suspect.getClass()) + ";" +
+                     " parameterList stub: " + (parameterList instanceof StubBasedPsiElement ? ((StubBasedPsiElement<?>)parameterList).getStub() : "---") + "; " +
+                     " parameter stub: " + (parameter instanceof StubBasedPsiElement ? ((StubBasedPsiElement<?>)parameter).getStub() : "---") + ";" +
+                     " suspect: " + suspect + " (index=" + i + "); " + (suspect==null?null:suspect.getClass()) +
+                     " suspect stub: " + (suspect instanceof StubBasedPsiElement ? ((StubBasedPsiElement<?>)suspect).getStub() : suspect == null ? "-null-" : "---" + suspect.getClass()) + ";" +
                      " parameter.equals(suspect) = " + parameter.equals(suspect) + "; " +
                      " parameter.getNode() == suspect.getNode():  " + (parameter.getNode() == (suspect==null ? null : suspect.getNode())) + "; " +
                      "."

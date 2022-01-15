@@ -26,7 +26,7 @@ public class SimpleDisplayKey<T extends NodeDescriptor> implements DisplayKey<T>
 
   public boolean equals(Object o) {
     if(!(o instanceof SimpleDisplayKey)) return false;
-    return ((SimpleDisplayKey)o).myKey.equals(myKey);
+    return ((SimpleDisplayKey<?>)o).myKey.equals(myKey);
   }
 
   public int hashCode() {

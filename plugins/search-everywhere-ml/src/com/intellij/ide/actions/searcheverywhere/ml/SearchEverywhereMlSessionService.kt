@@ -29,11 +29,18 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
     val settings = service<SearchEverywhereMlSettings>()
 
     if (settings.isSortingByMlEnabledByDefault(tab)) {
-      // For tabs with ML-sorting enabled by default, the experiment will disable ML-sorting if it's enabled
-      return settings.isSortingByMlEnabled(tab) && !experiment.shouldPerformExperiment(tab)
-    } else {
-      return settings.isSortingByMlEnabled(tab) || experiment.shouldPerformExperiment(tab)
+      return settings.isSortingByMlEnabled(tab)
+             && experiment.getExperimentForTab(tab) != SearchEverywhereMlExperiment.ExperimentType.NO_ML
     }
+    else {
+      return settings.isSortingByMlEnabled(tab)
+             || experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL
+    }
+  }
+
+  internal fun shouldUseExperimentalModel(tabId: String): Boolean {
+    val tab = SearchEverywhereTabWithMl.findById(tabId) ?: return false
+    return experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL
   }
 
   override fun getMlWeight(contributor: SearchEverywhereContributor<*>, element: GotoActionModel.MatchedValue): Double {

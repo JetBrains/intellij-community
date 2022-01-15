@@ -26,12 +26,12 @@ public class StructureViewUtil {
     @Nullable
     protected static String toString(@Nullable Object node, @Nullable Queryable.PrintInfo printInfo) {
         if (node instanceof AbstractTreeNode) {
-            return ((AbstractTreeNode) node).toTestString(printInfo);
+            return ((AbstractTreeNode<?>) node).toTestString(printInfo);
         }
 
         FilteringTreeStructure.FilteringNode filteringNode = tryCast(node, FilteringTreeStructure.FilteringNode.class);
         if (filteringNode != null && filteringNode.getDelegate() instanceof AbstractTreeNode) {
-            return ((AbstractTreeNode) filteringNode.getDelegate()).toTestString(printInfo);
+            return ((AbstractTreeNode<?>) filteringNode.getDelegate()).toTestString(printInfo);
         }
 
         if (node == null) {

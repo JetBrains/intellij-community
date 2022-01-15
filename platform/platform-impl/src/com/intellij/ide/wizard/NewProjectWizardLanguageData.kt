@@ -4,6 +4,8 @@ package com.intellij.ide.wizard
 import com.intellij.openapi.observable.properties.GraphProperty
 
 interface NewProjectWizardLanguageData : NewProjectWizardBaseData {
+
   val languageProperty: GraphProperty<String>
+
   val language: String
 }

@@ -1389,7 +1389,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
 
     Element element = typeElement.getChild(AbstractFileType.ELEMENT_HIGHLIGHTING);
-    FileType type;
+    UserFileType<?> type;
     if (element == null) {
       type = UserBinaryFileType.INSTANCE;
     }
@@ -1401,7 +1401,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     @NlsSafe String fileTypeDescr = typeElement.getAttributeValue(ATTRIBUTE_DESCRIPTION);
     String iconPath = typeElement.getAttributeValue("icon");
-    setFileTypeAttributes((UserFileType<?>)type, fileTypeName, fileTypeDescr, iconPath);
+    setFileTypeAttributes(type, fileTypeName, fileTypeDescr, iconPath);
     registerFileTypeWithoutNotification(type, pluginDescriptor, parseExtensions(context, extensionsStr), isDefault);
 
     if (isDefault) {

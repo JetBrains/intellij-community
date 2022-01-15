@@ -26,6 +26,9 @@ object NativeConsoleApplicationTemplate : Template() {
 
     override val id: String = "nativeConsoleApp"
 
+    private const val fileToCreate = "Main.kt"
+    override val filesToOpenInEditor = listOf(fileToCreate)
+
     override fun isApplicableTo(
         reader: Reader,
         module: Module
@@ -36,6 +39,6 @@ object NativeConsoleApplicationTemplate : Template() {
         targetConfigurationIR.withIrs(NativeTargetInternalIR("main"))
 
     override fun Reader.getFileTemplates(module: ModuleIR): List<FileTemplateDescriptorWithPath> = buildList {
-        +(FileTemplateDescriptor("$id/main.kt.vm", "Main.kt".asPath()) asSrcOf SourcesetType.main)
+        +(FileTemplateDescriptor("$id/main.kt.vm", fileToCreate.asPath()) asSrcOf SourcesetType.main)
     }
 }

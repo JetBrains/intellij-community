@@ -2,8 +2,6 @@
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.intellij.diagnostic.StartUpPerformanceService
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
@@ -21,15 +19,8 @@ internal class StartupMetricCollector : StartupActivity.Background {
     }
 
     val metrics = StartUpPerformanceService.getInstance().getMetrics() ?: return
-    val usageLogger = FUCounterUsageLogger.getInstance()
     for (entry in Object2IntMaps.fastIterable(metrics)) {
-      val usageData = FeatureUsageData()
-      usageData.addData("duration", entry.intValue)
-      var eventId = entry.key
-      if (eventId == "app initialization") {
-        eventId = "appInit"
-      }
-      usageLogger.logEvent("startup", eventId, usageData)
+      StartupPerformanceCollector.logEvent(entry.key, entry.intValue)
     }
   }
 }

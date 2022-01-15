@@ -6,7 +6,9 @@ import com.intellij.configurationStore.SerializableScheme
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
-import com.intellij.notification.*
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.application.ApplicationManager
@@ -402,6 +404,9 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     val own = actionIdToShortcuts[actionId] ?: return Shortcut.EMPTY_ARRAY
     return if (own.isEmpty()) Shortcut.EMPTY_ARRAY else own.toTypedArray()
   }
+
+  fun hasShortcutDefined(actionId: String): Boolean =
+    actionIdToShortcuts[actionId]?.isNotEmpty() == true || parent?.hasShortcutDefined(actionId) == true
 
   // you must clear `actionIdToShortcuts` before calling
   protected open fun readExternal(keymapElement: Element) {

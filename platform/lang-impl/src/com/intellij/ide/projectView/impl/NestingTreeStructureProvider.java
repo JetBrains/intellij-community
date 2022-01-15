@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.*;
@@ -12,16 +12,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -35,7 +30,7 @@ import java.util.function.Function;
  * @see ProjectViewFileNestingService
  * @see FileNestingInProjectViewDialog
  */
-public class NestingTreeStructureProvider implements TreeStructureProvider, DumbAware {
+public final class NestingTreeStructureProvider implements TreeStructureProvider, DumbAware {
   private static final Logger LOG = Logger.getInstance(NestingTreeStructureProvider.class);
 
   @NotNull
@@ -45,7 +40,7 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
                                             ViewSettings settings) {
     if (!(settings instanceof ProjectViewSettings) || !((ProjectViewSettings)settings).isUseFileNestingRules()) return children;
 
-    ProjectViewNode<?> parentNode = ObjectUtils.tryCast(parent, ProjectViewNode.class);
+    ProjectViewNode<?> parentNode = parent instanceof ProjectViewNode ? (ProjectViewNode)parent : null;
     VirtualFile virtualFile = parentNode == null ? null : parentNode.getVirtualFile();
     if (virtualFile == null || !virtualFile.isDirectory()) return children;
 
@@ -67,7 +62,7 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
     // initial ArrayList size may be not exact, not a big problem
     final Collection<AbstractTreeNode<?>> newChildren = new ArrayList<>(children.size() - parentToChildren.size());
 
-    final Set<PsiFileNode> childrenToMoveDown = new THashSet<>(parentToChildren.values());
+    final Set<PsiFileNode> childrenToMoveDown = new HashSet<>(parentToChildren.values());
 
     for (AbstractTreeNode<?> node : children) {
       if (!(node instanceof PsiFileNode)) {

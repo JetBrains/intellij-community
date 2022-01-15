@@ -1033,12 +1033,25 @@ public class MavenProject {
   }
 
   private @Nullable String getCompilerLevel(String level) {
-    return getCompilerConfigs().stream()
-      .map(element -> LanguageLevel.parse(MavenJDOMUtil.findChildValueByPath(element, level)))
+    List<Element> configs = getCompilerConfigs();
+    if (configs.size() == 1) return getCompilerLevel(level, configs.get(0));
+
+    return configs.stream()
+      .map(element -> MavenJDOMUtil.findChildValueByPath(element, level))
       .filter(Objects::nonNull)
+      .map(propertyValue -> LanguageLevel.parse(propertyValue))
+      .map(languageLevel -> languageLevel == null ? LanguageLevel.HIGHEST : languageLevel)
       .max(Comparator.naturalOrder())
       .map(l -> l.toJavaVersion().toFeatureString())
       .orElseGet(() -> myState.myProperties.getProperty("maven.compiler." + level));
+  }
+
+  private String getCompilerLevel(String level, Element config) {
+    String result = MavenJDOMUtil.findChildValueByPath(config, level);
+    if (result == null) {
+      result = myState.myProperties.getProperty("maven.compiler." + level);
+    }
+    return result;
   }
 
   private @Nullable Element getCompilerConfig() {

@@ -33,10 +33,9 @@ internal class CollapsiblePanelImpl(dialogPanelConfig: DialogPanelConfig,
 
   init {
     val collapsibleTitledSeparator = this.collapsibleTitledSeparator
-    val row = row {
+    row {
       cell(collapsibleTitledSeparator).horizontalAlign(HorizontalAlign.FILL)
     }
-    row.internalTopGap = dialogPanelConfig.spacing.groupTopGap
     expandablePanel = panel {
       init()
     }

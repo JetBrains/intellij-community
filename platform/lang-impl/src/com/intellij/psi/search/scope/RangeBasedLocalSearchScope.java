@@ -1,6 +1,7 @@
 package com.intellij.psi.search.scope;
 
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -15,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public abstract class RangeBasedLocalSearchScope extends LocalSearchScope {
+  private static final Logger ourLogger = Logger.getInstance(RangeBasedLocalSearchScope.class);
+
   protected final boolean myIgnoreInjectedPsi;
   @NotNull
   protected final @Nls String  myDisplayName;
@@ -38,7 +41,11 @@ public abstract class RangeBasedLocalSearchScope extends LocalSearchScope {
       return;
     }
     int modifiedEnd = end;
-    if (end == psiFile.getTextLength())
+    int length = psiFile.getTextLength();
+    if (end > length)
+      ourLogger.error("Range extends beyond the PSI file range. Maybe PSI file is not actual");
+
+    if (end == length)
       modifiedEnd--;
 
     final PsiElement endElement = psiFile.findElementAt(modifiedEnd);

@@ -64,7 +64,6 @@ import com.intellij.ui.content.MessageView;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MessageCategory;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
@@ -84,7 +83,6 @@ import static java.text.MessageFormat.format;
 
 public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   private static final Logger LOG = Logger.getInstance(AbstractVcsHelperImpl.class);
-  private static final String CHANGES_DETAILS_WINDOW_KEY = "CommittedChangesDetailsLock";
 
   private Consumer<VcsException> myCustomHandler = null;
 
@@ -398,20 +396,16 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
   @Override
   public void showChangesListBrowser(@NotNull CommittedChangeList changelist, @Nullable String title) {
-    ChangeListViewerDialog dlg = new ChangeListViewerDialog(myProject, changelist, null);
-    if (title != null) {
-      dlg.setTitle(title);
-    }
-    dlg.show();
+    LoadingCommittedChangeListPanel panel = new LoadingCommittedChangeListPanel(myProject);
+    panel.setChanges(changelist, null);
+    ChangeListViewerDialog.show(myProject, title, panel);
   }
 
   @Override
   public void showWhatDiffersBrowser(@NotNull Collection<Change> changes, @Nullable String title) {
-    ChangeListViewerDialog dlg = new ChangeListViewerDialog(myProject, changes);
-    if (title != null) {
-      dlg.setTitle(title);
-    }
-    dlg.show();
+    LoadingCommittedChangeListPanel panel = new LoadingCommittedChangeListPanel(myProject);
+    panel.setChanges(changes, null);
+    ChangeListViewerDialog.show(myProject, title, panel);
   }
 
   @Override
@@ -536,40 +530,31 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     final BackgroundableActionLock lock = BackgroundableActionLock.getLock(project, VcsBackgroundableActions.COMMITTED_CHANGES_DETAILS,
                                                                            revision, filePath.getPath());
 
-    if (lock.isLocked()) {
-      for (Window window : Window.getWindows()) {
-        Object windowLock = UIUtil.getWindowClientProperty(window, CHANGES_DETAILS_WINDOW_KEY);
-        if (windowLock != null && lock.equals(windowLock)) {
-          UIUtil.toFront(window);
-          break;
-        }
-      }
-      return;
+    if (ChangeListViewerDialog.tryFocusExistingDialog(lock)) return;
+
+    LoadingCommittedChangeListPanel loadingPanel = new LoadingCommittedChangeListPanel(project);
+    loadingPanel.loadChangesInBackground(() -> loadCommittedChanges(revision, filePath, changelistProvider));
+    ChangeListViewerDialog.show(project, title, loadingPanel, lock);
+  }
+
+  @NotNull
+  private static LoadingCommittedChangeListPanel.ChangelistData loadCommittedChanges(
+    @NotNull VcsRevisionNumber revision,
+    @NotNull FilePath filePath,
+    @NotNull CommittedChangeListProvider changelistProvider) throws VcsException {
+    try {
+      Pair<? extends CommittedChangeList, FilePath> pair = changelistProvider.loadChangelist();
+      if (pair == null || pair.getFirst() == null) throw new VcsException(failedText(filePath, revision));
+
+      CommittedChangeList changeList = pair.getFirst();
+      FilePath targetPath = pair.getSecond();
+
+      FilePath navigateToPath = ObjectUtils.notNull(targetPath, filePath);
+      return new LoadingCommittedChangeListPanel.ChangelistData(changeList, navigateToPath);
     }
-    lock.lock();
-
-    ChangeListViewerDialog dlg = new ChangeListViewerDialog(project);
-    dlg.setTitle(title);
-
-    UIUtil.putWindowClientProperty(dlg.getWindow(), CHANGES_DETAILS_WINDOW_KEY, lock);
-    Disposer.register(dlg.getDisposable(), () -> lock.unlock());
-
-    dlg.loadChangesInBackground(() -> {
-      try {
-        Pair<? extends CommittedChangeList, FilePath> pair = changelistProvider.loadChangelist();
-        if (pair == null || pair.getFirst() == null) throw new VcsException(failedText(filePath, revision));
-
-        CommittedChangeList changeList = pair.getFirst();
-        FilePath targetPath = pair.getSecond();
-
-        FilePath navigateToPath = ObjectUtils.notNull(targetPath, filePath);
-        return new ChangeListViewerDialog.ChangelistData(changeList, navigateToPath);
-      }
-      catch (VcsException e) {
-        throw new VcsException(failedText(filePath, revision), e);
-      }
-    });
-    dlg.show();
+    catch (VcsException e) {
+      throw new VcsException(failedText(filePath, revision), e);
+    }
   }
 
   @Nullable

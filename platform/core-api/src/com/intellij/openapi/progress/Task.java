@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress;
 
 import com.intellij.core.CoreBundle;
@@ -142,6 +142,15 @@ public abstract class Task implements TaskInfo, Progressive {
   public final @NotNull Task setCancelText(@NlsContexts.Button String cancelText) {
     myCancelText = cancelText;
     return this;
+  }
+
+  /**
+   * Can be used to distinguish this task among other progresses.
+   * @return this task optional id
+   */
+  @ApiStatus.Experimental
+  public @Nullable Object getId() {
+    return null;
   }
 
   public @Nullable NotificationInfo getNotificationInfo() {

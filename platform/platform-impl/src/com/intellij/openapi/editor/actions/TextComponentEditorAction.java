@@ -64,7 +64,7 @@ public abstract class TextComponentEditorAction extends EditorAction {
   private static JTextField findActiveSpeedSearchTextField(JComponent c) {
     final SpeedSearchSupply supply = SpeedSearchSupply.getSupply(c);
     if (supply instanceof SpeedSearchBase) {
-      return ((SpeedSearchBase)supply).getSearchField();
+      return ((SpeedSearchBase<?>)supply).getSearchField();
     }
     if (c instanceof DataProvider) {
       final Object component = PlatformDataKeys.SPEED_SEARCH_COMPONENT.getData((DataProvider)c);

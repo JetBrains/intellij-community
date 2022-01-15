@@ -49,13 +49,13 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
     val rowsGridBuilder = RowsGridBuilder(panel, grid = grid)
       .defaultVerticalAlign(VerticalAlign.CENTER)
       .defaultBaselineAlign(true)
-
-    for (row in rows) {
+    val allRowsGaps = getRowsGaps(rows)
+    for ((i, row) in rows.withIndex()) {
       if (!checkRow(row)) {
         continue
       }
 
-      val rowGaps = getRowGaps(row)
+      val rowGaps = allRowsGaps[i]
       rowsGridBuilder.setRowGaps(VerticalGaps(top = rowGaps.top))
 
       when (row.rowLayout) {
@@ -385,21 +385,43 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
       0
   }
 
-  private fun getRowGaps(row: RowImpl): VerticalGaps {
-    row.customRowGaps?.let {
-      return it
+  private fun getRowsGaps(rows: List<RowImpl>): List<VerticalGaps> {
+    val result = mutableListOf<VerticalGaps>()
+
+    for ((i, row) in rows.withIndex()) {
+      val rowGaps = getRowGaps(row, i == 0, i == rows.size - 1)
+      result.add(rowGaps)
+
+      // Only greatest gap of top and bottom gaps is used between two rows (or top gap if equal)
+      if (i > 0) {
+        val previousRowGaps = result[i - 1]
+        if (previousRowGaps.bottom != 0 && rowGaps.top != 0) {
+          if (previousRowGaps.bottom > rowGaps.top) {
+            result[i] = rowGaps.copy(top = 0)
+          }
+          else {
+            result[i - 1] = previousRowGaps.copy(bottom = 0)
+          }
+        }
+      }
     }
 
+    return result
+  }
+
+  private fun getRowGaps(row: RowImpl, first: Boolean, last: Boolean): VerticalGaps {
     val top = when (row.topGap) {
+      TopGap.NONE -> 0
       TopGap.SMALL -> dialogPanelConfig.spacing.verticalSmallGap
       TopGap.MEDIUM -> dialogPanelConfig.spacing.verticalMediumGap
-      null -> row.internalTopGap
+      null -> if (first) 0 else row.internalTopGap
     }
 
     val bottom = when (row.bottomGap) {
+      BottomGap.NONE -> 0
       BottomGap.SMALL -> dialogPanelConfig.spacing.verticalSmallGap
       BottomGap.MEDIUM -> dialogPanelConfig.spacing.verticalMediumGap
-      null -> row.internalBottomGap
+      null -> if (last) 0 else row.internalBottomGap
     }
 
     return if (top > 0 || bottom > 0) VerticalGaps(top = top, bottom = bottom) else VerticalGaps.EMPTY

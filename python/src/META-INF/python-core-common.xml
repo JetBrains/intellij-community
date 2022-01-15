@@ -321,6 +321,9 @@
     <registryKey key="python.explicit.namespace.packages" defaultValue="true" restartRequired="true" description="Require marking namespace packages explicitly, treat regular directories as implicit source roots"/>
     <registryKey key="python.create.namespace.package.action" defaultValue="false" description="Possibility to create namespace packages from New | Python Package"/>
 
+    <!-- CommandQueueForPythonConsoleService -->
+    <registryKey key="python.console.CommandQueue" defaultValue="true" restartRequired="true" description="Use CommandQueue in PythonConsole"/>
+
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
 
@@ -387,6 +390,7 @@
     <experimentalFeature id="python.use.targets.api.for.run.configurations">
       <description>Switches Python Run Configurations to Targets API. This might be unstable.</description>
     </experimentalFeature>
+    <experimentalFeature id="add.python.interpreter.dialog.on.targets" percentOfUsers="0"/>
     <notificationGroup id="Python Debugger" displayType="TOOL_WINDOW" toolWindowId="Debug" bundle="messages.PyBundle" key="debug.notification.group"/>
     <notificationGroup id="Python SDK Updater" displayType="BALLOON" bundle="messages.PyBundle" key="python.sdk.updater.notifications.group.title"/>
     <notificationGroup id="Sync Python requirements" displayType="BALLOON" bundle="messages.PyBundle" key="python.requirements.balloon"/>
@@ -404,6 +408,8 @@
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.add.PyAddNewEnvCollector"/>
 
     <vcs.envCustomizer implementation="com.jetbrains.python.sdk.PyVirtualEnvVcsCustomizer"/>
+
+    <executionTargetLanguageRuntimeType implementation="com.jetbrains.python.target.PythonLanguageRuntimeType"/>
   </extensions>
 
   <extensionPoints>

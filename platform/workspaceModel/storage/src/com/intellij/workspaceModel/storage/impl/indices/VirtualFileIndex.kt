@@ -7,10 +7,7 @@ import com.intellij.util.containers.CollectionFactory.createSmallMemoryFootprint
 import com.intellij.util.containers.CollectionFactory.createSmallMemoryFootprintSet
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
-import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
-import com.intellij.workspaceModel.storage.impl.EntityId
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.containers.copy
 import com.intellij.workspaceModel.storage.impl.containers.putAll
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
@@ -79,7 +76,7 @@ open class VirtualFileIndex internal constructor(
   override fun findEntitiesByUrl(fileUrl: VirtualFileUrl): Sequence<Pair<WorkspaceEntity, String>> =
     vfu2EntityId[fileUrl]?.asSequence()?.mapNotNull {
       val entityData = entityStorage.entityDataById(it.value) ?: return@mapNotNull null
-      entityData.createEntity(entityStorage) to it.key.substring(it.value.toString().length + 1)
+      entityData.createEntity(entityStorage) to it.key.substring(it.value.asString().length + 1)
     } ?: emptySequence()
 
   fun getIndexedJarDirectories() = entityId2JarDir.values
@@ -96,13 +93,15 @@ open class VirtualFileIndex internal constructor(
         vfuSet.forEach { vfu ->
           existingVfuInFirstMap.add(vfu)
           val property2EntityId = this.vfu2EntityId[vfu]
-          assert(
-            property2EntityId != null) { "VirtualFileUrl: $vfu exists in the first collection by EntityId: $entityId with Property: $property but absent at other" }
+          assert(property2EntityId != null) {
+            "VirtualFileUrl: $vfu exists in the first collection by EntityId: ${entityId.asString()} with Property: $property but absent at other"
+          }
 
           val compositeKey = getCompositeKey(entityId, property)
           val existingEntityId = property2EntityId!![compositeKey]
-          assert(
-            existingEntityId != null) { "VirtualFileUrl: $vfu exist in both maps but EntityId: $entityId with Property: $property absent at other" }
+          assert(existingEntityId != null) {
+            "VirtualFileUrl: $vfu exist in both maps but EntityId: ${entityId.asString()} with Property: $property absent at other"
+          }
         }
       }
 
@@ -118,7 +117,7 @@ open class VirtualFileIndex internal constructor(
     assert(existingVfuInFirstMap.isEmpty()) { "Both maps contain the same amount of VirtualFileUrls but they are different" }
   }
 
-  internal fun getCompositeKey(entityId: EntityId, propertyName: String) = "${entityId}_$propertyName"
+  internal fun getCompositeKey(entityId: EntityId, propertyName: String) = "${entityId.asString()}_$propertyName"
 
   class MutableVirtualFileIndex private constructor(
     // Do not write to [entityId2VirtualFileUrl]  and [vfu2EntityId] directly! Create a dedicated method for that

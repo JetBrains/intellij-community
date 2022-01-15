@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmark
 
 import com.intellij.ide.ui.UISettings
@@ -81,12 +81,12 @@ private class BookmarkPainter : RegionPainter<Component?> {
 }
 
 
-private val MNEMONIC_ICON_FOREGROUND = EditorColorsUtil.createColorKey("MnemonicIcon.foreground", JBColor(0x000000, 0xBBBBBB))
-private val MNEMONIC_ICON_BACKGROUND = EditorColorsUtil.createColorKey("MnemonicIcon.background", JBColor(0xFEF7EC, 0x5B5341))
-private val MNEMONIC_ICON_BORDER_COLOR = EditorColorsUtil.createColorKey("MnemonicIcon.borderColor", JBColor(0xF4AF3D, 0xD9A343))
+private val MNEMONIC_ICON_FOREGROUND = EditorColorsUtil.createColorKey("BookmarkMnemonicIcon.foreground", JBColor(0x000000, 0xBBBBBB))
+private val MNEMONIC_ICON_BACKGROUND = EditorColorsUtil.createColorKey("BookmarkMnemonicIcon.background", JBColor(0xFEF7EC, 0x5B5341))
+private val MNEMONIC_ICON_BORDER_COLOR = EditorColorsUtil.createColorKey("BookmarkMnemonicIcon.borderColor", JBColor(0xF4AF3D, 0xD9A343))
 
 private class MnemonicPainter(val mnemonic: String) : RegionPainter<Component?> {
-  override fun toString() = "MnemonicIcon:$mnemonic"
+  override fun toString() = "BookmarkMnemonicIcon:$mnemonic"
   override fun hashCode() = mnemonic.hashCode()
   override fun equals(other: Any?): Boolean {
     if (other === this) return true

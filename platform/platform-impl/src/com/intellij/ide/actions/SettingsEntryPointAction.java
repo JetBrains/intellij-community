@@ -105,12 +105,12 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
       }
       else {
         String text = child.getTemplateText();
-        if (text != null && !text.endsWith("...")) {
+        if (text != null && !(text.endsWith("...") || text.endsWith("…") )) {
           AnActionButton button = new AnActionButton.AnActionButtonWrapper(child.getTemplatePresentation(), child) {
             @Override
             public void updateButton(@NotNull AnActionEvent e) {
               getDelegate().update(e);
-              e.getPresentation().setText(e.getPresentation().getText() + "...");
+              e.getPresentation().setText(e.getPresentation().getText() + "…");
             }
 
             @Override

@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.NameUtilCore;
-import gnu.trove.TIntIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +15,7 @@ import java.util.*;
 /**
  * @author dsl
  */
-public class NameSuggester {
+public final class NameSuggester {
   private static final Logger LOG = Logger.getInstance(NameSuggester.class);
   private final String[] myOldClassName;
   private final String[] myNewClassName;
@@ -60,9 +60,9 @@ public class NameSuggester {
     return -1;
   }
 
-  List<Pair<String,String>> getChanges() {
-    final ArrayList<Pair<String,String>> result = new ArrayList<>();
-    for (int i = myChanges.size() - 1; i >=0; i--) {
+  List<Pair<String, String>> getChanges() {
+    final ArrayList<Pair<String, String>> result = new ArrayList<>();
+    for (int i = myChanges.size() - 1; i >= 0; i--) {
       final OriginalToNewChange change = myChanges.get(i);
       result.add(Pair.create(change.getOldString(), change.getNewString()));
     }
@@ -72,15 +72,15 @@ public class NameSuggester {
   public String suggestName(final String propertyName) {
     if (myOldClassNameAsGiven.equals(propertyName)) return myNewClassNameAsGiven;
     final String[] propertyWords = NameUtilCore.splitNameIntoWords(propertyName);
-    TIntIntHashMap matches = calculateMatches(propertyWords);
+    Int2IntMap matches = calculateMatches(propertyWords);
     if (matches.isEmpty()) return propertyName;
-    TreeMap<Pair<Integer,Integer>, String> replacements = calculateReplacements(propertyWords, matches);
+    TreeMap<Pair<Integer, Integer>, String> replacements = calculateReplacements(propertyWords, matches);
     if (replacements.isEmpty()) return propertyName;
     return calculateNewName(replacements, propertyWords, propertyName);
   }
 
 
-  private static Pair<int[],int[]> calculateWordPositions(String s, String[] words) {
+  private static Pair<int[], int[]> calculateWordPositions(String s, String[] words) {
     int[] starts = new int[words.length + 1];
     int[] prevEnds = new int[words.length + 1];
     prevEnds[0] = -1;
@@ -98,11 +98,11 @@ public class NameSuggester {
   }
 
   private static String calculateNewName(TreeMap<Pair<Integer, Integer>, String> replacements,
-                                  final String[] propertyWords,
-                                  String propertyName) {
+                                         final String[] propertyWords,
+                                         String propertyName) {
     StringBuffer resultingWords = new StringBuffer();
     int currentWord = 0;
-    final Pair<int[],int[]> wordIndicies = calculateWordPositions(propertyName, propertyWords);
+    final Pair<int[], int[]> wordIndicies = calculateWordPositions(propertyName, propertyWords);
     for (final Map.Entry<Pair<Integer, Integer>, String> entry : replacements.entrySet()) {
       final int first = entry.getKey().getFirst().intValue();
       final int last = entry.getKey().getSecond().intValue();
@@ -115,7 +115,7 @@ public class NameSuggester {
       appendWord(resultingWords, entry.getValue());
       currentWord = last + 1;
     }
-    for(; currentWord < propertyWords.length; currentWord++) {
+    for (; currentWord < propertyWords.length; currentWord++) {
       resultingWords.append(calculateBetween(wordIndicies, currentWord, propertyName));
       appendWord(resultingWords, propertyWords[currentWord]);
     }
@@ -148,12 +148,13 @@ public class NameSuggester {
    * It is valid situation that {@code last == first - 1}: in this case replace means insertion
    * before first word. Furthermore, first may be equal to {@code propertyWords.length}  - in
    * that case replacements transormates to appending.
+   *
    * @param propertyWords
    * @param matches
    * @return
    */
-  private TreeMap<Pair<Integer, Integer>, String> calculateReplacements(String[] propertyWords, TIntIntHashMap matches) {
-    TreeMap<Pair<Integer,Integer>, String> replacements = new TreeMap<>(Pair.comparingByFirst());
+  private TreeMap<Pair<Integer, Integer>, String> calculateReplacements(String[] propertyWords, Int2IntMap matches) {
+    TreeMap<Pair<Integer, Integer>, String> replacements = new TreeMap<>(Pair.comparingByFirst());
     for (final OriginalToNewChange change : myChanges) {
       final int first = change.oldFirst;
       final int last = change.oldLast;
@@ -178,9 +179,10 @@ public class NameSuggester {
           propertyWordToInsertBefore = matches.get(first);
         }
         else {
-          if (matches.contains(last)) {
+          if (matches.containsValue(last)) {
             propertyWordToInsertBefore = matches.get(last) + 1;
-          } else {
+          }
+          else {
             propertyWordToInsertBefore = propertyWords.length;
           }
         }
@@ -203,16 +205,16 @@ public class NameSuggester {
     return word;
   }
 
-  private static boolean containsAllBetween(TIntIntHashMap matches, int first, int last) {
+  private static boolean containsAllBetween(Int2IntMap matches, int first, int last) {
     for (int i = first; i <= last; i++) {
       if (!matches.containsKey(i)) return false;
     }
     return true;
   }
 
-  private TIntIntHashMap calculateMatches(final String[] propertyWords) {
+  private Int2IntMap calculateMatches(final String[] propertyWords) {
     int classNameIndex = myOldClassName.length - 1;
-    TIntIntHashMap matches = new TIntIntHashMap();
+    Int2IntMap matches = new Int2IntOpenHashMap();
     for (int i = propertyWords.length - 1; i >= 0; i--) {
       final String propertyWord = propertyWords[i];
       Match match = null;
@@ -279,6 +281,8 @@ public class NameSuggester {
     if (propertyWord.equalsIgnoreCase(myOldClassName[oldClassNameIndex])) {
       return new Match(oldClassNameIndex, propertyNameIndex, propertyWord);
     }
-    else return null;
+    else {
+      return null;
+    }
   }
 }

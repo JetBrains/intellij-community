@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
+import com.intellij.application.options.RegistryManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,6 +25,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.protocol.*;
 import com.jetbrains.python.console.pydev.AbstractConsoleCommunication;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
@@ -791,7 +793,14 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   private class PythonConsoleFrontendHandler implements PythonConsoleFrontendService.Iface {
 
     @Override
-    public void notifyFinished(boolean needsMoreInput) {
+    public void notifyFinished(boolean needsMoreInput, boolean exceptionOccurred) {
+      if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
+        // notify the CommandQueue service that the command has been completed without exceptions
+        // and it must be removed from the queue
+        // or clear queue if exception occurred
+        ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class)
+          .removeCommand(PydevConsoleCommunication.this, exceptionOccurred);
+      }
       execNotifyFinished(needsMoreInput);
     }
 

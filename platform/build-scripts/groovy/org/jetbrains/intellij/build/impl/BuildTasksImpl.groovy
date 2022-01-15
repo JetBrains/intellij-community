@@ -1035,7 +1035,7 @@ idea.fatal.error.notification=disabled
       jar(artifactName, true) {
         module(updaterModule)
         for (file in libraryFiles) {
-          ant.zipfileset(src: file.absolutePath)
+          ant.zipfileset(src: file.absolutePath, excludes: 'META-INF/**')
         }
       }
     }

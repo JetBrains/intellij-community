@@ -400,9 +400,8 @@ public final class DocRenderItem {
   }
 
   private void generateHtmlInBackgroundAndToggle() {
-    ReadAction.nonBlocking(() -> {
-      return DocRenderPassFactory.calcText(getComment());
-    }).withDocumentsCommitted(Objects.requireNonNull(editor.getProject()))
+    ReadAction.nonBlocking(() -> DocRenderPassFactory.calcText(getComment()))
+      .withDocumentsCommitted(Objects.requireNonNull(editor.getProject()))
       .coalesceBy(this)
       .finishOnUiThread(ModalityState.any(), (@Nls String html) -> {
         textToRender = html;
@@ -426,7 +425,10 @@ public final class DocRenderItem {
       DocRenderItemUpdater.getInstance().updateInlays(ContainerUtil.mapNotNull(items, i -> i.inlay), recreateContent);
     }
     else {
-      DocRenderItemUpdater.getInstance().updateFoldRegions(ContainerUtil.mapNotNull(items, i -> (CustomFoldRegion)i.foldRegion), recreateContent);
+      DocRenderItemUpdater.getInstance().updateFoldRegions(
+        ContainerUtil.mapNotNull(items, i -> (CustomFoldRegion)i.foldRegion),
+        recreateContent
+      );
     }
   }
 
@@ -528,9 +530,9 @@ public final class DocRenderItem {
       }
       else {
         return inlay == null && (foldRegion == null ||
-               foldRegion instanceof CustomFoldRegion && foldRegion.isValid() &&
-               foldRegion.getStartOffset() == foldRegion.getEditor().getDocument().getLineStartOffset(foldStartLine) &&
-               foldRegion.getEndOffset() == foldRegion.getEditor().getDocument().getLineEndOffset(foldEndLine));
+                                 foldRegion instanceof CustomFoldRegion && foldRegion.isValid() &&
+                                 foldRegion.getStartOffset() == foldRegion.getEditor().getDocument().getLineStartOffset(foldStartLine) &&
+                                 foldRegion.getEndOffset() == foldRegion.getEditor().getDocument().getLineEndOffset(foldEndLine));
       }
     }
   }
@@ -698,6 +700,7 @@ public final class DocRenderItem {
     ChangeFontSize() {
       super(CodeInsightBundle.messagePointer("javadoc.adjust.font.size"));
     }
+
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);

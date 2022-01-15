@@ -46,7 +46,7 @@ object JavaInlayHintsProvider {
           lastIndex = i
         }
       }
-      if (method.isVarArgs && (arguments.isEmpty() && params.size == 2 || !arguments.isEmpty() && arguments.size == params.size - 1)) {
+      if (method.isVarArgs && (arguments.isEmpty() && params.size == 2 || arguments.isNotEmpty() && arguments.size == params.size - 1)) {
         params[params.size - 1].name.let {
           infos.add(createHintWithComma(it, trailingOffset))
         }
@@ -94,7 +94,7 @@ object JavaInlayHintsProvider {
       return hintSet(callInfo, PsiSubstitutor.EMPTY)
     }
 
-    //we can show hints for same named parameters of overloaded methods, even if don't know exact method
+    //we can show hints for same named parameters of overloaded methods, even if you don't know exact method
     return resultSet.reduce { left, right -> left.intersect(right) }
       .map { InlayInfo(it.text, it.offset, isShowOnlyIfExistedBefore = true) }
       .toSet()
@@ -137,9 +137,7 @@ object JavaInlayHintsProvider {
   }
 
   private fun CallInfo.allParamsSequential(): Boolean {
-    val paramNames = regularArgs
-      .map { it.parameter.name.decomposeOrderedParams() }
-      .filterNotNull()
+    val paramNames = regularArgs.mapNotNull { it.parameter.name.decomposeOrderedParams() }
 
     if (paramNames.size > 1 && paramNames.size == regularArgs.size) {
       val prefixes = paramNames.map { it.first }
@@ -232,7 +230,7 @@ object JavaInlayHintsProvider {
 
 private fun List<Int>.areSequential(): Boolean {
   if (size == 0) throw IncorrectOperationException("List is empty")
-  val ordered = (first()..first() + size - 1).toList()
+  val ordered = (first() until first() + size).toList()
   if (ordered.size == size) {
     return zip(ordered).all { it.first == it.second }
   }
@@ -240,12 +238,12 @@ private fun List<Int>.areSequential(): Boolean {
 }
 
 
-private fun inlayInfo(info: CallArgumentInfo, showOnlyIfExistedBefore: Boolean = false): InlayInfo? {
+private fun inlayInfo(info: CallArgumentInfo, showOnlyIfExistedBefore: Boolean = false): InlayInfo {
   return inlayInfo(info.argument, info.parameter, showOnlyIfExistedBefore)
 }
 
 
-private fun inlayInfo(callArgument: PsiExpression, methodParam: PsiParameter, showOnlyIfExistedBefore: Boolean = false): InlayInfo? {
+private fun inlayInfo(callArgument: PsiExpression, methodParam: PsiParameter, showOnlyIfExistedBefore: Boolean = false): InlayInfo {
   val paramName = methodParam.name
   val paramToShow = (if (methodParam.type is PsiEllipsisType) "..." else "") + paramName
   val offset = inlayOffset(callArgument)
@@ -311,7 +309,7 @@ private class CallInfo(val regularArgs: List<CallArgumentInfo>, val varArg: PsiP
     return regularArgs
       .filterNot { isErroneousArg(it) || isArgWithComment(it) }
       .filter { duplicated.contains(it.parameter.typeText()) && it.argument.text != it.parameter.name }
-      .mapNotNull { inlayInfo(it) }
+      .map { inlayInfo(it) }
   }
 
   private fun isErroneousArg(arg : CallArgumentInfo): Boolean {
@@ -339,15 +337,15 @@ private class CallInfo(val regularArgs: List<CallArgumentInfo>, val varArg: PsiP
   fun varargsInlay(substitutor: PsiSubstitutor): InlayInfo? {
     if (varArg == null) return null
 
-    var hasUnassignable = false
+    var hasNonassignable = false
     for (expr in varArgExpressions) {
       if (shouldShowHintsForExpression(expr)) {
         return inlayInfo(varArgExpressions.first(), varArg)
       }
-      hasUnassignable = hasUnassignable || !varArg.isAssignable(expr, substitutor)
+      hasNonassignable = hasNonassignable || !varArg.isAssignable(expr, substitutor)
     }
     
-    return if (hasUnassignable) inlayInfo(varArgExpressions.first(), varArg, showOnlyIfExistedBefore = true) else null
+    return if (hasNonassignable) inlayInfo(varArgExpressions.first(), varArg, showOnlyIfExistedBefore = true) else null
   }
   
 }

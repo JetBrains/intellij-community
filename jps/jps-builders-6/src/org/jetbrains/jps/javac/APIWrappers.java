@@ -36,7 +36,7 @@ public class APIWrappers {
   @Nullable
   public static <T> T unwrap(Class<? extends T> iface, T wrapper) {
     if (wrapper instanceof WrapperDelegateAccessor) {
-      final Object delegate = ((WrapperDelegateAccessor)wrapper).getWrapperDelegate();
+      final Object delegate = ((WrapperDelegateAccessor<?>)wrapper).getWrapperDelegate();
       if (iface.isInstance(delegate)) {
         return iface.cast(delegate);
       }

@@ -25,12 +25,12 @@ Groovy script
         PsiElement({)('{')
         PsiWhiteSpace('\n      ')
         Case section
-          Case label
-            PsiElement(case)('case')
-            PsiWhiteSpace(' ')
+          PsiElement(case)('case')
+          PsiWhiteSpace(' ')
+          Expression list
             Literal
               PsiElement(Integer)('2')
-            PsiElement(:)(':')
+          PsiElement(:)(':')
           PsiElement(new line)('\n        ')
           Variable definitions
             Modifiers
@@ -102,12 +102,12 @@ Groovy script
         PsiElement({)('{')
         PsiWhiteSpace('\n      ')
         Case section
-          Case label
-            PsiElement(case)('case')
-            PsiWhiteSpace(' ')
+          PsiElement(case)('case')
+          PsiWhiteSpace(' ')
+          Expression list
             Literal
               PsiElement(Integer)('2')
-            PsiElement(:)(':')
+          PsiElement(:)(':')
           PsiElement(new line)('\n        ')
           Modifiers
             PsiElement(def)('def')

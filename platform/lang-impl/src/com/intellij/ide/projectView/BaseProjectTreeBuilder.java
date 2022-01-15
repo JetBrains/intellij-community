@@ -77,13 +77,13 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   @Override
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-    return nodeDescriptor instanceof AbstractTreeNode && ((AbstractTreeNode)nodeDescriptor).isAlwaysShowPlus();
+    return nodeDescriptor instanceof AbstractTreeNode && ((AbstractTreeNode<?>)nodeDescriptor).isAlwaysShowPlus();
   }
 
   @Override
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     return nodeDescriptor.getParentDescriptor() == null ||
-           nodeDescriptor instanceof AbstractTreeNode && ((AbstractTreeNode)nodeDescriptor).isAlwaysExpand();
+           nodeDescriptor instanceof AbstractTreeNode && ((AbstractTreeNode<?>)nodeDescriptor).isAlwaysExpand();
   }
 
   @Override
@@ -101,7 +101,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   private static VirtualFile getFileToRefresh(Object element) {
     Object object = element;
     if (element instanceof AbstractTreeNode) {
-      object = ((AbstractTreeNode)element).getValue();
+      object = ((AbstractTreeNode<?>)element).getValue();
     }
 
     return object instanceof PsiDirectory
@@ -271,7 +271,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       return async;
     }
 
-    if (root instanceof ProjectViewNode && file != null && !((ProjectViewNode)root).contains(file)) {
+    if (root instanceof ProjectViewNode && file != null && !((ProjectViewNode<?>)root).contains(file)) {
       async.setError("not applicable");
       return async;
     }

@@ -259,7 +259,7 @@ public final class CustomizationUtil {
       ActionUrl url = new ActionUrl();
       url.setGroupPath(groupPath);
       final Object userObject = child.getUserObject();
-      url.setComponent(userObject instanceof Pair ? ((Pair)userObject).first : userObject);
+      url.setComponent(userObject instanceof Pair ? ((Pair<?, ?>)userObject).first : userObject);
       result.add(url);
     }
     return result.toArray(new ActionUrl[0]);

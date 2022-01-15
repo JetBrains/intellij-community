@@ -102,13 +102,16 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   public void addNestedManager(@NotNull ContentManagerImpl manager) {
     myNestedManagers.add(manager);
-    Disposer.register(this, manager);
     Disposer.register(manager, new Disposable() {
       @Override
       public void dispose() {
-        myNestedManagers.remove(manager);
+        removeNestedManager(manager);
       }
     });
+  }
+
+  public void removeNestedManager(@NotNull ContentManagerImpl manager) {
+    myNestedManagers.remove(manager);
   }
 
   @Override

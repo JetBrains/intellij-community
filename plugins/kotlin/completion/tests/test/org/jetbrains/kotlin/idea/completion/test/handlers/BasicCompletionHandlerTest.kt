@@ -64,6 +64,16 @@ class BasicCompletionHandlerTest : CompletionHandlerTestBase() {
 
     fun testNamedParametersCompletion() = doTest()
 
+    fun testNamedParametersAreNotProperlyOrdered() = doTest()
+
+    fun testNamedParameterBeforeAnotherNamedParameter() = doTest() // The test checks parsing error
+
+    fun testNamedParameterCompletionWithLeadingSpace() = doTest()
+
+    fun testNamedParameterManualRenameCompletion() = doTest()
+
+    fun testNamedParameterCompletionWithTrailingCommaAndSpace() = doTest()
+
     fun testNamedParametersCompletionOnEqual() = doTest(0, "paramTest =", "paramTest =", null, '=')
 
     fun testNamedParameterKeywordName() = doTest(1, "class =", "class =", null, '\n')

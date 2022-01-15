@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.formatter.blocks;
 
 import com.intellij.formatting.*;
@@ -212,7 +212,7 @@ public class GroovyBlockGenerator {
       return getGenericBlocks(astNodes);
     }
 
-    if (blockPsi instanceof GrSwitchStatement) {
+    if (blockPsi instanceof GrSwitchElement) {
       final ArrayList<Block> subBlocks = new ArrayList<>();
       final ArrayList<Block> bodyBlocks = new ArrayList<>();
       List<ASTNode> astNodes = visibleChildren(myNode);
@@ -420,6 +420,9 @@ public class GroovyBlockGenerator {
         i--;
       }
       else {
+        if ("foo".equals(childNode.getText())) {
+          int x = 1;
+        }
         subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
       }
     }

@@ -479,7 +479,7 @@ public class FileTreeModelBuilder {
         if (element instanceof PsiFile) {
           PsiFile psiFile = null;
           if (node instanceof BasePsiNode) {
-            psiFile = ((BasePsiNode)node).getContainingFile();
+            psiFile = ((BasePsiNode<?>)node).getContainingFile();
           }
           else if (node instanceof FileNode) { //non java files
             psiFile = ((PsiFile)node.getPsiElement());

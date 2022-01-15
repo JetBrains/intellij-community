@@ -81,14 +81,40 @@ class InterpreterInterface(BaseInterpreterInterface):
 
     def do_add_exec(self, codeFragment):
         command = Command(self.interpreter, codeFragment)
-        command.run()
-        return command.more
+         # doesn't work correctly in python version < 3
+        if sys.version_info < (3,):
+            command.run()
+            return command.more, False
+
+        with CommandExceptionManager(command):
+            command.run()
+        return command.more, command.exception_occurred
 
     def get_namespace(self):
         return self.namespace
 
     def close(self):
         sys.exit(0)
+
+
+class CommandExceptionManager:
+    def __init__(self, cls):
+        self.original_hook = sys.excepthook
+        self.command = cls
+
+    def __enter__(self):
+        def info(type, value, tb):
+            self.command.exception_occurred = True
+            if (not sys.stderr.isatty() or
+                    not sys.stdin.isatty()):
+                self.original_hook(type, value, tb)
+            else:
+                traceback.print_exception(type, value, tb)
+        sys.excepthook = info
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.excepthook = self.original_hook
 
 
 class _ProcessExecQueueHelper:

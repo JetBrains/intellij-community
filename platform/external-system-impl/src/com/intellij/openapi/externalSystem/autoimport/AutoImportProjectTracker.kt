@@ -62,7 +62,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
 
   private fun createProjectReloadListener(projectData: ProjectData) =
     object : ExternalSystemProjectRefreshListener {
-      val id = "ProjectTracker: ${projectData.projectAware.projectId.readableName}"
+      val id = "ProjectTracker: ${projectData.projectAware.projectId.debugName}"
 
       override fun beforeProjectRefresh() {
         projectReloadOperation.startTask(id)
@@ -143,7 +143,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
     ExternalSystemUtil.confirmLoadingUntrustedProject(project, isFirstLoad, systemIds)
 
     for (projectData in projectsToReload) {
-      LOG.debug("${projectData.projectAware.projectId.readableName}: Project reload")
+      LOG.debug("${projectData.projectAware.projectId.debugName}: Project reload")
       val hasUndefinedModifications = !projectData.status.isUpToDate()
       val settingsContext = projectData.settingsTracker.getSettingsContext()
       val context = ProjectReloadContext(!smart, hasUndefinedModifications, settingsContext)
@@ -182,7 +182,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
 
   override fun register(projectAware: ExternalSystemProjectAware) {
     val projectId = projectAware.projectId
-    val projectIdName = projectId.readableName
+    val projectIdName = projectId.debugName
     val activationProperty = AtomicBooleanProperty(false)
     val projectStatus = ProjectStatus(debugName = projectIdName)
     val parentDisposable = Disposer.newDisposable(projectIdName)

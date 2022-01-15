@@ -30,7 +30,7 @@ import javax.swing.tree.TreeSelectionModel
 
 internal class ModulesTree(
     private val targetModuleSetter: TargetModuleSetter
-) : Tree(DefaultMutableTreeNode(TargetModules.None)), DataProvider, CopyProvider, Displayable<ModulesTree.ViewModel> {
+) : Tree(DefaultMutableTreeNode(TargetModules.None)), DataProvider, CopyProvider, Displayable<TreeModel> {
 
     private var latestTargetModules: TargetModules? = null
 
@@ -78,21 +78,17 @@ internal class ModulesTree(
         val traceInfo: TraceInfo
     )
 
-    override suspend fun display(viewModel: ViewModel) = withContext(Dispatchers.AppUI) {
-        if (model.root == null || model.getChildCount(model.root) == 0)
-            targetModuleSetter.setTargetModules(getTargetModulesFrom(viewModel.pendingSelectionPath))
-
+    override suspend fun display(viewModel: TreeModel) = withContext(Dispatchers.AppUI) {
         setPaintBusy(true)
-
-        logDebug(viewModel.traceInfo, "ModulesTree#display()") { "Tree populated. Found selection path: '${viewModel.pendingSelectionPath}'" }
-
+        val wasEmpty = model.root == null || model.getChildCount(model.root) == 0
         // Swapping model resets the selection — but, we set the right selection just afterwards
         removeTreeSelectionListener(onTreeItemSelected)
-        model = viewModel.treeModel
-        selectionModel.selectionPath = viewModel.pendingSelectionPath
+        val selectionPath = selectionModel.selectionPath
+        model = viewModel
+        selectionModel.selectionPath = selectionPath
         addTreeSelectionListener(onTreeItemSelected)
+        if (wasEmpty) TreeUtil.expandAll(this@ModulesTree)
 
-        TreeUtil.expandAll(this@ModulesTree)
         updateUI()
         setPaintBusy(false)
     }

@@ -16,9 +16,10 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog
+import com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel
+import com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel.ChangelistData
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.CollectConsumer
 import com.intellij.util.Consumer
@@ -50,7 +51,6 @@ import git4idea.util.LocalChangesWouldBeOverwrittenHelper
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.nio.charset.Charset
-import java.util.*
 import javax.swing.event.HyperlinkEvent
 
 private val LOG: Logger = Logger.getInstance("#git4idea.stash.GitStashUtils")
@@ -108,15 +108,14 @@ object GitStashOperations {
 
   @JvmStatic
   fun viewStash(project: Project, stash: StashInfo, compareWithLocal: Boolean) {
-    val emptyChangeList = CommittedChangeListImpl(stash.stash, stash.message, "", -1, Date(0), emptyList())
-    val dialog = ChangeListViewerDialog(project, emptyChangeList, null)
-    dialog.loadChangesInBackground {
+    val panel = LoadingCommittedChangeListPanel(project)
+    panel.loadChangesInBackground {
       val changes = GitChangeUtils.getRevisionChanges(project, GitUtil.getRootForFile(project, stash.root), stash.hash.asString(),
-                                                      true, compareWithLocal, false)
-      ChangeListViewerDialog.ChangelistData(changes, null)
+        true, compareWithLocal, false)
+      ChangelistData(changes, null)
     }
-    dialog.title = GitBundle.message("unstash.view.dialog.title", stash.stash)
-    dialog.show()
+
+    ChangeListViewerDialog.show(project, GitBundle.message("unstash.view.dialog.title", stash.stash), panel)
   }
 
   @RequiresBackgroundThread

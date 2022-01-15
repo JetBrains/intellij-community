@@ -4,6 +4,7 @@ package com.intellij.internal.ui.uiDslShowcase
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.text
 
 @Demo(title = "Comments",
   description = "Comment is a gray (depends on color scheme) text which can be assigned to cell (placed under cell), rows or placed in any cell directly")
@@ -12,12 +13,12 @@ fun demoComments(): DialogPanel {
     row {
       textField()
         .comment("Comment to textField1")
-        .applyToComponent { text = "textField1" }
+        .text("textField1")
       textField()
-        .applyToComponent { text = "textField2" }
+        .text("textField2")
       textField()
         .comment("Comment to textField3")
-        .applyToComponent { text = "textField3" }
+        .text("textField3")
     }
 
     row("Row2:") {

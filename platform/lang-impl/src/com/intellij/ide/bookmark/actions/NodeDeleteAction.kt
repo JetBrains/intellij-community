@@ -23,4 +23,8 @@ internal class NodeDeleteAction : DumbAwareAction(messagePointer("button.delete"
     val nodes = view.selectedNodes ?: return
     BookmarksListProvider.EP.findFirstSafe(project) { it.canDelete(nodes) }?.performDelete(nodes, view.tree)
   }
+
+  init {
+    isEnabledInModalContext = true
+  }
 }

@@ -38,7 +38,7 @@ public class NegatingComparable<T extends NegatingComparable<T>> implements Comp
   @Override
   public int compareTo(@NotNull T o) {
     final Comparable w1 = myWeigh;
-    final Comparable w2 = ((NegatingComparable)o).myWeigh;
+    final Comparable w2 = ((NegatingComparable<?>)o).myWeigh;
     if (w1 == null && w2 == null) return 0;
     if (w1 == null) return 1;
     if (w2 == null) return -1;

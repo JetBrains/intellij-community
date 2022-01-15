@@ -196,4 +196,5 @@ public interface GroovyTokenTypes {
   IElementType kVOID = KW_VOID;
   IElementType kVOLATILE = KW_VOLATILE;
   IElementType kWHILE = KW_WHILE;
+  IElementType kYIELD = KW_YIELD;
 }

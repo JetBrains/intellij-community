@@ -130,8 +130,7 @@ public class MavenPlugin implements Serializable {
   }
 
   private static boolean isCompileExecution(Execution each) {
-    return "default-compile".equals(each.getExecutionId()) || "default-testCompile".equals(each.getExecutionId())
-           || each.getExecutionId().startsWith("compile-");
+    return "default-compile".equals(each.getExecutionId()) || (each.getGoals() != null && each.getGoals().contains("compile"));
   }
 
   public String getDisplayString() {

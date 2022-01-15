@@ -7,7 +7,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertSame
 
 private const val BOOKMARK_ICON_STRING = "IconWrapperWithTooltip:BookmarkIcon"
-private const val MNEMONIC_ICON_PREFIX = "IconWrapperWithTooltip:MnemonicIcon:"
+private const val MNEMONIC_ICON_PREFIX = "IconWrapperWithTooltip:BookmarkMnemonicIcon:"
 
 private fun testIcons(iconSupplier: (BookmarkType) -> Icon) = BookmarkType.values().forEach {
   val icon = iconSupplier(it)

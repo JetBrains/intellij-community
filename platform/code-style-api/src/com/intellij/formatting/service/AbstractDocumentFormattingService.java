@@ -23,7 +23,6 @@ import java.util.Set;
 /**
  * Base class for synchronous document formatting services.
  */
-@ApiStatus.Experimental
 public abstract class AbstractDocumentFormattingService implements FormattingService {
   private final static Key<Document> DOCUMENT_KEY = Key.create("formatting.service.document");
 
@@ -71,6 +70,15 @@ public abstract class AbstractDocumentFormattingService implements FormattingSer
   }
 
 
+  /**
+   * Formats the document within the specified ranges.
+   *
+   * @param document                The document to format.
+   * @param formattingRanges        Ranges in which the document should be formatted.
+   * @param formattingContext       Formatting information, see {@link FormattingContext}
+   * @param canChangeWhiteSpaceOnly True if only whitespace can be changed (indents, spacing)
+   * @param quickFormat             True if only quick adjustments are allowed, e.g. after a quick fix or refactoring.
+   */
   public abstract void formatDocument(@NotNull Document document,
                                       @NotNull List<TextRange> formattingRanges,
                                       @NotNull FormattingContext formattingContext,
@@ -78,6 +86,7 @@ public abstract class AbstractDocumentFormattingService implements FormattingSer
                                       boolean quickFormat);
 
 
+  @ApiStatus.Internal
   public static void setDocument(@NotNull PsiFile file, @NotNull Document document) {
     file.putUserData(DOCUMENT_KEY, document);
   }

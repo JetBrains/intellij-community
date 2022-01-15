@@ -86,7 +86,7 @@ public final class PostfixTemplatesUtils {
 
   public static void writeExternalTemplate(@NotNull PostfixTemplate template, @NotNull Element parentElement) {
     if (template instanceof EditablePostfixTemplateWithMultipleExpressions) {
-      parentElement.setAttribute(TOPMOST_ATTR, String.valueOf(((EditablePostfixTemplateWithMultipleExpressions)template).isUseTopmostExpression()));
+      parentElement.setAttribute(TOPMOST_ATTR, String.valueOf(((EditablePostfixTemplateWithMultipleExpressions<?>)template).isUseTopmostExpression()));
       Element conditionsTag = new Element(CONDITIONS_TAG);
 
       //noinspection unchecked

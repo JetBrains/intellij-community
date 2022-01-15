@@ -46,10 +46,7 @@ class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
                 suspendModifier,
                 KotlinBundle.message("redundant.suspend.modifier"),
                 ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                IntentionWrapper(
-                    RemoveModifierFix(function, KtTokens.SUSPEND_KEYWORD, isRedundant = true),
-                    function.containingFile
-                )
+                IntentionWrapper(RemoveModifierFix(function, KtTokens.SUSPEND_KEYWORD, isRedundant = true))
             )
         })
     }

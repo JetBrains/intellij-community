@@ -28,7 +28,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @deprecated use {@link SimpleGoToChangePopupAction}
+ * @deprecated use {@link PresentableGoToChangePopupAction}
  */
 @Deprecated
 public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain>

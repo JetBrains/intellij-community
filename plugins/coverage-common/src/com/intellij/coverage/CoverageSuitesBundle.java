@@ -195,7 +195,7 @@ public class CoverageSuitesBundle {
     Module[] modules = Arrays.stream(mySuites).filter(suite -> suite instanceof BaseCoverageSuite)
       .map(suite -> ((BaseCoverageSuite)suite).getConfiguration())
       .filter(configuration -> configuration instanceof ModuleBasedConfiguration)
-      .map(configuration -> ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule())
+      .map(configuration -> ((ModuleBasedConfiguration<?, ?>)configuration).getConfigurationModule().getModule())
       .toArray(Module[]::new);
 
     if (modules.length == 0 || ArrayUtil.find(modules, null) > -1) {
