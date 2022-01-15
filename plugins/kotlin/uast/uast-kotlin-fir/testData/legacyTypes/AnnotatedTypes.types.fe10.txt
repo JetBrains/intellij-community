@@ -3,7 +3,7 @@ UFile (package = ) [public final class AnnotatedTypesKt {...]
         UMethod (name = foo) [public static final fun foo(@org.jetbrains.annotations.NotNull list: java.util.List<java.lang.String>) : void {...}]
             UParameter (name = list) [@org.jetbrains.annotations.NotNull var list: java.util.List<java.lang.String>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit
                 UDeclarationsExpression [var a: java.lang.String = list[2]]
                     ULocalVariable (name = a) [var a: java.lang.String = list[2]]
                         UArrayAccessExpression [list[2]] : {@MyAnnotation(a = 1, b = str, c = TYPE)}PsiType:String
