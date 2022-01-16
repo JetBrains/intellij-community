@@ -115,8 +115,7 @@ public interface ToolWindow extends BusyObject {
   /**
    * @throws IllegalStateException if tool window isn't installed.
    */
-  @NotNull
-  ToolWindowType getType();
+  @NotNull ToolWindowType getType();
 
   /**
    * @throws IllegalStateException if tool window isn't installed.
@@ -126,8 +125,7 @@ public interface ToolWindow extends BusyObject {
   /**
    * @return Window icon. Returns {@code null} if window has no icon.
    */
-  @Nullable
-  Icon getIcon();
+  @Nullable Icon getIcon();
 
   /**
    * Sets new window icon.
@@ -173,8 +171,7 @@ public interface ToolWindow extends BusyObject {
 
   void setDefaultContentUiType(@NotNull ToolWindowContentUiType type);
 
-  @NotNull
-  ToolWindowContentUiType getContentUiType();
+  @NotNull ToolWindowContentUiType getContentUiType();
 
   void installWatcher(ContentManager contentManager);
 
@@ -183,14 +180,11 @@ public interface ToolWindow extends BusyObject {
    *
    * @return component which represents window content.
    */
-  @NotNull
-  JComponent getComponent();
+  @NotNull JComponent getComponent();
 
-  @NotNull
-  ContentManager getContentManager();
+  @NotNull ContentManager getContentManager();
 
-  @Nullable
-  ContentManager getContentManagerIfCreated();
+  @Nullable ContentManager getContentManagerIfCreated();
 
   void addContentManagerListener(@NotNull ContentManagerListener listener);
 
@@ -209,8 +203,7 @@ public interface ToolWindow extends BusyObject {
 
   void showContentPopup(@NotNull InputEvent inputEvent);
 
-  @NotNull
-  Disposable getDisposable();
+  @NotNull Disposable getDisposable();
 
   default void setHelpId(@NotNull @NonNls String helpId) {
   }

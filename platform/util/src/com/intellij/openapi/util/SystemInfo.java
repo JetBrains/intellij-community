@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -92,26 +92,7 @@ public final class SystemInfo {
   }
 
   private static final NotNullLazyValue<Boolean> ourHasXdgMime = PathExecLazyValue.create("xdg-mime");
-  private static final NullableLazyValue<Long> ourWindowsBuild = new NullableLazyValue<Long>() {
-    @Override
-    protected @Nullable Long compute() {
-      if (!isWin10OrNewer) {
-        return null;
-      }
-      try {
-        // This key is undocumented, but mentioned heavily over the Internet and used by lots of people
-        // It was there since NT: https://web.archive.org/web/20220113230741/https://i.imgur.com/sGCtErh.png
-        // Exists in XP, 10 and 11
-        return Long.parseLong(Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE,
-                                                                  "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
-                                                                  "CurrentBuildNumber"));
-      }
-      catch (NumberFormatException | Win32Exception formatException) {
-        Logger.getInstance(SystemInfo.class).warn("Bad win version", formatException);
-        return null;
-      }
-    }
-  };
+  private static volatile Long ourWindowsBuild;
 
   public static boolean hasXdgMime() {
     return isXWindow && ourHasXdgMime.getValue();
@@ -137,7 +118,41 @@ public final class SystemInfo {
    *
    */
   public static @Nullable Long getWinBuildNumber() {
-    return ourWindowsBuild.getValue();
+    if (!isWin10OrNewer) {
+      return null;
+    }
+
+    Long result = ourWindowsBuild;
+    return result == null ? getOrComputeWindowsBuildNumber() : result;
+  }
+
+  // do not use NullableLazyValue
+  private static synchronized @Nullable Long getOrComputeWindowsBuildNumber() {
+    Long result = ourWindowsBuild;
+    if (result != null) {
+      return result;
+    }
+
+    try {
+      // This key is undocumented, but mentioned heavily over the Internet and used by lots of people
+      // It was there since NT: https://web.archive.org/web/20220113230741/https://i.imgur.com/sGCtErh.png
+      // Exists in XP, 10 and 11
+      result = Long.parseLong(Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE,
+                                                                "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+                                                                "CurrentBuildNumber"));
+    }
+    catch (Exception e) {
+      // do not load Win32Exception as part of class bytecode initialization
+      //noinspection InstanceofCatchParameter
+      if (e instanceof NumberFormatException || e instanceof Win32Exception) {
+        Logger.getInstance(SystemInfo.class).warn("Bad win version", e);
+      }
+      else {
+        throw e;
+      }
+    }
+    ourWindowsBuild = result;
+    return result;
   }
 
   public static @NotNull String getMacOSMajorVersion() {
