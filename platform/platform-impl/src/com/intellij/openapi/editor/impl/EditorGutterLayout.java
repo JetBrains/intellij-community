@@ -140,6 +140,8 @@ public class EditorGutterLayout {
         .showIf(() -> myEditorGutter.isShowGapAfterAnnotations()),
       area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationGuttersSize),
 
+      areaGap(4)
+        .showIf(() -> myEditorGutter.getLeftFreePaintersAreaWidth() + myEditorGutter.getRightFreePaintersAreaWidth() > 0),
       area(LEFT_FREE_PAINTERS_AREA, myEditorGutter::getLeftFreePaintersAreaWidth),
       area(RIGHT_FREE_PAINTERS_AREA, myEditorGutter::getRightFreePaintersAreaWidth),
 
@@ -155,6 +157,11 @@ public class EditorGutterLayout {
   @NotNull
   private GutterArea areaGap() {
     return area(GAP_BETWEEN_AREAS, EditorGutterComponentImpl::getGapBetweenAreas);
+  }
+
+  @NotNull
+  private GutterArea areaGap(int width) {
+    return area(GAP_BETWEEN_AREAS, () -> width); //type something
   }
 
   private List<GutterArea> getExperimentalGutterLayout() {
