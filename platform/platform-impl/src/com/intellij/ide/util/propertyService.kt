@@ -133,7 +133,10 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
   }
 }
 
-@State(name = "PropertyService", storages = [Storage(value = StoragePathMacros.CACHE_FILE)])
+@State(name = "PropertyService", storages = [
+  Storage(value = StoragePathMacros.NON_ROAMABLE_FILE),
+  Storage(value = StoragePathMacros.CACHE_FILE, deprecated = true),
+])
 internal class AppPropertyService : BasePropertyService()
 
 @State(name = "PropertiesComponent", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
