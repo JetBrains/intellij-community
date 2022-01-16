@@ -98,6 +98,9 @@ class SubpackagesIndexService(private val project: Project): Disposable {
         }
 
         fun hasSubpackages(fqName: FqName, scope: GlobalSearchScope): Boolean {
+            val cachedPartialFqNames: MutableMap<FqName, Boolean>? = cachedPartialFqNames(scope)
+            cachedPartialFqNames?.get(fqName)?.takeIf { !it }?.let { return false }
+
             val fqNames = fqNameByPrefix[fqName]
 
             val knownNotContains = fqNames.isKnownNotContains(fqName, scope)
@@ -107,7 +110,15 @@ class SubpackagesIndexService(private val project: Project): Disposable {
 
             val any = fqNames.any { packageWithFilesFqName ->
                 ProgressManager.checkCanceled()
-                PackageIndexUtil.containsFilesWithExactPackage(packageWithFilesFqName, scope, project)
+                if (cachedPartialFqNames?.get(packageWithFilesFqName) == false) {
+                    // there are production sources, test sources in module, therefore we can 100% rely only on a negative value
+                    return@any false
+                }
+                val containsFilesWithExactPackage = PackageIndexUtil.containsFilesWithExactPackage(packageWithFilesFqName, scope, project)
+                if (!containsFilesWithExactPackage) {
+                    cachedPartialFqNames?.put(packageWithFilesFqName, containsFilesWithExactPackage)
+                }
+                containsFilesWithExactPackage
             }
             return any
         }
@@ -118,10 +129,7 @@ class SubpackagesIndexService(private val project: Project): Disposable {
                     size > 1 && run {
                 val partialFqName = KotlinPartialPackageNamesIndex.toPartialFqName(fqName)
 
-                val cachedPartialFqNames: MutableMap<FqName, Boolean>? =
-                    scope.safeAs<ModuleSourceScope>()?.module?.cacheByProvider(dependencies) {
-                        Collections.synchronizedMap(mutableMapOf<FqName, Boolean>())
-                    }
+                val cachedPartialFqNames: MutableMap<FqName, Boolean>? = cachedPartialFqNames(scope)
                 cachedPartialFqNames?.get(partialFqName)?.let { return@run it }
                 val notContains = !PackageIndexUtil.containsFilesWithPartialPackage(partialFqName, scope)
                 cachedPartialFqNames?.put(partialFqName, notContains)
@@ -129,9 +137,16 @@ class SubpackagesIndexService(private val project: Project): Disposable {
             })
         }
 
+        private fun cachedPartialFqNames(scope: GlobalSearchScope): MutableMap<FqName, Boolean>? =
+            scope.safeAs<ModuleSourceScope>()?.module?.cacheByProvider(dependencies) {
+                Collections.synchronizedMap(mutableMapOf<FqName, Boolean>())
+            }
+
         fun packageExists(fqName: FqName): Boolean = fqName in allPackageFqNames || fqNameByPrefix.containsKey(fqName)
 
         fun getSubpackages(fqName: FqName, scope: GlobalSearchScope, nameFilter: (Name) -> Boolean): Collection<FqName> {
+            val cachedPartialFqNames: MutableMap<FqName, Boolean>? = cachedPartialFqNames(scope)
+            cachedPartialFqNames?.get(fqName)?.takeIf { !it }?.let { return emptyList() }
             val fqNames = fqNameByPrefix[fqName]
 
             if (fqNames.isKnownNotContains(fqName, scope)) {
@@ -145,9 +160,15 @@ class SubpackagesIndexService(private val project: Project): Disposable {
                 val candidateSubPackageShortName = filesFqName.pathSegments()[len]
                 if (candidateSubPackageShortName in existingSubPackagesShortNames || !nameFilter(candidateSubPackageShortName)) continue
 
+                if (cachedPartialFqNames?.get(filesFqName) == false) {
+                    continue
+                }
+
                 val existsInThisScope = PackageIndexUtil.containsFilesWithExactPackage(filesFqName, scope, project)
                 if (existsInThisScope) {
                     existingSubPackagesShortNames.add(candidateSubPackageShortName)
+                } else {
+                    cachedPartialFqNames?.run { put(filesFqName, false) }
                 }
             }
 
