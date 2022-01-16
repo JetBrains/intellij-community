@@ -21,7 +21,8 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val typedCharsField = IntEventField("typed_chars")
     private val hitsField = IntEventField("hits")
     private val generatorTypeField = ClassEventField("generator")
-    private val languageField = EventFields.String("language", NewProjectWizardLanguageStep.defaultLanguages.keys.toList())
+    private val languageField = EventFields.String("language",
+                                                   (NewProjectWizardLanguageStep.defaultLanguages.keys + NewProjectWizardLanguageStep.communityLanguages.keys).toList())
     private val gitField = EventFields.Boolean("git")
     private val isSucceededField = EventFields.Boolean("project_created")
     private val inputMaskField = EventFields.Long("input_mask")
