@@ -198,6 +198,18 @@ class GitMergeDialog(private val project: Project,
       })
   }
 
+  /**
+   * ```
+   * $ git branch --all
+   * |  master
+   * |  feature
+   * |* checked-out
+   * |+ checked-out-by-worktree
+   * |  remotes/origin/master
+   * |  remotes/origin/feature
+   * |  remotes/origin/HEAD -> origin/master
+   * ```
+   */
   @RequiresBackgroundThread
   private fun loadUnmergedBranches(root: VirtualFile): List<@NlsSafe String>? {
     var result: List<String>? = null
@@ -424,7 +436,7 @@ class GitMergeDialog(private val project: Project,
 
   companion object {
     private val LOG = logger<GitMergeDialog>()
-    private val LINK_REF_REGEX = Pattern.compile(".+\\s->\\s.+")
+    private val LINK_REF_REGEX = Pattern.compile(".+\\s->\\s.+") // aka 'symrefs'
     private val BRANCH_NAME_REGEX = Pattern.compile(". (\\S+)\\s*")
 
     @NlsSafe
