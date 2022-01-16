@@ -210,7 +210,8 @@ internal class GridImpl : Grid {
           val componentWidth = layoutData.getPaddedWidth(layoutCellData) + constraints.visualPaddings.width
           val baseline: Int
           if (componentWidth >= 0) {
-            baseline = cell.component.getBaseline(componentWidth, layoutCellData.preferredSize.height)
+            baseline = cell.constraints.componentHelper?.getBaseline(componentWidth, layoutCellData.preferredSize.height)
+                       ?: cell.component.getBaseline(componentWidth, layoutCellData.preferredSize.height)
             // getBaseline changes preferredSize, at least for JLabel
             layoutCellData.preferredSize.height = cell.component.preferredSize.height
           }
@@ -229,10 +230,22 @@ internal class GridImpl : Grid {
           grid.calculateLayoutDataStep3()
           layoutCellData.preferredSize.height = grid.layoutData.preferredHeight
           if (grid.layoutData.dimension.height == 1 && isSupportedBaseline(constraints)) {
-            val gridRowBaselineData = grid.layoutData.baselineData.get(constraints.verticalAlign)
-            if (gridRowBaselineData != null) {
-              val baseline = calculateBaseline(layoutCellData.preferredSize.height, layoutCellData.cell.constraints.verticalAlign,
-                gridRowBaselineData)
+            // Calculate baseline for grid
+            val gridBaselines = VerticalAlign.values()
+              .mapNotNull {
+                var result: Pair<VerticalAlign, RowBaselineData>? = null
+                if (it != VerticalAlign.FILL) {
+                  val baselineData = grid.layoutData.baselineData.get(it)
+                  if (baselineData != null) {
+                    result = Pair(it, baselineData)
+                  }
+                }
+                result
+              }
+
+            if (gridBaselines.size == 1) {
+              val (verticalAlign, gridBaselineData) = gridBaselines[0]
+              val baseline = calculateBaseline(layoutCellData.preferredSize.height, verticalAlign, gridBaselineData)
               layoutCellData.baseline = baseline
               layoutData.baselineData.registerBaseline(layoutCellData, baseline)
             }
@@ -261,12 +274,14 @@ internal class GridImpl : Grid {
    * Step 4 of [layoutData] calculations
    */
   fun calculateLayoutDataStep4(height: Int) {
-    layoutData.rowsCoord = layoutData.rowsSizeCalculator.calculateCoords(height , resizableRows)
+    layoutData.rowsCoord = layoutData.rowsSizeCalculator.calculateCoords(height, resizableRows)
 
     for (layoutCellData in layoutData.visibleCellsData) {
       val cell = layoutCellData.cell
       if (cell is GridCell) {
-        cell.content.calculateLayoutDataStep4(layoutData.getFullPaddedHeight(layoutCellData))
+        val subGridHeight = if (cell.constraints.verticalAlign == VerticalAlign.FILL)
+          layoutData.getFullPaddedHeight(layoutCellData) else cell.content.layoutData.preferredHeight
+        cell.content.calculateLayoutDataStep4(subGridHeight)
       }
     }
   }

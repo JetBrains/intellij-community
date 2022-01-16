@@ -13,7 +13,10 @@ interface RTBarAction {
   }
 
   fun traceLog(logger: Logger, e: AnActionEvent, additionalInfo: String?=null) {
-    //"RunToolbar UPDATE slotId: ${e.id()} ${"visible: ${e.presentation.isVisible}, enable: ${e.presentation.isEnabled}" }; ${additionalInfo ?: ""} "
+/*    if (RunToolbarProcess.logNeeded) {
+      logger.info(
+        "RunToolbar UPDATE slot: ${e.id()} ${"visible: ${e.presentation.isVisible}, enable: ${e.presentation.isEnabled}"}; ${additionalInfo ?: ""} ")
+    }*/
   }
 
   fun getRightSideType(): Type = Type.STABLE

@@ -1,10 +1,10 @@
 {
     "mainFile": "Main.kt",
     "usages": [
-        "Doo.kt",
-        "Foo.kt",
         "Child.kt",
         "ChildUsage.kt",
+        "Doo.kt",
+        "Foo.kt",
         "TypeAliasUsage.kt"
     ]
 }

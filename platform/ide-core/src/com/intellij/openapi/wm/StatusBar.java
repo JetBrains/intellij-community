@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 
 /**
  * Status bar shown on the bottom of IDE frame.
@@ -153,4 +154,18 @@ public interface StatusBar extends StatusBarInfo, Disposable {
   void startRefreshIndication(@NlsContexts.Tooltip String tooltipText);
 
   void stopRefreshIndication();
+
+  default void addListener(@NotNull StatusBarListener listener, @NotNull Disposable parentDisposable) {
+  }
+
+  @Nullable
+  default Collection<StatusBarWidget> getAllWidgets() {
+    return null;
+  }
+
+  @NonNls
+  @Nullable
+  default String getWidgetAnchor(@NonNls @NotNull String id) {
+    return null;
+  }
 }

@@ -23,7 +23,6 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.data.SingleTaskController
-import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
@@ -42,13 +41,9 @@ abstract class FullCommitDetailsListPanel(
 
   private val changesBrowserWithLoadingPanel = ChangesBrowserWithLoadingPanel(project, parent)
   private val changesLoadingController = ChangesLoadingController(project, parent, modalityState, changesBrowserWithLoadingPanel,
-                                                                  ::loadChanges)
-  private val commitDetails = object : CommitDetailsListPanel<CommitDetailsPanel>(parent) {
-    init {
-      border = JBUI.Borders.empty()
-    }
-
-    override fun getCommitDetailsPanel() = CommitDetailsPanel(project) {}
+    ::loadChanges)
+  private val commitDetails = CommitDetailsListPanel(project, parent).apply {
+    border = JBUI.Borders.empty()
   }
 
   init {

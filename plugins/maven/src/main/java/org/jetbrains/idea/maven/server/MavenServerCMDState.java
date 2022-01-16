@@ -18,7 +18,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
-import gnu.trove.TIntHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -182,7 +181,6 @@ public class MavenServerCMDState extends CommandLineState {
     classPath.add(PathUtil.getJarPathForClass(StringUtilRt.class));//util-rt
     classPath.add(PathUtil.getJarPathForClass(NotNull.class));//annotations-java5
     classPath.add(PathUtil.getJarPathForClass(Element.class));//JDOM
-    classPath.add(PathUtil.getJarPathForClass(TIntHashSet.class));//Trove
     return classPath;
   }
 

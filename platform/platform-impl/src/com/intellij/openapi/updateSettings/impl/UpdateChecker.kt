@@ -637,7 +637,7 @@ object UpdateChecker {
       UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, updatedPlugins, incompatiblePlugins)
 
       if (showNotification) {
-        IdeUpdateUsageTriggerCollector.trigger("notification.shown")
+        IdeUpdateUsageTriggerCollector.NOTIFICATION_SHOWN.log(project)
         val message = IdeBundle.message(
           "updates.new.build.notification.title",
           ApplicationNamesInfo.getInstance().fullProductName,
@@ -650,7 +650,7 @@ object UpdateChecker {
           "",
           message,
           NotificationAction.createSimpleExpiring(IdeBundle.message("updates.notification.update.action")) {
-            IdeUpdateUsageTriggerCollector.trigger("notification.clicked")
+            IdeUpdateUsageTriggerCollector.NOTIFICATION_CLICKED.log(project)
             runnable()
           })
       }

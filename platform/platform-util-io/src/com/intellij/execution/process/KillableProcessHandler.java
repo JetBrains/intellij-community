@@ -46,8 +46,10 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   }
 
   /**
-   * Starts a process with a {@link WinRunnerMediator mediator} when {@code withMediator} is set to {@code true} and the platform is Windows.
+   * @deprecated please use {@link KillableProcessHandler#KillableProcessHandler(GeneralCommandLine)}
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public KillableProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
     this(mediate(commandLine, withMediator, false));
   }
@@ -75,6 +77,11 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
     myMediatedProcess = false;
   }
 
+  /**
+   * @deprecated just don't use this method
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @NotNull
   protected static GeneralCommandLine mediate(@NotNull GeneralCommandLine commandLine, boolean withMediator, boolean showConsole) {
     if (withMediator && SystemInfo.isWindows) {
@@ -207,9 +214,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
             OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLine());
             return true;
           }
-          return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
-            return ProcessService.getInstance().sendWinProcessCtrlC(myProcess);
-          });
+          return getProcessService().sendWinProcessCtrlC(myProcess);
         }
         catch (Throwable e) {
           if (!myProcess.isAlive()) {
@@ -245,6 +250,13 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
     return false;
   }
 
+  private static @NotNull ProcessService getProcessService() {
+    // Without non-cancelable section "ProcessService.getInstance()" will fail under a canceled progress.
+    return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
+      return ProcessService.getInstance();
+    });
+  }
+
   /**
    * Writes the INTR (interrupt) character to process's stdin (PTY). When a PTY receives the INTR character,
    * it raises a SIGINT signal for all processes in the foreground job associated with the PTY. The character itself is then discarded.
@@ -257,6 +269,9 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    * @return true if the character has been written successfully
    */
   private boolean sendInterruptToPtyProcess() {
+    if (!getProcessService().hasControllingTerminal(myProcess)) {
+      return false;
+    }
     OutputStream outputStream = myProcess.getOutputStream();
     if (outputStream != null) {
       try {

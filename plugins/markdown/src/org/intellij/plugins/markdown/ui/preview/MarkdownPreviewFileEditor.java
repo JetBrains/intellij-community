@@ -277,7 +277,7 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
 
   private void attachHtmlPanel() {
     final var settings = MarkdownSettings.getInstance(myProject);
-    myPanel = retrievePanelProvider(settings).createHtmlPanel();
+    myPanel = retrievePanelProvider(settings).createHtmlPanel(myProject, myFile);
     myHtmlPanelWrapper.add(myPanel.getComponent(), BorderLayout.CENTER);
     if (myHtmlPanelWrapper.isShowing()) myHtmlPanelWrapper.validate();
     myHtmlPanelWrapper.repaint();

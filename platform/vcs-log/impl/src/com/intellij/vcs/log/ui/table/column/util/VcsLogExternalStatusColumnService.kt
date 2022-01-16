@@ -77,7 +77,7 @@ abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : 
         ).collectLatest { (isColumnVisible, rowsRange) ->
           val commits: List<CommitId> =
             if (rowsRange.isEmpty() || !isColumnVisible) emptyList()
-            else rowsRange.mapNotNull(table.model::getCommitId)
+            else rowsRange.limitedBy(0 until table.model.rowCount).mapNotNull(table.model::getCommitId)
           dataProvider.loadData(commits) {
             table.onColumnDataChanged(column)
           }

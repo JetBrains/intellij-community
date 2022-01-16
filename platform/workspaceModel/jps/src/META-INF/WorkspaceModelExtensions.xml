@@ -24,5 +24,7 @@
                  description="Enable additional checks after replaceBySource and addDiff"/>
     <registryKey key="ide.new.project.model.artifacts" defaultValue="true" restartRequired="true"
                  description="Use workspace model to store project artifacts"/>
+    <registryKey key="ide.new.project.model.report.wrapped" defaultValue="true" restartRequired="false"
+                 description="Wrap workspace model error report with IJ classes"/>
   </extensions>
 </idea-plugin>

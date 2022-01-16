@@ -11,5 +11,6 @@ class UrlParameterKeys {
     const val user = "user"
     const val port = "port"
     const val type = "type"
+    const val deploy = "deploy"
   }
 }

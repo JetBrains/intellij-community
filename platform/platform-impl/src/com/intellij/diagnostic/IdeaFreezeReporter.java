@@ -156,8 +156,8 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
         myDumpTask.stop();
       }
       reset();
-      myDumpTask = new SamplingTask(Registry.intValue("freeze.reporter.dump.interval.ms"),
-                                    Registry.intValue("freeze.reporter.dump.duration.s") * 1000) {
+      myDumpTask = new SamplingTask(Registry.intValue("freeze.reporter.dump.interval.ms", 100),
+                                    Registry.intValue("freeze.reporter.dump.duration.s", 180) * 1000) {
         @Override
         public void stop() {
           super.stop();

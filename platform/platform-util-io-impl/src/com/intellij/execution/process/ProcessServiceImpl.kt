@@ -16,7 +16,7 @@ class ProcessServiceImpl: ProcessService {
   override fun startPtyProcess(command: Array<String>,
                                directory: String?,
                                env: MutableMap<String, String>,
-                               options: PtyCommandLineOptions,
+                               options: LocalPtyOptions,
                                app: Application?,
                                redirectErrorStream: Boolean,
                                windowsAnsiColorEnabled: Boolean,
@@ -78,6 +78,15 @@ class ProcessServiceImpl: ProcessService {
       return process.childProcessId
     } else {
       null
+    }
+  }
+
+  override fun hasControllingTerminal(process: Process): Boolean {
+    return if (process is PtyProcess) {
+      !process.isConsoleMode
+    }
+    else {
+      false
     }
   }
 

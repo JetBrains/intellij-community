@@ -541,9 +541,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
       myAttachmentsList.clear();
       myAttachmentsList.addItem(STACKTRACE_ATTACHMENT, true);
-      boolean internal = ApplicationManager.getApplication().isInternal();
       for (Attachment attachment : message.getAllAttachments()) {
-        myAttachmentsList.addItem(attachment.getName(), attachment.isIncluded() || internal);
+        myAttachmentsList.addItem(attachment.getName(), attachment.isIncluded());
       }
       myAttachmentsList.setSelectedIndex(0);
 

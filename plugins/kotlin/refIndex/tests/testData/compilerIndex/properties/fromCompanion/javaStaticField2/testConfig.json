@@ -1,10 +1,11 @@
 {
+    "mainFile": "Main.java",
     "usages": [
-        "Main.java",
-        "JavaWrite.java",
         "JavaRead.java",
+        "JavaWrite.java",
         "Kotlin.kt",
+        "KotlinRead.kt",
         "KotlinWrite.kt",
-        "KotlinRead.kt"
+        "Main.java"
     ]
 }

@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.PlatformUtils;
@@ -53,7 +54,11 @@ public class StructureViewSelectInTarget implements SelectInTarget {
     final Runnable runnable = () -> StructureViewFactoryEx.getInstanceEx(myProject).runWhenInitialized(
       () -> getStructureViewWrapper().selectCurrentElement(fileEditor, context.getVirtualFile(), requestFocus));
     if (requestFocus) {
-      windowManager.getToolWindow(ToolWindowId.STRUCTURE_VIEW).activate(runnable);
+      ToolWindow window = windowManager.getToolWindow(getToolWindowId());
+      // not all startup activities might have passed?
+      if (window != null) {
+        window.activate(runnable);
+      }
     }
     else {
       runnable.run();

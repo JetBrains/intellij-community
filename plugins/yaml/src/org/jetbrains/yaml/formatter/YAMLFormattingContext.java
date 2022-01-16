@@ -72,6 +72,7 @@ class YAMLFormattingContext {
     mySpaceBuilder = new SpacingBuilder(mySettings, YAMLLanguage.INSTANCE)
       .between(YAMLTokenTypes.COLON, YAMLElementTypes.KEY_VALUE_PAIR).lineBreakInCode()
       .between(YAMLTokenTypes.COLON, YAMLElementTypes.SEQUENCE_ITEM).lineBreakInCode()
+      .between(YAMLElementTypes.ALIAS_NODE, YAMLTokenTypes.COLON).spaces(1)
       .before(YAMLTokenTypes.COLON).spaceIf(custom.SPACE_BEFORE_COLON)
       .after(YAMLTokenTypes.COLON).spaces(1)
       .after(YAMLTokenTypes.LBRACKET).spaceIf(common.SPACE_WITHIN_BRACKETS)

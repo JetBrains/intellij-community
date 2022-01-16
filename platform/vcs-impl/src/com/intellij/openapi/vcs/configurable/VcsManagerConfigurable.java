@@ -28,7 +28,7 @@ import static com.intellij.openapi.options.ex.ConfigurableWrapper.wrapConfigurab
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 
 public final class VcsManagerConfigurable extends SortedConfigurableGroup implements Configurable.WithEpDependencies {
-  private static final String ID = "project.propVCSSupport.Mappings";
+  private static final String ID = "project.propVCSSupport";
   private static final int GROUP_WEIGHT = 45;
 
   @NotNull private final Project myProject;
@@ -37,7 +37,7 @@ public final class VcsManagerConfigurable extends SortedConfigurableGroup implem
     super(ID,
           VcsBundle.message("version.control.main.configurable.name"),
           VcsBundle.message("version.control.main.configurable.description"),
-          ID,
+          VcsMappingConfigurable.HELP_ID,
           GROUP_WEIGHT);
     myProject = project;
   }

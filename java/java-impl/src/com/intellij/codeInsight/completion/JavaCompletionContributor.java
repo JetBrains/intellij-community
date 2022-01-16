@@ -1162,15 +1162,6 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   }
 
   public static boolean semicolonNeeded(PsiFile file, int startOffset) {
-    return semicolonNeeded(null, file, startOffset);
-  }
-
-  /**
-   * @deprecated use {@link #semicolonNeeded(PsiFile, int)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static boolean semicolonNeeded(@Nullable Editor editor, PsiFile file, int startOffset) {
     PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiJavaCodeReferenceElement.class, false);
     if (ref != null && !(ref instanceof PsiReferenceExpression)) {
       if (ref.getParent() instanceof PsiTypeElement) {

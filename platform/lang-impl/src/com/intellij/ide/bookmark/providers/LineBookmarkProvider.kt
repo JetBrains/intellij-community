@@ -2,7 +2,6 @@
 package com.intellij.ide.bookmark.providers
 
 import com.intellij.ide.bookmark.*
-import com.intellij.ide.favoritesTreeView.AbstractUrlFavoriteAdapter
 import com.intellij.ide.projectView.impl.DirectoryUrl
 import com.intellij.ide.projectView.impl.PsiFileUrl
 import com.intellij.ide.util.treeView.AbstractTreeNode
@@ -15,8 +14,6 @@ import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseEventArea
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.TextRange
@@ -61,8 +58,7 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
     is AbstractTreeNode<*> -> createBookmark(context.value)
     is NodeDescriptor<*> -> createBookmark(context.element)
     // below // migrate old bookmarks and favorites
-    is com.intellij.ide.bookmarks.Bookmark -> createBookmark(context.file, context.line) //
-    is AbstractUrlFavoriteAdapter -> createBookmark(context)
+    is com.intellij.ide.bookmarks.Bookmark -> createBookmark(context.file, context.line)
     is DirectoryUrl -> createBookmark(context.url)
     is PsiFileUrl -> createBookmark(context.url)
     // above // migrate old bookmarks and favorites
@@ -86,12 +82,6 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
   private fun createBookmark(url: String?, line: Int = -1) = url
     ?.let { VirtualFileManager.getInstance().findFileByUrl(it) }
     ?.let { createBookmark(it, line) }
-
-  private fun createBookmark(adapter: AbstractUrlFavoriteAdapter) = when {
-    !adapter.nodeProvider::class.java.name.startsWith("com.intellij.ide.favoritesTreeView.Psi") -> null
-    DumbService.isDumb(project) -> throw ProcessCanceledException() // wait for the end of indexing
-    else -> adapter.createPath(project)?.singleOrNull()?.let { createBookmark(it) }
-  }
 
   private fun createBookmark(element: PsiElement): FileBookmark? {
     if (element is PsiFileSystemItem) return element.virtualFile?.let { createBookmark(it) }

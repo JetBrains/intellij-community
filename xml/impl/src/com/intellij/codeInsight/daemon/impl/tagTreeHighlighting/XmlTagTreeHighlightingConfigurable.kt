@@ -18,40 +18,46 @@ package com.intellij.codeInsight.daemon.impl.tagTreeHighlighting
 import com.intellij.application.options.editor.WebEditorOptions
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
-import com.intellij.openapi.options.UiDslConfigurable
+import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import com.intellij.xml.XmlBundle
 import com.intellij.xml.breadcrumbs.BreadcrumbsPanel
-import javax.swing.JSpinner
-import javax.swing.SpinnerNumberModel
 
-class XmlTagTreeHighlightingConfigurable : UiDslConfigurable.Simple() {
-  override fun RowBuilder.createComponentRow() {
+class XmlTagTreeHighlightingConfigurable : UiDslUnnamedConfigurable.Simple() {
+
+  override fun Panel.createContent() {
     val options = WebEditorOptions.getInstance()
-    row {
-      val enable = checkBox(XmlBundle.message("settings.enable.html.xml.tag.tree.highlighting"),
-                            options::isTagTreeHighlightingEnabled, options::setTagTreeHighlightingEnabled)
-        .onApply { clearTagTreeHighlighting() }
-
-      val spinnerGroupName = "xml.tag.highlight.spinner"
-      row(XmlBundle.message("settings.levels.to.highlight")) {
-        spinner({ options.tagTreeHighlightingLevelCount }, { options.tagTreeHighlightingLevelCount = it },
-                1, 50, 1)
+    lateinit var enable: Cell<JBCheckBox>
+    panel {
+      row {
+        enable = checkBox(XmlBundle.message("settings.enable.html.xml.tag.tree.highlighting"))
+          .bindSelected(options::isTagTreeHighlightingEnabled, options::setTagTreeHighlightingEnabled)
           .onApply { clearTagTreeHighlighting() }
-          .sizeGroup(spinnerGroupName)
-          .enableIf(enable.selected)
-
       }
-      row(XmlBundle.message("settings.opacity")) {
-        component(JSpinner())
-          .applyToComponent { model = SpinnerNumberModel(0.0, 0.0, 1.0, 0.05) }
-          .withBinding({ ((it.value as Double) * 100).toInt() }, { it, value -> it.value = value * 0.01 },
-                       PropertyBinding(options::getTagTreeHighlightingOpacity, options::setTagTreeHighlightingOpacity))
-          .onApply { clearTagTreeHighlighting() }
-          .sizeGroup(spinnerGroupName)
-          .enableIf(enable.selected)
-        largeGapAfter()
+      indent {
+        row(XmlBundle.message("settings.levels.to.highlight")) {
+          spinner(1..50)
+            .bindIntValue({ options.tagTreeHighlightingLevelCount }, { options.tagTreeHighlightingLevelCount = it })
+            .onApply { clearTagTreeHighlighting() }
+            .horizontalAlign(HorizontalAlign.FILL)
+          cell()
+        }.layout(RowLayout.PARENT_GRID)
+          .enabledIf(enable.selected)
+        row(XmlBundle.message("settings.opacity")) {
+          spinner(0.0..1.0, step = 0.05)
+            .bind({ ((it.value as Double) * 100).toInt() }, { it, value -> it.value = value * 0.01 },
+              PropertyBinding(options::getTagTreeHighlightingOpacity, options::setTagTreeHighlightingOpacity))
+            .onApply { clearTagTreeHighlighting() }
+            .horizontalAlign(HorizontalAlign.FILL)
+          cell()
+        }.layout(RowLayout.PARENT_GRID)
+          .enabledIf(enable.selected)
+          .bottomGap(BottomGap.SMALL)
       }
     }
   }

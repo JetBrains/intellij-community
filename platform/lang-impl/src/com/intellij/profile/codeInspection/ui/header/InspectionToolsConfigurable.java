@@ -232,8 +232,8 @@ public abstract class InspectionToolsConfigurable implements ErrorsConfigurable,
 
   @Override
   public @Nullable JComponent getPreferredFocusedComponent() {
-    final SingleInspectionProfilePanel panel = getSelectedPanel();
-    return panel == null ? null : panel.getPreferredFocusedComponent();
+    SingleInspectionProfilePanel panel = myAbstractSchemesPanel != null ? getSelectedPanel() : null;
+    return panel != null ? panel.getPreferredFocusedComponent() : null;
   }
 
   void removeProfilePanel(SingleInspectionProfilePanel profilePanel) {

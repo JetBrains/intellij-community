@@ -695,7 +695,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     if (node.getOperator() != PyTokenTypes.OR) return;
 
     final PsiFile file = node.getContainingFile();
-    final boolean isInAnnotation = PsiTreeUtil.getParentOfType(node, PyAnnotation.class, false, ScopeOwner.class) != null;
+    final boolean isInAnnotation = PsiTreeUtil.getParentOfType(node, PyAnnotation.class, false, PyStatement.class) != null;
     if (file == null ||
         file instanceof PyFile &&
         ((PyFile)file).hasImportFromFuture(FutureFeature.ANNOTATIONS) &&

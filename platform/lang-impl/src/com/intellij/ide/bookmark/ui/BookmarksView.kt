@@ -239,8 +239,11 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
         model.invalidate() //TODO: node updated or node moved?
       }
 
-      override fun structureChanged(node: Any) {
-        model.invalidate(node, true)
+      override fun structureChanged(node: Any?) {
+        when (node) {
+          null -> model.invalidate()
+          else -> model.invalidate(node, true)
+        }
       }
     })
   }

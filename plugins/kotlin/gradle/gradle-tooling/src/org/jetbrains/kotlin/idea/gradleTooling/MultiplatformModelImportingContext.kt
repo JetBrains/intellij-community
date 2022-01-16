@@ -3,13 +3,11 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.Project
-import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
-import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
-import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
-import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
+import org.jetbrains.kotlin.idea.projectModel.*
 
 internal interface MultiplatformModelImportingContext: KotlinSourceSetContainer {
     val project: Project
+    val compilerArgumentsCacheMapper: CompilerArgumentsCacheMapper
 
     val targets: Collection<KotlinTarget>
     val compilations: Collection<KotlinCompilation>
@@ -71,7 +69,10 @@ internal enum class GradleImportProperties(val id: String, val defaultValue: Boo
 }
 
 
-internal class MultiplatformModelImportingContextImpl(override val project: Project) : MultiplatformModelImportingContext {
+internal class MultiplatformModelImportingContextImpl(
+    override val project: Project,
+    override val compilerArgumentsCacheMapper: CompilerArgumentsCacheMapper
+) : MultiplatformModelImportingContext {
     /** see [initializeSourceSets] */
     override lateinit var sourceSetsByName: Map<String, KotlinSourceSetImpl>
         private set

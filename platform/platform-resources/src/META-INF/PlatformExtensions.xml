@@ -744,7 +744,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.template.impl.LiveTemplateRunLogger"/>
     <statistics.counterUsagesCollector groupId="vcs.diff.trigger" version="2"/>
     <statistics.counterUsagesCollector groupId="vcs.back.forward.trigger" version="1"/>
-    <statistics.counterUsagesCollector groupId="ide.self.update" version="2"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.updateSettings.impl.IdeUpdateUsageTriggerCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.application.ImportOldConfigsUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.application.OldDirectoryCleaner$Stats"/>
     <statistics.counterUsagesCollector groupId="file.editor" version="2"/>
@@ -810,6 +810,10 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <toolWindow id="Event Log" anchor="bottom" secondary="true"
                 icon="AllIcons.Toolwindows.NoEvents"
                 factoryClass="com.intellij.notification.EventLogToolWindowFactory"/>
+
+    <toolWindow id="Notifications" anchor="right" secondary="true"
+                icon="AllIcons.Toolwindows.NoEvents"
+                factoryClass="com.intellij.notification.impl.NotificationsToolWindowFactory"/>
 
     <applicationService serviceInterface="com.intellij.ide.TypePresentationService"
                         serviceImplementation="com.intellij.ide.TypePresentationServiceImpl"/>
@@ -1013,6 +1017,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
                          bundle="messages.IdeBundle"
                          key="actions.on.save.page.title"
                          nonDefaultProject="true"/>
+    <search.optionContributor implementation="com.intellij.ide.actionsOnSave.ActionsOnSaveSearchableOptionsContributor"/>
 
     <!--troubleshooting-->
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.AboutTroubleInfoCollector"/>
@@ -1044,6 +1049,9 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <experimentalFeature id="new.project.wizard" percentOfUsers="0">
       <description>New project wizard</description>
     </experimentalFeature>
+
+    <applicationService serviceInterface="com.intellij.ide.ui.ToolbarSettings"
+                        serviceImplementation="com.intellij.ide.ui.experimental.toolbar.ExperimentalToolbarSettings"/>
 
     <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.EditorFactoryImpl$MyRawTypedHandler"/>
 
@@ -1307,10 +1315,9 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <advancedSetting id="terminal.escape.moves.focus.to.editor" default="true" groupKey="group.advanced.settings.terminal"/>
     <advancedSetting id="terminal.type.ahead" default="true" groupKey="group.advanced.settings.terminal"/>
     <advancedSetting id="terminal.type.ahead.latency.threshold" default="100" groupKey="group.advanced.settings.terminal"/>
-    <advancedSetting id="documentation.components.enable.doc.syntax.highlighting" default="true" groupKey="group.advanced.settings.documentation.components"/>
-    <advancedSetting id="documentation.components.enable.doc.syntax.highlighting.of.inline.code.blocks" default="true" groupKey="group.advanced.settings.documentation.components"/>
-    <advancedSetting id="documentation.components.enable.doc.syntax.highlighting.of.links" default="true" groupKey="group.advanced.settings.documentation.components"/>
-    <advancedSetting id="documentation.components.doc.syntax.highlighting.saturation" default="65" groupKey="group.advanced.settings.documentation.components"/>
+    <advancedSetting id="documentation.components.enable.inline.code.highlighting" default="false" groupKey="group.advanced.settings.documentation.components"/>
+    <advancedSetting id="documentation.components.enable.code.blocks.highlighting" default="true" groupKey="group.advanced.settings.documentation.components"/>
+    <advancedSetting id="documentation.components.enable.highlighting.of.links" default="false" groupKey="group.advanced.settings.documentation.components"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.ide.plugins.DependencyFeatureCollector"/>
     <projectService serviceInterface="com.intellij.presentation.FilePresentationService"

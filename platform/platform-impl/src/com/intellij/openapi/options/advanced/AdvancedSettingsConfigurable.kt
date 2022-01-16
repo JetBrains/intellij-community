@@ -258,18 +258,19 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
     return true
   }
 
-  private fun updateMatchText(component: JComponent, @NlsSafe baseText: String, @NlsSafe searchText: String?) {
-    val text = searchText?.takeIf { it.isNotBlank() }?.let {
-      @NlsSafe val highlightedText = SearchUtil.markup(baseText, it, UIUtil.getLabelFontColor(UIUtil.FontColor.NORMAL),
-                                              UIUtil.getSearchMatchGradientStartColor())
-      "<html>$highlightedText"
-    } ?: baseText
-    when (component) {
-      is JLabel -> component.text = text
-      is AbstractButton -> component.text = text
+  companion object {
+    fun updateMatchText(component: JComponent, @NlsSafe baseText: String, @NlsSafe searchText: String?) {
+      val text = searchText?.takeIf { it.isNotBlank() }?.let {
+        @NlsSafe val highlightedText = SearchUtil.markup(baseText, it, UIUtil.getLabelFontColor(UIUtil.FontColor.NORMAL),
+          UIUtil.getSearchMatchGradientStartColor())
+        "<html>$highlightedText"
+      } ?: baseText
+      when (component) {
+        is JLabel -> component.text = text
+        is AbstractButton -> component.text = text
+      }
     }
   }
-
   override fun getDisplayName(): String = ApplicationBundle.message("title.advanced.settings")
 
   override fun getId(): String = "advanced.settings"

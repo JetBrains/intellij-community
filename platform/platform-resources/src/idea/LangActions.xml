@@ -248,6 +248,10 @@
                 class="com.intellij.ide.bookmark.actions.NodeEditAction"/>
         <action id="BookmarksView.Delete" use-shortcut-of="$Delete"
                 class="com.intellij.ide.bookmark.actions.NodeDeleteAction"/>
+        <action id="BookmarksView.MoveUp" icon="AllIcons.Actions.MoveUp" use-shortcut-of="PreviousOccurence"
+                class="com.intellij.ide.bookmark.actions.NodeMoveUpAction"/>
+        <action id="BookmarksView.MoveDown" icon="AllIcons.Actions.MoveDown" use-shortcut-of="NextOccurence"
+                class="com.intellij.ide.bookmark.actions.NodeMoveDownAction"/>
         <action id="BookmarksView.SortGroupBookmarks"
                 class="com.intellij.ide.bookmark.actions.SortGroupBookmarksAction"/>
       </group>
@@ -266,8 +270,6 @@
       <group id="Bookmarks.ToolWindow.GearActions">
         <action id="BookmarksView.GroupLineBookmarks" icon="AllIcons.Actions.GroupByFile"
                 class="com.intellij.ide.bookmark.actions.GroupLineBookmarksToggleAction"/>
-        <action id="BookmarksView.SortGroupsAndBookmarks" icon="AllIcons.ObjectBrowser.SortByType"
-                class="com.intellij.ide.bookmark.actions.SortGroupsAndBookmarksAction"/>
         <separator/>
         <action id="BookmarksView.AutoscrollFromSource" icon="AllIcons.General.AutoscrollFromSource"
                 class="com.intellij.ide.bookmark.actions.AutoscrollFromSourceToggleAction"/>
@@ -691,6 +693,16 @@
       <group id="RightToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.RightToolbarGroup">
         <reference id="BigSpacer"/>
         <reference id="RunToolbarWidgetAction"/>
+        <reference id="SmallSpacer"/>
+        <reference id="SettingsEntryPoint"/>
+      </group>
+    </group>
+
+    <group id="NewToolbarActionsWithoutRight">
+      <reference ref="LeftToolbarSideGroup"/>
+      <reference ref="CenterToolbarSideGroup"/>
+      <group id="RightToolbarSideGroupNoRunWidget">
+        <reference id="ToolbarRunGroup"/>
         <reference id="SmallSpacer"/>
         <reference id="SettingsEntryPoint"/>
       </group>
@@ -1147,6 +1159,7 @@
       <reference ref="Stop"/>
       <separator/>
       <reference ref="Resume"/>
+      <reference ref="Pause"/>
       <reference ref="StepOver"/>
       <reference ref="StepInto"/>
       <reference ref="StepOut"/>
@@ -1163,7 +1176,6 @@
       <reference ref="RunToCursor"/>
       <reference ref="ForceRunToCursor"/>
       <separator/>
-      <reference ref="Pause"/>
       <reference ref="ShowExecutionPoint"/>
       <separator/>
     </group>

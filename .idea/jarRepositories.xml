@@ -46,5 +46,10 @@
       <option name="name" value="GraziePlatform" />
       <option name="url" value="https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="download-pgp-verifier" />
+      <option name="name" value="download-pgp-verifier" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/download-pgp-verifier" />
+    </remote-repository>
   </component>
 </project>

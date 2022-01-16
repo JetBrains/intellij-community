@@ -4,19 +4,15 @@ package com.intellij.formatting.service;
 import com.intellij.formatting.FormattingContext;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 /**
  * Contains formatting data and methods handling formatting results.
  */
-@ApiStatus.Experimental
 public interface AsyncFormattingRequest {
   /**
    * @return The document text to be formatted.

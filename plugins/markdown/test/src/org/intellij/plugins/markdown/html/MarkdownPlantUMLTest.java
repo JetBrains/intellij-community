@@ -10,6 +10,7 @@ import org.intellij.plugins.markdown.MarkdownTestingUtil;
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider;
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles;
 import org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeGeneratingProvider;
+import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings;
 import org.intellij.plugins.markdown.settings.MarkdownSettings;
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCache;
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil;
@@ -80,7 +81,7 @@ public class MarkdownPlantUMLTest extends BasePlatformTestCase {
     assertTrue(extension.isAvailable());
     myFixture.copyAll(getTestDataPath() + DATA_SUBDIR, "plantuml");
 
-    MarkdownSettings.getInstance(getProject()).setExtensionsEnabledState(Collections.singletonMap("PlantUMLLanguageExtension", true));
+    MarkdownExtensionsSettings.getInstance().setExtensionsEnabledState(Collections.singletonMap("PlantUMLLanguageExtension", true));
     assertTrue(extension.isEnabled());
 
     VirtualFile mdVFile = myFixture.getFile("plantuml/" + getTestName(true) + ".md");

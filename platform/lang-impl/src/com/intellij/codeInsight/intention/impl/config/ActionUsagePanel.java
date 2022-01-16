@@ -51,6 +51,10 @@ public class ActionUsagePanel extends JPanel implements Disposable {
     myRangeBlinker = new RangeBlinker(myEditor, blinkAttributes, Integer.MAX_VALUE);
   }
 
+  public EditorEx getEditor() {
+    return myEditor;
+  }
+
   protected static Editor createEditor(String text, int column, int line, int selectedLine) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document editorDocument = editorFactory.createDocument(text);

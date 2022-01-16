@@ -553,7 +553,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return new JobDescriptor[]{context.getStdJobDescriptors().BUILD_GRAPH, context.getStdJobDescriptors().FIND_EXTERNAL_USAGES};
   }
 
-
   void checkForReachableRefs(@NotNull final GlobalInspectionContext context) {
     CodeScanner codeScanner = new CodeScanner();
 
@@ -619,11 +618,21 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
             addDelayedMethod(method, methodOwnerClass);
           }
 
-          for (RefMethod refSub : method.getDerivedMethods()) {
-            visitMethod(refSub);
+          for (RefOverridable reference : method.getDerivedReferences()) {
+            if (reference instanceof RefMethod) {
+              visitMethod(((RefMethod)reference));
+            }
+            else if (reference instanceof RefFunctionalExpression) {
+              visitFunctionalExpression(((RefFunctionalExpression)reference));
+            }
           }
         }
       }
+    }
+
+    @Override
+    public void visitFunctionalExpression(@NotNull RefFunctionalExpression functionalExpression) {
+      makeContentReachable((RefJavaElementImpl)functionalExpression);
     }
 
     @Override public void visitClass(@NotNull RefClass refClass) {

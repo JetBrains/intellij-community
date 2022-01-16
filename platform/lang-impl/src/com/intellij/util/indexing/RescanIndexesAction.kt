@@ -5,12 +5,18 @@ import com.intellij.ide.actions.cache.CacheInconsistencyProblem
 import com.intellij.ide.actions.cache.ExceptionalCompletionProblem
 import com.intellij.ide.actions.cache.RecoveryAction
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.psi.stubs.StubTreeBuilder
+import com.intellij.psi.stubs.StubUpdatingIndex
+import com.intellij.util.BooleanFunction
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
 import org.jetbrains.annotations.Nls
+import java.util.*
 import java.util.concurrent.CompletableFuture
 
 internal class RescanIndexesAction : RecoveryAction {
@@ -23,7 +29,38 @@ internal class RescanIndexesAction : RecoveryAction {
 
   override fun performSync(project: Project): List<CacheInconsistencyProblem> {
     val historyFuture = CompletableFuture<ProjectIndexingHistoryImpl>()
+    val stubAndIndexingStampInconsistencies = Collections.synchronizedList(arrayListOf<CacheInconsistencyProblem>())
+
     object : UnindexedFilesUpdater(project, "Rescanning indexes recovery action") {
+      private val stubIndex =
+        runCatching { (FileBasedIndex.getInstance() as FileBasedIndexImpl).getIndex(StubUpdatingIndex.INDEX_ID) }
+        .onFailure { logger<RescanIndexesAction>().error(it) }.getOrNull()
+
+      private inner class StubAndIndexStampInconsistency(private val path: String): CacheInconsistencyProblem {
+        override val message: String
+          get() = "`$path` should have already indexed stub but it's not present"
+      }
+
+      override fun getForceReindexingTrigger(): BooleanFunction<IndexedFile>? {
+        if (stubIndex != null) {
+          return BooleanFunction<IndexedFile> {
+            val fileId = (it.file as VirtualFileWithId).id
+            if (stubIndex.getIndexingStateForFile(fileId, it) == FileIndexingState.UP_TO_DATE &&
+                stubIndex.getIndexedFileData(fileId).isEmpty() &&
+                isAbleToBuildStub(it.file)) {
+              stubAndIndexingStampInconsistencies.add(StubAndIndexStampInconsistency(it.file.path))
+              return@BooleanFunction true
+            }
+            false
+          }
+        }
+        return null
+      }
+
+      private fun isAbleToBuildStub(file: VirtualFile): Boolean = runCatching {
+        StubTreeBuilder.buildStubTree(FileContentImpl.createByFile(file))
+      }.getOrNull() != null
+
       override fun performScanningAndIndexing(indicator: ProgressIndicator): ProjectIndexingHistoryImpl {
         try {
           IndexingFlag.cleanupProcessedFlag()
@@ -38,7 +75,8 @@ internal class RescanIndexesAction : RecoveryAction {
       }
     }.queue(project)
     try {
-      return ProgressIndicatorUtils.awaitWithCheckCanceled(historyFuture).extractConsistencyProblems()
+      return ProgressIndicatorUtils.awaitWithCheckCanceled(historyFuture).extractConsistencyProblems() +
+             stubAndIndexingStampInconsistencies
     }
     catch (e: Exception) {
       return listOf(ExceptionalCompletionProblem(e))

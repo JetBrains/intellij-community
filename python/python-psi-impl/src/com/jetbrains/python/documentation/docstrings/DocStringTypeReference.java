@@ -77,13 +77,13 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
 
   @Override
   public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
-    PyElement result = null;
+    PsiElement result = null;
     final ResolveResultList results = new ResolveResultList();
     if (myType instanceof PyClassType) {
       result = ((PyClassType)myType).getPyClass();
     }
     else if (myType instanceof PyImportedModuleType) {
-      result = (PyElement)((PyImportedModuleType)myType).getImportedModule().resolve();
+      result = ((PyImportedModuleType)myType).getImportedModule().resolve();
     }
     else if (myType instanceof PyModuleType) {
       result = ((PyModuleType)myType).getModule();

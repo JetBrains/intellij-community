@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.util.io.URLUtil
+import com.intellij.util.text.nullize
 import kotlin.system.exitProcess
 
 internal class HeadlessPluginsInstaller : ApplicationStarter {
@@ -19,18 +20,18 @@ internal class HeadlessPluginsInstaller : ApplicationStarter {
   override fun main(args: List<String>) {
     try {
       val pluginIds = LinkedHashSet<PluginId>()
-      val customRepositories = StringBuilder()
+      val customRepositories = LinkedHashSet<String>()
       for (i in 1 until args.size) {
         val arg = args[i]
         when {
-          arg.contains(URLUtil.SCHEME_SEPARATOR) -> customRepositories.append(';').append(arg)
+          arg.contains(URLUtil.SCHEME_SEPARATOR) -> customRepositories += arg
           else -> pluginIds += PluginId.getId(arg)
         }
       }
 
       if (customRepositories.isNotEmpty()) {
         val hosts = System.getProperty("idea.plugin.hosts")
-        val newHosts = if (hosts.isNullOrBlank()) customRepositories.substring(1) else hosts + customRepositories
+        val newHosts = customRepositories.joinToString(separator = ";", prefix = if (hosts.isNullOrBlank()) "" else "${hosts};")
         System.setProperty("idea.plugin.hosts", newHosts)
         println("plugin hosts: ${newHosts}")
         LOG.info("plugin hosts: ${newHosts}")

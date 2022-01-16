@@ -1,17 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator
 
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.annotator.intentions.AddToPermitsList
+import org.jetbrains.plugins.groovy.annotator.intentions.GrRemoveModifiersFix
 import org.jetbrains.plugins.groovy.annotator.intentions.GrReplaceReturnWithYield
-import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
@@ -29,6 +27,17 @@ import org.jetbrains.plugins.groovy.lang.psi.util.*
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVisitor() {
+
+  companion object {
+    private val CONFLICING_MODIFIERS =
+      listOf(
+        GrModifier.SEALED,
+        GrModifier.NON_SEALED,
+        GrModifier.FINAL,
+        GroovyCommonClassNames.GROOVY_TRANSFORM_SEALED,
+        GroovyCommonClassNames.GROOVY_TRANSFORM_NON_SEALED,
+      )
+  }
 
   override fun visitTypeDefinition(typeDefinition: GrTypeDefinition) {
     checkModifiers(typeDefinition)
@@ -58,14 +67,13 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
     exclusiveElement.filterNotNull().takeIf { it.size > 1 }?.forEach(this::createExclusivenessAnnotation)
 
   private fun createExclusivenessAnnotation(element: PsiElement) {
-    if (element is GrAnnotation) {
-      holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message(
-        "inspection.message.only.one.final.sealed.non.sealed.should.be.applied.to.class")).range(element).create()
-    }
-    else {
-      checkModifierIsNotAllowed(element.parent as GrModifierList, element.text, GroovyBundle.message(
-        "inspection.message.only.one.final.sealed.non.sealed.should.be.applied.to.class"), holder)
-    }
+    val elementName = if (element is GrAnnotation) element.shortName else element.text
+    holder
+      .newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message(
+        "inspection.message.only.one.final.sealed.non.sealed.should.be.applied.to.class"))
+      .range(element)
+      .withFix(GrRemoveModifiersFix(CONFLICING_MODIFIERS, null, GroovyBundle.message("leave.only.modifier.or.annotation.0", elementName)))
+      .create()
   }
 
   private fun checkSealed(owner: GrTypeDefinition, sealedElement: PsiElement?) {
@@ -121,16 +129,11 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
       return super.visitPermitsClause(permitsClause)
     }
     if (modifierList?.hasModifierProperty(GrModifier.SEALED) == true) return
-    val fix = GrModifierFix(this, GrModifier.SEALED, false, true) {
-      it.startElement.parentOfType<PsiModifierListOwner>()?.modifierList
-    }
-    val builder = holder
+    val fix = GrRemoveModifiersFix(CONFLICING_MODIFIERS, GrModifier.SEALED, GroovyBundle.message("add.modifier.sealed"))
+    holder
       .newAnnotation(HighlightSeverity.ERROR,
-                     GroovyBundle.message("inspection.message.invalid.permits.clause.must.be.sealed", name))
-      .range(permitsClause.keyword!!)
-    registerLocalFix(builder, fix, permitsClause,
-                     GroovyBundle.message("inspection.message.invalid.permits.clause.must.be.sealed", name),
-                     ProblemHighlightType.ERROR, permitsClause.textRange)
+        GroovyBundle.message("inspection.message.invalid.permits.clause.must.be.sealed", name))
+      .range(permitsClause.keyword!!).withFix(fix)
       .create()
   }
 

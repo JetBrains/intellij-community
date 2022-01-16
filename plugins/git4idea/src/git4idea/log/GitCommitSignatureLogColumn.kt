@@ -12,7 +12,7 @@ import git4idea.commit.signature.GitCommitSignature
 import git4idea.i18n.GitBundle.message
 
 internal class GitCommitSignatureLogColumn : VcsLogExternalStatusColumn<GitCommitSignature>() {
-  override val id: String get() = "Git.CommitSignature"
+  override val id: String get() = GitCommitSignatureStatusProvider.ID
   override val localizedName: String get() = message("column.name.commit.signature")
 
   override fun getExternalStatusColumnService() =
@@ -28,5 +28,5 @@ internal class GitCommitSignatureLogColumn : VcsLogExternalStatusColumn<GitCommi
 
 @Service
 internal class GitCommitSignatureColumnService : VcsLogExternalStatusColumnService<GitCommitSignature>() {
-  override fun getDataLoader(project: Project) = GitCommitSignatureLoader(project)
+  override fun getDataLoader(project: Project) = GitCommitSignatureStatusProvider().createLoader(project)
 }

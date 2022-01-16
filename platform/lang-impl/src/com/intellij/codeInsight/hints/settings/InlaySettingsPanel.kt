@@ -4,7 +4,7 @@ package com.intellij.codeInsight.hints.settings
 import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.settings.language.NewInlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.language.ParameterInlayProviderSettingsModel
-import com.intellij.codeInsight.hints.settings.language.createEditor
+import com.intellij.codeInsight.intention.impl.config.ActionUsagePanel
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.project.Project
@@ -14,12 +14,11 @@ import com.intellij.ui.CheckedTreeNode
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.tree.TreeUtil
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
-import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTree
 import javax.swing.event.TreeSelectionListener
@@ -33,32 +32,37 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   init {
     val settings = InlayHintsSettings.instance()
-    val root = CheckedTreeNode()
-    var nodeToSelect: CheckedTreeNode? = null
-    val groups = InlayHintsProviderExtension.inlayProviderName.extensionList.groupBy { it.instance.groupId }.mapValues {
-      it.value.map { point ->
-        NewInlayProviderSettingsModel(point.instance.withSettings(Language.findLanguageByID(point.language)!!, settings),
-          settings) as InlayProviderSettingsModel
+    val providerInfos = InlayHintsProviderFactory.EP.extensionList.flatMap {
+      it.getProvidersInfo(project)
+    }.filter { it.provider.isLanguageSupported(it.language) }
+    val groups = providerInfos.groupBy { it.provider.groupId }.mapValues {
+      it.value.map { info ->
+        NewInlayProviderSettingsModel(info.provider.withSettings(info.language, settings), settings) as InlayProviderSettingsModel
       }
     }.toMutableMap()
-    val lastId = settings.getLastViewedProviderId()
-    val paramLanguages = PARAMETER_NAME_HINTS_EP.extensionList.mapNotNull {
+    val parameterModels = PARAMETER_NAME_HINTS_EP.extensionList.map {
       ParameterInlayProviderSettingsModel(it.instance, Language.findLanguageByID(it.language)!!)
     }
-    groups[PARAMETERS_GROUP] = paramLanguages
+    if (parameterModels.isNotEmpty()) {
+      groups[PARAMETERS_GROUP] = parameterModels
+    }
     val sortedMap = groups.toSortedMap(Comparator.comparing { sortedGroups.indexOf(it) })
+
+    val root = CheckedTreeNode()
+    val lastSelected = settings.getLastViewedProviderId()
+    var nodeToSelect: CheckedTreeNode? = null
     for (group in sortedMap) {
       val groupNode = CheckedTreeNode(ApplicationBundle.message("settings.hints.group." + group.key))
       root.add(groupNode)
       for (lang in group.value.groupBy { it.language }) {
-        if (lang.value.size == 1) {
-          nodeToSelect = addModelNode(lang.value.first(), groupNode, lastId, nodeToSelect)
+        if (lang.value.size == 1 && OTHER_GROUP != group.key) {
+          nodeToSelect = addModelNode(lang.value.first(), groupNode, lastSelected, nodeToSelect)
         }
         else {
           val langNode = CheckedTreeNode(lang.key)
           groupNode.add(langNode)
           lang.value.forEach {
-            nodeToSelect = addModelNode(it, langNode, lastId, nodeToSelect)
+            nodeToSelect = addModelNode(it, langNode, lastSelected, nodeToSelect)
           }
         }
       }
@@ -131,10 +135,14 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     rightPanel.removeAll()
     when (val item = treeNode?.userObject) {
       is InlayProviderSettingsModel -> {
-        addDescription(item.description)
+        if (treeNode.isLeaf) {
+          addDescription(item.description)
+        }
         item.component.border = JBUI.Borders.empty()
         rightPanel.add(item.component)
-        addPreview(item.getCasePreview(null) ?: item.previewText, item.language)
+        if (treeNode.isLeaf) {
+          addPreview(item.getCasePreview(null) ?: item.previewText, item.language)
+        }
       }
       is ImmediateConfigurable.Case -> {
         val parent = treeNode.parent as CheckedTreeNode
@@ -153,15 +161,16 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   private fun addPreview(previewText: String?, language: Language) {
     if (previewText != null) {
-      val editor = createEditor(language, project) {}
-      editor.text = previewText
-      rightPanel.add(editor)
+      val usagePanel = ActionUsagePanel()
+      usagePanel.editor.settings.isLineNumbersShown = false
+      usagePanel.reset(previewText, language.associatedFileType)
+      rightPanel.add(usagePanel, "growx")
     }
   }
 
   private fun addDescription(@Nls s: String?) {
-    val htmlBody = UIUtil.toHtml(StringUtil.notNullize(s))
-    rightPanel.add(JLabel(htmlBody), "growy, width 200:300:300")
+    val htmlLabel = SwingHelper.createHtmlLabel(StringUtil.notNullize(s), null, null)
+    rightPanel.add(htmlLabel, "growy, width 200:300:300")
   }
 
   private fun getProviderId(treeNode: CheckedTreeNode): String {

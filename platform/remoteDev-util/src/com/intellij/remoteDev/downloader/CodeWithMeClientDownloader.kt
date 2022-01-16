@@ -13,15 +13,15 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.application
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.remoteDev.RemoteDevUtilBundle
-import com.intellij.util.concurrency.EdtScheduledExecutorService
-import com.intellij.util.io.*
 import com.intellij.remoteDev.connection.CodeWithMeSessionInfoProvider
 import com.intellij.remoteDev.connection.StunTurnServerInfo
 import com.intellij.remoteDev.util.*
+import com.intellij.util.application
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.EdtScheduledExecutorService
+import com.intellij.util.io.*
 import com.jetbrains.infra.pgpVerifier.JetBrainsPgpConstants
 import com.jetbrains.infra.pgpVerifier.JetBrainsPgpConstants.JETBRAINS_DOWNLOADS_PGP_MASTER_PUBLIC_KEY
 import com.jetbrains.infra.pgpVerifier.PgpSignaturesVerifier
@@ -44,6 +44,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.*
+import kotlin.math.min
 
 @ApiStatus.Experimental
 object CodeWithMeClientDownloader {
@@ -74,8 +75,15 @@ object CodeWithMeClientDownloader {
     val archivePath: Path,
     val targetPath: Path,
     val includeInManifest: (Path) -> Boolean,
-    val downloadFuture: CompletableFuture<Boolean> = CompletableFuture()
+    val downloadFuture: CompletableFuture<Boolean> = CompletableFuture(),
+    var status: DownloadableFileState = DownloadableFileState.Downloading
   )
+
+  private enum class DownloadableFileState {
+    Downloading,
+    Extracting,
+    Done
+  }
 
   private val buildNumberRegex = Regex("""[0-9]{3}\.([0-9]+|SNAPSHOT)""")
 
@@ -114,7 +122,7 @@ object CodeWithMeClientDownloader {
     val clientName = "CodeWithMeGuest-$hostBuildNumber"
     val jreName = jreDownloadUrl.substringAfterLast('/').removeSuffix(".tar.gz")
 
-    return object : CodeWithMeSessionInfoProvider {
+    val sessionInfo = object : CodeWithMeSessionInfoProvider {
       override val hostBuildNumber = hostBuildNumber
       override val compatibleClientName = clientName
       override val compatibleClientUrl = clientDownloadUrl
@@ -125,6 +133,9 @@ object CodeWithMeClientDownloader {
       override val stunTurnServers: List<StunTurnServerInfo>? = null
       override val downloadPgpPublicKeyUrl: String? = null
     }
+
+    LOG.info("Generated session info: $sessionInfo")
+    return sessionInfo
   }
 
   private val currentlyDownloading = ConcurrentHashMap<Path, CompletableFuture<Boolean>>()
@@ -133,16 +144,18 @@ object CodeWithMeClientDownloader {
   fun downloadClientAndJdk(clientBuildVersion: String,
                            progressIndicator: ProgressIndicator): Pair<Path, Path>? {
     require(application.isUnitTestMode || !application.isDispatchThread) { "This method should not be called on UI thread" }
+
     LOG.info("Downloading Thin Client jdk-build.txt")
+    val jdkBuildProgressIndicator = progressIndicator.createSubProgress(0.1)
+    jdkBuildProgressIndicator.text = RemoteDevUtilBundle.message("thinClientDownloader.checking")
 
     val clientJdkDownloadUrl = "${DEFAULT_CWM_GUEST_DOWNLOAD_LOCATION}CodeWithMeGuest-$clientBuildVersion-jdk-build.txt"
+    val jdkBuild = HttpRequests
+      .request(clientJdkDownloadUrl)
+      .readString(jdkBuildProgressIndicator)
 
-    val jdkBuild = HttpRequests.request(clientJdkDownloadUrl).readString(progressIndicator)
-
-    LOG.info("Downloading Thin Client")
-    val sessionInfoResponse = createSessionInfo(clientBuildVersion, jdkBuild, true)
-    LOG.info("Generated session info: $sessionInfoResponse")
-    return downloadClientAndJdk(sessionInfoResponse, progressIndicator)
+    val sessionInfo = createSessionInfo(clientBuildVersion, jdkBuild, true)
+    return downloadClientAndJdk(sessionInfo, progressIndicator.createSubProgress(0.9))
   }
 
   /**
@@ -161,10 +174,8 @@ object CodeWithMeClientDownloader {
                            progressIndicator: ProgressIndicator): Pair<Path, Path>? {
     require(application.isUnitTestMode || !application.isDispatchThread) { "This method should not be called on UI thread" }
 
-    LOG.info("Downloading Thin Client")
-    val sessionInfoResponse = createSessionInfo(clientBuildVersion, jreBuild, true)
-    LOG.info("Generated session info: $sessionInfoResponse")
-    return downloadClientAndJdk(sessionInfoResponse, progressIndicator)
+    val sessionInfo = createSessionInfo(clientBuildVersion, jreBuild, true)
+    return downloadClientAndJdk(sessionInfo, progressIndicator)
   }
 
   /**
@@ -175,6 +186,7 @@ object CodeWithMeClientDownloader {
     require(application.isUnitTestMode || !application.isDispatchThread) { "This method should not be called on UI thread" }
 
     val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()
+    LOG.info("Downloading Thin Client in $tempDir...")
 
     fun archiveExtensionFromUrl(url: String) = when {
       url.endsWith(".zip") -> "zip"
@@ -209,10 +221,24 @@ object CodeWithMeClientDownloader {
       if (dataList.isNotEmpty()) RemoteDevStatisticsCollector.onGuestDownloadStarted()
       else null
 
-    // todo: download in parallel?
-    for (data in dataList) {
+    fun updateStateText() {
+      val downloadList = dataList.filter { it.status == DownloadableFileState.Downloading }.map { it.fileName }.joinToString(", ")
+      val extractList = dataList.filter { it.status == DownloadableFileState.Extracting }.map { it.fileName }.joinToString(", ")
+      progressIndicator.text =
+        if (downloadList.isNotBlank() && extractList.isNotBlank()) RemoteDevUtilBundle.message("thinClientDownloader.downloading.and.extracting", downloadList, extractList)
+        else if (downloadList.isNotBlank()) RemoteDevUtilBundle.message("thinClientDownloader.downloading", downloadList)
+        else if (extractList.isNotBlank()) RemoteDevUtilBundle.message("thinClientDownloader.extracting", extractList)
+        else RemoteDevUtilBundle.message("thinClientDownloader.ready")
+    }
+    updateStateText()
+
+    val dataProgressIndicators = MultipleSubProgressIndicator.create(progressIndicator, dataList.size)
+    for ((index, data) in dataList.withIndex()) {
       // download
       val future = data.downloadFuture
+
+      // Update only fraction via progress indicator API, text will be updated by updateStateText function
+      val dataProgressIndicator = dataProgressIndicators[index]
 
       AppExecutorUtil.getAppScheduledExecutorService().execute {
         try {
@@ -220,27 +246,39 @@ object CodeWithMeClientDownloader {
             val existingDownloadInnerFuture = currentlyDownloading[data.targetPath]
             if (existingDownloadInnerFuture != null) {
               existingDownloadInnerFuture
-            } else {
+            }
+            else {
               currentlyDownloading[data.targetPath] = data.downloadFuture
               null
             }
           }
+
+          // TODO: how to merge progress indicators in this case?
           if (existingDownloadFuture != null) {
             LOG.warn("Already downloading and extracting to ${data.targetPath}, will wait until download finished")
-            existingDownloadFuture.whenComplete { res, ex -> if (ex != null) { future.completeExceptionally(ex) } else { future.complete(res) } }
+            existingDownloadFuture.whenComplete { res, ex ->
+              if (ex != null) {
+                future.completeExceptionally(ex)
+              }
+              else {
+                future.complete(res)
+              }
+            }
             return@execute
           }
 
           if (isAlreadyDownloaded(data)) {
             LOG.info("Already downloaded and extracted ${data.fileName} to ${data.targetPath}")
+            data.status = DownloadableFileState.Done
+            dataProgressIndicator.fraction = 1.0
+            updateStateText()
             future.complete(true)
             return@execute
           }
-          val downloadProgressIndicator = progressIndicator.createSubProgress(0.5 / dataList.count().toDouble())
-          downloadProgressIndicator.text = RemoteDevUtilBundle.message("thinClientDownloader.downloading", data.fileName)
 
           val testInstallersDir = System.getProperty(gatewayTestsInstallersDirProperty)?.let { Path.of(it) }
           val usePreparedArchive = testInstallersDir != null && !data.archivePath.fileName.pathString.contains("jbr")
+          val downloadingDataProgressIndicator = dataProgressIndicator.createSubProgress(0.5)
 
           try {
             if (usePreparedArchive) {
@@ -263,11 +301,12 @@ object CodeWithMeClientDownloader {
               LOG.warn("Using prepared archive from ${preparedGuestArchive.absolutePathString()}")
 
               preparedGuestArchive.copy(data.archivePath)
+              downloadingDataProgressIndicator.fraction = 1.0
             }
             else {
               fun download(url: String, path: Path) {
                 LOG.info("Downloading $url -> $path")
-                HttpRequests.request(url).saveToFile(path, downloadProgressIndicator)
+                HttpRequests.request(url).saveToFile(path, downloadingDataProgressIndicator)
               }
 
               download(data.url, data.archivePath)
@@ -302,8 +341,9 @@ object CodeWithMeClientDownloader {
           }
 
           // extract
-          val extractProgressIndicator = progressIndicator.createSubProgress(0.5 / dataList.count().toDouble())
-          extractProgressIndicator.text = RemoteDevUtilBundle.message("thinClientDownloader.extracting", data.fileName)
+          dataProgressIndicator.fraction = 0.75
+          data.status = DownloadableFileState.Extracting
+          updateStateText()
 
           // downloading a .zip file will get a VirtualFile with a path of `jar://C:/Users/ivan.pashchenko/AppData/Local/Temp/CodeWithMeGuest-212.2033-windows-x64.zip!/`
           // see FileDownloaderImpl.findVirtualFiles making a call to VfsUtil.getUrlForLibraryRoot(ioFile)
@@ -317,7 +357,10 @@ object CodeWithMeClientDownloader {
 
           require(FileManifestUtil.isUpToDate(data.targetPath,
             data.includeInManifest)) { "Manifest verification failed for archive: $archivePath -> ${data.targetPath}" }
-          extractProgressIndicator.fraction = 1.0
+
+          dataProgressIndicator.fraction = 1.0
+          data.status = DownloadableFileState.Done
+          updateStateText()
 
           Files.delete(archivePath)
           future.complete(true)
@@ -333,6 +376,7 @@ object CodeWithMeClientDownloader {
         }
       }
     }
+
     try {
       val guestSucceeded = guestData.downloadFuture.get()
       val jdkSucceeded = jdkData.downloadFuture.get()
@@ -596,10 +640,12 @@ object CodeWithMeClientDownloader {
         else {
           Files.createSymbolicLink(link, target.absolute())
         }
-      } catch (e: IOException) {
+      }
+      catch (e: IOException) {
         if (link.exists() && link.toRealPath() == targetRealPath) {
           LOG.warn("Creating symlink/junction to already existing target. '$link' -> '$target'")
-        } else {
+        }
+        else {
           throw e
         }
       }
@@ -608,7 +654,8 @@ object CodeWithMeClientDownloader {
         if (linkRealPath != targetRealPath) {
           LOG.error("Symlink/junction '$link' should point to '$targetRealPath', but points to '$linkRealPath' instead")
         }
-      } catch (e: Throwable) {
+      }
+      catch (e: Throwable) {
         LOG.error(e)
         throw e
       }
@@ -651,5 +698,33 @@ object CodeWithMeClientDownloader {
   private val urlAllowedChars = Regex("^[._\\-a-zA-Z0-9:/]+$")
   fun isValidDownloadUrl(url: String): Boolean {
     return urlAllowedChars.matches(url) && !url.contains("..")
+  }
+
+  private class MultipleSubProgressIndicator(parent: ProgressIndicator,
+                                             private val onFractionChange: () -> Unit) : SubProgressIndicatorBase(parent) {
+
+    companion object {
+      fun create(parent: ProgressIndicator, count: Int): List<MultipleSubProgressIndicator> {
+        val result = mutableListOf<MultipleSubProgressIndicator>()
+        val parentBaseFraction = parent.fraction
+
+        for (i in 0..count) {
+          val element = MultipleSubProgressIndicator(parent) {
+            val subFraction = result.sumOf { it.subFraction }
+            parent.fraction = min(parentBaseFraction + subFraction * (1.0 / count), 1.0)
+          }
+          result.add(element)
+        }
+        return result
+      }
+    }
+
+    private var subFraction = 0.0
+
+    override fun getFraction() = subFraction
+    override fun setFraction(fraction: Double) {
+      subFraction = fraction
+      onFractionChange()
+    }
   }
 }

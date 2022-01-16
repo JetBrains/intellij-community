@@ -41,8 +41,8 @@ internal class BookmarkListProvider(private val project: Project) : BookmarksLis
       description,
       null
     )?.let {
-      if (description != null) group.setDescription(bookmark, it)
-      else group.add(bookmark, BookmarkType.DEFAULT, it)
+      if (description != null) group.setDescription(bookmark, { it })
+      else group.add(bookmark, BookmarkType.DEFAULT, { it })
     }
   }
 

@@ -110,20 +110,6 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
     myImports.add(new ImportCandidateHolder(importable, file, importElement, path, asName));
   }
 
-  /**
-   * @deprecated Use {@link #addImport(PsiNamedElement, PsiFileSystemItem, QualifiedName, String)} accepting a named element.
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
-  public void addImport(@NotNull PsiElement importable,
-                        @NotNull PsiFileSystemItem file,
-                        @Nullable QualifiedName path,
-                        @Nullable String asName) {
-    if (importable instanceof PsiNamedElement) {
-      addImport((PsiNamedElement)importable, file, path, asName);
-    }
-  }
-
   @Override
   @NotNull
   public String getText() {

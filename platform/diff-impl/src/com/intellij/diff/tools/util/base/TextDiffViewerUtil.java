@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.DiffContext;
@@ -366,6 +366,11 @@ public final class TextDiffViewerUtil {
 
   public static class ToggleAutoScrollAction extends ToggleActionButton implements DumbAware {
     @NotNull protected final TextDiffSettings mySettings;
+
+    @Override
+    public boolean isVisible() {
+      return super.isVisible() && !mySettings.isEnableAligningChangesMode();
+    }
 
     public ToggleAutoScrollAction(@NotNull TextDiffSettings settings) {
       super(DiffBundle.message("synchronize.scrolling"), AllIcons.Actions.SynchronizeScrolling);

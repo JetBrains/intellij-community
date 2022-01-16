@@ -200,12 +200,15 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
         }
       }
     );
-    myHelpButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        helpAction();
-      }
-    });
+
+    if (!isNewWizard()) {
+      myHelpButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(final ActionEvent e) {
+          helpAction();
+        }
+      });
+    }
 
     return panel;
   }
@@ -544,7 +547,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
   }
 
-  private static boolean isNewWizard() {
+  public static boolean isNewWizard() {
     return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
   }
 

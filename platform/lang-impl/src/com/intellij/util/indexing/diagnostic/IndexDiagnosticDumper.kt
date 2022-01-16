@@ -28,7 +28,9 @@ import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.*
+import kotlin.io.path.bufferedReader
+import kotlin.io.path.extension
+import kotlin.io.path.nameWithoutExtension
 import kotlin.streams.asSequence
 
 class IndexDiagnosticDumper : Disposable {
@@ -145,8 +147,9 @@ class IndexDiagnosticDumper : Disposable {
       val existingDiagnostics = parseExistingDiagnostics(indexDiagnosticDirectory)
       val survivedDiagnostics = deleteOutdatedDiagnostics(existingDiagnostics)
       val sharedIndexEvents = SharedIndexDiagnostic.readEvents(projectIndexingHistory.project)
+      val changedFilesPushedEvents = ChangedFilesPushedDiagnostic.readEvents(projectIndexingHistory.project)
       indexDiagnosticDirectory.resolve("report.html").write(
-        createAggregateHtml(projectIndexingHistory.project.name, survivedDiagnostics, sharedIndexEvents)
+        createAggregateHtml(projectIndexingHistory.project.name, survivedDiagnostics, sharedIndexEvents, changedFilesPushedEvents)
       )
     }
     catch (e: Exception) {

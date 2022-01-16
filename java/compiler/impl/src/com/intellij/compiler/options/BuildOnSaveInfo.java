@@ -37,6 +37,11 @@ public class BuildOnSaveInfo extends ActionOnSaveBackedByOwnConfigurable<Compile
 
       return List.of(new BuildOnSaveInfo(context));
     }
+
+    @Override
+    public Collection<String> getSearchableOptions() {
+      return List.of(JavaCompilerBundle.message("settings.actions.on.save.page.build.project.on.save.checkbox"));
+    }
   }
 
 

@@ -58,7 +58,7 @@ public class FormatOnSaveAction extends ActionsOnSaveFileDocumentManagerListener
       ReformatCodeProcessor p =
         new ReformatCodeProcessor(project, filesToProcessFully.toArray(PsiFile.EMPTY_ARRAY), null, onlyChangedLines);
       AbstractLayoutCodeProcessor processor =
-        createOptimizeRearrangeCleanupProcessor(project, filesToProcessButNotToFormat.toArray(PsiFile.EMPTY_ARRAY), onlyChangedLines, p);
+        createOptimizeRearrangeCleanupProcessor(project, filesToProcessFully.toArray(PsiFile.EMPTY_ARRAY), onlyChangedLines, p);
       runProcessor(processor);
     }
   }
@@ -72,25 +72,25 @@ public class FormatOnSaveAction extends ActionsOnSaveFileDocumentManagerListener
   }
 
   private static @Nullable AbstractLayoutCodeProcessor createOptimizeRearrangeCleanupProcessor(@NotNull Project project,
-                                                                                               @NotNull PsiFile @NotNull [] allFilesToProcess,
+                                                                                               @NotNull PsiFile @NotNull [] filesToProcess,
                                                                                                boolean onlyChangedLines,
                                                                                                @Nullable ReformatCodeProcessor reformatProcessor) {
     AbstractLayoutCodeProcessor processor = reformatProcessor;
     if (OptimizeImportsOnSaveActionInfo.isOptimizeImportsOnSaveEnabled(project)) {
       processor = processor != null
                   ? new OptimizeImportsProcessor(processor)
-                  : new OptimizeImportsProcessor(project, allFilesToProcess, null);
+                  : new OptimizeImportsProcessor(project, filesToProcess, null);
     }
     if (RearrangeCodeOnSaveActionInfo.isRearrangeCodeOnSaveEnabled(project)) {
       processor = processor != null
                   ? new RearrangeCodeProcessor(processor)
-                  : new RearrangeCodeProcessor(project, allFilesToProcess, CodeInsightBundle.message("command.rearrange.code"), null,
+                  : new RearrangeCodeProcessor(project, filesToProcess, CodeInsightBundle.message("command.rearrange.code"), null,
                                                onlyChangedLines);
     }
     if (CodeCleanupOnSaveActionInfo.isCodeCleanupOnSaveEnabled(project) && !DumbService.isDumb(project)) {
       processor = processor != null
                   ? new CodeCleanupCodeProcessor(processor)
-                  : new CodeCleanupCodeProcessor(project, allFilesToProcess, null, onlyChangedLines);
+                  : new CodeCleanupCodeProcessor(project, filesToProcess, null, onlyChangedLines);
     }
     return processor;
   }

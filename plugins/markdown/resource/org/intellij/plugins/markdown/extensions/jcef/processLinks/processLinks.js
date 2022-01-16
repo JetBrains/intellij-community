@@ -6,7 +6,7 @@ if (window.__IntelliJTools === undefined) {
 (function() {
   const openInExternalBrowser = (href) => {
     try {
-      window.messagePipe.post("openLink", href);
+      window.__IntelliJTools.messagePipe.post("openLink", href);
     }
     finally {}
   };

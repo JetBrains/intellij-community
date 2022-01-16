@@ -229,7 +229,7 @@ internal class PackagesListPanel(
                         onlyStable,
                         onlyMultiplatform,
                         searchQuery,
-                        dataProvider.doSearch(searchQuery, FilterOptions(onlyStable, onlyMultiplatform)).getOrNull()
+                        runCatching { dataProvider.doSearch(searchQuery, FilterOptions(onlyStable, onlyMultiplatform)) }.getOrNull()
                     )
                     isSearchingStateFlow.emit(false)
                     model
@@ -312,6 +312,7 @@ internal class PackagesListPanel(
             isSearchingStateFlow,
             project.packageSearchProjectService.isLoadingFlow
         ) { booleans -> emit(booleans.any { it }) }
+            .debounce(150)
             .onEach { headerPanel.showBusyIndicator(it) }
             .flowOn(Dispatchers.AppUI)
             .launchIn(project.lifecycleScope)

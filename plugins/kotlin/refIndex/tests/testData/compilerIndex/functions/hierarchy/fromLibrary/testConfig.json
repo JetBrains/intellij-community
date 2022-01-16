@@ -1,7 +1,8 @@
 {
+    "mainFile": "ClosedRangeUsage.kt",
     "usages": [
-        "ClosedRangeUsage.kt",
         "ClosedFloatingPointRangeUsage.kt",
+        "ClosedRangeUsage.kt",
         "MyClosedFloatingPointRangeUsage.kt"
     ],
     "shouldBeUsage": [

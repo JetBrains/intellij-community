@@ -13,6 +13,7 @@ intellij.reStructuredText
 intellij.settingsRepository
 intellij.sh
 intellij.statsCollector
+intellij.searchEverywhereMl
 intellij.tasks.core
 intellij.terminal
 intellij.textmate

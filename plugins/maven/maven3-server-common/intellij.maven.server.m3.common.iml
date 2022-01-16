@@ -155,7 +155,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="module-library">
       <library name="org.apache.lucene:lucene-core:2.4.1" type="repository">

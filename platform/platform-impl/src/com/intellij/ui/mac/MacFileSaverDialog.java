@@ -6,11 +6,10 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.PathChooserDialogHelper;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.OwnerOptional;
@@ -64,8 +63,7 @@ public final class MacFileSaverDialog implements FileSaverDialog {
     myFileDialog.setDirectory(baseDir);
     myFileDialog.setFile(filename);
     myFileDialog.setFilenameFilter(FileChooser.safeInvokeFilter((dir, name) -> {
-      String vfsPath = FileUtil.toSystemIndependentName(new File(dir, name).getAbsolutePath());
-      return myDescriptor.isFileSelectable(LocalFileSystem.getInstance().refreshAndFindFileByPath(vfsPath));
+      return myDescriptor.isFileSelectable(PathChooserDialogHelper.fileToCoreLocalVirtualFile(dir, name));
     }, false));
 
     myFileDialog.setVisible(true);

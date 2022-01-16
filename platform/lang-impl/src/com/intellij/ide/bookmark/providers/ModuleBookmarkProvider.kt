@@ -12,8 +12,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.util.text.StringUtil
 
-class ModuleBookmarkProvider(private val project: Project) : BookmarkProvider {
-  override fun getWeight() = 10
+internal class ModuleBookmarkProvider(private val project: Project) : BookmarkProvider {
+  override fun getWeight() = 200
   override fun getProject() = project
 
   internal val moduleManager
@@ -23,14 +23,11 @@ class ModuleBookmarkProvider(private val project: Project) : BookmarkProvider {
     get() = if (project.isDisposed) null else ProjectSettingsService.getInstance(project)
 
   override fun compare(bookmark1: Bookmark, bookmark2: Bookmark): Int {
-    val moduleBookmark1 = bookmark1 as? ModuleBookmark
-    val moduleBookmark2 = bookmark2 as? ModuleBookmark
-    if (moduleBookmark1 == null && moduleBookmark2 == null) return 0
-    if (moduleBookmark1 == null) return -1
-    if (moduleBookmark2 == null) return 1
-    if (moduleBookmark1.isGroup && !moduleBookmark2.isGroup) return -1
-    if (!moduleBookmark1.isGroup && moduleBookmark2.isGroup) return 1
-    return StringUtil.naturalCompare(moduleBookmark1.name, moduleBookmark2.name)
+    bookmark1 as ModuleBookmark
+    bookmark2 as ModuleBookmark
+    if (bookmark1.isGroup && !bookmark2.isGroup) return -1
+    if (!bookmark1.isGroup && bookmark2.isGroup) return +1
+    return StringUtil.naturalCompare(bookmark1.name, bookmark2.name)
   }
 
   override fun createBookmark(map: MutableMap<String, String>) =

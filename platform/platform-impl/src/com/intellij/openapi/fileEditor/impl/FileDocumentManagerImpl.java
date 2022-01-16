@@ -216,7 +216,11 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     boolean acceptSlashR = file instanceof LightVirtualFile && StringUtil.indexOf(text, '\r') >= 0;
     boolean freeThreaded = Boolean.TRUE.equals(file.getUserData(AbstractFileViewProvider.FREE_THREADED));
     DocumentImpl document = (DocumentImpl)((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(text, acceptSlashR, freeThreaded);
-    document.documentCreatedFrom(file);
+    Project project = ProjectUtil.guessProjectForFile(file);
+    int tabSize = project == null ? CodeStyle.getDefaultSettings().getTabSize(file.getFileType())  : CodeStyle.getFacade(project, document, file.getFileType()).getTabSize();
+    // calculate and pass tab size here since it's the ony place we have access to CodeStyle.
+    // tabSize might be needed by PersistentRangeMarkers to be able to restore from (line;col) info to offset
+    document.documentCreatedFrom(file, tabSize);
     return document;
   }
 

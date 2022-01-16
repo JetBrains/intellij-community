@@ -12,29 +12,11 @@ import com.intellij.grazie.ide.inspection.detection.problem.LanguageDetectionPro
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
 
 internal class LanguageDetectionInspection : LocalInspectionTool() {
-  companion object {
-    private val key = KeyWithDefaultValue.create("language-detection-inspection-key", DetectionContext.Local())
-  }
-
-  override fun inspectionStarted(session: LocalInspectionToolSession, isOnTheFly: Boolean) {
-    session.getUserData(key)!!.clear()
-  }
-
-  override fun inspectionFinished(session: LocalInspectionToolSession, holder: ProblemsHolder) {
-    val state = GrazieConfig.get()
-    val context = session.getUserData(key)!!
-    val languages = context.getToNotify((state.detectionContext.disabled + state.availableLanguages.map { it.toLanguage() }).toSet())
-
-    if (languages.isEmpty()) return
-
-    holder.registerProblem(LanguageDetectionProblemDescriptor.create(holder.manager, holder.isOnTheFly, session.file, languages))
-  }
-
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     val file = holder.file
     if (!isOnTheFly || InjectedLanguageManager.getInstance(holder.project).isInjectedFragment(file) || GrazieInspection.ignoreGrammarChecking(file))
@@ -43,11 +25,21 @@ internal class LanguageDetectionInspection : LocalInspectionTool() {
     val domains = GrazieInspection.checkedDomains()
     val fileLanguage = file.language
     val areChecksDisabled = GrazieInspection.getDisabledChecker(fileLanguage)
+    val context = DetectionContext.Local()
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
         if (areChecksDisabled(element)) return
         val text = TextExtractor.findUniqueTextAt(element, domains) ?: return
-        LangDetector.updateContext(text, session.getUserData(key)!!)
+        LangDetector.updateContext(text, context)
+      }
+
+      override fun visitFile(file: PsiFile) {
+        super.visitFile(file)
+        val state = GrazieConfig.get()
+        val languages = context.getToNotify((state.detectionContext.disabled + state.availableLanguages.map { it.toLanguage() }).toSet())
+        if (languages.isNotEmpty()) {
+          holder.registerProblem(LanguageDetectionProblemDescriptor.create(holder.manager, holder.isOnTheFly, file, languages))
+        }
       }
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.google.gson.Gson;
@@ -59,7 +59,8 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
   @NonNls private static final String GROUPS = "groups";
   @NonNls private static final String INSPECTION = "inspection";
   @NonNls private static final String HIGHLIGHTED_ELEMENT = "highlighted_element";
-  @NonNls private static final String DUPLICATED_CODE_AGGREGATE = "DuplicatedCode" + InspectionsResultUtil.AGGREGATE;
+  @NonNls public static final String DUPLICATED_CODE = "DuplicatedCode";
+  @NonNls public static final String DUPLICATED_CODE_AGGREGATE = DUPLICATED_CODE + InspectionsResultUtil.AGGREGATE;
 
   @Override
   public String getFormatName() {
@@ -114,14 +115,18 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
     jsonWriter.name(PROBLEMS);
     jsonWriter.beginArray();
     for (Element duplicates : problems.getRootElement().getChildren("duplicate")) {
-      jsonWriter.beginArray();
-      for (Element fragment : duplicates.getChildren("fragment")) {
-        convertDuplicateFragment(jsonWriter, fragment);
-      }
-      jsonWriter.endArray();
+      convertDuplicates(jsonWriter, duplicates);
     }
     jsonWriter.endArray();
     jsonWriter.endObject();
+  }
+
+  public static void convertDuplicates(@NotNull JsonWriter jsonWriter, Element duplicates) throws IOException {
+    jsonWriter.beginArray();
+    for (Element fragment : duplicates.getChildren("fragment")) {
+      convertDuplicateFragment(jsonWriter, fragment);
+    }
+    jsonWriter.endArray();
   }
 
   private static void convertDuplicateFragment(@NotNull JsonWriter jsonWriter, Element fragment) throws IOException {

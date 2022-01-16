@@ -22,6 +22,8 @@ const val COLUMNS_SHORT = 18
  */
 const val COLUMNS_MEDIUM = 25
 
+const val COLUMNS_LARGE = 36
+
 fun <T : JTextComponent> Cell<T>.bindText(binding: PropertyBinding<String>): Cell<T> {
   return bind(JTextComponent::getText, JTextComponent::setText, binding)
 }
@@ -75,6 +77,7 @@ fun <T : JTextComponent> Cell<T>.text(text: String): Cell<T> {
  * @see COLUMNS_TINY
  * @see COLUMNS_SHORT
  * @see COLUMNS_MEDIUM
+ * @see COLUMNS_LARGE
  */
 fun <T : JTextField> Cell<T>.columns(columns: Int): Cell<T> {
   component.columns = columns

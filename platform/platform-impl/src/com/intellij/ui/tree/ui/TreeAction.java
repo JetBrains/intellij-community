@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.ui;
 
 import com.intellij.ui.TreeActions;
@@ -226,25 +226,17 @@ final class TreeAction extends AbstractAction implements UIResource {
   }
 
   private static void selectNextSibling(@NotNull JTree tree) {
-    TreePath lead = tree.getLeadSelectionPath();
-    if (lead == null) return; // nothing is selected
-    TreePath parent = lead.getParentPath();
-    if (parent == null) return; // root node has no siblings
-    TreePath found = TreeUtil.nextVisiblePath(tree, lead, path -> parent.equals(path.getParentPath()));
-    if (found == null) return; // next sibling is not found
-    tree.setSelectionPath(found);
-    TreeUtil.scrollToVisible(tree, found, false);
+    TreePath sibling = TreeUtil.nextVisibleSibling(tree, tree.getLeadSelectionPath());
+    if (sibling == null) return; // next sibling is not found
+    tree.setSelectionPath(sibling);
+    TreeUtil.scrollToVisible(tree, sibling, false);
   }
 
   private static void selectPreviousSibling(@NotNull JTree tree) {
-    TreePath lead = tree.getLeadSelectionPath();
-    if (lead == null) return; // nothing is selected
-    TreePath parent = lead.getParentPath();
-    if (parent == null) return; // root node has no siblings
-    TreePath found = TreeUtil.previousVisiblePath(tree, lead, path -> parent.equals(path.getParentPath()));
-    if (found == null) return; // previous sibling is not found
-    tree.setSelectionPath(found);
-    TreeUtil.scrollToVisible(tree, found, false);
+    TreePath sibling = TreeUtil.previousVisibleSibling(tree, tree.getLeadSelectionPath());
+    if (sibling == null) return; // previous sibling is not found
+    tree.setSelectionPath(sibling);
+    TreeUtil.scrollToVisible(tree, sibling, false);
   }
 
   // NB!: the following method names correspond Tree.focusInputMap in BasicLookAndFeel and Actions in BasicTreeUI

@@ -4,7 +4,6 @@ package com.intellij.openapi.actionSystem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.ApiStatus;
@@ -16,8 +15,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.List;
-import java.util.concurrent.ForkJoinPool;
-import java.util.function.Consumer;
 
 /**
  * A manager for actions. Used to register and unregister actions, also
@@ -200,18 +197,4 @@ public abstract class ActionManager {
 
   @Nullable
   public abstract KeyboardShortcut getKeyboardShortcut(@NonNls @NotNull String actionId);
-
-  @ApiStatus.Internal
-  public static void doWithLazyActionManager(@NotNull Consumer<? super ActionManager> whatToDo) {
-    ActionManager created = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
-    if (created == null) {
-      ForkJoinPool.commonPool().execute(() -> {
-        ActionManager actionManager = ActionManager.getInstance();
-        ApplicationManager.getApplication().invokeLater(() -> whatToDo.accept(actionManager), ModalityState.any());
-      });
-    }
-    else {
-      whatToDo.accept(created);
-    }
-  }
 }

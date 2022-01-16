@@ -45,5 +45,7 @@
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.space.java.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" scope="RUNTIME" />
+    <orderEntry type="library" scope="RUNTIME" name="opentelemetry" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="jackson" level="project" />
   </component>
 </module>

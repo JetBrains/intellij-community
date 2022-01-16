@@ -10,7 +10,6 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -165,10 +164,6 @@ public final class PluginManager {
 
   public @Nullable IdeaPluginDescriptor findEnabledPlugin(@NotNull PluginId id) {
     return PluginManagerCore.getPluginSet().findEnabledPlugin(id);
-  }
-
-  public boolean hideImplementationDetails() {
-    return !Registry.is("plugins.show.implementation.details");
   }
 
   public @NotNull Disposable createDisposable(@NotNull Class<?> requestor) {

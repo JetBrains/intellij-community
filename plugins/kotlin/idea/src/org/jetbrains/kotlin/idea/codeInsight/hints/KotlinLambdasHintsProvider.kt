@@ -25,6 +25,10 @@ class KotlinLambdasHintsProvider : KotlinAbstractHintsProvider<KotlinLambdasHint
     override val groupId: String
         get() = LAMBDAS_GROUP
 
+    override fun getProperty(key: String): String {
+        return KotlinBundle.getMessage(key)
+    }
+
     override fun isElementSupported(resolved: HintType?, settings: Settings): Boolean {
         return when (resolved) {
             HintType.LAMBDA_RETURN_EXPRESSION -> settings.returnExpressions
@@ -57,7 +61,7 @@ class KotlinLambdasHintsProvider : KotlinAbstractHintsProvider<KotlinLambdasHint
 
     override fun createSettings(): Settings = Settings()
 
-    override val previewText: String? = """
+    override val previewText: String = """
         val lambda = { i: Int ->
             i + 10
             i + 20

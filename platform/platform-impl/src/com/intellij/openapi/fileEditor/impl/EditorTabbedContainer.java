@@ -24,6 +24,7 @@ import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsContexts;
@@ -40,6 +41,7 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.docking.impl.DockManagerImpl;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.*;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
@@ -47,10 +49,10 @@ import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -699,6 +701,15 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
     @Override
     protected void paintChildren(Graphics g) {
+      if (!isHideTabs() && ExperimentalUI.isNewEditorTabs()) {
+        TabLabel label = getSelectedLabel();
+        if (label != null) {
+          int h = label.getHeight();
+          Color color = myTabPainter.getTabTheme().getBorderColor();
+          g.setColor(color);
+          LinePainter2D.paint(((Graphics2D)g), 0, h, getWidth(), h);
+        }
+      }
       super.paintChildren(g);
       drawBorder(g);
     }
@@ -719,6 +730,17 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
             insets.top -= 7;
           }
           return super.getPreferredHeight() - insets.top - insets.bottom;
+        }
+
+        @Override
+        public void paint(Graphics g) {
+          if (ExperimentalUI.isNewEditorTabs() && getSelectedInfo() != info && !isHoveredTab(this)) {
+            GraphicsConfig config = GraphicsUtil.paintWithAlpha(g, JBUI.getFloat("EditorTabs.hoverAlpha", 0.75f));
+            super.paint(g);
+            config.restore();
+          } else {
+            super.paint(g);
+          }
         }
       };
     }

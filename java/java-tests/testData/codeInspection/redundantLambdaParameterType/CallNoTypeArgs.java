@@ -1,4 +1,4 @@
-// "Remove redundant types" "false"
+// "Remove redundant types" "true"
 class Test2 {
     class Y<T>{
         T t;

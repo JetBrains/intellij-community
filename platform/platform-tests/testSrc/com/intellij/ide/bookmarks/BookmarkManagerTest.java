@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentListener;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.TestFileType;
@@ -219,6 +220,24 @@ public class BookmarkManagerTest extends AbstractEditorTest {
 
   private void addBookmark(VirtualFile file, int line) {
     getManager().add(LineBookmarkProvider.find(getProject()).createBookmark(file, line), BookmarkType.DEFAULT);
+  }
+
+  public void testBookmarkCreationMustNotLoadDocumentUnnecessarily() throws IOException {
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(PsiDocumentListener.TOPIC,
+                                                                            (document, psiFile, project) -> fail("Document " + document + " was loaded unexpectedly"));
+
+    @NonNls String text =
+      "public class Test {\n" +
+      "}";
+
+    setVFile(WriteAction.compute(() -> {
+      VirtualFile file = getSourceRoot().createChildData(null, getTestName(false) + ".txt");
+      VfsUtil.saveText(file, text);
+      return file;
+    }));
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
+    addBookmark(getVFile(), 1);
   }
 
   private BookmarksManager getManager() {

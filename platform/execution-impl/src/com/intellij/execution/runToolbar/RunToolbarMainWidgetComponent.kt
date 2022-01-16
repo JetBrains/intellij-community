@@ -79,7 +79,8 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
 
       value
     }
-    LOG.info("MAIN SLOT state updated: $state")
+
+    if(RunToolbarProcess.logNeeded) LOG.info("MAIN SLOT state updated: $state RunToolbar")
   }
 
   internal var isOpened = false
@@ -87,10 +88,10 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
       if(field == value) return
 
       field = value
-      LOG.info("MAIN SLOT isOpened: $isOpened")
+      if(RunToolbarProcess.logNeeded) LOG.info("MAIN SLOT isOpened: $isOpened RunToolbar")
       updateState()
 
-      if (RunToolbarProcess.experimentalUpdating()) {
+      if (RunToolbarProcess.isExperimentalUpdatingEnabled) {
         forceUpdate()
       }
     }

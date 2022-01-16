@@ -32,6 +32,7 @@ fun <T, C : ComboBox<T>> Cell<C>.bindItem(getter: () -> T?, setter: (T?) -> Unit
  * @see COLUMNS_TINY
  * @see COLUMNS_SHORT
  * @see COLUMNS_MEDIUM
+ * @see COLUMNS_LARGE
  */
 fun <T, C : ComboBox<T>> Cell<C>.columns(columns: Int): Cell<C> {
   // See JTextField.getColumnWidth implementation

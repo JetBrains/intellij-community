@@ -47,10 +47,7 @@ public interface GroupNames {
     /** @deprecated use groupKey="group.names.logging.issues" instead */
   @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   String LOGGING_GROUP_NAME = "Logging";
-    /** @deprecated use groupKey="group.names.code.maturity.issues" instead */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  String MATURITY_GROUP_NAME = "Code maturity";
-    /** @deprecated use groupKey="group.names.naming.conventions" instead */
+  /** @deprecated use groupKey="group.names.naming.conventions" instead */
   @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   String NAMING_CONVENTIONS_GROUP_NAME = "Naming conventions";
   /** @deprecated use groupKey="group.names.code.style.issues" instead */

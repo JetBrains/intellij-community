@@ -93,6 +93,14 @@ fun demoComponents(): DialogPanel {
       intTextField(0..100)
     }
 
+    row("spinner(0..100):") {
+      spinner(0..100)
+    }
+
+    row("spinner(0.0..100.0, 0.01):") {
+      spinner(0.0..100.0, 0.01)
+    }
+
     row {
       label("textArea:")
         .verticalAlign(VerticalAlign.TOP)

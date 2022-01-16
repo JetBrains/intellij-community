@@ -45,7 +45,7 @@ class ScrollController {
 
   _scrollHandler() {
     const value = this._getElementsAtOffset(window.scrollY);
-    window.messagePipe.post("setScroll", value.previous.from);
+    window.__IntelliJTools.messagePipe.post("setScroll", value.previous.from);
   }
 
   _getNodeOffsets(node) {

@@ -1,0 +1,1 @@
+fun square(arg: Int) = arg * arg

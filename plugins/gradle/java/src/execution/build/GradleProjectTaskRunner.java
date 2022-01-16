@@ -155,6 +155,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
     MultiMap<String, String> buildTasksMap = MultiMap.createLinkedSet();
     MultiMap<String, String> cleanTasksMap = MultiMap.createLinkedSet();
     MultiMap<String, String> initScripts = MultiMap.createLinkedSet();
+    MultiMap<String, VersionSpecificInitScript> versionedInitScripts = MultiMap.createLinkedSet();
 
     Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = JpsProjectTaskRunner.groupBy(Arrays.asList(tasks));
 
@@ -162,7 +163,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
     List<Module> modulesOfResourcesToBuild = addModulesBuildTasks(taskMap.get(ModuleResourcesBuildTask.class), buildTasksMap, initScripts);
     // TODO there should be 'gradle' way to build files instead of related modules entirely
     List<Module> modulesOfFiles = addModulesBuildTasks(taskMap.get(ModuleFilesBuildTask.class), buildTasksMap, initScripts);
-    addArtifactsBuildTasks(taskMap.get(ProjectModelBuildTask.class), cleanTasksMap, buildTasksMap);
+    addArtifactsBuildTasks(taskMap.get(ProjectModelBuildTask.class), cleanTasksMap, buildTasksMap, versionedInitScripts);
 
     Set<String> rootPaths = buildTasksMap.keySet();
     if (rootPaths.isEmpty()) {
@@ -254,6 +255,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       userData.putUserData(PROGRESS_LISTENER_KEY, BuildViewManager.class);
 
       Collection<String> scripts = initScripts.getModifiable(rootProjectPath);
+      Collection<VersionSpecificInitScript> versionSpecificInitScripts = versionedInitScripts.getModifiable(rootProjectPath);
       if (outputPathsFile != null && context.isCollectionOfGeneratedFilesEnabled()) {
         String outputFilePath = FileUtil.toCanonicalPath(outputPathsFile.getAbsolutePath());
         GradleVersion v68 = GradleVersion.version("6.8");
@@ -271,9 +273,10 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
         var simple = new VersionSpecificInitScript(initScript, "ijpathcollect", v -> v.compareTo(v68) < 0);
         var services = new VersionSpecificInitScript(initScriptUsingService, "ijpathcollect", v -> v.compareTo(v68) >= 0);
-
-        userData.putUserData(GradleTaskManager.VERSION_SPECIFIC_SCRIPTS_KEY, Arrays.asList(simple, services));
+        versionSpecificInitScripts.add(simple);
+        versionSpecificInitScripts.add(services);
       }
+      userData.putUserData(GradleTaskManager.VERSION_SPECIFIC_SCRIPTS_KEY, versionSpecificInitScripts);
 
       userData.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, join(scripts, System.lineSeparator()));
       userData.putUserData(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY, executionName);
@@ -483,7 +486,8 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
   private static void addArtifactsBuildTasks(@Nullable Collection<? extends ProjectTask> tasks,
                                              @NotNull MultiMap<String, String> cleanTasksMap,
-                                             @NotNull MultiMap<String, String> buildTasksMap) {
+                                             @NotNull MultiMap<String, String> buildTasksMap,
+                                             @NotNull MultiMap<String, VersionSpecificInitScript> versionedInitScripts) {
     if (ContainerUtil.isEmpty(tasks)) return;
 
     for (ProjectTask projectTask : tasks) {
@@ -495,7 +499,8 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
           buildTasksProvider.addBuildTasks(
             projectModelBuildTask,
             task -> cleanTasksMap.putValue(task.getLinkedExternalProjectPath(), task.getName()),
-            task -> buildTasksMap.putValue(task.getLinkedExternalProjectPath(), task.getName())
+            task -> buildTasksMap.putValue(task.getLinkedExternalProjectPath(), task.getName()),
+            (String path, VersionSpecificInitScript script) -> versionedInitScripts.putValue(path, script)
           );
         }
       }

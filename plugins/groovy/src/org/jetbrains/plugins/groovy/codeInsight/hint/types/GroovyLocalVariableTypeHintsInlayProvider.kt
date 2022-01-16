@@ -23,6 +23,11 @@ class GroovyLocalVariableTypeHintsInlayProvider : InlayHintsProvider<GroovyLocal
   override val key: SettingsKey<Settings> = ourKey
   override val groupId: String
     get() = TYPES_GROUP
+
+  override fun getProperty(key: String): String {
+    return GroovyBundle.message(key)
+  }
+
   override val previewText: String = """
 def foo() {
   def x = 1

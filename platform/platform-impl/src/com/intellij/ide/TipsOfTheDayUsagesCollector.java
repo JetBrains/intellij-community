@@ -38,13 +38,13 @@ public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
                                      TipsUtilityExperiment.BY_TIP_UTILITY_IGNORE_USED.toString()));
   private static final EventId3<String, String, String> TIP_SHOWN =
     GROUP.registerEvent("tip.shown",
-                        EventFields.StringValidatedByCustomRule("filename", "tip_info"),
+                        EventFields.StringValidatedByCustomRule("filename", TipInfoValidationRule.RULE_ID),
                         ALGORITHM_FIELD,
                         EventFields.Version);
 
   private static final EventId2<String, Long> TIP_PERFORMED =
     GROUP.registerEvent("tip.performed",
-                        EventFields.StringValidatedByCustomRule("filename", "tip_info"),
+                        EventFields.StringValidatedByCustomRule("filename", TipInfoValidationRule.RULE_ID),
                         EventFields.Long("time_passed"));
 
   @Override
@@ -69,9 +69,11 @@ public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
   }
 
   public static class TipInfoValidationRule extends CustomValidationRule {
+    public static final String RULE_ID = "tip_info";
+
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
-      return "tip_info".equals(ruleId);
+      return RULE_ID.equals(ruleId);
     }
 
     @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -165,10 +165,7 @@ final class ActionUpdater {
     boolean shallAsync = myForceAsync || canAsync && UpdateInBackground.isUpdateInBackground(action);
     boolean isEDT = EDT.isCurrentThreadEdt();
     boolean shallEDT = !(canAsync && shallAsync);
-    if (isEDT &&
-        !shallEDT &&
-        !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM) &&
-        !SlowOperations.isInsideActivity(SlowOperations.MODAL_ACTION_PERFORM)) {
+    if (isEDT && !shallEDT && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM)) {
       LOG.error("Calling `" + action.getClass().getName() + "#" + operation + "` on EDT " +
                 (myForceAsync ? "(forceAsync=true)" : "(isUpdateInBackground=true)"));
     }

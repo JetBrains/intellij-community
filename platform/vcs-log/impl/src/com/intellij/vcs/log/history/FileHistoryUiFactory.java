@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.vcs.FilePath;
@@ -34,12 +35,17 @@ public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileH
 
     VcsLogFilterCollection filters = FileHistoryFilterer.createFilters(myFilePath, myHash, myRoot,
                                                                        properties.get(FileHistoryUiProperties.SHOW_ALL_BRANCHES));
-    VisiblePackRefresherImpl visiblePackRefresher = new VisiblePackRefresherImpl(project, logData,
-                                                                                 filters,
-                                                                                 PermanentGraph.SortType.Normal,
-                                                                                 new FileHistoryFilterer(logData),
-                                                                                 FileHistoryUi.getFileHistoryLogId(myFilePath, myHash));
-    FileHistoryUi ui = new FileHistoryUi(logData, properties, visiblePackRefresher, myFilePath, myHash, myRoot,
+    String logId = FileHistoryUi.getFileHistoryLogId(myFilePath, myHash);
+    FileHistoryFilterer filterer = new FileHistoryFilterer(logData, logId);
+    VisiblePackRefresherImpl visiblePackRefresher = new VisiblePackRefresherImpl(project, logData, filters, PermanentGraph.SortType.Normal,
+                                                                                 filterer, logId) {
+      @Override
+      public void dispose() {
+        super.dispose();
+        Disposer.dispose(filterer); // disposing filterer after the refresher
+      }
+    };
+    FileHistoryUi ui = new FileHistoryUi(logData, properties, visiblePackRefresher, myFilePath, myHash, myRoot, logId,
                                          Objects.requireNonNull(logData.getLogProvider(myRoot).getDiffHandler()));
 
     RegistryValueListener registryValueListener = new RegistryValueListener() {

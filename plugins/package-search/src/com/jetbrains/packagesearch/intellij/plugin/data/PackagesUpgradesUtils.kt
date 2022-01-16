@@ -5,6 +5,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageM
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackagesToUpgrade
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.upgradeCandidateVersionOrNull
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
 
 internal fun computePackageUpgrades(
@@ -18,15 +19,16 @@ internal fun computePackageUpgrades(
 
         for (usageInfo in installedPackageModel.usageInfo) {
             val currentVersion = usageInfo.version
-            if (currentVersion is PackageVersion.Missing) continue
+            if (currentVersion !is PackageVersion.Named) continue
 
-            val upgradeVersion = PackageVersionUtils.upgradeCandidateVersionOrNull(currentVersion, availableVersions)
+            val normalizedPackageVersion = NormalizedPackageVersion.parseFrom(currentVersion)
+            val upgradeVersion = PackageVersionUtils.upgradeCandidateVersionOrNull(normalizedPackageVersion, availableVersions)
             if (upgradeVersion != null) {
                 updatesByModule.getOrCreate(usageInfo.projectModule.nativeModule) { mutableSetOf() } +=
                     PackagesToUpgrade.PackageUpgradeInfo(
                         installedPackageModel,
                         usageInfo,
-                        upgradeVersion
+                        upgradeVersion.originalVersion
                     )
             }
         }

@@ -33,7 +33,7 @@ internal class VcsLogTabsWatcher(private val project: Project, private val postp
     val logWindow = postponableLogRefresher.logWindows.find { window -> window.id == tabId }
     if (logWindow != null) {
       LOG.debug("Selected log window '$logWindow'")
-      VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.TAB_NAVIGATED, null, project)
+      VcsLogUsageTriggerCollector.triggerTabNavigated(project)
       postponableLogRefresher.refresherActivated(logWindow.refresher, false)
     }
   }

@@ -239,8 +239,16 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     DfaValue[] args = callArguments.toArray();
     for (DfaMemoryState state : finalStates) {
       ContractValue.flushContractTempVariables(state);
+      boolean keepNonFlushed = state.peek() instanceof DfaVariableValue;
+      DfaValue tos = null;
+      if (keepNonFlushed) {
+        tos = state.pop();
+      }
       callArguments.flush(state, factory, realMethod);
-      pushResult(interpreter, state, state.pop(), args);
+      if (!keepNonFlushed) {
+        tos = state.pop();
+      }
+      pushResult(interpreter, state, tos, args);
       result[i++] = nextState(interpreter, state);
     }
     return result;

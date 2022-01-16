@@ -194,7 +194,7 @@ public final class PluginManagerMain {
         int code =
           MessageDialogBuilder.yesNoCancel(IdeBundle.message("dialog.title.dependent.plugins.found"), XmlStringUtil.wrapInHtml(message))
             .yesText(IdeBundle.message("button.enable.all"))
-            .noText(IdeBundle.message("button.enable.updated.plugin.0", disabled.size()))
+            .noText(IdeBundle.message("button.enable.updated.plugins", disabled.size()))
             .guessWindowAndAsk();
         if (code == Messages.CANCEL) {
           return false;
@@ -282,7 +282,7 @@ public final class PluginManagerMain {
       .notify(project);
   }
 
-  public static boolean checkThirdPartyPluginsAllowed(Iterable<? extends IdeaPluginDescriptor> descriptors) {
+  public static boolean checkThirdPartyPluginsAllowed(@NotNull Iterable<? extends IdeaPluginDescriptor> descriptors) {
     UpdateSettings updateSettings = UpdateSettings.getInstance();
     if (updateSettings.isThirdPartyPluginsAllowed()) {
       PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.AUTO_ACCEPTED);

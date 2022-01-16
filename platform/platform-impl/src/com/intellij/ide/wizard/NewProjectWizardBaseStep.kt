@@ -29,19 +29,22 @@ import java.io.File
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
-class NewProjectWizardBaseStep(override val context: WizardContext) : NewProjectWizardStep, NewProjectWizardBaseData {
 
-  override val propertyGraph = PropertyGraph("New project wizard")
+class NewProjectWizardBaseStep(context: WizardContext) : GitNewProjectWizardStep(context)
 
-  override val nameProperty = propertyGraph.graphProperty { suggestName() }
-  override val pathProperty = propertyGraph.graphProperty { context.projectFileDirectory }
-  override val gitProperty = propertyGraph.graphProperty { false }
+open class GitNewProjectWizardStep(override val context: WizardContext) : NewProjectWizardStep, NewProjectWizardBaseData {
 
-  override var name by nameProperty
-  override var path by pathProperty
-  override var git by gitProperty
+  final override val propertyGraph = PropertyGraph("New project wizard")
 
-  override val projectPath: Path get() = Path.of(path, name)
+  final override val nameProperty = propertyGraph.graphProperty { suggestName() }
+  final override val pathProperty = propertyGraph.graphProperty { context.projectFileDirectory }
+  final override val gitProperty = propertyGraph.graphProperty { false }
+
+  final override var name by nameProperty
+  final override var path by pathProperty
+  final override var git by gitProperty
+
+  final override val projectPath: Path get() = Path.of(path, name)
 
   private fun suggestName(): String {
     val moduleNames = findAllModules().map { it.name }.toSet()
@@ -78,8 +81,8 @@ class NewProjectWizardBaseStep(override val context: WizardContext) : NewProject
           .validationOnApply { validateLocation() }
           .validationOnInput { validateLocation() }
       }.bottomGap(BottomGap.SMALL)
-      if (context.isCreatingNewProject && GitRepositoryInitializer.getInstance() != null) {
-        row("") {
+      if (showGitRepositoryCheckbox()) {
+        row(EMPTY_LABEL) {
           checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"))
             .bindSelected(gitProperty)
         }.bottomGap(BottomGap.SMALL)
@@ -91,6 +94,8 @@ class NewProjectWizardBaseStep(override val context: WizardContext) : NewProject
       }
     }
   }
+
+  protected open fun showGitRepositoryCheckbox() = context.isCreatingNewProject && GitRepositoryInitializer.getInstance() != null
 
   private fun getBuilderId(): String? {
     val projectBuilder = context.projectBuilder
@@ -149,7 +154,7 @@ class NewProjectWizardBaseStep(override val context: WizardContext) : NewProject
     if (git) {
       val projectBaseDirectory = LocalFileSystem.getInstance().findFileByNioFile(projectPath)
       if (projectBaseDirectory != null) {
-        runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project )  {
+        runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project) {
           GitRepositoryInitializer.getInstance()!!.initRepository(project, projectBaseDirectory)
         }
       }

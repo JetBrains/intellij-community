@@ -90,7 +90,9 @@ internal class ModuleVcsDetector(private val project: Project) {
     val usedVcses = mutableSetOf<AbstractVcs?>()
     val detectedRoots = mutableSetOf<Pair<VirtualFile, AbstractVcs>>()
 
-    val roots = ModuleManager.getInstance(project).modules.flatMap { it.rootManager.contentRoots.asIterable() }.distinct()
+    val roots = ModuleManager.getInstance(project).modules.asSequence()
+      .flatMap { it.rootManager.contentRoots.asSequence() }
+      .filter { it.isDirectory }.distinct().toList()
     for (root in roots) {
       val moduleVcs = vcsManager.findVersioningVcs(root)
       if (moduleVcs != null) {
@@ -117,12 +119,14 @@ internal class ModuleVcsDetector(private val project: Project) {
     if (vcsManager.haveDefaultMapping() != null) return
 
     val newMappings = mutableListOf<VcsDirectoryMapping>()
-    for (file in module.rootManager.contentRoots) {
-      val vcs = vcsManager.findVersioningVcs(file)
-      if (vcs != null && vcs !== vcsManager.getVcsFor(file)) {
-        newMappings.add(VcsDirectoryMapping(file.path, vcs.name))
+    module.rootManager.contentRoots
+      .filter { it.isDirectory }
+      .forEach { file ->
+        val vcs = vcsManager.findVersioningVcs(file)
+        if (vcs != null && vcs !== vcsManager.getVcsFor(file)) {
+          newMappings.add(VcsDirectoryMapping(file.path, vcs.name))
+        }
       }
-    }
     if (newMappings.isNotEmpty()) {
       vcsManager.setAutoDirectoryMappings(vcsManager.directoryMappings + newMappings)
     }
@@ -130,6 +134,7 @@ internal class ModuleVcsDetector(private val project: Project) {
 
   private fun getMappings(module: Module): List<VcsDirectoryMapping> {
     return module.rootManager.contentRoots
+      .filter { it.isDirectory }
       .mapNotNull { root -> vcsManager.directoryMappings.firstOrNull { it.directory == root.path } }
   }
 }

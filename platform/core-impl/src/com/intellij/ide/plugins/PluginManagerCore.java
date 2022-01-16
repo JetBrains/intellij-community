@@ -41,9 +41,10 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-// Prefer to use only JDK classes. Any post start-up functionality should be placed in PluginManager class.
 /**
- * See <a href="https://github.com/JetBrains/intellij-community/blob/master/platform/core-impl/src/com/intellij/ide/plugins/readme.md">Plugin Model V2 documentation</a>
+ * See <a href="https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md">Plugin Model</a> documentation.
+ *
+ * @implNote Prefer to use only JDK classes. Any post start-up functionality should be placed in {@link PluginManager} class.
  */
 public final class PluginManagerCore {
   public static final @NonNls String META_INF = "META-INF/";
@@ -175,8 +176,7 @@ public final class PluginManagerCore {
         }
       }
     }
-    catch (NoSuchFileException ignore) {
-    }
+    catch (NoSuchFileException ignore) { }
     catch (IOException e) {
       getLogger().error("Failed to read " + updatedBrokenPluginFile, e);
     }
@@ -340,13 +340,12 @@ public final class PluginManagerCore {
 
   public static boolean isDevelopedByJetBrains(@NotNull PluginDescriptor plugin) {
     String vendor = plugin.getVendor();
-    if (vendor == null &&
-        !(plugin.getPluginClassLoader() instanceof PluginClassLoader) &&
-        plugin instanceof IdeaPluginDescriptorImpl && !((IdeaPluginDescriptorImpl)plugin).isUseIdeaClassLoader &&
-        ApplicationInfoEx.getInstanceEx().isVendorJetBrains()) {
-      return true;
-    }
-    return isDevelopedByJetBrains(vendor) || isDevelopedByJetBrains(vendor);
+    return isDevelopedByJetBrains(vendor) ||
+           (vendor == null &&  // a core plugin
+            !(plugin.getPluginClassLoader() instanceof PluginClassLoader) &&
+            plugin instanceof IdeaPluginDescriptorImpl &&
+            !((IdeaPluginDescriptorImpl)plugin).isUseIdeaClassLoader &&
+            ApplicationInfoEx.getInstanceEx().isVendorJetBrains());
   }
 
   public static boolean isDevelopedByJetBrains(@Nullable String vendorString) {

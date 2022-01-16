@@ -94,7 +94,19 @@ public class InstanceOfInstruction extends InstructionImpl implements MixinTypeI
       GrCondition condition = switchElement.getCondition();
       if (condition instanceof GrReferenceExpression) {
         List<GrExpression> expressions = PsiUtil.getAllPatternsForCaseSection((GrCaseSection)element.getParent());
-        List<PsiClass> patternClasses = ContainerUtil.mapNotNull(expressions, expr -> (PsiClass)((GrReferenceExpression)expr).resolve());
+        List<PsiClass> patternClasses = ContainerUtil.mapNotNull(expressions, (GrExpression expr) -> {
+          if (expr instanceof GrReferenceExpression) {
+            var resolved = ((GrReferenceExpression)expr).resolve();
+            if (resolved instanceof PsiClass) {
+              return (PsiClass)resolved;
+            }
+          }
+          return null;
+        });
+        if (patternClasses.size() != expressions.size()) {
+          // something weird is in the case arm
+          return null;
+        }
         var classTypes = ContainerUtil.map(patternClasses, InferenceKt::type);
         PsiType commonType = TypesUtil.getLeastUpperBoundNullable(classTypes, element.getManager());
         return Pair.create((GrReferenceExpression)condition, commonType);

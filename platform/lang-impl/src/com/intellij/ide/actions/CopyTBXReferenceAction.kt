@@ -2,11 +2,7 @@
 package com.intellij.ide.actions
 
 import com.intellij.ide.actions.CopyReferenceUtil.*
-import com.intellij.navigation.JBProtocolNavigateCommand.Companion.NAVIGATE_COMMAND
-import com.intellij.navigation.NavigatorWithinProject
-import com.intellij.navigation.PROJECT_NAME_KEY
-import com.intellij.navigation.REFERENCE_TARGET
-import com.intellij.navigation.SELECTION
+import com.intellij.navigation.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.JBProtocolCommand.PROTOCOL
 import com.intellij.openapi.diagnostic.Logger
@@ -20,7 +16,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.util.PlatformUtils.*
 import com.intellij.util.io.encodeUrlQueryParameter
-import org.jetbrains.annotations.NonNls
 import java.util.stream.Collectors
 import java.util.stream.IntStream
 
@@ -88,9 +83,9 @@ object CopyTBXReferenceAction {
     }
 
     val selectionParameters = getSelectionParameters(editor) ?: ""
-    val projectParameter = "$PROJECT_NAME_KEY=${project.name}" // NON-NLS
+    val projectParameter = "${PROJECT_NAME_KEY}=${project.name}"
 
-    return "${PROTOCOL}$tool/$NAVIGATE_COMMAND/$REFERENCE_TARGET?$projectParameter$refsParameters$selectionParameters" // NON-NLS
+    return "${PROTOCOL}${tool}/${NAVIGATE_COMMAND}/${REFERENCE_TARGET}?${projectParameter}${refsParameters}${selectionParameters}"
   }
 
   private fun getSelectionParameters(editor: Editor?): String? {
@@ -109,7 +104,6 @@ object CopyTBXReferenceAction {
     }
   }
 
-  @NonNls
   private fun getSelectionParameters(editor: Editor, caret: Caret, index: String): String? =
     getSelectionRange(editor, caret)?.let {
       @Suppress("HardCodedStringLiteral")

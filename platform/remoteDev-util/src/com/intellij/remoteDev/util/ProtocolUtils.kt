@@ -1,4 +1,4 @@
-package com.jetbrains.gateway.util
+package com.intellij.remoteDev.util
 
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
@@ -7,8 +7,7 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 @NlsSafe
-@Suppress("SpellCheckingInspection")
-const val jetbrains_gateway_protocol_name = "jetbrainsgateway"
+const val jetbrains_gateway_protocol_name = "jetbrains-gateway"
 
 @ApiStatus.Experimental
 object RemoteDevProtocolUtil {
@@ -16,11 +15,11 @@ object RemoteDevProtocolUtil {
   const val httpPrefix = "https://code-with-me.jetbrains.com/remoteDev"
 
   fun createGatewayUrl(parameters: Map<String, String>): String {
-    return "${gatewayPrefix}#" + buildParamsString(parameters)
+    return "$gatewayPrefix#" + buildParamsString(parameters)
   }
 
   fun createHttpUrl(parameters: Map<String, String>): String {
-    return "${httpPrefix}#" + buildParamsString(parameters)
+    return "$httpPrefix#" + buildParamsString(parameters)
   }
 
   private fun urlEncode(value: String): String {

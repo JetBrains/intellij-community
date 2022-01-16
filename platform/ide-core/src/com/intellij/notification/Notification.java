@@ -75,6 +75,9 @@ public class Notification {
   private final AtomicReference<WeakReference<Balloon>> myBalloonRef = new AtomicReference<>();
   private final long myTimestamp = System.currentTimeMillis();
 
+  private boolean mySuggestionType;
+  private boolean myImportantSuggestion;
+
   /** See {@link #Notification(String, String, String, NotificationType)} */
   public Notification(@NotNull String groupId, @NotNull @NotificationContent String content, @NotNull NotificationType type) {
     this(groupId, "", content, type);
@@ -93,6 +96,22 @@ public class Notification {
     myType = type;
     myTitle = title;
     myContent = content;
+  }
+
+  public boolean isSuggestionType() {
+    return mySuggestionType;
+  }
+
+  public void setSuggestionType(boolean suggestionType) {
+    mySuggestionType = suggestionType;
+  }
+
+  public boolean isImportantSuggestion() {
+    return myImportantSuggestion;
+  }
+
+  public void setImportantSuggestion(boolean importantSuggestion) {
+    myImportantSuggestion = importantSuggestion;
   }
 
   /**

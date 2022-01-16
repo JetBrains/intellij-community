@@ -182,11 +182,11 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
              ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED,
              ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT,
              ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION,
+             ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION,
+             ACTION_EDITOR_CUT_WITHOUT_SHORTCUT, // this one is shown since bound to $cut
              ACTION_EDITOR_DELETE_WITH_SHORTCUT), // this action is shown, since the keymap redefines the shortcut of $Delete
            Arrays.asList(
              NON_EXISTENT_ACTION,
-             ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION,
-             ACTION_EDITOR_CUT_WITHOUT_SHORTCUT, // this one is not shown since bound to $cut
              ACTION_WITH_FIXED_SHORTCUTS
            )
     );
@@ -242,12 +242,12 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
              ACTION_WITH_TEXT_ONLY,
              ACTION_WITH_TEXT_AND_DESCRIPTION,
              EXISTENT_ACTION,
+             ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION,
              ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED,
              ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT,
              ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION),
            Arrays.asList(
              NON_EXISTENT_ACTION,
-             ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION,
              ACTION_EDITOR_DELETE_WITH_SHORTCUT,
              ACTION_EDITOR_CUT_WITHOUT_SHORTCUT,
              ACTION_WITH_FIXED_SHORTCUTS

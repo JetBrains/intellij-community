@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -33,6 +33,7 @@ import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
+import com.intellij.xdebugger.impl.ui.tree.nodes.HeadlessValueEvaluationCallbackBase;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -299,7 +300,14 @@ public abstract class AbstractValueHint {
       component.append(
         evaluator.getLinkText(),
         XDebuggerTreeNodeHyperlink.TEXT_ATTRIBUTES,
-        (Consumer<MouseEvent>)event -> DebuggerUIUtil.showValuePopup(evaluator, event, getProject(), getEditor())
+        (Consumer<MouseEvent>)event -> {
+          if (evaluator.isShowValuePopup()) {
+            DebuggerUIUtil.showValuePopup(evaluator, event, getProject(), getEditor());
+          }
+          else {
+            new HeadlessValueEvaluationCallbackBase(getProject()).startFetchingValue(evaluator);
+          }
+        }
       );
     }
   }

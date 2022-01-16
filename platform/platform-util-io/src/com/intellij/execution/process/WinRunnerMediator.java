@@ -77,7 +77,7 @@ public final class WinRunnerMediator {
     return null;
   }
 
-  public static void injectRunnerCommand(@NotNull GeneralCommandLine commandLine, boolean showConsole) {
+  static void injectRunnerCommand(@NotNull GeneralCommandLine commandLine, boolean showConsole) {
     if (!SystemInfo.isWindows || isRunnerCommandInjected(commandLine)) {
       return;
     }
@@ -107,5 +107,12 @@ public final class WinRunnerMediator {
       return sendCtrlEventThroughStream(process, softKill ? C : BRK);
     }
     return false;
+  }
+
+  /**
+   * Show external console, only used by CLion, but CLion will migrate to its own implementation soon
+   */
+  public static void withExternalConsole(@NotNull GeneralCommandLine commandLine) {
+    injectRunnerCommand(commandLine, true);
   }
 }

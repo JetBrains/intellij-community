@@ -3,6 +3,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 import com.intellij.util.text.VersionComparatorUtil
 import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.util.versionTokenPriorityProvider
 import com.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -17,7 +18,7 @@ sealed class PackageVersion(
     abstract val displayName: String
 
     override fun compareTo(other: PackageVersion): Int =
-        VersionComparatorUtil.compare(versionName, other.versionName)
+        VersionComparatorUtil.compare(versionName, other.versionName, ::versionTokenPriorityProvider)
 
     object Missing : PackageVersion("", isStable = true, releasedAt = null) {
 

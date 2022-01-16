@@ -16,17 +16,23 @@ import com.intellij.structuralsearch.impl.matcher.PatternTreeContext
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo
+import com.intellij.util.containers.tail
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.addTypeParameter
 import org.jetbrains.kotlin.idea.core.setDefaultValue
+import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.js.translate.declaration.hasCustomGetter
 import org.jetbrains.kotlin.js.translate.declaration.hasCustomSetter
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
+import org.jetbrains.kotlin.resolve.ImportPath
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class KotlinStructuralReplaceHandler(private val project: Project) : StructuralReplaceHandler() {
     override fun replace(info: ReplacementInfo, options: ReplaceOptions) {
@@ -39,7 +45,7 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
         for (i in 0 until info.matchesCount) {
             val match = StructuralSearchUtil.getPresentableElement(info.getMatch(i)) ?: break
             val replacement = replaceTemplates.getOrNull(i) ?: break
-            replacement.structuralReplace(searchTemplate, StructuralSearchUtil.getPresentableElement(info.matchResult.match))
+            replacement.structuralReplace(searchTemplate, StructuralSearchUtil.getPresentableElement(info.matchResult.match), options)
             match.replace(replacement)
         }
         var lastElement = info.getMatch(info.matchesCount - 1) ?: return
@@ -71,7 +77,7 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
         return this
     }
 
-    private fun PsiElement.structuralReplace(searchTemplate: PsiElement, match: PsiElement): PsiElement {
+    private fun PsiElement.structuralReplace(searchTemplate: PsiElement, match: PsiElement, options: ReplaceOptions): PsiElement {
         if (searchTemplate is KtDeclaration && this is KtDeclaration && match is KtDeclaration) {
             replaceDeclaration(searchTemplate, match)
             if (this is KtCallableDeclaration && searchTemplate is KtCallableDeclaration && match is KtCallableDeclaration) {
@@ -93,7 +99,7 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
                     searchTemplate, match
                 )
                 this is KtDotQualifiedExpression && searchTemplate is KtDotQualifiedExpression && match is KtDotQualifiedExpression -> replaceDotQualifiedExpression(
-                    searchTemplate, match
+                    searchTemplate, match, options
                 )
                 this is KtCallExpression && searchTemplate is KtCallExpression && match is KtCallExpression -> replaceCallExpression(
                     searchTemplate, match
@@ -112,14 +118,27 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
     }
 
     private fun KtDotQualifiedExpression.replaceDotQualifiedExpression(
-        searchTemplate: KtDotQualifiedExpression, match: KtDotQualifiedExpression
+        searchTemplate: KtDotQualifiedExpression, match: KtDotQualifiedExpression, options: ReplaceOptions
     ) {
-        receiverExpression.structuralReplace(searchTemplate.receiverExpression, match.receiverExpression)
+        // fix parsing for fq selector expression replacement with shorten references
+        if (receiverExpression is KtDotQualifiedExpression && selectorExpression is KtCallExpression && options.isToShortenFQN) {
+            val symbols = text.split(".")
+            val psiFactory = KtPsiFactory(match)
+            receiverExpression.replace(psiFactory.createExpression(symbols.first()))
+            val importPath = ImportPath(FqName(symbols.tail().joinToString(separator = ".") { it }.substringBefore("(")), false)
+            val replaceImport = psiFactory.createImportDirective(importPath)
+            val matchFqName = match.selectorExpression?.resolveToCall(BodyResolveMode.PARTIAL_NO_ADDITIONAL)?.candidateDescriptor?.importableFqName
+            val importList = (match.containingFile as? KtFile)?.importList ?: return
+            val import = importList.imports.first { it.importedFqName == matchFqName }
+            val newLine = importList.addAfter(psiFactory.createWhiteSpace("\n"), import)
+            importList.addAfter(replaceImport, newLine)
+        }
+        receiverExpression.structuralReplace(searchTemplate.receiverExpression, match.receiverExpression, options)
         val selectorExpr = selectorExpression
         val searchSelectorExpr = searchTemplate.selectorExpression
         val matchSelectorExpr = match.selectorExpression
         if (selectorExpr != null && searchSelectorExpr != null && matchSelectorExpr != null) {
-            selectorExpr.structuralReplace(searchSelectorExpr, matchSelectorExpr)
+            selectorExpr.structuralReplace(searchSelectorExpr, matchSelectorExpr, options)
         }
     }
 

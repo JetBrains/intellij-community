@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExpectedTypeUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.positionCursor
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.startTemplate
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression
+import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInspection.CommonQuickFixBundle
 import com.intellij.lang.jvm.actions.CreateEnumConstantActionGroup
@@ -24,7 +25,7 @@ import com.intellij.psi.util.PsiTreeUtil
 internal class CreateEnumConstantAction(
   target: PsiClass,
   override val request: CreateFieldRequest
-) : CreateFieldActionBase(target, request) {
+) : CreateFieldActionBase(target, request), HighPriorityAction {
 
   override fun getActionGroup(): JvmActionGroup = CreateEnumConstantActionGroup
 

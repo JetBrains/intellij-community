@@ -22,7 +22,7 @@ internal class FlowOnIoContextFix : LocalQuickFix {
     }
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val callExpression = descriptor.psiElement.parentOfType<KtCallExpression>() ?: return
+        val callExpression = descriptor.psiElement?.parentOfType<KtCallExpression>() ?: return
         val flowOnCallOrNull = callExpression.findFlowOnCall()
         val ktPsiFactory = KtPsiFactory(project, true)
 

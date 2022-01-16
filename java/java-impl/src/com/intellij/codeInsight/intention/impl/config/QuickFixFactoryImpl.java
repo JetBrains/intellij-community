@@ -1053,6 +1053,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
+  public @NotNull IntentionAction createVariableTypeFix(@NotNull PsiVariable variable, @NotNull PsiType type) {
+    return new VariableTypeFix(variable, type);
+  }
+
+  @Override
   public @NotNull IntentionAction createConvertInterfaceToClassFix(@NotNull PsiClass aClass) {
     return new ConvertInterfaceToClassFix(aClass);
   }
@@ -1109,5 +1114,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     final PsiType returnType = resolved.getReturnType();
     if (!(returnType instanceof PsiArrayType)) return null;
     return new MergeDuplicateAttributesFix(pair);
+  }
+
+  @Override
+  public @NotNull IntentionAction createMoveSwitchBranchUpFix(@NotNull PsiCaseLabelElement moveBeforeLabel,
+                                                              @NotNull PsiCaseLabelElement labelElement) {
+    return new MoveSwitchBranchUpFix(moveBeforeLabel, labelElement);
   }
 }

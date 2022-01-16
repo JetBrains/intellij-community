@@ -36,7 +36,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -532,44 +531,5 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       }
     }
     return false;
-  }
-
-  /**
-   * needed for API compatibility only
-   * @deprecated Please use {@link TypedHandlerUtil#handleGenericGT} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static boolean handleJavaGT(@NotNull final Editor editor,
-                                     @NotNull final IElementType lt,
-                                     @NotNull final IElementType gt,
-                                     @NotNull final TokenSet invalidInsideReference) {
-    return TypedHandlerUtil.handleGenericGT(editor, lt, gt, invalidInsideReference);
-  }
-
-  /**
-   * needed for API compatibility only
-   * @deprecated Please use {@link TypedHandlerUtil#handleAfterGenericLT} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void handleAfterJavaLT(@NotNull final Editor editor,
-                                       @NotNull final IElementType lt,
-                                       @NotNull final IElementType gt,
-                                       @NotNull final TokenSet invalidInsideReference) {
-    TypedHandlerUtil.handleAfterGenericLT(editor, lt, gt, invalidInsideReference);
-  }
-
-  /**
-   * needed for API compatibility only
-   * @deprecated Please use {@link TypedHandlerUtil#isClassLikeIdentifier} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static boolean isClassLikeIdentifier(int offset,
-                                              @NotNull Editor editor,
-                                              @NotNull HighlighterIterator iterator,
-                                              @NotNull final IElementType idType) {
-    return TypedHandlerUtil.isClassLikeIdentifier(offset, editor, iterator, idType);
   }
 }

@@ -8,6 +8,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.usageView.UsageInfo
+import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
@@ -19,7 +20,6 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.utils.SmartList
 
 class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
 
@@ -111,17 +111,18 @@ class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
 
     override fun renameElement(element: PsiElement, newName: String, usages: Array<UsageInfo>, listener: RefactoringElementListener?) {
         val simpleUsages = ArrayList<UsageInfo>(usages.size)
-        val ambiguousImportUsages = com.intellij.util.SmartList<UsageInfo>()
-        for (usage in usages) {
-            if (usage.isAmbiguousImportUsage()) {
-                ambiguousImportUsages += usage
-            } else {
-                simpleUsages += usage
-            }
+        val ambiguousImportUsages = SmartList<UsageInfo>()
+        val simpleImportUsages = SmartList<UsageInfo>()
+        for (usage in usages) when (usage.importState()) {
+            ImportState.AMBIGUOUS -> ambiguousImportUsages += usage
+            ImportState.SIMPLE -> simpleImportUsages += usage
+            ImportState.NOT_IMPORT -> simpleUsages += usage
         }
+
         element.ambiguousImportUsages = ambiguousImportUsages
 
-        super.renameElement(element, newName, simpleUsages.toTypedArray(), listener)
+        val usagesToRename = if (simpleImportUsages.isEmpty()) simpleUsages else simpleImportUsages + simpleUsages
+        super.renameElement(element, newName, usagesToRename.toTypedArray(), listener)
 
         usages.forEach { (it as? KtResolvableCollisionUsageInfo)?.apply() }
     }

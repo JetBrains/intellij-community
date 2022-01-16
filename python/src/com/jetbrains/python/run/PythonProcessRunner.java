@@ -18,9 +18,9 @@ public final class PythonProcessRunner {
     }
     else {
       if (isUnderDebugger(commandLine)) {
-        return new PyDebugProcessHandler(commandLine, softKillOnWin);
+        return new PyDebugProcessHandler(commandLine);
       }
-      return new PythonProcessHandler(commandLine, softKillOnWin);
+      return new PythonProcessHandler(commandLine);
     }
   }
 

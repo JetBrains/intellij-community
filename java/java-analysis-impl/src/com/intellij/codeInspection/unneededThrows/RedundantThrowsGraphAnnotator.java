@@ -4,11 +4,9 @@
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefGraphAnnotatorEx;
-import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.codeInspection.reference.RefMethodImpl;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.*;
+import com.intellij.util.ObjectUtils;
 
 import java.util.*;
 
@@ -34,29 +32,27 @@ public final class RedundantThrowsGraphAnnotator extends RefGraphAnnotatorEx {
         }
       }
     }
-  }
-
-  @Override
-  public void onMarkReferenced(PsiElement what, PsiElement from, boolean referencedFromClassInitializer) {
-    if (from instanceof PsiFunctionalExpression) {
-      RefElement refResolved = myRefManager.getReference(what);
-      if (refResolved instanceof RefMethodImpl) {
-        PsiFunctionalExpression expression = (PsiFunctionalExpression)from;
-        final Collection<PsiClassType> exceptionTypes;
-        if (expression instanceof PsiLambdaExpression) {
-          PsiElement body = ((PsiLambdaExpression)expression).getBody();
-          exceptionTypes = body != null ? ExceptionUtil.collectUnhandledExceptions(body, expression, false) : Collections.emptyList();
+    else if (refElement instanceof RefFunctionalExpression) {
+      PsiElement expression = refElement.getPsiElement();
+      Collection<PsiClassType> exceptionTypes = null;
+      PsiMethod method = null;
+      if (expression instanceof PsiLambdaExpression) {
+        PsiElement body = ((PsiLambdaExpression)expression).getBody();
+        exceptionTypes = body != null ? ExceptionUtil.collectUnhandledExceptions(body, expression, false) : Collections.emptyList();
+        method = LambdaUtil.getFunctionalInterfaceMethod(expression);
+      }
+      else if (expression instanceof PsiMethodReferenceExpression) {
+        PsiMethod resolved = ObjectUtils.tryCast(((PsiMethodReferenceExpression)expression).resolve(), PsiMethod.class);
+        if (resolved != null) {
+          exceptionTypes = Arrays.asList(resolved.getThrowsList().getReferencedTypes());
         }
-        else {
-          final PsiElement resolve = ((PsiMethodReferenceExpression)expression).resolve();
-          exceptionTypes = resolve instanceof PsiMethod
-                           ? Arrays.asList(((PsiMethod)resolve).getThrowsList().getReferencedTypes())
-                           : Collections.emptyList();
-        }
-
-        for (final PsiClassType exceptionType : exceptionTypes) {
-          ((RefMethodImpl)refResolved).updateThrowsList(exceptionType);
-        }
+        method = LambdaUtil.getFunctionalInterfaceMethod(expression);
+      }
+      if (method == null || exceptionTypes == null) return;
+      RefElement refMethod = myRefManager.getReference(method);
+      if (refMethod == null) return;
+      for (PsiClassType exceptionType : exceptionTypes) {
+        ((RefMethodImpl)refMethod).updateThrowsList(exceptionType);
       }
     }
   }

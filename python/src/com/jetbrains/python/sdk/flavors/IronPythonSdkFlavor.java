@@ -28,9 +28,8 @@ public final class IronPythonSdkFlavor extends PythonSdkFlavor {
     return true;
   }
 
-  @Nullable
   @Override
-  public String envPathParam() {
+  public @NotNull String envPathParam() {
     return "IRONPYTHONPATH";
   }
 
@@ -74,22 +73,22 @@ public final class IronPythonSdkFlavor extends PythonSdkFlavor {
   }
 
   @Override
-  public String getVersionOption() {
+  public @NotNull String getVersionOption() {
     return "-V";
   }
 
   @Override
-  public Collection<String> getExtraDebugOptions() {
+  public @NotNull Collection<String> getExtraDebugOptions() {
     return Collections.singletonList("-X:Frames");
   }
 
   @Override
-  public void initPythonPath(GeneralCommandLine cmd, boolean passParentEnvs, Collection<String> path) {
+  public void initPythonPath(@NotNull GeneralCommandLine cmd, boolean passParentEnvs, @NotNull Collection<String> path) {
     initPythonPath(path, passParentEnvs, cmd.getEnvironment());
   }
 
   @Override
-  public void initPythonPath(Collection<String> path, boolean passParentEnvs, Map<String, String> env) {
+  public void initPythonPath(@NotNull Collection<String> path, boolean passParentEnvs, @NotNull Map<String, String> env) {
     PythonEnvUtil.addToEnv("IRONPYTHONPATH", StringUtil.join(path, File.pathSeparator), env);
   }
 
@@ -100,7 +99,7 @@ public final class IronPythonSdkFlavor extends PythonSdkFlavor {
   }
 
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return PythonIcons.Python.Dotnet;
   }
 }

@@ -33,7 +33,6 @@ fun demoRowLayout(): DialogPanel {
 
     row {
       label("Row label is not provided, INDEPENDENT is used:")
-        .gap(RightGap.SMALL)
       textField("textField1")
       textField("textField2")
     }

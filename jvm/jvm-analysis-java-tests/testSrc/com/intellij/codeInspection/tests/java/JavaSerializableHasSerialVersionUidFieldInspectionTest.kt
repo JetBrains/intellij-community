@@ -22,6 +22,6 @@ class JavaSerializableHasSerialVersionUidFieldInspectionTest : SerializableHasSe
       class Foo implements Serializable {
           private static final long serialVersionUID = -4454552974617678229L;
       }
-    """.trimIndent(), "Add 'serialVersionUID' field")
+    """.trimIndent(), "Create constant field 'serialVersionUID' in 'Foo'")
   }
 }

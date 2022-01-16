@@ -69,7 +69,7 @@ class KotlinReferencesTypeHintsProvider : KotlinAbstractHintsProvider<KotlinRefe
         }
     }
 
-    override val previewText: String? = """
+    override val previewText: String = """
         val property = listOf(1, 2, 3).filter { num -> num % 2 == 0 }
         
         fun someFun(arg: Int) = print(arg)
@@ -86,4 +86,8 @@ class KotlinReferencesTypeHintsProvider : KotlinAbstractHintsProvider<KotlinRefe
                 .collect(Collectors.toList())
         }
     """.trimIndent()
+
+    override fun getProperty(key: String): String {
+        return KotlinBundle.getMessage(key)
+    }
 }

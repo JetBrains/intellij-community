@@ -73,11 +73,11 @@ public abstract class PythonSdkFlavor {
     return null;
   }
 
-  public static List<PythonSdkFlavor> getApplicableFlavors() {
+  public static @NotNull List<PythonSdkFlavor> getApplicableFlavors() {
     return getApplicableFlavors(true);
   }
 
-  public static List<PythonSdkFlavor> getApplicableFlavors(boolean addPlatformIndependent) {
+  public static @NotNull List<PythonSdkFlavor> getApplicableFlavors(boolean addPlatformIndependent) {
     List<PythonSdkFlavor> result = new ArrayList<>();
     for (PythonSdkFlavor flavor : EP_NAME.getExtensionList()) {
       if (flavor.isApplicable() || (addPlatformIndependent && flavor.isPlatformIndependent())) {
@@ -90,7 +90,7 @@ public abstract class PythonSdkFlavor {
     return result;
   }
 
-  public static List<PythonSdkFlavor> getPlatformFlavorsFromExtensions(boolean isIndependent) {
+  public static @NotNull List<PythonSdkFlavor> getPlatformFlavorsFromExtensions(boolean isIndependent) {
     List<PythonSdkFlavor> result = new ArrayList<>();
     for (PythonFlavorProvider provider : PythonFlavorProvider.EP_NAME.getExtensionList()) {
       PythonSdkFlavor flavor = provider.getFlavor(isIndependent);
@@ -101,7 +101,7 @@ public abstract class PythonSdkFlavor {
     return result;
   }
 
-  public static List<PythonSdkFlavor> getPlatformIndependentFlavors() {
+  public static @NotNull List<PythonSdkFlavor> getPlatformIndependentFlavors() {
     List<PythonSdkFlavor> result = new ArrayList<>();
     for (PythonSdkFlavor flavor : EP_NAME.getExtensionList()) {
       if (flavor.isPlatformIndependent()) {
@@ -160,7 +160,7 @@ public abstract class PythonSdkFlavor {
    * @param path path to check.
    * @return true if paths points to a valid home.
    */
-  public boolean isValidSdkHome(String path) {
+  public boolean isValidSdkHome(@NotNull String path) {
     File file = new File(path);
     return file.isFile() && isValidSdkPath(file);
   }
@@ -201,15 +201,15 @@ public abstract class PythonSdkFlavor {
     return PatternUtil.getFirstMatch(Arrays.asList(StringUtil.splitByLines(output)), VERSION_RE);
   }
 
-  public String getVersionOption() {
+  public @NotNull String getVersionOption() {
     return "-V";
   }
 
-  public Collection<String> getExtraDebugOptions() {
+  public @NotNull Collection<String> getExtraDebugOptions() {
     return Collections.emptyList();
   }
 
-  public void initPythonPath(GeneralCommandLine cmd, boolean passParentEnvs, Collection<String> path) {
+  public void initPythonPath(@NotNull GeneralCommandLine cmd, boolean passParentEnvs, @NotNull Collection<String> path) {
     initPythonPath(path, passParentEnvs, cmd.getEnvironment());
   }
 
@@ -235,15 +235,15 @@ public abstract class PythonSdkFlavor {
     return LanguageLevel.getDefault();
   }
 
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return PythonSdkIcons.Python;
   }
 
-  public void initPythonPath(Collection<String> path, boolean passParentEnvs, Map<String, String> env) {
+  public void initPythonPath(@NotNull Collection<String> path, boolean passParentEnvs, @NotNull Map<String, String> env) {
     PythonEnvUtil.initPythonPath(env, passParentEnvs, path);
   }
 
-  public VirtualFile getSdkPath(VirtualFile path) {
+  public @Nullable VirtualFile getSdkPath(@NotNull VirtualFile path) {
     return path;
   }
 

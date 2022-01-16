@@ -196,4 +196,16 @@ switch (10) {
     break
 }"""
   }
+
+  void 'test enhanced range'() {
+    highlightingTest """
+<error>1<..<2</error>
+"""
+  }
+
+  void 'test literal without leading zero'() {
+    highlightingTest """
+<error>.5555d</error>
+"""
+  }
 }

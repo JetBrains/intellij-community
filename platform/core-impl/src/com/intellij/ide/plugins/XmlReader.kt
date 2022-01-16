@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("XmlReader")
-@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
+@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplacePutWithAssignment", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.components.ComponentConfig
@@ -14,7 +14,6 @@ import com.intellij.openapi.util.createNonCoalescingXmlStreamReader
 import com.intellij.platform.util.plugins.DataLoader
 import com.intellij.util.NoOpXmlInterner
 import com.intellij.util.XmlInterner
-import com.intellij.util.lang.Java11Shim
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.readXmlAsModel
@@ -667,7 +666,12 @@ private fun readComponents(reader: XMLStreamReader2, containerDescriptor: Contai
 private fun readContent(reader: XMLStreamReader2,
                         descriptor: RawPluginDescriptor,
                         readContext: ReadModuleContext) {
-  val items = ArrayList<PluginContentDescriptor.ModuleItem>()
+  var items = descriptor.contentModules
+  if (items == null) {
+    items = ArrayList()
+    descriptor.contentModules = items
+  }
+
   reader.consumeChildElements { elementName ->
     when (elementName) {
       "module" -> {
@@ -694,7 +698,6 @@ private fun readContent(reader: XMLStreamReader2,
     }
     reader.skipElement()
   }
-  descriptor.content = PluginContentDescriptor(Java11Shim.INSTANCE.copyOfCollection(items))
   assert(reader.isEndElement)
 }
 

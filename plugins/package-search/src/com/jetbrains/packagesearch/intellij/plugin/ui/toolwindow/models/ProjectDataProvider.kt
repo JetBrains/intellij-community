@@ -4,13 +4,12 @@ import com.jetbrains.packagesearch.api.v2.ApiPackagesResponse
 import com.jetbrains.packagesearch.api.v2.ApiRepository
 import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.api.PackageSearchApiClient
-import com.jetbrains.packagesearch.intellij.plugin.api.http.ApiResult
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.logInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.apache.commons.collections.map.LRUMap
@@ -21,10 +20,12 @@ internal class ProjectDataProvider(
 
     private val packageCache = LRUMap(500)
 
-    suspend fun fetchKnownRepositories(): ApiResult<List<ApiRepository>> = apiClient.repositories()
-        .mapSuccess { it.repositories }
+    suspend fun fetchKnownRepositories(): List<ApiRepository> = apiClient.repositories().repositories
 
-    suspend fun doSearch(searchQuery: String, filterOptions: FilterOptions): ApiResult<ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>> {
+    suspend fun doSearch(
+        searchQuery: String,
+        filterOptions: FilterOptions
+    ): ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion> {
         val repositoryIds = filterOptions.onlyRepositoryIds
 
         return apiClient.packagesByQuery(
@@ -90,8 +91,11 @@ internal class ProjectDataProvider(
             .chunked(size = 25)
             .asFlow()
             .map { dependenciesToFetch -> apiClient.packagesByRange(dependenciesToFetch) }
-            .filterIsInstance<ApiResult.Success<ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>>>()
-            .map { it.result.packages }
+            .map { it.packages }
+            .catch {
+                logDebug("${this::class.qualifiedName!!}#fetchedPackages", it) { "Error while retrieving packages" }
+                emit(emptyList())
+            }
             .toList()
             .flatten()
 

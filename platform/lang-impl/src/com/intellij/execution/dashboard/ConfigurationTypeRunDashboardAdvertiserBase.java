@@ -84,35 +84,39 @@ public abstract class ConfigurationTypeRunDashboardAdvertiserBase implements Run
 
     if (myNotification != null && !myNotification.isExpired()) return;
 
+    myNotification = createNotification(myProject, type.getId(), type.getDisplayName());
+    myNotification.notify(myProject);
+  }
+
+  private static Notification createNotification(Project project, String typeId, String typeDisplayName) {
     String toolWindowName = UIBundle.message("tool.window.name.services");
-    String typeId = type.getId();
-    myNotification = NotificationGroupManager.getInstance().getNotificationGroup(DASHBOARD_NOTIFICATION_GROUP_ID)
-      .createNotification(ExecutionBundle.message("run.dashboard.multiple.run.config.notification", type.getDisplayName(), toolWindowName), NotificationType.INFORMATION)
+    return NotificationGroupManager.getInstance().getNotificationGroup(DASHBOARD_NOTIFICATION_GROUP_ID)
+      .createNotification(ExecutionBundle.message("run.dashboard.multiple.run.config.notification", typeDisplayName, toolWindowName),
+                          NotificationType.INFORMATION)
       .setDisplayId(DASHBOARD_MULTIPLE_RUN_CONFIGURATIONS_NOTIFICATION_ID)
       .setIcon(AllIcons.Nodes.Services)
       .addAction(new NotificationAction(ExecutionBundle.message("run.dashboard.use.services.action", toolWindowName)) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
           notification.hideBalloon();
-          showInRunDashboard(typeId);
+          showInRunDashboard(project, typeId);
         }
       })
       .addAction(new NotificationAction(ExecutionBundle.message("run.dashboard.hide.multiple.run.config.notification.action")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          PropertiesComponent.getInstance(myProject).setValue(SHOW_RUN_DASHBOARD_NOTIFICATION, false, true);
+          PropertiesComponent.getInstance(project).setValue(SHOW_RUN_DASHBOARD_NOTIFICATION, false, true);
           notification.expire();
         }
       });
-    myNotification.notify(myProject);
   }
 
   private static boolean isEnabled(Project project) {
     return PropertiesComponent.getInstance(project).getBoolean(SHOW_RUN_DASHBOARD_NOTIFICATION, true);
   }
 
-  private void showInRunDashboard(String typeId) {
-    RunDashboardManager dashboardManager = RunDashboardManager.getInstance(myProject);
+  private static void showInRunDashboard(Project project, String typeId) {
+    RunDashboardManager dashboardManager = RunDashboardManager.getInstance(project);
     Set<String> types = new HashSet<>(dashboardManager.getTypes());
     types.add(typeId);
     dashboardManager.setTypes(types);

@@ -22,7 +22,7 @@ class GroupSelectDialog(project: Project?, parent: Component?, val manager: Book
   private val groupName
     get() = component.editor?.item?.toString()?.trim() ?: ""
 
-  fun showAndGetGroup(): BookmarkGroup? {
+  fun showAndGetGroup(addBookmark: Boolean): BookmarkGroup? {
     val validator = GroupInputValidator(manager, groups)
       .install(disposable, component) { groupName }
 
@@ -33,9 +33,11 @@ class GroupSelectDialog(project: Project?, parent: Component?, val manager: Book
         document.addDocumentListener(object : DocumentAdapter() {
           override fun textChanged(event: DocumentEvent) {
             validator.revalidate()
-            when (manager.getGroup(groupName)) {
-              null -> setOKButtonText(message("dialog.group.create.button"))
-              else -> setOKButtonText(message("dialog.group.select.button"))
+            if (!addBookmark) {
+              when (manager.getGroup(groupName)) {
+                null -> setOKButtonText(message("dialog.group.create.button"))
+                else -> setOKButtonText(message("dialog.group.select.button"))
+              }
             }
           }
         })
@@ -43,9 +45,9 @@ class GroupSelectDialog(project: Project?, parent: Component?, val manager: Book
     }
     validator.revalidate()
 
-    title = message("dialog.group.select.title")
-    setOKButtonText(message("dialog.group.select.button"))
-    return showAndGetGroup(manager.groups.isEmpty()) {
+    title = if (addBookmark) message("dialog.bookmark.add.title") else message("dialog.group.select.title")
+    setOKButtonText(if (addBookmark) message("dialog.bookmark.add.button") else message("dialog.group.select.button"))
+    return showAndGetGroup(false) {
       manager.getGroup(groupName)?.apply { isDefault = it } ?: manager.addGroup(groupName, it)
     }
   }

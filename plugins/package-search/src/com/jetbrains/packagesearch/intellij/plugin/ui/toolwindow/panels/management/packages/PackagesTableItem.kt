@@ -6,11 +6,11 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.util.text.VersionComparatorUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
+import com.jetbrains.packagesearch.intellij.plugin.util.VersionNameComparator
 import java.awt.datatransfer.StringSelection
 
 internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyProvider {
@@ -45,7 +45,7 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
                 append(
                     versions.map { it.version }
                         .distinct()
-                        .sortedWith(VersionComparatorUtil.COMPARATOR)
+                        .sortedWith(VersionNameComparator)
                         .joinToString(", ")
                         .removeSuffix(", ")
                 )

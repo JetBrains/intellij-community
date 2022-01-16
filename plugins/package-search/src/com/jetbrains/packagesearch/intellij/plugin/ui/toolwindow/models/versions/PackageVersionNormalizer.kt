@@ -15,8 +15,8 @@ internal object PackageVersionNormalizer {
      * has [1, 4] numeric components, each up to 5 digits long. Between each component
      * there is a period character.
      *
-     * Examples of valid semvers: 1, 1.0-whatever, 1.2.3, 2.3.3.0-beta02
-     * Examples of valid semvers: 1.0.0.0.0 (too many components), 123456 (component too long)
+     * Examples of valid semver: 1, 1.0-whatever, 1.2.3, 2.3.3.0-beta02
+     * Examples of invalid semver: 1.0.0.0.0 (too many components), 123456 (component too long)
      *
      * Group 0 matches the whole string, group 1 is the semver minus any suffixes.
      */
@@ -28,8 +28,8 @@ internal object PackageVersionNormalizer {
      *
      * Stability markers are made up by a separator character (one of: . _ - +), then one of the
      * stability tokens (see list below), followed by an optional separator (one of: . _ -),
-     * AND [0, 5] numeric digits. After the digits there must be a word boundary (most
-     * punctuation, except for underscores, qualify as such).
+     * AND [0, 5] numeric digits. After the digits, there must be a word boundary (most
+     * punctuation, except for underscores, qualifies as such).
      *
      * We only support up to two stability markers (arguably, having two already qualifies for
      * the [Garbage] tier, but we have well-known libraries out there that do the two-markers
@@ -40,7 +40,7 @@ internal object PackageVersionNormalizer {
      *  * `snapshots`*, `snapshot`, `snap`, `s`*
      *  * `preview`, `eap`, `pre`, `p`*
      *  * `develop`*, `dev`*
-     *  * `milestone`*, `m`
+     *  * `milestone`*, `m`, `build`*
      *  * `alpha`, `a`
      *  * `betta` (yes, there are Bettas out there), `beta`, `b`
      *  * `candidate`*, `rc`
@@ -48,16 +48,16 @@ internal object PackageVersionNormalizer {
      *  * `release`, `final`, `stable`*, `rel`, `r`
      *
      * Tokens denoted by a `*` are considered as meaningless words by [com.intellij.util.text.VersionComparatorUtil]
-     * when comparing, so sorting may be funky when they appear.
+     * when comparing without a custom , so sorting may be funky when they appear.
      */
     private val STABILITY_MARKER_REGEX =
         ("^((?:[._\\-+]" +
-            "(?:snapshots?|preview|milestone|candidate|release|develop|stable|alpha|betta|final|snap|beta|dev|pre|eap|rel|sp|rc|m|r|b|a|p)" +
-            "(?:[._\\-]?\\d{1,5})?){1,2}?)(?:\\b|_)")
+            "(?:snapshots?|preview|milestone|candidate|release|develop|stable|build|alpha|betta|final|snap|beta|dev|pre|eap|rel|sp|rc|m|r|b|a|p)" +
+            "(?:[._\\-]?\\d{1,5})?){1,2})(?:\\b|_)")
             .toRegex(option = RegexOption.IGNORE_CASE)
 
     fun parse(version: PackageVersion.Named): NormalizedPackageVersion {
-        // Before parsing, we rule out git commit hashes — those are garbage for what we're concerned.
+        // Before parsing, we rule out git commit hashes — those are garbage as far as we're concerned.
         // The initial step attempts parsing the version as a date(time) string starting at 0; if that fails,
         // and the version is not one uninterrupted alphanumeric blob (trying to catch more garbage), it
         // tries parsing it as a semver; if that fails too, the version name is considered "garbage"

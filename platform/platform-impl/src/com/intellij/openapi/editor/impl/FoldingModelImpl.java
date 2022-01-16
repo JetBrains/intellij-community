@@ -904,14 +904,16 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     }
 
     @Override
-    boolean collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<FoldRegionImpl> root,
+    void collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<FoldRegionImpl> root,
                                                    int start, int end, int lengthDelta,
                                                    @NotNull List<? super IntervalNode<FoldRegionImpl>> affected) {
-      if (inCollectCall) return super.collectAffectedMarkersAndShiftSubtrees(root, start, end, lengthDelta, affected);
+      if (inCollectCall) {
+        super.collectAffectedMarkersAndShiftSubtrees(root, start, end, lengthDelta, affected);
+        return;
+      }
       inCollectCall = true;
-      boolean result;
       try {
-        result = super.collectAffectedMarkersAndShiftSubtrees(root, start, end, lengthDelta, affected);
+        super.collectAffectedMarkersAndShiftSubtrees(root, start, end, lengthDelta, affected);
       }
       finally {
         inCollectCall = false;
@@ -927,7 +929,6 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
           region.mySizeBeforeUpdate = region.isExpanded() ? 0 : node.intervalEnd() - node.intervalStart();
         }
       }
-      return result;
     }
 
     @Override

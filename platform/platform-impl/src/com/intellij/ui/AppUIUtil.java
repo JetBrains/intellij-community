@@ -70,13 +70,13 @@ public final class AppUIUtil {
       ScaleContext scaleContext = ScaleContext.create(window);
 
       if (SystemInfoRt.isUnix) {
-        @SuppressWarnings("deprecation") Image image = loadApplicationIconImage(svgIconUrl, scaleContext, 128, appInfo.getBigIconUrl());
+        Image image = loadApplicationIconImage(svgIconUrl, scaleContext, 128, null);
         if (image != null) {
           images.add(image);
         }
       }
 
-      @SuppressWarnings("deprecation") Image element = loadApplicationIconImage(smallSvgIconUrl, scaleContext, 32, appInfo.getIconUrl());
+      Image element = loadApplicationIconImage(smallSvgIconUrl, scaleContext, 32, null);
       if (element != null) {
         images.add(element);
       }

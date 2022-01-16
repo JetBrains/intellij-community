@@ -3,8 +3,8 @@ package org.intellij.plugins.markdown.extensions.jcef.mermaid
 
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceDownloadLineMarkerProvider
-import org.intellij.plugins.markdown.extensions.MarkdownExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
 import java.util.*
@@ -15,7 +15,7 @@ internal class MermaidCodeFenceDownloadLineMarkerProvider: MarkdownCodeFenceDown
   }
 
   override fun getExtension(): MarkdownExtensionWithExternalFiles? {
-    return MarkdownExtension.all.find { it is MermaidCodeGeneratingProviderExtension } as? MermaidCodeGeneratingProviderExtension
+    return MarkdownBrowserPreviewExtension.Provider.all.find { it is MermaidBrowserExtension.Provider } as? MermaidBrowserExtension.Provider
   }
 
   override val tooltipText: String

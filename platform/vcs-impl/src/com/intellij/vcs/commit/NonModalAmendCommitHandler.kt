@@ -4,6 +4,7 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.changes.CommitContext
@@ -112,6 +113,6 @@ class NonModalAmendCommitHandler(private val workflowHandler: NonModalCommitWork
   private inner class EditedCommitCleaner : CommitResultHandler {
     override fun onSuccess(commitMessage: String) = setEditedCommit(null)
     override fun onCancel() = Unit
-    override fun onFailure() = setEditedCommit(null)
+    override fun onFailure(errors: MutableList<VcsException>) = setEditedCommit(null)
   }
 }

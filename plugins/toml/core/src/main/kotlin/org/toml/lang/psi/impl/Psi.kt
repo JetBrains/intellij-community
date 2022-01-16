@@ -18,6 +18,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import org.toml.lang.psi.*
 import org.toml.lang.psi.TomlElementTypes.*
+import org.toml.lang.psi.ext.TomlLiteralKind
 
 
 class TomlKeyValueImpl(type: IElementType) : CompositePsiElement(type), TomlKeyValue {
@@ -36,7 +37,10 @@ class TomlKeyValueImpl(type: IElementType) : CompositePsiElement(type), TomlKeyV
 
 class TomlKeySegmentImpl(type: IElementType) : CompositePsiElement(type), TomlKeySegment {
 
-    override fun getName(): String = text
+    override fun getName(): String = when (val child = node.findChildByType(TOML_SINGLE_LINE_STRINGS)) {
+        null -> text
+        else -> (TomlLiteralKind.fromAstNode(child) as? TomlLiteralKind.String)?.value ?: text
+    }
 
     override fun setName(name: String): PsiElement {
         return replace(TomlPsiFactory(project).createKeySegment(name))

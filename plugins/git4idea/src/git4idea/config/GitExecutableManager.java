@@ -46,6 +46,7 @@ public class GitExecutableManager {
   @NotNull private final GitExecutableDetector myExecutableDetector = new GitExecutableDetector();
   @NotNull private final CachingFileTester<GitVersion> myVersionCache;
 
+  @Topic.AppLevel
   public static final Topic<GitExecutableListener> TOPIC = new Topic<>(GitExecutableListener.class, Topic.BroadcastDirection.NONE);
 
   public GitExecutableManager() {
@@ -134,14 +135,8 @@ public class GitExecutableManager {
     return WslPath.getDistributionByWindowsUncPath(basePath);
   }
 
-  @NotNull
-  public String getDetectedExecutable(@Nullable Project project) {
-    String executable = getDetectedExecutable(project, true);
-    return executable != null ? executable : GitExecutableDetector.getDefaultExecutable();
-  }
-
   @Nullable
-  private String getDetectedExecutable(@Nullable Project project, boolean detectIfNeeded) {
+  public String getDetectedExecutable(@Nullable Project project, boolean detectIfNeeded) {
     WSLDistribution distribution = getProjectWslDistribution(project);
     if (detectIfNeeded) {
       return myExecutableDetector.detect(distribution);
@@ -153,7 +148,6 @@ public class GitExecutableManager {
 
   public void dropExecutableCache() {
     myExecutableDetector.clear();
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).executableChanged();
   }
 
   /**

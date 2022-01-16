@@ -8,6 +8,7 @@ import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.BitUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityIcons;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,5 +44,53 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
       VisibilityIcons.setVisibilityIcon(getContainingClass().getModifierList(), baseIcon);
     }
     return baseIcon;
+  }
+
+  @Override
+  public @NotNull PsiParameterList getParameterList() {
+    PsiParameterList parameterList = super.getParameterList();
+    return new LightParameterListWrapper(parameterList, this.mySubstitutor) {
+      @Override
+      public PsiElement getParent() {
+        return LightRecordCanonicalConstructor.this;
+      }
+
+      @Override
+      public PsiParameter @NotNull [] getParameters() {
+        return ContainerUtil.map2Array(super.getParameters(), PsiParameter.class,
+                                       p -> new LightRecordConstructorParameter(p, this, mySubstitutor));
+      }
+    };
+  }
+
+  public static class LightRecordConstructorParameter extends LightParameterWrapper {
+    private final @NotNull LightParameterListWrapper myWrapper;
+
+    private LightRecordConstructorParameter(@NotNull PsiParameter p,
+                                            @NotNull LightParameterListWrapper wrapper,
+                                            @NotNull PsiSubstitutor substitutor) {
+      super(p, substitutor);
+      myWrapper = wrapper;
+    }
+
+    @Override
+    public PsiElement getParent() {
+      return myWrapper;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      LightRecordConstructorParameter parameter = (LightRecordConstructorParameter)o;
+
+      return getPrototype().equals(parameter.getPrototype());
+    }
+
+    @Override
+    public int hashCode() {
+      return getPrototype().hashCode();
+    }
   }
 }

@@ -608,6 +608,10 @@ public class JBUI {
         return getInt("EditorTabs.underlineHeight", DefaultTabs.underlineHeight());
       }
 
+      public static int underlineArc() {
+        return getInt("EditorTabs.underlineArc", 0);
+      }
+
       @NotNull
       public static Color inactiveUnderlineColor() {
         return JBColor.namedColor("EditorTabs.inactiveUnderlineColor", DefaultTabs.inactiveUnderlineColor());
@@ -634,6 +638,15 @@ public class JBUI {
       @NotNull
       public static Color hoverBackground() {
         return JBColor.namedColor("EditorTabs.hoverBackground", DefaultTabs.hoverBackground());
+      }
+
+      @NotNull
+      public static Color hoverBackground(boolean selected, boolean active) {
+        String key = selected
+                     ? active ? "EditorTabs.hoverSelectedBackground" : "EditorTabs.hoverSelectedInactiveBackground"
+                     : active ? "EditorTabs.hoverBackground" : "EditorTabs.hoverInactiveBackground";
+
+        return JBColor.namedColor(key, Gray.TRANSPARENT);
       }
 
       @NotNull
@@ -1357,6 +1370,18 @@ public class JBUI {
   public static int getInt(@NonNls @NotNull String propertyName, int defaultValue) {
     Object value = UIManager.get(propertyName);
     return value instanceof Integer ? (Integer)value : defaultValue;
+  }
+
+  public static float getFloat(@NonNls @NotNull String propertyName, float defaultValue) {
+    Object value = UIManager.get(propertyName);
+    if (value instanceof Float) return (Float)value;
+    if (value instanceof Double) return ((Double)value).floatValue();
+    if (value instanceof String) {
+      try {
+        return Float.parseFloat((String)value);
+      } catch (NumberFormatException ignore) {}
+    }
+    return defaultValue;
   }
 
   @NotNull

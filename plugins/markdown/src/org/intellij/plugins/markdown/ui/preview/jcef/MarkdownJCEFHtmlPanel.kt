@@ -1,31 +1,57 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview.jcef
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.jcef.JCEFHtmlPanel
 import org.intellij.markdown.html.HtmlGenerator
+import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
-import org.intellij.plugins.markdown.extensions.jcef.MarkdownJCEFPreviewExtension
+import org.intellij.plugins.markdown.ui.preview.BrowserPipe
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
+import org.intellij.plugins.markdown.ui.preview.jcef.impl.JcefBrowserPipeImpl
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.random.Random
 
-class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getClassUrl()), MarkdownHtmlPanel {
+class MarkdownJCEFHtmlPanel(
+  private val _project: Project?,
+  private val _virtualFile: VirtualFile?
+): JCEFHtmlPanel(isOffScreenRendering(), null, getClassUrl()), MarkdownHtmlPanel {
+  constructor(): this(null, null)
+
   private val resourceProvider = MyResourceProvider()
-  private val browserPipe = BrowserPipe(this)
+  private val browserPipe = JcefBrowserPipeImpl(this)
 
   private val scrollListeners = ArrayList<MarkdownHtmlPanel.ScrollListener>()
 
-  private val scriptingLines get() =
-    scripts.joinToString("\n") {
+  private var currentExtensions = emptyList<MarkdownBrowserPreviewExtension>()
+
+  private fun reloadExtensions() {
+    currentExtensions.forEach(Disposer::dispose)
+    currentExtensions = MarkdownBrowserPreviewExtension.Provider.all
+      .mapNotNull { it.createBrowserExtension(this) }
+      .filter { (it as? MarkdownConfigurableExtension)?.isEnabled ?: true }
+      .sorted()
+  }
+
+  private val scripts
+    get() = baseScripts + currentExtensions.flatMap { it.scripts }
+
+  private val styles
+    get() = currentExtensions.flatMap { it.styles }
+
+  private val scriptingLines
+    get() = scripts.joinToString("\n") {
       "<script src=\"${PreviewStaticServer.getStaticUrl(resourceProvider, it)}\"></script>"
     }
 
-  private val stylesLines get() =
-    styles.joinToString("\n") {
+  private val stylesLines
+    get() = styles.joinToString("\n") {
       "<link rel=\"stylesheet\" href=\"${PreviewStaticServer.getStaticUrl(resourceProvider, it)}\"/>"
     }
 
@@ -35,9 +61,10 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getCla
       styles.map { PreviewStaticServer.getStaticUrl(resourceProvider, it) }
     )
 
-  private val indexContent get() =
+  private fun loadIndexContent() {
+    reloadExtensions()
     // language=HTML
-    """
+    val content = """
       <!DOCTYPE html>
       <html>
         <head>
@@ -49,6 +76,8 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getCla
         </head>
       </html>
     """
+    super<JCEFHtmlPanel>.setHtml(content)
+  }
 
   @Volatile
   private var delayedContent: String? = null
@@ -56,11 +85,11 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getCla
   private var previousRenderClosure: String = ""
 
   init {
+    Disposer.register(browserPipe) { currentExtensions.forEach(Disposer::dispose) }
     Disposer.register(this, browserPipe)
     val resourceProviderRegistration = PreviewStaticServer.instance.registerResourceProvider(resourceProvider)
     Disposer.register(this, resourceProviderRegistration)
-    browserPipe.addBrowserEvents(SET_SCROLL_EVENT)
-    browserPipe.subscribe(BrowserPipe.WINDOW_READY_EVENT) {
+    browserPipe.subscribe(JcefBrowserPipeImpl.WINDOW_READY_EVENT) {
       delayedContent?.let {
         cefBrowser.executeJavaScript(it, null, 0)
         delayedContent = null
@@ -71,11 +100,7 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getCla
         scrollListeners.forEach { it.onScroll(offset) }
       }
     }
-    extensions.flatMap { it.events.entries }.forEach { (event, handler) ->
-      browserPipe.addBrowserEvents(event)
-      browserPipe.subscribe(event, handler)
-    }
-    super<JCEFHtmlPanel>.setHtml(indexContent)
+    loadIndexContent()
   }
 
   private fun updateDom(renderClosure: String, initialScrollOffset: Int) {
@@ -120,9 +145,18 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getCla
   override fun reloadWithOffset(offset: Int) {
     delayedContent = null
     firstUpdate = true
-    super<JCEFHtmlPanel>.setHtml(indexContent)
+    loadIndexContent()
     updateDom(previousRenderClosure, offset)
   }
+
+  @ApiStatus.Experimental
+  override fun getBrowserPipe(): BrowserPipe = browserPipe
+
+  @ApiStatus.Experimental
+  override fun getProject(): Project? = _project
+
+  @ApiStatus.Experimental
+  override fun getVirtualFile(): VirtualFile? = _virtualFile
 
   override fun addScrollListener(listener: MarkdownHtmlPanel.ScrollListener) {
     scrollListeners.add(listener)
@@ -141,26 +175,17 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getCla
     )
   }
 
-  override fun dispose() {
-    super.dispose()
-  }
-
   private inner class MyResourceProvider : ResourceProvider {
     private val internalResources = baseScripts + baseStyles
 
-    override fun canProvide(resourceName: String): Boolean =
-      resourceName in internalResources || extensions.any {
-        it.resourceProvider.canProvide(resourceName)
-      }
+    override fun canProvide(resourceName: String): Boolean {
+      return resourceName in internalResources || currentExtensions.any { it.resourceProvider.canProvide(resourceName) }
+    }
 
     override fun loadResource(resourceName: String): ResourceProvider.Resource? {
       return when (resourceName) {
-        EVENTS_SCRIPT_FILENAME -> ResourceProvider.Resource(browserPipe.inject().toByteArray())
         in internalResources -> ResourceProvider.loadInternalResource<MarkdownJCEFHtmlPanel>(resourceName)
-        else ->
-          extensions.map { it.resourceProvider }.firstOrNull {
-            it.canProvide(resourceName)
-          }?.loadResource(resourceName)
+        else -> currentExtensions.map { it.resourceProvider }.firstOrNull { it.canProvide(resourceName) }?.loadResource(resourceName)
       }
     }
   }
@@ -168,36 +193,20 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getCla
   companion object {
     private const val SET_SCROLL_EVENT = "setScroll"
 
-    private val extensions
-      get() = MarkdownJCEFPreviewExtension.allSorted.filter {
-        if (it is MarkdownConfigurableExtension) {
-          it.isEnabled
-        }
-        else true
-      }
-
-    private const val EVENTS_SCRIPT_FILENAME = "events.js"
-
     private val baseScripts = listOf(
       "incremental-dom.min.js",
       "incremental-dom-additions.js",
       "BrowserPipe.js",
-      EVENTS_SCRIPT_FILENAME,
       "ScrollSync.js"
     )
 
     private val baseStyles = emptyList<String>()
 
-    val scripts get() = baseScripts + extensions.flatMap { it.scripts }
-
-    val styles get() = extensions.flatMap { it.styles }
-
     private fun getClassUrl(): String {
       val url = try {
         val cls = MarkdownJCEFHtmlPanel::class.java
-        cls.getResource("${cls.simpleName}.class").toExternalForm() ?: error("Failed to get class URL!")
-      }
-      catch (ignored: Exception) {
+        cls.getResource("${cls.simpleName}.class")?.toExternalForm() ?: error("Failed to get class URL!")
+      } catch (ignored: Exception) {
         "about:blank"
       }
       return "$url@${Random.nextInt(Integer.MAX_VALUE)}"

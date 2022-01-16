@@ -10,6 +10,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.project.Project
@@ -62,7 +63,7 @@ private class LearnProjectStateListener : ProjectManagerListener {
   }
 }
 
-@State(name = "LearnProjectState", storages = [Storage(value = trainerPluginConfigName)])
+@State(name = "LearnProjectState", storages = [Storage(value = trainerPluginConfigName)], category = SettingsCategory.TOOLS)
 internal class LearnProjectState : PersistentStateComponent<LearnProjectState> {
   var firstTimeOpenedWay: StatisticBase.LearnProjectOpeningWay? = null
 

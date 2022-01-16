@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.util.execution.ParametersListUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,17 +114,6 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   public void setDelegatedBuild(boolean delegatedBuild) {
     this.delegatedBuild = delegatedBuild;
-  }
-
-  /**
-   * @return VM options to use for the gradle daemon process (if any)
-   * @deprecated use {@link #getJvmArguments()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nullable
-  public String getDaemonVmOptions() {
-    return ParametersListUtil.join(getJvmArguments());
   }
 
   @Nullable

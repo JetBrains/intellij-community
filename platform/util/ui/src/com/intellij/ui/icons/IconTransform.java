@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.icons;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ArrayUtil;
@@ -16,48 +17,55 @@ import java.awt.image.ImageFilter;
 public final class IconTransform {
   private static final Logger LOG = Logger.getInstance(IconTransform.class);
 
-  private final boolean myDark;
-  private final IconPathPatcher @NotNull [] myPatchers;
-  private final @Nullable ImageFilter myFilter;
+  private final boolean dark;
+  private final IconPathPatcher @NotNull [] patchers;
+  private final @Nullable ImageFilter filter;
 
   public IconTransform(boolean dark, IconPathPatcher @NotNull [] patchers, @Nullable ImageFilter filter) {
-    myDark = dark;
-    myPatchers = patchers;
-    myFilter = filter;
+    this.dark = dark;
+    this.patchers = patchers;
+    this.filter = filter;
   }
 
   public boolean isDark() {
-    return myDark;
+    return dark;
   }
 
   public @Nullable ImageFilter getFilter() {
-    return myFilter;
+    return filter;
   }
 
-  @NotNull
-  public IconTransform withPathPatcher(@NotNull IconPathPatcher patcher) {
-    return new IconTransform(myDark, ArrayUtil.append(myPatchers, patcher), myFilter);
+  public @NotNull IconTransform withPathPatcher(@NotNull IconPathPatcher patcher) {
+    return new IconTransform(dark, ArrayUtil.append(patchers, patcher), filter);
   }
 
-  @NotNull
-  public IconTransform withoutPathPatcher(@NotNull IconPathPatcher patcher) {
-    IconPathPatcher[] newPatchers = ArrayUtil.remove(myPatchers, patcher);
-    return newPatchers == myPatchers ? this : new IconTransform(myDark, newPatchers, myFilter);
+  public @NotNull IconTransform withoutPathPatcher(@NotNull IconPathPatcher patcher) {
+    IconPathPatcher[] newPatchers = ArrayUtil.remove(patchers, patcher);
+    return newPatchers == patchers ? this : new IconTransform(dark, newPatchers, filter);
   }
 
-  @NotNull
-  public IconTransform withFilter(ImageFilter filter) {
-    return filter == myFilter ? this : new IconTransform(myDark, myPatchers, filter);
+  public @NotNull IconTransform withFilter(ImageFilter filter) {
+    return filter == this.filter ? this : new IconTransform(dark, patchers, filter);
   }
 
-  @NotNull
-  public IconTransform withDark(boolean dark) {
-    return dark == myDark ? this : new IconTransform(dark, myPatchers, myFilter);
+  public @NotNull IconTransform withDark(boolean dark) {
+    return dark == this.dark ? this : new IconTransform(dark, patchers, filter);
   }
 
   public @Nullable Pair<String, ClassLoader> patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
-    for (IconPathPatcher patcher : myPatchers) {
-      String newPath = patcher.patchPath(path, classLoader);
+    for (IconPathPatcher patcher : patchers) {
+      String newPath;
+      try {
+        newPath = patcher.patchPath(path, classLoader);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error(patcher + " cannot patch icon path", e);
+        continue;
+      }
+
       if (newPath == null) {
         continue;
       }
@@ -77,6 +85,6 @@ public final class IconTransform {
   }
 
   public @NotNull IconTransform copy() {
-    return new IconTransform(myDark, myPatchers, myFilter);
+    return new IconTransform(dark, patchers, filter);
   }
 }

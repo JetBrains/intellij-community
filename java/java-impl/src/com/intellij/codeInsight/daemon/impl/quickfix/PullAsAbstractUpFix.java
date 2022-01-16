@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.RunRefactoringAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -41,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
 
-public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(PullAsAbstractUpFix.class);
   private final @IntentionName String myName;
 
@@ -164,14 +165,17 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
         final PsiClass baseClass = classesToPullUp.iterator().next();
         name = JavaBundle.message("intention.name.pull.method.up.and.make.it.abstract.conditionally", methodWithOverrides.getName(), baseClass.getName(), !baseClass.hasModifierProperty(PsiModifier.ABSTRACT) ? 0 : 1);
       }
-      registrar.register(new RunRefactoringAction(new ExtractInterfaceHandler(), JavaBundle.message("extract.interface.command.name")));
-      registrar.register(new RunRefactoringAction(new ExtractSuperclassHandler(), JavaBundle.message("extract.superclass.command.name")));
     }
 
-
+    registrar.register(new PullAsAbstractUpFix(methodWithOverrides, name));
     if (canBePulledUp) {
       registrar.register(new RunRefactoringAction(new JavaPullUpHandler(), JavaBundle.message("pull.members.up.fix.name")));
     }
-    registrar.register(new PullAsAbstractUpFix(methodWithOverrides, name));
+
+
+    if (! (containingClass instanceof PsiAnonymousClass)){
+      registrar.register(new RunRefactoringAction(new ExtractInterfaceHandler(), JavaBundle.message("extract.interface.command.name")));
+      registrar.register(new RunRefactoringAction(new ExtractSuperclassHandler(), JavaBundle.message("extract.superclass.command.name")));
+    }
   }
 }

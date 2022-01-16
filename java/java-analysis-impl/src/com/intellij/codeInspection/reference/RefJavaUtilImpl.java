@@ -12,6 +12,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
   }
 
   @Override
-  public void addReferencesTo(@NotNull final UDeclaration decl, @NotNull final RefJavaElement ref, final UElement @Nullable ... findIn) {
+  public void addReferencesTo(@NotNull final UElement decl, @NotNull final RefJavaElement ref, final UElement @Nullable ... findIn) {
     final RefJavaElementImpl refFrom = (RefJavaElementImpl)ref;
     if (findIn == null) {
       return;
@@ -115,8 +116,8 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                              if (resolve instanceof PsiMember) {
                                final RefElement refResolved = refFrom.getRefManager().getReference(resolve);
                                refFrom.addReference(refResolved, resolve, decl, false, true, null);
-                               if (refResolved instanceof RefMethod) {
-                                 updateRefMethod(resolve, refResolved, node, decl, refFrom);
+                               if (refResolved instanceof RefMethodImpl) {
+                                 updateRefMethod(resolve, (RefMethodImpl)refResolved, node, decl, refFrom);
                                }
                              }
                            }
@@ -152,27 +153,6 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                        public boolean visitQualifiedReferenceExpression(@NotNull UQualifiedReferenceExpression node) {
                          visitReferenceExpression(node);
                          return false;
-                       }
-
-                       @Override
-                       public boolean visitCallableReferenceExpression(@NotNull UCallableReferenceExpression node) {
-                         visitReferenceExpression(node);
-                         // todo doesn't work for kotlin
-                         PsiType interfaceType = getFunctionalInterfaceType(node);
-                         processFunctionalExpression(node, interfaceType);
-                         markParametersReferenced(node, interfaceType);
-                         return false;
-                       }
-
-                       private void markParametersReferenced(@NotNull UCallableReferenceExpression node, @Nullable PsiType type) {
-                         PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(type);
-                         if (method == null) return;
-                         for (PsiParameter param : method.getParameterList().getParameters()) {
-                           RefElement paramRef = refFrom.getRefManager().getReference(param);
-                           if (paramRef != null) {
-                             refFrom.addReference(paramRef, param, decl, false, true, node);
-                           }
-                         }
                        }
 
                        @Override
@@ -213,7 +193,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          return false;
                        }
 
-                       private void visitReferenceExpression(UExpression node) {
+                       private void visitReferenceExpression(@NotNull UExpression node) {
                          UElement uastParent = node.getUastParent();
                          if (uastParent instanceof UQualifiedReferenceExpression && ((UQualifiedReferenceExpression)uastParent).getSelector() == node) {
                            return;
@@ -239,43 +219,46 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          boolean reading = isAccessedForReading(node);
                          refFrom.addReference(refResolved, psiResolved, decl, writing, reading, node);
 
-                         if (refResolved instanceof RefMethod) {
-                           updateRefMethod(psiResolved, refResolved, node, decl, refFrom);
+                         if (refResolved instanceof RefMethodImpl) {
+                           updateRefMethod(psiResolved, (RefMethodImpl)refResolved, node, decl, refFrom);
                          }
 
                          if (psiResolved instanceof PsiMember) {
                            //TODO support kotlin
                            addClassReferenceForStaticImport(node, (PsiMember)psiResolved, refFrom, decl);
                          }
-                         else {
-                           // todo currently if psiResolved is KtParameter, it doesn't convert to UParameter, that seems wrong
-                           UParameter uParam = UastContextKt.toUElement(psiResolved, UParameter.class);
-                           if (uParam != null) {
-                             addReferenceToLambdaParameter(uParam, psiResolved, decl, refFrom);
-                           }
-                         }
                        }
 
                        @Override
-                       public boolean visitLambdaExpression(@NotNull ULambdaExpression node) {
-                         processFunctionalExpression(node, node.getFunctionalInterfaceType());
-                         return false;
+                       public boolean visitLambdaExpression(@NotNull ULambdaExpression lambda) {
+                         processFunctionalExpression(lambda, lambda.getFunctionalInterfaceType());
+                         return true;
                        }
 
+                       @Override
+                       public boolean visitCallableReferenceExpression(@NotNull UCallableReferenceExpression methodRef) {
+                         RefElement refMethod = refFrom.getRefManager().getReference(methodRef.getSourcePsi());
+                         if (refFrom == refMethod) {
+                           visitReferenceExpression(methodRef);
+                           return false;
+                         }
+                         else {
+                           processFunctionalExpression(methodRef, getFunctionalInterfaceType(methodRef));
+                           return true;
+                         }
+                       }
 
-                       private void processFunctionalExpression(UExpression expression, PsiType type) {
+                       private void processFunctionalExpression(@NotNull UExpression expression, @Nullable PsiType type) {
                          PsiElement aClass = PsiUtil.resolveClassInType(type);
                          if (aClass != null) {
                            aClass = ((PsiClass)aClass).getSourceElement();
                          }
                          if (aClass != null) {
                            refFrom.addReference(refFrom.getRefManager().getReference(aClass), aClass, decl, false, true, null);
-                           final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(type);
-                           if (interfaceMethod != null) {
-                             refFrom.addReference(refFrom.getRefManager().getReference(interfaceMethod), interfaceMethod, decl, false, true, null);
-                             refFrom.getRefManager().fireNodeMarkedReferenced(interfaceMethod, expression.getSourcePsi());
-                           }
                          }
+                         PsiElement functionalExpr = expression.getSourcePsi();
+                         RefElement refFunctionalExpr = refFrom.getRefManager().getReference(functionalExpr);
+                         refFrom.addReference(refFunctionalExpr, functionalExpr, decl, false, true, expression);
                        }
 
                        @Nullable
@@ -307,9 +290,18 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
                        @Override
                        public boolean visitReturnExpression(@NotNull UReturnExpression node) {
+                         RefMethodImpl refMethod = null;
                          if (refFrom instanceof RefMethodImpl &&
                              UastUtils.getParentOfType(node, UMethod.class, false, UClass.class, ULambdaExpression.class) == decl) {
-                           RefMethodImpl refMethod = (RefMethodImpl)refFrom;
+                           refMethod = (RefMethodImpl)refFrom;
+                         }
+                         else if (refFrom instanceof RefFunctionalExpression) {
+                           if (decl instanceof ULambdaExpression) {
+                             PsiMethod lambdaMethod = LambdaUtil.getFunctionalInterfaceMethod(((ULambdaExpression)decl).getFunctionalInterfaceType());
+                             refMethod = ObjectUtils.tryCast(refFrom.getRefManager().getReference(lambdaMethod), RefMethodImpl.class);
+                           }
+                         }
+                         if (refMethod != null) {
                            refMethod.updateReturnValueTemplate(node.getReturnExpression());
                          }
                          return false;
@@ -326,11 +318,12 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
                        private void processClassReference(PsiClass psiClass,
                                                           RefJavaElementImpl refFrom,
-                                                          UDeclaration from,
+                                                          UElement from,
                                                           boolean defaultConstructorOnly,
                                                           UExpression node) {
                          if (psiClass != null) {
-                           RefClassImpl refClass = ObjectUtils.tryCast(refFrom.getRefManager().getReference(psiClass.getNavigationElement()), RefClassImpl.class);
+                           RefClassImpl refClass =
+                             ObjectUtils.tryCast(refFrom.getRefManager().getReference(psiClass.getNavigationElement()), RefClassImpl.class);
 
                            if (refClass != null) {
                              boolean hasConstructorsMarked = false;
@@ -354,10 +347,10 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                                UClass uClass = refClass.getUastElement();
                                if (uClass != null && uClass.getJavaPsi().isEnum()) {
                                  for (RefEntity child : refClass.getChildren()) {
-                                   if (child instanceof RefField) {
+                                   if (child instanceof RefFieldImpl) {
                                      UField uField = ((RefField)child).getUastElement();
                                      if (uField instanceof UEnumConstant) {
-                                       ((RefFieldImpl) child).markReferenced(refFrom, false, true, node);
+                                       ((RefFieldImpl)child).markReferenced(refFrom, false, true, node);
                                        refFrom.addOutReference((RefElement)child);
                                      }
                                    }
@@ -366,7 +359,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                              }
 
                              if (!hasConstructorsMarked) {
-                               refFrom.addReference(refClass, psiClass, from, false, true, null);
+                               refFrom.addReference(refClass, psiClass, from, false, true, node);
                              }
                            }
                          }
@@ -376,29 +369,9 @@ public class RefJavaUtilImpl extends RefJavaUtil {
     }
   }
 
-  private static void addReferenceToLambdaParameter(@NotNull UParameter uParam, @NotNull PsiElement param, @NotNull UDeclaration decl,
-                                                    @NotNull RefJavaElementImpl refFrom) {
-    ULambdaExpression lambda = UastUtils.getParentOfType(uParam, ULambdaExpression.class);
-    if (lambda == null) return;
-    int paramIndex = -1;
-    List<UParameter> lambdaParams = lambda.getParameters();
-    for (int i = 0; i < lambdaParams.size(); i++) {
-      if (lambdaParams.get(i).equals(uParam)) {
-        paramIndex = i;
-        break;
-      }
-    }
-    if (paramIndex == -1) return;
-    RefElement method = refFrom.getRefManager().getReference(LambdaUtil.getFunctionalInterfaceMethod(lambda.getFunctionalInterfaceType()));
-    if (method instanceof RefMethod) {
-      RefParameter[] methodParams = ((RefMethod)method).getParameters();
-      refFrom.addReference(methodParams[paramIndex], param, decl, false, true, null);
-    }
-  }
-
   private static void addClassReferenceForStaticImport(UExpression node,
                                                        PsiMember psiResolved,
-                                                       RefJavaElementImpl refFrom, UDeclaration decl) {
+                                                       RefJavaElementImpl refFrom, UElement decl) {
     PsiElement sourcePsi = node.getSourcePsi();
     if (sourcePsi instanceof PsiReferenceExpression) {
       JavaResolveResult result = ((PsiReferenceExpression)sourcePsi).advancedResolve(false);
@@ -414,15 +387,14 @@ public class RefJavaUtilImpl extends RefJavaUtil {
     }
   }
 
-  private static PsiElement tryFindKotlinParameter(@NotNull UExpression node,
-                                                   @NotNull UDeclaration decl) {
+  private static PsiElement tryFindKotlinParameter(@NotNull UExpression node, @NotNull UElement decl) {
     //TODO see KT-25524
     if (node instanceof UCallExpression && "invoke".equals(((UCallExpression)node).getMethodName())) {
       UIdentifier identifier = ((UCallExpression)node).getMethodIdentifier();
       if (identifier != null) {
         String name = identifier.getName();
         if (decl instanceof UMethod) {
-          UParameter parameter = ((UMethod)decl).getUastParameters().stream().filter(p -> name.equals(p.getName())).findAny().orElse(null);
+          UParameter parameter = ContainerUtil.find(((UMethod)decl).getUastParameters(), p -> name.equals(p.getName()));
           if (parameter != null) {
             return parameter.getSourcePsi();
           }
@@ -433,12 +405,11 @@ public class RefJavaUtilImpl extends RefJavaUtil {
   }
 
   private void updateRefMethod(PsiElement psiResolved,
-                               RefElement refResolved,
+                               RefMethodImpl refMethod,
                                UExpression refExpression,
                                final UElement uFrom,
                                final RefElement refFrom) {
     UMethod uMethod = Objects.requireNonNull(UastContextKt.toUElement(psiResolved, UMethod.class));
-    RefMethodImpl refMethod = (RefMethodImpl)refResolved;
 
     if (refExpression instanceof UCallableReferenceExpression) {
       PsiType returnType = uMethod.getReturnType();
@@ -504,7 +475,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
     }
   }
 
-  private static PsiType getFunctionalInterfaceType(UCallableReferenceExpression expression) {
+  private static PsiType getFunctionalInterfaceType(@NotNull UCallableReferenceExpression expression) {
     PsiElement psi = expression.getSourcePsi();
     if (psi instanceof PsiFunctionalExpression) {
       return ((PsiFunctionalExpression)psi).getFunctionalInterfaceType();
@@ -741,7 +712,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
   private static boolean isAccessedForWriting(@NotNull UElement expression) {
     if (isOnAssignmentLeftHand(expression)) return true;
-    UElement parent = skipParenthesises(expression);
+    UElement parent = skipParentheses(expression);
     return isIncrementDecrement(parent);
   }
 
@@ -755,21 +726,21 @@ public class RefJavaUtilImpl extends RefJavaUtil {
   }
 
   private static boolean isAccessedForReading(@NotNull UElement expression) {
-    UElement parent = skipParenthesises(expression);
+    UElement parent = skipParentheses(expression);
     return !(parent instanceof UBinaryExpression) ||
            !(((UBinaryExpression)parent).getOperator() instanceof UastBinaryOperator.AssignOperator) ||
            UastUtils.isUastChildOf(((UBinaryExpression)parent).getRightOperand(), expression, false);
   }
 
   private static boolean isOnAssignmentLeftHand(@NotNull UElement expression) {
-    UExpression parent = ObjectUtils.tryCast(skipParenthesises(expression), UExpression.class);
+    UExpression parent = ObjectUtils.tryCast(skipParentheses(expression), UExpression.class);
     if (parent == null) return false;
     return parent instanceof UBinaryExpression
            && ((UBinaryExpression)parent).getOperator() instanceof UastBinaryOperator.AssignOperator
            && UastUtils.isUastChildOf(expression, ((UBinaryExpression)parent).getLeftOperand(), false);
   }
 
-  private static UElement skipParenthesises(@NotNull UElement expression) {
+  private static UElement skipParentheses(@NotNull UElement expression) {
     return UastUtils.skipParentOfType(expression, true, UParenthesizedExpression.class);
   }
 }

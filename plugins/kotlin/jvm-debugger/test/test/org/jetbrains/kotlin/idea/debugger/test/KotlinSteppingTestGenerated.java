@@ -1231,6 +1231,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/custom/simpleConditionalBreakpoint.kt");
         }
 
+        @TestMetadata("smartStepIntoClassMethodReference.kt")
+        public void testSmartStepIntoClassMethodReference() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoClassMethodReference.kt");
+        }
+
         @TestMetadata("smartStepIntoComponentFunction.kt")
         public void testSmartStepIntoComponentFunction() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoComponentFunction.kt");
@@ -1289,6 +1294,16 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
         @TestMetadata("smartStepIntoNullSafeFunctionCalls.kt")
         public void testSmartStepIntoNullSafeFunctionCalls() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoNullSafeFunctionCalls.kt");
+        }
+
+        @TestMetadata("smartStepIntoMethodReference.kt")
+        public void testSmartStepIntoMethodReference() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoMethodReference.kt");
+        }
+
+        @TestMetadata("smartStepIntoPropertyGetterReference.kt")
+        public void testSmartStepIntoPropertyGetterReference() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoPropertyGetterReference.kt");
         }
 
         @TestMetadata("smartStepIntoSamLambdaFromJavaFunInterface.kt")

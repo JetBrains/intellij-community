@@ -1,19 +1,43 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder.impl
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.components.htmlComponent
+import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
 import javax.swing.text.JTextComponent
 
-internal const val DSL_LABEL_NO_BOTTOM_GAP_PROPERTY = "dsl.label.no.bottom.gap"
+/**
+ * Internal component properties for UI DSL
+ */
+@ApiStatus.Internal
+internal enum class DslComponentProperty {
+  /**
+   * Removes standard bottom gap from label
+   */
+  LABEL_NO_BOTTOM_GAP,
+
+  /**
+   * Baseline for component should be obtained from [JComponent.font] property
+   */
+  BASELINE_FROM_FONT
+}
+
+/**
+ * Throws exception instead of logging warning. Useful while forms building to avoid layout mistakes
+ */
+private const val FAIL_ON_WARN = false
+
+private val LOG = Logger.getInstance("Jetbrains UI DSL")
 
 /**
  * Components that can have assigned labels
@@ -53,7 +77,10 @@ private fun createHtmlPane(text: String, action: HyperlinkEventAction, foregroun
   @Suppress("HardCodedStringLiteral")
   val processedText = text.replace("<a>", "<a href=''>", ignoreCase = true)
   val font = ComponentPanelBuilder.getCommentFont(UIUtil.getLabelFont())
-  return htmlComponent(processedText, font = font, foreground = foreground, hyperlinkListener = hyperlinkAdapter)
+  val result = htmlComponent(processedText, font = font, foreground = foreground, hyperlinkListener = hyperlinkAdapter)
+  // JEditorPane doesn't support baseline, calculate is manually from font
+  result.putClientProperty(DslComponentProperty.BASELINE_FROM_FONT, true)
+  return result
 }
 
 internal fun isAllowedLabel(cell: CellBaseImpl<*>?): Boolean {
@@ -63,5 +90,14 @@ internal fun isAllowedLabel(cell: CellBaseImpl<*>?): Boolean {
 internal fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
   if (isAllowedLabel(cell)) {
     label.labelFor = (cell as CellImpl<*>).component.origin
+  }
+}
+
+internal fun warn(message: String) {
+  if (FAIL_ON_WARN) {
+    throw UiDslException(message)
+  }
+  else {
+    LOG.warn(message)
   }
 }

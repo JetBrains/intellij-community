@@ -55,8 +55,10 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
 
     override fun setUp() {
-        if (kotlinPluginVersionString == masterKotlinPluginVersion) {
+        if (kotlinPluginVersionString == masterKotlinPluginVersion && IS_UNDER_TEAMCITY) {
             assertTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
+        } else if  (kotlinPluginVersionString == masterKotlinPluginVersion) {
+            assumeTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
         }
         super.setUp()
         setupSystemProperties()
@@ -121,7 +123,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         )
     }
 
-    private fun repositories(useKts: Boolean): String {
+    protected fun repositories(useKts: Boolean): String {
         val repositories = mutableListOf<String>()
 
         fun MutableList<String>.addUrl(url: String) {

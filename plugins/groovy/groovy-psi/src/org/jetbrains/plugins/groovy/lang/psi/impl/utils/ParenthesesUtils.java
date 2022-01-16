@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.utils;
 
 import com.intellij.psi.PsiElement;
@@ -100,7 +100,9 @@ public final class ParenthesesUtils {
     BINARY_PRECEDENCES.put(GroovyElementTypes.COMPOSITE_RSHIFT_SIGN, SHIFT_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN, SHIFT_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mRANGE_INCLUSIVE, RANGE_PRECEDENCE);
-    BINARY_PRECEDENCES.put(GroovyTokenTypes.mRANGE_EXCLUSIVE, RANGE_PRECEDENCE);
+    BINARY_PRECEDENCES.put(GroovyTokenTypes.mRANGE_EXCLUSIVE_LEFT, RANGE_PRECEDENCE);
+    BINARY_PRECEDENCES.put(GroovyTokenTypes.mRANGE_EXCLUSIVE_RIGHT, RANGE_PRECEDENCE);
+    BINARY_PRECEDENCES.put(GroovyTokenTypes.mRANGE_EXCLUSIVE_BOTH, RANGE_PRECEDENCE);
 
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mGT, RELATIONAL_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mGE, RELATIONAL_PRECEDENCE);

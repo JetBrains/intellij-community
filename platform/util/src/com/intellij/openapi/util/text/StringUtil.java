@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -1324,23 +1324,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static @NotNull Iterable<String> tokenize(@NotNull String s, @NotNull String separators) {
-    final com.intellij.util.text.StringTokenizer tokenizer = new com.intellij.util.text.StringTokenizer(s, separators);
-    return () -> new Iterator<String>() {
-      @Override
-      public boolean hasNext() {
-        return tokenizer.hasMoreTokens();
-      }
-
-      @Override
-      public String next() {
-        return tokenizer.nextToken();
-      }
-
-      @Override
-      public void remove() {
-        throw new UnsupportedOperationException();
-      }
-    };
+    return tokenize(new StringTokenizer(s, separators));
   }
 
   @Contract(pure = true)

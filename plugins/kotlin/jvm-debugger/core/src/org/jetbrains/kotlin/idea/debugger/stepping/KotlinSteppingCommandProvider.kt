@@ -79,6 +79,7 @@ class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
         smartStepFilter: MethodFilter?,
         stepSize: Int
     ): DebugProcessImpl.ResumeCommand? {
+        if (suspendContext == null || suspendContext.isResumed) return null
         return DebuggerSteppingHelper.createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter)
     }
 

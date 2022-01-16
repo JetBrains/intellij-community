@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -154,7 +155,11 @@ final class FilePartNodeRoot extends FilePartNode {
         currentNode = currentNode.children[index];
       }
       else {
-        currentNode.children = ArrayUtil.insert(currentNode.children, 0, child);
+        currentNode.children = ArrayUtil.insert(currentNode.children, -index - 1, child);
+        if (currentNode.children.length >= 2) {
+          // it's expected that there won't be a lot of roots, so sorting should be cheap
+          Arrays.sort(currentNode.children, (c1, c2) -> StringUtil.compare(c1.getName(), c2.getName(), !isCaseSensitive()));
+        }
         currentNode = child;
       }
     }

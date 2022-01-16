@@ -38,6 +38,6 @@ public interface BookmarksListener {
   default void defaultGroupChanged(@Nullable BookmarkGroup oldGroup, @Nullable BookmarkGroup newGroup) {
   }
 
-  default void structureChanged(@NotNull Object node) {
+  default void structureChanged(@Nullable Object node) {
   }
 }

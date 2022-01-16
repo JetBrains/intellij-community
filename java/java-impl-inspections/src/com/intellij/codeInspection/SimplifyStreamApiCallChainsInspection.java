@@ -582,17 +582,16 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       if (element instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression collectCall = (PsiMethodCallExpression)element;
         PsiExpression qualifierExpression = collectCall.getMethodExpression().getQualifierExpression();
-        if (qualifierExpression != null) {
-          PsiElement parameter = collectCall.getArgumentList().getExpressions()[0];
-          if (parameter instanceof PsiMethodCallExpression) {
-            PsiMethodCallExpression collectorCall = (PsiMethodCallExpression)parameter;
-            PsiExpression[] collectorArgs = collectorCall.getArgumentList().getExpressions();
-            String result = MessageFormat.format(myStreamSequence, Arrays.stream(collectorArgs).map(PsiExpression::getText).toArray());
-            PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-            PsiExpression replacement = factory.createExpressionFromText(qualifierExpression.getText() + "." + result, collectCall);
-            addBoxingIfNecessary(factory, collectCall.replace(replacement));
-          }
-        }
+        if (qualifierExpression == null) return;
+        PsiExpression[] collectArgs = collectCall.getArgumentList().getExpressions();
+        if (collectArgs.length != 1) return;
+        PsiMethodCallExpression collectorCall = tryCast(skipParenthesizedExprDown(collectArgs[0]), PsiMethodCallExpression.class);
+        if (collectorCall == null) return;
+        PsiExpression[] collectorArgs = collectorCall.getArgumentList().getExpressions();
+        String result = MessageFormat.format(myStreamSequence, Arrays.stream(collectorArgs).map(PsiExpression::getText).toArray());
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+        PsiExpression replacement = factory.createExpressionFromText(qualifierExpression.getText() + "." + result, collectCall);
+        addBoxingIfNecessary(factory, collectCall.replace(replacement));
       }
     }
 

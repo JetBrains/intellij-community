@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -94,11 +95,19 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
   @Override
   public void expire(@NotNull Notification notification) {
-    UIUtil.invokeLaterIfNeeded(() -> EventLog.expireNotification(notification));
+    UIUtil.invokeLaterIfNeeded(() -> {
+      EventLog.expireNotification(notification);
+      if (Registry.is("ide.notification.action.center", false)) {
+        NotificationsToolWindowFactory.Companion.remove(notification);
+      }
+    });
   }
 
   public void expireAll() {
     EventLog.expireNotifications();
+    if (Registry.is("ide.notification.action.center", false)) {
+      NotificationsToolWindowFactory.Companion.remove(null);
+    }
   }
 
   @Override
@@ -342,7 +351,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     else {
       Disposable listenerDisposable = Disposer.newDisposable();
       Disposer.register(parentDisposable, listenerDisposable);
-      ApplicationManager.getApplication().getMessageBus().connect(parentDisposable)
+      ApplicationManager.getApplication().getMessageBus().connect(listenerDisposable)
         .subscribe(FrameStateListener.TOPIC, new FrameStateListener() {
           @Override
           public void onFrameActivated() {
@@ -407,6 +416,14 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
     if (layoutData.borderColor == null) {
       layoutData.borderColor = BORDER_COLOR;
+    }
+
+    if (notification.isSuggestionType()) {
+      layoutData.collapseType =
+        notification.isImportantSuggestion() ? BalloonLayoutData.Type.ImportantSuggestion : BalloonLayoutData.Type.Suggestion;
+    }
+    else {
+      layoutData.collapseType = BalloonLayoutData.Type.Timeline;
     }
 
     boolean actions = !notification.getActions().isEmpty() || notification.getContextHelpAction() != null;
@@ -679,7 +696,12 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       balloonImpl.getContent().addMouseListener(new MouseAdapter() {
       });
       balloon.setAnimationEnabled(false);
-      balloonImpl.setShadowBorderProvider(new NotificationBalloonShadowBorderProvider(layoutData.fillColor, layoutData.borderColor));
+      if (Registry.is("ide.notification.action.center", false)) {
+        balloonImpl.setShadowBorderProvider(new NotificationBalloonRoundShadowBorderProvider(layoutData.fillColor, layoutData.borderColor));
+      }
+      else {
+        balloonImpl.setShadowBorderProvider(new NotificationBalloonShadowBorderProvider(layoutData.fillColor, layoutData.borderColor));
+      }
 
       if (!layoutData.welcomeScreen) {
         balloonImpl.setActionProvider(new NotificationBalloonActionProvider(
@@ -730,24 +752,47 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     centerPanel.addActionPanel(actionPanel);
 
     List<AnAction> actions = notification.getActions();
+    int actionsSize = actions.size();
 
-    if (actions.size() > 1 && notification.getCollapseDirection() == Notification.CollapseActionsDirection.KEEP_RIGHTMOST) {
-      addDropDownAction(notification, actionPanel);
-    }
-
-    for (AnAction action : actions) {
-      Presentation presentation = action.getTemplatePresentation();
-      @SuppressWarnings("DialogTitleCapitalization") String text = presentation.getText();  // action templates are unfit for the context :/
-      actionPanel.addActionLink(
-        new LinkLabel<>(text, presentation.getIcon(), (link, _action) -> {
+    if (Registry.is("ide.notification.action.center", false) && notification.isSuggestionType()) {
+      if (actionsSize == 1) {
+        AnAction action = actions.get(0);
+        JButton button = new JButton(action.getTemplateText());
+        actionPanel.addAction(button);
+        button.addActionListener(e -> {
           NotificationCollector.getInstance()
-            .logNotificationActionInvoked(null, notification, _action, NotificationCollector.NotificationPlace.BALLOON);
-          Notification.fire(notification, _action, DataManager.getInstance().getDataContext(link));
-        }, action));
+            .logNotificationActionInvoked(null, notification, action, NotificationCollector.NotificationPlace.BALLOON);
+          Notification.fire(notification, action, DataManager.getInstance().getDataContext(button));
+        });
+      }
+      else if (actionsSize > 1) {
+        Action[] buttonActions = new Action[actionsSize - 1];
+        for (int i = 0; i < buttonActions.length; i++) {
+          buttonActions[i] = createAction(notification, actions.get(i + 1));
+        }
+        actionPanel.addAction(new NotificationOptionButton(createAction(notification, actions.get(0)), buttonActions));
+      }
     }
+    else {
+      if (actionsSize > 1 && notification.getCollapseDirection() == Notification.CollapseActionsDirection.KEEP_RIGHTMOST) {
+        addDropDownAction(notification, actionPanel);
+      }
 
-    if (actions.size() > 1 && notification.getCollapseDirection() == Notification.CollapseActionsDirection.KEEP_LEFTMOST) {
-      addDropDownAction(notification, actionPanel);
+      for (AnAction action : actions) {
+        Presentation presentation = action.getTemplatePresentation();
+        @SuppressWarnings("DialogTitleCapitalization") String text =
+          presentation.getText();  // action templates are unfit for the context :/
+        actionPanel.addActionLink(
+          new LinkLabel<>(text, presentation.getIcon(), (link, _action) -> {
+            NotificationCollector.getInstance()
+              .logNotificationActionInvoked(null, notification, _action, NotificationCollector.NotificationPlace.BALLOON);
+            Notification.fire(notification, _action, DataManager.getInstance().getDataContext(link));
+          }, action));
+      }
+
+      if (actionsSize > 1 && notification.getCollapseDirection() == Notification.CollapseActionsDirection.KEEP_LEFTMOST) {
+        addDropDownAction(notification, actionPanel);
+      }
     }
 
     AnAction helpAction = notification.getContextHelpAction();
@@ -755,7 +800,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       Presentation presentation = helpAction.getTemplatePresentation();
       ContextHelpLabel helpLabel = new ContextHelpLabel(presentation.getText(), presentation.getDescription());
       helpLabel.setForeground(UIUtil.getLabelDisabledForeground());
-      actionPanel.addContextHelpLabel(helpLabel);
+      actionPanel.addAction(helpLabel);
     }
 
     Insets hover = JBUI.insets(8, 5, 8, 7);
@@ -766,6 +811,17 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
 
     hoverAdapter.addSource(actionPanel);
+  }
+
+  private static @NotNull Action createAction(@NotNull Notification notification, @NotNull AnAction action) {
+    return new AbstractAction(action.getTemplateText()) {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        NotificationCollector.getInstance()
+          .logNotificationActionInvoked(null, notification, action, NotificationCollector.NotificationPlace.BALLOON);
+        Notification.fire(notification, action, DataManager.getInstance().getDataContext((Component)e.getSource()));
+      }
+    };
   }
 
   private static void addDropDownAction(Notification notification, NotificationActionPanel actionPanel) {
@@ -1154,8 +1210,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       actionLinks.add(label);
     }
 
-    public void addContextHelpLabel(ContextHelpLabel label) {
-      add(HorizontalLayout.LEFT, label);
+    public void addAction(JComponent component) {
+      add(HorizontalLayout.LEFT, component);
     }
   }
 

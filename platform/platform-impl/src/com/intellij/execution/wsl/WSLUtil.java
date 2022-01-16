@@ -107,24 +107,6 @@ public final class WSLUtil {
   }
 
   /**
-   * @deprecated use {@link WslDistributionManager#getOrCreateDistributionByMsId(String)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nullable
-  public static WSLDistribution getDistributionById(@Nullable String id) {
-    if (id == null) {
-      return null;
-    }
-    for (WSLDistribution distribution : getAvailableDistributions()) {
-      if (id.equals(distribution.getId())) {
-        return distribution;
-      }
-    }
-    return null;
-  }
-
-  /**
    * @return instance of WSL distribution or null if it's unavailable
    * @deprecated Use {@link WslDistributionManager#getOrCreateDistributionByMsId(String)}
    */

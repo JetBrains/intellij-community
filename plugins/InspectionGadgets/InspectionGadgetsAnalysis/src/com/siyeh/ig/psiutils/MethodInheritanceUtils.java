@@ -16,6 +16,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.reference.RefMethod;
+import com.intellij.codeInspection.reference.RefOverridable;
 import com.intellij.util.containers.Stack;
 
 import java.util.Collection;
@@ -26,28 +27,31 @@ public final class MethodInheritanceUtils {
 
   private MethodInheritanceUtils() {}
 
-  public static Set<RefMethod> calculateSiblingMethods(RefMethod method) {
-    final Set<RefMethod> siblingMethods = new HashSet<>();
-    final Stack<RefMethod> pendingMethods = new Stack<>();
-    pendingMethods.add(method);
-    while (!pendingMethods.isEmpty()) {
-      final RefMethod methodToAnalyze = pendingMethods.pop();
-      siblingMethods.add(methodToAnalyze);
-      final Collection<RefMethod> overridingMethods = methodToAnalyze.getDerivedMethods();
-      for (RefMethod overridingMethod : overridingMethods) {
-        if (!siblingMethods.contains(overridingMethod) &&
-            !pendingMethods.contains(overridingMethod)) {
-          pendingMethods.add(overridingMethod);
+  public static Set<RefOverridable> calculateSiblingReferences(RefMethod method) {
+    final Set<RefOverridable> siblingReferences = new HashSet<>();
+    final Stack<RefOverridable> pendingReferences = new Stack<>();
+    pendingReferences.add(method);
+    while (!pendingReferences.isEmpty()) {
+      final RefOverridable referenceToAnalyze = pendingReferences.pop();
+      siblingReferences.add(referenceToAnalyze);
+      final Collection<? extends RefOverridable> overridingReferences = referenceToAnalyze.getDerivedReferences();
+      for (RefOverridable overridingReference : overridingReferences) {
+        if (!siblingReferences.contains(overridingReference) &&
+            !pendingReferences.contains(overridingReference)) {
+          pendingReferences.add(overridingReference);
         }
       }
-      final Collection<RefMethod> superMethods = methodToAnalyze.getSuperMethods();
-      for (RefMethod superMethod : superMethods) {
-        if (!siblingMethods.contains(superMethod) &&
-            !pendingMethods.contains(superMethod)) {
-          pendingMethods.add(superMethod);
+      if (referenceToAnalyze instanceof RefMethod) {
+        final Collection<RefMethod> superMethods = ((RefMethod)referenceToAnalyze).getSuperMethods();
+        for (RefMethod superMethod : superMethods) {
+          if (!siblingReferences.contains(superMethod) &&
+              !pendingReferences.contains(superMethod)) {
+            pendingReferences.add(superMethod);
+          }
         }
       }
+
     }
-    return siblingMethods;
+    return siblingReferences;
   }
 }

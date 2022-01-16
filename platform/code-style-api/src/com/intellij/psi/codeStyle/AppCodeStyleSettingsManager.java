@@ -5,6 +5,7 @@ import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,7 +18,7 @@ public final class AppCodeStyleSettingsManager extends CodeStyleSettingsManager 
   }
 
   @Override
-  protected Collection<CodeStyleSettings> enumSettings() {
+  protected @NotNull Collection<CodeStyleSettings> enumSettings() {
     List<CodeStyleSettings> appSettings = new ArrayList<>();
     appSettings.add(CodeStyleSettings.getDefaults());
     ObjectUtils.consumeIfNotNull(getMainProjectCodeStyle(), settings -> appSettings.add(settings));

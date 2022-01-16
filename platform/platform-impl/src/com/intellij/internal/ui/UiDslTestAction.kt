@@ -18,6 +18,7 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
+import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JScrollPane
@@ -61,51 +62,23 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
 
   fun createLabelsPanel(): JPanel {
     val result = panel {
+      val model = DefaultComboBoxModel<String>()
+      var index = 0
       row("Label for row") {
-        textField()
-          .columns(10)
+        comboBox(model)
       }
       row {
-        for (i in 1..2) {
-          intTextField()
-            .columns(10)
-            .label("Labeled Cell $i")
+        val textField = intTextField()
+          .text("50")
+        button("Add items") {
+          val newItems = (1..textField.component.text.toInt()).map { "Item ${index++}" }
+          model.addAll(newItems)
         }
-      }
-
-      row {
-        checkBox("checkBox")
-          .label("Long label occupies two columns", position = LabelPosition.TOP)
-        intTextField()
-          .text("No labeled text field")
-        intTextField()
-          .columns(10)
-          .label("Third column", position = LabelPosition.TOP)
-      }
-
-      for (rowLayout in RowLayout.values()) {
-        group("Labeled Cell, position = Top, layout = ${rowLayout.name}") {
-          if (rowLayout == RowLayout.LABEL_ALIGNED) {
-            row {
-              label("LABEL_ALIGNED: in the next row only two first labels are shown")
-            }
-          }
-
-          row {
-            for (i in 1..3) {
-              var text = "Labeled $i"
-              if (i == 2) {
-                text = "<html>$text<br>second line"
-              }
-              intTextField()
-                .columns(10)
-                .label(text, position = LabelPosition.TOP)
-            }
-          }.layout(rowLayout)
+        button("Clear") {
+          model.removeAllElements()
         }
       }
     }
-
     val disposable = Disposer.newDisposable()
     result.registerValidators(disposable)
     Disposer.register(myDisposable, disposable)

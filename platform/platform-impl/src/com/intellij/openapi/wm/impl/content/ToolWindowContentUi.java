@@ -19,7 +19,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.*;
+import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
@@ -54,6 +56,8 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   public static final DataKey<BaseLabel> SELECTED_CONTENT_TAB_LABEL = DataKey.create("SELECTED_CONTENT_TAB_LABEL");
 
   private final @NotNull ContentManager contentManager;
+  int myDropOverIndex = -1;
+  int myDropOverWidth = 0;
 
   public @NotNull ContentManager getContentManager() {
     return contentManager;
@@ -137,6 +141,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     });
 
     initMouseListeners(tabComponent, this, true);
+    MouseDragHelper.setComponentDraggable(tabComponent, true);
 
     closeAllAction = new TabbedContentAction.CloseAllAction(contentManager);
     nextTabAction = new TabbedContentAction.MyNextTabAction(contentManager);
@@ -682,11 +687,18 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     }
   }
 
-  public final class TabPanel extends JPanel implements UISettingsListener {
+  public void setDropInfoIndex(int dropIndex, int dropWidth) {
+    if (dropIndex != myDropOverIndex || dropWidth != myDropOverWidth) {
+      myDropOverIndex = dropIndex;
+      myDropOverWidth = dropWidth;
+      dropCaches();
+      rebuild();
+    }
+  }
+
+  public final class TabPanel extends NonOpaquePanel implements UISettingsListener {
     private TabPanel() {
       super(new MigLayout(MigLayoutUtilKt.createLayoutConstraints(0, 0).noVisualPadding().fillY()));
-
-      setOpaque(false);
       setBorder(JBUI.Borders.emptyRight(2));
     }
 

@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -101,14 +102,13 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     synchronized (ourLastRunningTaskLock) {
       UnindexedFilesUpdater runningTask = myProject.getUserData(RUNNING_TASK);
       //two tasks with non-null myPredefinedIndexableFilesIterators should be just run one after other
-      if (runningTask == null || runningTask.myPredefinedIndexableFilesIterators == null || predefinedIndexableFilesIterators == null) {
+      if (runningTask == null || predefinedIndexableFilesIterators == null) {
         myProject.putUserData(RUNNING_TASK, this);
 
-        if (runningTask != null) {
-          if (runningTask.myPredefinedIndexableFilesIterators == null && predefinedIndexableFilesIterators != null) {
-            //new task should be run for all changes to handle what wasn't handled by the previous one
-            predefinedIndexableFilesIterators = null;
-          }
+        if (runningTask != null) { // => predefinedIndexableFilesIterators == null
+          // In case  of unlimited check followed by a limited change cancelling first and making unlimited check anew results
+          // in endless restart of unlimited checks on Windows with empty Maven cache.
+          // So only in case the second one is unlimited check the first one will be cancelled.
           DumbService.getInstance(project).cancelTask(runningTask);
         }
       }
@@ -362,6 +362,10 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     return orderedProviders;
   }
 
+  protected @Nullable BooleanFunction<IndexedFile> getForceReindexingTrigger() {
+    return null;
+  }
+
   @NotNull
   private Map<IndexableFilesIterator, List<VirtualFile>> collectIndexableFilesConcurrently(
     @NotNull Project project,
@@ -374,7 +378,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     }
     List<IndexableFileScanner.ScanSession> sessions =
       ContainerUtil.map(IndexableFileScanner.EP_NAME.getExtensionList(), scanner -> scanner.startSession(project));
-    UnindexedFilesFinder unindexedFileFinder = new UnindexedFilesFinder(project, myIndex);
+    UnindexedFilesFinder unindexedFileFinder = new UnindexedFilesFinder(project, myIndex, getForceReindexingTrigger());
 
     Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles = new IdentityHashMap<>();
     IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();

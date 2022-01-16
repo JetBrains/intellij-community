@@ -362,15 +362,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
-  /**
-   * @deprecated use {@link EvaluationContext#keep(Value)} directly
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void keep(Value value, EvaluationContext context) {
-    context.keep(value);
-  }
-
   public static StringReference mirrorOfString(@NotNull String s, VirtualMachineProxyImpl virtualMachineProxy, EvaluationContext context)
     throws EvaluateException {
     return context.computeAndKeep(() -> virtualMachineProxy.mirrorOf(s));

@@ -6,9 +6,12 @@ import com.intellij.ui.dsl.doLayout
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.dsl.label
 import org.junit.Test
+import java.awt.Component
+import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class GridLayoutBaselineTest {
 
@@ -30,8 +33,7 @@ class GridLayoutBaselineTest {
       doLayout(panel, 1600, 800)
       var baseline: Int? = null
       for (component in panel.components) {
-        val size = component.size
-        val componentBaseline = component.getBaseline(size.width, size.height)
+        val componentBaseline = component.getBaseline()
         if (baseline == null) {
           baseline = component.y + componentBaseline
         }
@@ -64,8 +66,7 @@ class GridLayoutBaselineTest {
       doLayout(panel, 1600, 800)
       var baseline: Int? = null
       for (component in panel.components) {
-        val size = component.size
-        val componentBaseline = component.getBaseline(size.width, size.height)
+        val componentBaseline = component.getBaseline()
         if (baseline == null) {
           baseline = component.y + componentBaseline
         }
@@ -102,6 +103,47 @@ class GridLayoutBaselineTest {
     assertEquals(rowComboBoxNoBaseline.label2.height, height)
   }
 
+  @Test
+  fun testSubPanelDifferentFontCase1() {
+    val labels = createLabels(12, 10)
+    val panel = JPanel(GridLayout())
+    val builder = RowsGridBuilder(panel)
+    builder.cell(labels[0], baselineAlign = true)
+      .subGridBuilder(baselineAlign = true)
+      .cell(labels[1], baselineAlign = true)
+
+    doLayout(panel)
+    assertBaselinesEqual(labels)
+  }
+
+  @Test
+  fun testSubPanelDifferentFontCase2() {
+    val labels = createLabels(8, 10, 12)
+    val panel = JPanel(GridLayout())
+    val builder = RowsGridBuilder(panel)
+    builder.cell(labels[0], baselineAlign = true)
+      .subGridBuilder(baselineAlign = true)
+      .cell(labels[1], baselineAlign = true)
+      .cell(labels[2], baselineAlign = true)
+
+    doLayout(panel)
+    assertBaselinesEqual(labels)
+  }
+
+  @Test
+  fun testSubPanelDifferentFontCase3() {
+    val labels = createLabels(14, 10, 12)
+    val panel = JPanel(GridLayout())
+    val builder = RowsGridBuilder(panel)
+    builder.cell(labels[0], baselineAlign = true)
+      .cell(labels[1], baselineAlign = true)
+      .subGridBuilder(baselineAlign = true)
+      .cell(labels[2], baselineAlign = true)
+
+    doLayout(panel)
+    assertBaselinesEqual(labels)
+  }
+
   private fun createRowComboBoxNoBaseline(verticalAlign: VerticalAlign): RowComboBoxNoBaseline {
     val result = RowComboBoxNoBaseline(
       JLabel("Label"),
@@ -128,6 +170,28 @@ class GridLayoutBaselineTest {
     assertEquals(result.label.y, result.label2.y)
 
     return result
+  }
+
+  private fun Component.getBaseline(): Int {
+    val size = size
+    return getBaseline(size.width, size.height)
+  }
+
+  private fun createLabels(vararg fontSizes: Int): List<JLabel> {
+    return fontSizes.mapIndexed { index, fontSize ->
+      JLabel("Label$index").apply {
+        font = font.deriveFont(fontSize.toFloat())
+      }
+    }
+  }
+
+  private fun assertBaselinesEqual(components: List<JComponent>) {
+    assertTrue(components.size > 1)
+
+    val firstComponent = components[0]
+    for (component in components) {
+      assertEquals(firstComponent.y + firstComponent.getBaseline(), component.y + component.getBaseline())
+    }
   }
 }
 

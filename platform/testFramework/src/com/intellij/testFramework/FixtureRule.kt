@@ -100,6 +100,8 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
   companion object {
     @JvmStatic
     fun withoutRunningStartUpActivities() = ProjectRule(runPostStartUpActivities = false)
+    @JvmStatic
+    fun withRunningStartUpActivities() = ProjectRule(runPostStartUpActivities = true)
 
     /**
      * Think twice before use. And then do not use. To support old code.

@@ -16,8 +16,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.module.Module
@@ -41,8 +39,6 @@ import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.backwardRefs.CompilerRef
 import org.jetbrains.jps.backwardRefs.NameEnumerator
-import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
-import org.jetbrains.jps.builders.storage.BuildDataPaths
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -62,17 +58,11 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.synthetic.canBePropertyAccessor
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.nio.file.Path
 import java.util.*
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
-import kotlin.io.path.exists
-import kotlin.io.path.isDirectory
-import kotlin.io.path.listDirectoryEntries
-import kotlin.system.measureNanoTime
 
 /**
  * Based on [com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase] and [com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl]
@@ -123,11 +113,12 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
     init {
         dirtyScopeHolder.installVFSListener(this)
 
-        val compilerManager = CompilerManager.getInstance(project)
-        val isUpToDate = compilerManager.takeIf { hasIncrementalIndex }
-            ?.createProjectCompileScope(project)
-            ?.let(compilerManager::isUpToDate)
-            ?: false
+        val isUpToDate = if (KotlinCompilerReferenceIndexStorage.hasIndexStorage(project)) {
+            val compilerManager = CompilerManager.getInstance(project)
+            compilerManager.createProjectCompileScope(project).let(compilerManager::isUpToDate)
+        } else {
+            false
+        }
 
         executeOnBuildThread {
             if (isUpToDate) {
@@ -195,41 +186,12 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         closeStorage()
     }
 
-    private val buildDataPaths: BuildDataPaths?
-        get() = BuildManager.getInstance().getProjectSystemDirectory(project)?.let(::BuildDataPathsImpl)
-
-    private val BuildDataPaths.kotlinDataContainer: Path?
-        get() = targetsDataRoot
-            ?.toPath()
-            ?.resolve(SettingConstants.KOTLIN_DATA_CONTAINER_ID)
-            ?.takeIf { it.exists() && it.isDirectory() }
-            ?.listDirectoryEntries("${SettingConstants.KOTLIN_DATA_CONTAINER_ID}*")
-            ?.firstOrNull()
-
-    private val hasIncrementalIndex: Boolean get() = buildDataPaths?.kotlinDataContainer != null
-
     private fun openStorage() {
-        val projectPath = runReadAction { projectIfNotDisposed?.basePath } ?: return
-        val buildDataPaths = buildDataPaths
-        val kotlinDataPath = buildDataPaths?.kotlinDataContainer ?: run {
-            LOG.warn("try to open storage without index directory")
-            return
-        }
-
-        val initializationTime = measureNanoTime {
-            storage = KotlinCompilerReferenceIndexStorage(kotlinDataPath, projectPath).apply {
-                initialize(buildDataPaths)
-            }
-        }
-
-        LOG.info("kotlin CRI storage is opened (initialization time: ${TimeUnit.NANOSECONDS.toMillis(initializationTime)} ms)")
+        storage = KotlinCompilerReferenceIndexStorage.open(project)
     }
 
     private fun closeStorage() {
-        storage?.close().let {
-            LOG.info("kotlin CRI storage is closed" + if (it == null) " (didn't exist)" else "")
-        }
-
+        KotlinCompilerReferenceIndexStorage.close(storage)
         storage = null
     }
 
@@ -436,7 +398,6 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         fun getInstanceIfEnable(project: Project): KotlinCompilerReferenceIndexService? = if (isEnabled) get(project) else null
         const val SETTINGS_ID: String = "kotlin.compiler.ref.index"
         val isEnabled: Boolean get() = AdvancedSettings.getBoolean(SETTINGS_ID)
-        private val LOG: Logger = logger<KotlinCompilerReferenceIndexService>()
     }
 
     class InitializationActivity : StartupActivity.DumbAware {

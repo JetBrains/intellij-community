@@ -24,13 +24,14 @@ internal class SearchEverywhereMLStatisticsCollector {
                      selectedIndices: IntArray,
                      selectedItems: List<Any>,
                      closePopup: Boolean,
+                     timeToFirstResult: Int,
                      elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val data = arrayListOf<Pair<String, Any>>(
       CLOSE_POPUP_KEY to closePopup,
       EXPERIMENT_GROUP to experimentGroup,
       ORDER_BY_ML_GROUP to orderByMl
     )
-    reportElements(project, SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, data,
+    reportElements(project, SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, timeToFirstResult, data,
       selectedIndices, selectedItems, elementsProvider)
   }
 
@@ -39,13 +40,14 @@ internal class SearchEverywhereMLStatisticsCollector {
                        elementIdProvider: SearchEverywhereMlItemIdProvider,
                        context: SearchEverywhereMLContextInfo,
                        cache: SearchEverywhereMlSearchState,
+                       timeToFirstResult: Int,
                        elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val additional = listOf(
       CLOSE_POPUP_KEY to true,
       EXPERIMENT_GROUP to experimentGroup,
       ORDER_BY_ML_GROUP to orderByMl
     )
-    reportElements(project, SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, additional,
+    reportElements(project, SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, timeToFirstResult, additional,
       EMPTY_ARRAY, emptyList(),elementsProvider)
   }
 
@@ -53,8 +55,9 @@ internal class SearchEverywhereMLStatisticsCollector {
                         elementIdProvider: SearchEverywhereMlItemIdProvider,
                         context: SearchEverywhereMLContextInfo,
                         cache: SearchEverywhereMlSearchState,
+                        timeToFirstResult: Int,
                         elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    reportElements(project, SEARCH_RESTARTED, seSessionId, searchIndex, elementIdProvider, context, cache, emptyList(),
+    reportElements(project, SEARCH_RESTARTED, seSessionId, searchIndex, elementIdProvider, context, cache, timeToFirstResult, emptyList(),
       EMPTY_ARRAY, emptyList(), elementsProvider)
   }
 
@@ -63,6 +66,7 @@ internal class SearchEverywhereMLStatisticsCollector {
                              elementIdProvider: SearchEverywhereMlItemIdProvider,
                              context: SearchEverywhereMLContextInfo,
                              state: SearchEverywhereMlSearchState,
+                             timeToFirstResult: Int,
                              additional: List<Pair<String, Any>>,
                              selectedElements: IntArray,
                              selectedItems: List<Any>,
@@ -76,6 +80,12 @@ internal class SearchEverywhereMLStatisticsCollector {
       data[TOTAL_NUMBER_OF_ITEMS_DATA_KEY] = elements.size
       data[SE_TAB_ID_KEY] = state.tabId
       data[SEARCH_START_TIME_KEY] = state.searchStartTime
+
+      if (timeToFirstResult > -1) {
+        // Only report if some results came up in the search
+        data[TIME_TO_FIRST_RESULT_DATA_KEY] = timeToFirstResult
+      }
+
       data[TYPED_SYMBOL_KEYS] = state.keysTyped
       data[TYPED_BACKSPACES_DATA_KEY] = state.backspacesTyped
       data[REBUILD_REASON_KEY] = state.searchStartReason
@@ -163,7 +173,7 @@ internal class SearchEverywhereMLStatisticsCollector {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("mlse.log", 9)
+    private val GROUP = EventLogGroup("mlse.log", 10)
     private val EMPTY_ARRAY = IntArray(0)
     private const val REPORTED_ITEMS_LIMIT = 100
 
@@ -173,6 +183,8 @@ internal class SearchEverywhereMLStatisticsCollector {
 
     private const val ORDER_BY_ML_GROUP = "orderByMl"
     private const val EXPERIMENT_GROUP = "experimentGroup"
+
+    private const val TIME_TO_FIRST_RESULT_DATA_KEY = "timeToFirstResult"
 
     // context fields
     private const val PROJECT_OPENED_KEY = "projectOpened"

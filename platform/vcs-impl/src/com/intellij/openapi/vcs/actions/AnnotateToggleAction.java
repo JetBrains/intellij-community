@@ -54,15 +54,15 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     super.update(e);
     Provider provider = getProvider(e);
     Presentation presentation = e.getPresentation();
-    Project project = e.getProject();
     presentation.setEnabled(provider != null && !provider.isSuspended(e));
-    if (project != null) {
-      presentation.setText(getActionName(project));
+    if (provider != null) {
+      presentation.setText(provider.getActionName(e));
     }
   }
 
-  private static @Nls @NotNull String getActionName(@NotNull Project project) {
+  private static @Nls @NotNull String getVcsActionName(@Nullable Project project) {
     String defaultName = ActionsBundle.message("action.Annotate.text");
+    if (project == null) return defaultName;
 
     Set<String> names = ContainerUtil.map2Set(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss(), vcs -> {
       AnnotationProvider provider = vcs.getAnnotationProvider();
@@ -366,6 +366,10 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     boolean isAnnotated(AnActionEvent e);
 
     void perform(@NotNull AnActionEvent e, boolean selected);
+
+    default @Nls(capitalization = Nls.Capitalization.Title) String getActionName(@NotNull AnActionEvent e) {
+      return getVcsActionName(e.getProject());
+    }
   }
 
   private static class MyEditorNotificationPanel extends EditorNotificationPanel {

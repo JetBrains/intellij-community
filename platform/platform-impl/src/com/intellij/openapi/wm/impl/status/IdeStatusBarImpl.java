@@ -30,15 +30,14 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -78,6 +77,8 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   private final List<String> myCustomComponentIds = new ArrayList<>();
 
   private final Set<IdeStatusBarImpl> myChildren = new HashSet<>();
+
+  private final EventDispatcher<StatusBarListener> myListeners = EventDispatcher.create(StatusBarListener.class);
 
   private static final class WidgetBean {
     JComponent component;
@@ -314,6 +315,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     widget.install(this);
     panel.revalidate();
     Disposer.register(this, widget);
+    fireWidgetAdded(widget, anchor);
     if (widget instanceof StatusBarWidget.Multiframe) {
       StatusBarWidget.Multiframe multiFrameWidget = (StatusBarWidget.Multiframe)widget;
       updateChildren(child -> child.addWidget(multiFrameWidget.copy(), position, anchor));
@@ -606,6 +608,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
         targetPanel.remove(bean.component);
         targetPanel.revalidate();
         Disposer.dispose(bean.widget);
+        fireWidgetRemoved(id);
       }
       updateChildren(child -> child.removeWidget(id));
     });
@@ -620,6 +623,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
           ((StatusBarWidgetWrapper)widgetComponent).beforeUpdate();
         }
         widgetComponent.repaint();
+        fireWidgetUpdated(id);
       }
 
       updateChildren(child -> child.updateWidget(id));
@@ -631,6 +635,19 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   public StatusBarWidget getWidget(String id) {
     WidgetBean bean = myWidgetMap.get(id);
     return bean == null ? null : bean.widget;
+  }
+
+  @Override
+  public Collection<StatusBarWidget> getAllWidgets() {
+    return ContainerUtil.map(myWidgetMap.values(), bean -> bean.widget);
+  }
+
+  @NonNls
+  @Nullable
+  @Override
+  public String getWidgetAnchor(@NotNull String id) {
+    WidgetBean bean = myWidgetMap.get(id);
+    return bean == null ? null : bean.anchor;
   }
 
   @ApiStatus.Internal
@@ -659,6 +676,23 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
       accessibleContext = new AccessibleIdeStatusBarImpl();
     }
     return accessibleContext;
+  }
+
+  @Override
+  public void addListener(@NotNull StatusBarListener listener, @NotNull Disposable parentDisposable) {
+    myListeners.addListener(listener, parentDisposable);
+  }
+
+  private void fireWidgetAdded(@NotNull StatusBarWidget widget, @NonNls @Nullable String anchor) {
+    myListeners.getMulticaster().widgetAdded(widget, anchor);
+  }
+
+  private void fireWidgetUpdated(@NonNls @NotNull String id) {
+    myListeners.getMulticaster().widgetUpdated(id);
+  }
+
+  private void fireWidgetRemoved(@NonNls @NotNull String id) {
+    myListeners.getMulticaster().widgetRemoved(id);
   }
 
   protected class AccessibleIdeStatusBarImpl extends AccessibleJComponent {

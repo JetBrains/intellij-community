@@ -496,6 +496,10 @@
       "warningBorderColor": "#78550B"
     },
 
+    "Tag": {
+      "background": "#4c5052"
+    },
+
     "activeCaption": "#434E60",
     "control": "#3c3f41",
     "controlText": "#bbbbbb",

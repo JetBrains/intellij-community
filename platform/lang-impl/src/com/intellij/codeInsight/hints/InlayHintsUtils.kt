@@ -122,7 +122,19 @@ object InlayHintsUtils {
     providerName: Supplier<@Nls(capitalization = Title) String>
   ): List<AnAction> =
     listOf(
-      DisableInlayHintsProviderAction(providerKey, providerName),
+      DisableInlayHintsProviderAction(providerKey, providerName, false),
+      ConfigureInlayHintsProviderAction(providerKey)
+    )
+
+  fun getDefaultInlayHintsProviderCasePopupActions(
+    providerKey: SettingsKey<*>,
+    providerName: Supplier<@Nls(capitalization = Title) String>,
+    caseId: String,
+    caseName: Supplier<@Nls(capitalization = Title) String>
+  ): List<AnAction> =
+    listOf(
+      DisableInlayHintsProviderCaseAction(providerKey, providerName, caseId, caseName),
+      DisableInlayHintsProviderAction(providerKey, providerName, true),
       ConfigureInlayHintsProviderAction(providerKey)
     )
 

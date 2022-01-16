@@ -311,7 +311,7 @@ private fun Module.configureSdkIfPossible(compilerArguments: CommonCompilerArgum
 private fun Module.hasNonOverriddenExternalSdkConfiguration(compilerArguments: CommonCompilerArguments): Boolean =
     hasExternalSdkConfiguration && (compilerArguments !is K2JVMCompilerArguments || compilerArguments.jdkHome == null)
 
-private fun substituteDefaults(args: List<String>, compilerArguments: CommonCompilerArguments): List<String> =
+fun substituteDefaults(args: List<String>, compilerArguments: CommonCompilerArguments): List<String> =
     args + defaultSubstitutors[compilerArguments::class]?.filter { it.isSubstitutable(args) }?.flatMap { it.oldSubstitution }.orEmpty()
 
 fun parseCompilerArgumentsToFacet(

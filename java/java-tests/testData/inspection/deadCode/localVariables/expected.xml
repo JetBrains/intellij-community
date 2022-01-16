@@ -50,5 +50,57 @@
     <line>35</line>
     <description>Variable &lt;code&gt;unusedStr11&lt;/code&gt; is never used</description>
   </problem>
+
+  <problem>
+    <file>Lambda.java</file>
+    <line>6</line>
+    <description>Field has no usages.</description>
+  </problem>
+  <problem>
+    <file>Lambda.java</file>
+    <line>7</line>
+    <description>Variable &lt;code&gt;i1&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>Lambda.java</file>
+    <line>12</line>
+    <description>Variable &lt;code&gt;i3&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>Lambda.java</file>
+    <line>24</line>
+    <description>Variable &lt;code&gt;i1&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>Lambda.java</file>
+    <line>29</line>
+    <description>Variable &lt;code&gt;i3&lt;/code&gt; is never used</description>
+  </problem>
+
+  <problem>
+    <file>AnonymousClass.java</file>
+    <line>6</line>
+    <description>Field has no usages.</description>
+  </problem>
+  <problem>
+    <file>AnonymousClass.java</file>
+    <line>10</line>
+    <description>Variable &lt;code&gt;i1&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>AnonymousClass.java</file>
+    <line>21</line>
+    <description>Variable &lt;code&gt;i3&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>AnonymousClass.java</file>
+    <line>39</line>
+    <description>Variable &lt;code&gt;i1&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>AnonymousClass.java</file>
+    <line>50</line>
+    <description>Variable &lt;code&gt;i3&lt;/code&gt; is never used</description>
+  </problem>
 </problems>
 

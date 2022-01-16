@@ -441,8 +441,8 @@ class TestingTasksImpl extends TestingTasks {
       def mainModuleTestsOutput = context.getModuleTestsOutputPath(context.findModule(mainModule))
       def pattern = Pattern.compile(FileUtil.convertAntToRegexp(options.batchTestIncludes))
       def root = Paths.get(mainModuleTestsOutput)
-      Files.walk(root)
-        .filter({ it -> 
+      Files.walk(root).withCloseable { stream ->
+        stream.filter({ it ->
             pattern.matcher(root.relativize(it).toString()).matches() 
         })
         .forEach({ it ->
@@ -463,9 +463,15 @@ class TestingTasksImpl extends TestingTasks {
             context.messages.error("Failed to process $qName", e)
           }
         })
+      }
     }
     else {
+
+      //run all junit 5 tests in default package
+      runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, null, null)
+
       runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, options.bootstrapSuite, null)
+
     }
   }
   
@@ -500,8 +506,12 @@ class TestingTasksImpl extends TestingTasks {
       }
     }
 
-    args.add("com.intellij.tests.JUnit5Runner")
-    args.add(suiteName)
+
+    def runner = suiteName != null ? "com.intellij.tests.JUnit5Runner" : "com.intellij.tests.JUnit5AllRunner"
+    args.add(runner)
+    if (suiteName != null) {
+      args.add(suiteName)
+    }
     if (methodName != null) {
       args.add(methodName)
     }
@@ -513,7 +523,10 @@ class TestingTasksImpl extends TestingTasks {
     final Process exec = builder.start()
     new Thread(createInputReader(exec.getErrorStream(), System.err), "Read forked error output").start()
     new Thread(createInputReader(exec.getInputStream(), System.out), "Read forked output").start()
-    exec.waitFor()
+    def exitCode = exec.waitFor()
+    if (exitCode != 0) {
+      context.messages.error("Tests failed with exit code $exitCode")
+    }
   }
 
   private Runnable createInputReader(final InputStream inputStream, final PrintStream outputStream) {

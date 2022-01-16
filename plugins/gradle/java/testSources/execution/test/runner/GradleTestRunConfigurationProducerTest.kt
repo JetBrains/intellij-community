@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiMethod
+import junit.framework.TestCase
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.settings.TestRunner
@@ -357,6 +358,31 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
         val producer = getConfigurationProducer<TestMethodGradleConfigurationProducer>()
         assertFalse(producer.isConfigurationFromContext(configuration, context))
       }
+    }
+  }
+
+  @Test
+  fun `test cannot create configurationFromContext when no test sources are available`() {
+    val projectData = generateAndImportTemplateProject()
+
+    createProjectSubFile("src/java/org/example/application/ExampleMain.java", """
+      package org.example.application;
+      public class ExampleMain {
+        public static void main(String[] args) {}
+      }
+    """.trimIndent())
+
+    runReadActionAndWait {
+      val contextFromMain = getContextByLocation(projectData["project"].root.subDirectory("src", "java"))
+      // Verify that there is no configurationFromContext available when checking from /src/java/ directory and this is because
+      // there are no test sources under /src/java.
+      val fromMainContext = contextFromMain.configurationsFromContext?.firstOrNull()
+      TestCase.assertTrue(fromMainContext == null)
+
+      val contextFromTest = getContextByLocation(projectData["project"].root.subDirectory("src", "test"))
+      // Verify that there is a configurationFromContext available when checking from /src/test/ as it contains test sources.
+      val fromTestContext = contextFromTest.configurationsFromContext?.firstOrNull()
+      TestCase.assertTrue(fromTestContext != null)
     }
   }
 }

@@ -5,39 +5,33 @@ import com.intellij.CommonBundle
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings
 import com.intellij.framework.library.FrameworkLibraryVersion
 import com.intellij.framework.library.FrameworkLibraryVersionFilter
-import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.highlighter.ModuleFileType
+import com.intellij.ide.projectWizard.generators.IntelliJNewProjectWizardStep
 import com.intellij.ide.util.projectWizard.ModuleBuilder.ModuleConfigurationUpdater
-import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.LanguageNewProjectWizard
 import com.intellij.ide.wizard.NewProjectWizardLanguageStep
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdkType
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SdkTypeId
-import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.libraries.LibraryType
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory
-import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.roots.ui.distribution.*
 import com.intellij.openapi.roots.ui.distribution.DistributionComboBox.Item
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.*
 import com.intellij.util.download.DownloadableFileSetVersions.FileSetVersionsCallback
-import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.plugins.groovy.GroovyBundle
 import java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager
 import java.nio.file.Path
+import java.nio.file.Paths
 import javax.swing.SwingUtilities
 
 class GroovyNewProjectWizard : LanguageNewProjectWizard {
@@ -45,20 +39,12 @@ class GroovyNewProjectWizard : LanguageNewProjectWizard {
 
   override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 
-  class Step(private val parentStep: NewProjectWizardLanguageStep) : AbstractNewProjectWizardStep(parentStep) {
-    val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
+  class Step(parentStep: NewProjectWizardLanguageStep) : IntelliJNewProjectWizardStep<NewProjectWizardLanguageStep>(parentStep) {
     val distributionsProperty = propertyGraph.graphProperty<DistributionInfo?> { null }
 
-    var javaSdk by sdkProperty
     var distribution by distributionsProperty
 
-    override fun setupUI(builder: Panel) {
-      with(builder) {
-        row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
-          val sdkTypeFilter = { it: SdkTypeId -> it is JavaSdkType && it !is DependentSdkType }
-          sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
-            .columns(COLUMNS_MEDIUM)
-        }.bottomGap(BottomGap.SMALL)
+    override fun Panel.customOptions() {
         row(GroovyBundle.message("label.groovy.sdk")) {
           val groovyLibraryDescription = GroovyLibraryDescription()
           val groovyLibraryType = LibraryType.EP_NAME.findExtensionOrFail(GroovyDownloadableLibraryType::class.java)
@@ -94,7 +80,6 @@ class GroovyNewProjectWizard : LanguageNewProjectWizard {
               { (it as? Item.Distribution)?.info }
             )).columns(COLUMNS_MEDIUM)
         }.bottomGap(BottomGap.SMALL)
-      }
     }
 
     private fun ValidationInfoBuilder.validateGroovySdk(): ValidationInfo? {
@@ -123,9 +108,11 @@ class GroovyNewProjectWizard : LanguageNewProjectWizard {
 
     override fun setupProject(project: Project) {
       val groovyModuleBuilder = GroovyAwareModuleBuilder().apply {
-        contentEntryPath = parentStep.projectPath.systemIndependentPath
-        name = parentStep.name
-        moduleJdk = javaSdk
+        contentEntryPath = FileUtil.toSystemDependentName(contentRoot)
+        name = moduleName
+        moduleJdk = sdk
+        val moduleFile = Paths.get(moduleFileLocation, moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION)
+        moduleFilePath = FileUtil.toSystemDependentName(moduleFile.toString())
       }
 
       groovyModuleBuilder.addModuleConfigurationUpdater(object : ModuleConfigurationUpdater() {
@@ -148,9 +135,7 @@ class GroovyNewProjectWizard : LanguageNewProjectWizard {
           val allVersions = listOf(distribution.version)
           return LibraryCompositionSettings(libraryDescription, pathProvider, versionFilter, allVersions).apply {
             setDownloadLibraries(true)
-            ApplicationManager.getApplication().executeOnPooledThread {
-              downloadFiles(null)
-            }
+            downloadFiles(null)
           }
         }
         is LocalDistributionInfo -> {

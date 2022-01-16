@@ -49,7 +49,7 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
     val location = context.location ?: return false
     val element = getElement(context) ?: return false
     val allTasksAndArguments = getAllTasksAndArguments(context, element, emptyList())
-    val tasksAndArguments = allTasksAndArguments.firstOrNull() ?: TasksAndArguments(emptyList())
+    val tasksAndArguments = allTasksAndArguments.firstOrNull() ?: return false
 
     sourceElement.set(element)
     configuration.name = suggestConfigurationName(context, element, emptyList())

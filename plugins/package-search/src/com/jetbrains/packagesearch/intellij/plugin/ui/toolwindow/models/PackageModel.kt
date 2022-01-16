@@ -3,6 +3,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
 import org.apache.commons.lang3.StringUtils
 
@@ -18,23 +19,26 @@ internal sealed class PackageModel(
 
     val isKotlinMultiplatform = remoteInfo?.mpp != null
 
-    fun getAvailableVersions(onlyStable: Boolean): List<PackageVersion> {
-        val remoteVersions = remoteInfo?.versions
+    fun getAvailableVersions(onlyStable: Boolean): List<NormalizedPackageVersion> {
+        val remoteVersions = remoteInfo?.versions?.asSequence()
             ?.map { PackageVersion.from(it) }
-            ?.filter { it != PackageVersion.Missing }
+            ?.filterIsInstance<PackageVersion.Named>()
+            ?.toList()
+            ?: emptyList()
 
-        val allVersions = additionalAvailableVersions()
-            .union(remoteVersions ?: emptyList())
+        val allVersions = allDeclaredVersions()
+            .union(remoteVersions).toList()
             .toList()
 
         return allVersions.asSequence()
             .filter { if (onlyStable) it.isStable else true }
             .distinctBy { it.versionName }
+            .map { NormalizedPackageVersion.parseFrom(it) }
             .sortedDescending()
             .toList()
     }
 
-    protected abstract fun additionalAvailableVersions(): List<PackageVersion>
+    protected abstract fun allDeclaredVersions(): List<PackageVersion.Named>
 
     override fun compareTo(other: PackageModel): Int = sortKey.compareTo(other.sortKey)
 
@@ -51,7 +55,9 @@ internal sealed class PackageModel(
             require(usageInfo.isNotEmpty()) { "An installed package must always have at least one usage" }
         }
 
-        override fun additionalAvailableVersions(): List<PackageVersion> = usageInfo.map { it.version }
+        override fun allDeclaredVersions(): List<PackageVersion.Named> =
+            usageInfo.map { it.version }
+                .filterIsInstance<PackageVersion.Named>()
 
         fun findUsagesIn(moduleModels: List<ModuleModel>): List<DependencyUsageInfo> =
             findUsagesIn(moduleModels.map { it.projectModule })
@@ -110,7 +116,7 @@ internal sealed class PackageModel(
         remoteInfo: ApiStandardPackage
     ) : PackageModel(groupId, artifactId, remoteInfo) {
 
-        override fun additionalAvailableVersions(): List<PackageVersion> = emptyList()
+        override fun allDeclaredVersions(): List<PackageVersion.Named> = emptyList()
 
         override val searchableInfo =
             buildString {

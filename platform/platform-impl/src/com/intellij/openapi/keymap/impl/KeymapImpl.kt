@@ -87,9 +87,6 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       return field
     }
 
-  @Suppress("DEPRECATION")
-  private val listeners = ContainerUtil.createLockFreeCopyOnWriteList<Keymap.Listener>()
-
   private val keymapManager by lazy { KeymapManagerEx.getInstanceEx()!! }
 
   /**
@@ -406,7 +403,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   }
 
   fun hasShortcutDefined(actionId: String): Boolean =
-    actionIdToShortcuts[actionId]?.isNotEmpty() == true || parent?.hasShortcutDefined(actionId) == true
+    actionIdToShortcuts[actionId] != null || parent?.hasShortcutDefined(actionId) == true
 
   // you must clear `actionIdToShortcuts` before calling
   protected open fun readExternal(keymapElement: Element) {
@@ -624,19 +621,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
   protected open fun convertShortcut(shortcut: Shortcut): Shortcut = shortcut
 
-  override fun addShortcutChangeListener(@Suppress("DEPRECATION") listener: Keymap.Listener) {
-    listeners.add(listener)
-  }
-
-  override fun removeShortcutChangeListener(@Suppress("DEPRECATION") listener: Keymap.Listener) {
-    listeners.remove(listener)
-  }
-
   private fun fireShortcutChanged(actionId: String) {
     (KeymapManager.getInstance() as? KeymapManagerImpl)?.fireShortcutChanged(this, actionId)
-    for (listener in listeners) {
-      listener.onShortcutChanged(actionId)
-    }
   }
 
   override fun toString(): String = presentableName

@@ -2,10 +2,12 @@
 package com.intellij.spellchecker.hunspell
 
 import ai.grazie.spell.lists.hunspell.HunspellWordList
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VfsUtil.findFileByIoFile
 import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.util.Consumer
+import org.apache.lucene.analysis.hunspell.TimeoutPolicy
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStreamReader
@@ -40,7 +42,7 @@ class HunspellDictionary(path: String, name: String? = null) : Dictionary {
     if (bundle !== null) {
       bundle.dic.inputStream().use { dic ->
         bundle.aff.inputStream().use { aff ->
-          this.dict = HunspellWordList(aff, dic)
+          this.dict = HunspellWordList(aff, dic, TimeoutPolicy.NO_TIMEOUT) { ProgressManager.checkCanceled() }
         }
       }
 

@@ -1,8 +1,8 @@
 {
     "mainFile": "Main.kt",
     "usages": [
+        "Child.kt",
         "Doo.kt",
-        "Foo.kt",
-        "Child.kt"
+        "Foo.kt"
     ]
 }

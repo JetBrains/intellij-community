@@ -8554,7 +8554,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // mb_nl ('..' | '..<') mb_nl <<disableNlBeforeClosure>>
+  // mb_nl ('<..' | '<..<' | '..' | '..<') mb_nl <<disableNlBeforeClosure>>
   private static boolean range_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "range_expression_0")) return false;
     boolean r;
@@ -8567,12 +8567,14 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // '..' | '..<'
+  // '<..' | '<..<' | '..' | '..<'
   private static boolean range_expression_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "range_expression_0_1")) return false;
     boolean r;
-    r = consumeTokenSmart(b, T_RANGE);
-    if (!r) r = consumeTokenSmart(b, T_RANGE_EX);
+    r = consumeTokenSmart(b, T_RANGE_LEFT_OPEN);
+    if (!r) r = consumeTokenSmart(b, T_RANGE_BOTH_OPEN);
+    if (!r) r = consumeTokenSmart(b, T_RANGE);
+    if (!r) r = consumeTokenSmart(b, T_RANGE_RIGHT_OPEN);
     return r;
   }
 

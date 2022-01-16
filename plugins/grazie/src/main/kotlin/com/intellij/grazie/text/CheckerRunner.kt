@@ -174,6 +174,8 @@ internal class CheckerRunner(val text: TextContent) {
       result.addAll(GrazieReplaceTypoQuickFix.getReplacementFixes(problem, underline, file))
     }
 
+    result.addAll(problem.customFixes)
+
     result.add(object : GrazieAddExceptionQuickFix(defaultSuppressionPattern(problem, findSentence(problem)), underline) {
       override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
         GrazieFUSCounter.quickFixInvoked(problem.rule, project, "add.exception")

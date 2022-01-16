@@ -184,7 +184,7 @@ public final class VfsEventsMerger {
     }
   }
 
-  static void tryLog(@NotNull String eventName, @NotNull VirtualFile file) {
+  public static void tryLog(@NotNull String eventName, @NotNull VirtualFile file) {
     tryLog(eventName, file, null);
   }
 
@@ -197,7 +197,7 @@ public final class VfsEventsMerger {
     });
   }
 
-  private static void tryLog(Supplier<String> message) {
+  public static void tryLog(Supplier<String> message) {
     if (LOG != null) {
       LOG.info(message.get());
     }

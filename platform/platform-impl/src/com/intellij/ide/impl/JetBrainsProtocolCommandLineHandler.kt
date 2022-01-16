@@ -6,7 +6,8 @@ import com.intellij.ide.CommandLineCustomHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.util.Ref
+import com.intellij.openapi.diagnostic.thisLogger
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 
 class JetBrainsProtocolCommandLineHandler : CommandLineCustomHandler {
@@ -14,10 +15,17 @@ class JetBrainsProtocolCommandLineHandler : CommandLineCustomHandler {
     val command = args[0]
     if (!command.startsWith(JBProtocolCommand.PROTOCOL)) return null
 
-    val result = Ref<Future<CliResult>>()
-    ApplicationManager.getApplication().invokeAndWait(
-      { result.set(JBProtocolCommand.execute(command)) },
+    val result = CompletableFuture<CliResult>()
+    ApplicationManager.getApplication().invokeLater(
+      {
+        val commandResult = runCatching { JBProtocolCommand.execute(command) }
+        ApplicationManager.getApplication().executeOnPooledThread {
+          commandResult.mapCatching { it.get() }
+            .onFailure { thisLogger().error(command, it) }
+            .onSuccess { result.complete(if (it == null) CliResult.OK else CliResult(1, it)) }
+        }
+      },
       ModalityState.NON_MODAL)
-    return result.get()
+    return result
   }
 }

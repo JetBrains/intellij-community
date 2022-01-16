@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageOperationType
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
 
 internal sealed class UiPackageModel<T : PackageModel> {
@@ -51,17 +52,30 @@ internal fun PackageModel.Installed.toUiPackageModel(
 ): UiPackageModel.Installed {
     val declaredScopes = declaredScopes(targetModules)
     val defaultScope = targetModules.defaultScope(project)
+    val selectedVersion = getLatestInstalledVersion()
+    val normalizedPackageVersion = selectedVersion.asNamedOrNull()
+        ?.let { NormalizedPackageVersion.parseFrom(it) }
+
+    val sortedVersions = if (normalizedPackageVersion != null) {
+        getAvailableVersions(onlyStable) + normalizedPackageVersion
+    } else {
+        getAvailableVersions(onlyStable)
+    }.distinct().sortedDescending().map { it.originalVersion }
+
     return UiPackageModel.Installed(
         packageModel = this,
         declaredScopes = declaredScopes,
         defaultScope = defaultScope,
-        selectedVersion = getLatestInstalledVersion(),
+        selectedVersion = selectedVersion,
         selectedScope = declaredScopes.firstOrNull() ?: defaultScope,
         mixedBuildSystemTargets = targetModules.isMixedBuildSystems,
         packageOperations = computeActionsFor(this, targetModules, knownRepositoriesInTargetModules, onlyStable),
-        sortedVersions = PackageVersionUtils.sortWithHeuristicsDescending(getAvailableVersions(onlyStable))
+        sortedVersions = sortedVersions
     )
 }
+
+private fun PackageVersion.asNamedOrNull(): PackageVersion.Named? =
+    if (this is PackageVersion.Named) this else null
 
 private fun PackageModel.Installed.declaredScopes(targetModules: TargetModules): List<PackageScope> =
     if (targetModules.modules.isNotEmpty()) {
@@ -115,12 +129,12 @@ internal fun PackageModel.SearchResult.toUiPackageModel(
         declaredScopes = declaredScopes,
         defaultScope = defaultScope,
         selectedVersion = searchResultUiState?.selectedVersion
-            ?: PackageVersionUtils.highestVersionByName(getAvailableVersions(onlyStable)),
+            ?: getAvailableVersions(onlyStable).first().originalVersion,
         selectedScope = searchResultUiState?.selectedScope
             ?: defaultScope,
         mixedBuildSystemTargets = mixedBuildSystems,
         packageOperations = computeActionsFor(this, targetModules, knownRepositoriesInTargetModules, onlyStable),
-        sortedVersions = PackageVersionUtils.sortWithHeuristicsDescending(getAvailableVersions(onlyStable))
+        sortedVersions = getAvailableVersions(onlyStable).sortedDescending().map { it.originalVersion }
     )
 
 private inline fun <reified T : PackageModel> computeActionsFor(
@@ -133,17 +147,19 @@ private inline fun <reified T : PackageModel> computeActionsFor(
 
     val availableVersions = packageModel.getAvailableVersions(onlyStable)
 
-    val upgradeToVersion = if (packageModel is PackageModel.Installed) {
-        val currentVersion = packageModel.getLatestInstalledVersion()
-        PackageVersionUtils.upgradeCandidateVersionOrNull(currentVersion, availableVersions)
-    } else {
-        null
+    val upgradeToVersion = when (packageModel) {
+        is PackageModel.Installed -> {
+            val currentVersion = packageModel.getLatestInstalledVersion()
+            if (currentVersion is PackageVersion.Named) {
+                PackageVersionUtils.upgradeCandidateVersionOrNull(NormalizedPackageVersion.parseFrom(currentVersion), availableVersions)
+            } else {
+                availableVersions.first()
+            }
+        }
+        else -> null
     }
-    val highestAvailableVersion = if (availableVersions.isNotEmpty()) {
-        PackageVersionUtils.highestSensibleVersionByNameOrNull(availableVersions)
-    } else {
-        null
-    }
+
+    val highestAvailableVersion = availableVersions.firstOrNull()
 
     val primaryOperationType = decidePrimaryOperationTypeFor(packageModel, upgradeToVersion)
 
@@ -179,10 +195,10 @@ private inline fun <reified T : PackageModel> computeActionsFor(
 
     val repoToInstall = when (primaryOperationType) {
         PackageOperationType.INSTALL -> highestAvailableVersion?.let {
-            knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(packageModel, it)
+            knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(packageModel, it.originalVersion)
         }
         PackageOperationType.UPGRADE -> upgradeToVersion?.let {
-            knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(packageModel, it)
+            knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(packageModel, it.originalVersion)
         }
         else -> null
     }
@@ -191,7 +207,7 @@ private inline fun <reified T : PackageModel> computeActionsFor(
         targetModules = targetModules,
         primaryOperations = primaryOperations,
         removeOperations = removeOperations,
-        targetVersion = highestAvailableVersion,
+        targetVersion = highestAvailableVersion?.originalVersion,
         primaryOperationType = primaryOperationType,
         repoToAddWhenInstalling = repoToInstall
     )
@@ -199,7 +215,7 @@ private inline fun <reified T : PackageModel> computeActionsFor(
 
 private fun <T : PackageModel> decidePrimaryOperationTypeFor(
     packageModel: T,
-    targetVersion: PackageVersion.Named?
+    targetVersion: NormalizedPackageVersion?
 ): PackageOperationType? =
     when (packageModel) {
         is PackageModel.SearchResult -> PackageOperationType.INSTALL

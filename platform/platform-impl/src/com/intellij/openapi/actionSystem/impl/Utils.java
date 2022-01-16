@@ -448,6 +448,11 @@ public final class Utils extends DataContextUtils {
                                                               @NotNull PresentationFactory factory,
                                                               @Nullable Consumer<? super AnActionEvent> eventTracker,
                                                               @NotNull Function<? super UpdateSession, ? extends T> function) {
+    ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
+    if (ProgressIndicatorUtils.isWriteActionRunningOrPending(applicationEx)) {
+      LOG.error("Actions cannot be updated when write-action is running or pending");
+      return null;
+    }
     long start = System.currentTimeMillis();
     boolean async = isAsyncDataContext(dataContext);
     // we will manually process "invokeLater" calls using a queue for performance reasons:
@@ -488,7 +493,6 @@ public final class Utils extends DataContextUtils {
             }
           };
           boolean inReadAction = Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once");
-          ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
           ProgressIndicator indicator = parentIndicator == null ? new EmptyProgressIndicator() : new SensitiveProgressWrapper(parentIndicator);
           promise.onError(__ -> indicator.cancel());
           ProgressManager.getInstance().computePrioritized(() -> {

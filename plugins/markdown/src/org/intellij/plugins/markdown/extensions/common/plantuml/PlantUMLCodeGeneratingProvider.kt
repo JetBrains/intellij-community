@@ -10,12 +10,15 @@ import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvid
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCacheCollector
+import org.intellij.plugins.markdown.ui.preview.html.links.IntelliJImageGeneratingProvider
 import java.io.File
 import java.io.IOException
 import java.net.URLClassLoader
 
-internal class PlantUMLCodeGeneratingProvider(collector: MarkdownCodeFencePluginCacheCollector? = null)
-  : MarkdownCodeFenceCacheableProvider(collector), MarkdownExtensionWithExternalFiles {
+internal class PlantUMLCodeGeneratingProvider(collector: MarkdownCodeFencePluginCacheCollector? = null):
+  MarkdownCodeFenceCacheableProvider(collector),
+  MarkdownExtensionWithExternalFiles
+{
   override val downloadLink: String
     get() = Registry.stringValue("markdown.plantuml.download.link")
 
@@ -31,7 +34,7 @@ internal class PlantUMLCodeGeneratingProvider(collector: MarkdownCodeFencePlugin
     cacheDiagram(key, raw)
     collector?.addAliveCachedFile(this, key)
 
-    return "<img src=\"${key.toURI()}\"/>"
+    return "<img ${IntelliJImageGeneratingProvider.ignorePathProcessingAttributeName}=\"true\" src=\"${key.toURI()}\"/>"
   }
 
   override fun onLAFChanged() {}

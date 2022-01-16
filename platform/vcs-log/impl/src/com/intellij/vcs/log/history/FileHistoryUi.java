@@ -58,8 +58,9 @@ public class FileHistoryUi extends AbstractVcsLogUi {
                        @NotNull FilePath path,
                        @Nullable Hash revision,
                        @NotNull VirtualFile root,
+                       @NotNull String logId,
                        @NotNull VcsLogDiffHandler vcsLogDiffHandler) {
-    super(getFileHistoryLogId(path, revision), logData, new FileHistoryColorManager(root, path), refresher);
+    super(logId, logData, new FileHistoryColorManager(root, path), refresher);
 
     assert !path.isDirectory();
 

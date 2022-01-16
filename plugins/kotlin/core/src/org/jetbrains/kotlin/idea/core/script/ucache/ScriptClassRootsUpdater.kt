@@ -108,8 +108,12 @@ abstract class ScriptClassRootsUpdater(
         update { invalidate() }
     }
 
+    fun isInTransaction(): Boolean {
+        return concurrentUpdates.get() > 0
+    }
+
     fun checkInTransaction() {
-        check(concurrentUpdates.get() > 0)
+        check(isInTransaction())
     }
 
     inline fun <T> update(body: () -> T): T {

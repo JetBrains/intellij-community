@@ -330,6 +330,11 @@ public final class FormatDecode {
     int idx = IntStream.range(0, arguments.length)
       .filter(i -> PsiTreeUtil.isAncestor(arguments[i], cast, false)).findFirst()
       .orElse(-1);
+
+    if (idx < formatArgumentIndex) {
+      return false;
+    }
+    
     Validator validator = validators[idx - formatArgumentIndex];
     PsiTypeElement castType = cast.getCastType();
     return validator.valid(Objects.requireNonNull(castType).getType()) &&

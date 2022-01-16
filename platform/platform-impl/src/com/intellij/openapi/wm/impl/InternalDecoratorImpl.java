@@ -163,9 +163,10 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
     }
   }
 
-  public void splitWithContent(@NotNull Content content, @MagicConstant(intValues = {CENTER, TOP, LEFT, BOTTOM, RIGHT, -1}) int dropSide) {
-    if (dropSide == -1 || dropSide == CENTER) {
-      getContentManager().addContent(content);
+  public void splitWithContent(@NotNull Content content, @MagicConstant(intValues = {CENTER, TOP, LEFT, BOTTOM, RIGHT, -1}) int dropSide,
+                               int dropIndex) {
+    if (dropSide == -1 || dropSide == CENTER || dropIndex >= 0) {
+      getContentManager().addContent(content, dropIndex);
       return;
     }
     myFirstDecorator = toolWindow.createCellDecorator();
@@ -583,6 +584,7 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
       glassPane.addMouseMotionPreprocessor(listener, disposable);
       glassPane.addMousePreprocessor(listener, disposable);
     }
+    myContentUi.update();
   }
 
   @Override
@@ -622,6 +624,10 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
       UIUtil.putClientProperty(this, INACTIVE_LOOK, hideActivity);
     }
     myContentUi.update();
+  }
+
+  public void setDropInfoIndex(int index, int width) {
+    myContentUi.setDropInfoIndex(index, width);
   }
 
   public void updateBounds(@NotNull MouseEvent dragEvent) {

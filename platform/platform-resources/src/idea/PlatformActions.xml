@@ -420,6 +420,7 @@
     <action id="PluginManagerFiltersConfigureResetTrustDebugAction" internal="true" class="com.intellij.ide.plugins.org.PluginManagerFiltersConfigureResetTrustDebugAction"/>
 
     <action id="CloseGotItTooltip" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="CallSaul" class="com.intellij.ide.actions.cache.CallSaulAction"/>
 
     <group id="MainMenu">
       <group id="FileMenu" popup="true">
@@ -463,11 +464,8 @@
           <synonym text="Restart"/>
         </action>
         <action id="RestartIde" class="com.intellij.ide.actions.RestartIdeAction"/>
-        <group id="CacheRecovery" internal="true" popup="true">
-          <action id="CallSaul" class="com.intellij.ide.actions.cache.CallSaulAction"/>
-          <separator/>
-          <group id="RecoveryActions" class="com.intellij.ide.actions.cache.CacheRecoveryActionGroup"/>
-        </group>
+
+        <group id="CacheRecovery" class="com.intellij.ide.actions.cache.CacheRecoveryActionGroup"/>
         <separator/>
         <group id="ExportImportGroup" popup="true">
           <action id="ImportSettings" class="com.intellij.configurationStore.ImportSettingsAction"/>

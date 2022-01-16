@@ -80,7 +80,7 @@ internal class DocumentationBrowser private constructor(
 
   fun navigateByLink(url: String) {
     cs.coroutineContext.cancelChildren()
-    cs.launch(Dispatchers.EDT) {
+    cs.handleUserAction {
       handleLink(url)
     }
   }

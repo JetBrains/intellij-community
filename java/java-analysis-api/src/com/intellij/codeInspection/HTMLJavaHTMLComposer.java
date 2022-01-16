@@ -13,9 +13,9 @@ import org.jetbrains.annotations.NotNull;
 public abstract class HTMLJavaHTMLComposer implements HTMLComposerExtension<HTMLJavaHTMLComposer> {
   public static final Key<HTMLJavaHTMLComposer> COMPOSER = Key.create("HTMLJavaComposer");
 
-  public abstract void appendClassOrInterface(@NotNull StringBuilder buf, RefClass refClass, boolean capitalizeFirstLetter);
+  public abstract void appendClassOrInterface(@NotNull StringBuilder buf, @NotNull RefClass refClass, boolean capitalizeFirstLetter);
 
-  public static String getClassOrInterface(RefClass refClass, boolean capitalizeFirstLetter) {
+  public static String getClassOrInterface(@NotNull RefClass refClass, boolean capitalizeFirstLetter) {
     if (refClass.isInterface()) {
       return capitalizeFirstLetter ? AnalysisBundle.message("inspection.export.results.capitalized.interface") : AnalysisBundle.message("inspection.export.results.interface");
     }
@@ -27,17 +27,19 @@ public abstract class HTMLJavaHTMLComposer implements HTMLComposerExtension<HTML
     }
   }
 
-  public abstract void appendClassExtendsImplements(@NotNull StringBuilder buf, RefClass refClass);
+  public abstract void appendClassExtendsImplements(@NotNull StringBuilder buf, @NotNull RefClass refClass);
 
-  public abstract void appendDerivedClasses(@NotNull StringBuilder buf, RefClass refClass);
+  public abstract void appendDerivedClasses(@NotNull StringBuilder buf, @NotNull RefClass refClass);
 
-  public abstract void appendLibraryMethods(@NotNull StringBuilder buf, RefClass refClass);
+  public abstract void appendLibraryMethods(@NotNull StringBuilder buf, @NotNull RefClass refClass);
 
-  public abstract void appendSuperMethods(@NotNull StringBuilder buf, RefMethod refMethod);
+  public abstract void appendSuperMethods(@NotNull StringBuilder buf, @NotNull RefMethod refMethod);
 
-  public abstract void appendDerivedMethods(@NotNull StringBuilder buf, RefMethod refMethod);
+  public abstract void appendDerivedMethods(@NotNull StringBuilder buf, @NotNull RefMethod refMethod);
 
-  public abstract void appendTypeReferences(@NotNull StringBuilder buf, RefClass refClass);
+  public abstract void appendDerivedFunctionalExpressions(@NotNull StringBuilder buf, @NotNull RefMethod refMethod);
+
+  public abstract void appendTypeReferences(@NotNull StringBuilder buf, @NotNull RefClass refClass);
 
   @Override
   public Key<HTMLJavaHTMLComposer> getID() {

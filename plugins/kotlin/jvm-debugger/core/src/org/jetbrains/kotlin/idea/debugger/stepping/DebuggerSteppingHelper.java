@@ -95,7 +95,7 @@ public class DebuggerSteppingHelper {
     }
 
     public static DebugProcessImpl.ResumeCommand createStepIntoCommand(
-            SuspendContextImpl suspendContext,
+            @NotNull SuspendContextImpl suspendContext,
             boolean ignoreBreakpoints,
             @Nullable MethodFilter methodFilter
     ) {

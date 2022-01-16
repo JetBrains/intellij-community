@@ -420,7 +420,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     return ActionManager.getInstance().createActionToolbar(getClass().getName(), group, false);
   }
 
-  @NotNull Comparator<Node> createComparator() {
+  protected @NotNull Comparator<Node> createComparator() {
     return new NodeComparator(
       isNullableOrSelected(getSortFoldersFirst()),
       isNullableOrSelected(getSortBySeverity()),

@@ -161,7 +161,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     if (CLEAR_NON_INDEXABLE_FILE_DATA) {
       List<ID<?, ?>> extensions = getIndexedContentDependentExtensions(fileId);
       if (!extensions.isEmpty()) {
-        myFileBasedIndex.removeDataFromIndicesForFile(fileId, file);
+        myFileBasedIndex.removeDataFromIndicesForFile(fileId, file, "non_indexable_file");
       }
       IndexingFlag.cleanProcessingFlag(file);
     }

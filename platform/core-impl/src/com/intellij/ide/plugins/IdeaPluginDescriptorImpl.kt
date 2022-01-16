@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 package com.intellij.ide.plugins
 
 import com.intellij.AbstractBundle
@@ -94,7 +94,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   @JvmField val projectContainerDescriptor = raw.projectContainerDescriptor
   @JvmField val moduleContainerDescriptor = raw.moduleContainerDescriptor
 
-  @JvmField val content = raw.content
+  @JvmField val content: PluginContentDescriptor = raw.contentModules?.let { PluginContentDescriptor(it) } ?: PluginContentDescriptor.EMPTY
   @JvmField val dependencies = raw.dependencies
   @JvmField val modules: List<PluginId> = raw.modules ?: Collections.emptyList()
 

@@ -39,8 +39,8 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
   private final Insets myInsets;
 
   protected final List<Balloon> myBalloons = new ArrayList<>();
-  private final Map<Balloon, BalloonLayoutData> myLayoutData = new HashMap<>();
-  private GetInt myWidth;
+  protected final Map<Balloon, BalloonLayoutData> myLayoutData = new HashMap<>();
+  protected GetInt myWidth;
 
   private final Alarm myRelayoutAlarm = new Alarm();
   private final Runnable myRelayoutRunnable = () -> {
@@ -52,14 +52,17 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
   };
   private JRootPane myParent;
 
-  private final Runnable myCloseAll = () -> {
+  protected final Runnable myCloseAll = () -> {
     for (Balloon balloon : new ArrayList<>(myBalloons)) {
       BalloonLayoutData layoutData = myLayoutData.get(balloon);
-      NotificationCollector.getInstance().logNotificationBalloonClosedByUser(layoutData.project, layoutData.id, layoutData.displayId, layoutData.groupId);
+      if (layoutData != null) {
+        NotificationCollector.getInstance()
+          .logNotificationBalloonClosedByUser(layoutData.project, layoutData.id, layoutData.displayId, layoutData.groupId);
+      }
       remove(balloon, true);
     }
   };
-  private final Runnable myLayoutRunnable = () -> {
+  protected final Runnable myLayoutRunnable = () -> {
     calculateSize();
     relayout();
     fireRelayout();
@@ -96,7 +99,7 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
     myListeners.remove(listener);
   }
 
-  private void fireRelayout() {
+  protected final void fireRelayout() {
     for (Runnable listener : myListeners) {
       listener.run();
     }
@@ -189,7 +192,7 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
     }
   }
 
-  private void remove(@NotNull Balloon balloon) {
+  protected final void remove(@NotNull Balloon balloon) {
     remove(balloon, false);
     balloon.hide(true);
     fireRelayout();
@@ -202,14 +205,14 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
     }
   }
 
-  private void remove(@NotNull Balloon balloon, boolean hide) {
+  protected void remove(@NotNull Balloon balloon, boolean hide) {
     myBalloons.remove(balloon);
     BalloonLayoutData layoutData = myLayoutData.remove(balloon);
     if (layoutData != null) {
       layoutData.mergeData = null;
     }
     if (hide) {
-      balloon.hide();
+      balloon.hide(Registry.is("ide.notification.action.center", false));
       fireRelayout();
     }
   }
@@ -233,7 +236,7 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
   }
 
   @NotNull
-  private Dimension getSize(@NotNull Balloon balloon) {
+  protected Dimension getSize(@NotNull Balloon balloon) {
     BalloonLayoutData layoutData = myLayoutData.get(balloon);
     if (layoutData == null) {
       Dimension size = balloon.getPreferredSize();
@@ -251,7 +254,7 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
     myRelayoutAlarm.addRequest(myRelayoutRunnable, 200);
   }
 
-  private void calculateSize() {
+  protected void calculateSize() {
     myWidth = null;
 
     for (Balloon balloon : myBalloons) {
@@ -264,7 +267,7 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
     myWidth = BalloonLayoutConfiguration::FixedWidth;
   }
 
-  private void relayout() {
+  protected final void relayout() {
     final Dimension size = myLayeredPane.getSize();
 
     JBInsets.removeFrom(size, myInsets);
@@ -288,7 +291,7 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
     doLayout(columns.get(0), eachColumnX + 4, (int)myLayeredPane.getBounds().getMaxY());
   }
 
-  private void doLayout(List<Balloon> balloons, int startX, int bottomY) {
+  private void doLayout(@NotNull List<Balloon> balloons, int startX, int bottomY) {
     int y = bottomY;
     ToolWindowsPane pane = UIUtil.findComponentOfType(myParent, ToolWindowsPane.class);
     if (pane != null) {
@@ -304,6 +307,10 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
       y -= ((IdeRootPane)myParent).getStatusBarHeight();
     }
 
+    setBounds(balloons, startX, y);
+  }
+
+  protected void setBounds(@NotNull List<Balloon> balloons, int startX, int y) {
     for (Balloon balloon : balloons) {
       Rectangle bounds = new Rectangle(getSize(balloon));
       y -= bounds.height;

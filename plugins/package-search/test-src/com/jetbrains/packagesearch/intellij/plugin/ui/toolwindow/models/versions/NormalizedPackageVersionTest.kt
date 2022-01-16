@@ -1,5 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions
 
+import com.jetbrains.packagesearch.intellij.plugin.PackageSearchTestUtils
 import com.jetbrains.packagesearch.intellij.plugin.asNullable
 import com.jetbrains.packagesearch.intellij.plugin.assertThat
 import com.jetbrains.packagesearch.intellij.plugin.isEqualTo
@@ -125,5 +126,44 @@ internal class NormalizedPackageVersionTest {
             )
             assertThat(version1.compareTo(version2).sign).isEqualTo(expected)
         }
+    }
+
+    @Nested
+    inner class RealWorldExamples {
+
+        @Test
+        internal fun `should sort apache commons-io versions correctly`() {
+            val expectedVersions = loadFromRes("versions_list/commons-io.csv")
+                .map { NormalizedPackageVersion.parseFrom(it) }
+
+            assertThat(expectedVersions.shuffled().sortedDescending()).isEqualTo(expectedVersions)
+        }
+
+        @Test
+        internal fun `should sort scala-compiler versions correctly`() {
+            val expectedVersions = loadFromRes("versions_list/scala-compiler.csv")
+                .map { NormalizedPackageVersion.parseFrom(it) }
+
+            assertThat(expectedVersions.shuffled().sortedDescending()).isEqualTo(expectedVersions)
+        }
+
+        @Test
+        internal fun `should sort postgresql versions correctly`() {
+            val expectedVersions = loadFromRes("versions_list/postgresql.csv")
+                .map { NormalizedPackageVersion.parseFrom(it) }
+
+            assertThat(expectedVersions.shuffled().sortedDescending()).isEqualTo(expectedVersions)
+        }
+
+        @Test
+        internal fun `should sort compose-full versions correctly`() {
+            val expectedVersions = loadFromRes("versions_list/compose-full.csv")
+                .map { NormalizedPackageVersion.parseFrom(it) }
+
+            assertThat(expectedVersions.shuffled().sortedDescending()).isEqualTo(expectedVersions)
+        }
+
+        private fun loadFromRes(path: String) =
+            PackageSearchTestUtils.loadPackageVersionsFromResource(path)
     }
 }

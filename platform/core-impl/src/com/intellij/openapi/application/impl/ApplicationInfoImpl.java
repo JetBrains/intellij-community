@@ -60,9 +60,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private int myProgressY = 350;
   private String mySplashImageUrl;
   private String myAboutImageUrl;
-  private String myIconUrl = "/icon.png";
   private String mySmallIconUrl = "/icon_small.png";
-  private String myBigIconUrl;
   private String mySvgIconUrl;
   private String mySvgEapIconUrl;
   private String mySmallSvgIconUrl;
@@ -182,9 +180,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         break;
 
         case "icon": {
-          myIconUrl = child.getAttributeValue("size32");
           mySmallIconUrl = child.getAttributeValue("size16", mySmallIconUrl);
-          myBigIconUrl = getAttributeValue(child, "size128");
           String toolWindowIcon = getAttributeValue(child, "size12");
           if (toolWindowIcon != null) {
             myToolWindowIconUrl = toolWindowIcon;
@@ -559,18 +555,8 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
   }
 
   @Override
-  public String getIconUrl() {
-    return myIconUrl;
-  }
-
-  @Override
   public @NotNull String getSmallIconUrl() {
     return mySmallIconUrl;
-  }
-
-  @Override
-  public @Nullable String getBigIconUrl() {
-    return myBigIconUrl;
   }
 
   @Override

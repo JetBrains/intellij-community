@@ -90,7 +90,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     myFileTypeManager.getRegisteredFileTypes();
     myFileTypeManager.reDetectAsync(true);
     Assume.assumeTrue(
-      "Test must be run under community classpath because otherwise everything would break thanks to weird HelmYamlLanguage" +
+      "This test must be run under community classpath because otherwise everything would break thanks to weird HelmYamlLanguage" +
       " which is created on each HelmYamlFileType registration which happens a lot in these tests",
       PlatformTestUtil.isUnderCommunityClassPath());
     myConflicts = new ArrayList<>();

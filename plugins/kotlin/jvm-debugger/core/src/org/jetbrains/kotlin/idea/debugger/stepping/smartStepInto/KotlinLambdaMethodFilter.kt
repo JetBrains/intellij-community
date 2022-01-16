@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.idea.debugger.isInsideInlineArgument
 import org.jetbrains.kotlin.idea.debugger.safeMethod
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
 class KotlinLambdaMethodFilter(private val target: KotlinLambdaSmartStepTarget) : BreakpointStepMethodFilter {
@@ -32,6 +32,7 @@ class KotlinLambdaMethodFilter(private val target: KotlinLambdaSmartStepTarget) 
     }
 
     override fun getBreakpointPosition() = firstStatementPosition
+
     override fun getLastStatementLine() = lastStatementLine
 
     override fun locationMatches(process: DebugProcessImpl, location: Location): Boolean {
@@ -49,7 +50,7 @@ class KotlinLambdaMethodFilter(private val target: KotlinLambdaSmartStepTarget) 
                location.matchesExpression(process, lambda.bodyExpression)
     }
 
-    fun Location.matchesExpression(process: DebugProcessImpl, bodyExpression: KtExpression?): Boolean {
+    private fun Location.matchesExpression(process: DebugProcessImpl, bodyExpression: KtExpression?): Boolean {
         val sourcePosition = process.positionManager.getSourcePosition(this) ?: return true
         val blockAt = runReadAction { sourcePosition.elementAt.parentOfType<KtBlockExpression>(true) } ?: return true
         return blockAt === bodyExpression
@@ -66,9 +67,9 @@ class KotlinLambdaMethodFilter(private val target: KotlinLambdaSmartStepTarget) 
         }
 }
 
-private fun findFirstAndLastStatementPositions(lambda: KtFunction): Pair<SourcePosition?, SourcePosition?> {
-    val body = lambda.bodyExpression
-    if (body != null && lambda.isMultiLine()) {
+fun findFirstAndLastStatementPositions(declaration: KtDeclarationWithBody): Pair<SourcePosition?, SourcePosition?> {
+    val body = declaration.bodyExpression
+    if (body != null && declaration.isMultiLine() && body.children.isNotEmpty()) {
         var firstStatementPosition: SourcePosition? = null
         var lastStatementPosition: SourcePosition? = null
         val statements = (body as? KtBlockExpression)?.statements ?: listOf(body)
@@ -84,6 +85,6 @@ private fun findFirstAndLastStatementPositions(lambda: KtFunction): Pair<SourceP
         }
         return Pair(firstStatementPosition, lastStatementPosition)
     }
-    val position = SourcePosition.createFromElement(lambda)
+    val position = SourcePosition.createFromElement(declaration)
     return Pair(position, position)
 }
