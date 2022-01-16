@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.projectWizard.NewProjectWizardCollector
 import com.intellij.openapi.GitRepositoryInitializer
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
+import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -20,7 +21,7 @@ class GitNewProjectWizardStep(
     NewProjectWizardBaseData by parent,
     GitNewProjectWizardData {
 
-  override val gitProperty = propertyGraph.graphProperty { false }
+  override val gitProperty = propertyGraph.graphProperty { false }.bindBooleanStorage("NewProjectWizard.gitState")
 
   override var git by gitProperty
 
