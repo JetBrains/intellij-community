@@ -84,10 +84,10 @@ internal fun loadDescriptorInTest(
 }
 
 internal fun setPluginClassLoaderForMainAndSubPlugins(rootDescriptor: IdeaPluginDescriptorImpl, classLoader: ClassLoader?) {
-  rootDescriptor.classLoader = classLoader
+  rootDescriptor.pluginClassLoader = classLoader
   for (dependency in rootDescriptor.pluginDependencies) {
-    if (dependency.subDescriptor != null) {
-      dependency.subDescriptor!!.classLoader = classLoader
+    dependency.subDescriptor?.let {
+      it.pluginClassLoader = classLoader
     }
   }
 }

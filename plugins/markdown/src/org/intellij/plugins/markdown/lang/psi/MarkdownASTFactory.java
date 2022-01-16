@@ -8,6 +8,7 @@ import org.intellij.plugins.markdown.lang.MarkdownElementTypes;
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceContentImpl;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,9 @@ public class MarkdownASTFactory extends ASTFactory {
   public LeafElement createLeaf(@NotNull IElementType type, @NotNull CharSequence text) {
     if (type == MarkdownTokenTypes.CODE_FENCE_CONTENT) {
       return new MarkdownCodeFenceContentImpl(type, text);
+    }
+    if (type == MarkdownTokenTypes.TABLE_SEPARATOR && text.length() > 1) {
+      return new MarkdownTableSeparatorRow(text);
     }
     return super.createLeaf(type, text);
   }

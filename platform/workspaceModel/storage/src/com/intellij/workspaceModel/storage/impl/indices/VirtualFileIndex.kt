@@ -2,6 +2,10 @@
 package com.intellij.workspaceModel.storage.impl.indices
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.openapi.util.text.Strings
 import com.intellij.util.containers.CollectionFactory.createSmallMemoryFootprintMap
 import com.intellij.util.containers.CollectionFactory.createSmallMemoryFootprintSet
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -12,8 +16,10 @@ import com.intellij.workspaceModel.storage.impl.containers.putAll
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
+import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.annotations.TestOnly
@@ -33,7 +39,7 @@ import kotlin.reflect.full.memberProperties
 //internal typealias Vfu2EntityId = Object2ObjectOpenHashMap<VirtualFileUrl, Object2ObjectOpenHashMap<String, EntityId>>
 //internal typealias EntityId2JarDir = BidirectionalMultiMap<EntityId, VirtualFileUrl>
 internal typealias EntityId2Vfu = Long2ObjectOpenHashMap<Any>
-internal typealias Vfu2EntityId = Object2ObjectOpenHashMap<VirtualFileUrl, Object2LongOpenHashMap<String>>
+internal typealias Vfu2EntityId = Object2ObjectOpenCustomHashMap<VirtualFileUrl, Object2LongOpenHashMap<String>>
 internal typealias EntityId2JarDir = BidirectionalLongMultiMap<VirtualFileUrl>
 
 @Suppress("UNCHECKED_CAST")
@@ -44,7 +50,7 @@ open class VirtualFileIndex internal constructor(
 ) : VirtualFileUrlIndex {
   private lateinit var entityStorage: AbstractEntityStorage
 
-  constructor() : this(EntityId2Vfu(), Vfu2EntityId(), EntityId2JarDir())
+  constructor() : this(EntityId2Vfu(), Vfu2EntityId(getHashingStrategy()), EntityId2JarDir())
 
   internal fun getVirtualFiles(id: EntityId): Set<VirtualFileUrl> {
     val result = mutableSetOf<VirtualFileUrl>()
@@ -359,7 +365,7 @@ open class VirtualFileIndex internal constructor(
     }
 
     private fun copyVfuMap(originMap: Vfu2EntityId): Vfu2EntityId {
-      val copiedMap = Vfu2EntityId()
+      val copiedMap = Vfu2EntityId(getHashingStrategy())
       originMap.forEach { (key, value) -> copiedMap[key] = Object2LongOpenHashMap(value) }
       return copiedMap
     }
@@ -372,6 +378,37 @@ open class VirtualFileIndex internal constructor(
         return MutableVirtualFileIndex(other.entityId2VirtualFileUrl, other.vfu2EntityId, other.entityId2JarDir)
       }
     }
+  }
+}
+
+internal fun getHashingStrategy(): Hash.Strategy<VirtualFileUrl> {
+  val indexSensitivityEnabled = Registry.`is`("ide.new.project.model.index.case.sensitivity", false)
+  if (!indexSensitivityEnabled) return STANDARD_STRATEGY
+  if (!SystemInfoRt.isFileSystemCaseSensitive) return CASE_INSENSITIVE_STRATEGY
+  return STANDARD_STRATEGY
+}
+
+private val STANDARD_STRATEGY: Hash.Strategy<VirtualFileUrl> = object : Hash.Strategy<VirtualFileUrl> {
+  override fun equals(firstVirtualFile: VirtualFileUrl?, secondVirtualFile: VirtualFileUrl?): Boolean {
+    if (firstVirtualFile === secondVirtualFile) return true
+    if (firstVirtualFile == null || secondVirtualFile == null) return false
+    return firstVirtualFile == secondVirtualFile
+  }
+
+  override fun hashCode(fileUrl: VirtualFileUrl?): Int {
+    if (fileUrl == null) return 0
+    return fileUrl.hashCode()
+  }
+}
+
+private val CASE_INSENSITIVE_STRATEGY: Hash.Strategy<VirtualFileUrl> = object : Hash.Strategy<VirtualFileUrl> {
+  override fun equals(firstVirtualFile: VirtualFileUrl?, secondVirtualFile: VirtualFileUrl?): Boolean {
+    return StringUtilRt.equal(firstVirtualFile?.url, secondVirtualFile?.url, false)
+  }
+
+  override fun hashCode(fileUrl: VirtualFileUrl?): Int {
+    if (fileUrl == null) return 0
+    return Strings.stringHashCodeInsensitive(fileUrl.url)
   }
 }
 

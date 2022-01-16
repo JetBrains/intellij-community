@@ -4,10 +4,10 @@ import com.intellij.util.ui.ColumnInfo
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageOperationType
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesTableItem
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers.PackageActionsTableCellRendererAndEditor
 import org.jetbrains.annotations.Nls
@@ -44,9 +44,9 @@ internal class ActionsColumn(
         this.knownRepositoriesInTargetModules = knownRepositoriesInTargetModules
     }
 
-    override fun valueOf(item: PackagesTableItem<*>): ActionsViewModel {
+    override fun valueOf(item: PackagesTableItem<*>): ActionViewModel {
         val operationType = getOperationTypeFor(item)
-        return ActionsViewModel(
+        return ActionViewModel(
             item.packageModel,
             item.uiPackageModel.packageOperations.primaryOperations,
             operationType,
@@ -63,7 +63,7 @@ internal class ActionsColumn(
 
                 val packageOperations = item.uiPackageModel.packageOperations
                 when {
-                  currentVersion is PackageVersion.Missing -> PackageOperationType.SET
+                  currentVersion is NormalizedPackageVersion.Missing -> PackageOperationType.SET
                   packageOperations.canUpgradePackage -> PackageOperationType.UPGRADE
                   else -> null
                 }
@@ -74,11 +74,10 @@ internal class ActionsColumn(
     @Nls
     private fun generateMessageFor(item: PackagesTableItem<*>): String? {
         val packageModel = item.packageModel
-        val selectedVersion = item.uiPackageModel.selectedVersion
 
         val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
-            packageModel,
-            selectedVersion
+            packageModel = packageModel,
+            selectedVersion = item.uiPackageModel.selectedVersion.originalVersion
         ) ?: return null
 
         return PackageSearchBundle.message(
@@ -87,7 +86,7 @@ internal class ActionsColumn(
         )
     }
 
-    data class ActionsViewModel(
+    data class ActionViewModel(
         val packageModel: PackageModel,
         val operations: List<PackageSearchOperation<*>>,
         val operationType: PackageOperationType?,

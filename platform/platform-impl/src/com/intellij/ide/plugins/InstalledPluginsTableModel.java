@@ -30,7 +30,7 @@ public class InstalledPluginsTableModel {
   public InstalledPluginsTableModel(@Nullable Project project) {
     myProject = project;
     myPluginTracker = myProject != null ?
-                      ProjectPluginTrackerManager.getInstance().getPluginTracker(myProject) :
+                      DynamicPluginEnabler.getInstance().getPluginTracker(myProject) :
                       null;
 
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
@@ -136,14 +136,6 @@ public class InstalledPluginsTableModel {
         enabledMap.put(pluginId, newState);
       }
     }
-  }
-
-  public boolean isEnabled(@NotNull PluginId pluginId) {
-    return !isDisabled(pluginId, myEnabled);
-  }
-
-  public boolean isDisabled(@NotNull PluginId pluginId) {
-    return !isEnabled(pluginId, myEnabled);
   }
 
   protected final @NotNull Map<PluginId, PluginEnabledState> getEnabledMap() {

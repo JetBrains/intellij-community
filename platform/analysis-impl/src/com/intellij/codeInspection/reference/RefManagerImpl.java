@@ -657,6 +657,7 @@ public class RefManagerImpl extends RefManager {
       }),
       element -> ReadAction.run(() -> {
         element.initialize();
+        element.setInitialized(true);
         for (RefManagerExtension<?> each : myExtensions.values()) {
           each.onEntityInitialized(element, elem);
         }

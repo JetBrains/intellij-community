@@ -756,24 +756,24 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static Ref<PyType> getTypeFromBitwiseOrOperator(@NotNull PyBinaryExpression expression, @NotNull Context context) {
     if (expression.getOperator() != PyTokenTypes.OR) return null;
+
     PyExpression left = expression.getLeftExpression();
     PyExpression right = expression.getRightExpression();
-    if (left != null && right != null) {
-      Ref<PyType> leftType = getType(left, context);
-      Ref<PyType> rightType = getType(right, context);
-      PyType union = null;
-      if (leftType != null && rightType != null) {
-        union = PyUnionType.union(leftType.get(), rightType.get());
-      }
-      else if (leftType != null) {
-        union = leftType.get();
-      }
-      else if (rightType != null) {
-        union = rightType.get();
-      }
-      return union != null ? Ref.create(union) : null;
+    if (left == null || right == null) return null;
+
+    Ref<PyType> leftType = getType(left, context);
+    Ref<PyType> rightType = getType(right, context);
+    if (leftType == null && rightType == null) return null;
+
+    PyType union;
+    if (leftType != null && rightType != null) {
+      union = PyUnionType.union(leftType.get(), rightType.get());
     }
-    return null;
+    else {
+      union = PyUnionType.createWeakType(Objects.requireNonNullElse(leftType, rightType).get());
+    }
+
+    return union != null ? Ref.create(union) : null;
   }
 
   public static boolean isBitwiseOrUnionAvailable(@NotNull TypeEvalContext context) {

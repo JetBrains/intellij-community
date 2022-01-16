@@ -231,7 +231,7 @@ public final class GroovyCompletionData {
 
   private static void addTypeDefinitionKeywords(CompletionResultSet result, PsiElement position) {
     if (suggestClassInterfaceEnum(position)) {
-      addKeywords(result, true, PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM, GroovyTokenTypes.kTRAIT.toString());
+      addKeywords(result, true, PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM, PsiKeyword.RECORD, GroovyTokenTypes.kTRAIT.toString());
     }
   }
 
@@ -266,7 +266,7 @@ public final class GroovyCompletionData {
     }
 
     ext &= elem instanceof GrInterfaceDefinition || elem instanceof GrClassDefinition || elem instanceof GrTraitTypeDefinition;
-    impl &= elem instanceof GrEnumTypeDefinition || elem instanceof GrClassDefinition || elem instanceof GrTraitTypeDefinition;
+    impl &= elem instanceof GrEnumTypeDefinition || elem instanceof GrClassDefinition || elem instanceof GrTraitTypeDefinition || elem instanceof GrRecordDefinition;
     permits &= elem instanceof GrInterfaceDefinition || elem instanceof GrClassDefinition || elem instanceof GrTraitTypeDefinition;
     if (!ext && !impl && !permits) return ArrayUtilRt.EMPTY_STRING_ARRAY;
 

@@ -25,7 +25,8 @@ internal class CellImpl<T : JComponent>(
   private val dialogPanelConfig: DialogPanelConfig,
   component: T,
   val parent: RowImpl,
-  val viewComponent: JComponent = component) : CellBaseImpl<Cell<T>>(), Cell<T> {
+  val viewComponent: JComponent = component,
+  visualPaddings: Gaps?) : CellBaseImpl<Cell<T>>(), Cell<T> {
 
   override var component: T = component
     private set
@@ -41,6 +42,8 @@ internal class CellImpl<T : JComponent>(
 
   var customGaps: Gaps? = null
     private set
+
+  val visualPaddings: Gaps = visualPaddings ?: getViewComponentVisualPaddings()
 
   private var property: GraphProperty<*>? = null
   private var applyIfEnabled = false
@@ -224,5 +227,10 @@ internal class CellImpl<T : JComponent>(
     viewComponent.isEnabled = isEnabled
     comment?.let { it.isEnabled = isEnabled }
     label?.let { it.isEnabled = isEnabled }
+  }
+
+  private fun getViewComponentVisualPaddings(): Gaps {
+    val insets = viewComponent.origin.insets
+    return Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
   }
 }

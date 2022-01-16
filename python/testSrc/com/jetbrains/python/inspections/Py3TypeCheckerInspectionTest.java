@@ -748,4 +748,18 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
            "\n" +
            "transform(bar)(<warning descr=\"Expected type 'str', got 'int' instead\">42</warning>)");
   }
+
+  // PY-50337
+  public void testBitwiseOrUnionWithNotCalculatedGenericFromUnion() {
+    doTestByText("from typing import Union, TypeVar\n" +
+                 "\n" +
+                 "T = TypeVar(\"T\", bytes, str)\n" +
+                 "\n" +
+                 "my_union = Union[str, set[T]]\n" +
+                 "another_union = Union[list[str], my_union[T]]\n" +
+                 "\n" +
+                 "\n" +
+                 "def foo(path_or_buf: another_union[T] | None) -> None:\n" +
+                 "    print(path_or_buf)\n");
+  }
 }

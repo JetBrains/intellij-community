@@ -1,16 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.marketplace.statistics
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.enums.PluginsGroupType
-import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
+import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum
 import com.intellij.ide.plugins.marketplace.statistics.enums.SignatureVerificationResult
 import com.intellij.ide.plugins.newui.PluginsGroup
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.BaseEventId
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.internal.statistic.utils.getPluginInfoById
@@ -59,8 +61,17 @@ class PluginManagerUsageCollector : CounterUsagesCollector() {
     fun thirdPartyAcceptanceCheck(result: DialogAcceptanceResultEnum) = THIRD_PARTY_ACCEPTANCE_CHECK.getIfInitializedOrNull()?.log(result)
 
     @JvmStatic
-    fun pluginsStateChanged(project: Project?, pluginIds: List<PluginId>, action: PluginEnableDisableAction) = pluginIds
-      .forEach { PLUGIN_STATE_CHANGED.getIfInitializedOrNull()?.log(project, getPluginInfoById(it), action) }
+    fun pluginsStateChanged(
+      descriptors: Collection<IdeaPluginDescriptor>,
+      action: PluginEnableDisableAction,
+      project: Project? = null,
+    ) {
+      descriptors.asSequence().map {
+        getPluginInfoByDescriptor(it)
+      }.forEach {
+        PLUGIN_STATE_CHANGED.getIfInitializedOrNull()?.log(project, it, action)
+      }
+    }
 
     @JvmStatic
     fun pluginRemoved(pluginId: PluginId) = PLUGIN_REMOVED.getIfInitializedOrNull()?.log(getPluginInfoById(pluginId))

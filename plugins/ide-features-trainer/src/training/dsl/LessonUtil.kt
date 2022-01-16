@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.dsl
 
+import com.intellij.codeInsight.documentation.DocumentationComponent
+import com.intellij.codeInsight.documentation.DocumentationEditorPane
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -38,12 +40,13 @@ import com.intellij.usageView.UsageViewContentManager
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerManager
-import org.fest.swing.timing.Timeout
+import org.assertj.swing.timing.Timeout
 import org.jetbrains.annotations.Nls
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.ui.*
+import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.learningToolWindow
 import java.awt.*
 import java.awt.event.InputEvent
@@ -55,8 +58,7 @@ import javax.swing.KeyStroke
 
 object LessonUtil {
   val productName: String get() {
-    val name = ApplicationNamesInfo.getInstance().fullProductName
-    return if (name == "DataSpell") "JetBrains DataSpell" else name
+      return ApplicationNamesInfo.getInstance().fullProductName
     }
 
   fun hideStandardToolwindows(project: Project) {
@@ -307,12 +309,23 @@ fun LessonContext.firstLessonCompletedMessage() {
 
 fun LessonContext.highlightDebugActionsToolbar() {
   task {
-    val needAction = ActionManager.getInstance().getAction("Resume")
-    triggerByUiComponentAndHighlight(highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
-      val b = ui.size.let { it.width > 0 && it.height > 0 } && ui.place == ActionPlaces.DEBUGGER_TOOLBAR
-      if (!b) return@triggerByUiComponentAndHighlight false
+    before {
+      LearningUiHighlightingManager.clearHighlights()
+    }
+    highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "Resume", clearPreviousHighlights = false)
+    if (!Registry.`is`("debugger.new.tool.window.layout")) {
+      highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "ShowExecutionPoint", clearPreviousHighlights = false)
+    }
+  }
+}
+
+private fun TaskContext.highlightToolbarWithAction(place: String, actionId: String, clearPreviousHighlights: Boolean = true) {
+  val needAction = ActionManager.getInstance().getAction(actionId)
+  triggerByUiComponentAndHighlight(usePulsation = true, clearPreviousHighlights = clearPreviousHighlights) { ui: ActionToolbarImpl ->
+    if (ui.size.let { it.width > 0 && it.height > 0 } && ui.place == place) {
       ui.components.filterIsInstance<ActionButton>().any { it.action == needAction }
     }
+    else false
   }
 }
 
@@ -324,6 +337,16 @@ fun TaskContext.proceedLink(additionalAbove: Int = 0) {
     LessonsBundle.message("proceed.to.the.next.step", LearningUiManager.addCallback { gotIt.complete(true) })
   }
   addStep(gotIt)
+  test {
+    ideFrame {
+      val linkText = "Click to proceed"
+      val lessonMessagePane = findComponentWithTimeout(defaultTimeout) { _: LessonMessagePane -> true }
+      val offset = lessonMessagePane.text.indexOf(linkText)
+      if (offset == -1) error("Not found '$linkText' in the LessonMessagePane")
+      val rect = lessonMessagePane.modelToView2D(offset + linkText.length / 2)
+      robot.click(lessonMessagePane, Point(rect.centerX.toInt(), rect.centerY.toInt()))
+    }
+  }
 }
 
 fun TaskContext.proposeRestoreForInvalidText(needToType: String) {
@@ -485,5 +508,14 @@ fun <ComponentType : Component> LessonContext.highlightAllFoundUiWithClass(compo
         }
       }
     }
+  }
+}
+
+fun TaskContext.triggerOnQuickDocumentationPopup() {
+  if (Registry.`is`("documentation.v2")) {
+    triggerByUiComponentAndHighlight(false, false) { _: DocumentationEditorPane -> true }
+  }
+  else {
+    triggerByUiComponentAndHighlight(false, false) { _: DocumentationComponent -> true }
   }
 }

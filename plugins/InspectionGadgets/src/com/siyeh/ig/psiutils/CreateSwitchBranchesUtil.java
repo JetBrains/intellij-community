@@ -155,25 +155,31 @@ public final class CreateSwitchBranchesUtil {
     return elementsToReplace;
   }
 
-  private static @NonNls List<String> generateStatements(String name,
-                                                         PsiSwitchBlock switchBlock,
-                                                         boolean isRuleBasedFormat,
-                                                         boolean isPatternSwitch) {
+  /**
+   * @param caseLabelName will be added after case keyword, i.e. case "caseLabelName"
+   * @param switchBlock a switch block, that is going to be changed
+   * @param isRuleBasedFormat true, if a switch block consists of arrows
+   * @param isPatternSwitch if true, then switchBlock will be considered as switch with patterns.
+   *                        Pattern variable identifiers will be generated as well i.e. case "caseLabelName" "patternVariableName"
+   * @return list of generated statements depending on type of switch block
+   */
+  public static @NonNls List<String> generateStatements(@NotNull String caseLabelName, @NotNull PsiSwitchBlock switchBlock,
+                                                        boolean isRuleBasedFormat, boolean isPatternSwitch) {
     final String patternVariableName =
-      isPatternSwitch ? " " + new VariableNameGenerator(switchBlock, VariableKind.PARAMETER).byName(name).generate(true) : "";
+      isPatternSwitch ? " " + new VariableNameGenerator(switchBlock, VariableKind.PARAMETER).byName(caseLabelName).generate(true) : "";
     if (switchBlock instanceof PsiSwitchExpression) {
       String value = TypeUtils.getDefaultValue(((PsiSwitchExpression)switchBlock).getType());
       if (isRuleBasedFormat) {
-        return Collections.singletonList("case " + name + patternVariableName + " -> " + value + ";");
+        return Collections.singletonList("case " + caseLabelName + patternVariableName + " -> " + value + ";");
       }
       else {
-        return Arrays.asList("case " + name + patternVariableName + ":", "yield " + value + ";");
+        return Arrays.asList("case " + caseLabelName + patternVariableName + ":", "yield " + value + ";");
       }
     }
     if (isRuleBasedFormat) {
-      return Collections.singletonList("case " + name + patternVariableName + " -> {}");
+      return Collections.singletonList("case " + caseLabelName + patternVariableName + " -> {}");
     }
-    return Arrays.asList("case " + name + patternVariableName + ":", "break;");
+    return Arrays.asList("case " + caseLabelName + patternVariableName + ":", "break;");
   }
 
   private static PsiSwitchLabelStatementBase addSwitchLabelStatementBefore(String labelExpression,

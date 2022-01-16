@@ -97,4 +97,6 @@ class JavaBasicCompletionLesson : KLesson("Basic completion", LessonsBundle.mess
   }
 
   private fun TaskTestContext.invokeCompletion() = invokeActionViaShortcut("CTRL SPACE")
+
+  override val suitableTips = listOf("CodeCompletion")
 }

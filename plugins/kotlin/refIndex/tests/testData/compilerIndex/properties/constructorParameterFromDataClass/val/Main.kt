@@ -1,0 +1,1 @@
+data class Main(val a<caret>: Int, val b: String)

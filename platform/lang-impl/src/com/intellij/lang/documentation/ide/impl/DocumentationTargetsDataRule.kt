@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiUtilBase
 
-class DocumentationTargetsDataRule : GetDataRule {
+internal class DocumentationTargetsDataRule : GetDataRule {
 
   override fun getData(dataProvider: DataProvider): List<DocumentationTarget>? {
     val project = CommonDataKeys.PROJECT.getData(dataProvider) ?: return null
@@ -32,7 +32,7 @@ class DocumentationTargetsDataRule : GetDataRule {
     }
     val target = CommonDataKeys.PSI_ELEMENT.getData(dataProvider)
     if (target != null) {
-      return listOf(PsiElementDocumentationTarget(project, target, sourceElement = null, anchor = null))
+      return listOf(PsiElementDocumentationTarget(project, target))
     }
     return null
   }

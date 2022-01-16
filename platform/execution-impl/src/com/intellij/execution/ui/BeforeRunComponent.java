@@ -303,8 +303,8 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
 
     private void updateButton() {
       if (myTask == null) return;
-      updateButton(myOrder + ". " + myProvider.getDescription(myTask), myProvider.getTaskIcon(myTask),
-                   !DumbService.isDumb(myConfiguration.getProject()) || DumbService.isDumbAware(myProvider));
+      setEnabled(!DumbService.isDumb(myConfiguration.getProject()) || DumbService.isDumbAware(myProvider));
+      updateButton(myOrder + ". " + myProvider.getDescription(myTask), myProvider.getTaskIcon(myTask));
     }
 
     private void showDropPlace(boolean show) {

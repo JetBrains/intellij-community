@@ -41,8 +41,8 @@ fun demoComponents(): DialogPanel {
       actionButton(action)
     }
 
-    row("gearButton:") {
-      gearButton(object : DumbAwareAction("Action one") {
+    row("actionsButton:") {
+      actionsButton(object : DumbAwareAction("Action one") {
         override fun actionPerformed(e: AnActionEvent) {
         }
       },
@@ -71,6 +71,10 @@ fun demoComponents(): DialogPanel {
 
     row("browserLink:") {
       browserLink("jetbrains.com", "https://www.jetbrains.com")
+    }
+
+    row("dropDownLink:") {
+      dropDownLink("Item 1", listOf("Item 1", "Item 2", "Item 3"))
     }
 
     row("icon:") {

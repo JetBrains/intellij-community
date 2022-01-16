@@ -17,7 +17,7 @@ public final class PythonUnitTestUtil {
    * @deprecated use {@link PythonUnitTestDetectorsBasedOnSettings#isTestClass(PyClass, ThreeState, TypeEvalContext)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static boolean isTestClass(@NotNull final PyClass cls,
                                     @NotNull final ThreeState testCaseClassRequired,
                                     @Nullable TypeEvalContext context) {

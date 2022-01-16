@@ -4,10 +4,12 @@ package com.intellij.lang.documentation;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@Experimental
 public interface InlineDocumentation {
 
   /**
@@ -29,4 +31,12 @@ public interface InlineDocumentation {
   @RequiresReadLock
   @RequiresBackgroundThread
   @Nls @Nullable String renderText();
+
+  /**
+   * @return the target which represents the owner of this inline documentation, e.g. documentation target for a class,
+   * or {@code null} if there is no owner
+   */
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  @Nullable DocumentationTarget getOwnerTarget();
 }

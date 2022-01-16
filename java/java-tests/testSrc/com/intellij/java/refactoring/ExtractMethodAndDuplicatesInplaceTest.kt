@@ -124,6 +124,10 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
+  fun testFoldReturnExpression(){
+    doTest()
+  }
+
   fun testOverlappingRanges(){
     doTest()
   }
@@ -151,6 +155,10 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testExpressionStatementInSwitchStatement(){
+    doTest()
+  }
+
+  fun testIDEA278872(){
     doTest()
   }
 

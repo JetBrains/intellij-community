@@ -2,17 +2,13 @@
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.hints.*
-import com.intellij.codeInsight.hints.settings.language.NewInlayProviderSettingsModel
-import com.intellij.codeInsight.hints.settings.language.ParameterInlayProviderSettingsModel
 import com.intellij.codeInsight.intention.impl.config.ActionUsagePanel
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.CheckboxTree
-import com.intellij.ui.CheckedTreeNode
-import com.intellij.ui.JBSplitter
-import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.tree.TreeUtil
@@ -31,44 +27,41 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   private val rightPanel: JPanel = JPanel(MigLayout("wrap, insets 0 10 0 0, gapy 20"))
 
   init {
-    val settings = InlayHintsSettings.instance()
-    val providerInfos = InlayHintsProviderFactory.EP.extensionList.flatMap {
-      it.getProvidersInfo(project)
-    }.filter { it.provider.isLanguageSupported(it.language) }
-    val groups = providerInfos.groupBy { it.provider.groupId }.mapValues {
-      it.value.map { info ->
-        NewInlayProviderSettingsModel(info.provider.withSettings(info.language, settings), settings) as InlayProviderSettingsModel
-      }
-    }.toMutableMap()
-    val parameterModels = PARAMETER_NAME_HINTS_EP.extensionList.map {
-      ParameterInlayProviderSettingsModel(it.instance, Language.findLanguageByID(it.language)!!)
+    val models = InlaySettingsProvider.EP.getExtensions().flatMap { provider ->
+      provider.getSupportedLanguages(project).flatMap { provider.createModels(project, it) }
     }
-    if (parameterModels.isNotEmpty()) {
-      groups[PARAMETERS_GROUP] = parameterModels
-    }
-    val sortedMap = groups.toSortedMap(Comparator.comparing { sortedGroups.indexOf(it) })
+    val groups = models.groupBy { it.groupId }.toSortedMap(Comparator.comparing { sortedGroups.indexOf(it) })
 
     val root = CheckedTreeNode()
-    val lastSelected = settings.getLastViewedProviderId()
+    val lastSelected = InlayHintsSettings.instance().getLastViewedProviderId()
     var nodeToSelect: CheckedTreeNode? = null
-    for (group in sortedMap) {
-      val groupNode = CheckedTreeNode(ApplicationBundle.message("settings.hints.group." + group.key))
+    for (group in groups) {
+      val groupName = ApplicationBundle.message("settings.hints.group." + group.key)
+      val groupNode = CheckedTreeNode(groupName)
       root.add(groupNode)
       for (lang in group.value.groupBy { it.language }) {
-        if (lang.value.size == 1 && OTHER_GROUP != group.key) {
-          nodeToSelect = addModelNode(lang.value.first(), groupNode, lastSelected, nodeToSelect)
+        val firstModel = lang.value.first()
+        val langNode: CheckedTreeNode
+        val startFrom: Int
+        if ((lang.value.size == 1 || groupName == firstModel.name) && OTHER_GROUP != group.key) {
+          nodeToSelect = addModelNode(firstModel, groupNode, lastSelected, nodeToSelect)
+          firstModel.isMergedNode = true
+          langNode = groupNode.firstChild as CheckedTreeNode
+          startFrom = 1
         }
         else {
-          val langNode = CheckedTreeNode(lang.key)
+          langNode = CheckedTreeNode(lang.key)
           groupNode.add(langNode)
-          lang.value.forEach {
-            nodeToSelect = addModelNode(it, langNode, lastSelected, nodeToSelect)
-          }
+          startFrom = 0
+        }
+
+        for (it in startFrom until lang.value.size) {
+          nodeToSelect = addModelNode(lang.value[it], langNode, lastSelected, nodeToSelect)
         }
       }
     }
 
-    tree = CheckboxTree(object : CheckboxTree.CheckboxTreeCellRenderer() {
+    tree = CheckboxTree(object : CheckboxTree.CheckboxTreeCellRenderer(true, true) {
       override fun customizeRenderer(tree: JTree?,
                                      value: Any?,
                                      selected: Boolean,
@@ -83,10 +76,10 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
           is Language -> textRenderer.append(item.displayName)
           is InlayProviderSettingsModel -> textRenderer.append(
             if ((value.parent as DefaultMutableTreeNode).userObject is String) item.language.displayName else item.name)
-          is ImmediateConfigurable.Case -> textRenderer.append(item.name)
+          is ImmediateConfigurable.Case -> textRenderer.appendHTML(item.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
         }
       }
-    }, root)
+    }, root, CheckboxTreeBase.CheckPolicy(true, true, true, false))
     tree.addTreeSelectionListener(
       TreeSelectionListener { updateRightPanel(it?.newLeadSelectionPath?.lastPathComponent as? CheckedTreeNode) })
     if (nodeToSelect == null) {
@@ -113,7 +106,6 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       }
     }
     val node = CheckedTreeNode(model)
-    node.isChecked = model.isEnabled
     parent.add(node)
     model.cases.forEach {
       val caseNode = object: CheckedTreeNode(it) {
@@ -122,7 +114,6 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
           it.value = checked
         }
       }
-      caseNode.isChecked = it.value
       node.add(caseNode)
       if (nodeToSelect == null && getProviderId(caseNode) == lastId) {
         nodeToSelect = caseNode
@@ -162,7 +153,12 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   private fun addPreview(previewText: String?, language: Language) {
     if (previewText != null) {
       val usagePanel = ActionUsagePanel()
-      usagePanel.editor.settings.isLineNumbersShown = false
+      usagePanel.editor.setBorder(JBUI.Borders.empty(10))
+      usagePanel.editor.backgroundColor = EditorColorsManager.getInstance().globalScheme.defaultBackground
+      usagePanel.editor.settings.apply {
+        isLineNumbersShown = false
+        isCaretRowShown = false
+      }
       usagePanel.reset(previewText, language.associatedFileType)
       rightPanel.add(usagePanel, "growx")
     }
@@ -176,79 +172,110 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   private fun getProviderId(treeNode: CheckedTreeNode): String {
     when (val item = treeNode.userObject) {
       is InlayProviderSettingsModel -> {
-        val model = treeNode.userObject as InlayProviderSettingsModel
-        return model.language.id + "." + model.id
+        return item.language.id + "." + item.id
       }
       is ImmediateConfigurable.Case -> {
         val model = (treeNode.parent as CheckedTreeNode).userObject as InlayProviderSettingsModel
         return model.language.id + "." + model.id + "." + item.id
-
       }
     }
     return ""
   }
 
   fun reset() {
-    reset(tree.model.root as CheckedTreeNode)
+    reset(tree.model.root as CheckedTreeNode, InlayHintsSettings.instance())
   }
 
-  private fun reset(node: CheckedTreeNode) {
-    when (node.userObject) {
+  private fun reset(node: CheckedTreeNode, settings: InlayHintsSettings) {
+    when (val item = node.userObject) {
       is InlayProviderSettingsModel -> {
-        val model = node.userObject as InlayProviderSettingsModel
-        if (model.isEnabled != node.isChecked) {
-          node.isChecked = model.isEnabled
-          refreshNode(node)
-        }
-        model.reset()
+        resetNode(node, isModelEnabled(item, settings))
+        item.reset()
       }
       is ImmediateConfigurable.Case -> {
-        val case = node.userObject as ImmediateConfigurable.Case
-        if (case.value != node.isChecked) {
-          node.isChecked = case.value
-          refreshNode(node)
-        }
+        resetNode(node, item.value && settings.hintsEnabledGlobally())
+      }
+      is Language -> {
+        resetNode(node, isLanguageEnabled(settings, item))
       }
     }
-    node.children().toList().forEach { reset(it as CheckedTreeNode) }
+    node.children().toList().forEach { reset(it as CheckedTreeNode, settings) }
   }
 
-  private fun refreshNode(node: CheckedTreeNode) {
+  private fun isGroupEnabled(settings: InlayHintsSettings) =
+    settings.hintsEnabledGlobally()
+
+  private fun isModelEnabled(model: InlayProviderSettingsModel, settings: InlayHintsSettings): Boolean {
+    return model.isEnabled && (!model.isMergedNode || settings.hintsEnabled(model.language)) && settings.hintsEnabledGlobally()
+  }
+
+  private fun resetNode(node: CheckedTreeNode, value: Boolean) {
+    if (node.isChecked == value) return
+    node.isChecked = value
     val treeModel = tree.model as DefaultTreeModel
     treeModel.nodeChanged(node)
     treeModel.nodeChanged(node.parent)
-    treeModel.nodeChanged(node.parent.parent)
+    if (node.parent != null) {
+      treeModel.nodeChanged(node.parent.parent)
+    }
   }
 
   fun apply() {
-    apply(tree.model.root as CheckedTreeNode)
+    apply(tree.model.root as CheckedTreeNode, InlayHintsSettings.instance())
+    ParameterHintsPassFactory.forceHintsUpdateOnNextPass()
+    InlayHintsPassFactory.forceHintsUpdateOnNextPass()
   }
 
-  private fun apply(node: CheckedTreeNode) {
-    when (node.userObject) {
+  private fun apply(node: CheckedTreeNode, settings: InlayHintsSettings) {
+    when (val item = node.userObject) {
       is InlayProviderSettingsModel -> {
-        val model = node.userObject as InlayProviderSettingsModel
-        model.isEnabled = node.isChecked
-        model.apply()
+        item.isEnabled = node.isChecked
+        item.apply()
+        if (item.isMergedNode) {
+          enableHintsForLanguage(item.language, settings, node)
+        }
       }
       is ImmediateConfigurable.Case -> {
-        (node.userObject as ImmediateConfigurable.Case).value = node.isChecked
+        item.value = node.isChecked
+        if (node.isChecked) {
+          settings.setEnabledGlobally(true)
+        }
+      }
+      is Language -> {
+        enableHintsForLanguage(item, settings, node)
       }
     }
-    node.children().toList().forEach { apply(it as CheckedTreeNode) }
+    node.children().toList().forEach { apply(it as CheckedTreeNode, settings) }
+  }
+
+  private fun enableHintsForLanguage(language: Language, settings: InlayHintsSettings, node: CheckedTreeNode) {
+    if (node.isChecked && !isLanguageEnabled(settings, language)) {
+      settings.setHintsEnabledForLanguage(language, true)
+    }
   }
 
   fun isModified(): Boolean {
-    return isModified(tree.model.root as CheckedTreeNode)
+    return isModified(tree.model.root as CheckedTreeNode, InlayHintsSettings.instance())
   }
 
-  private fun isModified(node: CheckedTreeNode): Boolean {
-    when (node.userObject) {
+  private fun isModified(node: CheckedTreeNode, settings: InlayHintsSettings): Boolean {
+    when (val item = node.userObject) {
       is InlayProviderSettingsModel -> {
-        val model = node.userObject as InlayProviderSettingsModel
-        if ((node.isChecked != model.isEnabled) || model.isModified()) return true
+        if ((node.isChecked != isModelEnabled(item, settings)) || settings.hintsEnabledGlobally() && item.isModified())
+          return true
+      }
+      is ImmediateConfigurable.Case -> {
+        if (node.isChecked && !settings.hintsEnabledGlobally()) {
+          return true;
+        }
+      }
+      is Language -> {
+        if (isLanguageEnabled(settings, item) != node.isChecked)
+          return true
       }
     }
-    return node.children().toList().any { isModified(it as CheckedTreeNode) }
+    return node.children().toList().any { isModified(it as CheckedTreeNode, settings) }
   }
+
+  private fun isLanguageEnabled(settings: InlayHintsSettings, item: Language) = settings.hintsEnabled(item)
 }

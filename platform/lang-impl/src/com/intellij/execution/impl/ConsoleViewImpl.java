@@ -230,6 +230,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       .expireWith(this)
       .finishOnUiThread(ModalityState.stateForComponent(this), filters -> {
         myPredefinedFilters = filters;
+        rehighlightHyperlinksAndFoldings();
       }).submit(AppExecutorUtil.getAppExecutorService());
   }
 
@@ -317,12 +318,17 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         flushDeferredText();
         Editor editor = getEditor();
         if (editor == null) return;
+        int moveOffset = getEffectiveOffset(editor);
+        editor.getCaretModel().moveToOffset(moveOffset);
+        editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      }
+
+      private int getEffectiveOffset(@NotNull Editor editor) {
         int moveOffset = Math.min(offset, editor.getDocument().getTextLength());
         if (ConsoleBuffer.useCycleBuffer() && moveOffset >= editor.getDocument().getTextLength()) {
           moveOffset = 0;
         }
-        editor.getCaretModel().moveToOffset(moveOffset);
-        editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+        return moveOffset;
       }
     }
     addFlushRequest(0, new ScrollRunnable());

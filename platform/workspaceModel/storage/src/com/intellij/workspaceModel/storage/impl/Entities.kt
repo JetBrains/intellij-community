@@ -140,6 +140,7 @@ abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
     other as WorkspaceEntityBase
 
     if (id != other.id) return false
+    if (this.snapshot.entityDataById(id) !== other.snapshot.entityDataById(other.id)) return false
 
     return true
   }

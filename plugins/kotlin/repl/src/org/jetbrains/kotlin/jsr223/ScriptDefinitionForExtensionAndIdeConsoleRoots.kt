@@ -55,7 +55,7 @@ private object ScriptCompilationConfigurationForExtensionAndIdeConsoleRoots : Sc
                 wholeClasspath = true
             )
             PluginManagerCore.getPlugins().forEach {
-                dependenciesFromClassloader(classLoader = it.pluginClassLoader, wholeClasspath = true)
+                dependenciesFromClassloader(classLoader = it.classLoader, wholeClasspath = true)
             }
         }
         ide {

@@ -25,9 +25,12 @@ public class CommitAnnotator implements Annotator {
       return;
     }
 
-    TextContent text = TextExtractor.findTextAt(element, EnumSet.of(TextContent.TextDomain.PLAIN_TEXT));
-    if (text == null) return;
+    for (TextContent text : TextExtractor.findTextsAt(element, EnumSet.of(TextContent.TextDomain.PLAIN_TEXT))) {
+      checkText(holder, text);
+    }
+  }
 
+  private static void checkText(AnnotationHolder holder, TextContent text) {
     List<TextChecker> checkers = TextChecker.allCheckers();
     CheckerRunner runner = new CheckerRunner(text);
     runner.run(checkers, problem -> {

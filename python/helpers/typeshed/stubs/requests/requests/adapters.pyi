@@ -1,4 +1,4 @@
-from typing import Any, Container, Mapping, Text, Tuple
+from typing import Any, Container, Mapping, Text
 
 from . import cookies, exceptions, models, structures, utils
 from .packages.urllib3 import exceptions as urllib3_exceptions, poolmanager, response
@@ -40,7 +40,7 @@ class BaseAdapter:
         self,
         request: PreparedRequest,
         stream: bool = ...,
-        timeout: None | float | Tuple[float, float] | Tuple[float, None] = ...,
+        timeout: None | float | tuple[float, float] | tuple[float, None] = ...,
         verify: bool | str = ...,
         cert: None | bytes | Text | Container[bytes | Text] = ...,
         proxies: Mapping[str, str] | None = ...,
@@ -69,7 +69,7 @@ class HTTPAdapter(BaseAdapter):
         self,
         request: PreparedRequest,
         stream: bool = ...,
-        timeout: None | float | Tuple[float, float] | Tuple[float, None] = ...,
+        timeout: None | float | tuple[float, float] | tuple[float, None] = ...,
         verify: bool | str = ...,
         cert: None | bytes | Text | Container[bytes | Text] = ...,
         proxies: Mapping[str, str] | None = ...,

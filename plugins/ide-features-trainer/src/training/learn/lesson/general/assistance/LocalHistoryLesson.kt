@@ -8,8 +8,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.LogicalPosition
@@ -29,9 +31,9 @@ import com.intellij.ui.tabs.impl.SingleHeightTabs
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.UIUtil
-import org.fest.swing.core.MouseButton
-import org.fest.swing.data.TableCell
-import org.fest.swing.fixture.JTableFixture
+import org.assertj.swing.core.MouseButton
+import org.assertj.swing.data.TableCell
+import org.assertj.swing.fixture.JTableFixture
 import org.jetbrains.annotations.Nls
 import training.FeaturesTrainerIcons
 import training.dsl.*
@@ -174,8 +176,8 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       restoreByUi()
       test {
         ideFrame {
-          jMenuItem { item -> item.text?.contains(localHistoryActionText) == true }.click()
-          jMenuItem { item -> item.text == showHistoryActionText }.click()
+          jMenuItem { item: ActionMenu -> item.text?.contains(localHistoryActionText) == true }.click()
+          jMenuItem { item: ActionMenuItem -> item.text == showHistoryActionText }.click()
         }
       }
     }
@@ -268,20 +270,24 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
 
   override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
     if (!lessonPassed) return
-    val editorComponent = LearningUiUtil.findComponentOrNull(project, EditorComponentImpl::class.java) { editor ->
-      UIUtil.getParentOfType(SingleHeightTabs::class.java, editor) != null
-    } ?: error("Failed to find editor component")
-    val lines = textToDelete.lines()
-    val rightColumn = lines.maxOf { it.length }
-    LearningUiHighlightingManager.highlightPartOfComponent(editorComponent, HighlightingOptions(highlightInside = false)) {
-      val editor = editorComponent.editor
-      val textToFind = lines[0].trim()
-      val offset = editor.document.charsSequence.indexOf(textToFind)
-      if (offset == -1) error("Failed to find '$textToFind' in the editor")
-      val leftPosition = editor.offsetToLogicalPosition(offset)
-      val leftPoint = editor.logicalPositionToXY(leftPosition)
-      val rightPoint = editor.logicalPositionToXY(LogicalPosition(leftPosition.line, rightColumn))
-      Rectangle(leftPoint.x - 3, leftPoint.y, rightPoint.x - leftPoint.x + 6, editor.lineHeight * lines.size)
+    ApplicationManager.getApplication().executeOnPooledThread {
+      val editorComponent = LearningUiUtil.findComponentOrNull(project, EditorComponentImpl::class.java) { editor ->
+        UIUtil.getParentOfType(SingleHeightTabs::class.java, editor) != null
+      } ?: error("Failed to find editor component")
+      invokeLater {
+        val lines = textToDelete.lines()
+        val rightColumn = lines.maxOf { it.length }
+        LearningUiHighlightingManager.highlightPartOfComponent(editorComponent, HighlightingOptions(highlightInside = false)) {
+          val editor = editorComponent.editor
+          val textToFind = lines[0].trim()
+          val offset = editor.document.charsSequence.indexOf(textToFind)
+          if (offset == -1) error("Failed to find '$textToFind' in the editor")
+          val leftPosition = editor.offsetToLogicalPosition(offset)
+          val leftPoint = editor.logicalPositionToXY(leftPosition)
+          val rightPoint = editor.logicalPositionToXY(LogicalPosition(leftPosition.line, rightColumn))
+          Rectangle(leftPoint.x - 3, leftPoint.y, rightPoint.x - leftPoint.x + 6, editor.lineHeight * lines.size)
+        }
+      }
     }
   }
 
@@ -361,4 +367,6 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       Thread.sleep(10)
     }
   }
+
+  override val suitableTips = listOf("local_history")
 }

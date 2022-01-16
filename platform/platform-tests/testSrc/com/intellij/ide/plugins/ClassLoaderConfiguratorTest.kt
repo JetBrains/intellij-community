@@ -66,7 +66,7 @@ internal class ClassLoaderConfiguratorTest {
   @Test
   fun regularPluginClassLoaderIsUsedIfPackageSpecified() {
     val plugin = loadPlugins(modulePackage = "com.example.extraSupportedFeature").getEnabledPlugins().get(1)
-    assertThat(plugin.content.modules.get(0).requireDescriptor().classLoader).isInstanceOf(PluginAwareClassLoader::class.java)
+    assertThat(plugin.content.modules.get(0).requireDescriptor().pluginClassLoader).isInstanceOf(PluginAwareClassLoader::class.java)
   }
 
   @Test
@@ -102,7 +102,7 @@ internal class ClassLoaderConfiguratorTest {
     val classLoaderConfigurator = ClassLoaderConfigurator(PluginSetBuilder(plugins).computeEnabledModuleMap().createPluginSet())
     classLoaderConfigurator.configure()
 
-    assertThat((barPlugin.classLoader as PluginClassLoader)._getParents().map { it.descriptorPath })
+    assertThat((barPlugin.pluginClassLoader as PluginClassLoader)._getParents().map { it.descriptorPath })
       .containsExactly("com.example.sub.xml", null)
   }
 

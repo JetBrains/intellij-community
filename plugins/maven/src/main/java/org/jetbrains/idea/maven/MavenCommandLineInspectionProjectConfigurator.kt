@@ -24,6 +24,7 @@ import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil
 import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.utils.resolved
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -94,8 +95,8 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
 
       val hasUnresolvedArtifacts = mavenProject.hasUnresolvedArtifacts()
       if (hasUnresolvedArtifacts) {
-        val unresolvedArtifacts = mavenProject.dependencies.filterNot { it.isResolved } +
-                                  mavenProject.externalAnnotationProcessors.filterNot { it.isResolved }
+        val unresolvedArtifacts = mavenProject.dependencies.filterNot { it.resolved() } +
+                                  mavenProject.externalAnnotationProcessors.filterNot { it.resolved() }
         throw IllegalStateException("Maven project ${mavenProject.name} has unresolved artifacts: $unresolvedArtifacts")
       }
 

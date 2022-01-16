@@ -31,7 +31,7 @@ import java.util.Set;
 public interface MavenServerIndexer extends Remote {
   String SEARCH_TERM_CLASS_NAMES = "c"; // see org.sonatype.nexus.index.ArtifactInfo
 
-  void releaseIndex(String indexId, MavenToken token) throws RemoteException, MavenServerIndexerException;
+  void releaseIndex(MavenIndexId mavenIndexId, MavenToken token) throws RemoteException, MavenServerIndexerException;
 
   int getIndexCount(MavenToken token) throws RemoteException;
 

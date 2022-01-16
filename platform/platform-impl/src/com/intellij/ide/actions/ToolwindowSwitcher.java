@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -146,7 +147,11 @@ public class ToolwindowSwitcher extends DumbAwareAction {
       UIUtil.setBackgroundRecursively(myPanel, UIUtil.getListBackground(isSelected, true));
       myTextLabel.clear();
       myTextLabel.append(value.getStripeTitle());
-      myTextLabel.setIcon(ObjectUtils.notNull(value.getIcon(), EmptyIcon.ICON_13));
+      Icon icon = value.getIcon();
+      if (icon instanceof ScalableIcon) {
+        icon = ((ScalableIcon)icon).scale(16f / icon.getIconWidth());
+      }
+      myTextLabel.setIcon(ObjectUtils.notNull(icon, EmptyIcon.ICON_16));
       myTextLabel.setForeground(UIUtil.getListForeground(isSelected, true));
       myTextLabel.setBackground(UIUtil.getListBackground(isSelected, true));
       String activateActionId = ActivateToolWindowAction.getActionIdForToolWindow(value.getId());

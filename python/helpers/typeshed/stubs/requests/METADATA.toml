@@ -1,2 +1,2 @@
-version = "2.25"
+version = "2.25.*"
 python2 = true

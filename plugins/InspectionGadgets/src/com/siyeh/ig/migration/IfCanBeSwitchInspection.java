@@ -38,10 +38,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class IfCanBeSwitchInspection extends BaseInspection {
 
@@ -131,8 +128,76 @@ public class IfCanBeSwitchInspection extends BaseInspection {
         return;
       }
       final PsiIfStatement ifStatement = (PsiIfStatement)element;
+      if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(ifStatement)) {
+        for (PsiIfStatement ifStatementInChain : getAllConditionalBranches(ifStatement)) {
+          replaceCastsWithPatternVariable(ifStatementInChain);
+        }
+      }
       replaceIfWithSwitch(ifStatement);
     }
+  }
+
+  private static List<PsiIfStatement> getAllConditionalBranches(PsiIfStatement ifStatement){
+    List<PsiIfStatement> ifStatements = new ArrayList<>();
+    while (ifStatement != null) {
+      ifStatements.add(ifStatement);
+      PsiStatement elseBranch = ifStatement.getElseBranch();
+      if (elseBranch instanceof PsiIfStatement) {
+        ifStatement = (PsiIfStatement) elseBranch;
+      } else {
+        ifStatement = null;
+      }
+    }
+    return ifStatements;
+  }
+
+  private static void replaceCastsWithPatternVariable(PsiIfStatement ifStatement){
+    PsiInstanceOfExpression targetInstanceOf =
+      PsiTreeUtil.findChildOfType(ifStatement.getCondition(), PsiInstanceOfExpression.class, false);
+    if (targetInstanceOf == null) return;
+    if (targetInstanceOf.getPattern() != null) return;
+    PsiTypeElement type = targetInstanceOf.getCheckType();
+    if (type == null) return;
+    Collection<PsiTypeCastExpression> castExpressions =
+      PsiTreeUtil.findChildrenOfType(ifStatement.getThenBranch(), PsiTypeCastExpression.class);
+    List<PsiTypeCastExpression> relatedCastExpressions =
+      ContainerUtil.filter(castExpressions, castExpression -> InstanceOfUtils.findPatternCandidate(castExpression) == targetInstanceOf);
+    if (relatedCastExpressions.isEmpty()) return;
+
+    PsiLocalVariable castedVariable = null;
+    for (PsiTypeCastExpression castExpression : relatedCastExpressions) {
+      castedVariable = findCastedLocalVariable(castExpression);
+      if (castedVariable != null) break;
+    }
+
+    String name = castedVariable != null ? castedVariable.getName() : SwitchUtils.suggestPatternCaseName(targetInstanceOf);
+
+    CommentTracker ct = new CommentTracker();
+    for (PsiTypeCastExpression castExpression : relatedCastExpressions) {
+      ct.replace(skipParenthesizedExprUp(castExpression), name);
+    }
+    if (castedVariable != null) {
+      ct.delete(castedVariable);
+    }
+    ct.replaceExpressionAndRestoreComments(
+      targetInstanceOf,
+      ct.text(targetInstanceOf.getOperand()) + " instanceof " + ct.text(type) + " " + name
+    );
+  }
+
+  private static @Nullable PsiLocalVariable findCastedLocalVariable(PsiTypeCastExpression castExpression){
+    PsiLocalVariable variable = PsiTreeUtil.getParentOfType(castExpression, PsiLocalVariable.class);
+    if (variable == null) return null;
+    PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
+    if (initializer != castExpression) return null;
+    return variable;
+  }
+
+  private static PsiElement skipParenthesizedExprUp(@NotNull PsiElement expression) {
+    while (expression.getParent() instanceof PsiParenthesizedExpression) {
+      expression = expression.getParent();
+    }
+    return expression;
   }
 
   public static void replaceIfWithSwitch(PsiIfStatement ifStatement) {

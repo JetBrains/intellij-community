@@ -1522,6 +1522,31 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertFalse(((VirtualFileSystemEntry)file).isFileIndexed())
   }
 
+  void 'test stub index updated after language level change'() {
+    def file = myFixture.addFileToProject("src1/A.java", "class A {}").virtualFile
+
+    def languageLevel = file.parent.getUserData(LanguageLevel.KEY)
+    assertNotNull(languageLevel)
+    assertNotNull(findClass("A"))
+
+    // be a :hacker:😀
+    // do it manually somehow
+    // seems property pushers are crazy, we know it from its name
+    file.parent.putUserData(LanguageLevel.KEY, null)
+    // fire any event
+    FileContentUtilCore.reparseFiles(file)
+
+    assertNull(file.parent.getUserData(LanguageLevel.KEY))
+    assertNull(findClass("A"))
+
+    // and return everything to a normal state
+    file.parent.putUserData(LanguageLevel.KEY, languageLevel)
+    FileContentUtilCore.reparseFiles(file)
+
+    assertNotNull(file.parent.getUserData(LanguageLevel.KEY))
+    assertNotNull(findClass("A"))
+  }
+
   private static <T> ThrowableComputable<T, RuntimeException> asComputable(CachedValue<T> cachedValue) {
     return new ThrowableComputable<T, RuntimeException>() {
       @Override

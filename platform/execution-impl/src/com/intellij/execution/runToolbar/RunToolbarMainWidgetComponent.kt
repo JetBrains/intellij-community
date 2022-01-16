@@ -22,7 +22,7 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
     private var counter: MutableMap<Project, Int> = mutableMapOf()
   }
 
-  override fun logNeeded(): Boolean = true
+  override fun logNeeded(): Boolean = RunToolbarProcess.logNeeded
 
   private var project: Project? = null
     set(value) {

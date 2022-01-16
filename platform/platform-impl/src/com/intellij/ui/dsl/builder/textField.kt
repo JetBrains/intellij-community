@@ -79,7 +79,10 @@ fun <T : JTextComponent> Cell<T>.text(text: String): Cell<T> {
  * @see COLUMNS_MEDIUM
  * @see COLUMNS_LARGE
  */
-fun <T : JTextField> Cell<T>.columns(columns: Int): Cell<T> {
-  component.columns = columns
-  return this
+fun <T : JTextField> Cell<T>.columns(columns: Int) = apply {
+  component.columns(columns)
+}
+
+fun <T : JTextField> T.columns(columns: Int) = apply {
+  this.columns = columns
 }

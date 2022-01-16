@@ -8,6 +8,7 @@ import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -21,7 +22,6 @@ import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutData;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -101,11 +101,9 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
       @Override
       public void run() {
         if (!isOtherModalWindowActive()) {
-          try {
+          try (AccessToken ignored = ClientId.withClientId(ClientId.getLocalId())) {
             // always show IDE errors to the host
-            ClientId.withClientId(ClientId.getLocalId(), () -> {
-              doOpenErrorsDialog(message);
-            });
+            doOpenErrorsDialog(message);
           }
           finally {
             myOpeningInProgress = false;

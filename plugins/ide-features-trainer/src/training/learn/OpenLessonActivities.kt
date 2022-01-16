@@ -472,15 +472,30 @@ internal object OpenLessonActivities {
         return //if user abort to open lesson in a new Project
     try {
       NewLearnProjectUtil.createLearnProject(projectToClose, langSupport, selectedSdk) { learnProject ->
-        langSupport.applyToProjectAfterConfigure().invoke(learnProject)
-        LearningUiManager.learnProject = learnProject
-        runInEdt {
-          postInitCallback(learnProject)
+        try {
+          langSupport.applyToProjectAfterConfigure().invoke(learnProject)
         }
+        catch (e: Throwable) {
+          LOG.error(e)
+          LOG.error("The configuration will be retried after 2 seconds")
+          Alarm().addRequest({
+            langSupport.applyToProjectAfterConfigure().invoke(learnProject)
+            finishProjectInitialization(learnProject, postInitCallback)
+          }, 2000)
+          return@createLearnProject
+        }
+        finishProjectInitialization(learnProject, postInitCallback)
       }
     }
     catch (e: IOException) {
       LOG.error(e)
+    }
+  }
+
+  private fun finishProjectInitialization(learnProject: Project, postInitCallback: (learnProject: Project) -> Unit) {
+    LearningUiManager.learnProject = learnProject
+    runInEdt {
+      postInitCallback(learnProject)
     }
   }
 

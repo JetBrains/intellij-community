@@ -353,13 +353,13 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
   private fun registerComponents(pluginDescriptor: IdeaPluginDescriptor, containerDescriptor: ContainerDescriptor, headless: Boolean): Int {
     var count = 0
     for (descriptor in (containerDescriptor.components ?: return 0)) {
-      var implementationClass = descriptor.implementationClass
+      var implementationClassName = descriptor.implementationClass
       if (headless && descriptor.headlessImplementationClass != null) {
         if (descriptor.headlessImplementationClass.isEmpty()) {
           continue
         }
 
-        implementationClass = descriptor.headlessImplementationClass
+        implementationClassName = descriptor.headlessImplementationClass
       }
 
       if (descriptor.os != null && !isSuitableForOs(descriptor.os)) {
@@ -370,15 +370,18 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
         continue
       }
 
+      val componentClassName = descriptor.interfaceClass ?: descriptor.implementationClass!!
       try {
-        registerComponent(interfaceClassName = descriptor.interfaceClass ?: descriptor.implementationClass!!,
-                          implementationClassName = implementationClass,
-                          config = descriptor,
-                          pluginDescriptor = pluginDescriptor)
+        registerComponent(
+          interfaceClassName = componentClassName,
+          implementationClassName = implementationClassName,
+          config = descriptor,
+          pluginDescriptor = pluginDescriptor,
+        )
         count++
       }
       catch (e: Throwable) {
-        handleInitComponentError(e, descriptor.implementationClass ?: descriptor.interfaceClass, pluginDescriptor.pluginId)
+        handleInitComponentError(e, componentClassName, pluginDescriptor.pluginId)
       }
     }
     return count
@@ -428,11 +431,13 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     adapter.replaceInstance(componentKey, componentImplementation, parentDisposable, null)
   }
 
-  private fun registerComponent(interfaceClassName: String,
-                                implementationClassName: String?,
-                                config: ComponentConfig,
-                                pluginDescriptor: PluginDescriptor) {
-    val interfaceClass = pluginDescriptor.pluginClassLoader.loadClass(interfaceClassName)
+  private fun registerComponent(
+    interfaceClassName: String,
+    implementationClassName: String?,
+    config: ComponentConfig,
+    pluginDescriptor: IdeaPluginDescriptor,
+  ) {
+    val interfaceClass = pluginDescriptor.classLoader.loadClass(interfaceClassName)
     val options = config.options
     if (config.overrides) {
       unregisterComponent(interfaceClass) ?: throw PluginException("$config does not override anything", pluginDescriptor.pluginId)

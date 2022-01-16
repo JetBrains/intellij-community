@@ -3,6 +3,7 @@
     "usages": [
         "Bar.kt",
         "Doo.kt",
-        "Foo.kt"
+        "Foo.kt",
+        "JavaRead.java"
     ]
 }

@@ -444,13 +444,19 @@ public class SwitchBlockHighlightingModel {
       }
       else if (label instanceof PsiPattern) {
         PsiPattern pattern = (PsiPattern)label;
-        PsiType patternType = JavaPsiPatternUtil.getPatternType(pattern);
+        PsiPatternVariable patternVariable = JavaPsiPatternUtil.getPatternVariable(pattern);
+
+        if (patternVariable == null) return null;
+        PsiTypeElement typeElement = patternVariable.getTypeElement();
+        PsiType patternType = typeElement.getType();
         if (!(patternType instanceof PsiClassType) && !(patternType instanceof PsiArrayType)) {
           String expectedTypes = JavaErrorBundle.message("switch.class.or.array.type.expected");
           String message = JavaErrorBundle.message("unexpected.type", expectedTypes, JavaHighlightUtil.formatType(patternType));
           HighlightInfo info = createError(label, message);
-          if (patternType instanceof PsiPrimitiveType) {
-            registerVariableTypeFixes(info, pattern, (PsiPrimitiveType)patternType);
+          PsiPrimitiveType primitiveType = ObjectUtils.tryCast(patternType, PsiPrimitiveType.class);
+          if (primitiveType != null) {
+            IntentionAction fix = getFixFactory().createReplacePrimitiveWithBoxedTypeAction(mySelectorType, typeElement);
+            QuickFixAction.registerQuickFixAction(info, fix);
           }
           return info;
         }
@@ -682,7 +688,11 @@ public class SwitchBlockHighlightingModel {
       }
       alreadyDominatedLabels.forEach((overWhom, who) -> {
         HighlightInfo info = createError(overWhom, JavaErrorBundle.message("switch.dominance.of.preceding.label", who.getText()));
-        QuickFixAction.registerQuickFixAction(info, getFixFactory().createMoveSwitchBranchUpFix(who, overWhom));
+        PsiPattern overWhomPattern = ObjectUtils.tryCast(overWhom, PsiPattern.class);
+        PsiPattern whoPattern = ObjectUtils.tryCast(who, PsiPattern.class);
+        if (whoPattern == null || !JavaPsiPatternUtil.dominates(overWhomPattern, whoPattern)) {
+          QuickFixAction.registerQuickFixAction(info, getFixFactory().createMoveSwitchBranchUpFix(who, overWhom));
+        }
         QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteSwitchLabelFix(overWhom));
         results.add(info);
       });
@@ -730,7 +740,7 @@ public class SwitchBlockHighlightingModel {
         }
         checkEnumCompleteness(selectorClass, enumElements, results);
       }
-      else if (selectorClass != null) {
+      else if (selectorClass != null && selectorClass.hasModifierProperty(SEALED) && selectorClass.hasModifierProperty(ABSTRACT)) {
         checkSealedClassCompleteness(selectorClass, elements, results);
       }
       else {
@@ -744,20 +754,6 @@ public class SwitchBlockHighlightingModel {
         return;
       }
       QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteDefaultFix(myFile, info));
-    }
-
-    private static void registerVariableTypeFixes(@Nullable HighlightInfo info,
-                                                  @NotNull PsiPattern pattern,
-                                                  @NotNull PsiPrimitiveType primitiveType) {
-      PsiType arrayType = PsiTypesUtil.createArrayType(primitiveType, 1);
-      PsiPatternVariable patternVariable = JavaPsiPatternUtil.getPatternVariable(pattern);
-      if (patternVariable == null) return;
-      PsiClassType boxedType = primitiveType.getBoxedType(patternVariable);
-      IntentionAction changeToArrayTypeFix = getFixFactory().createVariableTypeFix(patternVariable, arrayType);
-      QuickFixAction.registerQuickFixAction(info, changeToArrayTypeFix);
-      if (boxedType == null) return;
-      IntentionAction changeToBoxTypeFix = getFixFactory().createVariableTypeFix(patternVariable, boxedType);
-      QuickFixAction.registerQuickFixAction(info, changeToBoxTypeFix);
     }
 
     private void checkSealedClassCompleteness(@NotNull PsiClass selectorClass,

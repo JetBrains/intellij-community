@@ -36,37 +36,42 @@ open class DefaultKeymap {
   init {
     val filterKeymaps = !ApplicationManager.getApplication().isHeadlessEnvironment
                         && System.getProperty("keymap.current.os.only", "true").toBoolean()
-    val filteredBeans = mutableListOf<Pair<BundledKeymapBean, PluginDescriptor>>()
+    val filteredBeans = LinkedHashMap<BundledKeymapBean, PluginDescriptor>()
 
     var macosParentKeymapFound = false
-    val macosBeans = if (SystemInfoRt.isMac) null else mutableListOf<Pair<BundledKeymapBean, PluginDescriptor>>()
+    val macOsBeans = if (SystemInfoRt.isMac)
+      null
+    else
+      LinkedHashMap<BundledKeymapBean, PluginDescriptor>()
 
     BundledKeymapBean.EP_NAME.processWithPluginDescriptor(BiConsumer { bean, pluginDescriptor ->
       val keymapName = bean.keymapName
       // filter out bundled keymaps for other systems, but allow them via non-bundled plugins
       // on non-macOS add non-bundled known macOS keymaps if the default macOS keymap is present
-      if (filterKeymaps && pluginDescriptor.isBundled && isBundledKeymapHidden(keymapName)) {
-        return@BiConsumer
-      }
-      if (filterKeymaps && macosBeans != null && !pluginDescriptor.isBundled && isKnownMacOSKeymap(keymapName)) {
-        macosParentKeymapFound = macosParentKeymapFound || keymapName == KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP
-        macosBeans.add(Pair(bean, pluginDescriptor))
-      }
-      else {
-        filteredBeans.add(Pair(bean, pluginDescriptor))
+      if (!filterKeymaps || !pluginDescriptor.isBundled || !isBundledKeymapHidden(keymapName)) {
+        val isMacOsBean = filterKeymaps
+                          && !pluginDescriptor.isBundled
+                          && macOsBeans != null
+                          && isKnownMacOSKeymap(keymapName)
+
+        if (isMacOsBean) {
+          macosParentKeymapFound = macosParentKeymapFound || keymapName == KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP
+        }
+
+        (if (isMacOsBean) macOsBeans!! else filteredBeans)[bean] = pluginDescriptor
       }
     })
-    if (macosParentKeymapFound && macosBeans != null) {
-      filteredBeans.addAll(macosBeans)
+    if (macosParentKeymapFound && macOsBeans != null) {
+      filteredBeans.putAll(macOsBeans)
     }
 
     for ((bean, pluginDescriptor) in filteredBeans) {
       LOG.runAndLogException {
         loadKeymap(bean.keymapName, object : SchemeDataHolder<KeymapImpl> {
           override fun read(): Element {
-            return pluginDescriptor.pluginClassLoader.getResourceAsStream(bean.effectiveFile).use {
-              JDOMUtil.load(it)
-            }
+            return pluginDescriptor.classLoader
+              .getResourceAsStream(bean.effectiveFile)
+              .use { JDOMUtil.load(it) }
           }
         }, pluginDescriptor)
       }

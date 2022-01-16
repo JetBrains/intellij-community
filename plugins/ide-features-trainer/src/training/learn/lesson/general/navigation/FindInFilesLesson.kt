@@ -13,10 +13,10 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.Project
 import com.intellij.usages.UsagePresentation
 import com.intellij.util.ui.UIUtil
-import org.fest.swing.core.MouseClickInfo
-import org.fest.swing.data.TableCell
-import org.fest.swing.fixture.JTableFixture
-import org.fest.swing.fixture.JTextComponentFixture
+import org.assertj.swing.core.MouseClickInfo
+import org.assertj.swing.data.TableCell
+import org.assertj.swing.fixture.JTableFixture
+import org.assertj.swing.fixture.JTextComponentFixture
 import training.dsl.*
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
@@ -213,6 +213,8 @@ class FindInFilesLesson(override val existedFile: String)
   }
 
   override val testScriptProperties = TaskTestContext.TestScriptProperties(10)
+
+  override val suitableTips = listOf("FindReplaceToggle", "FindInPath")
 }
 
 private fun resetFindSettings(project: Project) {

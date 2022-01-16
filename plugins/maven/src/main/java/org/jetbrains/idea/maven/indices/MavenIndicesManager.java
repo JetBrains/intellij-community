@@ -263,16 +263,11 @@ public final class MavenIndicesManager implements Disposable {
   }
 
   private void addArtifact(File artifactFile, String relativePath) {
-    String repositoryPath = getRepositoryUrl(artifactFile, relativePath);
-
-    MavenIndices indices = getIndicesObject();
-    MavenIndex index = indices.find(repositoryPath, MavenSearchIndex.Kind.LOCAL);
-    if (index != null) {
-      index.addArtifact(artifactFile);
-    }
+    File repositoryFile = getRepositoryFile(artifactFile, relativePath);
+    fixArtifactIndexAsync(artifactFile, repositoryFile);
   }
 
-  public void fixArtifactIndex(File artifactFile, File localRepository) {
+  public void fixArtifactIndexAsync(File artifactFile, File localRepository) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       MavenIndex index = getIndicesObject().find(localRepository.getPath(), MavenSearchIndex.Kind.LOCAL);
       if (index != null) {
@@ -281,14 +276,14 @@ public final class MavenIndicesManager implements Disposable {
     });
   }
 
-  private static String getRepositoryUrl(File artifactFile, String name) {
+  private static File getRepositoryFile(File artifactFile, String name) {
     List<String> parts = getArtifactParts(name);
 
     File result = artifactFile;
     for (int i = 0; i < parts.size(); i++) {
       result = result.getParentFile();
     }
-    return result.getPath();
+    return result;
   }
 
   private static List<String> getArtifactParts(String name) {
@@ -520,10 +515,19 @@ public final class MavenIndicesManager implements Disposable {
       @Override
       public void run() {
         Pair<File, MavenIndex> elementToAdd;
+        ArrayList<Pair<File, MavenIndex>> retryElements = new ArrayList<>();
         while ((elementToAdd = queueToAdd.poll()) != null) {
-          elementToAdd.second.addArtifact(elementToAdd.first);
-          indexedCache.add(elementToAdd.first.getName());
+          if (indexedCache.contains(elementToAdd.first.getName())) {
+            continue;
+          }
+          boolean added = elementToAdd.second.tryAddArtifact(elementToAdd.first);
+          if (added) {
+            indexedCache.add(elementToAdd.first.getName());
+          } else {
+            retryElements.add(elementToAdd);
+          }
         }
+        if (retryElements.size() < 10_000) queueToAdd.addAll(retryElements);
       }
     }
   }

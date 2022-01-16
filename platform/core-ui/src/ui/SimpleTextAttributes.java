@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Objects;
 
 /**
  * @author Vladimir Kondratyev
@@ -307,5 +308,21 @@ public final class SimpleTextAttributes {
     }
 
     return new SimpleTextAttributes(bg, fg, wave, style);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    SimpleTextAttributes that = (SimpleTextAttributes)o;
+    return myStyle == that.myStyle &&
+           Objects.equals(myBgColor, that.myBgColor) &&
+           Objects.equals(myFgColor, that.myFgColor) &&
+           Objects.equals(myWaveColor, that.myWaveColor);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myBgColor, myFgColor, myWaveColor, myStyle);
   }
 }

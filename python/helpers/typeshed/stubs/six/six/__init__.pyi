@@ -25,8 +25,8 @@ PY34: Literal[True]
 string_types: tuple[Type[str]]
 integer_types: tuple[Type[int]]
 class_types: tuple[Type[Type[Any]]]
-text_type: Type[str]
-binary_type: Type[bytes]
+text_type = str
+binary_type = bytes
 
 MAXSIZE: int
 

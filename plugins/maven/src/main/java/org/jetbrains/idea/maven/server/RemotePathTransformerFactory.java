@@ -45,10 +45,17 @@ public interface RemotePathTransformerFactory {
       public @Nullable String toIdePath(@NotNull String remotePath) {
         return remotePath;
       }
+
+      @Override
+      public boolean canBeRemotePath(String s) {
+        return false;
+      }
     };
 
     @Nullable String toRemotePath(@NotNull String localPath);
 
     @Nullable String toIdePath(@NotNull String remotePath);
+
+    boolean canBeRemotePath(String s);
   }
 }

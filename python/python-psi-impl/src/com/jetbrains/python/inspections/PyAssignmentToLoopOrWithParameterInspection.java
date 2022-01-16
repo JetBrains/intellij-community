@@ -13,6 +13,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,12 +36,13 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
                                         final boolean isOnTheFly,
                                         @NotNull final LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static final class Visitor extends PyInspectionVisitor {
-    private Visitor(@Nullable final ProblemsHolder holder, @NotNull final LocalInspectionToolSession session) {
-      super(holder, session);
+    private Visitor(@Nullable final ProblemsHolder holder,
+                    @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override

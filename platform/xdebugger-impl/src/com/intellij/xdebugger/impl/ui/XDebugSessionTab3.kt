@@ -35,7 +35,8 @@ class XDebugSessionTab3(
 
   companion object {
     private const val viewProportionKey = "debugger.layout.watches.defaultThreadsProportion"
-    private const val debuggerContentId = "DebuggerView"
+    //is used by plugins
+    const val debuggerContentId = "DebuggerView"
   }
 
   private val splitter = OnePixelSplitter(viewProportionKey, 0.35f).apply {

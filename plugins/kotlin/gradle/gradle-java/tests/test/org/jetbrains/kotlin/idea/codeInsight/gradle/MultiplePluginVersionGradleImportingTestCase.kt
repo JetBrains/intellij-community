@@ -101,18 +101,16 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
             if (IS_UNDER_SAFE_PUSH)
                 return safePushParams
             else
-                return safePushParams.plus(
-                    listOf(
-                        arrayOf("4.9", "1.3.30"),
-                        arrayOf("5.6.4", "1.3.72"),
-                        arrayOf("6.7.1", "1.4.0"),
-                        arrayOf("6.8.2", "1.4.32"),
-                        arrayOf("7.0.2", "1.5.10"),
-                        arrayOf("7.0.2", "1.5.21"),
-                        arrayOf("7.0.2", "1.5.31"),
-                        arrayOf("7.0.2", "master")
-                    )
-                )
+                return listOf<Array<Any>>(
+                    arrayOf("4.9", "1.3.30"),
+                    arrayOf("5.6.4", "1.3.72"),
+                    arrayOf("6.7.1", "1.4.0"),
+                    arrayOf("6.8.2", "1.4.32"),
+                    arrayOf("7.0.2", "1.5.10"),
+                    arrayOf("7.0.2", "1.5.21"),
+                    arrayOf("7.0.2", "1.5.31"),
+                    arrayOf("7.0.2", "master")
+                ).plus(safePushParams)
         }
     }
 

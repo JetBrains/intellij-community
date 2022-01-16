@@ -17,7 +17,9 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -398,7 +400,8 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   }
 
   public void setActionHint(@Nullable @Nls String hint) {
-    myActionHint = hint;
+    //noinspection HardCodedStringLiteral
+    myActionHint = ObjectUtils.doIfNotNull(hint, it -> StringUtil.removeHtmlTags(it, true));
   }
 
   public @Nullable String getHint(@Nullable JComponent component) {

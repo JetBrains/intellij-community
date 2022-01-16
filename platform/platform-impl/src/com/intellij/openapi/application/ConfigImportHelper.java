@@ -49,6 +49,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
@@ -254,7 +255,7 @@ public final class ConfigImportHelper {
   }
 
   private static boolean doesVmOptionsFileExist(Path configDir) {
-    return Files.isRegularFile(configDir.resolve(VMOptions.getCustomVMOptionsFileName()));
+    return Files.isRegularFile(configDir.resolve(VMOptions.getFileName()));
   }
 
   private static void restart() {
@@ -361,14 +362,13 @@ public final class ConfigImportHelper {
   }
 
   /**
-   * Checks that current user is "new" (i.e. this is the very first launch of the IDE on this machine).
+   * Checks that current user is a "new" one (i.e. this is the very first launch of the IDE on this machine).
    */
   public static boolean isNewUser() {
     return isFirstSession() && !isConfigImported();
   }
 
   /** Simple check by file type, content is not checked. */
-  @SuppressWarnings("IdentifierGrammar")
   public static boolean isSettingsFile(@NotNull VirtualFile file) {
     return FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE);
   }
@@ -733,17 +733,32 @@ public final class ConfigImportHelper {
                        @NotNull ConfigImportOptions options) throws IOException {
     Logger log = options.log;
     if (Files.isRegularFile(oldConfigDir)) {
-      new Decompressor.Zip(oldConfigDir.toFile()).extract(newConfigDir);
+      new Decompressor.Zip(oldConfigDir).extract(newConfigDir);
       return;
     }
 
     // Copy everything except plugins.
     // The filter prevents web token reuse and accidental overwrite of files already created by this instance (port/lock/tokens etc.).
-    FileUtil.copyDir(oldConfigDir.toFile(), newConfigDir.toFile(), file -> !blockImport(file.toPath(), oldConfigDir, newConfigDir, oldPluginsDir));
+    Files.walkFileTree(oldConfigDir, new SimpleFileVisitor<>() {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+        return blockImport(dir, oldConfigDir, newConfigDir, oldPluginsDir) ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        if (!blockImport(file, oldConfigDir, newConfigDir, oldPluginsDir)) {
+          Path target = newConfigDir.resolve(oldConfigDir.relativize(file));
+          NioFiles.createDirectories(target.getParent());
+          Files.copy(file, target, LinkOption.NOFOLLOW_LINKS);
+        }
+        return FileVisitResult.CONTINUE;
+      }
+    });
 
     List<ActionCommand> actionCommands = loadStartupActionScript(oldConfigDir, oldIdeHome, oldPluginsDir);
 
-    // Copy plugins, unless the new plugin directory is not empty (the plugin manager will sort out incompatible ones).
+    // copying plugins, unless the target directory is not empty (the plugin manager will sort out incompatible ones)
     if (!options.importPlugins) {
       log.info("plugins are not imported.");
     }
@@ -761,7 +776,7 @@ public final class ConfigImportHelper {
       setKeymapIfNeeded(oldConfigDir, newConfigDir, log);
     }
 
-    // apply stale plugin updates
+    // applying prepared updates to copied plugins
     StartupActionScriptManager.executeActionScriptCommands(actionCommands, oldPluginsDir, newPluginsDir);
 
     updateVMOptions(newConfigDir, log);
@@ -824,7 +839,7 @@ public final class ConfigImportHelper {
           });
         }
 
-        // Migrate plugins for which we couldn't download updates
+        // migrating plugins for which we weren't able to download updates
         migratePlugins(newPluginsDir, incompatiblePlugins, pendingUpdates, log);
       }
     }
@@ -965,13 +980,16 @@ public final class ConfigImportHelper {
     }
   }
 
-  /* Fix VM options in the custom *.vmoptions file that won't work with the current IDE version. */
+  /* Fix VM options in the custom *.vmoptions file that won't work with the current IDE version or duplicate/undercut platform ones. */
   private static void updateVMOptions(Path newConfigDir, Logger log) {
-    Path vmOptionsFile = newConfigDir.resolve(VMOptions.getCustomVMOptionsFileName());
+    Path vmOptionsFile = newConfigDir.resolve(VMOptions.getFileName());
     if (Files.exists(vmOptionsFile)) {
       try {
         List<String> lines = Files.readAllLines(vmOptionsFile, VMOptions.getFileCharset());
+        Path platformVmOptionsFile = newConfigDir.getFileSystem().getPath(VMOptions.getPlatformOptionsFile().toString());
+        Collection<String> platformLines = new LinkedHashSet<>(readPlatformOptions(platformVmOptionsFile, log));
         boolean updated = false;
+
         for (ListIterator<String> i = lines.listIterator(); i.hasNext(); ) {
           String line = i.next().trim();
           if (line.equals("-XX:MaxJavaStackTraceDepth=-1")) {
@@ -984,7 +1002,8 @@ public final class ConfigImportHelper {
           else if ("-XX:+UseConcMarkSweepGC".equals(line) && JavaVersion.current().isAtLeast(17) ||
                    "-Xverify:none".equals(line) || "-noverify".equals(line) ||
                    line.startsWith("-agentlib:yjpagent") ||
-                   line.startsWith("-agentpath:") && line.contains("yjpagent")) {
+                   line.startsWith("-agentpath:") && line.contains("yjpagent") ||
+                   isDuplicateOrLowerValue(line, platformLines)) {
             i.remove(); updated = true;
           }
         }
@@ -992,6 +1011,7 @@ public final class ConfigImportHelper {
         if (lines.stream().noneMatch(line -> line.equals("-XX:+IgnoreUnrecognizedVMOptions"))) {
             lines.add("-XX:+IgnoreUnrecognizedVMOptions");
         }
+
         if (updated) {
           Files.write(vmOptionsFile, lines, VMOptions.getFileCharset());
         }
@@ -1000,6 +1020,46 @@ public final class ConfigImportHelper {
         log.warn("Failed to update custom VM options file " + vmOptionsFile, e);
       }
     }
+  }
+
+  private static List<String> readPlatformOptions(Path platformVmOptionsFile, Logger log) {
+    try {
+      return Files.readAllLines(platformVmOptionsFile, VMOptions.getFileCharset());
+    }
+    catch (IOException e) {
+      // should not prevent a user's VM options file from being processed
+      log.warn("Cannot read platform VM options file " + platformVmOptionsFile, e);
+      return List.of();
+    }
+  }
+
+  private static boolean isDuplicateOrLowerValue(String line, Collection<String> platformLines) {
+    if (platformLines.isEmpty()) {
+      return false;
+    }
+    if (platformLines.contains(line)) {
+      return true;
+    }
+    if (line.startsWith("-Xms") || line.startsWith("-Xmx") || line.startsWith("-Xss")) {
+      return isLowerValue(line.substring(0, 4), line.substring(4), platformLines);
+    }
+    if (line.startsWith("-XX:")) {
+      int p = line.indexOf('=', 4);
+      if (p > 0) return isLowerValue(line.substring(0, p + 1), line.substring(p + 1), platformLines);
+    }
+    return false;
+  }
+
+  private static boolean isLowerValue(String prefix, String userValue, Collection<String> platformLines) {
+    for (String line : platformLines) {
+      if (line.startsWith(prefix)) {
+        try {
+          return VMOptions.parseMemoryOption(userValue) <= VMOptions.parseMemoryOption(line.substring(prefix.length()));
+        }
+        catch (IllegalArgumentException ignored) { }
+      }
+    }
+    return false;
   }
 
   private static boolean blockImport(Path path, Path oldConfig, Path newConfig, Path oldPluginsDir) {

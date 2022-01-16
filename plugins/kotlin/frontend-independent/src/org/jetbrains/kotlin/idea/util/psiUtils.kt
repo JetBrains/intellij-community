@@ -76,7 +76,7 @@ fun PsiElement.reformatted(canChangeWhiteSpacesOnly: Boolean = false): PsiElemen
     CodeStyleManager.getInstance(it.project).reformat(it, canChangeWhiteSpacesOnly)
 }
 
-fun KtAnnotated.findAnnotation(
+fun KtAnnotated.findAnnotationWithShortName(
     shortName: String,
     useSiteTarget: AnnotationUseSiteTarget? = null,
 ): KtAnnotationEntry? = annotationEntries.firstOrNull {
@@ -84,12 +84,26 @@ fun KtAnnotated.findAnnotation(
 }
 
 private fun KtAnnotated.findJvmName(useSiteTarget: AnnotationUseSiteTarget? = null): String? =
-    findAnnotation(JvmFileClassUtil.JVM_NAME_SHORT, useSiteTarget)?.let(JvmFileClassUtil::getLiteralStringFromAnnotation)
+    findAnnotationWithShortName(JvmFileClassUtil.JVM_NAME_SHORT, useSiteTarget)?.let(JvmFileClassUtil::getLiteralStringFromAnnotation)
+
+fun KtAnnotated.hasAnnotationWithShortName(
+    shortName: String,
+    useSiteTarget: AnnotationUseSiteTarget? = null,
+): Boolean = findAnnotationWithShortName(shortName, useSiteTarget) != null
 
 val KtNamedFunction.jvmName: String? get() = findJvmName()
 val KtPropertyAccessor.jvmName: String? get() = findJvmName()
-val KtProperty.jvmSetterName: String? get() = setter?.jvmName ?: findJvmName(AnnotationUseSiteTarget.PROPERTY_SETTER)
-val KtProperty.jvmGetterName: String? get() = getter?.jvmName ?: findJvmName(AnnotationUseSiteTarget.PROPERTY_GETTER)
+val KtValVarKeywordOwner.jvmSetterName: String? get() = when (this) {
+    is KtProperty -> setter?.jvmName ?: findJvmName(AnnotationUseSiteTarget.PROPERTY_SETTER)
+    is KtParameter -> findJvmName(AnnotationUseSiteTarget.PROPERTY_SETTER)
+    else -> null
+}
+
+val KtValVarKeywordOwner.jvmGetterName: String? get() = when (this) {
+    is KtProperty -> getter?.jvmName ?: findJvmName(AnnotationUseSiteTarget.PROPERTY_GETTER)
+    is KtParameter -> findJvmName(AnnotationUseSiteTarget.PROPERTY_GETTER)
+    else -> null
+}
 
 fun KtCallableDeclaration.numberOfArguments(countReceiver: Boolean = false): Int =
     valueParameters.size + (1.takeIf { countReceiver && receiverTypeReference != null } ?: 0)

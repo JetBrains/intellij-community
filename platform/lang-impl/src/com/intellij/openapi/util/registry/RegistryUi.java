@@ -26,7 +26,6 @@ import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
@@ -60,7 +59,6 @@ public class RegistryUi implements Disposable {
 
   private final JPanel myContent = new JPanel();
 
-  private static final Icon RESTART_ICON = PlatformIcons.CHECK_ICON;
   private final RestoreDefaultsAction myRestoreDefaultsAction;
   private final MyTableModel myModel;
   private final Map<String, String> myModifiedValues = new HashMap<>();
@@ -72,7 +70,6 @@ public class RegistryUi implements Disposable {
     myTable = new JBTable(myModel);
     myTable.setShowGrid(false);
     myTable.setVisibleRowCount(15);
-    myTable.setCellSelectionEnabled(true);
     myTable.setEnableAntialiasing(true);
     final MyRenderer r = new MyRenderer();
 
@@ -94,7 +91,7 @@ public class RegistryUi implements Disposable {
     myDescriptionLabel.setEditable(false);
     myDescriptionLabel.setBackground(UIUtil.getPanelBackground());
     myDescriptionLabel.setFont(JBFont.label());
-    final JScrollPane label = ScrollPaneFactory.createScrollPane(myDescriptionLabel, 0);
+    final JScrollPane label = ScrollPaneFactory.createScrollPane(myDescriptionLabel, SideBorder.NONE);
     final JPanel descriptionPanel = new JPanel(new BorderLayout());
     descriptionPanel.add(label, BorderLayout.CENTER);
     descriptionPanel.setBorder(JBUI.Borders.emptyTop(8));
@@ -157,6 +154,7 @@ public class RegistryUi implements Disposable {
         }
       },
       KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
+    ScrollingUtil.ensureSelectionExists(myTable);
   }
 
   private final class RevertAction extends AnAction implements DumbAware {
@@ -543,7 +541,7 @@ public class RegistryUi implements Disposable {
       int modelRow = table.convertRowIndexToModel(row);
       myValue = ((MyTableModel)table.getModel()).getRegistryValue(modelRow);
       if (myValue.asColor(null) != null) {
-        final Color color = ColorChooser.chooseColor(table, IdeBundle.message("dialog.title.choose.color"), myValue.asColor(Color.WHITE));
+        final Color color = ColorChooser.chooseColor(table, IdeBundle.message("dialog.title.choose.color"), myValue.asColor(JBColor.WHITE));
         if (color != null) {
           setValue(myValue, color.getRed() + "," + color.getGreen() + "," + color.getBlue());
           keyChanged(myValue.getKey());

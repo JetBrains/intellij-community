@@ -417,7 +417,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
       if (ExperimentalUI.isNewUI()) {
         g.setColor(getEditor().getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
-        double offsetX = getFoldingAreaOffset() + getFoldingAnchorWidth() - scale(4f);
+        double offsetX = getExpUIVerticalLineX();
         LinePainter2D.paint(g, offsetX, clip.y, offsetX, clip.y + clip.height);
       }
     }
@@ -428,11 +428,16 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (old != null) g.setTransform(old);
   }
 
+  private double getExpUIVerticalLineX() {
+    return getFoldingAreaOffset() + getFoldingAnchorWidth() - scale(4f);
+  }
+
   private void paintEditorBackgrounds(Graphics g, int firstVisibleOffset, int lastVisibleOffset) {
     myTextFgColors.clear();
     Color defaultBackgroundColor = myEditor.getBackgroundColor();
     Color defaultForegroundColor = myEditor.getColorsScheme().getDefaultForeground();
-    int startX = myEditor.isInDistractionFreeMode() ? 0 : getWhitespaceSeparatorOffset();
+    int startX = myEditor.isInDistractionFreeMode() ? 0
+                                                    : ExperimentalUI.isNewUI() ? (int)getExpUIVerticalLineX() + 1 : getWhitespaceSeparatorOffset();
     IterationState state = new IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, null, true, false, true, false);
     while (!state.atEnd()) {
       drawEditorBackgroundForRange(g, state.getStartOffset(), state.getEndOffset(), state.getMergedAttributes(),

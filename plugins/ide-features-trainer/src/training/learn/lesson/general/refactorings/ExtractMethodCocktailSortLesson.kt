@@ -84,4 +84,6 @@ class ExtractMethodCocktailSortLesson(private val sample: LessonSample)
   private fun insideRefactoring() = Thread.currentThread().stackTrace.any {
     it.className.contains(ExtractMethodHelper::class.java.simpleName)
   }
+
+  override val suitableTips = listOf("ExtractMethod")
 }

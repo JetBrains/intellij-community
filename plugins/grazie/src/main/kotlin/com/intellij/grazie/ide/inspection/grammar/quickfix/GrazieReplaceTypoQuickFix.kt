@@ -18,13 +18,12 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiFileRange
 import kotlin.math.min
 
-internal object GrazieReplaceTypoQuickFix {
+object GrazieReplaceTypoQuickFix {
   private class ReplaceTypoTitleAction(@IntentionFamilyName family: String, @IntentionName title: String) : ChoiceTitleIntentionAction(family, title),
     HighPriorityAction
 
@@ -68,16 +67,18 @@ internal object GrazieReplaceTypoQuickFix {
     override fun startInWriteAction(): Boolean = true
   }
 
-  fun getReplacementFixes(problem: TextProblem, underlineRanges: List<SmartPsiFileRange>, file: PsiFile): List<LocalQuickFix> {
+  @JvmStatic
+  fun getReplacementFixes(problem: TextProblem, underlineRanges: List<SmartPsiFileRange>): List<LocalQuickFix> {
     val replacementRange = problem.replacementRange
     val replacedText = replacementRange.subSequence(problem.text)
+    val file = problem.text.containingFile
     val spm = SmartPointerManager.getInstance(file.project)
     val familyName = GrazieBundle.message("grazie.grammar.quickfix.replace.typo.text", problem.shortMessage)
     val result = arrayListOf<LocalQuickFix>(ReplaceTypoTitleAction(familyName, problem.shortMessage))
     problem.corrections.forEachIndexed { index, suggestion ->
-      val commonPrefix = StringUtil.commonPrefixLength(suggestion, replacedText)
+      val commonPrefix = commonPrefixLength(suggestion, replacedText)
       val commonSuffix =
-        min(StringUtil.commonSuffixLength(suggestion, replacedText), min(suggestion.length, replacementRange.length) - commonPrefix)
+        min(commonSuffixLength(suggestion, replacedText), min(suggestion.length, replacementRange.length) - commonPrefix)
       val localRange = TextRange(replacementRange.startOffset + commonPrefix, replacementRange.endOffset - commonSuffix)
       val replacement = suggestion.substring(commonPrefix, suggestion.length - commonSuffix)
       result.add(ChangeToVariantAction(
@@ -86,4 +87,23 @@ internal object GrazieReplaceTypoQuickFix {
     }
     return result
   }
+
+  // custom common prefix/suffix calculation to honor cases when the text is separated by a synthetic \n,
+  // but LT suggests a space instead (https://github.com/languagetool-org/languagetool/issues/5297)
+
+  private fun commonPrefixLength(s1: CharSequence, s2: CharSequence): Int {
+    val minLength = min(s1.length, s2.length)
+    var i = 0
+    while (i < minLength && charsMatch(s1[i], s2[i])) i++
+    return i
+  }
+
+  private fun commonSuffixLength(s1: CharSequence, s2: CharSequence): Int {
+    val minLength = min(s1.length, s2.length)
+    var i = 0
+    while (i < minLength && charsMatch(s1[s1.length - i - 1], s2[s2.length - i - 1])) i++
+    return i
+  }
+
+  private fun charsMatch(c1: Char, c2: Char) = c1 == c2 || c1 == ' ' && c2 == '\n'
 }

@@ -16955,12 +16955,20 @@
     <option name="absolute" path="Tabs and Indents" hit="Absolute label indent" />
     <option name="indent" path="Tabs and Indents" hit="Absolute label indent" />
     <option name="label" path="Tabs and Indents" hit="Absolute label indent" />
-    <option name="a" path="Code Generation" hit="Add a space at comment start" />
-    <option name="add" path="Code Generation" hit="Add a space at comment start" />
-    <option name="at" path="Code Generation" hit="Add a space at comment start" />
-    <option name="comment" path="Code Generation" hit="Add a space at comment start" />
-    <option name="space" path="Code Generation" hit="Add a space at comment start" />
-    <option name="start" path="Code Generation" hit="Add a space at comment start" />
+    <option name="a" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="add" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="at" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="block" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="comment" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="space" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="start" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="a" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="add" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="at" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="comment" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="line" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="space" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="start" path="Code Generation" hit="Add a space at line comment start" />
     <option name="after" path="Blank Lines" hit="After anonymous class header:" />
     <option name="anonymous" path="Blank Lines" hit="After anonymous class header:" />
     <option name="class" path="Blank Lines" hit="After anonymous class header:" />
@@ -17810,12 +17818,20 @@
     <option name="package" path="Tabs and Indents" hit=" Indent package statement children" />
     <option name="statement" path="Tabs and Indents" hit=" Indent package statement children" />
     <option name="actionscript" hit="ActionScript" />
-    <option name="a" path="Code Generation" hit="Add a space at comment start" />
-    <option name="add" path="Code Generation" hit="Add a space at comment start" />
-    <option name="at" path="Code Generation" hit="Add a space at comment start" />
-    <option name="comment" path="Code Generation" hit="Add a space at comment start" />
-    <option name="space" path="Code Generation" hit="Add a space at comment start" />
-    <option name="start" path="Code Generation" hit="Add a space at comment start" />
+    <option name="a" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="add" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="at" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="block" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="comment" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="space" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="start" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="a" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="add" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="at" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="comment" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="line" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="space" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="start" path="Code Generation" hit="Add a space at line comment start" />
     <option name="after" path="Blank Lines" hit="After imports:" />
     <option name="imports" path="Blank Lines" hit="After imports:" />
     <option name="after" path="Blank Lines" hit="After package statement:" />
@@ -24658,12 +24674,20 @@
   </configurable>
   <configurable id="preferences.sourceCode.Groovy" configurable_name="Groovy">
     <option name="absolute" path="Tabs and Indents" hit="Absolute" />
-    <option name="a" path="Code Generation" hit="Add a space at comment start" />
-    <option name="add" path="Code Generation" hit="Add a space at comment start" />
-    <option name="at" path="Code Generation" hit="Add a space at comment start" />
-    <option name="comment" path="Code Generation" hit="Add a space at comment start" />
-    <option name="space" path="Code Generation" hit="Add a space at comment start" />
-    <option name="start" path="Code Generation" hit="Add a space at comment start" />
+    <option name="a" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="add" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="at" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="block" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="comment" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="space" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="start" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="a" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="add" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="at" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="comment" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="line" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="space" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="start" path="Code Generation" hit="Add a space at line comment start" />
     <option name="after" path="Blank Lines" hit="After class header:" />
     <option name="class" path="Blank Lines" hit="After class header:" />
     <option name="header" path="Blank Lines" hit="After class header:" />
@@ -25332,12 +25356,20 @@
     <option name="use" path="Tabs and Indents" hit="Use tab character" />
   </configurable>
   <configurable id="preferences.sourceCode.HTML" configurable_name="HTML">
-    <option name="a" path="Code Generation" hit="Add a space at comment start" />
-    <option name="add" path="Code Generation" hit="Add a space at comment start" />
-    <option name="at" path="Code Generation" hit="Add a space at comment start" />
-    <option name="comment" path="Code Generation" hit="Add a space at comment start" />
-    <option name="space" path="Code Generation" hit="Add a space at comment start" />
-    <option name="start" path="Code Generation" hit="Add a space at comment start" />
+    <option name="a" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="add" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="at" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="block" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="comment" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="space" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="start" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="a" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="add" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="at" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="comment" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="line" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="space" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="start" path="Code Generation" hit="Add a space at line comment start" />
     <option name="add" path="Other" hit="Add for JSX attributes:" />
     <option name="attributes" path="Other" hit="Add for JSX attributes:" />
     <option name="for" path="Other" hit="Add for JSX attributes:" />
@@ -25512,12 +25544,20 @@
   </configurable>
   <configurable id="preferences.sourceCode.JavaScript" configurable_name="JavaScript">
     <option name="" path="Punctuation" hit="" />
-    <option name="a" path="Code Generation" hit="Add a space at comment start" />
-    <option name="add" path="Code Generation" hit="Add a space at comment start" />
-    <option name="at" path="Code Generation" hit="Add a space at comment start" />
-    <option name="comment" path="Code Generation" hit="Add a space at comment start" />
-    <option name="space" path="Code Generation" hit="Add a space at comment start" />
-    <option name="start" path="Code Generation" hit="Add a space at comment start" />
+    <option name="a" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="add" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="at" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="block" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="comment" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="space" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="start" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="a" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="add" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="at" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="comment" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="line" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="space" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="start" path="Code Generation" hit="Add a space at line comment start" />
     <option name="add" path="Punctuation" hit="Add when multiline" />
     <option name="multiline" path="Punctuation" hit="Add when multiline" />
     <option name="when" path="Punctuation" hit="Add when multiline" />
@@ -26626,12 +26666,20 @@
     <option name="" path="Imports" hit=" names used" />
     <option name="names" path="Imports" hit=" names used" />
     <option name="used" path="Imports" hit=" names used" />
-    <option name="a" path="Code Generation" hit="Add a space at comment start" />
-    <option name="add" path="Code Generation" hit="Add a space at comment start" />
-    <option name="at" path="Code Generation" hit="Add a space at comment start" />
-    <option name="comment" path="Code Generation" hit="Add a space at comment start" />
-    <option name="space" path="Code Generation" hit="Add a space at comment start" />
-    <option name="start" path="Code Generation" hit="Add a space at comment start" />
+    <option name="a" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="add" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="at" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="block" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="comment" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="space" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="start" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="a" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="add" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="at" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="comment" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="line" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="space" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="start" path="Code Generation" hit="Add a space at line comment start" />
     <option name="after" path="Blank Lines" hit="After class header:" />
     <option name="class" path="Blank Lines" hit="After class header:" />
     <option name="header" path="Blank Lines" hit="After class header:" />
@@ -27481,12 +27529,20 @@
     <option name="in" path="Code Conversion" hit="Add a comma after last element in multiline array" />
     <option name="last" path="Code Conversion" hit="Add a comma after last element in multiline array" />
     <option name="multiline" path="Code Conversion" hit="Add a comma after last element in multiline array" />
-    <option name="a" path="Code Generation" hit="Add a space at comment start" />
-    <option name="add" path="Code Generation" hit="Add a space at comment start" />
-    <option name="at" path="Code Generation" hit="Add a space at comment start" />
-    <option name="comment" path="Code Generation" hit="Add a space at comment start" />
-    <option name="space" path="Code Generation" hit="Add a space at comment start" />
-    <option name="start" path="Code Generation" hit="Add a space at comment start" />
+    <option name="a" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="add" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="at" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="block" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="comment" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="space" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="start" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="a" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="add" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="at" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="comment" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="line" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="space" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="start" path="Code Generation" hit="Add a space at line comment start" />
     <option name="after" path="Blank Lines" hit="After 'use' statements:" />
     <option name="statements" path="Blank Lines" hit="After 'use' statements:" />
     <option name="use" path="Blank Lines" hit="After 'use' statements:" />
@@ -29215,12 +29271,20 @@
   </configurable>
   <configurable id="preferences.sourceCode.TypeScript" configurable_name="TypeScript">
     <option name="" path="Punctuation" hit="" />
-    <option name="a" path="Code Generation" hit="Add a space at comment start" />
-    <option name="add" path="Code Generation" hit="Add a space at comment start" />
-    <option name="at" path="Code Generation" hit="Add a space at comment start" />
-    <option name="comment" path="Code Generation" hit="Add a space at comment start" />
-    <option name="space" path="Code Generation" hit="Add a space at comment start" />
-    <option name="start" path="Code Generation" hit="Add a space at comment start" />
+    <option name="a" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="add" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="at" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="block" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="comment" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="space" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="start" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="a" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="add" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="at" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="comment" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="line" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="space" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="start" path="Code Generation" hit="Add a space at line comment start" />
     <option name="add" path="Punctuation" hit="Add when multiline" />
     <option name="multiline" path="Punctuation" hit="Add when multiline" />
     <option name="when" path="Punctuation" hit="Add when multiline" />
@@ -29947,12 +30011,20 @@
     <option name="velocity" hit="Velocity" />
   </configurable>
   <configurable id="preferences.sourceCode.XML" configurable_name="XML">
-    <option name="a" path="Code Generation" hit="Add a space at comment start" />
-    <option name="add" path="Code Generation" hit="Add a space at comment start" />
-    <option name="at" path="Code Generation" hit="Add a space at comment start" />
-    <option name="comment" path="Code Generation" hit="Add a space at comment start" />
-    <option name="space" path="Code Generation" hit="Add a space at comment start" />
-    <option name="start" path="Code Generation" hit="Add a space at comment start" />
+    <option name="a" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="add" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="at" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="block" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="comment" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="space" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="start" path="Code Generation" hit="Add a space at block comment start" />
+    <option name="a" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="add" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="at" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="comment" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="line" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="space" path="Code Generation" hit="Add a space at line comment start" />
+    <option name="start" path="Code Generation" hit="Add a space at line comment start" />
     <option name="add" path="Other" hit="Add new lines" />
     <option name="lines" path="Other" hit="Add new lines" />
     <option name="new" path="Other" hit="Add new lines" />

@@ -6,6 +6,7 @@ import com.google.common.collect.Sets;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
@@ -35,7 +36,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  *
  * @author Mikhail Golubev
  */
-public class PyStructuralTypeAttributesCompletionContributor extends CompletionContributor {
+public class PyStructuralTypeAttributesCompletionContributor extends CompletionContributor implements DumbAware {
 
   private static final Logger LOG = Logger.getInstance(PyStructuralTypeAttributesCompletionContributor.class);
 

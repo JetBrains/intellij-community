@@ -170,4 +170,6 @@ class PythonInPlaceRefactoringLesson
     }
     return result.toString()
   }
+
+  override val suitableTips = listOf("InPlaceRefactoring")
 }

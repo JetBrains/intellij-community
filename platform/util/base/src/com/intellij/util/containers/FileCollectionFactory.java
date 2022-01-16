@@ -4,7 +4,6 @@ package com.intellij.util.containers;
 import com.intellij.openapi.util.io.FileUtilRt;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenCustomHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -78,12 +77,6 @@ public final class FileCollectionFactory {
   }
 
   public static @NotNull <V> Map<File, V> createCanonicalFileMap(@NotNull Map<? extends File, ? extends V> map) {
-    if (map instanceof Object2ObjectOpenCustomHashMap) {
-      Object2ObjectOpenCustomHashMap<File, V> m = (Object2ObjectOpenCustomHashMap<File, V>)map;
-      if (m.strategy() == FILE_HASH_STRATEGY) {
-        return m.clone();
-      }
-    }
     Map<File, V> result = createCanonicalFileMap(map.size());
     result.putAll(map);
     return result;

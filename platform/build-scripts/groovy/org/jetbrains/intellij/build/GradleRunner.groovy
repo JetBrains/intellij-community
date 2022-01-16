@@ -1,13 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
-import com.intellij.openapi.util.SystemInfo
+
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.jps.model.java.JdkVersionDetector
 
 @CompileStatic
-class GradleRunner {
+final class GradleRunner {
   final File gradleProjectDir
   private final String projectDir
   private final BuildMessages messages
@@ -83,6 +84,14 @@ class GradleRunner {
     return Arrays.asList(rawParams.split(" "))
   }
 
+  boolean runOneTask(String task) {
+    boolean result = runInner(null, task)
+    if (!result) {
+      messages.error("Failed to complete `gradle $task`")
+    }
+    return result
+  }
+
   private boolean runInner(String title, File buildFile, boolean force, String... tasks) {
     def result = false
     messages.block("Gradle $tasks") {
@@ -102,7 +111,7 @@ class GradleRunner {
   }
 
   private boolean runInner(File buildFile, String... tasks) {
-    def gradleScript = SystemInfo.isWindows ? 'gradlew.bat' : 'gradlew'
+    String gradleScript = SystemInfoRt.isWindows ? "gradlew.bat" : "gradlew"
     List<String> command = new ArrayList()
     command.add("${gradleProjectDir.absolutePath}/$gradleScript".toString())
     command.add("-Djava.io.tmpdir=${System.getProperty('java.io.tmpdir')}".toString())
@@ -141,7 +150,7 @@ class GradleRunner {
     }
     run('Downloading JBR 11', 'setupJbr11')
     def modularRuntime = "$projectDir/build/jdk/11"
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       modularRuntime += '/Contents/Home'
     }
     modularRuntime = FileUtil.toSystemIndependentName(new File(modularRuntime).canonicalPath)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
@@ -297,7 +297,12 @@ final class FileLoader extends Loader {
       return;
     }
 
-    Executors.newSingleThreadScheduledExecutor(r -> new Thread(r,"Save classpath indexes for file loader")).schedule(() -> {
+    Executors.newSingleThreadScheduledExecutor(r -> {
+      Thread thread = new Thread(r, "Save classpath indexes for file loader");
+      thread.setDaemon(true);
+      thread.setPriority(Thread.MIN_PRIORITY);
+      return thread;
+    }).schedule(() -> {
       while (true) {
         try {
           Map.Entry<ClasspathCache.LoaderData, Path> entry = loaderDataToSave.takeFirst();

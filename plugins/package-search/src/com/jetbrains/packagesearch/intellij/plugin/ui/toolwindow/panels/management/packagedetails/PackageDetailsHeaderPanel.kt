@@ -154,7 +154,7 @@ internal class PackageDetailsHeaderPanel(
         val packageModel = viewModel.uiPackageModel.packageModel
 
         val name = packageModel.remoteInfo?.name
-        val rawIdentifier = packageModel.identifier.rawValue
+        val rawIdentifier = viewModel.uiPackageModel.identifier.rawValue
         if (name != null && name != rawIdentifier) {
             @Suppress("HardCodedStringLiteral") // The name comes from the API
             nameLabel.setBody(
@@ -171,10 +171,10 @@ internal class PackageDetailsHeaderPanel(
             identifierLabel.isVisible = false
         }
 
-        val actionSetsHolder = viewModel.uiPackageModel.packageOperations
-        val repoToInstall = actionSetsHolder.repoToAddWhenInstalling
+        val packageOperations = viewModel.uiPackageModel.packageOperations
+        val repoToInstall = packageOperations.repoToAddWhenInstalling
         updateRepoWarningBanner(repoToInstall)
-        updateActions(actionSetsHolder)
+        updateActions(packageOperations)
 
         overflowButton.componentPopupMenu?.isVisible = false
     }

@@ -57,18 +57,19 @@ _Params = Union[
     Iterable[Tuple[_ParamsMappingKeyType, _ParamsMappingValueType]],
     Union[Text, bytes],
 ]
+_TextMapping = MutableMapping[Text, Text]
 _SessionT = TypeVar("_SessionT", bound=Session)
 
 class Session(SessionRedirectMixin):
     __attrs__: Any
     headers: CaseInsensitiveDict[Text]
-    auth: None | Tuple[Text, Text] | _auth.AuthBase | Callable[[PreparedRequest], PreparedRequest]
-    proxies: MutableMapping[Text, Text]
+    auth: None | tuple[Text, Text] | _auth.AuthBase | Callable[[PreparedRequest], PreparedRequest]
+    proxies: _TextMapping
     hooks: _Hooks
     params: _Params
     stream: bool
     verify: None | bool | Text
-    cert: None | Text | Tuple[Text, Text]
+    cert: None | Text | tuple[Text, Text]
     max_redirects: int
     trust_env: bool
     cookies: RequestsCookieJar
@@ -77,24 +78,28 @@ class Session(SessionRedirectMixin):
     def __init__(self) -> None: ...
     def __enter__(self: _SessionT) -> _SessionT: ...
     def __exit__(self, *args) -> None: ...
-    def prepare_request(self, request): ...
+    def prepare_request(self, request: Request) -> PreparedRequest: ...
     def request(
         self,
         method: str,
         url: str | bytes | Text,
         params: _Params | None = ...,
         data: _Data = ...,
-        headers: MutableMapping[Text, Text] | None = ...,
-        cookies: None | RequestsCookieJar | MutableMapping[Text, Text] = ...,
-        files: MutableMapping[Text, IO[Any]] | None = ...,
-        auth: None | Tuple[Text, Text] | _auth.AuthBase | Callable[[PreparedRequest], PreparedRequest] = ...,
-        timeout: None | float | Tuple[float, float] | Tuple[float, None] = ...,
+        headers: _TextMapping | None = ...,
+        cookies: None | RequestsCookieJar | _TextMapping = ...,
+        files: MutableMapping[Text, IO[Any]]
+        | MutableMapping[Text, tuple[Text, IO[Any]]]
+        | MutableMapping[Text, tuple[Text, IO[Any], Text]]
+        | MutableMapping[Text, tuple[Text, IO[Any], Text, _TextMapping]]
+        | None = ...,
+        auth: None | tuple[Text, Text] | _auth.AuthBase | Callable[[PreparedRequest], PreparedRequest] = ...,
+        timeout: None | float | tuple[float, float] | tuple[float, None] = ...,
         allow_redirects: bool | None = ...,
-        proxies: MutableMapping[Text, Text] | None = ...,
+        proxies: _TextMapping | None = ...,
         hooks: _HooksInput | None = ...,
         stream: bool | None = ...,
         verify: None | bool | Text = ...,
-        cert: Text | Tuple[Text, Text] | None = ...,
+        cert: Text | tuple[Text, Text] | None = ...,
         json: Any | None = ...,
     ) -> Response: ...
     def get(
@@ -225,7 +230,7 @@ class Session(SessionRedirectMixin):
     ) -> Response: ...
     def send(self, request: PreparedRequest, **kwargs) -> Response: ...
     def merge_environment_settings(self, url, proxies, stream, verify, cert): ...
-    def get_adapter(self, url): ...
+    def get_adapter(self, url: str) -> BaseAdapter: ...
     def close(self) -> None: ...
     def mount(self, prefix: Text | bytes, adapter: BaseAdapter) -> None: ...
 

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.core.script.configuration
 
 import com.intellij.ProjectTopics
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
+import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -11,6 +12,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable.JDK_TABLE_TOPIC
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
@@ -146,7 +148,11 @@ class CompositeScriptConfigurationManager(val project: Project) : ScriptConfigur
     }
 
     override fun getScriptSdk(file: VirtualFile): Sdk? =
-        getActualClasspathRoots(file).getScriptSdk(file)
+        if (ScratchUtil.isScratch(file)) {
+            ProjectRootManager.getInstance(project).projectSdk
+        } else {
+            getActualClasspathRoots(file).getScriptSdk(file)
+        }
 
     override fun getFirstScriptsSdk(): Sdk? =
         classpathRoots.firstScriptSdk

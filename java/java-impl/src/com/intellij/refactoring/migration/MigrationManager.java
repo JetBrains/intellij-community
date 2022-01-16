@@ -1,49 +1,65 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.migration;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+
 public class MigrationManager {
   private final Project myProject;
   private final MigrationMapSet myMigrationMapSet = new MigrationMapSet();
+  private final static Logger LOG = Logger.getInstance(MigrationManager.class);
 
   public MigrationManager(Project project) {
     myProject = project;
   }
 
-  public void showMigrationDialog() {
-    final MigrationDialog migrationDialog = new MigrationDialog(myProject, myMigrationMapSet);
+  public void showMigrationDialog(MigrationMap map) {
+    final MigrationDialog migrationDialog = new MigrationDialog(myProject, map, myMigrationMapSet);
     if (!migrationDialog.showAndGet()) {
       return;
     }
-    MigrationMap migrationMap = migrationDialog.getMigrationMap();
-    if (migrationMap == null) return;
 
     GlobalSearchScope migrationScope = migrationDialog.getMigrationScope();
     if (migrationScope == null) return;
 
-    new MigrationProcessor(myProject, migrationMap, migrationScope).run();
+    new MigrationProcessor(myProject, map, migrationScope).run();
+  }
+
+  public void createNewMigration() {
+    MigrationMap newMap = new MigrationMap();
+    final EditMigrationDialog editMigrationDialog = new EditMigrationDialog(myProject, newMap, myMigrationMapSet, "");
+    if (!editMigrationDialog.showAndGet()) {
+      return;
+    }
+    updateMapFromDialog(newMap, editMigrationDialog);
+
+    myMigrationMapSet.addMap(newMap);
+    try {
+      myMigrationMapSet.saveMaps();
+    }
+    catch (IOException e) {
+      LOG.error("Couldn't save migration maps.", e);
+    }
+  }
+
+  public static void updateMapFromDialog(MigrationMap map, EditMigrationDialog dialog) {
+    map.setName(dialog.getName());
+    map.setDescription(dialog.getDescription());
+    map.setFileName(FileUtil.sanitizeFileName(map.getName()));
   }
 
   @Nullable
   public MigrationMap findMigrationMap(@NotNull String name) {
     return myMigrationMapSet.findMigrationMap(name);
+  }
+
+  public MigrationMapSet getMigrationsMap() {
+    return myMigrationMapSet;
   }
 }

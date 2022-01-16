@@ -19,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -48,4 +49,7 @@ public interface Injection extends com.intellij.lang.injection.general.Injection
   String getDisplayName();
 
   boolean acceptsPsiElement(final PsiElement element);
+
+  @ApiStatus.Experimental
+  boolean acceptsPsiElement(PsiElement patternElement, @Nullable PsiElement target);
 }

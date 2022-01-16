@@ -1092,36 +1092,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   @Override
-  public boolean tryRunWriteAction(@NotNull Runnable action) {
-    assertIsWriteThread();
-    boolean writeActionPending = myWriteActionPending;
-    myWriteActionPending = true;
-    Class<? extends Runnable> clazz = action.getClass();
-    boolean success;
-    try {
-      ActivityTracker.getInstance().inc();
-      fireBeforeWriteActionStart(clazz);
-
-      success = myLock.isWriteLocked() || myLock.startTryWrite();
-    }
-    finally {
-      myWriteActionPending = writeActionPending;
-    }
-    if (success) {
-      myWriteActionsStack.push(clazz);
-      try {
-        fireWriteActionStarted(clazz);
-
-        action.run();
-      }
-      finally {
-        endWrite(clazz);
-      }
-    }
-    return success;
-  }
-
-  @Override
   public boolean isActive() {
     if (isHeadlessEnvironment()) {
       return true;
@@ -1312,8 +1282,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
     int prevBase = myWriteStackBase;
     myWriteStackBase = myWriteActionsStack.size();
-    try (AccessToken ignored = myLock.writeSuspend()) {
-      runModalProgress(project, title, runnable);
+    try {
+      myLock.writeSuspendWhilePumpingIdeEventQueueHopingForTheBest(()->runModalProgress(project, title, runnable));
     }
     finally {
       myWriteStackBase = prevBase;

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.core.script.configuration
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
@@ -543,9 +544,17 @@ abstract class DefaultScriptingSupportBase(val manager: CompositeScriptConfigura
 
         // own builder for saving to storage
         val rootsStorage = ScriptClassRootsStorage.getInstance(project)
-        val ownBuilder = ScriptClassRootsBuilder.fromStorage(project, rootsStorage)
-        cache.allApplied().forEach { (vFile, configuration) -> ownBuilder.add(vFile, configuration) }
-        ownBuilder.toStorage(rootsStorage)
+        val storageBuilder = ScriptClassRootsBuilder.fromStorage(project, rootsStorage)
+        val ownBuilder = ScriptClassRootsBuilder(storageBuilder)
+        cache.allApplied().forEach { (vFile, configuration) ->
+            ownBuilder.add(vFile, configuration)
+            if (!ScratchUtil.isScratch(vFile)) {
+                // do not store (to disk) scratch file configurations due to huge dependencies
+                // (to be indexed next time - even if you don't use scratches at all)
+                storageBuilder.add(vFile, configuration)
+            }
+        }
+        storageBuilder.toStorage(rootsStorage)
 
         builder.add(ownBuilder)
     }

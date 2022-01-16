@@ -6,6 +6,7 @@ import com.intellij.ui.ColoredText.Fragment;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -121,14 +122,40 @@ final class ColoredTextBuilderImpl implements Builder {
 
   private final @NotNull List<@NotNull Fragment> myFragments = new ArrayList<>(2);
 
+  private final @Nls @NotNull StringBuilder myLastFragmentTextBuilder = new StringBuilder();
+  private @Nullable SimpleTextAttributes myLastFragmentAttributes = null;
+
   @Override
   public @NotNull Builder append(@Nls @NotNull String fragmentText, @NotNull SimpleTextAttributes attributes) {
-    myFragments.add(new ColoredTextFragmentImpl(fragmentText, attributes));
+    if (!fragmentText.isEmpty()) {
+      if (myLastFragmentAttributes == null && !myFragments.isEmpty()) {
+        int size = myFragments.size();
+        Fragment lastFragment = myFragments.get(size - 1);
+        if (attributes.equals(lastFragment.fragmentAttributes())) {
+          myLastFragmentTextBuilder.append(lastFragment.fragmentText());
+          myFragments.remove(size - 1);
+        }
+      }
+      if (!attributes.equals(myLastFragmentAttributes)) {
+        flushLastFragment();
+      }
+      myLastFragmentAttributes = attributes;
+      myLastFragmentTextBuilder.append(fragmentText);
+    }
     return this;
+  }
+
+  private void flushLastFragment() {
+    if (myLastFragmentAttributes != null) {
+      myFragments.add(new ColoredTextFragmentImpl(myLastFragmentTextBuilder.toString(), myLastFragmentAttributes));
+      myLastFragmentTextBuilder.setLength(0);
+      myLastFragmentAttributes = null;
+    }
   }
 
   @Override
   public @NotNull ColoredText build() {
+    flushLastFragment();
     int size = myFragments.size();
     if (size == 0) {
       return ColoredTextImpl.EMPTY;

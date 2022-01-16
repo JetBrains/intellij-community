@@ -55,7 +55,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   private final OrderRootsCache myRootsCache;
 
   protected boolean myStartupActivityPerformed;
-  private boolean myStateLoaded;
 
   private final RootProvider.RootSetChangedListener myRootProviderChangeListener = new RootProviderChangeListener();
 
@@ -355,19 +354,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     myProjectSdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR);
     myProjectSdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR);
 
-    if (myStateLoaded) {
-      Application app = ApplicationManager.getApplication();
-      if (app != null) {
-        app.invokeLater(() -> app.runWriteAction(() -> projectJdkChanged()), app.getNoneModalityState());
-      }
-    } else {
-      myStateLoaded = true;
+    Application app = ApplicationManager.getApplication();
+    if (app != null) {
+      app.invokeLater(() -> app.runWriteAction(() -> projectJdkChanged()), app.getNoneModalityState());
     }
-  }
-
-  @Override
-  public void noStateLoaded() {
-    myStateLoaded = true;
   }
 
   @Override

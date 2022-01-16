@@ -121,7 +121,7 @@ public class PyPep8NamingInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class IgnoreBaseClassQuickFix implements LocalQuickFix {
@@ -185,8 +185,8 @@ public class PyPep8NamingInspection extends PyInspection {
   }
 
   public class Visitor extends PyInspectionVisitor {
-    public Visitor(ProblemsHolder holder, LocalInspectionToolSession session) {
-      super(holder, session);
+    public Visitor(ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override

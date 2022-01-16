@@ -221,4 +221,6 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
   override val testScriptProperties: TaskTestContext.TestScriptProperties
     get() = TaskTestContext.TestScriptProperties(duration = 20)
+
+  override val suitableTips = listOf("recent-locations", "RecentFiles")
 }

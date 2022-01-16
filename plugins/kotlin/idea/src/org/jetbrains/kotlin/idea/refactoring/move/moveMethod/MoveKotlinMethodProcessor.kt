@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.refactoring.move.moveMethod
 
 import com.intellij.ide.util.EditorHelper
+import com.intellij.java.JavaBundle
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
@@ -12,7 +13,6 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
-import com.intellij.usageView.UsageViewBundle
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
@@ -57,7 +57,7 @@ class MoveKotlinMethodProcessor(
 
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor {
         return MoveMultipleElementsViewDescriptor(
-            arrayOf(method), (targetClassOrObject.fqName ?: UsageViewBundle.message("default.package.presentable.name")).toString()
+            arrayOf(method), (targetClassOrObject.fqName ?: JavaBundle.message("default.package.presentable.name")).toString()
         )
     }
 

@@ -10,5 +10,3 @@ public class JavaClassWI {
     public static class Other extends JavaClassWI {
     }
 }
-
-// CRI_IGNORE

@@ -127,7 +127,7 @@ internal object MavenWslUtil : MavenUtil() {
     MavenLog.LOG.debug("resolving maven home on WSL with override = \"${overrideMavenHome}\"")
     if (overrideMavenHome != null) {
       if (overrideMavenHome == MavenServerManager.BUNDLED_MAVEN_3) {
-        return MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome
+        return MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toFile()
       }
       val home = File(overrideMavenHome)
       if (isValidMavenHome(home)) {

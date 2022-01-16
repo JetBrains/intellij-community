@@ -40,6 +40,16 @@ class NamedEntityData : WorkspaceEntityData.WithCalculablePersistentId<NamedEnti
   }
 
   override fun persistentId(): PersistentEntityId<*> = NameId(name)
+
+  override fun equalsIgnoringEntitySource(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is NamedEntityData) return false
+
+    if (name != other.name) return false
+    if (additionalProperty != other.additionalProperty) return false
+
+    return true
+  }
 }
 
 class NamedEntity(val name: String, val additionalProperty: String?) : WorkspaceEntityBase(), WorkspaceEntityWithPersistentId {
@@ -233,6 +243,16 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculablePersistent
   }
 
   override fun persistentId() = ComposedId(name, link)
+
+  override fun equalsIgnoringEntitySource(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is ComposedIdSoftRefEntityData) return false
+
+    if (name != other.name) return false
+    if (link != other.link) return false
+
+    return true
+  }
 }
 
 class ComposedIdSoftRefEntity(val name: String, val link: NameId) : WorkspaceEntityBase(), WorkspaceEntityWithPersistentId {

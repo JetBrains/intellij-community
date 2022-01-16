@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm
 
 import com.intellij.openapi.Disposable
@@ -17,6 +17,8 @@ import javax.swing.event.HyperlinkListener
 /**
  * If you want to register a toolwindow, which will be enabled during the dumb mode, please use [ToolWindowManager]'s
  * registration methods which have 'canWorkInDumbMode' parameter.
+ *
+ * @see com.intellij.openapi.wm.ex.ToolWindowManagerListener
  */
 abstract class ToolWindowManager {
   companion object {

@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.platform.util.plugins.DataLoader
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 import java.io.File
 import java.io.IOException
@@ -22,6 +23,10 @@ private val LOG: Logger
   get() = PluginManagerCore.getLogger()
 
 private val checkCompatibilityFlag = System.getProperty("idea.plugin.check.compatibility", "true") != "false"
+
+fun Iterable<IdeaPluginDescriptor>.toPluginSet(): Set<PluginId> = mapTo(LinkedHashSet()) { it.pluginId }
+
+fun Iterable<PluginId>.toPluginDescriptors(): List<IdeaPluginDescriptorImpl> = mapNotNull { PluginManagerCore.findPlugin(it) }
 
 @ApiStatus.Internal
 class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
@@ -45,7 +50,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   private var releaseDate: Date? = raw.releaseDate?.let { Date.from(it.atStartOfDay(ZoneOffset.UTC).toInstant()) }
   private val releaseVersion = raw.releaseVersion
   private val isLicenseOptional = raw.isLicenseOptional
-  private var resourceBundleBaseName: String? = null
+  @NonNls private var resourceBundleBaseName: String? = null
   private val changeNotes = raw.changeNotes
   private var version: String? = raw.version
   private var vendor = raw.vendor
@@ -83,7 +88,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   }
 
   @Transient @JvmField var jarFiles: List<Path>? = null
-  @JvmField var classLoader: ClassLoader? = null
+  private var _pluginClassLoader: ClassLoader? = null
 
   @JvmField val actions: List<RawPluginDescriptor.ActionDescriptor> = raw.actions ?: Collections.emptyList()
 
@@ -415,28 +420,27 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     return registeredCount
   }
 
+  @Suppress("HardCodedStringLiteral")
   override fun getDescription(): String? {
-    @Suppress("HardCodedStringLiteral")
     var result = description
     if (result != null) {
       return result
     }
 
-    val bundle: ResourceBundle? = resourceBundleBaseName?.let { resourceBundleBaseName ->
+    result = (resourceBundleBaseName?.let { baseName ->
       try {
-        DynamicBundle.INSTANCE.getResourceBundle(resourceBundleBaseName, pluginClassLoader)
+        AbstractBundle.messageOrDefault(
+          DynamicBundle.INSTANCE.getResourceBundle(baseName, classLoader),
+          "plugin.$id.description",
+          descriptionChildText ?: "",
+        )
       }
-      catch (e: MissingResourceException) {
-        LOG.info("Cannot find plugin $id resource-bundle: $resourceBundleBaseName")
+      catch (_: MissingResourceException) {
+        LOG.info("Cannot find plugin $id resource-bundle: $baseName")
         null
       }
-    }
-    if (bundle == null) {
-      result = descriptionChildText
-    }
-    else {
-      result = AbstractBundle.messageOrDefault(bundle, "plugin.$id.description", descriptionChildText ?: "")
-    }
+    }) ?: descriptionChildText
+
     description = result
     return result
   }
@@ -455,12 +459,14 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   override fun getOptionalDependentPluginIds(): Array<PluginId> {
     val pluginDependencies = pluginDependencies
-    if (pluginDependencies.isEmpty()) {
-      return PluginId.EMPTY_ARRAY
-    }
-    else {
-      return pluginDependencies.asSequence().filter { it.isOptional }.map { it.pluginId }.toList().toTypedArray()
-    }
+    return if (pluginDependencies.isEmpty())
+      PluginId.EMPTY_ARRAY
+    else
+      pluginDependencies.asSequence()
+        .filter { it.isOptional }
+        .map { it.pluginId }
+        .toList()
+        .toTypedArray()
   }
 
   override fun getVendor() = vendor
@@ -495,7 +501,12 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   override fun getPluginId() = id
 
-  override fun getPluginClassLoader(): ClassLoader = classLoader ?: javaClass.classLoader
+  override fun getPluginClassLoader(): ClassLoader? = _pluginClassLoader
+
+  @ApiStatus.Internal
+  fun setPluginClassLoader(classLoader: ClassLoader?) {
+    _pluginClassLoader = classLoader
+  }
 
   override fun isEnabled() = isEnabled
 

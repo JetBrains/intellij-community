@@ -11,3 +11,4 @@ public class InterfaceWithDelegatedNoImpl(f: InterfaceNoImpl) : InterfaceNoImpl 
 fun test(twdni: InterfaceWithDelegatedNoImpl) = twdni.foo()
 
 // FIR_COMPARISON
+// CRI_IGNORE

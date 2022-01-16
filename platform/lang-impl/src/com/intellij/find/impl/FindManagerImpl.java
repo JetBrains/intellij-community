@@ -41,7 +41,6 @@ import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.StringPattern;
@@ -197,7 +196,7 @@ public final class FindManagerImpl extends FindManager {
     myFindInProjectModel.setFromCursor(false);
     myFindInProjectModel.setForward(true);
     myFindInProjectModel.setGlobal(true);
-    myFindInProjectModel.setMultiline(Registry.is("ide.find.as.popup.allow.multiline"));
+    myFindInProjectModel.setMultiline(true);
     myFindInProjectModel.setSearchInProjectFiles(false);
     return myFindInProjectModel;
   }

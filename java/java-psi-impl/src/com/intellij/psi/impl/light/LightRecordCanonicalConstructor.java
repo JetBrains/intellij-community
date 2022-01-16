@@ -56,6 +56,11 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
       }
 
       @Override
+      public PsiFile getContainingFile() {
+        return getParent().getContainingFile();
+      }
+
+      @Override
       public PsiParameter @NotNull [] getParameters() {
         return ContainerUtil.map2Array(super.getParameters(), PsiParameter.class,
                                        p -> new LightRecordConstructorParameter(p, this, mySubstitutor));
@@ -76,6 +81,11 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
     @Override
     public PsiElement getParent() {
       return myWrapper;
+    }
+
+    @Override
+    public PsiFile getContainingFile() {
+      return getParent().getContainingFile();
     }
 
     @Override

@@ -7,7 +7,6 @@ import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -674,45 +673,5 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   public void testWriteCommandActionMustThrowRelevantException() {
     assertThrows(IOException.class, () -> WriteCommandAction.runWriteCommandAction(getProject(),
                                           (ThrowableComputable<ThrowableRunnable<?>, IOException>)() -> { throw new IOException("aaaah"); }));
-  }
-
-  public void testTryWriteActionWorks() throws Throwable {
-    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-    assertTrue(application.isWriteThread());
-
-    Future<?> f = application.executeOnPooledThread(() -> {
-      try {
-        assertThrows(Throwable.class, () -> application.tryRunWriteAction(()->{}));
-      }
-      catch (Throwable e) {
-        exception = e;
-      }
-    });
-    f.get();
-    if (exception != null) throw exception;
-    boolean success = application.tryRunWriteAction(() -> {
-      assertTrue(application.isWriteAccessAllowed());
-    });
-    assertTrue(success);
-    CountDownLatch proceed = new CountDownLatch(1);
-    AtomicBoolean readAcquired = new AtomicBoolean();
-    Future<?> f2 = application.executeOnPooledThread(() -> {
-      application.runReadAction(() -> {
-        readAcquired.set(true);
-        try {
-          proceed.await();
-        }
-        catch (InterruptedException e) {
-          exception = e;
-        }
-      });
-    });
-    while (!readAcquired.get()) {
-      Thread.sleep(1);
-    }
-    assertFalse(application.tryRunWriteAction(() -> {}));
-    if (exception != null) throw exception;
-    proceed.countDown();
-    f2.get();
   }
 }

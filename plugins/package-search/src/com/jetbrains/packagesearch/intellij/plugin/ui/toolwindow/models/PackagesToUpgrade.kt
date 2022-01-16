@@ -1,6 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.openapi.module.Module
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 
 internal data class PackagesToUpgrade(
     val upgradesByModule: Map<Module, Set<PackageUpgradeInfo>>
@@ -14,7 +15,7 @@ internal data class PackagesToUpgrade(
     data class PackageUpgradeInfo(
         val packageModel: PackageModel.Installed,
         val usageInfo: DependencyUsageInfo,
-        val targetVersion: PackageVersion.Named
+        val targetVersion: NormalizedPackageVersion<PackageVersion.Named>
     )
 
     companion object {

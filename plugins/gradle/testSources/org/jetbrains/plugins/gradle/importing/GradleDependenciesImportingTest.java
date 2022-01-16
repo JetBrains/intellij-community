@@ -952,16 +952,16 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  @TargetVersions("3.0 <=> 6.9")
   public void testDependencyOnDefaultConfigurationWithAdditionalArtifact() throws Exception {
     createSettingsFile("include 'project1', 'project2'");
-    String compileConfiguration = isJavaLibraryPluginSupported() ? "implementation" : "compile";
     createProjectSubFile("project1/build.gradle",
                          createBuildScriptBuilder()
-                           .withJavaLibraryPlugin()
+                           .withJavaPlugin()
                            .addPostfix(
                              "configurations {",
                              "  aParentCfg",
-                             "  " + compileConfiguration + ".extendsFrom aParentCfg",
+                             "  compile.extendsFrom aParentCfg",
                              "}",
                              "sourceSets {",
                              "  aParentSrc { java.srcDirs = ['src/aParent/java'] }",

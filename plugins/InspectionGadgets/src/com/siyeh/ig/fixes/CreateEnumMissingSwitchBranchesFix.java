@@ -33,7 +33,7 @@ public final class CreateEnumMissingSwitchBranchesFix extends CreateMissingSwitc
   }
 
   @Override
-  protected @NotNull List<String> getAllNames(PsiClass aClass) {
+  protected @NotNull List<String> getAllNames(@NotNull PsiClass aClass) {
     return StreamEx.of(aClass.getAllFields()).select(PsiEnumConstant.class).map(PsiField::getName).toList();
   }
 

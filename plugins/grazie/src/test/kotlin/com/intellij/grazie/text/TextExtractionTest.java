@@ -7,6 +7,7 @@ import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.StringLiteralManipulator;
@@ -19,7 +20,6 @@ import org.intellij.lang.regexp.RegExpLanguage;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Objects;
 
 public class TextExtractionTest extends BasePlatformTestCase {
   public void testMarkdownInlineLink() {
@@ -44,15 +44,17 @@ public class TextExtractionTest extends BasePlatformTestCase {
     String text = extractText("a.java", "//Hello. I are a very humble\n//persons.\n\nclass C {}", 4).toString();
     assertTrue(text, text.matches("Hello\\. I are a very humble\\spersons\\."));
 
-    assertEquals("First line. Third line.", extractText("a.java",
+    assertEquals("First line.\nThird line.", extractText("a.java",
       "// First line.\n" +
       "// \n" +
       "//   Third line.\n"
       , 4).toString());
 
     text = "//1\n//2\n//3\n//4";
-    assertEquals("1 2 3 4", extractText("a.java", text, text.indexOf("1")).toString());
-    assertEquals("1 2 3 4", extractText("a.java", text, text.indexOf("3")).toString());
+    PsiFile file = PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", JavaFileType.INSTANCE, text);
+    TextContent tc = TextExtractor.findTextAt(file, text.indexOf("1"), TextContent.TextDomain.ALL);
+    assertEquals("1\n2\n3\n4", tc.toString());
+    assertEquals(tc, TextExtractor.findTextAt(file, text.indexOf("3"), TextContent.TextDomain.ALL));
   }
 
   public void testIgnorePropertyCommentStarts() {
@@ -60,7 +62,8 @@ public class TextExtractionTest extends BasePlatformTestCase {
   }
 
   public void testProcessPropertyMessageFormat() {
-    assertEquals("Hello World '|'!", TextContentTest.unknownOffsets(extractText("a.properties", "a=Hello World ''{0}''!", 4)));
+    String text = "a=Hello World ''{0}''!";
+    assertEquals("Hello World '|'!", TextContentTest.unknownOffsets(extractText("a.properties", text, text.length())));
   }
 
   public void testBrokenPropertyMessageFormat() {
@@ -68,11 +71,11 @@ public class TextExtractionTest extends BasePlatformTestCase {
   }
 
   public void testExcludePropertyHtml() {
-    assertEquals("Hello |World", TextContentTest.unknownOffsets(extractText("a.properties", "a=<html>Hello <p/>World</html>", 4)));
+    assertEquals("Hello |World", TextContentTest.unknownOffsets(extractText("a.properties", "a=<html>Hello <p/>World</html>", 8)));
   }
 
   public void testMultiLineCommentInProperties() {
-    assertEquals("line1 line2", TextContentTest.unknownOffsets(extractText("a.properties", "# line1\n! line2", 4)));
+    assertEquals("line1\nline2", TextContentTest.unknownOffsets(extractText("a.properties", "# line1\n! line2", 4)));
   }
 
   public void testJavadoc() {
@@ -135,8 +138,14 @@ public class TextExtractionTest extends BasePlatformTestCase {
 
     String text = "class C { String s = \" abc def xxx \"; }";
     PsiFile file = PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", JavaFileType.INSTANCE, text, 0, true);
-    PsiElement leaf = file.findElementAt(text.indexOf("def"));
-    assertNull(TextExtractor.findTextAt(Objects.requireNonNull(leaf), TextContent.TextDomain.ALL));
+    assertNull(TextExtractor.findTextAt(file, text.indexOf("def"), TextContent.TextDomain.ALL));
+  }
+
+  public void testSplitPlainTextByParagraphsForMoreGranularChecking() {
+    PsiFile file = PsiFileFactory.getInstance(getProject()).createFileFromText(
+      "a.txt", PlainTextFileType.INSTANCE, " First paragraph  \n  \n \t Second paragraph\n\n\n");
+    assertEquals("First paragraph", TextExtractor.findTextAt(file, 2, TextContent.TextDomain.ALL).toString());
+    assertEquals("Second paragraph", TextExtractor.findTextAt(file, 40, TextContent.TextDomain.ALL).toString());
   }
 
   public void testXmlHtml() {
@@ -189,7 +198,6 @@ public class TextExtractionTest extends BasePlatformTestCase {
   public static TextContent extractText(String fileName, String fileText, int offset, Project project) {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
     PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, fileType, fileText);
-    PsiElement leaf = file.findElementAt(offset);
-    return TextExtractor.findTextAt(Objects.requireNonNull(leaf), TextContent.TextDomain.ALL);
+    return TextExtractor.findTextAt(file, offset, TextContent.TextDomain.ALL);
   }
 }

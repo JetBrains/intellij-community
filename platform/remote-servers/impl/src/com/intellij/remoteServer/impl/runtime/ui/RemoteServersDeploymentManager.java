@@ -13,6 +13,7 @@ import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServerListener;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.impl.runtime.ui.RemoteServersServiceViewContributor.RemoteServerNodeServiceViewContributor;
+import com.intellij.remoteServer.impl.runtime.ui.tree.ServerTreeNodeExpander;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNodeSelector;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure.RemoteServerNode;
 import com.intellij.remoteServer.runtime.*;
@@ -36,16 +37,16 @@ public final class RemoteServersDeploymentManager {
   }
 
   private final Project myProject;
-  private final ServersTreeNodeSelector myNodeSelector;
+  private final ServersTreeNodeManipulator myNodeManipulator;
   private final Map<RemoteServersServiceViewContributor, Boolean> myContributors = CollectionFactory.createConcurrentWeakMap();
   private final Map<RemoteServer<?>, MessagePanel> myServerToContent = new HashMap<>();
 
   public RemoteServersDeploymentManager(@NotNull Project project) {
     myProject = project;
-    myNodeSelector = new ServersTreeNodeSelectorImpl(project);
+    myNodeManipulator = new ServersTreeNodeManipulator(project);
     initListeners();
     RemoteServersView.getInstance(project)
-      .registerTreeNodeSelector(myNodeSelector, connection -> myContributors.keySet().stream()
+      .registerTreeNodeSelector(myNodeManipulator, connection -> myContributors.keySet().stream()
         .anyMatch(contributor -> contributor.accept(connection.getServer())));
   }
 
@@ -135,8 +136,13 @@ public final class RemoteServersDeploymentManager {
   }
 
   @NotNull
+  public ServerTreeNodeExpander getNodeExpander() {
+    return myNodeManipulator;
+  }
+
+  @NotNull
   public ServersTreeNodeSelector getNodeSelector() {
-    return myNodeSelector;
+    return myNodeManipulator;
   }
 
   public JComponent getServerContent(RemoteServer<?> server) {
@@ -199,10 +205,10 @@ public final class RemoteServersDeploymentManager {
     JComponent getComponent();
   }
 
-  private static class ServersTreeNodeSelectorImpl implements ServersTreeNodeSelector {
+  private static class ServersTreeNodeManipulator implements ServersTreeNodeSelector, ServerTreeNodeExpander {
     private final Project myProject;
 
-    ServersTreeNodeSelectorImpl(Project project) {
+    ServersTreeNodeManipulator(Project project) {
       myProject = project;
     }
 
@@ -234,6 +240,17 @@ public final class RemoteServersDeploymentManager {
       AbstractTreeNode<?> deploymentNode = findDeployment(contributor, connection, deploymentName);
       if (deploymentNode != null) {
         contributor.selectLog(deploymentNode, logName);
+      }
+    }
+
+    @Override
+    public void expand(@NotNull ServerConnection<?> connection, @NotNull String deploymentName) {
+      RemoteServersServiceViewContributor contributor = getInstance(myProject).findContributor(connection.getServer());
+      if (contributor == null) return;
+
+      AbstractTreeNode<?> deploymentNode = findDeployment(contributor, connection, deploymentName);
+      if (deploymentNode != null) {
+        ServiceViewManager.getInstance(myProject).expand(deploymentNode, contributor.getClass());
       }
     }
 

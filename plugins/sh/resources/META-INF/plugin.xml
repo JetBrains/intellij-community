@@ -8,6 +8,7 @@
   <content>
     <module name="intellij.sh/terminal"/>
     <module name="intellij.sh/copyright"/>
+    <module name="intellij.sh/markdown"/>
   </content>
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>

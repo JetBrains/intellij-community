@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+# Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 ### See plugins/remote-dev-server/bin/launcher.sh for actual launcher code
 
@@ -15,4 +15,4 @@ if [ ! -f "$REMOTE_DEV_SERVER_LAUNCHER_PATH" ]; then
   exit 1
 fi
 
-exec "$REMOTE_DEV_SERVER_DIR/launcher.sh" "__script_name__" "$@"
+exec "$REMOTE_DEV_SERVER_LAUNCHER_PATH" "__script_name__" "$@"

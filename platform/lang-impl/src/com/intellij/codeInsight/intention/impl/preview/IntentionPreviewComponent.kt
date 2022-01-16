@@ -23,13 +23,14 @@ internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(Bord
 
   var editors: List<EditorEx> = emptyList()
   val htmlContent = JEditorPane().also { pane -> pane.editorKit = JBHtmlEditorKit() }
+  val htmlScrollPane = JBScrollPane(htmlContent)
 
   val multiPanel: MultiPanel = object : MultiPanel() {
     override fun create(key: Int): JComponent {
       return when (key) {
         NO_PREVIEW -> NO_PREVIEW_LABEL
         LOADING_PREVIEW -> LOADING_LABEL
-        HTML_PREVIEW -> JBScrollPane(htmlContent)
+        HTML_PREVIEW -> htmlScrollPane
         else -> {
           if (editors.isEmpty()) return NO_PREVIEW_LABEL
 

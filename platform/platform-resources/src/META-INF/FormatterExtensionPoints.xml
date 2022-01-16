@@ -51,6 +51,6 @@
 
     <extensionPoint name="fileSetDescriptorFactory" interface="com.intellij.formatting.fileSet.FileSetDescriptorFactory" dynamic="true"/>
 
-    <extensionPoint name="formatOnSaveOptions.defaultsProvider" interface="com.intellij.codeInsight.actions.onSave.FormatOnSaveOptions$DefaultsProvider" dynamic="true"/>
+    <extensionPoint name="formatOnSaveOptions.defaultsProvider" interface="com.intellij.codeInsight.actions.onSave.FormatOnSaveOptionsBase$DefaultsProvider" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

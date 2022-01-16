@@ -13,7 +13,7 @@ MISSING: _MISSING_TYPE
 @overload
 def asdict(obj: Any) -> dict[str, Any]: ...
 @overload
-def asdict(obj: Any, *, dict_factory: Callable[[list[Tuple[str, Any]]], _T]) -> _T: ...
+def asdict(obj: Any, *, dict_factory: Callable[[list[tuple[str, Any]]], _T]) -> _T: ...
 @overload
 def astuple(obj: Any) -> Tuple[Any, ...]: ...
 @overload
@@ -77,7 +77,7 @@ class InitVar(Generic[_T]):
 
 def make_dataclass(
     cls_name: str,
-    fields: Iterable[str | Tuple[str, type] | Tuple[str, type, Field[Any]]],
+    fields: Iterable[str | tuple[str, type] | tuple[str, type, Field[Any]]],
     *,
     bases: Tuple[type, ...] = ...,
     namespace: dict[str, Any] | None = ...,

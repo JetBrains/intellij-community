@@ -72,8 +72,7 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
 
   fun check(tokens: Collection<PsiElement>): List<TextProblem> {
     return tokens.flatMap {
-      val text = TextExtractor.findTextAt(it, TextContent.TextDomain.ALL)
-      if (text == null) emptyList() else LanguageToolChecker().check(text)
+      TextExtractor.findTextsAt(it, TextContent.TextDomain.ALL).flatMap { text -> LanguageToolChecker().check(text) }
     }
   }
 }

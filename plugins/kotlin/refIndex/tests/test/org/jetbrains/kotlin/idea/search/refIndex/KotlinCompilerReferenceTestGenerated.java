@@ -87,9 +87,19 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("allWithDefault")
+            public void testAllWithDefault() throws Exception {
+                runTest("testData/compilerIndex/functions/constructors/allWithDefault/");
+            }
+
             @TestMetadata("javaConstructor")
             public void testJavaConstructor() throws Exception {
                 runTest("testData/compilerIndex/functions/constructors/javaConstructor/");
+            }
+
+            @TestMetadata("jvmOverloads")
+            public void testJvmOverloads() throws Exception {
+                runTest("testData/compilerIndex/functions/constructors/jvmOverloads/");
             }
 
             @TestMetadata("nestedPrimaryConstructor")
@@ -370,6 +380,21 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 runTest("testData/compilerIndex/functions/members/function/");
             }
 
+            @TestMetadata("javaAnnotation")
+            public void testJavaAnnotation() throws Exception {
+                runTest("testData/compilerIndex/functions/members/javaAnnotation/");
+            }
+
+            @TestMetadata("javaAnnotationWithCustomName")
+            public void testJavaAnnotationWithCustomName() throws Exception {
+                runTest("testData/compilerIndex/functions/members/javaAnnotationWithCustomName/");
+            }
+
+            @TestMetadata("javaAnnotationWithSeveralParameters")
+            public void testJavaAnnotationWithSeveralParameters() throws Exception {
+                runTest("testData/compilerIndex/functions/members/javaAnnotationWithSeveralParameters/");
+            }
+
             @TestMetadata("javaMethod")
             public void testJavaMethod() throws Exception {
                 runTest("testData/compilerIndex/functions/members/javaMethod/");
@@ -609,14 +634,19 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
-            @TestMetadata("dataClass")
-            public void testDataClass() throws Exception {
-                runTest("testData/compilerIndex/properties/constructorParameter/dataClass/");
+            @TestMetadata("annotation")
+            public void testAnnotation() throws Exception {
+                runTest("testData/compilerIndex/properties/constructorParameter/annotation/");
             }
 
-            @TestMetadata("dataClassWithEscapedName")
-            public void testDataClassWithEscapedName() throws Exception {
-                runTest("testData/compilerIndex/properties/constructorParameter/dataClassWithEscapedName/");
+            @TestMetadata("annotationWithCustomParameter")
+            public void testAnnotationWithCustomParameter() throws Exception {
+                runTest("testData/compilerIndex/properties/constructorParameter/annotationWithCustomParameter/");
+            }
+
+            @TestMetadata("hierarchy")
+            public void testHierarchy() throws Exception {
+                runTest("testData/compilerIndex/properties/constructorParameter/hierarchy/");
             }
 
             @TestMetadata("val")
@@ -624,19 +654,62 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 runTest("testData/compilerIndex/properties/constructorParameter/val/");
             }
 
-            @TestMetadata("valWithComponentFunction")
-            public void testValWithComponentFunction() throws Exception {
-                runTest("testData/compilerIndex/properties/constructorParameter/valWithComponentFunction/");
-            }
-
             @TestMetadata("var")
             public void testVar() throws Exception {
                 runTest("testData/compilerIndex/properties/constructorParameter/var/");
             }
 
+            @TestMetadata("varWithCustomNames")
+            public void testVarWithCustomNames() throws Exception {
+                runTest("testData/compilerIndex/properties/constructorParameter/varWithCustomNames/");
+            }
+
+            @TestMetadata("varWithJvmField")
+            public void testVarWithJvmField() throws Exception {
+                runTest("testData/compilerIndex/properties/constructorParameter/varWithJvmField/");
+            }
+
             @TestMetadata("withoutVal")
             public void testWithoutVal() throws Exception {
                 runTest("testData/compilerIndex/properties/constructorParameter/withoutVal/");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/compilerIndex/properties/constructorParameterFromDataClass")
+        public static class ConstructorParameterFromDataClass extends AbstractKotlinCompilerReferenceTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("componentB")
+            public void testComponentB() throws Exception {
+                runTest("testData/compilerIndex/properties/constructorParameterFromDataClass/componentB/");
+            }
+
+            @TestMetadata("escapedName")
+            public void testEscapedName() throws Exception {
+                runTest("testData/compilerIndex/properties/constructorParameterFromDataClass/escapedName/");
+            }
+
+            @TestMetadata("val")
+            public void testVal() throws Exception {
+                runTest("testData/compilerIndex/properties/constructorParameterFromDataClass/val/");
+            }
+
+            @TestMetadata("var")
+            public void testVar() throws Exception {
+                runTest("testData/compilerIndex/properties/constructorParameterFromDataClass/var/");
+            }
+
+            @TestMetadata("varWithCustomNames")
+            public void testVarWithCustomNames() throws Exception {
+                runTest("testData/compilerIndex/properties/constructorParameterFromDataClass/varWithCustomNames/");
+            }
+
+            @TestMetadata("varWithJvmField")
+            public void testVarWithJvmField() throws Exception {
+                runTest("testData/compilerIndex/properties/constructorParameterFromDataClass/varWithJvmField/");
             }
         }
 
@@ -682,6 +755,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 runTest("testData/compilerIndex/properties/fromCompanion/javaStaticField2/");
             }
 
+            @TestMetadata("lateinit")
+            public void testLateinit() throws Exception {
+                runTest("testData/compilerIndex/properties/fromCompanion/lateinit/");
+            }
+
             @TestMetadata("property")
             public void testProperty() throws Exception {
                 runTest("testData/compilerIndex/properties/fromCompanion/property/");
@@ -697,9 +775,19 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 runTest("testData/compilerIndex/properties/fromCompanion/propertyWithCustomGetterAndSetter/");
             }
 
+            @TestMetadata("propertyWithJvmField")
+            public void testPropertyWithJvmField() throws Exception {
+                runTest("testData/compilerIndex/properties/fromCompanion/propertyWithJvmField/");
+            }
+
             @TestMetadata("variable")
             public void testVariable() throws Exception {
                 runTest("testData/compilerIndex/properties/fromCompanion/variable/");
+            }
+
+            @TestMetadata("variableWithJvmField")
+            public void testVariableWithJvmField() throws Exception {
+                runTest("testData/compilerIndex/properties/fromCompanion/variableWithJvmField/");
             }
         }
 
@@ -894,6 +982,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 runTest("testData/compilerIndex/properties/members/javaField/");
             }
 
+            @TestMetadata("lateinit")
+            public void testLateinit() throws Exception {
+                runTest("testData/compilerIndex/properties/members/lateinit/");
+            }
+
             @TestMetadata("property")
             public void testProperty() throws Exception {
                 runTest("testData/compilerIndex/properties/members/property/");
@@ -909,6 +1002,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 runTest("testData/compilerIndex/properties/members/propertyWithCustomGetterAndSetter/");
             }
 
+            @TestMetadata("propertyWithJvmField")
+            public void testPropertyWithJvmField() throws Exception {
+                runTest("testData/compilerIndex/properties/members/propertyWithJvmField/");
+            }
+
             @TestMetadata("propertyWithReceiver")
             public void testPropertyWithReceiver() throws Exception {
                 runTest("testData/compilerIndex/properties/members/propertyWithReceiver/");
@@ -917,6 +1015,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @TestMetadata("variable")
             public void testVariable() throws Exception {
                 runTest("testData/compilerIndex/properties/members/variable/");
+            }
+
+            @TestMetadata("variableWithJvmField")
+            public void testVariableWithJvmField() throws Exception {
+                runTest("testData/compilerIndex/properties/members/variableWithJvmField/");
             }
 
             @TestMetadata("variableWithReceiver")
@@ -972,6 +1075,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 runTest("testData/compilerIndex/properties/topLevel/isVariableWithCustomFileName/");
             }
 
+            @TestMetadata("lateinit")
+            public void testLateinit() throws Exception {
+                runTest("testData/compilerIndex/properties/topLevel/lateinit/");
+            }
+
             @TestMetadata("property")
             public void testProperty() throws Exception {
                 runTest("testData/compilerIndex/properties/topLevel/property/");
@@ -985,6 +1093,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @TestMetadata("propertyWithCustomGetterAndSetter")
             public void testPropertyWithCustomGetterAndSetter() throws Exception {
                 runTest("testData/compilerIndex/properties/topLevel/propertyWithCustomGetterAndSetter/");
+            }
+
+            @TestMetadata("propertyWithJvmField")
+            public void testPropertyWithJvmField() throws Exception {
+                runTest("testData/compilerIndex/properties/topLevel/propertyWithJvmField/");
             }
 
             @TestMetadata("variable")
@@ -1005,6 +1118,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @TestMetadata("variableWithCustomGetterAndSetterAndMixedJvmName")
             public void testVariableWithCustomGetterAndSetterAndMixedJvmName() throws Exception {
                 runTest("testData/compilerIndex/properties/topLevel/variableWithCustomGetterAndSetterAndMixedJvmName/");
+            }
+
+            @TestMetadata("variableWithJvmField")
+            public void testVariableWithJvmField() throws Exception {
+                runTest("testData/compilerIndex/properties/topLevel/variableWithJvmField/");
             }
 
             @TestMetadata("variableWithJvmNameOnProperty")

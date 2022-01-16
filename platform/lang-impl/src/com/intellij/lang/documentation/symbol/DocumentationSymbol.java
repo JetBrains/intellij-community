@@ -4,11 +4,13 @@ package com.intellij.lang.documentation.symbol;
 import com.intellij.lang.documentation.DocumentationTarget;
 import com.intellij.model.Pointer;
 import com.intellij.model.Symbol;
+import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @see SymbolDocumentationTargetFactory
  */
+@Experimental
 public interface DocumentationSymbol extends Symbol {
 
   @Override

@@ -58,4 +58,6 @@ class ExtractVariableFromBubbleLesson(private val sample: LessonSample)
         }
       }
     }
+
+  override val suitableTips = listOf("IntroduceVariable")
 }

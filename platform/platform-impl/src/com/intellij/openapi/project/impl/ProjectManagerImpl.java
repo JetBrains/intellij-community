@@ -284,6 +284,11 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     return closeProject(project, /* isSaveProject = */ false, /* dispose = */ true, /* checkCanClose = */ false);
   }
 
+  @Override
+  public boolean saveAndForceCloseProject(@NotNull Project project) {
+    return closeProject(project, /* isSaveProject = */ true, /* dispose = */ true, /* checkCanClose = */ false);
+  }
+
   // return true if successful
   @Override
   public boolean closeAndDisposeAllProjects(boolean checkCanClose) {

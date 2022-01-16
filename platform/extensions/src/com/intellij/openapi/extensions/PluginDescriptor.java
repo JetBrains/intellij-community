@@ -12,10 +12,16 @@ import java.nio.file.Path;
 import java.util.Date;
 
 public interface PluginDescriptor {
-  @NotNull
-  PluginId getPluginId();
 
-  ClassLoader getPluginClassLoader();
+  @NotNull PluginId getPluginId();
+
+  @Nullable ClassLoader getPluginClassLoader();
+
+  @ApiStatus.Experimental
+  default @NotNull ClassLoader getClassLoader() {
+    ClassLoader classLoader = getPluginClassLoader();
+    return classLoader != null ? classLoader : getClass().getClassLoader();
+  }
 
   default boolean isBundled() {
     return false;

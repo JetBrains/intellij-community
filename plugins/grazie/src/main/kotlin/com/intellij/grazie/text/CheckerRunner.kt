@@ -171,7 +171,7 @@ internal class CheckerRunner(val text: TextContent) {
     val fixes = problem.corrections
     if (fixes.isNotEmpty()) {
       GrazieFUSCounter.typoFound(problem)
-      result.addAll(GrazieReplaceTypoQuickFix.getReplacementFixes(problem, underline, file))
+      result.addAll(GrazieReplaceTypoQuickFix.getReplacementFixes(problem, underline))
     }
 
     result.addAll(problem.customFixes)

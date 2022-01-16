@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.compilation.cache
 
 import com.google.common.hash.Hashing
@@ -13,7 +13,7 @@ import java.lang.reflect.Type
 import java.nio.charset.StandardCharsets
 
 @CompileStatic
-class SourcesStateProcessor {
+final class SourcesStateProcessor {
   private static final Type SOURCES_STATE_TYPE = new TypeToken<Map<String, Map<String, BuildTargetState>>>() {}.getType()
 
   private static final String SOURCES_STATE_FILE_NAME = 'target_sources_state.json'

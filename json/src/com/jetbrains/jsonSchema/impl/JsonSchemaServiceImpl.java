@@ -100,12 +100,6 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     return myState.getProvider(schemaFile);
   }
 
-  @VisibleForTesting
-  @NotNull
-  public JsonSchemaVfsListener.JsonSchemaUpdater getSchemaUpdater() {
-    return mySchemaUpdater;
-  }
-
   @Nullable
   @Override
   public JsonSchemaFileProvider getSchemaProvider(@NotNull JsonSchemaObject schemaObject) {

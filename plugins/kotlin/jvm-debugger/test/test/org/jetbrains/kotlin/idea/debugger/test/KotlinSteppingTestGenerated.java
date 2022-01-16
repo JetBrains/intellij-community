@@ -1291,14 +1291,14 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/custom/smartStepIntoLambdasOnOneLine.kt");
         }
 
-        @TestMetadata("smartStepIntoNullSafeFunctionCalls.kt")
-        public void testSmartStepIntoNullSafeFunctionCalls() throws Exception {
-            runTest("testData/stepping/custom/smartStepIntoNullSafeFunctionCalls.kt");
-        }
-
         @TestMetadata("smartStepIntoMethodReference.kt")
         public void testSmartStepIntoMethodReference() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoMethodReference.kt");
+        }
+
+        @TestMetadata("smartStepIntoNullSafeFunctionCalls.kt")
+        public void testSmartStepIntoNullSafeFunctionCalls() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoNullSafeFunctionCalls.kt");
         }
 
         @TestMetadata("smartStepIntoPropertyGetterReference.kt")

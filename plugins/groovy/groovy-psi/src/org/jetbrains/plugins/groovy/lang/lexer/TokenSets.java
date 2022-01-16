@@ -40,6 +40,7 @@ import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.SHIFT_
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.TRAIT_TYPE_DEFINITION;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.VARIABLE;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes.RECORD_TYPE_DEFINITION;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
 public interface TokenSets {
@@ -95,7 +96,9 @@ public interface TokenSets {
     mREGEX_LITERAL,
     mDOLLAR_SLASH_REGEX_LITERAL,
     KW_VAR,
-    KW_YIELD
+    KW_YIELD,
+    KW_RECORD,
+    KW_PERMITS
   ));
 
   TokenSet KEYWORDS = TokenSet.create(
@@ -109,7 +112,7 @@ public interface TokenSets {
     kLONG,
     kNATIVE, kNEW, kNON_SEALED, kNULL,
     kPACKAGE, kPERMITS, kPRIVATE, kPROTECTED, kPUBLIC,
-    kRETURN,
+    kRECORD, kRETURN,
     kSEALED, kSHORT, kSTATIC, kSTRICTFP, kSUPER, kSWITCH,
     kSYNCHRONIZED,
     kTHIS, kTHROW, kTHROWS, kTRAIT, kTRANSIENT, kTRUE, kTRY,
@@ -207,7 +210,7 @@ public interface TokenSets {
     .put(mSTAR_STAR_ASSIGN, mSTAR_STAR)
     .build();
 
-  TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(mIDENT, kDEF, kIN, kAS, kTRAIT, kVAR, kYIELD);
+  TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(mIDENT, kDEF, kIN, kAS, kTRAIT, kVAR, kYIELD, kRECORD);
 
   TokenSet BLOCK_SET =
     TokenSet.create(CLOSABLE_BLOCK, BLOCK_STATEMENT, CONSTRUCTOR_BODY, OPEN_BLOCK, OPEN_BLOCK_SWITCH_AWARE, CLOSABLE_BLOCK_SWITCH_AWARE, ENUM_BODY, CLASS_BODY, BLOCK_LAMBDA_BODY, BLOCK_LAMBDA_BODY_SWITCH_AWARE);
@@ -220,6 +223,7 @@ public interface TokenSets {
 
   TokenSet TYPE_DEFINITIONS = TokenSet.create(
     CLASS_TYPE_DEFINITION,
+    RECORD_TYPE_DEFINITION,
     ENUM_TYPE_DEFINITION,
     INTERFACE_TYPE_DEFINITION,
     ANNOTATION_TYPE_DEFINITION,

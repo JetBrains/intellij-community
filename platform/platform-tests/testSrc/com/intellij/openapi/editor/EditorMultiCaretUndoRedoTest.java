@@ -24,7 +24,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.testFramework.TestFileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 
 public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
   private CurrentEditorProvider mySavedCurrentEditorProvider;
@@ -130,7 +130,7 @@ public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
   }
 
   private void init(String text) {
-    init(text, TestFileType.TEXT);
+    init(text, PlainTextFileType.INSTANCE);
     setEditorVisibleSize(1000, 1000);
     getUndoManager().setEditorProvider(new CurrentEditorProvider() {
       @Override

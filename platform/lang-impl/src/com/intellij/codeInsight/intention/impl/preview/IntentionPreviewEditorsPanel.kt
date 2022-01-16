@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
+import java.awt.Dimension
 import javax.swing.BoxLayout
 import javax.swing.JPanel
 

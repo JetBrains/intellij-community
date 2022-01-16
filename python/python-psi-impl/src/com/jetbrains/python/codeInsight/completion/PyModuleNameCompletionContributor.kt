@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.TestOnly
  * Adds completion variants for modules and packages, inserts a dot after and calls completion on the result,
  * see [PyUnresolvedModuleAttributeCompletionContributor]
  */
-class PyModuleNameCompletionContributor : CompletionContributor() {
+class PyModuleNameCompletionContributor : CompletionContributor(), DumbAware {
 
   companion object {
     // temporary solution for tests that are not prepared for module name completion firing everywhere

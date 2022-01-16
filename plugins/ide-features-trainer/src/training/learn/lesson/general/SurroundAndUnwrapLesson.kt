@@ -100,4 +100,6 @@ abstract class SurroundAndUnwrapLesson
       else null
     }
   }
+
+  override val suitableTips = listOf("SurroundWith")
 }

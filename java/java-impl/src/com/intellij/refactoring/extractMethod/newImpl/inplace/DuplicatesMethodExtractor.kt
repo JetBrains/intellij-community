@@ -10,6 +10,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.extractMethod.SignatureSuggesterPreviewDialog
@@ -69,8 +70,12 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     val finder = duplicatesFinder ?: return
     val calls = callsToReplace?.map { it.element!! } ?: return
     val options = extractOptions ?: return
-    var duplicates = finder.findDuplicates(method.containingClass ?: file)
-      .filterNot { findParentMethod(it.candidate.first()) == method }
+    var duplicates = finder
+      .findDuplicates(method.containingClass ?: file)
+      .filterNot { duplicate ->
+        findParentMethod(duplicate.candidate.first()) == method || areElementsIntersected(duplicate.candidate, calls)
+      }
+
     //TODO check same data output
     //TODO check same flow output (+ same return values)
 
@@ -128,6 +133,18 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
         MethodExtractor().replace(duplicate.candidate, callElements)
       }
     }
+  }
+
+  private fun areElementsIntersected(firstElements: List<PsiElement>, secondElements: List<PsiElement>): Boolean {
+    if (firstElements.isEmpty() || secondElements.isEmpty()) {
+      return false
+    }
+    if (firstElements.first().containingFile != secondElements.first().containingFile) {
+      return false
+    }
+    val firstRange = TextRange(firstElements.first().textRange.startOffset, firstElements.last().textRange.endOffset)
+    val secondRange = TextRange(secondElements.first().textRange.startOffset, secondElements.last().textRange.endOffset)
+    return firstRange.intersects(secondRange)
   }
 
   private val isSilentMode = ApplicationManager.getApplication().isUnitTestMode

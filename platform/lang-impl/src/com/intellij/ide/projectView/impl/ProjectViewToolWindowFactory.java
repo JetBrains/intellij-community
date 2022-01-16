@@ -5,6 +5,9 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.util.RunOnceUtil;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.module.GeneralModuleType;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -39,6 +42,11 @@ public final class ProjectViewToolWindowFactory implements ToolWindowFactory, Du
           manager.invokeLater(() -> {
             if (null == manager.getActiveToolWindowId()) {
               window.activate(() -> {
+                Module[] modules = ModuleManager.getInstance(project).getModules();
+                if (modules.length == 1 && GeneralModuleType.TYPE_ID.equals(modules[0].getModuleTypeName()))
+                {
+                  return;
+                }
                 AbstractProjectViewPane pane = ProjectView.getInstance(project).getCurrentProjectViewPane();
                 JTree tree = pane == null ? null : pane.getTree();
                 if (tree != null) TreeUtil.promiseSelectFirst(tree).onSuccess(tree::expandPath);
@@ -48,5 +56,9 @@ public final class ProjectViewToolWindowFactory implements ToolWindowFactory, Du
         });
       }
     }
+  }
+
+  private void showTooltipForEmptyProject(Project project) {
+//    new GotItTooltip("", "", null).withShortcut()
   }
 }

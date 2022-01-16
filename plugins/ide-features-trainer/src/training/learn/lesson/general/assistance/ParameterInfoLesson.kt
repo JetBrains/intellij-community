@@ -41,4 +41,6 @@ class ParameterInfoLesson(private val sample: LessonSample) :
     val partOfSequence = sequence.subSequence(caretOffset, min(caretOffset + 20, sequence.length))
     return partOfSequence.matches(parametersRegex)
   }
+
+  override val suitableTips = listOf("ParameterInfo")
 }

@@ -329,6 +329,7 @@ public final class DiffUtil {
 
   public static void moveCaret(@Nullable final Editor editor, int line) {
     if (editor == null) return;
+    editor.getSelectionModel().removeSelection();
     editor.getCaretModel().removeSecondaryCarets();
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, 0));
   }
@@ -339,6 +340,7 @@ public final class DiffUtil {
 
   public static void scrollEditor(@Nullable final Editor editor, int line, int column, boolean animated) {
     if (editor == null) return;
+    editor.getSelectionModel().removeSelection();
     editor.getCaretModel().removeSecondaryCarets();
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, column));
     scrollToCaret(editor, animated);
@@ -374,6 +376,7 @@ public final class DiffUtil {
   public static void moveCaretToLineRangeIfNeeded(@NotNull Editor editor, int startLine, int endLine) {
     int caretLine = editor.getCaretModel().getLogicalPosition().line;
     if (!isSelectedByLine(caretLine, startLine, endLine)) {
+      editor.getSelectionModel().removeSelection();
       editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(startLine, 0));
     }
   }

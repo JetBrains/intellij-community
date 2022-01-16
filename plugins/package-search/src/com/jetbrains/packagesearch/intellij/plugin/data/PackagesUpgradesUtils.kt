@@ -23,12 +23,13 @@ internal fun computePackageUpgrades(
 
             val normalizedPackageVersion = NormalizedPackageVersion.parseFrom(currentVersion)
             val upgradeVersion = PackageVersionUtils.upgradeCandidateVersionOrNull(normalizedPackageVersion, availableVersions)
-            if (upgradeVersion != null) {
+            if (upgradeVersion != null && upgradeVersion.originalVersion is PackageVersion.Named) {
+                @Suppress("UNCHECKED_CAST") // The if guards us against cast errors
                 updatesByModule.getOrCreate(usageInfo.projectModule.nativeModule) { mutableSetOf() } +=
                     PackagesToUpgrade.PackageUpgradeInfo(
                         installedPackageModel,
                         usageInfo,
-                        upgradeVersion.originalVersion
+                        upgradeVersion as NormalizedPackageVersion<PackageVersion.Named>
                     )
             }
         }

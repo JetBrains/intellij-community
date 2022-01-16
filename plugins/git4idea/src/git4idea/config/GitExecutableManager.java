@@ -146,6 +146,7 @@ public class GitExecutableManager {
     }
   }
 
+  @RequiresBackgroundThread
   public void dropExecutableCache() {
     myExecutableDetector.clear();
   }

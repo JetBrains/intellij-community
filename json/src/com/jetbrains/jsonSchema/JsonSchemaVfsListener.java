@@ -4,6 +4,7 @@ package com.jetbrains.jsonSchema;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.json.JsonFileType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
@@ -23,19 +24,16 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
-import com.intellij.util.ui.UIUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Irina.Chernushina on 3/30/2016.
@@ -134,14 +132,14 @@ public final class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter 
     protected void onFileChange(@NotNull final VirtualFile schemaFile) {
       if (JsonFileType.DEFAULT_EXTENSION.equals(schemaFile.getExtension())) {
         myDirtySchemas.add(schemaFile);
-        myUpdater.queue(myRunnable);
+        Application app = ApplicationManager.getApplication();
+        if (app.isUnitTestMode()) {
+          app.invokeLater(myRunnable, myProject.getDisposed());
+        }
+        else {
+          myUpdater.queue(myRunnable);
+        }
       }
-    }
-
-    @TestOnly
-    public void waitForAllExecuted() {
-      UIUtil.dispatchAllInvocationEvents();
-      myUpdater.waitForAllExecuted(DELAY_MS * 2, TimeUnit.MILLISECONDS);
     }
   }
 }

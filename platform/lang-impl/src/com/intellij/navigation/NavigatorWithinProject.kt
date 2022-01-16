@@ -81,9 +81,7 @@ fun openProject(parameters: Map<String, String>): CompletableFuture<Project?> {
             if (project.isDisposed) result.complete(null)
             else {
               StartupManager.getInstance(project).runAfterOpened {
-                DumbService.getInstance(project).runWhenSmart {
-                  result.complete(project)
-                }
+                result.complete(project)
               }
             }
           }, ModalityState.NON_MODAL)

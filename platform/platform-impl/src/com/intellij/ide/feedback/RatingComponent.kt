@@ -38,6 +38,10 @@ class RatingComponent : JComponent() {
         if (rating != oldRating) {
           firePropertyChange(RATING_PROPERTY, oldRating, rating)
         }
+        else {
+          rating = 0
+          firePropertyChange(RATING_PROPERTY, oldRating, 0)
+        }
       }
     })
 
@@ -55,7 +59,7 @@ class RatingComponent : JComponent() {
   private fun ratingFromPoint(e: MouseEvent) = (e.x / (myIconSize + myIconGap) + 1).coerceAtMost(myIconCount)
 
   override fun getPreferredSize(): Dimension {
-    return Dimension(myIconCount * myIconSize + myIconGap * (myIconSize - 1), myIconSize)
+    return Dimension(myIconSize * myIconCount + myIconGap * (myIconCount - 2), myIconSize)
   }
 
   override fun getMinimumSize(): Dimension {

@@ -9,6 +9,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.psi.SyntaxTraverser
+import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
@@ -94,14 +95,14 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val context = dummyContextFile()
         val variable = uastElementFactory.createLocalVariable(
             "a", PsiType.INT, uastElementFactory.createNullLiteral(context), false, context
-        ) ?: kfail("cannot create variable")
+        )
 
         val reference = uastElementFactory.createSimpleReference(variable, context) ?: kfail("cannot create reference")
         TestCase.assertEquals("a", reference.identifier)
     }
 
     fun `test simple reference by name`() {
-        val reference = uastElementFactory.createSimpleReference("a", dummyContextFile()) ?: kfail("cannot create reference")
+        val reference = uastElementFactory.createSimpleReference("a", dummyContextFile())
         TestCase.assertEquals("a", reference.identifier)
     }
 
@@ -118,7 +119,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val expression = psiFactory.createExpression("a + b").toUElementOfType<UExpression>()
             ?: kfail("Cannot find plugin")
 
-        val returnExpression = uastElementFactory.createReturnExpresion(expression, false, dummyContextFile()) ?: kfail("cannot create return expression")
+        val returnExpression = uastElementFactory.createReturnExpresion(expression, false, dummyContextFile())
         TestCase.assertEquals("a + b", returnExpression.returnExpression?.asRenderString())
         TestCase.assertEquals("return a + b", returnExpression.sourcePsi?.text)
     }
@@ -127,7 +128,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val expression = psiFactory.createExpression("1 + 2").toUElementOfType<UExpression>()
             ?: kfail("cannot create variable declaration")
 
-        val declaration = uastElementFactory.createLocalVariable("a", null, expression, false, dummyContextFile()) ?: kfail("cannot create variable")
+        val declaration = uastElementFactory.createLocalVariable("a", null, expression, false, dummyContextFile())
 
         TestCase.assertEquals("var a = 1 + 2", declaration.sourcePsi?.text)
     }
@@ -136,7 +137,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val expression = psiFactory.createExpression("b").toUElementOfType<UExpression>()
             ?: kfail("cannot create variable declaration")
 
-        val declaration = uastElementFactory.createLocalVariable("a", PsiType.DOUBLE, expression, false, dummyContextFile()) ?: kfail("cannot create variable")
+        val declaration = uastElementFactory.createLocalVariable("a", PsiType.DOUBLE, expression, false, dummyContextFile())
 
         TestCase.assertEquals("var a: kotlin.Double = b", declaration.sourcePsi?.text)
     }
@@ -146,7 +147,6 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
             ?: kfail("cannot create variable declaration")
 
         val declaration = uastElementFactory.createLocalVariable("a", PsiType.DOUBLE, expression, true, dummyContextFile())
-            ?: kfail("cannot create variable")
 
         TestCase.assertEquals("val a: kotlin.Double = b", declaration.sourcePsi?.text)
     }
@@ -156,7 +156,6 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
             ?: kfail("cannot create variable declaration")
 
         val declaration = uastElementFactory.createLocalVariable("a", PsiType.DOUBLE, expression, true, dummyContextFile())
-            ?: kfail("cannot create variable")
 
         TestCase.assertEquals("val a: kotlin.Double = b", declaration.sourcePsi?.text)
         TestCase.assertEquals("""
@@ -171,7 +170,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val statement2 = psiFactory.createExpression("System.out.println(2)").toUElementOfType<UExpression>()
             ?: kfail("cannot create statement")
 
-        val block = uastElementFactory.createBlockExpression(listOf(statement1, statement2), dummyContextFile()) ?: kfail("cannot create block")
+        val block = uastElementFactory.createBlockExpression(listOf(statement1, statement2), dummyContextFile())
 
         TestCase.assertEquals("""
                 {
@@ -275,7 +274,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val r = psiFactory.createExpression("return \"10\"").toUElementOfType<UExpression>()
             ?: kfail("cannot create return")
 
-        val block = uastElementFactory.createBlockExpression(listOf(r), dummyContextFile()) ?: kfail("cannot create block")
+        val block = uastElementFactory.createBlockExpression(listOf(r), dummyContextFile())
 
         val lambda = uastElementFactory.createLambdaExpression(listOf(UParameterInfo(null, "a")), block, dummyContextFile())
             ?: kfail("cannot create lambda")
@@ -326,7 +325,6 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val expression = psiFactory.createExpression("f(a) + 1").toUElementOfType<UExpression>()
             ?: kfail("cannot create expression")
         val variable = uastElementFactory.createLocalVariable(null, PsiType.INT, expression, true, dummyContextFile())
-            ?: kfail("cannot create variable")
 
         TestCase.assertEquals("val i: kotlin.Int = f(a) + 1", variable.sourcePsi?.text)
         TestCase.assertEquals("""
@@ -413,8 +411,8 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
             UastCallKind.METHOD_CALL,
             dummyContextFile()
         ) ?: kfail("cannot create call")
-        TestCase.assertEquals("emptyMap<kotlin.String, kotlin.Int>()", methodCall.sourcePsi?.text)
-        TestCase.assertEquals("java.util.Collections.emptyMap<kotlin.String, kotlin.Int>()", methodCall.sourcePsi?.parent?.text)
+        TestCase.assertEquals("emptyMap<kotlin.String,kotlin.Int>()", methodCall.sourcePsi?.text)
+        TestCase.assertEquals("java.util.Collections.emptyMap<kotlin.String,kotlin.Int>()", methodCall.sourcePsi?.parent?.text)
         TestCase.assertEquals(
             """
             UQualifiedReferenceExpression
@@ -425,7 +423,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
                     USimpleNameReferenceExpression (identifier = Collections)
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                     UIdentifier (Identifier (emptyMap))
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                    USimpleNameReferenceExpression (identifier = emptyMap, resolvesTo = null)
                     """.trimIndent(), methodCall.uastParent?.asRecursiveLogString()?.trim()
         )
     }
@@ -449,7 +447,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
             dummyContextFile()
         ) ?: kfail("cannot create call")
 
-        TestCase.assertEquals("A.kek<kotlin.String, kotlin.Int>(\"a\")", methodCall.sourcePsi?.parent?.text)
+        TestCase.assertEquals("A.kek<kotlin.String,kotlin.Int>(\"a\")", methodCall.sourcePsi?.parent?.text)
         TestCase.assertEquals(
             """
             UQualifiedReferenceExpression
@@ -542,10 +540,49 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
             USimpleNameReferenceExpression (identifier = a)
             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                 UIdentifier (Identifier (method))
-                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                USimpleNameReferenceExpression (identifier = method, resolvesTo = null)
         """.trimIndent(), callExpression.uastParent?.asRecursiveLogString()?.trim()
         )
+    }
 
+    fun `test method call generation without generics with context`() {
+        val file = myFixture.configureByText("file.kt", """
+            class A {
+                fun <T> method(t: T): List<T> { TODO() }
+            }
+
+            fun main(){
+               val a = A()
+               println(a)
+            }
+        """.trimIndent()
+        ) as KtFile
+
+        val reference = file.findUElementByTextFromPsi<UElement>("println(a)")
+            .findElementByTextFromPsi<UReferenceExpression>("a")
+
+        val callExpression = uastElementFactory.createCallExpression(
+            reference,
+            "method",
+            listOf(uastElementFactory.createIntLiteral(1, null)),
+            createTypeFromText(
+                "java.util.List<java.lang.Integer>",
+                null
+            ),
+            UastCallKind.METHOD_CALL,
+            context = reference.sourcePsi
+        ) ?: kfail("cannot create method call")
+
+        TestCase.assertEquals("a.method(1)", callExpression.uastParent?.sourcePsi?.text)
+        TestCase.assertEquals("""
+            UQualifiedReferenceExpression
+                USimpleNameReferenceExpression (identifier = a)
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                    UIdentifier (Identifier (method))
+                    USimpleNameReferenceExpression (identifier = method, resolvesTo = null)
+                    ULiteralExpression (value = 1)
+        """.trimIndent(), callExpression.uastParent?.asRecursiveLogString()?.trim()
+        )
     }
 
 
@@ -570,7 +607,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         UsefulTestCase.assertSize(3, expressions)
 
         val uReturnExpression = expressions.last() as UReturnExpression
-        val newStringLiteral = uastElementFactory.createStringLiteralExpression("def", file) ?: kfail("cannot create method call")
+        val newStringLiteral = uastElementFactory.createStringLiteralExpression("def", file)
 
         val defReturn = runWriteCommand { uReturnExpression.replace(newStringLiteral) ?: kfail("cant replace") }
         val uLambdaExpression2 = defReturn.getParentOfType<ULambdaExpression>() ?: kfail("cant get lambda")
@@ -646,15 +683,15 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val conditionalExit = with(uastElementFactory) {
             createIfExpression(
                 createBinaryExpression(
-                    createSimpleReference("it", uLambdaExpression.sourcePsi)!!,
+                    createSimpleReference("it", uLambdaExpression.sourcePsi),
                     createIntLiteral(3, uLambdaExpression.sourcePsi),
                     UastBinaryOperator.GREATER,
                     uLambdaExpression.sourcePsi
                 )!!,
                 createReturnExpresion(
-                    createStringLiteralExpression("exit", uLambdaExpression.sourcePsi)!!, true,
+                    createStringLiteralExpression("exit", uLambdaExpression.sourcePsi), true,
                     uLambdaExpression.sourcePsi
-                )!!,
+                ),
                 null,
                 uLambdaExpression.sourcePsi
             )!!
@@ -663,7 +700,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val newBlockExpression = uastElementFactory.createBlockExpression(
             listOf(conditionalExit) + oldBlockExpression.expressions,
             uLambdaExpression.sourcePsi
-        )!!
+        )
 
         aliveChecker.checkUserDataAlive(newBlockExpression)
 
@@ -739,16 +776,16 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
                 listOf(UParameterInfo(null, "it")),
                 createIfExpression(
                     createBinaryExpression(
-                        createSimpleReference("it", uLambdaExpression.sourcePsi)!!,
+                        createSimpleReference("it", uLambdaExpression.sourcePsi),
                         createIntLiteral(3, uLambdaExpression.sourcePsi),
                         UastBinaryOperator.GREATER,
                         uLambdaExpression.sourcePsi
                     )!!,
                     oldBlockExpression,
                     createReturnExpresion(
-                        createStringLiteralExpression("exit", uLambdaExpression.sourcePsi)!!, true,
+                        createStringLiteralExpression("exit", uLambdaExpression.sourcePsi), true,
                         uLambdaExpression.sourcePsi
-                    )!!,
+                    ),
                     uLambdaExpression.sourcePsi
                 )!!.also {
                     aliveChecker.checkUserDataAlive(it)
@@ -860,14 +897,12 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
     fun `test build lambda from returning a variable`() {
         val context = dummyContextFile()
         val localVariable = uastElementFactory.createLocalVariable("a", null, uastElementFactory.createNullLiteral(context), true, context)
-            ?: kfail("cannot create variable")
         val declarationExpression =
-            uastElementFactory.createDeclarationExpression(listOf(localVariable), context) ?: kfail("cannot create declaration expression")
+            uastElementFactory.createDeclarationExpression(listOf(localVariable), context)
         val returnExpression = uastElementFactory.createReturnExpresion(
             uastElementFactory.createSimpleReference(localVariable, context), false, context
-        ) ?: kfail("cannot create return expression")
+        )
         val block = uastElementFactory.createBlockExpression(listOf(declarationExpression, returnExpression), context)
-            ?: kfail("cannot create block expression")
 
         TestCase.assertEquals("""
             UBlockExpression
@@ -901,8 +936,8 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
             createLambdaExpression(
                 parameters,
                 createBinaryExpression(
-                    createSimpleReference("a", context)!!,
-                    createSimpleReference("a", context)!!,
+                    createSimpleReference("a", context),
+                    createSimpleReference("a", context),
                     UastBinaryOperator.PLUS, context
                 )!!, context
             )!!
@@ -918,7 +953,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
                         createCallExpression(
                             null,
                             "println",
-                            listOf(createSimpleReference("a", context)!!),
+                            listOf(createSimpleReference("a", context)),
                             PsiType.VOID,
                             UastCallKind.METHOD_CALL,
                             context
@@ -926,7 +961,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
                         lambdaReturn
                     ),
                     context
-                )!!, context
+                ), context
             )!!
         }
 
@@ -948,7 +983,65 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent(), lambda.putIntoVarInitializer().asRecursiveLogString().trim())
     }
 
-    private fun createTypeFromText(s: String, newClass: PsiElement?): PsiType? {
+    fun `test moving lambda from parenthesis`() {
+        myFixture.configureByText("myFile.kt", """
+            fun a(p: (Int) -> Unit) {}
+        """.trimIndent())
+
+
+        val lambdaExpression = uastElementFactory.createLambdaExpression(
+            emptyList(),
+            uastElementFactory.createNullLiteral(null),
+            null
+        ) ?: kfail("Cannot create lambda")
+
+        val callExpression = uastElementFactory.createCallExpression(
+            null,
+            "a",
+            listOf(lambdaExpression),
+            null,
+            UastCallKind.METHOD_CALL,
+            myFixture.file
+        ) ?: kfail("Cannot create method call")
+
+        TestCase.assertEquals("""a{ null }""", callExpression.sourcePsi?.text)
+    }
+
+    fun `test saving space after receiver`() {
+        myFixture.configureByText("myFile.kt", """
+            fun f() {
+                a
+                    .b()
+                    .c<caret>()
+                    .d()
+            }
+        """.trimIndent())
+
+        val receiver =
+            myFixture.file.findElementAt(myFixture.caretOffset)?.parentOfType<KtDotQualifiedExpression>().toUElementOfType<UExpression>()
+                ?: kfail("Cannot find UExpression")
+
+        val callExpression = uastElementFactory.createCallExpression(
+            receiver,
+            "e",
+            listOf(),
+            null,
+            UastCallKind.METHOD_CALL,
+            null
+        ) ?: kfail("Cannot create call expression")
+
+        TestCase.assertEquals(
+            """
+                a
+                        .b()
+                        .c()
+                        .e()
+            """.trimIndent(),
+            callExpression.sourcePsi?.parentOfType<KtDotQualifiedExpression>()?.text
+        )
+    }
+
+    private fun createTypeFromText(s: String, newClass: PsiElement?): PsiType {
         return JavaPsiFacade.getElementFactory(myFixture.project).createTypeFromText(s, newClass)
     }
 

@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -31,16 +32,21 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -498,10 +504,69 @@ public final class EditorTestUtil {
         assertEquals(messageSuffix + caretDescription + "unexpected selection end", expectedSelectionEnd, actualSelectionEnd);
       }
       else {
-        assertFalse(messageSuffix + caretDescription + "should has no selection, but was: (" + actualSelectionStart + ", " + actualSelectionEnd + ")",
-                    currentCaret.hasSelection());
+        assertFalse(
+          messageSuffix + caretDescription + "should has no selection, but was: (" + actualSelectionStart + ", " + actualSelectionEnd + ")",
+          currentCaret.hasSelection());
       }
     }
+  }
+
+  /**
+   * Runs syntax highlighter for the {@code testFile}, serializes highlighting results and comparing them with file from {@code answerFilePath}
+   *
+   * @param allowUnhandledTokens allows to have tokens without highlighting
+   */
+  public static void testFileSyntaxHighlighting(@NotNull PsiFile testFile, @NotNull String answerFilePath, boolean allowUnhandledTokens) {
+    TestCase.assertNotNull("Fixture has no file", testFile);
+    final SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(testFile.getFileType(),
+                                                                                              testFile.getProject(),
+                                                                                              testFile.getVirtualFile());
+    TestCase.assertNotNull("Syntax highlighter not found", syntaxHighlighter);
+    final Lexer highlightingLexer = syntaxHighlighter.getHighlightingLexer();
+    TestCase.assertNotNull("Highlighting lexer not found", highlightingLexer);
+
+    final String fileText = testFile.getText();
+    highlightingLexer.start(fileText);
+    IElementType tokenType;
+    final StringBuilder sb = new StringBuilder();
+    Set<IElementType> notHighlightedTokens = new HashSet<>();
+    while ((tokenType = highlightingLexer.getTokenType()) != null) {
+      final TextAttributesKey[] highlights = syntaxHighlighter.getTokenHighlights(tokenType);
+      if (highlights.length > 0) {
+        if (sb.length() > 0) {
+          sb.append("\n");
+        }
+        String token = fileText.substring(highlightingLexer.getTokenStart(), highlightingLexer.getTokenEnd());
+        token = token.replace(' ', '␣');
+        if (StringUtil.isEmptyOrSpaces(token)) {
+          token = token.replace("\n", "\\n");
+        }
+        sb.append(token).append("\n");
+        final List<String> attrNames = new SmartList<>();
+        for (final TextAttributesKey attributesKey : highlights) {
+          attrNames.add("    " + serializeTextAttributeKey(attributesKey));
+        }
+        sb.append(StringUtil.join(attrNames, "\n"));
+      }
+      else if (!StringUtil.isEmptyOrSpaces(highlightingLexer.getTokenText())) {
+        notHighlightedTokens.add(tokenType);
+      }
+      highlightingLexer.advance();
+    }
+    if (!allowUnhandledTokens && !notHighlightedTokens.isEmpty()) {
+      TestCase.fail("Some tokens have no highlighting: " + notHighlightedTokens);
+    }
+    UsefulTestCase.assertSameLinesWithFile(answerFilePath, sb.toString());
+  }
+
+  private static String serializeTextAttributeKey(@Nullable TextAttributesKey key) {
+    if (key == null) {
+      return "";
+    }
+    final String keyName = key.getExternalName();
+    final TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
+    TestCase.assertNotSame(fallbackKey, key);
+    return fallbackKey == null ? keyName : (keyName + " => " + serializeTextAttributeKey(fallbackKey));
   }
 
   private static class CaretAndSelectionMarkup {

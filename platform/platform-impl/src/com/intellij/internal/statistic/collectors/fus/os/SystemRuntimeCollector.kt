@@ -100,7 +100,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       val fileStore = Files.getFileStore(PathManager.getIndexRoot())
       val totalSpace = fileStore.totalSpace
       if (totalSpace > 0L) {
-        val size = min(1 shl 14, StatisticsUtil.roundToPowerOfTwo((totalSpace shr 30).toInt()))  // ATM, biggest popular consumer HDDs are ~16TB
+        val size = min(1 shl 14, StatisticsUtil.roundToPowerOfTwo((totalSpace shr 30).toInt()))  // ATM, the biggest popular consumer HDDs are ~16 TB
         val freeSpace = (fileStore.usableSpace * 100.0 / totalSpace).toInt()
         return size to freeSpace
       }

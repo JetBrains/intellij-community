@@ -11,6 +11,8 @@ import com.intellij.searchEverywhere.model.PredictionModel
 internal class SearchEverywhereActionsRankingModelProvider : SearchEverywhereMLRankingModelProvider() {
   private val resourceDirectory = "features"
 
+  override val isExperimental: Boolean = false
+
   override val supportedContributor = ActionSearchEverywhereContributor::class.java
 
   override val model: DecisionFunction

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,16 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
@@ -36,10 +37,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 
-public final class UnaryPlusInspection extends LocalInspectionTool {
+public final class UnaryPlusInspection extends BaseInspection {
   public boolean onlyReportInsideBinaryExpression = true;
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("unary.plus.problem.descriptor");
+  }
 
   @NotNull
   @Override
@@ -50,9 +56,17 @@ public final class UnaryPlusInspection extends LocalInspectionTool {
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    if (!onlyReportInsideBinaryExpression) {
-      node.addContent(new Element("option").setAttribute("name", "onlyReportInsideBinaryExpression").setAttribute("value", "false"));
-    }
+    writeBooleanOption(node, "onlyReportInsideBinaryExpression", true);
+  }
+
+  @Override
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+    final boolean onTheFly = (boolean)infos[0];
+    final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)infos[1];
+    final InspectionGadgetsFix fix = ConvertDoubleUnaryToPrefixOperationFix.createFix(prefixExpression);
+    return onTheFly && fix != null
+           ? new InspectionGadgetsFix[]{new UnaryPlusFix(), fix}
+           : new InspectionGadgetsFix[]{new UnaryPlusFix()};
   }
 
   private static class UnaryPlusFix extends InspectionGadgetsFix {
@@ -81,20 +95,11 @@ public final class UnaryPlusInspection extends LocalInspectionTool {
   }
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new UnaryPlusVisitor(holder, isOnTheFly, onlyReportInsideBinaryExpression);
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnaryPlusVisitor();
   }
 
-  private static class UnaryPlusVisitor extends BaseInspectionVisitor {
-    private final ProblemsHolder myHolder;
-    private final boolean myOnTheFly;
-    private final boolean myOnlyReportInsideBinaryExpression;
-
-    private UnaryPlusVisitor(@NotNull ProblemsHolder holder, boolean onTheFly, boolean onlyReportInsideBinaryExpression) {
-      myHolder = holder;
-      myOnTheFly = onTheFly;
-      myOnlyReportInsideBinaryExpression = onlyReportInsideBinaryExpression;
-    }
+  private class UnaryPlusVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitPrefixExpression(PsiPrefixExpression prefixExpression) {
@@ -110,7 +115,7 @@ public final class UnaryPlusInspection extends LocalInspectionTool {
       if (type == null) {
         return;
       }
-      if (myOnlyReportInsideBinaryExpression) {
+      if (onlyReportInsideBinaryExpression) {
         final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(prefixExpression);
         if (!(operand instanceof PsiParenthesizedExpression ||
               operand instanceof PsiPrefixExpression ||
@@ -126,15 +131,7 @@ public final class UnaryPlusInspection extends LocalInspectionTool {
         // unary plus might have been used as cast to int
         return;
       }
-      List<LocalQuickFix> fixes = new SmartList<>(new UnaryPlusFix());
-      if (myOnTheFly) {
-        LocalQuickFix incrementFix = ConvertDoubleUnaryToPrefixOperationFix.createFix(prefixExpression);
-        if (incrementFix != null) {
-          fixes.add(incrementFix);
-        }
-      }
-      myHolder.registerProblem(prefixExpression.getOperationSign(), InspectionGadgetsBundle.message("unary.plus.problem.descriptor"),
-                               ProblemHighlightType.LIKE_UNUSED_SYMBOL, fixes.toArray(LocalQuickFix[]::new));
+      registerError(prefixExpression.getOperationSign(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly(), prefixExpression);
     }
   }
 
@@ -158,7 +155,7 @@ public final class UnaryPlusInspection extends LocalInspectionTool {
     }
 
     @Nullable
-    static LocalQuickFix createFix(@NotNull PsiPrefixExpression prefixExpr) {
+    static InspectionGadgetsFix createFix(@NotNull PsiPrefixExpression prefixExpr) {
       final PsiExpression operand = prefixExpr.getOperand();
       boolean increment;
       if (isDesiredPrefixExpression(prefixExpr, true)) {
@@ -191,7 +188,7 @@ public final class UnaryPlusInspection extends LocalInspectionTool {
     }
 
     @Nullable
-    private static LocalQuickFix createFix(@NotNull PsiReferenceExpression refExpr, boolean increment) {
+    private static InspectionGadgetsFix createFix(@NotNull PsiReferenceExpression refExpr, boolean increment) {
       final String refName = refExpr.getReferenceName();
       if (refName == null) {
         return null;

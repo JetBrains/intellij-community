@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.statistic
 
+import com.intellij.ide.TipsOfTheDayUsagesCollector.TipInfoValidationRule
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -28,6 +29,7 @@ import training.statistic.FeatureUsageStatisticConsts.LAST_BUILD_LEARNING_OPENED
 import training.statistic.FeatureUsageStatisticConsts.LEARN_PROJECT_OPENED_FIRST_TIME
 import training.statistic.FeatureUsageStatisticConsts.LEARN_PROJECT_OPENING_WAY
 import training.statistic.FeatureUsageStatisticConsts.LESSON_ID
+import training.statistic.FeatureUsageStatisticConsts.LESSON_OPENED_FROM_TIP
 import training.statistic.FeatureUsageStatisticConsts.MODULE_NAME
 import training.statistic.FeatureUsageStatisticConsts.NEED_SHOW_NEW_LESSONS_NOTIFICATIONS
 import training.statistic.FeatureUsageStatisticConsts.NEW_LESSONS_COUNT
@@ -44,6 +46,7 @@ import training.statistic.FeatureUsageStatisticConsts.START
 import training.statistic.FeatureUsageStatisticConsts.START_MODULE_ACTION
 import training.statistic.FeatureUsageStatisticConsts.STOPPED
 import training.statistic.FeatureUsageStatisticConsts.TASK_ID
+import training.statistic.FeatureUsageStatisticConsts.TIP_FILENAME
 import training.util.KeymapUtil
 import java.awt.event.KeyEvent
 import java.util.concurrent.ConcurrentHashMap
@@ -66,7 +69,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val LOG = logger<StatisticBase>()
     private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
     private var prevRestoreLessonProgress: LessonProgress = LessonProgress("", 0)
-    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 13)
+    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 14)
 
     var isLearnProjectCloseLogged = false
 
@@ -85,6 +88,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val reasonField = EventFields.Enum<LessonStopReason>(REASON)
     private val newLessonsCount = EventFields.Int(NEW_LESSONS_COUNT)
     private val showNewLessonsState = EventFields.Boolean(SHOULD_SHOW_NEW_LESSONS)
+    private val tipFilenameField = EventFields.StringValidatedByCustomRule(TIP_FILENAME, TipInfoValidationRule.RULE_ID)
     private val lastBuildLearningOpened = object : PrimitiveEventField<String?>() {
       override val name: String = LAST_BUILD_LEARNING_OPENED
       override val validationRule: List<String>
@@ -120,6 +124,8 @@ internal class StatisticBase : CounterUsagesCollector() {
       GROUP.registerEvent(SHOW_NEW_LESSONS, newLessonsCount, lastBuildLearningOpened)
     private val needShowNewLessonsNotifications =
       GROUP.registerEvent(NEED_SHOW_NEW_LESSONS_NOTIFICATIONS, newLessonsCount, lastBuildLearningOpened, showNewLessonsState)
+
+    private val lessonOpenedFromTip = GROUP.registerEvent(LESSON_OPENED_FROM_TIP, lessonIdField, languageField, tipFilenameField)
 
     // LOGGING
     fun logLessonStarted(lesson: Lesson) {
@@ -212,6 +218,10 @@ internal class StatisticBase : CounterUsagesCollector() {
 
     fun logShowNewLessonsNotificationState(newLessonsCount: Int, previousOpenedVersion: BuildNumber?, showNewLessons: Boolean) {
       needShowNewLessonsNotifications.log(newLessonsCount, previousOpenedVersion?.asString(), showNewLessons)
+    }
+
+    fun logLessonOpenedFromTip(lessonId: String, tipFilename: String) {
+      lessonOpenedFromTip.log(lessonId, courseLanguage(), tipFilename)
     }
 
     private fun courseLanguage() = LangManager.getInstance().getLangSupport()?.primaryLanguage?.toLowerCase() ?: ""

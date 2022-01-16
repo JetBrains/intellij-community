@@ -223,7 +223,7 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
                 .apply {
                   if (!SystemInfo.isWindows) comment(CredentialStoreBundle.message("passwordSafeConfigurable.weak.encryption"))
                 }.component
-              gearButton(
+              actionsButton(
                 ClearKeePassDatabaseAction(),
                 ImportKeePassDatabaseAction(),
                 ChangeKeePassDatabaseMasterPasswordAction()

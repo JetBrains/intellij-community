@@ -83,4 +83,6 @@ class PythonTabCompletionLesson
       checkExpectedStateOfEditor(sample)
     }
   }
+
+  override val suitableTips = listOf("TabInLookups")
 }

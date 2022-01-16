@@ -87,7 +87,12 @@ internal object PackageSearchUI {
         override fun getBackground() = backgroundColor
     }.apply(init)
 
-    internal fun checkBox(@Nls title: String) = object : JCheckBox(title) {
+    internal fun checkBox(@Nls title: String, init: JCheckBox.() -> Unit = {}) = object : JCheckBox(title) {
+
+        init {
+            init()
+        }
+
         override fun getBackground() = UsualBackgroundColor
     }
 

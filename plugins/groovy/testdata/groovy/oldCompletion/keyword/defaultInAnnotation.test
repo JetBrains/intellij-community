@@ -7,4 +7,5 @@ class
 default
 enum
 interface
+record
 trait

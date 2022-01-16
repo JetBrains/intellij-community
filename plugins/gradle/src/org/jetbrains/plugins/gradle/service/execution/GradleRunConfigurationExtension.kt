@@ -1,12 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.execution
 
-import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.openapi.externalSystem.service.execution.configuration.*
 import com.intellij.openapi.externalSystem.service.ui.project.path.ExternalSystemWorkingDirectoryInfo
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.LabeledComponent
 import org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
@@ -17,8 +15,8 @@ class GradleRunConfigurationExtension
   override fun SettingsFragmentsContainer<GradleRunConfiguration>.configureFragments(configuration: GradleRunConfiguration) {
     val project = configuration.project
     addBeforeRunFragment(GradleBeforeRunTaskProvider.ID)
-    val workingDirectoryFragment = addWorkingDirectoryFragment(project)
-    addCommandLineFragment(project, workingDirectoryFragment)
+    val workingDirectoryField = addWorkingDirectoryFragment(project).component().component
+    addCommandLineFragment(project, workingDirectoryField)
     addTag(
       "gradle.tasks.script.debugging.fragment",
       GradleBundle.message("gradle.tasks.script.debugging"),
@@ -54,10 +52,10 @@ class GradleRunConfigurationExtension
 
   private fun SettingsFragmentsContainer<GradleRunConfiguration>.addCommandLineFragment(
     project: Project,
-    workingDirectoryFragment: SettingsEditorFragment<GradleRunConfiguration, LabeledComponent<WorkingDirectoryField>>
+    workingDirectoryField: WorkingDirectoryField
   ) = addCommandLineFragment(
     project,
-    GradleCommandLineInfo(project, workingDirectoryFragment.component().component),
+    GradleCommandLineInfo(project, workingDirectoryField),
     { rawCommandLine },
     { rawCommandLine = it }
   )

@@ -9,6 +9,7 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -335,7 +336,8 @@ public final class NullabilityProblemKind<T extends PsiElement> {
   private static NullabilityProblem<?> getSwitchBlockProblem(@NotNull PsiSwitchBlock switchBlock,
                                                              @NotNull PsiExpression expression,
                                                              @NotNull PsiExpression context) {
-    Nullability exprNullability = DfaPsiUtil.getTypeNullability(expression.getType());
+    PsiType expressionType = expression.getType();
+    Nullability exprNullability = DfaPsiUtil.getTypeNullability(expressionType);
     // if selector expr is nullable or unknown and switch contains null label, then we shouldn't check nullity of the expr
     if (exprNullability != Nullability.NOT_NULL) {
       PsiCodeBlock body = switchBlock.getBody();
@@ -347,9 +349,9 @@ public final class NullabilityProblemKind<T extends PsiElement> {
           PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
           if (labelElementList == null) continue;
           for (PsiCaseLabelElement element : labelElementList.getElements()) {
-            if (element instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)element).getType())) {
-              return null;
-            }
+            if (element instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)element).getType())) return null;
+            if (element instanceof PsiPattern && expressionType != null &&
+                JavaPsiPatternUtil.isTotalForType(((PsiPattern)element), expressionType)) return null;
           }
         }
       }

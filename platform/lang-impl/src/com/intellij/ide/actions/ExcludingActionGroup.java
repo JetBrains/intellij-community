@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.UpdateInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,7 @@ import java.util.Set;
 /**
  * @author peter
  */
-public class ExcludingActionGroup extends ActionGroup {
+public class ExcludingActionGroup extends ActionGroup implements UpdateInBackground {
   private final ActionGroup myDelegate;
   private final Set<AnAction> myExcludes;
 
@@ -36,6 +37,11 @@ public class ExcludingActionGroup extends ActionGroup {
     super(delegate.getTemplatePresentation().getText(), delegate.isPopup());
     myDelegate = delegate;
     myExcludes = excludes;
+  }
+
+  @Override
+  public boolean isUpdateInBackground() {
+    return UpdateInBackground.isUpdateInBackground(myDelegate);
   }
 
   @Override

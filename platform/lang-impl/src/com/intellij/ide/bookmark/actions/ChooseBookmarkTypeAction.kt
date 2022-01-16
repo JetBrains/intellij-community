@@ -40,11 +40,12 @@ internal class ChooseBookmarkTypeAction : DumbAwareAction(BookmarkBundle.message
       null -> BookmarkBundle.message("mnemonic.chooser.bookmark.create.popup.title")
       else -> BookmarkBundle.message("mnemonic.chooser.mnemonic.change.popup.title")
     }
-    val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(chooser, chooser.buttons().first()).setTitle(title).setFocusable(
-      true).setRequestFocus(true).setMovable(false).setResizable(false).createPopup()
-
-    popupState.prepareToShow(popup)
-    popup.showInBestPositionFor(event.dataContext)
+    JBPopupFactory.getInstance().createComponentPopupBuilder(chooser, chooser.buttons().first())
+      .setFocusable(true).setRequestFocus(true)
+      .setMovable(false).setResizable(false)
+      .setTitle(title).createPopup()
+      .also { popupState.prepareToShow(it) }
+      .showInBestPositionFor(event.dataContext)
   }
 
   init {

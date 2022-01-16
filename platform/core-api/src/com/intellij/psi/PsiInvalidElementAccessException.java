@@ -182,7 +182,7 @@ public final class PsiInvalidElementAccessException extends RuntimeException imp
 
     String hierarchy = "";
     while (element != null && !(element instanceof PsiFile)) {
-      hierarchy += (hierarchy.isEmpty() ? "," : "") + element.getClass();
+      hierarchy += (hierarchy.isEmpty() ? "" : ", ") + element.getClass();
       lastParent = element;
       element = element.getParent();
     }

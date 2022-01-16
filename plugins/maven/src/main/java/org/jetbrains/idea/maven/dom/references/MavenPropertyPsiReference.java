@@ -280,7 +280,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
   }
 
   private PsiElement resolveConfigFileProperty(@SystemIndependent String fileRelativePath, String propertyValue) {
-    VirtualFile baseDir = VfsUtil.findFileByIoFile(MavenUtil.getBaseDir(myMavenProject.getDirectoryFile()), false);
+    VirtualFile baseDir = VfsUtil.findFile(MavenUtil.getBaseDir(myMavenProject.getDirectoryFile()), false);
     if (baseDir != null) {
       VirtualFile mavenConfigFile = baseDir.findFileByRelativePath(fileRelativePath);
       if (mavenConfigFile != null) {

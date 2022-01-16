@@ -9,8 +9,8 @@
 # followed by committing the changes to typeshed
 #
 # Update these two variables when rerunning script
-PROTOBUF_VERSION=3.17.3
-MYPY_PROTOBUF_VERSION=v2.8
+PROTOBUF_VERSION=3.18.1
+MYPY_PROTOBUF_VERSION=v3.0.0
 
 set -ex
 

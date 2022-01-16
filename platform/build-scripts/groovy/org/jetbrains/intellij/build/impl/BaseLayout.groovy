@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.containers.MultiMap
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.ResourcesGenerator
 
 /**
@@ -71,7 +72,7 @@ abstract class BaseLayout {
     }
   }
 
-  final void withModule(String moduleName) {
+  final void withModule(@NotNull String moduleName) {
     String jarPath = convertModuleNameToFileName(moduleName) + ".jar"
     checkAndAssociateModuleNameWithJarPath(moduleName, jarPath)
     moduleJars.putValue(jarPath, moduleName)

@@ -134,4 +134,6 @@ class JavaRenameLesson
     if (!Character.isJavaIdentifierStart(newName[0]) || newName.any { !Character.isJavaIdentifierPart(it) }) return null
     return newName.toString()
   }
+
+  override val suitableTips = listOf("Rename")
 }

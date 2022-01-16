@@ -1,11 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.search.refIndex
 
+import com.intellij.codeInsight.daemon.impl.MarkerType
 import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.testFramework.SkipSlowTestLocally
 import junit.framework.AssertionFailedError
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.highlighter.markers.OVERRIDDEN_FUNCTION
+import org.jetbrains.kotlin.idea.highlighter.markers.SUBCLASSED_CLASS
 import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.test.KotlinRoot
 import java.util.*
@@ -154,6 +158,44 @@ class CustomKotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
             subtypes,
             findHierarchy(myFixture.findClass(className)),
         )
+    }
+
+    fun testTooltips() {
+        myFixture.configureByFiles(
+            "anonObject.kt",
+            "JavaClass.java",
+            "JavaJavaSub.java",
+            "JavaSub.java",
+            "KInterface.kt",
+            "NestedSub.kt",
+            "Sub.kt",
+            "SubJavaJavaSub.kt",
+            "SubJavaSub.kt",
+            "SubObject.kt",
+            "SubSub.kt",
+            "SubSubSub.kt",
+        )
+
+        val subclassTooltip = SUBCLASSED_CLASS
+        val kInterface = myFixture.findClass("KInterface")
+
+        val overriddenFunctionTooltip = OVERRIDDEN_FUNCTION
+        val kInterfaceMethod = kInterface.findMethodsByName("foo", false).single()
+
+        testTooltips(
+            subclassTooltip to kInterface,
+            overriddenFunctionTooltip to kInterfaceMethod,
+        )
+    }
+
+    private fun testTooltips(vararg tooltips: Pair<MarkerType, PsiElement>) {
+        val expected = tooltips.map { it.first.tooltip.`fun`(it.second) }
+        rebuildProject()
+        tooltips.zip(expected).forEach { (pair, before) ->
+            val marker = pair.first
+            val element = pair.second
+            assertEquals(marker.toString(), before, marker.tooltip.`fun`(element))
+        }
     }
 
     private fun findClassSubtypes(className: String, deep: Boolean) = ClassInheritorsSearch.search(myFixture.findClass(className), deep)

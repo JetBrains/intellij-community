@@ -103,7 +103,7 @@ final class PlatformModules {
     "intellij.platform.credentialStore.ui",
     "intellij.platform.rd.community",
     "intellij.platform.ml.impl",
-  )
+    )
 
   private static final String UTIL_JAR = "util.jar"
 
@@ -249,6 +249,7 @@ final class PlatformModules {
       // jna uses native lib
       "jna", PackMode.STANDALONE_MERGED,
       "jetbrains-annotations-java5", PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
+      "intellij-coverage", PackMode.STANDALONE_SEPARATE,
       "kotlin-stdlib-jdk8", PackMode.STANDALONE_SEPARATE,  // Android Studio: b/213385827
     )
 

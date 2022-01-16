@@ -17,6 +17,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
@@ -133,7 +134,7 @@ internal fun ExecutionEnvironment.getRunToolbarProcess(): RunToolbarProcess? {
       it.executorId == executorGroup.id
     }
   } ?: run {
-    RunToolbarProcess.getProcesses().firstOrNull{
+    RunToolbarProcess.getProcesses().firstOrNull {
       it.executorId == this.executor.id
     }
   }
@@ -142,6 +143,16 @@ internal fun ExecutionEnvironment.getRunToolbarProcess(): RunToolbarProcess? {
 internal fun DataContext.editConfiguration() {
   getData(CommonDataKeys.PROJECT)?.let {
     EditConfigurationsDialog(it, createRunConfigurationConfigurable(it, this)).show()
+  }
+}
+
+internal fun ExecutionEnvironment.showToolWindowTab() {
+  ToolWindowManager.getInstance(this.project).getToolWindow(this.contentToReuse?.contentToolWindowId ?: this.executor.id)?.let {
+    val contentManager = it.contentManager
+    contentManager.contents.firstOrNull { it.executionId == this.executionId }?.let { content ->
+      contentManager.setSelectedContent(content)
+    }
+    it.show()
   }
 }
 

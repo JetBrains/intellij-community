@@ -16,9 +16,6 @@ class PythonRunConfigurationLesson : CommonRunConfigurationLesson("python.run.co
       text(PythonLessonsBundle.message("python.run.configuration.lets.run", action(it)))
       //Wait toolwindow
       checkToolWindowState("Run", true)
-      stateCheck {
-        configurations().isNotEmpty()
-      }
       test {
         actions(it)
       }

@@ -132,7 +132,7 @@ private fun requiresMavenFiles(jarName: String): Boolean =
 private val excludedFromMergeLibs = java.util.Set.of(
   "sqlite", "async-profiler",
   "dexlib2", // android-only lib
-  "intellij-coverage", "intellij-test-discovery", // used as agent
+  "intellij-test-discovery", // used as agent
   "winp", "junixsocket-core", "pty4j", "grpc-netty-shaded", // contains native library
   "protobuf", // https://youtrack.jetbrains.com/issue/IDEA-268753
 )

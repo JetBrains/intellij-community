@@ -13,6 +13,7 @@
     />
 
     <languageCompilerRefAdapter implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerRefHelper"/>
+    <languageCompilerRefAdapter.directInheritorProvider implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinDirectInheritorProvider"/>
   </extensions>
   <actions>
     <action

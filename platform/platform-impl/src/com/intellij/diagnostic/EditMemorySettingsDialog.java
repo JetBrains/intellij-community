@@ -76,8 +76,8 @@ public class EditMemorySettingsDialog extends DialogWrapper {
       if (suggested <= 0) suggested = MIN_VALUE;
     }
 
-    Path file = VMOptions.getWriteFile();
-    assert file != null;
+    Path file = VMOptions.getUserOptionsFile();
+    if (file == null) throw new IllegalStateException();
 
     JPanel panel = new JPanel(new GridBagLayout());
 

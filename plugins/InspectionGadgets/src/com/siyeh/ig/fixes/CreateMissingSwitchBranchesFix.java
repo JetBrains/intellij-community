@@ -39,13 +39,13 @@ public abstract class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
     if (switchExpression == null) return;
     final PsiClassType switchType = (PsiClassType)switchExpression.getType();
     if (switchType == null) return;
-    final PsiClass enumClass = switchType.resolve();
-    if (enumClass == null) return;
+    final PsiClass psiClass = switchType.resolve();
+    if (psiClass == null) return;
     List<PsiSwitchLabelStatementBase> addedLabels = CreateSwitchBranchesUtil
-      .createMissingBranches(switchBlock, getAllNames(enumClass), myNames, getCaseExtractor(), myIsPatternMatching);
+      .createMissingBranches(switchBlock, getAllNames(psiClass), myNames, getCaseExtractor(), myIsPatternMatching);
     CreateSwitchBranchesUtil.createTemplate(switchBlock, addedLabels);
   }
 
-  abstract protected @NotNull List<String> getAllNames(PsiClass aClass);
+  abstract protected @NotNull List<String> getAllNames(@NotNull PsiClass aClass);
   abstract protected @NotNull Function<PsiSwitchLabelStatementBase, List<String>> getCaseExtractor();
 }

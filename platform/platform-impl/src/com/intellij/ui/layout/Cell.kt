@@ -673,20 +673,6 @@ abstract class Cell : BaseBuilder {
   }
 }
 
-internal fun JBCheckBox.bind(property: GraphProperty<Boolean>) {
-  val mutex = AtomicBoolean()
-  property.afterChange {
-    mutex.lockOrSkip {
-      isSelected = property.get()
-    }
-  }
-  addItemListener {
-    mutex.lockOrSkip {
-      property.set(isSelected)
-    }
-  }
-}
-
 class InnerCell(val cell: Cell) : Cell() {
   override fun <T : JComponent> component(component: T): CellBuilder<T> {
     return cell.component(component)
@@ -760,6 +746,20 @@ fun <C : JLabel> C.bind(property: ObservableClearableProperty<@Label String>): C
   }
   property.afterReset {
     text = property.get()
+  }
+}
+
+fun <C : JCheckBox> C.bind(property: ObservableClearableProperty<Boolean>): C = apply {
+  val mutex = AtomicBoolean()
+  property.afterChange {
+    mutex.lockOrSkip {
+      isSelected = it
+    }
+  }
+  addItemListener {
+    mutex.lockOrSkip {
+      property.set(isSelected)
+    }
   }
 }
 

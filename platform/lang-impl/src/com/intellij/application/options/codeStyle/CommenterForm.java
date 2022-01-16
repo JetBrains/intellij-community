@@ -37,7 +37,8 @@ public class CommenterForm implements CodeStyleSettingsCustomizable {
   private JBCheckBox myLineCommentAtFirstColumnCb;
   private JBCheckBox myLineCommentAddSpaceCb;
   private JBCheckBox myBlockCommentAtFirstJBCheckBox;
-  
+  private JBCheckBox myBlockCommentAddSpaceCb;
+
   private final Language myLanguage;
 
   public CommenterForm(Language language) {
@@ -64,21 +65,24 @@ public class CommenterForm implements CodeStyleSettingsCustomizable {
     myBlockCommentAtFirstJBCheckBox.setSelected(langSettings.BLOCK_COMMENT_AT_FIRST_COLUMN);
     myLineCommentAddSpaceCb.setSelected(langSettings.LINE_COMMENT_ADD_SPACE && !langSettings.LINE_COMMENT_AT_FIRST_COLUMN);
     myLineCommentAddSpaceCb.setEnabled(!langSettings .LINE_COMMENT_AT_FIRST_COLUMN);
+    myBlockCommentAddSpaceCb.setSelected(langSettings.BLOCK_COMMENT_ADD_SPACE);
   }
-  
-  
+
+
   public void apply(@NotNull CodeStyleSettings settings) {
     CommonCodeStyleSettings langSettings = settings.getCommonSettings(myLanguage);
     langSettings.LINE_COMMENT_AT_FIRST_COLUMN = myLineCommentAtFirstColumnCb.isSelected();
     langSettings.BLOCK_COMMENT_AT_FIRST_COLUMN = myBlockCommentAtFirstJBCheckBox.isSelected();
     langSettings.LINE_COMMENT_ADD_SPACE = myLineCommentAddSpaceCb.isSelected();
+    langSettings.BLOCK_COMMENT_ADD_SPACE = myBlockCommentAddSpaceCb.isSelected();
   }
-  
+
   public boolean isModified(@NotNull CodeStyleSettings settings) {
     CommonCodeStyleSettings langSettings = settings.getCommonSettings(myLanguage);
     return myLineCommentAtFirstColumnCb.isSelected() != langSettings.LINE_COMMENT_AT_FIRST_COLUMN
            || myBlockCommentAtFirstJBCheckBox.isSelected() != langSettings.BLOCK_COMMENT_AT_FIRST_COLUMN
-           || myLineCommentAddSpaceCb.isSelected() != langSettings.LINE_COMMENT_ADD_SPACE;
+           || myLineCommentAddSpaceCb.isSelected() != langSettings.LINE_COMMENT_ADD_SPACE
+           || myBlockCommentAddSpaceCb.isSelected() != langSettings.BLOCK_COMMENT_ADD_SPACE;
   }
 
   public JPanel getCommenterPanel() {
@@ -102,15 +106,19 @@ public class CommenterForm implements CodeStyleSettingsCustomizable {
       else if (CommenterOption.BLOCK_COMMENT_AT_FIRST_COLUMN.name().equals(optionName)) {
         myBlockCommentAtFirstJBCheckBox.setVisible(true);
       }
+      else if (CommenterOption.BLOCK_COMMENT_ADD_SPACE.name().equals(optionName)) {
+        myBlockCommentAddSpaceCb.setVisible(true);
+      }
     }
   }
-  
+
   private void setAllOptionsVisible(boolean isVisible) {
     myLineCommentAtFirstColumnCb.setVisible(isVisible);
     myLineCommentAddSpaceCb.setVisible(isVisible);
     myBlockCommentAtFirstJBCheckBox.setVisible(isVisible);
+    myBlockCommentAddSpaceCb.setVisible(isVisible);
   }
-  
+
   private void customizeSettings() {
     setAllOptionsVisible(false);
     LanguageCodeStyleSettingsProvider settingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(myLanguage);
@@ -118,6 +126,10 @@ public class CommenterForm implements CodeStyleSettingsCustomizable {
       settingsProvider.customizeSettings(this, LanguageCodeStyleSettingsProvider.SettingsType.COMMENTER_SETTINGS);
     }
     myCommenterPanel.setVisible(
-      myLineCommentAtFirstColumnCb.isVisible() || myLineCommentAddSpaceCb.isVisible() || myBlockCommentAtFirstJBCheckBox.isVisible());
+      myLineCommentAtFirstColumnCb.isVisible()
+      || myLineCommentAddSpaceCb.isVisible()
+      || myBlockCommentAtFirstJBCheckBox.isVisible()
+      || myBlockCommentAddSpaceCb.isVisible()
+    );
   }
 }

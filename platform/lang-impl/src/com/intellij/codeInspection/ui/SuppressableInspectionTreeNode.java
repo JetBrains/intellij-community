@@ -92,7 +92,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   public final synchronized boolean isValid() {
     Boolean valid = myValid;
     if (valid == null) {
-      valid = calculateIsValid();
+      valid = ReadAction.compute(() -> calculateIsValid());
       myValid = valid;
     }
     return valid;
@@ -152,17 +152,15 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   protected abstract boolean calculateIsValid();
 
   protected void dropCaches() {
-    ReadAction.run(() -> {
-      doDropCache();
-      dropProblemCountCaches();
-    });
+    doDropCache();
+    dropProblemCountCaches();
   }
 
   private void doDropCache() {
     myProblemLevels.drop();
     if (isQuickFixAppliedFromView() || isAlreadySuppressedFromView()) return;
     // calculate all data on background thread
-    myValid = calculateIsValid();
+    ReadAction.run(() -> myValid = calculateIsValid());
     myPresentableName = calculatePresentableName();
 
     for (InspectionTreeNode child : getChildren()) {

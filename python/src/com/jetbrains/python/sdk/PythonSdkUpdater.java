@@ -200,16 +200,26 @@ public class PythonSdkUpdater implements StartupActivity.Background {
           updateSdkPaths(sdk, getRemoteSdkMappedPaths(sdk), getProject());
         }
       }
-      catch (UnsupportedPythonSdkTypeException e) {
+      catch (UnsupportedPythonSdkTypeException | InvalidSdkException e) {
+        notifyOfGenerationFailure(e, sdk);
+      }
+    }
+
+    private void notifyOfGenerationFailure(@NotNull Exception exception, @NotNull Sdk sdk) {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        LOG.warn(exception);
+        return;
+      }
+      if (exception instanceof UnsupportedPythonSdkTypeException) {
         NOTIFICATION_GROUP
           .createNotification(PyBundle.message("sdk.gen.failed.notification.title"),
                               PyBundle.message("remote.interpreter.support.is.not.available", sdk.getName()),
                               NotificationType.WARNING)
           .notify(myProject);
       }
-      catch (InvalidSdkException e) {
+      else if (exception instanceof InvalidSdkException) {
         if (PythonSdkUtil.isRemote(PythonSdkUtil.findSdkByKey(mySdkKey))) {
-          PythonSdkType.notifyRemoteSdkSkeletonsFail(e, () -> {
+          PythonSdkType.notifyRemoteSdkSkeletonsFail((InvalidSdkException)exception, () -> {
             Sdk revalidatedSdk = PythonSdkUtil.findSdkByKey(mySdkKey);
             if (revalidatedSdk != null) {
               update(revalidatedSdk, myProject, null);
@@ -217,7 +227,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
           });
         }
         else if (!PythonSdkUtil.isInvalid(sdk)) {
-          LOG.error(e);
+          LOG.error(exception);
         }
       }
     }
@@ -240,7 +250,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
         }
       }
 
-      if (requestData != null) {
+      if ( requestData != null) {
         ProgressManager.getInstance().run(new PyUpdateSdkTask(myProject, mySdkKey, requestData));
       }
     }

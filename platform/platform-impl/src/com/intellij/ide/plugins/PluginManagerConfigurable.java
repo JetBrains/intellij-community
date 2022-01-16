@@ -1170,12 +1170,12 @@ public final class PluginManagerConfigurable
     }
 
     private void setEnabledState() {
-      myPluginModel.setEnabledState(descriptors,
-                                    PluginEnableDisableAction.globally(myIsEnable));
-    }
-
-    private @NotNull @Nls String getDefaultCategory() {
-      return IdeBundle.message("plugins.configurable.other.bundled");
+      if (myIsEnable) {
+        myPluginModel.enable(descriptors);
+      }
+      else {
+        myPluginModel.disable(descriptors);
+      }
     }
   }
 
@@ -1562,8 +1562,12 @@ public final class PluginManagerConfigurable
       }
 
       if (!descriptors.isEmpty()) {
-        myPluginModel.setEnabledState(descriptors,
-                                      PluginEnableDisableAction.globally(myEnable));
+        if (myEnable) {
+          myPluginModel.enable(descriptors);
+        }
+        else {
+          myPluginModel.disable(descriptors);
+        }
       }
     }
   }

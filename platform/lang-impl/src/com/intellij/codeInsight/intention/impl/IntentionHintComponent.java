@@ -129,7 +129,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         myPopup.showInBestPositionFor(myEditor);
       }
 
-      if (EditorSettingsExternalizable.getInstance().getOptions().SHOW_INTENTION_PREVIEW) {
+      if (EditorSettingsExternalizable.getInstance().isShowIntentionPreview()) {
         ApplicationManager.getApplication().invokeLater(() -> showPreview(this));
       }
 
@@ -599,7 +599,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   private static void updatePreviewPopup(@NotNull IntentionHintComponent.IntentionPopup that, @NotNull IntentionAction action, int index) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    that.myPreviewPopupUpdateProcessor.setup(index);
+    that.myPreviewPopupUpdateProcessor.setup(that.myPopup, index);
     that.myPreviewPopupUpdateProcessor.updatePopup(action);
   }
 
@@ -610,10 +610,9 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       public void actionPerformed(ActionEvent e) {
         IntentionPreviewPopupUpdateProcessor processor = that.myPreviewPopupUpdateProcessor;
         boolean shouldShow = !processor.isShown();
-        EditorSettingsExternalizable.getInstance().getOptions().SHOW_INTENTION_PREVIEW = shouldShow;
+        EditorSettingsExternalizable.getInstance().setShowIntentionPreview(shouldShow);
         if (shouldShow) {
           showPreview(that);
-          advertisePopup(that, false);
         }
         else {
           processor.hide();
@@ -627,8 +626,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   private static void advertisePopup(@NotNull IntentionPopup that, boolean show) {
-    that.myPopup.setAdText(CodeInsightBundle.message(show ? "intention.preview.adv.show.text" : "intention.preview.adv.hide.text",
-                                                     IntentionPreviewPopupUpdateProcessor.Companion.getShortcutText()), SwingConstants.LEFT);
+    ListPopup popup = that.myPopup;
+    if (!popup.isDisposed()) {
+      popup.setAdText(CodeInsightBundle.message(
+        show ? "intention.preview.adv.show.text" : "intention.preview.adv.hide.text",
+        IntentionPreviewPopupUpdateProcessor.Companion.getShortcutText()), SwingConstants.LEFT);
+    }
   }
 
   private static void showPreview(@NotNull IntentionHintComponent.IntentionPopup that) {
@@ -641,6 +644,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         updatePreviewPopup(that, ((IntentionActionWithTextCaching)selectedValue).getAction(), selectedIndex);
       }
     }
+    advertisePopup(that, false);
   }
 
   private static final class MyComponentHint extends LightweightHint {

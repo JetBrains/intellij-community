@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
-import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
@@ -10,6 +9,7 @@ import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 import org.jetbrains.jps.model.module.JpsModule
 
 import java.nio.file.Files
+import java.nio.file.Path
 
 import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 
@@ -483,11 +483,11 @@ Android Studio: exclude intellij.android.jpsBuildPlugin */
       // Profiler downloader will also download instant run transport: /resources/transport
 
       //  "//tools/adt/idea/android/lib:sample-data-bundle",
-      withResourceFromModule("intellij.android.core", "lib/sampleData", "lib/sampleData")
+      withResourceFromModule("intellij.android.core", "lib/sampleData", "resources/sampleData")
       //  "//tools/adt/idea/artwork:device-art-resources-bundle",  # duplicated in android.jar
-      withResourceFromModule("intellij.android.artwork", "resources/device-art-resources", "lib/device-art-resources")
+      withResourceFromModule("intellij.android.artwork", "resources/device-art-resources", "resources/device-art-resources")
       //  "//tools/adt/idea/android/annotations:androidAnnotations",
-      withResourceArchive("../android/annotations", "lib/androidAnnotations.jar")
+      withResourceArchive("../android/annotations", "resources/androidAnnotations.jar")
       //  "//tools/base/app-inspection/inspectors/network:bundle",
       //  "//tools/base/dynamic-layout-inspector/agent/appinspection:bundle",
       //  "//tools/base/profiler/transform:profilers-transform",
@@ -527,8 +527,8 @@ Android Studio: exclude intellij.android.jpsBuildPlugin */
       withGeneratedResources(new ResourcesGenerator() {
         @Override
         File generateResources(BuildContext buildContext) {
-          buildContext.project.modules.forEach {
-            JpsModule module -> FileUtil.createDirectory(new File(buildContext.getModuleOutputPath(module)))
+          for (JpsModule module in buildContext.project.modules) {
+            Files.createDirectories(Path.of(buildContext.getModuleOutputPath(module)))
           }
           return null
         }

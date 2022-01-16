@@ -24,9 +24,12 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class Main {
   public static final int NO_GRAPHICS = 1;
@@ -55,7 +58,7 @@ public final class Main {
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
   private static final List<String> HEADLESS_COMMANDS = List.of(
     "ant", "duplocate", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
-    "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "warmup");
+    "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "warmup", "buildEventsScheme");
   private static final List<String> GUI_COMMANDS = List.of("diff", "merge");
 
   private static boolean isHeadless;
@@ -113,6 +116,16 @@ public final class Main {
     PathClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader();
     Thread.currentThread().setContextClassLoader(newClassLoader);
     if (args.length > 0 && (CWM_HOST_COMMAND.equals(args[0]) || CWM_HOST_NO_LOBBY_COMMAND.equals(args[0]))) {
+      // Remote dev requires Projector libraries in system classloader due to AWT internals (see below)
+      // At the same time, we don't want to ship them with base (non-remote) IDE due to possible unwanted interference with plugins
+      // See also: com.jetbrains.codeWithMe.projector.PluginClassPathRuntimeCustomizer
+      Path remoteDevPluginLibs = Paths.get(PathManager.getPreInstalledPluginsPath(), "cwm-plugin-projector", "lib");
+      if (Files.exists(remoteDevPluginLibs))
+        try (Stream<Path> libs = Files.list(remoteDevPluginLibs)) {
+          // add all files in that dir except for plugin jar
+          newClassLoader.addFiles(libs.filter(it -> !it.getFileName().toString().endsWith("projector.jar")).collect(Collectors.toList()));
+        }
+
       // AWT can only use builtin and system class loaders to load classes, so set the system loader to something that can find projector libs
       Class<ClassLoader> aClass = ClassLoader.class;
       MethodHandles.privateLookupIn(aClass, MethodHandles.lookup()).findStaticSetter(aClass, "scl", aClass).invoke(newClassLoader);

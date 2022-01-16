@@ -19,7 +19,8 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
         get() = uiPackageModel.packageModel
 
     abstract val uiPackageModel: UiPackageModel<T>
-    abstract val scopes: List<PackageScope>
+
+    abstract val allScopes: List<PackageScope>
 
     protected open val handledDataKeys: List<DataKey<*>> = listOf(PlatformDataKeys.COPY_PROVIDER)
 
@@ -86,12 +87,11 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
 
     data class InstalledPackage(
         override val uiPackageModel: UiPackageModel.Installed,
-        val defaultScope: PackageScope,
-        override val scopes: List<PackageScope>
+        override val allScopes: List<PackageScope>
     ) : PackagesTableItem<PackageModel.Installed>() {
 
         init {
-            require(scopes.isNotEmpty()) { "An installed package must have at least one installed scope" }
+            require(allScopes.isNotEmpty()) { "An installed package must have at least one installed scope" }
         }
 
         override fun additionalCopyText() = buildString {
@@ -110,12 +110,11 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
 
     data class InstallablePackage(
         override val uiPackageModel: UiPackageModel.SearchResult,
-        val defaultScope: PackageScope,
-        override val scopes: List<PackageScope>
+        override val allScopes: List<PackageScope>
     ) : PackagesTableItem<PackageModel.SearchResult>() {
 
         init {
-            require(scopes.isNotEmpty()) { "A package must have at least one available scope" }
+            require(allScopes.isNotEmpty()) { "A package must have at least one available scope" }
         }
 
         override fun additionalCopyText() = ""

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
@@ -15,7 +15,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 @CompileStatic
-class PluginXmlPatcher {
+final class PluginXmlPatcher {
   private final BuildMessages myBuildMessages
   private final String myReleaseDate
   private final String myReleaseVersion
@@ -47,7 +47,7 @@ class PluginXmlPatcher {
 
     def productDescriptor = doc.rootElement.getChild("product-descriptor")
     if (productDescriptor != null) {
-      myBuildMessages.info("        ${toPublish ? "Patching" : "Skipping"} $pluginModuleName <product-descriptor/>")
+      myBuildMessages.info("      ${toPublish ? "Patching" : "Skipping"} $pluginModuleName <product-descriptor/>")
 
       setProductDescriptorEapAttribute(productDescriptor, myIsEap)
 

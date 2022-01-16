@@ -106,8 +106,9 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
         //    DefaultKeymap.isBundledKeymapHidden(keymapName) &&
         //    schemeManager.findSchemeByName(KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP) == null) return
         val keymap = DefaultKeymap.getInstance().loadKeymap(keymapName, object : SchemeDataHolder<KeymapImpl> {
-          override fun read() = pluginDescriptor.pluginClassLoader
-            .getResourceAsStream(ep.effectiveFile).use { JDOMUtil.load(it) }
+          override fun read() = pluginDescriptor.classLoader
+            .getResourceAsStream(ep.effectiveFile)
+            .use { JDOMUtil.load(it) }
         }, pluginDescriptor)
         schemeManager.addScheme(keymap)
         fireKeymapAdded(keymap)

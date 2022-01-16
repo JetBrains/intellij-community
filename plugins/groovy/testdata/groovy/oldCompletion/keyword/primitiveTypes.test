@@ -22,6 +22,7 @@ non-sealed
 private
 protected
 public
+record
 sealed
 short
 static

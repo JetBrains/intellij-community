@@ -125,8 +125,8 @@ public final class PyCallExpressionHelper {
         final PyType typeFromProviders =
           Ref.deref(PyReferenceExpressionImpl.getReferenceTypeFromProviders(element, resolveContext.getTypeEvalContext(), call));
 
-        if (typeFromProviders instanceof PyCallableType) {
-          callableTypes.add(typeFromProviders);
+        if (PyTypeUtil.toStream(typeFromProviders).allMatch(it -> it instanceof PyCallableType)) {
+          PyTypeUtil.toStream(typeFromProviders).forEachOrdered(callableTypes::add);
           continue;
         }
       }

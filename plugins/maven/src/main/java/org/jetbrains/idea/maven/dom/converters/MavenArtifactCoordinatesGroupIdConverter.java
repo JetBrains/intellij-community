@@ -9,6 +9,7 @@ import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.utils.MavenArtifactUtilKt;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.util.Collection;
@@ -26,7 +27,7 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
     MavenProject mavenProject = findMavenProject(context);
     if (mavenProject != null) {
       for (MavenArtifact artifact : mavenProject.findDependencies(id.getGroupId(), id.getArtifactId())) {
-        if (artifact.isResolved()) {
+        if (MavenArtifactUtilKt.resolved(artifact)) {
           return true;
         }
       }

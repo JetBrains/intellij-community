@@ -67,4 +67,6 @@ class CodeFormatLesson(private val sample: LessonSample, private val optimizeImp
       }
     }
   }
+
+  override val suitableTips = listOf("LayoutCode")
 }

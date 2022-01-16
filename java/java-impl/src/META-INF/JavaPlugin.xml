@@ -109,6 +109,8 @@
                     interface="com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationProvider" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.languageCompilerRefAdapter" interface="com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.languageCompilerRefAdapter.directInheritorProvider" area="IDEA_PROJECT"
+                    interface="com.intellij.compiler.backwardRefs.DirectInheritorProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.framework.type" interface="com.intellij.framework.FrameworkTypeEx" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.runConfigurationExtension" interface="com.intellij.execution.RunConfigurationExtension" dynamic="true"/>
 

@@ -20,7 +20,6 @@ import java.util.function.Consumer;
 
 public class InplaceButton extends JComponent implements ActiveComponent, Accessible {
   private boolean myPainting = true;
-  private boolean myActive = true;
 
   private final BaseButtonBehavior myBehavior;
   private final ActionListener myListener;
@@ -88,7 +87,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
   }
 
   public void doClick(final MouseEvent e) {
-    if (myListener != null) {
+    if (myListener != null && isEnabled()) {
       myListener.actionPerformed(new ActionEvent(e, ActionEvent.ACTION_PERFORMED, "execute", e.getModifiers()));
     }
   }
@@ -145,7 +144,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
 
   @Override
   public void setActive(final boolean active) {
-    myActive = active;
+    setEnabled(active);
     repaint();
   }
 
@@ -176,8 +175,10 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
 
     g.translate(myXTransform, myYTransform);
 
-
-    if ((myBehavior.isHovered() && myHoveringEnabled) || hasFocus()) {
+    if (!isEnabled()) {
+      myInactive.paintIcon(this, g, 0, 0);
+    }
+    else if ((myBehavior.isHovered() && myHoveringEnabled) || hasFocus()) {
       paintHover(g);
       if (myBehavior.isPressedByMouse()) {
         myHovered.paintIcon(this, g, 1, 1);
@@ -187,12 +188,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
       }
     }
     else {
-      if (isActive()) {
-        myRegular.paintIcon(this, g, 0, 0);
-      }
-      else {
-        myInactive.paintIcon(this, g, 0, 0);
-      }
+      myRegular.paintIcon(this, g, 0, 0);
     }
 
     g.translate(0, 0);
@@ -211,7 +207,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
   }
 
   public boolean isActive() {
-    return myActive;
+    return isEnabled();
   }
 
   @Override

@@ -4,6 +4,7 @@ package git4idea.ift
 import com.intellij.dvcs.push.VcsPushAction
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
@@ -153,6 +154,9 @@ object GitLessonsUtil {
       gotIt.complete(true)
     })
     addStep(gotIt)
+    test(waitEditorToBeReady = false) {
+      ideFrame { button(IdeBundle.message("got.it.button.name")).click() }
+    }
   }
 
   fun TaskContext.showWarningIfCommitWindowClosed(restoreTaskWhenResolved: Boolean = true) {

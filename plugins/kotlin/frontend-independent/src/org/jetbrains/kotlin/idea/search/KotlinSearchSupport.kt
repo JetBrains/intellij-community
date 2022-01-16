@@ -67,7 +67,7 @@ interface KotlinSearchUsagesSupport {
         ): Boolean = getInstance(ktClass.project).forEachKotlinOverride(ktClass, members, scope, searchDeeply, processor)
 
         fun PsiMethod.forEachOverridingMethod(
-            scope: SearchScope = runReadAction { this.codeUsageScope() },
+            scope: SearchScope = runReadAction { useScope() },
             processor: (PsiMethod) -> Boolean
         ): Boolean = getInstance(project).forEachOverridingMethod(this, scope, processor)
 

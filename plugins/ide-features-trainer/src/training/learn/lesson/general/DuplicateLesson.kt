@@ -60,4 +60,6 @@ class DuplicateLesson(private val sample: LessonSample) :
     val end = model.selectionEndPosition ?: return false
     return start.column == end.column && abs(start.line - end.line) >= 2
   }
+
+  override val suitableTips = listOf("CtrlD", "DeleteLine")
 }

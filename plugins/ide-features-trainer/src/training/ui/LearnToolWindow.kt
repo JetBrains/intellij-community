@@ -13,7 +13,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.components.JBScrollPane
-import org.fest.swing.timing.Timeout
+import org.assertj.swing.timing.Timeout
 import training.actions.ChooseProgrammingLanguageForLearningAction
 import training.lang.LangManager
 import training.learn.LearnBundle

@@ -40,9 +40,13 @@ public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
 
   @Override
   public String getFileTitle(@NotNull Project project, @NotNull VirtualFile file) {
-    String fileTitle = VfsPresentationUtil.getPresentableNameForUI(project, file);
-    if (!fileTitle.endsWith(file.getPresentableName()) || file.getParent() == null) {
-      return fileTitle;
+    String overriddenTitle = VfsPresentationUtil.getCustomPresentableNameForUI(project, file);
+    if (overriddenTitle != null) {
+      return overriddenTitle;
+    }
+
+    if (file.getParent() == null) {
+      return file.getPresentableName();
     }
 
     if (UISettings.getInstance().getFullPathsInWindowHeader()) {
@@ -58,6 +62,7 @@ public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
       return FileUtil.getLocationRelativeToUserHome(file.getPresentableUrl());
     }
 
+    String fileTitle = VfsPresentationUtil.getPresentableNameForUI(project, file);
     if (PlatformUtils.isCidr() || PlatformUtils.isRider()) {
       return fileTitle;
     }

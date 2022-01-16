@@ -54,7 +54,12 @@ Modules that are only available for Python 2 are not listed in `VERSIONS`.
 
 ### Third-party library stubs
 
-Modules that are not shipped with Python but have a type description in Python
+We accept stubs for third-party packages into typeshed as long as:
+* the package is publicly available on the [Python Package Index](https://pypi.org/);
+* the package supports any Python version supported by typeshed; and
+* the package does not ship with its own stubs or type annotations.
+
+Stubs for third-party packages
 go into `stubs`. Each subdirectory there represents a PyPI distribution, and
 contains the following:
 * `METADATA.toml`, describing the package. See below for details.
@@ -66,7 +71,12 @@ contains the following:
   and also with Python 2 if `python2 = true` is set in `METADATA.toml` (see below).
 * (Rarely) some docs specific to a given type stub package in `README` file.
 
-When a third party stub is
+The fastest way to generate new stubs is to use [stubgen](https://mypy.readthedocs.io/en/stable/stubgen.html),
+a tool shipped with mypy. Please make sure to use the latest version.
+The generated stubs usually need some trimming of imports. You also need
+to run `black` and `isort` manually on the generated stubs (see below).
+
+When a third party stub is added or
 modified, an updated version of the corresponding distribution will be
 automatically uploaded to PyPI within a few hours.
 Each time this happens the least significant
@@ -85,13 +95,18 @@ The metadata file describes the stubs package using the
 [TOML file format](https://toml.io/en/). Currently, the following keys are
 supported:
 
-* `version`: The latest version of the library that the stubs support.
-  Note that only two most significant version levels are supported
-  (i.e. only single dot). When the stubs are updated to a newer version
+* `version`: The versions of the library that the stubs support. Two
+  formats are supported:
+    - A concrete version. This is especially suited for libraries that
+      use [Calendar Versioning](https://calver.org/).
+    - A version range ending in `.*`. This is suited for libraries that
+      reflect API changes in the version number only, where the API-independent
+      part is represented by the asterisk. In the case
+      of [Semantic Versioning](https://semver.org/), this version could look
+      like this: `2.7.*`.
+  When the stubs are updated to a newer version
   of the library, the version of the stub should be bumped (note that
-  previous versions are still available on PyPI). Some legacy stubs are
-  marked with version `0.1`, indicating that their supported version is
-  unknown and needs to be updated.
+  previous versions are still available on PyPI).
 * `python2` (default: `false`): If set to `true`, the top-level stubs
   support both Python 2 and Python 3.
 * `requires` (optional): A list of other stub packages or packages with type
@@ -473,15 +488,6 @@ The process for preparing and submitting changes also applies to
 maintainers.  This ensures high quality contributions and keeps
 everybody on the same page.  Avoid direct pushes to the repository.
 
-Maintainers should follow these rules when processing pull requests:
-
-* Always wait for tests to pass before merging PRs.
-* Use "[Squash and merge](https://github.com/blog/2141-squash-your-commits)" to merge PRs.
-* Delete branches for merged PRs (by maintainers pushing to the main repo).
-* Make sure commit messages to master are meaningful. For example, remove irrelevant
-  intermediate commit messages.
-* If stubs for a new library are submitted, notify the library's maintainers.
-
 When reviewing pull requests, follow these guidelines:
 
 * Typing is hard. Try to be helpful and explain issues with the PR,
@@ -491,3 +497,14 @@ When reviewing pull requests, follow these guidelines:
 * When reviewing large, hand-crafted PRs, you only need to look for red flags
   and general issues, and do a few spot checks.
 * Review smaller, hand-crafted PRs thoroughly.
+
+When merging pull requests, follow these guidelines:
+
+* Always wait for tests to pass before merging PRs.
+* Use "[Squash and merge](https://github.com/blog/2141-squash-your-commits)" to merge PRs.
+* Make sure the commit message is meaningful. For example, remove irrelevant
+  intermediate commit messages.
+* The commit message for third-party stubs is used to generate the changelog.
+  It should be valid Markdown, be comprehensive, read like a changelog entry,
+  and assume that the reader has no access to the diff.
+* Delete branches for merged PRs (by maintainers pushing to the main repo).

@@ -13,7 +13,6 @@ import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.io.File;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -53,8 +52,8 @@ public class MavenEmbeddersManager {
 
   @NotNull
   public synchronized MavenEmbedderWrapper getEmbedder(@NotNull MavenProject mavenProject, Key kind) {
-    File baseDir = MavenUtil.getBaseDir(mavenProject.getDirectoryFile());
-    return getEmbedder(kind, baseDir.getPath(), baseDir.getPath());
+    String baseDir = MavenUtil.getBaseDir(mavenProject.getDirectoryFile()).toString();
+    return getEmbedder(kind, baseDir, baseDir);
   }
   @NotNull
   public synchronized MavenEmbedderWrapper getEmbedder(Key kind, String workingDirectory,  @NotNull String multiModuleProjectDirectory) {

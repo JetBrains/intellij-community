@@ -157,13 +157,19 @@ public abstract class AbstractTerminalRunner<T extends Process> {
                                                         @Nullable String currentWorkingDirectory,
                                                         boolean deferSessionStartUntilUiShown) {
     JBTerminalWidget terminalWidget = new ShellTerminalWidget(myProject, mySettingsProvider, parent);
+    scheduleOpenSessionInDirectory(terminalWidget, currentWorkingDirectory, deferSessionStartUntilUiShown);
+    return terminalWidget;
+  }
+
+  protected void scheduleOpenSessionInDirectory(@NotNull JBTerminalWidget terminalWidget,
+                                                @Nullable String currentWorkingDirectory,
+                                                boolean deferSessionStartUntilUiShown) {
     if (deferSessionStartUntilUiShown) {
       UiNotifyConnector.doWhenFirstShown(terminalWidget, () -> openSessionInDirectory(terminalWidget, currentWorkingDirectory));
     }
     else {
       openSessionInDirectory(terminalWidget, currentWorkingDirectory);
     }
-    return terminalWidget;
   }
 
   private void initConsoleUI(final T process) {

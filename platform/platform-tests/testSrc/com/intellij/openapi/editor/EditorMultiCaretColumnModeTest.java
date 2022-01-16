@@ -323,6 +323,43 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                       "l<selection>ine4<caret></selection>");
   }
 
+  public void testSelectColumnsUsingShift() {
+    init("" +
+         "aaaaa\n" +
+         "bbbbb\n" +
+         "cccccccccc");
+    ((EditorEx)getEditor()).setColumnMode(true);
+    mouse().clickAt(1, 2);
+    checkResultByText("" +
+                      "aaaaa\n" +
+                      "bb<caret>bbb\n" +
+                      "cccccccccc");
+
+    mouse().shift().clickAt(2, 5);
+    checkResultByText("" +
+                      "aaaaa\n" +
+                      "bb<selection>bbb<caret></selection>\n" +
+                      "cc<selection>ccc<caret></selection>ccccc");
+
+    mouse().shift().clickAt(0, 0);
+    checkResultByText("" +
+                      "<selection><caret>aa</selection>aaa\n" +
+                      "<selection><caret>bb</selection>bbb\n" +
+                      "cccccccccc");
+
+    mouse().shift().clickAt(1, 10);
+    checkResultByText("" +
+                      "aaaaa\n" +
+                      "bb<selection>bbb<caret></selection>\n" +
+                      "cccccccccc");
+
+    mouse().shift().clickAt(2, 0);
+    checkResultByText("" +
+                      "aaaaa\n" +
+                      "<selection><caret>bb</selection>bbb\n" +
+                      "<selection><caret>cc</selection>cccccccc");
+  }
+
   public void testToggleCaseToLower() {
     init("a\n" +
          "BBB\n" +

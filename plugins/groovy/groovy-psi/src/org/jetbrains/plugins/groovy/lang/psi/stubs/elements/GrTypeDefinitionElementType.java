@@ -1,12 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
-import com.intellij.psi.stubs.IndexSink;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
@@ -30,18 +27,17 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
     super(debugName);
   }
 
-  @NotNull
-  @Override
-  public GrTypeDefinitionStub createStub(@NotNull TypeDef psi, StubElement<?> parentStub) {
-    final byte flags = GrTypeDefinitionStub.buildFlags(psi);
+  protected static GrTypeDefinitionStub doCreateStub(IStubElementType<?, ?> elementType, GrTypeDefinition typeDefinition, StubElement<?> parentStub) {
+    final byte flags = GrTypeDefinitionStub.buildFlags(typeDefinition);
     return new GrTypeDefinitionStub(
-      parentStub, psi.getName(),
-      GrStubUtils.getBaseClassName(psi),
-      this, psi.getQualifiedName(),
-      GrStubUtils.getAnnotationNames(psi),
+      parentStub, typeDefinition.getName(),
+      GrStubUtils.getBaseClassName(typeDefinition),
+      elementType, typeDefinition.getQualifiedName(),
+      GrStubUtils.getAnnotationNames(typeDefinition),
       flags
     );
   }
+
 
   @Override
   public void serialize(@NotNull GrTypeDefinitionStub stub, @NotNull StubOutputStream dataStream) throws IOException {

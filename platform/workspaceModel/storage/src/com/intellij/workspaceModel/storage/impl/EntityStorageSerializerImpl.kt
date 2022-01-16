@@ -485,7 +485,7 @@ class EntityStorageSerializerImpl(
   }
 
   private fun read(kryo: Kryo, input: Input): Vfu2EntityId {
-    val vfu2EntityId = Vfu2EntityId()
+    val vfu2EntityId = Vfu2EntityId(getHashingStrategy())
     repeat(input.readInt()) {
       val file = kryo.readObject(input, VirtualFileUrl::class.java) as VirtualFileUrl
       @Suppress("SSBasedInspection")

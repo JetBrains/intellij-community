@@ -13,8 +13,11 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
+import com.intellij.util.application
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
@@ -46,7 +49,7 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
   private val runWidgetAvailabilityManager = RunWidgetAvailabilityManager.getInstance(myProject)
   private val runWidgetListener = object : RunWidgetAvailabilityManager.RunWidgetAvailabilityListener {
     override fun availabilityChanged(value: Boolean) {
-      repaint()
+      reinitAndPaintAll()
     }
   }
 
@@ -68,7 +71,8 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
       .connect(this)
       .subscribe(NewToolbarPaneListener.TOPIC, object : NewToolbarPaneListener {
         override fun stateChanged() {
-          repaint()
+          myPanel.doLayout()
+          myPanel.repaint()
         }
       })
 
@@ -77,14 +81,14 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
 
   override fun getKey() = NEW_TOOLBAR_KEY
 
-  override fun revalidate() {
+  private fun reinitAndPaintAll() {
     ActivityTracker.getInstance().inc()
 
     myPanel.removeAll()
     if (myPanel.isVisible) {
       val actionsSchema = CustomActionsSchema.getInstance()
       for ((actionId, layoutConstrains) in mapOf(
-        (if (runWidgetAvailabilityManager.isAvailable()) "RightToolbarSideGroup" else "RightToolbarSideGroupNoRunWidget" ) to BorderLayout.EAST,
+        (if (runWidgetAvailabilityManager.isAvailable()) "RightToolbarSideGroup" else "RightToolbarSideGroupNoRunWidget") to BorderLayout.EAST,
         "CenterToolbarSideGroup" to BorderLayout.CENTER,
         "LeftToolbarSideGroup" to BorderLayout.WEST,
       )) {
@@ -98,12 +102,16 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
         )
         toolbar.targetComponent = myPanel
         toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
-
+        application.invokeLater {
+          toolbar.component.revalidate()
+          toolbar.component.repaint()
+        }
         myPanel.add(toolbar as JComponent, layoutConstrains)
       }
     }
 
     myPanel.revalidate()
+    myPanel.repaint()
   }
 
   override fun getComponent(): JComponent = myPanel
@@ -115,12 +123,14 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
     myPanel.isEnabled = toolbarSettings.isEnabled
     myPanel.isVisible = toolbarSettings.isVisible && !settings.presentationMode
 
-    repaint()
+    reinitAndPaintAll()
+    updateStatusBar()
   }
 
-  private fun repaint() {
-    revalidate()
-    myPanel.repaint()
+  private fun updateStatusBar() {
+    for (project in ProjectManager.getInstance().openProjects) {
+      project.getService(StatusBarWidgetsManager::class.java).updateAllWidgets()
+    }
   }
 
   override fun copy() = NewToolbarRootPaneExtension(myProject)
@@ -128,4 +138,12 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
   override fun dispose() {
     runWidgetAvailabilityManager.removeListener(runWidgetListener)
   }
+
+  /**
+   * This method is empty because all repaint logic in the new toolbar
+   * is based on the ui settings changes
+   */
+  override fun revalidate() {
+  }
+
 }

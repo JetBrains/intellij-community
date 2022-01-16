@@ -171,7 +171,7 @@ public final class ComplementaryFontsRegistry {
       final String fontFamily = fontFamilies.get(i);
       result = doGetFontAbleToDisplay(codePoint, preferences.getSize(fontFamily), style, fontFamily,
                                       i == 0 ? preferences.getRegularSubFamily() : null, i == 0 ? preferences.getBoldSubFamily() : null,
-                                      useLigatures, context, len > 1, true);
+                                      useLigatures, context, true, true);
       if (result != null && result.getFont().canDisplayUpTo(remainingText, start, end) == -1) {
         return result;
       }
@@ -209,7 +209,7 @@ public final class ComplementaryFontsRegistry {
       final String fontFamily = fontFamilies.get(i);
       result = doGetFontAbleToDisplay(codePoint, preferences.getSize(fontFamily), style, fontFamily,
                                       i == 0 ? preferences.getRegularSubFamily() : null, i == 0 ? preferences.getBoldSubFamily() : null,
-                                      useLigatures, context, len > 1, true);
+                                      useLigatures, context, true, true);
       if (result != null) {
         return result;
       }

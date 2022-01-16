@@ -5,9 +5,11 @@ import com.intellij.util.AsyncSupplier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.function.Supplier
 
-internal class DocumentationData(
+@VisibleForTesting
+class DocumentationData(
   val html: @Nls String,
   val anchor: String?,
   val externalUrl: String?,

@@ -35,6 +35,8 @@ class MoveLesson(private val caretText: String, private val sample: LessonSample
         LessonsBundle.message("move.whole.method.down", action(it))
       }
     }
+
+  override val suitableTips = listOf("MoveUpDown")
 }
 
 fun checkSwapMoreThan2Lines(before: String, now: String): Boolean {

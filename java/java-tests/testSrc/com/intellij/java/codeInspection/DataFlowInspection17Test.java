@@ -30,4 +30,24 @@ public class DataFlowInspection17Test extends DataFlowInspectionTestCase {
   }
 
   public void testPredicateNot() { doTest(); }
+
+  public void testEnumNullability() {
+    doTest();
+  }
+
+  public void testBoxedTypeNullability() {
+    doTest();
+  }
+
+  public void testPatternsNullability() {
+    doTest();
+  }
+
+  public void testPatterns() {
+    doTest();
+  }
+
+  public void testInstanceof() {
+    doTest();
+  }
 }

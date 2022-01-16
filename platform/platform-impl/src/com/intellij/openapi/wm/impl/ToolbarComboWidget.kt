@@ -1,0 +1,48 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.wm.impl
+
+import java.awt.Color
+import java.awt.event.ActionListener
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.SwingUtilities
+import javax.swing.UIManager
+import kotlin.properties.Delegates
+import kotlin.reflect.KProperty
+
+open class ToolbarComboWidget: JComponent() {
+
+  init {
+    SwingUtilities.invokeLater { updateUI() }
+  }
+
+  val pressListeners = mutableListOf<ActionListener>()
+  val expandListeners = mutableListOf<ActionListener>()
+
+  var text: String by Delegates.observable("", this::fireUpdateEvents)
+  var leftIcons: List<Icon> by Delegates.observable(emptyList(), this::fireUpdateEvents)
+  var rightIcons: List<Icon> by Delegates.observable(emptyList(), this::fireUpdateEvents)
+  var hoverBackground: Color by Delegates.observable(UIManager.getColor("ToolbarComboWidget.hoverBackground"), this::fireUpdateEvents)
+
+  override fun getUIClassID(): String {
+    return "ToolbarComboWidgetUI"
+  }
+
+  override fun updateUI() {
+    setUI(UIManager.getUI(this))
+  }
+
+  fun addPressListener(action: ActionListener) {
+    pressListeners += action
+  }
+
+  fun addExpandListener(action: ActionListener) {
+    expandListeners += action
+  }
+
+  private fun fireUpdateEvents(prop: KProperty<*>, oldValue: Any?, newValue: Any?) {
+    firePropertyChange(prop.name, oldValue, newValue)
+    invalidate()
+    repaint()
+  }
+}

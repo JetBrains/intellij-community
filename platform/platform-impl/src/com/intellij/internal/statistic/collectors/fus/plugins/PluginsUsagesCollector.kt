@@ -2,9 +2,9 @@
 package com.intellij.internal.statistic.collectors.fus.plugins
 
 import com.intellij.ide.plugins.DisabledPluginsState
+import com.intellij.ide.plugins.DynamicPluginEnabler
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.ProjectPluginTracker
-import com.intellij.ide.plugins.ProjectPluginTrackerManager
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -13,7 +13,6 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.extensions.PluginId
-
 
 class PluginsUsagesCollector : ApplicationUsagesCollector() {
   companion object {
@@ -52,10 +51,7 @@ class PluginsUsagesCollector : ApplicationUsagesCollector() {
   private fun getPerProjectPlugins(
     eventId: EventId1<Int>,
     countProducer: (ProjectPluginTracker) -> Set<PluginId>
-  ) = ProjectPluginTrackerManager
-    .instance
-    .trackers
-    .values
+  ) = DynamicPluginEnabler.getInstance().trackers.values
     .map { countProducer(it) }
     .filter { it.isNotEmpty() }
     .map { eventId.metric(it.size) }

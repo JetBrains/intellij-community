@@ -35,10 +35,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.codeInsight.completion.JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
@@ -234,12 +231,13 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
                                                                           boolean withInners,
                                                                           InsertHandler<JavaPsiClassReferenceElement> insertHandler,
                                                                           Condition<? super PsiClass> condition) {
+    String name = psiClass.getName();
+    if (name == null) return Collections.emptyList();
     List<JavaPsiClassReferenceElement> result = new SmartList<>();
     if (condition.value(psiClass)) {
       result.add(AllClassesGetter.createLookupItem(psiClass, insertHandler));
     }
-    String name = psiClass.getName();
-    if (withInners && name != null) {
+    if (withInners) {
       for (PsiClass inner : psiClass.getInnerClasses()) {
         if (inner.hasModifierProperty(PsiModifier.STATIC)) {
           for (JavaPsiClassReferenceElement lookupInner : createClassLookupItems(inner, true, insertHandler, condition)) {

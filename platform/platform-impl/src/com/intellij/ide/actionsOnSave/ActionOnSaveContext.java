@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -19,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
  * @see ActionOnSaveInfoProvider#getActionOnSaveInfos(ActionOnSaveContext)
  * @see ActionOnSaveInfo
  */
-@ApiStatus.Experimental
 public final class ActionOnSaveContext extends UserDataHolderBase {
 
   private final @NotNull Project myProject;

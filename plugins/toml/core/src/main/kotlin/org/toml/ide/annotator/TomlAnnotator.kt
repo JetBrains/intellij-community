@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.SyntaxTraverser
+import org.toml.TomlBundle
 import org.toml.lang.psi.TomlArray
 import org.toml.lang.psi.TomlElementTypes
 import org.toml.lang.psi.TomlInlineTable
@@ -27,14 +28,15 @@ class TomlAnnotator : AnnotatorBase() {
                 .expand { it !is TomlArray } // An array can be multiline even inside an inline table
                 .filterIsInstance<PsiWhiteSpace>()
             if (whiteSpaces.any { it.textContains('\n') }) {
-                holder.newAnnotation(HighlightSeverity.ERROR, "Inline tables are intended to appear on a single line").create()
+                holder.newAnnotation(HighlightSeverity.ERROR,
+                  TomlBundle.message("inspection.toml.message.inline.tables.on.single.line")).create()
             }
         }
 
         val parent = element.parent
         if (element.elementType == TomlElementTypes.COMMA && parent is TomlInlineTable &&
             element.textOffset > parent.entries.lastOrNull()?.textOffset ?: 0) {
-            val message = "Remove trailing comma"
+            val message = TomlBundle.message("intention.toml.name.remove.trailing.comma")
 
             val fix = object : LocalQuickFix {
                 override fun getFamilyName(): String = message
@@ -46,7 +48,7 @@ class TomlAnnotator : AnnotatorBase() {
             val problemDescriptor = InspectionManager.getInstance(element.project)
                 .createProblemDescriptor(element, message, fix, ProblemHighlightType.ERROR, true)
 
-            holder.newAnnotation(HighlightSeverity.ERROR, "Trailing commas are not allowed in inline tables")
+            holder.newAnnotation(HighlightSeverity.ERROR, TomlBundle.message("inspection.toml.message.trailing.commas.in.inline.tables"))
                 .newLocalQuickFix(fix, problemDescriptor)
                 .registerFix()
                 .create()

@@ -13,6 +13,9 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageV
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 
 internal suspend fun installedPackages(
     projectModules: List<ProjectModule>,
@@ -45,7 +48,7 @@ internal suspend fun installedPackages(
 
     val dependencyRemoteInfoMap = dataProvider.fetchInfoFor(installedDependencies, traceInfo)
 
-    return usageInfoByDependency.mapNotNull { (dependency, usageInfo) ->
+    return usageInfoByDependency.parallelMap { (dependency, usageInfo) ->
         val installedDependency = InstalledDependency.from(dependency)
         val remoteInfo = if (installedDependency != null) {
             dependencyRemoteInfoMap[installedDependency]
@@ -58,11 +61,14 @@ internal suspend fun installedPackages(
             usageInfo = usageInfo,
             remoteInfo = remoteInfo
         )
-    }.sortedBy { it.sortKey }
+    }.filterNotNull().sortedBy { it.sortKey }
 }
 
 private suspend fun fetchProjectDependencies(modules: List<ProjectModule>, traceInfo: TraceInfo): Map<ProjectModule, List<UnifiedDependency>> =
-    modules.associateWith { module -> module.installedDependencies(traceInfo) }
+    coroutineScope {
+        modules.associateWith { module -> async { module.installedDependencies(traceInfo) } }
+            .mapValues { (_, value) -> value.await() }
+    }
 
 private suspend fun ProjectModule.installedDependencies(traceInfo: TraceInfo): List<UnifiedDependency> {
     logDebug(traceInfo, "installedDependencies()") { "Fetching installed dependencies for module $name..." }

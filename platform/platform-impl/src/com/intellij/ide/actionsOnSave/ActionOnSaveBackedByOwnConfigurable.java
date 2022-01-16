@@ -4,7 +4,6 @@ package com.intellij.ide.actionsOnSave;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +26,6 @@ import java.util.function.Supplier;
  * @see #getValueFromSavedStateOrFromUiState(Supplier, Function)
  * @see #updateUiOnOwnPage(Consumer)
  */
-@ApiStatus.Experimental
 public abstract class ActionOnSaveBackedByOwnConfigurable<Conf extends UnnamedConfigurable> extends ActionOnSaveInfo {
   private static final Logger LOG = Logger.getInstance(ActionOnSaveBackedByOwnConfigurable.class);
 

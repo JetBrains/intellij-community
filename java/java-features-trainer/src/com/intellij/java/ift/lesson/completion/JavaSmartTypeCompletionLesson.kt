@@ -70,4 +70,6 @@ class JavaSmartTypeCompletionLesson : KLesson("Smart type completion", LessonsBu
       }
     }
   }
+
+  override val suitableTips = listOf("SmartTypeCompletion", "SmartTypeAfterNew", "SecondSmartCompletionToar")
 }

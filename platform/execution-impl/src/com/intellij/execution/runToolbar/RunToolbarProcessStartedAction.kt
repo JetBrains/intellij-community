@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBDimension
@@ -75,17 +74,9 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
 
       override fun showPopup() {
         presentation.getClientProperty(PROP_ACTIVE_ENVIRONMENT)?.let { environment ->
-          ToolWindowManager.getInstance(environment.project).getToolWindow(
-            environment.contentToReuse?.contentToolWindowId ?: environment.executor.id)?.let {
-            val contentManager = it.contentManager
-            contentManager.contents.firstOrNull { it.executionId == environment.executionId }?.let { content ->
-              contentManager.setSelectedContent(content)
-            }
-            it.show()
-          }
+          environment.showToolWindowTab()
         }
       }
-
 
       override fun doRightClick() {
         RunToolbarRunConfigurationsAction.doRightClick(dataContext)

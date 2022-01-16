@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.packaging.PyPackageManagers;
+import com.jetbrains.python.packaging.PyPackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ public class PythonSdkEditorAdditionalOptionsProvider extends SdkEditorAdditiona
     @Nullable
     @Override
     public JComponent createComponent() {
-      final PackagesNotificationPanel notificationsArea = new PackagesNotificationPanel();
+      final PackagesNotificationPanel notificationsArea = new PyPackagesNotificationPanel();
       final JComponent notificationsComponent = notificationsArea.getComponent();
 
       JPanel panel = new JPanel(new BorderLayout());

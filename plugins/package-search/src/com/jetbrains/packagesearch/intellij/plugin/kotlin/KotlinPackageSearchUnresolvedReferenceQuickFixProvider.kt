@@ -1,12 +1,9 @@
 package com.jetbrains.packagesearch.intellij.plugin.kotlin
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageSearchUnresolvedReferenceQuickFixProvider
-
-val logger = Logger.getInstance(KotlinPackageSearchUnresolvedReferenceQuickFixProvider::class.java)
 
 class KotlinPackageSearchUnresolvedReferenceQuickFixProvider : PackageSearchUnresolvedReferenceQuickFixProvider<PsiReference>() {
 

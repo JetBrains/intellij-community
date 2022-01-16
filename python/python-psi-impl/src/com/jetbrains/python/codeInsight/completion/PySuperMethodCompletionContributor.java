@@ -19,6 +19,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -36,7 +37,7 @@ import java.util.Set;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 
-public class PySuperMethodCompletionContributor extends CompletionContributor {
+public class PySuperMethodCompletionContributor extends CompletionContributor implements DumbAware {
   public PySuperMethodCompletionContributor() {
     extend(CompletionType.BASIC,
            psiElement().afterLeafSkipping(psiElement().whitespace(), psiElement().withElementType(PyTokenTypes.DEF_KEYWORD)),

@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+// This service exists for Rider and CWM to override.
 // TODO consider EP instead of a service override
 @Internal
 public interface IdeDocumentationTargetProvider {

@@ -4,11 +4,13 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -45,7 +47,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       }
       if (importStatement instanceof PsiImportStaticStatement) {
         context.setAddCompletionChar(false);
-        EditorModificationUtil.insertStringAtCaret(context.getEditor(), ".");
+        EditorModificationUtilEx.insertStringAtCaret(context.getEditor(), ".");
       }
       return;
     }
@@ -94,9 +96,14 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
 
     context.commitDocument();
 
+    // Restore elements after commit
+    position = file.findElementAt(context.getTailOffset() - 1);
+    ref = position != null && position.getParent() instanceof PsiJavaCodeReferenceElement ?
+          (PsiJavaCodeReferenceElement)position.getParent() : null;
+
     if (c == '!' || c == '?') {
       context.setAddCompletionChar(false);
-      if (ref != null && ref.isValid() && !(ref instanceof PsiReferenceExpression) &&
+      if (ref != null && !(ref instanceof PsiReferenceExpression) &&
           !ref.textContains('@') && !(ref.getParent() instanceof PsiAnnotation)) {
         NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
         String annoName = c == '!' ? manager.getDefaultNotNull() : manager.getDefaultNullable();
@@ -105,6 +112,22 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
           PsiJavaCodeReferenceElement newRef =
             JavaPsiFacade.getElementFactory(project).createReferenceFromText('@' + annoName + ' ' + ref.getText(), ref);
           JavaCodeStyleManager.getInstance(project).shortenClassReferences(ref.replace(newRef));
+        }
+      }
+    }
+
+    if (ref != null && HighlightingFeature.PATTERNS.isAvailable(ref) && psiClass.getTypeParameters().length > 0) {
+      PsiExpression instanceOfOperand = JavaCompletionUtil.getInstanceOfOperand(ref);
+      if (instanceOfOperand != null) {
+        PsiClassType origType = JavaPsiFacade.getElementFactory(project).createType(psiClass);
+        PsiType generified = DfaPsiUtil.tryGenerify(instanceOfOperand, origType);
+        if (generified != null && generified != origType) {
+          String completeTypeText = generified.getCanonicalText();
+          PsiJavaCodeReferenceElement newRef =
+            JavaPsiFacade.getElementFactory(project).createReferenceFromText(completeTypeText, ref);
+          PsiElement resultingRef = JavaCodeStyleManager.getInstance(project).shortenClassReferences(ref.replace(newRef));
+          context.getEditor().getCaretModel().moveToOffset(resultingRef.getTextRange().getEndOffset());
+          return;
         }
       }
     }

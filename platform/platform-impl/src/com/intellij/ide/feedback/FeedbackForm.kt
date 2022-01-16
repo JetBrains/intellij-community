@@ -138,8 +138,6 @@ class FeedbackForm(
               ApplicationBundle.message("feedback.form.evaluation.details.emptyText")
             else
               ApplicationBundle.message("feedback.form.details.emptyText")
-            font = JBFont.regular()
-            emptyText.setFont(JBFont.regular())
             putClientProperty(JBTextArea.STATUS_VISIBLE_FUNCTION,
               BooleanFunction<JBTextArea> { textArea -> textArea.text.isEmpty() })
             addKeyListener(object : KeyAdapter() {

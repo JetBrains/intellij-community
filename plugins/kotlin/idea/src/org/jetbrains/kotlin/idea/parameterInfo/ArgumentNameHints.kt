@@ -56,7 +56,7 @@ private fun getArgumentNameHintsForCallCandidate(
     }
 
     return resolvedCall.valueArguments.mapNotNull { (valueParam: ValueParameterDescriptor, resolvedArg) ->
-        if (resultingDescriptor.isAnnotationConstructor() && valueParam.name.identifier == "value") {
+        if (resultingDescriptor.isAnnotationConstructor() && valueParam.name.asString() == "value") {
             return@mapNotNull null
         }
 

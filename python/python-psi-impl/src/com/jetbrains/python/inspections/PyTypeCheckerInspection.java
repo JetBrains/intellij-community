@@ -39,10 +39,18 @@ public class PyTypeCheckerInspection extends PyInspection {
     if (LOG.isDebugEnabled()) {
       session.putUserData(TIME_KEY, System.nanoTime());
     }
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   public static class Visitor extends PyInspectionVisitor {
+    public Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
+    }
+
+    /**
+     * @deprecated do not use
+     */
+    @Deprecated
     public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
     }

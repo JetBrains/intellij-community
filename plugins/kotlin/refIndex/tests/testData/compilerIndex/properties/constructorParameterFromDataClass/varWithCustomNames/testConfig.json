@@ -1,0 +1,13 @@
+{
+    "mainFile": "Main.kt",
+    "usages": [
+        "ImplicitComponent.kt",
+        "JavaReadComponent.java",
+        "JavaReadGetter.java",
+        "JavaSetter.java",
+        "Usage.kt",
+        "UsageOfComponent1.kt",
+        "Write.kt",
+        "fromFun.kt"
+    ]
+}

@@ -60,7 +60,7 @@ public class MoveToTestRootFix extends LocalQuickFixAndIntentionActionOnPsiEleme
   }
 
   public boolean isAvailable(PsiFile file) {
-    if (file == null || !file.isValid()) return false;
+    if (file == null || !file.isValid() || !(file instanceof PsiJavaFile)) return false;
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);
     if (virtualFile == null) return false;
     Module module = ModuleUtilCore.findModuleForFile(virtualFile, file.getProject());

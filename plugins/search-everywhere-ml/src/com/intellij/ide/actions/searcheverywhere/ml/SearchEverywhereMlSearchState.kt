@@ -18,7 +18,8 @@ internal class SearchEverywhereMlSearchState(
   private val cachedMLWeight: MutableMap<Int, Double> = hashMapOf()
 
   private val model: SearchEverywhereRankingModel by lazy {
-    SearchEverywhereRankingModel(SearchEverywhereMLRankingModelProvider.getForTab(tabId))
+    val provider = SearchEverywhereMLRankingModelProvider.getForTab(tabId)
+    SearchEverywhereRankingModel(provider)
   }
 
   @Synchronized

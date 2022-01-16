@@ -886,6 +886,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-48012
+  public void testUnresolvedKeywordPattern() {
+    runWithLanguageLevel(LanguageLevel.PYTHON310, this::doTest);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

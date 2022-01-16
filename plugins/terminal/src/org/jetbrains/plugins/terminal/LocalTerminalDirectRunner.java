@@ -4,10 +4,7 @@ package org.jetbrains.plugins.terminal;
 import com.google.common.collect.ImmutableList;
 import com.intellij.execution.TaskExecutor;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessWaitFor;
+import com.intellij.execution.process.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
@@ -17,10 +14,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.terminal.JBTerminalWidget;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.EnvironmentUtil;
-import com.intellij.util.PathUtil;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -131,6 +125,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(myProject).getEnvData();
     if (envData.isPassParentEnvs()) {
       envs.putAll(System.getenv());
+      EnvironmentRestorer.restoreOverriddenVars(envs);
     }
 
     if (!SystemInfo.isWindows) {
@@ -183,7 +178,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         .setEnvironment(envs)
         .setDirectory(workingDir)
         .setInitialColumns(options.getInitialColumns())
-        .setInitialRows(options.getInitialRows());
+        .setInitialRows(options.getInitialRows())
+        .setUseWinConPty(LocalPtyOptions.shouldUseWinConPty());
       PtyProcess process = builder.start();
       if (LOG.isDebugEnabled()) {
         LOG.debug("Started " + process.getClass().getName() + " from " + Arrays.toString(command) + " in " + workingDir +

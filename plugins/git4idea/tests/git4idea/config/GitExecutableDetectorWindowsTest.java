@@ -175,7 +175,7 @@ public class GitExecutableDetectorWindowsTest {
       }
 
       @Override
-      protected String getPath() {
+      protected String getPathEnv() {
         return StringUtil.join(PATH.split(";"), s -> convertPath(s), ";");
       }
     }.detect(null);

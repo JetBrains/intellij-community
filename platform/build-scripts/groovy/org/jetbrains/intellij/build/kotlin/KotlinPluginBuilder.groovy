@@ -291,7 +291,6 @@ class KotlinPluginBuilder {
 
           switch (kind) {
             case KotlinPluginKind.IJ:
-            case KotlinPluginKind.MI:
               text = replace(
                 text,
                 "<!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->",

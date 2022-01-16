@@ -9,7 +9,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowContextMenuActionBase
 import com.intellij.ui.content.Content
 
-class TurnOffAutoUpdateAction : ToolWindowContextMenuActionBase() {
+internal class TurnOffAutoUpdateAction : ToolWindowContextMenuActionBase() {
 
   override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
     e.presentation.isEnabledAndVisible = toolWindow.id == DocumentationToolWindowManager.TOOL_WINDOW_ID

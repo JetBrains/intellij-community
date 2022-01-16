@@ -25,10 +25,8 @@ import org.jetbrains.annotations.ApiStatus
 internal class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
                                                                    Disposable {
   companion object {
-
     private val logger = logger<ExperimentalToolbarSettings>()
-
-    private val NewToolbarEnabled = RegistryManager.getInstance().get("ide.new.navbar")
+    private var newToolbarEnabled = RegistryManager.getInstance().get("ide.widget.toolbar")
   }
 
   private var toolbarState = ExperimentalToolbarSettingsState()
@@ -55,7 +53,7 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
     }
 
     Disposer.register(application, this)
-    NewToolbarEnabled.addListener(ToolbarRegistryListener(), this)
+    newToolbarEnabled.addListener(ToolbarRegistryListener(), this)
   }
 
   override fun getState(): ExperimentalToolbarSettingsState = toolbarState
@@ -70,12 +68,18 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
 
   override fun dispose() {}
 
+  /**
+   * True if new the toolbar is enabled
+   */
   override var isEnabled: Boolean
-    get() = NewToolbarEnabled.asBoolean()
-    set(value) = NewToolbarEnabled.setValue(value)
+    get() = newToolbarEnabled.asBoolean()
+    set(value) = newToolbarEnabled.setValue(value)
 
+  /**
+   * True if new the toolbar is visible
+   */
   override var isVisible: Boolean
-    get() = toolbarState.showNewMainToolbar
+    get() = toolbarState.showNewMainToolbar && isEnabled
     set(value) {
       toolbarState.showNewMainToolbar = value
 

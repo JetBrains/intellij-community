@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyConditionalStatementPart;
 import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +49,7 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session, ignoreComparisonToZero);
+    return new Visitor(holder, ignoreComparisonToZero, PyInspectionVisitor.getContext(session));
   }
 
   @Override
@@ -62,8 +63,10 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
   private static class Visitor extends PyInspectionVisitor {
     private final boolean myIgnoreComparisonToZero;
 
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, boolean ignoreComparisonToZero) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder,
+            boolean ignoreComparisonToZero,
+            @NotNull TypeEvalContext context) {
+      super(holder, context);
       myIgnoreComparisonToZero = ignoreComparisonToZero;
     }
 
@@ -72,7 +75,7 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
       super.visitPyConditionalStatementPart(node);
       final PyExpression condition = node.getCondition();
       if (condition != null) {
-        condition.accept(new PyBinaryExpressionVisitor(getHolder(), getSession(), myIgnoreComparisonToZero));
+        condition.accept(new PyBinaryExpressionVisitor(getHolder(), myTypeEvalContext, myIgnoreComparisonToZero));
       }
     }
   }
@@ -81,9 +84,9 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
     private final boolean myIgnoreComparisonToZero;
 
     PyBinaryExpressionVisitor(@Nullable ProblemsHolder holder,
-                                     @NotNull LocalInspectionToolSession session,
+                              @NotNull TypeEvalContext context,
                                      boolean ignoreComparisonToZero) {
-      super(holder, session);
+      super(holder, context);
       myIgnoreComparisonToZero = ignoreComparisonToZero;
     }
 

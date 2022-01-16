@@ -59,8 +59,8 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
     val support = XBreakpointUtil.getDebuggerSupport(project, breakpoint) ?: return
     val bounds = (parent as? JTree)?.run { getPathBounds(leadSelectionPath) }
     val visible = parent.visibleRect.apply {
-      x = bounds?.run { x + width }?.coerceAtMost(x + width)?.coerceAtLeast(x) ?: (x + width / 2)
-      y = bounds?.run { y + height / 2 }?.coerceAtMost(y + height)?.coerceAtLeast(y) ?: (y + height / 2)
+      x = bounds?.run { x + width }?.coerceIn(x, x + width) ?: (x + width / 2)
+      y = bounds?.run { y + height / 2 }?.coerceIn(y, y + height) ?: (y + height / 2)
     }
     support.editBreakpointAction.editBreakpoint(project, parent, visible.location, breakpoint)
   }

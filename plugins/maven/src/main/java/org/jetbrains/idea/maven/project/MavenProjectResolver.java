@@ -276,7 +276,7 @@ public class MavenProjectResolver {
 
   @NotNull
   private MultiMap<File, MavenProject> groupByBasedir(@NotNull Collection<MavenProject> projects) {
-    return ContainerUtil.groupBy(projects, p -> MavenUtil.getBaseDir(myTree.findRootProject(p).getDirectoryFile()));
+    return ContainerUtil.groupBy(projects, p -> MavenUtil.getBaseDir(myTree.findRootProject(p).getDirectoryFile()).toFile());
   }
 
   public void executeWithEmbedder(@NotNull MavenProject mavenProject,

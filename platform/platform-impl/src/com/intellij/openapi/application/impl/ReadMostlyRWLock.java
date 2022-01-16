@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.util.containers.ConcurrentList;
@@ -98,7 +98,7 @@ final class ReadMostlyRWLock {
     if (status.readRequested) return null;
 
     if (!tryReadLock(status)) {
-      ProgressIndicator progress = ProgressManager.getGlobalProgressIndicator();
+      ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
       for (int iter = 0; ; iter++) {
         if (tryReadLock(status)) {
           break;
@@ -122,21 +122,6 @@ final class ReadMostlyRWLock {
 
     tryReadLock(status);
     return status;
-  }
-
-  // return true if write lock acquired successfully, false if there's at least one active reader and write lock couldn't be acquired
-  boolean startTryWrite() {
-    checkWriteThreadAccess();
-    assert !writeRequested;
-    assert !writeAcquired;
-
-    writeRequested = true;
-    if (areAllReadersIdle()) {
-      writeAcquired = true;
-      return true;
-    }
-    writeRequested = false;
-    return false;
   }
 
   void endRead(Reader status) {
@@ -257,18 +242,18 @@ final class ReadMostlyRWLock {
     }
   }
 
-  AccessToken writeSuspend() {
+  void writeSuspendWhilePumpingIdeEventQueueHopingForTheBest(@NotNull Runnable runnable) {
     boolean prev = writeSuspended;
     writeSuspended = true;
     writeUnlock();
-    return new AccessToken() {
-      @Override
-      public void finish() {
-        cancelActionsToBeCancelledBeforeWrite();
-        writeLock();
-        writeSuspended = prev;
-      }
-    };
+    try {
+      runnable.run();
+    }
+    finally {
+      cancelActionsToBeCancelledBeforeWrite();
+      writeLock();
+      writeSuspended = prev;
+    }
   }
 
   void writeUnlock() {

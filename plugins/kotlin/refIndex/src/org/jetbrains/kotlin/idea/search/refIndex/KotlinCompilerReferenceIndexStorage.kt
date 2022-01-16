@@ -4,19 +4,15 @@ package org.jetbrains.kotlin.idea.search.refIndex
 import com.intellij.compiler.server.BuildManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.MultiMap
-import com.intellij.util.containers.generateRecursiveSequence
 import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.io.CorruptedException
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.PersistentHashMap
-import com.intellij.util.io.PersistentMapBuilder
-import com.intellij.util.io.externalizer.StringCollectionExternalizer
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
@@ -24,28 +20,23 @@ import org.jetbrains.jps.builders.storage.BuildDataPaths
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.incremental.KOTLIN_CACHE_DIRECTORY_NAME
-import org.jetbrains.kotlin.incremental.LookupStorage
-import org.jetbrains.kotlin.incremental.LookupSymbol
-import org.jetbrains.kotlin.incremental.storage.BasicMapsOwner.Companion.CACHE_EXTENSION
+import org.jetbrains.kotlin.incremental.storage.BasicMapsOwner
 import org.jetbrains.kotlin.incremental.storage.CollectionExternalizer
-import org.jetbrains.kotlin.incremental.storage.RelativeFileToPathConverter
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
-import java.io.File
 import java.nio.file.Path
 import java.util.concurrent.Future
 import kotlin.io.path.*
 import kotlin.system.measureTimeMillis
 
 class KotlinCompilerReferenceIndexStorage private constructor(
-    targetDataDir: Path,
-    projectPath: String,
+    kotlinDataContainerPath: Path,
+    private val lookupStorageReader: LookupStorageReader,
 ) {
     companion object {
         /**
          * [org.jetbrains.kotlin.incremental.AbstractIncrementalCache.Companion.SUBTYPES]
          */
-        private val SUBTYPES_STORAGE_NAME = "subtypes.$CACHE_EXTENSION"
+        private val SUBTYPES_STORAGE_NAME = "subtypes.${BasicMapsOwner.CACHE_EXTENSION}"
 
         private val STORAGE_INDEXING_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor(
             "Kotlin compiler references indexing", UnindexedFilesUpdater.getMaxNumberOfIndexingThreads()
@@ -56,12 +47,17 @@ class KotlinCompilerReferenceIndexStorage private constructor(
         fun open(project: Project): KotlinCompilerReferenceIndexStorage? {
             val projectPath = runReadAction { project.takeUnless(Project::isDisposed)?.basePath } ?: return null
             val buildDataPaths = project.buildDataPaths
-            val kotlinDataPath = buildDataPaths?.kotlinDataContainer ?: run {
-                LOG.warn("try to open storage without index directory")
+            val kotlinDataContainerPath = buildDataPaths?.kotlinDataContainer ?: kotlin.run {
+                LOG.warn("${SettingConstants.KOTLIN_DATA_CONTAINER_ID} is not found")
                 return null
             }
 
-            val storage = KotlinCompilerReferenceIndexStorage(kotlinDataPath, projectPath)
+            val lookupStorageReader = LookupStorageReader.create(kotlinDataContainerPath, projectPath) ?: kotlin.run {
+                LOG.warn("LookupStorage not found or corrupted")
+                return null
+            }
+
+            val storage = KotlinCompilerReferenceIndexStorage(kotlinDataContainerPath, lookupStorageReader)
             if (!storage.initialize(buildDataPaths)) return null
             return storage
         }
@@ -72,7 +68,7 @@ class KotlinCompilerReferenceIndexStorage private constructor(
             }
         }
 
-        fun hasIndexStorage(project: Project): Boolean = project.buildDataPaths?.kotlinDataContainer != null
+        fun hasIndex(project: Project): Boolean = LookupStorageReader.hasStorage(project)
 
         @TestOnly
         fun initializeForTests(
@@ -80,10 +76,10 @@ class KotlinCompilerReferenceIndexStorage private constructor(
             destination: ClassOneToManyStorage,
         ) = initializeSubtypeStorage(buildDataPaths, destination)
 
-        private val Project.buildDataPaths: BuildDataPaths?
+        internal val Project.buildDataPaths: BuildDataPaths?
             get() = BuildManager.getInstance().getProjectSystemDirectory(this)?.let(::BuildDataPathsImpl)
 
-        private val BuildDataPaths.kotlinDataContainer: Path?
+        internal val BuildDataPaths.kotlinDataContainer: Path?
             get() = targetsDataRoot?.toPath()
                 ?.resolve(SettingConstants.KOTLIN_DATA_CONTAINER_ID)
                 ?.takeIf { it.exists() && it.isDirectory() }
@@ -146,9 +142,7 @@ class KotlinCompilerReferenceIndexStorage private constructor(
         }
     }
 
-    private val lookupStorage = LookupStorage(targetDataDir.toFile(), RelativeFileToPathConverter(File(projectPath)))
-
-    private val subtypesStorage = ClassOneToManyStorage(targetDataDir.resolve(SUBTYPES_STORAGE_NAME))
+    private val subtypesStorage = ClassOneToManyStorage(kotlinDataContainerPath.resolve(SUBTYPES_STORAGE_NAME))
 
     /**
      * @return true if initialization was successful
@@ -156,14 +150,11 @@ class KotlinCompilerReferenceIndexStorage private constructor(
     private fun initialize(buildDataPaths: BuildDataPaths): Boolean = initializeSubtypeStorage(buildDataPaths, subtypesStorage)
 
     private fun close() {
-        lookupStorage.close()
+        lookupStorageReader.close()
         subtypesStorage.closeAndClean()
     }
 
-    fun getUsages(fqName: FqName): List<VirtualFile> = LookupSymbol(
-        name = fqName.shortName().asString(),
-        scope = fqName.parent().takeUnless(FqName::isRoot)?.asString() ?: "",
-    ).let(lookupStorage::get).mapNotNull { VfsUtil.findFile(Path(it), true) }
+    fun getUsages(fqName: FqName): List<VirtualFile> = lookupStorageReader[fqName].mapNotNull { VfsUtil.findFile(it, true) }
 
     fun getSubtypesOf(fqName: FqName, deep: Boolean): Sequence<FqName> = subtypesStorage[fqName, deep]
 }
@@ -180,46 +171,8 @@ private fun initializeStorage(destinationMap: MultiMap<String, String>, subtypes
     }
 }
 
-private fun createKotlinDataReader(storagePath: Path): PersistentHashMap<String, Collection<String>> = PersistentMapBuilder.newBuilder(
+private fun createKotlinDataReader(storagePath: Path): PersistentHashMap<String, Collection<String>> = openReadOnlyPersistentHashMap(
     storagePath,
     EnumeratorStringDescriptor.INSTANCE,
     CollectionExternalizer<String>(EnumeratorStringDescriptor.INSTANCE, ::SmartList),
-).readonly().build()
-
-@IntellijInternalApi
-class ClassOneToManyStorage(storagePath: Path) {
-    init {
-        val storageName = storagePath.name
-        storagePath.parent.listDirectoryEntries("$storageName*").ifNotEmpty {
-            forEach { it.deleteIfExists() }
-            LOG.warn("'$storageName' was deleted")
-        }
-    }
-
-    private val storage = PersistentMapBuilder.newBuilder(
-        storagePath,
-        EnumeratorStringDescriptor.INSTANCE,
-        externalizer,
-    ).build()
-
-    fun closeAndClean(): Unit = storage.closeAndClean()
-
-    fun put(key: String, values: Collection<String>) {
-        storage.put(key, values)
-    }
-
-    operator fun get(key: FqName, deep: Boolean): Sequence<FqName> = get(key.asString(), deep).map(::FqName)
-    operator fun get(key: String, deep: Boolean): Sequence<String> {
-        val values = storage[key]?.asSequence() ?: emptySequence()
-        if (!deep) return values
-
-        return generateRecursiveSequence(values) {
-            storage[it]?.asSequence() ?: emptySequence()
-        }
-    }
-
-    companion object {
-        private val externalizer = StringCollectionExternalizer<Collection<String>>(::ArrayList)
-        private val LOG = logger<ClassOneToManyStorage>()
-    }
-}
+)

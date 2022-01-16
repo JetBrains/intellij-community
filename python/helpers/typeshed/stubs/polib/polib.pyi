@@ -1,5 +1,5 @@
 import textwrap
-from typing import IO, Any, Callable, Generic, List, Text, Tuple, Type, TypeVar, overload
+from typing import IO, Any, Callable, Generic, List, Text, Type, TypeVar, overload
 from typing_extensions import SupportsIndex
 
 _TB = TypeVar("_TB", bound="_BaseEntry")
@@ -82,7 +82,7 @@ class _BaseEntry(object):
 class POEntry(_BaseEntry):
     comment: Text
     tcomment: Text
-    occurrences: list[Tuple[str, int]]
+    occurrences: list[tuple[str, int]]
     flags: list[Text]
     previous_msgctxt: Text | None
     previous_msgid: Text | None
@@ -108,7 +108,7 @@ class POEntry(_BaseEntry):
 class MOEntry(_BaseEntry):
     comment: Text
     tcomment: Text
-    occurrences: list[Tuple[str, int]]
+    occurrences: list[tuple[str, int]]
     flags: list[Text]
     previous_msgctxt: Text | None
     previous_msgid: Text | None
@@ -119,7 +119,7 @@ class MOEntry(_BaseEntry):
 class _POFileParser(Generic[_TP]):
     fhandle: IO[Text]
     instance: _TP
-    transitions: dict[Tuple[str, str], Tuple[Callable[[], bool], str]]
+    transitions: dict[tuple[str, str], tuple[Callable[[], bool], str]]
     current_line: int
     current_entry: POEntry
     current_state: str

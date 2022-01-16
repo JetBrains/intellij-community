@@ -4,6 +4,7 @@ package com.intellij.openapi.command.undo;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.ClientCopyPasteManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.client.*;
@@ -229,26 +230,36 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
     return myManager.isUndoAvailable(getFileEditor(getFirstEditor()));
   }
 
-  private void flushCommandMergers(ClientId @NotNull... clientIds) {
+  private void flushCommandMergers(ClientId @NotNull ... clientIds) {
     for (ClientId clientId : clientIds) {
-      ClientId.withClientId(clientId, () -> myManager.flushCurrentCommandMerger());
+      try (AccessToken ignored = ClientId.withClientId(clientId)) {
+        myManager.flushCurrentCommandMerger();
+      }
     }
   }
 
   private void backspace(@NotNull Editor editor, @NotNull ClientId clientId) {
-    ClientId.withClientId(clientId, () -> backspace(editor));
+    try (AccessToken ignored = ClientId.withClientId(clientId)) {
+      backspace(editor);
+    }
   }
 
   private void undoFirstEditor(@NotNull ClientId clientId) {
-    ClientId.withClientId(clientId, () -> undoFirstEditor());
+    try (AccessToken ignored = ClientId.withClientId(clientId)) {
+      undoFirstEditor();
+    }
   }
 
   private void redoFirstEditor(@NotNull ClientId clientId) {
-    ClientId.withClientId(clientId, () -> redoFirstEditor());
+    try (AccessToken ignored = ClientId.withClientId(clientId)) {
+      redoFirstEditor();
+    }
   }
 
   private void typeWithoutFlush(char c, @NotNull ClientId clientId) {
-    ClientId.withClientId(clientId, () -> typeWithoutFlush(c));
+    try (AccessToken ignored = ClientId.withClientId(clientId)) {
+      typeWithoutFlush(c);
+    }
   }
 
   private void typeWithoutFlush(char c) {
@@ -256,7 +267,9 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
   }
 
   private void typeWithFlush(char c, @NotNull ClientId clientId) {
-    ClientId.withClientId(clientId, () -> typeWithFlush(c));
+    try (AccessToken ignored = ClientId.withClientId(clientId)) {
+      typeWithFlush(c);
+    }
   }
 
   private void typeWithFlush(char c) {

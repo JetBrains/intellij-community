@@ -23,11 +23,8 @@ import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.search.excludeKotlinSources
 import org.jetbrains.kotlin.idea.stubindex.*
-import org.jetbrains.kotlin.idea.util.CallType
-import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
+import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
-import org.jetbrains.kotlin.idea.util.receiverTypes
-import org.jetbrains.kotlin.idea.util.substituteExtensionIfCallable
 import org.jetbrains.kotlin.incremental.KotlinLookupLocation
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -38,9 +35,8 @@ import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationResolver
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
-import org.jetbrains.kotlin.resolve.scopes.SyntheticScopes
-import org.jetbrains.kotlin.resolve.scopes.collectSyntheticStaticFunctions
+import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
+import org.jetbrains.kotlin.resolve.scopes.*
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.types.isError
@@ -384,6 +380,73 @@ class KotlinIndicesHelper(
         val result = arrayListOf<PsiField>()
         processFieldsWithName(name, { field -> result.add(field); true }, scope, null)
         return result.asSequence()
+    }
+
+    /**
+     * Collect all callable object members (including inherited members) with the specified name.
+     *
+     * @param callTypeAndReceiver the call type and receiver at the call site
+     * @param receiverTypes the list of the types allowed as receivers
+     * @param nameFilter the function to filter candidates with relevant names (e.g., a prefix matcher for the completion)
+     *
+     * Unit tests are part of the autoimport quickfix:
+     * [org.jetbrains.kotlin.idea.quickfix.QuickFixTestGenerated.AutoImports.CallablesDeclaredInClasses]
+     */
+
+    fun getAllCallablesFromSubclassObjects(
+        callTypeAndReceiver: CallTypeAndReceiver<*, *>,
+        receiverTypes: Collection<KotlinType>,
+        nameFilter: (String) -> Boolean
+    ): Collection<CallableMemberDescriptor> {
+        val descriptorKindFilter = DescriptorKindFilter.CALLABLES
+
+        val objectsIndex = KotlinSubclassObjectNameIndex.getInstance()
+
+        val objectDeclarations = objectsIndex.getAllKeys(project).asSequence()
+            .onEach { ProgressManager.checkCanceled() }
+            .flatMap { objectsIndex[it, project, scope] }
+            .flatMap { it.resolveToDescriptors<ClassDescriptor>() }
+
+        return objectDeclarations
+            .map { it.unsubstitutedMemberScope }
+            .flatMap { it.getDescriptorsFiltered(descriptorKindFilter) { name -> !name.isSpecial && nameFilter(name.identifier) } }
+            .filterIsInstance<CallableMemberDescriptor>()
+            .flatMap {
+                if (it.isExtension)
+                    it.substituteExtensionIfCallable(receiverTypes, callTypeAndReceiver.callType)
+                else
+                    listOf(it)
+            }.toList()
+    }
+
+    /**
+     * Get descriptors for each candidate method/property with a specified name and run a processor on each of them.
+     *
+     * @param name the callable name
+     * @param callTypeAndReceiver expected call type and receiver
+     * @param position a Kotlin PSI element where the autoimport quickfix or completion is performed
+     * @param bindingContext a binding context of the element
+     * @param processor the processor function to run for each descriptor
+     */
+    fun processAllCallablesInSubclassObjects(
+        name: String,
+        callTypeAndReceiver: CallTypeAndReceiver<*, *>,
+        position: KtExpression,
+        bindingContext: BindingContext,
+        processor: (CallableDescriptor) -> Unit
+    ) {
+
+        val receiverTypes = callTypeAndReceiver.receiverTypes(
+            bindingContext, position, moduleDescriptor, resolutionFacade,
+            stableSmartCastsOnly = false
+        ) ?: return
+
+        val callables = getAllCallablesFromSubclassObjects(
+            callTypeAndReceiver,
+            receiverTypes,
+            nameFilter = { it == name })
+
+        callables.forEach(processor)
     }
 
     fun processKotlinCallablesByName(

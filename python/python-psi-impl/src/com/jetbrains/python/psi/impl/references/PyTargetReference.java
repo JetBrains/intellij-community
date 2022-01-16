@@ -7,12 +7,13 @@ import com.intellij.psi.PsiElementResolveResult;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyImportElement;
-import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 
 public class PyTargetReference extends PyReferenceImpl {
@@ -49,6 +50,20 @@ public class PyTargetReference extends PyReferenceImpl {
     if (importElement != null && myElement == importElement.getAsNameElement()) {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
+    PyClassPattern classPattern = getContainingClassPatternIfInAttributeNamePosition();
+    if (classPattern != null) {
+      TypeEvalContext context = TypeEvalContext.codeCompletion(myElement.getProject(), myElement.getContainingFile());
+      return PyKeywordPatternReference.collectClassAttributeVariants(myElement, classPattern, context);
+    }
     return super.getVariants();
+  }
+
+  @Nullable
+  private PyClassPattern getContainingClassPatternIfInAttributeNamePosition() {
+    PsiElement grandParent = myElement.getParent().getParent();
+    if (myElement.getParent() instanceof PyCapturePattern && grandParent instanceof PyPatternArgumentList) {
+      return as(grandParent.getParent(), PyClassPattern.class);
+    }
+    return null;
   }
 }

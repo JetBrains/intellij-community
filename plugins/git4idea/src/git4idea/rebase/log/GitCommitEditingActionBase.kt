@@ -23,12 +23,12 @@ import git4idea.rebase.log.GitCommitEditingActionBase.CommitEditingDataCreationR
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.Nls
 
-internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.MultipleCommitEditingData> : DumbAwareAction() {
+abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.MultipleCommitEditingData> : DumbAwareAction() {
   companion object {
-    internal fun findContainingBranches(data: VcsLogData, root: VirtualFile, hash: Hash): List<String> {
-      val branchesGetter = data.containingBranchesGetter
-      val branches = branchesGetter.getContainingBranchesQuickly(root, hash)
+    fun findContainingBranches(data: VcsLogData, root: VirtualFile, hash: Hash): List<String> {
+      val branches = findContainingBranchesQuickly(data, root, hash)
       if (branches == null) {
+        val branchesGetter = data.containingBranchesGetter
         return ProgressManager.getInstance()
           .runProcessWithProgressSynchronously<List<String>, RuntimeException>(
             {
@@ -40,6 +40,11 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
           )
       }
       return branches
+    }
+
+    fun findContainingBranchesQuickly(data: VcsLogData, root: VirtualFile, hash: Hash): List<String>? {
+      val branchesGetter = data.containingBranchesGetter
+      return branchesGetter.getContainingBranchesQuickly(root, hash)
     }
   }
 

@@ -20,6 +20,7 @@ import com.intellij.pom.tree.events.impl.ChangeInfoImpl
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.impl.source.tree.SharedImplUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findTopmostParentInFile
 import com.intellij.psi.util.findTopmostParentOfType
@@ -49,6 +50,8 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
         }
 
         private fun inBlockModifications(elements: Array<ASTNode>): List<KtElement> {
+            if (elements.any { !it.psi.isValid }) return emptyList()
+
             // When a code fragment is reparsed, Intellij doesn't do an AST diff and considers the entire
             // contents to be replaced, which is represented in a POM event as an empty list of changed elements
 

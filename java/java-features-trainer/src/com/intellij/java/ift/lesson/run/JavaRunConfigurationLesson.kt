@@ -32,9 +32,6 @@ class JavaRunConfigurationLesson : CommonRunConfigurationLesson("java.run.config
                                      strong(ExecutionBundle.message("default.runner.start.action.text").dropMnemonic())))
       //Wait toolwindow
       checkToolWindowState("Run", true)
-      stateCheck {
-        configurations().isNotEmpty()
-      }
       test {
         actions(it)
       }

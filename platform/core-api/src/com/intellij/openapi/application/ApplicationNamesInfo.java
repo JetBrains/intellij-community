@@ -53,6 +53,20 @@ public final class ApplicationNamesInfo {
       }
     }
     else {
+      // Gateway started from other IntelliJ Based IDE case
+      if (prefix.equals(PlatformUtils.GATEWAY_PREFIX)) {
+        String customAppInfo = System.getProperty("idea.application.info.value");
+        if (customAppInfo != null) {
+          try {
+            Path file = Paths.get(customAppInfo);
+            return XmlDomReader.readXmlAsModel(Files.newInputStream(file));
+          }
+          catch (Exception e) {
+            throw new RuntimeException("Cannot load custom application info file " + customAppInfo, e);
+          }
+        }
+      }
+
       // production
       String appInfoData = getAppInfoData();
       if (!appInfoData.isEmpty()) {

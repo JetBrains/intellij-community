@@ -409,8 +409,7 @@ public final class PluginInstaller {
 
       PluginId pluginId = dependency.getPluginId();
       if (installedDependencies.contains(pluginId) ||
-          model.isEnabled(pluginId) ||
-          model.isDisabled(pluginId) ||
+          model.isLoaded(pluginId) ||
           PluginManagerCore.isModuleDependency(pluginId)) {
         continue;
       }

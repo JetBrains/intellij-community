@@ -5,8 +5,11 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion.Semantic
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion.TimestampLike
 import com.jetbrains.packagesearch.intellij.plugin.util.nullIfBlank
+import org.apache.commons.collections.map.LRUMap
 
-internal object PackageVersionNormalizer {
+internal class PackageVersionNormalizer private constructor() {
+
+    private val versionsCache = LRUMap(2_000)
 
     private val HEX_STRING_LETTER_CHARS = 'a'..'f'
 
@@ -56,23 +59,43 @@ internal object PackageVersionNormalizer {
             "(?:[._\\-]?\\d{1,5})?){1,2})(?:\\b|_)")
             .toRegex(option = RegexOption.IGNORE_CASE)
 
-    fun parse(version: PackageVersion.Named): NormalizedPackageVersion {
+    fun parse(version: PackageVersion.Named): NormalizedPackageVersion<PackageVersion.Named> {
+        @Suppress("UNCHECKED_CAST") // Unfortunately, MRUMap doesn't have type parameters
+        val cachedValue = versionsCache[version] as NormalizedPackageVersion<PackageVersion.Named>?
+        if (cachedValue != null) return cachedValue
+
         // Before parsing, we rule out git commit hashes — those are garbage as far as we're concerned.
         // The initial step attempts parsing the version as a date(time) string starting at 0; if that fails,
         // and the version is not one uninterrupted alphanumeric blob (trying to catch more garbage), it
         // tries parsing it as a semver; if that fails too, the version name is considered "garbage"
         // (that is, it realistically can't be sorted if not by timestamp, and by hoping for the best).
-        if (version.looksLikeGitCommitOrOtherHash()) return Garbage(version)
+        val garbage = Garbage(version)
+        if (version.looksLikeGitCommitOrOtherHash()) {
+            versionsCache[version] = garbage
+            return garbage
+        }
 
         val timestampPrefix = VeryLenientDateTimeExtractor.extractTimestampLookingPrefixOrNull(version.versionName)
-        if (timestampPrefix != null) return parseTimestampVersion(version, timestampPrefix)
+        if (timestampPrefix != null) {
+            val normalized = parseTimestampVersion(version, timestampPrefix)
+            versionsCache[version] = normalized
+            return normalized
+        }
 
-        if (version.isOneBigHexadecimalBlob()) return Garbage(version)
+        if (version.isOneBigHexadecimalBlob()) {
+            versionsCache[version] = garbage
+            return garbage
+        }
 
         val semanticVersionPrefix = version.semanticVersionPrefixOrNull()
-        if (semanticVersionPrefix != null) return parseSemanticVersion(version, semanticVersionPrefix)
+        if (semanticVersionPrefix != null) {
+            val normalized = parseSemanticVersion(version, semanticVersionPrefix)
+            versionsCache[version] = normalized
+            return normalized
+        }
 
-        return Garbage(version)
+        versionsCache[version] = garbage
+        return garbage
     }
 
     private fun PackageVersion.Named.looksLikeGitCommitOrOtherHash(): Boolean {
@@ -83,7 +106,7 @@ internal object PackageVersionNormalizer {
         }
     }
 
-    private fun parseTimestampVersion(version: PackageVersion.Named, timestampPrefix: String): NormalizedPackageVersion =
+    private fun parseTimestampVersion(version: PackageVersion.Named, timestampPrefix: String): NormalizedPackageVersion<PackageVersion.Named> =
         TimestampLike(
             original = version,
             timestampPrefix = timestampPrefix,
@@ -95,14 +118,14 @@ internal object PackageVersionNormalizer {
         var hasHexChars = false
         for (char in versionName.lowercase()) {
             when {
-              char in HEX_STRING_LETTER_CHARS -> hasHexChars = true
-              !char.isDigit() -> return false
+                char in HEX_STRING_LETTER_CHARS -> hasHexChars = true
+                !char.isDigit() -> return false
             }
         }
         return hasHexChars
     }
 
-    private fun parseSemanticVersion(version: PackageVersion.Named, semanticVersionPrefix: String): NormalizedPackageVersion =
+    private fun parseSemanticVersion(version: PackageVersion.Named, semanticVersionPrefix: String): NormalizedPackageVersion<PackageVersion.Named> =
         Semantic(
             original = version,
             semanticPart = semanticVersionPrefix,
@@ -127,5 +150,15 @@ internal object PackageVersionNormalizer {
         val semanticPart = stabilitySuffixComponentOrNull(ignoredPrefix ?: return null)
             ?: ignoredPrefix
         return versionName.substringAfter(semanticPart).nullIfBlank()
+    }
+
+    companion object {
+
+        private var INSTANCE: PackageVersionNormalizer? = null
+
+        fun getInstance(): PackageVersionNormalizer {
+            if (INSTANCE == null) INSTANCE = PackageVersionNormalizer()
+            return INSTANCE!!
+        }
     }
 }

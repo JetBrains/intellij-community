@@ -32,6 +32,25 @@ class Normal14CompletionTest extends NormalCompletionTestCase {
     myFixture.checkResult("record FooBar(FooBar fooBar)")
   }
 
+  @NeedsIndex.ForStandardLibrary
+  void testInstanceOfSpecificType() {
+    myFixture.configureByText("a.java", "interface I<T> { }\n\n" +
+                                        "class J<T> implements I<T> {\n  " +
+                                        "void test(I<String> i) {\n" +
+                                        "    if (i instanceof <caret>)\n" +
+                                        "  }\n}")
+    myFixture.completeBasic()
+    assert !myFixture.lookupElementStrings.contains("T")
+    myFixture.type('\n')
+    myFixture.checkResult("interface I<T> { }\n" +
+                          "\n" +
+                          "class J<T> implements I<T> {\n" +
+                          "  void test(I<String> i) {\n" +
+                          "    if (i instanceof J<String><caret>)\n" +
+                          "  }\n" +
+                          "}")
+  }
+
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for getters generation)")
   void testRecordAccessorDeclaration() {
     doTest()

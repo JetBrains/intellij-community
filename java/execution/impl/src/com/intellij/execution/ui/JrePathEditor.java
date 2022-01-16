@@ -46,6 +46,7 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreComboBoxItem>> implements PanelWithAnchor {
   private final JreComboboxEditor myComboboxEditor;
@@ -255,14 +256,18 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
   }
 
   private void updateDefaultJrePresentation() {
+    updateDefaultJrePresentation((@Nls String result) -> {
+      StatusText text = myComboboxEditor.getEmptyText();
+      text.clear();
+      text.appendText(ExecutionBundle.message("default.jre.name"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      text.appendText(result, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    });
+  }
+
+  private void updateDefaultJrePresentation(Consumer<String> uiUpdater) {
     ReadAction
       .nonBlocking(myDefaultJreSelector::getDescriptionString)
-      .finishOnUiThread(ModalityState.stateForComponent(this), (@Nls String result) -> {
-        StatusText text = myComboboxEditor.getEmptyText();
-        text.clear();
-        text.appendText(ExecutionBundle.message("default.jre.name"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        text.appendText(result, SimpleTextAttributes.GRAYED_ATTRIBUTES);
-      })
+      .finishOnUiThread(ModalityState.stateForComponent(this), uiUpdater)
       .expireWhen(() -> !myDefaultJreSelector.isValid())
       .submit(AppExecutorUtil.getAppExecutorService());
   }
@@ -417,7 +422,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
       component.append(ExecutionBundle.message("default.jre.name"));
       //may be null if JrePathEditor is added to a GUI Form where the default constructor is used and setDefaultJreSelector isn't called
       if (myDefaultJreSelector != null) {
-        component.append(myDefaultJreSelector.getDescriptionString(), SimpleTextAttributes.GRAY_ATTRIBUTES);
+        updateDefaultJrePresentation((@Nls String result) -> component.append(result, SimpleTextAttributes.GRAY_ATTRIBUTES));
       }
     }
 

@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenArchetype;
@@ -27,14 +28,14 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
     myProject = project;
   }
 
-  public void releaseIndex(String indexId) throws MavenServerIndexerException {
-    MavenLog.LOG.debug("releaseIndex " + indexId);
+  public void releaseIndex(MavenIndexId mavenIndexId) throws MavenServerIndexerException {
+    MavenLog.LOG.debug("releaseIndex " + mavenIndexId.indexId);
 
     MavenServerIndexer w = getWrappee();
     if (w == null) return;
 
     try {
-      w.releaseIndex(indexId, ourToken);
+      w.releaseIndex(mavenIndexId, ourToken);
     }
     catch (RemoteException e) {
       handleRemoteError(e);
@@ -55,9 +56,9 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
     return perform(() -> getOrCreateWrappee().getIndexCount(ourToken));
   }
 
-  public void updateIndex(final MavenIndexId mavenIndexId,
-                          final MavenGeneralSettings settings,
-                          final MavenProgressIndicator indicator) throws MavenProcessCanceledException,
+  public void updateIndex(@NotNull final MavenIndexId mavenIndexId,
+                          @Nullable final MavenGeneralSettings settings,
+                          @NotNull final MavenProgressIndicator indicator) throws MavenProcessCanceledException,
                                                                          MavenServerIndexerException {
     performCancelable(() -> {
       MavenServerProgressIndicator indicatorWrapper = wrapAndExport(indicator);

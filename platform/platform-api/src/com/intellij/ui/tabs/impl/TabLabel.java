@@ -9,6 +9,8 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.JBPopupMenu;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -18,6 +20,7 @@ import com.intellij.ui.tabs.JBTabsEx;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.themes.TabTheme;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -86,6 +89,7 @@ public class TabLabel extends JPanel implements Accessible {
           Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
           if (c instanceof InplaceButton) return;
           myTabs.select(info, true);
+          ObjectUtils.consumeIfNotNull(PopupUtil.getPopupContainerFor(TabLabel.this), JBPopup::cancel);
         }
         else {
           handlePopup(e);
@@ -307,7 +311,7 @@ public class TabLabel extends JPanel implements Accessible {
   }
 
   private void handlePopup(final MouseEvent e) {
-    if (e.getClickCount() != 1 || !e.isPopupTrigger()) return;
+    if (e.getClickCount() != 1 || !e.isPopupTrigger() || PopupUtil.getPopupContainerFor(this) != null) return;
 
     if (e.getX() < 0 || e.getX() >= e.getComponent().getWidth() || e.getY() < 0 || e.getY() >= e.getComponent().getHeight()) return;
 

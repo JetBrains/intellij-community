@@ -9,7 +9,7 @@ apply plugin: 'maven-publish'
 
 
 dependencies {
-    compile project(":bottom-mpp")
+    api project(":bottom-mpp")
 }
 
 [compileKotlin, compileTestKotlin]*.configure {

@@ -1060,6 +1060,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public PsiElement simplify(PsiMethodCallExpression toArrayCall) {
+      if (!TO_ARRAY.test(toArrayCall)) return null;
       CommentTracker ct = new CommentTracker();
       String replacement = getReplacement(toArrayCall, ct);
       if (replacement == null) return null;

@@ -81,7 +81,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public class PythonConsoleView extends LanguageConsoleImpl implements ObservableConsoleView, PyCodeExecutor {
-  static Key<Boolean> CONSOLE_KEY = new Key<>("PYDEV_CONSOLE_KEY");
+  public static final Key<Boolean> CONSOLE_KEY = new Key<>("PYDEV_CONSOLE_KEY");
   private static final Logger LOG = Logger.getInstance(PythonConsoleView.class);
   private final boolean myTestMode;
 

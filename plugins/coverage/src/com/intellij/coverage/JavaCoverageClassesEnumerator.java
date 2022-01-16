@@ -4,6 +4,7 @@ package com.intellij.coverage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
@@ -25,12 +26,15 @@ public abstract class JavaCoverageClassesEnumerator {
   protected final Project myProject;
   protected final CoverageDataManager myCoverageManager;
   private final boolean[] myShouldVisitTestSource;
+  private final int myRootsCount;
+  private int myCurrentRootsCount;
 
-  public JavaCoverageClassesEnumerator(@NotNull final CoverageSuitesBundle suite, @NotNull final Project project) {
+  public JavaCoverageClassesEnumerator(@NotNull final CoverageSuitesBundle suite, @NotNull final Project project, final int totalRoots) {
     mySuite = suite;
     myProject = project;
     myCoverageManager = CoverageDataManager.getInstance(myProject);
     myShouldVisitTestSource = mySuite.isTrackTestFolders() ? new boolean[]{false, true} : new boolean[]{false};
+    myRootsCount = totalRoots;
   }
 
   protected void visitClass(PsiClass psiClass) { }
@@ -41,6 +45,8 @@ public abstract class JavaCoverageClassesEnumerator {
   protected void visitClassFiles(String topLevelClassName, List<File> files, String packageVMName, GlobalSearchScope scope) { }
 
   public void visitSuite() {
+    myCurrentRootsCount = 0;
+    updateProgress();
     final List<PsiPackage> packages = new ArrayList<>();
     final List<PsiClass> classes = new ArrayList<>();
 
@@ -138,6 +144,16 @@ public abstract class JavaCoverageClassesEnumerator {
         visitClassFiles(entry.getKey(), entry.getValue(), packageVMName, scope);
       }
     }
+    myCurrentRootsCount++;
+    updateProgress();
+  }
+
+  private void updateProgress() {
+    if (myRootsCount <= 1) return;
+    final ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    if (progressIndicator == null) return;
+    progressIndicator.setIndeterminate(false);
+    progressIndicator.setFraction(myCurrentRootsCount / (double)myRootsCount);
   }
 
   private static final class PackageData {
@@ -178,5 +194,25 @@ public abstract class JavaCoverageClassesEnumerator {
       }
       return enumerator.classes().getRoots();
     });
+  }
+
+  public static class RootsCounter extends JavaCoverageClassesEnumerator {
+    private int myRoots;
+
+    public RootsCounter(@NotNull CoverageSuitesBundle suite, @NotNull Project project) {
+      super(suite, project, 0);
+      visitSuite();
+    }
+
+    @Override
+    protected void visitRoot(File packageOutputRoot,
+                             String rootPackageVMName,
+                             GlobalSearchScope scope) {
+      myRoots++;
+    }
+
+    public int getRoots() {
+      return myRoots;
+    }
   }
 }

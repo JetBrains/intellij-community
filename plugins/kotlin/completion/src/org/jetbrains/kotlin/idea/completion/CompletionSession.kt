@@ -248,6 +248,7 @@ abstract class CompletionSession(
 
     protected val importableFqNameClassifier = ImportableFqNameClassifier(file)
 
+    @Suppress("InvalidBundleOrProperty") //workaround to avoid false-positive: KTIJ-19892
     protected open fun createSorter(): CompletionSorter {
         var sorter = CompletionSorter.defaultSorter(parameters, prefixMatcher)!!
 

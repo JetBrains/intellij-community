@@ -39,7 +39,6 @@ import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import org.jetbrains.kotlin.types.KotlinType
 import java.lang.reflect.*
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
     private var afterAnalysisVisitor: Array<AfterAnalysisHighlightingVisitor>? = null
@@ -60,17 +59,12 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
         } catch (e: Throwable) {
             if (e is ControlFlowException) throw e
 
-            val timestamp = System.currentTimeMillis()
-            // daemon is restarted when exception is thrown
-            // if there is a recurred error (e.g. within a resolve) it could lead to infinite highlighting loop
-            // so, do not rethrow exception too often to disable HL for a while (1 minute)
-            if (timestamp - lastThrownExceptionTimestamp > TimeUnit.MINUTES.toMillis(1)) {
-                lastThrownExceptionTimestamp = timestamp
+            if (KotlinHighlightingSuspender.getInstance(file.project).suspend(file.virtualFile)) {
                 throw e
             } else {
                 LOG.warn(e)
             }
-        }  finally {
+        } finally {
           afterAnalysisVisitor = null
         }
 
@@ -250,9 +244,6 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
 
     companion object {
         private val LOG = Logger.getInstance(AbstractKotlinHighlightVisitor::class.java)
-
-        @Volatile
-        private var lastThrownExceptionTimestamp: Long = 0
 
         private val UNRESOLVED_KEY = Key<Unit>("KotlinHighlightVisitor.UNRESOLVED_KEY")
 

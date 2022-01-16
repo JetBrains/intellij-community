@@ -6,6 +6,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.*;
 
 public interface GroovyStubElementTypes {
   GrClassDefinitionElementType CLASS_TYPE_DEFINITION = GroovyElementTypes.CLASS_TYPE_DEFINITION;
+  GrRecordDefinitionElementType RECORD_TYPE_DEFINITION = GroovyElementTypes.RECORD_TYPE_DEFINITION;
   GrInterfaceDefinitionElementType INTERFACE_TYPE_DEFINITION = GroovyElementTypes.INTERFACE_TYPE_DEFINITION;
   GrEnumDefinitionElementType ENUM_TYPE_DEFINITION = GroovyElementTypes.ENUM_TYPE_DEFINITION;
   GrAnnotationDefinitionElementType ANNOTATION_TYPE_DEFINITION = GroovyElementTypes.ANNOTATION_TYPE_DEFINITION;

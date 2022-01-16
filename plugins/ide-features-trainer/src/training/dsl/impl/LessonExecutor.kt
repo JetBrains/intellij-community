@@ -307,7 +307,11 @@ internal class LessonExecutor(val lesson: KLesson,
       info.removeAfterDoneMessages.clear()
     }
     val restoreInfo = taskActions[restoreIndex]
-    restoreInfo.rehighlightComponent?.let { it() }
+    restoreInfo.rehighlightComponent?.let {
+      ApplicationManager.getApplication().executeOnPooledThread {
+        it()
+      }
+    }
     LessonManager.instance.resetMessagesNumber(restoreInfo.messagesNumberBeforeStart)
 
     StatisticBase.logRestorePerformed(lesson, currentTaskIndex)

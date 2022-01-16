@@ -361,7 +361,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
   private void collectClassLoaders(@NotNull Deque<ClassLoader> queue) {
     for (IdeaPluginDescriptorImpl parent : parents) {
-      ClassLoader classLoader = parent.classLoader;
+      ClassLoader classLoader = parent.getPluginClassLoader();
       if (classLoader != null && classLoader != coreLoader) {
         queue.add(classLoader);
       }

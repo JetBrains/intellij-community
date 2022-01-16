@@ -124,6 +124,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val MERGE_RESET_ERROR = "git.merge.reset.error"
     const val MERGE_ROLLBACK_ERROR = "git.merge.rollback.error"
     const val PULL_FAILED = "git.pull.failed"
+    const val PUSH_NOT_SUPPORTED = "git.push.not.supported"
     const val REBASE_ABORT_FAILED = "git.rebase.abort.failed"
     const val REBASE_ABORT = "git.rebase.abort"
     const val REBASE_ABORT_SUCCESS = "git.rebase.abort.succeeded"

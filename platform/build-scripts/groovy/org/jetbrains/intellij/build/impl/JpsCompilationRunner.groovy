@@ -28,6 +28,7 @@ import org.jetbrains.jps.incremental.MessageHandler
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType
 import org.jetbrains.jps.incremental.artifacts.impl.ArtifactSorter
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil
+import org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder
 import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner
 import org.jetbrains.jps.incremental.messages.*
 import org.jetbrains.jps.model.artifact.JpsArtifact
@@ -43,19 +44,20 @@ import java.util.concurrent.TimeUnit
 
 @CompileStatic
 class JpsCompilationRunner {
+  private static setSystemPropertyIfUndefined(String name, String value) {
+    if (System.getProperty(name) == null) {
+      System.setProperty(name, value)
+    }
+  }
+
   static {
-    if (System.getProperty(GlobalOptions.COMPILE_PARALLEL_OPTION) == null) {
-      System.setProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "true")
-    }
+    setSystemPropertyIfUndefined(GlobalOptions.COMPILE_PARALLEL_OPTION, "true")
     def availableProcessors = Runtime.getRuntime().availableProcessors().toString()
-    if (System.getProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION) == null) {
-      System.setProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, availableProcessors)
-    }
-    // TODO: replace with org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder#RESOLUTION_PARALLELISM_PROPERTY
-    def resolutionParallelismKey = "org.jetbrains.jps.incremental.dependencies.resolution.parallelism"
-    if (System.getProperty(resolutionParallelismKey) == null) {
-      System.setProperty(resolutionParallelismKey, availableProcessors)
-    }
+    setSystemPropertyIfUndefined(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, availableProcessors)
+    setSystemPropertyIfUndefined(DependencyResolvingBuilder.RESOLUTION_PARALLELISM_PROPERTY, availableProcessors)
+    setSystemPropertyIfUndefined(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "false")
+    setSystemPropertyIfUndefined(JpsGroovycRunner.GROOVYC_IN_PROCESS, "true")
+    setSystemPropertyIfUndefined(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY, "false")
   }
 
   private static boolean ourToolsJarAdded
@@ -167,9 +169,6 @@ class JpsCompilationRunner {
     if (JavaVersion.current().feature < 9 && (!modulesSet.isEmpty() || allModules)) {
       addToolsJarToSystemClasspath(context.paths.jdkHome, context.messages)
     }
-    System.setProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "false")
-    System.setProperty(JpsGroovycRunner.GROOVYC_IN_PROCESS, "true")
-    System.setProperty(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY, "false")
     final AntMessageHandler messageHandler = new AntMessageHandler()
     AntLoggerFactory.ourMessageHandler = messageHandler
     if (context.options.compilationLogEnabled) {

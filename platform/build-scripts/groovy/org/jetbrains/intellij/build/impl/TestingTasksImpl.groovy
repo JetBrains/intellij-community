@@ -467,10 +467,13 @@ class TestingTasksImpl extends TestingTasks {
     }
     else {
 
-      //run all junit 5 tests in default package
+      context.messages.info("Run junit 5 tests")
       runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, null, null)
+      context.messages.info("Finish junit 5 task")
 
+      context.messages.info("Run junit 3 tests")
       runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, options.bootstrapSuite, null)
+      context.messages.info("Finish junit 3 task")
 
     }
   }
@@ -487,12 +490,12 @@ class TestingTasksImpl extends TestingTasks {
     args.add("-classpath")
     List<String> classpath = new ArrayList<>(bootstrapClasspath)
 
-    ["JUnit5", "JUnit5Launcher", "JUnit5Vintage"].forEach { libName ->
+    ["JUnit5", "JUnit5Launcher", "JUnit5Vintage", "JUnit5Jupiter"].forEach { libName ->
       context.projectModel.project.libraryCollection.findLibrary(libName)
         .getFiles(JpsOrderRootType.COMPILED).forEach { it -> classpath.add(it.getAbsolutePath()) }
     }
 
-    if (!isBootstrapSuiteDefault() || isRunningInBatchMode()) {
+    if (!isBootstrapSuiteDefault() || isRunningInBatchMode() || suiteName == null) {
       classpath.addAll(testClasspath)
     }
     args.add(classpath.join(File.pathSeparator))
@@ -521,9 +524,17 @@ class TestingTasksImpl extends TestingTasks {
     def builder = new ProcessBuilder(javaPath, '@' + argFile.getAbsolutePath())
     builder.environment().putAll(envVariables)
     final Process exec = builder.start()
-    new Thread(createInputReader(exec.getErrorStream(), System.err), "Read forked error output").start()
-    new Thread(createInputReader(exec.getInputStream(), System.out), "Read forked output").start()
+
+    def errorReader = new Thread(createInputReader(exec.getErrorStream(), System.err), "Read forked error output")
+    errorReader.start()
+
+    def outputReader = new Thread(createInputReader(exec.getInputStream(), System.out), "Read forked output")
+    outputReader.start()
+
     def exitCode = exec.waitFor()
+    
+    errorReader.join(360_000)
+    outputReader.join(360_000)
     if (exitCode != 0) {
       context.messages.error("Tests failed with exit code $exitCode")
     }
