@@ -20,7 +20,7 @@ class NewProjectWizardLanguageStep(parent: NewProjectWizardStep) :
   override val languageProperty by ::stepProperty
   override var language by ::step
 
-  override var additionalStepPlugins = if (PlatformUtils.isIdeaCommunity()) communityLanguages else defaultLanguages + communityLanguages
+  override var additionalStepPlugins = if (PlatformUtils.isIdeaCommunity()) communityLanguages else allLanguages
 
   init {
     data.putUserData(LanguageNewProjectWizardData.KEY, this)
@@ -43,5 +43,7 @@ class NewProjectWizardLanguageStep(parent: NewProjectWizardStep) :
     )
 
     val communityLanguages = mapOf("Scala" to "org.intellij.scala")
+
+    val allLanguages = defaultLanguages + communityLanguages
   }
 }
