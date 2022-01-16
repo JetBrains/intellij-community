@@ -109,7 +109,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     if (currentClosureFrame.getStartInstructionState() == state || hasNoChanges(currentClosureFrame.getStartInstructionState(), state.getRawVarTypes())) {
       return currentClosureFrame.getStartInstructionState().withRemovedBindings(state.getRemovedBindings());
     }
-    InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
+    InvocationKind kind = getInvocationKind(block, state, instruction);
     TypeDfaState newState = state.withoutTopClosureState();
     switch (kind) {
       case IN_PLACE_ONCE:
@@ -132,6 +132,18 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
         return TypeDfaState.merge(newState.withNewMap(stateTypes), currentClosureFrame.getStartInstructionState(), myManager);
     }
     return newState;
+  }
+
+  @NotNull
+  private InvocationKind getInvocationKind(GrFunctionalExpression block,
+                                           @NotNull TypeDfaState state,
+                                           @NotNull FunctionalBlockEndInstruction instruction) {
+    if (myFlowInfo.getAcyclicInstructions().contains(instruction)) {
+      return FunctionalExpressionFlowUtil.getInvocationKind(block, true);
+    }
+    else {
+      return runWithoutCaching(state, () -> FunctionalExpressionFlowUtil.getInvocationKind(block, false));
+    }
   }
 
   private TypeDfaState handleMixin(@NotNull final TypeDfaState state, @NotNull final MixinTypeInstruction instruction) {
@@ -228,13 +240,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
         type = computation.get();
       }
       else {
-        Map<VariableDescriptor, DFAType> unwrappedVariables = new HashMap<>();
-        for (var entry : state.getRawVarTypes().int2ObjectEntrySet()) {
-          if (!state.isProhibited(entry.getIntKey())) {
-            unwrappedVariables.put(myFlowInfo.getReverseVarIndexes()[entry.getIntKey()], entry.getValue());
-          }
-        }
-        type = TypeInferenceHelper.doInference(unwrappedVariables, computation);
+        type = runWithoutCaching(state, computation);
       }
     }
 
@@ -243,6 +249,22 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       type = type.withFlushingType(existingDfaType.getFlushingType(), myManager);
     }
     return state.withNewType(index, type);
+  }
+
+  private <T> T runWithoutCaching(@NotNull TypeDfaState state, Supplier<T> computation) {
+    Map<VariableDescriptor, DFAType> unwrappedVariables = getCurrentVariableTypes(state);
+    return TypeInferenceHelper.doInference(unwrappedVariables, computation);
+  }
+
+  @NotNull
+  private Map<VariableDescriptor, DFAType> getCurrentVariableTypes(@NotNull TypeDfaState state) {
+    Map<VariableDescriptor, DFAType> unwrappedVariables = new HashMap<>();
+    for (var entry : state.getRawVarTypes().int2ObjectEntrySet()) {
+      if (!state.isProhibited(entry.getIntKey())) {
+        unwrappedVariables.put(myFlowInfo.getReverseVarIndexes()[entry.getIntKey()], entry.getValue());
+      }
+    }
+    return unwrappedVariables;
   }
 
   private static TypeDfaState handleNegation(@NotNull TypeDfaState state, @NotNull NegatingGotoInstruction negation) {

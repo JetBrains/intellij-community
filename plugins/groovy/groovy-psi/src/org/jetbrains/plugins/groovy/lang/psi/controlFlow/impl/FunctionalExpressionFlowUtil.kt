@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("FunctionalExpressionFlowUtil")
 
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl
@@ -101,12 +101,19 @@ fun GrFunctionalExpression?.getControlFlowOwner(): GrControlFlowOwner? = when (t
   else -> null
 }
 
-fun GrFunctionalExpression?.getInvocationKind(): InvocationKind {
+/**
+ * Most of the invocations should be with mayCache=true
+ */
+fun GrFunctionalExpression?.getInvocationKind(mayCache: Boolean = true): InvocationKind {
   if (this == null) {
     return UNKNOWN
   }
-  return CachedValuesManager.getCachedValue(this) {
-    CachedValueProvider.Result(computeInvocationKind(this), this)
+  if (mayCache) {
+    return CachedValuesManager.getCachedValue(this) {
+      CachedValueProvider.Result(computeInvocationKind(this), this)
+    }
+  } else {
+    return computeInvocationKind(this)
   }
 }
 
