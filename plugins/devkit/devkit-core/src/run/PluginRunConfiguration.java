@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -124,7 +124,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
     //copy license from running instance of idea
     IdeaLicenseHelper.copyIDEALicense(sandboxHome);
 
-    final JavaCommandLineState state = new JavaCommandLineState(env) {
+    return new JavaCommandLineState(env) {
       @Override
       protected JavaParameters createJavaParameters() throws ExecutionException {
 
@@ -188,9 +188,8 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           }
         }
 
+        String buildNumber = IdeaJdk.getBuildNumber(ideaJdkHome);
         if (!vm.hasProperty(PlatformUtils.PLATFORM_PREFIX_KEY)) {
-          String buildNumber = IdeaJdk.getBuildNumber(ideaJdkHome);
-
           if (buildNumber != null) {
             String prefix = IntelliJPlatformProduct.fromBuildNumber(buildNumber).getPlatformPrefix();
             if (prefix != null) {
@@ -210,7 +209,16 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           }
         }
         else {
-          for (String path : List.of("openapi.jar", "util.jar", "bootstrap.jar", "idea_rt.jar", "idea.jar")) {
+          final BuildNumber number = BuildNumber.fromString(buildNumber);
+          final List<String> jars;
+          if (number != null && number.getBaselineVersion() <= 201) {
+            jars = List.of("log4j.jar", "jdom.jar", "trove4j.jar",
+                           "openapi.jar", "util.jar", "bootstrap.jar", "idea_rt.jar", "idea.jar");
+          }
+          else {
+            jars = List.of("openapi.jar", "util.jar", "bootstrap.jar", "idea_rt.jar", "idea.jar");
+          }
+          for (String path : jars) {
             params.getClassPath().add(ideaJdkHome + FileUtil.toSystemDependentName("/lib/" + path));
           }
         }
@@ -221,8 +229,6 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         return params;
       }
     };
-
-    return state;
   }
 
   public String getAlternativeJrePath() {
