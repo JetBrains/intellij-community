@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.reference;
 
@@ -330,10 +330,10 @@ public class RefManagerImpl extends RefManager {
     if (range == null) return element;
 
     int firstRangeLine = document.getLineNumber(range.getStartOffset());
-    int lineStartOffset = Math.min(range.getEndOffset(), document.getLineStartOffset(firstRangeLine));
-    int lineEndOffset = Math.min(range.getEndOffset(), document.getLineEndOffset(firstRangeLine));
+    int lineStartOffset = document.getLineStartOffset(firstRangeLine);
+    int endOffset = Math.min(range.getEndOffset(), document.getLineEndOffset(firstRangeLine));
 
-    TextRange exportedRange = new TextRange(range.getStartOffset(), lineEndOffset);
+    TextRange exportedRange = new TextRange(range.getStartOffset(), endOffset);
     String text = ProblemDescriptorUtil.extractHighlightedText(exportedRange, psiFile);
 
     element.addContent(new Element("offset").addContent(String.valueOf(exportedRange.getStartOffset() - lineStartOffset)));
