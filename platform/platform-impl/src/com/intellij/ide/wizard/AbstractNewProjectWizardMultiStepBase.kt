@@ -40,6 +40,7 @@ abstract class AbstractNewProjectWizardMultiStepBase(
 
   override fun setupUI(builder: Panel) {
     steps = initSteps()
+    if (!steps.keys.contains(step)) step = ""
     step = step.ifBlank { steps.keys.first() }
 
     keywords.add(steps.keys)
