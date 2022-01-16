@@ -50,8 +50,7 @@ internal class InstallPluginTask(private val pluginIds: Set<PluginId>, val modal
 
   companion object {
     private fun downloadPlugins(plugins: List<PluginNode>, customPlugins: Collection<PluginNode>, modalityState: ModalityState) {
-      ProgressManager.getInstance().run(object : Backgroundable(null, IdeBundle.message("progress.download.plugins"), true,
-                                                                PluginManagerUISettings.getInstance()) {
+      ProgressManager.getInstance().run(object : Modal(null, IdeBundle.message("progress.download.plugins"), true) {
         override fun run(indicator: ProgressIndicator) {
           val operation = PluginInstallOperation(plugins, customPlugins, PluginEnabler.HEADLESS, indicator)
           operation.setAllowInstallWithoutRestart(true)
