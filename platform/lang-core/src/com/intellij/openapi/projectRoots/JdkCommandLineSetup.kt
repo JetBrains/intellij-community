@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.util.PathUtil
 import com.intellij.util.PathsList
@@ -90,7 +91,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
                                       afterUploadResolved: (String) -> Unit = {}): TargetValue<String> {
 
     val uploadPath = Paths.get(FileUtil.toSystemDependentName(uploadPathString))
-    val isDir = uploadPathIsFile?.not() ?: uploadPath.isDirectory()
+    val isDir = uploadPathIsFile?.not() ?: VfsUtil.findFile(uploadPath, false)?.isDirectory ?: uploadPath.isDirectory()
     val localRootPath =
       if (isDir) uploadPath
       else (uploadPath.parent ?: Paths.get("."))  // Normally, paths should be absolute, but there are tests that check relative paths.
