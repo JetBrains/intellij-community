@@ -25,6 +25,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.actions.ToggleCaseAction
+import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -366,6 +367,12 @@ class PythonOnboardingTour :
   }
 
   private fun LessonContext.runTasks() {
+    task {
+      triggerByUiComponentAndHighlight(highlightInside = false) { ui: EditorComponentImpl ->
+        ui.text.contains("find_average")
+      }
+    }
+
     val runItem = ExecutionBundle.message("default.runner.start.action.text").dropMnemonic() + " '$demoConfigurationName'"
 
     task {
