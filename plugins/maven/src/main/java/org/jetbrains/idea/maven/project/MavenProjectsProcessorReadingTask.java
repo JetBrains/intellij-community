@@ -60,18 +60,21 @@ public class MavenProjectsProcessorReadingTask implements MavenProjectsProcessor
                       MavenEmbeddersManager embeddersManager,
                       MavenConsole console,
                       MavenProgressIndicator indicator) throws MavenProcessCanceledException {
-    if (myFilesToUpdate == null) {
-      checkOrInstallMavenWrapper(project);
-      myTree.updateAll(myForce, mySettings, indicator);
-    }
-    else {
-      myTree.delete(myFilesToDelete, mySettings, indicator);
-      myTree.update(myFilesToUpdate, myForce, mySettings, indicator);
-    }
+    try {
+      if (myFilesToUpdate == null) {
+        checkOrInstallMavenWrapper(project);
+        myTree.updateAll(myForce, mySettings, indicator);
+      }
+      else {
+        myTree.delete(myFilesToDelete, mySettings, indicator);
+        myTree.update(myFilesToUpdate, myForce, mySettings, indicator);
+      }
 
-    mySettings.updateFromMavenConfig(myTree.getRootProjectsFiles());
-
-    if (myOnCompletion != null) myOnCompletion.run();
+      mySettings.updateFromMavenConfig(myTree.getRootProjectsFiles());
+    }
+    finally {
+      if (myOnCompletion != null) myOnCompletion.run();
+    }
   }
 
   private void checkOrInstallMavenWrapper(Project project) {

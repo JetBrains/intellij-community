@@ -34,10 +34,12 @@ import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.server.CannotStartServerException
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.WslMavenDistribution
 import org.jetbrains.idea.maven.wizards.MavenProjectBuilder
+import org.jetbrains.idea.maven.server.wsl.BuildIssueWslJdk
 import java.io.File
 import java.util.function.Function
 import java.util.function.Supplier
@@ -113,10 +115,13 @@ internal object MavenWslUtil : MavenUtil() {
     return File(File(directory, CONF_DIR), SETTINGS_XML)
   }
 
-
   @JvmStatic
   fun WSLDistribution.resolveM2Dir(): File {
-    return this.getWindowsFile(File(this.environment["HOME"], DOT_M2_DIR))
+    val userHome = MavenWslCache.getInstance().wslEnv(this)["HOME"]
+    if (userHome.isNullOrBlank()) {
+      throw CannotStartServerException(SyncBundle.message("maven.sync.wsl.userhome.cannot.resolve"))
+    }
+    return this.getWindowsFile(File(userHome, DOT_M2_DIR))
   }
 
   /**
