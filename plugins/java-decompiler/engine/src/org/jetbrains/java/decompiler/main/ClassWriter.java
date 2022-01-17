@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -8,10 +8,15 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
-import org.jetbrains.java.decompiler.modules.decompiler.typeann.*;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.NewExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.typeann.TargetInfo;
+import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotation;
+import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotationWriteHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarTypeProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
@@ -477,13 +482,13 @@ public class ClassWriter {
 
     buffer.append(' ');
     List<TypeAnnotationWriteHelper> supertypeAnnotations = typeAnnwriteHelper.stream()
-      .filter(typeAnnotationWriteHelper -> typeAnnotationWriteHelper.getAnnotation().getTargetInfo() instanceof SupertypeTarget)
+      .filter(typeAnnotationWriteHelper -> typeAnnotationWriteHelper.getAnnotation().getTargetInfo() instanceof TargetInfo.SupertypeTarget)
       .collect(Collectors.toList());
     if (!isEnum && !isInterface && components == null && cl.superClass != null) {
       VarType supertype = new VarType(cl.superClass.getString(), true);
       List<TypeAnnotationWriteHelper> extendSupertypeAnnotations = supertypeAnnotations.stream()
         .filter(typeAnnotationWriteHelper ->
-          ((SupertypeTarget) typeAnnotationWriteHelper.getAnnotation().getTargetInfo()).getSupertypeIndex() == 0xFFFF
+                  ((TargetInfo.SupertypeTarget) typeAnnotationWriteHelper.getAnnotation().getTargetInfo()).getSupertypeIndex() == 0xFFFF
         ).collect(Collectors.toList());
       if (!VarType.VARTYPE_OBJECT.equals(supertype)) {
         buffer.append("extends ");
@@ -508,7 +513,7 @@ public class ClassWriter {
           final int it = i;
           List<TypeAnnotationWriteHelper> curSuperTypeAnnotations = supertypeAnnotations.stream()
             .filter(typeAnnotationWriteHelper ->
-              ((SupertypeTarget) typeAnnotationWriteHelper.getAnnotation().getTargetInfo()).getSupertypeIndex() == it
+                      ((TargetInfo.SupertypeTarget) typeAnnotationWriteHelper.getAnnotation().getTargetInfo()).getSupertypeIndex() == it
             ).collect(Collectors.toList());
           if (descriptor != null) {
             buffer.append(GenericMain.getGenericCastTypeName(descriptor.superinterfaces.get(i), curSuperTypeAnnotations));
@@ -881,11 +886,11 @@ public class ClassWriter {
 
         if (init) {
           typeAnnwriteHelper.stream().filter(typeAnnotationWriteHelper ->
-            typeAnnotationWriteHelper.getAnnotation().getTargetInfo() instanceof EmptyTarget
+            typeAnnotationWriteHelper.getAnnotation().getTargetInfo() instanceof TargetInfo.EmptyTarget
           ).forEach(typeAnnotationWriteHelper -> typeAnnotationWriteHelper.writeTo(buffer));
         } else {
           final List<TypeAnnotationWriteHelper> emptyTargetTypeAnnwriteHelper = typeAnnwriteHelper.stream().filter(typeAnnotationWriteHelper ->
-            typeAnnotationWriteHelper.getAnnotation().getTargetInfo() instanceof EmptyTarget
+            typeAnnotationWriteHelper.getAnnotation().getTargetInfo() instanceof TargetInfo.EmptyTarget
           ).collect(Collectors.toList());
           if (descriptor != null) {
             buffer.append(GenericMain.getGenericCastTypeName(descriptor.returnType, emptyTargetTypeAnnwriteHelper));
@@ -928,7 +933,7 @@ public class ClassWriter {
             final int it = i;
             List<TypeAnnotationWriteHelper> parameterProgresses = typeAnnwriteHelper.stream().filter(typeAnnotationWriteHelper ->
               typeAnnotationWriteHelper.getAnnotation().getTargetType() == TypeAnnotation.METHOD_PARAMETER &&
-                ((FormalParameterTarget) typeAnnotationWriteHelper.getAnnotation().getTargetInfo()).getFormalParameterIndex() == it
+              ((TargetInfo.FormalParameterTarget) typeAnnotationWriteHelper.getAnnotation().getTargetInfo()).getFormalParameterIndex() == it
             ).collect(Collectors.toList());
 
             if (descriptor != null) {
@@ -976,7 +981,7 @@ public class ClassWriter {
           buffer.append(" throws ");
 
           List<TypeAnnotationWriteHelper> throwsTypeAnnwriteHelper = typeAnnwriteHelper.stream()
-            .filter(typeAnnotationWriteHelper -> typeAnnotationWriteHelper.getAnnotation().getTargetInfo() instanceof ThrowsTarget)
+            .filter(typeAnnotationWriteHelper -> typeAnnotationWriteHelper.getAnnotation().getTargetInfo() instanceof TargetInfo.ThrowsTarget)
             .collect(Collectors.toList());
           for (int i = 0; i < attr.getThrowsExceptions().size(); i++) {
             if (i > 0) {
@@ -984,7 +989,7 @@ public class ClassWriter {
             }
             final int it = i;
             throwsTypeAnnwriteHelper.removeIf(typeAnnotationWriteHelper -> {
-              if(((ThrowsTarget) typeAnnotationWriteHelper.getAnnotation().getTargetInfo()).getThrowsTypeIndex() == it) {
+              if(((TargetInfo.ThrowsTarget) typeAnnotationWriteHelper.getAnnotation().getTargetInfo()).getThrowsTypeIndex() == it) {
                 typeAnnotationWriteHelper.writeTo(buffer);
                 return true;
               }
@@ -1286,7 +1291,7 @@ public class ClassWriter {
   ) {
     final List<TypeAnnotationWriteHelper> typeParamTypeAnnWriteHelper = typeAnnWriteHelper.stream().filter(typeAnnotationWriteHelper -> {
       TargetInfo targetInfo = typeAnnotationWriteHelper.getAnnotation().getTargetInfo();
-      return targetInfo instanceof TypeParameterTarget || targetInfo instanceof TypeParameterBoundTarget;
+      return targetInfo instanceof TargetInfo.TypeParameterTarget || targetInfo instanceof TargetInfo.TypeParameterBoundTarget;
     }).collect(Collectors.toList());
 
     buffer.append('<');
@@ -1298,7 +1303,7 @@ public class ClassWriter {
       final int it = i;
       typeParamTypeAnnWriteHelper.removeIf(typeAnnotationWriteHelper -> {
         TargetInfo targetInfo = typeAnnotationWriteHelper.getAnnotation().getTargetInfo();
-        if (targetInfo instanceof TypeParameterTarget && ((TypeParameterTarget)targetInfo).getTypeParameterIndex() == it) {
+        if (targetInfo instanceof TargetInfo.TypeParameterTarget && ((TargetInfo.TypeParameterTarget)targetInfo).getTypeParameterIndex() == it) {
           typeAnnotationWriteHelper.writeTo(buffer);
           return true;
         }
@@ -1312,9 +1317,9 @@ public class ClassWriter {
         buffer.append(" extends ");
         typeParamTypeAnnWriteHelper.removeIf(typeAnnotationWriteHelper -> {
           TargetInfo targetInfo = typeAnnotationWriteHelper.getAnnotation().getTargetInfo();
-          if (targetInfo instanceof TypeParameterBoundTarget &&
-            ((TypeParameterBoundTarget)targetInfo).getTypeParameterIndex() == it &&
-            ((TypeParameterBoundTarget)targetInfo).getBoundIndex() == 0) {
+          if (targetInfo instanceof TargetInfo.TypeParameterBoundTarget &&
+              ((TargetInfo.TypeParameterBoundTarget)targetInfo).getTypeParameterIndex() == it &&
+              ((TargetInfo.TypeParameterBoundTarget)targetInfo).getBoundIndex() == 0) {
             typeAnnotationWriteHelper.writeTo(buffer);
             return true;
           }
@@ -1326,9 +1331,9 @@ public class ClassWriter {
           final int jt = j;
           typeParamTypeAnnWriteHelper.removeIf(typeAnnotationWriteHelper -> {
             TargetInfo targetInfo = typeAnnotationWriteHelper.getAnnotation().getTargetInfo();
-            if (targetInfo instanceof TypeParameterBoundTarget &&
-              ((TypeParameterBoundTarget)targetInfo).getTypeParameterIndex() == it &&
-              ((TypeParameterBoundTarget)targetInfo).getBoundIndex() == jt) {
+            if (targetInfo instanceof TargetInfo.TypeParameterBoundTarget &&
+                ((TargetInfo.TypeParameterBoundTarget)targetInfo).getTypeParameterIndex() == it &&
+                ((TargetInfo.TypeParameterBoundTarget)targetInfo).getBoundIndex() == jt) {
               typeAnnotationWriteHelper.writeTo(buffer);
               return true;
             }
