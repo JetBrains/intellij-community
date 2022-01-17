@@ -106,8 +106,10 @@ internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
   }
 
   override fun onStripeButtonUpdate(toolWindow: ToolWindow, property: ToolWindowProperty, entry: ToolWindowEntry?) {
+    val button = findToolbar(toolWindow.largeStripeAnchor)?.getButtonFor(toolWindow.id) ?: return
+    ToolWindowButtonManager.updateStripeButton(toolWindow, property, button.button)
     if (property == ToolWindowProperty.ICON) {
-      findToolbar(toolWindow.largeStripeAnchor)?.getButtonFor(toolWindow.id)?.updateIcon(toolWindow)
+      button.syncIcon()
     }
   }
 }
