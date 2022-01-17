@@ -13,8 +13,8 @@ import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.IntInlineKeyDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,58 +25,58 @@ import java.beans.PropertyChangeListener;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
  */
-public final class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> {
+public final class TodoIndex extends SingleEntryFileBasedIndexExtension<Map<TodoIndexEntry, Integer>> {
   @NonNls
-  public static final ID<TodoIndexEntry, Integer> NAME = ID.create("TodoIndex");
+  public static final ID<Integer, Map<TodoIndexEntry, Integer>> NAME = ID.create("TodoIndex");
 
   public TodoIndex() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(IndexPatternProvider.INDEX_PATTERNS_CHANGED, new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        FileBasedIndex.getInstance().requestRebuild(NAME);
-      }
-    });
+    ApplicationManager.getApplication().getMessageBus().connect()
+      .subscribe(IndexPatternProvider.INDEX_PATTERNS_CHANGED, new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+          FileBasedIndex.getInstance().requestRebuild(NAME);
+        }
+      });
   }
 
-  private final KeyDescriptor<TodoIndexEntry> myKeyDescriptor = new KeyDescriptor<>() {
+  private final DataExternalizer<Map<TodoIndexEntry, Integer>> myValueExternalizer = new DataExternalizer<>() {
     @Override
-    public int getHashCode(final TodoIndexEntry value) {
-      return value.hashCode();
+    public void save(@NotNull DataOutput out,
+                     @NotNull Map<TodoIndexEntry, Integer> value) throws IOException {
+      int size = value.size();
+      DataInputOutputUtil.writeINT(out, size);
+      if (size <= 0) return;
+      for (TodoIndexEntry entry : value.keySet()) {
+        out.writeUTF(entry.pattern);
+        out.writeBoolean(entry.caseSensitive);
+        DataInputOutputUtil.writeINT(out, value.get(entry));
+      }
     }
 
     @Override
-    public boolean isEqual(final TodoIndexEntry val1, final TodoIndexEntry val2) {
-      return val1.equals(val2);
-    }
-
-    @Override
-    public void save(@NotNull final DataOutput out, final TodoIndexEntry value) throws IOException {
-      out.writeUTF(value.pattern);
-      out.writeBoolean(value.caseSensitive);
-    }
-
-    @Override
-    public TodoIndexEntry read(@NotNull final DataInput in) throws IOException {
-      final String pattern = in.readUTF();
-      final boolean caseSensitive = in.readBoolean();
-      return new TodoIndexEntry(pattern, caseSensitive);
-    }
-  };
-
-  private final DataExternalizer<Integer> myValueExternalizer = new IntInlineKeyDescriptor() {
-    @Override
-    protected boolean isCompactFormat() {
-      return true;
+    public @NotNull Map<TodoIndexEntry, Integer> read(@NotNull DataInput in) throws IOException {
+      int size = DataInputOutputUtil.readINT(in);
+      if (size == 0) return Collections.emptyMap();
+      Map<TodoIndexEntry, Integer> map = new HashMap<>(size);
+      for (int i = 0; i < size; i++) {
+        String pattern = in.readUTF();
+        boolean caseSensitive = in.readBoolean();
+        TodoIndexEntry entry = new TodoIndexEntry(pattern, caseSensitive);
+        map.put(entry, DataInputOutputUtil.readINT(in));
+      }
+      return map;
     }
   };
 
-  private final DataIndexer<TodoIndexEntry, Integer, FileContent> myIndexer =
-    new CompositeDataIndexer<TodoIndexEntry, Integer, DataIndexer<TodoIndexEntry, Integer, FileContent>, String>() {
+  private final SingleEntryIndexer<Map<TodoIndexEntry, Integer>> myIndexer =
+    new SingleEntryCompositeIndexer<Map<TodoIndexEntry, Integer>, DataIndexer<TodoIndexEntry, Integer, FileContent>, String>(false) {
       @Nullable
       @Override
       public DataIndexer<TodoIndexEntry, Integer, FileContent> calculateSubIndexer(@NotNull IndexedFile file) {
@@ -96,23 +96,24 @@ public final class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Int
         return EnumeratorStringDescriptor.INSTANCE;
       }
 
-    @NotNull
-    @Override
-    public Map<TodoIndexEntry, Integer> map(@NotNull FileContent inputData, @NotNull DataIndexer<TodoIndexEntry, Integer, FileContent> indexer) {
-      try {
-        return indexer.map(inputData);
+      @Override
+      protected @Nullable Map<TodoIndexEntry, Integer> computeValue(@NotNull FileContent inputData,
+                                                                    @NotNull DataIndexer<TodoIndexEntry, Integer, FileContent> indexer) {
+        try {
+          Map<TodoIndexEntry, Integer> result = indexer.map(inputData);
+          return result.isEmpty() ? null : result;
+        }
+        catch (Exception e) {
+          if (e instanceof ControlFlowException) throw e;
+          throw new MapReduceIndexMappingException(e, indexer.getClass());
+        }
       }
-      catch (Exception e) {
-        if (e instanceof ControlFlowException) throw e;
-        throw new MapReduceIndexMappingException(e, indexer.getClass());
-      }
-    }
-  };
+    };
 
   @Override
   public int getVersion() {
     // composite indexer
-    return 11;
+    return 12;
   }
 
   @Override
@@ -122,25 +123,18 @@ public final class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Int
 
   @NotNull
   @Override
-  public ID<TodoIndexEntry, Integer> getName() {
+  public ID<Integer, Map<TodoIndexEntry, Integer>> getName() {
     return NAME;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<TodoIndexEntry, Integer, FileContent> getIndexer() {
+  public @NotNull SingleEntryIndexer<Map<TodoIndexEntry, Integer>> getIndexer() {
     return myIndexer;
   }
 
   @NotNull
   @Override
-  public KeyDescriptor<TodoIndexEntry> getKeyDescriptor() {
-    return myKeyDescriptor;
-  }
-
-  @NotNull
-  @Override
-  public DataExternalizer<Integer> getValueExternalizer() {
+  public DataExternalizer<Map<TodoIndexEntry, Integer>> getValueExternalizer() {
     return myValueExternalizer;
   }
 

@@ -21,7 +21,6 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
-import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -118,7 +117,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     PsiClass objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()));
     assertNotNull(objectClass);
     checkUsages(objectClass, ArrayUtil.EMPTY_STRING_ARRAY);
-    FileBasedIndex.getInstance().getContainingFiles(TodoIndex.NAME, new TodoIndexEntry("todo", true), GlobalSearchScope.allScope(getProject()));
+    FileBasedIndex.getInstance().ensureUpToDate(TodoIndex.NAME, getProject(), GlobalSearchScope.allScope(getProject()));
 
     String projectLocation = myProject.getPresentableUrl();
     assert projectLocation != null : myProject;

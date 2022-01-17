@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.cache.impl;
 
@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.cache.TodoCacheManager;
@@ -25,7 +26,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class IndexTodoCacheManagerImpl implements TodoCacheManager {
   private static final Logger LOG = Logger.getInstance(IndexTodoCacheManagerImpl.class);
@@ -41,23 +45,22 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
     if (myProject.isDefault()) {
       return PsiFile.EMPTY_ARRAY;
     }
-    final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-    final Set<PsiFile> allFiles = new HashSet<>();
-
+    ManagingFS fs = ManagingFS.getInstance();
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
+    Set<PsiFile> allFiles = new HashSet<>();
+    PsiManager psiManager = PsiManager.getInstance(myProject);
     DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
-      for (IndexPattern indexPattern : IndexPatternUtil.getIndexPatterns()) {
-        final Collection<VirtualFile> files = fileBasedIndex.getContainingFiles(
-          TodoIndex.NAME,
-          new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), GlobalSearchScope.allScope(myProject));
-        PsiManager psiManager = PsiManager.getInstance(myProject);
-        for (VirtualFile file : files) {
-          ReadAction.run(() -> {
-            if (file.isValid() && TodoIndexers.belongsToProject(myProject, file)) {
-              ContainerUtil.addIfNotNull(allFiles, psiManager.findFile(file));
-            }
-          });
-        }
-      }
+      GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
+      fileBasedIndex.processAllKeys(TodoIndex.NAME, fileId -> {
+        VirtualFile file = fs.findFileById(fileId);
+        if (file == null || !scope.contains(file)) return true;
+        ReadAction.run(() -> {
+          if (file.isValid() && TodoIndexers.belongsToProject(myProject, file)) {
+            ContainerUtil.addIfNotNull(allFiles, psiManager.findFile(file));
+          }
+        });
+        return true;
+      }, scope, null);
     });
 
     return allFiles.isEmpty() ? PsiFile.EMPTY_ARRAY : PsiUtilCore.toPsiFileArray(allFiles);
@@ -99,8 +102,8 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
 
     try {
       FileContent fc = FileContentImpl.createByFile(file, myProject);
-      Map<TodoIndexEntry, Integer> data = extension.getIndexer().map(fc);
-      return getTodoCountForInputData(data, indexPatterns);
+      Map<Integer, Map<TodoIndexEntry, Integer>> data = extension.getIndexer().map(fc);
+      return getTodoCountForInputData(ContainerUtil.getFirstItem(data.values()), indexPatterns);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -111,7 +114,7 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
   private int fetchTodoCountFromIndex(@NotNull VirtualFile file, IndexPattern @NotNull [] indexPatterns) {
     Ref<Map<TodoIndexEntry, Integer>> inputData = Ref.create();
     DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
-      Map<TodoIndexEntry, Integer> data = FileBasedIndex.getInstance().getFileData(TodoIndex.NAME, file, myProject);
+      Map<TodoIndexEntry, Integer> data = FileBasedIndex.getInstance().getSingleEntryIndexData(TodoIndex.NAME, file, myProject);
       inputData.set(data);
     });
     return getTodoCountForInputData(inputData.get(), indexPatterns);
