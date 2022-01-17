@@ -3,11 +3,10 @@ package com.intellij.settingsSync
 import com.intellij.configurationStore.ComponentStoreImpl
 import com.intellij.configurationStore.getExportableComponentsMap
 import com.intellij.configurationStore.getExportableItemsFromLocalStorage
-import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.SystemProperties
@@ -23,56 +22,50 @@ private const val SETTINGS_SYNC_ENABLED_PROPERTY = "idea.settings.sync.enabled"
 internal fun isSettingsSyncEnabled() : Boolean =
   SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, false)
 
-internal class SettingsSyncFacade {
-  internal val updateChecker: SettingsSyncUpdateChecker get() = getMain().controls.updateChecker
+internal class SettingsSyncMain {
 
-  internal fun pushSettingsToServer() {
-    ApplicationManager.getApplication().messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(SyncSettingsEvent.PushRequest)
-  }
+  internal val controls: SettingsSyncControls
 
-  internal fun getRemoteCommunicator(): SettingsSyncRemoteCommunicator = getMain().controls.remoteCommunicator
-
-  @RequiresBackgroundThread
-  internal fun syncSettings() {
-    val updateChecker = service<SettingsSyncFacade>().updateChecker
-    if (updateChecker.isUpdateNeeded()) {
-      LOG.info("Syncing settings...")
-      updateChecker.scheduleUpdateFromServer()
-    }
-    else {
-      LOG.info("Syncing settings... is not needed.")
-    }
-  }
-
-  private fun getMain(): SettingsSyncMain {
-    return ApplicationLoadListener.EP_NAME.findExtensionOrFail(SettingsSyncMain::class.java)
-  }
-
-  companion object {
-    private val LOG = logger<SettingsSyncFacade>()
-  }
-}
-
-internal class SettingsSyncMain : ApplicationLoadListener {
-
-  internal lateinit var controls: SettingsSyncControls
-
-  override fun beforeApplicationLoaded(application: Application, appConfigPath: Path) {
-    if (application.isUnitTestMode || !isSettingsSyncEnabled()) {
-      return
-    }
-
+  init {
+    val application = ApplicationManager.getApplication()
+    val appConfigPath = PathManager.getConfigDir()
     val settingsSyncStorage = appConfigPath.resolve("settingsSync")
     val remoteCommunicator = if (System.getProperty(SETTINGS_SYNC_LOCAL_SERVER_PATH_PROPERTY) != null)
       LocalDirSettingsSyncRemoteCommunicator(settingsSyncStorage)
     else CloudConfigServerCommunicator()
 
     @Suppress("IncorrectParentDisposable") // settings sync is enabled on startup => Application is the only possible disposable parent
-    controls = init(application, application, settingsSyncStorage, appConfigPath, application.stateStore as ComponentStoreImpl, remoteCommunicator)
+    controls = init(application, application, settingsSyncStorage, appConfigPath,
+                    application.stateStore as ComponentStoreImpl, remoteCommunicator)
+
   }
 
-  companion object {
+  internal fun pushSettingsToServer() {
+    ApplicationManager.getApplication().messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(SyncSettingsEvent.PushRequest)
+  }
 
+  internal fun getRemoteCommunicator(): SettingsSyncRemoteCommunicator = controls.remoteCommunicator
+
+  @RequiresBackgroundThread
+  internal fun syncSettings() {
+    if (controls.updateChecker.isUpdateNeeded()) {
+      LOG.info("Syncing settings...")
+      controls.updateChecker.scheduleUpdateFromServer()
+    }
+    else {
+      LOG.info("Syncing settings... is not needed.")
+    }
+  }
+
+  internal companion object {
+
+    fun isAvailable(): Boolean {
+      return ApplicationManager.getApplication().getServiceIfCreated(SettingsSyncMain::class.java) != null
+    }
+
+    fun getInstance(): SettingsSyncMain = ApplicationManager.getApplication().getService(SettingsSyncMain::class.java)
+
+    // Extracted to simplify testing, otherwise it is fast and is called from the service initializer
     internal fun init(application: Application,
                       parentDisposable: Disposable,
                       settingsSyncStorage: Path,
@@ -95,6 +88,8 @@ internal class SettingsSyncMain : ApplicationLoadListener {
 
       return SettingsSyncControls(updateChecker, bridge, remoteCommunicator)
     }
+
+    private val LOG = logger<SettingsSyncMain>()
   }
 
   internal class SettingsSyncControls(val updateChecker: SettingsSyncUpdateChecker,

@@ -1,7 +1,6 @@
 package com.intellij.settingsSync
 
 import com.intellij.ide.FrameStateListener
-import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.concurrent.ScheduledFuture
@@ -24,7 +23,7 @@ class SettingsSyncFrameListener : FrameStateListener {
 
     if (Registry.`is`("settingsSync.autoSync.on.focus", true)) {
       executorService.schedule(Runnable {
-        service<SettingsSyncFacade>().syncSettings()
+        SettingsSyncMain.getInstance().syncSettings()
       }, 0, TimeUnit.SECONDS)
     }
   }
@@ -39,7 +38,7 @@ class SettingsSyncFrameListener : FrameStateListener {
   private fun syncSettingsByTimer(): ScheduledFuture<*> {
     val delay = autoSyncDelay
     return executorService.scheduleWithFixedDelay(Runnable {
-      service<SettingsSyncFacade>().syncSettings()
+      SettingsSyncMain.getInstance().syncSettings()
     }, delay, delay, TimeUnit.SECONDS)
   }
 }

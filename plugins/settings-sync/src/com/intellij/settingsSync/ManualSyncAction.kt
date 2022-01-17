@@ -1,7 +1,6 @@
 package com.intellij.settingsSync
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
@@ -9,12 +8,12 @@ import com.intellij.openapi.project.DumbAwareAction
 class ManualSyncAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
-    val facade = service<SettingsSyncFacade>()
+    val facade = SettingsSyncMain.getInstance()
     // todo cancellability
     // todo don't allow to start several tasks at once, including the automated ones
     object: Task.Backgroundable(e.project, SettingsSyncBundle.message("progress.title.updating.settings.from.server"), false) {
       override fun run(indicator: ProgressIndicator) {
-        val updateResult = facade.updateChecker.scheduleUpdateFromServer()
+        val updateResult = facade.controls.updateChecker.scheduleUpdateFromServer()
         when (updateResult) {
           is UpdateResult.Success -> Unit // received the update pack successfully, it will be applied async via the SettingsSyncBridge
           is UpdateResult.Error -> {
@@ -33,6 +32,6 @@ class ManualSyncAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = isSettingsSyncEnabled()
+    e.presentation.isEnabledAndVisible = SettingsSyncMain.isAvailable()
   }
 }
