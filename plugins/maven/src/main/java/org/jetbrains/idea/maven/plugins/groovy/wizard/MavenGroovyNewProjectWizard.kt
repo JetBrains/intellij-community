@@ -10,10 +10,7 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.plugins.groovy.GroovyBundle
-import org.jetbrains.plugins.groovy.config.wizard.BuildSystemGroovyNewProjectWizard
-import org.jetbrains.plugins.groovy.config.wizard.GROOVY_SDK_FALLBACK_VERSION
-import org.jetbrains.plugins.groovy.config.wizard.GroovyNewProjectWizard
-import org.jetbrains.plugins.groovy.config.wizard.groovySdkComboBox
+import org.jetbrains.plugins.groovy.config.wizard.*
 import java.util.*
 
 class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
@@ -25,13 +22,16 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
   class Step(parent: GroovyNewProjectWizard.Step) : MavenNewProjectWizardStep<GroovyNewProjectWizard.Step>(parent) {
 
+    private val addSampleCodeProperty = propertyGraph.graphProperty { false }
     private val groovySdkVersionProperty = propertyGraph.graphProperty<Optional<String>> { Optional.empty() }
 
     private var groovySdkVersion by groovySdkVersionProperty
+    var addSampleCode by addSampleCodeProperty
 
     override fun setupSettingsUI(builder: Panel) {
       super.setupSettingsUI(builder)
       builder.row(GroovyBundle.message("label.groovy.sdk")) { groovySdkComboBox(groovySdkVersionProperty) }
+      builder.addSampleCodeCheckbox(addSampleCodeProperty)
     }
 
     override fun setupProject(project: Project) {

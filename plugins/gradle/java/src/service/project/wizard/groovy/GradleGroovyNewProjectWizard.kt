@@ -24,13 +24,16 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
   class Step(parent: GroovyNewProjectWizard.Step) :
     GradleNewProjectWizardStep<GroovyNewProjectWizard.Step>(parent) {
 
+    private val addSampleCodeProperty = propertyGraph.graphProperty { false }
     private val groovySdkVersionProperty = propertyGraph.graphProperty<Optional<String>> { Optional.empty() }
 
     private var groovySdkVersion by groovySdkVersionProperty
+    var addSampleCode by addSampleCodeProperty
 
     override fun setupSettingsUI(builder: Panel) {
       super.setupSettingsUI(builder)
       builder.row(GroovyBundle.message("label.groovy.sdk")) { groovySdkComboBox(groovySdkVersionProperty) }
+      builder.addSampleCodeCheckbox(addSampleCodeProperty)
     }
 
     override fun setupProject(project: Project) {

@@ -11,10 +11,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
-import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.builder.bindItem
-import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.UIBundle
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.orNull
 import com.intellij.util.download.DownloadableFileSetVersions
@@ -46,6 +44,14 @@ fun Row.groovySdkComboBox(property : GraphProperty<Optional<String>>) {
       }
     }
 }
+
+fun Panel.addSampleCodeCheckbox(property : GraphProperty<Boolean>) {
+  row {
+    checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
+      .bindSelected(property)
+  }.topGap(TopGap.SMALL)
+}
+
 
 fun ModuleBuilder.createSampleGroovyCodeFile(project: Project, sourceDirectory: VirtualFile) {
   WriteCommandAction.runWriteCommandAction(project, GroovyBundle.message("new.project.wizard.groovy.creating.main.file"), null,
