@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.history.LocalHistory;
@@ -340,7 +340,7 @@ public final class MoveClassesOrPackagesImpl {
           continue sourceRoots;
         }
       }
-      sourceRootDirectories.put(sourceRootDirectory, qualifiedName != null ? File.separator + qualifiedName.replaceAll("\\.", File.separator) : null);
+      sourceRootDirectories.put(sourceRootDirectory, qualifiedName != null ? File.separator + qualifiedName.replace('.', File.separatorChar) : null);
     }
     return sourceRootDirectories;
   }
