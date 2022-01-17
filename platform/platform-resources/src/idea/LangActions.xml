@@ -1000,6 +1000,7 @@
 
     <group id="EditorTabPopupMenuEx" searchable="false">
       <separator/>
+      <reference ref="Scratch.ChangeLanguage"/>
       <reference ref="AssociateWithFileType"/>
       <reference ref="MarkFileAs"/>
       <reference ref="AddToFavorites"/>
