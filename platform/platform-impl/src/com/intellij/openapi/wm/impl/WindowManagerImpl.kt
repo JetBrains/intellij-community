@@ -395,7 +395,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   override fun getFocusedComponent(project: Project?) = windowWatcher.getFocusedComponent(project)
 
   override fun noStateLoaded() {
-    layout = DesktopLayout(service<DefaultToolWindowLayoutProvider>().createDefaultToolWindowLayout().associateByTo(HashMap()) { it.id!! })
+    layout = DesktopLayout(service<DefaultToolWindowLayoutProvider>().createDefaultToolWindowLayout())
   }
 
   override fun loadState(state: Element) {

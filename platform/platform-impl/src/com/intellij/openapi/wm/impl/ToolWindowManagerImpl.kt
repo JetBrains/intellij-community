@@ -1094,7 +1094,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     setLayout(newLayout, toolWindowPane!!)
   }
 
-  internal fun setLayoutOnInit(newLayout: DesktopLayout) {
+  @VisibleForTesting
+  fun setLayoutOnInit(newLayout: DesktopLayout) {
     if (!idToEntry.isEmpty()) {
       LOG.error("idToEntry must be empty (idToEntry={\n${idToEntry.entries.joinToString(separator = "\n") { (k, v) -> "$k: $v" }})")
     }
