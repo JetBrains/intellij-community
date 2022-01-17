@@ -4,15 +4,13 @@ package org.jetbrains.plugins.gradle.service.project.wizard.groovy
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.ui.dsl.builder.Panel
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 import org.jetbrains.plugins.gradle.service.project.wizard.generateModuleBuilder
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.groovy.GroovyBundle
-import org.jetbrains.plugins.groovy.config.wizard.BuildSystemGroovyNewProjectWizard
-import org.jetbrains.plugins.groovy.config.wizard.GROOVY_SDK_FALLBACK_VERSION
-import org.jetbrains.plugins.groovy.config.wizard.GroovyNewProjectWizard
-import org.jetbrains.plugins.groovy.config.wizard.groovySdkComboBox
+import org.jetbrains.plugins.groovy.config.wizard.*
 import java.util.*
 
 class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
@@ -46,6 +44,13 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
       ExternalProjectsManagerImpl.setupCreatedProject(project)
       builder.commit(project)
+      if (addSampleCode) {
+        val groovySourcesDirectory = builder.contentEntryPath + "/src/main/groovy"
+        val directory = VfsUtil.createDirectoryIfMissing(groovySourcesDirectory)
+        if (directory != null) {
+          builder.createSampleGroovyCodeFile(project, directory)
+        }
+      }
     }
 
   }

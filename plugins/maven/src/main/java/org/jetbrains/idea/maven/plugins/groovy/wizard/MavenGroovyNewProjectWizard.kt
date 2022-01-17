@@ -44,6 +44,7 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
         projectId = MavenId(groupId, artifactId, version)
         isInheritGroupId = parentData?.mavenId?.groupId == groupId
         isInheritVersion = parentData?.mavenId?.version == version
+        createSampleCode = addSampleCode
       }
 
       ExternalProjectsManagerImpl.setupCreatedProject(project)

@@ -32,6 +32,8 @@ import kotlin.io.path.createDirectories
  */
 class MavenGroovyNewProjectBuilder(private val groovySdkVersion : String) : AbstractMavenModuleBuilder() {
 
+  var createSampleCode = false
+
   override fun createWizardSteps(wizardContext: WizardContext, modulesProvider: ModulesProvider): Array<ModuleWizardStep> = arrayOf(
     MavenStructureWizardStep(this, wizardContext),
     SelectPropertiesStep(wizardContext.project, this),
@@ -75,7 +77,9 @@ class MavenGroovyNewProjectBuilder(private val groovySdkVersion : String) : Abst
     val sourceDirectory = VfsUtil.createDirectories(root.path + "/src/main/groovy")
     VfsUtil.createDirectories(root.path + "/src/main/resources")
     VfsUtil.createDirectories(root.path + "/src/test/groovy")
-    createSampleGroovyCodeFile(project, sourceDirectory)
+    if (createSampleCode) {
+      createSampleGroovyCodeFile(project, sourceDirectory)
+    }
 
     MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
 
