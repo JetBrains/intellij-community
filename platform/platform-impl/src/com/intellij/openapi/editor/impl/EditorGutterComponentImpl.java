@@ -98,6 +98,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -1858,9 +1859,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Task.Backgroundable(myEditor.getProject(), IdeBundle.message("progress.title.constructing.tooltip")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        tooltip.set(ReadAction.nonBlocking(() -> renderer.getTooltipText())
-            .wrapProgress(indicator)
-              .executeSynchronously());
+        Callable<@NlsContexts.Tooltip String> callable = () -> renderer.getTooltipText();
+        tooltip.set(ReadAction.nonBlocking(callable).wrapProgress(indicator).executeSynchronously());
       }
 
       @Override
