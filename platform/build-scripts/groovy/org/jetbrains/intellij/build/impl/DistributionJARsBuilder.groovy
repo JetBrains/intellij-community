@@ -830,13 +830,13 @@ final class DistributionJARsBuilder {
           ModuleOutputPatcher moduleOutputPatcher = new ModuleOutputPatcher()
           Path stageDir = context.paths.tempDir.resolve("non-bundled-plugins-" + context.applicationInfo.productCode)
 
-          List<Map.Entry<String, Path>> dirToJar = new ArrayList<>()
+          List<Map.Entry<String, Path>> dirToJar = Collections.synchronizedList(new ArrayList<Map.Entry<String, Path>>())
 
           String defaultPluginVersion = context.buildNumber.endsWith(".SNAPSHOT")
             ? context.buildNumber + ".${PluginXmlPatcher.pluginDateFormat.format(ZonedDateTime.now())}"
             : context.buildNumber
 
-          List<PluginRepositorySpec> pluginsToIncludeInCustomRepository = new ArrayList<PluginRepositorySpec>()
+          List<PluginRepositorySpec> pluginsToIncludeInCustomRepository = Collections.synchronizedList(new ArrayList<PluginRepositorySpec>())
           Predicate<PluginLayout> autoPublishPluginChecker = loadPluginAutoPublishList(context)
 
           boolean prepareCustomPluginRepositoryForPublishedPlugins = context.productProperties.productLayout
