@@ -22,7 +22,7 @@ private const val SETTINGS_SYNC_ENABLED_PROPERTY = "idea.settings.sync.enabled"
 internal fun isSettingsSyncEnabled() : Boolean =
   SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, false)
 
-internal class SettingsSyncMain {
+internal class SettingsSyncMain : Disposable {
 
   internal val controls: SettingsSyncControls
 
@@ -34,10 +34,12 @@ internal class SettingsSyncMain {
       LocalDirSettingsSyncRemoteCommunicator(settingsSyncStorage)
     else CloudConfigServerCommunicator()
 
-    @Suppress("IncorrectParentDisposable") // settings sync is enabled on startup => Application is the only possible disposable parent
-    controls = init(application, application, settingsSyncStorage, appConfigPath,
+    controls = init(application, this, settingsSyncStorage, appConfigPath,
                     application.stateStore as ComponentStoreImpl, remoteCommunicator)
 
+  }
+
+  override fun dispose() {
   }
 
   internal fun pushSettingsToServer() {
