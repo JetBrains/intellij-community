@@ -225,7 +225,7 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
       gutters.add(new HistoryIdColumn(fileAnnotation, presentation, bgColorMap, historyIds));
     }
     gutters.add(new HighlightedAdditionalColumn(fileAnnotation, presentation, bgColorMap));
-    final AnnotateActionGroup actionGroup = new AnnotateActionGroup(gutters, bgColorMap);
+    final AnnotateActionGroup actionGroup = new AnnotateActionGroup(fileAnnotation, gutters, bgColorMap);
     presentation.addAction(actionGroup, 1);
     gutters.add(new ExtraFieldGutter(fileAnnotation, presentation, bgColorMap, actionGroup));
 

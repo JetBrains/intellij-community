@@ -103,6 +103,8 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
 
     removeDiff();
 
+    if (!AnnotateDiffOnHoverToggleAction.isShowDiffOnHover()) return;
+
     int annotationLine = myTextPresentation.getAnnotationLine(editorLine);
     if (annotationLine >= 0) {
       myCurrentLine = editorLine;
