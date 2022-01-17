@@ -20,7 +20,7 @@ val KotlinVersion.isDev: Boolean
 
 val KotlinVersion.isMilestone: Boolean
     get() = this.classifier != null &&
-            this.classifier.lowercase().matches(Regex("""m(\d*)?-?\d*"""))
+            this.classifier.lowercase().matches(Regex("""m\d+(-\d*)?"""))
 
 val KotlinVersion.isAlpha: Boolean
     get() = this.classifier != null &&
@@ -42,7 +42,6 @@ val KotlinVersion.isPreRelease: Boolean get() = !isStable
 
 enum class KotlinVersionMaturity {
     WILDCARD,
-    UNKNOWN,
     SNAPSHOT,
     DEV,
     MILESTONE,
@@ -51,19 +50,6 @@ enum class KotlinVersionMaturity {
     RC,
     STABLE
 }
-
-val KotlinVersion.maturity: KotlinVersionMaturity
-    get() = when {
-        isStable -> KotlinVersionMaturity.STABLE
-        isRC -> KotlinVersionMaturity.RC
-        isBeta -> KotlinVersionMaturity.BETA
-        isAlpha -> KotlinVersionMaturity.ALPHA
-        isMilestone -> KotlinVersionMaturity.MILESTONE
-        isSnapshot -> KotlinVersionMaturity.SNAPSHOT
-        isDev -> KotlinVersionMaturity.DEV
-        isWildcard -> KotlinVersionMaturity.WILDCARD
-        else -> KotlinVersionMaturity.UNKNOWN
-    }
 
 operator fun KotlinVersion.compareTo(other: KotlinVersion): Int {
     if (this == other) return 0
@@ -212,7 +198,7 @@ fun parseKotlinVersion(value: String): KotlinVersion {
         major = baseVersionSplit[0].toIntOrNull() ?: throwInvalid(),
         minor = baseVersionSplit[1].toIntOrNull() ?: throwInvalid(),
         patch = baseVersionSplit.getOrNull(2)?.let { it.toIntOrNull() ?: throwInvalid() } ?: 0,
-        classifier = classifier?.toLowerCase()
+        classifier = classifier?.lowercase()
     )
 }
 

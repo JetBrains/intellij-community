@@ -2,9 +2,7 @@
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class KotlinVersionUtilsTest {
 
@@ -206,10 +204,6 @@ class KotlinVersionUtilsTest {
         assertTrue(
             parseKotlinVersion("1.5.30").toWildcard() < parseKotlinVersion("1.5.30-snapshot")
         )
-
-        assertTrue(
-            parseKotlinVersion("1.5.30").toWildcard() < parseKotlinVersion("1.5.30-unknown")
-        )
     }
 
     @Test
@@ -243,11 +237,7 @@ class KotlinVersionUtilsTest {
         )
 
         assertTrue(
-            parseKotlinVersion("1.6.20-M") < parseKotlinVersion("1.6.20-M1")
-        )
-
-        assertTrue(
-            parseKotlinVersion("1.6.20-M1") > parseKotlinVersion("1.6.20-M")
+            parseKotlinVersion("1.6.20-beta1") > parseKotlinVersion("1.6.20-beta")
         )
 
         assertTrue(
@@ -316,6 +306,12 @@ class KotlinVersionUtilsTest {
             KotlinVersionMaturity.MILESTONE,
             parseKotlinVersion("1.6.20-M2411-1901").maturity
         )
+    }
+
+    @Test
+    fun invalidMilestoneVersion() {
+        val exception = assertFailsWith<IllegalArgumentException> { parseKotlinVersion("1.6.20-M") }
+        assertTrue("maturity" in exception.message.orEmpty().lowercase(), "Expected 'maturity' issue mentioned in error message")
     }
 
     @Test
