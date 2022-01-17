@@ -137,6 +137,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     override val defaultProperties: Map<String, String>
         get() = super.defaultProperties.toMutableMap().apply {
             putAll(androidProperties())
+            putAll(hmppProperties())
             put("kotlin_plugin_version", kotlinPluginVersionString)
             put("kotlin_plugin_repositories", repositories(false))
             put("kts_kotlin_plugin_repositories", repositories(true))
