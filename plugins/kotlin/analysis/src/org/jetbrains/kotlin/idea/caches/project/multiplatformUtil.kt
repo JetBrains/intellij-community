@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.service.project.IdeModelsProviderImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
@@ -31,11 +32,12 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.konan.NativePlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatformUnspecifiedTarget
+import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import org.jetbrains.kotlin.types.typeUtil.closure
 
 val Module.isNewMPPModule: Boolean
     get() = facetSettings?.mppVersion.isNewMPP ||
-        facetSettings?.mppVersion.isHmpp // TODO: review clients, correct them to use precise checks for MPP version
+            facetSettings?.mppVersion.isHmpp // TODO: review clients, correct them to use precise checks for MPP version
 
 val Module.externalProjectId: String
     get() = facetSettings?.externalProjectId ?: ""
@@ -52,6 +54,12 @@ val Module.isTestModule: Boolean
 val KotlinFacetSettings.isMPPModule: Boolean
     get() = this.mppVersion != null
 
+var Module.isKpmModule: Boolean
+        by NotNullableUserDataProperty(Key.create("IS_KPM_MODULE"), false)
+
+var Module.refinesFragmentIds: Collection<String>
+        by NotNullableUserDataProperty(Key.create("REFINES_FRAGMENT_IDS"), emptyList())
+
 private val Module.facetSettings get() = KotlinFacet.get(this)?.configuration?.settings
 
 val Module.implementingModules: List<Module>
@@ -63,8 +71,9 @@ val Module.implementingModules: List<Module>
         }
 
         val moduleManager = ModuleManager.getInstance(project)
-
-        when (facetSettings?.mppVersion) {
+        if (isKpmModule) {
+            moduleManager.modules.filter { stableModuleName in it.refinesFragmentIds }
+        } else when (facetSettings?.mppVersion) {
             null -> emptyList()
 
             KotlinMultiplatformVersion.M3 -> {
@@ -112,27 +121,31 @@ val Module.implementedModules: List<Module>
             }
         }
 
-        val facetSettings = facetSettings
-        when (facetSettings?.mppVersion) {
-            null -> emptyList()
+        if (isKpmModule) {
+            refinesFragmentIds.mapNotNull { project.modulesByLinkedKey[it] }
+        } else {
+            val facetSettings = facetSettings
+            when (facetSettings?.mppVersion) {
+                null -> emptyList()
 
-            KotlinMultiplatformVersion.M3 -> {
-                facetSettings.dependsOnModuleNames
-                    .mapNotNull { project.modulesByLinkedKey[it] }
-                    // HACK: we do not import proper dependsOn for android source-sets in M3, so fallback to M2-impl
-                    // to at least not make things worse.
-                    // See KT-33809 for details
-                    .plus(if (isAndroidModule()) implementedModulesM2() else emptyList())
-                    .distinct()
-            }
+                KotlinMultiplatformVersion.M3 -> {
+                    facetSettings.dependsOnModuleNames
+                        .mapNotNull { project.modulesByLinkedKey[it] }
+                        // HACK: we do not import proper dependsOn for android source-sets in M3, so fallback to M2-impl
+                        // to at least not make things worse.
+                        // See KT-33809 for details
+                        .plus(if (isAndroidModule()) implementedModulesM2() else emptyList())
+                        .distinct()
+                }
 
-            KotlinMultiplatformVersion.M2 -> {
-                implementedModulesM2()
-            }
+                KotlinMultiplatformVersion.M2 -> {
+                    implementedModulesM2()
+                }
 
-            KotlinMultiplatformVersion.M1 -> {
-                val modelsProvider = IdeModelsProviderImpl(project)
-                findOldFashionedImplementedModuleNames().mapNotNull { modelsProvider.findIdeModule(it) }
+                KotlinMultiplatformVersion.M1 -> {
+                    val modelsProvider = IdeModelsProviderImpl(project)
+                    findOldFashionedImplementedModuleNames().mapNotNull { modelsProvider.findIdeModule(it) }
+                }
             }
         }
     }
