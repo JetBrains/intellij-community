@@ -13,30 +13,30 @@ val KotlinVersion.isWildcard: Boolean
             this.classifier == WILDCARD_KOTLIN_VERSION_CLASSIFIER
 
 val KotlinVersion.isSnapshot: Boolean
-    get() = this.classifier != null && this.classifier.lowercase(Locale.getDefault()) == "snapshot"
+    get() = this.classifier != null && this.classifier.lowercase() == "snapshot"
 
 val KotlinVersion.isDev: Boolean
-    get() = this.classifier != null && this.classifier.matches(Regex("""dev-?\d*"""))
+    get() = this.classifier != null && this.classifier.lowercase().matches(Regex("""dev-?\d*"""))
 
 val KotlinVersion.isMilestone: Boolean
     get() = this.classifier != null &&
-            this.classifier.matches(Regex("""[mM](\d*)?-?\d*"""))
+            this.classifier.lowercase().matches(Regex("""m(\d*)?-?\d*"""))
 
 val KotlinVersion.isAlpha: Boolean
     get() = this.classifier != null &&
-            this.classifier.matches(Regex("""(alpha|ALPHA)(\d*)?-?\d*"""))
+            this.classifier.lowercase().matches(Regex("""alpha(\d*)?-?\d*"""))
 
 val KotlinVersion.isBeta: Boolean
     get() = this.classifier != null &&
-            this.classifier.matches(Regex("""(beta|BETA)(\d*)?-?\d*"""))
+            this.classifier.lowercase().matches(Regex("""beta(\d*)?-?\d*"""))
 
 val KotlinVersion.isRC: Boolean
     get() = this.classifier != null &&
-            this.classifier.matches(Regex("""(rc|RC)(\d*)?-?\d*"""))
+            this.classifier.lowercase().matches(Regex("""(rc)(\d*)?-?\d*"""))
 
 val KotlinVersion.isStable: Boolean
     get() = this.classifier == null ||
-            this.classifier.matches(Regex("""(release-|RELEASE-)?\d+"""))
+            this.classifier.lowercase().matches(Regex("""(release-)?\d+"""))
 
 val KotlinVersion.isPreRelease: Boolean get() = !isStable
 

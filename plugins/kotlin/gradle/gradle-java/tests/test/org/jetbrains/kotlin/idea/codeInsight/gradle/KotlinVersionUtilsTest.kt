@@ -273,8 +273,8 @@ class KotlinVersionUtilsTest {
         )
 
         assertEquals(
-            KotlinVersionMaturity.RC,
-            parseKotlinVersion("1.6.20-RC2411-1901").maturity
+            KotlinVersionMaturity.STABLE,
+            parseKotlinVersion("1.6.20-rElEaSe-999").maturity
         )
 
         assertEquals(
@@ -283,8 +283,8 @@ class KotlinVersionUtilsTest {
         )
 
         assertEquals(
-            KotlinVersionMaturity.BETA,
-            parseKotlinVersion("1.6.20-BETA2411-1901").maturity
+            KotlinVersionMaturity.RC,
+            parseKotlinVersion("1.6.20-RC2411-1901").maturity
         )
 
         assertEquals(
@@ -293,13 +293,18 @@ class KotlinVersionUtilsTest {
         )
 
         assertEquals(
-            KotlinVersionMaturity.ALPHA,
-            parseKotlinVersion("1.6.20-ALPHA2411-1901").maturity
+            KotlinVersionMaturity.BETA,
+            parseKotlinVersion("1.6.20-bEtA2411-1901").maturity
         )
 
         assertEquals(
             KotlinVersionMaturity.ALPHA,
             parseKotlinVersion("1.6.20-alpha2411-1901").maturity
+        )
+
+        assertEquals(
+            KotlinVersionMaturity.ALPHA,
+            parseKotlinVersion("1.6.20-aLpHa2411-1901").maturity
         )
 
         assertEquals(
