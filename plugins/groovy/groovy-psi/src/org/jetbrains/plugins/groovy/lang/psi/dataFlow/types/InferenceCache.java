@@ -110,7 +110,7 @@ final class InferenceCache {
       }
     }
     DFAType dfaType = getCachedInferredType(descriptor, instruction);
-    return dfaType == null ? null : dfaType.getResultType(myScope.getManager());
+    return dfaType == null ? null : dfaType.getResultType();
   }
 
   @Nullable

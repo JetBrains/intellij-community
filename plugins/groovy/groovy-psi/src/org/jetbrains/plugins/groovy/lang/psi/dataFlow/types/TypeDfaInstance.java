@@ -82,7 +82,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       PsiType initialType = myInitialTypeProvider.initialType(descriptor);
       if (initialType != null) {
         int index = myFlowInfo.getVarIndexes().get(descriptor);
-        state = state.withNewType(index, DFAType.create(initialType, PsiType.NULL));
+        state = state.withNewType(index, DFAType.create(initialType));
       }
     }
     return state;
@@ -174,10 +174,10 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
               TypeInferenceHelper.isSimpleEnoughForAugmenting(myFlow)) {
             GrVariable variable = ((ResolvedVariableDescriptor)descriptor).getVariable();
             PsiType augmentedType = TypeAugmenter.Companion.inferAugmentedType(variable);
-            return DFAType.create(augmentedType, PsiType.NULL);
+            return DFAType.create(augmentedType);
           }
           else {
-            return DFAType.create(initializerType, PsiType.NULL);
+            return DFAType.create(initializerType);
           }
         }
       );
@@ -244,10 +244,6 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       }
     }
 
-    DFAType existingDfaType = state.getVariableType(descriptor, myFlowInfo.getVarIndexes());
-    if (existingDfaType != null) {
-      type = type.withFlushingType(existingDfaType.getFlushingType(), myManager);
-    }
     return state.withNewType(index, type);
   }
 
