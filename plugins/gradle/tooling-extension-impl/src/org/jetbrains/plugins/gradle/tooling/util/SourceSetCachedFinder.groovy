@@ -143,12 +143,30 @@ class SourceSetCachedFinder {
 
   private static List<Project> exposeIncludedBuilds(Gradle gradle, List<Project> projects) {
     for (IncludedBuild includedBuild : gradle.includedBuilds) {
-      if (includedBuild instanceof DefaultIncludedBuild) {
-        def build = includedBuild as DefaultIncludedBuild
+      def unwrapped = maybeUnwrapIncludedBuildInternal(includedBuild)
+      if (unwrapped instanceof DefaultIncludedBuild) {
+        def build = unwrapped as DefaultIncludedBuild
         projects += build.configuredBuild.rootProject.allprojects
       }
     }
     return projects
+  }
+
+  // TODO: remove reflection when bundled Gradle TAPI is newer than 7.2
+  private static Object maybeUnwrapIncludedBuildInternal(IncludedBuild includedBuild) {
+    def wrapee = includedBuild
+    Class includedBuildInternalClass = null
+    try {
+      includedBuildInternalClass = Class.forName("org.gradle.internal.composite.IncludedBuildInternal");
+    }
+    catch (ClassNotFoundException ignored) {
+    }
+    if (includedBuildInternalClass != null &&
+        includedBuildInternalClass.isAssignableFrom(includedBuild.class)) {
+      def method = includedBuild.class.getMethod("getTarget")
+      wrapee = method.invoke(includedBuild)
+    }
+    wrapee
   }
 
   private static class ArtifactsMap {
