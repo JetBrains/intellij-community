@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * or when syntax error can be ignored or annotated on different level (e.g. warning, info, etc.).
  *
  * @see com.intellij.codeInsight.daemon.impl.HighlightInfoFilter
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/syntax-errors.html">Syntax Errors (IntelliJ Platform Docs)</a>
  */
 public abstract class HighlightErrorFilter {
   public static final ProjectExtensionPointName<HighlightErrorFilter> EP_NAME = new ProjectExtensionPointName<>("com.intellij.highlightErrorFilter");
