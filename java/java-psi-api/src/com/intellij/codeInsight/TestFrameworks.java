@@ -3,7 +3,9 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -58,11 +60,12 @@ public abstract class TestFrameworks {
 
   @NotNull
   public static Set<TestFramework> detectApplicableFrameworks(@NotNull final PsiClass psiClass) {
-    return CachedValuesManager.getCachedValue(psiClass, () -> CachedValueProvider.Result
-      .create(computeFrameworks(psiClass), PsiModificationTracker.MODIFICATION_COUNT));
+    PsiModifierListOwner normalized = AnnotationCacheOwnerNormalizer.normalize(psiClass);
+    return CachedValuesManager.getCachedValue(normalized, () -> CachedValueProvider.Result
+      .create(computeFrameworks(normalized), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
-  private static Set<TestFramework> computeFrameworks(PsiClass psiClass) {
+  private static Set<TestFramework> computeFrameworks(PsiElement psiClass) {
     Set<TestFramework> frameworks = new LinkedHashSet<>();
     for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensionList()) {
       if (framework.isTestClass(psiClass)) {
