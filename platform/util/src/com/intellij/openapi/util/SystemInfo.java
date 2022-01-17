@@ -1,15 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
-import com.sun.jna.platform.win32.Advapi32Util;
-import com.sun.jna.platform.win32.Win32Exception;
-import com.sun.jna.platform.win32.WinReg;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,7 +88,6 @@ public final class SystemInfo {
   }
 
   private static final NotNullLazyValue<Boolean> ourHasXdgMime = PathExecLazyValue.create("xdg-mime");
-  private static volatile Long ourWindowsBuild;
 
   public static boolean hasXdgMime() {
     return isXWindow && ourHasXdgMime.getValue();
@@ -124,38 +119,7 @@ public final class SystemInfo {
     if (!isWin10OrNewer) {
       return null;
     }
-
-    Long result = ourWindowsBuild;
-    return result == null ? getOrComputeWindowsBuildNumber() : result;
-  }
-
-  // do not use NullableLazyValue
-  private static synchronized @Nullable Long getOrComputeWindowsBuildNumber() {
-    Long result = ourWindowsBuild;
-    if (result != null) {
-      return result;
-    }
-
-    try {
-      // This key is undocumented, but mentioned heavily over the Internet and used by lots of people
-      // It was there since NT: https://web.archive.org/web/20220113230741/https://i.imgur.com/sGCtErh.png
-      // Exists in XP, 10 and 11
-      result = Long.parseLong(Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE,
-                                                                "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
-                                                                "CurrentBuildNumber"));
-    }
-    catch (Exception e) {
-      // do not load Win32Exception as part of class bytecode initialization
-      //noinspection InstanceofCatchParameter
-      if (e instanceof NumberFormatException || e instanceof Win32Exception) {
-        Logger.getInstance(SystemInfo.class).warn("Bad win version", e);
-      }
-      else {
-        throw e;
-      }
-    }
-    ourWindowsBuild = result;
-    return result;
+    return WinBuildVersionKt.getWinBuildNumber();
   }
 
   public static @NotNull String getMacOSMajorVersion() {
