@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.LafManager;
@@ -145,6 +145,7 @@ public final class ExperimentalUI {
     paths.put("toolwindows/toolWindowChanges.svg", "/expui/toolwindow/vcs.svg");
     paths.put("toolwindows/webToolWindow.svg", "/expui/toolwindow/web.svg");
     paths.put("actions/more.svg", "/expui/general/moreVertical.svg");
+    paths.put("actions/moreHorizontal.svg", "/expui/general/moreHorizontal.svg");
     paths.put("general/hideToolWindow.svg", "/expui/general/close.svg");
     paths.put("actions/find.svg", "/expui/general/search.svg");
     paths.put("general/gearPlain.svg", "/expui/general/settings.svg");
