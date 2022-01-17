@@ -1,21 +1,21 @@
 package transitiveStory.bottomActual.mppBeginning
 
-actual open class <!LINE_MARKER("descr='Has declaration in common module'")!>BottomActualDeclarations<!> {
-    actual val <!LINE_MARKER("descr='Has declaration in common module'")!>simpleVal<!>: Int = commonInt
+actual open class <!LINE_MARKER("descr='Has expects in multimod-hmpp.top-mpp.commonMain module'")!>BottomActualDeclarations<!> {
+    actual val <!LINE_MARKER("descr='Has expects in multimod-hmpp.top-mpp.commonMain module'")!>simpleVal<!>: Int = commonInt
 
-    actual companion object <!LINE_MARKER("descr='Has declaration in common module'")!>Compainon<!> {
-        actual val <!LINE_MARKER("descr='Has declaration in common module'")!>inTheCompanionOfBottomActualDeclarations<!>: String =
+    actual companion object <!LINE_MARKER("descr='Has expects in multimod-hmpp.top-mpp.commonMain module'")!>Compainon<!> {
+        actual val <!LINE_MARKER("descr='Has expects in multimod-hmpp.top-mpp.commonMain module'")!>inTheCompanionOfBottomActualDeclarations<!>: String =
                 "I'm a string from the companion object of `$this` in `$sourceSetName` module `$moduleName`"
     }
 }
 
-actual open class <!LINE_MARKER("descr='Has declaration in common module'"), LINE_MARKER("descr='Is subclassed by ChildOfMPOuterInMacos  Click or press ... to navigate'")!>MPOuter<!> {
-    protected actual open val <!LINE_MARKER("descr='Has declaration in common module'")!>b<!>: Int = 4325
-    internal actual val <!LINE_MARKER("descr='Has declaration in common module'")!>c<!>: Int = 2345
-    actual val <!LINE_MARKER("descr='Has declaration in common module'")!>d<!>: Int = 325
+actual open class <!LINE_MARKER("descr='Has expects in multimod-hmpp.top-mpp.commonMain module'"), LINE_MARKER("descr='Is subclassed by ChildOfMPOuterInMacos  Click or press ... to navigate'")!>MPOuter<!> {
+    protected actual open val <!LINE_MARKER("descr='Has expects in multimod-hmpp.top-mpp.commonMain module'")!>b<!>: Int = 4325
+    internal actual val <!LINE_MARKER("descr='Has expects in multimod-hmpp.top-mpp.commonMain module'")!>c<!>: Int = 2345
+    actual val <!LINE_MARKER("descr='Has expects in multimod-hmpp.top-mpp.commonMain module'")!>d<!>: Int = 325
 
-    protected actual class <!LINE_MARKER("descr='Has declaration in common module'")!>MPNested<!> {
-        actual val <!LINE_MARKER("descr='Has declaration in common module'")!>e<!>: Int = 345
+    protected actual class <!LINE_MARKER("descr='Has expects in multimod-hmpp.top-mpp.commonMain module'")!>MPNested<!> {
+        actual val <!LINE_MARKER("descr='Has expects in multimod-hmpp.top-mpp.commonMain module'")!>e<!>: Int = 345
     }
 
 }
@@ -32,4 +32,4 @@ class ChildOfMPOuterInMacos : MPOuter() {
     private val sav = MPNested()
 }
 
-actual val <!LINE_MARKER("descr='Has declaration in common module'")!>sourceSetName<!>: String = "macosMain"
+actual val <!LINE_MARKER("descr='Has expects in multimod-hmpp.top-mpp.commonMain module'")!>sourceSetName<!>: String = "macosMain"

@@ -12,7 +12,7 @@ class InBottomActualIntermediate {
     val callingInteral = tlInternalInCommon
 }
 
-expect class <!LINE_MARKER("descr='Has actuals in Native, JS, JVM'")!>IntermediateMPPClassInBottomActual<!>()
+expect class <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.dummyiOSMain, multimod-hmpp-top-mpp, top-mpp] module'")!>IntermediateMPPClassInBottomActual<!>()
 
 
 class Subclass : Outer() {
