@@ -1,78 +1,64 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.roots.impl.libraries;
+package com.intellij.openapi.roots.impl.libraries
 
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.impl.OrderEntryUtil;
-import com.intellij.openapi.roots.libraries.*;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.impl.OrderEntryUtil
+import com.intellij.openapi.roots.libraries.*
 
-import java.util.function.Consumer;
-
-final class LibraryKindLoader {
-  private LibraryKindLoader() {
+internal class LibraryKindLoader private constructor() {
+  init {
     //todo[nik] this is temporary workaround for IDEA-98118: we need to initialize all library types to ensure that their kinds are created and registered in LibraryKind.ourAllKinds
     //In order to properly fix the problem we should extract all UI-related methods from LibraryType to a separate class and move LibraryType to intellij.platform.projectModel.impl module
-    LibraryType.EP_NAME.getExtensionList();
+    LibraryType.EP_NAME.extensionList
 
-    LibraryType.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
-      @Override
-      public void extensionAdded(@NotNull LibraryType<?> extension, @NotNull PluginDescriptor pluginDescriptor) {
-        WriteAction.run(() -> {
-          LibraryKind.registerKind(extension.getKind());
-          processAllLibraries(library -> rememberKind(extension.getKind(), library));
-        });
+    LibraryType.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<LibraryType<*>?> {
+      override fun extensionAdded(extension: LibraryType<*>, pluginDescriptor: PluginDescriptor) {
+        WriteAction.run<RuntimeException> {
+          LibraryKind.registerKind(extension.kind)
+          processAllLibraries { rememberKind(extension.kind, it) }
+        }
       }
 
-      @Override
-      public void extensionRemoved(@NotNull LibraryType<?> extension, @NotNull PluginDescriptor pluginDescriptor) {
-        LibraryKind.unregisterKind(extension.getKind());
-        processAllLibraries(library -> forgetKind(extension.getKind(), library));
+      override fun extensionRemoved(extension: LibraryType<*>, pluginDescriptor: PluginDescriptor) {
+        LibraryKind.unregisterKind(extension.kind)
+        processAllLibraries { forgetKind(extension.kind, it) }
       }
-    }, null);
+    }, null)
   }
 
-  private static void processAllLibraries(@NotNull Consumer<? super Library> processor) {
-    processLibraries(LibraryTablesRegistrar.getInstance().getLibraryTable(), processor);
-    for (LibraryTable table : LibraryTablesRegistrar.getInstance().getCustomLibraryTables()) {
-      processLibraries(table, processor);
+  private fun processAllLibraries(processor: (Library) -> Unit) {
+    LibraryTablesRegistrar.getInstance().libraryTable.libraries.forEach(processor)
+    for (table in LibraryTablesRegistrar.getInstance().customLibraryTables) {
+      table.libraries.forEach(processor)
     }
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      processLibraries(LibraryTablesRegistrar.getInstance().getLibraryTable(project), processor);
-      for (Module module : ModuleManager.getInstance(project).getModules()) {
-        for (Library library : OrderEntryUtil.getModuleLibraries(ModuleRootManager.getInstance(module))) {
-          processor.accept(library);
+    for (project in ProjectManager.getInstance().openProjects) {
+      LibraryTablesRegistrar.getInstance().getLibraryTable(project).libraries.forEach(processor)
+      for (module in ModuleManager.getInstance(project).modules) {
+        for (library in OrderEntryUtil.getModuleLibraries(ModuleRootManager.getInstance(module))) {
+          processor(library)
         }
       }
     }
   }
 
-  private static void processLibraries(@NotNull LibraryTable table, Consumer<? super Library> processor) {
-    for (Library library : table.getLibraries()) {
-      processor.accept(library);
+  private fun forgetKind(kind: PersistentLibraryKind<*>, library: Library) {
+    if (kind == (library as LibraryEx).kind) {
+      val model = library.modifiableModel
+      model.forgetKind()
+      model.commit()
     }
   }
 
-  private static void forgetKind(@NotNull PersistentLibraryKind<?> kind, @NotNull Library library) {
-    if (kind.equals(((LibraryEx)library).getKind())) {
-      LibraryEx.ModifiableModelEx model = (LibraryEx.ModifiableModelEx)library.getModifiableModel();
-      model.forgetKind();
-      model.commit();
-    }
-  }
-
-  private static void rememberKind(@NotNull PersistentLibraryKind<?> kind, @NotNull Library library) {
-    PersistentLibraryKind<?> libraryKind = ((LibraryEx)library).getKind();
-    if (libraryKind instanceof UnknownLibraryKind && libraryKind.getKindId().equals(kind.getKindId())) {
-      LibraryEx.ModifiableModelEx model = (LibraryEx.ModifiableModelEx)library.getModifiableModel();
-      model.restoreKind();
-      model.commit();
+  private fun rememberKind(kind: PersistentLibraryKind<*>, library: Library) {
+    if (((library as LibraryEx).kind as? UnknownLibraryKind)?.kindId == kind.kindId) {
+      val model = library.modifiableModel
+      model.restoreKind()
+      model.commit()
     }
   }
 }
