@@ -301,7 +301,7 @@ public final class GitFileAnnotation extends FileAnnotation {
     @NotNull private final Date myCommitterDate;
     @NotNull private final Date myAuthorDate;
     @NotNull private final VcsUser myAuthor;
-    @NotNull private final String mySubject;
+    @NotNull private final @NlsSafe String mySubject;
 
     CommitInfo(@NotNull Project project,
                @NotNull GitRevisionNumber revision,
@@ -309,7 +309,7 @@ public final class GitFileAnnotation extends FileAnnotation {
                @NotNull Date committerDate,
                @NotNull Date authorDate,
                @NotNull VcsUser author,
-               @NotNull String subject,
+               @NotNull @NlsSafe String subject,
                @Nullable GitRevisionNumber previousRevision,
                @Nullable FilePath previousPath) {
       myProject = project;
