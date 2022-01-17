@@ -90,10 +90,9 @@ public final class DomHelper {
 
     HashMap<Statement, FastFixedSet<Statement>> lists = new HashMap<>();
 
-    StrongConnectivityHelper schelper = new StrongConnectivityHelper(container);
-    List<List<Statement>> components = schelper.getComponents();
+    StrongConnectivityHelper connectivityHelper = new StrongConnectivityHelper(container);
 
-    List<Statement> lstStats = container.getPostReversePostOrderList(StrongConnectivityHelper.getExitReps(components));
+    List<Statement> lstStats = container.getPostReversePostOrderList(connectivityHelper.getExitReps());
 
     FastFixedSetFactory<Statement> factory = new FastFixedSetFactory<>(lstStats);
 
@@ -103,7 +102,7 @@ public final class DomHelper {
     FastFixedSet<Statement> initSet = factory.spawnEmptySet();
     initSet.setAllElements();
 
-    for (List<Statement> lst : components) {
+    for (List<Statement> lst : connectivityHelper.getComponents()) {
       FastFixedSet<Statement> tmpSet;
 
       if (StrongConnectivityHelper.isExitComponent(lst)) {

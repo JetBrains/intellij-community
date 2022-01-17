@@ -439,8 +439,7 @@ public class Statement implements IMatchable {
     List<Statement> res = new ArrayList<>();
 
     if (lstexits == null) {
-      StrongConnectivityHelper schelper = new StrongConnectivityHelper(this);
-      lstexits = StrongConnectivityHelper.getExitReps(schelper.getComponents());
+      lstexits = new StrongConnectivityHelper(this).getExitReps();
     }
 
     HashSet<Statement> setVisited = new HashSet<>();
