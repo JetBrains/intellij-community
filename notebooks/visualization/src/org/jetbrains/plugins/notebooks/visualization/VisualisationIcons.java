@@ -14,6 +14,10 @@ public final class VisualisationIcons {
     return IconManager.getInstance().loadRasterizedIcon(path, VisualisationIcons.class.getClassLoader(), cacheKey, flags);
   }
 
+  public static final class Actions {
+    /** 16x16 */ public static final @NotNull Icon RunAndSelect = load("icons/actions/runAndSelect.svg", -201676548, 2);
+  }
+
   public static final class Chart {
     /** 16x16 */ public static final @NotNull Icon ChartAreaRange = load("icons/chart/chartAreaRange.svg", -497928148, 2);
     /** 16x16 */ public static final @NotNull Icon ChartBar = load("icons/chart/chartBar.svg", -269322076, 2);
