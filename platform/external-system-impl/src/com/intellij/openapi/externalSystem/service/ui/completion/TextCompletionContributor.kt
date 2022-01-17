@@ -17,7 +17,5 @@ interface TextCompletionContributor<C : JComponent> {
 
   fun getCompletionVariants(owner: C, textToComplete: String): Iterable<TextCompletionInfo>
 
-  fun whenVariantChosen(action: (C, TextCompletionInfo) -> Unit)
-
   fun fireVariantChosen(owner: C, variant: TextCompletionInfo)
 }

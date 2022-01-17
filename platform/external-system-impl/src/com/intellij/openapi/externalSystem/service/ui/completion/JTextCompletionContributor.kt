@@ -6,7 +6,9 @@ import javax.swing.text.BadLocationException
 import javax.swing.text.JTextComponent
 
 @ApiStatus.Experimental
-abstract class JTextCompletionContributor<C : JTextComponent>(completionType: CompletionType) : AbstractTextCompletionContributor<C>() {
+abstract class JTextCompletionContributor<C : JTextComponent>(
+  private val completionType: CompletionType
+) : TextCompletionContributor<C> {
   override fun getTextToComplete(owner: C): String {
     val caretPosition = getCaretPosition(owner)
     val wordRange = getWordRange(owner, caretPosition)
@@ -47,12 +49,10 @@ abstract class JTextCompletionContributor<C : JTextComponent>(completionType: Co
     owner.document.insertString(caretPosition, textCompletionSuffix, null)
   }
 
-  init {
-    whenVariantChosen { owner, variant ->
-      when (completionType) {
-        CompletionType.INSERT -> insert(owner, variant)
-        CompletionType.REPLACE -> replace(owner, variant)
-      }
+  override fun fireVariantChosen(owner: C, variant: TextCompletionInfo) {
+    when (completionType) {
+      CompletionType.INSERT -> insert(owner, variant)
+      CompletionType.REPLACE -> replace(owner, variant)
     }
   }
 

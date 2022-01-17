@@ -4,7 +4,7 @@ package com.intellij.openapi.externalSystem.service.ui.command.line
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.externalSystem.service.ui.completion.JTextCompletionContributor
-import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionPopup
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.observable.properties.AtomicLazyProperty
 import com.intellij.openapi.observable.properties.comap
@@ -12,7 +12,6 @@ import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.fields.ExtendableTextComponent
-import com.intellij.ui.components.fields.ExtendableTextField
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
@@ -20,11 +19,15 @@ import javax.swing.KeyStroke
 class CommandLineField(
   project: Project,
   commandLineInfo: CommandLineInfo
-) : ExtendableTextField() {
+) : TextCompletionField(project) {
 
   private val commandLineProperty = AtomicLazyProperty { "" }
 
   var commandLine by commandLineProperty
+
+  override val contributor = JTextCompletionContributor.create<TextCompletionField> {
+    commandLineInfo.tablesInfo.flatMap { it.completionInfo }
+  }
 
   init {
     bind(commandLineProperty.comap { it.trim() })
@@ -36,12 +39,8 @@ class CommandLineField(
   }
 
   init {
-    val textCompletionContributor = JTextCompletionContributor.create<CommandLineField> {
-      commandLineInfo.tablesInfo.flatMap { it.completionInfo }
-    }
-    val textCompletionPopup = TextCompletionPopup(project, this, textCompletionContributor)
     val action = Runnable {
-      textCompletionPopup.updatePopup(TextCompletionPopup.UpdatePopupType.HIDE)
+      updatePopup(UpdatePopupType.HIDE)
       val dialog = CommandLineDialog(project, commandLineInfo)
       dialog.whenVariantChosen {
         val separator = if (text.endsWith(" ") || text.isEmpty()) "" else " "

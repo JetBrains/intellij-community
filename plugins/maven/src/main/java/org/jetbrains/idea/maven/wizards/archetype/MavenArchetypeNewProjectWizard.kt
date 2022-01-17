@@ -13,6 +13,10 @@ import com.intellij.ide.wizard.util.NewProjectLinkNewProjectWizardStep
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.externalSystem.service.ui.completion.DefaultTextCompletionRenderer
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBox
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBoxConverter
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer
 import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesTable
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
@@ -27,7 +31,6 @@ import com.intellij.openapi.ui.naturalSorted
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes.*
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -46,7 +49,7 @@ import org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder
 import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizard
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
-import org.jetbrains.idea.maven.wizards.archetype.TextCompletionComboBoxRenderer.Companion.append
+import com.intellij.openapi.externalSystem.service.ui.completion.DefaultTextCompletionRenderer.Companion.append
 import java.awt.Component
 import javax.swing.Icon
 import javax.swing.JList
@@ -124,7 +127,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           }
         }.topGap(TopGap.SMALL)
         row(MavenWizardBundle.message("maven.new.project.wizard.archetype.version.label")) {
-          archetypeVersionComboBox = TextCompletionComboBox(ArchetypeVersionConverter())
+          archetypeVersionComboBox = TextCompletionComboBox(ArchetypeVersionConverter(), DefaultTextCompletionRenderer())
           archetypeVersionComboBox.bind(archetypeVersionProperty)
           cell(archetypeVersionComboBox)
             .validationOnInput { validateArchetypeVersion() }
@@ -384,26 +387,29 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     override fun createString(element: String) = element
   }
 
-  private class ArchetypeRenderer : TextCompletionComboBoxRenderer<ArchetypeItem> {
-    override fun customizeCellRenderer(cell: SimpleColoredComponent, item: ArchetypeItem, matchedText: @NlsSafe String) {
-      val groupIdSuffix = matchedText.substringBefore(':')
-      val artifactIdPrefix = matchedText.substringAfter(':', "")
-      if (':' in matchedText && item.groupId.endsWith(groupIdSuffix) && item.artifactId.startsWith(artifactIdPrefix)) {
-        val groupIdPrefix = item.groupId.removeSuffix(groupIdSuffix)
-        val artifactIdSuffix = item.artifactId.removePrefix(artifactIdPrefix)
-        cell.append(groupIdPrefix, GRAYED_ATTRIBUTES, matchedText, REGULAR_MATCHED_ATTRIBUTES)
-        cell.append(groupIdSuffix, REGULAR_MATCHED_ATTRIBUTES)
-        if (item.artifactId.isNotEmpty()) {
-          cell.append(":", REGULAR_MATCHED_ATTRIBUTES)
-          cell.append(artifactIdPrefix, REGULAR_MATCHED_ATTRIBUTES)
-          cell.append(artifactIdSuffix, REGULAR_ATTRIBUTES, matchedText, REGULAR_MATCHED_ATTRIBUTES)
+  private class ArchetypeRenderer : TextCompletionRenderer<ArchetypeItem> {
+    override fun customizeCellRenderer(text: @NlsSafe String, cell: TextCompletionRenderer.Cell<ArchetypeItem>) {
+      val item = cell.item
+      with(cell.component) {
+        val groupIdSuffix = text.substringBefore(':')
+        val artifactIdPrefix = text.substringAfter(':', "")
+        if (':' in text && item.groupId.endsWith(groupIdSuffix) && item.artifactId.startsWith(artifactIdPrefix)) {
+          val groupIdPrefix = item.groupId.removeSuffix(groupIdSuffix)
+          val artifactIdSuffix = item.artifactId.removePrefix(artifactIdPrefix)
+          append(groupIdPrefix, GRAYED_ATTRIBUTES, text, REGULAR_MATCHED_ATTRIBUTES)
+          append(groupIdSuffix, REGULAR_MATCHED_ATTRIBUTES)
+          if (item.artifactId.isNotEmpty()) {
+            append(":", REGULAR_MATCHED_ATTRIBUTES)
+            append(artifactIdPrefix, REGULAR_MATCHED_ATTRIBUTES)
+            append(artifactIdSuffix, REGULAR_ATTRIBUTES, text, REGULAR_MATCHED_ATTRIBUTES)
+          }
         }
-      }
-      else {
-        cell.append(item.groupId, GRAYED_ATTRIBUTES, matchedText, REGULAR_MATCHED_ATTRIBUTES)
-        if (item.artifactId.isNotEmpty()) {
-          cell.append(":", GRAYED_ATTRIBUTES)
-          cell.append(item.artifactId, REGULAR_ATTRIBUTES, matchedText, REGULAR_MATCHED_ATTRIBUTES)
+        else {
+          append(item.groupId, GRAYED_ATTRIBUTES, text, REGULAR_MATCHED_ATTRIBUTES)
+          if (item.artifactId.isNotEmpty()) {
+            append(":", GRAYED_ATTRIBUTES)
+            append(item.artifactId, REGULAR_ATTRIBUTES, text, REGULAR_MATCHED_ATTRIBUTES)
+          }
         }
       }
     }

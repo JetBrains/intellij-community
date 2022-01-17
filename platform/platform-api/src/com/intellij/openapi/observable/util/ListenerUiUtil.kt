@@ -68,6 +68,10 @@ fun JTextComponent.whenTextChanged(listener: (DocumentEvent) -> Unit) {
   })
 }
 
+fun JTextComponent.whenCaretMoved(listener: (CaretEvent) -> Unit) {
+  addCaretListener { e -> listener(e) }
+}
+
 fun JComponent.whenFocusGained(listener: (FocusEvent) -> Unit) {
   addFocusListener(object : FocusAdapter() {
     override fun focusGained(e: FocusEvent) {
