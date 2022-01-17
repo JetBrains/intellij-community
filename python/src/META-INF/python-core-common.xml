@@ -406,9 +406,7 @@
     <postStartupActivity implementation="com.jetbrains.python.sdk.poetry.PoetryConfigLoader" order="last"/>
 
     <!-- Targets API -->
-    <experimentalFeature id="python.use.targets.api" percentOfUsers="0">
-      <description>Switches Python support to Targets API.</description>
-    </experimentalFeature>
+    <registryKey key="python.use.targets.api" defaultValue="false" description="Switches Python support to Targets API." />
     <notificationGroup id="Python Debugger" displayType="TOOL_WINDOW" toolWindowId="Debug" bundle="messages.PyBundle" key="debug.notification.group"/>
     <notificationGroup id="Python SDK Updater" displayType="BALLOON" bundle="messages.PyBundle" key="python.sdk.updater.notifications.group.title"/>
     <notificationGroup id="Sync Python requirements" displayType="BALLOON" bundle="messages.PyBundle" key="python.requirements.balloon"/>

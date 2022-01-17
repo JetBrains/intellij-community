@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -39,6 +38,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.components.DropDownLink;
@@ -115,7 +115,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       customUiProvider == null ? null : new Pair<>(customUiProvider, myDisposable);
 
     final JButton additionalAction;
-    if (Experiments.getInstance().isFeatureEnabled("python.use.targets.api")) {
+    if (Registry.get("python.use.targets.api").asBoolean()) {
       additionalAction = new DropDownLink<>(PyBundle.message("active.sdk.dialog.link.add.interpreter.text"),
                                             link -> createAddInterpreterPopup(project, module, link, this::updateSdkListAndSelect));
     }

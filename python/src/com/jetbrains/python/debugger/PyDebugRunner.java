@@ -20,7 +20,6 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -123,7 +122,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     return AppUIExecutor.onUiThread()
       .submit(FileDocumentManager.getInstance()::saveAllDocuments)
       .thenAsync(ignored ->
-                   Experiments.getInstance().isFeatureEnabled("python.use.targets.api")
+                   Registry.get("python.use.targets.api").asBoolean()
                    ? createSessionUsingTargetsApi(state, environment)
                    : createSessionLegacy(state, environment));
   }
