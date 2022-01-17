@@ -24,6 +24,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
@@ -53,6 +54,7 @@ import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
 public final class DfaPsiUtil {
+  private static final Logger LOG = Logger.getInstance(DfaPsiUtil.class);
 
   private static final CallMatcher NON_NULL_VAR_ARG = CallMatcher.anyOf(
     staticCall(JAVA_UTIL_LIST, "of"),
@@ -304,7 +306,7 @@ public final class DfaPsiUtil {
     for (PsiClassInitializer initializer : containingClass.getInitializers()) {
       if (initializer.getLanguage().isKindOf(JavaLanguage.INSTANCE) &&
           initializer.hasModifierProperty(PsiModifier.STATIC) == staticField &&
-          getBlockNotNullFields(containingClass, initializer.getBody()).contains(field)) {
+          getBlockNotNullFields(initializer.getBody()).contains(field)) {
         return true;
       }
     }
@@ -315,20 +317,22 @@ public final class DfaPsiUtil {
 
     for (PsiMethod method : constructors) {
       if (!method.getLanguage().isKindOf(JavaLanguage.INSTANCE) ||
-          !getBlockNotNullFields(containingClass, method.getBody()).contains(field)) {
+          !getBlockNotNullFields(method.getBody()).contains(field)) {
         return false;
       }
     }
     return true;
   }
 
-  private static Set<PsiField> getBlockNotNullFields(PsiClass containingClass, PsiCodeBlock body) {
+  private static Set<PsiField> getBlockNotNullFields(PsiCodeBlock body) {
     if (body == null) return Collections.emptySet();
 
     return CachedValuesManager.getCachedValue(body, new CachedValueProvider<>() {
       @NotNull
       @Override
       public Result<Set<PsiField>> compute() {
+        PsiClass containingClass = PsiTreeUtil.getContextOfType(body, PsiClass.class);
+        LOG.assertTrue(containingClass != null);
         DfaValueFactory factory = new DfaValueFactory(body.getProject());
         ControlFlow flow = ControlFlowAnalyzer.buildFlow(body, factory, true);
         if (flow == null) {
