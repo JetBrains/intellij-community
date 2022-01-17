@@ -63,7 +63,8 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
   }
 
   override fun createPanel(): DialogPanel {
-    return panel {
+    val extensionsSettings = createExtensionsSettings()
+    val result = panel {
       row {
         cell(searchField)
           .horizontalAlign(HorizontalAlign.FILL)
@@ -75,10 +76,33 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
           }
       }.layout(RowLayout.INDEPENDENT)
 
-      val groupedExtensions = AdvancedSettingBean.EP_NAME.extensions.groupBy {
-        it.group() ?: ApplicationBundle.message("group.advanced.settings.other")
-      }.toSortedMap()
+      nothingFoundRow = row {
+        label(ApplicationBundle.message("search.advanced.settings.nothing.found"))
+          .horizontalAlign(HorizontalAlign.CENTER)
+          .verticalAlign(VerticalAlign.CENTER)
+          .applyToComponent {
+            foreground = UIUtil.getInactiveTextColor()
+          }
+      }.visible(false)
 
+      row {
+        val scrollable = ScrollPaneFactory.createScrollPane(extensionsSettings, true)
+        scrollable.preferredSize = Dimension(JBUI.scale(300), JBUI.scale(200))
+        cell(scrollable)
+          .horizontalAlign(HorizontalAlign.FILL)
+          .verticalAlign(VerticalAlign.FILL)
+      }.resizableRow()
+    }
+    result.registerSubPanel(extensionsSettings)
+    return result
+  }
+
+  private fun createExtensionsSettings(): DialogPanel {
+    val groupedExtensions = AdvancedSettingBean.EP_NAME.extensions.groupBy {
+      it.group() ?: ApplicationBundle.message("group.advanced.settings.other")
+    }.toSortedMap()
+
+    return panel {
       for ((group, extensions) in groupedExtensions) {
         val settingsRows = mutableListOf<SettingsRow>()
         val groupRow = group(title = group) {
@@ -126,15 +150,6 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
 
         settingsGroups.add(SettingsGroup(groupRow, group, settingsRows))
       }
-
-      nothingFoundRow = row {
-        label(ApplicationBundle.message("search.advanced.settings.nothing.found"))
-          .horizontalAlign(HorizontalAlign.CENTER)
-          .verticalAlign(VerticalAlign.CENTER)
-          .applyToComponent {
-            foreground = UIUtil.getInactiveTextColor()
-          }
-      }.visible(false)
     }
   }
 

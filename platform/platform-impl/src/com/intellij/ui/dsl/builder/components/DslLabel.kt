@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.JEditorPane
 import javax.swing.event.HyperlinkEvent
+import javax.swing.text.DefaultCaret
 
 /**
  * Denied content and reasons
@@ -45,6 +46,9 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
   init {
     contentType = UIUtil.HTML_MIME
     editorKit = HTMLEditorKitBuilder().build()
+
+    // JEditorPane.setText updates cursor and requests scrolling to cursor position if scrollable is used. Disable it
+    (caret as DefaultCaret).updatePolicy = DefaultCaret.NEVER_UPDATE
 
     foreground = when (type) {
       DslLabelType.COMMENT -> JBUI.CurrentTheme.ContextHelp.FOREGROUND

@@ -2,7 +2,6 @@
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.INTEGRATED_PANEL_PROPERTY
 import com.intellij.ui.dsl.builder.CellBase
 import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.ui.dsl.gridLayout.Constraints
@@ -61,15 +60,15 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
     var invalidate = false
     if (oldComponent != null) {
       placeholderCellData?.let {
+        if (oldComponent is DialogPanel) {
+          it.panel.unregisterSubPanel(oldComponent)
+        }
         it.panel.remove(oldComponent)
         invalidate = true
       }
     }
 
     if (newComponent != null) {
-      if (newComponent is DialogPanel) {
-        newComponent.putClientProperty(INTEGRATED_PANEL_PROPERTY, true)
-      }
       newComponent.isVisible = visible && parent.isVisible()
       newComponent.isEnabled = enabled && parent.isEnabled()
       placeholderCellData?.let {
@@ -79,6 +78,9 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
           visualPaddings = getVisualPaddings(newComponent.origin)
         )
         it.panel.add(newComponent, it.constraints)
+        if (newComponent is DialogPanel) {
+          it.panel.registerSubPanel(newComponent)
+        }
         invalidate = true
       }
     }
