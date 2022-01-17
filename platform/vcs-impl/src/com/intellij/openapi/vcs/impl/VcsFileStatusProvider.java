@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.diff.DiffContentFactoryImpl;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,14 +13,12 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
+import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.nio.charset.Charset;
 
 @Service
 public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContentProvider {
@@ -255,8 +252,7 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
         FilePath filePath = contentRevision.getFile();
 
         if (revisionContent != null) {
-          Charset charset = DiffContentFactoryImpl.guessCharset(project, revisionContent, filePath);
-          return CharsetToolkit.decodeString(revisionContent, charset);
+          return VcsImplUtil.loadTextFromBytes(project, revisionContent, filePath);
         }
         else {
           return null;
