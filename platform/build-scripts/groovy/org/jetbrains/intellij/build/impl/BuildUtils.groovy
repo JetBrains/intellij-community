@@ -53,7 +53,7 @@ final class BuildUtils {
       else {
         throw new BuildException(
           "Cannot add to classpath: non-groovy or ant classloader $classLoader which doesn't have 'addURL' method\n" +
-          "most likely you need to add -Djava.system.class.loader=org.jetbrains.intellij.build.impl.BuildScriptsSystemClassLoader to run configuration")
+          "most likely you need to add -Djava.system.class.loader=org.jetbrains.intellij.build.impl.BuildScriptsSystemClassLoader to run configuration\n\n")
       }
       ant.project.log("'$path' added to classpath", Project.MSG_INFO)
     }
