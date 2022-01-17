@@ -79,7 +79,7 @@ echo Using JVM at %JAVA_HOME%
 "%JAVA_HOME%\bin\java.exe" -ea -Daether.connector.resumeDownloads=false -jar "%JPS_BOOTSTRAP_COMMUNITY_HOME%lib\ant\lib\ant-launcher.jar" "-Dbuild.dir=%JPS_BOOTSTRAP_WORK_DIR%." -f "%JPS_BOOTSTRAP_DIR%jps-bootstrap-classpath.xml"
 if errorlevel 1 goto fail
 
-"%JAVA_HOME%\bin\java.exe" -ea -Xmx2g -Djava.awt.headless=true -classpath "%JPS_BOOTSTRAP_WORK_DIR%jps-bootstrap.out.lib\*" org.jetbrains.jpsBootstrap.JpsBootstrapMain %*
+"%JAVA_HOME%\bin\java.exe" -ea -Xmx4g -Djava.awt.headless=true -classpath "%JPS_BOOTSTRAP_WORK_DIR%jps-bootstrap.out.lib\*" org.jetbrains.jpsBootstrap.JpsBootstrapMain %*
 exit /B %ERRORLEVEL%
 
 :fail
