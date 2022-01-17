@@ -102,8 +102,8 @@ private const val SHORTENED_END_PART = 8
 private fun cutText(value: String?): String? {
   if (value == null || value.length <= MAX_TEXT_LENGTH) return value
 
-  val beginRange = IntRange(0, SHORTENED_BEGIN_PART)
-  val endRange = IntRange(value.length - SHORTENED_END_PART, value.length)
+  val beginRange = IntRange(0, SHORTENED_BEGIN_PART - 1)
+  val endRange = IntRange(value.length - SHORTENED_END_PART, value.length - 1)
   return value.substring(beginRange) + "..." + value.substring(endRange)
 }
 
