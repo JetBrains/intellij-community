@@ -111,11 +111,6 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
   )
 
   init {
-    setupUI()
-    initDialog(cancelText)
-  }
-
-  private fun setupUI() {
     myPanel.layout = GridLayoutManager(2, 1, JBInsets.emptyInsets(), -1, -1, false, false)
 
     val panel = JPanel()
@@ -177,9 +172,7 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
     myPanel.add(myTitlePanel, GridConstraints(0, 0, 1, 1, ANCHOR_CENTER, FILL_HORIZONTAL,
                                               SIZEPOLICY_CAN_SHRINK or SIZEPOLICY_CAN_GROW or
                                                 SIZEPOLICY_WANT_GROW, SIZEPOLICY_FIXED, null, null, null))
-  }
 
-  private fun initDialog(cancelText: @Nls String?) {
     if (SystemInfo.isMac) {
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myText2Label)
     }
@@ -201,7 +194,19 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
     }
     myProgressBar.isIndeterminate = myProgressWindow.isIndeterminate
     myProgressBar.maximum = 100
-    createCenterPanel()
+
+    // Cancel button (if any)
+    if (myProgressWindow.myCancelText != null) {
+      myCancelButton.text = myProgressWindow.myCancelText
+    }
+    myCancelButton.isVisible = myProgressWindow.myShouldShowCancel
+
+    myBackgroundButton.isVisible = myShouldShowBackground
+    myBackgroundButton.addActionListener {
+      if (myShouldShowBackground) {
+        myProgressWindow.background()
+      }
+    }
 
     myTitlePanel.setActive(true)
     val moveListener = object : WindowMoveListener(myTitlePanel) {
@@ -253,22 +258,6 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
   fun enableCancelButtonIfNeeded(enable: Boolean) {
     if (myProgressWindow.myShouldShowCancel && !myUpdateAlarm.isDisposed) {
       (if (enable) myEnableCancelAlarm else myDisableCancelAlarm).request()
-    }
-  }
-
-  private fun createCenterPanel() {
-    // Cancel button (if any)
-
-    if (myProgressWindow.myCancelText != null) {
-      myCancelButton.text = myProgressWindow.myCancelText
-    }
-    myCancelButton.isVisible = myProgressWindow.myShouldShowCancel
-
-    myBackgroundButton.isVisible = myShouldShowBackground
-    myBackgroundButton.addActionListener {
-      if (myShouldShowBackground) {
-        myProgressWindow.background()
-      }
     }
   }
 
