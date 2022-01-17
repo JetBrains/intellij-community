@@ -20,7 +20,7 @@ class NewProjectWizardLanguageStep(parent: NewProjectWizardStep) :
   override val languageProperty by ::stepProperty
   override var language by ::step
 
-  override var additionalStepPlugins = if (PlatformUtils.isIdeaCommunity()) communityLanguages else allLanguages
+  override var additionalStepPlugins = allLanguages
 
   init {
     data.putUserData(LanguageNewProjectWizardData.KEY, this)
@@ -35,15 +35,15 @@ class NewProjectWizardLanguageStep(parent: NewProjectWizardStep) :
   }
 
   companion object {
-    val defaultLanguages = mapOf(
+    private val ultimate = mapOf(
       "Go" to "org.jetbrains.plugins.go",
       "Ruby" to "org.jetbrains.plugins.ruby",
-      "PHP" to "com.jetbrains.php",
-      "Python" to "com.intellij.python"
+      "PHP" to "com.jetbrains.php"
     )
+    private val community = mapOf("Scala" to "org.intellij.scala")
+    private val pythonCommunity = mapOf("Python" to "PythonCore")
+    private val pythonUltimate = mapOf("Python" to "Pythonid")
 
-    val communityLanguages = mapOf("Scala" to "org.intellij.scala")
-
-    val allLanguages = defaultLanguages + communityLanguages
+    val allLanguages = if (PlatformUtils.isIdeaCommunity()) pythonCommunity + community else ultimate + pythonUltimate + community
   }
 }
