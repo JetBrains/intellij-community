@@ -1,5 +1,7 @@
 <keymap name="Visual Studio 2022" parent="Visual Studio" version="1" disable-mnemonics="false">
-  <action id="EditorCompleteStatement"/>
+  <action id="EditorCompleteStatement">
+    <keyboard-shortcut first-keystroke="control shift ENTER"/><!--Edit.SmartBreakLine-->
+  </action>
   <action id="EditorStartNewLine">
     <keyboard-shortcut first-keystroke="control shift ENTER"/><!--Edit.LineOpenBelow-->
   </action>
@@ -103,9 +105,6 @@
     <keyboard-shortcut first-keystroke="alt 9" />
     <keyboard-shortcut first-keystroke="control 0" second-keystroke="S" /><!--View.GitRepositoryWindow-->
     <keyboard-shortcut first-keystroke="control 0" second-keystroke="control S" />
-  </action>
-  <action id="Unscramble">
-    <keyboard-shortcut first-keystroke="control E" second-keystroke="control T" />
   </action>
   <action id="Unscramble">
     <keyboard-shortcut first-keystroke="control E" second-keystroke="control T" />
