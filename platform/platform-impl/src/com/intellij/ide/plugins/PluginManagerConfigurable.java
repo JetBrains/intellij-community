@@ -1363,7 +1363,7 @@ public final class PluginManagerConfigurable
           return List.of(stamp.startsWith("eval:") ? Tags.Trial.name() : Tags.Purchased.name());
         }
       }
-      return List.of(Tags.Paid.name());
+      return plugin.isLicenseOptional() ? List.of(Tags.Freemium.name()) : List.of(Tags.Paid.name());
     }
     if (ContainerUtil.isEmpty(tags)) {
       return List.of();
