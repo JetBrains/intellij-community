@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.roots.libraries.LibraryKind
+import com.intellij.openapi.roots.libraries.LibraryKindRegistry
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.vfs.JarFileSystem
@@ -65,7 +65,7 @@ internal class KotlinNonJvmSourceRootConverterProvider : ConverterProvider() {
             private val moduleSettings: ModuleSettings
         ) : LibInfo() {
             override val explicitKind: PersistentLibraryKind<*>?
-                get() = LibraryKind.findById(element.getAttributeValue("type")) as? PersistentLibraryKind<*>
+                get() = LibraryKindRegistry.getInstance().findKindById(element.getAttributeValue("type")) as? PersistentLibraryKind<*>
 
             override fun getRoots(): Array<VirtualFile> {
                 val contextImpl = conversionContext as? ConversionContextImpl ?: return VirtualFile.EMPTY_ARRAY
