@@ -689,7 +689,7 @@ class PythonOnboardingTour :
     }
 
     task {
-      triggerByUiComponentAndHighlight(usePulsation = true) { info: TextPanel.WithIconAndArrows ->
+      triggerByUiComponentAndHighlight(highlightInside = false) { info: TextPanel.WithIconAndArrows ->
         info.toolTipText.isToStringContains(PyBundle.message("current.interpreter", ""))
       }
     }
@@ -698,6 +698,8 @@ class PythonOnboardingTour :
         useDelay = false
       }
       text(PythonLessonsBundle.message("python.onboarding.interpreter.description"))
+      text(PythonLessonsBundle.message("python.onboarding.interpreter.tip"),
+           LearningBalloonConfig(Balloon.Position.above, width = 0))
 
       restoreState(restoreId = openLearnTaskId) {
         learningToolWindow(project)?.isVisible?.not() ?: true
