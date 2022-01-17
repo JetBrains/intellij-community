@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * It can be used in situations when highlight infos are false-positives or unnecessary in a given file context.
  *
  * @see com.intellij.codeInsight.highlighting.HighlightErrorFilter
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/controlling-highlighting.html">Controlling Highlighting (IntelliJ Platform Docs)</a>
  */
 public interface HighlightInfoFilter {
   HighlightInfoFilter[] EMPTY_ARRAY = new HighlightInfoFilter[0];
