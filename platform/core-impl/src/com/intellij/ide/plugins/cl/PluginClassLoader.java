@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
@@ -271,7 +271,19 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
         }
         else if (classloader instanceof UrlClassLoader) {
           try {
-            c = ((UrlClassLoader)classloader).loadClassInsideSelf(name, fileName, packageNameHash, false);
+            UrlClassLoader urlClassLoader = (UrlClassLoader)classloader;
+            BiFunction<String, Boolean, String> resolveScopeManager = urlClassLoader.resolveScopeManager;
+            String consistencyError = resolveScopeManager == null
+                                      ? null
+                                      : resolveScopeManager.apply(name, forceLoadFromSubPluginClassloader);
+            if (consistencyError != null) {
+              if (!consistencyError.isEmpty() && error == null) {
+                // yes, we blame requestor plugin
+                error = new PluginException(consistencyError, pluginId);
+              }
+              continue;
+            }
+            c = urlClassLoader.loadClassInsideSelf(name, fileName, packageNameHash, false);
           }
           catch (IOException e) {
             throw new ClassNotFoundException(name, e);
