@@ -50,6 +50,7 @@ open class CombinedDiffRequestProcessor(project: Project?,
   protected val viewer get() = activeViewer as? CombinedDiffViewer
   protected val request get() = activeRequest as? CombinedDiffRequest
 
+  private val blockCount get() = viewer?.diffBlocks?.size ?: requestProducer.getFilesSize()
   //
   // Global, shortcuts only navigation actions
   //
@@ -96,11 +97,11 @@ open class CombinedDiffRequestProcessor(project: Project?,
     return listOfNotNull(prevDifferenceAction, nextDifferenceAction, MyDifferencesLabel(goToChangeAction),
                          openInEditorAction, prevFileAction, nextFileAction)
   }
-  final override fun isNavigationEnabled(): Boolean = requestProducer.getFilesSize() > 0
+  final override fun isNavigationEnabled(): Boolean = blockCount > 0
 
   final override fun hasNextChange(fromUpdate: Boolean): Boolean {
     val curFilesIndex = viewer?.scrollSupport?.blockIterable?.index ?: -1
-    return curFilesIndex != -1 && curFilesIndex < requestProducer.getFilesSize() - 1
+    return curFilesIndex != -1 && curFilesIndex < blockCount - 1
   }
 
   final override fun hasPrevChange(fromUpdate: Boolean): Boolean {
