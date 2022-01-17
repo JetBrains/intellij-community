@@ -22,10 +22,7 @@ import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.util.BitUtil;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DataOutputStream;
@@ -37,7 +34,6 @@ import org.jetbrains.annotations.*;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -555,8 +551,8 @@ public final class FSRecords {
     });
   }
 
-  public static @NotNull Collection<String> getAllNames() {
-    return readAndHandleErrors(() -> ourConnection.getNames().getAllDataObjects(null));
+  public static boolean processAllNames(@NotNull Processor<? super String> processor) {
+    return readAndHandleErrors(() -> ourConnection.getNames().processAllDataObjects(processor));
   }
 
   public static boolean processFilesWithName(@NotNull String name, @NotNull IntPredicate processor) {

@@ -69,8 +69,7 @@ public final class FileBasedIndexScanUtil {
     if (indexId == FilenameIndex.NAME && Registry.is("indexing.filename.over.vfs")) {
       ensureIdFilterUpToDate();
       //noinspection unchecked
-      Collection<K> names = (Collection<K>)FSRecords.getAllNames();
-      return ContainerUtil.process(names, processor);
+      return FSRecords.processAllNames((Processor<String>)processor);
     }
     else if (indexId == FileTypeIndex.NAME && Registry.is("indexing.filetype.over.vfs")) {
       ensureIdFilterUpToDate();
