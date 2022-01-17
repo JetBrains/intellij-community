@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl
 
 import com.intellij.openapi.Disposable
@@ -11,6 +11,7 @@ import io.ktor.network.sockets.openWriteChannel
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.close
+import io.ktor.utils.io.core.ExperimentalIoApi
 import io.ktor.utils.io.jvm.javaio.toByteReadChannel
 import io.ktor.utils.io.readUTF8Line
 import kotlinx.coroutines.*
@@ -34,7 +35,8 @@ import kotlin.coroutines.coroutineContext
  * [dispose] this object to stop forwarding.
  *
  */
-class WslProxy(distro: WSLDistribution, private val applicationPort: Int) : Disposable {
+@OptIn(ExperimentalIoApi::class)
+class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int) : Disposable {
   private companion object {
     suspend fun connectChannels(source: ByteReadChannel, dest: ByteWriteChannel) {
       val buffer = ByteBuffer.allocate(4096)
