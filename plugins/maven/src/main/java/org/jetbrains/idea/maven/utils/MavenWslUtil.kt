@@ -28,7 +28,6 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.navigation.Place
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.idea.maven.config.MavenConfig
 import org.jetbrains.idea.maven.config.MavenConfigSettings
@@ -36,11 +35,11 @@ import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.server.CannotStartServerException
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.WslMavenDistribution
 import org.jetbrains.idea.maven.server.wsl.BuildIssueWslJdk
-import org.jetbrains.idea.maven.wizards.MavenProjectBuilder
 import java.io.File
 import java.util.function.Function
 import java.util.function.Supplier
@@ -119,10 +118,13 @@ object MavenWslUtil : MavenUtil() {
     return File(File(directory, CONF_DIR), SETTINGS_XML)
   }
 
-
   @JvmStatic
   fun WSLDistribution.resolveM2Dir(): File {
-    return this.getWindowsFile(File(MavenWslCache.getInstance().wslEnv(this)["HOME"], DOT_M2_DIR))
+    val userHome = MavenWslCache.getInstance().wslEnv(this)["HOME"]
+    if (userHome.isNullOrBlank()) {
+      throw CannotStartServerException(SyncBundle.message("maven.sync.wsl.userhome.cannot.resolve"))
+    }
+    return this.getWindowsFile(File(userHome, DOT_M2_DIR))
   }
 
   /**
