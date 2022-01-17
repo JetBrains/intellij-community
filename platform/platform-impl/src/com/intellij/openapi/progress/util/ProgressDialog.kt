@@ -157,7 +157,7 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
                                            SIZEPOLICY_CAN_SHRINK, SIZEPOLICY_CAN_GROW, null, null,
                                            null))
 
-    myCancelButton.text = CommonBundle.getCancelButtonText()
+    myCancelButton.text = cancelText ?: CommonBundle.getCancelButtonText()
     DialogUtil.registerMnemonic(myCancelButton, '&')
     buttonPanel.add(myCancelButton, GridConstraints(0, 0, 1, 1, ANCHOR_CENTER, FILL_HORIZONTAL,
                                                     SIZEPOLICY_CAN_GROW or SIZEPOLICY_CAN_SHRINK,
@@ -189,16 +189,9 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
       myCancelButton.registerKeyboardAction(cancelFunction, shortcut, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
     }
 
-    if (cancelText != null) {
-      myProgressWindow.setCancelButtonText(cancelText)
-    }
     myProgressBar.isIndeterminate = myProgressWindow.isIndeterminate
     myProgressBar.maximum = 100
 
-    // Cancel button (if any)
-    if (myProgressWindow.myCancelText != null) {
-      myCancelButton.text = myProgressWindow.myCancelText
-    }
     myCancelButton.isVisible = myProgressWindow.myShouldShowCancel
 
     myBackgroundButton.isVisible = myShouldShowBackground
@@ -232,10 +225,6 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
   fun getRepaintRunnable(): Runnable = myRepaintRunnable
 
   fun getPopup(): DialogWrapper? = myPopup
-
-  fun changeCancelButtonText(text: @Nls String) {
-    myCancelButton.text = text
-  }
 
   private fun doCancelAction() {
     if (myProgressWindow.myShouldShowCancel) {

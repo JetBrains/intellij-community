@@ -48,7 +48,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   protected final @Nullable Project myProject;
   final boolean myShouldShowCancel;
-  @NlsContexts.Button String myCancelText;
 
   private @ProgressTitle String myTitle;
 
@@ -87,7 +86,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
                         @Nullable @NlsContexts.Button String cancelText) {
     myProject = project;
     myShouldShowCancel = shouldShowCancel;
-    myCancelText = cancelText;
 
     if (project != null) {
       Disposer.register(project, this);
@@ -96,7 +94,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     myDialogInitialization = () -> {
       ApplicationManager.getApplication().assertIsDispatchThread();
       Window parentWindow = calcParentWindow(parentComponent);
-      myDialog = new ProgressDialog(this, shouldShowBackground, myCancelText, parentWindow);
+      myDialog = new ProgressDialog(this, shouldShowBackground, cancelText, parentWindow);
       Disposer.register(this, myDialog);
     };
     UIUtil.invokeLaterIfNeeded(this::initializeDialog);
@@ -338,16 +336,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   public @ProgressTitle String getTitle() {
     return myTitle;
-  }
-
-  void setCancelButtonText(@NlsContexts.Button @NotNull String text) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (myDialog != null) {
-      myDialog.changeCancelButtonText(text);
-    }
-    else {
-      myCancelText = text;
-    }
   }
 
   @Override
