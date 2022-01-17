@@ -3,8 +3,7 @@ package com.intellij.internal.statistic.uploader.util;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -34,6 +33,9 @@ class ExtraHTTPHeadersParserTest {
   @Test
   void serialize() {
     assertEquals(singleKV, ExtraHTTPHeadersParser.serialize(Collections.singletonMap("foo", "bar")));
-    assertEquals(multiKV,  ExtraHTTPHeadersParser.serialize(Map.of("foo", "bar", "A", "B")));
+    Map<String, String> multiKVMap = new LinkedHashMap<>();
+    multiKVMap.put("foo", "bar");
+    multiKVMap.put("A", "B");
+    assertEquals(multiKV,  ExtraHTTPHeadersParser.serialize(multiKVMap));
   }
 }
