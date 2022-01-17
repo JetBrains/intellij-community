@@ -104,7 +104,8 @@ internal fun getDefaultVerticalGap(component: JComponent, spacing: SpacingConfig
 internal fun createComment(@NlsContexts.Label text: String, maxLineLength: Int, action: HyperlinkEventAction): DslLabel {
   val result = DslLabel(DslLabelType.COMMENT)
   result.action = action
-  result.setHtmlText(text, maxLineLength)
+  result.maxLineLength = maxLineLength
+  result.text = text
   return result
 }
 

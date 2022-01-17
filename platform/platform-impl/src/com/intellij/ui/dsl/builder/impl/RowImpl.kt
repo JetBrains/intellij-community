@@ -273,7 +273,8 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   override fun text(@NlsContexts.Label text: String, maxLineLength: Int, action: HyperlinkEventAction): Cell<JEditorPane> {
     val dslLabel = DslLabel(DslLabelType.LABEL)
     dslLabel.action = action
-    dslLabel.setHtmlText(text, maxLineLength)
+    dslLabel.maxLineLength = maxLineLength
+    dslLabel.text = text
     return cell(dslLabel)
   }
 
