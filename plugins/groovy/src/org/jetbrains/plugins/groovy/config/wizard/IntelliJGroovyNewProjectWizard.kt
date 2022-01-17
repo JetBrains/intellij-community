@@ -142,10 +142,13 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     override fun setupProject(project: Project) {
       reportFeature()
       val groovyModuleBuilder = GroovyAwareModuleBuilder().apply {
-        contentEntryPath = FileUtil.toSystemDependentName(contentRoot)
+        val contentRoot = FileUtil.toSystemDependentName(contentRoot)
+        contentEntryPath = contentRoot
         name = moduleName
         moduleJdk = sdk
-        addGroovySample("src")
+        if (addSampleCode) {
+          addGroovySample("src")
+        }
         val moduleFile = Paths.get(moduleFileLocation, moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION)
         moduleFilePath = FileUtil.toSystemDependentName(moduleFile.toString())
       }
@@ -160,8 +163,14 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       })
 
       groovyModuleBuilder.commit(project)
+      if (addSampleCode) {
+        openSampleCodeInEditorLater(project, contentRoot)
+      }
+    }
+
+    private fun openSampleCodeInEditorLater(project: Project, contentEntryPath: String) {
       StartupManager.getInstance(project).runAfterOpened {
-        val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(groovyModuleBuilder.contentEntryPath + "/src/Main.groovy")
+        val file = LocalFileSystem.getInstance().refreshAndFindFileByPath("$contentEntryPath/src/Main.groovy")
         if (file != null) {
           runReadAction {
             PsiManager.getInstance(project).findFile(file)?.let {
