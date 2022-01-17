@@ -18,6 +18,9 @@ package com.intellij.diff.tools.util.text;
 public interface LineOffsets {
   int getLineStart(int line);
 
+  /**
+   * includeNewline = false
+   */
   int getLineEnd(int line);
 
   int getLineEnd(int line, boolean includeNewline);

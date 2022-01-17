@@ -15,6 +15,9 @@ public final class LineOffsetsUtil {
     return new LineOffsetsDocumentWrapper(document);
   }
 
+  /**
+   * NB: Does not support CRLF separators, use {@link StringUtil#convertLineSeparators}.
+   */
   @NotNull
   public static LineOffsets create(@NotNull CharSequence text) {
     IntList ends = new IntArrayList();
