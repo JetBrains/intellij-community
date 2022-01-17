@@ -537,7 +537,7 @@ class TestingTasksImpl extends TestingTasks {
     }
 
     if (context.options.bundledRuntimeVersion >= 17) {
-      jvmArgs.addAll(OpenedPackages.INSTANCE)
+      jvmArgs.addAll(OpenedPackages.getPackages(context))
     }
 
     if (suspendDebugProcess) {
