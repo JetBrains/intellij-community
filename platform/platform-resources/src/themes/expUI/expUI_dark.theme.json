@@ -170,6 +170,11 @@
       "focusedBorderColor": "Grey2"
     },
 
+    "DragAndDrop": {
+      "borderColor": "Blue6",
+      "rowBackground": "#3573F026"
+    },
+
     "EditorTabs": {
       "tabInsets": "-3,12,-4,8",
       "hoverBackground": "Grey1",
@@ -198,7 +203,7 @@
 
     "Notification": {
       "background": "Grey2",
-      "borderColor": "Grey2",
+      "borderColor": "Grey3",
       "MoreButton": {
         "background": "Grey2",
         "innerBorderColor": "Grey4"
@@ -247,8 +252,10 @@
         "foreground": "Grey7",
         "hoverForeground": "Grey12",
         "hoverBackground": "Grey3",
-        "itemInsets": "0,0,0,2",
-        "chevronInset": "2"
+        "itemInsets": "0,0,0,0",
+        "chevronInset": "0",
+        "floatingToolbarInsets": "8,12,8,12",
+        "itemBackgroundInsets": "2,4,2,4"
       }
     },
 
@@ -268,11 +275,15 @@
         "inactiveBackground": "Grey2",
         "font.size.offset": 0
       },
-
+      "HeaderTab": {
+        "hoverBackground": "Grey3",
+        "hoverInactiveBackground": "Grey3",
+        "leftRightInsets": "0,12,0,12"
+      },
       "Button": {
         "DragAndDrop" : {
-          "stripeBackground" : "#2E436E",
-          "buttonDropBackground": "#35538F"
+          "stripeBackground" : "Grey2",
+          "buttonDropBackground": "#35538F99"
         }
       }
     },

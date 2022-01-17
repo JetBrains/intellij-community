@@ -166,6 +166,11 @@
       "focusedBorderColor": "Grey13"
     },
 
+    "DragAndDrop": {
+      "borderColor": "Blue6",
+      "rowBackground": "#3573F026"
+    },
+
     "EditorTabs": {
       "tabInsets": "-3,12,-4,8",
       "hoverBackground": "Grey13",
@@ -190,22 +195,28 @@
       "background": "Grey2",
       "borderColor": "Grey4",
       "foreground": "Grey13",
-      "separatorColor": "Grey4"
+      "disabledForeground": "Grey6",
+      "separatorColor": "Grey4",
+      "selectionBackground": "Blue5",
+      "selectionForeground": "Grey13"
     },
 
     "PopupMenu": {
       "background": "Grey2",
-      "foreground": "Grey13"
+      "foreground": "Grey13",
+      "selectionForeground": "Grey13"
+    },
+
+    "MenuItem": {
+      "background": "Grey2",
+      "foreground": "Grey13",
+      "disabledForeground": "Grey6",
+      "selectionForeground": "Grey13"
     },
 
     "MemoryIndicator": {
       "allocatedBackground": "Grey10",
       "usedBackground": "#B7CEFA75"
-    },
-
-    "MenuItem": {
-      "background": "Grey2",
-      "foreground": "Grey13"
     },
 
     "Notification": {
@@ -260,8 +271,10 @@
         "hoverForeground": "Grey1",
         "hoverBackground": "Grey11",
         "floatingBackground": "Grey13",
-        "itemInsets": "0,0,0,2",
-        "chevronInset": "2"
+        "itemInsets": "0,0,0,0",
+        "chevronInset": "0",
+        "floatingToolbarInsets": "8,12,8,12",
+        "itemBackgroundInsets": "2,4,2,4"
       }
     },
 
@@ -282,11 +295,15 @@
         "inactiveBackground": "Grey12",
         "font.size.offset": 0
       },
-
+      "HeaderTab": {
+        "hoverBackground": "Grey11",
+        "hoverInactiveBackground": "Grey11",
+        "leftRightInsets": "0,12,0,12"
+      },
       "Button": {
         "DragAndDrop" : {
-          "stripeBackground" : "#E7EFFd",
-          "buttonDropBackground": "#CFDEFC"
+          "stripeBackground" : "Grey12",
+          "buttonDropBackground": "Blue13"
         }
       }
     },
