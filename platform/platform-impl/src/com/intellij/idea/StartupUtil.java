@@ -448,7 +448,7 @@ public final class StartupUtil {
     }
   }
 
-  private static void setLafToShowPreAppStartUpDialogIfNeeded(@NotNull Object baseLaF) {
+  public static void setLafToShowPreAppStartUpDialogIfNeeded(@NotNull Object baseLaF) {
     if (DarculaLaf.setPreInitializedBaseLaf((LookAndFeel)baseLaF)) {
       try {
         UIManager.setLookAndFeel(new IntelliJLaf());
