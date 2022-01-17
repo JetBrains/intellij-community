@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -546,9 +546,8 @@ public final class HighlightMethodUtil {
       if ((parameters.length == 0 || !parameters[parameters.length - 1].isVarArgs()) && parameters.length != expressions.length) {
         return createMismatchedArgumentCountTooltip(parameters, expressions);
       }
-      boolean varargs = candidateInfo.getApplicabilityLevel() == MethodCandidateInfo.ApplicabilityLevel.VARARGS;
       int idx = ArrayUtil.find(expressions, wrongArg);
-      PsiType paramType = candidateInfo.getSubstitutor().substitute(PsiTypesUtil.getParameterType(parameters, idx, varargs));
+      PsiType paramType = candidateInfo.getSubstitutor().substitute(PsiTypesUtil.getParameterType(parameters, idx, candidateInfo.isVarargs()));
       String errorMessage = candidateInfo.getInferenceErrorMessage();
       HtmlChunk reason = getTypeMismatchErrorHtml(errorMessage);
       return HighlightUtil.createIncompatibleTypesTooltip(
