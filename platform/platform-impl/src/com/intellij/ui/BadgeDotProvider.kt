@@ -8,8 +8,13 @@ import java.awt.geom.Ellipse2D
 @ApiStatus.Experimental
 open class BadgeDotProvider : BadgeShapeProvider() {
 
+  /** @return X-position of the badge relative to the icon width [0..1] */
   protected open fun getX() = getDouble("IconBadge.dotX", 16.5) / 20
+
+  /** @return Y-position of the badge relative to the icon height [0..1] */
   protected open fun getY() = getDouble("IconBadge.dotY", 3.5) / 20
+
+  /** @return radius of the badge relative to the icon size [0..1] */
   protected open fun getRadius() = getDouble("IconBadge.dotRadius", 3.5) / 20
 
   override fun createShape(width: Int, height: Int, hole: Boolean): Ellipse2D? {

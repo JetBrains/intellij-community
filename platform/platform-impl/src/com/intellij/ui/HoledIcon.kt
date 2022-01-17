@@ -34,7 +34,7 @@ abstract class HoledIcon(private val icon: Icon) : RetrievableIcon, ScalableIcon
         val area = g.clip
         if (g is Graphics2D) {
           g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-          g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
+          g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE)
           g.clip(hole) // do not allow painting outside the hole
           paintHole(g, width, height)
         }

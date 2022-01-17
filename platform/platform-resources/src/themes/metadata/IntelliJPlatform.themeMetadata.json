@@ -493,7 +493,7 @@
     {
       "key": "IconBadge.dotRadius",
       "since": "2022.1",
-      "description": "Badge radius of a badge, assuming that it is for a 20x20 icon"
+      "description": "Badge radius, assuming that it is for a 20x20 icon"
     },
     {
       "key": "IconBadge.dotX",
@@ -508,17 +508,17 @@
     {
       "key": "IconBadge.errorBackground",
       "since": "2022.1",
-      "description": "Badge color indicating an error status"
+      "description": "Badge color indicating the error status"
     },
     {
       "key": "IconBadge.infoBackground",
       "since": "2022.1",
-      "description": "Badge color indicating an info status"
+      "description": "Badge color indicating the info status"
     },
     {
       "key": "IconBadge.successBackground",
       "since": "2022.1",
-      "description": "Badge color indicating a success status"
+      "description": "Badge color indicating the success status"
     },
     {
       "key": "InformationHint.borderColor"
