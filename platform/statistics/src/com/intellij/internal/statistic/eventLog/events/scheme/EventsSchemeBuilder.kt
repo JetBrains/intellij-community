@@ -16,7 +16,10 @@ object EventsSchemeBuilder {
     FieldDescriptor("plugin_version", hashSetOf("{util#plugin_version}"))
   )
 
-  private val classValidationRules = hashSetOf("{util#class_name}", "{util#dialog_class}", "{util#quick_fix_class_name}")
+  private val classValidationRuleNames = hashSetOf("class_name", "dialog_class", "quick_fix_class_name",
+                                                   "run_config_factory", "tip_info", "run_config_factory",
+                                                   "run_config_id", "facets_type", "registry_key")
+  private val classValidationRules = classValidationRuleNames.map { "{util#$it}" }
 
   private fun fieldSchema(field: EventField<*>, fieldName: String, eventName: String, groupId: String): Set<FieldDescriptor> {
     if (field.name.contains(".")) {
