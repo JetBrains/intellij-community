@@ -473,6 +473,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     return !storageSpec.deprecated &&
            stateSpec.reportStatistic &&
            storageSpec.value != StoragePathMacros.CACHE_FILE &&
+           storageSpec.value != StoragePathMacros.WORKSPACE_FILE &&
            storageSpec.value != StoragePathMacros.NON_ROAMABLE_FILE
   }
 
