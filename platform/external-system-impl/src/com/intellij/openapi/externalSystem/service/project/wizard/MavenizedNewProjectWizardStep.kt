@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.wizard
 
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.SortedComboBoxModel
+import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.*
 import com.intellij.util.io.systemIndependentPath
@@ -34,11 +35,13 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
   final override val groupIdProperty = propertyGraph.graphProperty(::suggestGroupIdByParent)
   final override val artifactIdProperty = propertyGraph.graphProperty(::suggestArtifactIdByName)
   final override val versionProperty = propertyGraph.graphProperty(::suggestVersionByParent)
+  private val addSampleCodeProperty = propertyGraph.graphProperty { false }
 
   final override var parent by parentProperty
   final override var groupId by groupIdProperty.map { it.trim() }
   final override var artifactId by artifactIdProperty.map { it.trim() }
   final override var version by versionProperty.map { it.trim() }
+  var addSampleCode by addSampleCodeProperty
 
   val parents by lazy { parentsData.map(::createView) }
   val parentsData by lazy { findAllParents() }
@@ -94,6 +97,7 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
 
   override fun setupUI(builder: Panel) {
     setupSettingsUI(builder)
+    builder.addSampleCodeCheckbox()
     builder.collapsibleGroup(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.advanced.settings.title")) {
       setupAdvancedSettingsUI(this)
     }.topGap(TopGap.MEDIUM)
@@ -146,6 +150,13 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
       text = view.presentationName
       icon = DataView.getIcon(view)
     }
+  }
+
+  private fun Panel.addSampleCodeCheckbox() {
+    row {
+      checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
+        .bindSelected(addSampleCodeProperty)
+    }.topGap(TopGap.SMALL)
   }
 
   companion object {
