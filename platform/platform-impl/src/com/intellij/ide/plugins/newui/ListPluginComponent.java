@@ -208,7 +208,8 @@ public final class ListPluginComponent extends JPanel {
         myInstallButton
           .addActionListener(
             e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
-        myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null,
+        myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null &&
+                                   !InstalledPluginsState.getInstance().wasInstalledWithoutRestart(myPlugin.getPluginId()),
                                    IdeBundle.message("plugin.status.installed"));
         ColorButton.setWidth72(myInstallButton);
       }
