@@ -161,7 +161,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
   }
 
 
-  class Provider: MarkdownBrowserPreviewExtension.Provider, MarkdownConfigurableExtension, ResourceProvider {
+  class Provider: MarkdownBrowserPreviewExtension.Provider, ResourceProvider {
     val extensions = ConcurrentHashMap<VirtualFile, CommandRunnerExtension>()
 
     init {
@@ -175,15 +175,6 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
       }
       return extensions.computeIfAbsent(virtualFile) { CommandRunnerExtension(panel, this) }
     }
-
-    override val displayName: String
-      get() = MarkdownBundle.message("markdown.extensions.commandrunner.display.name")
-
-    override val description: String
-      get() = MarkdownBundle.message("markdown.extensions.commandrunner.description")
-
-    override val id: String
-      get() = "CommandRunnerExtension"
 
     val icons: List<String> = listOf(RUN_LINE_ICON, RUN_BLOCK_ICON)
 
