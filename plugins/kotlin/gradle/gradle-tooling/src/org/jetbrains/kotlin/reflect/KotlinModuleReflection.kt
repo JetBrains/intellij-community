@@ -4,6 +4,8 @@
  */
 package org.jetbrains.kotlin.reflect
 
+import org.jetbrains.kotlin.gradle.loadClassOrNull
+
 fun KotlinModuleReflection(module: Any): KotlinModuleReflection =
     KotlinModuleReflectionImpl(module)
 
@@ -32,7 +34,13 @@ private class KotlinModuleReflectionImpl(private val instance: Any) : KotlinModu
 
     override val fragments: List<KotlinFragmentReflection>? by lazy {
         instance.callReflective("getFragments", parameters(), returnType<Iterable<Any>>(), logger)
-            ?.map { fragment -> KotlinFragmentReflection(fragment) }
+            ?.map { fragment ->
+                when {
+                    variantClass?.isInstance(fragment) == true -> KotlinVariantReflection(fragment)
+                    fragmentClass?.isInstance(fragment) == true  -> KotlinFragmentReflection(fragment)
+                    else -> error("Unknown fragment with type: ${fragment.javaClass.name}")
+                }
+            }
     }
 
     override val variants: List<KotlinVariantReflection>? by lazy {
@@ -40,7 +48,12 @@ private class KotlinModuleReflectionImpl(private val instance: Any) : KotlinModu
             ?.map { variant -> KotlinVariantReflection(variant) }
     }
 
+    private val variantClass = instance.javaClass.classLoader.loadClassOrNull(KOTLIN_GRADLE_VARIANT_CLASS_NAME)
+    private val fragmentClass = instance.javaClass.classLoader.loadClassOrNull(KOTLIN_GRADLE_FRAGMENT_CLASS_NAME)
+
     companion object {
         val logger = ReflectionLogger(KotlinModuleReflection::class.java)
+        private const val KOTLIN_GRADLE_FRAGMENT_CLASS_NAME = "org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinGradleFragment"
+        private const val KOTLIN_GRADLE_VARIANT_CLASS_NAME = "org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinGradleVariant"
     }
 }
