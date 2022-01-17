@@ -6,6 +6,7 @@ package com.jetbrains.python.debugger
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.getLocalPaths
 import com.intellij.execution.target.getTargetPaths
+import com.intellij.openapi.util.io.FileUtil
 import com.jetbrains.python.debugger.remote.vfs.PyRemotePositionConverter
 import com.jetbrains.python.remote.PyRemotePathMapper
 
@@ -20,7 +21,7 @@ private class PyTargetPathMapper(private val targetEnvironment: TargetEnvironmen
   }
 
   override fun convertToRemote(localPath: String): String {
-    return targetEnvironment.getTargetPaths(localPath).firstOrNull() ?: super.convertToRemote(localPath)
+    return targetEnvironment.getTargetPaths(FileUtil.toSystemDependentName(localPath)).firstOrNull() ?: super.convertToRemote(localPath)
   }
 
   override fun isEmpty(): Boolean {
