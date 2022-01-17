@@ -151,11 +151,13 @@ open class IdeStarter : ApplicationStarter {
   }
 
   private fun showWelcomeFrame(lifecyclePublisher: AppLifecycleListener): Boolean {
-    val doShowWelcomeFrame = WelcomeFrame.prepareToShow()
-    if (doShowWelcomeFrame == null) return true
+    val showWelcomeFrameTask = WelcomeFrame.prepareToShow()
+    if (showWelcomeFrameTask == null) {
+      return true
+    }
 
     ApplicationManager.getApplication().invokeLater {
-      doShowWelcomeFrame.run()
+      showWelcomeFrameTask.run()
       lifecyclePublisher.welcomeScreenDisplayed()
     }
     return false
