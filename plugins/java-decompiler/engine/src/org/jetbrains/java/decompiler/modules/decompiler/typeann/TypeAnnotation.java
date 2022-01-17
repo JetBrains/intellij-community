@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.typeann;
 
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
 import org.jetbrains.java.decompiler.struct.StructTypePathEntry;
@@ -48,20 +49,13 @@ public class TypeAnnotation {
     this.annotation = annotation;
   }
 
+  @MagicConstant(flagsFromClass = TypeAnnotation.class)
   public int getTargetType() {
     return targetType;
   }
 
   public TargetInfo getTargetInfo() {
     return targetInfo;
-  }
-
-  /**
-   * @param dims The amount of dimensions if the annotated type is an array type, 0 otherwise.
-   * @return Whether the type annotations is top level.
-   */
-  public boolean isTopLevel(int dims) {
-    return (dims == 0 && paths.isEmpty()) || (dims == paths.size());
   }
 
   public @NotNull AnnotationExprent getAnnotationExpr() {
