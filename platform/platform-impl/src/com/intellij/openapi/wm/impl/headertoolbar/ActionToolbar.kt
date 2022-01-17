@@ -18,7 +18,7 @@ import javax.swing.UIManager
 
 private const val iconSize = 20
 
-internal class ActionToolbar(actions: List<AnAction>) : JPanel(FlowLayout(FlowLayout.LEFT, 5, 0)) {
+internal class ActionToolbar(actions: List<AnAction>) : JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)) {
 
   init {
     border = null
