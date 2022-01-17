@@ -129,33 +129,45 @@ fun KtValueArgument.canBeUsedWithoutNameInCall(resolvedCall: ResolvedCall<out Ca
     }
 }
 
-data class ArgumentThatCanBeUsedWithoutName(val argument: KtValueArgument, val parameter: ValueParameterDescriptor)
+data class ArgumentThatCanBeUsedWithoutName(
+    val argument: KtValueArgument,
+    /**
+     * When we didn't manage to map an argument to the appropriate parameter then the parameter is `null`. It's useful for cases when we
+     * want to analyze possibility for the argument to be used without name even when appropriate parameter doesn't yet exist
+     * (it may start existing when user will create the parameter from usage with "Add parameter to function" refactoring)
+     */
+    val parameter: ValueParameterDescriptor?
+)
 
 fun collectAllArgumentsThatCanBeUsedWithoutName(
     resolvedCall: ResolvedCall<out CallableDescriptor>,
 ): List<ArgumentThatCanBeUsedWithoutName> {
     val arguments = resolvedCall.call.valueArguments.filterIsInstance<KtValueArgument>()
-    val argumentAndParameters = arguments.mapNotNull { argument ->
-        val parameter = resolvedCall.getParameterForArgument(argument) ?: return@mapNotNull null
+    val argumentAndParameters = arguments.map { argument ->
+        val parameter = resolvedCall.getParameterForArgument(argument)
         argument to parameter
-    }.sortedBy { (_, parameter) -> parameter.index }
-    if (arguments.size != argumentAndParameters.size) return emptyList()
+    }.sortedBy { (_, parameter) -> parameter?.index ?: Int.MAX_VALUE }
 
-    val firstVarargArgumentIndex = argumentAndParameters.indexOfFirst { (_, parameter) -> parameter.isVararg }
-    val lastVarargArgumentIndex = argumentAndParameters.indexOfLast { (_, parameter) -> parameter.isVararg }
-    return argumentAndParameters.mapIndexedNotNull { argumentIndex, (argument, parameter) ->
-        val parameterIndex = parameter.index
-        val isAfterVararg = lastVarargArgumentIndex != -1 && argumentIndex > lastVarargArgumentIndex
-        val isVarargArg = argumentIndex in firstVarargArgumentIndex..lastVarargArgumentIndex
-        if (!isVarargArg && argumentIndex != parameterIndex ||
-            isAfterVararg ||
-            isVarargArg && argumentAndParameters.drop(lastVarargArgumentIndex + 1).any { (argument, _) -> !argument.isNamed() }
-        ) {
-            null
-        } else {
-            ArgumentThatCanBeUsedWithoutName(argument, parameter)
+    val firstVarargArgumentIndex = argumentAndParameters.indexOfFirst { (_, parameter) -> parameter?.isVararg ?: false }
+    val lastVarargArgumentIndex = argumentAndParameters.indexOfLast { (_, parameter) -> parameter?.isVararg ?: false }
+    return argumentAndParameters
+        .asSequence()
+        .mapIndexed { argumentIndex, (argument, parameter) ->
+            val parameterIndex = parameter?.index ?: argumentIndex
+            val isAfterVararg = lastVarargArgumentIndex != -1 && argumentIndex > lastVarargArgumentIndex
+            val isVarargArg = argumentIndex in firstVarargArgumentIndex..lastVarargArgumentIndex
+            if (!isVarargArg && argumentIndex != parameterIndex ||
+                isAfterVararg ||
+                isVarargArg && argumentAndParameters.drop(lastVarargArgumentIndex + 1).any { (argument, _) -> !argument.isNamed() }
+            ) {
+                null
+            } else {
+                ArgumentThatCanBeUsedWithoutName(argument, parameter)
+            }
         }
-    }
+        .takeWhile { it != null } // When any argument can't be used without a name then all subsequent arguments must have a name too!
+        .map { it ?: error("It cannot be null because of the previous takeWhile in the chain") }
+        .toList()
 }
 
 /**
