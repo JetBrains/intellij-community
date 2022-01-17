@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.plugins.api;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -57,8 +57,8 @@ public final class MavenModelPropertiesPatcher {
       }
 
       if (descriptor.propertyGenerator != null) {
-        MavenPropertiesGenerator generator = SingletonInstancesCache
-          .getInstance(descriptor.propertyGenerator, descriptor.getPluginDescriptor().getPluginClassLoader());
+        MavenPropertiesGenerator generator = SingletonInstancesCache.getInstance(descriptor.propertyGenerator,
+                                                                                 descriptor.getPluginDescriptor().getClassLoader());
         generator.generate(modelProperties, goal, plugin, cfgElement);
       }
     }

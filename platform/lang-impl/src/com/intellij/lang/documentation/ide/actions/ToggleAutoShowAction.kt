@@ -3,10 +3,15 @@ package com.intellij.lang.documentation.ide.actions
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 
 internal class ToggleAutoShowAction : ToggleAction(), ActionToIgnore {
+  override fun update(e: AnActionEvent) {
+    val project = e.project
+    e.presentation.isEnabledAndVisible = project != null && LookupManager.getInstance(project).activeLookup != null
+  }
 
   override fun isSelected(e: AnActionEvent): Boolean {
     return CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO

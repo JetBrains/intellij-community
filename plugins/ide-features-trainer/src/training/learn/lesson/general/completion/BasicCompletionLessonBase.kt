@@ -98,4 +98,9 @@ abstract class BasicCompletionLessonBase : KLesson("Basic completion", LessonsBu
     it.model.size >= 1 && it.model.getElementAt(0).toString().contains(item1Completion)
 
   override val suitableTips = listOf("CodeCompletion")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("basic.completion.help.code.completion"),
+         LessonUtil.getHelpLink("auto-completing-code.html#basic_completion")),
+  )
 }

@@ -87,6 +87,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private volatile @Nullable ErrorPage myErrorPage;
   protected final @NotNull PropertiesHelper myPropertiesHelper = new PropertiesHelper();
   private final @NotNull AtomicBoolean myIsCreateStarted = new AtomicBoolean(false);
+  private @Nullable CefRequestHandler myHrefProcessingRequestHandler;
 
   private static final LazyInitializer.LazyValue<@NotNull String> ERROR_PAGE_READER = LazyInitializer.create(() -> {
     try {
@@ -372,8 +373,18 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   /**
    * Adds handler that opens any links clicked by user in external browser
    */
-  public final void openLinksInExternalBrowser() {
-    var handler = new CefRequestHandlerAdapter() {
+  public void setOpenLinksInExternalBrowser(boolean openLinksInExternalBrowser) {
+    if (openLinksInExternalBrowser) {
+      enableExternalBrowserLinks();
+    }
+    else {
+      disableExternalBrowserLinks();
+    }
+  }
+
+  private void enableExternalBrowserLinks() {
+    if (myHrefProcessingRequestHandler != null) return;
+    var hrefProcessingRequestHandler = new CefRequestHandlerAdapter() {
       @Override
       public boolean onBeforeBrowse(CefBrowser browser,
                                     CefFrame frame,
@@ -387,8 +398,17 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         return false;
       }
     };
-    this.myCefClient.addRequestHandler(handler, myCefBrowser);
-    Disposer.register(this, () -> myCefClient.removeRequestHandler(handler, myCefBrowser));
+    this.myCefClient.addRequestHandler(hrefProcessingRequestHandler, myCefBrowser);
+    myHrefProcessingRequestHandler = hrefProcessingRequestHandler;
+  }
+
+  private void disableExternalBrowserLinks() {
+    var hrefProcessingRequestHandler = myHrefProcessingRequestHandler;
+    if (hrefProcessingRequestHandler != null) {
+      myCefClient.removeRequestHandler(hrefProcessingRequestHandler, myCefBrowser);
+      myHrefProcessingRequestHandler = null;
+    }
+
   }
 
   /**
@@ -438,6 +458,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       if (myLifeSpanHandler != null) getJBCefClient().removeLifeSpanHandler(myLifeSpanHandler, getCefBrowser());
       if (myLoadHandler != null) getJBCefClient().removeLoadHandler(myLoadHandler, getCefBrowser());
       if (myRequestHandler != null) getJBCefClient().removeRequestHandler(myRequestHandler, getCefBrowser());
+      if (myHrefProcessingRequestHandler != null) getJBCefClient().removeRequestHandler(myHrefProcessingRequestHandler, getCefBrowser());
       if (myContextMenuHandler != null) getJBCefClient().removeContextMenuHandler(myContextMenuHandler, getCefBrowser());
 
       myCefBrowser.stopLoad();

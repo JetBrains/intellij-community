@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import org.jetbrains.annotations.NotNull;
 
-public final class SourcepathMacro extends Macro {
+public final class SourcepathMacro extends Macro implements PathMacro {
   @NotNull
   @Override
   public String getName() {

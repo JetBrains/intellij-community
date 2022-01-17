@@ -96,7 +96,7 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     return JBIterable.of(PluginManagerCore.getPlugins())
       .flatten(o1 -> {
         try {
-          return new ScriptEngineManager(o1.getPluginClassLoader()).getEngineFactories();
+          return new ScriptEngineManager(o1.getClassLoader()).getEngineFactories();
         }
         catch (Exception e) {
           LOG.warn(e);
@@ -342,7 +342,7 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     // used by kotlin engine
     public @NotNull List<URL> getUrls() {
       return JBIterable.of(PluginManagerCore.getPlugins())
-        .map(PluginDescriptor::getPluginClassLoader)
+        .map(PluginDescriptor::getClassLoader)
         .unique()
         .flatMap(o -> {
           try {

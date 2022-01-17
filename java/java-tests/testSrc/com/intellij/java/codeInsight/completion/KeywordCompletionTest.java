@@ -16,7 +16,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/keywords/";
 
   private static final String[] CLASS_SCOPE_KEYWORDS = {
-    "public", "private", "protected", "import", "final", "class", "interface", "abstract", "enum", "default", "record", null};
+    "public", "private", "protected", "import", "final", "class", "interface", "abstract", "enum", "default", "record", "sealed", "non-sealed", null};
   private static final String[] CLASS_SCOPE_KEYWORDS_2 = {
     "package", "public", "private", "protected", "transient", "volatile", "static", "import", "final", "class", "interface", "abstract", "default", "record"};
   private static final String[] INTERFACE_SCOPE_KEYWORDS = {
@@ -36,19 +36,19 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testFileScopeAfterComment() { doTest(4, "package", "class", "import", "public", "private"); }
   public void testFileScopeAfterJavaDoc() { doTest(4, "package", "class", "import", "public", "private"); }
   public void testFileScopeAfterJavaDocInsideModifierList() { doTest(2, "class", "public"); }
-  public void testFileScope2() { doTest(8, CLASS_SCOPE_KEYWORDS); }
-  public void testClassScope1() { doTest(6, CLASS_SCOPE_KEYWORDS); }
-  public void testClassScope2() { doTest(5, CLASS_SCOPE_KEYWORDS); }
+  public void testFileScope2() { doTest(10, CLASS_SCOPE_KEYWORDS); }
+  public void testClassScope1() { doTest(8, CLASS_SCOPE_KEYWORDS); }
+  public void testClassScope2() { doTest(7, CLASS_SCOPE_KEYWORDS); }
   public void testClassScope3() { doTest(0, CLASS_SCOPE_KEYWORDS); }
   public void testClassScope4() { doTest(11, CLASS_SCOPE_KEYWORDS_2); }
   public void testInnerClassScope() {
     doTest(11, CLASS_SCOPE_KEYWORDS_2); 
   }
   public void testInterfaceScope() { setLanguageLevel(LanguageLevel.JDK_1_8); doTest(8, INTERFACE_SCOPE_KEYWORDS); }
-  public void testAfterAnnotations() { doTest(7, "public", "final", "class", "interface", "abstract", "enum", "record", null); }
-  public void testAfterAnnotationsWithParams() { doTest(7, "public", "final", "class", "interface", "abstract", "enum", "record", null); }
+  public void testAfterAnnotations() { doTest(9, "public", "final", "class", "interface", "abstract", "enum", "record", "non-sealed", "sealed", null); }
+  public void testAfterAnnotationsWithParams() { doTest(9, "public", "final", "class", "interface", "abstract", "enum", "record", "non-sealed", "sealed", null); }
   public void testAfterAnnotationsWithParamsInClass() { doTest(7, "public", "private", "final", "class", "interface", "abstract", "enum"); }
-  public void testExtends1() { doTest(2, "extends", "implements", null); }
+  public void testExtends1() { doTest(3, "extends", "implements", "permits", null); }
   public void testExtends2() { doTest(1, "extends", "implements", "AAA", "BBB", "instanceof"); }
   public void testExtends3() { doTest(2, "extends", "implements", "AAA", "BBB", "CCC", "instanceof"); }
   public void testExtends4() { doTest(2, "extends", "implements", "AAA", "BBB", "CCC", "instanceof"); }

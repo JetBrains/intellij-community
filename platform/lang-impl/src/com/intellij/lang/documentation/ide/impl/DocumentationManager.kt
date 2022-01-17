@@ -7,7 +7,7 @@ import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.propComponentProperty
 import com.intellij.lang.documentation.InlineDocumentation
-import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_TARGETS_KEY
+import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_TARGETS
 import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.lang.documentation.impl.documentationRequest
 import com.intellij.lang.documentation.impl.resolveLink
@@ -80,7 +80,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
       }
     }
 
-    val targets = dataContext.getData(DOCUMENTATION_TARGETS_KEY) ?: return
+    val targets = dataContext.getData(DOCUMENTATION_TARGETS) ?: return
     val target = targets.firstOrNull() ?: return // TODO multiple targets
 
     // This happens in the UI thread because IntelliJ action system returns `DocumentationTarget` instance from the `DataContext`,

@@ -23,9 +23,9 @@ import com.intellij.ui.layout.*
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.CondaOnTargetPackageManager
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl
 import com.jetbrains.python.packaging.PyCondaPackageService
-import com.jetbrains.python.packaging.CondaOnTargetPackageManager
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.ExistingPySdkComboBoxItem
@@ -95,7 +95,6 @@ open class PyAddCondaEnvPanel(
 
     val supportedLanguageLevels = LanguageLevel.SUPPORTED_LEVELS
       .asReversed()
-      .filter { it < LanguageLevel.PYTHON310 }
       .map { it.toPythonVersion() }
 
     languageLevelsField = ComboBox(supportedLanguageLevels.toTypedArray()).apply {

@@ -185,7 +185,7 @@ final class BuildDependenciesDownloader {
       connection.instanceFollowRedirects = true
 
       if (connection.responseCode != 200) {
-        throw new IllegalStateException("Error download $uri: non-200 http status code ${connection.responseCode}")
+        throw new IllegalStateException("Error downloading $uri: non-200 http status code ${connection.responseCode}")
       }
 
       connection.inputStream.withStream { inputStream ->

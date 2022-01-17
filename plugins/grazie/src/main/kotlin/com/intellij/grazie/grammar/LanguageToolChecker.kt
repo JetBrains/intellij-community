@@ -129,15 +129,26 @@ open class LanguageToolChecker : TextChecker() {
         return true // https://github.com/languagetool-org/languagetool/issues/5270
       }
 
-      if (match.rule.id == "EN_A_VS_AN" && text.subSequence(match.toPos, text.length).matches(Regex("[^\\p{javaLetterOrDigit}]*hour.*"))) {
-        return true // https://github.com/languagetool-org/languagetool/issues/5260
-      }
-
       if (match.rule.id == "THIS_NNS_VB" && text.subSequence(match.toPos, text.length).matches(Regex("\\s+reverts\\s.*"))) {
         return true // https://github.com/languagetool-org/languagetool/issues/5455
       }
 
+      if (match.rule.id.endsWith("DOUBLE_PUNCTUATION") &&
+          (isNumberRange(match.fromPos, match.toPos, text) || isPathPart(match.fromPos, match.toPos, text))) {
+        return true
+      }
+
       return false
+    }
+
+    // https://github.com/languagetool-org/languagetool/issues/5230
+    private fun isNumberRange(startOffset: Int, endOffset: Int, text: TextContent): Boolean {
+      return startOffset > 0 && endOffset < text.length && text[startOffset - 1].isDigit() && text[endOffset].isDigit()
+    }
+
+    // https://github.com/languagetool-org/languagetool/issues/5883
+    private fun isPathPart(startOffset: Int, endOffset: Int, text: TextContent): Boolean {
+      return text.subSequence(0, startOffset).endsWith('/') || text.subSequence(endOffset, text.length).startsWith('/')
     }
 
     @NlsSafe

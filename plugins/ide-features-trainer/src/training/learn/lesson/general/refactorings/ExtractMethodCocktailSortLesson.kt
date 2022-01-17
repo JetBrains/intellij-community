@@ -86,4 +86,9 @@ class ExtractMethodCocktailSortLesson(private val sample: LessonSample)
   }
 
   override val suitableTips = listOf("ExtractMethod")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("extract.method.help.link"),
+         LessonUtil.getHelpLink("extract-method.html")),
+  )
 }

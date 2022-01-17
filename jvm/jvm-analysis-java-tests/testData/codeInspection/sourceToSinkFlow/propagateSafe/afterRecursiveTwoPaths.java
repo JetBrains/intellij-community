@@ -11,16 +11,16 @@ class Simple {
   }
 
     @Untainted String foo() {
-        return bar();
-    }
+    return bar();
+  }
 
     @Untainted String bar() {
-        return baz();
-    }
+    return baz();
+  }
 
     @Untainted String baz() {
-        return foo();
-    }
+    return foo();
+  }
 
   void sink(@Untainted String s) {}
 }

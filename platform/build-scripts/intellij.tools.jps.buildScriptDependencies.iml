@@ -48,5 +48,6 @@
     <orderEntry type="library" scope="RUNTIME" name="opentelemetry" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jackson" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="okhttp" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="jackson-jr-objects" level="project" />
   </component>
 </module>

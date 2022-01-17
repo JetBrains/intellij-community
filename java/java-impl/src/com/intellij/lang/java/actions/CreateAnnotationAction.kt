@@ -38,12 +38,18 @@ internal class CreateAnnotationAction(target: PsiModifierListOwner, override val
   companion object {
     private val LOG = logger<CreateAnnotationAction>()
     internal fun addAnnotationToModifierList(modifierList: PsiModifierList, annotationRequest: AnnotationRequest) {
-      val project = modifierList.project
       val list = AddAnnotationPsiFix.expandParameterIfNecessary(modifierList)
+      addAnnotationToAnnotationOwner(modifierList, list, annotationRequest)
+    }
+
+    internal fun addAnnotationToAnnotationOwner(context: PsiElement,
+                                                list: PsiAnnotationOwner,
+                                                annotationRequest: AnnotationRequest) {
+      val project = context.project
       val annotation = list.addAnnotation(annotationRequest.qualifiedName)
       val psiElementFactory = PsiElementFactory.getInstance(project)
 
-      fillAnnotationAttributes(annotation, annotationRequest, psiElementFactory, list)
+      fillAnnotationAttributes(annotation, annotationRequest, psiElementFactory, context)
 
       val formatter = CodeStyleManager.getInstance(project)
       val codeStyleManager = JavaCodeStyleManager.getInstance(project)
@@ -84,7 +90,7 @@ internal class CreateAnnotationAction(target: PsiModifierListOwner, override val
         dummyAnnotation.findAttributeValue(null)
       }
       else -> {
-        LOG.error("adding annotation members of ${value.javaClass} type is not implemented");
+        LOG.error("adding annotation members of ${value.javaClass} type is not implemented")
         null
       }
     }

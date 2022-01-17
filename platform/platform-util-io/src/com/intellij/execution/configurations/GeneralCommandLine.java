@@ -468,7 +468,6 @@ public class GeneralCommandLine implements UserDataHolder {
 
     if (myParentEnvironmentType != ParentEnvironmentType.NONE) {
       environment.putAll(getParentEnvironment());
-      EnvironmentRestorer.restoreOverriddenVars(environment);
     }
 
     if (SystemInfo.isUnix) {
@@ -490,6 +489,8 @@ public class GeneralCommandLine implements UserDataHolder {
         environment.putAll(myEnvParams);
       }
     }
+
+    EnvironmentRestorer.restoreOverriddenVars(environment);
   }
 
   /**

@@ -122,3 +122,13 @@ typealias SimpleClassAlias = SimpleClass
 typealias NestedSimpleClassAlias = List<SimpleClassAlias>
 
 typealias NestedSimpleClassAliasFunctionalType = SimpleClassAlias.() -> Unit
+
+open class OpenClassWithFunctionWithDefaultParameter {
+    open fun doSmth(condition: Boolean = true) {}
+}
+
+class ChildOfOpenClassWithFunctionWithDefaultParameter : OpenClassWithFunctionWithDefaultParameter() {
+    override fun doSmth(condition: Boolean) {}
+}
+
+fun funWithDefaultParameter(a: Int, b: String = "abc") {}

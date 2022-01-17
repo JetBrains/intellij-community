@@ -571,12 +571,61 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
 
     for (RefElement entry : getEntryPointsManager(context).getEntryPoints(refManager)) {
-      entry.accept(codeScanner);
+      try {
+        entry.accept(codeScanner);
+      }
+      // todo temporary decision for debugging, to be deleted
+      catch (StackOverflowError e) {
+        logFromEntryPoint(entry);
+      }
     }
 
     while (codeScanner.newlyInstantiatedClassesCount() != 0) {
       codeScanner.cleanInstantiatedClassesCount();
       codeScanner.processDelayedMethods();
+    }
+  }
+
+  private static void logFromEntryPoint(RefElement entry) {
+    StringBuilder result = new StringBuilder("\n");
+    List<List<RefElement>> paths = new ArrayList<>();
+    paths.add(new ArrayList<>());
+    traverse(entry, paths, 0);
+    String rootText = String.format("%s %s (owner: %s, reachable: %s, entry: %s):", entry.getClass().getSimpleName(), entry.getName(),
+                                    entry.getOwner(), entry.isReachable(), entry.isEntry());
+    result.append(rootText).append("\n");
+    for (List<RefElement> path : paths) {
+      if (path.size() <= 1) continue;
+      StringJoiner pathJoiner = new StringJoiner(" --> ");
+      for (int i = 1; i < path.size(); i++) {
+        RefElement element = path.get(i);
+        String elementText = String.format("%s %s (owner: %s, reachable: %s)", element.getClass().getSimpleName(), element.getName(),
+                                           element.getOwner(), element.isReachable());
+        pathJoiner.add(elementText);
+      }
+      result.append(" --> ").append(pathJoiner).append("\n");
+    }
+    LOG.warn(result.toString());
+  }
+
+  private static void traverse(RefElement element, List<List<RefElement>> paths, Integer depth) {
+    int lastPathsIndex = paths.size() - 1;
+    List<RefElement> path = paths.get(lastPathsIndex);
+    if (path.contains(element)) {
+      LOG.warn(String.format("Cycle is detected on the element %s", element.getName()));
+      return;
+    }
+    path.add(element);
+    List<RefElement> outRefs = new ArrayList<>(element.getOutReferences());
+    for (int i = 0; i < outRefs.size(); i++) {
+      RefElement outRef = outRefs.get(i);
+      if (i > 0) {
+        List<RefElement> pathCopy = new ArrayList<>(path.subList(0, depth + 1));
+        paths.add(pathCopy);
+      }
+      depth++;
+      traverse(outRef, paths, depth);
+      depth--;
     }
   }
 

@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiEditorUtil
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parents
 import com.intellij.ui.LightweightHint
@@ -51,7 +52,7 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
     }
     val leftGroup = ActionManager.getInstance().getAction(actionGroupId) as ActionGroup
     val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, leftGroup, true)
-    toolbar.setTargetComponent(editor.contentComponent)
+    toolbar.targetComponent = editor.contentComponent
     toolbar.setReservePlaceAutoPopupIcon(false)
     buttonSize = toolbar.maxButtonHeight
 
@@ -69,6 +70,8 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
 
   override fun dispose() {
     unregisterListeners()
+    hideIfShown()
+    hint = null
   }
 
   private fun showOrUpdateLocation(hint: LightweightHint) {
@@ -98,9 +101,9 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
     val file = PsiEditorUtil.getPsiFile(editor)
     PsiDocumentManager.getInstance(file.project).commitDocument(editor.document)
     val selectionModel = editor.selectionModel
-    val elementAtStart = file.findElementAt(selectionModel.selectionStart)
-    val elementAtEnd = file.findElementAt(selectionModel.selectionEnd)
-    return elementAtStart?.let(::hasIgnoredParent) == false && elementAtEnd?.let(::hasIgnoredParent) == false
+    val elementAtStart = PsiUtilCore.getElementAtOffset(file, selectionModel.selectionStart)
+    val elementAtEnd = PsiUtilCore.getElementAtOffset(file, selectionModel.selectionEnd)
+    return !(hasIgnoredParent(elementAtStart) || hasIgnoredParent(elementAtEnd))
   }
 
   protected open fun hasIgnoredParent(element: PsiElement): Boolean {

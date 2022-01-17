@@ -102,7 +102,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
                   <plugin>
                       <groupId>org.openjfx</groupId>
                       <artifactId>javafx-maven-plugin</artifactId>
-                      <version>0.0.7</version>
+                      <version>0.0.8</version>
                       <executions>
                           <execution>
                               <!-- Default configuration for running with: mvn clean javafx:run -->

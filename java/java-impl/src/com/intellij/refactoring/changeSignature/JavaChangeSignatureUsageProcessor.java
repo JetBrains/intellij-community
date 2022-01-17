@@ -777,16 +777,12 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     if (changeInfo.isVisibilityChanged()) {
       PsiModifierList modifierList = method.getModifierList();
       final String targetVisibility;
-      if (isOriginal) {
+      if (isOriginal || changeInfo instanceof JavaChangeInfoImpl && ((JavaChangeInfoImpl)changeInfo).propagateVisibility) {
         targetVisibility = changeInfo.getNewVisibility();
       }
       else {
-        if (changeInfo instanceof JavaChangeInfoImpl && ((JavaChangeInfoImpl)changeInfo).propagateVisibility) {
-          targetVisibility = changeInfo.getNewVisibility();
-        }
-        else {
-          targetVisibility = VisibilityUtil.getHighestVisibility(changeInfo.getNewVisibility(), VisibilityUtil.getVisibilityModifier(modifierList));
-        }
+        targetVisibility =
+          VisibilityUtil.getHighestVisibility(changeInfo.getNewVisibility(), VisibilityUtil.getVisibilityModifier(modifierList));
       }
       VisibilityUtil.setVisibility(modifierList, targetVisibility);
     }

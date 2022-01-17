@@ -9,12 +9,12 @@ class Simple {
   }
 
     @Untainted String foo() {
-        return bar();
-    }
+    return bar();
+  }
 
     @Untainted String bar() {
-        return "safe";
-    }
+    return "safe";
+  }
 
   void sink(@Untainted String s) {}
 }

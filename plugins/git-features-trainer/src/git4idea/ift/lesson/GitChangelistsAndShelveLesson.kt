@@ -325,4 +325,9 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     }
     return Rectangle(this.x + this.width - 15, y, 10, editor.lineHeight)
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(GitLessonsBundle.message("git.changelists.shelf.help.link"),
+         LessonUtil.getHelpLink("work-on-several-features-simultaneously.html")),
+  )
 }

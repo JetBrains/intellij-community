@@ -397,6 +397,7 @@ internal object MavenWslUtil : MavenUtil() {
 
         }
         else {
+          this.title = MavenProjectBundle.message("wsl.jdk.downloading")
           val homeDir = installer.defaultInstallDir(model[0], projectWslDistr)
           val request = installer.prepareJdkInstallation(model[0], homeDir)
           installer.installJdk(request, indicator, project)

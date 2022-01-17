@@ -17,6 +17,7 @@
     <appStarter implementation="com.intellij.ide.plugins.HeadlessPluginsInstaller"/>
     <appStarter implementation="com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilderAppStarter"/>
     <appStarter implementation="com.intellij.internal.statistic.utils.DumpActionsAppStarter"/>
+    <protocolHandler implementation="com.intellij.openapi.application.JBProtocolHandler"/>
 
     <groupConfigurable id="appearance" weight="70"
                        helpTopic="configurable.group.appearance.help.topic"
@@ -428,9 +429,6 @@
 
     <applicationService serviceImplementation="com.intellij.ide.CommandLineWaitingManager" />
 
-    <applicationService serviceImplementation="com.intellij.ide.CommandLineCustomHandler$StartupService" preload="true" />
-    <commandLineCustomHandler implementation="com.intellij.ide.impl.JetBrainsProtocolCommandLineHandler" />
-
     <!-- Android Studio: don't register IntelliJ fork
     <applicationService serviceImplementation="com.intellij.diagnostic.HeapDumpAnalysisSupport"/>
     Android Studio: don't register IntelliJ fork -->
@@ -529,8 +527,7 @@
     <applicationConfigurable groupId="appearance" instance="com.intellij.openapi.keymap.impl.ui.QuickListsPanel"
                              id="reference.idesettings.quicklists"
                              bundle="messages.IdeBundle"
-                             key="configurable.quick.lists.name"
-    />
+                             key="configurable.quick.lists.name"/>
 
     <!-- Customizations -->
     <applicationConfigurable groupId="appearance" groupWeight="130" instance="com.intellij.ide.ui.customization.CustomizationConfigurable" id="preferences.customizations"
@@ -542,8 +539,7 @@
                              id="reference.settings.ide.settings.notifications"
                              provider="com.intellij.notification.impl.NotificationsConfigurableProvider"
                              bundle="messages.IdeBundle"
-                             key="configurable.notifications.name"
-    />
+                             key="configurable.notifications.name"/>
     <search.optionContributor implementation="com.intellij.notification.impl.NotificationSearchableOptionContributor"/>
     <applicationService serviceImplementation="com.intellij.notification.impl.NotificationCollector"/>
 
@@ -592,6 +588,8 @@
 
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginEnabler"
                         serviceImplementation="com.intellij.ide.plugins.DynamicPluginEnabler"
+                        headlessImplementation="com.intellij.ide.plugins.DisabledPluginsState"
+                        testServiceImplementation="com.intellij.ide.plugins.DynamicPluginEnabler"
                         preload="true"/>
     <startupActivity implementation="com.intellij.ide.plugins.DynamicPluginEnabler$Companion$EnableDisablePluginsActivity"
                      order="first"/>
@@ -1278,10 +1276,6 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <applicationService serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowToolbarProvider"/>
     <startupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowToolbarActivity"/>
 
-    <moduleType implementationClass="com.intellij.ide.wizard.NewModuleType" id="newWizard.newModuleType"/>
-    <moduleType implementationClass="com.intellij.ide.wizard.NewProjectType" id="newWizard.newProjectType" order="first"/>
-    <moduleType implementationClass="com.intellij.ide.wizard.NewEmptyProjectType" id="newWizard.emptyProjectType" order="after newWizard.newProjectType"/>
-
     <settingsEntryPointActionProvider implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsEntryPointActionProvider" order="first"/>
 
     <applicationConfigurable id="advanced.settings"
@@ -1328,9 +1322,11 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
 
     <recoveryAction implementation="com.intellij.ide.actions.cache.InvalidateCachesAndRestartAction"/>
    </extensions>
+
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
   </extensions>
+
   <applicationListeners>
     <listener class="com.intellij.ide.plugins.DynamicPluginsFrameStateListener" topic="com.intellij.ide.FrameStateListener"/>
     <listener class="com.intellij.openapi.updateSettings.impl.UpdateCheckerService$MyAppLifecycleListener" topic="com.intellij.ide.AppLifecycleListener"/>

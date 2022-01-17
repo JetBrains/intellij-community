@@ -172,4 +172,11 @@ class PythonInPlaceRefactoringLesson
   }
 
   override val suitableTips = listOf("InPlaceRefactoring")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(PythonLessonsBundle.message("python.in.place.refactoring.help.rename.link"),
+         LessonUtil.getHelpLink("rename-refactorings.html#inplace_rename")),
+    Pair(PythonLessonsBundle.message("python.in.place.refactoring.help.signature.link"),
+         LessonUtil.getHelpLink("pycharm", "change-signature.html#inplace_change_signature_python")),
+  )
 }

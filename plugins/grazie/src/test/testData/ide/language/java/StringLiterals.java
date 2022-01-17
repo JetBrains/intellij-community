@@ -11,5 +11,6 @@ class Main {
         System.out.println("It <warning descr="IT_VBZ">are</warning> working for <warning descr="MUCH_COUNTABLE">much</warning> warnings");
         System.out.println("It is ${1} friend");
         System.out.println("It is friend. But I have a ${1} here");
+        System.out.println("The path is ../data/test.avi");
     }
 }

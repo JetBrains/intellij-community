@@ -356,6 +356,18 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     return getReferentFiles(element);
   }
 
+  @TestOnly
+  public @Nullable Set<VirtualFile> getReferentFilesForTests(@NotNull CompilerRef compilerRef, boolean checkBaseClassAmbiguity) throws StorageException {
+    return myReader.findReferentFileIds(compilerRef, checkBaseClassAmbiguity);
+  }
+
+  @TestOnly
+  public @Nullable List<@NotNull CompilerRef> getCompilerRefsForTests(@NotNull PsiElement element) throws IOException {
+    LanguageCompilerRefAdapter adapter = LanguageCompilerRefAdapter.findAdapter(element, true);
+    if (adapter == null) return null;
+    return adapter.asCompilerRefs(element, myReader.getNameEnumerator());
+  }
+
   @Nullable
   private Set<VirtualFile> getReferentFileIdsViaImplicitToString(@NotNull PsiElement element) {
     return getReferentFiles(element, false, (ref, elementPlace) -> myReader.findFileIdsWithImplicitToString(ref));

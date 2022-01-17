@@ -355,9 +355,8 @@ public class CustomizableActionsPanel {
     textField.setMinimumSize(new Dimension(200, textField.getPreferredSize().height));
     final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
-      public boolean isFileSelectable(VirtualFile file) {
-        //noinspection HardCodedStringLiteral
-        return file.getName().endsWith(".png") || file.getName().endsWith(".svg");
+      public boolean isFileSelectable(@Nullable VirtualFile file) {
+        return file != null && (file.getName().endsWith(".png") || file.getName().endsWith(".svg"));
       }
     };
     textField.addBrowseFolderListener(IdeBundle.message("title.browse.icon"), IdeBundle.message("prompt.browse.icon.for.selected.action"), null,

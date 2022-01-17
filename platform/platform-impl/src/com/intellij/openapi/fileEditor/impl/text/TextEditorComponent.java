@@ -224,8 +224,11 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
       if (CommonDataKeys.EDITOR.is(dataId)) {
         return e;
       }
+      if (CommonDataKeys.PROJECT.is(dataId)) {
+        return myProject;
+      }
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-        return myFile.isValid()? myFile : null;  // fix for SCR 40329
+        return myFile.isValid() ? myFile : null;  // fix for SCR 40329
       }
       return null;
     };

@@ -11,8 +11,8 @@ class Simple {
   }
 
     @Untainted String foo() {
-        return field;
-    }
+    return field;
+  }
 
   void sink(@Untainted String s) {}
 }

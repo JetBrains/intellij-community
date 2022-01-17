@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.BundleBase;
@@ -58,7 +58,7 @@ public final class TypeNameEP implements PluginAware {
           bundleName = pluginDescriptor.getResourceBundleBaseName();
         }
         if (bundleName != null) {
-          ResourceBundle bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, pluginDescriptor.getPluginClassLoader());
+          ResourceBundle bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, pluginDescriptor.getClassLoader());
           return BundleBase.message(bundle, resourceKey);
         }
       }

@@ -35,7 +35,6 @@ import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.picocontainer.ComponentAdapter
 import org.picocontainer.PicoContainer
@@ -53,7 +52,7 @@ private val constructorParameterResolver = ConstructorParameterResolver()
 private val methodLookup = MethodHandles.lookup()
 private val emptyConstructorMethodType = MethodType.methodType(Void.TYPE)
 
-@Internal
+@ApiStatus.Internal
 abstract class ComponentManagerImpl @JvmOverloads constructor(
   internal val parent: ComponentManagerImpl?,
   setExtensionsRootArea: Boolean = parent == null
@@ -63,11 +62,11 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
   }
 
   companion object {
-    @Internal
+    @ApiStatus.Internal
     @JvmField val fakeCorePluginDescriptor = DefaultPluginDescriptor(PluginManagerCore.CORE_ID, null)
 
     @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-    @Internal
+    @ApiStatus.Internal
     @JvmField val badWorkspaceComponents: Set<String> = java.util.Set.of(
       "jetbrains.buildServer.codeInspection.InspectionPassRegistrar",
       "jetbrains.buildServer.testStatus.TestStatusPassRegistrar",
@@ -169,7 +168,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     }
   }
 
-  @Internal
   fun forbidGettingServices(reason: String): AccessToken {
     val token = object : AccessToken() {
       override fun finish() {
@@ -232,7 +230,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
                        listenerCallbacks = null)
   }
 
-  @Internal
   open fun registerComponents(modules: Sequence<IdeaPluginDescriptorImpl>,
                               app: Application?,
                               precomputedExtensionModel: PrecomputedExtensionModel?,
@@ -719,7 +716,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
   /**
    * Use only if approved by core team.
    */
-  @Internal
   fun registerComponent(key: Class<*>, implementation: Class<*>, pluginDescriptor: PluginDescriptor, override: Boolean) {
     assertComponentsSupported()
     checkState()
@@ -746,7 +742,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
   /**
    * Use only if approved by core team.
    */
-  @Internal
   fun registerService(serviceInterface: Class<*>,
                       implementation: Class<*>,
                       pluginDescriptor: PluginDescriptor,
@@ -769,7 +764,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
   /**
    * Use only if approved by core team.
    */
-  @Internal
   fun <T : Any> registerServiceInstance(serviceInterface: Class<T>, instance: T, pluginDescriptor: PluginDescriptor) {
     val serviceKey = serviceInterface.name
     checkState()
@@ -781,7 +775,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
   }
 
   @TestOnly
-  @Internal
   fun <T : Any> replaceServiceInstance(serviceInterface: Class<T>, instance: T, parentDisposable: Disposable) {
     checkState()
     if (isLightService(serviceInterface)) {
@@ -800,7 +793,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     }
   }
 
-  @Internal
   fun <T : Any> replaceRegularServiceInstance(serviceInterface: Class<T>, instance: T) {
     checkState()
     val adapter = componentKeyToAdapter.get(serviceInterface.name) as ServiceComponentAdapter
@@ -939,7 +931,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     return PluginException(message, error, pluginId, attachments?.map { Attachment(it.key, it.value) } ?: emptyList())
   }
 
-  @Internal
   open fun unloadServices(services: List<ServiceDescriptor>, pluginId: PluginId) {
     checkState()
 
@@ -974,10 +965,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     serviceInstanceHotCache.clear()
   }
 
-  @Internal
   open fun activityNamePrefix(): String? = null
 
-  @ApiStatus.Internal
   open fun preloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
                            activityPrefix: String,
                            onlyIfAwait: Boolean = false): Pair<CompletableFuture<Void?>, CompletableFuture<Void?>> {
@@ -1082,7 +1071,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     startDispose()
   }
 
-  @Internal
   fun startDispose() {
     stopServicePreloading()
 
@@ -1127,7 +1115,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     componentConfigCount = -1
   }
 
-  @Internal
   fun stopServicePreloading() {
     isServicePreloadingCancelled = true
   }
@@ -1161,7 +1148,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     return adapter?.getInstance(this, keyClass = null)
   }
 
-  @ApiStatus.Internal
   open fun isServiceSuitable(descriptor: ServiceDescriptor): Boolean {
     return descriptor.client == null
   }
@@ -1173,7 +1159,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
 
   final override fun getDisposed(): Condition<*> = Condition<Any?> { isDisposed }
 
-  @ApiStatus.Internal
   fun processInitializedComponentsAndServices(processor: (Any) -> Unit) {
     for (adapter in componentKeyToAdapter.values) {
       if (adapter is BaseComponentAdapter) {
@@ -1185,7 +1170,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     }
   }
 
-  @ApiStatus.Internal
   fun processAllImplementationClasses(processor: (componentClass: Class<*>, plugin: PluginDescriptor?) -> Unit) {
     for (adapter in componentKeyToAdapter.values) {
       if (adapter is ServiceComponentAdapter) {
@@ -1239,6 +1223,9 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
 
     val adapter = componentKeyToAdapter.remove(componentKey) ?: return null
     componentAdapters.remove(adapter)
+    if (componentKey is Class<*>) {
+      serviceInstanceHotCache.remove(componentKey)
+    }
     return adapter
   }
 

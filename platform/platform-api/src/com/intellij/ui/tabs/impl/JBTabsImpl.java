@@ -90,6 +90,8 @@ public class JBTabsImpl extends JComponent
   public final Map<TabInfo, TabLabel> myInfo2Label = new HashMap<>();
   public final Map<TabInfo, Toolbar> myInfo2Toolbar = new HashMap<>();
   public final ActionToolbar myMoreToolbar;
+  @Nullable
+  public final ActionToolbar myEntryPointToolbar;
   public final NonOpaquePanel myTitleWrapper = new NonOpaquePanel();
   public Dimension myHeaderFitSize;
 
@@ -419,14 +421,17 @@ public class JBTabsImpl extends JComponent
     };
 
     ActionManager actionManager = ActionManager.getInstance();
-    AnAction tabListAction = actionManager.getAction("TabList");
-    myMoreToolbar = actionManager
-      .createActionToolbar(ActionPlaces.TABS_MORE_TOOLBAR, new DefaultActionGroup(tabListAction), true);
-    myMoreToolbar.setTargetComponent(this);
-    myMoreToolbar.getComponent().setBorder(JBUI.Borders.empty());
-    myMoreToolbar.getComponent().setOpaque(false);
-    myMoreToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    myMoreToolbar = createToolbar(new DefaultActionGroup(actionManager.getAction("TabList")));
     add(myMoreToolbar.getComponent());
+
+    DefaultActionGroup entryPointActionGroup = getEntryPointActionGroup();
+    if (entryPointActionGroup != null) {
+      myEntryPointToolbar = createToolbar(entryPointActionGroup);
+      add(myEntryPointToolbar.getComponent());
+    } else {
+      myEntryPointToolbar = null;
+    }
+
     add(myTitleWrapper);
     Disposer.register(myParentDisposable, () -> {
       setTitleProducer(null);
@@ -551,6 +556,21 @@ public class JBTabsImpl extends JComponent
                                     });
   }
 
+  @NotNull
+  private ActionToolbar createToolbar(DefaultActionGroup group) {
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TABS_MORE_TOOLBAR, group, true);
+    toolbar.setTargetComponent(this);
+    toolbar.getComponent().setBorder(JBUI.Borders.empty());
+    toolbar.getComponent().setOpaque(false);
+    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    return toolbar;
+  }
+
+  @Nullable
+  protected DefaultActionGroup getEntryPointActionGroup() {
+    return null;
+  }
+
   @Override
   protected void paintChildren(Graphics g) {
     super.paintChildren(g);
@@ -580,7 +600,7 @@ public class JBTabsImpl extends JComponent
         showLeftFadeout |= label.getX() < 0;
         boolean needShowRightFadeout = moreRect != null
                           && label.getX() + label.getPreferredSize().width > moreRect.x
-                          && label.getY() == moreRect.y;
+                          && Math.abs(label.getY() - moreRect.y) < moreRect.height / 2;
         if (needShowRightFadeout && !showRightFadeout) {
           moreY = label.getY();
           moreHeight = label.getHeight();
@@ -728,7 +748,8 @@ public class JBTabsImpl extends JComponent
     if (NEW_TABS) {
       return myTabsLayout != null && myTabsLayout.ignoreTabLabelLimitedWidthWhenPaint();
     } else {
-      return myLayout instanceof ScrollableSingleRowLayout /*|| myLayout instanceof TableLayout*/;
+      return myLayout instanceof ScrollableSingleRowLayout
+             || (myLayout instanceof TableLayout && UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow());
     }
   }
 
@@ -979,6 +1000,24 @@ public class JBTabsImpl extends JComponent
     }
   }
 
+  @NotNull
+  public Dimension getEntryPointPreferredSize() {
+    if (myEntryPointToolbar == null) return new Dimension();
+    return myEntryPointToolbar.getComponent().getPreferredSize();
+  }
+
+  private Rectangle getEntryPointRect() {
+    if (myLayout instanceof SingleRowLayout) {
+      SingleRowPassInfo lastLayout = mySingleRowLayout.myLastSingRowLayout;
+      return lastLayout != null ? lastLayout.entryPointRect : null;
+    }
+    if (myLayout instanceof TableLayout) {
+      TablePassInfo lastLayout = myTableLayout.myLastTableLayout;
+      return lastLayout != null ? lastLayout.entryPointRect : null;
+    }
+    return null;
+  }
+
   private Rectangle getMoreRect() {
     if (myLayout instanceof SingleRowLayout) {
       SingleRowPassInfo lastLayout = mySingleRowLayout.myLastSingRowLayout;
@@ -1017,19 +1056,12 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public boolean canShowMorePopup() {
-    if (myLayout instanceof MorePopupAware)
-      return ((MorePopupAware)myLayout).canShowMorePopup();
     Rectangle moreRect = getMoreRect();
     return moreRect != null;
   }
 
   @Override
   public void showMorePopup() {
-    if (myLayout instanceof MorePopupAware) {
-      ((MorePopupAware)myLayout).showMorePopup();
-      return;
-    }
-
     Rectangle rect = getMoreRect();
     if (rect == null) return;
 
@@ -1845,10 +1877,45 @@ public class JBTabsImpl extends JComponent
             visible.add(myDropInfo);
           }
         }
+        if (myEntryPointToolbar != null) {
+          JComponent eComponent = myEntryPointToolbar.getComponent();
+          if (!getTabsPosition().isSide() && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE && getTabCount() > 0) {
+            Dimension preferredSize = eComponent.getPreferredSize();
+            Rectangle bounds = new Rectangle(getWidth() - preferredSize.width - 2, 1, preferredSize.width, myHeaderFitSize.height);
+            int xDiff = (bounds.width - preferredSize.width) / 2;
+            int yDiff = (bounds.height - preferredSize.height) / 2;
+            bounds.x += xDiff + 2;
+            bounds.width -= 2 * xDiff;
+            bounds.y += yDiff;
+            bounds.height -= 2 * yDiff;
+            eComponent.setBounds(bounds);
+          } else {
+            eComponent.setBounds(new Rectangle());
+          }
+        }
 
         if (myLayout instanceof SingleRowLayout) {
           mySingleRowLayout.scrollSelectionInView();
           myLastLayoutPass = mySingleRowLayout.layoutSingleRow(visible);
+
+          JComponent eComponent = ObjectUtils.doIfNotNull(myEntryPointToolbar, ActionToolbar::getComponent);
+          if (eComponent != null) {
+            Rectangle entryPointRect = getEntryPointRect();
+            if (entryPointRect != null && !entryPointRect.isEmpty() && getTabCount() > 0) {
+              Dimension preferredSize = eComponent.getPreferredSize();
+              Rectangle bounds = new Rectangle(entryPointRect);
+              int xDiff = (bounds.width - preferredSize.width) / 2;
+              int yDiff = (bounds.height - preferredSize.height) / 2;
+              bounds.x += xDiff + 2;
+              bounds.width -= 2 * xDiff;
+              bounds.y += yDiff;
+              bounds.height -= 2 * yDiff;
+              eComponent.setBounds(bounds);
+            }
+            else {
+              eComponent.setBounds(new Rectangle());
+            }
+          }
           Rectangle moreRect = getMoreRect();
           JComponent mComponent = myMoreToolbar.getComponent();
           if (moreRect != null && !moreRect.isEmpty()) {
@@ -1859,7 +1926,7 @@ public class JBTabsImpl extends JComponent
             bounds.x += xDiff + 2;
             bounds.width -= 2 * xDiff;
             bounds.y += yDiff;
-            bounds.height -= 2* yDiff;
+            bounds.height -= 2 * yDiff;
             mComponent.setBounds(bounds);
           } else {
             mComponent.setBounds(new Rectangle());

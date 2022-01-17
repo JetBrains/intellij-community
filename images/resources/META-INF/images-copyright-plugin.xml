@@ -1,5 +1,0 @@
-<idea-plugin package="org.intellij.images.copyright">
-  <extensions defaultExtensionNs="com.intellij">
-    <copyright.updater filetype="SVG" implementationClass="org.intellij.images.copyright.SvgCopyrightUpdater"/>
-  </extensions>
-</idea-plugin>

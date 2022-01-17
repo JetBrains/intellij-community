@@ -256,11 +256,11 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
   }
 
   private void updateDefaultJrePresentation() {
-    updateDefaultJrePresentation((@Nls String result) -> {
+    updateDefaultJrePresentation((@Nls String description) -> {
       StatusText text = myComboboxEditor.getEmptyText();
       text.clear();
       text.appendText(ExecutionBundle.message("default.jre.name"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      text.appendText(result, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      text.appendText(description, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     });
   }
 
@@ -422,7 +422,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
       component.append(ExecutionBundle.message("default.jre.name"));
       //may be null if JrePathEditor is added to a GUI Form where the default constructor is used and setDefaultJreSelector isn't called
       if (myDefaultJreSelector != null) {
-        updateDefaultJrePresentation((@Nls String result) -> component.append(result, SimpleTextAttributes.GRAY_ATTRIBUTES));
+        updateDefaultJrePresentation((@Nls String description) -> component.append(description, SimpleTextAttributes.GRAY_ATTRIBUTES));
       }
     }
 

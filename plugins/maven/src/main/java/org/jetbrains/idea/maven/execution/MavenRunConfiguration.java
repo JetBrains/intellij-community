@@ -66,10 +66,12 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenDistribution;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
+import org.jetbrains.idea.maven.server.MavenWrapperDownloader;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Paths;
 import java.util.List;
@@ -548,6 +550,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     @NotNull
     @Override
     public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
+      checkMavenWrapperAndPatchJavaParams();
       final ProcessHandler processHandler = startProcess();
       ExecutionEnvironment environment = getEnvironment();
       TargetEnvironment targetEnvironment = environment.getPreparedTargetEnvironment(this, TargetProgressIndicator.EMPTY);
@@ -602,6 +605,31 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
           viewManager.onEvent(buildId, event);
         }
       };
+    }
+
+    private void checkMavenWrapperAndPatchJavaParams() {
+      if (myConfiguration.getGeneralSettings() == null || !MavenUtil.isWrapper(myConfiguration.getGeneralSettings())) return;
+
+      MavenDistributionsCache instance = MavenDistributionsCache.getInstance(myConfiguration.getProject());
+      String workingDirPath = myConfiguration.getRunnerParameters().getWorkingDirPath();
+      MavenDistribution wrapper = instance.getWrapper(workingDirPath);
+      if (wrapper == null) {
+        MavenWrapperDownloader.checkOrInstall(myConfiguration.getProject(), workingDirPath);
+      }
+      wrapper = instance.getWrapper(workingDirPath);
+      if (wrapper == null) return;
+      try {
+        JavaParameters javaParameters = getJavaParameters();
+        if (javaParameters == null || !javaParameters.getVMParametersList().hasProperty(MavenConstants.HOME_PROPERTY)) return;
+        String mavenHomePath = wrapper.getMavenHome().toFile().getCanonicalPath();
+
+        ParametersList vmParametersList = javaParameters.getVMParametersList();
+        if (Objects.equals(vmParametersList.getPropertyValue(MavenConstants.HOME_PROPERTY), wrapper.getMavenHome().toString())) return;
+        vmParametersList.addProperty(MavenConstants.HOME_PROPERTY, mavenHomePath);
+      }
+      catch (IOException | ExecutionException e) {
+        MavenLog.LOG.error(e);
+      }
     }
 
     @Override

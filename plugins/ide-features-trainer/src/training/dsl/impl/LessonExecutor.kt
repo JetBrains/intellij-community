@@ -354,6 +354,7 @@ internal class LessonExecutor(val lesson: KLesson,
     taskData.checkRestoreByTimer?.let {
       restoreRecorder.timerCheck(it) { checkFunction(); false }
     }
+    ?: checkFunction() // In case of regular restore check we need to check that restore should be performed just after another restore
   }
 
   private fun clearRestore() {

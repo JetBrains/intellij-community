@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManager
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBCheckBox
 import training.dsl.*
 import training.learn.LessonsBundle
@@ -120,4 +119,9 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
     get() = TaskTestContext.TestScriptProperties(duration = 20)
 
   override val suitableTips = listOf("SelectRunDebugConfiguration")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("run.configuration.help.link"),
+         LessonUtil.getHelpLink("run-debug-configuration.html")),
+  )
 }

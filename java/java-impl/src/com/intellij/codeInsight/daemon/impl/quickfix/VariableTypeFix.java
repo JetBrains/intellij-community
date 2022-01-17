@@ -34,7 +34,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
   private final PsiType myReturnType;
   protected final String myName;
 
-  public VariableTypeFix(@NotNull PsiVariable variable, @NotNull PsiType toReturn) {
+  protected VariableTypeFix(@NotNull PsiVariable variable, @NotNull PsiType toReturn) {
     super(variable);
     myReturnType = GenericsUtil.getVariableTypeByExpressionType(toReturn);
     myName = variable.getName();

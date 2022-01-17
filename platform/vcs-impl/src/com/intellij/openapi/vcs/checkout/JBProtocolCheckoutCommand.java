@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs.checkout;
 import com.intellij.openapi.application.JBProtocolCommand;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.CheckoutProviderEx;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -26,7 +26,7 @@ final class JBProtocolCheckoutCommand extends JBProtocolCommand {
   }
 
   @Override
-  public @NotNull Future<@Nullable @DialogMessage String> perform(@Nullable String target, @NotNull Map<String, String> parameters, @Nullable String fragment) {
+  public @NotNull Future<@Nullable @NotificationContent String> perform(@Nullable String target, @NotNull Map<String, String> parameters, @Nullable String fragment) {
     String repository = parameter(parameters, "checkout.repo");
 
     CheckoutProviderEx provider = (CheckoutProviderEx)CheckoutProvider.EXTENSION_POINT_NAME.findFirstSafe(

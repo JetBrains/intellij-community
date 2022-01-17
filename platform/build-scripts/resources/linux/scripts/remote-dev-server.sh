@@ -15,4 +15,4 @@ if [ ! -f "$REMOTE_DEV_SERVER_LAUNCHER_PATH" ]; then
   exit 1
 fi
 
-exec "$REMOTE_DEV_SERVER_LAUNCHER_PATH" "__script_name__" "$@"
+exec "$REMOTE_DEV_SERVER_LAUNCHER_PATH" "__script_name__" "__product_code__" "$@"

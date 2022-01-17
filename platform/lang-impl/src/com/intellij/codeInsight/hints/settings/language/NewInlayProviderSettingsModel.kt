@@ -27,8 +27,8 @@ class NewInlayProviderSettingsModel<T : Any>(
     get() = providerWithSettings.provider.name
   override val mainCheckBoxLabel: String
     get() = providerWithSettings.configurable.mainCheckboxText
-  override val groupId: String
-    get() = providerWithSettings.provider.groupId
+  override val group: InlayGroup
+    get() = providerWithSettings.provider.group
 
   override fun createFile(project: Project, fileType: FileType, document: Document): PsiFile =
     providerWithSettings.provider.createFile(project, fileType, document)

@@ -10,7 +10,7 @@ import java.util.concurrent.Future
 
 class OpenNewProjectWizardProtocolCommand : JBProtocolCommand(COMMAND_NAME) {
     override fun perform(target: String?, parameters: MutableMap<String, String>, fragment: String?): Future<String?> =
-        if (target != NEW_PROJECT_TARGET) CompletableFuture.completedFuture(IdeBundle.message("ide.protocol.unknown.target", target))
+        if (target != NEW_PROJECT_TARGET) CompletableFuture.completedFuture(IdeBundle.message("jb.protocol.unknown.target", target))
         else {
             showCreateNewProjectWizard(parameters)
             CompletableFuture.completedFuture(null)

@@ -26,6 +26,7 @@ import com.intellij.util.IconUtil;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
 import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class AddAssociationAction extends AnAction {
   private final FileAssociationsManager myManager;
@@ -53,7 +54,7 @@ class AddAssociationAction extends AnAction {
 
         final FileChooserDescriptor descriptor = new AnyXMLDescriptor(true) {
             @Override
-            public boolean isFileSelectable(VirtualFile file) {
+            public boolean isFileSelectable(@Nullable VirtualFile file) {
                 return super.isFileSelectable(file) && !file.equals(virtualFile);
             }
         };

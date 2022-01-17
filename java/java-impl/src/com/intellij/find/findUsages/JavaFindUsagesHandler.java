@@ -5,7 +5,6 @@ import com.intellij.find.FindBundle;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -13,6 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -138,7 +138,6 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
   @Override
   public PsiElement @NotNull [] getSecondaryElements() {
     PsiElement element = getPsiElement();
-    if (ApplicationManager.getApplication().isUnitTestMode()) return PsiElement.EMPTY_ARRAY;
     if (element instanceof PsiField) {
       Set<PsiMethod> accessors = getFieldAccessors((PsiField)element);
       if (!accessors.isEmpty()) {
@@ -157,6 +156,9 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
           return PsiUtilCore.toPsiElementArray(elements);
         }
       }
+    }
+    else if (element instanceof PsiClass && ((PsiClass)element).isRecord()) {
+      return ContainerUtil.findAllAsArray(((PsiClass)element).getConstructors(), LightRecordCanonicalConstructor.class);
     }
     return super.getSecondaryElements();
   }

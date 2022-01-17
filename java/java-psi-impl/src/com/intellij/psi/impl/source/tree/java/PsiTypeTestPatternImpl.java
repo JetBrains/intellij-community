@@ -7,8 +7,8 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 
 public class PsiTypeTestPatternImpl extends CompositePsiElement implements PsiTypeTestPattern, Constants {
   public PsiTypeTestPatternImpl() {
@@ -25,10 +25,10 @@ public class PsiTypeTestPatternImpl extends CompositePsiElement implements PsiTy
     throw new IllegalStateException(this.getText());
   }
 
-  @NotNull
+  @Nullable
   @Override
   public PsiPatternVariable getPatternVariable() {
-    return Objects.requireNonNull(PsiTreeUtil.getChildOfType(this, PsiPatternVariable.class));
+    return PsiTreeUtil.getChildOfType(this, PsiPatternVariable.class);
   }
 
 

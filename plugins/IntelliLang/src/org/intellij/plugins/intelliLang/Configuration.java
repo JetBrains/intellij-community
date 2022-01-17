@@ -331,7 +331,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     final List<Configuration> cfgList = new ArrayList<>();
     final Set<Object> visited = new HashSet<>();
     LanguageInjectionSupport.CONFIG_EP_NAME.processWithPluginDescriptor((configBean, pluginDescriptor) -> {
-      final ClassLoader loader = pluginDescriptor.getPluginClassLoader();
+      final ClassLoader loader = pluginDescriptor.getClassLoader();
       try {
         final Enumeration<URL> enumeration = loader.getResources(configBean.getConfigUrl());
         if (enumeration == null || !enumeration.hasMoreElements()) {

@@ -11,6 +11,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -712,6 +713,13 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       }
       super.paintChildren(g);
       drawBorder(g);
+    }
+
+    @Override
+    protected DefaultActionGroup getEntryPointActionGroup() {
+      AnAction source = ActionManager.getInstance().getAction("EditorTabsEntryPoint");
+      source.getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+      return new DefaultActionGroup(source);
     }
 
     @NotNull

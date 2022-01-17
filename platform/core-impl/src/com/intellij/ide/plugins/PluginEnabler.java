@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
@@ -16,12 +17,16 @@ public interface PluginEnabler {
   PluginEnabler HEADLESS = new DisabledPluginsState();
 
   static @NotNull PluginEnabler getInstance() {
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
+      return HEADLESS;
+    }
+
     Application application = ApplicationManager.getApplication();
-    return application == null ||
-           application.isHeadlessEnvironment() && !application.isUnitTestMode() ||
-           application.isDisposed() ?
-           HEADLESS :
-           application.getService(PluginEnabler.class);
+    if (application == null || application.isDisposed()) {
+      return HEADLESS;
+    }
+
+    return application.getService(PluginEnabler.class);
   }
 
   boolean isDisabled(@NotNull PluginId pluginId);

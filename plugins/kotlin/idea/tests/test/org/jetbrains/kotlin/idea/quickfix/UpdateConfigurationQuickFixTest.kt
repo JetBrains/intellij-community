@@ -4,14 +4,13 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.facet.FacetManager
 import com.intellij.facet.impl.FacetUtil
-import com.intellij.openapi.roots.ModuleRootModificationUtil.updateModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.impl.ZipHandler
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments.Companion.DEFAULT
 import org.jetbrains.kotlin.config.CompilerSettings.Companion.DEFAULT_ADDITIONAL_ARGUMENTS
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -161,6 +160,7 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
                 }
             },
             ThrowableRunnable { ConfigLibraryUtil.removeLibrary(module, "KotlinJavaRuntime") },
+            ThrowableRunnable { ZipHandler.clearFileAccessorCache() },
             ThrowableRunnable { super.tearDown() }
         )
     }

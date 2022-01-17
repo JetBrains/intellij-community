@@ -178,7 +178,7 @@ class FileTemplatesLoader implements Disposable {
     Set<URL> processedUrls = new HashSet<>();
     Set<ClassLoader> processedLoaders = new HashSet<>();
     for (IdeaPluginDescriptorImpl plugin : PluginManagerCore.getPluginSet().enabledPlugins) {
-      ClassLoader loader = plugin.getPluginClassLoader();
+      ClassLoader loader = plugin.getClassLoader();
       if (loader instanceof PluginAwareClassLoader && ((PluginAwareClassLoader)loader).getFiles().isEmpty() ||
           !processedLoaders.add(loader)) {
         // test or development mode, when IDEA_CORE's loader contains all the classpath

@@ -433,6 +433,7 @@
       <option name="WHILE_ON_NEW_LINE" value="true" />
       <option name="CATCH_ON_NEW_LINE" value="true" />
       <option name="FINALLY_ON_NEW_LINE" value="true" />
+      <option name="ALIGN_MULTILINE_PARAMETERS_IN_CALLS" value="true" />
       <option name="ALIGN_MULTILINE_BINARY_OPERATION" value="true" />
       <option name="ALIGN_MULTILINE_EXTENDS_LIST" value="true" />
       <option name="CALL_PARAMETERS_WRAP" value="1" />

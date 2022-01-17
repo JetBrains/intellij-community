@@ -35,6 +35,7 @@ private val gradleLogWriter = BufferedWriter(FileWriter(PathManager.getLogPath()
 private val GRADLE_OUTPUT_LOG = Logger.getInstance("GradleOutput")
 
 private const val DISABLE_GRADLE_AUTO_IMPORT = "external.system.auto.import.disabled"
+private const val DISABLE_ANDROID_GRADLE_PROJECT_STARTUP_ACTIVITY = "android.gradle.project.startup.activity.disabled"
 
 class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigurator {
   override fun getName() = "gradle"
@@ -43,6 +44,7 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
 
   override fun configureEnvironment(context: ConfiguratorContext) = context.run {
     Registry.get(DISABLE_GRADLE_AUTO_IMPORT).setValue(true)
+    Registry.get(DISABLE_ANDROID_GRADLE_PROJECT_STARTUP_ACTIVITY).setValue(true)
     val progressManager = ExternalSystemProgressNotificationManager.getInstance()
     progressManager.addNotificationListener(LoggingNotificationListener(context.logger))
     Unit

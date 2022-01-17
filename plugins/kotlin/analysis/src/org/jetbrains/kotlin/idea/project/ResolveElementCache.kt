@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.frontend.di.createContainerForBodyResolve
 import org.jetbrains.kotlin.idea.DaemonCodeAnalyzerStatusService
 import org.jetbrains.kotlin.idea.caches.project.LibraryInfo
+import org.jetbrains.kotlin.idea.caches.resolve.BindingTraceForBodyResolve
 import org.jetbrains.kotlin.idea.caches.resolve.CodeFragmentAnalyzer
 import org.jetbrains.kotlin.idea.caches.resolve.util.analyzeControlFlow
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
@@ -831,12 +832,10 @@ class ResolveElementCache(
     */
     private fun createDelegatingTrace(resolveElement: KtElement, filter: BindingTraceFilter): BindingTrace {
         return resolveSession.storageManager.createSafeTrace(
-            DelegatingBindingTrace(
+            BindingTraceForBodyResolve(
                 resolveSession.bindingContext,
-                "trace to resolve element",
-                resolveElement,
-                filter,
-                allowSliceRewrite = true
+                AnalyzingUtils.formDebugNameForBindingTrace("trace to resolve element", resolveElement),
+                filter
             )
         )
     }

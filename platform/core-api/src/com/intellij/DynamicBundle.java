@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
 import com.intellij.diagnostic.LoadingState;
@@ -45,7 +45,7 @@ public class DynamicBundle extends AbstractBundle {
       LanguageBundleEP langBundle = findLanguageBundle();
       if (langBundle != null) {
         PluginDescriptor pluginDescriptor = langBundle.pluginDescriptor;
-        ResourceBundle pluginBundle = super.findBundle(pathToBundle, pluginDescriptor == null ? getClass().getClassLoader() : pluginDescriptor.getPluginClassLoader(), control);
+        ResourceBundle pluginBundle = super.findBundle(pathToBundle, pluginDescriptor == null ? getClass().getClassLoader() : pluginDescriptor.getClassLoader(), control);
         if (pluginBundle != null) {
           try {
             if (DynamicBundleInternal.SET_PARENT != null && pluginBundle != base) {

@@ -26,22 +26,18 @@ object SimpleNodeJsTemplate : Template() {
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.simple.nodejs.description")
 
 
-    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind, reader: Reader): Boolean =
         module.configurator.moduleType == ModuleType.js
+                && when (module.configurator) {
+                    JsNodeTargetConfigurator, NodeJsSinglePlatformModuleConfigurator -> true
+                    else -> false
+                }
 
     @NonNls
     override val id: String = "simpleNodeJs"
 
     private const val mainFile = "Main.kt"
     override val filesToOpenInEditor = listOf(mainFile)
-
-    override fun isApplicableTo(
-        reader: Reader,
-        module: Module
-    ): Boolean = when (module.configurator) {
-        JsNodeTargetConfigurator, NodeJsSinglePlatformModuleConfigurator -> true
-        else -> false
-    }
 
     val useKotlinxNodejs by booleanSetting(
         KotlinNewProjectWizardBundle.message("module.template.simple.nodejs.use.kotlinx.nodejs"),

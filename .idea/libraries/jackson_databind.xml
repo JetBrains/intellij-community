@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="jackson-databind" type="repository">
-    <properties maven-id="com.fasterxml.jackson.core:jackson-databind:2.12.2">
+    <properties maven-id="com.fasterxml.jackson.core:jackson-databind:2.13.0">
       <exclude>
         <dependency maven-id="com.fasterxml.jackson.core:jackson-core" />
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.12.2/jackson-databind-2.12.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.12.2/jackson-annotations-2.12.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.13.0/jackson-databind-2.13.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.13.0/jackson-annotations-2.13.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.12.2/jackson-databind-2.12.2-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.12.2/jackson-annotations-2.12.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.13.0/jackson-databind-2.13.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.13.0/jackson-annotations-2.13.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -174,7 +174,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   @Nullable
   @Override
   public String getTooltipTextFor(PopupFactoryImpl.ActionItem value) {
-    return value.getDescription();
+    return value.getTooltip();
   }
 
   @Override

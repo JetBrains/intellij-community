@@ -128,7 +128,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     updatePluginDependencies(pluginIdMap);
     assertCanApply(pluginIdMap);
 
-    DynamicPluginEnablerState pluginEnablerState = DynamicPluginEnabler.getInstance().getState();
+    PluginEnabler pluginEnabler = PluginEnabler.getInstance();
+    DynamicPluginEnablerState pluginEnablerState = pluginEnabler instanceof DynamicPluginEnabler ?
+                                                   ((DynamicPluginEnabler)pluginEnabler).getState() :
+                                                   null;
     Set<PluginId> uninstallsRequiringRestart = new HashSet<>();
     for (IdeaPluginDescriptorImpl pluginDescriptor : myDynamicPluginsToUninstall) {
       myDiff.remove(pluginDescriptor);
@@ -141,7 +144,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
         getEnabledMap().remove(pluginId);
       }
 
-      pluginEnablerState.stopTracking(List.of(pluginId));
+      if (pluginEnablerState != null) {
+        pluginEnablerState.stopTracking(List.of(pluginId));
+      }
     }
 
     boolean installsRequiringRestart = myInstallsRequiringRestart;
@@ -173,7 +178,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     myDynamicPluginsToInstall.clear();
     myPluginsToRemoveOnCancel.clear();
 
-    boolean enableDisableAppliedWithoutRestart = applyEnableDisablePlugins(parent);
+    boolean enableDisableAppliedWithoutRestart = applyEnableDisablePlugins(pluginEnabler, parent);
     myDynamicPluginsToUninstall.clear();
     myDiff.clear();
 
@@ -201,7 +206,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     myPluginsToRemoveOnCancel.clear();
   }
 
-  private boolean applyEnableDisablePlugins(@Nullable JComponent parentComponent) {
+  private boolean applyEnableDisablePlugins(@NotNull PluginEnabler pluginEnabler,
+                                            @Nullable JComponent parentComponent) {
     EnumMap<PluginEnableDisableAction, List<IdeaPluginDescriptor>> descriptorsByAction = new EnumMap<>(PluginEnableDisableAction.class);
 
     for (Map.Entry<IdeaPluginDescriptor, Pair<PluginEnableDisableAction, PluginEnabledState>> entry : myDiff.entrySet()) {
@@ -226,15 +232,21 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       }
     }
 
-    boolean result = true;
-    DynamicPluginEnabler pluginEnabler = DynamicPluginEnabler.getInstance();
+    boolean appliedWithoutRestart = true;
     for (Map.Entry<PluginEnableDisableAction, List<IdeaPluginDescriptor>> entry : descriptorsByAction.entrySet()) {
-      result &= pluginEnabler.updatePluginsState(entry.getValue(),
-                                                 entry.getKey(),
-                                                 getProject(),
-                                                 parentComponent);
+      PluginEnableDisableAction action = entry.getKey();
+      List<IdeaPluginDescriptor> descriptors = entry.getValue();
+
+      appliedWithoutRestart &= pluginEnabler instanceof DynamicPluginEnabler ?
+                               ((DynamicPluginEnabler)pluginEnabler).updatePluginsState(descriptors,
+                                                                                        action,
+                                                                                        getProject(),
+                                                                                        parentComponent) :
+                               action.isEnable() ?
+                               pluginEnabler.enable(descriptors) :
+                               pluginEnabler.disable(descriptors);
     }
-    return result;
+    return appliedWithoutRestart;
   }
 
   public void pluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData) {

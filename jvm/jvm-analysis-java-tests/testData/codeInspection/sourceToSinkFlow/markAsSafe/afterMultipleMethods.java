@@ -11,11 +11,11 @@ class Simple {
     }
 
     @Untainted String foo() {
-        return "foo";
+      return "foo";
     }
 
     @Untainted String other() {
-        return "other";
+      return "other";
     }
 
     void sink(@Untainted String s1) {}

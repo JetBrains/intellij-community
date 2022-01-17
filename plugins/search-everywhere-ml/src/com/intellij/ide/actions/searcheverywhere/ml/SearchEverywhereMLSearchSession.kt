@@ -6,7 +6,6 @@ import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereCon
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.id.SearchEverywhereMlItemIdProvider
 import com.intellij.ide.actions.searcheverywhere.ml.performance.PerformanceTracker
-import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicReference
 
@@ -90,11 +89,11 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
     performanceTracker.stop()
   }
 
-  fun getMLWeight(contributor: SearchEverywhereContributor<*>, element: GotoActionModel.MatchedValue): Double {
+  fun getMLWeight(contributor: SearchEverywhereContributor<*>, element: Any, matchingDegree: Int): Double {
     val state = getCurrentSearchState()
-    if (state != null && isActionsTab(state.tabId)) {
+    if (state != null && isMLSupportedTab(state.tabId)) {
       val id = itemIdProvider.getId(element)
-      return state.getMLWeight(id, element, contributor, cachedContextInfo, element.matchingDegree)
+      return state.getMLWeight(id, element, contributor, cachedContextInfo, matchingDegree)
     }
     return -1.0
   }

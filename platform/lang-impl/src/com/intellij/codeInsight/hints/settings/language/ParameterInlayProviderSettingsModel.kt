@@ -21,8 +21,8 @@ class ParameterInlayProviderSettingsModel(
     get() = provider.mainCheckboxText
   override val name: String
     get() = CodeInsightBundle.message("settings.inlay.parameter.hints.panel.name")
-  override val groupId: String
-    get() = PARAMETERS_GROUP
+  override val group: InlayGroup
+    get() = InlayGroup.PARAMETERS_GROUP
   override val previewText: String?
     get() = null
 
@@ -53,9 +53,9 @@ class ParameterInlayProviderSettingsModel(
     )
   }
 
-  override fun collectAndApply(editor: Editor, file: PsiFile) = throw UnsupportedOperationException()
+  override fun collectAndApply(editor: Editor, file: PsiFile) {}
 
-  override fun collectAndApplyOnEdt(editor: Editor, file: PsiFile) = throw UnsupportedOperationException()
+  override fun collectAndApplyOnEdt(editor: Editor, file: PsiFile) {}
 
   override val description: String?
     get() = null

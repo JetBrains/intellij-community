@@ -306,9 +306,9 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     }
   }
 
-  private boolean processElement(@NotNull ProgressIndicator progressIndicator,
-                                 @NotNull Processor<? super FoundItemDescriptor<Object>> consumer,
-                                 FilteringGotoByModel<?> model, Object element, int degree) {
+  protected boolean processElement(@NotNull ProgressIndicator progressIndicator,
+                                   @NotNull Processor<? super FoundItemDescriptor<Object>> consumer,
+                                   FilteringGotoByModel<?> model, Object element, int degree) {
     if (progressIndicator.isCanceled()) return false;
 
     if (element == null) {

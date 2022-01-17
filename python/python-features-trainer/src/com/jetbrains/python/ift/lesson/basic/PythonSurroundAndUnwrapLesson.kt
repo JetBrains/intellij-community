@@ -3,7 +3,6 @@ package com.jetbrains.python.ift.lesson.basic
 
 import training.dsl.LessonSample
 import training.dsl.parseLessonSample
-import training.learn.LessonsBundle
 import training.learn.lesson.general.SurroundAndUnwrapLesson
 
 class PythonSurroundAndUnwrapLesson : SurroundAndUnwrapLesson() {
@@ -17,11 +16,4 @@ class PythonSurroundAndUnwrapLesson : SurroundAndUnwrapLesson() {
   override val surroundItems = arrayOf("try", "except")
 
   override val lineShiftBeforeUnwrap = -2
-
-  override val helpLinks: Map<String, String> = mapOf(
-    Pair(LessonsBundle.message("surround.and.unwrap.help.surround.code.fragments"),
-         "https://www.jetbrains.com/help/pycharm/surrounding-blocks-of-code-with-language-constructs.html"),
-    Pair(LessonsBundle.message("surround.and.unwrap.help.unwrapping.and.removing.statements"),
-         "https://www.jetbrains.com/help/pycharm/unwrapping-and-removing-statements.html"),
-  )
 }

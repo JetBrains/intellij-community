@@ -61,7 +61,7 @@ public class RedundantLambdaParameterTypeInspectionTest extends LightJavaCodeIns
   }
 
   public void testCallNoTypeArgs() {
-    doTest();
+    assertIntentionNotAvailable();
   }
 
   public void testCallNoTypeArgs1() {

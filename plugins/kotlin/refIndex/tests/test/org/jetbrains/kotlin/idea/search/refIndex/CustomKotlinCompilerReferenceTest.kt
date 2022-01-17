@@ -2,17 +2,25 @@
 package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.codeInsight.daemon.impl.MarkerType
+import com.intellij.compiler.CompilerReferenceService
+import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.testFramework.SkipSlowTestLocally
 import junit.framework.AssertionFailedError
 import junit.framework.TestCase
+import org.jetbrains.jps.backwardRefs.CompilerRef
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.highlighter.markers.OVERRIDDEN_FUNCTION
 import org.jetbrains.kotlin.idea.highlighter.markers.SUBCLASSED_CLASS
 import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.test.KotlinRoot
-import java.util.*
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import kotlin.io.path.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
@@ -160,6 +168,109 @@ class CustomKotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
         )
     }
 
+    fun testObjects() {
+        myFixture.configureByFiles(
+            "CompanionInstanceUsage.java",
+            "CompanionUsage.java",
+            "KotlinClass.kt",
+            "KotlinClassWithNamedCompanion.kt",
+            "MyObject.kt",
+            "NamedCompanionInstanceUsage.java",
+            "NamedCompanionUsage.java",
+            "NestedObjectInstanceUsage.java",
+            "NestedObjectUsage.java",
+            "ObjectInstanceUsage.java",
+            "ObjectUsage.java",
+            "SecondUsage.java",
+        )
+
+        rebuildProject()
+        doObjectUsagesTest(
+            objectName = "MyObject",
+            classFiles = listOf(
+                "NestedObjectInstanceUsage.java",
+                "NestedObjectUsage.java",
+                "ObjectInstanceUsage.java",
+                "ObjectUsage.java",
+                "SecondUsage.java",
+            ),
+            instanceFiles = listOf(
+                "ObjectInstanceUsage.java",
+                "SecondUsage.java",
+            ),
+        )
+
+        doObjectUsagesTest(
+            objectName = "MyObject.Nested",
+            classFiles = listOf(
+                "NestedObjectInstanceUsage.java",
+                "NestedObjectUsage.java",
+            ),
+            instanceFiles = listOf(
+                "NestedObjectInstanceUsage.java",
+            ),
+        )
+
+        doObjectUsagesTest(
+            objectName = "KotlinClass.Companion",
+            classFiles = listOf(
+                "CompanionUsage.java",
+            ),
+            instanceFiles = listOf(
+                "CompanionInstanceUsage.java",
+            ),
+        )
+
+        doObjectUsagesTest(
+            objectName = "KotlinClassWithNamedCompanion.Named",
+            classFiles = listOf(
+                "NamedCompanionUsage.java",
+            ),
+            instanceFiles = listOf(
+                "NamedCompanionInstanceUsage.java",
+            ),
+        )
+    }
+
+    private fun doObjectUsagesTest(objectName: String, classFiles: List<String>, instanceFiles: List<String>) {
+        val javaService = CompilerReferenceService.getInstance(project) as CompilerReferenceServiceBase<*>
+        val myObject = myFixture.findClass(objectName)
+        val compilerRefs = javaService.getCompilerRefsForTests(myObject) ?: error("$objectName: compiler refs is not found")
+        assertEquals(objectName, 2, compilerRefs.size)
+        val classRef = compilerRefs.firstIsInstanceOrNull<CompilerRef.CompilerClassHierarchyElementDef>()
+            ?: error("$objectName: class ref is not found")
+
+        val instanceRef = compilerRefs.firstIsInstanceOrNull<CompilerRef.CompilerMember>()
+            ?: error("$objectName: instance ref is not found")
+
+        assertCompilerRefs(
+            "$objectName class usages",
+            javaService,
+            classRef,
+            classFiles,
+        )
+
+        assertCompilerRefs(
+            "$objectName instance usages",
+            javaService,
+            instanceRef,
+            instanceFiles,
+        )
+    }
+
+    private fun assertCompilerRefs(
+        errorMessage: String,
+        service: CompilerReferenceServiceBase<*>,
+        compilerRef: CompilerRef,
+        files: List<String>,
+    ) {
+        assertEquals(
+            errorMessage,
+            files,
+            service.getReferentFilesForTests(compilerRef, true)?.map(VirtualFile::getName)?.sorted().orEmpty(),
+        )
+    }
+
     fun testTooltips() {
         myFixture.configureByFiles(
             "anonObject.kt",
@@ -202,4 +313,30 @@ class CustomKotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
         .findAll()
         .map { it.getKotlinFqName().toString() }
         .sorted()
+
+    fun testNonPresentedClass(): Unit = doTestNonPresentedClass(7)
+
+    fun testNonPresentedClassWithCompanion(): Unit = doTestNonPresentedClass(13)
+
+    private fun doTestNonPresentedClass(declarationsCount: Int) {
+        myFixture.configureByFiles(
+            "Hierarchy.java",
+            "KotlinOnlyClass.kt",
+            "Parameter.java",
+        )
+
+        val kotlinOnlyClass = myFixture.findClass("one.KotlinOnlyClass").unwrapped as KtClass
+        val declarations = kotlinOnlyClass.declarations.fold(mutableListOf<KtDeclaration>()) { list, declaration ->
+            if (declaration is KtObjectDeclaration) list += declaration.declarations else list += declaration
+            list
+        }
+
+        assertEquals(declarationsCount, declarations.size)
+        rebuildProject()
+        for (declaration in declarations) {
+            val referentFiles = getReferentFiles(declaration, withJavaIndex = true) ?: error("${declaration.name}: file is not found")
+            assertTrue(declaration.name, "Hierarchy.java" in referentFiles)
+            assertTrue(declaration.name, "Parameter.java" in referentFiles)
+        }
+    }
 }

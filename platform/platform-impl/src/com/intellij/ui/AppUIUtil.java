@@ -107,7 +107,7 @@ public final class AppUIUtil {
 
   public static boolean isWindowIconAlreadyExternallySet() {
     if (SystemInfoRt.isMac) {
-      return ourMacDocIconSet || (!PlatformUtils.isCodeWithMeGuest() && !PluginManagerCore.isRunningFromSources());
+      return ourMacDocIconSet || (!PlatformUtils.isJetBrainsClient() && !PluginManagerCore.isRunningFromSources());
     }
 
     // todo[tav] JBR supports loading icon resource (id=2000) from the exe launcher, remove when OpenJDK supports it as well

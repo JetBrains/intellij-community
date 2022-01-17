@@ -1,7 +1,0 @@
-{
-    "mainFile": "Main.kt",
-    "usages": [
-        "Read.kt",
-        "Write.kt"
-    ]
-}

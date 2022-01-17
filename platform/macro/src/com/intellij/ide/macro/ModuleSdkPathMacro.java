@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class ModuleSdkPathMacro extends Macro {
+public class ModuleSdkPathMacro extends Macro implements PathMacro {
   @NotNull
   @Override
   public String getName() {

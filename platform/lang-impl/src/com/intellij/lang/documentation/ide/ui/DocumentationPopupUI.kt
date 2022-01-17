@@ -121,7 +121,7 @@ internal class DocumentationPopupUI(
     myPopup = popup
 
     DataManager.registerDataProvider(component) { dataId ->
-      if (DOCUMENTATION_POPUP_KEY.`is`(dataId)) {
+      if (DOCUMENTATION_POPUP.`is`(dataId)) {
         popup
       }
       else {

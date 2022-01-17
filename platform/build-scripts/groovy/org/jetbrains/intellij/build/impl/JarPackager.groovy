@@ -271,8 +271,7 @@ final class JarPackager {
                                                            Map<Path, JpsLibrary> copiedFiles,
                                                            BuildContext buildContext) {
     Map<JpsLibrary, List<Path>> toMerge = new HashMap<JpsLibrary, List<Path>>()
-    // the only purpose of this - construct path for DistributionFileEntry.path
-    String relativePathToLibFile = layoutSpec.getOutputFilePath("lib")
+    String basePathToLibFile = layoutSpec.getOutputFilePath("lib")
 
     MethodHandle isLibraryMergeable = BuildHelper.getInstance(buildContext).isLibraryMergeable
 
@@ -281,9 +280,13 @@ final class JarPackager {
     }
 
     for (ProjectLibraryData libraryData in layout.includedProjectLibraries) {
+      // the only purpose of this - construct path for DistributionFileEntry.path
+      String relativePathToLibFile = basePathToLibFile
+      Path outputDirForLibFile = outputDir
+
       String relativePath = libraryData.relativeOutputPath
       if (relativePath != null && !relativePath.isEmpty()) {
-        outputDir = outputDir.resolve(relativePath)
+        outputDirForLibFile = outputDirForLibFile.resolve(relativePath)
         relativePathToLibFile += "/" + relativePath
       }
 
@@ -309,7 +312,7 @@ final class JarPackager {
       }
       else if (packMode == PackMode.STANDALONE_MERGED) {
         String fileName = libNameToMergedJarFileName(libName)
-        buildLibrary(library, relativePathToLibFile, outputDir.resolve(fileName), files, layoutSpec, buildContext)
+        buildLibrary(library, relativePathToLibFile, outputDirForLibFile.resolve(fileName), files, layoutSpec, buildContext)
       }
       else {
         for (Path file : files) {
@@ -317,7 +320,7 @@ final class JarPackager {
           if (packMode == PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME) {
             fileName = removeVersionFromJar(fileName)
           }
-          buildLibrary(library, relativePathToLibFile, outputDir.resolve(fileName), List.of(file), layoutSpec, buildContext)
+          buildLibrary(library, relativePathToLibFile, outputDirForLibFile.resolve(fileName), List.of(file), layoutSpec, buildContext)
         }
       }
     }
@@ -330,7 +333,7 @@ final class JarPackager {
 
         if (libName == "async-profiler-windows") {
           // custom name, removeVersionFromJar doesn't support strings like `2.1-ea-4`
-          buildLibrary(library, relativePathToLibFile, outputDir.resolve("async-profiler-windows.jar"), files, layoutSpec, buildContext)
+          buildLibrary(library, basePathToLibFile, outputDir.resolve("async-profiler-windows.jar"), files, layoutSpec, buildContext)
           return
         }
 
@@ -341,7 +344,7 @@ final class JarPackager {
           if (fileName.endsWith("-rt.jar") || fileName.startsWith("jps-") || fileName.contains("-agent") ||
               fileName == "yjp-controller-api-redist.jar") {
             files.remove(i)
-            buildLibrary(library, relativePathToLibFile, outputDir.resolve(removeVersionFromJar(fileName)), List.of(file), layoutSpec, buildContext)
+            buildLibrary(library, basePathToLibFile, outputDir.resolve(removeVersionFromJar(fileName)), List.of(file), layoutSpec, buildContext)
           }
         }
         if (!files.isEmpty()) {

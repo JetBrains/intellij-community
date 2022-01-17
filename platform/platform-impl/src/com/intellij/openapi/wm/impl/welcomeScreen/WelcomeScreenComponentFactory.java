@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.application.Topics;
@@ -326,5 +326,13 @@ public final class WelcomeScreenComponentFactory {
       title += " (" + suffix + ")";
     }
     return title;
+  }
+
+  public static @NotNull JPanel createNotificationPanel(@NotNull Disposable parentDisposable) {
+    JPanel panel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT));
+    panel.setBorder(JBUI.Borders.emptyTop(10));
+    panel.add(createErrorsLink(parentDisposable));
+    panel.add(createEventLink("", parentDisposable));
+    return panel;
   }
 }

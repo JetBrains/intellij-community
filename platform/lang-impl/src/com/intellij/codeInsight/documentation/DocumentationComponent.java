@@ -922,6 +922,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
+    public void update(AnActionEvent e) {
+      var project = e.getProject();
+      e.getPresentation().setEnabledAndVisible(project != null && LookupManager.getInstance(project).getActiveLookup() != null);
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO;
     }

@@ -2589,6 +2589,20 @@ public final class UIUtil {
     return false;
   }
 
+  public static void runWhenVisibilityChanged(@NotNull Component component, Runnable runnable) {
+    component.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentShown(ComponentEvent e) {
+        runnable.run();
+      }
+
+      @Override
+      public void componentHidden(ComponentEvent e) {
+        runnable.run();
+      }
+    });
+  }
+
   public static @Nullable JComponent mergeComponentsWithAnchor(PanelWithAnchor @NotNull ... panels) {
     return mergeComponentsWithAnchor(Arrays.asList(panels));
   }

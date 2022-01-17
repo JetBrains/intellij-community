@@ -236,7 +236,7 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
       return new FoundItemDescriptor<>(element, element.getMatchingDegree(), 1.0);
     }
 
-    double mlWeight = service.getMlWeight(this, element);
+    double mlWeight = service.getMlWeight(this, element, element.getMatchingDegree());
     if (mlWeight > 0) {
       return new FoundItemDescriptor<>(element, element.getMatchingDegree(), mlWeight);
     }

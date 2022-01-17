@@ -657,6 +657,9 @@ public class JavaDocInfoGenerator {
 
     generateAnnotations(buffer, aClass, place, true, false, true);
     generateModifiers(buffer, aClass, false);
+    if (aClass.isAnnotationType()) {
+      buffer.append("@");
+    }
     appendStyledSpan(buffer, getHighlightingManager().getKeywordAttributes(), classKeyword);
     buffer.append(' ');
     String refText = JavaDocUtil.getReferenceText(aClass.getProject(), aClass);

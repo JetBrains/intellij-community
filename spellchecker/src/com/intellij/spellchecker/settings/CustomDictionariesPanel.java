@@ -91,8 +91,8 @@ public class CustomDictionariesPanel extends JPanel {
   private void doChooseFiles(@NotNull Project project, @NotNull Consumer<? super List<VirtualFile>> consumer) {
     final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, true) {
       @Override
-      public boolean isFileSelectable(VirtualFile file) {
-        return extensionEquals(file.getPath(), "dic");
+      public boolean isFileSelectable(@Nullable VirtualFile file) {
+        return file != null && extensionEquals(file.getPath(), "dic");
       }
     };
 

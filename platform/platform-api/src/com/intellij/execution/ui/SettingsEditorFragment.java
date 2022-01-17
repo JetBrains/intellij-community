@@ -58,6 +58,8 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   private boolean myRemovable = true;
   private boolean myCanBeHidden = false;
 
+  private boolean isSelected;
+
   public SettingsEditorFragment(String id,
                                 @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                 @Nls(capitalization = Nls.Capitalization.Title) String group,
@@ -210,7 +212,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   }
 
   public boolean isSelected() {
-    return myComponent.isVisible();
+    return isSelected;
   }
 
   public boolean isInitiallyVisible(Settings settings) {
@@ -288,6 +290,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   }
 
   public void setSelected(boolean selected) {
+    isSelected = selected;
     myComponent.setVisible(selected);
     if (myHintComponent != null) {
       myHintComponent.setVisible(selected);

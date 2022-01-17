@@ -223,4 +223,9 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
     get() = TaskTestContext.TestScriptProperties(duration = 20)
 
   override val suitableTips = listOf("recent-locations", "RecentFiles")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("recent.files.locations.help.link"),
+         LessonUtil.getHelpLink("navigating-through-the-source-code.html#recent_locations")),
+  )
 }

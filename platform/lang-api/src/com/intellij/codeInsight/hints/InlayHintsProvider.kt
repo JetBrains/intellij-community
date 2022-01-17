@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.lang.LanguageExtensionPoint
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -20,19 +21,21 @@ import kotlin.reflect.KMutableProperty0
 
 private const val EXTENSION_POINT_NAME = "com.intellij.codeInsight.inlayProvider"
 
-const val CODE_VISION_GROUP = "code.vision"
-const val PARAMETERS_GROUP = "parameters"
-const val TYPES_GROUP = "types"
-const val VALUES_GROUP = "values"
-const val ANNOTATIONS_GROUP = "annotations"
-const val METHOD_CHAINS_GROUP = "method.chains"
-const val LAMBDAS_GROUP = "lambdas"
-const val CODE_AUTHOR_GROUP = "code.author"
-const val URL_PATH_GROUP = "url.path"
-const val OTHER_GROUP = "other"
+enum class InlayGroup(val key: String) {
+  CODE_VISION_GROUP("settings.hints.group.code.vision"),
+  PARAMETERS_GROUP("settings.hints.group.parameters"),
+  TYPES_GROUP("settings.hints.group.types"),
+  VALUES_GROUP("settings.hints.group.values"),
+  ANNOTATIONS_GROUP("settings.hints.group.annotations"),
+  METHOD_CHAINS_GROUP("settings.hints.group.method.chains"),
+  LAMBDAS_GROUP("settings.hints.group.lambdas"),
+  CODE_AUTHOR_GROUP("settings.hints.group.code.author"),
+  URL_PATH_GROUP("settings.hints.group.url.path"),
+  OTHER_GROUP("settings.hints.group.other");
 
-val sortedGroups = arrayOf(CODE_VISION_GROUP, PARAMETERS_GROUP, TYPES_GROUP, VALUES_GROUP, ANNOTATIONS_GROUP, METHOD_CHAINS_GROUP,
-  LAMBDAS_GROUP, CODE_AUTHOR_GROUP, URL_PATH_GROUP, OTHER_GROUP)
+  override fun toString(): @Nls String {
+    return ApplicationBundle.message(key)
+  }}
 
 object InlayHintsProviderExtension : LanguageExtension<InlayHintsProvider<*>>(EXTENSION_POINT_NAME) {
   private fun findLanguagesWithHintsSupport(): List<Language> {
@@ -85,7 +88,7 @@ interface InlayHintsProvider<T : Any> {
   val name: String
 
   @JvmDefault
-  val groupId: String get() = OTHER_GROUP
+  val group: InlayGroup get() = InlayGroup.OTHER_GROUP
 
   /**
    * Used for persisting settings.

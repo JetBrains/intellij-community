@@ -3,11 +3,13 @@ package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.documentation.*
-import com.intellij.codeInsight.documentation.DocumentationManager.decorate
-import com.intellij.codeInsight.documentation.DocumentationManager.getLink
+import com.intellij.codeInsight.documentation.DocumentationManager.*
 import com.intellij.ide.DataManager
 import com.intellij.lang.documentation.DocumentationData
-import com.intellij.lang.documentation.ide.actions.*
+import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_BROWSER
+import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_HISTORY
+import com.intellij.lang.documentation.ide.actions.PRIMARY_GROUP_ID
+import com.intellij.lang.documentation.ide.actions.registerBackForwardActions
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.openapi.Disposable
@@ -67,7 +69,7 @@ internal class DocumentationUI(
 
     val contextMenu = PopupHandler.installPopupMenu(
       editorPane,
-      DOCUMENTATION_PRIMARY_GROUP_ID,
+      PRIMARY_GROUP_ID,
       "documentation.pane.content.menu"
     )
     Disposer.register(this) { editorPane.removeMouseListener(contextMenu) }
@@ -79,9 +81,9 @@ internal class DocumentationUI(
 
   override fun getData(dataId: String): Any? {
     return when {
-      DOCUMENTATION_BROWSER_DATA_KEY.`is`(dataId) -> browser
-      DOCUMENTATION_HISTORY_DATA_KEY.`is`(dataId) -> browser.history
-      DOCUMENTATION_TARGET_POINTER_KEY.`is`(dataId) -> browser.targetPointer
+      DOCUMENTATION_BROWSER.`is`(dataId) -> browser
+      DOCUMENTATION_HISTORY.`is`(dataId) -> browser.history
+      SELECTED_QUICK_DOC_TEXT.`is`(dataId) -> editorPane.selectedText?.replace(160.toChar(), ' ') // IDEA-86633
       else -> null
     }
   }

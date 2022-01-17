@@ -5,6 +5,7 @@ import com.intellij.build.BuildProgressListener
 import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.FilePosition
 import com.intellij.build.SyncViewManager
+import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.EventResult
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.MessageEventResult
@@ -17,8 +18,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
-import com.intellij.openapi.progress.TaskInfo
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
@@ -109,12 +108,22 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
+  fun addWrapperProgressText(@Nls text: String) = doIfImportInProcess {
+    addText(SyncBundle.message("maven.sync.wrapper"), text, true)
+  }
+
+  @Synchronized
   private fun addText(parentId: Any, @Nls text: String, stdout: Boolean) = doIfImportInProcess {
     if (StringUtil.isEmpty(text)) {
       return
     }
     val toPrint = if (text.endsWith('\n')) text else "$text\n"
     mySyncView.onEvent(mySyncId, OutputBuildEventImpl(parentId, toPrint, stdout))
+  }
+
+  @Synchronized
+  fun addBuildEvent(buildEvent: BuildEvent) = doIfImportInProcess {
+    mySyncView.onEvent(mySyncId, buildEvent)
   }
 
 
@@ -187,34 +196,6 @@ class MavenSyncConsole(private val myProject: Project) {
       }, MessageEvent.Kind.WARNING)
     }
     completeTask(mySyncId, SyncBundle.message("maven.sync.wrapper"), SuccessResultImpl())
-  }
-
-  fun progressIndicatorForWrapper(project: Project, taskInfo: TaskInfo): BackgroundableProcessIndicator {
-    return WrapperProgressIndicator(project, taskInfo)
-  }
-
-  inner class WrapperProgressIndicator(project: Project, taskInfo: TaskInfo) : BackgroundableProcessIndicator(project, taskInfo) {
-    var myFraction: Long = 0
-
-    override fun setText(text: String) = doIfImportInProcess {
-      super.setText(text)
-      addText(SyncBundle.message("maven.sync.wrapper"), text, true)
-    }
-
-    override fun setFraction(fraction: Double) = doIfImportInProcess {
-      super.setFraction(fraction)
-      val newFraction = (fraction * 100).toLong()
-      if (myFraction == newFraction) return@doIfImportInProcess
-      myFraction = newFraction;
-      mySyncView.onEvent(mySyncId,
-        ProgressBuildEventImpl(SyncBundle.message("maven.sync.wrapper"), SyncBundle.message("maven.sync.wrapper"),
-          System.currentTimeMillis(),
-          SyncBundle.message("maven.sync.wrapper.downloading.progress", myFraction, 100) ,
-          100,
-          myFraction,
-          "%"
-        ))
-    }
   }
 
   @Synchronized

@@ -14,7 +14,6 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Alarm;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -33,6 +32,7 @@ import git4idea.GitRemoteBranch;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
+import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.push.GitPushSupport;
 import git4idea.push.GitPushTarget;
@@ -389,21 +389,15 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
     //run git rev-list --count pushTargetForBranch_or_hash..localName for outgoing ( @{push} can be used only for equal branch names)
     //see git-push help -> simple push strategy
     //git rev-list --count localName..localName@{u} for incoming
-
-    GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REV_LIST);
-    handler.setSilent(true);
     String branchName = localBranch.getName();
-    handler.addParameters("--count", incoming
-                                     ? branchName + ".." + branchName + "@{u}"
-                                     : localHashForRemoteBranch.asString() + ".." + branchName);
-    try {
-      String output = Git.getInstance().runCommand(handler).getOutputOrThrow().trim();
-      return !StringUtil.startsWithChar(output, '0');
-    }
-    catch (VcsException e) {
-      LOG.warn("Can't get outgoing info (git rev-list " + branchName + " failed):" + e.getMessage());
+    String from = incoming ? branchName : localHashForRemoteBranch.asString();
+    String to = incoming ? branchName + "@{u}" : branchName;
+    String numberOfCommitsBetween = GitHistoryUtils.getNumberOfCommitsBetween(repository, from, to);
+    if (numberOfCommitsBetween == null) {
+      LOG.warn("Can't get outgoing info (git rev-list " + branchName + " failed)");
       return false;
     }
+    return !StringUtil.startsWithChar(numberOfCommitsBetween, '0');
   }
 
   private static @NotNull Collection<GitLocalBranch> getBranches(@Nullable GitRepository repository,

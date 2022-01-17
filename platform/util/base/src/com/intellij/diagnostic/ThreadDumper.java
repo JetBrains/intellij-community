@@ -27,8 +27,13 @@ public final class ThreadDumper {
 
   @NotNull
   public static String dumpThreadsToString() {
+    return dumpThreadsToString(getThreadInfos());
+  }
+
+  @NotNull
+  public static String dumpThreadsToString(@NotNull ThreadInfo[] threadInfos) {
     StringWriter writer = new StringWriter();
-    dumpThreadInfos(getThreadInfos(ManagementFactory.getThreadMXBean(), true), writer);
+    dumpThreadInfos(threadInfos, writer);
     return writer.toString();
   }
 

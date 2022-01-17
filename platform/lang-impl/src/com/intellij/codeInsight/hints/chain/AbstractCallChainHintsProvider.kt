@@ -82,8 +82,6 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
   override val name: String
     get() = CodeInsightBundle.message("inlay.hints.chain.call.chain")
 
-  override val key: SettingsKey<Settings> = SettingsKey(this::class.simpleName!!)
-
   final override fun createConfigurable(settings: Settings): ImmediateConfigurable = object : ImmediateConfigurable {
     val uniqueTypeCountName = CodeInsightBundle.message("inlay.hints.chain.minimal.unique.type.count.to.show.hints")
 

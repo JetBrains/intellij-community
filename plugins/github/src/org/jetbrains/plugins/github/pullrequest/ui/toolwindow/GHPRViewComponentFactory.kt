@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
@@ -37,6 +38,7 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -50,9 +52,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesTreeFactory
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRDiffRequestChainProducer
-import org.jetbrains.plugins.github.pullrequest.ui.changes.showPullRequestProgress
+import org.jetbrains.plugins.github.pullrequest.ui.changes.*
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRBranchesModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataModelImpl
@@ -73,10 +73,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                         pullRequest: GHPRIdentifier,
                                         private val disposable: Disposable) {
   private val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, disposable)
-
-  private val diffRequestProducer = GHPRDiffRequestChainProducer(project, dataProvider,
-                                                                 dataContext.avatarIconsProvider,
-                                                                 dataContext.securityService.currentUser)
 
   private val detailsLoadingModel = GHCompletableFutureLoadingModel<GHPullRequest>(disposable)
   private val commitsLoadingModel = GHCompletableFutureLoadingModel<List<GHCommit>>(disposable)
@@ -107,6 +103,22 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     dataProvider.changesData.reloadChanges()
   }
 
+  private val repository: GitRepository get() = dataContext.repositoryDataService.remoteCoordinates.repository
+
+  private val diffRequestProducer: DiffRequestChainProducer =
+    object : GHPRDiffRequestChainProducer(project, dataProvider, dataContext.avatarIconsProvider, dataContext.securityService.currentUser) {
+
+      private val viewedStateSupport = GHPRViewedStateDiffSupportImpl(repository, dataProvider.viewedStateData)
+
+      override fun createCustomContext(change: Change): Map<Key<*>, Any> {
+        if (diffBridge.activeTree != GHPRDiffController.ActiveTree.FILES) return emptyMap()
+
+        return mapOf(
+          GHPRViewedStateDiffSupport.KEY to viewedStateSupport,
+          GHPRViewedStateDiffSupport.PULL_REQUEST_FILE to ChangesUtil.getFilePath(change)
+        )
+      }
+    }
   private val diffBridge = GHPRDiffController(dataProvider.diffRequestModel, diffRequestProducer)
 
   private val uiDisposable = Disposer.newDisposable().also {
@@ -130,7 +142,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       .apply {
         setDataProvider { dataId ->
           when {
-            GHPRActionKeys.GIT_REPOSITORY.`is`(dataId) -> dataContext.repositoryDataService.remoteCoordinates.repository
+            GHPRActionKeys.GIT_REPOSITORY.`is`(dataId) -> repository
             GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER.`is`(dataId) -> this@GHPRViewComponentFactory.dataProvider
             DiffRequestChainProducer.DATA_KEY.`is`(dataId) -> diffRequestProducer
             else -> null
@@ -206,7 +218,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                                     detailsLoadingErrorHandler).createWithUpdatesStripe(uiDisposable) { _, model ->
       val branchesModel = GHPRBranchesModelImpl(model,
                                                 dataProvider.detailsData,
-                                                dataContext.repositoryDataService.repositoryMapping.gitRemoteUrlCoordinates.repository,
+                                                repository,
                                                 disposable)
 
       val detailsModel = GHPRDetailsModelImpl(model)
@@ -251,7 +263,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
               HashImpl.build(commit.oid),
               commit.parents.map { HashImpl.build(it.oid) },
               commit.committer?.date?.time ?: 0L,
-              dataContext.repositoryDataService.remoteCoordinates.repository.root,
+              repository.root,
               commit.messageHeadline,
               commit.author?.name ?: "unknown user",
               commit.author?.email ?: "",
@@ -319,10 +331,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
         val tree = UIUtil.findComponentOfType(it, ChangesTree::class.java)
 
         diffBridge.filesTree = tree
-        tree?.showPullRequestProgress(
-          uiDisposable,
-          dataContext.repositoryDataService.remoteCoordinates.repository, dataProvider.reviewData, dataProvider.viewedStateData
-        )
+        tree?.showPullRequestProgress(uiDisposable, repository, dataProvider.reviewData, dataProvider.viewedStateData)
       }
       .createWithUpdatesStripe(uiDisposable) { parent, model ->
         val getCustomData = { tree: ChangesTree, dataId: String ->

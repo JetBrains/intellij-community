@@ -6,7 +6,6 @@ import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereMLRankingModelProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereRankingModel
-import com.intellij.ide.util.gotoByName.GotoActionModel
 
 internal class SearchEverywhereMlSearchState(
   val sessionStartTime: Long, val searchStartTime: Long,
@@ -47,7 +46,7 @@ internal class SearchEverywhereMlSearchState(
 
   @Synchronized
   fun getMLWeight(elementId: Int,
-                  element: GotoActionModel.MatchedValue,
+                  element: Any,
                   contributor: SearchEverywhereContributor<*>,
                   context: SearchEverywhereMLContextInfo,
                   priority: Int): Double {

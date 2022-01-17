@@ -120,11 +120,17 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     }
 
     @TestOnly
-    fun StarterModuleBuilder.setupTestModule(module: Module, consumer: StarterContext.() -> Unit) {
+    fun StarterModuleBuilder.setupTestModule(module: Module, starterId: String? = null, consumer: StarterContext.() -> Unit) {
       this.apply {
         starterContext.starterPack = getStarterPack()
         moduleJdk = ModuleRootManager.getInstance(module).sdk
-        starterContext.starter = starterContext.starterPack.starters.first()
+
+        starterContext.starter = if (starterId == null) {
+          starterContext.starterPack.starters.first()
+        }
+        else {
+          starterContext.starterPack.starters.find { it.id == starterId }
+        }
         starterContext.starterDependencyConfig = loadTestDependencyConfig(starterContext.starter!!)
       }
 

@@ -113,6 +113,10 @@ internal class SearchEverywhereMLStatisticsCollector {
 
       val actionManager = ActionManager.getInstance()
       data[COLLECTED_RESULTS_DATA_KEY] = elements.take(REPORTED_ITEMS_LIMIT).map {
+        if (project != null && project.isDisposed) {
+          return@execute
+        }
+
         val result: HashMap<String, Any> = hashMapOf(
           CONTRIBUTOR_ID_KEY to it.contributor.searchProviderId
         )
@@ -178,7 +182,7 @@ internal class SearchEverywhereMLStatisticsCollector {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("mlse.log", 11)
+    private val GROUP = EventLogGroup("mlse.log", 12)
     private val EMPTY_ARRAY = IntArray(0)
     private const val REPORTED_ITEMS_LIMIT = 100
 

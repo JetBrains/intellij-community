@@ -27,6 +27,10 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.plugins.notebooks.editor.NotebookCellSelectionModelProvider"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookIntervalPointerFactoryProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.plugins.notebooks.editor.NotebookIntervalPointerFactoryProvider"/>
+    </extensionPoint>
 
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookCellInlayController"
                     interface="org.jetbrains.plugins.notebooks.editor.NotebookCellInlayController$Factory"

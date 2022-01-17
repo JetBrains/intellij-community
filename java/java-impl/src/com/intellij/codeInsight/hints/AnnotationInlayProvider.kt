@@ -28,8 +28,8 @@ import kotlin.reflect.KMutableProperty0
 
 class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Settings> {
 
-  override val groupId: String
-    get() = ANNOTATIONS_GROUP
+  override val group: InlayGroup
+    get() = InlayGroup.ANNOTATIONS_GROUP
 
   override fun getCollectorFor(file: PsiFile,
                                editor: Editor,

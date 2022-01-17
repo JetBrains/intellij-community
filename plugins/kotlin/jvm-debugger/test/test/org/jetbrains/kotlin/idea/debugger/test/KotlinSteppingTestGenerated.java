@@ -231,6 +231,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/stepInto/inlineClass.kt");
         }
 
+        @TestMetadata("inlineFunctionLambdaOneLine.kt")
+        public void testInlineFunctionLambdaOneLine() throws Exception {
+            runTest("testData/stepping/stepInto/inlineFunctionLambdaOneLine.kt");
+        }
+
         @TestMetadata("inlineOnly.kt")
         public void testInlineOnly() throws Exception {
             runTest("testData/stepping/stepInto/inlineOnly.kt");
@@ -430,6 +435,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
         @TestMetadata("inlineFunInPropertyGetter.kt")
         public void testInlineFunInPropertyGetter() throws Exception {
             runTest("testData/stepping/stepOver/inlineFunInPropertyGetter.kt");
+        }
+
+        @TestMetadata("inlineFunctionLambdaOneLine.kt")
+        public void testInlineFunctionLambdaOneLine() throws Exception {
+            runTest("testData/stepping/stepOver/inlineFunctionLambdaOneLine.kt");
         }
 
         @TestMetadata("inlineFunctionSameLines.kt")

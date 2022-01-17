@@ -9,7 +9,7 @@
         <compilerArguments>
           <option name="pluginClasspaths">
             <array>
-              <option value="$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar" />
+              <option value="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.5.10-release-949/kotlinx-serialization-compiler-plugin-for-ide-1.5.10-release-949.jar" />
             </array>
           </option>
         </compilerArguments>
@@ -30,7 +30,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
-    <orderEntry type="library" name="Gradle" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="library" name="kotlinx-datetime" level="project" />
     <orderEntry type="library" name="kotlinx-datetime-jvm" level="project" />

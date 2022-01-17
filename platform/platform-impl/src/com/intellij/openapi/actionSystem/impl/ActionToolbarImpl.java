@@ -29,10 +29,12 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -126,6 +128,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private final boolean myDecorateButtons;
 
   private final ToolbarUpdater myUpdater;
+  private CancellablePromise<List<AnAction>> myLastUpdate;
+  private boolean myForcedUpdateRequested = true;
 
   /** @see ActionToolbar#adjustTheSameSize(boolean) */
   private boolean myAdjustTheSameSize;
@@ -151,6 +155,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private boolean myReservePlaceAutoPopupIcon = true;
   private boolean myShowSeparatorTitles;
   private Image myCachedImage;
+
+  private final EventDispatcher<ActionToolbarListener> myListeners = EventDispatcher.create(ActionToolbarListener.class);
 
   public ActionToolbarImpl(@NotNull String place, @NotNull ActionGroup actionGroup, boolean horizontal) {
     this(place, actionGroup, horizontal, false);
@@ -223,9 +229,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (ComponentUtil.getParentOfType(CellRendererPane.class, this) != null) return;
     ourToolbars.add(this);
 
-    // should update action right on the showing, otherwise toolbar may not be displayed at all,
-    // since by default all updates are postponed until frame gets focused.
-    updateActionsImmediately(true);
+    if (isShowing()) {
+      updateActionsImmediately();
+    }
+    else {
+      UiNotifyConnector.doWhenFirstShown(this, () -> {
+        if (myForcedUpdateRequested && myLastUpdate == null) { // a first update really
+          updateActionsImmediately();
+        }
+      });
+    }
   }
 
   protected boolean isInsideNavBar() {
@@ -1176,9 +1189,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
   }
 
-  private CancellablePromise<List<AnAction>> myLastUpdate;
-  private boolean myForcedUpdateRequested = true;
-
   private void addLoadingIcon() {
     AnimatedIcon icon = AnimatedIcon.Default.INSTANCE;
     JLabel label = new JLabel();
@@ -1207,6 +1217,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   protected void actionsUpdated(boolean forced, @NotNull List<? extends AnAction> newVisibleActions) {
+    myListeners.getMulticaster().actionsUpdated();
     if (forced || canUpdateActions(newVisibleActions)) {
       myForcedUpdateRequested = false;
       myCachedImage = null;
@@ -1341,6 +1352,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   public void setShowSeparatorTitles(boolean showSeparatorTitles) {
     myShowSeparatorTitles = showSeparatorTitles;
+  }
+
+  @Override
+  public void addListener(@NotNull ActionToolbarListener listener, @NotNull Disposable parentDisposable) {
+    myListeners.addListener(listener, parentDisposable);
   }
 
   protected @NotNull DataContext getDataContext() {

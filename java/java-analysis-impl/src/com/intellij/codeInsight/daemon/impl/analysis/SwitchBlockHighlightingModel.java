@@ -452,7 +452,7 @@ public class SwitchBlockHighlightingModel {
         if (!(patternType instanceof PsiClassType) && !(patternType instanceof PsiArrayType)) {
           String expectedTypes = JavaErrorBundle.message("switch.class.or.array.type.expected");
           String message = JavaErrorBundle.message("unexpected.type", expectedTypes, JavaHighlightUtil.formatType(patternType));
-          HighlightInfo info = createError(label, message);
+          HighlightInfo info = createError(patternVariable, message);
           PsiPrimitiveType primitiveType = ObjectUtils.tryCast(patternType, PsiPrimitiveType.class);
           if (primitiveType != null) {
             IntentionAction fix = getFixFactory().createReplacePrimitiveWithBoxedTypeAction(mySelectorType, typeElement);
@@ -461,10 +461,10 @@ public class SwitchBlockHighlightingModel {
           return info;
         }
         if (!TypeConversionUtil.areTypesConvertible(mySelectorType, patternType)) {
-          return HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, patternType, label.getTextRange(), 0);
+          return HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, patternType, patternVariable.getTextRange(), 0);
         }
         else if (JavaGenericsUtil.isUncheckedCast(patternType, mySelectorType)) {
-          return createError(label, JavaErrorBundle.message("unsafe.cast.in.instanceof", JavaHighlightUtil.formatType(mySelectorType),
+          return createError(patternVariable, JavaErrorBundle.message("unsafe.cast.in.instanceof", JavaHighlightUtil.formatType(mySelectorType),
                                                             JavaHighlightUtil.formatType(patternType)));
         }
         return null;

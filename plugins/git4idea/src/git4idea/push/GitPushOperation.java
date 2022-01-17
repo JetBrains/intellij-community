@@ -51,6 +51,7 @@ import java.util.*;
 
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.vcs.log.util.VcsLogUtil.HASH_REGEX;
+import static com.intellij.vcs.log.util.VcsLogUtil.HEAD;
 import static git4idea.commands.GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS;
 import static git4idea.push.GitPushNativeResult.Type.FORCED_UPDATE;
 import static git4idea.push.GitPushNativeResult.Type.NEW_REF;
@@ -323,12 +324,22 @@ public class GitPushOperation {
 
   @Nullable
   private static GitPushNativeResult getPushedBranchOrCommit(@NotNull List<? extends GitPushNativeResult> results) {
-    return ContainerUtil.find(results, result -> isBranchOrHash(result));
+    return ContainerUtil.find(results, result -> isBranch(result) || isHash(result) || isHeadRelativeReference(result));
   }
 
-  private static boolean isBranchOrHash(@NotNull GitPushNativeResult result) {
+  private static boolean isBranch(@NotNull GitPushNativeResult result) {
     String sourceRef = result.getSourceRef();
     return sourceRef.startsWith("refs/heads/") || HASH_REGEX.matcher(sourceRef).matches();
+  }
+
+  private static boolean isHash(@NotNull GitPushNativeResult result) {
+    String sourceRef = result.getSourceRef();
+    return HASH_REGEX.matcher(sourceRef).matches();
+  }
+
+  private static boolean isHeadRelativeReference(@NotNull GitPushNativeResult result) {
+    String sourceRef = result.getSourceRef();
+    return sourceRef.startsWith(HEAD);
   }
 
   private int collectNumberOfPushedCommits(@NotNull VirtualFile root, @NotNull GitPushNativeResult result) {

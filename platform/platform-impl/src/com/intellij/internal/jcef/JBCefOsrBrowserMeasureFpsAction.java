@@ -7,7 +7,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.jcef.JBCefFpsMeter;
@@ -25,17 +24,13 @@ import java.awt.event.*;
  * @author tav
  */
 public class JBCefOsrBrowserMeasureFpsAction extends DumbAwareAction {
-  private static final @NotNull String FPS_METER_ID = "ide.browser.jcef.osr.measureFPS";
+  private static final @NotNull String FPS_METER_ID = RegistryManager.getInstance().get("ide.browser.jcef.osr.measureFPS.id").asString();
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    if (!RegistryManager.getInstance().is("ide.browser.jcef.osr.measureFPS")) {
-      Logger.getInstance(JBCefOsrBrowserMeasureFpsAction.class).warn("The registry key is disabled: ide.browser.jcef.osr.measureFPS");
-      return;
-    }
     Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (focusOwner == null || !focusOwner.getClass().getName().contains("JBCefOsrComponent")) {
-      throw new IllegalStateException("no JBCef OSR browser is in focus");
+      throw new IllegalStateException("No JCEF OSR browser is in focus");
     }
 
     Notification notification = JBCefApp.NOTIFICATION_GROUP.getValue().
@@ -44,6 +39,7 @@ public class JBCefOsrBrowserMeasureFpsAction extends DumbAwareAction {
     notification.notify(null);
 
     final JBCefFpsMeter fpsMeter = JBCefFpsMeter.get(FPS_METER_ID);
+    if (fpsMeter == null) return;
 
     focusOwner.addKeyListener(new KeyAdapter() {
       @Override

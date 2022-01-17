@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader;
-import com.intellij.openapi.actionSystem.impl.WeakTimerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -68,7 +67,6 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   private List<AnAction> myVisibleActions = new ArrayList<>();
   private final MenuItemPresentationFactory myPresentationFactory = new MenuItemPresentationFactory();
   private final TimerListener myTimerListener = new MyTimerListener();
-  private final WeakTimerListener myWeakTimerListener = new WeakTimerListener(myTimerListener);
   protected final Disposable myDisposable = Disposer.newDisposable();
 
   @Nullable private final ClockPanel myClockPanel;
@@ -283,8 +281,8 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
         if (!(action instanceof ActionGroup)) continue;
         PopupMenuPreloader.install(this, ActionPlaces.MAIN_MENU, null, () -> (ActionGroup)action);
       }
-      actionManager.addTimerListener(myWeakTimerListener);
-      Disposer.register(myDisposable, () -> actionManager.removeTimerListener(myWeakTimerListener));
+      actionManager.addTimerListener(myTimerListener);
+      Disposer.register(myDisposable, () -> actionManager.removeTimerListener(myTimerListener));
     });
 
     Disposer.register(ApplicationManager.getApplication(), myDisposable);

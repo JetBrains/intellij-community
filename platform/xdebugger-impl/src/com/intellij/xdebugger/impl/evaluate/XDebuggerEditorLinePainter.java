@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.evaluate;
 
 import com.intellij.ide.lightEdit.LightEdit;
@@ -29,6 +29,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.inline.XDebuggerInlayUtil;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererImpl;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
@@ -133,11 +134,14 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     res.add(new LineExtensionInfo(name, attributes));
 
     Variable var = new Variable(name, lineNumber);
-    VariableValue variableValue = oldValues.computeIfAbsent(var, k -> new VariableValue(text.toString(), null, value.hashCode()));
-    if (variableValue.valueNodeHashCode != value.hashCode()) {
-      variableValue.old = variableValue.actual;
+    VariableValue variableValue = oldValues.get(var);
+    if (variableValue == null) {
+      variableValue = new VariableValue(text.toString(), null);
+      oldValues.put(var, variableValue);
+    }
+    else if (!StringUtil.equals(text.toString(), variableValue.actual)) {
+      variableValue.setOld(variableValue.actual);
       variableValue.actual = text.toString();
-      variableValue.valueNodeHashCode = value.hashCode();
     }
 
     if (!variableValue.isChanged()) {
@@ -274,16 +278,14 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     private static final String ARRAY_DELIMITER = ", ";
     private @NlsSafe String actual;
     private @NlsSafe String old;
-    private int valueNodeHashCode;
 
-    VariableValue(String actual, String old, int valueNodeHashCode) {
+    VariableValue(String actual, String old) {
       this.actual = actual;
       this.old = old;
-      this.valueNodeHashCode = valueNodeHashCode;
     }
 
     public boolean isChanged() {
-      return old != null && !StringUtil.equals(actual, old);
+      return old != null && !StringUtil.equals(actual, old) && !isCollecting(actual);
     }
 
     void produceChangedParts(List<? super LineExtensionInfo> result) {
@@ -309,6 +311,17 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
       }
 
       result.add(new LineExtensionInfo(actual, getChangedAttributes()));
+    }
+
+    void setOld(String text) {
+      if (!isCollecting(text)) {
+        this.old = text;
+      }
+    }
+
+    //TODO:implement better detection
+    static boolean isCollecting(@NotNull String text) {
+      return text.contains(XDebuggerUIConstants.getCollectingDataMessage());
     }
 
     @Nullable

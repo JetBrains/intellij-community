@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.AbstractBundle;
@@ -189,15 +189,17 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   public boolean hasStaticDescription;
 
   private @Nullable @Nls String getLocalizedString(@Nullable String bundleName, String key) {
+    PluginDescriptor descriptor = getPluginDescriptor();
     String baseName = bundleName != null ? bundleName :
-                      bundle == null ? getPluginDescriptor().getResourceBundleBaseName() : bundle;
+                      bundle != null ? bundle :
+                      descriptor.getResourceBundleBaseName();
     if (baseName == null || key == null) {
       if (bundleName != null) {
         LOG.warn(implementationClass);
       }
       return null;
     }
-    ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(baseName, getPluginDescriptor().getPluginClassLoader());
+    ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(baseName, descriptor.getClassLoader());
     return AbstractBundle.message(resourceBundle, key);
   }
 

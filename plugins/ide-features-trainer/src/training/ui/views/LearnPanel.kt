@@ -10,7 +10,6 @@ import com.intellij.openapi.wm.impl.CloseProjectWindowHelper
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.VerticalBox
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
@@ -48,8 +47,6 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   private val nextButton = JButton()
   private val prevButton = JButton()
 
-  private val footer = JPanel()
-
   private val lessonPanelBoxLayout = BoxLayout(lessonPanel, BoxLayout.Y_AXIS)
 
   internal var scrollToNewMessages = true
@@ -66,11 +63,10 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
 
     scrollToNewMessages = true
     clearMessages()
-    footer.removeAll()
     lessonPanel.removeAll()
     removeAll()
 
-    layout = BorderLayout()
+    layout = BoxLayout(this, BoxLayout.Y_AXIS)
     isOpaque = true
 
     initLessonPanel()
@@ -78,8 +74,8 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     add(lessonPanel, BorderLayout.CENTER)
 
     if (lesson.helpLinks.isNotEmpty() && Registry.`is`("ift.help.links", false)) {
-      initFooterPanel(lesson)
-      add(footer, BorderLayout.PAGE_END)
+      lessonPanel.add(rigid(0, 16))
+      lessonPanel.add(createFooterPanel(lesson))
     }
   }
 
@@ -95,7 +91,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     lessonPanel.repaint()
   }
 
-  private fun initFooterPanel(lesson: Lesson) {
+  private fun createFooterPanel(lesson: Lesson): JPanel {
     val shiftedFooter = JPanel()
     shiftedFooter.name = "footerLessonPanel"
     shiftedFooter.layout = BoxLayout(shiftedFooter, BoxLayout.Y_AXIS)
@@ -105,7 +101,8 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
 
     val footerContent = JPanel()
     footerContent.isOpaque = false
-    footerContent.layout = VerticalLayout(5)
+    footerContent.layout = BoxLayout(footerContent, BoxLayout.Y_AXIS)
+    footerContent.add(rigid(0, 16))
     footerContent.add(JLabel(IdeBundle.message("welcome.screen.learnIde.help.and.resources.text")).also {
       it.font = UISettings.instance.getFont(1).deriveFont(Font.BOLD)
     })
@@ -115,16 +112,20 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
       val linkLabel = LinkLabel<Any>(text, null) { _, _ ->
         openLinkInBrowser(link)
       }
+      footerContent.add(rigid(0, 5))
       footerContent.add(linkLabel.wrapWithUrlPanel())
     }
 
     shiftedFooter.add(footerContent)
     shiftedFooter.add(Box.createHorizontalGlue())
 
+    val footer = JPanel()
     footer.add(shiftedFooter)
+    footer.alignmentX = Component.LEFT_ALIGNMENT
     footer.isOpaque = false
     footer.layout = BoxLayout(footer, BoxLayout.Y_AXIS)
-    footer.border = UISettings.instance.checkmarkShiftBorder
+    footer.border = UISettings.instance.lessonHeaderBorder
+    return footer
   }
 
   private fun initLessonPanel() {

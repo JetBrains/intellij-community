@@ -13,11 +13,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.ui.UIBundle
 import com.intellij.ui.table.JBTable
-import training.dsl.LessonContext
+import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
-import training.dsl.TaskRuntimeContext
-import training.dsl.checkToolWindowState
-import training.dsl.closeAllFindTabs
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
@@ -147,4 +144,9 @@ abstract class DeclarationAndUsagesLesson
   private data class MyPosition(val file: PsiFile, val offset: Int)
 
   override val suitableTips = listOf("GoToDeclaration", "ShowUsages")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("declaration.and.usages.help.link"),
+         LessonUtil.getHelpLink("navigating-through-the-source-code.html#go_to_declaration")),
+  )
 }

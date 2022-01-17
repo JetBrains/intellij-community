@@ -16,6 +16,10 @@ class InlaySettingsConfigurable(val project: Project) : Configurable {
     return panel
   }
 
+  override fun getPreferredFocusedComponent(): JComponent {
+    return panel.tree
+  }
+
   override fun isModified(): Boolean {
     return panel.isModified()
   }

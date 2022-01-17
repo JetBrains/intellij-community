@@ -3,13 +3,16 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.surroundWith.JavaWithTryFinallySurrounder;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -47,5 +50,10 @@ public class AddFinallyFix extends BaseIntentionAction {
       JavaPsiFacade.getElementFactory(project).createStatementFromText(myTryStatement.getText() + "finally {\n\n}", myTryStatement);
     PsiTryStatement result = (PsiTryStatement)myTryStatement.replace(replacement);
     JavaWithTryFinallySurrounder.moveCaretToFinallyBlock(project, editor, Objects.requireNonNull(result.getFinallyBlock()));
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new AddFinallyFix(PsiTreeUtil.findSameElementInCopy(myTryStatement, target));
   }
 }

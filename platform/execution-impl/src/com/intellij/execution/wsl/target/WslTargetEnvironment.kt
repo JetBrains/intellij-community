@@ -119,7 +119,7 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
     @Throws(IOException::class)
     override fun resolveTargetPath(relativePath: String): String {
       val localPath = FileUtil.toCanonicalPath(FileUtil.join(localRoot.toString(), relativePath))
-      return toLinuxPath(localPath)!!
+      return toLinuxPath(localPath) ?: throw RuntimeException("Cannot find Linux path for $localPath (${distribution.msId})")
     }
 
     @Throws(IOException::class)

@@ -15,7 +15,7 @@
           </option>
           <option name="pluginClasspaths">
             <array>
-              <option value="$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar" />
+              <option value="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.5.10-release-949/kotlinx-serialization-compiler-plugin-for-ide-1.5.10-release-949.jar" />
             </array>
           </option>
           <option name="errors">

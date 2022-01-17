@@ -135,7 +135,7 @@ public final class MavenServerManager implements Disposable {
         connector.connect();
       }
     }
-    MavenLog.LOG.warn("[connector] get " + connector);
+    MavenLog.LOG.debug("[connector] get " + connector);
     return connector;
   }
 
@@ -148,7 +148,7 @@ public final class MavenServerManager implements Disposable {
       if (connector != null) return connector;
       connector = findCompatibleConnector(project, jdk, multimoduleDirectory);
       if (connector != null) {
-        MavenLog.LOG.info("[connector] use existing connector for " + connector);
+        MavenLog.LOG.debug("[connector] use existing connector for " + connector);
         connector.addMultimoduleDir(multimoduleDirectory);
       }
       else {
@@ -185,7 +185,7 @@ public final class MavenServerManager implements Disposable {
     MavenServerConnector connector;
     if (MavenUtil.isProjectTrustedEnoughToImport(project, false)) {
       connector = new MavenServerConnectorImpl(project, this, jdk, vmOptions, debugPort, distribution, multimoduleDirectory);
-      MavenLog.LOG.info("[connector] new maven connector " + connector);
+      MavenLog.LOG.debug("[connector] new maven connector " + connector);
     }
     else {
       MavenLog.LOG.warn("Project " + project + " not trusted enough. Will not start maven for it");
@@ -443,10 +443,19 @@ public final class MavenServerManager implements Disposable {
           settings.setOffline(false);
         }
 
-        settings.setProjectJdk(MavenUtil.getSdkPath(ProjectRootManager.getInstance(project).getProjectSdk()));
+        RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(project);
+        String sdkPath = MavenUtil.getSdkPath(ProjectRootManager.getInstance(project).getProjectSdk());
+        if (sdkPath != null) {
+          sdkPath = transformer.toRemotePath(sdkPath);
+        }
+        settings.setProjectJdk(sdkPath);
         myConnector = MavenServerManager.this.getConnector(project, multiModuleProjectDirectory);
-        return myConnector.createEmbedder(new MavenEmbedderSettings(settings, workingDirectory, multiModuleProjectDirectory));
+
+        return myConnector.createEmbedder(
+          new MavenEmbedderSettings(settings, workingDirectory == null ? null : transformer.toRemotePath(workingDirectory),
+                                    transformer.toRemotePath(multiModuleProjectDirectory)));
       }
+
 
       @Override
       protected synchronized void cleanup() {
@@ -516,7 +525,12 @@ public final class MavenServerManager implements Disposable {
     MavenServerSettings result = new MavenServerSettings();
     result.setLoggingLevel(settings.getOutputLevel().getLevel());
     result.setOffline(settings.isWorkOffline());
-    result.setMavenHome(settings.getEffectiveMavenHome());
+    File mavenHome = settings.getEffectiveMavenHome();
+    if (mavenHome != null) {
+      String remotePath = transformer.toRemotePath(mavenHome.getAbsolutePath());
+      mavenHome = remotePath == null ? null : new File(remotePath);
+    }
+    result.setMavenHome(mavenHome);
     result.setUserSettingsFile(
       transformer == RemotePathTransformerFactory.Transformer.ID ? settings.getEffectiveUserSettingsIoFile() : null);
     result.setGlobalSettingsFile(

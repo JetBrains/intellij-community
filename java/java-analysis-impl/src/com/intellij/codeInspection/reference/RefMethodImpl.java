@@ -603,6 +603,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   public void updateThrowsList(PsiClassType exceptionType) {
+    LOG.assertTrue(isInitialized());
     for (RefMethod refSuper : getSuperMethods()) {
       ((RefMethodImpl)refSuper).updateThrowsList(exceptionType);
     }

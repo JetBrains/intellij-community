@@ -473,7 +473,9 @@ public abstract class ContractValue {
 
     @Override
     public boolean equals(Object obj) {
-      return obj == this || obj instanceof ContractTempDescriptor && ((ContractTempDescriptor)obj).myValue == myValue;
+      return obj == this || obj instanceof ContractTempDescriptor &&
+                            ((ContractTempDescriptor)obj).myValue == myValue &&
+                            ((ContractTempDescriptor)obj).myType.equals(myType);
     }
 
     @Override

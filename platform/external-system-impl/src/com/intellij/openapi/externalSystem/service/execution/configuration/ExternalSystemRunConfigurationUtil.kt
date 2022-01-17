@@ -146,9 +146,7 @@ fun <S> SettingsFragmentsContainer<S>.addWorkingDirectoryFragment(
   workingDirectoryInfo,
   { it, c -> it.getWorkingDirectory().let { p -> if (p.isNotBlank()) c.workingDirectory = p } },
   { it, c -> it.setWorkingDirectory(c.workingDirectory) }
-).apply {
-  isRemovable = false
-}.addValidation {
+).addValidation {
   if (it.getWorkingDirectory().isBlank()) {
     throw RuntimeConfigurationError(workingDirectoryInfo.emptyFieldError)
   }
@@ -187,7 +185,7 @@ fun <S> SettingsFragmentsContainer<S>.addVmOptionsFragment(
   info: LabeledSettingsFragmentInfo,
   getVmOptions: S.() -> String?,
   setVmOptions: S.(String?) -> Unit
-) = addLabeledTextSettingsEditorFragment(
+) = addRemovableLabeledTextSettingsEditorFragment(
   RawCommandLineEditor().apply {
     MacrosDialog.addMacroSupport(editorField, MacrosDialog.Filters.ALL) { false }
   },
@@ -240,7 +238,7 @@ fun <S> SettingsFragmentsContainer<S>.addPathFragment(
   pathFragmentInfo: PathFragmentInfo,
   getPath: S.() -> String?,
   setPath: S.(String?) -> Unit
-) = addLabeledTextSettingsEditorFragment(
+) = addRemovableLabeledTextSettingsEditorFragment(
   textFieldWithBrowseButton(
     project,
     pathFragmentInfo.fileChooserTitle,
@@ -258,12 +256,12 @@ fun <S> SettingsFragmentsContainer<S>.addPathFragment(
   { setPath(it?.let(::getCanonicalPath)) }
 )
 
-fun <S, C> SettingsFragmentsContainer<S>.addLabeledTextSettingsEditorFragment(
+fun <S, C> SettingsFragmentsContainer<S>.addRemovableLabeledTextSettingsEditorFragment(
   component: C,
   info: LabeledSettingsFragmentInfo,
   getter: S.() -> String?,
   setter: S.(String?) -> Unit
-) where C : JComponent, C : TextAccessor = addLabeledSettingsEditorFragment(
+) where C : JComponent, C : TextAccessor = addRemovableLabeledSettingsEditorFragment(
   component,
   info,
   TextAccessor::getText,
@@ -272,17 +270,17 @@ fun <S, C> SettingsFragmentsContainer<S>.addLabeledTextSettingsEditorFragment(
   setter
 )
 
-fun <S, C : JComponent, V> SettingsFragmentsContainer<S>.addLabeledSettingsEditorFragment(
+fun <S, C : JComponent, V> SettingsFragmentsContainer<S>.addRemovableLabeledSettingsEditorFragment(
   component: C,
   info: LabeledSettingsFragmentInfo,
   getterC: C.() -> V,
   setterC: C.(V) -> Unit,
   getterS: S.() -> V?,
   setterS: S.(V?) -> Unit
-) = addLabeledSettingsEditorFragment(
+) = addRemovableLabeledSettingsEditorFragment(
   component, info, getterC, setterC, { null }, getterS, setterS)
 
-fun <S, C : JComponent, V> SettingsFragmentsContainer<S>.addLabeledSettingsEditorFragment(
+fun <S, C : JComponent, V> SettingsFragmentsContainer<S>.addRemovableLabeledSettingsEditorFragment(
   component: C,
   info: LabeledSettingsFragmentInfo,
   getterC: C.() -> V,

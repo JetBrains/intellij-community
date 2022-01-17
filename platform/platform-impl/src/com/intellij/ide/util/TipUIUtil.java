@@ -117,12 +117,13 @@ public final class TipUIUtil {
       }
       else {
         PluginDescriptor pluginDescriptor = tip.getPluginDescriptor();
-        ClassLoader tipLoader = pluginDescriptor == null ? TipUIUtil.class.getClassLoader() :
-                                ObjectUtils.notNull(pluginDescriptor.getPluginClassLoader(), TipUIUtil.class.getClassLoader());
+        ClassLoader tipLoader = pluginDescriptor != null ?
+                                ObjectUtils.notNull(pluginDescriptor.getClassLoader(), TipUIUtil.class.getClassLoader()) :
+                                TipUIUtil.class.getClassLoader();
 
         DynamicBundle.LanguageBundleEP langBundle = findLanguageBundle();
         if (langBundle != null) {
-          tipLoader = langBundle.pluginDescriptor.getPluginClassLoader();
+          tipLoader = langBundle.pluginDescriptor.getClassLoader();
         }
 
         String ideCode = ApplicationInfoEx.getInstanceEx().getApiVersionAsNumber().getProductCode().toLowerCase(Locale.ROOT);
