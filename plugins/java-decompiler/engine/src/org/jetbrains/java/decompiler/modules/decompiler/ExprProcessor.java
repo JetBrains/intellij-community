@@ -16,7 +16,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotationWriteHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.struct.StructClass;
-import org.jetbrains.java.decompiler.struct.StructTypePath;
+import org.jetbrains.java.decompiler.struct.StructTypePathEntry;
 import org.jetbrains.java.decompiler.struct.attr.StructBootstrapMethodsAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
@@ -654,12 +654,12 @@ public class ExprProcessor implements CodeConstants {
     int tp = type.type;
     StringBuilder sb = new StringBuilder();
     typePathWriteStack.removeIf(typeAnnotationWriteHelper -> {
-      StructTypePath path = typeAnnotationWriteHelper.getPaths().peek();
+      StructTypePathEntry path = typeAnnotationWriteHelper.getPaths().peek();
       if (path == null && type.arrayDim == 0) { // nested type
         typeAnnotationWriteHelper.writeTo(sb);
         return true;
       }
-      if (path != null && path.getTypePathKind() == StructTypePath.Kind.ARRAY.getOpcode() &&
+      if (path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.ARRAY.getOpcode() &&
         typeAnnotationWriteHelper.getPaths().size() == type.arrayDim
       ) {
         typeAnnotationWriteHelper.writeTo(sb);
@@ -715,8 +715,8 @@ public class ExprProcessor implements CodeConstants {
 
   public static void checkNestedTypeAnnotation(StringBuilder sb, List<TypeAnnotationWriteHelper> typePathWriteStack) {
     typePathWriteStack.removeIf(typeAnnotationWriteHelper -> {
-      StructTypePath path = typeAnnotationWriteHelper.getPaths().peek();
-      if (path != null && path.getTypePathKind() == StructTypePath.Kind.NESTED.getOpcode()) {
+      StructTypePathEntry path = typeAnnotationWriteHelper.getPaths().peek();
+      if (path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.NESTED.getOpcode()) {
         typeAnnotationWriteHelper.getPaths().pop();
         if (typeAnnotationWriteHelper.getPaths().isEmpty()) {
           typeAnnotationWriteHelper.writeTo(sb);

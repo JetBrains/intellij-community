@@ -1,11 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.typeann;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
-import org.jetbrains.java.decompiler.struct.StructTypePath;
+import org.jetbrains.java.decompiler.struct.StructTypePathEntry;
 
-import java.lang.annotation.Target;
 import java.util.List;
 
 public class TypeAnnotation {
@@ -34,10 +33,15 @@ public class TypeAnnotation {
 
   private final int targetType;
   private final TargetInfo targetInfo;
-  private final @NotNull List<StructTypePath> paths;
+  private final @NotNull List<StructTypePathEntry> paths;
   private final @NotNull AnnotationExprent annotation;
 
-  public TypeAnnotation(int targetType, TargetInfo targetInfo, @NotNull List<StructTypePath> paths, @NotNull AnnotationExprent annotation) {
+  public TypeAnnotation(
+    int targetType,
+    TargetInfo targetInfo,
+    @NotNull List<StructTypePathEntry> paths,
+    @NotNull AnnotationExprent annotation
+  ) {
     this.targetType = targetType;
     this.targetInfo = targetInfo;
     this.paths = paths;
@@ -64,7 +68,7 @@ public class TypeAnnotation {
     return annotation;
   }
 
-  public @NotNull List<StructTypePath> getPaths() {
+  public @NotNull List<StructTypePathEntry> getPaths() {
     return paths;
   }
 }

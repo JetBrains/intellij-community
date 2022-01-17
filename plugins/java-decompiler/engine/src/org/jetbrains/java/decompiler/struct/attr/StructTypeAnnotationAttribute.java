@@ -4,7 +4,7 @@ package org.jetbrains.java.decompiler.struct.attr;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.typeann.TargetInfo;
 import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotation;
-import org.jetbrains.java.decompiler.struct.StructTypePath;
+import org.jetbrains.java.decompiler.struct.StructTypePathEntry;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
@@ -90,9 +90,9 @@ public class StructTypeAnnotationAttribute extends StructGeneralAttribute {
     }
 
     int pathLength = data.readUnsignedByte();
-    List<StructTypePath> paths = new ArrayList<>(pathLength);
+    List<StructTypePathEntry> paths = new ArrayList<>(pathLength);
     for (int i = 0; i < pathLength; i++) {
-      paths.add(i, new StructTypePath(data.readUnsignedByte(), data.readUnsignedByte()));
+      paths.add(i, new StructTypePathEntry(data.readUnsignedByte(), data.readUnsignedByte()));
     }
 
     AnnotationExprent annotation = StructAnnotationAttribute.parseAnnotation(data, pool);
