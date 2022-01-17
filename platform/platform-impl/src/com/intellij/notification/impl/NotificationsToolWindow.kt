@@ -650,7 +650,7 @@ private class NotificationGroupComponent(private val myMainContent: Notification
   }
 
   private fun updateContent() {
-    if (!mySuggestionType) {
+    if (!mySuggestionType && !myTimeAlarm.isDisposed) {
       myTimeAlarm.cancelAllRequests()
 
       object : Runnable {
@@ -659,7 +659,7 @@ private class NotificationGroupComponent(private val myMainContent: Notification
             timeComponent.text = formatPrettyDateTime(timeComponent.getClientProperty(NotificationComponent.TIME_KEY) as Long)
           }
 
-          if (myTimeComponents.isNotEmpty()) {
+          if (myTimeComponents.isNotEmpty() && !myTimeAlarm.isDisposed) {
             myTimeAlarm.addRequest(this, 30000)
           }
         }
