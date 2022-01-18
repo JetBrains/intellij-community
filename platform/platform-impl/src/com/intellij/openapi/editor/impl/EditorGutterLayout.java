@@ -39,7 +39,7 @@ public class EditorGutterLayout {
   public EditorMouseEventArea getEditorMouseAreaByOffset(int offset) {
     int off = 0;
     for (GutterArea area : getLayout()) {
-      off += area.widthFunc.get();
+      off += area.width();
       if (off >= offset) {
         return area.mouseEventAreaType;
       }
