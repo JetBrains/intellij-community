@@ -11,7 +11,7 @@ import java.util.List;
 
 @ApiStatus.Internal
 public interface ConfigImportSettings {
-  void importFinished(@NotNull Path newConfigPath);
+  void importFinished(@NotNull Path newConfigPath, @Nullable String pathSelectorOfOtherIde);
 
   /**
    * If there are no configs for previous versions of this product,
@@ -44,4 +44,11 @@ public interface ConfigImportSettings {
                                        @NotNull Path oldConfigDir,
                                        @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
                                        @NotNull List<IdeaPluginDescriptor> pluginsToDownload) { }
+
+  /**
+   * @return true if configDirectory should not be seen as import candidate while finding configuration directories
+   */
+  default boolean shouldNotBeSeenAsImportCandidate(Path configDirectory, @Nullable String productPrefixOtherIde) {
+    return false;
+  }
 }

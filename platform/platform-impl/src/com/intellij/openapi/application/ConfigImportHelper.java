@@ -118,7 +118,7 @@ public final class ConfigImportHelper {
     ConfigImportSettings settings = findCustomConfigImportSettings();
 
     String pathSelectorOfOtherIde = (settings != null ? settings.getProductToImportFrom(args) : null);
-    ConfigDirsSearchResult guessedOldConfigDirs = findConfigDirectories(newConfigDir, pathSelectorOfOtherIde);
+    ConfigDirsSearchResult guessedOldConfigDirs = findConfigDirectories(newConfigDir, pathSelectorOfOtherIde, settings);
     File tempBackup = null;
     boolean vmOptionFileChanged = false;
     ImportOldConfigsState.InitialImportScenario importScenarioStatistics = null;
@@ -206,7 +206,7 @@ public final class ConfigImportHelper {
         doImport(oldConfigDir, newConfigDir, oldIdeHome, log, configImportOptions);
 
         if (settings != null) {
-          settings.importFinished(newConfigDir);
+          settings.importFinished(newConfigDir, pathSelectorOfOtherIde);
         }
 
         setConfigImportedInThisSession();
@@ -444,10 +444,12 @@ public final class ConfigImportHelper {
   }
 
   static @NotNull ConfigDirsSearchResult findConfigDirectories(@NotNull Path newConfigDir) {
-    return findConfigDirectories(newConfigDir, null);
+    return findConfigDirectories(newConfigDir, null, null);
   }
 
-  static @NotNull ConfigDirsSearchResult findConfigDirectories(@NotNull Path newConfigDir, @Nullable String productPrefixOtherIde) {
+  static @NotNull ConfigDirsSearchResult findConfigDirectories(@NotNull Path newConfigDir,
+                                                               @Nullable String productPrefixOtherIde,
+                                                               @Nullable ConfigImportSettings settings) {
     // looking for existing config directories ...
     Set<Path> homes = new HashSet<>();
     homes.add(newConfigDir.getParent());  // ... in the vicinity of the new config directory
@@ -466,7 +468,6 @@ public final class ConfigImportHelper {
 
     List<Path> exactCandidates = new ArrayList<>();
     List<Path> otherPreferredCandidates = new ArrayList<>();
-    List<Path> otherCandidates = new ArrayList<>();
     for (Path home : homes) {
       if (home == null || !Files.isDirectory(home)) continue;
       boolean dotted = !SystemInfoRt.isMac && home == historicHome;
@@ -474,6 +475,7 @@ public final class ConfigImportHelper {
       try (DirectoryStream<Path> stream = Files.newDirectoryStream(home)) {
         for (Path path : stream) {
           if (!path.equals(newConfigDir) && Files.isDirectory(path)) {
+            if (settings != null && settings.shouldNotBeSeenAsImportCandidate(path, productPrefixOtherIde)) continue;
             String name = path.getFileName().toString();
             if (nameMatchesPrefix(name, prefix, dotted)) {
               exactCandidates.add(path);
@@ -481,9 +483,6 @@ public final class ConfigImportHelper {
             else if (exactCandidates.isEmpty() && productPrefixOtherIde != null) {
               if (nameMatchesPrefix(name, productPrefixOtherIde, dotted)) {
                 otherPreferredCandidates.add(path);
-              }
-              else if (otherPreferredCandidates.isEmpty() && isConfigDirectory(path)) {
-                otherCandidates.add(path);
               }
             }
           }
@@ -500,10 +499,6 @@ public final class ConfigImportHelper {
     }
     else if (!otherPreferredCandidates.isEmpty()) {
       candidates = otherPreferredCandidates;
-      exact = false;
-    }
-    else if (!otherCandidates.isEmpty()) {
-      candidates = otherCandidates;
       exact = false;
     }
     else {
@@ -540,7 +535,7 @@ public final class ConfigImportHelper {
     return new ConfigDirsSearchResult(lastModified, exact);
   }
 
-  private static boolean nameMatchesPrefix(String name, String prefix, boolean dotted) {
+  public static boolean nameMatchesPrefix(String name, String prefix, boolean dotted) {
     return StringUtilRt.startsWithIgnoreCase(name, dotted ? '.' + prefix : prefix);
   }
 
