@@ -54,6 +54,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     productLayout.withAdditionalPlatformJar("resources.jar", "intellij.idea.community.resources", "intellij.android.adt.branding")
 
     productLayout.bundledPluginModules = ProductModulesLayout.DEFAULT_BUNDLED_PLUGINS + BUNDLED_PLUGIN_MODULES + [
+      "intellij.toml",  // b/184090375
       // Android Studio: package CIDR plugins. This list is based on what we have been shipping in Android Studio
       // and the structure of CIDR plugins.
       "intellij.c.clangd",
