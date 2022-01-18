@@ -15,4 +15,16 @@ if [ ! -f "$REMOTE_DEV_SERVER_LAUNCHER_PATH" ]; then
   exit 1
 fi
 
-exec "$REMOTE_DEV_SERVER_LAUNCHER_PATH" "__script_name__" "__product_code__" "__product_uc__" "__vm_options__" "$@"
+export IDEA_RESTART_VIA_EXIT_CODE=88
+
+REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE_WITH_EXIT_CODE_CHECK="${REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE:-$(basename "$0")}"
+export REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE=$REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE_WITH_EXIT_CODE_CHECK
+
+while true; do
+  "$REMOTE_DEV_SERVER_LAUNCHER_PATH" "__script_name__" "__product_code__" "__product_uc__" "__vm_options__" "__ide_default_xmx__" "$@"
+  host_exit_code=$?
+  # restart on special exit code, otherwise forward the exit code to caller
+  if [ $host_exit_code -ne $IDEA_RESTART_VIA_EXIT_CODE ]; then
+    exit $host_exit_code
+  fi
+done

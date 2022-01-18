@@ -14,19 +14,24 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 interface RunToolbarData {
   companion object {
-    var RUN_TOOLBAR_DATA_KEY: DataKey<RunToolbarData> = DataKey.create("RUN_TOOLBAR_DATA_KEY")
-    var RUN_TOOLBAR_POPUP_STATE_KEY: DataKey<Boolean> = DataKey.create("RUN_TOOLBAR_POPUP_STATE_KEY")
-    var RUN_TOOLBAR_MAIN_STATE: DataKey<RunToolbarMainSlotState> = DataKey.create("RUN_TOOLBAR_MAIN_STATE")
+    @JvmField val RUN_TOOLBAR_DATA_KEY: DataKey<RunToolbarData> = DataKey.create("RUN_TOOLBAR_DATA_KEY")
+    @JvmField val RUN_TOOLBAR_POPUP_STATE_KEY: DataKey<Boolean> = DataKey.create("RUN_TOOLBAR_POPUP_STATE_KEY")
+    @JvmField val RUN_TOOLBAR_MAIN_STATE: DataKey<RunToolbarMainSlotState> = DataKey.create("RUN_TOOLBAR_MAIN_STATE")
+
+    @ApiStatus.Internal
+    @JvmField val RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY = Key<Boolean>("RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY")
 
     internal fun prepareDescription(@Nls text: String, @Nls description: String): @Nls String {
       return HtmlBuilder().append(text)
@@ -82,18 +87,15 @@ internal fun RunToolbarData.startWaitingForAProcess(project: Project, settings: 
 }
 
 internal fun AnActionEvent.setConfiguration(value: RunnerAndConfigurationSettings?) {
-  this.dataContext.setConfiguration(value)
+  this.runToolbarData()?.configuration = value
 }
 
 internal fun DataContext.setConfiguration(value: RunnerAndConfigurationSettings?) {
-  val runToolbarData = runToolbarData()
-  runToolbarData?.clear()
-  runToolbarData?.configuration = value
+  runToolbarData()?.configuration = value
 }
 
 internal fun AnActionEvent.configuration(): RunnerAndConfigurationSettings? {
-  val runToolbarData = runToolbarData()
-  return runToolbarData?.environment?.runnerAndConfigurationSettings ?: runToolbarData?.configuration
+  return runToolbarData()?.configuration
 }
 
 internal fun AnActionEvent.arrowIcon(): Icon? {

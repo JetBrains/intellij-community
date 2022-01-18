@@ -18,6 +18,7 @@ abstract class DiffVirtualFile(name: String) :
 
   init {
     useDiffWindowDimensionKey()
+    turnOffReopeningWindow()
   }
 
   abstract fun createProcessor(project: Project): DiffRequestProcessor
@@ -29,6 +30,7 @@ abstract class DiffVirtualFile(name: String) :
   companion object {
 
     fun VirtualFile.useDiffWindowDimensionKey() = putUserData(DockManagerImpl.WINDOW_DIMENSION_KEY, DiffWindowBase.DEFAULT_DIALOG_GROUP_KEY)
+    fun VirtualFile.turnOffReopeningWindow() = putUserData(DockManagerImpl.REOPEN_WINDOW, false)
 
     @JvmField
     val ESCAPE_HANDLER = Key<AnAction?>("ESCAPE_HANDLER")

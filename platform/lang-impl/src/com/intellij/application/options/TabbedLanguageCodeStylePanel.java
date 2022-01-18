@@ -125,7 +125,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
    */
   protected void addIndentOptionsTab(CodeStyleSettings settings) {
     if (getProvider() != null) {
-      IndentOptionsEditorBase indentOptionsEditor = getProvider().getIndentOptionsEditor();
+      IndentOptionsEditor indentOptionsEditor = getProvider().getIndentOptionsEditor();
       if (indentOptionsEditor != null) {
         MyIndentOptionsWrapper indentOptionsWrapper = new MyIndentOptionsWrapper(settings, indentOptionsEditor);
         addTab(indentOptionsWrapper);
@@ -587,10 +587,10 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   //========================================================================================================================================
 
   protected class MyIndentOptionsWrapper extends CodeStyleAbstractPanel {
-    private final IndentOptionsEditorBase myEditor;
+    private final IndentOptionsEditor myEditor;
     private final JPanel myTopPanel = new JPanel(new BorderLayout());
 
-    protected MyIndentOptionsWrapper(CodeStyleSettings settings, IndentOptionsEditorBase editor) {
+    protected MyIndentOptionsWrapper(CodeStyleSettings settings, IndentOptionsEditor editor) {
       super(settings);
       JPanel leftPanel = new JPanel(new BorderLayout());
       myTopPanel.add(leftPanel, BorderLayout.WEST);

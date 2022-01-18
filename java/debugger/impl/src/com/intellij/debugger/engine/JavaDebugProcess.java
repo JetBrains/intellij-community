@@ -309,11 +309,7 @@ public class JavaDebugProcess extends XDebugProcess {
       @Override
       public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
         registerThreadsPanel(ui);
-        /**
-         * b/38437408 disable memory view for Android Studio.
-         * It slows down debugger due to triggering GC on retrieving instance information.
-          */
-        //registerMemoryViewPanel(ui);
+        registerMemoryViewPanel(ui);
         registerOverheadMonitor(ui);
       }
 

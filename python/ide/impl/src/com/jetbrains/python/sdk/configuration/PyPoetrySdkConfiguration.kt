@@ -1,7 +1,7 @@
-package com.jetbrains.python.sdk.poetry
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.jetbrains.python.sdk.configuration
 
 import com.intellij.codeInspection.util.IntentionName
-import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.intellij.execution.ExecutionException
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
@@ -20,6 +20,7 @@ import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.poetry.*
 import java.awt.BorderLayout
 import java.awt.Insets
 import javax.swing.JComponent

@@ -27,14 +27,6 @@ public final class JavaSdkVersionUtil {
   }
 
   public static JavaSdkVersion getJavaSdkVersion(@Nullable Sdk sdk) {
-    // Android Studio: Offer a reasonable language level when using an Android SDK
-    // since this is tied to various editor features such as the ability to
-    // to switch from 1.7 to 1.8 language level when using lambdas.
-    if (sdk != null && sdk.getSdkType().getName().equals("Android SDK")) {
-      // With Desugar we now support Java 1.8 language features
-      return JavaSdkVersion.JDK_1_8;
-    }
-
     if (sdk != null) {
       SdkTypeId sdkType = sdk.getSdkType();
       if (!(sdkType instanceof JavaSdk) && sdkType instanceof SdkType) {

@@ -19,6 +19,10 @@ interface RunToolbarProcess {
     val isAvailable: Boolean
       get() = RegistryManager.getInstance().`is`("ide.widget.toolbar")
 
+    @JvmStatic
+    val isSettingsAvailable: Boolean
+      get() = RegistryManager.getInstance().`is`("ide.widget.toolbar.is.settings.available") && isAvailable
+
     val logNeeded: Boolean
       get() = RegistryManager.getInstance().`is`("ide.widget.toolbar.logging")
 

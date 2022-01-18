@@ -84,7 +84,6 @@
     <group id="Java.BuildMenu">
       <action id="CompileDirty" class="com.intellij.compiler.actions.CompileDirtyAction" icon="AllIcons.Actions.Compile">
         <add-to-group group-id="TouchBarDefault" anchor="before" relative-to-action="RunConfiguration"/>
-        <add-to-group group-id="RightToolbarSideGroup" anchor="first"/>
       </action>
       <action id="MakeModule" class="com.intellij.compiler.actions.MakeModuleAction"/>
       <action id="Compile" class="com.intellij.compiler.actions.CompileAction"/>

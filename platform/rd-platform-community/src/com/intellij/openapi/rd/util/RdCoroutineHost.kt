@@ -48,6 +48,11 @@ class RdCoroutineHost(lifetime: Lifetime) : RdCoroutineScope(lifetime) {
     }
   }
 
+  val uiDispatcherAnyModality = object : CoroutineDispatcher() {
+    override fun dispatch(context: CoroutineContext, block: Runnable) = invokeLater(ModalityState.any()) { block.run() }
+    override fun isDispatchNeeded(context: CoroutineContext) = !application.isDispatchThread
+  }
+
   init {
     override(lifetime, this)
   }

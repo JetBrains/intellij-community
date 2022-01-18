@@ -89,12 +89,6 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
   @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
     @NlsSafe String factoryName = getConfigurationTypeId();
-    // Android Studio: customise the deprecation message for Android JUnit run configurations.
-    // This is to customise the message on the pop-up window when clicking run button.
-    if (factoryName != null && factoryName.equals("AndroidJUnit"))
-      throw new ExecutionException("Android JUnit test configurations are no longer supported. You should instead use the " +
-                                   "Gradle run configuration for your unit tests. " +
-                                   "<html><a href=\"http://d.android.com/r/tools/android-junit-deprecation\">Learn More.</a></html>");
     throw new ExecutionException(ExecutionBundle.message("dialog.message.unknown.run.configuration.type", factoryName, StringUtil.isEmpty(factoryName) ? 0 : 1));
   }
 
@@ -119,13 +113,6 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
   public void checkConfiguration() throws RuntimeConfigurationException {
     String typeId = getConfigurationTypeId();
     if (typeId != null) {
-      // Android Studio: customise the deprecation message for Android JUnit run configurations.
-      // This is to customise the message in the Run configurations window.
-      if (typeId.equals("AndroidJUnit"))
-        throw new RuntimeConfigurationException("<html><br/><b>Android JUnit test configurations are no longer supported:</b> " +
-                                              "You should instead use the Gradle run configuration for your unit tests. " +
-                                              "You can find your existing configurations at &lt;my-app&gt;/.idea/workspace.xml. " +
-                                              "<a href=\"http://d.android.com/r/tools/android-junit-deprecation\">Learn More.</a></html>");
       FeaturePluginData plugin = PluginFeatureService.getInstance().getPluginForFeature(RunManager.CONFIGURATION_TYPE_FEATURE_ID,
                                                                                         typeId);
       if (plugin != null) {

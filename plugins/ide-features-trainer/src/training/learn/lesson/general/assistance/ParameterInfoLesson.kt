@@ -1,11 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.lesson.general.assistance
 
-import training.dsl.LessonContext
-import training.dsl.LessonSample
-import training.dsl.LessonUtil
+import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
-import training.dsl.TaskRuntimeContext
+import training.dsl.LessonUtil.sampleRestoreNotification
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import kotlin.math.min
@@ -15,7 +13,7 @@ class ParameterInfoLesson(private val sample: LessonSample) :
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
-    val caretOffset = sample.getPosition(0).startOffset
+    val initialOffset = sample.getPosition(0).startOffset
 
     actionTask("ParameterInfo") {
       restoreIfModifiedOrMoved()
@@ -24,7 +22,13 @@ class ParameterInfoLesson(private val sample: LessonSample) :
 
     task {
       text(LessonsBundle.message("parameter.info.add.parameters", code("175"), code("100")))
-      stateCheck { checkParametersAdded(caretOffset) }
+      stateCheck { checkParametersAdded(initialOffset) }
+      proposeRestore {
+        if (initialOffset >= editor.document.textLength) {
+          sampleRestoreNotification(TaskContext.ModificationRestoreProposal, sample)
+        }
+        else null
+      }
       test {
         type("175, 100")
       }
@@ -33,9 +37,10 @@ class ParameterInfoLesson(private val sample: LessonSample) :
 
   private val parametersRegex = Regex("""175[ \n]*,[ \n]*100[\s\S]*""")
 
-  private fun TaskRuntimeContext.checkParametersAdded(caretOffset: Int): Boolean {
+  private fun TaskRuntimeContext.checkParametersAdded(initialOffset: Int): Boolean {
     val sequence = editor.document.charsSequence
-    val partOfSequence = sequence.subSequence(caretOffset, min(caretOffset + 20, sequence.length))
+    if (initialOffset >= sequence.length) return false
+    val partOfSequence = sequence.subSequence(initialOffset, min(initialOffset + 20, sequence.length))
     return partOfSequence.matches(parametersRegex)
   }
 

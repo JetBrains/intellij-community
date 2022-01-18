@@ -7,7 +7,6 @@ import com.intellij.java.ift.lesson.basic.JavaSelectLesson
 import com.intellij.java.ift.lesson.basic.JavaSurroundAndUnwrapLesson
 import com.intellij.java.ift.lesson.completion.*
 import com.intellij.java.ift.lesson.navigation.*
-import com.intellij.java.ift.lesson.refactorings.JavaExtractMethodCocktailSortLesson
 import com.intellij.java.ift.lesson.refactorings.JavaRefactoringMenuLesson
 import com.intellij.java.ift.lesson.refactorings.JavaRenameLesson
 import com.intellij.java.ift.lesson.run.JavaDebugLesson
@@ -31,7 +30,8 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
   override fun modules() = stableModules() + CourseManager.instance.findCommonModules("Git")
 
   private fun stableModules() = listOf(
-    LearningModule(name = LessonsBundle.message("essential.module.name"),
+    LearningModule(id = "Java.Essential",
+                   name = LessonsBundle.message("essential.module.name"),
                    description = LessonsBundle.message("essential.module.description", LessonUtil.productName),
                    primaryLanguage = langSupport,
                    moduleType = LessonType.SCRATCH) {
@@ -43,7 +43,8 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
         JavaBasicCompletionLesson(),
       )
     },
-    LearningModule(name = LessonsBundle.message("editor.basics.module.name"),
+    LearningModule(id = "Java.EditorBasics",
+                   name = LessonsBundle.message("editor.basics.module.name"),
                    description = LessonsBundle.message("editor.basics.module.description"),
                    primaryLanguage = langSupport,
                    moduleType = LessonType.SCRATCH) {
@@ -58,7 +59,8 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
         MultipleSelectionHtmlLesson(),
       )
     },
-    LearningModule(name = LessonsBundle.message("code.completion.module.name"),
+    LearningModule(id = "Java.CodeCompletion",
+                   name = LessonsBundle.message("code.completion.module.name"),
                    description = LessonsBundle.message("code.completion.module.description"),
                    primaryLanguage = langSupport,
                    moduleType = LessonType.SCRATCH) {
@@ -70,7 +72,8 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
         JavaCompletionWithTabLesson(),
       )
     },
-    LearningModule(name = LessonsBundle.message("refactorings.module.name"),
+    LearningModule(id = "Java.Refactorings",
+                   name = LessonsBundle.message("refactorings.module.name"),
                    description = LessonsBundle.message("refactorings.module.description"),
                    primaryLanguage = langSupport,
                    moduleType = LessonType.SINGLE_EDITOR) {
@@ -78,11 +81,12 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
       listOf(
         JavaRenameLesson(),
         ExtractVariableFromBubbleLesson(ls("ExtractVariable.java.sample")),
-        JavaExtractMethodCocktailSortLesson(),
+        //JavaExtractMethodCocktailSortLesson(), // Need to hide this lesson because of IDEA-262587
         JavaRefactoringMenuLesson(),
       )
     },
-    LearningModule(name = LessonsBundle.message("code.assistance.module.name"),
+    LearningModule(id = "Java.CodeAssistance",
+                   name = LessonsBundle.message("code.assistance.module.name"),
                    description = LessonsBundle.message("code.assistance.module.description"),
                    primaryLanguage = langSupport,
                    moduleType = LessonType.SINGLE_EDITOR) {
@@ -95,7 +99,8 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
         JavaEditorCodingAssistanceLesson(ls("EditorCodingAssistance.java.sample")),
       )
     },
-    LearningModule(name = LessonsBundle.message("navigation.module.name"),
+    LearningModule(id = "Java.Navigation",
+                   name = LessonsBundle.message("navigation.module.name"),
                    description = LessonsBundle.message("navigation.module.description"),
                    primaryLanguage = langSupport,
                    moduleType = LessonType.PROJECT) {
@@ -109,7 +114,8 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
         JavaOccurrencesLesson(),
       )
     },
-    LearningModule(name = LessonsBundle.message("run.debug.module.name"),
+    LearningModule(id = "Java.RunAndDebug",
+                   name = LessonsBundle.message("run.debug.module.name"),
                    description = LessonsBundle.message("run.debug.module.description"),
                    primaryLanguage = langSupport,
                    moduleType = LessonType.SINGLE_EDITOR) {

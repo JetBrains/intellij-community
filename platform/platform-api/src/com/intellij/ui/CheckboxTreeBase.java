@@ -188,7 +188,7 @@ public class CheckboxTreeBase extends Tree {
           return State.DONT_CARE;
         }
       }
-      return ownState;
+      return result == null ? ownState : result;
     }
 
     @Override

@@ -10,6 +10,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 internal fun DocumentationTarget.documentationRequest(): DocumentationRequest {
@@ -17,7 +18,8 @@ internal fun DocumentationTarget.documentationRequest(): DocumentationRequest {
   return DocumentationRequest(createPointer(), presentation)
 }
 
-internal fun CoroutineScope.computeDocumentationAsync(targetPointer: Pointer<out DocumentationTarget>): Deferred<DocumentationData?> {
+@ApiStatus.Internal
+fun CoroutineScope.computeDocumentationAsync(targetPointer: Pointer<out DocumentationTarget>): Deferred<DocumentationData?> {
   return async(Dispatchers.Default) {
     val documentationResult: DocumentationResult? = readAction {
       targetPointer.dereference()?.computeDocumentation()
@@ -32,7 +34,8 @@ internal fun CoroutineScope.computeDocumentationAsync(targetPointer: Pointer<out
   }
 }
 
-internal suspend fun resolveLink(targetPointer: Pointer<out DocumentationTarget>, url: String): InternalLinkResult {
+@ApiStatus.Internal
+suspend fun resolveLink(targetPointer: Pointer<out DocumentationTarget>, url: String): InternalLinkResult {
   return withContext(Dispatchers.Default) {
     readAction {
       doResolveLink(targetPointer, url)

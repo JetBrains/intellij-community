@@ -69,6 +69,8 @@ interface PyExecuteConsoleCustomizer {
    * Notify that runner started execution, but console process will be started later
    */
   fun notifyRunnerStart(virtualFile: VirtualFile, runner: PydevConsoleRunner) {}
+
+  fun isHorizontalAndUnitedToolbar(): Boolean = false
 }
 
 enum class DescriptorType {

@@ -5,6 +5,7 @@
 
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <appStarter implementation="com.intellij.openapi.application.SaveStarter"/>
+    <appStarter implementation="com.intellij.openapi.application.ExitStarter"/>
     <appStarter implementation="com.intellij.diff.applications.DiffApplication"/>
     <appStarter implementation="com.intellij.diff.applications.MergeApplication"/>
     <appStarter implementation="com.intellij.ui.win.RecentProjectApplication"/>
@@ -590,6 +591,8 @@
                         serviceImplementation="com.intellij.ide.plugins.DynamicPluginEnabler"
                         headlessImplementation="com.intellij.ide.plugins.DisabledPluginsState"
                         testServiceImplementation="com.intellij.ide.plugins.DynamicPluginEnabler"
+                        preload="true"/>
+    <applicationService serviceImplementation="com.intellij.ide.plugins.BundledPluginsState"
                         preload="true"/>
     <startupActivity implementation="com.intellij.ide.plugins.DynamicPluginEnabler$Companion$EnableDisablePluginsActivity"
                      order="first"/>

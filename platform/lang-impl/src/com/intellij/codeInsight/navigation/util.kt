@@ -1,12 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation
 
+import com.intellij.diagnostic.PluginException
 import com.intellij.ide.util.DefaultModuleRendererFactory
 import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.navigation.ColoredItemPresentation
 import com.intellij.navigation.ItemPresentation
 import com.intellij.navigation.NavigationItem
 import com.intellij.navigation.TargetPresentation
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -27,6 +29,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.Font
 import java.util.regex.Pattern
 
+private val LOG: Logger = Logger.getInstance("#com.intellij.codeInsight.navigation")
 private val CONTAINER_PATTERN: Pattern = Pattern.compile("(\\(in |\\()?([^)]*)(\\))?")
 
 @ApiStatus.Internal
@@ -60,6 +63,10 @@ fun targetPresentation(element: PsiElement): TargetPresentation {
   val presentableText: String = itemPresentation?.presentableText
                                 ?: (element as? PsiNamedElement)?.name
                                 ?: element.text
+                                ?: run {
+                                  presentationError(element)
+                                  element.toString()
+                                }
   val moduleTextWithIcon = PsiElementListCellRenderer.getModuleTextWithIcon(element)
   return TargetPresentation
     .builder(presentableText)
@@ -69,6 +76,11 @@ fun targetPresentation(element: PsiElement): TargetPresentation {
     .containerText(itemPresentation?.getContainerText(), file?.let { fileStatusAttributes(project, file) })
     .locationText(moduleTextWithIcon?.text, moduleTextWithIcon?.icon)
     .presentation()
+}
+
+private fun presentationError(element: PsiElement) {
+  val clazz = element.javaClass
+  LOG.error(PluginException.createByClass("${clazz.name} cannot be presented", null, clazz))
 }
 
 @ApiStatus.Experimental

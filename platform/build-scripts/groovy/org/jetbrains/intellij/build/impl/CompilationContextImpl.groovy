@@ -176,8 +176,7 @@ final class CompilationContextImpl implements CompilationContext {
     if (kotlinBinaries.isCompilerRequired()) {
       pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "$kotlinBinaries.compilerHome/kotlinc")
     }
-    // Android Studio: modified by Change Ibf21a74c / commit 4904fa8
-    pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtil.toSystemIndependentName(new File(projectHome, "../../prebuilts/tools/common/m2/repository").absolutePath))
+    pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtilRt.toSystemIndependentName(new File(SystemProperties.getUserHome(), ".m2/repository").absolutePath))
 
     def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
     JpsProjectLoader.loadProject(model.project, pathVariables, projectHome)
@@ -346,9 +345,7 @@ final class CompilationContextImpl implements CompilationContext {
     JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService
       .dependencies(module).recursively()
       // if project requires different SDKs they all shouldn't be added to test classpath
-/* Android Studio: include SDK in test classpath
       .with { forTests ? withoutSdk() : it }
-*/
       .includedIn(JpsJavaClasspathKind.runtime(forTests))
     return enumerator.classes().roots.collect { it.absolutePath }
   }

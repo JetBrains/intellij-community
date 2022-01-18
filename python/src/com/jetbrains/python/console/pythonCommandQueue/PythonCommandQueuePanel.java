@@ -34,8 +34,8 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.PythonDebugConsoleCommunication;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
+import com.jetbrains.python.console.actions.ShowCommandQueueAction;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
-import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -195,7 +195,7 @@ public class PythonCommandQueuePanel extends JPanel {
     return UIUtil.uiTraverser(myConsole.getToolbar().getComponent())
       .filter(ActionButton.class)
       .filter((button) -> {
-        return button.getIcon().equals(PythonIcons.Python.CommandQueue);
+        return ShowCommandQueueAction.isCommandQueueIcon(button.getIcon());
       })
       .first();
   }

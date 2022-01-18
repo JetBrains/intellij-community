@@ -284,7 +284,7 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
             kotlinTarget = platform ?: kotlinPluginId,
             kotlinTaskProperties = extraProperties,
             gradleUserHome = project.gradle.gradleUserHomeDir.absolutePath,
-            partialCacheAware = detachableMapper.detachCacheAware()
+            partialCacheAware = detachableMapper.detachCacheAware(project.name == "buildSrc")
         )
     }
 }

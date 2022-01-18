@@ -62,6 +62,8 @@ class JavaExtractMethodCocktailSortLesson
           }
         }
       }
+
+      restoreRefactoringOptionsInformer()
     }
 
   override val suitableTips = listOf("ExtractMethod")

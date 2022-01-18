@@ -29,6 +29,10 @@ public interface ToolWindowEx extends ToolWindow {
 
   void stretchHeight(int value);
 
+  default boolean canCloseContents() {
+    return false;
+  }
+
   @NotNull InternalDecorator getDecorator();
 
   void setAdditionalGearActions(@Nullable ActionGroup additionalGearActions);

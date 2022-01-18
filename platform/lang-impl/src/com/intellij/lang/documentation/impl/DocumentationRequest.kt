@@ -4,8 +4,10 @@ package com.intellij.lang.documentation.impl
 import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.model.Pointer
 import com.intellij.navigation.TargetPresentation
+import org.jetbrains.annotations.ApiStatus
 
-internal class DocumentationRequest(
+@ApiStatus.Internal
+class DocumentationRequest(
   val targetPointer: Pointer<out DocumentationTarget>,
   val presentation: TargetPresentation,
 )

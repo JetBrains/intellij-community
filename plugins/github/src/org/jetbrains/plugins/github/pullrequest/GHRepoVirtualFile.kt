@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
+import com.intellij.diff.editor.DiffVirtualFile.Companion.turnOffReopeningWindow
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
@@ -20,6 +21,10 @@ abstract class GHRepoVirtualFile(protected val fileManagerId: String,
                                  val project: Project,
                                  val repository: GHRepositoryCoordinates)
   : LightVirtualFileBase("", null, 0), VirtualFileWithoutContent, VirtualFilePathWrapper {
+
+  init {
+    turnOffReopeningWindow()
+  }
 
   override fun enforcePresentableName() = true
 

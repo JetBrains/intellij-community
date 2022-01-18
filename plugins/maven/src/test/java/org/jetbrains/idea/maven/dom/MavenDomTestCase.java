@@ -41,15 +41,14 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.dom.inspections.MavenModelInspection;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCase {
@@ -276,6 +275,10 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
     assertContain(getCompletionVariants(f, lookupElementStringFunction), expected);
   }
 
+  protected void assertDependencyCompletionVariantsInclude(VirtualFile f, String... expected) {
+    assertContain(getDependencyCompletionVariants(f), expected);
+  }
+
   protected void assertCompletionVariantsDoNotInclude(VirtualFile f, String... expected) {
     assertDoNotContain(getCompletionVariants(f), expected);
   }
@@ -291,6 +294,19 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
     List<String> result = new ArrayList<>();
     for (LookupElement each : variants) {
       result.add(lookupElementStringFunction.apply(each));
+    }
+    return result;
+  }
+
+  protected Set<String> getDependencyCompletionVariants(VirtualFile f) {
+    configTest(f);
+    LookupElement[] variants = myFixture.completeBasic();
+
+    Set<String> result = new TreeSet<>();
+    for (LookupElement each : variants) {
+      if (each.getObject() instanceof MavenRepositoryArtifactInfo) {
+        result.add(MavenDependencyCompletionUtil.getPresentableText((MavenRepositoryArtifactInfo)each.getObject()));
+      }
     }
     return result;
   }

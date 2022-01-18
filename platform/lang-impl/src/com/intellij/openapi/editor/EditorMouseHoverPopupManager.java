@@ -447,7 +447,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
       this.elementForQuickDoc = elementForQuickDoc == null ? null : new WeakReference<>(elementForQuickDoc);
     }
 
-    public PsiElement getElementForQuickDoc() {
+    public @Nullable PsiElement getElementForQuickDoc() {
       return SoftReference.dereference(elementForQuickDoc);
     }
 

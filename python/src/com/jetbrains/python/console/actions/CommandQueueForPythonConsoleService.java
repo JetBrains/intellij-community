@@ -26,7 +26,6 @@ public final class CommandQueueForPythonConsoleService {
   @NlsSafe
   private static final String STUB = "pass";
 
-
   @NotNull
   private Queue<ConsoleCommunication.ConsoleCodeFragment> getQueue(@NotNull ConsoleCommunication consoleComm) {
     return queues.get(consoleComm);
@@ -52,7 +51,7 @@ public final class CommandQueueForPythonConsoleService {
     return null;
   }
 
-  public synchronized boolean isEmpty(@NotNull ConsoleCommunication consoleComm) {
+  public boolean isEmpty(@NotNull ConsoleCommunication consoleComm) {
     return getQueue(consoleComm).isEmpty();
   }
 

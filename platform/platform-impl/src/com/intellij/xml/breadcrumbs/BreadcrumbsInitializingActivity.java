@@ -99,8 +99,12 @@ public final class BreadcrumbsInitializingActivity implements StartupActivity.Du
             wrapper.queueUpdate();
           }
           else {
-            registerWrapper(fileEditorManager, fileEditor, new BreadcrumbsXmlWrapper(editor));
+            wrapper = new BreadcrumbsXmlWrapper(editor);
+            registerWrapper(fileEditorManager, fileEditor, wrapper);
           }
+
+          fileEditorManager.getProject().getMessageBus().syncPublisher(BreadcrumbsInitListener.TOPIC)
+            .breadcrumbsInitialized(wrapper, fileEditor, fileEditorManager);
         }
         else if (wrapper != null) {
           disposeWrapper(fileEditorManager, fileEditor, wrapper);

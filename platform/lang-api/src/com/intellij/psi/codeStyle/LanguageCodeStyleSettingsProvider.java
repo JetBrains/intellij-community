@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
-import com.intellij.application.options.IndentOptionsEditorBase;
+import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
 import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
@@ -248,7 +248,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   }
 
   @Nullable
-  public IndentOptionsEditorBase getIndentOptionsEditor() {
+  public IndentOptionsEditor getIndentOptionsEditor() {
     return null;
   }
 
@@ -443,14 +443,5 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
    */
   public boolean supportsExternalFormats() {
     return true;
-  }
-
-  /**
-   * Return true if formatter for this language uses {@link CommonCodeStyleSettings#KEEP_LINE_BREAKS} flag
-   * for custom line breaks processing
-   */
-  @ApiStatus.Experimental
-  public boolean usesCommonKeepLineBreaks() {
-    return false;
   }
 }

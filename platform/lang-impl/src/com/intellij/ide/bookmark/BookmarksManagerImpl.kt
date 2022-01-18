@@ -45,8 +45,9 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     }
 
   internal val snapshot: List<BookmarkOccurrence>
-    get() = mutableListOf<BookmarkOccurrence>().also {
-      synchronized(notifier) {
+    get() = synchronized(notifier) {
+      notifier.snapshot ?: mutableListOf<BookmarkOccurrence>().also {
+        notifier.snapshot = it // update cached snapshot
         for (group in allGroups) {
           for (bookmark in group.getBookmarks()) {
             it.add(BookmarkOccurrence(group, bookmark, it.size, it))

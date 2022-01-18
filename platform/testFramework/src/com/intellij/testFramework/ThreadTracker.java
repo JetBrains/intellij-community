@@ -99,7 +99,6 @@ public final class ThreadTracker {
       "RMI GC Daemon",
       "RMI TCP ",
       "Save classpath indexes for file loader",
-    "SeedGenerator Thread", // Android Studio: for failures on remote bazel execution
       "Signal Dispatcher",
       "tc-okhttp-stream", // Dockers "com.github.dockerjava.okhttp.UnixDomainSocket.recv"
       "timer-int", //serverIm,

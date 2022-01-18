@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 /**
  * Interface to create hints for particular clients. Take a look at {@link com.intellij.openapi.client.ClientSession}
@@ -24,6 +25,10 @@ public interface ClientHintManager {
 
   static @NotNull ClientHintManager getCurrentInstance() {
     return ApplicationManager.getApplication().getService(ClientHintManager.class);
+  }
+
+  static @NotNull List<ClientHintManager> getAllInstances() {
+    return ApplicationManager.getApplication().getServices(ClientHintManager.class, true);
   }
 
   boolean canShowQuestionAction(QuestionAction action);

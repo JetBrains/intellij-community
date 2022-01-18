@@ -60,10 +60,16 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     get() = tree.selectionPaths?.mapNotNull { TreeUtil.getAbstractTreeNode(it) }?.ifEmpty { null }
 
   private val previousOccurrence
-    get() = selectedNode?.bookmarkOccurrence?.previous { it.bookmark is LineBookmark }
+    get() = when (val occurrence = selectedNode?.bookmarkOccurrence) {
+      null -> BookmarkOccurrence.lastLineBookmark(project)
+      else -> occurrence.previousLineBookmark()
+    }
 
   private val nextOccurrence
-    get() = selectedNode?.bookmarkOccurrence?.next { it.bookmark is LineBookmark }
+    get() = when (val occurrence = selectedNode?.bookmarkOccurrence) {
+      null -> BookmarkOccurrence.firstLineBookmark(project)
+      else -> occurrence.nextLineBookmark()
+    }
 
 
   override fun dispose() = preview.close()
@@ -168,7 +174,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   private fun navigateToSource(requestFocus: Boolean) {
     val node = selectedNode ?: return
     val task = Runnable { OpenSourceUtil.navigateToSource(requestFocus, false, node) }
-    ApplicationManager.getApplication()?.invokeLater(task, stateForComponent(tree)) { !isShowing }
+    ApplicationManager.getApplication()?.invokeLater(task, stateForComponent(tree)) { project.isDisposed }
   }
 
   init {

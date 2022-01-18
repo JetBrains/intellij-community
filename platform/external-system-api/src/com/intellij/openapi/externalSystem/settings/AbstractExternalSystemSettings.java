@@ -7,7 +7,6 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNullableLazyValue;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -129,11 +128,6 @@ public abstract class AbstractExternalSystemSettings<
           if (linkedProjectPath.equals(modulePath)) return ps1;
         }
       }
-    }
-
-    // Android Studio: added by Change I12231f26 / commit 814f829
-    if (ps == null) {
-      ps = myLinkedProjectsSettings.get(FileUtil.toSystemIndependentName(linkedProjectPath));
     }
     return ps;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.codeWithMe.ClientId;
@@ -11,10 +11,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -405,6 +402,7 @@ public final class ProgressIndicatorUtils {
 
   /** Use when otherwise a deadlock is possible. */
   public static void checkCancelledEvenWithPCEDisabled(@Nullable ProgressIndicator indicator) {
+    Cancellation.checkCancelled();
     if (indicator != null && indicator.isCanceled()) {
       indicator.checkCanceled(); // maybe it'll throw with some useful additional information
       throw new ProcessCanceledException();

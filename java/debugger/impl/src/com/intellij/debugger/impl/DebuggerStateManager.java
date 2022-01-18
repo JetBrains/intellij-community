@@ -19,21 +19,7 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class DebuggerStateManager {
-  private final EventDispatcher<DebuggerContextListener> myEventDispatcher;
-  {
-    // Android Studio:
-    // Try to not bomb during startup if running on a JRE such that
-    // we can make it far enough that the SystemHealthDetector kicks in
-    // https://code.google.com/p/android/issues/detail?id=225130
-    EventDispatcher<DebuggerContextListener> dispatcher;
-    try {
-      dispatcher = EventDispatcher.create(DebuggerContextListener.class);
-    } catch (Throwable t) {
-      // We've already warned in the health detector
-      dispatcher = null;
-    }
-    myEventDispatcher = dispatcher;
-  }
+  private final EventDispatcher<DebuggerContextListener> myEventDispatcher = EventDispatcher.create(DebuggerContextListener.class);
 
   @NotNull
   public abstract DebuggerContextImpl getContext();
@@ -42,24 +28,15 @@ public abstract class DebuggerStateManager {
 
   //we allow add listeners inside DebuggerContextListener.changeEvent
   public void addListener(DebuggerContextListener listener){
-    if (myEventDispatcher == null) {
-      return;
-    }
     myEventDispatcher.addListener(listener);
   }
 
   //we allow remove listeners inside DebuggerContextListener.changeEvent
   public void removeListener(DebuggerContextListener listener){
-    if (myEventDispatcher == null) {
-      return;
-    }
     myEventDispatcher.removeListener(listener);
   }
 
   protected void fireStateChanged(@NotNull DebuggerContextImpl newContext, DebuggerSession.Event event) {
-    if (myEventDispatcher == null) {
-      return;
-    }
     myEventDispatcher.getMulticaster().changeEvent(newContext, event);
   }
 

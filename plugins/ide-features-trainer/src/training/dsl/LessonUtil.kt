@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nls
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
+import training.learn.lesson.LessonManager
 import training.ui.*
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.getActionById
@@ -434,10 +435,10 @@ fun TaskContext.waitSmartModeStep() {
 private val seconds01 = Timeout.timeout(1, TimeUnit.SECONDS)
 
 fun LessonContext.showWarningIfInplaceRefactoringsDisabled() {
-  if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) return
   task {
-    val step = CompletableFuture<Boolean>()
-    addStep(step)
+    val step = stateCheck {
+      EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled
+    }
     val callbackId = LearningUiManager.addCallback {
       EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled = true
       step.complete(true)
@@ -449,11 +450,27 @@ fun LessonContext.showWarningIfInplaceRefactoringsDisabled() {
                                       strong(ApplicationBundle.message("radiogroup.rename.local.variables").dropLast(1)),
                                       callbackId)
     ) {
-      if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
-        step.complete(true)
-        false
+      !EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled
+    }
+  }
+}
+
+fun LessonContext.restoreRefactoringOptionsInformer() {
+  if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) return
+  restoreChangedSettingsInformer {
+    EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled = false
+  }
+}
+
+fun LessonContext.restoreChangedSettingsInformer(restoreSettings: () -> Unit) {
+  task {
+    runtimeText {
+      val newMessageIndex = LessonManager.instance.messagesNumber()
+      val callbackId = LearningUiManager.addCallback {
+        restoreSettings()
+        LessonManager.instance.removeMessageAndRepaint(newMessageIndex)
       }
-      else true
+      LessonsBundle.message("restore.settings.informer", callbackId)
     }
   }
 }

@@ -8,11 +8,14 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.siblings
 import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
 import org.intellij.plugins.markdown.editor.tables.TableUtils
+import org.intellij.plugins.markdown.editor.tables.TableUtils.firstNonWhitespaceOffset
+import org.intellij.plugins.markdown.editor.tables.TableUtils.lastNonWhitespaceOffset
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCellImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRowImpl
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 internal abstract class MarkdownTableTabHandler(private val baseHandler: EditorActionHandler?, private val forward: Boolean = true): EditorWriteActionHandler() {
@@ -39,20 +42,37 @@ internal abstract class MarkdownTableTabHandler(private val baseHandler: EditorA
     val documentManager = PsiDocumentManager.getInstance(project)
     val file = documentManager.getPsiFile(document) ?: return false
     PsiDocumentManager.getInstance(project).commitDocument(document)
-    val cell = TableUtils.findCell(file, caretOffset)
-    val nextCell = cell?.siblings(forward = forward, withSelf = false)?.filterIsInstance<MarkdownTableCellImpl>()?.firstOrNull()
+    val cell = TableUtils.findCell(file, caretOffset) ?: return false
+    val nextCell = findNextCell(cell, forward)
     if (nextCell != null) {
       val offset = when {
-        forward -> nextCell.startOffset
-        else -> nextCell.endOffset
+        forward -> nextCell.firstNonWhitespaceOffset
+        else -> nextCell.lastNonWhitespaceOffset + 1
       }
       caret.moveToOffset(offset)
       return true
     } else if (forward) {
-      cell?.parentRow?.endOffset?.let { caret.moveToOffset(it) }
+      cell.parentRow?.endOffset?.let { caret.moveToOffset(it) }
       return true
     }
     return false
+  }
+
+  private fun findNextCell(currentCell: MarkdownTableCellImpl, forward: Boolean): MarkdownTableCellImpl? {
+    val nextCellInCurrentRow = findSiblingCell(currentCell, forward, withSelf = false)
+    if (nextCellInCurrentRow != null) {
+      return nextCellInCurrentRow
+    }
+    val nextRow = currentCell.parentRow?.siblings(forward, withSelf = false)?.filterIsInstance<MarkdownTableRowImpl>()?.firstOrNull()
+    val startElement = when {
+      forward -> nextRow?.firstChild
+      else -> nextRow?.lastChild
+    }
+    return startElement?.let { findSiblingCell(it, forward, withSelf = true) }
+  }
+
+  private fun findSiblingCell(element: PsiElement, forward: Boolean, withSelf: Boolean): MarkdownTableCellImpl? {
+    return element.siblings(forward, withSelf).filterIsInstance<MarkdownTableCellImpl>().firstOrNull()
   }
 
   class Tab(baseHandler: EditorActionHandler?): MarkdownTableTabHandler(baseHandler, forward = true)

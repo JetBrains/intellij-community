@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.apache.commons.lang.StringUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -507,8 +506,8 @@ public class MavenGeneralSettings implements Cloneable {
     needUpdate = needUpdate || !Objects.equals(nonRecursive, nonRecursiveConfig);
     nonRecursive = nonRecursiveConfig;
 
-    String threadsConfig = requireNonNullElse(config.getOptionValue(THREADS), StringUtils.EMPTY);
-    needUpdate = needUpdate || !Objects.equals(threads, threadsConfig);
+    String threadsConfig = StringUtil.nullize(config.getOptionValue(THREADS));
+    needUpdate = needUpdate || !Objects.equals(StringUtil.nullize(threads), threadsConfig);
     threads = threadsConfig;
 
     if (needUpdate) {

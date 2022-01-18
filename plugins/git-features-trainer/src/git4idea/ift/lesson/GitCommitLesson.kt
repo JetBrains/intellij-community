@@ -24,8 +24,10 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.util.DocumentUtil
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.AbstractCommitWorkflowHandler
+import com.intellij.vcs.commit.CommitActionsPanel
 import com.intellij.vcs.commit.CommitOptionsPanel
 import com.intellij.vcs.commit.allOptions
 import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
@@ -35,9 +37,11 @@ import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import git4idea.ift.GitLessonsUtil.openCommitWindowText
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
+import git4idea.ift.GitLessonsUtil.restoreCommitWindowStateInformer
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
+import git4idea.ift.GitLessonsUtil.showWarningIfStagingAreaEnabled
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import org.assertj.swing.core.MouseButton
 import org.assertj.swing.data.TableCell
@@ -82,6 +86,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     }
 
     showWarningIfModalCommitEnabled()
+    showWarningIfStagingAreaEnabled()
 
     task {
       openCommitWindowText(GitLessonsBundle.message("git.commit.open.commit.window"))
@@ -151,7 +156,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     val reformatCodeButtonText = VcsBundle.message("checkbox.checkin.options.reformat.code").dropMnemonic()
     task {
       triggerByUiComponentAndHighlight { ui: JBCheckBox ->
-        ui.text == reformatCodeButtonText
+        ui.text?.contains(reformatCodeButtonText) == true
       }
     }
 
@@ -160,12 +165,12 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       text(GitLessonsBundle.message("git.commit.analyze.code.explanation", strong(analyzeOptionText)))
       text(GitLessonsBundle.message("git.commit.enable.reformat.code", strong(reformatCodeButtonText)))
       triggerByUiComponentAndHighlight(false, false) { ui: JBCheckBox ->
-        ui.text == reformatCodeButtonText && ui.isSelected
+        ui.text?.contains(reformatCodeButtonText) == true && ui.isSelected
       }
       restoreByUi(showOptionsTaskId)
       test {
         ideFrame {
-          val checkBox = findComponentWithTimeout(defaultTimeout) { ui: JBCheckBox -> ui.text == reformatCodeButtonText }
+          val checkBox = findComponentWithTimeout(defaultTimeout) { ui: JBCheckBox -> ui.text?.contains(reformatCodeButtonText) == true }
           JCheckBoxFixture(robot, checkBox).check()
         }
       }
@@ -263,13 +268,13 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       val amendButtonText = VcsBundle.message("amend.action.name", commitButtonText)
       text(GitLessonsBundle.message("git.commit.amend.commit", strong(amendButtonText)))
       triggerByUiComponentAndHighlight { ui: JBOptionButton ->
-        ui.text?.contains(amendButtonText) == true
+        UIUtil.getParentOfType(CommitActionsPanel::class.java, ui) != null
       }
       triggerOnNotification { it.displayId == VcsNotificationIdsHolder.COMMIT_FINISHED }
       showWarningIfCommitWindowClosed()
       test {
         ideFrame {
-          button { b: JBOptionButton -> b.text == amendButtonText }.click()
+          button { b: JBOptionButton -> UIUtil.getParentOfType(CommitActionsPanel::class.java, b) != null }.click()
         }
       }
     }
@@ -287,6 +292,8 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     }
 
     text(GitLessonsBundle.message("git.commit.two.committed.files.explanation"))
+
+    restoreCommitWindowStateInformer()
   }
 
   private fun TaskContext.highlightVcsChange(changeFileName: String, highlightBorder: Boolean = true) {

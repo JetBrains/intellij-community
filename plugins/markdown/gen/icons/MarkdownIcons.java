@@ -30,7 +30,7 @@ public final class MarkdownIcons {
     /** 16x16 */ public static final @NotNull Icon Link = load("icons/editor_actions/Link.svg", 7399315794832636966L, 2);
     /** 16x16 */ public static final @NotNull Icon RightAlign = load("icons/editor_actions/rightAlign.svg", -5230465023942046643L, 2);
     /** 16x16 */ public static final @NotNull Icon Strike_through = load("icons/editor_actions/Strike_through.svg", 7655458485343876010L, 2);
-    /** 16x16 */ public static final @NotNull Icon Table = load("icons/editor_actions/table.svg", 4230996344808228630L, 0);
+    /** 16x16 */ public static final @NotNull Icon Table = load("icons/editor_actions/table.svg", 4230996344808228630L, 2);
   }
 
   /** 12x12 */ public static final @NotNull Icon ImageGutter = load("icons/imageGutter.svg", -5624930059003110774L, 2);

@@ -69,7 +69,7 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython, 
             from Cython.Build import cythonize  # @UnusedImport
             ext_modules = cythonize([
                 "%s/%s.pyx" % (dir_name, target_pydevd_name,),
-            ], compile_time_env={"IS_PY39_OR_GREATER": "YES" if IS_PY39_OR_GREATER else "NO"}, force=True)
+            ], force=True)
         else:
             # Always compile the .c (and not the .pyx) file (which we should keep up-to-date by running build_tools/build.py).
             from distutils.extension import Extension
@@ -118,7 +118,7 @@ if IS_PY36_OR_GREATER:
     build_extension(frame_eval_dir_name, target_frame_eval_common, target_frame_eval_common, force_cython, extension_folder,
                     True)
     if IS_PY39_OR_GREATER:
-        extension_name += "_py39"
+        extension_name += "_py39_and_above"
     if target_frame_eval is None:
         target_frame_eval = extension_name
     build_extension(frame_eval_dir_name, extension_name, target_frame_eval, force_cython, extension_folder, True)

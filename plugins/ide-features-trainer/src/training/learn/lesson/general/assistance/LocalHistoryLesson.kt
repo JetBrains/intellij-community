@@ -256,7 +256,9 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       before { LearningUiHighlightingManager.clearHighlights() }
       text(LessonsBundle.message("local.history.close.window", action("EditorEscape")))
       stateCheck {
-        previous.ui?.isShowing != true
+        val focusedEditor = focusOwner as? EditorComponentImpl
+        // check that it is editor from main IDE frame
+        focusedEditor != null && UIUtil.getParentOfType(SingleHeightTabs::class.java, focusedEditor) != null
       }
       test {
         invokeActionViaShortcut("ESCAPE")

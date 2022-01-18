@@ -262,7 +262,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     }
   }
 
-  private fun adjustMessagesArea() {
+  fun adjustMessagesArea() {
     updatePanelSize(learnToolWindow.getVisibleAreaWidth())
     revalidate()
     repaint()

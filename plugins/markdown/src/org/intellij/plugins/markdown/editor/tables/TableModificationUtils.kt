@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.util.siblings
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.containers.ContainerUtil
@@ -216,26 +217,52 @@ internal object TableModificationUtils {
     return builder
   }
 
-  fun MarkdownTableImpl.selectColumn(editor: Editor, columnIndex: Int, withHeader: Boolean = false, withSeparator: Boolean = false) {
+  fun MarkdownTableImpl.selectColumn(
+    editor: Editor,
+    columnIndex: Int,
+    withHeader: Boolean = false,
+    withSeparator: Boolean = false,
+    withBorders: Boolean = false
+  ) {
     val cells = getColumnCells(columnIndex, withHeader)
     val caretModel = editor.caretModel
     caretModel.removeSecondaryCarets()
     caretModel.currentCaret.apply {
-      val textRange = cells.first().textRange
+      val textRange = obtainCellSelectionRange(cells.first(), withBorders)
       moveToOffset(textRange.startOffset)
       setSelectionFromRange(textRange)
     }
     if (withSeparator) {
-      separatorRow?.getCellRange(columnIndex)?.let { textRange ->
+      val range = when {
+        withBorders -> separatorRow?.getCellRangeWithPipes(columnIndex)
+        else -> separatorRow?.getCellRange(columnIndex)
+      }
+      range?.let { textRange ->
         val caret = caretModel.addCaret(editor.offsetToVisualPosition(textRange.startOffset))
         caret?.setSelectionFromRange(textRange)
       }
     }
     for (cell in cells.asSequence().drop(1)) {
-      val textRange = cell.textRange
+      val textRange = obtainCellSelectionRange(cell, withBorders)
       val caret = caretModel.addCaret(editor.offsetToVisualPosition(textRange.startOffset))
       caret?.setSelectionFromRange(textRange)
     }
+  }
+
+  private fun obtainCellSelectionRange(cell: MarkdownTableCellImpl, withBorders: Boolean): TextRange {
+    val range = cell.textRange
+    if (!withBorders) {
+      return range
+    }
+    val leftPipe = cell.siblings(forward = false, withSelf = false)
+      .takeWhile { it !is MarkdownTableCellImpl }
+      .find { it.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) }
+    val rightPipe = cell.siblings(forward = true, withSelf = false)
+      .takeWhile { it !is MarkdownTableCellImpl }
+      .find { it.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) }
+    val left = leftPipe?.startOffset ?: range.startOffset
+    val right = rightPipe?.endOffset ?: range.endOffset
+    return TextRange(left, right)
   }
 
   private fun Caret.setSelectionFromRange(textRange: TextRange) {

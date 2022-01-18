@@ -51,4 +51,8 @@ public interface SdkTypeId {
   default Comparator<String> versionStringComparator() {
     return (v1, v2) -> StringUtil.compareVersionNumbers(v1, v2);
   }
+
+ default boolean allowWslSdkForLocalProject() {
+    return false;
+ }
 }

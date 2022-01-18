@@ -1611,7 +1611,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  private static void markFileIndexed(@Nullable VirtualFile file,
+  public static void markFileIndexed(@Nullable VirtualFile file,
                                       @Nullable FileContent fc) {
     // TODO restore original assertion
     if (fc != null && (ourIndexedFile.get() != null || ourFileToBeIndexed.get() != null)) {
@@ -1620,7 +1620,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     ourIndexedFile.set(file);
   }
 
-  private static void unmarkBeingIndexed() {
+  public static void unmarkBeingIndexed() {
     ourIndexedFile.remove();
   }
 

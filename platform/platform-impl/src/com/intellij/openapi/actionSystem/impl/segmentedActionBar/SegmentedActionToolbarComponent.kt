@@ -27,7 +27,14 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
 
     private val LOG = Logger.getInstance(SegmentedActionToolbarComponent::class.java)
 
-    internal val painter = SegmentedBarPainter()
+    internal val segmentedButtonLook = object : ActionButtonLook() {
+      override fun paintBorder(g: Graphics, c: JComponent, state: Int) {
+      }
+
+      override fun paintBackground(g: Graphics, component: JComponent, state: Int) {
+        SegmentedBarPainter.paintActionButtonBackground(g, component, state)
+      }
+    }
 
     fun isCustomBar(component: Component): Boolean {
       if (component !is JComponent) return false
@@ -47,15 +54,6 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
 
   private var isActive = false
   private var visibleActions: MutableList<out AnAction>? = null
-
-  private val segmentedButtonLook = object : ActionButtonLook() {
-    override fun paintBorder(g: Graphics, c: JComponent, state: Int) {
-    }
-
-    override fun paintBackground(g: Graphics, component: JComponent, state: Int) {
-      SegmentedBarPainter.paintActionButtonBackground(g, component, state)
-    }
-  }
 
   override fun getInsets(): Insets {
     return JBUI.emptyInsets()
@@ -79,6 +77,10 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
         component = it
       }
     }
+    else if (component is ActionButton) {
+      val actionButton = component as ActionButton
+      updateActionButtonLook(actionButton)
+    }
 
     component.border = JBUI.Borders.empty()
 
@@ -96,10 +98,14 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
     }
 
     val createToolbarButton = super.createToolbarButton(action, segmentedButtonLook, place, presentation, minimumSize)
-    createToolbarButton.border = JBUI.Borders.empty(0, 3)
-    createToolbarButton.setLook(segmentedButtonLook)
+    updateActionButtonLook(createToolbarButton)
 
     return createToolbarButton
+  }
+
+  private fun updateActionButtonLook(actionButton: ActionButton) {
+    actionButton.border = JBUI.Borders.empty(0, 3)
+    actionButton.setLook(segmentedButtonLook)
   }
 
   override fun fillToolBar(actions: MutableList<out AnAction>, layoutSecondaries: Boolean) {

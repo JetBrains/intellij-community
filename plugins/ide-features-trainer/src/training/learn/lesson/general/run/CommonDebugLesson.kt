@@ -110,6 +110,8 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     evaluateExpressionTasks()
 
     stopTask()
+
+    restoreHotSwapStateInformer()
   }
 
   private fun LessonContext.prepareTask() {
@@ -423,6 +425,8 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
   }
 
   protected abstract fun LessonContext.applyProgramChangeTasks()
+
+  protected open fun LessonContext.restoreHotSwapStateInformer() = Unit
 
   private fun LessonContext.highlightLineNumberByOffset(offset: Int) {
     task {

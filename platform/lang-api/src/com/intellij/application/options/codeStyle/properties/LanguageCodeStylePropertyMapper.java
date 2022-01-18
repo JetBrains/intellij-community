@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.properties;
 
-import com.intellij.application.options.IndentOptionsEditorBase;
+import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditorBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
@@ -117,7 +117,7 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
     Set<String> indentOptions =
       new HashSet<>(provider.getSupportedFields(LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS));
     if (indentOptions.isEmpty()) {
-      IndentOptionsEditorBase editor = provider.getIndentOptionsEditor();
+      IndentOptionsEditor editor = provider.getIndentOptionsEditor();
       if (editor != null) {
         indentOptions.add("TAB_SIZE");
         indentOptions.add("USE_TAB_CHARACTER");

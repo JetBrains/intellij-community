@@ -7,7 +7,8 @@ import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.propComponentProperty
 import com.intellij.lang.documentation.InlineDocumentation
-import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_TARGETS
+import com.intellij.lang.documentation.ide.actions.documentationTargets
+import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.lang.documentation.impl.documentationRequest
 import com.intellij.lang.documentation.impl.resolveLink
@@ -80,7 +81,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
       }
     }
 
-    val targets = dataContext.getData(DOCUMENTATION_TARGETS) ?: return
+    val targets = documentationTargets(dataContext)
     val target = targets.firstOrNull() ?: return // TODO multiple targets
 
     // This happens in the UI thread because IntelliJ action system returns `DocumentationTarget` instance from the `DataContext`,
@@ -126,6 +127,9 @@ internal class DocumentationManager(private val project: Project) : Disposable {
   private fun CoroutineScope.showDocumentation(request: DocumentationRequest, popupContext: PopupContext) {
     if (skipPopup) {
       toolWindowManager.showInToolWindow(request)
+      return
+    }
+    else if (toolWindowManager.updateVisibleReusableTab(request)) {
       return
     }
 
@@ -183,13 +187,13 @@ internal class DocumentationManager(private val project: Project) : Disposable {
       // the user might've explicitly invoked the action during the delay
       return // return here to not compute the request unnecessarily
     }
+    if (toolWindowManager.hasVisibleAutoUpdatingTab()) {
+      return // don't show a documentation popup if an auto-updating tab is visible, it will be updated
+    }
     val request = withContext(Dispatchers.Default) {
       mapper(lookupElement)
     }
     if (request == null) {
-      return
-    }
-    if (toolWindowManager.updateVisibleAutoUpdatingTab(request)) {
       return
     }
     coroutineScope {
@@ -224,19 +228,25 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     popupPosition: Point
   ) {
     EDT.assertIsEdt()
-    cs.launch(ModalityState.current().asContextElement()) {
-      val request = readAction {
-        val ownerTarget = documentation()?.ownerTarget
-                          ?: return@readAction null
-        val linkResult = resolveLink(ownerTarget, url)
-        linkResult?.target?.documentationRequest()
-      }
-      withContext(Dispatchers.EDT) {
+    cs.launch(Dispatchers.EDT + ModalityState.current().asContextElement()) {
+      val pauseAutoUpdateHandle = toolWindowManager.getVisibleAutoUpdatingContent()?.toolWindowUI?.pauseAutoUpdate()
+      try {
+        val request = withContext(Dispatchers.Default) {
+          readAction {
+            val ownerTarget = documentation()?.ownerTarget
+                              ?: return@readAction null
+            val linkResult = resolveLink(ownerTarget, url)
+            linkResult?.target?.documentationRequest()
+          }
+        }
         if (request == null) {
           BrowserUtil.browseAbsolute(url)
-          return@withContext
+          return@launch
         }
         showDocumentation(request, InlinePopupContext(project, editor, popupPosition))
+      }
+      finally {
+        pauseAutoUpdateHandle?.let(Disposer::dispose)
       }
     }
   }

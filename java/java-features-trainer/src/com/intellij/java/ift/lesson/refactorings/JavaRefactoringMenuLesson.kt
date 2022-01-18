@@ -48,6 +48,7 @@ class JavaRefactoringMenuLesson : RefactoringMenuLessonBase("java.refactoring.me
     showWarningIfInplaceRefactoringsDisabled()
     extractParameterTasks()
     moreRefactoringsTasks()
+    restoreRefactoringOptionsInformer()
   }
 
   private fun LessonContext.moreRefactoringsTasks() {

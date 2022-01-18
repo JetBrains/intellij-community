@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,8 +21,7 @@ public interface ConfigImportSettings {
    * @return the {@link PathManager#getPathsSelector() path selector} of an IDE to import configs from,
    * or null if no import should happen if there are no configs for this product.
    */
-  @Nullable
-  default String getProductToImportFrom(@NotNull List<String> programArgs) {
+  default @Nullable String getProductToImportFrom(@NotNull List<String> programArgs) {
     return null;
   }
 
@@ -30,6 +30,23 @@ public interface ConfigImportSettings {
    * Returning {@code false} from this method allows to override this behavior and not restart.
    */
   default boolean shouldRestartAfterVmOptionsChange() {
+    return true;
+  }
+
+  /**
+   * @return true if bundled plugins should be downloaded from the plugin repository if they are missing
+   * in the current installation when importing settings from another product
+   */
+  default boolean shouldImportBundledPlugins() {
+    return false;
+  }
+
+  /**
+   * Determines whether bundled plugin from other product should be imported if bundled plugins importing enabled or not.
+   *
+   * @return true if plugin should be imported
+   */
+  default boolean shouldImport(@NotNull PluginId id, @Nullable String category) {
     return true;
   }
 }

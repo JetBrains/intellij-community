@@ -173,7 +173,7 @@ public class CommonCodeStyleSettings {
   }
 
   public void writeExternal(Element element) {
-    LanguageCodeStyleProvider provider = CodeStyleSettingsService.getLanguageCodeStyleProvider(getLanguage());
+    LanguageCodeStyleProvider provider = LanguageCodeStyleProvider.forLanguage(getLanguage());
     if (provider != null) {
       writeExternal(element, provider);
     }

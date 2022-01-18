@@ -627,5 +627,10 @@ public final class PythonSdkType extends SdkType {
     }
     return null;
   }
+
+  @Override
+  public boolean allowWslSdkForLocalProject() {
+    return true;
+  }
 }
 

@@ -353,9 +353,7 @@
     <action id="Documentation.ToggleAutoUpdate"
             class="com.intellij.lang.documentation.ide.actions.ToggleAutoUpdateAction"/>
     <action id="Documentation.KeepTab"
-            class="com.intellij.lang.documentation.ide.actions.KeepTabAction"
-            icon="AllIcons.Toolbar.Pin"
-            use-shortcut-of="QuickJavaDoc">
+            class="com.intellij.lang.documentation.ide.actions.KeepTabAction">
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
 
@@ -720,12 +718,13 @@
         <reference id="BigSpacer"/>
         <action id="SegmentedVcsControlAction" class="com.intellij.execution.segmentedVcsWidget.SegmentedVcsControlAction"/>
         <reference id="SmallSpacer"/>
-        <action id="SegmentedSearchEverywhereAction" class="com.intellij.ide.navigationToolbar.experimental.SegmentedSearchEverywhereAction"/>
+        <action id="SearchEverywhereNewToolbarAction" class="com.intellij.ide.navigationToolbar.experimental.SearchEverywhereNewToolbarAction"/>
       </group>
       <group id="CenterToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.CenterToolbarGroup">
         <group id="CustomActions"/>
       </group>
       <group id="RightToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.RightToolbarGroup">
+        <reference id="TinySpacer"/>
         <reference id="BigSpacer"/>
         <reference id="RunToolbarWidgetAction"/>
         <reference id="SmallSpacer"/>
@@ -741,10 +740,6 @@
         <reference id="SmallSpacer"/>
         <reference id="SettingsEntryPoint"/>
       </group>
-    </group>
-
-    <group id="SegmentedSearchEverywhereGroup">
-      <action id="SearchEverywhereNewToolbarAction" class="com.intellij.ide.navigationToolbar.experimental.SearchEverywhereNewToolbarAction"/>
     </group>
 
     <group id="ProjectViewPopupMenuRefactoringGroup" compact="true">

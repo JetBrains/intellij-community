@@ -335,12 +335,13 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
                                                                          @Nullable String packageName) {
     if (e instanceof PyExecutionException) {
       final PyExecutionException ee = (PyExecutionException)e;
-      final String stdoutCause = findErrorCause(ee.getStdout());
+      final String stdout = ee.getStdout();
+      final String stdoutCause = findErrorCause(stdout);
       final String stderrCause = findErrorCause(ee.getStderr());
       final String cause = stdoutCause != null ? stdoutCause : stderrCause;
       final String message = cause != null ? cause : ee.getMessage();
       final String command = ee.getCommand() + " " + StringUtil.join(ee.getArgs(), " ");
-      return new PyPackageInstallationErrorDescription(message, command, ee.getStdout() + "\n" + ee.getStderr(),
+      return new PyPackageInstallationErrorDescription(message, command, stdout.isEmpty() ? ee.getStderr() : stdout + "\n" + ee.getStderr(),
                                                        findErrorSolution(ee, cause, sdk), packageName, sdk);
     }
     else {

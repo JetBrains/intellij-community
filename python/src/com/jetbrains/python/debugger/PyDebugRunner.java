@@ -579,10 +579,6 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
           if (langLevel == LanguageLevel.PYTHON34 || langLevel == LanguageLevel.PYTHON35) {
             environmentController.putFixedValue(PYDEVD_USE_CYTHON, "NO");
           }
-          // Disabled until the 'TypeError: an integer is required' error is fixed. See PY-50572.
-          if (langLevel == LanguageLevel.PYTHON310) {
-            environmentController.putFixedValue(PYDEVD_USE_CYTHON, "NO");
-          }
         }
       }
 

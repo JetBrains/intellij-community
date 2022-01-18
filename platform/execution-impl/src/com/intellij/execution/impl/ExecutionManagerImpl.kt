@@ -64,6 +64,7 @@ import java.io.OutputStream
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.Consumer
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
@@ -449,7 +450,8 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
                                  executor: Executor,
                                  target: ExecutionTarget,
                                  configuration: RunnerAndConfigurationSettings?,
-                                 processHandler: ProcessHandler?) {
+                                 processHandler: ProcessHandler?,
+                                 environmentCustomization: Consumer<ExecutionEnvironment>?) {
     val builder = createEnvironmentBuilder(project, executor, configuration)
     if (processHandler != null) {
       for (descriptor in getAllDescriptors(project)) {
@@ -459,7 +461,9 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
         }
       }
     }
-    restartRunProfile(builder.target(target).build())
+    val environment = builder.target(target).build()
+    environmentCustomization?.accept(environment)
+    restartRunProfile(environment)
   }
 
   override fun restartRunProfile(environment: ExecutionEnvironment) {

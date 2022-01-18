@@ -21,7 +21,7 @@ import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_INDENT_SIZE;
 import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_TAB_SIZE;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS;
 
-public class IndentOptionsEditor extends OptionGroup implements IndentOptionsEditorBase {
+public class IndentOptionsEditor extends OptionGroup implements CodeStyleSettingsCustomizable {
 
   private JTextField myIndentField;
   private JCheckBox myCbUseTab;

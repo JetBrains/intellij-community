@@ -5,7 +5,6 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
 import kotlinx.coroutines.Job;
-import kotlinx.coroutines.JobKt;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,14 +28,13 @@ public final class Cancellation {
   }
 
   public static void checkCancelled() {
-    Job job = ourJob.get();
-    if (job != null) {
-      JobKt.ensureActive(job);
+    if (isCancelled()) {
+      throw new JobCanceledException();
     }
   }
 
   /**
-   * Makes {@link #checkCancelled()} delegate to the passed {@code job} until the returned token is not closed.
+   * Makes {@link #isCancelled()} delegate to the passed {@code job} until the returned token is not closed.
    */
   public static @NotNull AccessToken withJob(@NotNull Job job) {
     Job previousJob = ourJob.get();

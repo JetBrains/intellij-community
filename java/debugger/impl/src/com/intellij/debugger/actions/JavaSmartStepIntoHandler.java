@@ -91,9 +91,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   @Override
   public Promise<List<SmartStepTarget>> findStepIntoTargets(SourcePosition position, DebuggerSession session) {
     if (DebuggerSettings.getInstance().ALWAYS_SMART_STEP_INTO) {
-      // Android Studio (b/171896348): Treat StepInto(F7)+ALWAYS_SMART_STEP_INTO as exactly identical to
-      // SmartStepInto (Shift+F7).
-      return findSmartStepTargetsAsync(position, session, true);
+      return findSmartStepTargetsAsync(position, session, false);
     }
     return Promises.rejectedPromise();
   }

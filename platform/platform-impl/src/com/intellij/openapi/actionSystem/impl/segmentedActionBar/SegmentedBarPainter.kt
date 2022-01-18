@@ -18,6 +18,7 @@ import java.awt.geom.Rectangle2D
 import java.awt.geom.RoundRectangle2D
 import javax.swing.AbstractButton
 import javax.swing.JComponent
+import kotlin.math.roundToInt
 
 internal class SegmentedBarPainter {
   companion object {
@@ -68,8 +69,9 @@ internal class SegmentedBarPainter {
 
     val area = when (position) {
       SegmentedActionToolbarComponent.CONTROL_BAR_FIRST -> {
-        val area = Area(RoundRectangle2D.Float(bw, bw, wdth - bw, r.height.toFloat() - (2*bw), arc, arc))
-        area.add(Area(Rectangle2D.Float(wdth - arc, bw, arc, r.height.toFloat() - (2 * bw))))
+        val rightGap = (wdth / 3).roundToInt().toFloat()
+        val area = Area(RoundRectangle2D.Float(bw, bw, wdth - bw, r.height.toFloat() - (2 * bw), arc, arc))
+        area.add(Area(Rectangle2D.Float(wdth - rightGap, bw, rightGap, r.height.toFloat() - (2 * bw))))
         area
       }
       SegmentedActionToolbarComponent.CONTROL_BAR_MIDDLE -> {
@@ -132,8 +134,10 @@ internal class SegmentedBarPainter {
         val comp = component.getComponent(i)
         val bounds = comp.bounds
 
-        g2.paint2DLine(bounds.maxX, bw.toDouble(), bounds.maxX, (component.height - (bw * 2)).toDouble(), LinePainter2D.StrokeType.INSIDE,
-                       1.0,
+        val strokeWidth = 1.0
+        g2.paint2DLine(bounds.maxX - strokeWidth, bw.toDouble(), bounds.maxX - strokeWidth, (component.height - (bw * 2)).toDouble(),
+                       LinePainter2D.StrokeType.INSIDE,
+                       strokeWidth,
                        JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
       }
 

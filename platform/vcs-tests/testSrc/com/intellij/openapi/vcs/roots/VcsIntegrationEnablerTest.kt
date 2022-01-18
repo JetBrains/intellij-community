@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.roots
 
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
@@ -112,11 +113,11 @@ class VcsIntegrationEnablerTest : VcsRootBaseTest() {
     return FileUtil.toSystemDependentName(VcsTestUtil.toAbsolute(root, myProject))
   }
 
-  private class TestIntegrationEnabler(vcs: MockAbstractVcs) : VcsIntegrationEnabler(vcs) {
+  private class TestIntegrationEnabler(vcs: MockAbstractVcs) : VcsIntegrationEnabler(vcs, vcs.project.guessProjectDir()!!) {
 
-    override fun initOrNotifyError(projectDir: VirtualFile): Boolean {
-      val file = File(projectDir.path, DOT_MOCK)
-      VcsNotifier.getInstance(myProject).notifySuccess(null, "", "Created mock repository in " + projectDir.presentableUrl)
+    override fun initOrNotifyError(directory: VirtualFile): Boolean {
+      val file = File(directory.path, DOT_MOCK)
+      VcsNotifier.getInstance(myProject).notifySuccess(null, "", "Created mock repository in " + directory.presentableUrl)
       return file.mkdir()
     }
   }

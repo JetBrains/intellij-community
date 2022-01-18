@@ -46,7 +46,7 @@ object CodeWithMeGuestLauncher {
       override fun run(progressIndicator: ProgressIndicator) {
         try {
           val sessionInfo = when (uri.scheme) {
-            "tcp" -> {
+            "tcp", "gwws" -> {
               val clientBuild = uri.fragmentParameters["cb"] ?: error("there is no client build in url")
               val jreBuild = uri.fragmentParameters["jb"] ?: error("there is no jre build in url")
               val unattendedMode = uri.fragmentParameters["jt"] != null
@@ -86,12 +86,12 @@ object CodeWithMeGuestLauncher {
   }
 
   fun runDownloadedClient(lifetime: Lifetime, pathToClient: Path, pathToJre: Path, urlForThinClient: String,
-                          @NlsContexts.DialogTitle product: String, progressIndicator: ProgressIndicator?, patchVmOptions: ((String) -> String)? = null): Lifetime {
+                          @NlsContexts.DialogTitle product: String, progressIndicator: ProgressIndicator?): Lifetime {
     // todo: offer to connect as-is?
     try {
       progressIndicator?.text = RemoteDevUtilBundle.message("launcher.launch.client")
       progressIndicator?.text2 = pathToClient.toString()
-      val thinClientLifetime = CodeWithMeClientDownloader.runCwmGuestProcessFromDownload(lifetime, urlForThinClient, pathToClient, pathToJre, patchVmOptions)
+      val thinClientLifetime = CodeWithMeClientDownloader.runCwmGuestProcessFromDownload(lifetime, urlForThinClient, pathToClient, pathToJre)
 
       // Wait a bit until process will be launched and only after that finish task
       Thread.sleep(3000)

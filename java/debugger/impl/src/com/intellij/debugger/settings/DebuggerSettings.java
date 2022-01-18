@@ -128,16 +128,8 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       state = new Element("state");
     }
 
-    try {
     if (!Arrays.equals(DEFAULT_STEPPING_FILTERS, mySteppingFilters)) {
       DebuggerUtilsEx.writeFilters(state, "filter", mySteppingFilters);
-    }
-    }
-    catch (NoClassDefFoundError e) {
-      // Android Studio:
-      // https://code.google.com/p/android/issues/detail?id=225130
-      // Running on a JRE: we've already warned in the system health detector
-      return null;
     }
 
     for (ContentState eachState : myContentStates.values()) {
@@ -153,19 +145,12 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   public void loadState(@NotNull Element state) {
     XmlSerializer.deserializeInto(state, this);
 
-    try {
     List<Element> steppingFiltersElement = state.getChildren("filter");
     if (steppingFiltersElement.isEmpty()) {
       setSteppingFilters(DEFAULT_STEPPING_FILTERS);
     }
     else {
       setSteppingFilters(DebuggerUtilsEx.readFilters(steppingFiltersElement));
-    }
-    }
-    catch (NoClassDefFoundError ignore) {
-      // Android Studio:
-      // https://code.google.com/p/android/issues/detail?id=225130
-      // Running on a JRE: we've already warned in the system health detector
     }
 
     myContentStates.clear();

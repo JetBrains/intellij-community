@@ -9,6 +9,8 @@ import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runToolbar.RunToolbarData;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
@@ -28,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static com.intellij.execution.dashboard.actions.RunDashboardActionUtils.getLeafTargets;
 
@@ -145,8 +148,8 @@ public abstract class ExecutorAction extends DumbAwareAction implements UpdateIn
   private void run(RunnerAndConfigurationSettings settings, ExecutionTarget target, RunContentDescriptor descriptor) {
     RunConfiguration configuration = settings.getConfiguration();
     Project project = configuration.getProject();
+    RunManager runManager = RunManager.getInstance(project);
     if (configuration instanceof CompoundRunConfiguration) {
-      RunManager runManager = RunManager.getInstance(project);
       List<SettingsAndEffectiveTarget> subConfigurations =
         ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets();
       for (SettingsAndEffectiveTarget subConfiguration : subConfigurations) {
@@ -162,7 +165,11 @@ public abstract class ExecutorAction extends DumbAwareAction implements UpdateIn
         assert target != null : "No target for configuration of type " + configuration.getType().getDisplayName();
       }
       ProcessHandler processHandler = descriptor == null ? null : descriptor.getProcessHandler();
-      ExecutionManager.getInstance(project).restartRunProfile(project, getExecutor(), target, settings, processHandler);
+      Consumer<ExecutionEnvironment> environmentCustomization =
+        runManager.isRunWidgetActive()
+        ? ee -> ee.putUserData(RunToolbarData.RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY, true)
+        : null;
+      ExecutionManager.getInstance(project).restartRunProfile(project, getExecutor(), target, settings, processHandler, environmentCustomization);
     }
   }
 

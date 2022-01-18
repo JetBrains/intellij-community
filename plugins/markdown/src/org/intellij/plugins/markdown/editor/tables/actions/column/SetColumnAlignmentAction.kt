@@ -50,6 +50,7 @@ internal abstract class SetColumnAlignmentAction(private val alignment: Markdown
     val editor = event.getData(CommonDataKeys.EDITOR)
     val file = event.getData(CommonDataKeys.PSI_FILE)
     if (editor == null || file == null) {
+      event.presentation.isEnabledAndVisible = false
       return
     }
     val (table, _) = ColumnBasedTableAction.findTableAndIndex(event, file, editor)
