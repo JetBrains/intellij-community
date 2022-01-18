@@ -325,7 +325,7 @@ fun compareNameAndProjectBasePath(projectName: String, project: Project): Boolea
 
 fun findIndexFile(basedir: VirtualFile): VirtualFile? {
   val children = basedir.children
-  if (children == null || children.isEmpty()) {
+  if (children.isNullOrEmpty()) {
     return null
   }
 

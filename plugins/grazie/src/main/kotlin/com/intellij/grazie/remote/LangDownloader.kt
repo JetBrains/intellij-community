@@ -24,7 +24,7 @@ internal object LangDownloader {
     val result = runDownload(lang, project)
 
     // null if canceled or failed, zero result if nothing found
-    if (result != null && result.isNotEmpty()) {
+    if (!result.isNullOrEmpty()) {
       val classLoader = UrlClassLoader.build().parent(GraziePlugin.classLoader)
         .files(result).get()
 

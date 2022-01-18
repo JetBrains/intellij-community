@@ -70,7 +70,7 @@ private fun buildDocument(reader: XMLStreamReader): SVGOMDocument {
         }
 
         val implementation: SVGDOMImplementation = when {
-          version == null || version.isEmpty() || version == "1.0" || version == "1.1" -> SVGDOMImplementation.getDOMImplementation() as SVGDOMImplementation
+          version.isNullOrEmpty() || version == "1.0" || version == "1.1" -> SVGDOMImplementation.getDOMImplementation() as SVGDOMImplementation
           version == "1.2" -> SVG12DOMImplementation.getDOMImplementation() as SVGDOMImplementation
           else -> throw TranscoderException("Unsupported SVG version: $version")
         }

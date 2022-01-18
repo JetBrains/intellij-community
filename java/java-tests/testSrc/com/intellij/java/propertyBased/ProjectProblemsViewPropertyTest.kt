@@ -121,7 +121,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
       val prevScope = psiMember.useScope
       env.logMessage("Changing member: ${JavaDocUtil.getReferenceText(myProject, psiMember)}")
       val usages = findUsages(psiMember)
-      if (usages == null || usages.isEmpty()) {
+      if (usages.isNullOrEmpty()) {
         env.logMessage("Member has no usages (or too many). Skipping.")
         continue
       }

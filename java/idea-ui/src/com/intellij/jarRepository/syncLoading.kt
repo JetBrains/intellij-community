@@ -45,7 +45,7 @@ internal fun loadDependenciesSync(project: Project) {
       return
     }
     val artifacts = result.artifacts
-    if (artifacts != null && !artifacts.isEmpty()) {
+    if (!artifacts.isNullOrEmpty()) {
       LOG.info("Creating roots started for - " + result.library?.name)
       JarRepositoryManager.copyAndRefreshFiles(artifacts, RepositoryUtils.getStorageRoot(result.library, project))
       LOG.info("Create roots finished for - " + result.library?.name)

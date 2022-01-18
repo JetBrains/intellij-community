@@ -93,7 +93,7 @@ class KotlinJUnitRunConfigurationProducer : RunConfigurationProducer<JUnitConfig
         }
 
         val nodeIds = UniqueIdConfigurationProducer.getNodeIds(context)
-        if (nodeIds != null && nodeIds.isNotEmpty()) {
+        if (!nodeIds.isNullOrEmpty()) {
             return false
         }
         

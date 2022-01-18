@@ -75,7 +75,7 @@ abstract class DifferencesLabel(private val goToChangeAction: AnAction?, private
 
     return when {
       differencesStatus.isNullOrBlank() && filesCount > 1 -> filesLink
-      differencesStatus != null && differencesStatus.isNotBlank() && filesCount > 1 -> inFiles
+      !differencesStatus.isNullOrBlank() && filesCount > 1 -> inFiles
       else -> null
     }
   }

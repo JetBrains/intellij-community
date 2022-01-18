@@ -22,7 +22,7 @@ internal object MessageFactory {
     for (message in messageParts) {
       if (message.type == MessagePart.MessageType.LINK && message.runnable == null) {
         val link = message.link
-        if (link == null || link.isEmpty()) {
+        if (link.isNullOrEmpty()) {
           LOG.error("No link specified for ${message.text}")
         }
         else {

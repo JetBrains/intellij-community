@@ -426,7 +426,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             val line = position.line + 1
 
             val locations = DebuggerUtilsAsync.locationsOfLineSync(type, KOTLIN_STRATA_NAME, null, line)
-            if (locations == null || locations.isEmpty()) {
+            if (locations.isNullOrEmpty()) {
                 throw NoDataException.INSTANCE
             }
 

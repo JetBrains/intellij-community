@@ -45,7 +45,7 @@ class PyPoetryPackageManager(val sdk: Sdk) : PyPackageManager() {
   }
 
   override fun install(requirements: List<PyRequirement>?, extraArgs: List<String>) {
-    val args = if (requirements == null || requirements.isEmpty()) {
+    val args = if (requirements.isNullOrEmpty()) {
       listOfNotNull(listOf("install"),
         extraArgs)
         .flatten()

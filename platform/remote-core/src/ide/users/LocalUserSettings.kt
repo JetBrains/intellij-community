@@ -21,7 +21,7 @@ object LocalUserSettings {
           PropertiesComponent.getInstance().setValue(userNameObsoleteKey, null)
         }
       }
-      if (value != null && value.isNotBlank()) return value
+      if (!value.isNullOrBlank()) return value
       return getDefaultSystemUserName()
     }
     set(value) {

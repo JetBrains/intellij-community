@@ -25,7 +25,7 @@ open class IdeDocumentationTargetProviderImpl(private val project: Project) : Id
       ?.dereference()
       ?.castSafelyTo<Symbol>()
       ?.let { symbolDocumentationTargets(file.project, listOf(it)) }
-    if (symbolTargets != null && symbolTargets.isNotEmpty()) {
+    if (!symbolTargets.isNullOrEmpty()) {
       return symbolTargets.first()
     }
     val sourceElement = file.findElementAt(editor.caretModel.offset)

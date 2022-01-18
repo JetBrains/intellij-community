@@ -126,7 +126,7 @@ class ModulePointerManagerImpl(private val project: Project) : ModulePointerMana
       }
 
       val pointers = unresolved.remove(module.name)
-      if (pointers == null || pointers.isEmpty()) {
+      if (pointers.isNullOrEmpty()) {
         val pointer = ModulePointerImpl(module, lock)
         registerPointer(module, pointer)
         pointer
