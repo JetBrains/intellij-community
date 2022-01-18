@@ -2,14 +2,14 @@
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.impl.CompilationTasksImpl
 
 @CompileStatic
 abstract class CompilationTasks {
   abstract void compileAllModulesAndTests()
 
-  abstract void compileModules(@NotNull Collection<String> moduleNames, List<String> includingTestsInModules = [])
+  abstract void compileModules(@Nullable Collection<String> moduleNames, List<String> includingTestsInModules = [])
 
   abstract void buildProjectArtifacts(Set<String> artifactNames)
 
