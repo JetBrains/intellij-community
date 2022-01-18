@@ -102,13 +102,8 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   @Override
   public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.TYPE);
-
     PsiTypeElement mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
-    ClsElementImpl child = myChild.getValue();
-    PsiJavaCodeReferenceElement innerRefElement = mirror.getInnermostComponentReferenceElement();
-    if (child instanceof PsiJavaCodeReferenceElement && innerRefElement != null) {
-      child.setMirror(SourceTreeToPsiMap.psiToTreeNotNull(innerRefElement));
-    }
+    setMirrorIfPresent(getInnermostComponentReferenceElement(), mirror.getInnermostComponentReferenceElement());
   }
 
   private boolean isArray() {
@@ -127,7 +122,12 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
 
   @Override
   public PsiJavaCodeReferenceElement getInnermostComponentReferenceElement() {
-    return null;
+    ClsElementImpl child = myChild.getValue();
+    if (child instanceof ClsTypeElementImpl) {
+      return ((ClsTypeElementImpl)child).getInnermostComponentReferenceElement();
+    } else {
+      return (PsiJavaCodeReferenceElement) child;
+    }
   }
 
   private ClsElementImpl calculateChild() {
