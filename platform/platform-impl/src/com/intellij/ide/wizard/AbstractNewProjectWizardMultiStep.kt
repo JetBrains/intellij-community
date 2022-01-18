@@ -4,6 +4,7 @@ package com.intellij.ide.wizard
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.util.containers.reverse
 
 abstract class AbstractNewProjectWizardMultiStep<S : NewProjectWizardStep, F : NewProjectWizardMultiStepFactory<S>>(
   parent: NewProjectWizardStep,
@@ -15,10 +16,19 @@ abstract class AbstractNewProjectWizardMultiStep<S : NewProjectWizardStep, F : N
       object : ExtensionPointListener<F> {
         override fun extensionAdded(extension: F, pluginDescriptor: PluginDescriptor) {
           steps = initSteps()
+          selectLanguage(pluginDescriptor)
         }
 
         override fun extensionRemoved(extension: F, pluginDescriptor: PluginDescriptor) {
           steps = initSteps()
+          selectLanguage(pluginDescriptor)
+        }
+
+        private fun selectLanguage(pluginDescriptor: PluginDescriptor) {
+          val language = NewProjectWizardLanguageStep.allLanguages.reverse()[pluginDescriptor.pluginId.idString]
+          if (language != null) {
+            step = language
+          }
         }
       }, context.disposable
     )

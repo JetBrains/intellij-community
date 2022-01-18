@@ -71,6 +71,7 @@ abstract class AbstractNewProjectWizardMultiStepBase(
   private fun updateStepPanels(stepsPanels: HashMap<String, DialogPanel>, panelBuilder: NewProjectWizardPanelBuilder) {
     for ((key, panel) in stepsPanels) {
       panelBuilder.setVisible(panel, key == step)
+      panel.repaint()
     }
   }
 
