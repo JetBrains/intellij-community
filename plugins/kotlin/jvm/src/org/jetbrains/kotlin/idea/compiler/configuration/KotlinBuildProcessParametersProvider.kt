@@ -14,6 +14,7 @@ class KotlinBuildProcessParametersProvider(private val project: Project) : Build
         val compilerWorkspaceSettings = KotlinCompilerWorkspaceSettings.getInstance(project)
 
         val res = arrayListOf<String>()
+        res.add("-Djps.kotlin.home=${KotlinArtifacts.instance.kotlincDirectory.path}")
         if (compilerWorkspaceSettings.preciseIncrementalEnabled) {
             res.add("-D" + IncrementalCompilation.INCREMENTAL_COMPILATION_JVM_PROPERTY + "=true")
         }
