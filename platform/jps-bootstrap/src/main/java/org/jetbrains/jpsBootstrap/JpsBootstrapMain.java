@@ -198,6 +198,10 @@ public class JpsBootstrapMain {
 
     info("Running class " + className + " from module " + module.getName());
     try (URLClassLoader classloader = new URLClassLoader(moduleRuntimeClasspath.toArray(new URL[0]), ClassLoader.getPlatformClassLoader())) {
+      // Some clients peek into context class loaders
+      // see org.apache.log4j.helpers.Loader#loadClass
+      Thread.currentThread().setContextClassLoader(classloader);
+
       Class<?> mainClass;
       try {
         mainClass = classloader.loadClass(className);
