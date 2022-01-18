@@ -186,6 +186,9 @@ public final class EndUserAgreement {
       if (PlatformUtils.isJetBrainsClient()) {
         return CWM_GUEST_EULA_NAME;
       }
+      if (PlatformUtils.isGateway()) {
+        return isEAP()? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
+      }
       return isEAP()? PRIVACY_POLICY_EAP_DOCUMENT_NAME : PRIVACY_POLICY_DOCUMENT_NAME;
     }
 
