@@ -131,10 +131,14 @@ public class JpsBootstrapMain {
   }
 
   private void main() throws Throwable {
+    Properties savedProperties = System.getProperties();
+
     JpsModel model = JpsProjectUtils.loadJpsProject(projectHome);
     JpsModule module = JpsProjectUtils.getModuleByName(model, moduleNameToRun);
 
     loadClasses(module, model);
+
+    System.setProperties(savedProperties);
     setSystemPropertiesFromTeamCityBuild();
     runMainFromModuleRuntimeClasspath(classNameToRun, mainArgsToRun, module);
   }
