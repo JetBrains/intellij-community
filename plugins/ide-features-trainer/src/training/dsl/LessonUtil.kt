@@ -368,14 +368,20 @@ fun TaskContext.proceedLink(additionalAbove: Int = 0) {
   }
   addStep(gotIt)
   test {
-    ideFrame {
-      val linkText = "Click to proceed"
-      val lessonMessagePane = findComponentWithTimeout(defaultTimeout) { _: LessonMessagePane -> true }
-      val offset = lessonMessagePane.text.indexOf(linkText)
-      if (offset == -1) error("Not found '$linkText' in the LessonMessagePane")
-      val rect = lessonMessagePane.modelToView2D(offset + linkText.length / 2)
-      robot.click(lessonMessagePane, Point(rect.centerX.toInt(), rect.centerY.toInt()))
-    }
+    clickLessonMessagePaneLink("Click to proceed")
+  }
+}
+
+/**
+ * Will click on the first occurrence of [linkText] in the [LessonMessagePane]
+ */
+fun TaskTestContext.clickLessonMessagePaneLink(linkText: String) {
+  ideFrame {
+    val lessonMessagePane = findComponentWithTimeout(defaultTimeout) { _: LessonMessagePane -> true }
+    val offset = lessonMessagePane.text.indexOf(linkText)
+    if (offset == -1) error("Not found '$linkText' in the LessonMessagePane")
+    val rect = lessonMessagePane.modelToView2D(offset + linkText.length / 2)
+    robot.click(lessonMessagePane, Point(rect.centerX.toInt(), rect.centerY.toInt()))
   }
 }
 
