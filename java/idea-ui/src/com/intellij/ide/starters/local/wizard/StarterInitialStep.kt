@@ -111,11 +111,10 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
     wizardContext.setProjectFileDirectory(FileUtil.join(location, entityName))
 
     val sdk = sdkProperty.get()
+    moduleBuilder.moduleJdk = sdk
+
     if (wizardContext.project == null) {
       wizardContext.projectJdk = sdk
-    }
-    else {
-      moduleBuilder.moduleJdk = sdk
     }
   }
 

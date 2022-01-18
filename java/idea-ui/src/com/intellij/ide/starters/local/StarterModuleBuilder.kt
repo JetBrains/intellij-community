@@ -308,7 +308,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
 
     val starter = starterContext.starter ?: throw IllegalStateException("Starter is not set")
     val dependencyConfig = starterContext.starterDependencyConfig ?: error("Starter dependency config is not set")
-    val sdk = ModuleRootManager.getInstance(module).sdk
+    val sdk = moduleJdk
 
     val rootPackage = suggestPackageName(starterContext.group, starterContext.artifact)
 
