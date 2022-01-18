@@ -9,7 +9,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.isDirectory
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.idea.PluginStartupApplicationService
-import org.jetbrains.kotlin.idea.jps.SetupKotlinJpsPluginBeforeCompileTask
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import java.nio.file.Path
 
 class KotlinBuildProcessParametersProvider(private val project: Project) : BuildProcessParametersProvider() {
@@ -17,6 +17,7 @@ class KotlinBuildProcessParametersProvider(private val project: Project) : Build
         val compilerWorkspaceSettings = KotlinCompilerWorkspaceSettings.getInstance(project)
 
         val res = arrayListOf<String>()
+        res.add("-Djps.kotlin.home=${KotlinArtifacts.instance.kotlincDirectory.path}")
         if (compilerWorkspaceSettings.preciseIncrementalEnabled) {
             res.add("-D" + IncrementalCompilation.INCREMENTAL_COMPILATION_JVM_PROPERTY + "=true")
         }
