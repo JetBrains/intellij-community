@@ -154,6 +154,5 @@
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" scope="TEST" />
     <orderEntry type="module" module-name="intellij.junit.v5.rt.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.ml.models.local.java" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
   </component>
 </module>
