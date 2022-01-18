@@ -112,16 +112,17 @@ internal sealed class EntitiesBarrel {
   fun assertConsistency(abstractEntityStorage: AbstractEntityStorage) {
     val persistentIds = HashSet<PersistentEntityId<*>>()
     entityFamilies.forEachIndexed { i, family ->
+      if (family == null) return@forEachIndexed
       val clazz = i.findEntityClass<WorkspaceEntity>()
       val hasPersistentId = WorkspaceEntityWithPersistentId::class.java.isAssignableFrom(clazz)
-      family?.assertConsistency { entityData ->
+      family.assertConsistency { entityData ->
         // Assert correctness of the class
         val immutableClass = ClassConversion.entityDataToEntity(entityData.javaClass)
         assert(clazz == immutableClass) {
           """EntityFamily contains entity data of wrong type:
-            | - EntityFamily class:   $clazz
-            | - entityData class:     $immutableClass
-          """.trimMargin()
+                | - EntityFamily class:   $clazz
+                | - entityData class:     $immutableClass
+              """.trimMargin()
         }
 
         // Assert unique of persistent id

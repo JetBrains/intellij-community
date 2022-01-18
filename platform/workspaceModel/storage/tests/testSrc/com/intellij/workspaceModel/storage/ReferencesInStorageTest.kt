@@ -25,7 +25,7 @@ class ReferencesInStorageTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
   @Before
   fun setUp() {
-    //ClassToIntConverter.clear()
+    //ClassToIntConverter.INSTANCE.clear()
     virtualFileManager = VirtualFileUrlManagerImpl()
   }
 
