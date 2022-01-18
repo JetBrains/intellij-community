@@ -240,6 +240,8 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       pythonExecution = pythonScriptExecution;
     }
 
+    pythonExecution.addParameters(getExpandedScriptParameters(myConfig));
+
     pythonExecution.setCharset(EncodingProjectManager.getInstance(myConfig.getProject()).getDefaultCharset());
 
     return pythonExecution;
