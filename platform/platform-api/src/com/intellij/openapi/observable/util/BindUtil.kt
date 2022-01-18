@@ -190,11 +190,11 @@ fun <C : ThreeStateCheckBox> C.bind(property: ObservableMutableProperty<ThreeSta
   }
 }
 
-fun <C : TextFieldWithBrowseButton> C.bind(property: ObservableClearableProperty<String>): C = apply {
+fun <C : TextFieldWithBrowseButton> C.bind(property: ObservableMutableProperty<String>): C = apply {
   textField.bind(property)
 }
 
-fun <C : JTextComponent> C.bind(property: ObservableClearableProperty<String>): C = apply {
+fun <C : JTextComponent> C.bind(property: ObservableMutableProperty<String>): C = apply {
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {

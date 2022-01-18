@@ -13,11 +13,16 @@ fun <T> ObservableClearableProperty<T>.comap(transform: (T) -> T) = transform({ 
 fun <S, T> ObservableClearableProperty<S>.transform(map: (S) -> T, comap: (T) -> S): ObservableClearableProperty<T> =
   ObservableClearablePropertyView(this, map, comap)
 
+fun <T> ObservableMutableProperty<T>.map(transform: (T) -> T) = transform(transform, { it })
+fun <T> ObservableMutableProperty<T>.comap(transform: (T) -> T) = transform({ it }, transform)
+fun <S, T> ObservableMutableProperty<S>.transform(map: (S) -> T, comap: (T) -> S): ObservableMutableProperty<T> =
+  ObservableMutablePropertyView(this, map, comap)
+
 private class GraphPropertyView<S, T>(
   private val instance: GraphProperty<S>,
-  private val map: (S) -> T,
+  map: (S) -> T,
   private val comap: (T) -> S
-) : GraphProperty<T>, ObservableClearableProperty<T> by ObservableClearablePropertyView(instance, map, comap) {
+) : GraphProperty<T>, ObservableClearablePropertyView<S, T>(instance, map, comap) {
   override fun dependsOn(parent: ObservableClearableProperty<*>) =
     instance.dependsOn(parent)
 
@@ -26,42 +31,39 @@ private class GraphPropertyView<S, T>(
 
   override fun afterPropagation(listener: () -> Unit) =
     instance.afterPropagation(listener)
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    return instance == other
-  }
-
-  override fun hashCode(): Int {
-    return instance.hashCode()
-  }
 }
 
-private class ObservableClearablePropertyView<S, T>(
+private open class ObservableClearablePropertyView<S, T>(
   private val instance: ObservableClearableProperty<S>,
+  map: (S) -> T,
+  comap: (T) -> S
+) : ObservableClearableProperty<T>, ObservableMutablePropertyView<S, T>(instance, map, comap) {
+  override fun reset() =
+    instance.reset()
+
+  override fun afterReset(listener: () -> Unit) =
+    instance.afterReset(listener)
+
+  override fun afterReset(listener: () -> Unit, parentDisposable: Disposable) =
+    instance.afterReset(listener, parentDisposable)
+}
+
+private open class ObservableMutablePropertyView<S, T>(
+  private val instance: ObservableMutableProperty<S>,
   private val map: (S) -> T,
   private val comap: (T) -> S
-) : ObservableClearableProperty<T> {
+) : ObservableMutableProperty<T> {
   override fun get(): T =
     map(instance.get())
 
   override fun set(value: T) =
     instance.set(comap(value))
 
-  override fun reset() =
-    instance.reset()
-
   override fun afterChange(listener: (T) -> Unit) =
     instance.afterChange { listener(map(it)) }
 
-  override fun afterReset(listener: () -> Unit) =
-    instance.afterReset(listener)
-
   override fun afterChange(listener: (T) -> Unit, parentDisposable: Disposable) =
     instance.afterChange({ listener(map(it)) }, parentDisposable)
-
-  override fun afterReset(listener: () -> Unit, parentDisposable: Disposable) =
-    instance.afterReset(listener, parentDisposable)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
