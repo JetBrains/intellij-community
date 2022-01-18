@@ -49,7 +49,7 @@ abstract class AbstractMultiFileLocalInspectionTest : AbstractLocalInspectionTes
             ?.let { (SAXBuilder().build(it) as Document).rootElement }
 
 
-        doTest(path) test@{ _ ->
+        doTest(path) test@{
             myFixture.configureFromTempProjectFile(mainFilePath)
 
             runInspectionWithFixesAndCheck(inspection, problemExpectedString, null, localFixTextString, inspectionSettings)
