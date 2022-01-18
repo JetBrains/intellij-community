@@ -39,13 +39,6 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                     sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
                         .columns(COLUMNS_MEDIUM)
                 }
-                collapsibleGroup(KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.kotlin.advanced")) {
-                    row("${KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.kotlin.runtime")}:") {
-                        val libraryOptionsPanel = wizardBuilder.wizard.jpsData.libraryOptionsPanel
-                        Disposer.register(context.disposable, libraryOptionsPanel)
-                        cell(libraryOptionsPanel.simplePanel)
-                    }
-                }.topGap(TopGap.MEDIUM)
             }
         }
 
