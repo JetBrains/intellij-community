@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.nj2k.parenthesizeIfBinaryExpression
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
 import org.jetbrains.kotlin.nj2k.symbols.isUnresolved
 import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken.Companion.ARITHMETIC_OPERATORS
 import org.jetbrains.kotlin.nj2k.types.*
 
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
@@ -25,21 +26,18 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplic
         return recurse(element)
     }
 
-
     private fun convertBinaryExpression(binaryExpression: JKBinaryExpression): JKExpression {
         fun JKBinaryExpression.convertBinaryOperationWithChar(): JKBinaryExpression {
             val leftType = left.calculateType(typeFactory)?.asPrimitiveType() ?: return this
             val rightType = right.calculateType(typeFactory)?.asPrimitiveType() ?: return this
-
-            val leftOperandCastedCasted by lazy(LazyThreadSafetyMode.NONE) {
+            val leftOperandCasted by lazy(LazyThreadSafetyMode.NONE) {
                 JKBinaryExpression(
                     ::left.detached().let { it.castTo(rightType, strict = true) ?: it },
                     ::right.detached(),
                     operator
                 )
             }
-
-            val rightOperandCastedCasted by lazy(LazyThreadSafetyMode.NONE) {
+            val rightOperandCasted by lazy(LazyThreadSafetyMode.NONE) {
                 JKBinaryExpression(
                     ::left.detached(),
                     ::right.detached().let { it.castTo(leftType, strict = true) ?: it },
@@ -48,12 +46,19 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplic
             }
 
             return when {
+                leftType.isChar() && rightType.isChar() && operator.token in ARITHMETIC_OPERATORS -> {
+                    JKBinaryExpression(
+                        ::left.detached().let { it.castTo(JKJavaPrimitiveType.INT, strict = true) ?: it },
+                        ::right.detached().let { it.castTo(JKJavaPrimitiveType.INT, strict = true) ?: it },
+                        operator
+                    )
+                }
                 leftType.jvmPrimitiveType == rightType.jvmPrimitiveType -> this
-                leftType.jvmPrimitiveType == JvmPrimitiveType.CHAR -> leftOperandCastedCasted
-                rightType.jvmPrimitiveType == JvmPrimitiveType.CHAR -> rightOperandCastedCasted
+                leftType.isChar() -> leftOperandCasted
+                rightType.isChar() -> rightOperandCasted
                 operator.isEquals() ->
-                    if (rightType isStrongerThan leftType) leftOperandCastedCasted
-                    else rightOperandCastedCasted
+                    if (rightType isStrongerThan leftType) leftOperandCasted
+                    else rightOperandCasted
                 else -> this
             }
         }
@@ -74,7 +79,6 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplic
             statement.expression = it
         }
     }
-
 
     private fun convertMethodCallExpression(expression: JKCallExpression) {
         if (expression.identifier.isUnresolved) return
@@ -105,7 +109,6 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplic
                 JKTypeArgumentList()
             )
         )
-
     }
 
     private fun JKExpression.castTo(toType: JKType, strict: Boolean = false): JKExpression? {
@@ -122,4 +125,6 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplic
         val lastArrayType = realParameterTypes.lastOrNull()?.arrayInnerType() ?: return realParameterTypes
         return realParameterTypes.subList(0, realParameterTypes.lastIndex) + lastArrayType
     }
+
+    private fun JKJavaPrimitiveType.isChar() = jvmPrimitiveType == JvmPrimitiveType.CHAR
 }
