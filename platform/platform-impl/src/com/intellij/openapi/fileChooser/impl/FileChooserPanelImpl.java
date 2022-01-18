@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -56,6 +56,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl.FILE_CHOOSER_SHOW_PATH_PROPERTY;
 import static com.intellij.openapi.util.Pair.pair;
@@ -64,6 +65,7 @@ import static java.util.Objects.requireNonNull;
 
 final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implements FileChooserPanel, Disposable {
   private static final Logger LOG = Logger.getInstance(FileChooserPanelImpl.class);
+  private static final String SEPARATOR = "!/";
 
   private final FileTypeRegistry myRegistry;
   private final FileChooserDescriptor myDescriptor;
@@ -71,7 +73,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private final @Nullable WatchService myWatcher;
   private final Map<Path, FileSystem> myOpenFileSystems;
 
-  private final ComboBox<Path> myPath;
+  private final ComboBox<FsItem> myPath;
   private final SortedListModel<FsItem> myModel;
   private final JBList<FsItem> myList;
   private boolean myShowPathBar;
@@ -103,7 +105,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     var toolBar = ActionManager.getInstance().createActionToolbar("FileChooserDialog", group, true);
     toolBar.setTargetComponent(this);
 
-    myPath = new ComboBox<>(recentPaths);
+    myPath = new ComboBox<>(Stream.of(recentPaths).map(FsItem::new).toArray(FsItem[]::new));
     myPath.setVisible(myShowPathBar);
     myPath.setEditable(true);
     Insets pathInsets = myPath.getInsets(), pathBorder = myPath.getBorder().getBorderInsets(myPath);
@@ -201,11 +203,38 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
   @NotNull List<@NotNull Path> chosenPaths() {
     if (myShowPathBar && myPath.isAncestorOf(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner())) {
-      var item = myPath.getEditor().getItem();
-      var path = item instanceof Path ? (Path)item :
-                 item instanceof String && !((String)item).isBlank() ? NioFiles.toPath(((String)item).trim()) :
-                 null;
-      return path != null ? List.of(path) : List.of();
+      var object = myPath.getEditor().getItem();
+
+      if (object instanceof FsItem) {
+        return List.of(((FsItem)object).path);
+      }
+
+      if (object instanceof String && !((String)object).isBlank()) {
+        var text = ((String)object).trim();
+        var p = text.lastIndexOf(SEPARATOR);
+        if (p > 0 && myDescriptor.isChooseJarContents()) {
+          var archive = NioFiles.toPath(text.substring(0, p));
+          if (archive != null && myRegistry.getFileTypeByFileName(archive.getFileName().toString()) == ArchiveFileType.INSTANCE) {
+            @SuppressWarnings("resource") var fs = myOpenFileSystems.computeIfAbsent(archive, k -> {
+              try {
+                return FileSystems.newFileSystem(archive, null);
+              }
+              catch (IOException e) {
+                LOG.warn(e);
+                return null;
+              }
+            });
+            return fs != null ? List.of(fs.getRootDirectories().iterator().next().resolve(text.substring(p + 2))) : List.of();
+          }
+        }
+
+        var path = NioFiles.toPath(text);
+        if (path != null) {
+          return List.of(path);
+        }
+      }
+
+      return List.of();
     }
     else {
       return myList.getSelectedValuesList().stream()
@@ -292,7 +321,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
   private void doLoad(@Nullable Path path, boolean asZip) {
     synchronized (myLock) {
-      myPath.setItem(path);
+      myPath.setItem(new FsItem(path));
       myModel.clear();
       myList.clearSelection();
       myList.setPaintBusy(true);
@@ -361,7 +390,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     var uplink = new FsItem(parent(directory));
     update(id, cancelled, () -> {
       myCurrentDirectory = directory;
-      myPath.setItem(directory);
+      myPath.setItem(new FsItem(directory));
       myCurrentContent.add(uplink);
       myModel.add(uplink);
       myList.setSelectedIndex(0);
@@ -463,7 +492,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     if (parent == null) {
       var uri = path.toUri();
       if ("jar".equals(uri.getScheme())) {
-        var fileUri = Strings.trimEnd(uri.getRawSchemeSpecificPart(), "!/");
+        var fileUri = Strings.trimEnd(uri.getRawSchemeSpecificPart(), SEPARATOR);
         try {
           return Path.of(new URI(fileUri));
         }
@@ -488,7 +517,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     });
   }
 
-  private static class FsItem {
+  private static final class FsItem {
     private static final String UPLINK = "..";
 
     private final Path path;
@@ -509,12 +538,40 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
     private FsItem(Path path, BasicFileAttributes attrs, boolean visible, boolean selectable, @Nullable Icon icon) {
       this.path = path;
-      String name = NioFiles.getFileName(path);
+      var name = NioFiles.getFileName(path);
       this.name = name.length() > 1 && name.endsWith(File.separator) ? name.substring(0, name.length() - 1) : name;
       this.directory = attrs.isDirectory();
       this.visible = visible;
       this.selectable = selectable;
       this.icon = icon;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return this == o || o instanceof FsItem && path.equals(((FsItem)o).path);
+    }
+
+    @Override
+    public int hashCode() {
+      return path.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      var uri = path.toUri();
+      if ("jar".equals(uri.getScheme())) {
+        var raw = uri.getRawSchemeSpecificPart();
+        var p = raw.lastIndexOf(SEPARATOR);
+        if (p > 0) {
+          try {
+            return Path.of(new URI(raw.substring(0, p))) + raw.substring(p);
+          }
+          catch (Exception e) {
+            LOG.warn(e);
+          }
+        }
+      }
+      return path.toString();
     }
 
     private static final Comparator<FsItem> COMPARATOR = (o1, o2) -> {
