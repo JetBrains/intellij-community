@@ -136,7 +136,7 @@ final class InspectionPopupManager {
 
   private void showPopup(@NotNull InputEvent event) {
     hidePopup();
-    if (myPopupState.isRecentlyHidden()) return; // do not show new popup
+    if (myPopupState.isRecentlyHidden() || AnalyzerStatus.isEmpty(getAnalyzerStatus())) return; // do not show new popup
 
     updateContentPanel(getAnalyzerStatus().getController());
 

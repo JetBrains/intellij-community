@@ -186,11 +186,12 @@ class AnalyzerStatus(val icon: Icon, @Nls @get:Nls val title: String, @Nls @get:
      * Default instance for classes that don't implement <code>ErrorStripeRenderer.getStatus</code>
      */
     @JvmStatic
-    val DEFAULT by lazy(LazyThreadSafetyMode.NONE) {
-      AnalyzerStatus(EmptyIcon.ICON_0, "", "") {
-        EmptyController
-      }
+    val EMPTY by lazy(LazyThreadSafetyMode.NONE) {
+      AnalyzerStatus(EmptyIcon.ICON_0, "", "") { EmptyController }
     }
+
+    @JvmStatic
+    fun isEmpty(status: AnalyzerStatus) = status == EMPTY
 
     @JvmStatic
     val EmptyController = object : UIController {
