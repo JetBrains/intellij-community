@@ -556,7 +556,7 @@ public final class UITheme {
     else if (value.startsWith("AllIcons.")) {
       return IconLoader.getReflectiveIcon(value, UITheme.class.getClassLoader());
     }
-    else if (!value.startsWith("#") && getIntegerOrFloat(value, key) != null) {
+    else if (!value.startsWith("#") && getIntegerOrFloat(value, null) != null) {
       return getIntegerOrFloat(value, key);
     }
     else {
