@@ -4,10 +4,9 @@ package com.intellij.openapi.externalSystem.service.ui.project.path
 import com.intellij.ide.wizard.getCanonicalPath
 import com.intellij.ide.wizard.getPresentablePath
 import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.externalSystem.service.ui.completion.JTextCompletionContributor
-import com.intellij.openapi.externalSystem.service.ui.completion.JTextCompletionContributor.CompletionType
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfoRenderer
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
@@ -32,7 +31,7 @@ import javax.swing.text.Highlighter
 class WorkingDirectoryField(
   project: Project,
   private val workingDirectoryInfo: WorkingDirectoryInfo
-) : TextCompletionField(project) {
+) : TextCompletionField<TextCompletionInfo>(project) {
 
   private val propertyGraph = PropertyGraph(isBlockPropagation = false)
   private val modeProperty = propertyGraph.graphProperty { Mode.NAME }
@@ -49,14 +48,15 @@ class WorkingDirectoryField(
 
   private val externalProjects = workingDirectoryInfo.externalProjects
 
-  override val contributor = JTextCompletionContributor.create<TextCompletionField>(CompletionType.REPLACE) { textToComplete ->
-    when (mode) {
+  override fun getCompletionVariants(): List<TextCompletionInfo> {
+    return when (mode) {
       Mode.NAME -> {
         externalProjects
           .map { it.name }
           .map { TextCompletionInfo(it) }
       }
       Mode.PATH -> {
+        val textToComplete = getTextToComplete()
         val pathToComplete = getCanonicalPath(textToComplete, removeLastSlash = false)
         externalProjects
           .filter { it.path.startsWith(pathToComplete) }
@@ -65,6 +65,11 @@ class WorkingDirectoryField(
           .map { TextCompletionInfo(it) }
       }
     }
+  }
+
+  init {
+    renderer = TextCompletionInfoRenderer()
+    completionType = CompletionType.REPLACE_TEXT
   }
 
   init {

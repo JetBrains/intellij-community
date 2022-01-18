@@ -6,9 +6,14 @@ package com.intellij.openapi.ui
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.fields.ExtendableTextComponent
+import com.intellij.ui.components.fields.ExtendableTextField
+import com.intellij.util.ui.ComponentWithEmptyText
+import java.awt.Component
 import java.awt.event.*
 import javax.swing.*
 import javax.swing.text.JTextComponent
@@ -63,6 +68,15 @@ fun JComponent.addKeyboardAction(keyStrokes: List<KeyStroke>, action: (ActionEve
   }
 }
 
+fun ExtendableTextField.addExtension(
+  icon: Icon,
+  hoverIcon: Icon = icon,
+  tooltip: @NlsContexts.Tooltip String? = null,
+  action: () -> Unit
+) {
+  addExtension(ExtendableTextComponent.Extension.create(icon, hoverIcon, tooltip, action))
+}
+
 fun <T> ListModel<T>.asSequence() = sequence<T> {
   for (i in 0 until size) {
     yield(getElementAt(i))
@@ -85,6 +99,13 @@ fun TreeModel.getTreePath(userObject: Any?): TreePath? =
 
 val TextFieldWithBrowseButton.emptyText
   get() = (textField as JBTextField).emptyText
+
+fun <C> C.setEmptyState(
+  text: @NlsContexts.StatusText String
+): C where C : Component, C : ComponentWithEmptyText = apply {
+  getAccessibleContext().accessibleName = text
+  emptyText.text = text
+}
 
 val <E> ComboBox<E>.collectionModel: CollectionComboBoxModel<E>
   get() = model as CollectionComboBoxModel

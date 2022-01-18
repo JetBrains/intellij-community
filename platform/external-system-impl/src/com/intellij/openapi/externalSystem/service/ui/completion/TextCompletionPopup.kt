@@ -19,14 +19,13 @@ import javax.swing.Icon
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 import javax.swing.ListSelectionModel
-import javax.swing.text.JTextComponent
 
-class TextCompletionPopup<T, C : JTextComponent>(
-  project: Project,
-  private val textComponent: C,
+class TextCompletionPopup<T>(
+  project: Project?,
+  private val textComponent: TextCompletionField<T>,
   private val contributor: Contributor<T>,
   private val renderer: TextCompletionRenderer<T>
-) : ListPopupImpl(project, null, PopupStep(textComponent, contributor), null) {
+) : ListPopupImpl(project, null, PopupStep(contributor), null) {
 
   override fun getListElementRenderer(): ListCellRenderer<*> = Renderer()
 
@@ -70,24 +69,16 @@ class TextCompletionPopup<T, C : JTextComponent>(
     }
   }
 
-  private class PopupStep<T, C : JTextComponent>(
-    private val textComponent: C,
+  private class PopupStep<T>(
     private val contributor: Contributor<T>,
   ) : BaseStep<Item<T>>(), ListPopupStep<Item<T>> {
 
     override fun isSelectable(value: Item<T>): Boolean = value is Item.Just
 
     override fun getValues(): List<Item<T>> {
-      val text = textComponent.text
-      val items = ArrayList<Item<T>>()
-      items.add(Item.None)
-      for (item in contributor.getItems(text)) {
-        if (items[0] is Item.None) {
-          items.removeAt(0)
-        }
-        items.add(Item.Just(item))
-      }
-      return items
+      return contributor.getItems()
+        .map { Item.Just(it) }
+        .ifEmpty { listOf(Item.None) }
     }
 
     override fun onChosen(selectedValue: Item<T>, finalChoice: Boolean): com.intellij.openapi.ui.popup.PopupStep<*>? {
@@ -119,7 +110,7 @@ class TextCompletionPopup<T, C : JTextComponent>(
         }
         is Item.Just -> {
           val cell = TextCompletionRenderer.Cell(this, value.item, list, index, selected, hasFocus)
-          renderer.customizeCellRenderer(textComponent.text, cell)
+          renderer.customizeCellRenderer(textComponent, cell)
         }
       }
     }
@@ -132,7 +123,7 @@ class TextCompletionPopup<T, C : JTextComponent>(
 
   interface Contributor<T> {
 
-    fun getItems(text: String): List<T>
+    fun getItems(): List<T>
 
     fun fireItemChosen(item: T)
   }

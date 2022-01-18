@@ -13,14 +13,10 @@ import com.intellij.ide.wizard.util.NewProjectLinkNewProjectWizardStep
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
-import com.intellij.openapi.externalSystem.service.ui.completion.DefaultTextCompletionRenderer
-import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBox
-import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBoxConverter
-import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer
+import com.intellij.openapi.externalSystem.service.ui.completion.*
 import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesTable
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
@@ -50,6 +46,7 @@ import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizard
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 import com.intellij.openapi.externalSystem.service.ui.completion.DefaultTextCompletionRenderer.Companion.append
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer.Cell
 import java.awt.Component
 import javax.swing.Icon
 import javax.swing.JList
@@ -115,9 +112,10 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           }
         }.topGap(TopGap.SMALL)
         row(MavenWizardBundle.message("maven.new.project.wizard.archetype.label")) {
-          archetypeComboBox = TextCompletionComboBox(ArchetypeConverter(), ArchetypeRenderer())
-          archetypeComboBox.bind(archetypeItemProperty)
+          archetypeComboBox = TextCompletionComboBox(context.project, ArchetypeConverter())
           cell(archetypeComboBox)
+            .applyToComponent { bindSelectedItem(archetypeItemProperty) }
+            .graphProperty(archetypeItemProperty)
             .horizontalAlign(HorizontalAlign.FILL)
             .resizableColumn()
             .validationOnInput { validateArchetypeId() }
@@ -127,9 +125,10 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           }
         }.topGap(TopGap.SMALL)
         row(MavenWizardBundle.message("maven.new.project.wizard.archetype.version.label")) {
-          archetypeVersionComboBox = TextCompletionComboBox(ArchetypeVersionConverter(), DefaultTextCompletionRenderer())
-          archetypeVersionComboBox.bind(archetypeVersionProperty)
+          archetypeVersionComboBox = TextCompletionComboBox(context.project, ArchetypeVersionConverter())
           cell(archetypeVersionComboBox)
+            .applyToComponent { bindSelectedItem(archetypeVersionProperty) }
+            .graphProperty(archetypeVersionProperty)
             .validationOnInput { validateArchetypeVersion() }
             .validationOnApply { validateArchetypeVersion() }
             .columns(10)
@@ -363,7 +362,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
   }
 
   private class ArchetypeConverter : TextCompletionComboBoxConverter<ArchetypeItem> {
-    override fun createItem(text: String) =
+    override fun getItem(text: String) =
       text.nullize(true)?.let {
         ArchetypeItem(
           groupId = text.substringBefore(':'),
@@ -372,24 +371,17 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
         )
       } ?: ArchetypeItem.NONE
 
-    override fun createString(element: ArchetypeItem) =
-      element.run {
+    override fun getText(item: ArchetypeItem) =
+      item.run {
         if (artifactId.isNotEmpty())
           "$groupId:$artifactId"
         else
           groupId
       }
-  }
 
-  private class ArchetypeVersionConverter : TextCompletionComboBoxConverter<String> {
-    override fun createItem(text: String) = text.trim()
-
-    override fun createString(element: String) = element
-  }
-
-  private class ArchetypeRenderer : TextCompletionRenderer<ArchetypeItem> {
-    override fun customizeCellRenderer(text: @NlsSafe String, cell: TextCompletionRenderer.Cell<ArchetypeItem>) {
+    override fun customizeCellRenderer(editor: TextCompletionField<ArchetypeItem>, cell: Cell<ArchetypeItem>) {
       val item = cell.item
+      val text = editor.getTextToComplete()
       with(cell.component) {
         val groupIdSuffix = text.substringBefore(':')
         val artifactIdPrefix = text.substringAfter(':', "")
@@ -412,6 +404,16 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           }
         }
       }
+    }
+  }
+
+  private class ArchetypeVersionConverter : TextCompletionComboBoxConverter<@NlsSafe String> {
+    override fun getItem(text: String) = text.trim()
+
+    override fun getText(item: String) = item
+
+    override fun customizeCellRenderer(editor: TextCompletionField<String>, cell: Cell<@NlsSafe String>) {
+      cell.component.append(cell.item, editor.getTextToComplete())
     }
   }
 

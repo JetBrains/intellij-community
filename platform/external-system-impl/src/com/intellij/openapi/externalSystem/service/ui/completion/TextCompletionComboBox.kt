@@ -1,113 +1,64 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.ui.completion
 
-import com.intellij.codeInsight.lookup.impl.LookupCellRenderer
-import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.observable.properties.AtomicObservableProperty
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.observable.properties.AtomicLazyProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.observable.util.bind
-import com.intellij.openapi.observable.util.onceWhenFocusGained
-import com.intellij.openapi.observable.util.whenFocusGained
-import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.observable.util.whenListChanged
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.addExtension
 import com.intellij.openapi.ui.addKeyboardAction
-import com.intellij.openapi.ui.collectionModel
-import com.intellij.openapi.ui.getKeyStrokes
 import com.intellij.ui.*
-import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField.UpdatePopupType
-import javax.swing.JList
-import javax.swing.JTextField
-import javax.swing.ListCellRenderer
-import javax.swing.ListSelectionModel
-import javax.swing.plaf.basic.BasicComboBoxEditor
+import java.awt.event.KeyEvent
+import javax.swing.KeyStroke
 
 class TextCompletionComboBox<T>(
-  private val converter: TextCompletionComboBoxConverter<T>,
-  renderer: TextCompletionRenderer<T>
-) : ComboBox<T>(CollectionComboBoxModel()) {
+  project: Project?,
+  private val converter: TextCompletionComboBoxConverter<T>
+) : TextCompletionField<T>(project) {
 
-  private fun findOrCreateItem(text: String): T {
-    val item = converter.createItem(text)
+  val collectionModel = CollectionComboBoxModel<T>()
+
+  val selectedItemProperty = AtomicLazyProperty { converter.getItem("") }
+  var selectedItem by selectedItemProperty
+
+  override fun getCompletionVariants(): List<T> {
+    return collectionModel.items
+  }
+
+  private fun getItem(text: String): T {
+    val item = converter.getItem(text)
     val existedItem = collectionModel.items.find { it == item }
     return existedItem ?: item
   }
 
-  private fun createEditor(): Editor<T> {
-    val property = AtomicObservableProperty("")
-    val editor = object : Editor<T>() {
-      override fun setItem(anObject: Any?) {}
-      override fun getItem(): Any? = selectedItem
-    }
-    editor.textField.bind(property)
-    bind(property.transform(::findOrCreateItem, converter::createString))
-    return editor
+  fun bindSelectedItem(property: ObservableMutableProperty<T>) {
+    selectedItemProperty.bind(property)
   }
 
-  private fun updatePopup(type: UpdatePopupType) {
-    when (type) {
-      UpdatePopupType.SHOW_IF_HAS_VARIANCES ->
-        if (collectionModel.items.isNotEmpty())
-          showPopup()
-      UpdatePopupType.SHOW ->
-        showPopup()
-      UpdatePopupType.HIDE ->
-        hidePopup()
-      UpdatePopupType.UPDATE -> {}
+  init {
+    renderer = converter
+    completionType = CompletionType.REPLACE_TEXT
+  }
+
+  init {
+    bind(selectedItemProperty.transform(converter::getText, ::getItem))
+    collectionModel.whenListChanged {
+      selectedItem = getItem(text)
     }
   }
 
   init {
-    val editor = createEditor()
-    val cellRenderer = Renderer(renderer, editor)
-
-    setRenderer(wrapWithExpandedRenderer(cellRenderer))
-    setEditor(editor)
-    setEditable(true)
-
-    editor.textField.whenFocusGained {
-      if (editor.text.isEmpty()) {
-        updatePopup(UpdatePopupType.SHOW_IF_HAS_VARIANCES)
-      }
+    collectionModel.whenListChanged {
+      updatePopup(UpdatePopupType.UPDATE)
     }
-    editor.textField.onceWhenFocusGained {
-      updatePopup(UpdatePopupType.SHOW_IF_HAS_VARIANCES)
+    addExtension(AllIcons.General.ArrowDown, AllIcons.General.ArrowDown, null) {
+      updatePopup(UpdatePopupType.SHOW_ALL_VARIANCES)
     }
-    editor.textField.addKeyboardAction(getKeyStrokes(IdeActions.ACTION_CODE_COMPLETION)) {
-      updatePopup(UpdatePopupType.SHOW)
-    }
-  }
-
-  init {
-    popup?.list?.apply {
-      prototypeCellValue = converter.createItem("X")
-      selectionBackground = LookupCellRenderer.SELECTED_BACKGROUND_COLOR
-      selectionMode = ListSelectionModel.SINGLE_SELECTION
-      isFocusable = false
-    }
-  }
-
-  private fun wrapWithExpandedRenderer(renderer: ListCellRenderer<in T>): ListCellRenderer<in T> {
-    val list = popup?.list ?: return renderer
-    val handler = ExpandableItemsHandlerFactory.install<Int>(list)
-    return ExpandedItemListCellRendererWrapper(renderer, handler)
-  }
-
-  private abstract class Editor<T> : BasicComboBoxEditor() {
-    val textField: JTextField get() = editor
-    val text: String get() = editor.text
-  }
-
-  private class Renderer<T>(
-    private val renderer: TextCompletionRenderer<T>,
-    private val editor: Editor<T>
-  ) : ColoredListCellRenderer<T>() {
-    override fun customizeCellRenderer(list: JList<out T>, value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
-      // Code completion prefix should be visible under cell selection
-      mySelected = false
-
-      myBorder = null
-
-      val cell = TextCompletionRenderer.Cell(this, value, list, index, selected, hasFocus)
-      renderer.customizeCellRenderer(editor.text, cell)
+    addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0)) {
+      updatePopup(UpdatePopupType.SHOW_ALL_VARIANCES)
     }
   }
 }

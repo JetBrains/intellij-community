@@ -3,14 +3,16 @@ package com.intellij.openapi.externalSystem.service.ui.command.line
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.CustomShortcutSet
-import com.intellij.openapi.externalSystem.service.ui.completion.JTextCompletionContributor
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfoRenderer
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.observable.properties.AtomicLazyProperty
 import com.intellij.openapi.observable.properties.comap
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.setEmptyState
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -18,15 +20,15 @@ import javax.swing.KeyStroke
 
 class CommandLineField(
   project: Project,
-  commandLineInfo: CommandLineInfo
-) : TextCompletionField(project) {
+  private val commandLineInfo: CommandLineInfo
+) : TextCompletionField<TextCompletionInfo>(project) {
 
   private val commandLineProperty = AtomicLazyProperty { "" }
 
   var commandLine by commandLineProperty
 
-  override val contributor = JTextCompletionContributor.create<TextCompletionField> {
-    commandLineInfo.tablesInfo.flatMap { it.completionInfo }
+  override fun getCompletionVariants(): List<TextCompletionInfo> {
+    return commandLineInfo.tablesInfo.flatMap { it.completionInfo }
   }
 
   init {
@@ -34,8 +36,9 @@ class CommandLineField(
   }
 
   init {
-    getAccessibleContext().accessibleName = commandLineInfo.fieldEmptyState
-    emptyText.text = commandLineInfo.fieldEmptyState
+    renderer = TextCompletionInfoRenderer()
+    completionType = CompletionType.REPLACE_WORD
+    setEmptyState(commandLineInfo.fieldEmptyState)
   }
 
   init {

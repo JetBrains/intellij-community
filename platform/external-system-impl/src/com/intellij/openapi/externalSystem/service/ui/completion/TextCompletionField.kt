@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.ui.completion
 
-import com.intellij.codeInsight.lookup.impl.LookupCellRenderer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.invokeLater
@@ -10,20 +9,76 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.addKeyboardAction
 import com.intellij.openapi.ui.getKeyStrokes
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.fields.ExtendableTextField
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.*
+import javax.swing.text.BadLocationException
 
-abstract class TextCompletionField(private val project: Project) : ExtendableTextField() {
+abstract class TextCompletionField<T>(private val project: Project?) : ExtendableTextField() {
 
-  protected abstract val contributor: TextCompletionContributor<TextCompletionField>
+  var renderer: TextCompletionRenderer<T> = DefaultTextCompletionRenderer()
+
+  var completionType: CompletionType = CompletionType.REPLACE_TEXT
+
+  protected abstract fun getCompletionVariants(): List<T>
 
   private val updateMutex = AtomicBoolean()
 
-  private var popup: TextCompletionPopup<TextCompletionInfo, TextCompletionField>? = null
-  private val visibleCompletionVariants = ArrayList<TextCompletionInfo>()
+  private var popup: TextCompletionPopup<T>? = null
+  private val completionVariants = ArrayList<T>()
+
+  fun getTextToComplete(): @NlsSafe String {
+    return when (completionType) {
+      CompletionType.REPLACE_TEXT -> text
+      CompletionType.REPLACE_WORD -> getWordUnderCaret()
+    }
+  }
+
+  private fun fireVariantChosen(variant: T) {
+    updateMutex.lockOrSkip {
+      when (completionType) {
+        CompletionType.REPLACE_TEXT -> replaceText(variant)
+        CompletionType.REPLACE_WORD -> replaceWordUnderCaret(variant)
+      }
+    }
+  }
+
+  private fun replaceText(variant: T) {
+    text = renderer.getText(variant)
+  }
+
+  private fun replaceWordUnderCaret(variant: T) {
+    val variantText = renderer.getText(variant)
+    val caretPosition = getBoundedCaretPosition()
+    val wordRange = getWordRange(caretPosition)
+    document.remove(wordRange.first, wordRange.last - wordRange.first + 1)
+    document.insertString(wordRange.first, variantText, null)
+  }
+
+  private fun getWordUnderCaret(): String {
+    val caretPosition = getBoundedCaretPosition()
+    val wordRange = getWordRange(caretPosition)
+    val textToCompleteRange = wordRange.first until caretPosition
+    return text.substring(textToCompleteRange)
+  }
+
+  private fun getWordRange(offset: Int): IntRange {
+    var wordStartPosition = 0
+    for (word in text.split(" ")) {
+      val wordEndPosition = wordStartPosition + word.length
+      if (offset in wordStartPosition..wordEndPosition) {
+        return wordStartPosition until wordEndPosition
+      }
+      wordStartPosition = wordEndPosition + 1
+    }
+    throw BadLocationException(text, offset)
+  }
+
+  private fun getBoundedCaretPosition(): Int {
+    return maxOf(0, minOf(text.length, caretPosition))
+  }
 
   private fun isFocusedParent(): Boolean {
     val focusManager = IdeFocusManager.getInstance(project)
@@ -35,57 +90,58 @@ abstract class TextCompletionField(private val project: Project) : ExtendableTex
     return height > 0 && width > 0
   }
 
-  private fun rebuildCompletionVariantsList() {
-    val textToComplete = contributor.getTextToComplete(this@TextCompletionField)
-    visibleCompletionVariants.clear()
-    visibleCompletionVariants.addAll(
-      contributor.getCompletionVariants(this@TextCompletionField, textToComplete)
-        .filter { it.text.startsWith(textToComplete) }
-    )
-  }
-
-  private fun hasVariances(): Boolean {
-    return visibleCompletionVariants.isNotEmpty()
+  private fun rebuildCompletionVariantsList(isFilterDisabled: Boolean) {
+    val textToComplete = getTextToComplete()
+    val completionVariance = getCompletionVariants()
+      .filter { isFilterDisabled || textToComplete in renderer.getText(it) }
+    completionVariants.clear()
+    completionVariants.addAll(completionVariance)
   }
 
   fun updatePopup(type: UpdatePopupType) {
     if (isValidParent() && isFocusedParent()) {
-      rebuildCompletionVariantsList()
+      rebuildCompletionVariantsList(
+        type == UpdatePopupType.SHOW_ALL_VARIANCES
+      )
       when (type) {
-        UpdatePopupType.UPDATE -> popup?.update()
+        UpdatePopupType.UPDATE -> updatePopup()
         UpdatePopupType.SHOW -> showPopup()
         UpdatePopupType.HIDE -> hidePopup()
-        UpdatePopupType.SHOW_IF_HAS_VARIANCES ->
-          when {
-            hasVariances() -> showPopup()
-            else -> hidePopup()
-          }
+        UpdatePopupType.SHOW_ALL_VARIANCES -> showIfHasVariances()
+        UpdatePopupType.SHOW_IF_HAS_VARIANCES -> showIfHasVariances()
       }
     }
   }
 
+  private fun showIfHasVariances() {
+    if (completionVariants.isEmpty()) {
+      hidePopup()
+    }
+    else {
+      showPopup()
+    }
+  }
+
+  private fun updatePopup() {
+    popup?.update()
+  }
+
   private fun showPopup() {
     if (popup == null) {
-      val contributor = object : TextCompletionPopup.Contributor<TextCompletionInfo> {
-        override fun getItems(text: String) = visibleCompletionVariants
-        override fun fireItemChosen(item: TextCompletionInfo) = fireVariantChosen(item)
+      val contributor = object : TextCompletionPopup.Contributor<T> {
+        override fun getItems() = completionVariants
+        override fun fireItemChosen(item: T) = fireVariantChosen(item)
       }
-      popup = TextCompletionPopup(project, this, contributor, Renderer())
+      popup = TextCompletionPopup(project, this, contributor, renderer)
         .also { Disposer.register(it, Disposable { popup = null }) }
         .also { it.showUnderneathOf(this) }
     }
-    popup?.update()
+    updatePopup()
   }
 
   private fun hidePopup() {
     popup?.cancel()
     popup = null
-  }
-
-  private fun fireVariantChosen(variant: TextCompletionInfo) {
-    updateMutex.lockOrSkip {
-      contributor.fireVariantChosen(this, variant)
-    }
   }
 
   init {
@@ -118,36 +174,10 @@ abstract class TextCompletionField(private val project: Project) : ExtendableTex
   }
 
   enum class UpdatePopupType {
-    UPDATE, SHOW, HIDE, SHOW_IF_HAS_VARIANCES
+    UPDATE, SHOW, HIDE, SHOW_IF_HAS_VARIANCES, SHOW_ALL_VARIANCES
   }
 
-  private inner class Renderer : TextCompletionRenderer<TextCompletionInfo> {
-    override fun customizeCellRenderer(text: String, cell: TextCompletionRenderer.Cell<TextCompletionInfo>) {
-      val item = cell.item
-      val list = cell.list
-      with (cell.component) {
-        icon = item.icon
-        val textStyle = SimpleTextAttributes.STYLE_PLAIN
-        val prefix = contributor.getTextToComplete(this@TextCompletionField)
-        val prefixForeground = LookupCellRenderer.MATCHED_FOREGROUND_COLOR
-        val prefixAttributes = SimpleTextAttributes(textStyle, prefixForeground)
-        if (item.text.startsWith(prefix)) {
-          append(prefix, prefixAttributes)
-          append(item.text.substring(prefix.length))
-        }
-        else {
-          append(item.text)
-        }
-        val description = item.description
-        if (description != null) {
-          val descriptionForeground = LookupCellRenderer.getGrayedForeground(cell.isSelected)
-          val descriptionAttributes = SimpleTextAttributes(textStyle, descriptionForeground)
-          append(" ")
-          append(description.trim(), descriptionAttributes)
-          val padding = maxOf(preferredSize.width, list.width - (ipad.left + ipad.right))
-          appendTextPadding(padding, SwingConstants.RIGHT)
-        }
-      }
-    }
+  enum class CompletionType {
+    REPLACE_WORD, REPLACE_TEXT
   }
 }

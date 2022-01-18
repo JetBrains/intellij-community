@@ -13,19 +13,25 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
-class MavenProfilesFiled(project: Project, workingDirectoryField: WorkingDirectoryField) : TextCompletionField(project) {
+class MavenProfilesFiled(
+  private val project: Project,
+  private val workingDirectoryField: WorkingDirectoryField
+) : TextCompletionField<TextCompletionInfo>(project) {
+
   private val textProperty = AtomicObservableProperty("")
 
   var profiles by textProperty.transform(::decodeProfiles, ::encodeProfiles)
 
-  override val contributor = JTextCompletionContributor.create<TextCompletionField> {
+  override fun getCompletionVariants(): List<TextCompletionInfo> {
     val profiles = getProfiles(project, workingDirectoryField)
       .sortedWith(NaturalComparator.INSTANCE)
-    profiles.map { TextCompletionInfo(it) } +
-    profiles.map { TextCompletionInfo("-$it") }
+    return profiles.map { TextCompletionInfo(it) } +
+           profiles.map { TextCompletionInfo("-$it") }
   }
 
   init {
+    renderer = TextCompletionInfoRenderer()
+    completionType = CompletionType.REPLACE_WORD
     bind(textProperty)
   }
 
