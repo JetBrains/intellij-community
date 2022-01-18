@@ -12,6 +12,7 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" exported="" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Slf4j" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="slf4j-jdk14" level="project" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" exported="" />

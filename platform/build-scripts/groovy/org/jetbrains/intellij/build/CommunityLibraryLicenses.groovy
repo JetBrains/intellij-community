@@ -643,6 +643,7 @@ final class CommunityLibraryLicenses {
                        url: "https://six.readthedocs.io/",
                        licenseUrl: "https://github.com/benjaminp/six/blob/master/LICENSE").mit(),
     new LibraryLicense(libraryName: "Slf4j", url: "https://slf4j.org/", licenseUrl: "https://slf4j.org/license.html").mit(),
+    new LibraryLicense(libraryName: "slf4j-jdk14", url: "https://slf4j.org/", licenseUrl: "https://slf4j.org/license.html").mit(),
     new LibraryLicense(name: "SnakeYAML", libraryName: "snakeyaml",
                        url: "https://bitbucket.org/asomov/snakeyaml").apache(),
     new LibraryLicense(name: "snakeyaml-engine", libraryName: "snakeyaml-engine",
