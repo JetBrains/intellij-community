@@ -2,6 +2,8 @@
 
 package org.jetbrains.jpsBootstrap;
 
+import com.intellij.execution.CommandLineWrapperUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import org.apache.commons.cli.*;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -11,15 +13,10 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.net.URL;
-import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.*;
@@ -28,17 +25,20 @@ import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.*;
 public class JpsBootstrapMain {
 
   private static final String COMMUNITY_HOME_ENV = "JPS_BOOTSTRAP_COMMUNITY_HOME";
-  private static final String JPS_BOOTSTRAP_WORK_DIR_ENV = "JPS_BOOTSTRAP_WORK_DIR";
   private static final String JPS_BOOTSTRAP_VERBOSE = "JPS_BOOTSTRAP_VERBOSE";
 
   private static final String ARG_HELP = "help";
   private static final String ARG_VERBOSE = "verbose";
+  private static final String ARG_JAVA_ARGFILE_TARGET = "java-argfile-target";
+  private static final String ARG_BUILD_TARGET_XMX = "build-target-xmx";
 
   private static Options createCliOptions() {
     Options opts = new Options();
 
     opts.addOption(Option.builder("h").longOpt("help").argName(ARG_HELP).build());
     opts.addOption(Option.builder("v").longOpt("verbose").desc("Show more logging from jps-bootstrap and the building process").argName(ARG_VERBOSE).build());
+    opts.addOption(Option.builder().longOpt("build-target-xmx").desc("Specify Xmx to run build script. default: 4g").argName(ARG_BUILD_TARGET_XMX).build());
+    opts.addOption(Option.builder().longOpt("java-argfile-target").required().hasArg().desc("Write java argfile to this file").argName(ARG_JAVA_ARGFILE_TARGET).build());
 
     return opts;
   }
@@ -58,9 +58,11 @@ public class JpsBootstrapMain {
   private final Path communityHome;
   private final String moduleNameToRun;
   private final String classNameToRun;
+  private final String buildTargetXmx;
   private final Path jpsBootstrapWorkDir;
   private final Path ideaHomePath;
-  private final String[] mainArgsToRun;
+  private final Path javaArgsFileTarget;
+  private final List<String> mainArgsToRun;
 
   public JpsBootstrapMain(String[] args) throws IOException {
     CommandLine cmdline;
@@ -117,30 +119,54 @@ public class JpsBootstrapMain {
       ideaHomePath = communityHome;
     }
 
-    if (System.getenv(JPS_BOOTSTRAP_WORK_DIR_ENV) != null) {
-      jpsBootstrapWorkDir = Path.of(System.getenv(JPS_BOOTSTRAP_WORK_DIR_ENV));
-    }
-    else {
-      jpsBootstrapWorkDir = communityHome.resolve("out").resolve("jps-bootstrap");
-    }
+    jpsBootstrapWorkDir = communityHome.resolve("out").resolve("jps-bootstrap");
 
     info("Working directory: " + jpsBootstrapWorkDir);
     Files.createDirectories(jpsBootstrapWorkDir);
 
-    mainArgsToRun = freeArgs.subList(2, freeArgs.size()).toArray(new String[0]);
+    mainArgsToRun = freeArgs.subList(2, freeArgs.size());
+    javaArgsFileTarget = Path.of(cmdline.getOptionValue(ARG_JAVA_ARGFILE_TARGET));
+    buildTargetXmx = cmdline.hasOption(ARG_BUILD_TARGET_XMX) ? cmdline.getOptionValue(ARG_BUILD_TARGET_XMX) : "4g";
   }
 
   private void main() throws Throwable {
-    Properties savedProperties = System.getProperties();
-
     JpsModel model = JpsProjectUtils.loadJpsProject(projectHome);
     JpsModule module = JpsProjectUtils.getModuleByName(model, moduleNameToRun);
 
     loadClasses(module, model);
 
-    System.setProperties(savedProperties);
-    setSystemPropertiesFromTeamCityBuild();
-    runMainFromModuleRuntimeClasspath(classNameToRun, mainArgsToRun, module);
+    List<File> moduleRuntimeClasspath = JpsProjectUtils.getModuleRuntimeClasspath(module);
+    verbose("Module " + module.getName() + " classpath:\n  " + moduleRuntimeClasspath.stream().map(JpsBootstrapMain::fileDebugInfo).collect(Collectors.joining("\n  ")));
+
+    writeJavaArgfile(moduleRuntimeClasspath);
+  }
+
+  private void writeJavaArgfile(List<File> moduleRuntimeClasspath) throws IOException {
+    List<String> args = new ArrayList<>();
+    args.add("-ea");
+    args.add("-Xmx" + buildTargetXmx);
+    args.add("-Dfile.encoding=UTF-8"); // just in case
+    args.add("-Djava.awt.headless=true");
+
+    // This is required only for accommodating KotlinBinaries.ensureKotlinJpsPluginIsAddedToClassPath
+    args.add("-Djava.system.class.loader=org.jetbrains.intellij.build.impl.BuildScriptsSystemClassLoader");
+
+    args.addAll(systemPropertiesArgsFromTeamCityBuild());
+
+    args.add("-classpath");
+    args.add(StringUtil.join(moduleRuntimeClasspath, File.pathSeparator));
+
+    args.add(classNameToRun);
+
+    args.addAll(mainArgsToRun);
+
+    CommandLineWrapperUtil.writeArgumentsFile(
+      javaArgsFileTarget.toFile(),
+      args,
+      StandardCharsets.UTF_8
+    );
+
+    info("java argfile:\n" + Files.readString(javaArgsFileTarget));
   }
 
   private void loadClasses(JpsModule module, JpsModel model) throws Throwable {
@@ -174,65 +200,37 @@ public class JpsBootstrapMain {
     }
   }
 
-  private static String urlDebugInfo(URL url) {
+  private static String fileDebugInfo(File file) {
     try {
-      File file = new File(url.toURI());
-
       if (file.exists()) {
         if (file.isDirectory()) {
-          return url + " directory";
+          return file + " directory";
         }
         else {
           long length = file.length();
           String sha256 = DigestUtils.sha256Hex(Files.readAllBytes(file.toPath()));
-          return url + " file length " + length + " sha256 " + sha256;
+          return file + " file length " + length + " sha256 " + sha256;
         }
       }
       else {
-        return url + " missing file";
+        return file + " missing file";
       }
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
-  private static void runMainFromModuleRuntimeClasspath(String className, String[] args, JpsModule module) throws Throwable {
-    List<URL> moduleRuntimeClasspath = JpsProjectUtils.getModuleRuntimeClasspath(module);
-    verbose("Module " + module.getName() + " classpath:\n  " + moduleRuntimeClasspath.stream().map(JpsBootstrapMain::urlDebugInfo).collect(Collectors.joining("\n  ")));
+  private static List<String> systemPropertiesArgsFromTeamCityBuild() throws IOException {
+    if (!underTeamCity) return Collections.emptyList();
 
-    info("Running class " + className + " from module " + module.getName());
-    try (URLClassLoader classloader = new URLClassLoader(moduleRuntimeClasspath.toArray(new URL[0]), ClassLoader.getPlatformClassLoader())) {
-      // Some clients peek into context class loaders
-      // see org.apache.log4j.helpers.Loader#loadClass
-      Thread.currentThread().setContextClassLoader(classloader);
-
-      Class<?> mainClass;
-      try {
-        mainClass = classloader.loadClass(className);
-      }
-      catch (ClassNotFoundException ex) {
-        final String message = "Class '" + className + "' was not found in runtime classpath of module " + module.getName();
-        info(message + ":\n  " + moduleRuntimeClasspath.stream().map(URL::toString).collect(Collectors.joining("\n  ")));
-        throw new IllegalStateException(message + ". See the class path above");
-      }
-
-      //noinspection ConfusingArgumentToVarargsMethod
-      MethodHandles.lookup()
-        .findStatic(mainClass, "main", MethodType.methodType(Void.TYPE, String[].class))
-        .invokeExact(args);
-    }
-  }
-
-  private static void setSystemPropertiesFromTeamCityBuild() throws IOException {
-    if (!underTeamCity) return;
-
+    List<String> result = new ArrayList<>();
     final Properties systemProperties = getTeamCitySystemProperties();
-    for (String propertyName : systemProperties.stringPropertyNames().stream().sorted().collect(Collectors.toList())) {
+    for (String propertyName : systemProperties.stringPropertyNames()) {
       String value = systemProperties.getProperty(propertyName);
 
-      verbose("Setting system property '" + propertyName + "' to '" + value + "' from TeamCity build parameters");
-      System.setProperty(propertyName, value);
+      result.add("-D" + propertyName + "=" + value);
     }
+    return result;
   }
 
   @Contract("->fail")
