@@ -438,6 +438,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           }
         }
 
+        ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(myProgressIndicator);
         if (shouldFinishOnEdt()) {
           Semaphore semaphore = new Semaphore(1);
           invokeLater(() -> {
