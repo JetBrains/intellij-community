@@ -282,13 +282,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
             if (t is ControlFlowException) throw t
             // reporting failed loading only once
             failedContributorsHashes.add(this@safeGetDefinitions.hashCode())
-            // Assuming that direct ClasspathExtractionException is the result of versions mismatch and missing subsystems, e.g. kotlin plugin
-            // so, it only results in warning, while other errors are severe misconfigurations, resulting it user-visible error
-            if (t.cause is ClasspathExtractionException || t is ClasspathExtractionException) {
-                scriptingWarnLog("Cannot load script definitions from $this: ${t.cause?.message ?: t.message}", t)
-            } else {
-                scriptingErrorLog("[kts] cannot load script definitions using $this", t)
-            }
+            scriptingErrorLog("Cannot load script definitions from $this: ${t.cause?.message ?: t.message}", t)
         }
         return emptyList()
     }
