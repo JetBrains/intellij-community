@@ -3,6 +3,8 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.notification.impl.widget.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -156,8 +158,12 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
                                     JBUI.Borders.empty(0, 10, 1, 10)) :
               JBUI.Borders.empty(1, 0, 0, 6));
 
-    myInfoAndProgressPanel = new InfoAndProgressPanel();
+    myInfoAndProgressPanel = new InfoAndProgressPanel(UISettings.getShadowInstance());
     addWidget(myInfoAndProgressPanel, Position.CENTER, "__IGNORED__");
+    Project project = myFrame.getProject();
+    if (project != null) {
+      project.getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, myInfoAndProgressPanel);
+    }
 
     setOpaque(true);
     updateUI();

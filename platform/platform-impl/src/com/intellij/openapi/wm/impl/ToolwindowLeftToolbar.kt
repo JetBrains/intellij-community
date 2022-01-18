@@ -15,14 +15,15 @@ internal class ToolwindowLeftToolbar : ToolwindowToolbar() {
   private val topPane = object : AbstractDroppableStripe(VerticalFlowLayout(0, 0)) {
     override fun getAnchor(): ToolWindowAnchor = ToolWindowAnchor.LEFT
     override fun getButtonFor(toolWindowId: String): JComponent? = this@ToolwindowLeftToolbar.getButtonFor(toolWindowId)
-    override fun tryDroppingOnGap(data: LayoutData, gap: Int, insertOrder: Int) {
+    override fun tryDroppingOnGap(data: LayoutData, gap: Int, insertOrder: Int) =
       tryDroppingOnGap(data, gap, myDropRectangle) { layoutDragButton(data, gap) }
-    }
   }
 
   private val bottomPane = object : AbstractDroppableStripe(VerticalFlowLayout(0, 0)) {
     override fun getAnchor(): ToolWindowAnchor = ToolWindowAnchor.BOTTOM
     override fun getButtonFor(toolWindowId: String): JComponent? = this@ToolwindowLeftToolbar.getButtonFor(toolWindowId)
+    override fun tryDroppingOnGap(data: LayoutData, gap: Int, insertOrder: Int) =
+      tryDroppingOnGap(data, gap, myDropRectangle) { layoutDragButton(data, gap) }
   }
 
   val moreButton = MoreSquareStripeButton(this, topPane)
