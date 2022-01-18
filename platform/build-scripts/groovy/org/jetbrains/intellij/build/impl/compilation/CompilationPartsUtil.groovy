@@ -113,18 +113,20 @@ class CompilationPartsUtil {
   static void packAndUploadToServer(CompilationContextImpl context, String zipsLocation) {
     BuildMessages messages = context.messages
 
+    messages.progress("Packing classes and uploading them to the server")
+
     String serverUrl = System.getProperty("intellij.build.compiled.classes.server.url")
     if (StringUtil.isEmptyOrSpaces(serverUrl)) {
-      messages.warning("Compile Parts archive server url is not defined. \n" +
-                       "Will not upload to remote server. Please set 'intellij.compile.archive.url' system property.")
+      messages.error("Compile Parts archive server url is not defined. \n" +
+                     "Please set 'intellij.compile.archive.url' system property.")
       return
     }
     String intellijCompileArtifactsBranchProperty = 'intellij.build.compiled.classes.branch'
     String branch = System.getProperty(intellijCompileArtifactsBranchProperty)
     if (StringUtil.isEmptyOrSpaces(branch)) {
-      messages.warning("Unable to determine current git branch, assuming 'master'. \n" +
-                       "Please set '$intellijCompileArtifactsBranchProperty' system property")
-      branch = 'master'
+      messages.error("Unable to determine current git branch, assuming 'master'. \n" +
+                     "Please set '$intellijCompileArtifactsBranchProperty' system property")
+      return
     }
 
     //region Prepare executor
