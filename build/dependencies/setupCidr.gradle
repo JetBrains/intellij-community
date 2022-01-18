@@ -60,7 +60,7 @@ task setupCidr
     path: "CIDR/cidr-debugger/bin/lldb"
   ],
   bridge: [
-    version: "51b0c22",
+    version: "ed6c9b1",
     platforms: [
       mac: [archs: ["x64"]]
     ],
@@ -68,7 +68,7 @@ task setupCidr
     no_platform_subdir: true
   ],
   jbdevice: [
-    version: "78c68ee",
+    version: "b19d276",
     platforms: [
       "mac": [archs: ["x64"]]
     ],
@@ -76,7 +76,7 @@ task setupCidr
     no_platform_subdir: true
   ],
   objchelper: [
-    version: "e9b1fe3",
+    version: "f0d856",
     platforms: [
       "mac": [archs: ["x64"]],
       "linux": [archs: ["x64"]]
