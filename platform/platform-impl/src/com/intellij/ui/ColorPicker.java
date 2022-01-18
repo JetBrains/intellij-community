@@ -1121,7 +1121,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
       setTitle(caption);
       setResizable(false);
-      setOKButtonText(listeners.size() > 0 ? IdeBundle.message("button.choose") : IdeBundle.message("button.copy"));
+      setOKButtonText(listeners == null || listeners.size() > 0 ? IdeBundle.message("button.choose") : IdeBundle.message("button.copy"));
       super.init();
     }
 
@@ -1148,7 +1148,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       myColorPicker.appendRecentColor();
       myColorPicker.saveRecentColors();
 
-      if (myListeners.isEmpty()) {
+      if (myListeners != null && myListeners.isEmpty()) {
         String color = StringUtil.toUpperCase(ColorUtil.toHex(myColorPicker.myColor));
         CopyPasteManager.getInstance().setContents(new StringSelection(color));
       }
