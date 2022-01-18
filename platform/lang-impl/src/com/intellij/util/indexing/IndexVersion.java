@@ -84,7 +84,11 @@ public final class IndexVersion {
     if (ourVersion == -1) {
       int version = BASE_VERSION;
       for (FileBasedIndexInfrastructureExtension ex : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensions()) {
-        version = 31 * version + ex.getVersion();
+        int extensionVersion = ex.getVersion();
+        // move rocksdb versioning outside
+        if (extensionVersion != -1) {
+          version = 31 * version + extensionVersion;
+        }
       }
       ourVersion = version;
     }
