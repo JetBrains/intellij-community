@@ -2,20 +2,15 @@
 package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.compiler.CompilerReferenceService
-import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase
+import com.intellij.compiler.backwardRefs.*
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase.CompilerRefProvider
-import com.intellij.compiler.backwardRefs.DirtyScopeHolder
-import com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter
-import com.intellij.compiler.backwardRefs.SearchId
 import com.intellij.compiler.server.BuildManager
 import com.intellij.compiler.server.BuildManagerListener
 import com.intellij.compiler.server.CustomBuilderMessageHandler
 import com.intellij.compiler.server.PortableCachesLoadListener
-import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
@@ -23,8 +18,6 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.ModificationTracker
@@ -37,7 +30,6 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.generateRecursiveSequence
 import com.intellij.util.indexing.StorageException
 import org.jetbrains.annotations.TestOnly
@@ -59,7 +51,6 @@ import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.IOException
 import java.util.*
-import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.atomic.LongAdder
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -69,6 +60,7 @@ import kotlin.concurrent.write
  * Based on [com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase] and [com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl]
  */
 class KotlinCompilerReferenceIndexService(private val project: Project) : Disposable, ModificationTracker {
+    private var initialized: Boolean = false
     private var storage: KotlinCompilerReferenceIndexStorage? = null
     private var activeBuildCount = 0
     private val compilationCounter = LongAdder()
@@ -111,51 +103,13 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
     private fun <T> withDirtyScopeUnderReadLock(readAction: DirtyScopeHolder.() -> T): T = withReadLock { dirtyScopeHolder.readAction() }
 
     init {
+        subscribeToEvents()
+    }
+
+    private fun subscribeToEvents() {
         dirtyScopeHolder.installVFSListener(this)
 
-        if (KotlinCompilerReferenceIndexStorage.hasIndex(project)) {
-            if (StartUpMeasurer.isEnabled()) {
-                ForkJoinPool.commonPool().execute {
-                    val activity = StartUpMeasurer.startActivity("kotlin compiler ref index checking")
-                    initialCheckValidIndex()
-                    activity.end()
-                }
-            } else {
-                AppExecutorUtil.getAppExecutorService().execute(::initialCheckValidIndex)
-            }
-        } else {
-            executeOnBuildThread(::markAsOutdated)
-        }
-        subscribeToCompilerEvents()
-    }
-
-    private fun initialCheckValidIndex() {
-        try {
-            BackgroundTaskUtil.runUnderDisposeAwareIndicator(this) {
-                val compilerManager = CompilerManager.getInstance(project)
-                val isUpToDate = compilerManager.isUpToDate(compilerManager.createProjectCompileScope(project))
-                executeOnBuildThread {
-                    if (isUpToDate) {
-                        withDirtyScopeUnderWriteLock {
-                            upToDateCheckFinished(Module.EMPTY_ARRAY)
-                            openStorage()
-                        }
-                    } else {
-                        markAsOutdated()
-                    }
-                }
-            }
-        } catch (ignore: ProcessCanceledException) {
-        } catch (e: Exception) {
-            LOG.error(e)
-        }
-    }
-
-    private val projectIfNotDisposed: Project?
-        get() = project.takeUnless(Project::isDisposed)
-
-    private fun subscribeToCompilerEvents() {
-        val connection = projectIfNotDisposed?.messageBus?.connect(this) ?: return
+        val connection = project.messageBus.connect(this)
         connection.subscribe(BuildManagerListener.TOPIC, object : BuildManagerListener {
             override fun buildStarted(project: Project, sessionId: UUID, isAutomake: Boolean) {
                 if (project === this@KotlinCompilerReferenceIndexService.project) {
@@ -174,26 +128,65 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
             }
         })
 
+        if (isUnitTestMode()) return
+
         connection.subscribe(PortableCachesLoadListener.TOPIC, object : PortableCachesLoadListener {
             override fun loadingStarted() {
                 withWriteLock { closeStorage() }
             }
         })
+
+        connection.subscribe(IsUpToDateCheckListener.TOPIC, IsUpToDateCheckListener { isUpToDate ->
+            if (isUpToDate && KotlinCompilerReferenceIndexStorage.hasIndex(project)) {
+                markAsUpToDate()
+            }
+        })
     }
 
+    private val projectIfNotDisposed: Project? get() = project.takeUnless(Project::isDisposed)
+
     private fun compilationFinished() {
-        val compilerModules = runReadAction {
+        val compiledModules = runReadAction {
             projectIfNotDisposed?.let {
                 val manager = ModuleManager.getInstance(it)
-                dirtyScopeHolder.compilationAffectedModules.map(manager::findModuleByName)
+                dirtyScopeHolder.compilationAffectedModules.mapNotNull(manager::findModuleByName)
             }
         }
 
+        val allModules = if (!initialized) allModules() else null
+        compilationCounter.increment()
         withDirtyScopeUnderWriteLock {
             --activeBuildCount
-            compilerActivityFinished(compilerModules)
+
+            if (!initialized) {
+                initialize(allModules, compiledModules)
+            } else {
+                compilerActivityFinished(compiledModules)
+            }
+
             if (activeBuildCount == 0) openStorage()
-            compilationCounter.increment()
+        }
+    }
+
+    private fun DirtyScopeHolder.initialize(allModules: Array<Module>?, compiledModules: Collection<Module>?) {
+        initialized = true
+        LOG.info("initialized")
+
+        upToDateCheckFinished(allModules?.asList(), compiledModules)
+    }
+
+    private fun allModules(): Array<Module>? = runReadAction { projectIfNotDisposed?.let { ModuleManager.getInstance(it).modules } }
+
+    private fun markAsUpToDate() {
+        val modules = allModules() ?: return
+        withDirtyScopeUnderWriteLock {
+            val modificationCount = modificationCount
+
+            LOG.info("MC: $modificationCount, ABC: $activeBuildCount")
+            if (activeBuildCount == 0 && modificationCount == 1L) {
+                compilerActivityFinished(modules.asList())
+                LOG.info("marked as up to date")
+            }
         }
     }
 
@@ -204,17 +197,17 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
     }
 
     private fun openStorage() {
+        if (storage != null) {
+            LOG.warn("already opened – will be overridden")
+            closeStorage()
+        }
+
         storage = KotlinCompilerReferenceIndexStorage.open(project)
     }
 
     private fun closeStorage() {
         KotlinCompilerReferenceIndexStorage.close(storage)
         storage = null
-    }
-
-    private fun markAsOutdated() {
-        val modules = runReadAction { projectIfNotDisposed?.let { ModuleManager.getInstance(it).modules } } ?: return
-        withDirtyScopeUnderWriteLock { upToDateCheckFinished(modules) }
     }
 
     private fun <T> runActionSafe(actionName: String, action: () -> T): T? = try {
@@ -439,8 +432,7 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
     companion object {
         operator fun get(project: Project): KotlinCompilerReferenceIndexService = project.service()
         fun getInstanceIfEnabled(project: Project): KotlinCompilerReferenceIndexService? = if (isEnabled) get(project) else null
-        const val SETTINGS_ID: String = "kotlin.compiler.ref.index"
-        val isEnabled: Boolean get() = AdvancedSettings.getBoolean(SETTINGS_ID)
+        val isEnabled: Boolean get() = AdvancedSettings.getBoolean("kotlin.compiler.ref.index")
         private val LOG = logger<KotlinCompilerReferenceIndexService>()
     }
 }

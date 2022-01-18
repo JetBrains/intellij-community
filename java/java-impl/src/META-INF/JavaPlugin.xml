@@ -300,6 +300,7 @@
     <backgroundPostStartupActivity implementation="com.intellij.packaging.impl.artifacts.ArtifactTypeFeatureCollector"/>
     <projectService serviceInterface="com.intellij.compiler.CompilerConfiguration" serviceImplementation="com.intellij.compiler.CompilerConfigurationImpl" preload="await"/>
     <projectService serviceInterface="com.intellij.compiler.ProblemsView" serviceImplementation="com.intellij.compiler.impl.ProblemsViewImpl"/>
+    <backgroundPostStartupActivity implementation="com.intellij.compiler.backwardRefs.CompilerReferenceIndexIsUpToDateStartupActivity"/>
     <projectService serviceInterface="com.intellij.compiler.CompilerReferenceService"
                     serviceImplementation="com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl"
                     preload="notHeadless"/>

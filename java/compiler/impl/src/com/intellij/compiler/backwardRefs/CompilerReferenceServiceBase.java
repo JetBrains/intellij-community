@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.application.options.RegistryManager;
@@ -9,21 +9,17 @@ import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInf
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.PortableCachesLoadListener;
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -41,7 +37,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
@@ -49,6 +44,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import kotlin.collections.ArraysKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -58,11 +54,7 @@ import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ForkJoinPool;
+import java.util.*;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -85,6 +77,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   private final CompilerReferenceReaderFactory<? extends Reader> myReaderFactory;
   // index build start/finish callbacks are not ordered, so "build1 started" -> "build2 started" -> "build1 finished" -> "build2 finished" is expected sequence
   private int myActiveBuilds = 0;
+  private boolean initialized = false;
 
   protected volatile Reader myReader;
   private final ThreadLocal<Boolean> myIsInsideLibraryScope = ThreadLocal.withInitial(() -> false);
@@ -115,52 +108,23 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
       return;
     }
 
-    File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
-    if (buildDir != null && !CompilerReferenceIndex.versionDiffers(buildDir, myReaderFactory.expectedIndexVersion())) {
-      if (StartUpMeasurer.isEnabled()) {
-        ForkJoinPool.commonPool().execute(() -> {
-          Activity activity = StartUpMeasurer.startActivity("compiler ref index checking");
-          initialCheckValidIndex();
-          activity.end();
-        });
-      }
-      else {
-        AppExecutorUtil.getAppExecutorService().execute(this::initialCheckValidIndex);
-      }
-    }
-    else {
-      applyInitialCheckIsUpToDate(false);
-    }
-
-    project.getMessageBus().connect(this).subscribe(PortableCachesLoadListener.TOPIC, new PortableCachesLoadListener() {
+    MessageBusConnection connection = project.getMessageBus().connect(this);
+    connection.subscribe(PortableCachesLoadListener.TOPIC, new PortableCachesLoadListener() {
       @Override
       public void loadingStarted() {
         closeReaderIfNeeded(IndexCloseReason.SHUTDOWN);
       }
     });
-  }
 
-  private void initialCheckValidIndex() {
-    try {
-      BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
-        CompilerManager compilerManager = CompilerManager.getInstance(this.project);
-        applyInitialCheckIsUpToDate(compilerManager.isUpToDate(compilerManager.createProjectCompileScope(this.project)));
-      });
-    }
-    catch (ProcessCanceledException ignore) {
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-  }
+    connection.subscribe(IsUpToDateCheckListener.TOPIC, new IsUpToDateCheckListener() {
+      @Override
+      public void isUpToDateCheckFinished(boolean isUpToDate) {
+        if (!isUpToDate) return;
 
-  private void applyInitialCheckIsUpToDate(boolean isUpToDate) {
-    BuildManager.getInstance().runCommand(() -> {
-      if (isUpToDate) {
-        openReaderIfNeeded(IndexOpenReason.UP_TO_DATE_CACHE);
-      }
-      else {
-        markAsOutdated();
+        File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
+        if (buildDir == null || CompilerReferenceIndex.versionDiffers(buildDir, myReaderFactory.expectedIndexVersion())) return;
+
+        markAsUpToDate();
       }
     });
   }
@@ -545,28 +509,32 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
-  protected void openReaderIfNeeded(IndexOpenReason reason) {
+  protected void openReaderIfNeeded() {
     // do not run read action inside myOpenCloseLock
-    List<Module> compiledModules = null;
-    if (reason == IndexOpenReason.COMPILATION_FINISHED) {
-      compiledModules = ReadAction.nonBlocking(() -> {
-        ModuleManager moduleManager = ModuleManager.getInstance(project);
-        return ContainerUtil.map(myDirtyScopeHolder.getCompilationAffectedModules(), moduleManager::findModuleByName);
-      }).expireWith(this).executeSynchronously();
-    }
+    List<Module> compiledModules = ReadAction.nonBlocking(() -> {
+      ModuleManager moduleManager = ModuleManager.getInstance(project);
+      return ContainerUtil.mapNotNull(myDirtyScopeHolder.getCompilationAffectedModules(), moduleManager::findModuleByName);
+    }).expireWith(this).executeSynchronously();
+
+    Module[] allModules = initialized ? null : allModules();
 
     myCompilationCount.increment();
     myOpenCloseLock.lock();
     try {
-      if (reason == IndexOpenReason.COMPILATION_FINISHED) {
-        myActiveBuilds--;
+      myActiveBuilds--;
+
+      if (!initialized) {
+        initialize(allModules, compiledModules);
+      } else {
         myDirtyScopeHolder.compilerActivityFinished(compiledModules);
-      }
-      else if (reason == IndexOpenReason.UP_TO_DATE_CACHE) {
-        myDirtyScopeHolder.upToDateCheckFinished(Module.EMPTY_ARRAY);
       }
 
       if (myActiveBuilds == 0 && project.isOpen()) {
+        if (myReader != null) {
+          LOG.warn("already opened – will be overridden");
+          myReader.close(false);
+        }
+
         myReader = myReaderFactory.create(project);
         LOG.info("backward reference index reader " + (myReader == null ? "doesn't exist" : "is opened"));
       }
@@ -576,20 +544,36 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
-  private void markAsOutdated() {
-    Module[] modules = ReadAction.nonBlocking(() -> {
-      return project.isDisposed() ? null : ModuleManager.getInstance(project).getModules();
-    }).expireWith(this).executeSynchronously();
+  private void markAsUpToDate() {
+    Module[] modules = allModules();
+    if (modules == null) return;
+
     myOpenCloseLock.lock();
     try {
-      if (modules == null) {
-        return;
+      long modificationCount = getModificationCount();
+
+      LOG.info("MC: " + modificationCount + ", ABC: " + myActiveBuilds);
+      if (myActiveBuilds == 0 && modificationCount == 1) {
+        myDirtyScopeHolder.compilerActivityFinished(ArraysKt.asList(modules));
+        LOG.info("marked as up to date");
       }
-      myDirtyScopeHolder.upToDateCheckFinished(modules);
     }
     finally {
       myOpenCloseLock.unlock();
     }
+  }
+
+  private void initialize(Module[] allModules, @Nullable Collection<@NotNull Module> compiledModules) {
+    initialized = true;
+    LOG.info("initialized");
+
+    myDirtyScopeHolder.upToDateCheckFinished(allModules != null ? ArraysKt.asList(allModules) : null, compiledModules);
+  }
+
+  private Module [] allModules() {
+    return ReadAction.nonBlocking(() -> {
+      return project.isDisposed() ? null : ModuleManager.getInstance(project).getModules();
+    }).expireWith(this).executeSynchronously();
   }
 
   public Set<FileType> getFileTypes() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.ProjectTopics;
@@ -36,6 +36,8 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import kotlin.collections.ArraysKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,9 +115,19 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
     }
   }
 
+  /**
+   * @deprecated use {@link DirtyScopeHolder#upToDateCheckFinished(Collection, Collection)}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   public void upToDateCheckFinished(Module @NotNull [] modules) {
+    upToDateCheckFinished(ArraysKt.asList(modules), Collections.emptyList());
+  }
+
+  public void upToDateCheckFinished(@Nullable Collection<@NotNull Module> allModules, @Nullable Collection<@NotNull Module> compiledModules) {
     compilationFinished(() -> {
-      ContainerUtil.addAll(myVFSChangedModules, modules);
+      if (allModules != null) myVFSChangedModules.addAll(allModules);
+      if (compiledModules != null) compiledModules.forEach(myVFSChangedModules::remove);
     });
   }
 

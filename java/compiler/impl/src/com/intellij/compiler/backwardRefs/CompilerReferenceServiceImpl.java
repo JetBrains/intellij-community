@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.backwardRefs.JavaBackwardReferenceIndexReaderFactory.BackwardReferenceReader;
@@ -50,7 +50,7 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
         if (project == CompilerReferenceServiceImpl.this.project) {
           executeOnBuildThread(() -> {
             if (!ReadAction.compute(() -> CompilerReferenceServiceImpl.this.project.isDisposed())) {
-              openReaderIfNeeded(IndexOpenReason.COMPILATION_FINISHED);
+              openReaderIfNeeded();
             }
           });
         }
