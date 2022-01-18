@@ -58,22 +58,27 @@ class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginMan
   }
 
   fun pushChangesToIDE() {
+    val installer = SettingsSyncPluginInstaller()
     this.state.plugins.forEach { mapEntry ->
       val plugin = findPlugin(mapEntry.key)
-      if (plugin != null && isPluginSyncEnabled(plugin)) {
-        if (mapEntry.value.isEnabled != plugin.isEnabled) {
-          if (mapEntry.value.isEnabled) {
-            PluginManagerCore.enablePlugin(plugin.pluginId)
-          }
-          else {
-            PluginManagerCore.disablePlugin(plugin.pluginId)
+      if (plugin != null) {
+        if (isPluginSyncEnabled(plugin)) {
+          if (mapEntry.value.isEnabled != plugin.isEnabled) {
+            if (mapEntry.value.isEnabled) {
+              PluginManagerCore.enablePlugin(plugin.pluginId)
+            }
+            else {
+              PluginManagerCore.disablePlugin(plugin.pluginId)
+            }
           }
         }
       }
       else {
-        // TODO<rv>: Handle plugin installation
+        val newPluginId = PluginId.getId(mapEntry.key)
+        installer.addPluginId(newPluginId)
       }
     }
+    installer.installUnderProgress()
   }
 
   private fun findPlugin(idString : String) : IdeaPluginDescriptor? {
