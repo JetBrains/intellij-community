@@ -5,6 +5,8 @@ import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.settings.language.createEditor
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -21,6 +23,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
+import java.util.concurrent.Callable
 import java.util.function.Predicate
 import javax.swing.JPanel
 import javax.swing.JTree
@@ -127,13 +130,20 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         currentEditor?.let { updateHints(it, model) }
       }
     }
-    val node = CheckedTreeNode(model)
+    val node = object: CheckedTreeNode(model) {
+      override fun setChecked(checked: Boolean) {
+        super.setChecked(checked)
+        model.isEnabled = checked
+        model.onChangeListener?.settingsChanged()
+      }
+    }
     parent.add(node)
     model.cases.forEach {
       val caseNode = object: CheckedTreeNode(it) {
         override fun setChecked(checked: Boolean) {
           super.setChecked(checked)
-//          it.value = checked
+          it.value = checked
+          model.onChangeListener?.settingsChanged()
         }
       }
       node.add(caseNode)
@@ -194,11 +204,17 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   }
 
   private fun updateHints(editor: Editor, model: InlayProviderSettingsModel) {
-    ReadAction.nonBlocking {
-      val fileType = model.language.associatedFileType ?: PlainTextFileType.INSTANCE
-      val psiFile = model.createFile(project, fileType, editor.document)
-      model.collectAndApplyOnEdt(editor, psiFile)
-    }.inSmartMode(project).submit(AppExecutorUtil.getAppExecutorService())
+    val fileType = model.language.associatedFileType ?: PlainTextFileType.INSTANCE
+    ReadAction.nonBlocking(Callable {
+      model.createFile(project, fileType, editor.document)
+    })
+      .finishOnUiThread(ModalityState.defaultModalityState()) { psiFile ->
+        ApplicationManager.getApplication().runWriteAction {
+          model.collectAndApply(editor, psiFile)
+        }
+      }
+      .inSmartMode(project)
+      .submit(AppExecutorUtil.getAppExecutorService())
   }
 
   private fun addDescription(@Nls s: String?) {
@@ -304,7 +320,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   private fun isModified(node: CheckedTreeNode, settings: InlayHintsSettings): Boolean {
     when (val item = node.userObject) {
       is InlayProviderSettingsModel -> {
-        if ((node.isChecked != isModelEnabled(item, settings)))
+        if (item.isModified() || (node.isChecked != isModelEnabled(item, settings)))
           return true
       }
       is ImmediateConfigurable.Case -> {

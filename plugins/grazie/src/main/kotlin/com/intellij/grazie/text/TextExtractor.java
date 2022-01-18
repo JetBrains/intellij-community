@@ -20,8 +20,10 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -30,8 +32,11 @@ import java.util.regex.Pattern;
  * An extension specifying how to extract natural language text from PSI for specific programming languages.
  */
 public abstract class TextExtractor {
-  private static final LanguageExtension<TextExtractor> EP = new LanguageExtension<>("com.intellij.grazie.textExtractor");
-  private static final Key<CachedValue<Cache>> CACHE = Key.create("TextExtractor cache");
+  @VisibleForTesting
+  static final LanguageExtension<TextExtractor> EP = new LanguageExtension<>("com.intellij.grazie.textExtractor");
+  private static final Key<CachedValue<Cache>> COMMON_PARENT_CACHE = Key.create("TextExtractor common parent cache");
+  private static final Key<CachedValue<Cache>> QUERY_CACHE = Key.create("TextExtractor query cache");
+  private static final Key<Boolean> IGNORED = Key.create("TextExtractor ignored");
   private static final Pattern SUPPRESSION = Pattern.compile(SuppressionUtil.COMMON_SUPPRESS_REGEXP);
 
   /**
@@ -91,11 +96,13 @@ public abstract class TextExtractor {
    * The extensions are queried for the given {@code psi} and its parents, the results are cached and reused.
    */
   public static @NotNull List<TextContent> findTextsAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
+    TextRange psiRange = psi.getTextRange();
     JBIterable<PsiElement> hierarchy = SyntaxTraverser.psiApi().parents(psi);
     for (PsiElement each : hierarchy) {
-      CachedValue<Cache> cache = each.getUserData(CACHE);
+      CachedValue<Cache> cache = each.getUserData(COMMON_PARENT_CACHE);
       if (cache != null) {
-        List<TextContent> cached = cache.getValue().getCached(allowedDomains, psi);
+        List<TextContent> cached = ContainerUtil.filter(cache.getValue().getCached(allowedDomains), c ->
+          c.getUserData(IGNORED) == null && c.intersectsRange(psiRange));
         if (!cached.isEmpty()) {
           return cached;
         }
@@ -107,50 +114,78 @@ public abstract class TextExtractor {
     for (PsiElement each : hierarchy) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
 
-      Language psiLanguage = each.getLanguage();
-      List<TextContent> contents = doExtract(each, allowedDomains, psiLanguage);
-      if (contents.isEmpty() && fileLanguage != psiLanguage) {
-        contents = doExtract(each, allowedDomains, fileLanguage);
-      }
+      List<TextContent> contents = obtainContents(allowedDomains, fileLanguage, each);
       if (stamp.mayCacheNow()) {
-        for (TextContent content : contents) {
-          PsiElement parent = content.getCommonParent();
-          CachedValue<Cache> cache = CachedValuesManager.getManager(parent.getProject()).createCachedValue(
-            () -> CachedValueProvider.Result.create(new Cache(), PsiModificationTracker.MODIFICATION_COUNT));
-          cache = ((UserDataHolderEx) parent).putUserDataIfAbsent(CACHE, cache);
-          cache.getValue().register(allowedDomains, content);
-        }
+        StreamEx.of(contents)
+          .groupingBy(TextContent::getCommonParent)
+          .forEach((commonParent, group) -> obtainCache(commonParent, COMMON_PARENT_CACHE).register(allowedDomains, group));
       }
 
       if (!contents.isEmpty()) {
-        return ContainerUtil.filter(contents, c -> isSuitable(c, psi) && allowedDomains.contains(c.getDomain()));
+        return ContainerUtil.filter(contents, c ->
+          c.getUserData(IGNORED) == null && allowedDomains.contains(c.getDomain()) && c.intersectsRange(psiRange));
       }
     }
 
     return Collections.emptyList();
   }
 
+  private static Cache obtainCache(PsiElement psi, Key<CachedValue<Cache>> key) {
+    CachedValue<Cache> cache = CachedValuesManager.getManager(psi.getProject()).createCachedValue(
+      () -> CachedValueProvider.Result.create(new Cache(), PsiModificationTracker.MODIFICATION_COUNT));
+    cache = ((UserDataHolderEx)psi).putUserDataIfAbsent(key, cache);
+    return cache.getValue();
+  }
+
+  private static List<TextContent> obtainContents(Set<TextContent.TextDomain> allowedDomains,
+                                                  Language fileLanguage,
+                                                  PsiElement psi) {
+    CachedValue<Cache> cv = psi.getUserData(QUERY_CACHE);
+    if (cv != null) {
+      List<TextContent> result = cv.getValue().getCached(allowedDomains);
+      if (!result.isEmpty()) return result;
+    }
+
+    RecursionGuard.StackStamp stamp = RecursionManager.markStack();
+
+    Language psiLanguage = psi.getLanguage();
+    List<TextContent> contents = doExtract(psi, allowedDomains, psiLanguage);
+    if (contents.isEmpty() && fileLanguage != psiLanguage) {
+      contents = doExtract(psi, allowedDomains, fileLanguage);
+    }
+
+    for (TextContent content : contents) {
+      if (shouldIgnore(content)) {
+        content.putUserData(IGNORED, true);
+      }
+    }
+
+    if (!contents.isEmpty() && stamp.mayCacheNow()) {
+      obtainCache(psi, QUERY_CACHE).register(allowedDomains, contents);
+    }
+    return contents;
+  }
+
   private static class Cache {
     final EnumSet<TextContent.TextDomain> checkedDomains = EnumSet.noneOf(TextContent.TextDomain.class);
     final LinkedHashSet<TextContent> foundContents = new LinkedHashSet<>();
 
-    synchronized void register(Set<TextContent.TextDomain> allowedDomains, TextContent content) {
+    synchronized void register(Set<TextContent.TextDomain> allowedDomains, List<TextContent> contents) {
       checkedDomains.addAll(allowedDomains);
-      foundContents.add(content);
+      foundContents.addAll(contents);
     }
 
-    synchronized List<TextContent> getCached(Set<TextContent.TextDomain> allowedDomains, PsiElement psi) {
+    synchronized List<TextContent> getCached(Set<TextContent.TextDomain> allowedDomains) {
       return checkedDomains.containsAll(allowedDomains)
-             ? ContainerUtil.filter(foundContents, c -> allowedDomains.contains(c.getDomain()) && isSuitable(c, psi))
+             ? ContainerUtil.filter(foundContents, c -> allowedDomains.contains(c.getDomain()))
              : Collections.emptyList();
     }
   }
 
-  private static boolean isSuitable(TextContent content, PsiElement psi) {
-    return content.intersectsRange(psi.getTextRange()) &&
-           !hasIntersectingInjection(content, psi.getContainingFile()) &&
-           !isSuppressionComment(content) &&
-           !isCopyrightComment(content);
+  private static boolean shouldIgnore(TextContent content) {
+    return hasIntersectingInjection(content, content.getContainingFile()) ||
+           isSuppressionComment(content) ||
+           isCopyrightComment(content);
   }
 
   private static boolean isCopyrightComment(TextContent content) {

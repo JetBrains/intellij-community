@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.VirtualConfigurationType
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.options.ex.SingleConfigurableEditor
 import com.intellij.openapi.project.Project
@@ -19,18 +20,29 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.tree.DefaultMutableTreeNode
 
-fun showTemplatesDialog(project: Project, selectedConfigurationType: ConfigurationType?) {
-  val configurable = RunConfigurationTemplatesConfigurable(project, selectedConfigurationType)
-  object: SingleConfigurableEditor(project, configurable) {
-    override fun getStyle(): DialogStyle {
-      return DialogStyle.COMPACT
-    }
-  }.show()
+fun showTemplatesDialog(project: Project, selectedConfigurationType: ConfigurationType?) =
+  RunConfigurationTemplatesDialog(project, selectedConfigurationType).show()
+
+class RunConfigurationTemplatesDialog(project: Project, selectedConfigurationType: ConfigurationType?) :
+  SingleConfigurableEditor(project, RunConfigurationTemplatesConfigurable(project, selectedConfigurationType)) {
+
+  init {
+    (configurable as RunConfigurationTemplatesConfigurable).postInit(disposable)
+  }
+
+  override fun getStyle(): DialogStyle {
+    return DialogStyle.COMPACT
+  }
 }
 
-class RunConfigurationTemplatesConfigurable(project: Project, val configurationType: ConfigurationType?) : RunConfigurable(project) {
+class RunConfigurationTemplatesConfigurable(project: Project, private val configurationType: ConfigurationType?) : RunConfigurable(project) {
 
-  fun selectTypeNode(configurationType: ConfigurationType?) {
+  internal fun postInit(disposable: Disposable) {
+    initTreeSelectionListener(disposable)
+    selectTypeNode(configurationType)
+  }
+
+  private fun selectTypeNode(configurationType: ConfigurationType?) {
     configurationType?.let {
       val node = TreeUtil.findNodeWithObject(it, tree.model, root) ?: return
       expandTemplatesNode(node as DefaultMutableTreeNode)
@@ -71,7 +83,6 @@ class RunConfigurationTemplatesConfigurable(project: Project, val configurationT
     panel.border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
     panel.background = EditorColorsManager.getInstance().globalScheme.getColor(HintUtil.PROMOTION_PANE_KEY)
     component!!.add(panel, BorderLayout.NORTH)
-    selectTypeNode(configurationType)
     return component
   }
 

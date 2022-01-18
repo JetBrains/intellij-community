@@ -80,7 +80,7 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     JComponent quickAccessPanel = createQuickAccessPanel(this);
     quickAccessPanel.setBorder(JBUI.Borders.empty(5, 10));
     leftPanel.add(quickAccessPanel, BorderLayout.SOUTH);
-    leftPanel.setPreferredSize(new Dimension(JBUI.scale(205), leftPanel.getPreferredSize().height));
+    leftPanel.setPreferredSize(new Dimension(JBUI.scale(215), leftPanel.getPreferredSize().height));
 
     JComponent centralPanel = mainPanel;
     JComponent mainPanelToolbar = createMainPanelToolbar(this);

@@ -62,11 +62,9 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     }
 
     task {
-      highlightLatestCommitsFromBranch(branchName)
-    }
-
-    task {
       text(GitLessonsBundle.message("git.project.history.commits.tree.explanation"))
+      highlightLatestCommitsFromBranch(branchName)
+      showWarningIfGitWindowClosed()
       proceedLink()
     }
 
@@ -91,7 +89,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
       triggerByUiComponentAndHighlight(false, false) { ui: BranchFilterPopupComponent ->
         ui.currentText?.contains("HEAD") == true
       }
-      showWarningIfGitWindowClosed()
+      showWarningIfGitWindowClosed(restoreTaskWhenResolved = true)
       test {
         ideFrame {
           val fixture = jTree { path -> path.getPathComponent(path.pathCount - 1).toString() == "HEAD_NODE" }
@@ -112,7 +110,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
       triggerByListItemAndHighlight { item ->
         item.toString().contains(meFilterText)
       }
-      showWarningIfGitWindowClosed()
+      showWarningIfGitWindowClosed(restoreTaskWhenResolved = true)
       test {
         ideFrame {
           val panel: UserFilterPopupComponent = findComponentWithTimeout(defaultTimeout)
@@ -176,6 +174,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
       text(GitLessonsBundle.message("git.project.history.commit.details.explanation"))
       proceedLink()
       triggerByUiComponentAndHighlight(highlightInside = false, usePulsation = true) { _: CommitDetailsListPanel -> true }
+      showWarningIfGitWindowClosed()
     }
 
     task {

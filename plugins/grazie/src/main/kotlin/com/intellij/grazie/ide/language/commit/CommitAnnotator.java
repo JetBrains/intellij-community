@@ -40,7 +40,10 @@ public class CommitAnnotator implements Annotator {
         return null;
       }
 
-      ProblemDescriptor descriptor = runner.toProblemDescriptors(problem, true).get(0);
+      List<ProblemDescriptor> descriptors = runner.toProblemDescriptors(problem, true);
+      if (descriptors.isEmpty()) return null;
+
+      ProblemDescriptor descriptor = descriptors.get(0);
 
       AnnotationBuilder annotation = holder
         .newAnnotation(HighlightSeverity.WARNING, problem.getDescriptionTemplate(true))

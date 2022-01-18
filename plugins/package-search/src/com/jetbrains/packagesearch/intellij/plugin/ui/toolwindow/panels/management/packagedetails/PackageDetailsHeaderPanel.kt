@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.JBPopupMenu
@@ -41,6 +40,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.top
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.vertical
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.verticalCenter
 import com.jetbrains.packagesearch.intellij.plugin.util.nullIfBlank
+import kotlinx.coroutines.Deferred
 import org.apache.commons.lang3.StringUtils
 import java.awt.BorderLayout
 import java.awt.Component
@@ -79,7 +79,7 @@ internal class PackageDetailsHeaderPanel(
         addActionListener { onPrimaryActionClicked() }
     }
 
-    private var primaryOperations: List<PackageSearchOperation<*>> = emptyList()
+    private var primaryOperations: Deferred<List<PackageSearchOperation<*>>>? = null
 
     private val removeMenuAction = MenuAction().apply {
         add(object : DumbAwareAction(PackageSearchBundle.message("packagesearch.ui.toolwindow.actions.remove.text")) {
@@ -102,7 +102,7 @@ internal class PackageDetailsHeaderPanel(
         ActionButton(removeMenuAction, presentation, "PackageSearchPackageDetailsHeader", ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE)
     }
 
-    private var removeOperations: List<PackageSearchOperation<*>> = emptyList()
+    private var removeOperations: Deferred<List<PackageSearchOperation<*>>>? = null
 
     private val copyMenuItem = PackageSearchUI.menuItem(
         title = PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.details.menu.copy"),
@@ -210,27 +210,19 @@ internal class PackageDetailsHeaderPanel(
                 }
             }
         } else {
-            primaryOperations = emptyList()
+            primaryOperations = null
             primaryActionButton.isVisible = false
         }
 
-        removeOperations = if (packageOperations.canRemovePackage) packageOperations.removeOperations else emptyList()
+        removeOperations = packageOperations.removeOperations
     }
 
     private fun onPrimaryActionClicked() {
-        if (primaryOperations.isEmpty()) {
-            logger<PackageDetailsHeaderPanel>().error("No primary action operations to perform, status mismatch")
-            return
-        }
-        operationExecutor.executeOperations(primaryOperations)
+        primaryOperations?.let { operationExecutor.executeOperations(it) }
     }
 
     private fun onRemoveClicked() {
-        if (removeOperations.isEmpty()) {
-            logger<PackageDetailsHeaderPanel>().error("No remove operations to perform, status mismatch")
-            return
-        }
-        operationExecutor.executeOperations(removeOperations)
+        removeOperations?.let { operationExecutor.executeOperations(it) }
     }
 
     private fun onCopyClicked() {

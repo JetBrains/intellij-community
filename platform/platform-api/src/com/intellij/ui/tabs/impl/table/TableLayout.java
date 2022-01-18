@@ -3,11 +3,12 @@ package com.intellij.ui.tabs.impl.table;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.ui.JBMenuItem;
-import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsUtil;
-import com.intellij.ui.tabs.impl.*;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.LayoutPassInfo;
+import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.ui.tabs.impl.TabLayout;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -50,8 +51,6 @@ public class TableLayout extends TabLayout {
     int eachX = data.titleRect.x + data.titleRect.width;
     Insets insets = myTabs.getLayoutInsets();
     int eachY = insets.top;
-    TableRow eachTableRow = new TableRow(data);
-    data.table.add(eachTableRow);
     int requiredRowsPinned = 0;
     int requiredRowsUnpinned = 0;
 
@@ -109,33 +108,19 @@ public class TableLayout extends TabLayout {
       data.moreRect.setBounds(0, 0, 0, 0);
     }
 
-    eachX = data.toFitRec.x + titleWidth;
-    entryPointMargin = entryPointToolbar != null ? entryPointToolbar.getComponent().getPreferredSize().width : 0;
+    eachY = -1;
+    TableRow eachTableRow = new TableRow(data);
+
     for (TabInfo eachInfo : data.myVisibleInfos) {
       final TabLabel eachLabel = myTabs.getTabLabel(eachInfo);
-      boolean pinned = eachLabel.isPinned();
-      int width = data.lengths.get(eachInfo);
-      if (pinned && showPinnedTabsSeparately) {
-        eachTableRow.add(eachInfo, width);
-        eachX += width;
-      }
-      else {
-        boolean useSameRow = singleRow || eachX + /*size.*/width + hGap <= maxX - entryPointMargin;
-        if (showPinnedTabsSeparately && eachLabel.isNextToLastPinned()) {
-          useSameRow = false;
-        }
-        if (useSameRow) {
-          eachTableRow.add(eachInfo, width);
-          eachX += width;
-        }
-        else {
+      if (eachY == -1 || eachY != eachLabel.getY()) {
+        if (eachY != -1) {
           eachTableRow = new TableRow(data);
-          data.table.add(eachTableRow);
-          eachX = data.toFitRec.x + titleWidth + width;
-          eachTableRow.add(eachInfo, width);
         }
+        eachY = eachLabel.getY();
+        data.table.add(eachTableRow);
       }
-      if (data.table.size() > 1) entryPointMargin = - data.moreRect.width;
+      eachTableRow.add(eachInfo, eachLabel.getWidth());
     }
     if (myScrollSelectionInViewPending) {
       myScrollSelectionInViewPending = false;

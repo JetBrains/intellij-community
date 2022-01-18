@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.LightVirtualFile
 import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
@@ -73,7 +74,7 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
     else -> FileBookmarkImpl(this, file)
   }
 
-  fun createBookmark(editor: Editor, line: Int? = null): Bookmark? {
+  fun createBookmark(editor: Editor, line: Int? = null): FileBookmark? {
     if (editor.isOneLineMode) return null
     val file = FileDocumentManager.getInstance().getFile(editor.document) ?: return null
     return createBookmark(file, line ?: editor.caretModel.logicalPosition.line)
@@ -86,10 +87,13 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
   private fun createBookmark(element: PsiElement): FileBookmark? {
     if (element is PsiFileSystemItem) return element.virtualFile?.let { createBookmark(it) }
     if (element is PsiCompiledElement) return null
-    val file = element.containingFile.virtualFile ?: return null
+    val file = PsiUtilCore.getVirtualFile(element) ?: return null
     if (file is LightVirtualFile) return null
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
-    return createBookmark(file, document.getLineNumber(element.textOffset))
+    return when (val offset = element.textOffset) {
+      in 0..document.textLength -> createBookmark(file, document.getLineNumber(offset))
+      else -> null
+    }
   }
 
   private val MouseEvent.isUnexpected
@@ -154,6 +158,7 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
 
     fun readLineText(file: VirtualFile, line: Int): String? {
       val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
+      if (line < 0 || document.lineCount <= line) return null
       val start = document.getLineStartOffset(line)
       if (start < 0) return null
       val end = document.getLineEndOffset(line)

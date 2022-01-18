@@ -346,7 +346,10 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public int getToFitLength(final SingleRowPassInfo data) {
-      return myTabs.getHeight() - data.insets.top - data.insets.bottom - myTabs.getEntryPointPreferredSize().height;
+      int length = myTabs.getHeight() - data.insets.top - data.insets.bottom;
+      int entryPointHeight = myTabs.getEntryPointPreferredSize().height;
+      length -= (entryPointHeight + 2 * Math.signum(entryPointHeight));
+      return length;
     }
 
     @Override
@@ -376,7 +379,7 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public int getScrollUnitIncrement(TabLabel label) {
-      return label.getPreferredSize().height;
+      return (label.getPreferredSize().height + myTabs.getTabHGap());
     }
   }
 

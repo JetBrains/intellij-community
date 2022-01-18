@@ -115,7 +115,7 @@ class FindInFilesLesson(override val existedFile: String)
       text(LessonsBundle.message("find.in.files.type.to.replace",
                                  code("apple"), code(it)))
       triggerByUiComponentAndHighlight(highlightInside = false) { ui: SearchTextArea ->
-        it.startsWith(ui.textArea.text)
+        it.startsWith(ui.textArea.text) && UIUtil.getParentOfType(FindPopupPanel::class.java, ui) != null
       }
       stateCheck {
         getFindPopup()?.helper?.model?.let { model ->
@@ -203,8 +203,7 @@ class FindInFilesLesson(override val existedFile: String)
 
   private fun TaskContext.showWarningIfPopupClosed(isReplacePopup: Boolean) {
     val actionId = if (isReplacePopup) "ReplaceInPath" else "FindInPath"
-    showWarning(LessonsBundle.message("find.in.files.popup.closed.warning.message", action(actionId), LessonUtil.actionName(actionId)),
-      restoreTaskWhenResolved = true) {
+    showWarning(LessonsBundle.message("find.in.files.popup.closed.warning.message", action(actionId), LessonUtil.actionName(actionId))) {
       getFindPopup()?.helper?.isReplaceState != isReplacePopup
     }
   }

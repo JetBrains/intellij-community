@@ -214,7 +214,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
             OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLine());
             return true;
           }
-          return getProcessService().sendWinProcessCtrlC(myProcess);
+          return WinProcessTerminator.terminateWinProcessGracefully(this, getProcessService());
         }
         catch (Throwable e) {
           if (!myProcess.isAlive()) {

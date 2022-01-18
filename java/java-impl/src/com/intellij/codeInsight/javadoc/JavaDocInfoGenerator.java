@@ -2128,8 +2128,9 @@ public class JavaDocInfoGenerator {
       buffer.append("<font color=red>").append(label).append("</font>");
     }
     else {
-      String highlightedLabel =
-        myIsSignatureGenerationInProgress || doSemanticHighlightingOfLinks() ? tryHighlightLinkLabel(target, label) : label;
+      String highlightedLabel = myIsSignatureGenerationInProgress && doHighlightSignatures() || doSemanticHighlightingOfLinks()
+                                ? tryHighlightLinkLabel(target, label)
+                                : label;
       generateLink(buffer, target, highlightedLabel, plainLink);
     }
   }

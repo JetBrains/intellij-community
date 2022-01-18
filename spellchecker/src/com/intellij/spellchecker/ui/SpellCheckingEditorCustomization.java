@@ -28,25 +28,21 @@ import java.util.Set;
 import java.util.function.Function;
 
 /**
- * Allows to enforce editors to use/don't use spell checking ignoring user-defined spelling inspection settings.
+ * Allows enforcing editors to use/not use spell checking, ignoring user-defined spelling inspection settings.
  * <p/>
  * Thread-safe.
  *
  * @author Denis Zhdanov
  */
 public class SpellCheckingEditorCustomization extends SimpleEditorCustomization {
-
-  /**
-   * @deprecated use {@link SpellCheckingEditorCustomizationProvider#getDisabledCustomization()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static final SpellCheckingEditorCustomization DISABLED =
-    (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
-
   private static final Map<String, LocalInspectionToolWrapper> SPELL_CHECK_TOOLS = new HashMap<>();
   private static final boolean READY = init();
 
+  /**
+   * @deprecated use {@link SpellCheckingEditorCustomizationProvider} methods.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @NotNull
   public static SpellCheckingEditorCustomization getInstance(boolean enabled) {
     return (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getCustomization(enabled);
@@ -59,7 +55,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
   @SuppressWarnings({"unchecked"})
   private static boolean init() {
     // It's assumed that default spell checking inspection settings are just fine for processing all types of data.
-    // Please perform corresponding settings tuning if that assumption is broken at future.
+    // Please perform corresponding settings tuning if that assumption is broken in the future.
 
     Class<LocalInspectionTool>[] inspectionClasses = (Class<LocalInspectionTool>[])new Class<?>[]{SpellCheckingInspection.class};
     for (Class<LocalInspectionTool> inspectionClass : inspectionClasses) {

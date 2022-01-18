@@ -17,7 +17,7 @@ import com.intellij.openapi.editor.DocumentationHoverInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.PopupBridge
 import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.openapi.progress.runSuspendingAction
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
@@ -30,7 +30,7 @@ import javax.swing.JComponent
 
 internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, hostOffset: Int): DocumentationHoverInfo? {
   ApplicationManager.getApplication().assertIsNonDispatchThread()
-  return runSuspendingAction {
+  return runBlockingCancellable {
     val request = readAction {
       val targets = injectedThenHost(
         project, hostEditor, hostOffset,
@@ -39,13 +39,13 @@ internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, h
       targets?.singleOrNull()?.documentationRequest()
     }
     if (request == null) {
-      return@runSuspendingAction null
+      return@runBlockingCancellable null
     }
     val preview = withContext(Dispatchers.EDT) {
       DocumentationToolWindowManager.instance(project).updateVisibleAutoUpdatingTab(request)
     }
     if (preview) {
-      return@runSuspendingAction null
+      return@runBlockingCancellable null
     }
     val (browser, browseJob) = DocumentationBrowser.createBrowserAndGetJob(project, request)
     withTimeoutOrNull(DEFAULT_UI_RESPONSE_TIMEOUT) {

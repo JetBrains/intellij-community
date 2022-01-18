@@ -23,7 +23,7 @@ import java.io.IOException
 private const val IGNORE_ULTIMATE_EDITION = "ignoreUltimateEdition"
 
 @get:JvmName("getLog")
-val LOG = Logger.getInstance("#PluginsAdvertiser")
+internal val LOG = Logger.getInstance("#PluginsAdvertiser")
 
 private val propertiesComponent
   get() = PropertiesComponent.getInstance()

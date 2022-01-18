@@ -178,6 +178,7 @@
     <keyboard-shortcut first-keystroke="shift f11"/>
   </action>
   <action id="ShowBookmarks"/>
+  <action id="ShowTypeBookmarks"/>
   <action id="Move"/>
   <action id="ChangeSignature"/>
   <action id="ChangeTypeSignature"/>

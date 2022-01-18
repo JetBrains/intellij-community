@@ -15,13 +15,14 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scrollbarWidth
+import kotlinx.coroutines.Deferred
 import java.awt.BorderLayout
 import java.awt.FlowLayout
 import javax.swing.JLabel
 
 @Suppress("MagicNumber") // Swing dimension constants
 internal class HeaderPanel(
-    onUpdateAllLinkClicked: (List<PackageSearchOperation<*>>) -> Unit
+    onUpdateAllLinkClicked: (Deferred<List<PackageSearchOperation<*>>>) -> Unit
 ) : BorderLayoutPanel() {
 
     private val titleLabel = JLabel().apply {
@@ -47,7 +48,7 @@ internal class HeaderPanel(
         insets.top = 3.scaled()
     }
 
-    private var updateAllOperations: List<PackageSearchOperation<*>> = emptyList()
+    private var updateAllOperations: Deferred<List<PackageSearchOperation<*>>>? = null
 
     init {
         PackageSearchUI.setHeight(this, PackageSearchUI.SmallHeaderHeight)
@@ -74,7 +75,7 @@ internal class HeaderPanel(
         )
 
         updateAllLink.addHyperlinkListener {
-            onUpdateAllLinkClicked(updateAllOperations)
+            updateAllOperations?.let { onUpdateAllLinkClicked(it) }
             PackageSearchEventsLogger.logUpgradeAll()
         }
     }

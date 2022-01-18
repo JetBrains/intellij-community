@@ -85,6 +85,7 @@
   <action id="ShowBookmarks">
     <keyboard-shortcut first-keystroke="alt control M"/>
   </action>
+  <action id="ShowTypeBookmarks"/>
   <action id="ExportToTextFile"/>
   <action id="UsageGrouping.FlattenModules"/>
   <action id="OverrideMethods"/>

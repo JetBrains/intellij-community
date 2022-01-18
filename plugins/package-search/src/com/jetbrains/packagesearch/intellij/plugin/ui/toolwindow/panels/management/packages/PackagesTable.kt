@@ -28,6 +28,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.onMouseMotion
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
@@ -118,7 +119,10 @@ internal class PackagesTable(
         require(columnWeights.sum() == 1.0f) { "The column weights must sum to 1.0" }
 
         model = PackagesTableModel(
-            columns = arrayOf(nameColumn, scopeColumn, versionColumn, actionsColumn)
+            nameColumn = nameColumn,
+            scopeColumn = scopeColumn,
+            versionColumn = versionColumn,
+            actionsColumn = actionsColumn
         )
 
         val columnInfos = tableModel.columnInfos
@@ -364,9 +368,9 @@ internal class PackagesTable(
         }
     }
 
-    private fun executeActionColumnOperations(operations: List<PackageSearchOperation<*>>) {
+    private fun executeActionColumnOperations(operations: Deferred<List<PackageSearchOperation<*>>>) {
         logDebug("PackagesTable#executeActionColumnOperations()") {
-            "The user has clicked the action for a package. This resulted in ${operations.size} operation(s)."
+            "The user has clicked the action for a package. This resulted in many operation(s)."
         }
         operationExecutor.executeOperations(operations)
     }

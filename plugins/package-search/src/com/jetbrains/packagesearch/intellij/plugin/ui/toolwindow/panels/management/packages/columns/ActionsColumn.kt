@@ -10,12 +10,13 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operatio
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesTableItem
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers.PackageActionsTableCellRendererAndEditor
+import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.Nls
 import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
 
 internal class ActionsColumn(
-    private val operationExecutor: (List<PackageSearchOperation<*>>) -> Unit
+    private val operationExecutor: (Deferred<List<PackageSearchOperation<*>>>) -> Unit
 ) : ColumnInfo<PackagesTableItem<*>, Any>(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.columns.actions")) {
 
     var hoverItem: PackagesTableItem<*>? = null
@@ -88,7 +89,7 @@ internal class ActionsColumn(
 
     data class ActionViewModel(
         val packageModel: PackageModel,
-        val operations: List<PackageSearchOperation<*>>,
+        val operations: Deferred<List<PackageSearchOperation<*>>>,
         val operationType: PackageOperationType?,
         @Nls val infoMessage: String?,
         val isSearchResult: Boolean,

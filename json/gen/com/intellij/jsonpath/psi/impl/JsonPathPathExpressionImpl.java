@@ -35,6 +35,12 @@ public class JsonPathPathExpressionImpl extends JsonPathExpressionImpl implement
 
   @Override
   @NotNull
+  public List<JsonPathExpressionSegment> getExpressionSegmentList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonPathExpressionSegment.class);
+  }
+
+  @Override
+  @NotNull
   public List<JsonPathFunctionCall> getFunctionCallList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonPathFunctionCall.class);
   }
@@ -46,21 +52,9 @@ public class JsonPathPathExpressionImpl extends JsonPathExpressionImpl implement
   }
 
   @Override
-  @NotNull
-  public List<JsonPathQuotedSegment> getQuotedSegmentList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonPathQuotedSegment.class);
-  }
-
-  @Override
   @Nullable
   public JsonPathRootSegment getRootSegment() {
     return findChildByClass(JsonPathRootSegment.class);
-  }
-
-  @Override
-  @NotNull
-  public List<JsonPathSegmentExpression> getSegmentExpressionList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonPathSegmentExpression.class);
   }
 
   @Override

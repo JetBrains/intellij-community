@@ -39,7 +39,7 @@ internal fun PackageVersionUtils.upgradeCandidateVersionOrNull(
 
     // We can't really compare non-semantic versions, so we simply get the max semantic version (if any)
     if (currentVersion !is NormalizedPackageVersion.Semantic) {
-        return availableSemanticVersions.first { it.nonSemanticSuffixOrNull().isNullOrBlank() && it > currentVersion }
+        return availableSemanticVersions.find { it.nonSemanticSuffixOrNull().isNullOrBlank() && it > currentVersion }
     }
 
     // Finding the upgrade version for semantic versions is a multi-step process:
@@ -86,6 +86,7 @@ internal fun PackageVersionUtils.upgradeCandidateVersionOrNull(
 internal fun PackageVersionUtils.highestSensibleVersionByNameOrNull(
     availableVersions: List<NormalizedPackageVersion<*>>
 ): NormalizedPackageVersion<*>? {
+
     require(availableVersions.isNotEmpty()) { "Cannot find highest version in an empty list" }
 
     return availableVersions.asSequence()

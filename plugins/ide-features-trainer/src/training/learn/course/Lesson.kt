@@ -12,6 +12,7 @@ import training.learn.CourseManager
 import training.learn.lesson.LessonListener
 import training.learn.lesson.LessonState
 import training.learn.lesson.LessonStateManager
+import training.statistic.LessonStartingWay
 import training.util.filterUnseenLessons
 import training.util.findLanguageByID
 
@@ -65,8 +66,8 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
 
   internal val lessonListeners: MutableList<LessonListener> = mutableListOf()
 
-  internal fun onStart() {
-    lessonListeners.forEach { it.lessonStarted(this) }
+  internal fun onStart(way: LessonStartingWay) {
+    lessonListeners.forEach { it.lessonStarted(this, way) }
   }
 
   internal fun onStop(project: Project, lessonPassed: Boolean) {

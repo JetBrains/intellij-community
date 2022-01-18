@@ -153,6 +153,7 @@
     <keyboard-shortcut first-keystroke="control K" second-keystroke="W"/>
     <keyboard-shortcut first-keystroke="control K" second-keystroke="control W"/>
   </action>
+  <action id="ShowTypeBookmarks"/>
   <action id="GotoNextBookmark">
     <keyboard-shortcut first-keystroke="ctrl K" second-keystroke="N"/>
     <keyboard-shortcut first-keystroke="ctrl K" second-keystroke="ctrl N"/>

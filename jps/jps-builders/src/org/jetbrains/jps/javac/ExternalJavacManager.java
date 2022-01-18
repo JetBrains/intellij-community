@@ -407,11 +407,14 @@ public class ExternalJavacManager extends ProcessAdapter {
             }
           }
         }
+        final String msg = prefix + ": " + text;
         if (consumers != null) {
-          final String msg = prefix + ": " + text;
           for (DiagnosticOutputConsumer consumer : consumers) {
             consumer.outputLineAvailable(msg);
           }
+        }
+        else {
+          LOG.info(msg.trim());
         }
       }
     }
@@ -527,27 +530,27 @@ public class ExternalJavacManager extends ProcessAdapter {
               myConnections.put(msgUuid, channel);
               myConnections.notifyAll();
             }
+            return;
           }
-          else if (handler != null) {
-            final boolean terminateOk = handler.handleMessage(message);
-            if (terminateOk) {
-              session.setDone();
-              mySessions.remove(session.getId());
-              final ExternalJavacProcessHandler process = myRunningProcesses.get(session.getProcessId());
-              if (process != null) {
-                process.unlock();
-              }
-            }
-            else if (session.isCancelRequested()) {
-              reply = JavacProtoUtil.toMessage(msgUuid, JavacProtoUtil.createCancelRequest());
+        }
+
+        if (handler != null) {
+          final boolean terminateOk = handler.handleMessage(message);
+          if (terminateOk) {
+            session.setDone();
+            mySessions.remove(session.getId());
+            final ExternalJavacProcessHandler process = myRunningProcesses.get(session.getProcessId());
+            if (process != null) {
+              process.unlock();
             }
           }
-          else {
+          else if (session.isCancelRequested()) {
             reply = JavacProtoUtil.toMessage(msgUuid, JavacProtoUtil.createCancelRequest());
           }
         }
         else {
-          reply = JavacProtoUtil.toMessage(msgUuid, JavacProtoUtil.createFailure("Unsupported message: " + messageType.name(), null));
+          LOG.info("No message handler is registered to handle message " + messageType.name() + "; canceling the process");
+          reply = JavacProtoUtil.toMessage(msgUuid, JavacProtoUtil.createCancelRequest());
         }
       }
       finally {

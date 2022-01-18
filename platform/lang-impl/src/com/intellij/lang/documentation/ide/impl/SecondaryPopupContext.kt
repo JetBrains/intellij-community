@@ -30,6 +30,11 @@ internal abstract class SecondaryPopupContext : PopupContext {
 
   override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {
     val resized = popupUI.useStoredSize()
+    if (!resized.get()) {
+      // a popup might be shown before its content was loaded (with "Fetching..." message)
+      // => no update events were generated => ensure popup size is set
+      resizePopup(popup)
+    }
     popupUI.updatePopup {
       if (!resized.get()) {
         resizePopup(popup)

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.openapi.project.Project;
@@ -28,10 +29,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -1299,7 +1297,17 @@ public final class ExpressionUtils {
     }
     Boolean isConstantArray = CachedValuesManager.<Boolean>getCachedValue(array, () -> CachedValueProvider.Result
       .create(isConstantArray(array), PsiModificationTracker.MODIFICATION_COUNT));
+    Arrays.asList(initializers).replaceAll(expr -> isIllegalReference(array, expr) ? null : expr);
     return Boolean.TRUE.equals(isConstantArray) ? initializers : null;
+  }
+
+  private static boolean isIllegalReference(PsiVariable array, PsiExpression expr) {
+    return SyntaxTraverser.psiTraverser(expr).filter(PsiReferenceExpression.class)
+             .find(ref -> {
+               PsiElement target = ref.resolve();
+               return target == array ||
+                      target instanceof PsiField && HighlightUtil.isIllegalForwardReferenceToField(ref, (PsiField)target, true) != null;
+             }) != null;
   }
 
   private static boolean isConstantArray(PsiVariable array) {

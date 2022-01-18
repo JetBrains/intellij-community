@@ -4,20 +4,21 @@ import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageVersionNormalizer
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import org.apache.commons.lang3.StringUtils
 
 internal sealed class PackageModel(
     val groupId: String,
     val artifactId: String,
-    val remoteInfo: ApiStandardPackage?
+    val remoteInfo: ApiStandardPackage?,
+    val remoteVersions: List<NormalizedPackageVersion<PackageVersion.Named>>
 ) : Comparable<PackageModel> {
-
-    val remoteVersions = remoteInfo?.versions?.asSequence()
-        ?.map { PackageVersion.from(it) }
-        ?.filterIsInstance<PackageVersion.Named>()
-        ?.map { NormalizedPackageVersion.parseFrom(it) }
-        ?.toList()
-        ?: emptyList()
 
     val identifier = PackageIdentifier("$groupId:$artifactId")
 
@@ -45,22 +46,48 @@ internal sealed class PackageModel(
         groupId: String,
         artifactId: String,
         remoteInfo: ApiStandardPackage?,
-        val usageInfo: List<DependencyUsageInfo>
-    ) : PackageModel(groupId, artifactId, remoteInfo) {
+        remoteVersions: List<NormalizedPackageVersion<PackageVersion.Named>>,
+        val usageInfo: List<DependencyUsageInfo>,
+        val latestInstalledVersion: NormalizedPackageVersion<*>,
+        override val declaredVersions: List<NormalizedPackageVersion<*>>
+    ) : PackageModel(groupId, artifactId, remoteInfo, remoteVersions) {
+
+        companion object {
+
+            suspend operator fun invoke(
+                groupId: String,
+                artifactId: String,
+                remoteInfo: ApiStandardPackage?,
+                usageInfo: List<DependencyUsageInfo>,
+                normalizer: PackageVersionNormalizer
+            ) = coroutineScope {
+                val remoteVersions = async { evaluateRemoteVersions(remoteInfo, normalizer) }
+                val latestInstalledVersion = async {
+                    usageInfo.asFlow()
+                        .map { it.version }
+                        .map { NormalizedPackageVersion.parseFrom(it, normalizer) }
+                        .toList()
+                        .maxOrNull()
+                        ?: error("An installed package must always have at least one usage")
+                }
+                val declaredVersions = async {
+                    usageInfo.map { it.version }.map { NormalizedPackageVersion.parseFrom(it, normalizer) }
+                }
+                Installed(
+                    groupId,
+                    artifactId,
+                    remoteInfo,
+                    remoteVersions.await(),
+                    usageInfo,
+                    latestInstalledVersion.await(),
+                    declaredVersions.await()
+                )
+            }
+        }
 
         init {
             require(usageInfo.isNotEmpty()) { "An installed package must always have at least one usage" }
         }
-
-        val latestInstalledVersion = usageInfo.asSequence()
-            .map { it.version }
-            .map { NormalizedPackageVersion.parseFrom(it) }
-            .maxOrNull()
-            ?: error("An installed package must always have at least one usage")
-
-        override val declaredVersions: List<NormalizedPackageVersion<*>> =
-            usageInfo.map { it.version }
-                .map { NormalizedPackageVersion.parseFrom(it) }
 
         fun findUsagesIn(moduleModels: List<ModuleModel>): List<DependencyUsageInfo> =
             findUsagesIn(moduleModels.map { it.projectModule })
@@ -71,7 +98,7 @@ internal sealed class PackageModel(
         }
 
         fun copyWithUsages(usages: List<DependencyUsageInfo>) =
-            Installed(groupId, artifactId, remoteInfo, usages)
+            Installed(groupId, artifactId, remoteInfo, remoteVersions, usages, latestInstalledVersion, declaredVersions)
 
         override val searchableInfo =
             buildString {
@@ -108,8 +135,19 @@ internal sealed class PackageModel(
     class SearchResult(
         groupId: String,
         artifactId: String,
-        remoteInfo: ApiStandardPackage
-    ) : PackageModel(groupId, artifactId, remoteInfo) {
+        remoteInfo: ApiStandardPackage,
+        remoteVersions: List<NormalizedPackageVersion<PackageVersion.Named>>
+    ) : PackageModel(groupId, artifactId, remoteInfo, remoteVersions) {
+
+        companion object {
+
+            suspend operator fun invoke(
+                groupId: String,
+                artifactId: String,
+                remoteInfo: ApiStandardPackage,
+                normalizer: PackageVersionNormalizer
+            ) = SearchResult(groupId, artifactId, remoteInfo, evaluateRemoteVersions(remoteInfo, normalizer))
+        }
 
         override val declaredVersions: List<NormalizedPackageVersion<*>> = emptyList()
 
@@ -138,27 +176,37 @@ internal sealed class PackageModel(
 
     companion object {
 
-        fun fromSearchResult(remoteInfo: ApiStandardPackage): SearchResult? {
+        suspend fun evaluateRemoteVersions(remoteInfo: ApiStandardPackage?, normalizer: PackageVersionNormalizer) =
+            remoteInfo?.versions?.asFlow()
+                ?.map { PackageVersion.from(it) }
+                ?.filterIsInstance<PackageVersion.Named>()
+                ?.map { NormalizedPackageVersion.parseFrom(it, normalizer) }
+                ?.toList()
+                ?: emptyList()
+
+        suspend fun fromSearchResult(remoteInfo: ApiStandardPackage, normalizer: PackageVersionNormalizer): SearchResult? {
             if (remoteInfo.versions.isEmpty()) return null
 
             return SearchResult(
                 remoteInfo.groupId,
                 remoteInfo.artifactId,
-                remoteInfo = remoteInfo
+                remoteInfo,
+                normalizer
             )
         }
 
-        fun fromInstalledDependency(
+        suspend fun fromInstalledDependency(
             unifiedDependency: UnifiedDependency,
             usageInfo: List<DependencyUsageInfo>,
-            remoteInfo: ApiStandardPackage?
+            remoteInfo: ApiStandardPackage?,
+            normalizer: PackageVersionNormalizer
         ): Installed? {
             val groupId = unifiedDependency.coordinates.groupId ?: return null
             val artifactId = unifiedDependency.coordinates.artifactId ?: return null
 
             if (usageInfo.isEmpty()) return null
 
-            return Installed(groupId, artifactId, remoteInfo, usageInfo)
+            return Installed(groupId, artifactId, remoteInfo, usageInfo, normalizer)
         }
     }
 }

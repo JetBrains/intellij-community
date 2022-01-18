@@ -110,11 +110,16 @@ public class APIWrappers {
     @Nullable
     static String adjustMessage(final Iterable<Pair<String, String>> namesMap, String message) {
       if (message != null) {
-        for (Pair<String, String> pair : namesMap) {
-          final String replaced = message.replace(pair.getFirst(), pair.getSecond());
-          if (!message.equals(replaced)) {
-            return replaced;
+        try {
+          for (Pair<String, String> pair : namesMap) {
+            final String replaced = message.replace(pair.getFirst(), pair.getSecond());
+            if (!message.equals(replaced)) {
+              return replaced;
+            }
           }
+        }
+        catch (Throwable ignored) {
+           //iterating namesMap may cause unexpected AP class loading exceptions
         }
       }
       return message;

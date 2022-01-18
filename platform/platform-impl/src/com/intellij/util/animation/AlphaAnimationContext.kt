@@ -2,6 +2,7 @@
 package com.intellij.util.animation
 
 import java.awt.AlphaComposite
+import java.awt.Graphics2D
 import java.util.function.Consumer
 
 class AlphaAnimationContext(private val base: AlphaComposite, val consumer: Consumer<AlphaComposite?>) {
@@ -17,5 +18,22 @@ class AlphaAnimationContext(private val base: AlphaComposite, val consumer: Cons
       else -> base.derive(it.toFloat())
     }
     consumer.accept(composite)
+  }
+
+  var isVisible: Boolean
+    get() = composite != null
+    set(visible) = animator.setVisible(visible)
+
+  fun paintWithComposite(g: Graphics2D, paint: Runnable) {
+    composite?.let {
+      val old = g.composite
+      try {
+        g.composite = it
+        paint.run()
+      }
+      finally {
+        g.composite = old
+      }
+    }
   }
 }

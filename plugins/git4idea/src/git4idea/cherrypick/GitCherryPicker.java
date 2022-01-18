@@ -128,7 +128,7 @@ public class GitCherryPicker extends VcsCherryPicker {
   private String createCommitMessage(@NotNull GitRepository repository, @NotNull VcsFullCommitDetails commit) {
     String message = commit.getFullMessage();
     if (shouldAddSuffix(repository, commit.getId())) {
-      message += String.format("\n\n(cherry-picked from commit %s)", commit.getId().asString()); //NON-NLS Do not i18n commit template
+      message += String.format("\n\n(cherry picked from commit %s)", commit.getId().asString()); //NON-NLS Do not i18n commit template
     }
     return message;
   }

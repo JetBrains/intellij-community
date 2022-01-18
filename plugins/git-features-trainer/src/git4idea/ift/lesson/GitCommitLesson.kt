@@ -121,7 +121,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
            LearningBalloonConfig(Balloon.Position.below, 300, cornerToPointerDistance = 55))
       highlightVcsChange(firstFileName)
       triggerOnOneChangeIncluded(secondFileName)
-      showWarningIfCommitWindowClosed()
+      showWarningIfCommitWindowClosed(restoreTaskWhenResolved = true)
       test {
         clickChangeElement(firstFileName)
       }
@@ -140,7 +140,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       text(GitLessonsBundle.message("git.commit.open.options.tooltip", strong(commitWindowName)),
            LearningBalloonConfig(Balloon.Position.above, 0))
       triggerByUiComponentAndHighlight(false, false) { _: CommitOptionsPanel -> true }
-      showWarningIfCommitWindowClosed()
+      showWarningIfCommitWindowClosed(restoreTaskWhenResolved = true)
       test {
         ideFrame {
           actionButton(ActionsBundle.actionText("ChangesView.ShowCommitOptions")).click()
@@ -224,10 +224,11 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       text(GitLessonsBundle.message("git.commit.committed.file.explanation"))
       triggerByUiComponentAndHighlight(highlightInside = false, usePulsation = true) { _: VcsLogChangesBrowser -> true }
       proceedLink()
-      showWarningIfGitWindowClosed(restoreTaskWhenResolved = false)
+      showWarningIfGitWindowClosed()
     }
 
     task {
+      before { LearningUiHighlightingManager.clearHighlights() }
       val amendCheckboxText = VcsBundle.message("checkbox.amend").dropMnemonic()
       text(GitLessonsBundle.message("git.commit.select.amend.checkbox",
                                     strong(amendCheckboxText),

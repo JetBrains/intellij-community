@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.Configurable
@@ -43,10 +42,7 @@ import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.Alarm
-import com.intellij.util.ArrayUtilRt
-import com.intellij.util.IconUtil
-import com.intellij.util.PlatformIcons
+import com.intellij.util.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.EditableModel
@@ -64,6 +60,7 @@ import java.util.concurrent.Callable
 import java.util.function.ToIntFunction
 import javax.swing.*
 import javax.swing.event.DocumentEvent
+import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.*
 import kotlin.math.max
 
@@ -92,10 +89,10 @@ fun createRunConfigurationConfigurable(project: Project): RunConfigurable {
 
 open class RunConfigurable @JvmOverloads constructor(protected val project: Project, var runDialog: RunDialogBase? = null) : Configurable, Disposable, RunConfigurationCreator {
   @Volatile private var isDisposed: Boolean = false
+
   val root = DefaultMutableTreeNode("Root")
   val treeModel = MyTreeModel(root)
   val tree = Tree(treeModel)
-  private val myChangeRunConfigurationNodeAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, project)
   private val rightPanel = JPanel(BorderLayout())
   private val splitter = JBSplitter("RunConfigurable.dividerProportion", 0.3f)
   private var wholePanel: JPanel? = null
@@ -105,7 +102,18 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   private var isFolderCreating = false
   protected val toolbarAddAction = MyToolbarAddAction()
   private var isModified = false
-  private val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
+
+  init {
+    runDialog?.let {
+      initTreeSelectionListener(it.getDisposable())
+    }
+  }
+
+  private lateinit var changeRunConfigurationNodeAlarm: SingleAlarm
+  private val changeRunConfigurationListener = TreeSelectionListener {
+    if (changeRunConfigurationNodeAlarm.isDisposed) return@TreeSelectionListener
+    changeRunConfigurationNodeAlarm.cancelAndRequest()
+  }
 
   companion object {
     fun collectNodesRecursively(parentNode: DefaultMutableTreeNode, nodes: MutableList<DefaultMutableTreeNode>, vararg allowed: RunConfigurableNodeKind) {
@@ -202,19 +210,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
 
     addRunConfigurationsToModel(root)
 
-    if (!isUnitTestMode) {
-      tree.addTreeSelectionListener {
-        if (myChangeRunConfigurationNodeAlarm.isDisposed) return@addTreeSelectionListener
-        myChangeRunConfigurationNodeAlarm.cancelAllRequests()
-        myChangeRunConfigurationNodeAlarm.addRequest({
-          runInEdt(ModalityState.stateForComponent(tree)) { selectRunConfiguration() }
-        }, 300)
-      }
-    }
-    else {
-      tree.addTreeSelectionListener {
-        selectRunConfiguration()
-      }
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      tree.addTreeSelectionListener { selectRunConfiguration() }
     }
 
     tree.registerKeyboardAction({ clickDefaultButton() }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED)
@@ -225,6 +222,25 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     val shortcut = KeymapUtil.getShortcutsText(toolbarAddAction.shortcutSet.shortcuts)
     if (shortcut.isNotEmpty()) tree.emptyText.appendText(" $shortcut")
     (tree.model as DefaultTreeModel).reload()
+  }
+
+  protected fun initTreeSelectionListener(parentDisposable: Disposable) {
+    if (tree.treeSelectionListeners.any { it == changeRunConfigurationListener }) return
+
+    val modalityState = ModalityState.stateForComponent(tree)
+
+    // The listener is supposed to be registered for a dialog, so the modality state cannot be NON_MODAL
+    if (modalityState == ModalityState.NON_MODAL) return
+
+    changeRunConfigurationNodeAlarm = SingleAlarm(
+      task = ::selectRunConfiguration,
+      delay = 300,
+      parentDisposable = parentDisposable,
+      threadToUse = Alarm.ThreadToUse.SWING_THREAD,
+      modalityState = modalityState
+    )
+
+    tree.addTreeSelectionListener(changeRunConfigurationListener)
   }
 
   private fun selectRunConfiguration() {

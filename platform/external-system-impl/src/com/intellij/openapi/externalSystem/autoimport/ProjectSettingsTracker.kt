@@ -77,7 +77,7 @@ class ProjectSettingsTracker(
         val settingsFilesStatus = settingsFilesStatus.updateAndGet {
           createSettingsFilesStatus(it.oldCRC, newSettingsFilesCRC)
         }
-        LOG.info("Settings file status: ${settingsFilesStatus}")
+        LOG.info("[refreshChanges] Settings file status: ${settingsFilesStatus}")
         when (settingsFilesStatus.hasChanges()) {
           true -> status.markDirty(operationStamp, EXTERNAL)
           else -> status.markReverted(operationStamp)
@@ -127,7 +127,7 @@ class ProjectSettingsTracker(
   fun afterApplyChanges(listener: () -> Unit) = applyChangesOperation.afterOperation(listener)
 
   init {
-    projectAware.subscribe(ProjectRefreshListener(), parentDisposable)
+    projectAware.subscribe(ProjectListener(), parentDisposable)
     whenNewFilesCreated(settingsAsyncSupplier::invalidate, parentDisposable)
     subscribeOnDocumentsAndVirtualFilesChanges(settingsAsyncSupplier, ProjectSettingsListener(), parentDisposable)
   }
@@ -146,15 +146,15 @@ class ProjectSettingsTracker(
     fun hasChanges() = updated.isNotEmpty() || created.isNotEmpty() || deleted.isNotEmpty()
   }
 
-  private inner class ProjectRefreshListener : ExternalSystemProjectRefreshListener {
+  private inner class ProjectListener : ExternalSystemProjectListener {
     private lateinit var settingsFilesCRC: Map<String, Long>
 
-    override fun beforeProjectRefresh() {
+    override fun onProjectReloadStart() {
       applyChangesOperation.startTask()
       settingsFilesCRC = settingsFilesStatus.get().newCRC
     }
 
-    override fun afterProjectRefresh(status: ExternalSystemRefreshStatus) {
+    override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) {
       val operationStamp = currentTime()
       submitSettingsFilesRefresh { settingsPaths ->
         submitSettingsFilesCRCCalculation(settingsPaths) { newSettingsFilesCRC ->
@@ -169,6 +169,23 @@ class ProjectSettingsTracker(
             this@ProjectSettingsTracker.status.markSynchronized(operationStamp)
           }
           applyChangesOperation.finishTask()
+        }
+      }
+    }
+
+    override fun onSettingsFilesListChange() {
+      val operationStamp = currentTime()
+      submitSettingsFilesCollection (invalidateCache = true) { settingsPaths ->
+        submitSettingsFilesCRCCalculation(settingsPaths) { newSettingsFilesCRC ->
+          val settingsFilesStatus = settingsFilesStatus.updateAndGet {
+            createSettingsFilesStatus(it.oldCRC, newSettingsFilesCRC)
+          }
+          LOG.info("[onSettingsFilesListChange] Settings file status: ${settingsFilesStatus}")
+          when (settingsFilesStatus.hasChanges()) {
+            true -> status.markModified(operationStamp, EXTERNAL)
+            else -> status.markReverted(operationStamp)
+          }
+          projectTracker.scheduleChangeProcessing()
         }
       }
     }

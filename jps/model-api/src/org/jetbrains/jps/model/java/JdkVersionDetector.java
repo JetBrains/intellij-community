@@ -24,6 +24,8 @@ public abstract class JdkVersionDetector {
   public enum Variant {
     AdoptOpenJdk_HS("adopt", "AdoptOpenJDK (HotSpot)"),
     AdoptOpenJdk_J9("adopt-j9", "AdoptOpenJDK (OpenJ9)"),
+    Temurin("temurin", "Eclipse Temurin"),
+    Semeru("semeru", "IBM Semeru"),
     Corretto("corretto", "Amazon Corretto"),
     GraalVM("graalvm", "GraalVM"),
     IBM("ibm", "IBM JDK"),

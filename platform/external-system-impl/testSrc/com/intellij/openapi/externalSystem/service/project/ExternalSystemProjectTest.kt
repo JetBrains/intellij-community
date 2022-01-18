@@ -5,6 +5,7 @@ import com.intellij.compiler.CompilerConfiguration
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.model.ProjectKeys
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.*
 import com.intellij.openapi.externalSystem.model.project.LibraryLevel
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
@@ -26,6 +27,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.PathUtil
+import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.io.File
@@ -159,6 +161,19 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
     }
   }
 
+  private fun buildProjectModel(contentRoots: Map<ExternalSystemSourceType, List<String>>) =
+    project {
+      module {
+        contentRoot {
+          for ((key, values) in contentRoots) {
+            values.forEach {
+              folder(type = key, relativePath = it)
+            }
+          }
+        }
+      }
+    }
+
   @Test
   fun `test changes in a project layout (content roots) could be detected on Refresh`() {
     val contentRoots = mutableMapOf(
@@ -171,24 +186,10 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
       FileUtil.createDirectory(File(projectPath, it))
     }
 
-    val projectModelBuilder: () -> Project = {
-      project {
-        module {
-          contentRoot {
-            for ((key, values) in contentRoots) {
-              values.forEach {
-                folder(type = key, relativePath = it)
-              }
-            }
-          }
-        }
-      }
-    }
-
-    val projectModelInitial = projectModelBuilder.invoke()
+    val projectModelInitial = buildProjectModel(contentRoots)
     contentRoots[SOURCE]!!.removeFirst()
     contentRoots[TEST]!!.removeFirst()
-    val projectModelRefreshed = projectModelBuilder.invoke()
+    val projectModelRefreshed = buildProjectModel(contentRoots)
 
     applyProjectModel(projectModelInitial, projectModelRefreshed)
 
@@ -208,29 +209,36 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
   }
 
   @Test
+  fun `test import does not fail if filename contains space`() {
+    val contentRoots = mapOf(
+      SOURCE to listOf(" source1", "source2 ", "source 3")
+    )
+    contentRoots.forEach { (_, v) -> v.forEach { createProjectSubDirectory(it) } }
+    applyProjectModel(buildProjectModel(contentRoots), buildProjectModel(contentRoots))
+    val modelsProvider = IdeModelsProviderImpl(project)
+    val module = modelsProvider.findIdeModule("module")
+    if (module == null) {
+      fail("Could not find single module")
+    } else {
+      val folders = ArrayList<String>()
+      modelsProvider.getOrderEntries(module)
+        .filterIsInstance<ModuleSourceOrderEntry>()
+        .flatMap { it.rootModel.contentEntries.asIterable() }
+        .forEach { contentEntry -> folders.addAll(contentEntry.sourceFolders.map { File(it.url).name }) }
+      TestCase.assertEquals(contentRoots[SOURCE], folders)
+    }
+  }
+
+  @Test
   fun `test excluded directories merge`() {
     val contentRoots = mutableMapOf(
       EXCLUDED to mutableListOf(".gradle", "build")
     )
 
-    val projectModelBuilder: () -> Project = {
-      project {
-        module {
-          contentRoot {
-            for ((key, values) in contentRoots) {
-              values.forEach {
-                folder(type = key, relativePath = it)
-              }
-            }
-          }
-        }
-      }
-    }
-
-    val projectModelInitial = projectModelBuilder.invoke()
+    val projectModelInitial = buildProjectModel(contentRoots)
     contentRoots[EXCLUDED]!!.removeFirst()
     contentRoots[EXCLUDED]!!.add("newExclDir")
-    val projectModelRefreshed = projectModelBuilder.invoke()
+    val projectModelRefreshed = buildProjectModel(contentRoots)
     applyProjectModel(projectModelInitial, projectModelRefreshed)
 
     val modelsProvider = IdeModelsProviderImpl(project)

@@ -16,7 +16,7 @@ const val INLAY_ID = "inlay.hints"
 
 class InlaySettingsConfigurable(val project: Project) : Configurable, SearchableConfigurable, Configurable.NoScroll {
 
-  private val panel: InlaySettingsPanel = InlaySettingsPanel(project)
+  private val panel: InlaySettingsPanel by lazy  { InlaySettingsPanel(project) }
 
   override fun createComponent(): JComponent {
     return panel

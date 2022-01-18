@@ -225,9 +225,6 @@ public abstract class SingleRowLayout extends TabLayout {
   protected void calculateRequiredLength(SingleRowPassInfo data) {
     for (TabInfo eachInfo : data.myVisibleInfos) {
       data.requiredLength += getRequiredLength(eachInfo);
-      if (myTabs.getTabsPosition().isSide()) {
-        data.requiredLength -= 1;
-      }
       data.toLayout.add(eachInfo);
     }
   }

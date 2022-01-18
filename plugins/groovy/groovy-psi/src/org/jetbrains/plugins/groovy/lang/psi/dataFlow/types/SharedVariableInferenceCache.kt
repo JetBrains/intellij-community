@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types
 
 import com.intellij.psi.PsiType
@@ -35,13 +35,19 @@ class SharedVariableInferenceCache(val scope: GrControlFlowOwner) {
   private val writeInstructions: List<Pair<ReadWriteVariableInstruction, GrControlFlowOwner>>
 
   init {
-    val mergedInnerFlows: List<Pair<ReadWriteVariableInstruction, GrControlFlowOwner>> =
-      mergeInnerFlows(scope)
-        .mapNotNull { (instruction, owner) ->
-          (instruction as? ReadWriteVariableInstruction)?.takeIf { instruction.isWrite }?.run { instruction to owner }
-        }
-    sharedVariableDescriptors = doGetSharedVariables(mergedInnerFlows.map(Pair<ReadWriteVariableInstruction, GrControlFlowOwner>::first))
-    writeInstructions = mergedInnerFlows.filter { pair -> pair.first.descriptor in sharedVariableDescriptors }
+    if (isCompileStatic(scope)) {
+      val mergedInnerFlows: List<Pair<ReadWriteVariableInstruction, GrControlFlowOwner>> =
+        mergeInnerFlows(scope)
+          .mapNotNull { (instruction, owner) ->
+            (instruction as? ReadWriteVariableInstruction)?.takeIf { instruction.isWrite }?.run { instruction to owner }
+          }
+      sharedVariableDescriptors = doGetSharedVariables(mergedInnerFlows.map(Pair<ReadWriteVariableInstruction, GrControlFlowOwner>::first))
+      writeInstructions = mergedInnerFlows.filter { pair -> pair.first.descriptor in sharedVariableDescriptors }
+    }
+    else {
+      sharedVariableDescriptors = emptySet()
+      writeInstructions = emptyList()
+    }
   }
 
   private val finalTypes: AtomicReferenceArray<PsiType?> = AtomicReferenceArray(sharedVariableDescriptors.size)

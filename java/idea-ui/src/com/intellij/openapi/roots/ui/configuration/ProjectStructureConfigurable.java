@@ -285,6 +285,9 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
 
   @Override
   public boolean isModified() {
+    if (myProjectJdksModel.isModified()) {
+      return true;
+    }
     for (Configurable each : myName2Config) {
       if (each.isModified()) return true;
     }
@@ -294,6 +297,9 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
 
   @Override
   public void apply() throws ConfigurationException {
+    if (myProjectJdksModel.isModified()) {
+      myProjectJdksModel.apply();
+    }
     for (Configurable each : myName2Config) {
       if (each instanceof BaseStructureConfigurable && each.isModified()) {
         ((BaseStructureConfigurable)each).checkCanApply();

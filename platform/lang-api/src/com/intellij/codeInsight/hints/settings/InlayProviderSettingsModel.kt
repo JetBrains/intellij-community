@@ -18,6 +18,8 @@ import javax.swing.JComponent
 /**
  * Model of settings of single language hints provider (Preferences | Editor | Inlay Hints)
  * @param isEnabled language is enabled in terms of InlayHintsSettings.hintsEnabled
+ * @param id unique model id
+ * @param language model language
  */
 abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String, val language: Language) {
   /**
@@ -40,19 +42,19 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
   /**
    * Called, when it is required to update inlay hints for file in preview
    * Invariant: if previewText == null, this method is not invoked
+   *
+   * Note: it is invoked on EDT thread
    */
   abstract fun collectAndApply(editor: Editor, file: PsiFile)
-
-  open fun collectAndApplyOnEdt(editor: Editor, file: PsiFile) {
-    // bwc implementation
-    collectAndApply(editor, file)
-  }
 
   open fun createFile(project: Project, fileType: FileType, document:Document): PsiFile {
     val factory = PsiFileFactory.getInstance(project)
     return factory.createFileFromText("dummy", fileType, document.text)
   }
 
+  /**
+   * Short description to be displayed in the model's details
+   */
   abstract val description: String?
 
   /**
@@ -60,8 +62,16 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
    */
   abstract val previewText: String?
 
+  /**
+   * Code preview text for given case
+   * @param case null for model node
+   */
   abstract fun getCasePreview(case: ImmediateConfigurable.Case?): String?
 
+  /**
+   * Description for given case
+   * @param case case to get description
+   */
   @Nls
   abstract fun getCaseDescription(case: ImmediateConfigurable.Case): String?
 

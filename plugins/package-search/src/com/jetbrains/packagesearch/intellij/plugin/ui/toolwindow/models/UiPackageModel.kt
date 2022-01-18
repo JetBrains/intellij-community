@@ -2,6 +2,8 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
+import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
+import kotlinx.coroutines.CoroutineScope
 
 internal sealed class UiPackageModel<T : PackageModel> {
 
@@ -68,7 +70,7 @@ internal fun PackageModel.Installed.toUiPackageModel(
         selectedVersion = latestInstalledVersion,
         selectedScope = declaredScopes.firstOrNull() ?: defaultScope,
         mixedBuildSystemTargets = targetModules.isMixedBuildSystems,
-        packageOperations = computeActionsFor(this, targetModules, knownRepositoriesInTargetModules, onlyStable),
+        packageOperations = project.lifecycleScope.computeActionsFor(this, targetModules, knownRepositoriesInTargetModules, onlyStable),
         sortedVersions = sortedVersions
     )
 }
@@ -95,15 +97,16 @@ internal fun PackageModel.SearchResult.toUiPackageModel(
     project: Project,
     searchResultUiState: SearchResultUiState?,
     knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
-    onlyStable: Boolean,
-) = this.toUiPackageModel(
+    onlyStable: Boolean
+) = toUiPackageModel(
     declaredScopes = targetModules.declaredScopes(project),
     defaultScope = targetModules.defaultScope(project),
     mixedBuildSystems = targetModules.isMixedBuildSystems,
     searchResultUiState = searchResultUiState,
     onlyStable = onlyStable,
     targetModules = targetModules,
-    knownRepositoriesInTargetModules = knownRepositoriesInTargetModules
+    knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
+    coroutineScope = project.lifecycleScope
 )
 
 internal fun PackageModel.SearchResult.toUiPackageModel(
@@ -114,6 +117,7 @@ internal fun PackageModel.SearchResult.toUiPackageModel(
     onlyStable: Boolean,
     targetModules: TargetModules,
     knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
+    coroutineScope: CoroutineScope
 ): UiPackageModel.SearchResult {
     val sortedVersions = getAvailableVersions(onlyStable).sortedDescending()
     return UiPackageModel.SearchResult(
@@ -125,7 +129,14 @@ internal fun PackageModel.SearchResult.toUiPackageModel(
         selectedVersion = searchResultUiState?.selectedVersion ?: NormalizedPackageVersion.Missing,
         selectedScope = searchResultUiState?.selectedScope ?: defaultScope,
         mixedBuildSystemTargets = mixedBuildSystems,
-        packageOperations = computeActionsFor(this, targetModules, knownRepositoriesInTargetModules, onlyStable),
+        packageOperations = coroutineScope.computeActionsFor(
+            packageModel = this,
+            targetModules = targetModules,
+            knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
+            onlyStable = onlyStable,
+            selectedScope = searchResultUiState?.selectedScope ?: defaultScope,
+            selectedVersion = searchResultUiState?.selectedVersion ?: NormalizedPackageVersion.Missing
+        ),
         sortedVersions = sortedVersions
     )
 }

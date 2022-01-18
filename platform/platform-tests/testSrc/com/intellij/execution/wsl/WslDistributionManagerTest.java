@@ -32,6 +32,11 @@ public class WslDistributionManagerTest extends BareTestFixtureTestCase {
         public @NotNull List<WslDistributionAndVersion> loadInstalledDistributionsWithVersions() {
           return ContainerUtil.map(loadInstalledDistributionMsIds(), s -> new WslDistributionAndVersion(s, 2));
         }
+
+        @Override
+        protected boolean isAvailable() {
+          return true;
+        }
       }, getTestRootDisposable());
     WslDistributionManager distributionManager = WslDistributionManager.getInstance();
     WSLDistribution lowerCaseUbuntu = distributionManager.getOrCreateDistributionByMsId(lowerCaseUbuntuName);

@@ -155,6 +155,7 @@
     <keyboard-shortcut first-keystroke="meta K" second-keystroke="W"/>
     <keyboard-shortcut first-keystroke="meta K" second-keystroke="meta W"/>
   </action>
+  <action id="ShowTypeBookmarks"/>
   <action id="ViewBreakpoints">
     <keyboard-shortcut first-keystroke="meta alt B"/>
   </action>

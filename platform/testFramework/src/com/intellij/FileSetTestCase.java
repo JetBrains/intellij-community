@@ -6,8 +6,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.text.CharArrayUtil;
 import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
 
@@ -125,20 +127,19 @@ public abstract class FileSetTestCase extends TestSuite {
 
       content = StringUtil.replace(content, "\r", "");
 
+      int currentIndex = 0;
       int separatorIndex;
-      while ((separatorIndex = content.indexOf(getDelimiter())) >= 0) {
-        input.add(content.substring(0, separatorIndex));
-        content = content.substring(separatorIndex);
-        while (StringUtil.startsWithChar(content, '-') || StringUtil.startsWithChar(content, '\n')) content = content.substring(1);
+      String delimiter = getDelimiter();
+      while ((separatorIndex = content.indexOf(delimiter, currentIndex)) >= 0) {
+        input.add(content.substring(currentIndex, separatorIndex));
+        currentIndex = separatorIndex + delimiter.length();
+        currentIndex = CharArrayUtil.shiftForward(content, currentIndex, "-\n");
       }
-
-      String result = content;
 
       assertFalse("No data found in source file", input.isEmpty());
 
-      while (StringUtil.startsWithChar(result, '-') || StringUtil.startsWithChar(result, '\n') || StringUtil.startsWithChar(result, '\r')) {
-        result = result.substring(1);
-      }
+      int expectedOffset = currentIndex;
+
       myProject = getProject();
       String testName = myTestFile.getName();
       final int dotIdx = testName.indexOf('.');
@@ -146,10 +147,10 @@ public abstract class FileSetTestCase extends TestSuite {
         testName = testName.substring(0, dotIdx);
       }
 
-      final String transformed = StringUtil.replace(transform(testName, ArrayUtilRt.toStringArray(input)), "\r", "");
-      result = StringUtil.replace(result, "\r", "");
+      final String transformed = transform(testName, ArrayUtilRt.toStringArray(input));
+      String result = content.substring(0, expectedOffset) + transformed;
 
-      assertEquals(result.trim(),transformed.trim());
+      UsefulTestCase.assertSameLinesWithFile(myTestFile.getAbsolutePath(), result, true);
     }
 
     @NotNull

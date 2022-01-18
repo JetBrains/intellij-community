@@ -72,7 +72,7 @@ object LangTool : GrazieStateLifecycle {
   internal fun createTool(lang: Lang, state: GrazieConfig.State): JLanguageTool {
     val jLanguage = lang.jLanguage
     require(jLanguage != null) { "Trying to get LangTool for not available language" }
-    return JLanguageTool(jLanguage, null, ResultCache(1_000)).apply {
+    return JLanguageTool(jLanguage, null, ResultCache(10_000)).apply {
       setCheckCancelledCallback { ProgressManager.checkCanceled(); false }
       addMatchFilter(UppercaseMatchFilter())
 

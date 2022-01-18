@@ -344,6 +344,7 @@
   <action id="ShowBookmarks">
     <keyboard-shortcut first-keystroke="shift control M"/>
   </action>
+  <action id="ShowTypeBookmarks"/>
   <action id="ShowPopupMenu">
     <keyboard-shortcut first-keystroke="CONTEXT_MENU"/>
     <keyboard-shortcut first-keystroke="shift F10"/>

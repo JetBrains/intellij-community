@@ -17,8 +17,12 @@ sealed interface DocumentationResult {
      */
     @JvmStatic
     @JvmOverloads
-    fun documentation(html: @Nls String, anchor: String? = null): DocumentationResult {
-      return DocumentationData(html, anchor, externalUrl = null)
+    fun documentation(
+      html: @Nls String,
+      anchor: String? = null,
+      imageResolver: DocumentationImageResolver? = null,
+    ): DocumentationResult {
+      return DocumentationData(html, anchor, externalUrl = null, imageResolver)
     }
 
     /**
@@ -27,8 +31,13 @@ sealed interface DocumentationResult {
      */
     @JvmStatic
     @JvmOverloads
-    fun externalDocumentation(html: @Nls String, anchor: String? = null, externalUrl: String): DocumentationResult {
-      return DocumentationData(html, anchor, externalUrl)
+    fun externalDocumentation(
+      html: @Nls String,
+      anchor: String? = null,
+      externalUrl: String,
+      imageResolver: DocumentationImageResolver? = null,
+    ): DocumentationResult {
+      return DocumentationData(html, anchor, externalUrl, imageResolver)
     }
 
     /**

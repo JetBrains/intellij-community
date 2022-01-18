@@ -16,7 +16,7 @@ interface ExternalSystemProjectAware {
    */
   val settingsFiles: Set<String>
 
-  fun subscribe(listener: ExternalSystemProjectRefreshListener, parentDisposable: Disposable)
+  fun subscribe(listener: ExternalSystemProjectListener, parentDisposable: Disposable)
 
   fun reloadProject(context: ExternalSystemProjectReloadContext)
 }

@@ -44,7 +44,7 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
         val viewModel = checkNotNull(value as? UiPackageModel<*>)
         val labelText = when (viewModel) {
             is UiPackageModel.Installed -> versionMessage(viewModel.packageModel, viewModel.packageOperations)
-            is UiPackageModel.SearchResult -> viewModel.selectedVersion?.displayName ?: viewModel.defaultVersion.displayName
+            is UiPackageModel.SearchResult -> viewModel.selectedVersion.displayName
         }
 
         val hasVersionsToChooseFrom = viewModel.sortedVersions.isNotEmpty()

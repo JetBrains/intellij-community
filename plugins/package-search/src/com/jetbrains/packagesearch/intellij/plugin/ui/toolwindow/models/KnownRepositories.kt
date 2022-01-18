@@ -11,7 +11,7 @@ internal sealed class KnownRepositories(
     fun findById(id: String) = find { repo -> repo.id == id }
 
     fun excludingById(repoIdsToExclude: Iterable<String>) =
-        repositories.filter { repo -> repoIdsToExclude.contains(repo.id) }
+        filter { repo -> repoIdsToExclude.contains(repo.id) }
 
     data class All(override val repositories: List<RepositoryModel>) : KnownRepositories(repositories) {
 

@@ -31,6 +31,7 @@ import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.gotItStep
 import git4idea.ift.GitLessonsUtil.openCommitWindowText
 import git4idea.ift.GitLessonsUtil.openPushDialogText
+import git4idea.ift.GitLessonsUtil.restoreByUiAndBackgroundTask
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
 import git4idea.ift.GitLessonsUtil.triggerOnCheckout
@@ -205,10 +206,9 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
 
     task {
       text(GitLessonsBundle.message("git.quick.start.name.new.branch", LessonUtil.rawEnter(), strong(createButtonText)))
-      val checkoutStartedFuture = triggerOnCheckout()
-      restoreState(showBranchesTaskId, delayMillis = 4 * defaultRestoreDelay) {
-        previous.ui?.isShowing != true && !checkoutStartedFuture.isDone
-      }
+      triggerOnCheckout()
+      restoreByUiAndBackgroundTask(GitBundle.message("branch.checking.out.branch.from.process", "\\w+", "HEAD"),
+                                   delayMillis = 2 * defaultRestoreDelay, showBranchesTaskId)
       test(waitEditorToBeReady = false) {
         type("newBranch")
         ideFrame { button(createButtonText).click() }
@@ -315,7 +315,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       triggerOnNotification { notification ->
         notification.groupId == "Vcs Notifications" && notification.type == NotificationType.INFORMATION
       }
-      restoreByUi(delayMillis = 4 * defaultRestoreDelay)
+      restoreByUiAndBackgroundTask(DvcsBundle.message("push.process.pushing"), delayMillis = defaultRestoreDelay)
       test(waitEditorToBeReady = false) {
         ideFrame {
           button { b: JBOptionButton -> b.text == pushButtonText }.click()

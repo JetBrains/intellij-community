@@ -134,4 +134,28 @@ class JsonPathJaywayParserTest : JsonPathParsingTestCase("jayway") {
   fun testNeOperators() {
     doCodeTest("@.demo[?(@.a != 2 && @.b !== 'x')]")
   }
+
+  fun testIndexWithoutContext() {
+    doCodeTest("[0]")
+  }
+
+  fun testWildcardIndex() {
+    doCodeTest("*[0]")
+  }
+
+  fun testQuotedPathAfterIndex() {
+    doCodeTest("[0][\"id\"]")
+  }
+
+  fun testDotAfterIndex() {
+    doCodeTest("[0].id")
+  }
+
+  fun testRepeatedWildcard() {
+    doCodeTest("**")
+  }
+
+  fun testRepeatedWildcardInTheMiddle() {
+    doCodeTest("[1].**.created")
+  }
 }

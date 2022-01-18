@@ -11,16 +11,24 @@ public final class JsonPathConstants {
   }
 
   public static final List<String> STANDARD_NAMED_OPERATORS = List.of(
-    "in", "nin", "subsetof", "anyof", "noneof", "size", "empty", "contains"
+    "anyof",
+    "contains",
+    "empty",
+    "in",
+    "nin",
+    "noneof",
+    "size",
+    "subsetof"
   );
 
   public static final Map<String, String> STANDARD_FUNCTIONS = ImmutableMap.<String, String>builder()
+    .put("avg", "number")
     .put("concat", "string")
     .put("keys", "array")
     .put("length", "number")
-    .put("min", "number")
     .put("max", "number")
-    .put("avg", "number")
+    .put("min", "number")
+    .put("size", "number")
     .put("stddev", "number")
     .put("sum", "number")
     .build();

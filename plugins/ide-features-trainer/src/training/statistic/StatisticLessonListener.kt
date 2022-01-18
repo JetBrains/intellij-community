@@ -7,8 +7,8 @@ import training.learn.lesson.LessonListener
 
 class StatisticLessonListener(val project: Project) : LessonListener {
 
-  override fun lessonStarted(lesson: Lesson) {
-    StatisticBase.logLessonStarted(lesson)
+  override fun lessonStarted(lesson: Lesson, way: LessonStartingWay) {
+    StatisticBase.logLessonStarted(lesson, way)
   }
 
   override fun lessonPassed(lesson: Lesson) {

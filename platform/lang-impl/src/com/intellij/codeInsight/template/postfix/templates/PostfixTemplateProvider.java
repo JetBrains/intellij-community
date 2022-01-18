@@ -14,6 +14,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
+/**
+ * Extension point interface for providing language specific postfix templates.
+ * @see LanguagePostfixTemplate#EP_NAME
+ * @see PostfixTemplate
+ */
 public interface PostfixTemplateProvider {
   /**
    * Identifier of template provider. Used for storing settings of provider's templates.

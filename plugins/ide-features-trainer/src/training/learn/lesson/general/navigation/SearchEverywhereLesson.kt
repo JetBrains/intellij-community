@@ -97,8 +97,7 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
       triggerByUiComponentAndHighlight(false, false) { button: ActionButtonWithText ->
         button.accessibleContext.accessibleName == it
       }
-      showWarning(LessonsBundle.message("search.everywhere.class.popup.closed.warning.message", action("GotoClass")),
-                  restoreTaskWhenResolved = true) {
+      showWarning(LessonsBundle.message("search.everywhere.class.popup.closed.warning.message", action("GotoClass"))) {
         !checkInsideSearchEverywhere() && focusOwner !is JList<*>
       }
       test {

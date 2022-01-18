@@ -1,6 +1,5 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
@@ -21,14 +20,12 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
-import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import com.jetbrains.packagesearch.intellij.plugin.util.uiStateSource
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,6 +33,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.newCoroutineContext
@@ -46,7 +44,7 @@ import javax.swing.JScrollPane
 @Suppress("MagicNumber") // Swing dimension constants
 internal class PackageManagementPanel(
     val project: Project,
-) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title")), CoroutineScope, Disposable {
+) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title")), CoroutineScope by project.lifecycleScope {
 
     override val coroutineContext =
         project.lifecycleScope.newCoroutineContext(SupervisorJob() + CoroutineName("PackageManagementPanel"))
@@ -110,7 +108,8 @@ internal class PackageManagementPanel(
     init {
         updatePackageDetailsVisible(PackageSearchGeneralConfiguration.getInstance(project).packageDetailsVisible)
 
-        project.uiStateSource.targetModulesFlow.onEach { targetModulesChannel.send(it) }
+        project.uiStateSource.targetModulesFlow
+            .onEach { targetModulesChannel.send(it) }
             .launchIn(this)
 
         modulesScrollPanel.apply {
@@ -123,7 +122,9 @@ internal class PackageManagementPanel(
         packagesListPanel.content.minimumSize = Dimension(250.scaled(), 0)
 
         project.packageSearchProjectService.moduleModelsStateFlow
-            .onEach { data -> modulesTree.display(computeModuleTreeModel(data)) }
+            .map { computeModuleTreeModel(it) }
+            .flowOn(Dispatchers.Default)
+            .onEach { modulesTree.display(it) }
             .flowOn(Dispatchers.AppUI)
             .launchIn(this)
 
@@ -134,16 +135,17 @@ internal class PackageManagementPanel(
             packagesListPanel.onlyStableStateFlow
         ) { knownRepositoriesInTargetModules, selectedUiPackageModel,
             targetModules, onlyStable ->
-            packageDetailsPanel.display(
-                PackageDetailsPanel.ViewModel(
-                    selectedPackageModel = selectedUiPackageModel,
-                    knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
-                    targetModules = targetModules,
-                    onlyStable = onlyStable,
-                    invokeLaterScope = this
-                )
+            PackageDetailsPanel.ViewModel(
+                selectedPackageModel = selectedUiPackageModel,
+                knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
+                targetModules = targetModules,
+                onlyStable = onlyStable,
+                invokeLaterScope = this
             )
-        }.launchIn(this)
+        }.flowOn(Dispatchers.Default)
+            .onEach { packageDetailsPanel.display(it) }
+            .flowOn(Dispatchers.AppUI)
+            .launchIn(this)
     }
 
     private fun updatePackageDetailsVisible(becomeVisible: Boolean) {
@@ -172,9 +174,4 @@ internal class PackageManagementPanel(
     )
 
     override fun buildTitleActions(): Array<AnAction> = arrayOf(togglePackageDetailsAction)
-
-    override fun dispose() {
-        logDebug("PackageManagementPanel#dispose()") { "Disposing PackageManagementPanel..." }
-        cancel("Disposing PackageManagementPanel")
-    }
 }

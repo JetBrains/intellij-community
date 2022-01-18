@@ -81,6 +81,7 @@
   <action id="ShowBookmarks">
     <keyboard-shortcut first-keystroke="alt M"/>
   </action>
+  <action id="ShowTypeBookmarks"/>
   <action id="ExportToTextFile"/>
   <action id="RecentFiles">
     <keyboard-shortcut first-keystroke="alt O"/>

@@ -1,3 +1,5 @@
+import java.util.List;
+
 class Test {
   void testTypePattern1(Object o) {
     o = "fsd";
@@ -38,6 +40,20 @@ class Test {
     o = "fsd";
     if (<warning descr="Condition 'o instanceof (Integer i)' is always 'false'">o instanceof (Integer i)</warning>) {
       System.out.println();
+    }
+  }
+
+  void testInstanceofInForeach(List<Object> list) {
+    for (Object obj : list) {
+      if (obj instanceof String st) {
+      }
+    }
+  }
+
+  void testInstanceofTotalInForeach(List<Object> list) {
+    for (Object obj : list) {
+      if (obj instanceof <error descr="Pattern type 'Object' is the same as expression type">Object</error> st) {
+      }
     }
   }
 

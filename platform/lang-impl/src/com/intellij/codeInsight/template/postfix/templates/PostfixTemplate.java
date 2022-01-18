@@ -19,11 +19,18 @@ import java.io.IOException;
 import java.util.Objects;
 
 /**
- * Represents a postfix template.
- * <p>
- * EDITABLE TEMPLATES
- * ==================
- * Editable postfix template MUST know the provider that created it.
+ * Represents a postfix template. 
+ * Postfix templates are live template that applicable to a specific code fragment e.g. "sout" template:
+ * <code>
+ * "hello".sout
+ * </code>
+ * is expanded to:
+ * <code>
+ * System.out.println("hello")  
+ * <code/>
+ * <br>
+ * Editable templates:
+ * editable postfix template MUST know the provider that created it.
  * <p>
  * Editable postfix templates MUST provide proper equals/hashCode implementation.
  * Equal postfix templates produces by the very same provider will overwrite each other.

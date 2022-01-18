@@ -28,16 +28,15 @@ class ScriptSdks(
         if (javaClass != other?.javaClass) return false
 
         other as ScriptSdks
-
-        if (nonIndexedClassRoots != other.nonIndexedClassRoots) return false
-        if (nonIndexedSourceRoots != other.nonIndexedSourceRoots) return false
-
-        return true
+        return nonIndexedClassRoots == other.nonIndexedClassRoots &&
+                nonIndexedSourceRoots == other.nonIndexedSourceRoots &&
+                sdks.keys == other.sdks.keys && sdks.all { entry -> entry.value == other.sdks[entry.key] }
     }
 
     override fun hashCode(): Int {
         var result = nonIndexedClassRoots.hashCode()
         result = 31 * result + nonIndexedSourceRoots.hashCode()
+        result = 31 * result + sdks.hashCode()
         return result
     }
 }
