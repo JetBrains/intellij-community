@@ -40,21 +40,29 @@ class MavenProjectImporterToWorkspaceModel(
   private fun importModules(builder: WorkspaceEntityStorageBuilder) {
     val allProjects = myProjectsTree.projects.toMutableSet()
     allProjects.addAll(projectsToImportWithChanges.keys)
-    val moduleEntities = ArrayList<ModuleEntity>()
+    val createdModules = ArrayList<Pair<MavenProject, ModuleEntity>>()
     val mavenProjectToModuleName = HashMap<MavenProject, String>()
     MavenModuleNameMapper.map(allProjects, emptyMap(), mavenProjectToModuleName, HashMap(), mavenImportingSettings.dedicatedModuleDir)
     for (mavenProject in allProjects) {
       val moduleEntity = WorkspaceModuleImporter(mavenProject, virtualFileUrlManager, mavenProjectsTree, builder,
                                                  mavenImportingSettings, mavenProjectToModuleName, project).importModule()
-      moduleEntities.add(moduleEntity)
+      createdModules.add(mavenProject to moduleEntity)
     }
+    val mavenProjectToModule = HashMap<MavenProject, Module>()
     MavenUtil.invokeAndWaitWriteAction(project) {
       WorkspaceModel.getInstance(project).updateProjectModel { current ->
         current.replaceBySource({ (it as? JpsImportedEntitySource)?.externalSystemId == ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID }, builder)
       }
       val storage = WorkspaceModel.getInstance(project).entityStorage.current
-      moduleEntities.mapNotNullTo(createdModulesList) { storage.findModuleByEntity(it) }
+      for ((mavenProject, moduleEntity) in createdModules) {
+        val module = storage.findModuleByEntity(moduleEntity)
+        if (module != null) {
+          createdModulesList.add(module)
+          mavenProjectToModule[mavenProject] = module
+        }
+      }
     }
+    configureMavenProjects(allProjects, mavenProjectToModule, project)
   }
 
   override val createdModules: List<Module>

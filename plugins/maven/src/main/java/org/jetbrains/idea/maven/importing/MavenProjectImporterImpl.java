@@ -36,10 +36,10 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.importing.configurers.MavenModuleConfigurer;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.utils.*;
+import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import java.io.IOException;
@@ -176,7 +176,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterBase {
         }
       }
 
-      configureMavenProjects();
+      configureMavenProjects(myAllProjects, myMavenProjectToModule, myProject);
     }
     else {
       MavenUtil.invokeAndWaitWriteAction(myProject, () -> setMavenizedModules(obsoleteModules, false));
@@ -184,28 +184,6 @@ class MavenProjectImporterImpl extends MavenProjectImporterBase {
     }
 
     return postTasks;
-  }
-
-  private void configureMavenProjects() {
-    List<MavenModuleConfigurer> configurers = MavenModuleConfigurer.getConfigurers();
-
-    MavenUtil.runInBackground(myProject, MavenProjectBundle.message("command.name.configuring.projects"), false, indicator -> {
-      float count = 0;
-      long startTime = System.currentTimeMillis();
-      LOG.info("[maven import] applying " + configurers.size() + " configurers to " + myAllProjects.size() + " Maven projects");
-      for (MavenProject mavenProject : myAllProjects) {
-        Module module = myMavenProjectToModule.get(mavenProject);
-        if (module == null) {
-          continue;
-        }
-        indicator.setFraction(count++ / myAllProjects.size());
-        indicator.setText2(MavenProjectBundle.message("progress.details.configuring.module", module.getName()));
-        for (MavenModuleConfigurer configurer : configurers) {
-          configurer.configure(mavenProject, myProject, module);
-        }
-      }
-      LOG.info("[maven import] configuring projects took " + (System.currentTimeMillis() - startTime) + "ms");
-    });
   }
 
   private void disposeModifiableModels() {
