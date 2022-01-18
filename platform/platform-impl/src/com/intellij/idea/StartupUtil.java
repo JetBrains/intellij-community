@@ -609,31 +609,22 @@ public final class StartupUtil {
 
     CompletableFuture<Boolean> euaFuture;
     EndUserAgreement.updateCachedContentToLatestBundledVersion();
-    try {
-      if (document != null) {
-        euaFuture = CompletableFuture.supplyAsync(() -> {
-          setLafToShowPreAppStartUpDialogIfNeeded(baseLaF);
-          Agreements.showEndUserAndDataSharingAgreements(document);
-          return true;
-        }, EventQueue::invokeLater);
-        EventQueue.invokeAndWait(() -> Agreements.showEndUserAndDataSharingAgreements(document));
-      }
-      else if (ConsentOptions.needToShowUsageStatsConsent()) {
-        euaFuture = CompletableFuture.supplyAsync(() -> {
-          setLafToShowPreAppStartUpDialogIfNeeded(baseLaF);
-          Agreements.showDataSharingAgreement();
-          return false;
-        }, EventQueue::invokeLater);
-      }
-      else {
-        euaFuture = CompletableFuture.completedFuture(false);
-      }
+    if (document != null) {
+      euaFuture = CompletableFuture.supplyAsync(() -> {
+        setLafToShowPreAppStartUpDialogIfNeeded(baseLaF);
+        Agreements.showEndUserAndDataSharingAgreements(document);
+        return true;
+      }, EventQueue::invokeLater);
     }
-    catch (InterruptedException e) {
-      throw new CompletionException(e);
+    else if (ConsentOptions.needToShowUsageStatsConsent()) {
+      euaFuture = CompletableFuture.supplyAsync(() -> {
+        setLafToShowPreAppStartUpDialogIfNeeded(baseLaF);
+        Agreements.showDataSharingAgreement();
+        return false;
+      }, EventQueue::invokeLater);
     }
-    catch (InvocationTargetException e) {
-      throw new CompletionException(e.getCause());
+    else {
+      euaFuture = CompletableFuture.completedFuture(false);
     }
     return euaFuture.whenComplete((__, ___) -> activity.end());
   }
