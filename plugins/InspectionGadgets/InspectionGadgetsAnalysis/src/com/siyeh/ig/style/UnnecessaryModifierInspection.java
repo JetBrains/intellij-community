@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -14,6 +14,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.List;
 
@@ -54,43 +55,37 @@ public class UnnecessaryModifierInspection extends BaseInspection implements Cle
           final IElementType tokenType = modifier.getTokenType();
           if (JavaTokenType.FINAL_KEYWORD == tokenType && aClass.isRecord()) {
             // all records are implicitly final
-            registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                          InspectionGadgetsBundle.message("unnecessary.record.modifier.problem.descriptor"));
+            registerError(modifier, "unnecessary.record.modifier.problem.descriptor");
           }
           else if (JavaTokenType.ABSTRACT_KEYWORD == tokenType && aClass.isInterface()) {
             // all interfaces are implicitly abstract
-            registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                          InspectionGadgetsBundle.message("unnecessary.interface.modifier.problem.descriptor"));
+            registerError(modifier, "unnecessary.interface.modifier.problem.descriptor");
           }
           else if (JavaTokenType.STATIC_KEYWORD == tokenType && parent instanceof PsiClass) {
-            // all nested interfaces, nested enums, nested records and nested inner classes of interfaces are implicitly static
             if (aClass.isRecord()) {
-              registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                            InspectionGadgetsBundle.message("unnecessary.inner.record.modifier.problem.descriptor"));
+              // all inner records are implicitly static
+              registerError(modifier, "unnecessary.inner.record.modifier.problem.descriptor");
             }
             else if (aClass.isInterface()) {
-              registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                            InspectionGadgetsBundle.message("unnecessary.inner.interface.modifier.problem.descriptor"));
+              // all inner interfaces are implicitly static
+              registerError(modifier, "unnecessary.inner.interface.modifier.problem.descriptor");
             }
             else if (aClass.isEnum()) {
-              registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                            InspectionGadgetsBundle.message("unnecessary.inner.enum.modifier.problem.descriptor"));
+              // all inner enums are implicitly static
+              registerError(modifier, "unnecessary.inner.enum.modifier.problem.descriptor");
             }
             else if (interfaceMember) {
               // all inner classes of interfaces are implicitly static
-              registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                            InspectionGadgetsBundle.message("unnecessary.interface.inner.class.modifier.problem.descriptor"));
+              registerError(modifier, "unnecessary.interface.inner.class.modifier.problem.descriptor");
             }
           }
           if (JavaTokenType.PUBLIC_KEYWORD == tokenType && interfaceMember) {
-            // all inner classes of interfaces are implicitly public
-            registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                          InspectionGadgetsBundle.message("unnecessary.interface.inner.class.modifier.problem.descriptor"));
+            // all members of interfaces are implicitly public
+            registerError(modifier, "unnecessary.interface.member.modifier.problem.descriptor");
           }
           if (JavaTokenType.STRICTFP_KEYWORD == tokenType && redundantStrictfp) {
-            // all code is strictfp under Java 17
-            registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                          InspectionGadgetsBundle.message("unnecessary.strictfp.modifier.problem.descriptor"));
+            // all code is strictfp under Java 17 and higher
+            registerError(modifier, "unnecessary.strictfp.modifier.problem.descriptor");
           }
         }
       }
@@ -104,8 +99,8 @@ public class UnnecessaryModifierInspection extends BaseInspection implements Cle
         final List<PsiKeyword> modifiers = PsiTreeUtil.getChildrenOfTypeAsList(modifierList, PsiKeyword.class);
         for (PsiKeyword modifier : modifiers) {
           if (JavaTokenType.STRICTFP_KEYWORD == modifier.getTokenType()) {
-            registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                          InspectionGadgetsBundle.message("unnecessary.strictfp.modifier.problem.descriptor"));
+            // all code is strictfp under Java 17 and higher
+            registerError(modifier, "unnecessary.strictfp.modifier.problem.descriptor");
           }
         }
       }
@@ -121,8 +116,8 @@ public class UnnecessaryModifierInspection extends BaseInspection implements Cle
         final List<PsiKeyword> modifiers = PsiTreeUtil.getChildrenOfTypeAsList(modifierList, PsiKeyword.class);
         for (PsiKeyword modifier : modifiers) {
           if (JavaTokenType.PRIVATE_KEYWORD == modifier.getTokenType()) {
-            registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                          InspectionGadgetsBundle.message("unnecessary.enum.constructor.modifier.problem.descriptor"));
+            // enum constructors are implicitly private
+            registerError(modifier, "unnecessary.enum.constructor.modifier.problem.descriptor");
           }
         }
       }
@@ -131,9 +126,13 @@ public class UnnecessaryModifierInspection extends BaseInspection implements Cle
         final List<PsiKeyword> modifiers = PsiTreeUtil.getChildrenOfTypeAsList(modifierList, PsiKeyword.class);
         for (PsiKeyword modifier : modifiers) {
           final IElementType tokenType = modifier.getTokenType();
-          if (JavaTokenType.PUBLIC_KEYWORD == tokenType || JavaTokenType.ABSTRACT_KEYWORD == tokenType) {
-            registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                          InspectionGadgetsBundle.message("unnecessary.interface.method.modifier.problem.descriptor"));
+          if (JavaTokenType.PUBLIC_KEYWORD == tokenType) {
+            // all members of interface are implicitly public
+            registerError(modifier, "unnecessary.interface.member.modifier.problem.descriptor");
+          }
+          else if (JavaTokenType.ABSTRACT_KEYWORD == tokenType) {
+            // all non-default, non-static methods of interfaces are implicitly abstract
+            registerError(modifier, "unnecessary.interface.method.modifier.problem.descriptor");
           }
         }
       }
@@ -150,11 +149,13 @@ public class UnnecessaryModifierInspection extends BaseInspection implements Cle
         final List<PsiKeyword> modifiers = PsiTreeUtil.getChildrenOfTypeAsList(modifierList, PsiKeyword.class);
         for (PsiKeyword modifier : modifiers) {
           final IElementType tokenType = modifier.getTokenType();
-          if (JavaTokenType.PUBLIC_KEYWORD == tokenType ||
-              JavaTokenType.STATIC_KEYWORD == tokenType ||
-              JavaTokenType.FINAL_KEYWORD == tokenType) {
-            registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                          InspectionGadgetsBundle.message("unnecessary.interface.field.modifier.problem.descriptor"));
+          if (JavaTokenType.PUBLIC_KEYWORD == tokenType) {
+            // all members of interfaces are implicitly public
+            registerError(modifier, "unnecessary.interface.member.modifier.problem.descriptor");
+          }
+          else if (JavaTokenType.STATIC_KEYWORD == tokenType || JavaTokenType.FINAL_KEYWORD == tokenType) {
+            // all fields of interfaces are implicitly static and final
+            registerError(modifier, "unnecessary.interface.field.modifier.problem.descriptor");
           }
         }
       }
@@ -164,13 +165,18 @@ public class UnnecessaryModifierInspection extends BaseInspection implements Cle
           final PsiModifierList modifierList = field.getModifierList();
           final List<PsiKeyword> modifiers = PsiTreeUtil.getChildrenOfTypeAsList(modifierList, PsiKeyword.class);
           for (PsiKeyword modifier : modifiers) {
+            // a transient modifier on a static field is a no-op
             if (JavaTokenType.TRANSIENT_KEYWORD == modifier.getTokenType()) {
-              registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                            InspectionGadgetsBundle.message("unnecessary.transient.modifier.problem.descriptor"));
+              registerError(modifier, "unnecessary.transient.modifier.problem.descriptor");
             }
           }
         }
       }
+    }
+
+    private void registerError(@NotNull PsiKeyword modifier,
+                               @NotNull @PropertyKey(resourceBundle = InspectionGadgetsBundle.BUNDLE) String key) {
+      registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL, InspectionGadgetsBundle.message(key));
     }
   }
 }
