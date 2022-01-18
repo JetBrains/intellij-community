@@ -8,10 +8,7 @@ import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.gradleTooling.compilationFullName
 import org.jetbrains.kotlin.idea.gradleTooling.resolveAllDependsOnSourceSets
-import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
-import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
-import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
-import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
+import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
@@ -23,8 +20,8 @@ object KotlinModuleUtils {
     }
 
     private fun KotlinTarget.testTasksFor(compilation: KotlinCompilation) = testRunTasks.filter { task ->
-        when (name) {
-            "android" -> task.taskName.endsWith(compilation.name, true)
+        when (platform) {
+            KotlinPlatform.ANDROID -> task.taskName.endsWith(compilation.name, true)
             else -> task.compilationName == compilation.name
         }
     }
