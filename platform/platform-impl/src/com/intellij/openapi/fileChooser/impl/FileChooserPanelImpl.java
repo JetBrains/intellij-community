@@ -398,12 +398,14 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
     try {
       var vfsDirectory = new PreloadedDirectory(directory);
-      var showHiddenFiles = myShowHiddenFiles;
       Files.walkFileTree(directory, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
           var virtualFile = new LazyDirectoryOrFile(vfsDirectory, file, attrs);
-          var visible = myDescriptor.isFileVisible(virtualFile, showHiddenFiles);
+          if (!myDescriptor.isFileVisible(virtualFile, true)) {
+            return FileVisitResult.CONTINUE;  // not hidden, just ignored
+          }
+          var visible = myDescriptor.isFileVisible(virtualFile, false);
           var selectable = myDescriptor.isFileSelectable(virtualFile);
           var icon = myDescriptor.getIcon(virtualFile);
           var item = new FsItem(file, attrs, visible, selectable, icon);
