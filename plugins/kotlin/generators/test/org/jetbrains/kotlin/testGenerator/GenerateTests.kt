@@ -669,7 +669,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractOutOfBlockModificationTest> {
-            model("codeInsight/outOfBlock", pattern = KT_OR_KTS)
+            model("codeInsight/outOfBlock", pattern = "^(.+)\\.(kt|kts|java)$".toRegex())
         }
 
         testClass<AbstractChangeLocalityDetectorTest> {
