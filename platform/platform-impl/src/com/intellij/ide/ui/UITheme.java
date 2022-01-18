@@ -548,7 +548,7 @@ public final class UITheme {
       return parseSize(value);
     }
     else if (key.endsWith("Width") || key.endsWith("Height")) {
-      return getInteger(value, key);
+      return getIntegerOrFloat(value, key);
     }
     else if (key.endsWith("grayFilter")) {
       return parseGrayFilter(value);
@@ -556,8 +556,8 @@ public final class UITheme {
     else if (value.startsWith("AllIcons.")) {
       return IconLoader.getReflectiveIcon(value, UITheme.class.getClassLoader());
     }
-    else if (!value.startsWith("#") && getInteger(value, key) != null) {
-      return getInteger(value, key);
+    else if (!value.startsWith("#") && getIntegerOrFloat(value, key) != null) {
+      return getIntegerOrFloat(value, key);
     }
     else {
       Color color = parseColor(value);
@@ -626,10 +626,24 @@ public final class UITheme {
     }
     catch (NumberFormatException e) {
       if (key != null) {
-        LOG.warn(key + " = " + value);
+        LOG.warn("Can't parse: " + key + " = " + value);
       }
       return null;
     }
+  }
+
+  private static Number getIntegerOrFloat(String value, @Nullable String key) {
+    if (value.contains(".")) {
+      try {
+        return Float.parseFloat(value);
+      } catch (NumberFormatException e) {
+        if (key != null) {
+          LOG.warn("Can't parse: " + key + " = " + value);
+        }
+        return null;
+      }
+    }
+    return getInteger(value, key);
   }
 
   private static Dimension parseSize(@NotNull String value) {
