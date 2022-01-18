@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInsight;
 
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
@@ -34,6 +34,8 @@ public class JUnit5TestFrameworkSetupUtil {
                         "  MATCH_ALL," +
                         "  MATCH_ANY }" +
                         "}");
+    fixture.addClass("package org.junit.jupiter.params.provider;\n" +
+                     "public @interface NullSource {}\n");
     fixture.addClass( "package org.junit.jupiter.params.provider;\n" +
                         "@ArgumentsSource(ValueArgumentsProvider.class)\n" +
                         "public @interface ValueSource {\n" +
