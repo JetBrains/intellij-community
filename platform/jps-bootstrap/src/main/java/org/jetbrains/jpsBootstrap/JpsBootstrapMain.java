@@ -37,7 +37,7 @@ public class JpsBootstrapMain {
 
     opts.addOption(Option.builder("h").longOpt("help").argName(ARG_HELP).build());
     opts.addOption(Option.builder("v").longOpt("verbose").desc("Show more logging from jps-bootstrap and the building process").argName(ARG_VERBOSE).build());
-    opts.addOption(Option.builder().longOpt("build-target-xmx").desc("Specify Xmx to run build script. default: 4g").argName(ARG_BUILD_TARGET_XMX).build());
+    opts.addOption(Option.builder().longOpt("build-target-xmx").hasArg().desc("Specify Xmx to run build script. default: 4g").argName(ARG_BUILD_TARGET_XMX).build());
     opts.addOption(Option.builder().longOpt("java-argfile-target").required().hasArg().desc("Write java argfile to this file").argName(ARG_JAVA_ARGFILE_TARGET).build());
 
     return opts;
