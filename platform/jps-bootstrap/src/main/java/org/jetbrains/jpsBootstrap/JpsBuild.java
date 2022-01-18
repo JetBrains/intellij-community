@@ -33,7 +33,7 @@ public class JpsBuild {
   private final Set<String> myModuleNames;
   private final File myDataStorageRoot;
 
-  public JpsBuild(Path ideaHomePath, JpsModel model, Path jpsBootstrapWorkDir) {
+  public JpsBuild(Path ideaHomePath, JpsModel model, Path jpsBootstrapWorkDir) throws Exception {
     myModel = model;
     myModuleNames = myModel.getProject().getModules().stream().map(JpsNamedElement::getName).collect(Collectors.toUnmodifiableSet());
     myDataStorageRoot = jpsBootstrapWorkDir.resolve("jps-build-data").toFile();
@@ -43,6 +43,12 @@ public class JpsBuild {
 
     System.setProperty("kotlin.incremental.compilation", "true");
     System.setProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "true");
+
+    if (underTeamCity) {
+      // Under TeamCity agents try to utilize all available cpu resources
+      int cpuCount = Integer.parseInt(JpsBootstrapUtil.getTeamCityConfigPropertyOrThrow("teamcity.agent.hardware.cpuCount"));
+      System.setProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, Integer.toString(cpuCount + 1));
+    }
 
     System.setProperty(JpsGroovycRunner.GROOVYC_IN_PROCESS, "true");
     System.setProperty(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY, "false");
