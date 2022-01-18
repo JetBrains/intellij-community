@@ -2,6 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.CommonBundle
+import com.intellij.codeWithMe.ClientId
 import com.intellij.conversion.ConversionService
 import com.intellij.ide.*
 import com.intellij.openapi.Disposable
@@ -115,7 +116,9 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
     val settings = GeneralSettings.getInstance()
     val idleListener = Runnable {
       if (settings.isAutoSaveIfInactive && canSyncOrSave()) {
-        (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
+        ClientId.withClientId(ClientId.ownerId) {
+          (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
+        }
       }
     }
 
