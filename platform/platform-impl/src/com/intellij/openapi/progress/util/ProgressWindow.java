@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.ide.IdeEventQueue;
@@ -359,10 +359,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     if (dialog != null) {
       dialog.enableCancelButtonIfNeeded(enable);
     }
-  }
-
-  public @NotNull KeyStroke[] getCancelShortcuts() {
-    return new KeyStroke[]{KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)};
   }
 
   @Override

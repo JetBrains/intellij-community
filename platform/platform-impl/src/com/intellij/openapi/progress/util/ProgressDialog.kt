@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util
 
 import com.intellij.CommonBundle
@@ -37,6 +37,7 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.Window
 import java.awt.event.ActionEvent
+import java.awt.event.KeyEvent
 import java.io.File
 import javax.swing.*
 import javax.swing.border.Border
@@ -185,9 +186,11 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
         doCancelAction()
       }
     }
-    for (shortcut in myProgressWindow.cancelShortcuts) {
-      myCancelButton.registerKeyboardAction(cancelFunction, shortcut, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
-    }
+    myCancelButton.registerKeyboardAction(
+      cancelFunction,
+      KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+      JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
+    )
 
     myProgressBar.isIndeterminate = myProgressWindow.isIndeterminate
     myProgressBar.maximum = 100
