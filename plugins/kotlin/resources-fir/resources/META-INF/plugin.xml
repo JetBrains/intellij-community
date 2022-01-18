@@ -331,6 +331,8 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
 
   <extensions defaultExtensionNs="com.intellij">
     <compileServer.plugin classpath="jps/kotlin-jps-plugin.jar;kotlin-stdlib.jar;kotlin-stdlib-jdk7.jar;kotlin-stdlib-jdk8.jar;kotlin-reflect.jar;kotlin-plugin.jar;kotlin-jps-common.jar;kotlin-common.jar"/>
+    <buildProcess.parametersProvider implementation="org.jetbrains.kotlin.idea.compiler.configuration.KotlinBuildProcessParametersProvider"/>
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerWorkspaceSettings"/>
 
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.run.KotlinMainFunctionLocatingService"
                         serviceImplementation="org.jetbrains.kotlin.idea.run.KotlinFirMainFunctionLocatingService"/>
