@@ -36,7 +36,7 @@ class InlineCallableUsagesSearcher(val project: Project, val searchScope: Global
         alreadyVisited: Set<PsiElement>,
         transformer: (PsiElement, Set<PsiElement>) -> ComputedClassNames
     ): ComputedClassNames {
-        if (DumbService.isDumb(declaration.project) || !checkIfInline(declaration)) {
+        if (DumbService.isDumb(project) || !checkIfInline(declaration)) {
             return ComputedClassNames.EMPTY
         } else {
             val searchResult = hashSetOf<PsiElement>()

@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.contracts.description.CallsEffectDeclaration
 import org.jetbrains.kotlin.contracts.description.ContractProviderKey
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
@@ -46,6 +45,7 @@ import org.jetbrains.kotlin.idea.intentions.loopToCallChain.targetLoop
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -226,7 +226,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     private fun processThisExpression(expr: KtThisExpression) {
         val dfType = expr.getKotlinType().toDfType(expr)
-        val descriptor = expr.analyze(BodyResolveMode.FULL)[BindingContext.REFERENCE_TARGET, expr.instanceReference]
+        val descriptor = expr.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL)[BindingContext.REFERENCE_TARGET, expr.instanceReference]
         if (descriptor != null) {
             val varDesc = KtThisDescriptor(descriptor, dfType)
             addInstruction(JvmPushInstruction(factory.varFactory.createVariableValue(varDesc), KotlinExpressionAnchor(expr)))
@@ -290,7 +290,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             val transfer = trapTracker.maybeTransferValue("java.lang.ClassCastException")
             addInstruction(EnsureInstruction(KotlinCastProblem(operand, expr), RelationType.IS, type, transfer))
             if (typeReference != null) {
-                val castType = typeReference.getAbbreviatedTypeOrType(typeReference.analyze(BodyResolveMode.FULL))
+                val castType = typeReference.getAbbreviatedTypeOrType(typeReference.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL))
                 if (castType.toDfType(typeReference) is DfPrimitiveType) {
                     addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
                 }
@@ -1021,7 +1021,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val returnedExpression = expr.returnedExpression
         processExpression(returnedExpression)
         if (expr.labeledExpression != null) {
-            val targetFunction = expr.getTargetFunction(expr.analyze(BodyResolveMode.FULL))
+            val targetFunction = expr.getTargetFunction(expr.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL))
             if (targetFunction != null && PsiTreeUtil.isAncestor(context, targetFunction, true)) {
                 val transfer: InstructionTransfer
                 if (returnedExpression != null) {
@@ -1549,7 +1549,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     private fun getTypeCheckDfType(typeReference: KtTypeReference?): DfType {
         if (typeReference == null) return DfType.TOP
-        val kotlinType = typeReference.getAbbreviatedTypeOrType(typeReference.analyze(BodyResolveMode.FULL))
+        val kotlinType = typeReference.getAbbreviatedTypeOrType(typeReference.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL))
         val type = kotlinType.toDfType(typeReference)
         return if (type is DfPrimitiveType) {
             val boxedType = (kotlinType?.toPsiType(typeReference) as? PsiPrimitiveType)?.getBoxedType(typeReference)

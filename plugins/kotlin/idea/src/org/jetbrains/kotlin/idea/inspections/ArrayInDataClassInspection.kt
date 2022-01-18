@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateEqualsAndHashcodeAction
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFunction
@@ -27,7 +28,7 @@ class ArrayInDataClassInspection : AbstractKotlinInspection() {
             if (!klass.isData()) return@classVisitor
             val constructor = klass.primaryConstructor ?: return@classVisitor
             if (hasOverriddenEqualsAndHashCode(klass)) return@classVisitor
-            val context = constructor.analyze(BodyResolveMode.PARTIAL)
+            val context = constructor.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
             for (parameter in constructor.valueParameters) {
                 if (!parameter.hasValOrVar()) continue
                 val type = context.get(BindingContext.TYPE, parameter.typeReference) ?: continue
