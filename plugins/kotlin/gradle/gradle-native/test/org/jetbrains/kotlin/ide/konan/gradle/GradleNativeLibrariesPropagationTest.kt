@@ -5,10 +5,12 @@ package org.jetbrains.kotlin.ide.konan.gradle
 import com.intellij.openapi.roots.DependencyScope
 import org.jetbrains.kotlin.gradle.ModuleInfo
 import org.jetbrains.kotlin.gradle.checkProjectStructure
+import org.jetbrains.kotlin.idea.codeInsight.gradle.kotlinPluginVersionMatches
 import org.jetbrains.kotlin.idea.configuration.externalCompilerVersion
+import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.junit.Assume
 import org.junit.Test
-import org.junit.runners.Parameterized
 
 class GradleNativeLibrariesPropagationTest : TestCaseWithFakeKotlinNative() {
     override fun getExternalSystemConfigFileName() = GradleConstants.KOTLIN_DSL_SCRIPT_NAME
@@ -17,6 +19,8 @@ class GradleNativeLibrariesPropagationTest : TestCaseWithFakeKotlinNative() {
 
     private val testedTargets = setOf("ios_arm64", "ios_x64", "watchos_arm32", "watchos_x86")
 
+    // Dependency propagation was introduced in 1.3.60 and disabled when HMPP was turn on by default.
+    @PluginTargetVersions(pluginVersion = "1.3.60 <=> 1.6.20")
     @Test
     fun testCommonIOS() {
         configureProject()
@@ -58,6 +62,9 @@ class GradleNativeLibrariesPropagationTest : TestCaseWithFakeKotlinNative() {
         }
     }
 
+    // Dependency propagation was introduced in 1.3.60.
+    // Since 1.4.0, disabling propagation enables the commonizer.
+    @PluginTargetVersions(pluginVersion = "1.3.60 <=> 1.4.0")
     @Test
     fun testCommonIOSWithDisabledPropagation() {
         configureProject()
@@ -105,12 +112,5 @@ class GradleNativeLibrariesPropagationTest : TestCaseWithFakeKotlinNative() {
     private fun ModuleInfo.hasPlatformLibrary(libraryName: String, target: String) {
         libraryDependency("Kotlin/Native $kotlinVersion - $libraryName | $target", DependencyScope.PROVIDED)
         noPlatformLibrary(libraryName, testedTargets - target)
-    }
-
-    companion object {
-        @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
-        @Throws(Throwable::class)
-        @JvmStatic
-        fun data() = listOf(arrayOf("4.10.2"))
     }
 }
