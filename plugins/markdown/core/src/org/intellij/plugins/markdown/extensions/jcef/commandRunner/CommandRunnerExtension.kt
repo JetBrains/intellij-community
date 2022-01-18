@@ -84,38 +84,50 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
 
 
   fun processCodeLine(rawCodeLine: String, insideFence: Boolean): String {
-    val project = panel.project
-    val file = panel.virtualFile
-    if (project != null && file != null && file.parent != null
-        && matches(project, file.parent.canonicalPath, true, rawCodeLine.trim(), allowRunConfigurations = !insideFence)
-    ) {
-      val hash = MarkdownUtil.md5(rawCodeLine, "")
-      hash2Cmd[hash] = rawCodeLine
-      val cssClass = "run-icon hidden" + if (insideFence) " code-block" else ""
-      return "<a class='${cssClass}' href='#' role='button' data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash'>" +
-             "<img src='${PreviewStaticServer.getStaticUrl(provider, RUN_LINE_ICON)}'>" +
-             "</a>"
+    try {
+      val project = panel.project
+      val file = panel.virtualFile
+      if (project != null && file != null && file.parent != null
+          && matches(project, file.parent.canonicalPath, true, rawCodeLine.trim(), allowRunConfigurations = !insideFence)
+      ) {
+        val hash = MarkdownUtil.md5(rawCodeLine, "")
+        hash2Cmd[hash] = rawCodeLine
+        val cssClass = "run-icon hidden" + if (insideFence) " code-block" else ""
+        return "<a class='${cssClass}' href='#' role='button' data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash'>" +
+               "<img src='${PreviewStaticServer.getStaticUrl(provider, RUN_LINE_ICON)}'>" +
+               "</a>"
+      }
+      else return ""
     }
-    else return ""
+    catch (e: Exception) {
+      LOG.warn(e)
+      return ""
+    }
   }
 
   fun processCodeBlock(codeFenceRawContent: String, language: String): String {
-    val lang = CodeFenceLanguageGuesser.guessLanguageForInjection(language)
-    val runner = MarkdownRunner.EP_NAME.extensionList.firstOrNull {
-      it.isApplicable(lang)
+    try {
+      val lang = CodeFenceLanguageGuesser.guessLanguageForInjection(language)
+      val runner = MarkdownRunner.EP_NAME.extensionList.firstOrNull {
+        it.isApplicable(lang)
+      }
+      if (runner == null) return ""
+
+      val hash = MarkdownUtil.md5(codeFenceRawContent, "")
+      hash2Cmd[hash] = codeFenceRawContent
+      val cssClass = "run-icon hidden code-block"
+
+      return "<a class='${cssClass}' href='#' role='button' " +
+             "data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash' " +
+             "data-commandtype='block'" +
+             ">" +
+             "<img src='${PreviewStaticServer.getStaticUrl(provider, RUN_BLOCK_ICON)}'>" +
+             "</a>"
     }
-    if (runner == null) return ""
-
-    val hash = MarkdownUtil.md5(codeFenceRawContent, "")
-    hash2Cmd[hash] = codeFenceRawContent
-    val cssClass = "run-icon hidden code-block"
-
-    return "<a class='${cssClass}' href='#' role='button' " +
-           "data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash' " +
-           "data-commandtype='block'" +
-           ">" +
-           "<img src='${PreviewStaticServer.getStaticUrl(provider, RUN_BLOCK_ICON)}'>" +
-           "</a>"
+    catch (e: Exception) {
+      LOG.warn(e)
+      return ""
+    }
   }
 
 
