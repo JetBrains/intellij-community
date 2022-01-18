@@ -22,6 +22,8 @@ import java.util.List;
 public class JavadocInjector implements MultiHostInjector {
 
   private static final String LANG_ATTR_KEY = "lang";
+  private static final String SNIPPET_INJECTION_JAVA_HEADER = "class ___JavadocSnippetPlaceholder {\n" +
+                                                              "  void ___JavadocSnippetPlaceholderMethod() throws Throwable {\n";
 
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar,
@@ -32,8 +34,8 @@ public class JavadocInjector implements MultiHostInjector {
 
     final Language language = getLanguage(snippet);
 
-    final String prefix = language == JavaLanguage.INSTANCE ? "class ___JavadocSnippetPlaceholder { " : null;
-    final String suffix = language == JavaLanguage.INSTANCE ? " }" : null;
+    final String prefix = language == JavaLanguage.INSTANCE ? SNIPPET_INJECTION_JAVA_HEADER : null;
+    final String suffix = language == JavaLanguage.INSTANCE ? " }}" : null;
 
     registrar.startInjecting(language)
       .addPlace(prefix, suffix, snippet, innerRangeStrippingQuotes(snippet))

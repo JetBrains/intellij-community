@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.intellij.psi.javadoc.PsiSnippetDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;

@@ -7,9 +7,15 @@ import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiSnippetDocTag;
 import com.intellij.psi.javadoc.PsiSnippetDocTagBody;
 import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 public final class SnippetDocTagManipulator extends AbstractElementManipulator<PsiSnippetDocTagImpl> {
@@ -18,7 +24,41 @@ public final class SnippetDocTagManipulator extends AbstractElementManipulator<P
   public PsiSnippetDocTagImpl handleContentChange(@NotNull PsiSnippetDocTagImpl element,
                                                   @NotNull TextRange range,
                                                   String newContent) throws IncorrectOperationException {
-    throw new UnsupportedOperationException("Not implemented");
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
+
+    final JavaFileCodeStyleFacade codeStyleFacade = JavaFileCodeStyleFacade.forContext(element.getContainingFile());
+    final String newSnippetTagContent = codeStyleFacade.isJavaDocLeadingAsterisksEnabled()
+                                        ? prependAbsentAsterisks(newContent)
+                                        : newContent;
+
+    final PsiDocComment text = factory.createDocCommentFromText("/**\n" + newSnippetTagContent + "\n*/");
+    final PsiSnippetDocTag snippet = PsiTreeUtil.findChildOfType(text, PsiSnippetDocTag.class);
+    if (snippet == null) {
+      return element;
+    }
+    return (PsiSnippetDocTagImpl)element.replace(snippet);
+  }
+
+  @Contract(pure = true)
+  private static @NotNull String prependAbsentAsterisks(@NotNull String input) {
+    final StringBuilder builder = new StringBuilder();
+    boolean afterNewLine = false;
+    for (char c : input.toCharArray()) {
+      if (c == '\n') {
+        afterNewLine = true;
+      }
+      else if (afterNewLine) {
+        if (c == '*') {
+          afterNewLine = false;
+        }
+        else if (!Character.isWhitespace(c)) {
+          builder.append("* ");
+          afterNewLine = false;
+        }
+      }
+      builder.append(c);
+    }
+    return builder.toString();
   }
 
   @Override

@@ -1,13 +1,12 @@
-// "_ignore" "true"
-
 class Main {
   /**
    * A simple program.
    * {@snippet :
    * class HelloWorld {
-   *       <caret>
+   *  equal<caret>
+   *   void f() {}
    * }
-   * }
+   *}
    */
   void f() {}
 }
