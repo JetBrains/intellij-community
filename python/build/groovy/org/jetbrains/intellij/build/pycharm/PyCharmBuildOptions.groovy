@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.pycharm
 
-import com.intellij.util.SystemProperties
+
 import groovy.transform.CompileStatic
 
 /**
@@ -11,6 +11,4 @@ import groovy.transform.CompileStatic
 final class PyCharmBuildOptions {
   /** Build pydevd package step name */
   static final String PYDEVD_PACKAGE = "pydevd_package"
-
-  static final boolean buildSharedIndexes = SystemProperties.getBooleanProperty("intellij.build.pycharm.shared.indexes", true)
 }
