@@ -41,6 +41,7 @@ import java.util.concurrent.*;
  */
 public class ProjectImportAction implements BuildAction<ProjectImportAction.AllModels>, Serializable {
   private static final ModelConverter NOOP_CONVERTER = new NoopConverter();
+  public static final String IDEA_BACKGROUND_CONVERT = "idea.background.convert";
 
   private final Set<ProjectImportModelProvider> myProjectsLoadedModelProviders = new HashSet<ProjectImportModelProvider>();
   private final Set<ProjectImportModelProvider> myBuildFinishedModelProviders = new HashSet<ProjectImportModelProvider>();
@@ -105,7 +106,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   @Nullable
   @Override
   public AllModels execute(final BuildController controller) {
-    if (Boolean.getBoolean("idea.background.convert")) {
+    if (!System.getProperties().containsKey(IDEA_BACKGROUND_CONVERT) || Boolean.getBoolean(IDEA_BACKGROUND_CONVERT)) {
       myConverterExecutor =  Executors.newSingleThreadExecutor(new ThreadFactory() {
         @Override
         public Thread newThread(@NotNull Runnable runnable) {
