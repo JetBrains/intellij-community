@@ -88,7 +88,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                 populateNonJvmSourceRootTypes(nodeToImport, ideModule)
             }
 
-            configureFacet(sourceSetData, kotlinSourceSet, null, mainModuleData, ideModule, modelsProvider, projectPlatforms)?.let { facet ->
+            configureFacet(sourceSetData, kotlinSourceSet, mainModuleData, ideModule, modelsProvider, projectPlatforms)?.let { facet ->
                 GradleProjectImportHandler.getInstances(project).forEach { it.importBySourceSet(facet, nodeToImport) }
             }
 
@@ -149,29 +149,29 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
         fun configureFacet(
             moduleData: ModuleData,
             kotlinSourceSet: KotlinSourceSetInfo,
-            additionalRunTasks: List<ExternalSystemRunTask>? = null,
             mainModuleNode: DataNode<ModuleData>,
             ideModule: Module,
-            modelsProvider: IdeModifiableModelsProvider
+            modelsProvider: IdeModifiableModelsProvider,
+            additionalRunTasks: List<ExternalSystemRunTask>? = null
         ) = configureFacet(
             moduleData,
             kotlinSourceSet,
-            additionalRunTasks,
             mainModuleNode,
             ideModule,
             modelsProvider,
-            enumValues<KotlinPlatform>().toList()
+            enumValues<KotlinPlatform>().toList(),
+            additionalRunTasks
         )
 
         @OptIn(ExperimentalStdlibApi::class)
         fun configureFacet(
             moduleData: ModuleData,
             kotlinSourceSet: KotlinSourceSetInfo,
-            additionalRunTasks: List<ExternalSystemRunTask>? = null,
             mainModuleNode: DataNode<ModuleData>,
             ideModule: Module,
             modelsProvider: IdeModifiableModelsProvider,
-            projectPlatforms: List<KotlinPlatform>
+            projectPlatforms: List<KotlinPlatform>,
+            additionalRunTasks: List<ExternalSystemRunTask>? = null
         ): KotlinFacet? {
 
             val compilerVersion = KotlinGradleFacadeImpl.findKotlinPluginVersion(mainModuleNode)
