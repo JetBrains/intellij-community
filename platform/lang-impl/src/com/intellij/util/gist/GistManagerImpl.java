@@ -114,17 +114,22 @@ public final class GistManagerImpl extends GistManager {
     }
   }
 
-  public void startMergingDependentCacheInvalidations() {
+  public void runWithMergingDependentCacheInvalidations(@NotNull Runnable runnable) {
     myMergingDropCachesRequestors.incrementAndGet();
-  }
-
-  public void endMergingDependentCacheInvalidations() {
-    if (myMergingDropCachesRequestors.decrementAndGet() == 0) {
-      myDropCachesQueue.sendFlush();
+    try {
+      runnable.run();
+    }
+    finally {
+      if (myMergingDropCachesRequestors.decrementAndGet() == 0) {
+        myDropCachesQueue.sendFlush();
+      }
     }
   }
 
-
+  @TestOnly
+  public void clearQueueInTests() {
+    myDropCachesQueue.cancelAllUpdates();
+  }
 
   @TestOnly
   public void resetReindexCount() {

@@ -575,9 +575,9 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     myIndex.loadIndexes();
     myIndex.filesUpdateStarted(myProject, isFullIndexUpdate());
     IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
-    ((GistManagerImpl)GistManager.getInstance()).startMergingDependentCacheInvalidations();
     try {
-      updateUnindexedFiles(projectIndexingHistory, indicator);
+      ((GistManagerImpl)GistManager.getInstance()).runWithMergingDependentCacheInvalidations(() ->
+         updateUnindexedFiles(projectIndexingHistory, indicator));
     }
     catch (Throwable e) {
       projectIndexingHistory.setWasInterrupted(true);
@@ -587,7 +587,6 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       throw e;
     }
     finally {
-      ((GistManagerImpl)GistManager.getInstance()).endMergingDependentCacheInvalidations();
       myIndex.filesUpdateFinished(myProject);
       myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, false);
       projectIndexingHistory.finishTotalUpdatingTime();
