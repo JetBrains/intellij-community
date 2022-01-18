@@ -5,7 +5,7 @@ set -eu
 
 JPS_BOOTSTRAP_DIR="$(cd "$(dirname "$0")"; pwd)"
 JPS_BOOTSTRAP_COMMUNITY_HOME="$(cd "$JPS_BOOTSTRAP_DIR/../.."; pwd)"
-JPS_BOOTSTRAP_WORK_DIR=${JPS_BOOTSTRAP_WORK_DIR:-$JPS_BOOTSTRAP_COMMUNITY_HOME/out/jps-bootstrap}
+JPS_BOOTSTRAP_WORK_DIR="$JPS_BOOTSTRAP_COMMUNITY_HOME/out/jps-bootstrap"
 
 SCRIPT_VERSION=jps-bootstrap-cmd-v1
 
@@ -104,8 +104,16 @@ fi
 
 set -x
 
+# Download and compile jps-bootstrap
 "$JAVA_HOME/bin/java" -ea -Daether.connector.resumeDownloads=false -jar "$JPS_BOOTSTRAP_COMMUNITY_HOME/lib/ant/lib/ant-launcher.jar" "-Dbuild.dir=$JPS_BOOTSTRAP_WORK_DIR" -f "$JPS_BOOTSTRAP_DIR/jps-bootstrap-classpath.xml"
 
+_java_args_file="$JPS_BOOTSTRAP_WORK_DIR/java.args.$$.txt"
+# shellcheck disable=SC2064
+trap "rm -f '$_java_args_file'" EXIT INT HUP
+
+# Run jps-bootstrap and produce java args file to run actual user class
 export JPS_BOOTSTRAP_COMMUNITY_HOME
-export JPS_BOOTSTRAP_WORK_DIR
-exec "$JAVA_HOME/bin/java" -ea -Xmx4g -Djava.awt.headless=true -classpath "$JPS_BOOTSTRAP_WORK_DIR/jps-bootstrap.out.lib/*" org.jetbrains.jpsBootstrap.JpsBootstrapMain "$@"
+"$JAVA_HOME/bin/java" -ea -Xmx4g -Djava.awt.headless=true -classpath "$JPS_BOOTSTRAP_WORK_DIR/jps-bootstrap.out.lib/*" org.jetbrains.jpsBootstrap.JpsBootstrapMain "--java-argfile-target=$_java_args_file" "$@"
+
+# Run user class via wrapper from platform to correctly capture and report exception to TeamCity build log
+"$JAVA_HOME/bin/java" "@$_java_args_file"
