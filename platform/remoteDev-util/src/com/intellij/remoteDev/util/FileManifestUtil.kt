@@ -128,14 +128,14 @@ object FileManifestUtil {
       }
 
       override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes?): FileVisitResult {
-        if (!includeInManifest(dir)) return FileVisitResult.CONTINUE
         if (dir == targetDir) return FileVisitResult.CONTINUE
 
-        val name = dir.relativeTo(targetDir).toString().replace("\\", "/") + "/"
-        val type = EntryType.DIR
-        val attributes = readAttributesNoFollowLinks(dir)
-
-        addManifestEntry(name, type, attributes.mode, attributes.size, attributes.lastModifiedTime)
+        if (includeInManifest(dir)) {
+          val name = dir.relativeTo(targetDir).toString().replace("\\", "/") + "/"
+          val type = EntryType.DIR
+          val attributes = readAttributesNoFollowLinks(dir)
+          addManifestEntry(name, type, attributes.mode, attributes.size, attributes.lastModifiedTime)
+        }
 
         return if (isSymlink(dir)) FileVisitResult.SKIP_SUBTREE else FileVisitResult.CONTINUE
       }

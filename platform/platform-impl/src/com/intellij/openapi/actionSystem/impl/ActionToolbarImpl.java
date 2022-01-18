@@ -31,6 +31,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.animation.AlphaAnimationContext;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -156,6 +157,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private boolean myShowSeparatorTitles;
   private Image myCachedImage;
 
+  private final AlphaAnimationContext myAlphaContext = new AlphaAnimationContext(composite -> {
+    super.setVisible(composite != null);
+    if (isShowing()) repaint();
+  });
+
   private final EventDispatcher<ActionToolbarListener> myListeners = EventDispatcher.create(ActionToolbarListener.class);
 
   public ActionToolbarImpl(@NotNull String place, @NotNull ActionGroup actionGroup, boolean horizontal) {
@@ -172,6 +178,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                "Any string unique enough to deduce the toolbar location will do.", myCreationTrace);
     }
 
+    myAlphaContext.getAnimator().setVisibleImmediately(true);
     myPlace = place;
     myActionGroup = actionGroup;
     myVisibleActions = new ArrayList<>();
@@ -290,6 +297,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @Override
   protected void paintComponent(final Graphics g) {
+    if (g instanceof Graphics2D) {
+      Graphics2D g2d = (Graphics2D)g;
+      AlphaComposite composite = myAlphaContext.getComposite();
+      if (composite == null) return; // do not paint a completely transparent component
+      g2d.setComposite(composite);
+    }
     if (myCachedImage != null) {
       UIUtil.drawImage(g, myCachedImage, 0, 0, null);
       return;
@@ -1096,6 +1109,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
     }
     revalidate();
+  }
+
+  @Override
+  public void setVisible(boolean visible) {
+    if (ExperimentalUI.isNewUI()) {
+      myAlphaContext.getAnimator().setVisible(visible);
+    }
+    else {
+      super.setVisible(visible);
+    }
   }
 
   @Override

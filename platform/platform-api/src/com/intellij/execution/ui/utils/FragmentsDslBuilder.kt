@@ -6,6 +6,7 @@ import com.intellij.execution.ui.NestedGroupFragment
 import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.execution.ui.TagButton
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.ComponentWithBrowseButton
@@ -19,7 +20,6 @@ import org.jetbrains.annotations.Nls
 import java.awt.Font
 import javax.swing.JComponent
 import javax.swing.JLabel
-import kotlin.concurrent.thread
 
 @DslMarker
 annotation class FragmentsDsl
@@ -168,7 +168,7 @@ class Fragment<Settings : FragmentedSettings, Component : JComponent>(
       override fun applyEditorTo(s: Settings) {
         super.applyEditorTo(s)
 
-        thread {
+        ApplicationManager.getApplication().executeOnPooledThread {
           if (validator != null) {
             val validationInfo = (validation!!)(s, this.component())?.let {
               if (it.component == null) {
@@ -255,6 +255,7 @@ class FragmentsBuilder<Settings : FragmentedSettings>(
   }
 }
 
+@ApiStatus.Internal
 @ApiStatus.Experimental
 interface FragmentsDslBuilderExtender<Settings : FragmentedSettings> {
   val id: String

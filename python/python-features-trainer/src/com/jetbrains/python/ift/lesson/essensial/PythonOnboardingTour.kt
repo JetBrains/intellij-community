@@ -11,7 +11,6 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -66,7 +65,9 @@ import training.learn.lesson.general.run.toggleBreakpointTask
 import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
+import training.util.getActionById
 import training.util.invokeActionForFocusContext
+import training.util.isToStringContains
 import training.util.learningToolWindow
 import java.awt.Point
 import java.awt.Rectangle
@@ -180,7 +181,7 @@ class PythonOnboardingTour :
       when (result) {
         Messages.YES -> invokeLater {
           LessonManager.instance.stopLesson()
-          val closeAction = ActionManager.getInstance().getAction("CloseProject") ?: error("No close project action found")
+          val closeAction = getActionById("CloseProject")
           dataContextPromise.onSuccess { context ->
             invokeLater {
               val event = AnActionEvent.createFromAnAction(closeAction, null, ActionPlaces.LEARN_TOOLWINDOW, context)
@@ -196,7 +197,7 @@ class PythonOnboardingTour :
   }
 
   private fun getCallBackActionId(@Suppress("SameParameterValue") actionId: String): Int {
-    val action = ActionManager.getInstance().getAction(actionId) ?: error("No action with Id $actionId")
+    val action = getActionById(actionId)
     return LearningUiManager.addCallback { invokeActionForFocusContext(action) }
   }
 
@@ -289,7 +290,7 @@ class PythonOnboardingTour :
     task {
       text(PythonLessonsBundle.message("python.onboarding.context.menu"))
       triggerByUiComponentAndHighlight(usePulsation = true) { ui: ActionMenuItem ->
-        ui.text?.contains(runItem) ?: false
+        ui.text.isToStringContains(runItem)
       }
       restoreIfModified(sample)
     }
@@ -304,10 +305,11 @@ class PythonOnboardingTour :
     }
 
     task {
+      val stopAction = getActionById("Stop")
       triggerByPartOfComponent(highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
         ui.takeIf { (ui.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR || ui.place == ActionPlaces.MAIN_TOOLBAR) }?.let {
           val configurations = ui.components.find { it is JPanel && it.components.any { b -> b is ComboBoxAction.ComboBoxButton } }
-          val stop = ui.components.find { it is ActionButton && it.action == ActionManager.getInstance().getAction("Stop") }
+          val stop = ui.components.find { it is ActionButton && it.action == stopAction }
           if (configurations != null && stop != null) {
             val x = configurations.x
             val y = configurations.y
@@ -396,7 +398,7 @@ class PythonOnboardingTour :
       text(PythonLessonsBundle.message("python.onboarding.balloon.project.view"),
            LearningBalloonConfig(Balloon.Position.atRight, width = 0))
       triggerByFoundPathAndHighlight { tree: JTree, path: TreePath ->
-        val result = path.pathCount >= 1 && path.getPathComponent(0).toString().contains("PyCharmLearningProject")
+        val result = path.pathCount >= 1 && path.getPathComponent(0).isToStringContains("PyCharmLearningProject")
         if (result) {
           if (!collapsed) {
             invokeLater {
@@ -410,7 +412,7 @@ class PythonOnboardingTour :
     }
 
     fun isDemoFilePath(path: TreePath) =
-      path.pathCount >= 3 && path.getPathComponent(2).toString().contains(demoFileName)
+      path.pathCount >= 3 && path.getPathComponent(2).isToStringContains(demoFileName)
 
     task {
       text(PythonLessonsBundle.message("python.onboarding.balloon.project.directory"),
@@ -452,7 +454,7 @@ class PythonOnboardingTour :
         code("()"),
         action("CodeCompletion")))
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { // no highlighting
-        it.toString().contains("values")
+        it.isToStringContains("values")
       }
       proposeRestoreForInvalidText("values")
     }
@@ -492,7 +494,7 @@ class PythonOnboardingTour :
       text(PythonLessonsBundle.message("python.onboarding.invoke.intention.for.warning.1"))
       text(PythonLessonsBundle.message("python.onboarding.invoke.intention.for.warning.2", action(it)))
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
-        item.toString().contains(reformatMessage)
+        item.isToStringContains(reformatMessage)
       }
       restoreIfModifiedOrMoved()
     }
@@ -515,7 +517,7 @@ class PythonOnboardingTour :
       text(PythonLessonsBundle.message("python.onboarding.invoke.intention.for.code",
                                        code("find_average"), action(it)))
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
-        item.toString().contains(returnTypeMessage(project))
+        item.isToStringContains(returnTypeMessage(project))
       }
       restoreIfModifiedOrMoved()
     }
@@ -607,7 +609,7 @@ class PythonOnboardingTour :
 
     task {
       triggerByUiComponentAndHighlight(usePulsation = true) { info: TextPanel.WithIconAndArrows ->
-        info.toolTipText.contains(PyBundle.message("current.interpreter", ""))
+        info.toolTipText.isToStringContains(PyBundle.message("current.interpreter", ""))
       }
     }
     task {

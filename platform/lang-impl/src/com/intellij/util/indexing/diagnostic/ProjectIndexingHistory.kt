@@ -11,6 +11,10 @@ typealias TimeMillis = Long
 typealias TimeNano = Long
 typealias BytesNumber = Long
 
+/**
+ * Extend this extension point to receive project scanning & indexing statistics
+ * (e.g.: indexed file count, indexation speed, etc.) after each **dumb** indexation task was performed.
+ */
 interface ProjectIndexingHistoryListener {
   fun onStartedIndexing(projectIndexingHistory: ProjectIndexingHistory) = Unit
 

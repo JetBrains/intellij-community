@@ -41,7 +41,7 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
 
       val uiSettings = UISettings.instance
       val uiSettingsState = uiSettings.state
-      uiSettingsState.showNavigationBar = !booleanValue && uiSettingsState.showNavigationBar
+      uiSettingsState.showNavigationBar = !booleanValue
       uiSettings.fireUISettingsChanged()
     }
   }
@@ -85,5 +85,8 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
 
       val uiSettingState = UISettings.instance.state
       uiSettingState.showMainToolbar = !value && uiSettingState.showMainToolbar
+      if(value) {
+        uiSettingState.showNavigationBar = false
+      }
     }
 }

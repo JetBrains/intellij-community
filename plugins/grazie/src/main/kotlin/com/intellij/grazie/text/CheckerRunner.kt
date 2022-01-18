@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieAddExceptionQuickFix
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieCustomFixWrapper
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieRuleSettingsAction
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
@@ -79,25 +80,28 @@ internal class CheckerRunner(val text: TextContent) {
     val tooltip = problem.tooltipTemplate
     val description = problem.getDescriptionTemplate(isOnTheFly)
     return fileHighlightRanges(problem).map { range ->
-      GrazieProblemDescriptor(
-        parent, description,
-        if (isOnTheFly) toFixes(problem) else LocalQuickFix.EMPTY_ARRAY,
-        range.shiftLeft(parent.startOffset), isOnTheFly,
-        tooltip)
+      val descriptor = GrazieProblemDescriptor(parent, description, range.shiftLeft(parent.startOffset), isOnTheFly, tooltip)
+      if (isOnTheFly) {
+        descriptor.quickFixes = toFixes(problem, descriptor)
+      }
+      descriptor
     }
   }
 
   // a non-anonymous class to work around KT-48784
   private class GrazieProblemDescriptor(psi: PsiElement,
                                         @InspectionMessage descriptionTemplate: String,
-                                        fixes: Array<out LocalQuickFix>?,
                                         rangeInElement: TextRange?,
                                         onTheFly: Boolean,
                                         @NlsContexts.Tooltip private val tooltip: String
   ): ProblemDescriptorBase(
-    psi, psi, descriptionTemplate, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false,
+    psi, psi, descriptionTemplate, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false,
     rangeInElement, true, onTheFly
   ) {
+    var quickFixes: Array<LocalQuickFix> = LocalQuickFix.EMPTY_ARRAY
+
+    override fun getFixes(): Array<LocalQuickFix> = quickFixes
+
     override fun getTooltipTemplate(): String {
       return tooltip
     }
@@ -162,7 +166,7 @@ internal class CheckerRunner(val text: TextContent) {
   private fun findSentence(problem: TextProblem) =
     sentences.find { problem.highlightRange.intersects(it.range.first, it.range.last + 1) }?.token
 
-  fun toFixes(problem: TextProblem): Array<LocalQuickFix> {
+  fun toFixes(problem: TextProblem, descriptor: ProblemDescriptor): Array<LocalQuickFix> {
     val file = text.containingFile
     val result = arrayListOf<LocalQuickFix>()
     val spm = SmartPointerManager.getInstance(file.project)
@@ -174,7 +178,7 @@ internal class CheckerRunner(val text: TextContent) {
       result.addAll(GrazieReplaceTypoQuickFix.getReplacementFixes(problem, underline))
     }
 
-    result.addAll(problem.customFixes)
+    problem.customFixes.forEachIndexed { index, fix -> result.add(GrazieCustomFixWrapper(problem, fix, descriptor, index)) }
 
     result.add(object : GrazieAddExceptionQuickFix(defaultSuppressionPattern(problem, findSentence(problem)), underline) {
       override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {

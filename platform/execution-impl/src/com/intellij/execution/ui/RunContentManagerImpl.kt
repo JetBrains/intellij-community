@@ -474,7 +474,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   fun moveContent(executor: Executor, descriptor: RunContentDescriptor) {
     val content = descriptor.attachedContent ?: return
     val oldContentManager = content.manager
-    val newContentManager = getContentManagerForRunner(executor, descriptor)
+    val newContentManager = getOrCreateContentManagerForToolWindow(getToolWindowIdForRunner(executor, descriptor), executor)
     if (oldContentManager == null || oldContentManager === newContentManager) return
     val listener = content.getUserData(CLOSE_LISTENER_KEY)
     if (listener != null) {
@@ -490,9 +490,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       }
     }
     newContentManager.addContent(content)
-    if (listener != null) {
-      newContentManager.addContentManagerListener(listener)
-    }
+    // Close listener is added to new content manager by propertyChangeListener in BaseContentCloseListener.
   }
 
   private fun updateToolWindowIcon(contentManagerToUpdate: ContentManager, alive: Boolean) {

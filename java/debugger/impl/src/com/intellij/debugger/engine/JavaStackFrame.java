@@ -216,9 +216,11 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       if (evaluationContext == null) {
         return;
       }
-      if (!debuggerContext.isEvaluationPossible()) {
-        node.setErrorMessage(MessageDescriptor.EVALUATION_NOT_POSSIBLE.getLabel());
-      }
+
+      // the message is disabled, see IDEA-281129
+      //if (!debuggerContext.isEvaluationPossible()) {
+      //  node.setErrorMessage(MessageDescriptor.EVALUATION_NOT_POSSIBLE.getLabel());
+      //}
 
       // this node
       XNamedValue thisNode = createThisNode(evaluationContext);

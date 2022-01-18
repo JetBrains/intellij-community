@@ -60,6 +60,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UnknownUsagesInUnloadedModules;
 import com.intellij.usages.impl.UsageViewImpl;
+import com.intellij.usages.impl.UsageViewStatisticsCollector;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
@@ -197,6 +198,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
     final Runnable findUsagesRunnable = () -> {
       try {
+        UsageViewStatisticsCollector.logSearchStarted(myProject);
         refUsages.set(ReadAction.compute(this::findUsages));
       }
       catch (UnknownReferenceTypeException e) {

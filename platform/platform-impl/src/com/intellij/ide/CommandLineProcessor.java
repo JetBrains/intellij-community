@@ -18,9 +18,12 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.NlsContexts.NotificationContent;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -145,7 +148,8 @@ public final class CommandLineProcessor {
     return projects[0];
   }
 
-  public static @NotNull CommandLineProcessorResult processProtocolCommand(@NotNull String uri) {
+  @ApiStatus.Internal
+  public static @NotNull CompletableFuture<CliResult> processProtocolCommand(@NotNull @NlsSafe String uri) {
     LOG.info("external URI request:\n" + uri);
 
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
@@ -156,23 +160,32 @@ public final class CommandLineProcessor {
     if (separatorStart < 0) throw new IllegalArgumentException(uri);
 
     String scheme = uri.substring(0, separatorStart), query = uri.substring(separatorStart + SCHEME_SEPARATOR.length());
-    (SCHEME_INTERNAL.equals(scheme) ? processInternalProtocol(query) : ProtocolHandler.process(scheme, query))
-      .exceptionally(t -> {
-        LOG.error(t);
-        return IdeBundle.message("ide.protocol.exception", t.getClass().getSimpleName(), t.getMessage());
-      })
-      .thenAccept(message -> {
-        if (message != null) {
-          String title = IdeBundle.message("ide.protocol.cannot.title");
-          new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, message, NotificationType.WARNING)
-            .addAction(ShowLogAction.notificationAction())
-            .notify(null);
-        }
-      });
-    return new CommandLineProcessorResult(null, OK_FUTURE);
+    CompletableFuture<CliResult> result = new CompletableFuture<>();
+    ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("ide.protocol.progress.title"), true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
+        indicator.setText(uri);
+        (SCHEME_INTERNAL.equals(scheme) ? processInternalProtocol(query) : ProtocolHandler.process(scheme, query, indicator))
+          .exceptionally(t -> {
+            LOG.error(t);
+            return new CliResult(0, IdeBundle.message("ide.protocol.exception", t.getClass().getSimpleName(), t.getMessage()));
+          })
+          .thenAccept(cliResult -> {
+            result.complete(cliResult);
+            if (cliResult.message != null) {
+              String title = IdeBundle.message("ide.protocol.cannot.title");
+              new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, cliResult.message, NotificationType.WARNING)
+                .addAction(ShowLogAction.notificationAction())
+                .notify(null);
+            }
+          });
+      }
+    });
+    return result;
   }
 
-  private static CompletableFuture<@Nullable @NotificationContent String> processInternalProtocol(String query) {
+  private static CompletableFuture<CliResult> processInternalProtocol(String query) {
     try {
       QueryStringDecoder decoder = new QueryStringDecoder(query);
       if ("open".equals(decoder.path())) {
@@ -184,12 +197,12 @@ public final class CommandLineProcessor {
             int line = StringUtil.parseInt(ContainerUtil.getLastItem(parameters.get("line")), -1);
             int column = StringUtil.parseInt(ContainerUtil.getLastItem(parameters.get("column")), -1);
             openFileOrProject(file, line, column, false, false, false);
-            return CompletableFuture.completedFuture(null);
+            return CompletableFuture.completedFuture(CliResult.OK);
           }
         }
       }
 
-      return CompletableFuture.completedFuture(IdeBundle.message("ide.protocol.internal.bad.query", query));
+      return CompletableFuture.completedFuture(new CliResult(0, IdeBundle.message("ide.protocol.internal.bad.query", query)));
     }
     catch (Throwable t) {
       return CompletableFuture.failedFuture(t);

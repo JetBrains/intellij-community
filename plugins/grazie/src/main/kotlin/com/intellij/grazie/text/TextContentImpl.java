@@ -324,13 +324,19 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
 
   private static @Nullable TokenInfo merge(TokenInfo t1, TokenInfo t2) {
     if (t1 instanceof WSTokenInfo && t2 instanceof WSTokenInfo) return t1;
-    if (t1 instanceof PsiToken && t2 instanceof PsiToken) {
-      if (((PsiToken) t1).unknown && ((PsiToken) t2).unknown) {
-        return t1;
-      }
-      if (!((PsiToken) t1).unknown && !((PsiToken) t2).unknown) {
-        if (t1.length() == 0) return t2;
-        if (t2.length() == 0) return t1;
+    if (t1 instanceof PsiToken && t2 instanceof PsiToken) return mergePsiTokens((PsiToken)t1, (PsiToken)t2);
+    return null;
+  }
+
+  private static TokenInfo mergePsiTokens(PsiToken t1, PsiToken t2) {
+    if (t1.unknown && t2.unknown) {
+      return t1;
+    }
+    if (!t1.unknown && !t2.unknown) {
+      if (t1.length() == 0) return t2;
+      if (t2.length() == 0) return t1;
+      if (t1.psi == t2.psi && t1.rangeInPsi.getStartOffset() + t1.length() == t2.rangeInPsi.getStartOffset()) {
+        return new PsiToken(t1.text + t2.text, t1.psi, t1.rangeInPsi.union(t2.rangeInPsi), false);
       }
     }
     return null;

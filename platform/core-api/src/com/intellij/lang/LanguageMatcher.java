@@ -167,7 +167,7 @@ final class MetaLanguageKindMatcher extends LanguageMatcher {
 
   @Override
   public boolean matchesLanguage(@NotNull Language language) {
-    return LanguageUtil.hierarchy(language).filter(it -> myLanguage.matchesLanguage(it)).isNotEmpty();
+    return LanguageUtil.getBaseLanguages(language).filter(it -> myLanguage.matchesLanguage(it)).isNotEmpty();
   }
 
   @Override

@@ -562,7 +562,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
       JavaSdkVersion jdkVersion = ClsParsingUtil.getJdkVersionByBytecode(reader.readUnsignedShort(6));
       LanguageLevel level = jdkVersion != null ? jdkVersion.getMaxLanguageLevel() : null;
       if (level != null && level.isAtLeast(LanguageLevel.JDK_11) && ClsParsingUtil.isPreviewLevel(reader.readUnsignedShort(4))) {
-        level = notNull(level.getPreviewLevel(), level);
+        level = notNull(level.getPreviewLevel(), LanguageLevel.HIGHEST);
       }
 
       if (module) {

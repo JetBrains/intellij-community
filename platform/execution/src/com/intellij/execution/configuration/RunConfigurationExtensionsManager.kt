@@ -197,6 +197,10 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
     }
   }
 
+  fun forEachApplicableExtension(configuration: U, handler: (T) -> Unit) {
+    processApplicableExtensions(configuration, handler)
+  }
+
   protected inline fun processEnabledExtensions(configuration: U, runnerSettings: RunnerSettings?, handler: (T) -> Unit) {
     for (extension in extensionPoint.iterable) {
       if (extension != null && extension.isApplicableFor(configuration) && extension.isEnabledFor(configuration, runnerSettings)) {

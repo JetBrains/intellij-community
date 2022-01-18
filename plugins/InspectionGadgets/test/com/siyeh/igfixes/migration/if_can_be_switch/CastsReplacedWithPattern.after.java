@@ -8,7 +8,7 @@ public class Test {
             case Integer y -> y.byteValue();
             case String s && x > 0 -> s.length();
             case Boolean c -> (Boolean) c ? 42 : 0;
-            case Character c -> ((BigDecimal) obj).hashCode();
+            case Character character -> ((BigDecimal) obj).hashCode();
             case null, default -> -1;
         };
     }

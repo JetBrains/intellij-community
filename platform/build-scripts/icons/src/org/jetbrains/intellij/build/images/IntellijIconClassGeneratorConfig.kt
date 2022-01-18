@@ -50,7 +50,6 @@ class IntellijIconClassGeneratorConfig : IconsClasses() {
       )
       // default name 'com.goide.GOIcons' clashes with existing 'com.goide.GoIcons'
       "intellij.go.impl" -> IntellijIconClassGeneratorModuleConfig(className = "GoGeneratedIcons", packageName = "com.goide")
-      "intellij.tide.impl" -> IntellijIconClassGeneratorModuleConfig(className = "TideIcons", packageName = "com.jetbrains.test.ide")
       "intellij.toml.core" -> IntellijIconClassGeneratorModuleConfig(className = "TomlIcons", packageName = "org.toml")
       else -> super.getConfigForModule(moduleName)
     }

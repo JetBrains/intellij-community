@@ -209,8 +209,8 @@ internal fun KotlinType.toPsiType(lightDeclaration: PsiModifierListOwner?, conte
     return ClsTypeElementImpl(parent, typeText, '\u0000').type
 }
 
-private fun renderAnnotation(annotation: AnnotationDescriptor): String {
-    val fqn = annotation.fqName?.asString() ?: return "<ERROR>"
+private fun renderAnnotation(annotation: AnnotationDescriptor): String? {
+    val fqn = annotation.fqName?.asString() ?: return null
     val valueArguments = annotation.allValueArguments
     val valueesList = SmartList<String>().apply {
         for ((k, v) in valueArguments.entries) {
@@ -238,7 +238,7 @@ private fun renderConstantValue(value: ConstantValue<*>?): String? = value?.acce
     override fun visitArrayValue(value: ArrayValue, data: String?): String =
         value.value.mapNotNull { renderConstantValue(it) }.joinToString(", ", "{", "}")
 
-    override fun visitAnnotationValue(value: AnnotationValue, data: String?): String = renderAnnotation(value.value)
+    override fun visitAnnotationValue(value: AnnotationValue, data: String?): String? = renderAnnotation(value.value)
     override fun visitKClassValue(value: KClassValue, data: String?): String = value.value.toString() + ".class"
     override fun visitUByteValue(value: UByteValue, data: String?): String = value.value.toString()
     override fun visitUShortValue(value: UShortValue, data: String?): String = value.value.toString()
@@ -250,7 +250,7 @@ private fun buildAnnotationProvider(ktType: KotlinType, context: PsiElement): Ty
     val result = SmartList<PsiAnnotation>()
     val psiElementFactory = PsiElementFactory.getInstance(context.project)
     for (annotation in ktType.annotations) {
-        val annotationText = renderAnnotation(annotation)
+        val annotationText = renderAnnotation(annotation) ?: continue
         try {
             result.add(psiElementFactory.createAnnotationFromText(annotationText, context))
         } catch (e: Exception) {

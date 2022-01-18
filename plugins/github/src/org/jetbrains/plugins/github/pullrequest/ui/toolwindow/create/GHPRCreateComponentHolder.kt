@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 
 import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
@@ -36,6 +36,7 @@ import git4idea.history.GitCommitRequirements
 import git4idea.history.GitLogUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
+import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -78,7 +79,8 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
   private val changesLoadingModel = GHIOExecutorLoadingModel<Collection<Change>>(disposable)
   private val commitsLoadingModel = GHIOExecutorLoadingModel<List<VcsCommitMetadata>>(disposable)
   private val commitChangesLoadingModel = GHIOExecutorLoadingModel<Collection<Change>>(disposable)
-  private val filesCountModel = createCountModel(changesLoadingModel)
+  private val filesCountFlow = changesLoadingModel.getResultFlow().map { it?.size }
+  private val commitsCountFlow = commitsLoadingModel.getResultFlow().map { it?.size }
   private val commitsCountModel = createCountModel(commitsLoadingModel)
 
   private val existenceCheckLoadingModel = GHIOExecutorLoadingModel<GHPRIdentifier?>(disposable)
@@ -168,8 +170,8 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
 
     GHPRViewTabsFactory(project, viewController::viewList, uiDisposable)
       .create(infoComponent, diffController,
-              createFilesComponent(), filesCountModel,
-              createCommitsComponent(), commitsCountModel).apply {
+              createFilesComponent(), filesCountFlow, null,
+              createCommitsComponent(), commitsCountFlow).apply {
         setDataProvider { dataId ->
           if (DiffRequestChainProducer.DATA_KEY.`is`(dataId)) diffRequestProducer
           else null

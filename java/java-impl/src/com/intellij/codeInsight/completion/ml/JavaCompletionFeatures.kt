@@ -126,12 +126,13 @@ object JavaCompletionFeatures {
   }
 
   fun calculateVariables(environment: CompletionEnvironment) = try {
-    val parentClass = PsiTreeUtil.getParentOfType(environment.parameters.position, PsiClass::class.java)
-    val variables = getVariablesInScope(environment.parameters.position, parentClass)
-    val names = variables.mapNotNull { it.name }.toSet()
-    val types = variables.map { it.type }.toSet()
-    val names2types = variables.mapNotNull { variable -> variable.name?.let { Pair(it, variable.type) } }.toSet()
-    environment.putUserData(VARIABLES_KEY, VariablesInfo(names, types, names2types))
+    PsiTreeUtil.getParentOfType(environment.parameters.position, PsiMethod::class.java)?.let { enclosingMethod ->
+      val variables = getVariablesInScope(environment.parameters.position, enclosingMethod)
+      val names = variables.mapNotNull { it.name }.toSet()
+      val types = variables.map { it.type }.toSet()
+      val names2types = variables.mapNotNull { variable -> variable.name?.let { Pair(it, variable.type) } }.toSet()
+      environment.putUserData(VARIABLES_KEY, VariablesInfo(names, types, names2types))
+    }
   } catch (ignored: PsiInvalidElementAccessException) {}
 
   fun getArgumentsVariablesMatchingFeatures(contextFeatures: ContextFeatures, method: PsiMethod): Map<String, MLFeatureValue> {

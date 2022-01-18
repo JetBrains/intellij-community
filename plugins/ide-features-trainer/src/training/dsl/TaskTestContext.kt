@@ -2,7 +2,6 @@
 package training.dsl
 
 import com.intellij.ide.util.treeView.NodeRenderer
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
@@ -25,6 +24,7 @@ import org.assertj.swing.timing.Timeout
 import training.ui.IftTestContainerFixture
 import training.ui.LearningUiUtil
 import training.ui.LearningUiUtil.findComponentWithTimeout
+import training.util.getActionById
 import training.util.invokeActionForFocusContext
 import java.awt.Component
 import java.awt.Container
@@ -55,7 +55,7 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
 
   fun actions(vararg actionIds: String) {
     for (actionId in actionIds) {
-      val action = ActionManager.getInstance().getAction(actionId) ?: error("Action $actionId is non found")
+      val action = getActionById(actionId)
       invokeActionForFocusContext(action)
     }
   }

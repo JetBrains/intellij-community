@@ -12,10 +12,7 @@ class PyDevDisplayHook(DisplayHook):
             super(PyDevDisplayHook, self).write_format_data(format_dict, *args,
                                                             **kwargs)
             return
-        if "text/plain" in format_dict:
-            text = format_dict["text/plain"]
-            if len(text) > 0 and not text.endswith("\n"):
-                format_dict["text/plain"] = text + "\n"
+        add_new_line_to_text(format_dict)
         format_dict["execution_count"] = str(self.shell.execution_count)
         send_rich_output(format_dict)
 
@@ -26,7 +23,15 @@ class PyDevDisplayPub(DisplayPublisher):
         if not is_supported(data):
             super(PyDevDisplayPub, self).publish(data, *args, **kwargs)
             return
+        add_new_line_to_text(data)
         send_rich_output(data)
+
+
+def add_new_line_to_text(format_dict):
+    if "text/plain" in format_dict:
+        text = format_dict["text/plain"]
+        if len(text) > 0 and not text.endswith("\n"):
+            format_dict["text/plain"] = text + "\n"
 
 
 def is_supported(data):

@@ -43,8 +43,8 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
   public NameValuePairElement getNode() {
     ASTNode node = super.getNode();
     if (!(node instanceof NameValuePairElement)) {
-      JBIterable<String> parents = SyntaxTraverser.psiApi().parents(this).takeWhile(Objects::nonNull)
-        .map(psi -> psi.getClass().getName()).join("; ");
+      String parents = String.join("; ", SyntaxTraverser.psiApi().parents(this).takeWhile(Objects::nonNull)
+        .map(psi -> psi.getClass().getName()).toList());
       throw new IllegalStateException("Node is not NameValuePairElement; node class = " + node.getClass() + "; parents = " + parents);
     }
     return (NameValuePairElement)node;

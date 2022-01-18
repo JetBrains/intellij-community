@@ -98,6 +98,19 @@
       min-usage-count="3"
       first-show="5"
       successive-show="5"/>
+    <feature id="navigation.recent.locations"
+             tip-file="recent-locations.html"
+             show-in-guide="false">
+      <track-action id="RecentLocations"/>
+    </feature>
+    <feature id="navigation.find.usages"
+             tip-file="find_usages.html"
+             show-in-guide="false">
+      <track-action id="FindUsages"/>
+    </feature>
+    <feature id="navigation.goto.file.line"
+             tip-file="GotoLineInFile.html"
+             show-in-guide="false"/>
   </group>
 
   <group id="completion">
@@ -280,6 +293,40 @@
       <track-action id="ConvertToWindowsLineSeparators"/>
       <track-action id="ConvertToUnixLineSeparators"/>
     </feature>
+    <feature id="editing.move.statement.up.down"
+             tip-file="MoveUpDown.html"
+             show-in-guide="false">
+      <track-action id="MoveStatementUp"/>
+      <track-action id="MoveStatementDown"/>
+    </feature>
+    <feature id="editing.join.lines"
+             tip-file="JoinLines.html"
+             show-in-guide="false">
+      <track-action id="EditorJoinLines"/>
+    </feature>
+    <feature id="editing.clipboard.history"
+             tip-file="ClipboardStack.html"
+             show-in-guide="false">
+      <track-action id="PasteMultiple"/>
+    </feature>
+    <feature id="editing.duplicate"
+             tip-file="CtrlD.html"
+             show-in-guide="false">
+      <track-action id="EditorDuplicate"/>
+    </feature>
+    <feature id="editing.copy.reference"
+             tip-file="CopyPasteReference.html"
+             show-in-guide="false">
+      <track-action id="CopyReference"/>
+    </feature>
+    <feature id="editing.copy.line"
+             tip-file="CopyWithNoSelection.html"
+             show-in-guide="false"/>
+    <feature id="editing.compare.editor.with.clipboard"
+             tip-file="CompareEditorWithClipboard.html"
+             show-in-guide="false">
+      <track-action id="CompareClipboardWithSelection"/>
+    </feature>
   </group>
 
   <group id="codeassists">
@@ -396,6 +443,11 @@
              first-show="3"
              min-usage-count="5"
              successive-show="5"/>
+    <feature id="codeassists.highlight.usages"
+             tip-file="HighlightUsagesInFile.html"
+             show-in-guide="false">
+      <track-action id="HighlightUsagesInFile"/>
+    </feature>
   </group>
 
   <group id="refactoring">
@@ -437,6 +489,11 @@
       first-show="10"
       successive-show="8"
       />
+    <feature id="refactoring.show.quick.list"
+             tip-file="RefactorThis.html"
+             show-in-guide="false">
+      <track-action id="Refactorings.QuickListPopupAction"/>
+    </feature>
   </group>
   
 
@@ -502,6 +559,16 @@
       first-show="10"
       successive-show="5"
       min-usage-count="5"/>
+    <feature id="ui.close.other.editors"
+             tip-file="CloseOthers.html"
+             show-in-guide="false">
+      <track-action id="CloseAllEditorsButActive"/>
+    </feature>
+    <feature id="ui.close.all.editors"
+             tip-file="Close_all_editor_tabs.html"
+             show-in-guide="false">
+      <track-action id="CloseAllEditors"/>
+    </feature>
   </group>
 
   <group id="ant">
@@ -544,6 +611,27 @@
     </feature>
     <feature id="debugger.evaluate.expression"
              tip-file="EvaluateExpression.html"/>
+    <feature id="debugger.breakpoint.non.suspending"
+             tip-file="NonSuspendingBreakpoints.html"
+             show-in-guide="false"/>
+  </group>
+
+  <group id="vcs">
+    <feature id="vcs.show.local.history"
+             tip-file="local_history.html"
+             show-in-guide="false">
+      <track-action id="LocalHistory.ShowHistory"/>
+    </feature>
+    <feature id="vcs.show.quick.list"
+             tip-file="VcsQuickList.html"
+             show-in-guide="false">
+      <track-action id="Vcs.QuickListPopupAction"/>
+    </feature>
+    <feature id="vcs.pull.requests"
+             tip-file="pull_requests.html"
+             show-in-guide="false">
+      <track-action id="Github.View.Pull.Request"/>
+    </feature>
   </group>
 
   <group id="intentions">
@@ -551,6 +639,12 @@
              tip-file="CheckRegExp.html"
              show-in-guide="false">
       <track-intention class-name="org.intellij.lang.regexp.intention.CheckRegExpIntentionAction"/>
+    </feature>
+    <feature id="intentions.fix.javadoc"
+             tip-file="FixDocComment.html"
+             show-in-guide="false">
+      <track-intention class-name="com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection$RemoveTagFix"/>
+      <track-intention class-name="com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection$RenameReferenceQuickFix"/>
     </feature>
   </group>
 </component>

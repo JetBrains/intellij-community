@@ -13,13 +13,13 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
@@ -28,19 +28,18 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static com.intellij.ide.impl.DataManagerImpl.getDataProviderEx;
-import static com.intellij.ide.impl.DataManagerImpl.validateEditor;
 
 /**
  * @author gregsh
@@ -51,6 +50,7 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
   private static final Map<Component, FList<ProviderData>> ourPrevMaps = ContainerUtil.createWeakKeySoftValueMap();
   private static final Map<String, Integer> ourDataKeysIndices = new ConcurrentHashMap<>();
   private static final AtomicInteger ourDataKeysCount = new AtomicInteger();
+  private static final Object ourExplicitNull = ObjectUtils.sentinel("explicit.null");
 
   private final ComponentRef myComponentRef;
   private final AtomicReference<KeyFMap> myUserData;
@@ -154,6 +154,7 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
     for (ProviderData map : myCachedData) {
       ProgressManager.checkCanceled();
       answer = map.get(dataId);
+      if (answer == ourExplicitNull) break;
       if (answer != null) {
         answer = DataValidators.validOrNull(answer, dataId, this);
         if (answer != null) break;
@@ -167,7 +168,8 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
         rule = dataManager.getDataRule(dataId);
       }
       answer = rule == null ? null : dataManager.getDataFromProvider(dataId2 -> {
-        return dataId2 == dataId ? null : map.get(dataId2);
+        Object o = dataId2 == dataId ? null : map.get(dataId2);
+        return o == ourExplicitNull ? null : o;
       }, dataId, null, rule);
 
       if (answer == null) map.nullsByRules.set(keyIndex);
@@ -178,7 +180,7 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
       myMissedKeysIfFrozen.accept(dataId);
       return null;
     }
-    return answer;
+    return answer == ourExplicitNull ? null : answer;
   }
 
   @Nullable Object getRawDataIfCached(@NotNull String dataId) {
@@ -215,6 +217,7 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
     long start = System.currentTimeMillis();
     for (Component comp : components) {
       DataProvider dataProvider = getDataProviderEx(comp);
+      if (dataProvider == null && hideEditor(comp)) dataProvider = dataId -> null;
       if (dataProvider == null) continue;
       ProviderData cachedData = new ProviderData();
       doPreGetAllData(dataProvider, cachedData, comp, dataManager, keys, result.getHead());
@@ -229,11 +232,12 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
   }
 
   private static void doPreGetAllData(@NotNull DataProvider dataProvider,
-                                      @NotNull ConcurrentMap<String, Object> cachedData,
+                                      @NotNull ProviderData cachedData,
                                       @Nullable Component c,
                                       @NotNull DataManagerImpl dataManager,
                                       DataKey<?> @NotNull [] keys,
                                       @Nullable Map<String, Object> parentMap) {
+    boolean hideEditor = hideEditor(c);
     for (DataKey<?> key : keys) {
       if (key == PlatformCoreDataKeys.IS_MODAL_CONTEXT ||
           key == PlatformCoreDataKeys.CONTEXT_COMPONENT ||
@@ -241,8 +245,8 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
           key == PlatformCoreDataKeys.SLOW_DATA_PROVIDERS) {
         continue;
       }
-      Object data = dataManager.getDataFromProvider(dataProvider, key.getName(), null, getFastDataRule(key));
-      if (key == CommonDataKeys.EDITOR || key == CommonDataKeys.HOST_EDITOR) data = validateEditor((Editor)data, c);
+      Object data = hideEditor && (key == CommonDataKeys.EDITOR || key == CommonDataKeys.HOST_EDITOR) ? ourExplicitNull :
+                    dataManager.getDataFromProvider(dataProvider, key.getName(), null, getFastDataRule(key));
       if (data == null) continue;
       cachedData.put(key.getName(), data);
     }
@@ -259,6 +263,11 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
 
   private static @Nullable GetDataRule getFastDataRule(@NotNull DataKey<?> key) {
     return key == PlatformCoreDataKeys.FILE_EDITOR ? ourFileEditorRule : null;
+  }
+
+  private static boolean hideEditor(@Nullable Component component) {
+    return component instanceof JComponent &&
+           ((JComponent)component).getClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY) != null;
   }
 
   @Override

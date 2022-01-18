@@ -34,6 +34,7 @@ public class LicensePanel extends NonOpaquePanel {
   private final JPanel myPanel = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(5)));
   private final JLabel myMessage = new JLabel();
   private final ActionLink myLink = new ActionLink();
+  private Runnable myLinkRunnable;
 
   public LicensePanel(boolean tiny) {
     setLayout(new BorderLayout());
@@ -43,6 +44,8 @@ public class LicensePanel extends NonOpaquePanel {
 
     myPanel.add(tiny ? PluginManagerConfigurable.setTinyFont(myMessage) : myMessage);
     myPanel.add(tiny ? PluginManagerConfigurable.setTinyFont(myLink) : myLink);
+
+    myLink.addActionListener(e -> myLinkRunnable.run());
 
     hideElements();
   }
@@ -113,6 +116,8 @@ public class LicensePanel extends NonOpaquePanel {
   }
 
   public void setLink(@NotNull @Nls String text, @NotNull Runnable action, boolean external) {
+    myLinkRunnable = action;
+
     myLink.setText(text);
     if (external) {
       myLink.setExternalLinkIcon();
@@ -120,7 +125,6 @@ public class LicensePanel extends NonOpaquePanel {
     else {
       myLink.setIcon(null);
     }
-    myLink.addActionListener(e -> action.run());
     myLink.setVisible(true);
 
     myPanel.setVisible(true);

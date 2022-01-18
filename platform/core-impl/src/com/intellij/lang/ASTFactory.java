@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -19,6 +19,13 @@ import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * <p>An expert-level extension point for exercising fine-grained control over abstract syntax tree (AST) element generation,
+ * when PSI is not enough (see the <a href="https://plugins.jetbrains.com/docs/intellij/implementing-parser-and-psi.html">Implementing Parser and PSI</a>
+ * section for description of PSI/AST relation).</p>
+ *
+ * <p>Registration is via {@code "com.intellij.lang.ast.factory"} extension point (see {@link LanguageASTFactory}).</p>
+ */
 public abstract class ASTFactory {
   private static final CharTable WHITESPACES = new CharTableImpl();
 

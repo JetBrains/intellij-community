@@ -8,9 +8,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 
 internal class ToggleAutoShowAction : ToggleAction(), ActionToIgnore {
+
   override fun update(e: AnActionEvent) {
     val project = e.project
-    e.presentation.isEnabledAndVisible = project != null && LookupManager.getInstance(project).activeLookup != null
+    val visible = project != null && LookupManager.getInstance(project).activeLookup != null
+    e.presentation.isEnabledAndVisible = visible
+    super.update(e)
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {

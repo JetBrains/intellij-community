@@ -23,6 +23,7 @@ internal val DOCUMENTATION_POPUP: DataKey<JBPopup> = DataKey.create("documentati
 internal const val PRIMARY_GROUP_ID: String = "Documentation.PrimaryGroup"
 internal const val TOGGLE_SHOW_IN_POPUP_ACTION_ID: String = "Documentation.ToggleShowInPopup"
 internal const val TOGGLE_AUTO_SHOW_ACTION_ID: String = "Documentation.ToggleAutoShow"
+internal const val TOGGLE_AUTO_UPDATE_ACTION_ID: String = "Documentation.ToggleAutoUpdate"
 
 internal fun primaryActions(): List<AnAction> = groupActions(PRIMARY_GROUP_ID)
 internal fun navigationActions(): List<AnAction> = groupActions("Documentation.Navigation")

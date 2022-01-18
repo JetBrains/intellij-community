@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -67,6 +68,7 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
       if (CopyAction.isSkipCopyPasteForEmptySelection()) {
         return;
       }
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.copy.line");
       editor.getCaretModel().runForEachCaret(__ -> selectionModel.selectLineAtCaret());
       if (!selectionModel.hasSelection(true)) return;
       editor.getCaretModel().runForEachCaret(__ -> EditorActionUtil.moveCaretToLineStartIgnoringSoftWraps(editor));

@@ -790,7 +790,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
     if (invokeForLoadedExtensions) {
       //noinspection unchecked
-      notifyListeners(false, adapters, new ExtensionPointListener[]{listener});
+      notifyListeners(false, getSortedAdapters(), new ExtensionPointListener[]{listener});
     }
 
     if (parentDisposable != null) {

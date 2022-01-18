@@ -220,7 +220,7 @@ internal class IftSmartWaitRobot : Robot {
     basicRobot.pressAndReleaseKeys(*p0)
   }
 
-  override fun finder(): ComponentFinder = basicRobot.finder()
+  override fun finder(): ComponentFinder = IftComponentFinder(basicRobot.finder(), basicRobot.hierarchy(), basicRobot.settings())
 
   private val basicRobot: BasicRobot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock() as BasicRobot
 

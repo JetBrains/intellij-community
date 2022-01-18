@@ -65,17 +65,25 @@ class InlayInfo(val text: String,
 sealed class HintInfo {
 
   /**
-   * @language in case you want to put this method into blacklist of another language
+   * Provides fully qualified method name (e.g. "java.util.Map.put") and list of its parameter names.
+   * Used to match method with exclude list, and to add method into exclude list.
+   * @language in case you want to put this method into blacklist of another language.
    */
   open class MethodInfo(val fullyQualifiedName: String, val paramNames: List<String>, val language: Language?) : HintInfo() {
     constructor(fullyQualifiedName: String, paramNames: List<String>) : this(fullyQualifiedName, paramNames, null)
 
+    /**
+     * Presentable method name which will be shown to the user when adding it to exclude list.
+     */
     open fun getMethodName(): String {
       val start = fullyQualifiedName.lastIndexOf('.') + 1
       return fullyQualifiedName.substring(start)
     }
   }
 
+  /**
+   * Provides option to disable/enable by alt-enter.
+   */
   open class OptionInfo(protected val option: Option) : HintInfo() {
 
     open fun disable(): Unit = alternate()
@@ -100,13 +108,18 @@ sealed class HintInfo {
   }
 }
 
+/**
+ * @param id global unique identifier of this option
+ * @param nameSupplier user visible name supplier
+ */
 data class Option(@NonNls val id: String,
-                  private val nameSupplier: Supplier<String>,
+                  private val nameSupplier: Supplier<@NlsContexts.DetailedDescription String>,
                   val defaultValue: Boolean) {
 
   @Deprecated("Use default constructor")
   constructor(@NonNls id: String, @Nls name: String, defaultValue: Boolean) : this(id, Supplier { name }, defaultValue)
 
+  @get:NlsContexts.DetailedDescription
   val name: String
     get() = nameSupplier.get()
 

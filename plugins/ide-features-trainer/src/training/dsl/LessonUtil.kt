@@ -3,14 +3,12 @@ package training.dsl
 
 import com.intellij.codeInsight.documentation.DocumentationComponent
 import com.intellij.codeInsight.documentation.DocumentationEditorPane
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
@@ -47,6 +45,7 @@ import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.ui.*
 import training.ui.LearningUiUtil.findComponentWithTimeout
+import training.util.getActionById
 import training.util.learningToolWindow
 import java.awt.*
 import java.awt.event.InputEvent
@@ -188,8 +187,7 @@ object LessonUtil {
   }
 
   fun actionName(actionId: String): @NlsActions.ActionText String {
-    val name = ActionManager.getInstance().getAction(actionId).templatePresentation.text?.replace("...", "")
-               ?: error("No action with ID $actionId")
+    val name = getActionById(actionId).templatePresentation.text?.replace("...", "")
     return "<strong>${name}</strong>"
   }
 
@@ -332,7 +330,7 @@ fun LessonContext.highlightDebugActionsToolbar() {
 }
 
 private fun TaskContext.highlightToolbarWithAction(place: String, actionId: String, clearPreviousHighlights: Boolean = true) {
-  val needAction = ActionManager.getInstance().getAction(actionId)
+  val needAction = getActionById(actionId)
   triggerByUiComponentAndHighlight(usePulsation = true, clearPreviousHighlights = clearPreviousHighlights) { ui: ActionToolbarImpl ->
     if (ui.size.let { it.width > 0 && it.height > 0 } && ui.place == place) {
       ui.components.filterIsInstance<ActionButton>().any { it.action == needAction }
@@ -462,16 +460,22 @@ fun LessonContext.showWarningIfInplaceRefactoringsDisabled() {
 
 fun LessonContext.highlightButtonById(actionId: String, clearHighlights: Boolean = true): CompletableFuture<Boolean> {
   val feature: CompletableFuture<Boolean> = CompletableFuture()
-  val needToFindButton = ActionManager.getInstance().getAction(actionId)
+  val needToFindButton = getActionById(actionId)
   prepareRuntimeTask {
     if (clearHighlights) {
       LearningUiHighlightingManager.clearHighlights()
     }
-    ApplicationManager.getApplication().executeOnPooledThread {
-      val result =
+    invokeInBackground {
+      val result = try {
         LearningUiUtil.findAllShowingComponentWithTimeout(project, ActionButton::class.java, seconds01) { ui ->
           ui.action == needToFindButton && LessonUtil.checkToolbarIsShowing(ui)
         }
+      }
+      catch (e: Throwable) {
+        // Just go to the next step if we cannot find needed button (when this method is used as pass trigger)
+        feature.complete(false)
+        throw IllegalStateException("Cannot find button for $actionId", e)
+      }
       taskInvokeLater {
         feature.complete(result.isNotEmpty())
         for (button in result) {

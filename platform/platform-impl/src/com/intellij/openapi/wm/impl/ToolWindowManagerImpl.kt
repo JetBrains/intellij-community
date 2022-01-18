@@ -302,9 +302,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       for (entry in idToEntry.values) {
         if (entry.readOnlyWindowInfo.isVisible) {
           entry.toolWindow.decoratorComponent?.repaint()
-          if (Registry.`is`("ide.experimental.ui")) {
-            entry.toolWindow.decorator.headerToolbar.component.isVisible = entry.toolWindow.isActive
-          }
+          entry.toolWindow.decorator.updateActiveAndHoverState()
         }
       }
     })

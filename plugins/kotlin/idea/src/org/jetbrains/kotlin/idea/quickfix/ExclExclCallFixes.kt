@@ -52,8 +52,6 @@ class RemoveExclExclCallFix(psiElement: PsiElement) : ExclExclCallFix(psiElement
         getExclExclPostfixExpression() != null
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        if (!FileModificationService.getInstance().prepareFileForWrite(file)) return
-
         val postfixExpression = getExclExclPostfixExpression() ?: return
         val expression = KtPsiFactory(project).createExpression(postfixExpression.baseExpression!!.text)
         postfixExpression.replace(expression)

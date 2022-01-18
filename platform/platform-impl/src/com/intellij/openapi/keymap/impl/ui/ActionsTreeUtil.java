@@ -108,13 +108,11 @@ public final class ActionsTreeUtil {
                                                 String[] pluginActions,
                                                 Condition<? super AnAction> filtered) {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     Group pluginGroup = new Group(name, null, null);
     Arrays.sort(pluginActions, Comparator.comparing(ActionsTreeUtil::getTextToCompare));
     for (String actionId : pluginActions) {
       AnAction action = actionManager.getActionOrStub(actionId);
-      if (isNonExecutableActionGroup(actionId, action) ||
-          keymapManager.getBoundActions().contains(actionId)) {
+      if (isNonExecutableActionGroup(actionId, action)) {
         continue;
       }
       if (filtered == null || filtered.value(action)) {
@@ -397,7 +395,6 @@ public final class ActionsTreeUtil {
     }
 
     // add all registered actions
-    KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     List<String> namedGroups = new ArrayList<>();
     for (String id : actionManager.getActionIdList("")) {
       AnAction actionOrStub = actionManager.getActionOrStub(id);

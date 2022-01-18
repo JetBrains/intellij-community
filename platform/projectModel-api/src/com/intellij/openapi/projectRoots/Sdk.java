@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolder;
@@ -12,9 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Represent a specific instance of an SDK in the IDE configuration. Use {@link ProjectJdkTable} to access configured SDKs, and
+ * {@link com.intellij.openapi.projectRoots.SdkType} to define a new type of SDKs.
  * @author Eugene Zhuravlev
- * @see ProjectJdkTable
- * @see ProjectRootManager#getProjectSdk()
  */
 @ApiStatus.NonExtendable
 public interface Sdk extends UserDataHolder {

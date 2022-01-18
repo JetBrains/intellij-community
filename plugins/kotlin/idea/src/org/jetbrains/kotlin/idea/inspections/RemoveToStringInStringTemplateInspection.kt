@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -33,7 +32,6 @@ class RemoveToStringFix : LocalQuickFix {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement.parent as? KtDotQualifiedExpression ?: return
-        if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return
 
         val receiverExpression = element.receiverExpression
         if (receiverExpression is KtNameReferenceExpression) {

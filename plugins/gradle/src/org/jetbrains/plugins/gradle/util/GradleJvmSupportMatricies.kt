@@ -11,6 +11,9 @@ fun isSupported(gradleVersion: GradleVersion, javaVersion: JavaVersion): Boolean
   val baseVersion = gradleVersion.baseVersion
   val featureVersion = javaVersion.feature
   return when {
+    // Gradle 7.2 and java 17 are partially compatible
+    // https://github.com/gradle/gradle/issues/16857
+    baseVersion >= GradleVersion.version("7.2") -> featureVersion in 8..17
     // https://docs.gradle.org/7.0/release-notes.html#java-16
     baseVersion >= GradleVersion.version("7.0") -> featureVersion in 8..16
     // https://docs.gradle.org/6.7/release-notes.html#java-15
@@ -30,7 +33,7 @@ fun suggestGradleVersion(javaVersion: JavaVersion): GradleVersion? {
   val featureVersion = javaVersion.feature
   return when {
     isSupported(GradleVersion.current(), javaVersion) -> GradleVersion.current()
-    featureVersion in 8..16 -> GradleVersion.version("7.0")
+    featureVersion in 8..17 -> GradleVersion.version("7.2")
     // https://docs.gradle.org/5.0/release-notes.html#potential-breaking-changes
     featureVersion == 7 -> GradleVersion.version("4.10.3")
     else -> null
@@ -40,6 +43,7 @@ fun suggestGradleVersion(javaVersion: JavaVersion): GradleVersion? {
 fun suggestJavaVersion(gradleVersion: GradleVersion): JavaVersion {
   val baseVersion = gradleVersion.baseVersion
   return when {
+    baseVersion >= GradleVersion.version("7.2") -> JavaVersion.compose(17)
     baseVersion >= GradleVersion.version("7.0") -> JavaVersion.compose(16)
     baseVersion >= GradleVersion.version("6.7") -> JavaVersion.compose(15)
     baseVersion >= GradleVersion.version("6.3") -> JavaVersion.compose(14)
@@ -54,7 +58,8 @@ fun suggestJavaVersion(gradleVersion: GradleVersion): JavaVersion {
 fun suggestOldestCompatibleGradleVersion(javaVersion: JavaVersion): GradleVersion? {
   val featureVersion = javaVersion.feature
   return when {
-    featureVersion == 16 -> GradleVersion.version("7.0")
+    featureVersion >= 17 -> GradleVersion.version("7.2")
+    featureVersion >= 16 -> GradleVersion.version("7.0")
     featureVersion >= 15 -> GradleVersion.version("6.7")
     featureVersion >= 14 -> GradleVersion.version("6.3")
     featureVersion >= 13 -> GradleVersion.version("6.0")

@@ -229,7 +229,7 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
                     appendName(valueParameters.last().name)
                     appendFixedText(" = ")
                 }
-                appendFixedText(referenceName)
+                appendNonFormattedText(referenceName)
                 appendFixedText(")")
             }
             val argumentList = outerCallExpression.valueArgumentList

@@ -303,7 +303,7 @@ public final class CachedIntentions {
     List<IntentionActionWithTextCaching> result = new ArrayList<>(myErrorFixes);
     result.addAll(myInspectionFixes);
     for (IntentionActionWithTextCaching intention : myIntentions) {
-      if (!myErrorFixes.contains(intention)) {
+      if (!myErrorFixes.contains(intention) && !myInspectionFixes.contains(intention)) {
         result.add(intention);
       }
     }

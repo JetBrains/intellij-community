@@ -106,6 +106,10 @@ public final class CommandQueueForPythonConsoleService {
   public synchronized void addNewCommand(@NotNull PydevConsoleExecuteActionHandler pydevConsoleExecuteActionHandler,
                                          @NotNull ConsoleCommunication.ConsoleCodeFragment code) {
     var console = pydevConsoleExecuteActionHandler.getConsoleCommunication();
+    if (console.isWaitingForInput()) {
+      execCommand(console, code);
+      return;
+    }
     if (!queues.containsKey(console)) {
       queues.put(console, new ConcurrentLinkedDeque<>());
       handlers.put(console, pydevConsoleExecuteActionHandler);

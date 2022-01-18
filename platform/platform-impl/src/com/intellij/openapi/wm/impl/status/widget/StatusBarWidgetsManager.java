@@ -23,6 +23,7 @@ import java.util.*;
 public final class StatusBarWidgetsManager extends SimpleModificationTracker implements Disposable {
   private static final @NotNull Logger LOG = Logger.getInstance(StatusBar.class);
 
+  private final List<StatusBarWidgetFactory> myPendingFactories = new ArrayList<>();
   private final Map<StatusBarWidgetFactory, StatusBarWidget> myWidgetFactories = new LinkedHashMap<>();
   private final Map<String, StatusBarWidgetFactory> myWidgetIdsMap = new HashMap<>();
 
@@ -106,6 +107,7 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
     synchronized (myWidgetFactories) {
       myWidgetFactories.forEach((factory, createdWidget) -> disableWidget(factory));
       myWidgetFactories.clear();
+      myPendingFactories.clear();
     }
   }
 
@@ -198,6 +200,21 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
     return factory.isAvailable(myProject) && factory.isConfigurable() && factory.canBeEnabledOn(statusBar);
   }
 
+  public void installPendingWidgets() {
+    LOG.assertTrue(WindowManager.getInstance().getStatusBar(myProject) != null);
+
+    synchronized (myWidgetFactories) {
+      List<StatusBarWidgetFactory> pendingFactories = new ArrayList<>(myPendingFactories);
+      myPendingFactories.clear();
+
+      for (StatusBarWidgetFactory factory : pendingFactories) {
+        addWidgetFactory(factory);
+      }
+    }
+
+    updateAllWidgets();
+  }
+
   private void addWidgetFactory(@NotNull StatusBarWidgetFactory factory) {
     synchronized (myWidgetFactories) {
       if (LightEdit.owns(myProject) && !(factory instanceof LightEditCompatible)) {
@@ -205,6 +222,10 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
       }
       if (myWidgetFactories.containsKey(factory)) {
         LOG.error("Factory has been added already: " + factory.getId());
+        return;
+      }
+      if (WindowManager.getInstance().getStatusBar(myProject) == null) {
+        myPendingFactories.add(factory);
         return;
       }
       myWidgetFactories.put(factory, null);
@@ -221,6 +242,7 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
     synchronized (myWidgetFactories) {
       disableWidget(factory);
       myWidgetFactories.remove(factory);
+      myPendingFactories.remove(factory);
       incModificationCount();
     }
   }

@@ -58,6 +58,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.hover.HoverStateListener;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.LinePainter2D.StrokeType;
 import com.intellij.ui.paint.PaintUtil;
@@ -205,23 +206,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       });
     }
     setRenderingHints();
-    addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseEntered(MouseEvent e) {
-        myMouseInside = true;
-        if (ExperimentalUI.isNewEditorTabs()) {
-          repaint();
-        }
-      }
-
-      @Override
-      public void mouseExited(MouseEvent e) {
-        myMouseInside = false;
-        if (ExperimentalUI.isNewEditorTabs()) {
-          repaint();
-        }
-      }
-    });
+    HOVER_STATE_LISTENER.addTo(this);
   }
 
   @NotNull
@@ -733,7 +718,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
               if (breakpoint.isPresent()) {
                 iconOnTheLine = breakpoint.get().getIcon();
               }
-                if (Objects.equals(getClientProperty("active.line.number"), visualPosition.line)) {
+                if (myMouseInside && Objects.equals(getClientProperty("active.line.number"), visualPosition.line)) {
                   Object activeIcon = getClientProperty("line.number.hover.icon");
                   if (activeIcon instanceof Icon) {
                     hoverIcon = (Icon)activeIcon;
@@ -2565,4 +2550,17 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       this.iconCenterPosition = iconCenterPosition;
     }
   }
+
+  private static final HoverStateListener HOVER_STATE_LISTENER = new HoverStateListener() {
+    @Override
+    protected void hoverChanged(@NotNull Component component, boolean hovered) {
+      if (component instanceof EditorGutterComponentImpl) {
+        EditorGutterComponentImpl gutter = (EditorGutterComponentImpl)component;
+        gutter.myMouseInside = hovered;
+        if (ExperimentalUI.isNewEditorTabs()) {
+          gutter.repaint();
+        }
+      }
+    }
+  };
 }

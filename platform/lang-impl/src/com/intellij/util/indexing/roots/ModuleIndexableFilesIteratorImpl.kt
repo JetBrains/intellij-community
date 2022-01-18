@@ -53,10 +53,8 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
 
   override fun getDebugName(): String =
     if (printRootsInDebugName) {
-      "Module '" + module.name + "' (" +
-      if (roots.isEmpty()) "empty"
-      else roots.joinToString(", ") { it.name } +
-           ")"
+      val rootsDebugStr = if (roots.isEmpty()) "empty" else roots.map { it.name }.sorted().joinToString(", ")
+      "Module '" + module.name + "' ($rootsDebugStr)"
     }
     else {
       "Module '${module.name}'"

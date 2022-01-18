@@ -239,6 +239,8 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
                                   @NotNull CompletionResultSet result) {
       // Do not provide HTML text completions in multi view files like PHP
       if (!ContainerUtil.and(parameters.getOriginalFile().getViewProvider().getAllFiles(), f -> f instanceof HtmlFileImpl)) return;
+      // We cannot modify the file in injections - disable the feature
+      if (parameters.getPosition().getContainingFile().isPhysical()) return;
       PsiFile completionFile = parameters.getPosition().getContainingFile();
       int offset = parameters.getOffset();
       var offsets = new OffsetsInFile(completionFile);

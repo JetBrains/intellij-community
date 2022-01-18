@@ -4,11 +4,13 @@ package com.intellij.codeInsight.hints.settings
 import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.settings.language.createEditor
 import com.intellij.lang.Language
+import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -19,8 +21,10 @@ import com.intellij.util.ui.tree.TreeUtil
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
+import java.util.function.Predicate
 import javax.swing.JPanel
 import javax.swing.JTree
+import javax.swing.ScrollPaneConstants
 import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -29,7 +33,7 @@ import javax.swing.tree.TreeNode
 class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   val tree: CheckboxTree
-  private val rightPanel: JPanel = JPanel(MigLayout("wrap, insets 0 10 0 0, gapy 20"))
+  private val rightPanel: JPanel = JPanel(MigLayout("wrap, insets 0 10 0 0, gapy 20, fillx"))
   private val groups: Map<InlayGroup, List<InlayProviderSettingsModel>>
   private var currentEditor: Editor? = null
 
@@ -95,8 +99,9 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       TreeUtil.selectNode(tree, nodeToSelect)
     }
 
-    val splitter = JBSplitter(false, 0.3f)
-    splitter.firstComponent = ScrollPaneFactory.createScrollPane(tree)
+    val splitter = JBSplitter(false, "inlay.settings.proportion.key", 0.5f)
+    splitter.setHonorComponentsMinimumSize(false)
+    splitter.firstComponent = ScrollPaneFactory.createScrollPane(tree, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER)
     splitter.secondComponent = rightPanel
     add(splitter, BorderLayout.CENTER)
   }
@@ -184,7 +189,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
           isRightMarginShown = false
         }
       }
-      rightPanel.add(editorTextField, "growx")
+      rightPanel.add(ScrollPaneFactory.createScrollPane(editorTextField), "growx")
     }
   }
 
@@ -198,7 +203,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   private fun addDescription(@Nls s: String?) {
     val htmlLabel = SwingHelper.createHtmlLabel(StringUtil.notNullize(s), null, null)
-    rightPanel.add(htmlLabel, "growy, width 200:300:300")
+    rightPanel.add(htmlLabel, "growy")
   }
 
   private fun getProviderId(treeNode: CheckedTreeNode): String {
@@ -316,4 +321,32 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   }
 
   private fun isLanguageEnabled(settings: InlayHintsSettings, item: Language) = settings.hintsEnabled(item)
+
+  fun enableSearch(option: String?): Runnable? {
+    if (option == null) return null
+    return Runnable {
+      val treeNode = TreeUtil.findNode(tree.model.root as DefaultMutableTreeNode, Condition {
+        getName(it, it.parent as DefaultMutableTreeNode?).lowercase().startsWith(option.lowercase())
+      })
+      if (treeNode != null) {
+        TreeUtil.selectNode(tree, treeNode)
+      }
+    }
+  }
+
+  fun selectModel(language: Language, selector: Predicate<InlayProviderSettingsModel>?) {
+    val languages = LanguageUtil.getBaseLanguages(language).toSet()
+    val node = TreeUtil.findNode(tree.model.root as DefaultMutableTreeNode) {
+      if (selector == null) {
+        language in languages
+      }
+      else {
+        val model = it.userObject as? InlayProviderSettingsModel
+        model != null && selector.test(model) && model.language in languages
+      }
+    }
+    if (node != null) {
+      TreeUtil.selectNode(tree, node)
+    }
+  }
 }

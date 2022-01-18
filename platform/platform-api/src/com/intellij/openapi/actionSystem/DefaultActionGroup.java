@@ -116,7 +116,8 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   private static void errorDuplicateActionAdded(@NotNull AnAction action) {
-    LOG.error("Cannot add an action twice: " + action + "(" + action.getClass() + ")");
+    LOG.error("Cannot add an action twice: " + action + " (" +
+              (action instanceof ActionStub ? ((ActionStub)action).getClassName() : action.getClass().getName()) + ")");
   }
 
   /**

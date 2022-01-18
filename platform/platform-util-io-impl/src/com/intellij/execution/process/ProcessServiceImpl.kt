@@ -76,7 +76,7 @@ class ProcessServiceImpl: ProcessService {
 
   override fun winPtyChildProcessId(process: Process): Int? {
     return if (process is WinPtyProcess) {
-      return process.childProcessId
+      return process.pid().toInt()
     } else {
       null
     }
@@ -85,10 +85,7 @@ class ProcessServiceImpl: ProcessService {
   override fun hasControllingTerminal(process: Process): Boolean = process is PtyProcess && !process.isConsoleMode
 
   private fun createWinProcess(process: Process): WinProcess {
-    return if (process is WinPtyProcess) {
-      WinProcess(process.pid)
-    }
-    else WinProcess(process)
+    return WinProcess(process.pid().toInt())
   }
 
   private fun createWinProcess(pid: Int) = WinProcess(pid)

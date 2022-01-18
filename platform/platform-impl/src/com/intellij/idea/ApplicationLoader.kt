@@ -289,9 +289,13 @@ private fun addActivateAndWindowsCliListeners() {
 }
 
 private fun handleExternalCommand(args: List<String>, currentDirectory: String?): CommandLineProcessorResult {
-  val uri = args.isNotEmpty() && args[0].contains(URLUtil.SCHEME_SEPARATOR)
-  val result = if (uri) CommandLineProcessor.processProtocolCommand(args[0])
-               else CommandLineProcessor.processExternalCommandLine(args, currentDirectory)
+  val result = if (args.isNotEmpty() && args[0].contains(URLUtil.SCHEME_SEPARATOR)) {
+    CommandLineProcessor.processProtocolCommand(args[0])
+    CommandLineProcessorResult(null, CommandLineProcessor.OK_FUTURE)
+  }
+  else {
+    CommandLineProcessor.processExternalCommandLine(args, currentDirectory)
+  }
   ApplicationManager.getApplication().invokeLater {
     if (result.hasError) {
       result.showErrorIfFailed()

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
 import com.intellij.ide.util.gotoByName.FileTypeRef;
@@ -132,6 +133,9 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
         OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, file, pos.first, pos.second);
         if (descriptor.canNavigate()) {
           descriptor.navigate(true);
+          if (pos.first > 0) {
+            FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.file.line");
+          }
           return true;
         }
       }

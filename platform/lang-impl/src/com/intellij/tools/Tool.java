@@ -416,8 +416,8 @@ public class Tool implements SchemeElement {
                                                         @NotNull WSLDistribution wsl,
                                                         @NotNull GeneralCommandLine cmd,
                                                         @Nullable String linuxWorkingDir,
-                                                        @NotNull String windowsExePath) throws ExecutionException {
-    cmd.setExePath(windowsExePath);
+                                                        @NotNull String linuxExePath) throws ExecutionException {
+    cmd.setExePath(linuxExePath);
     WSLCommandLineOptions wslOptions = new WSLCommandLineOptions();
     if (StringUtil.isNotEmpty(linuxWorkingDir)) {
       wslOptions.setRemoteWorkingDirectory(linuxWorkingDir);

@@ -91,7 +91,6 @@ class AddVarianceModifierInspection : AbstractKotlinInspection() {
         override fun getFamilyName() = KotlinBundle.message("add.variance.fix.family.name")
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.psiElement)) return
             val typeParameter = descriptor.psiElement as? KtTypeParameter
                 ?: throw KotlinExceptionWithAttachments("Add variance fix is used on ${descriptor.psiElement}")
                     .withPsiAttachment("element", descriptor.psiElement)

@@ -21,11 +21,13 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.MockFontLayoutService;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -775,6 +777,7 @@ public class EditorImplTest extends AbstractEditorTest {
   }
 
   public void testMouseSelectionWithBlockCaret() {
+    Registry.get("editor.block.caret.selection.vim-like").setValue(true, getTestRootDisposable());
     initText("abcdef");
     EditorTestUtil.setEditorVisibleSize(getEditor(), 1000, 1000);  // enable drag testing
     getEditor().getSettings().setBlockCursor(true);
@@ -803,6 +806,7 @@ public class EditorImplTest extends AbstractEditorTest {
   }
 
   public void testMouseSelectionAtLineEndWithBlockCaret() {
+    Registry.get("editor.block.caret.selection.vim-like").setValue(true, getTestRootDisposable());
     initText("abc\ndef");
     EditorTestUtil.setEditorVisibleSize(getEditor(), 1000, 1000);  // enable drag testing
     getEditor().getSettings().setBlockCursor(true);
@@ -862,6 +866,39 @@ public class EditorImplTest extends AbstractEditorTest {
     // 'Enter' key released
     dispatchEventToEditor(new KeyEvent(component, KeyEvent.KEY_RELEASED, 5, 0, KeyEvent.VK_ENTER, '\n', KeyEvent.KEY_LOCATION_STANDARD));
     checkResultByText("\u00e0<caret>b");
+  }
+
+  public void testSelectionOutsideVisibleAreaWithBlockCaret() throws Exception {
+    Registry.get("editor.block.caret.selection.vim-like").setValue(true, getTestRootDisposable());
+    initText(StringUtil.repeatSymbol('\n', 20));
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 10, 10);  // enable drag testing
+    getEditor().getSettings().setBlockCursor(true);
+    Registry.get("editor.scrolling.animation.interval.ms").setValue(1, getTestRootDisposable()); // make scrolling faster
+
+    EditorMouseFixture mouse = mouse();
+    mouse.pressAt(0, 0).dragTo(15, 0);
+
+    // scroll till all text is selected
+    while (getEditor().getSelectionModel().getSelectionEnd() != getEditor().getDocument().getTextLength()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+
+    Rectangle visibleArea = getEditor().getScrollingModel().getVisibleArea();
+    mouse.dragToXY((int)visibleArea.getCenterX(), (int)visibleArea.getCenterY()).release(); // stop scrolling
+
+    assertEquals(0, getEditor().getSelectionModel().getSelectionStart());
+    assertTrue(getEditor().getSelectionModel().getSelectionEnd() > 0);
+  }
+
+  public void testLeadSelectionPosition() throws Exception {
+    initText("<caret>abc");
+    Caret caret = getEditor().getCaretModel().getPrimaryCaret();
+
+    caret.moveToOffset(1);
+    caret.setSelection(0, 1);
+
+    assertEquals(0, caret.getLeadSelectionOffset());
+    assertEquals(new VisualPosition(0, 0), caret.getLeadSelectionPosition());
   }
 
   private void dispatchEventToEditor(AWTEvent event) {

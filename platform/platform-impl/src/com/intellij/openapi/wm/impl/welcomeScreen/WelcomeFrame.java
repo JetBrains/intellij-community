@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.SplashManager;
 import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
@@ -204,6 +205,10 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
   }
 
   public static void showIfNoProjectOpened() {
+    showIfNoProjectOpened(null);
+  }
+
+  public static void showIfNoProjectOpened(@Nullable AppLifecycleListener lifecyclePublisher) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
@@ -212,7 +217,13 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
       WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
       windowManager.disposeRootFrame();
       if (windowManager.getProjectFrameHelpers().isEmpty()) {
-        showNow();
+        Runnable show = prepareToShow();
+        if (show != null) {
+          show.run();
+          if (lifecyclePublisher != null) {
+            lifecyclePublisher.welcomeScreenDisplayed();
+          }
+        }
       }
     }, ModalityState.NON_MODAL);
   }

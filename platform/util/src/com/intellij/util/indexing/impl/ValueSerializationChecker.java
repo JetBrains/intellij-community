@@ -48,7 +48,7 @@ final class ValueSerializationChecker<Value, Input> {
       try {
         ByteArraySequence sequence = AbstractForwardIndexAccessor.serializeValueToByteSeq(value,
                                                                                           myValueExternalizer,
-                                                                                          4 * data.size());
+                                                                                          4);
         Value deserializedValue = sequence == null ? null : myValueExternalizer.read(new DataInputStream(sequence.toInputStream()));
 
         if (!(Comparing.equal(value, deserializedValue) && (value == null || value.hashCode() == deserializedValue.hashCode()))) {

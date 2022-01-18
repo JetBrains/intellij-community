@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
@@ -117,7 +116,6 @@ class CanBeParameterInspection : AbstractKotlinInspection() {
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val parameter = descriptor.psiElement.getParentOfType<KtParameter>(strict = true) ?: return
-            if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.psiElement)) return
             parameter.valOrVarKeyword?.delete()
             // Delete visibility / open / final / lateinit, if any
             // Retain annotations / vararg

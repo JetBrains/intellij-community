@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.intention.impl.preview
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.HTML_PREVIEW
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.LOADING_PREVIEW
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.NO_PREVIEW
 import com.intellij.openapi.actionSystem.IdeActions
@@ -28,8 +27,6 @@ import com.intellij.ui.popup.PopupUpdateProcessor
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.TestOnly
 import java.awt.Dimension
-import java.awt.LayoutManager2
-import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import kotlin.math.max
@@ -68,11 +65,9 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
           if (key != NO_PREVIEW) {
             size = Dimension(size.width.coerceAtLeast(MIN_WIDTH), size.height)
           }
-          if (key == HTML_PREVIEW) {
-            component.htmlScrollPane.scrollRectToVisible(Rectangle(0, 0, 1, 1))
-          }
           popup.content.preferredSize = size
           adjustPosition(originalPopup)
+          popup.size = size
         }
       })
       adjustPosition(originalPopup)
@@ -115,7 +110,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
         select(index, editors)
       }
       is IntentionPreviewHtmlResult -> {
-        select(HTML_PREVIEW, html = result.html)
+        select(index, html = result.html)
       }
       else -> {
         select(NO_PREVIEW)
@@ -151,7 +146,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
   private fun select(index: Int, editors: List<EditorEx> = emptyList(), @NlsSafe html: String = "") {
     component.stopLoading()
     component.editors = editors
-    component.htmlContent.text = html
+    component.html = html
     component.multiPanel.select(index, true)
 
     val size = component.preferredSize
@@ -170,8 +165,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
         override fun recalculationEnds() {
           val height = (it as EditorImpl).offsetToXY(it.document.textLength).y + it.lineHeight + 6
           it.component.preferredSize = Dimension(it.component.preferredSize.width, min(height, MAX_HEIGHT))
-          val parent = it.component.parent
-          (parent.layout as LayoutManager2).invalidateLayout(parent)
+          it.component.parent.invalidate()
           popup.pack(true, true)
         }
 
@@ -185,8 +179,8 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
   }
 
   companion object {
-    private const val MAX_HEIGHT = 300
-    private const val MIN_WIDTH = 300
+    internal const val MAX_HEIGHT = 300
+    internal const val MIN_WIDTH = 300
 
     fun getShortcutText(): String = KeymapUtil.getPreferredShortcutText(getShortcutSet().shortcuts)
     fun getShortcutSet(): ShortcutSet = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_QUICK_JAVADOC)

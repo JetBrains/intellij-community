@@ -182,21 +182,33 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
 
     fun getHostRangeEscapeAware(segmentRange: TextRange, inSegmentStart: Int, inSegmentEnd: Int): TextRange {
       if (host is PsiLanguageInjectionHost) {
-        val escaper = host.createLiteralTextEscaper()
-        val decode = escaper.decode(segmentRange, StringBuilder())
-        if (decode) {
-          val start = escaper.getOffsetInHost(inSegmentStart, segmentRange)
-          val end = escaper.getOffsetInHost(inSegmentEnd, segmentRange)
-          if (start != -1 && end != -1 && start <= end)
-            return TextRange(start, end)
-          else {
-            logger<PartiallyKnownString>().error(
-              "decoding of ${segmentRange} failed for $host : [$start, $end] inSegment = [$inSegmentStart, $inSegmentEnd]",
-              Attachment("host:", host.text ?: "<null>"),
-              Attachment("file:", host.containingFile?.text ?: "<null>")
-            )
-            return TextRange(segmentRange.startOffset + inSegmentStart, segmentRange.startOffset + inSegmentEnd)
+
+        fun mkAttachments(): Array<Attachment> = arrayOf(
+          Attachment("host.txt", kotlin.runCatching { host.text ?: "<null>" }.getOrElse { it.stackTraceToString() }),
+          Attachment("file.txt", kotlin.runCatching { host.containingFile?.text ?: "<null>" }.getOrElse { it.stackTraceToString() })
+        )
+
+        try {
+          val escaper = host.createLiteralTextEscaper()
+          val decode = escaper.decode(segmentRange, StringBuilder())
+          if (decode) {
+            val start = escaper.getOffsetInHost(inSegmentStart, segmentRange)
+            val end = escaper.getOffsetInHost(inSegmentEnd, segmentRange)
+            if (start != -1 && end != -1 && start <= end)
+              return TextRange(start, end)
+            else {
+              logger<PartiallyKnownString>().error(
+                "decoding of ${segmentRange} failed for $host : [$start, $end] inSegment = [$inSegmentStart, $inSegmentEnd]",
+                *mkAttachments()
+              )
+              return TextRange(segmentRange.startOffset + inSegmentStart, segmentRange.startOffset + inSegmentEnd)
+            }
           }
+        }
+        catch (e: Exception) {
+          logger<PartiallyKnownString>().error(
+            "decoding of ${segmentRange} failed for $host inSegment = [$inSegmentStart, $inSegmentEnd]", e, *mkAttachments()
+          )
         }
       }
 

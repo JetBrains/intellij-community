@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings
+import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.fragments.LineFragment
@@ -95,9 +96,21 @@ internal class IntentionPreviewComputable(private val project: Project,
         if (!action.startInWriteAction() || action.getElementToMakeWritable(originalFile)?.containingFile !== originalFile) {
           return null
         }
-        val action = findCopyIntention(project, editorCopy, psiFileCopy, action) ?: return null
-        LOG.error("Intention preview fallback is used for action " + action::class.java + "|" + action.familyName)
-        action.invoke(project, editorCopy, psiFileCopy)
+        val method = try {
+          IntentionActionDelegate.unwrap(action).javaClass
+            .getMethod("invokeForPreview", Project::class.java, Editor::class.java, PsiFile::class.java)
+        }
+        catch (_: NoSuchMethodException) { null }
+        catch (_: SecurityException) { null }
+        if (method != null && method.declaringClass == IntentionAction::class.java) {
+          // Use fallback algorithm only if invokeForPreview is not explicitly overridden
+          // in this case, the absence of diff could be intended, thus should not be logged as error
+          val action = findCopyIntention(project, editorCopy, psiFileCopy, action) ?: return null
+          val unwrapped = IntentionActionDelegate.unwrap(action)
+          val actionClass = (if (unwrapped is QuickFixWrapper) unwrapped.fix else unwrapped)::class.qualifiedName
+          LOG.error("Intention preview fallback is used for action $actionClass|${action.familyName}")
+          action.invoke(project, editorCopy, psiFileCopy)
+        }
       }
       ProgressManager.checkCanceled()
     }

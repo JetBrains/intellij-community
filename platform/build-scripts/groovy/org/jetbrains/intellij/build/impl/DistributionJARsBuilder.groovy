@@ -107,7 +107,7 @@ final class DistributionJARsBuilder {
       JpsModule module = buildContext.findRequiredModule(it)
       JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll { library ->
         !(library.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.any {
-          it.libraryName == library.name && it.relativeOutputPath == ""
+          it.libraryName == library.name
         } && !libsToUnpack.contains(library.name)
       }.each {
         result.putValue(it, module)

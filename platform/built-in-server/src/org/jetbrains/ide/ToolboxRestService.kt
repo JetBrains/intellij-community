@@ -15,8 +15,8 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelOption
 import io.netty.handler.codec.http.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.io.addCommonHeaders
-import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -26,6 +26,7 @@ import kotlin.io.path.writeText
 
 val toolboxHandlerEP: ExtensionPointName<ToolboxServiceHandler<*>> = ExtensionPointName.create("com.intellij.toolboxServiceHandler")
 
+@ApiStatus.Internal
 interface ToolboxServiceHandler<T> {
   /**
    * Specifies a request, it is actually the last part of the path,

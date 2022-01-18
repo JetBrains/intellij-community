@@ -77,8 +77,12 @@ class PropertiesDialog(
   private class Table(info: PropertiesInfo) : ListTableWithButtons<Property>() {
 
     var properties: List<Property>
-      get() = elements
-      set(properties) = setValues(properties)
+      get() = elements.cleanupProperties()
+      set(properties) = setValues(properties.cleanupProperties())
+
+    private fun List<Property>.cleanupProperties() =
+      map { Property(it.name.trim(), it.value.trim()) }
+        .filterNot { it.name.isEmpty() && it.value.isEmpty() }
 
     init {
       tableView.getAccessibleContext().accessibleName = info.dialogEmptyState

@@ -119,11 +119,10 @@ open class IdeStarter : ApplicationStarter {
     }
 
     if (uriToOpen != null || args.isNotEmpty() && args[0].contains(SCHEME_SEPARATOR)) {
-      showWelcomeFrame(lifecyclePublisher)
       frameInitActivity.end()
       @Suppress("DEPRECATION")
       lifecyclePublisher.appStarting(null)
-      processUriParameter(uriToOpen ?: args.first())
+      processUriParameter(uriToOpen ?: args.first(), lifecyclePublisher)
     }
     else {
       val recentProjectManager = RecentProjectsManager.getInstance()
@@ -150,7 +149,7 @@ open class IdeStarter : ApplicationStarter {
         return recentProjectManager.reopenLastProjectsOnStart()
           .thenAccept { isOpened ->
             if (!isOpened) {
-              WelcomeFrame.showIfNoProjectOpened()
+              WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
             }
           }
       }
@@ -169,9 +168,19 @@ open class IdeStarter : ApplicationStarter {
     return false
   }
 
-  private fun processUriParameter(uri: String) {
+  private fun processUriParameter(uri: String, lifecyclePublisher: AppLifecycleListener) {
     ApplicationManager.getApplication().invokeLater {
       CommandLineProcessor.processProtocolCommand(uri)
+        .thenAccept {
+          if (it.exitCode == ProtocolHandler.PLEASE_QUIT) {
+            ApplicationManager.getApplication().invokeLater {
+              ApplicationManagerEx.getApplicationEx().exit(false, true)
+            }
+          }
+          else if (it.exitCode != ProtocolHandler.PLEASE_NO_UI) {
+            WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
+          }
+        }
     }
   }
 

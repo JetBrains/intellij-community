@@ -1,0 +1,6 @@
+// WITH_RUNTIME
+fun test() = buildString {
+        append("hello")
+        append(1)
+        append("world") // $
+    }
