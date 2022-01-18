@@ -150,18 +150,23 @@ open class IdeStarter : ApplicationStarter {
       @Suppress("DEPRECATION")
       lifecyclePublisher.appStarting(project)
 
-      if (project == null && willReopenRecentProjectOnStart) {
-        return recentProjectManager.reopenLastProjectsOnStart()
-          .thenAccept { isOpened ->
-            if (!isOpened) {
-              WelcomeFrame.showIfNoProjectOpened()
+      if (project == null) {
+        return if (willReopenRecentProjectOnStart) {
+          recentProjectManager.reopenLastProjectsOnStart()
+            .thenAccept { isOpened ->
+              if (!isOpened) {
+                WelcomeFrame.showIfNoProjectOpened()
+              }
             }
+        }
+        else {
+          CompletableFuture.completedFuture(null).thenRun {
+            WelcomeFrame.showIfNoProjectOpened()
           }
+        }
       }
     }
-    return CompletableFuture.completedFuture(null).thenRun {
-      WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
-    }
+    return CompletableFuture.completedFuture(null)
   }
 
   private fun showWelcomeFrame(lifecyclePublisher: AppLifecycleListener, willOpenProject: Boolean): Boolean {
