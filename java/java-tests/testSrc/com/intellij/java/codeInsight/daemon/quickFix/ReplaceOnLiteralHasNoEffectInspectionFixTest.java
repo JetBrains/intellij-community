@@ -3,9 +3,6 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.siyeh.ig.redundancy.RedundantStringOperationInspection;
 import com.siyeh.ig.redundancy.ReplaceOnLiteralHasNoEffectInspection;
 import org.jetbrains.annotations.NotNull;
 

@@ -3,12 +3,8 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.siyeh.ig.LightJavaInspectionTestCase;
-import com.siyeh.ig.redundancy.RedundantStringOperationInspection;
 import com.siyeh.ig.redundancy.ReplaceOnLiteralHasNoEffectInspection;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ReplaceOnLiteralHasNoEffectInspectionTest extends LightJavaInspectionTestCase {
