@@ -3,7 +3,7 @@ plugins {
 }
 
 repositories {
-    mavenCentral()
+    {{kts_kotlin_plugin_repositories}}
 }
 
 kotlin {
