@@ -42,6 +42,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.ForkJoinTask
+import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Supplier
@@ -226,7 +227,8 @@ final class BuildTasksImpl extends BuildTasks {
           Files.deleteIfExists(targetFile)
           // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
           BuildHelper.runApplicationStarter(context, context.paths.tempDir.resolve("builtinModules"), modules,
-                                            List.of("listBundledPlugins", targetFile.toString()))
+                                            List.of("listBundledPlugins", targetFile.toString()), Collections.emptyMap(),
+                                            null, TimeUnit.MINUTES.toMillis(10L), context.classpathCustomizer)
           if (Files.notExists(targetFile)) {
             context.messages.error("Failed to build provided modules list: $targetFile doesn't exist")
           }
@@ -485,7 +487,7 @@ idea.fatal.error.notification=disabled
         else {
           Span.current().addEvent("skip building product distributions because " +
                                   "\"intellij.build.target.os\" property is set to \"$BuildOptions.OS_NONE\"")
-          DistributionJARsBuilder.buildSearchableOptions(context, distributionJARsBuilder.getModulesForPluginsToPublish())
+          DistributionJARsBuilder.buildSearchableOptions(context, distributionJARsBuilder.getModulesForPluginsToPublish(), context.classpathCustomizer)
           distributionJARsBuilder.createBuildNonBundledPluginsTask(pluginsToPublish, true, null, context)?.fork()?.join()
         }
         return null
