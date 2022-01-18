@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectImporterToWorkspaceModel
 import org.jetbrains.idea.maven.project.*
@@ -27,8 +26,7 @@ interface MavenProjectImporter {
                        importingSettings: MavenImportingSettings,
                        dummyModule: Module?): MavenProjectImporter {
       if (isImportToWorkspaceModelEnabled()) {
-        val dummyModuleId = dummyModule?.let { ModuleId(it.name) }
-        return MavenProjectImporterToWorkspaceModel(projectsTree, projectsToImportWithChanges, importingSettings, dummyModuleId,
+        return MavenProjectImporterToWorkspaceModel(projectsTree, projectsToImportWithChanges, importingSettings,
                                                     VirtualFileUrlManager.getInstance(project), project)
       }
       return MavenProjectImporterImpl(project, projectsTree, fileToModuleMapping, projectsToImportWithChanges, importModuleGroupsRequired,
