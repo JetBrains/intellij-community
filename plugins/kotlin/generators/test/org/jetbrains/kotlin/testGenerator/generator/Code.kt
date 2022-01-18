@@ -130,7 +130,7 @@ fun Code.appendModifiers(modifiers: Set<Modifier>): Code {
 }
 
 fun Code.appendDocComment(text: String?): Code {
-    if (text != null && text.isNotBlank()) {
+    if (!text.isNullOrBlank()) {
         append("/**").newLine()
         for (line in text.lineSequence()) {
             append(" * ").append(line).newLine()

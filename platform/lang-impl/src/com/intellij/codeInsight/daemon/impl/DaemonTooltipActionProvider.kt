@@ -84,7 +84,7 @@ fun extractMostPriorityFixFromHighlightInfo(highlightInfo: HighlightInfo, editor
 
   val fixes = mutableListOf<HighlightInfo.IntentionActionDescriptor>()
   val quickFixActionMarkers = highlightInfo.quickFixActionRanges
-  if (quickFixActionMarkers == null || quickFixActionMarkers.isEmpty()) return null
+  if (quickFixActionMarkers.isNullOrEmpty()) return null
 
   fixes.addAll(quickFixActionMarkers.map { it.first }.toList())
 

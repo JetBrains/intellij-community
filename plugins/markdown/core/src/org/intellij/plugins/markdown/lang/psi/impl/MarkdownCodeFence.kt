@@ -120,7 +120,7 @@ class MarkdownCodeFence(elementType: IElementType): MarkdownCodeFenceImpl(elemen
         return if (textElement is MarkdownCodeFence) element.replace(textElement) as MarkdownCodeFence else null
       }
       val indent = MarkdownCodeFenceUtils.getIndent(element)
-      if (indent != null && indent.isNotEmpty()) {
+      if (!indent.isNullOrEmpty()) {
         actualContent = StringUtil.splitByLinesKeepSeparators(actualContent).joinToString(separator = "") { indent + it }
         if (StringUtil.endsWithLineBreak(actualContent)) {
           actualContent += indent

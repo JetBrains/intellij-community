@@ -62,7 +62,7 @@ abstract class PyAddSdkPanelBase(protected val project: Project?,
       val sdkVersion: String? = data.getInterpreterVersion(project, interpreterPath)
 
       val name: String
-      if (sdkName != null && sdkName.isNotEmpty()) {
+      if (!sdkName.isNullOrEmpty()) {
         name = sdkName
       }
       else {

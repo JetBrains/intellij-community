@@ -32,7 +32,7 @@ class EventMap<R : ResponseResultReader>(private val protocolReader: R) {
 
   fun handleEvent(method: String, data: JsonReaderEx?) {
     val handlers = nameToHandler.get(method)
-    if (handlers == null || handlers.isEmpty()) {
+    if (handlers.isNullOrEmpty()) {
       return
     }
 

@@ -230,7 +230,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
       }
 
       val productCodes = ideExtensions[extensionOrFileName]
-      if (productCodes == null || productCodes.isEmpty()) {
+      if (productCodes.isNullOrEmpty()) {
         return emptyList()
       }
 

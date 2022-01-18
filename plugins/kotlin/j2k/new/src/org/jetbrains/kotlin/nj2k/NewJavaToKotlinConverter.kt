@@ -259,7 +259,7 @@ class NewJ2kWithProgressProcessor(
             progress?.text = KotlinNJ2KBundle.message("progress.text", description, phase + 1, phasesCount)
         }
         progress?.text2 = when {
-            files != null && files.isNotEmpty() && fileIndex != null -> files[fileIndex].virtualFile.presentableUrl + if (files.size > 1) " ($fileIndex/${files.size})" else ""
+            !files.isNullOrEmpty() && fileIndex != null -> files[fileIndex].virtualFile.presentableUrl + if (files.size > 1) " ($fileIndex/${files.size})" else ""
             else -> ""
         }
     }

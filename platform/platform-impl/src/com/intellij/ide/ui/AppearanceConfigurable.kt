@@ -420,7 +420,7 @@ private fun Row.fontSizeComboBox(prop: MutableProperty<String?>): Cell<ComboBox<
 }
 
 private fun getIntValue(text: String?, defaultValue: Int): Int {
-  if (text != null && text.isNotBlank()) {
+  if (!text.isNullOrBlank()) {
     val value = text.toIntOrNull()
     if (value != null && value > 0) return value
   }

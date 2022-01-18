@@ -31,7 +31,7 @@ class AnnotationConverter(private val converter: Converter) {
         val modifierList = owner.modifierList
         val annotations = modifierList?.annotations?.filter { it.qualifiedName !in annotationsToRemove }
 
-        var convertedAnnotations: List<Annotation> = if (annotations != null && annotations.isNotEmpty()) {
+        var convertedAnnotations: List<Annotation> = if (!annotations.isNullOrEmpty()) {
             val newLines = if (!modifierList.isInSingleLine()) {
                 true
             }

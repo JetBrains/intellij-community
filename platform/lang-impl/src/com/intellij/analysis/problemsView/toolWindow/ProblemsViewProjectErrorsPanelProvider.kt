@@ -28,7 +28,7 @@ class ProblemsViewProjectErrorsPanelProvider(private val project: Project) : Pro
       for (id in ACTION_IDS) {
         val action = ActionUtil.getAction(id) ?: continue
         val text = action.templateText
-        if (text == null || text.isBlank()) continue
+        if (text.isNullOrBlank()) continue
         if (index == 0) {
           status.appendText(".")
           status.appendLine("")

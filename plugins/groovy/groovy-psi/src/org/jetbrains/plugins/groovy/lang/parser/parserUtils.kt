@@ -159,7 +159,7 @@ fun codeReferenceIdentifier(builder: PsiBuilder, level: Int, identifier: Parser)
 
 private fun PsiBuilder.isNextTokenCapitalized(): Boolean {
   val text = tokenText
-  return text != null && text.isNotEmpty() && text != DUMMY_IDENTIFIER_TRIMMED && text.first().isUpperCase()
+  return !text.isNullOrEmpty() && text != DUMMY_IDENTIFIER_TRIMMED && text.first().isUpperCase()
 }
 
 fun definitelyTypeElement(builder: PsiBuilder, level: Int, typeElement: Parser, check: Parser): Boolean {

@@ -59,7 +59,7 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
     processOpenedProjects { project ->
       val changedSchemes: Map<SchemeChangeApplicator<*, *>, Set<SchemeChangeEvent<*, *>>>? = CHANGED_SCHEMES_KEY.getAndClear(project as UserDataHolderEx)
       val changedStorages = CHANGED_FILES_KEY.getAndClear(project as UserDataHolderEx)
-      if ((changedSchemes == null || changedSchemes.isEmpty()) && (changedStorages == null || changedStorages.isEmpty())
+      if ((changedSchemes.isNullOrEmpty()) && (changedStorages.isNullOrEmpty())
           && !mayHaveAdditionalConfigurations(project)) {
         return@processOpenedProjects
       }
@@ -274,7 +274,7 @@ internal fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentSto
       return ReloadComponentStoreStatus.ERROR
     }
 
-    if (notReloadableComponents == null || notReloadableComponents.isEmpty()) {
+    if (notReloadableComponents.isNullOrEmpty()) {
       return ReloadComponentStoreStatus.SUCCESS
     }
 

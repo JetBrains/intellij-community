@@ -33,7 +33,7 @@ abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase
                 afterTypingBlock()
             }
 
-            if (actions != null && actions.isNotEmpty()) {
+            if (!actions.isNullOrEmpty()) {
                 for (action in actions) {
                     fixture.performEditorAction(action)
                 }
