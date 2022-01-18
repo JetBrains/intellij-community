@@ -21,6 +21,7 @@ interface NewProjectWizardMultiStepFactory<P : NewProjectWizardStep> {
   /**
    * The ordinal the steps are sorted by
    */
+  @JvmDefault
   val ordinal: Int
     get() = Int.MAX_VALUE
 
