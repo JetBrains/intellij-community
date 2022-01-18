@@ -73,6 +73,11 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 runTest("../idea/tests/testData/editor/enterHandler/afterUnmatchedBrace/UnfinishedLambdaInCodeAsVarInitiailzer.after.kt");
             }
 
+            @TestMetadata("UnfinishedLambdaIsLastElement.after.kt")
+            public void testUnfinishedLambdaIsLastElement() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/afterUnmatchedBrace/UnfinishedLambdaIsLastElement.after.kt");
+            }
+
             @TestMetadata("UnfinishedLambdaWithCommentInCode.after.kt")
             public void testUnfinishedLambdaWithCommentInCode() throws Exception {
                 runTest("../idea/tests/testData/editor/enterHandler/afterUnmatchedBrace/UnfinishedLambdaWithCommentInCode.after.kt");

@@ -63,7 +63,7 @@ class KotlinEnterHandler : EnterHandlerDelegateAdapter() {
         val elementAfter = CodeInsightUtils.getElementAtOffsetIgnoreWhitespaceBefore(file, caretOffset)
 
         val isAfterLBraceOrArrow = elementBefore != null && elementBefore.node!!.elementType in FORCE_INDENT_IN_LAMBDA_AFTER
-        val isBeforeRBrace = elementAfter == null || elementAfter.node!!.elementType == KtTokens.RBRACE
+        val isBeforeRBrace = elementAfter != null && elementAfter.node!!.elementType == KtTokens.RBRACE
 
         if (isAfterLBraceOrArrow && isBeforeRBrace && (elementBefore!!.parent is KtFunctionLiteral)) {
             originalHandler?.execute(editor, editor.caretModel.currentCaret, dataContext)

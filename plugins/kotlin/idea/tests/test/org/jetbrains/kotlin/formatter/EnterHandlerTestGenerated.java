@@ -73,6 +73,11 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
                 runTest("testData/editor/enterHandler/afterUnmatchedBrace/UnfinishedLambdaInCodeAsVarInitiailzer.after.kt");
             }
 
+            @TestMetadata("UnfinishedLambdaIsLastElement.after.kt")
+            public void testUnfinishedLambdaIsLastElement() throws Exception {
+                runTest("testData/editor/enterHandler/afterUnmatchedBrace/UnfinishedLambdaIsLastElement.after.kt");
+            }
+
             @TestMetadata("UnfinishedLambdaWithCommentInCode.after.kt")
             public void testUnfinishedLambdaWithCommentInCode() throws Exception {
                 runTest("testData/editor/enterHandler/afterUnmatchedBrace/UnfinishedLambdaWithCommentInCode.after.kt");
