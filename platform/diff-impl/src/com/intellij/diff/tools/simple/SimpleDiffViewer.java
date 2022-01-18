@@ -65,7 +65,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
 
     mySyncScrollable = new MySyncScrollable();
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
-    myStatusPanel = loadStatusPanel();
+    myStatusPanel = new MyStatusPanel();
     myFoldingModel = new MyFoldingModel(getProject(), getEditors(), this);
 
     myModifierProvider = new ModifierProvider();
@@ -750,18 +750,19 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     @Nullable
     @Override
     protected String getMessage() {
-      if (myTextDiffProvider.isHighlightingDisabled()) {
-        return DiffBundle.message("diff.highlighting.disabled.text");
-      }
-      List<SimpleDiffChange> allChanges = myModel.getAllChanges();
-      return DiffUtil.getStatusText(allChanges.size(),
-                                    ContainerUtil.count(allChanges, it -> it.isExcluded()),
-                                    myModel.isContentsEqual());
+      return getStatusTextMessage();
     }
   }
 
-  protected StatusPanel loadStatusPanel() {
-    return new MyStatusPanel();
+  @Nullable
+  protected @Nls String getStatusTextMessage() {
+    if (myTextDiffProvider.isHighlightingDisabled()) {
+      return DiffBundle.message("diff.highlighting.disabled.text");
+    }
+    List<SimpleDiffChange> allChanges = myModel.getAllChanges();
+    return DiffUtil.getStatusText(allChanges.size(),
+                                  ContainerUtil.count(allChanges, it -> it.isExcluded()),
+                                  myModel.isContentsEqual());
   }
 
   public class ModifierProvider extends KeyboardModifierListener {
