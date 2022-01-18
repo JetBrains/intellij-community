@@ -147,6 +147,10 @@ public class GroovyCompilerWrapper {
           compiledFiles.add(item);
         }
       }
+
+      public void doPhaseOperation(CompilationUnit unit) throws CompilationFailedException {
+        super.doPhaseOperation(unit);
+      }
     });
     return compiledFiles;
   }

@@ -137,7 +137,7 @@ class GroovyStringKindTest extends GroovyLatestTest {
       '\f'            : '\\u000C',
       /a\b/           : /a\b/,
       $/5/6/$         : $/5/6/$,
-      $/$$/$          : /$$/,
+      //$/$$/$          : /$$/, //caused compilation error in Groovy 3.0.9 because of Groovy bug (https://issues.apache.org/jira/projects/GROOVY/issues/GROOVY-10406)
       $/'/$           : $/'/$,
       $/"/$           : $/"/$,
       '$_'           : '$$_',
