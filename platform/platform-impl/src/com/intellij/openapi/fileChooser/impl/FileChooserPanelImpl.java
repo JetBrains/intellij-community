@@ -321,7 +321,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
   private void doLoad(@Nullable Path path, boolean asZip) {
     synchronized (myLock) {
-      myPath.setItem(new FsItem(path));
+      myPath.setItem(path != null ? new FsItem(path) : null);
       myModel.clear();
       myList.clearSelection();
       myList.setPaintBusy(true);
