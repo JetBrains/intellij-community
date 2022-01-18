@@ -148,7 +148,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private Rectangle cachedToolbarBounds = new Rectangle();
   private final JLabel smallIconLabel;
   @NotNull
-  private AnalyzerStatus analyzerStatus = AnalyzerStatus.getDEFAULT();
+  private AnalyzerStatus analyzerStatus = AnalyzerStatus.getEMPTY();
   private boolean hasAnalyzed;
   private boolean isAnalyzing;
   private boolean showNavigation;
@@ -1471,6 +1471,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       List<StatusItem> newStatus = analyzerStatus.getExpandedStatus();
       Icon newIcon = analyzerStatus.getIcon();
 
+      presentation.setVisible(!AnalyzerStatus.isEmpty(analyzerStatus));
+
       if (!hasAnalyzed || analyzerStatus.getAnalyzingType() != AnalyzingType.EMPTY) {
         if (newStatus.isEmpty()) {
           newStatus = Collections.singletonList(new StatusItem("", newIcon));
@@ -1526,6 +1528,11 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         }
         else if (propName.equals(TRANSLUCENT_STATE.toString())) {
           translucent = l.getNewValue() == Boolean.TRUE;
+          repaint();
+        }
+        else if (propName.equals(Presentation.PROP_VISIBLE)) {
+          setVisible(l.getNewValue() == Boolean.TRUE);
+          revalidate();
           repaint();
         }
       };
