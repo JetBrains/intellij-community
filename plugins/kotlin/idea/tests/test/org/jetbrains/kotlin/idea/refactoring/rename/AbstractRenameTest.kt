@@ -169,7 +169,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         val classFQN = renameParamsObject.getString("classId").toClassId().asSingleFqName().asString()
         val newName = renameParamsObject.getString("newName")
 
-        doTestCommittingDocuments(context) { _ ->
+        doTestCommittingDocuments(context) {
             val aClass = context.javaFacade.findClass(classFQN, context.project.allScope())!!
             val substitution = RenamePsiElementProcessor.forElement(aClass).substituteElementToRename(aClass, null)
 
