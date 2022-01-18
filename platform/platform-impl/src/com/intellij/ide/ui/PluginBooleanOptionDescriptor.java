@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
@@ -60,9 +60,10 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
       return;
     }
 
+    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
     Collection<? extends IdeaPluginDescriptor> autoSwitchedDescriptors = enable ?
-                                                                         getDependenciesToEnable(descriptors) :
-                                                                         getDependentsToDisable(descriptors);
+                                                                         getDependenciesToEnable(descriptors, pluginIdMap) :
+                                                                         getDependentsToDisable(descriptors, pluginIdMap);
 
     PluginEnabler pluginEnabler = PluginEnabler.getInstance();
     boolean appliedWithoutRestart = enable ?
@@ -128,7 +129,8 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
     switchNotification.notify(null);
   }
 
-  private static @NotNull Collection<? extends IdeaPluginDescriptor> getDependenciesToEnable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
+  private static @NotNull Collection<? extends IdeaPluginDescriptor> getDependenciesToEnable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
+                                                                                             @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap) {
     Set<IdeaPluginDescriptor> result = new LinkedHashSet<>();
 
     for (IdeaPluginDescriptor descriptor : descriptors) {
@@ -138,7 +140,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
         continue;
       }
 
-      PluginManagerCore.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)descriptor, dependency ->
+      PluginManagerCore.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)descriptor, pluginIdMap, dependency ->
         PluginManagerCore.CORE_ID.equals(dependency.getPluginId()) ||
         dependency.isEnabled() ||
         !result.add(dependency) ?
@@ -149,15 +151,15 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
     return Collections.unmodifiableSet(result);
   }
 
-  private static @NotNull Collection<? extends IdeaPluginDescriptor> getDependentsToDisable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
+  private static @NotNull Collection<? extends IdeaPluginDescriptor> getDependentsToDisable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
+                                                                                            @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap) {
     Set<IdeaPluginDescriptor> result = new LinkedHashSet<>();
     ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
 
     for (IdeaPluginDescriptor descriptor : descriptors) {
       result.add(descriptor);
 
-      result.addAll(MyPluginModel.getDependents(descriptor,
-                                                applicationInfo));
+      result.addAll(MyPluginModel.getDependents(descriptor, applicationInfo, pluginIdMap));
     }
 
     return Collections.unmodifiableSet(result);
