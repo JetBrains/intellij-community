@@ -4,7 +4,7 @@ package com.intellij.util;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Deprecated. Use {@link java.util.function.Function} instead.
+ * Deprecated. Use {@link java.util.function.Function} with {@code @Nullable} annotation on the second type parameter instead.
  */
 public interface NullableFunction<Param, Result> extends Function<Param, Result> {
   @Override

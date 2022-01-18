@@ -21,6 +21,9 @@ package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Deprecated. Use {@link java.util.function.Supplier} with {@code @Nullable} annotation on the type parameter instead.
+ */
 @FunctionalInterface
 public interface NullableComputable<T> extends Computable<T> {
   @Override
