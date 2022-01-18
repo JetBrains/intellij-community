@@ -156,7 +156,8 @@ public class JpsBootstrapMain {
     args.add("-classpath");
     args.add(StringUtil.join(moduleRuntimeClasspath, File.pathSeparator));
 
-    args.add(classNameToRun);
+    args.add("-Dbuild.script.launcher.main.class=" + classNameToRun);
+    args.add("org.jetbrains.intellij.build.impl.BuildScriptLauncher");
 
     args.addAll(mainArgsToRun);
 
