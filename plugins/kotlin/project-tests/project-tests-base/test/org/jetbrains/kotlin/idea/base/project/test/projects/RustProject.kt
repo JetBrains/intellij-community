@@ -20,7 +20,7 @@ object RustProject {
         val basePath = "src/main/kotlin/org/rust"
 
         listOf(
-            //HighlightFile("$basePath/lang/core/stubs/StubImplementations.kt"),
+            HighlightFile("$basePath/lang/core/stubs/StubImplementations.kt"),
             HighlightFile("$basePath/lang/core/resolve/NameResolution.kt"),
             HighlightFile("$basePath/ide/annotator/RsErrorAnnotator.kt"),
             HighlightFile("$basePath/lang/core/types/infer/TypeInferenceWalker.kt"),
