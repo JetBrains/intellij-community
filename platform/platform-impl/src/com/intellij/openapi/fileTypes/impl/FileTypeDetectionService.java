@@ -608,8 +608,8 @@ final class FileTypeDetectionService implements Disposable {
 
   @NotNull
   private ByteArraySequence getFirstBytes(@NotNull VirtualFile file, byte @Nullable [] content) throws IOException {
+    int bufferLength = getDetectFileBufferSize(file);
     if (content == null) {
-      int bufferLength = getDetectFileBufferSize(file);
       try {
         return ProgressManager.getInstance().isInNonCancelableSection() || ApplicationManager.getApplication().isWriteThread()
                ? readFirstBytesFromFile(file, bufferLength)
@@ -620,7 +620,7 @@ final class FileTypeDetectionService implements Disposable {
       }
     }
     else {
-      return content.length != 0 ? new ByteArraySequence(content) : ByteArraySequence.EMPTY;
+      return content.length != 0 ? new ByteArraySequence(content, 0, Math.min(content.length, bufferLength)) : ByteArraySequence.EMPTY;
     }
   }
 
