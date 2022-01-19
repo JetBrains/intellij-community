@@ -1619,9 +1619,9 @@ public final class HighlightUtil {
     return infos;
   }
 
-  public static void registerChangeTypeFix(@Nullable HighlightInfo info,
-                                           @NotNull PsiExpression expression,
-                                           @NotNull PsiType expectedType) {
+  static void registerChangeTypeFix(@Nullable HighlightInfo info,
+                                    @NotNull PsiExpression expression,
+                                    @NotNull PsiType expectedType) {
     if (info == null) return;
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiReturnStatement) {
