@@ -6,12 +6,10 @@ import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.gr
 import com.intellij.openapi.observable.util.bindStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.util.ui.JBUI
 
 
 abstract class AbstractNewProjectWizardMultiStepBase(
@@ -25,6 +23,8 @@ abstract class AbstractNewProjectWizardMultiStepBase(
 
   val stepProperty = propertyGraph.graphProperty { "" }.bindStorage("${javaClass.name}.selectedStep")
   var step by stepProperty
+
+  private val stepsPanels = HashMap<String, DialogPanel>()
 
   protected open fun initSteps() = emptyMap<String, NewProjectWizardStep>()
 
@@ -45,61 +45,37 @@ abstract class AbstractNewProjectWizardMultiStepBase(
 
     keywords.add(steps.keys)
 
+    stepsProperty.afterChange {
+      stepsPanels.clear()
+    }
+
     with(builder) {
       row(label) {
         setupSwitcherUi(this@row)
       }.bottomGap(BottomGap.SMALL)
-
-      var stepsPanels = initStepPanels()
-      stepsProperty.afterChange {
-        stepsPanels = initStepPanels()
-      }
-
-      stepProperty.afterChange {
-        showStepPanel(stepsPanels)
-      }
-      showStepPanel(stepsPanels)
-    }
-  }
-
-  private fun showStepPanel(stepsPanels: Map<String, DialogPanel>) {
-    val panelBuilder = NewProjectWizardPanelBuilder.getInstance(context)
-    for ((key, panel) in stepsPanels) {
-      panelBuilder.setVisible(panel, key == step)
-      panel.repaint()
-    }
-  }
-
-  fun Panel.initStepPanels(): Map<String, DialogPanel> {
-    val stepsPanels = HashMap<String, DialogPanel>()
-    val panelBuilder = NewProjectWizardPanelBuilder.getInstance(context)
-    for ((name, step) in steps) {
-      val panel = panelBuilder.panel(step::setupUI)
       row {
-        cell(panel)
+        val placeholder = placeholder()
           .horizontalAlign(HorizontalAlign.FILL)
+
+        placeholder.component = getOrCreateStepPanel()
+        stepProperty.afterChange {
+          placeholder.component = getOrCreateStepPanel()
+        }
       }
-      stepsPanels[name] = panel
     }
-    return stepsPanels
+  }
+
+  private fun getOrCreateStepPanel(): DialogPanel? {
+    if (step !in stepsPanels) {
+      val stepUi = steps[step] ?: return null
+      val panel = panel(stepUi::setupUI)
+      panel.setMinimumWidthForAllRowLabels(JBUI.scale(90))
+      stepsPanels[step] = panel
+    }
+    return stepsPanels[step]
   }
 
   override fun setupProject(project: Project) {
     steps[step]?.setupProject(project)
-  }
-
-  fun whenStepSelected(name: String, action: () -> Unit) {
-    if (step == name) {
-      action()
-    }
-    else {
-      val disposable = Disposer.newDisposable(context.disposable, "")
-      stepProperty.afterChange({
-        if (it == name) {
-          Disposer.dispose(disposable)
-          action()
-        }
-      }, disposable)
-    }
   }
 }
