@@ -38,6 +38,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
+import java.util.function.Consumer
 import javax.swing.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -86,21 +87,20 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
     val panel = extension.panel
     if (panel.isEnabled && panel.isVisible && ToolbarSettings.getInstance().isEnabled) {
       CompletableFuture.supplyAsync(::correctedToolbarActions, AppExecutorUtil.getAppExecutorService())
-        .thenAcceptAsync(
-          {
-            applyTo(it, panel, extension.layout)
-          it.forEach { it2 ->
-            if (it2.key == null) {
-              val comp = extension.layout.getLayoutComponent(it2.value)
+        .thenAcceptAsync({ placeToActionGroup ->
+          applyTo(placeToActionGroup, panel, extension.layout)
+          for ((place, actionGroup) in placeToActionGroup) {
+            if (actionGroup == null) {
+              val comp = extension.layout.getLayoutComponent(place)
               if (comp != null) {
                 panel.remove(comp)
               }
             }
           }
-          },
-          Executor {
-            ApplicationManager.getApplication().invokeLater(it, project.disposed)
-          })
+        }
+        ) {
+          ApplicationManager.getApplication().invokeLater(it, project.disposed)
+        }
         .exceptionally {
           LOG.error(it)
           null
@@ -108,34 +108,44 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
     }
   }
 
-  /**
-   * Null key in the result map means that we need to clear the old panel that corresponded to the null group
-   */
   @RequiresBackgroundThread
-  private fun correctedToolbarActions(): Map<ActionGroup?, String> {
+  private fun correctedToolbarActions(): Map<String, ActionGroup?> {
     val toolbarGroup = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR) as? ActionGroup
                        ?: return emptyMap()
     val children = toolbarGroup.getChildren(null)
-    val leftGroup = children.firstOrNull { it.templateText.equals(ActionsBundle.message("group.LeftToolbarSideGroup.text")) }
-    val rightGroup = children.firstOrNull { it.templateText.equals(ActionsBundle.message("group.RightToolbarSideGroup.text")) }
-    val restGroup = DefaultActionGroup(children.filter { it != leftGroup && it != rightGroup })
-    val map = mutableMapOf<ActionGroup?, String>()
-    map[leftGroup as? ActionGroup] = BorderLayout.WEST
-    map[rightGroup as? ActionGroup] = BorderLayout.EAST
-    map[restGroup] = BorderLayout.CENTER
+
+    var leftGroup: ActionGroup? = null
+    var rightGroup: ActionGroup? = null
+    val restItems = ArrayList<AnAction>(children.size - 2)
+
+    val actionManager = ActionManager.getInstance()
+    for (action in children) {
+      when (actionManager.getId(action)) {
+        "LeftToolbarSideGroup" -> leftGroup = action as? ActionGroup
+        "RightToolbarSideGroup" -> rightGroup = action as? ActionGroup
+        else -> restItems.add(action)
+      }
+    }
+
+    val restGroup = DefaultActionGroup(restItems)
+
+    val map = mutableMapOf<String, ActionGroup?>()
+    map[BorderLayout.WEST] = leftGroup
+    map[BorderLayout.EAST] = rightGroup
+    map[BorderLayout.CENTER] = restGroup
 
     return map
   }
 
   @RequiresEdt
   private fun applyTo(
-    actions: Map<ActionGroup?, String>,
+    actions: Map<String, ActionGroup?>,
     component: JComponent,
     layout: BorderLayout
   ) {
     val actionManager = ActionManager.getInstance()
 
-    actions.mapKeys { (actionGroup, _) ->
+    actions.mapValues { (_, actionGroup) ->
       if (actionGroup != null) {
         actionManager.createActionToolbar(
           ActionPlaces.MAIN_TOOLBAR,
@@ -146,7 +156,7 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
       else {
         null
       }
-    }.forEach { (toolbar, layoutConstraints) ->
+    }.forEach { (layoutConstraints, toolbar) ->
       // We need to replace old component having the same constraints with the new one.
       if (toolbar != null) {
         layout.getLayoutComponent(component, layoutConstraints)?.let {
