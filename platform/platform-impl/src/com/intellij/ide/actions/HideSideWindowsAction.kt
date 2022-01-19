@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.AnAction
@@ -14,8 +14,13 @@ internal class HideSideWindowsAction : AnAction(), DumbAware {
     val project = e.project ?: return
     val toolWindowManager = ToolWindowManagerEx.getInstanceEx(project) as ToolWindowManagerImpl
     val id = toolWindowManager.activeToolWindowId ?: toolWindowManager.lastActiveToolWindowId ?: return
-    if (HideToolWindowAction.shouldBeHiddenByShortCut(toolWindowManager, id)) {
-      toolWindowManager.hideToolWindow(id, true, true, ToolWindowEventSource.HideSideWindowsAction)
+    val window = toolWindowManager.getToolWindow(id) ?: return
+    if (HideToolWindowAction.shouldBeHiddenByShortCut(window)) {
+      toolWindowManager.hideToolWindow(id = id,
+                                       hideSide = true,
+                                       moveFocus = true,
+                                       removeFromStripe = false,
+                                       source = ToolWindowEventSource.HideSideWindowsAction)
     }
   }
 
@@ -28,13 +33,12 @@ internal class HideSideWindowsAction : AnAction(), DumbAware {
     }
 
     val toolWindowManager = ToolWindowManager.getInstance(project)
-    var id = toolWindowManager.activeToolWindowId
-    if (id != null) {
-      presentation.isEnabled = true
-      return
+    if (toolWindowManager.activeToolWindowId == null) {
+      val window = toolWindowManager.getToolWindow(toolWindowManager.lastActiveToolWindowId ?: return)
+      presentation.isEnabled = window != null && HideToolWindowAction.shouldBeHiddenByShortCut(window)
     }
-
-    id = toolWindowManager.lastActiveToolWindowId
-    presentation.isEnabled = id != null && HideToolWindowAction.shouldBeHiddenByShortCut(toolWindowManager, id)
+    else {
+      presentation.isEnabled = true
+    }
   }
 }

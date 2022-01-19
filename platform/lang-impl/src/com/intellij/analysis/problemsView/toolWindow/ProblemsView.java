@@ -47,7 +47,7 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
       toolWindowManager.activateToolWindow(window.getId(), null, true, ToolWindowEventSource.InspectionsWidget);
     }
     else if (file.equals(panel.getCurrentFile())) {
-      toolWindowManager.hideToolWindow(window.getId(), false, true, ToolWindowEventSource.InspectionsWidget);
+      toolWindowManager.hideToolWindow(window.getId(), false, true, false, ToolWindowEventSource.InspectionsWidget);
     }
     else {
       panel.setCurrentFile(file);

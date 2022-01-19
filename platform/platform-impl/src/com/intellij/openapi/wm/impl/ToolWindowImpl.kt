@@ -167,7 +167,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     decorator.addComponentListener(object : ComponentAdapter() {
       private val alarm = SingleAlarm(Runnable {
         toolWindowManager.resized(decorator)
-        windowInfo = toolWindowManager.layout.getInfo(getId()) as WindowInfo
+        windowInfo = toolWindowManager.getLayout().getInfo(getId()) as WindowInfo
       }, 100, disposable)
 
       override fun componentResized(e: ComponentEvent) {
@@ -186,6 +186,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
 
     return contentManager
+  }
+
+  internal fun applyWindowInfoOnOrderChange(info: WindowInfo) {
+    windowInfo = info
   }
 
   internal fun applyWindowInfo(info: WindowInfo) {
@@ -273,14 +277,6 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   override fun getAnchor() = windowInfo.anchor
 
-  override fun getLargeStripeAnchor() = windowInfo.largeStripeAnchor
-
-  fun setLargeStripeAnchor(anchor: ToolWindowAnchor, order: Int) {
-    toolWindowManager.setLargeStripeAnchor(id, anchor, order)
-  }
-
-  override fun isVisibleOnLargeStripe() = windowInfo.isVisibleOnLargeStripe
-
   override fun setAnchor(anchor: ToolWindowAnchor, runnable: Runnable?) {
     EDT.assertIsEdt()
     toolWindowManager.setToolWindowAnchor(id, anchor)
@@ -352,16 +348,18 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   override fun setAvailable(value: Boolean) {
+    if (isAvailable == value) {
+      return
+    }
+
     EDT.assertIsEdt()
 
-    if (isAvailable != value) {
-      isAvailable = value
-      if (!value) {
-        toolWindowManager.hideToolWindow(id, hideSide = false)
-        contentUi?.dropCaches()
-      }
-      toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.AVAILABLE)
+    isAvailable = value
+    if (!value) {
+      toolWindowManager.hideToolWindow(id, hideSide = false)
+      contentUi?.dropCaches()
     }
+    toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.AVAILABLE)
   }
 
   override fun setAvailable(value: Boolean, runnable: Runnable?) {
@@ -431,13 +429,11 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   internal fun doSetIcon(newIcon: Icon) {
     val oldIcon = icon
-    if (EventLog.LOG_TOOL_WINDOW_ID != id) {
-      if (oldIcon !== newIcon &&
-          newIcon !is LayeredIcon &&
-          !ExperimentalUI.isNewUI() &&
-          (abs(newIcon.iconHeight - JBUIScale.scale(13f)) >= 1 || abs(newIcon.iconWidth - JBUIScale.scale(13f)) >= 1)) {
-        LOG.warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  $id) or icon $newIcon")
-      }
+    if (EventLog.LOG_TOOL_WINDOW_ID != id && oldIcon !== newIcon &&
+        newIcon !is LayeredIcon &&
+        !ExperimentalUI.isNewUI() &&
+        (abs(newIcon.iconHeight - JBUIScale.scale(13f)) >= 1 || abs(newIcon.iconWidth - JBUIScale.scale(13f)) >= 1)) {
+      LOG.warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  $id) or icon $newIcon")
     }
     icon = ToolWindowIcon(newIcon, id)
   }
@@ -459,20 +455,16 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
   }
 
-  fun fireActivated() {
-    fireActivated(null)
-  }
-
-  fun fireActivated(source: ToolWindowEventSource?) {
+  fun fireActivated(source: ToolWindowEventSource) {
     toolWindowManager.activated(this, source)
   }
 
   fun fireHidden(source: ToolWindowEventSource?) {
-    toolWindowManager.hideToolWindow(id, false, true, source)
+    toolWindowManager.hideToolWindow(id = id, hideSide = false, moveFocus = true, source = source)
   }
 
   fun fireHiddenSide(source: ToolWindowEventSource?) {
-    toolWindowManager.hideToolWindow(id, true, true, source)
+    toolWindowManager.hideToolWindow(id = id, hideSide = true, moveFocus = true, source = source)
   }
 
   override fun setDefaultState(anchor: ToolWindowAnchor?, type: ToolWindowType?, floatingBounds: Rectangle?) {
@@ -617,7 +609,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       addAction(toggleToolbarGroup).setAsSecondary(true)
       add(ActionManager.getInstance().getAction("TW.ViewModeGroup"))
       if (ExperimentalUI.isNewToolWindowsStripes()) {
-        add(SquareStripeButton.createMoveGroup(project, null, toolWindow))
+        add(SquareStripeButton.createMoveGroup(toolWindow))
       }
       else {
         add(ToolWindowMoveAction.Group())
@@ -664,8 +656,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     override fun isDumbAware() = true
   }
 
-  private inner class RemoveStripeButtonAction : AnAction(ActionsBundle.message("action.RemoveStripeButton.text"),
-                                                          ActionsBundle.message("action.RemoveStripeButton.description"), null), DumbAware, FusAwareAction {
+  private inner class RemoveStripeButtonAction :
+    AnAction(ActionsBundle.message("action.RemoveStripeButton.text"),
+             ActionsBundle.message("action.RemoveStripeButton.description"),
+             null), DumbAware, FusAwareAction {
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = isShowStripeButton
     }

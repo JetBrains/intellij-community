@@ -10,12 +10,18 @@ import javax.swing.JComponent
 
 internal class ToolwindowRightToolbar : ToolwindowToolbar() {
   val topPane = object : AbstractDroppableStripe(VerticalFlowLayout(0, 0)) {
-    override fun getAnchor(): ToolWindowAnchor = ToolWindowAnchor.RIGHT
+    override val isNewStripes: Boolean
+      get() = true
+    override val anchor: ToolWindowAnchor
+      get() = ToolWindowAnchor.RIGHT
 
-    override fun tryDroppingOnGap(data: LayoutData, gap: Int, insertOrder: Int) =
-      tryDroppingOnGap(data, gap, myDropRectangle) { layoutDragButton(data, gap) }
+    override fun getToolWindowFor(component: JComponent) = (component as SquareStripeButton).toolWindow
 
-    override fun getButtonFor(toolWindowId: String): JComponent? = this@ToolwindowRightToolbar.getButtonFor(toolWindowId)
+    override fun tryDroppingOnGap(data: LayoutData, gap: Int, insertOrder: Int) {
+      tryDroppingOnGap(data, gap, dropRectangle) { layoutDragButton(data, gap) }
+    }
+
+    override fun getButtonFor(toolWindowId: String) = this@ToolwindowRightToolbar.getButtonFor(toolWindowId)
   }
 
   init {
@@ -32,17 +38,17 @@ internal class ToolwindowRightToolbar : ToolwindowToolbar() {
   }
 
   override fun getStripeFor(screenPoint: Point): AbstractDroppableStripe? {
-    return if (isVisible) {
-      val toolBarRect = Rectangle(topPane.locationOnScreen, topPane.size).also {
-        if (it.width == 0) {
-          it.width = SHADOW_WIDTH
-          it.x -= SHADOW_WIDTH
-        }
-      }
-
-      if (toolBarRect.contains(screenPoint)) topPane else null
+    if (!isVisible) {
+      return null
     }
-    else null
+
+    val toolBarRect = Rectangle(topPane.locationOnScreen, topPane.size).also {
+      if (it.width == 0) {
+        it.width = SHADOW_WIDTH
+        it.x -= SHADOW_WIDTH
+      }
+    }
+    return if (toolBarRect.contains(screenPoint)) topPane else null
   }
 
   override fun reset() {
@@ -50,9 +56,7 @@ internal class ToolwindowRightToolbar : ToolwindowToolbar() {
     topPane.revalidate()
   }
 
-  override fun getButtonFor(toolWindowId: String): SquareStripeButton? {
-    return topPane.components.filterIsInstance(SquareStripeButton::class.java).find {it.button.id == toolWindowId}
-  }
+  override fun getButtonFor(toolWindowId: String): StripeButtonManager? = topPane.getButtons().find { it.id == toolWindowId }
 
   companion object {
     val SHADOW_WIDTH = JBUI.scale(40)

@@ -1,9 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl;
+package com.intellij.toolWindow;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.usageView.impl.UsageViewContentManagerImpl;
 
 import java.util.Arrays;
@@ -39,10 +40,10 @@ public class HiddenSidebarButtonTest extends ToolWindowManagerTestCase {
     new UsageViewContentManagerImpl(manager.getProject(), manager);
 
     for (int i = 0; i < toolWindows.length; i++) {
-      assertTrue(manager.isToolWindowRegistered(toolWindows[i]));
-      assertEquals(expectedStripes[i], layout.getInfo(toolWindows[i]).isShowStripeButton());
-      StripeButton button = manager.getStripeButton(toolWindows[i]);
-      assertEquals(expectedVisibility[i], button != null && button.isVisible());
+      String toolWindow = toolWindows[i];
+      assertTrue(manager.isToolWindowRegistered(toolWindow));
+      assertEquals(expectedStripes[i], layout.getInfo(toolWindow).isShowStripeButton());
+      TestHelperKt.testStripeButton(toolWindow, manager, expectedVisibility[i]);
     }
   }
 }

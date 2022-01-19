@@ -38,6 +38,12 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     myProject = project;
   }
 
+  @NotNull
+  @Override
+  public List<ToolWindow> getToolWindows() {
+    return List.copyOf(myToolWindows.values());
+  }
+
   @Override
   public boolean canShowNotification(@NotNull String toolWindowId) {
     return false;
@@ -208,17 +214,12 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public boolean isVisibleOnLargeStripe() {
-      return false;
-    }
-
-    @Override
     public void setShowStripeButton(boolean show) {
     }
 
     @Override
     public boolean isShowStripeButton() {
-      return false;
+      return true;
     }
 
     @Override
@@ -236,11 +237,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @Override
     public @NotNull ToolWindowAnchor getAnchor() {
-      return ToolWindowAnchor.BOTTOM;
-    }
-
-    @Override
-    public @NotNull ToolWindowAnchor getLargeStripeAnchor() {
       return ToolWindowAnchor.BOTTOM;
     }
 

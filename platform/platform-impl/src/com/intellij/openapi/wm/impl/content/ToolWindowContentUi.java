@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeBundle;
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.*;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.PopupHandler;
@@ -58,8 +59,8 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   public static final DataKey<BaseLabel> SELECTED_CONTENT_TAB_LABEL = DataKey.create("SELECTED_CONTENT_TAB_LABEL");
 
   private final @NotNull ContentManager contentManager;
-  int myDropOverIndex = -1;
-  int myDropOverWidth = 0;
+  int dropOverIndex = -1;
+  int dropOverWidth = 0;
 
   public @NotNull ContentManager getContentManager() {
     return contentManager;
@@ -78,7 +79,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   private final ShowContentAction showContent;
 
   private final TabContentLayout tabsLayout;
-  private ContentLayout myComboLayout;
+  private ContentLayout comboLayout;
 
   private ToolWindowContentUiType type;
 
@@ -118,6 +119,10 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         getCurrentLayout().contentAdded(event);
         event.getContent().addPropertyChangeListener(propertyChangeListener);
         rebuild();
+
+        if (window.isToHideOnEmptyContent()) {
+          window.setAvailable(true);
+        }
       }
 
       @Override
@@ -128,7 +133,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         rebuild();
 
         if (contentManager.isEmpty() && window.isToHideOnEmptyContent()) {
-          window.hide(null);
+          window.getToolWindowManager().hideToolWindow(window.getId(), false, true, true, null);
         }
       }
 
@@ -213,10 +218,10 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       return tabsLayout;
     }
     else {
-      if (myComboLayout == null) {
-        myComboLayout = new ComboContentLayout(this);
+      if (comboLayout == null) {
+        comboLayout = new ComboContentLayout(this);
       }
-      return myComboLayout;
+      return comboLayout;
     }
   }
 
@@ -323,6 +328,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   public static void initMouseListeners(@NotNull JComponent c, @NotNull ToolWindowContentUi ui, boolean allowResize) {
     initMouseListeners(c, ui, allowResize, false);
   }
+
   public static void initMouseListeners(@NotNull JComponent c, @NotNull ToolWindowContentUi ui, boolean allowResize, boolean allowDrag) {
     if (c.getClientProperty(TOOLWINDOW_UI_INSTALLED) != null) {
       return;
@@ -516,8 +522,8 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     group.add(closeAllAction);
     group.add(new TabbedContentAction.CloseAllButThisAction(content));
     group.addSeparator();
-    if (Registry.is("ide.allow.split.and.reorder.in.tool.window", false)
-        && UIUtil.isClientPropertyTrue(window.getComponent(), ALLOW_DND_FOR_TABS)) {
+    Component component = window.getComponent();
+    if (Registry.is("ide.allow.split.and.reorder.in.tool.window", false) && ClientProperty.isTrue(component, ALLOW_DND_FOR_TABS)) {
       group.add(splitRightTabAction);
       group.add(splitDownTabAction);
       group.add(unsplitTabAction);
@@ -703,9 +709,9 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   }
 
   public void setDropInfoIndex(int dropIndex, int dropWidth) {
-    if (dropIndex != myDropOverIndex || dropWidth != myDropOverWidth) {
-      myDropOverIndex = dropIndex;
-      myDropOverWidth = dropWidth;
+    if (dropIndex != dropOverIndex || dropWidth != dropOverWidth) {
+      dropOverIndex = dropIndex;
+      dropOverWidth = dropWidth;
       dropCaches();
       rebuild();
     }

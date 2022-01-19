@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.execution.ui
 
 import com.intellij.execution.ExecutionBundle
@@ -14,7 +16,6 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.ui.layout.impl.DockableGridContainerFactory
-import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
@@ -139,18 +140,23 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     }
 
     toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask(
-      id = toolWindowId, icon = executor.toolWindowIcon, stripeTitle = executor::getActionName))
+      id = toolWindowId,
+      icon = executor.toolWindowIcon,
+      stripeTitle = executor::getActionName
+    ))
+    toolWindow.setToHideOnEmptyContent(true)
     if (DefaultRunExecutor.EXECUTOR_ID == executor.id) {
-      UIUtil.putClientProperty(toolWindow.component, ToolWindowContentUi.ALLOW_DND_FOR_TABS, true)
+      toolWindow.component.putClientProperty(ToolWindowContentUi.ALLOW_DND_FOR_TABS, true)
     }
     val contentManager = toolWindow.contentManager
     contentManager.addDataProvider(object : DataProvider {
       override fun getData(dataId: String): Any? {
-        if (PlatformCoreDataKeys.HELP_ID.`is`(dataId)) return executor.helpId
+        if (PlatformCoreDataKeys.HELP_ID.`is`(dataId)) {
+          return executor.helpId
+        }
         return null
       }
     })
-    ContentManagerWatcher.watchContentManager(toolWindow, contentManager)
     initToolWindow(executor, toolWindowId, executor.toolWindowIcon, contentManager)
     return contentManager
   }

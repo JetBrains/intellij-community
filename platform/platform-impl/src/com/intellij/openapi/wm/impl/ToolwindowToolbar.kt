@@ -28,16 +28,12 @@ internal abstract class ToolwindowToolbar : JPanel() {
 
   abstract fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe
 
-  abstract fun getButtonFor(toolWindowId: String): SquareStripeButton?
+  abstract fun getButtonFor(toolWindowId: String): StripeButtonManager?
 
   abstract fun getStripeFor(screenPoint: Point): AbstractDroppableStripe?
 
   fun removeStripeButton(toolWindow: ToolWindow, anchor: ToolWindowAnchor) {
     remove(getStripeFor(anchor), toolWindow)
-  }
-
-  fun addStripeButton(toolWindow: ToolWindowImpl) {
-    rebuildStripe(getStripeFor(toolWindow.windowInfo.largeStripeAnchor), toolWindow)
   }
 
   abstract fun reset()
@@ -49,29 +45,8 @@ internal abstract class ToolwindowToolbar : JPanel() {
 
   fun stopDrag() = startDrag()
 
-  private fun rebuildStripe(panel: AbstractDroppableStripe, toolWindow: ToolWindowImpl) {
-    // temporary add new button
-    if (panel.buttons.asSequence().filterIsInstance(SquareStripeButton::class.java).find { it.button.id == toolWindow.id } == null) {
-      panel.add(SquareStripeButton(toolWindow.project, StripeButton(toolWindow).also(StripeButton::updatePresentation)))
-    }
-
-    val sortedSquareButtons = panel.components.asSequence()
-      .filterIsInstance(SquareStripeButton::class.java)
-      .map { it.button.toolWindow }
-      .sortedWith(Comparator.comparingInt<ToolWindow> { (it as? ToolWindowImpl)?.windowInfo?.orderOnLargeStripe ?: -1 })
-      .toList()
-    panel.removeAll()
-    panel.buttons.clear()
-    sortedSquareButtons.forEach {
-      val button = SquareStripeButton(toolWindow.project, StripeButton(it).also(StripeButton::updatePresentation))
-      panel.add(button)
-      panel.buttons.add(button)
-    }
-  }
-
   protected fun tryDroppingOnGap(data: LayoutData, gap: Int, dropRectangle: Rectangle, doLayout: () -> Unit) {
     val sideDistance = data.eachY + gap - dropRectangle.y + dropRectangle.height
-
     if (sideDistance > 0) {
       data.dragInsertPosition = -1
       data.dragToSide = false
@@ -88,9 +63,8 @@ internal abstract class ToolwindowToolbar : JPanel() {
     }
 
     fun remove(panel: AbstractDroppableStripe, toolWindow: ToolWindow) {
-      val component = panel.components.firstOrNull { it is SquareStripeButton && it.button.id == toolWindow.id } ?: return
+      val component = panel.components.firstOrNull { it is SquareStripeButton && it.toolWindow.id == toolWindow.id } ?: return
       panel.remove(component)
-      panel.buttons.remove(component)
       panel.revalidate()
       panel.repaint()
     }

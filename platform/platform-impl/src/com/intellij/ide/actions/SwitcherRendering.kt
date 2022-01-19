@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle.message
@@ -105,7 +105,7 @@ internal class SwitcherToolWindow(val window: ToolWindow, shortcut: Boolean) : S
 
   override fun close(switcher: Switcher.SwitcherPanel) {
     val manager = ToolWindowManager.getInstance(switcher.project) as? ToolWindowManagerImpl
-    manager?.hideToolWindow(window.id, false, false, ToolWindowEventSource.CloseFromSwitcher) ?: window.hide()
+    manager?.hideToolWindow(id = window.id, hideSide = false, moveFocus = false, source = ToolWindowEventSource.CloseFromSwitcher) ?: window.hide()
   }
 
   override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean) {

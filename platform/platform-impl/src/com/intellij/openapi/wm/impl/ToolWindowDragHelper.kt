@@ -6,6 +6,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowAnchor.*
 import com.intellij.openapi.wm.ToolWindowType
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.ScreenUtil
@@ -30,7 +31,7 @@ import javax.swing.JDialog
 import javax.swing.JLabel
 import javax.swing.SwingUtilities
 
-fun Dimension.isNotEmpty():Boolean = width > 0 && height > 0
+private fun Dimension.isNotEmpty(): Boolean = width > 0 && height > 0
 
 internal fun Component.createDragImage(): BufferedImage? {
   val initialBounds = bounds
@@ -54,11 +55,15 @@ internal fun Component.createDragImage(): BufferedImage? {
       else -> JBUI.emptySize()
     }
 
-    if (areaSize.isNotEmpty())
-      UIUtil.createImage(this, areaSize.width, areaSize.height, BufferedImage.TYPE_INT_RGB).also { image->
+    if (areaSize.isNotEmpty()) {
+      ImageUtil.createImage(graphicsConfiguration, areaSize.width, areaSize.height, BufferedImage.TYPE_INT_RGB).also { image ->
         val graphics = image.graphics
-        graphics.color = if (ExperimentalUI.isNewToolWindowsStripes()) JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_FLOATING_BACKGROUND
-        else UIUtil.getBgFillColor(parent)
+        graphics.color = if (ExperimentalUI.isNewToolWindowsStripes()) {
+          JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_FLOATING_BACKGROUND
+        }
+        else {
+          UIUtil.getBgFillColor(parent)
+        }
 
         graphics.fillRect(0, 0, areaSize.width, areaSize.height)
 
@@ -69,7 +74,10 @@ internal fun Component.createDragImage(): BufferedImage? {
 
         graphics.dispose()
       }
-    else null
+    }
+    else {
+      null
+    }
   }
   finally {
     bounds = initialBounds
@@ -80,7 +88,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
                                     val pane: @NotNull ToolWindowsPane) : MouseDragHelper<ToolWindowsPane>(parent, pane) {
   private var toolWindowRef : WeakReference<ToolWindowImpl?>? = null
   private var myInitialAnchor : ToolWindowAnchor? = null
-  private var myInitialButton : Component? = null
+  private var initialButton : Component? = null
   private var myInitialSize = Dimension()
   private var myLastStripe : AbstractDroppableStripe? = null
 
@@ -126,7 +134,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
   }
 
   private fun isDragOut(dragToScreenPoint: Point): Boolean {
-    if (ExperimentalUI.isNewToolWindowsStripes()) {
+    if (pane.buttonManager.isNewUi) {
       return getStripe(dragToScreenPoint) == null
     }
     else {
@@ -158,7 +166,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
 
     return when (clickedComponent) {
       is StripeButton -> clickedComponent.toolWindow
-      is SquareStripeButton -> clickedComponent.button.toolWindow
+      is SquareStripeButton -> clickedComponent.toolWindow
       else -> null
     }
   }
@@ -172,12 +180,12 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
     val component = getComponentAtPoint(relativePoint)
     val decorator = if (toolWindow.isVisible) toolWindow.decorator else null
     toolWindowRef = WeakReference(toolWindow)
-    if (ExperimentalUI.isNewToolWindowsStripes()) {
-      myInitialAnchor = toolWindow.largeStripeAnchor
+    if (pane.buttonManager.isNewUi) {
+      myInitialAnchor = toolWindow.anchor
       myLastStripe = component?.let { c ->
         val parent = c.parent
         if (c.isShowing && parent is AbstractDroppableStripe) {
-          myInitialButton = c
+          initialButton = c
           myInitialSize = toolWindow.windowInfo.floatingBounds?.size ?: JBUI.size(500, 400)
           parent
         }
@@ -186,15 +194,15 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
     }
     else {
       myInitialAnchor = toolWindow.anchor
-      myLastStripe = pane.getStripeFor(toolWindow.anchor).also {
-        myInitialButton = if (it is Stripe && it.isShowing) it.getButtonFor(toolWindow.id) else component
+      myLastStripe = pane.buttonManager.getStripeFor(toolWindow.anchor).also {
+        initialButton = if (it is Stripe && it.isShowing) it.getButtonFor(toolWindow.id)?.getComponent() else component
       }
 
       myInitialSize = toolWindow.getBoundsOnScreen(toolWindow.anchor, relativePoint.screenPoint).size
     }
 
     val dragOutImage = if (decorator != null && !decorator.bounds.isEmpty) createDragImage(decorator) else null
-    val dragImage = myInitialButton?.createDragImage() ?: dragOutImage
+    val dragImage = initialButton?.createDragImage() ?: dragOutImage
     mySourceIsHeader = true
 
     if (component is StripeButton || component is SquareStripeButton) {
@@ -229,7 +237,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
     }
 
     val screenPoint = event.locationOnScreen
-    val initialStripe = pane.getStripeFor(myInitialAnchor!!)
+    val initialStripe = pane.buttonManager.getStripeFor(myInitialAnchor!!)
     if (pane.getStripeFor(screenPoint, initialStripe) == null &&
         toolWindow.getBoundsOnScreen(myInitialAnchor!!, screenPoint).contains(screenPoint)) {
       cancelDragging()
@@ -243,7 +251,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
     else {
       toolWindow.toolWindowManager.setToolWindowType(toolWindow.id, ToolWindowType.FLOATING)
       toolWindow.toolWindowManager.activateToolWindow(toolWindow.id, Runnable {
-        val w = UIUtil.getWindow(toolWindow.component)
+        val w = ComponentUtil.getWindow(toolWindow.component)
         if (w is JDialog) {
           val locationOnScreen = event.locationOnScreen
           if (mySourceIsHeader) {
@@ -262,9 +270,12 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
         }
       }, true, null)
 
-      if (ExperimentalUI.isNewToolWindowsStripes()) {
-        val info = toolWindow.toolWindowManager.layout.getInfo(toolWindow.id)
-        toolWindow.toolWindowManager.setLargeStripeAnchor(toolWindow.id, initialStripe.getAnchor(), info?.orderOnLargeStripe ?: -1, true)
+      if (pane.buttonManager.isNewUi) {
+        val info = toolWindow.toolWindowManager.getLayout().getInfo(toolWindow.id)
+        toolWindow.toolWindowManager.setSideToolAndAnchor(id = toolWindow.id,
+                                                          anchor = initialStripe.anchor,
+                                                          order = info?.order ?: -1,
+                                                          isSplit = false)
       }
     }
   }
@@ -307,7 +318,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
       myLastStripe!!.resetDrop()
       myLastStripe = null
     }
-    myInitialButton = null
+    initialButton = null
   }
 
   override fun processDrag(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point) {
@@ -330,7 +341,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
 
   private fun startDrag(event: MouseEvent) {
     relocate(event)
-    myInitialButton?.isVisible = false
+    initialButton?.isVisible = false
     myDialog?.isVisible = true
     with(pane.rootPane.glassPane as JComponent) {
       add(myHighlighter)
@@ -340,54 +351,55 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
     pane.startDrag()
   }
 
-  private fun ToolWindowImpl.getBoundsOnScreen(anchor: ToolWindowAnchor, screenPoint : Point) =
-    if (!ExperimentalUI.isNewToolWindowsStripes()){
-      val location = pane.locationOnScreen
-      var width = pane.width
-      var height = pane.height
-
-      location.x += getStripeWidth(LEFT)
-      location.y += getStripeHeight(TOP)
-      width -= getStripeWidth(LEFT) + getStripeWidth(RIGHT)
-      height -= getStripeHeight(TOP) + getStripeHeight(BOTTOM)
-
-      val trueStripe = pane.getStripeFor(screenPoint, pane.getStripeFor(myInitialAnchor!!))
-      if (anchor === myInitialAnchor  && trueStripe == null && isVisible) {
-        if (anchor.isHorizontal) height = (pane.rootPane.height * windowInfo.weight).toInt()
-        else width = (pane.rootPane.width * windowInfo.weight).toInt()
-      }
-      else {
-        if (anchor.isHorizontal) height = Stripe.DROP_DISTANCE_SENSITIVITY
-        else width = Stripe.DROP_DISTANCE_SENSITIVITY
-      }
-
-      when (anchor) {
-        BOTTOM -> {
-          location.y = pane.locationOnScreen.y + pane.height - height - getStripeHeight(BOTTOM)
-        }
-        RIGHT -> {
-          location.x = pane.locationOnScreen.x + pane.width - width - getStripeWidth(RIGHT)
-        }
-      }
-      Rectangle(location.x, location.y, width, height)
+  private fun ToolWindowImpl.getBoundsOnScreen(anchor: ToolWindowAnchor, screenPoint: Point): Rectangle {
+    if (pane.buttonManager.isNewUi) {
+      return Rectangle()
     }
-    else Rectangle()
+
+    val location = pane.locationOnScreen
+    var width = pane.width
+    var height = pane.height
+
+    location.x += getStripeWidth(LEFT)
+    location.y += getStripeHeight(TOP)
+    width -= getStripeWidth(LEFT) + getStripeWidth(RIGHT)
+    height -= getStripeHeight(TOP) + getStripeHeight(BOTTOM)
+
+    val trueStripe = pane.getStripeFor(screenPoint, pane.buttonManager.getStripeFor(myInitialAnchor!!))
+    if (anchor === myInitialAnchor && trueStripe == null && isVisible) {
+      if (anchor.isHorizontal) height = (pane.rootPane.height * windowInfo.weight).toInt()
+      else width = (pane.rootPane.width * windowInfo.weight).toInt()
+    }
+    else {
+      if (anchor.isHorizontal) height = Stripe.DROP_DISTANCE_SENSITIVITY
+      else width = Stripe.DROP_DISTANCE_SENSITIVITY
+    }
+
+    when (anchor) {
+      BOTTOM -> {
+        location.y = pane.locationOnScreen.y + pane.height - height - getStripeHeight(BOTTOM)
+      }
+      RIGHT -> {
+        location.x = pane.locationOnScreen.x + pane.width - width - getStripeWidth(RIGHT)
+      }
+    }
+    return Rectangle(location.x, location.y, width, height)
+  }
 
 
   private fun getStripeWidth(anchor: ToolWindowAnchor): Int {
-    with(pane.getStripeFor(anchor)) {
-      return if (isVisible && isShowing) width else 0
-    }
+    val stripe = pane.buttonManager.getStripeFor(anchor)
+    return if (stripe.isVisible && stripe.isShowing) stripe.width else 0
   }
 
   private fun getStripeHeight(anchor: ToolWindowAnchor): Int {
-    with(pane.getStripeFor(anchor)) {
-      return if (isVisible && isShowing) height else 0
-    }
+    val stripe = pane.buttonManager.getStripeFor(anchor)
+    return if (stripe.isVisible && stripe.isShowing) stripe.height else 0
   }
 
-  private fun getStripeButton(window: ToolWindowImpl?): JComponent? =
-    window?.let{ pane.getStripeFor(it.anchor).getButtonFor(it.id) }
+  private fun getStripeButton(window: ToolWindowImpl?): JComponent? {
+    return window?.let { pane.buttonManager.getStripeFor(it.anchor).getButtonFor(it.id)?.getComponent() }
+  }
 
   private fun relocate(event: MouseEvent) {
     val screenPoint = event.locationOnScreen
@@ -403,7 +415,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
     myLastStripe?.let { if (it != stripe) it.resetDrop() }
 
     myHighlighter.isVisible = stripe != null
-    if (stripe != null && myInitialButton != null) {
+    if (stripe != null && initialButton != null) {
       //if (myLastStripe != stripe) {//attempt to rotate thumb image on fly to show actual button view if user drops it right here
       //  val button = object : StripeButton(pane, toolWindow) {
       //    override fun getAnchor(): ToolWindowAnchor {
@@ -420,23 +432,24 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
       //  dialog.updateIcon(image)
       //  stripe.remove(button)
       //}
-      stripe.processDropButton(myInitialButton as JComponent, dialog.contentPane as JComponent, screenPoint)
-      if (!ExperimentalUI.isNewToolWindowsStripes()) {
+      stripe.processDropButton(initialButton as JComponent, dialog.contentPane as JComponent, screenPoint)
+      if (!pane.buttonManager.isNewUi) {
         SwingUtilities.invokeLater(Runnable {
           if (myInitialAnchor == null) return@Runnable
-          val bounds = toolWindow.getBoundsOnScreen(stripe.getAnchor(), screenPoint)
+          val bounds = toolWindow.getBoundsOnScreen(stripe.anchor, screenPoint)
           val p = bounds.location
           SwingUtilities.convertPointFromScreen(p, pane.rootPane.layeredPane)
           bounds.location = p
           val dropToSide = stripe.getDropToSide()
           if (dropToSide != null) {
-            val half = if (stripe.getAnchor().isHorizontal) bounds.width / 2 else bounds.height / 2
-            if (!stripe.getAnchor().isHorizontal) {
+            val half = if (stripe.anchor.isHorizontal) bounds.width / 2 else bounds.height / 2
+            if (!stripe.anchor.isHorizontal) {
               bounds.height -= half
               if (dropToSide) {
                 bounds.y += half
               }
-            } else {
+            }
+            else {
               bounds.width -= half
               if (dropToSide) {
                 bounds.x += half
@@ -452,11 +465,11 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
 
   private fun getStripe(screenPoint: Point): AbstractDroppableStripe? {
     val stripe = myInitialAnchor?.let { anchor ->
-      val preferred = pane.getStripeFor(anchor)
+      val preferred = pane.buttonManager.getStripeFor(anchor)
       pane.getStripeFor(screenPoint, preferred) ?:
       if (getToolWindow()!!.getBoundsOnScreen(anchor, screenPoint).contains(screenPoint)) preferred else null
     }
-    return if (stripe?.getAnchor() == TOP) null else stripe
+    return if (stripe?.anchor == TOP) null else stripe
   }
 
   private fun setDragOut(dragOut: Boolean) {

@@ -11,7 +11,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.LinePainter2D;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -24,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.util.Comparator;
 
 /**
  * @author Eugene Belyaev
@@ -45,14 +43,27 @@ final class Stripe extends AbstractDroppableStripe implements UISettingsListener
     setBorder(new AdaptiveBorder());
   }
 
-  public boolean isEmpty() {
-    return getButtons().isEmpty();
+  @Override
+  protected boolean isNewStripes() {
+    return false;
+  }
+
+  @Override
+  public @NotNull Dimension getPreferredSize() {
+    if (computedPreferredSize == null) {
+      computedPreferredSize = getButtons().isEmpty() ? JBUI.emptySize() : recomputeBounds(false, null, false).size;
+    }
+    return computedPreferredSize;
+  }
+
+  @Override
+  protected ToolWindowImpl getToolWindowFor(@NotNull JComponent component) {
+    return ((StripeButton)component).getToolWindow$intellij_platform_ide_impl();
   }
 
   @Override
   public void reset() {
     super.reset();
-    getButtons().clear();
     removeAll();
     revalidate();
   }
@@ -134,20 +145,6 @@ final class Stripe extends AbstractDroppableStripe implements UISettingsListener
     }
   }
 
-  void addButton(@NotNull StripeButton button, @NotNull Comparator<? super JComponent> comparator) {
-    setMyPreferredSize(null);
-    getButtons().add(button);
-    getButtons().sort(comparator);
-    add(button);
-  }
-
-  void removeButton(@NotNull StripeButton button) {
-    setMyPreferredSize(null);
-    getButtons().remove(button);
-    remove(button);
-    revalidate();
-  }
-
   @Override
   public @NotNull ToolWindowAnchor getAnchor() {
     return ToolWindowAnchor.get(anchor);
@@ -163,10 +160,14 @@ final class Stripe extends AbstractDroppableStripe implements UISettingsListener
     repaint();
   }
 
-  @Nullable
   @Override
-  public JComponent getButtonFor(@NotNull String toolWindowId) {
-    return ContainerUtil.find(getButtons(), c -> ((StripeButton)c).getId().equals(toolWindowId));
+  public @Nullable StripeButtonManager getButtonFor(@NotNull String toolWindowId) {
+    for (StripeButtonManager it : getButtons()) {
+      if (it.getId().equals(toolWindowId)) {
+        return it;
+      }
+    }
+    return null;
   }
 
   public void setOverlaid(boolean overlaid) {
@@ -189,7 +190,9 @@ final class Stripe extends AbstractDroppableStripe implements UISettingsListener
   }
 
   void updatePresentation() {
-    getButtons().forEach(c -> ((StripeButton)c).updatePresentation());
+    for (StripeButtonManager it : getButtons()) {
+      it.updatePresentation();
+    }
   }
 
   @Override

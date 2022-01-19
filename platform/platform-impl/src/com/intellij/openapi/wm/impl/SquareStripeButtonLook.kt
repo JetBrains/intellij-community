@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.actionSystem.ActionButtonComponent
@@ -21,9 +21,11 @@ import javax.swing.UIManager
 /**
  * @author Konstantin Bulenkov
  */
-class SquareStripeButtonLook(val button: ActionButton) : IdeaActionButtonLook() {
+internal class SquareStripeButtonLook(private val button: ActionButton) : IdeaActionButtonLook() {
   override fun paintBackground(g: Graphics, component: JComponent, state: Int) {
-    if (state == ActionButtonComponent.NORMAL && !component.isBackgroundSet) return
+    if (state == ActionButtonComponent.NORMAL && !component.isBackgroundSet) {
+      return
+    }
     val rect = Rectangle(component.size).also {
       JBInsets.removeFrom(it, component.insets)
       JBInsets.removeFrom(it, ICON_PADDING)
@@ -35,7 +37,9 @@ class SquareStripeButtonLook(val button: ActionButton) : IdeaActionButtonLook() 
 
   override fun paintBorder(g: Graphics, component: JComponent, state: Int) {
     if (button is SquareStripeButton && button.isFocused() ||
-        state == ActionButtonComponent.NORMAL && !component.isBackgroundSet) return
+        state == ActionButtonComponent.NORMAL && !component.isBackgroundSet) {
+      return
+    }
 
     val rect = Rectangle(component.size).also {
       JBInsets.removeFrom(it, component.insets)
@@ -64,7 +68,7 @@ class SquareStripeButtonLook(val button: ActionButton) : IdeaActionButtonLook() 
                                            "#6e6e6e" to fg,
                                            "#afb1b3" to fg)
       val alpha: MutableMap<String, Int> = HashMap(map.size)
-      map.forEach { (key: String?, value: String) -> alpha[value] = 255 }
+      map.values.forEach { alpha[it] = 255 }
       SVGLoader.setContextColorPatcher(object : SvgElementColorPatcherProvider {
         override fun forPath(path: String?): SvgElementColorPatcher? {
           return SVGLoader.newPatcher(null, map, alpha)

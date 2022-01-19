@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -33,7 +33,6 @@ import com.intellij.util.animation.AlphaAnimated;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -67,7 +66,7 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
     }
   }
 
-  private final ToolWindowContentUi myContentUi;
+  private final ToolWindowContentUi contentUi;
   private final JComponent myDecoratorChild;
   private Mode myMode = null;
   private boolean isSplitUnsplitInProgress;
@@ -79,7 +78,7 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
 
   private final JPanel dividerAndHeader = new JPanel(new BorderLayout());
 
-  private Disposable disposable;
+  private CheckedDisposable disposable;
 
   /**
    * Catches all event from tool window and modifies decorator's appearance.
@@ -93,7 +92,7 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
   private Splitter mySplitter;
 
   InternalDecoratorImpl(@NotNull ToolWindowImpl toolWindow, @NotNull ToolWindowContentUi contentUi, @NotNull JComponent decoratorChild) {
-    myContentUi = contentUi;
+    this.contentUi = contentUi;
     myDecoratorChild = decoratorChild;
     this.toolWindow = toolWindow;
 
@@ -104,13 +103,13 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
     header = new ToolWindowHeader(toolWindow, contentUi, () -> toolWindow.createPopupGroup(true)) {
       @Override
       protected boolean isActive() {
-        return toolWindow.isActive() && Boolean.TRUE != UIUtil.getClientProperty(InternalDecoratorImpl.this, INACTIVE_LOOK)
-          && !ExperimentalUI.isNewToolWindowsStripes();
+        return toolWindow.isActive() && Boolean.TRUE != ClientProperty.get(InternalDecoratorImpl.this, INACTIVE_LOOK) &&
+               !ExperimentalUI.isNewToolWindowsStripes();
       }
 
       @Override
       protected void hideToolWindow() {
-        toolWindow.getToolWindowManager().hideToolWindow(toolWindow.getId(), false, true, ToolWindowEventSource.HideButton);
+        toolWindow.getToolWindowManager().hideToolWindow(toolWindow.getId(), false, true, false, ToolWindowEventSource.HideButton);
       }
     };
 
@@ -318,6 +317,7 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
     isSplitUnsplitInProgress = inProgress;
   }
 
+  @Override
   public boolean isSplitUnsplitInProgress() {
     return isSplitUnsplitInProgress;
   }
@@ -332,7 +332,7 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
 
   @Override
   public ContentManager getContentManager() {
-    return myContentUi.getContentManager();
+    return contentUi.getContentManager();
   }
 
   @Override
@@ -591,7 +591,7 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
       Disposer.dispose(disposable);
     }
     JPanel divider = this.divider;
-    disposable = Disposer.newDisposable();
+    disposable = Disposer.newCheckedDisposable();
     HOVER_STATE_LISTENER.addTo(this, disposable);
     updateActiveAndHoverState();
     if (divider != null) {
@@ -600,7 +600,7 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
       glassPane.addMouseMotionPreprocessor(listener, disposable);
       glassPane.addMousePreprocessor(listener, disposable);
     }
-    myContentUi.update();
+    contentUi.update();
   }
 
   @Override
@@ -611,39 +611,40 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
       return;
     }
 
-    Disposable disposable = this.disposable;
-    if (disposable != null && !Disposer.isDisposed(disposable)) {
+    CheckedDisposable disposable = this.disposable;
+    if (disposable != null && !disposable.isDisposed()) {
       this.disposable = null;
       Disposer.dispose(disposable);
     }
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void reshape(int x, int y, int w, int h) {
     super.reshape(x, y, w, h);
     InternalDecoratorImpl topLevelDecorator = findTopLevelDecorator(this);
     if (topLevelDecorator == null || !topLevelDecorator.isShowing()) {
       putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, null);
-      UIUtil.putClientProperty(this, HIDE_COMMON_TOOLWINDOW_BUTTONS, null);
-      UIUtil.putClientProperty(this, INACTIVE_LOOK, null);
-    } else {
+      putClientProperty(HIDE_COMMON_TOOLWINDOW_BUTTONS, null);
+      putClientProperty(INACTIVE_LOOK, null);
+    }
+    else {
       Object hideLabel = SwingUtilities.convertPoint(this, x, y, topLevelDecorator).equals(new Point()) ? null : "true";
-      putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL,
-                        hideLabel);
+      putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, hideLabel);
       Point topScreenLocation = topLevelDecorator.getLocationOnScreen();
       topScreenLocation.x += topLevelDecorator.getWidth();
       Point screenLocation = getLocationOnScreen();
       screenLocation.x += w;
       Boolean hideButtons = topScreenLocation.equals(screenLocation) ? null : Boolean.TRUE;
       Boolean hideActivity = topScreenLocation.y == screenLocation.y ? null : Boolean.TRUE;
-      UIUtil.putClientProperty(this, HIDE_COMMON_TOOLWINDOW_BUTTONS, hideButtons);
-      UIUtil.putClientProperty(this, INACTIVE_LOOK, hideActivity);
+      putClientProperty(HIDE_COMMON_TOOLWINDOW_BUTTONS, hideButtons);
+      putClientProperty(INACTIVE_LOOK, hideActivity);
     }
-    myContentUi.update();
+    contentUi.update();
   }
 
   public void setDropInfoIndex(int index, int width) {
-    myContentUi.setDropInfoIndex(index, width);
+    contentUi.setDropInfoIndex(index, width);
   }
 
   public void updateBounds(@NotNull MouseEvent dragEvent) {

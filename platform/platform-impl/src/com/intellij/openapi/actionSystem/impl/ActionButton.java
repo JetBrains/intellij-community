@@ -332,7 +332,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     boolean enabled = isEnabled();
     int popState = getPopState();
     Icon hoveredIcon = (popState == POPPED || popState == PUSHED) ? myPresentation.getHoveredIcon() : null;
-    Icon icon = enabled ? hoveredIcon != null ? hoveredIcon : myIcon : myDisabledIcon;
+    Icon icon = enabled ? (hoveredIcon == null ? myIcon : hoveredIcon) : myDisabledIcon;
     return icon == null ? getFallbackIcon(enabled) : icon;
   }
 

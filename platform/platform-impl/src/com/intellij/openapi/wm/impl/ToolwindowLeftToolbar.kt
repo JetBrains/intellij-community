@@ -12,21 +12,28 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal class ToolwindowLeftToolbar : ToolwindowToolbar() {
-  private val topPane = object : AbstractDroppableStripe(VerticalFlowLayout(0, 0)) {
-    override fun getAnchor(): ToolWindowAnchor = ToolWindowAnchor.LEFT
-    override fun getButtonFor(toolWindowId: String): JComponent? = this@ToolwindowLeftToolbar.getButtonFor(toolWindowId)
-    override fun tryDroppingOnGap(data: LayoutData, gap: Int, insertOrder: Int) =
-      tryDroppingOnGap(data, gap, myDropRectangle) { layoutDragButton(data, gap) }
+  private class StripeV2(private val toolBar: ToolwindowLeftToolbar,
+                         override val anchor: ToolWindowAnchor) : AbstractDroppableStripe(VerticalFlowLayout(0, 0)) {
+    override val isNewStripes: Boolean
+      get() = true
+
+    override fun getButtonFor(toolWindowId: String) = toolBar.getButtonFor(toolWindowId)
+
+    override fun getToolWindowFor(component: JComponent) = (component as SquareStripeButton).toolWindow
+
+    override fun tryDroppingOnGap(data: LayoutData, gap: Int, insertOrder: Int) {
+      toolBar.tryDroppingOnGap(data, gap, dropRectangle) {
+        layoutDragButton(data, gap)
+      }
+    }
+
+    override fun toString() = "StripeNewUi(anchor=$anchor)"
   }
 
-  private val bottomPane = object : AbstractDroppableStripe(VerticalFlowLayout(0, 0)) {
-    override fun getAnchor(): ToolWindowAnchor = ToolWindowAnchor.BOTTOM
-    override fun getButtonFor(toolWindowId: String): JComponent? = this@ToolwindowLeftToolbar.getButtonFor(toolWindowId)
-    override fun tryDroppingOnGap(data: LayoutData, gap: Int, insertOrder: Int) =
-      tryDroppingOnGap(data, gap, myDropRectangle) { layoutDragButton(data, gap) }
-  }
+  private val topPane = StripeV2(this, ToolWindowAnchor.LEFT)
+  private val bottomPane = StripeV2(this, ToolWindowAnchor.BOTTOM)
 
-  val moreButton = MoreSquareStripeButton(this, topPane)
+  val moreButton = MoreSquareStripeButton(this)
 
   init {
     border = JBUI.Borders.customLine(JBUI.CurrentTheme.ToolWindow.borderColor(), 1, 0, 0, 1)
@@ -44,6 +51,7 @@ internal class ToolwindowLeftToolbar : ToolwindowToolbar() {
     return when (anchor) {
       ToolWindowAnchor.LEFT -> topPane
       ToolWindowAnchor.BOTTOM -> bottomPane
+      ToolWindowAnchor.TOP -> bottomPane
       else -> throw IllegalArgumentException("Wrong anchor $anchor")
     }
   }
@@ -54,16 +62,16 @@ internal class ToolwindowLeftToolbar : ToolwindowToolbar() {
     }
 
     val moreButtonRect = Rectangle(moreButton.locationOnScreen, moreButton.size)
-    return if (Rectangle(topPane.locationOnScreen, topPane.size).contains(screenPoint) ||
-               topPane.buttons.isEmpty() && moreButtonRect.contains(screenPoint)) {
-      topPane
+    if (Rectangle(topPane.locationOnScreen, topPane.size).contains(screenPoint) ||
+        topPane.getButtons().isEmpty() && moreButtonRect.contains(screenPoint)) {
+      return topPane
     }
     else if (!moreButtonRect.contains(screenPoint) &&
              Rectangle(locationOnScreen, size).also { JBInsets.removeFrom(it, insets) }.contains(screenPoint)) {
-      bottomPane
+      return bottomPane
     }
     else {
-      null
+      return null
     }
   }
 
@@ -74,10 +82,7 @@ internal class ToolwindowLeftToolbar : ToolwindowToolbar() {
     bottomPane.revalidate()
   }
 
-  override fun getButtonFor(toolWindowId: String): SquareStripeButton? {
-    return topPane.components.asSequence()
-             .filterIsInstance(SquareStripeButton::class.java)
-             .find { it.button.id == toolWindowId }
-           ?: bottomPane.components.asSequence().filterIsInstance(SquareStripeButton::class.java).find { it.button.id == toolWindowId }
+  override fun getButtonFor(toolWindowId: String): StripeButtonManager? {
+    return topPane.getButtons().find { it.id == toolWindowId } ?: bottomPane.getButtons().find { it.id == toolWindowId }
   }
 }

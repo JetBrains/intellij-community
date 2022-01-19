@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content
 
 import com.intellij.CommonBundle
@@ -83,7 +83,7 @@ internal class SingleContentLayout(
   }
 
   private fun findTopLevelContentManager(): ContentManagerImpl? {
-    return InternalDecoratorImpl.findTopLevelDecorator(myUi.component)?.contentManager as? ContentManagerImpl
+    return InternalDecoratorImpl.findTopLevelDecorator(ui.component)?.contentManager as? ContentManagerImpl
   }
 
   private fun tryUpdateContentView() {
@@ -102,7 +102,7 @@ internal class SingleContentLayout(
       resetSingleContentView()
     }
 
-    val toolwindow = myUi.getWindow().castSafelyTo<ToolWindowEx>()
+    val toolwindow = ui.getWindow().castSafelyTo<ToolWindowEx>()
     if (toolwindow != null) {
       val group = toolwindow.decoration?.actionGroup
       if (isSingleContentView) {
@@ -125,9 +125,9 @@ internal class SingleContentLayout(
   }
 
   private fun initSingleContentView(content: Content, supplier: SingleContentSupplier) {
-    tabAdapter = TabAdapter(content, supplier.getTabs(), tabPainter, myUi).also {
+    tabAdapter = TabAdapter(content, supplier.getTabs(), tabPainter, ui).also {
       Disposer.register(content, it)
-      myUi.tabComponent.add(it)
+      ui.tabComponent.add(it)
     }
     assert(toolbars.isEmpty())
     supplier.getToolbarActions()?.let { mainActionGroup ->
@@ -155,20 +155,20 @@ internal class SingleContentLayout(
       }
     }
 
-    toolbars.forEach { (_, toolbar) -> myUi.tabComponent.add(toolbar.component) }
+    toolbars.forEach { (_, toolbar) -> ui.tabComponent.add(toolbar.component) }
 
     wrapper = NonOpaquePanel(HorizontalLayout(0)).also {
       MyRedispatchMouseEventListener { e ->
         // extra actions are registered in ToolWindowContentUi#initMouseListeners
         if (SwingUtilities.isLeftMouseButton(e)) {
-          myUi.tabComponent.parent?.let { westPanel ->
+          ui.tabComponent.parent?.let { westPanel ->
             westPanel.dispatchEvent(SwingUtilities.convertMouseEvent(e.component, e, westPanel))
           }
         }
       }.installOn(it)
       MouseDragHelper.setComponentDraggable(it, true)
-      ToolWindowContentUi.initMouseListeners(it, myUi, true)
-      myUi.tabComponent.add(it)
+      ToolWindowContentUi.initMouseListeners(it, ui, true)
+      ui.tabComponent.add(it)
     }
 
     isSingleContentView = true
@@ -187,22 +187,22 @@ internal class SingleContentLayout(
         toolbar.updateActionsImmediately()
       }
       supplier.customize(wrapper)
-      myUi.tabComponent.repaint()
+      ui.tabComponent.repaint()
     }
   }
 
   private fun resetSingleContentView() {
     val adapter = tabAdapter ?: error("Adapter must not be null")
     tabAdapter = null
-    myUi.tabComponent.remove(adapter)
+    ui.tabComponent.remove(adapter)
     Disposer.dispose(adapter)
 
     toolbars.values.forEach {
-      myUi.tabComponent.remove(it.component)
+      ui.tabComponent.remove(it.component)
     }
     toolbars.clear()
 
-    myUi.tabComponent.remove(wrapper ?: error("Wrapper must not be null"))
+    ui.tabComponent.remove(wrapper ?: error("Wrapper must not be null"))
     wrapper = null
 
     isSingleContentView = false
@@ -224,10 +224,10 @@ internal class SingleContentLayout(
     super.layout()
 
     if (isSingleContentView) {
-      val component = myUi.tabComponent
+      val component = ui.tabComponent
       component.bounds = component.bounds.apply { width = component.parent.width }
 
-      val labelWidth = myIdLabel.x + myIdLabel.preferredSize.width
+      val labelWidth = idLabel.x + idLabel.preferredSize.width
       var tabsWidth = tabAdapter?.preferredSize?.width ?: 0
       var mainToolbarWidth = toolbars[ToolbarType.MAIN]?.component?.preferredSize?.width ?: 0
       val contentToolbarWidth = toolbars[ToolbarType.CLOSE_GROUP]?.component?.preferredSize?.width ?: 0
@@ -279,7 +279,7 @@ internal class SingleContentLayout(
       label.icon = myTabs[0].content.icon
       val displayName = myTabs[0].content.displayName
       label.text = createProcessName(
-        prefix = myUi.window.stripeTitle,
+        prefix = ui.window.stripeTitle,
         title = displayName
       )
       label.toolTipText = displayName

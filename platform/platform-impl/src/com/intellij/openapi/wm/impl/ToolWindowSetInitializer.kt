@@ -28,6 +28,7 @@ import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import java.util.concurrent.ForkJoinPool
@@ -178,7 +179,7 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
       val entries = ArrayList<String>(list.size)
       for (task in list) {
         try {
-          entries.add(manager.registerToolWindow(task, toolWindowPane).id)
+          entries.add(manager.registerToolWindow(task, toolWindowPane.buttonManager).id)
         }
         catch (e: ProcessCanceledException) {
           throw e
@@ -258,7 +259,8 @@ private fun beanToTask(project: Project,
   )
 }
 
-private fun computeToolWindowBeans(project: Project): List<RegisterToolWindowTask> {
+@VisibleForTesting
+internal fun computeToolWindowBeans(project: Project): List<RegisterToolWindowTask> {
   val ep = ToolWindowEP.EP_NAME.point as ExtensionPointImpl<ToolWindowEP>
   val list = ArrayList<RegisterToolWindowTask>(ep.size())
   ep.processWithPluginDescriptor(true) { bean, pluginDescriptor ->

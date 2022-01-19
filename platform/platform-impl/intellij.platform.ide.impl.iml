@@ -30,6 +30,7 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
     <orderEntry type="library" scope="PROVIDED" name="Mac" level="project" />
     <orderEntry type="inheritedJdk" />
@@ -139,5 +140,6 @@
     <orderEntry type="library" name="jbr-api" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
   </component>
 </module>

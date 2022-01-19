@@ -21,7 +21,6 @@ import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.WindowInfo;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.paint.PaintUtil;
@@ -160,7 +159,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   void addDecorator(@NotNull JComponent decorator, @NotNull WindowInfo info, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
     if (info.isDocked()) {
       boolean side = !info.isSplit();
-      ToolWindowAnchor anchor = ExperimentalUI.isNewToolWindowsStripes() ? info.getLargeStripeAnchor() : info.getAnchor();
+      ToolWindowAnchor anchor = info.getAnchor();
 
       WindowInfo sideInfo = manager.getDockedInfoAt(anchor, side);
       if (sideInfo == null) {
@@ -185,7 +184,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   void removeDecorator(@NotNull WindowInfo info, @Nullable JComponent component, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
     if (info.getType() == ToolWindowType.DOCKED) {
       if (component != null && component.isShowing()) {
-        ToolWindowAnchor anchor = ExperimentalUI.isNewToolWindowsStripes() ? info.getLargeStripeAnchor() : info.getAnchor();
+        ToolWindowAnchor anchor = info.getAnchor();
         WindowInfo sideInfo = manager.getDockedInfoAt(anchor, !info.isSplit());
         if (sideInfo == null) {
           setComponent(null, anchor, 0);
@@ -293,10 +292,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   public boolean isBottomSideToolWindowsVisible() {
     return getComponentAt(ToolWindowAnchor.BOTTOM) != null;
-  }
-
-  @NotNull AbstractDroppableStripe getStripeFor(@NotNull ToolWindowAnchor anchor) {
-    return buttonManager.getStripeFor(anchor);
   }
 
   @Nullable AbstractDroppableStripe getStripeFor(@NotNull Point screenPoint, @NotNull AbstractDroppableStripe preferred) {
@@ -437,7 +432,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     if (maximized) {
       int size = toolWindow.getAnchor().isHorizontal() ? resizerAndComponent.second.getHeight() : resizerAndComponent.second.getWidth();
       stretch(toolWindow, Short.MAX_VALUE);
-      state.setMaximizedProportion(Pair.create(toolWindow, size));
+      state.setMaximizedProportion(new Pair<>(toolWindow, size));
     }
     else {
       Pair<ToolWindow, Integer> maximizedProportion = state.getMaximizedProportion();

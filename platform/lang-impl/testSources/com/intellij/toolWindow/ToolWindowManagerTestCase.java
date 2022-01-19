@@ -1,8 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl;
+package com.intellij.toolWindow;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.SkipInHeadlessEnvironment;

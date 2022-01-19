@@ -3,13 +3,11 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerListener;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,10 +76,6 @@ public interface ToolWindow extends BusyObject {
    * @throws IllegalStateException if tool window isn't installed.
    */
   @NotNull ToolWindowAnchor getAnchor();
-
-  boolean isVisibleOnLargeStripe();
-
-  @NotNull ToolWindowAnchor getLargeStripeAnchor();
 
   /**
    * @throws IllegalStateException if tool window isn't installed.
@@ -216,15 +210,6 @@ public interface ToolWindow extends BusyObject {
    * Delete tool window.
    */
   void remove();
-
-  /**
-   * @deprecated Not used anymore.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  default ActionCallback getActivation() {
-    return ActionCallback.DONE;
-  }
 
   void setTitleActions(@NotNull List<? extends AnAction> actions);
 }

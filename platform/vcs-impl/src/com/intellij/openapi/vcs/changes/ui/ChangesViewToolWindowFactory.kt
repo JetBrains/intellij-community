@@ -18,8 +18,7 @@ private class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
   override fun init(window: ToolWindow) {
     super.init(window)
 
-    window as ToolWindowEx
-    window.setAdditionalGearActions(ActionManager.getInstance().getAction("LocalChangesView.GearActions") as ActionGroup)
+    (window as ToolWindowEx).setAdditionalGearActions(ActionManager.getInstance().getAction("LocalChangesView.GearActions") as ActionGroup)
   }
 
   override fun setEmptyState(project: Project, state: StatusText) {
@@ -30,7 +29,8 @@ private class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
     super.createToolWindowContent(project, toolWindow)
 
     if (toolWindow.contentManager.isEmpty) {
-      rebuildContentUi(toolWindow) // to show id label
+      // to show id label
+      rebuildContentUi(toolWindow)
     }
   }
 
@@ -56,18 +56,21 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
     state.setCommitViewEmptyState(project)
   }
 
-  override fun shouldBeAvailable(project: Project): Boolean =
-    project.vcsManager.hasAnyMappings() && project.isCommitToolWindowShown && project.isTrusted()
+  override fun shouldBeAvailable(project: Project): Boolean {
+    return project.vcsManager.hasAnyMappings() && project.isCommitToolWindowShown && project.isTrusted()
+  }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     super.createToolWindowContent(project, toolWindow)
 
-    if (toolWindow.contentManager.isEmpty) rebuildContentUi(toolWindow) // to show id label
+    // to show id label
+    if (toolWindow.contentManager.isEmpty) {
+      rebuildContentUi(toolWindow)
+    }
   }
 }
 
 internal class SwitchToCommitDialogHint(toolWindow: ToolWindowEx, toolbar: ActionToolbar) : ChangesViewContentManagerListener {
-
   private val actionToolbarTooltip =
     ActionToolbarGotItTooltip("changes.view.toolwindow", message("switch.to.commit.dialog.hint.text"),
                               toolWindow.disposable, toolbar, gearButtonOrToolbar)

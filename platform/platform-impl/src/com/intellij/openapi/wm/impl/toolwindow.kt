@@ -11,8 +11,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.ToolWindowEP
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ui.EmptyIcon
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.function.Supplier
@@ -80,5 +82,37 @@ fun findIconFromBean(bean: ToolWindowEP, factory: ToolWindowFactory, pluginDescr
   catch (e: Exception) {
     logger<ToolWindowManagerImpl>().error(e)
     return EmptyIcon.ICON_13
+  }
+}
+
+@Serializable
+data class ToolWindowDescriptor(
+  val id: String,
+  var order: Int = -1,
+
+  var anchor: ToolWindowAnchor = ToolWindowAnchor.LEFT,
+  val isAutoHide: Boolean = false,
+  val floatingBounds: List<Int>? = null,
+  val isMaximized: Boolean = false,
+
+  val type: ToolWindowType = ToolWindowType.DOCKED,
+  val internalType: ToolWindowType = ToolWindowType.DOCKED,
+  var contentUiType: ToolWindowContentUiType = ToolWindowContentUiType.TABBED,
+
+  val isActiveOnStart: Boolean = false,
+  val isVisible: Boolean = false,
+  val isShowStripeButton: Boolean = true,
+
+  var weight: Float = 0.33f,
+  val sideWeight: Float = 0.5f,
+
+  val isSplit: Boolean = false,
+  ) {
+  enum class ToolWindowAnchor {
+    TOP, LEFT, BOTTOM, RIGHT
+  }
+
+  enum class ToolWindowContentUiType {
+    TABBED, COMBO
   }
 }

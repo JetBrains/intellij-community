@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
@@ -29,8 +29,9 @@ public final class ContentManagerWatcher {
 
       @Override
       public void contentRemoved(@NotNull ContentManagerEvent e) {
-        if (!(toolWindow instanceof ToolWindowImpl) || !((ToolWindowImpl)toolWindow).getDecorator().isSplitUnsplitInProgress()) {
-          toolWindow.setAvailable(!contentManager.isEmpty());
+        if ((!(toolWindow instanceof ToolWindowEx) || !((ToolWindowEx)toolWindow).getDecorator().isSplitUnsplitInProgress()) &&
+            contentManager.isEmpty()) {
+          toolWindow.setAvailable(false);
         }
       }
     });

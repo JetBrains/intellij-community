@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NonNls
 import java.util.function.Predicate
 import kotlin.properties.Delegates.observable
 
-private val COMMIT_TOOL_WINDOW = "vcs.commit.tool.window"
+private const val COMMIT_TOOL_WINDOW = "vcs.commit.tool.window"
 
 private val isCommitToolWindowEnabled
   get() = AdvancedSettings.getBoolean(COMMIT_TOOL_WINDOW)
@@ -153,7 +153,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
   }
 
   override fun <T : Any> getActiveComponent(aClass: Class<T>): T? =
-    contentManagers.mapNotNull { tryCast(it.selectedContent?.component, aClass) }.firstOrNull()
+    contentManagers.firstNotNullOfOrNull { tryCast(it.selectedContent?.component, aClass) }
 
   fun isContentSelected(tabName: String): Boolean =
     contentManagers.any { it.selectedContent?.tabName == tabName }

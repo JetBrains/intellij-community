@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.icons.AllIcons
@@ -270,7 +270,7 @@ abstract class ToolWindowHeader internal constructor(
 
     if (isNewUI()) {
       val scrolled = ClientProperty.isTrue(nearestDecorator, SimpleToolWindowPanel.SCROLLED_STATE)
-      drawBottomLine = (toolWindow.largeStripeAnchor == ToolWindowAnchor.BOTTOM
+      drawBottomLine = (toolWindow.anchor == ToolWindowAnchor.BOTTOM
                         || (toolWindow.windowInfo.contentUiType == ToolWindowContentUiType.TABBED && toolWindow.contentManager.contentCount > 1)
                         || ToggleToolbarAction.hasVisibleToolwindowToolbars(toolWindow)
                         || scrolled)

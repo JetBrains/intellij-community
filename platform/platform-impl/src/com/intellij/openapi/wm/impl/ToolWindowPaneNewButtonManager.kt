@@ -1,16 +1,26 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
-import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.WindowInfo
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.Point
+import javax.swing.Icon
 import javax.swing.JComponent
+
+@Suppress("SSBasedInspection")
+private val LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowManagerImpl")
 
 internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
   private val left = ToolwindowLeftToolbar()
   private val right = ToolwindowRightToolbar()
+
+  override val isNewUi: Boolean
+    get() = true
 
   override fun add(pane: JComponent) {
     pane.add(left, BorderLayout.WEST)
@@ -54,7 +64,7 @@ internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
   }
 
   fun getSquareStripeFor(anchor: ToolWindowAnchor): ToolwindowToolbar {
-    return when(anchor) {
+    return when (anchor) {
       ToolWindowAnchor.TOP, ToolWindowAnchor.RIGHT -> right
       ToolWindowAnchor.BOTTOM, ToolWindowAnchor.LEFT -> left
       else -> throw java.lang.IllegalArgumentException("Anchor=$anchor")
@@ -84,32 +94,47 @@ internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
     right.reset()
   }
 
-  private fun findToolbar(anchor: ToolWindowAnchor): ToolwindowToolbar? {
-    when(anchor) {
-      ToolWindowAnchor.LEFT, ToolWindowAnchor.BOTTOM -> return left
-      ToolWindowAnchor.RIGHT -> return right
-      else -> return null
-    }
-  }
-
-  override fun onStripeButtonAdded(toolWindow: ToolWindowImpl) {
-    findToolbar(toolWindow.largeStripeAnchor)?.addStripeButton(toolWindow)
-  }
-
-  override fun onStripeButtonRemoved(toolWindow: ToolWindowImpl) {
-    if (!toolWindow.isAvailable) {
-      return
+  private fun findToolbar(anchor: ToolWindowAnchor): ToolwindowToolbar = if (anchor == ToolWindowAnchor.RIGHT) right else left
+  override fun createStripeButton(toolWindow: ToolWindowImpl, info: WindowInfo, task: RegisterToolWindowTask?): StripeButtonManager? {
+    if (!info.isShowStripeButton || (task != null && !task.shouldBeAvailable)) {
+      LOG.debug {
+        "`${info.id}` is not added as a large stripe button " +
+        "(isShowStripeButton: ${info.isShowStripeButton}, isAvailable: ${task?.shouldBeAvailable})"
+      }
+      return null
     }
 
-    val anchor = toolWindow.largeStripeAnchor
-    findToolbar(anchor)?.removeStripeButton(toolWindow, anchor)
-  }
+    val squareStripeButton = SquareStripeButton(toolWindow)
+    val manager = object : StripeButtonManager {
+      override val id: String
+        get() = toolWindow.id
 
-  override fun onStripeButtonUpdate(toolWindow: ToolWindow, property: ToolWindowProperty, entry: ToolWindowEntry?) {
-    val button = findToolbar(toolWindow.largeStripeAnchor)?.getButtonFor(toolWindow.id) ?: return
-    ToolWindowButtonManager.updateStripeButton(toolWindow, property, button.button)
-    if (property == ToolWindowProperty.ICON) {
-      button.syncIcon()
+      override val windowDescriptor: WindowInfo
+        get() = toolWindow.windowInfo
+
+      override fun updateState(toolWindow: ToolWindowImpl) {
+        squareStripeButton.updateIcon()
+      }
+
+      override fun updatePresentation() {
+        squareStripeButton.syncIcon()
+      }
+
+      override fun updateIcon(icon: Icon?) {
+        squareStripeButton.syncIcon()
+      }
+
+      override fun remove() {
+        findToolbar(toolWindow.anchor).getStripeFor(toolWindow.windowInfo.anchor).removeButton(this)
+      }
+
+      override fun getComponent() = squareStripeButton
+
+      override fun toString(): String {
+        return "SquareStripeButtonManager(windowInfo=${toolWindow.windowInfo})"
+      }
     }
+    findToolbar(toolWindow.anchor).getStripeFor(toolWindow.windowInfo.anchor).addButton(manager)
+    return manager
   }
 }

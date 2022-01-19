@@ -4,11 +4,13 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.WindowInfo
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLayeredPane
 import javax.swing.SwingConstants
@@ -20,6 +22,9 @@ internal class ToolWindowPaneOldButtonManager : ToolWindowButtonManager {
   private val topStripe = Stripe(SwingConstants.TOP)
 
   private val stripes = java.util.List.of(topStripe, leftStripe, bottomStripe, rightStripe)
+
+  override val isNewUi: Boolean
+    get() = false
 
   override fun add(pane: JComponent) {
   }
@@ -55,10 +60,10 @@ internal class ToolWindowPaneOldButtonManager : ToolWindowButtonManager {
     val bottomSize = bottomStripe.preferredSize
     val leftSize = leftStripe.preferredSize
     val rightSize = rightStripe.preferredSize
-    val topBounds = Rectangle(0, 0, size.width, topSize!!.height)
-    val height = size.height - topSize.height - bottomSize!!.height
-    val leftBounds = Rectangle(0, topSize.height, leftSize!!.width, height)
-    val rightBounds = Rectangle(size.width - rightSize!!.width, topSize.height, rightSize.width, height)
+    val topBounds = Rectangle(0, 0, size.width, topSize.height)
+    val height = size.height - topSize.height - bottomSize.height
+    val leftBounds = Rectangle(0, topSize.height, leftSize.width, height)
+    val rightBounds = Rectangle(size.width - rightSize.width, topSize.height, rightSize.width, height)
     val bottomBounds = Rectangle(0, size.height - bottomSize.height, size.width, bottomSize.height)
     topStripe.putClientProperty(Stripe.VIRTUAL_BOUNDS, topBounds)
     leftStripe.putClientProperty(Stripe.VIRTUAL_BOUNDS, leftBounds)
@@ -96,7 +101,7 @@ internal class ToolWindowPaneOldButtonManager : ToolWindowButtonManager {
 
   override fun revalidateNotEmptyStripes() {
     for (stripe in stripes) {
-      if (!stripe.isEmpty) {
+      if (!stripe.getButtons().isEmpty()) {
         stripe.revalidate()
       }
     }
@@ -104,7 +109,7 @@ internal class ToolWindowPaneOldButtonManager : ToolWindowButtonManager {
 
   override fun getBottomHeight() = if (bottomStripe.isVisible) bottomStripe.height else 0
 
-  override fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe {
+  override fun getStripeFor(anchor: ToolWindowAnchor): Stripe {
     return when(anchor) {
       ToolWindowAnchor.TOP -> topStripe
       ToolWindowAnchor.BOTTOM -> bottomStripe
@@ -144,13 +149,39 @@ internal class ToolWindowPaneOldButtonManager : ToolWindowButtonManager {
     stripes.forEach(Stripe::reset)
   }
 
-  override fun onStripeButtonAdded(toolWindow: ToolWindowImpl) {
-  }
+  override fun createStripeButton(toolWindow: ToolWindowImpl, info: WindowInfo, task: RegisterToolWindowTask?): StripeButtonManager {
+    val button = StripeButton(toolWindow)
 
-  override fun onStripeButtonRemoved(toolWindow: ToolWindowImpl) {
-  }
+    button.isSelected = info.isVisible
+    button.updatePresentation()
 
-  override fun onStripeButtonUpdate(toolWindow: ToolWindow, property: ToolWindowProperty, entry: ToolWindowEntry?) {
-    ToolWindowButtonManager.updateStripeButton(toolWindow, property, entry?.stripeButton ?: return)
+    val manager = object : StripeButtonManager {
+      override val id: String
+        get() = toolWindow.id
+
+      override val windowDescriptor: WindowInfo
+        get() = toolWindow.windowInfo
+
+      override fun getComponent() = button
+
+      override fun updateState(toolWindow: ToolWindowImpl) {
+        button.isSelected = toolWindow.isVisible
+        button.updateState(toolWindow)
+      }
+
+      override fun updatePresentation() {
+        button.updatePresentation()
+      }
+
+      override fun updateIcon(icon: Icon?) {
+        button.updateIcon(icon)
+      }
+
+      override fun remove() {
+        (button.parent as? Stripe)?.removeButton(this)
+      }
+    }
+    getStripeFor(info.anchor).addButton(manager)
+    return manager
   }
 }

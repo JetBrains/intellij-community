@@ -1,25 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsActions.ActionText;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
 abstract class ContentLayout {
-  ToolWindowContentUi myUi;
-  BaseLabel myIdLabel;
+  ToolWindowContentUi ui;
+  BaseLabel idLabel;
 
   ContentLayout(@NotNull ToolWindowContentUi ui) {
-    myUi = ui;
+    this.ui = ui;
   }
 
   public abstract void init(@NotNull ContentManager contentManager);
@@ -28,7 +28,8 @@ abstract class ContentLayout {
 
   public abstract void layout();
 
-  public abstract void paintComponent(Graphics g);
+  public void paintComponent(Graphics g) {
+  }
 
   public abstract void update();
 
@@ -36,12 +37,14 @@ abstract class ContentLayout {
 
   public abstract int getMinimumWidth();
 
-  public abstract void contentAdded(ContentManagerEvent event);
+  public void contentAdded(ContentManagerEvent event) {
+  }
 
-  public abstract void contentRemoved(ContentManagerEvent event);
+  public void contentRemoved(ContentManagerEvent event) {
+  }
 
   protected void updateIdLabel(BaseLabel label) {
-    String title = myUi.window.getStripeTitle();
+    String title = ui.window.getStripeTitle();
 
     String suffix = getTitleSuffix();
     if (ExperimentalUI.isNewToolWindowsStripes()) suffix = null;
@@ -58,7 +61,7 @@ abstract class ContentLayout {
   }
 
   private String getTitleSuffix() {
-    ContentManager manager = myUi.getContentManager();
+    ContentManager manager = ui.getContentManager();
     switch (manager.getContentCount()) {
       case 0:
         return null;
@@ -91,12 +94,12 @@ abstract class ContentLayout {
   public abstract String getNextContentActionName();
 
   protected boolean shouldShowId() {
-    return !"true".equals(UIUtil.getClientProperty(
-      ComponentUtil.findParentByCondition(myUi.getComponent(), c -> UIUtil.getClientProperty(c, ToolWindowContentUi.HIDE_ID_LABEL) != null),
-      ToolWindowContentUi.HIDE_ID_LABEL));
+    Component component =
+      ComponentUtil.findParentByCondition(ui.getComponent(), c -> ClientProperty.get(c, ToolWindowContentUi.HIDE_ID_LABEL) != null);
+    return component == null || !"true".equals(ClientProperty.get(component, ToolWindowContentUi.HIDE_ID_LABEL));
   }
 
   boolean isIdVisible() {
-    return myIdLabel.isVisible();
+    return idLabel.isVisible();
   }
 }

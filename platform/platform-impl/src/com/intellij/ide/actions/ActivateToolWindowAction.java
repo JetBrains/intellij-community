@@ -145,7 +145,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
     }
     else {
       if (windowManager instanceof ToolWindowManagerImpl) {
-        ((ToolWindowManagerImpl) windowManager).hideToolWindow(myToolWindowId, false, true, source);
+        ((ToolWindowManagerImpl) windowManager).hideToolWindow(myToolWindowId, false, true, false, source);
       }
       else {
         ToolWindow toolWindow = windowManager.getToolWindow(myToolWindowId);

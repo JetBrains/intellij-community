@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.rules;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -13,9 +13,8 @@ import java.util.Collection;
 import java.util.Collections;
 
 public interface UsageFilteringRuleProvider {
-
   @Internal
-  ExtensionPointName<UsageFilteringRuleProvider> EP_NAME = ExtensionPointName.create("com.intellij.usageFilteringRuleProvider");
+  ExtensionPointName<UsageFilteringRuleProvider> EP_NAME = new ExtensionPointName<>("com.intellij.usageFilteringRuleProvider");
 
   @Internal
   Topic<Runnable> RULES_CHANGED = new Topic<>("usage view rules changed", Runnable.class);

@@ -8,7 +8,10 @@ import com.intellij.configurationStore.serialize
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.createNewProjectFrame
@@ -43,16 +46,13 @@ private const val FOCUSED_WINDOW_PROPERTY_NAME = "focusedWindow"
 @NonNls
 private const val FRAME_ELEMENT = "frame"
 
-@State(
-  name = "WindowManager",
-  storages = [Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED)]
-)
+@State(name = "WindowManager", storages = [Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED)])
 class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModificationTracker<Element> {
   private var alphaModeSupported: Boolean? = null
   internal val windowWatcher = WindowWatcher()
 
-  // default layout
-  private var layout = DesktopLayout()
+  internal var oldLayout: DesktopLayout? = null
+    private set
 
   // null keys must be supported
   // null key - root frame
@@ -394,10 +394,6 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
   override fun getFocusedComponent(project: Project?) = windowWatcher.getFocusedComponent(project)
 
-  override fun noStateLoaded() {
-    layout = DesktopLayout(service<DefaultToolWindowLayoutProvider>().createDefaultToolWindowLayout())
-  }
-
   override fun loadState(state: Element) {
     val frameElement = state.getChild(FRAME_ELEMENT)
     if (frameElement != null) {
@@ -410,12 +406,14 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       defaultFrameInfoHelper.copyFrom(info)
     }
     state.getChild(DesktopLayout.TAG)?.let {
+      val layout = DesktopLayout()
       layout.readExternal(it, ExperimentalUI.isNewUI())
+      oldLayout = layout
     }
   }
 
   override fun getStateModificationCount(): Long {
-    return defaultFrameInfoHelper.getModificationCount() + layout.stateModificationCount
+    return defaultFrameInfoHelper.getModificationCount()
   }
 
   override fun getState(): Element {
@@ -423,18 +421,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     defaultFrameInfoHelper.info?.let { serialize(it) }?.let {
       state.addContent(it)
     }
-
-    // save default layout
-    layout.writeExternal(DesktopLayout.TAG)?.let {
-      state.addContent(it)
-    }
     return state
-  }
-
-  override fun getLayout() = layout
-
-  override fun setLayout(layout: DesktopLayout) {
-    this.layout = layout.copy()
   }
 
   override fun isFullScreenSupportedInCurrentOS() = isFullScreenSupportedInCurrentOs()

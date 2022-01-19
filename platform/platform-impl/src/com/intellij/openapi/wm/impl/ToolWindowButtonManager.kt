@@ -3,23 +3,15 @@
 
 package com.intellij.openapi.wm.impl
 
-import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.WindowInfo
 import java.awt.Dimension
 import java.awt.Point
 import javax.swing.JComponent
 
 internal interface ToolWindowButtonManager {
-  companion object {
-    fun updateStripeButton(toolWindow: ToolWindow, property: ToolWindowProperty, stripeButton: StripeButton) {
-      if (property == ToolWindowProperty.ICON) {
-        stripeButton.updateIcon(toolWindow.icon)
-      }
-      else {
-        stripeButton.updatePresentation()
-      }
-    }
-  }
+  val isNewUi: Boolean
 
   fun add(pane: JComponent)
 
@@ -46,9 +38,5 @@ internal interface ToolWindowButtonManager {
 
   fun reset()
 
-  fun onStripeButtonAdded(toolWindow: ToolWindowImpl)
-
-  fun onStripeButtonRemoved(toolWindow: ToolWindowImpl)
-
-  fun onStripeButtonUpdate(toolWindow: ToolWindow, property: ToolWindowProperty, entry: ToolWindowEntry?)
+  fun createStripeButton(toolWindow: ToolWindowImpl, info: WindowInfo, task: RegisterToolWindowTask?): StripeButtonManager?
 }

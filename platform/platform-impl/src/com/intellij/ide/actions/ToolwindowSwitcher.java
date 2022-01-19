@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -16,6 +16,7 @@ import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.ToolWindowEventSource;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.ScrollingUtil;
@@ -33,11 +34,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * @author Konstantin Bulenkov
@@ -57,52 +57,62 @@ public final class ToolwindowSwitcher extends DumbAwareAction {
                                  @NotNull Comparator<? super ToolWindow> comparator,
                                  @Nullable Predicate<? super ToolWindow> filter,
                                  @Nullable RelativePoint point) {
-    if (filter == null) filter = window -> true;
+    if (filter == null) {
+      filter = window -> true;
+    }
 
     if (popup != null) {
       gotoNextElement(popup);
       return;
     }
-    final ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
-    List<ToolWindow> toolWindows = getToolWindows(project, filter);
 
-    if (toolWindows.isEmpty()) return;
+    ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
+    List<ToolWindow> toolWindows = getToolWindows(toolWindowManager, filter);
+    if (toolWindows.isEmpty()) {
+      return;
+    }
+
     toolWindows.sort(comparator);
     IPopupChooserBuilder<ToolWindow> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(toolWindows);
     ToolWindow selected =
       toolWindowManager.getActiveToolWindowId() == null || toolWindows.size() == 1 ? toolWindows.get(0) : toolWindows.get(1);
 
     popup = builder
-                .setRenderer(new ToolWindowsWidgetCellRenderer())
-                .setAutoselectOnMouseMove(true)
-                .setRequestFocus(true)
-                .setSelectedValue(selected, false)
-                .setMinSize(new Dimension(300, -1))
-                .setNamerForFiltering(x -> x.getStripeTitle())
-                .setItemChosenCallback((selectedValue) -> {
-                  if (popup != null) {
-                    popup.closeOk(null);
-                  }
-                  toolWindowManager.activateToolWindow(selectedValue.getId(), null, true, ToolWindowEventSource.ToolWindowSwitcher);
-                }).createPopup();
+      .setRenderer(new ToolWindowsWidgetCellRenderer())
+      .setAutoselectOnMouseMove(true)
+      .setRequestFocus(true)
+      .setSelectedValue(selected, false)
+      .setMinSize(new Dimension(300, -1))
+      .setNamerForFiltering(x -> x.getStripeTitle())
+      .setItemChosenCallback((selectedValue) -> {
+        if (popup != null) {
+          popup.closeOk(null);
+        }
+        toolWindowManager.activateToolWindow(selectedValue.getId(), null, true, ToolWindowEventSource.ToolWindowSwitcher);
+      }).createPopup();
 
     Disposer.register(popup, () -> popup = null);
-    if (point != null) {
-      popup.show(point);
-    } else {
+    if (point == null) {
       popup.showCenteredInCurrentWindow(project);
+    }
+    else {
+      popup.show(point);
     }
   }
 
-  @NotNull
-  public static List<ToolWindow> getToolWindows(@NotNull Project project, @NotNull Predicate<? super ToolWindow> filter) {
-    final ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
-    return Arrays.stream(toolWindowManager.getToolWindowIds()).map(toolWindowManager::getToolWindow)
-      .filter(tw -> tw != null && tw.isAvailable() && tw.isShowStripeButton() && filter.test(tw)).collect(Collectors.toList());
+   public static @NotNull List<ToolWindow> getToolWindows(@NotNull ToolWindowManagerEx toolWindowManager,
+                                                          @NotNull Predicate<? super ToolWindow> filter) {
+     List<ToolWindow> list = new ArrayList<>();
+     for (ToolWindow toolWindow : toolWindowManager.getToolWindows()) {
+       if (toolWindow != null && toolWindow.isAvailable() && filter.test(toolWindow)) {
+         list.add(toolWindow);
+       }
+     }
+     return list;
   }
 
   private static void gotoNextElement(JBPopup popup) {
-    JList list = UIUtil.findComponentOfType(popup.getContent(), JList.class);
+    JList<?> list = UIUtil.findComponentOfType(popup.getContent(), JList.class);
     if (list != null) {
       ScrollingUtil.moveDown(list, 0);
     }
@@ -113,7 +123,7 @@ public final class ToolwindowSwitcher extends DumbAwareAction {
     e.getPresentation().setEnabledAndVisible(e.getProject() != null);
   }
 
-  private static class ToolWindowsWidgetCellRenderer implements ListCellRenderer<ToolWindow> {
+  private static final class ToolWindowsWidgetCellRenderer implements ListCellRenderer<ToolWindow> {
     private final JPanel myPanel;
     private final SimpleColoredComponent myTextLabel = new SimpleColoredComponent();
     private final JLabel myShortcutLabel = new JLabel();

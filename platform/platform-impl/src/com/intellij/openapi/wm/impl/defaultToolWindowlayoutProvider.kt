@@ -1,17 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
-import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.openapi.wm.ToolWindowContentUiType
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 interface DefaultToolWindowLayoutProvider {
-  fun createDefaultToolWindowLayout(): List<WindowInfoImpl>
+  fun createV1Layout(): List<ToolWindowDescriptor>
+
+  fun createV2Layout(): List<ToolWindowDescriptor>
 }
 
-class DefaultToolWindowLayoutInfoBuilder {
-  var anchor = ToolWindowAnchor.LEFT
+class DefaultToolWindowLayoutBuilder {
+  var anchor = ToolWindowDescriptor.ToolWindowAnchor.LEFT
     set(value) {
       field = value
       order = 0
@@ -19,70 +19,45 @@ class DefaultToolWindowLayoutInfoBuilder {
 
   private var order = 0
 
-  private val list = mutableListOf<WindowInfoImpl>()
+  private val list = mutableListOf<ToolWindowDescriptor>()
 
-  fun add(id: String, weight: Float = -1f, contentUiType: ToolWindowContentUiType? = null) {
-    val info = WindowInfoImpl()
-    info.id = id
+  fun add(id: String, weight: Float = -1f, contentUiType: ToolWindowDescriptor.ToolWindowContentUiType? = null) {
+    val descriptor = ToolWindowDescriptor(id = id)
     if (weight != -1f) {
-      info.weight = weight
+      descriptor.weight = weight
     }
     contentUiType?.let {
-      info.contentUiType = it
+      descriptor.contentUiType = it
     }
-
-    add(info)
+    add(descriptor)
   }
 
-  fun add(info: WindowInfoImpl) {
+  fun add(info: ToolWindowDescriptor) {
     info.anchor = anchor
-    info.largeStripeAnchor = anchor
     info.order = order++
-    info.orderOnLargeStripe = info.order
-    info.isFromPersistentSettings = false
-    info.resetModificationCount()
     list.add(info)
   }
 
-  fun build(): List<WindowInfoImpl> = list
+  fun build(): List<ToolWindowDescriptor> = list
 }
 
+@Suppress("DuplicatedCode")
 @Internal
 open class IntellijPlatformDefaultToolWindowLayoutProvider : DefaultToolWindowLayoutProvider {
-  protected fun DefaultToolWindowLayoutInfoBuilder.visibleOnLargeStripe(id: String, weight: Float = 0.25f) {
-    add(WindowInfoImpl().apply {
-      this.id = id
-      this.weight = weight
-      isVisibleOnLargeStripe = true
-    })
-  }
-
-  @Suppress("DuplicatedCode")
-  final override fun createDefaultToolWindowLayout(): List<WindowInfoImpl> {
-    val builder = DefaultToolWindowLayoutInfoBuilder()
-
-    fun combo(id: String) {
-      builder.add(WindowInfoImpl().apply {
-        this.id = id
-        weight = 0.25f
-        isVisibleOnLargeStripe = true
-        contentUiType = ToolWindowContentUiType.COMBO
-      })
-    }
+  final override fun createV1Layout(): List<ToolWindowDescriptor> {
+    val builder = DefaultToolWindowLayoutBuilder()
 
     // left stripe
-    combo("Project")
-    configureLeftVisibleOnLargeStripe(builder)
+    builder.add("Project", weight = 0.25f, contentUiType = ToolWindowDescriptor.ToolWindowContentUiType.COMBO)
 
     // right stripe
-    builder.anchor = ToolWindowAnchor.RIGHT
-    builder.add("Notifications", contentUiType = ToolWindowContentUiType.COMBO, weight = 0.25f)
-    configureRightVisibleOnLargeStripe(builder)
+    builder.anchor = ToolWindowDescriptor.ToolWindowAnchor.RIGHT
+    builder.add("Notifications", weight = 0.25f)
 
     // bottom stripe
-    builder.anchor = ToolWindowAnchor.BOTTOM
-    configureBottomVisibleOnLargeStripe(builder)
+    builder.anchor = ToolWindowDescriptor.ToolWindowAnchor.BOTTOM
 
+    builder.add(id = "Version Control")
     builder.add(id = "Find")
     builder.add(id = "Run")
     builder.add(id = "Debug", weight = 0.4f)
@@ -91,20 +66,42 @@ open class IntellijPlatformDefaultToolWindowLayoutProvider : DefaultToolWindowLa
     return builder.build()
   }
 
-  open fun configureLeftVisibleOnLargeStripe(builder: DefaultToolWindowLayoutInfoBuilder) {
-    builder.visibleOnLargeStripe("Commit")
-    builder.visibleOnLargeStripe("Structure")
+  @Suppress("DuplicatedCode")
+  override fun createV2Layout(): List<ToolWindowDescriptor> {
+    val builder = DefaultToolWindowLayoutBuilder()
+
+    // left stripe
+    builder.add("Project", weight = 0.25f, contentUiType = ToolWindowDescriptor.ToolWindowContentUiType.COMBO)
+    configureLeftVisibleOnLargeStripe(builder)
+
+    // right stripe
+    builder.anchor = ToolWindowDescriptor.ToolWindowAnchor.RIGHT
+    builder.add("Notifications", contentUiType = ToolWindowDescriptor.ToolWindowContentUiType.COMBO, weight = 0.25f)
+    configureRightVisibleOnLargeStripe(builder)
+
+    // bottom stripe
+    builder.anchor = ToolWindowDescriptor.ToolWindowAnchor.BOTTOM
+    configureBottomVisibleOnLargeStripe(builder)
+    return builder.build()
   }
 
-  open fun configureRightVisibleOnLargeStripe(builder: DefaultToolWindowLayoutInfoBuilder) {
-    builder.visibleOnLargeStripe("Database")
-    builder.visibleOnLargeStripe("Gradle")
-    builder.visibleOnLargeStripe("Maven")
+  open fun configureLeftVisibleOnLargeStripe(builder: DefaultToolWindowLayoutBuilder) {
+    builder.add("Commit", weight = 0.25f)
+    builder.add("Structure", weight = 0.25f)
   }
 
-  open fun configureBottomVisibleOnLargeStripe(builder: DefaultToolWindowLayoutInfoBuilder) {
-    builder.visibleOnLargeStripe(id = "Version Control")
-    builder.visibleOnLargeStripe(id = "Problems View")
-    builder.visibleOnLargeStripe(id = "Terminal")
+  open fun configureRightVisibleOnLargeStripe(builder: DefaultToolWindowLayoutBuilder) {
+    builder.add("Database", weight = 0.25f)
+    builder.add("Gradle", weight = 0.25f)
+    builder.add("Maven", weight = 0.25f)
+  }
+
+  open fun configureBottomVisibleOnLargeStripe(builder: DefaultToolWindowLayoutBuilder) {
+    builder.add("Version Control")
+    // Auto-Build
+    builder.add("Problems")
+    // Problems
+    builder.add("Problems View")
+    builder.add("Terminal")
   }
 }

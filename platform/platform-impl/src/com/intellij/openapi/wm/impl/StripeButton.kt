@@ -3,7 +3,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
-import com.intellij.ide.ui.UISettings.Companion.instance
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.Registry
@@ -50,7 +50,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
       val id = toolWindow.id
       val manager = toolWindow.toolWindowManager
       if (pressedWhenSelected) {
-        manager.hideToolWindow(id, false, true, ToolWindowEventSource.StripeButton)
+        manager.hideToolWindow(id = id, hideSide = false, moveFocus = true, source = ToolWindowEventSource.StripeButton)
       }
       else {
         manager.activated(toolWindow, ToolWindowEventSource.StripeButton)
@@ -175,7 +175,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
         }
       })
       dragPane!!.add(dragButtonImage, JLayeredPane.POPUP_LAYER)
-      dragButtonImage.setSize(dragButtonImage.preferredSize)
+      dragButtonImage.size = dragButtonImage.preferredSize
       isVisible = false
       toolWindow.toolWindowManager.toolWindowPane!!.startDrag()
       dragKeyEventDispatcher = DragKeyEventDispatcher()
@@ -245,11 +245,6 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
     super.processMouseEvent(e)
   }
 
-  fun apply(info: WindowInfo) {
-    isSelected = info.isVisible
-    updateState(toolWindow)
-  }
-
   private fun showPopup(component: Component?, x: Int, y: Int) {
     val group = toolWindow.createPopupGroup()
     val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, group)
@@ -276,7 +271,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
 
   private fun updateText(toolWindow: ToolWindowImpl) {
     var text = toolWindow.stripeTitle
-    if (instance.showToolWindowsNumbers) {
+    if (UISettings.instance.showToolWindowsNumbers) {
       val mnemonic = ActivateToolWindowAction.getMnemonicForToolWindow(toolWindow.id)
       if (mnemonic != -1) {
         text = mnemonic.toChar().toString() + ": " + text
@@ -290,7 +285,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
     updateHelpTooltip()
   }
 
-  private fun updateState(toolWindow: ToolWindowImpl) {
+  internal fun updateState(toolWindow: ToolWindowImpl) {
     val toShow = toolWindow.isAvailable || toolWindow.isPlaceholderMode
     isVisible = toShow && (toolWindow.isShowStripeButton || isSelected)
     isEnabled = toolWindow.isAvailable

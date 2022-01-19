@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.ui.ClientProperty
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.StatusText
@@ -38,8 +39,10 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun init(window: ToolWindow) {
     val project = (window as ToolWindowEx).project
 
-    updateState(project, window)
-    val connection = project.messageBus.connect()
+    updateContentIfCreated(project, window)
+    updateEmptyState(project, window)
+
+    val connection = project.messageBus.connect(window.disposable)
     connection.subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
       runInEdt {
         if (project.isDisposed) return@runInEdt
@@ -75,20 +78,13 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   protected open fun updateState(project: Project, toolWindow: ToolWindow) {
-    updateAvailability(project, toolWindow)
-    updateContentIfCreated(project, toolWindow)
-    updateEmptyState(project, toolWindow)
-  }
-
-  private fun updateAvailability(project: Project, toolWindow: ToolWindow) {
-    val available = shouldBeAvailable(project)
-
     // force showing stripe button on adding initial mapping even if stripe button was manually removed by the user
-    if (available && !toolWindow.isAvailable) {
+    if (!toolWindow.isAvailable && !ExperimentalUI.isNewUI()) {
       toolWindow.isShowStripeButton = true
     }
 
-    toolWindow.isAvailable = available
+    updateContentIfCreated(project, toolWindow)
+    updateEmptyState(project, toolWindow)
   }
 
   private fun updateContentIfCreated(project: Project, toolWindow: ToolWindow) {
