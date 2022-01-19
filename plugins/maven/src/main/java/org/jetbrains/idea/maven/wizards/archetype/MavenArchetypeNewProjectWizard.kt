@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.wizards.archetype
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.*
 import com.intellij.execution.util.setEmptyState
 import com.intellij.execution.util.setVisibleRowCount
+import com.intellij.icons.AllIcons
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.buildSystem
 import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
 import com.intellij.ide.util.projectWizard.WizardContext
@@ -31,6 +32,7 @@ import com.intellij.ui.SimpleTextAttributes.*
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
+import com.intellij.ui.components.JBLabel
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil.putIfNotNull
 import com.intellij.util.io.systemIndependentPath
@@ -48,8 +50,7 @@ import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 import com.intellij.openapi.externalSystem.service.ui.completion.DefaultTextCompletionRenderer.Companion.append
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer.Cell
 import java.awt.Component
-import javax.swing.Icon
-import javax.swing.JList
+import javax.swing.*
 
 class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
   override val id: String = javaClass.name
@@ -101,9 +102,15 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     override fun setupSettingsUI(builder: Panel) {
       super.setupSettingsUI(builder)
       with(builder) {
-        row(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.label")) {
-          comboBox(CollectionComboBoxModel(), CatalogRenderer())
-            .apply { catalogComboBox = component }
+        row {
+          layout(RowLayout.LABEL_ALIGNED)
+          catalogComboBox = ComboBox(CollectionComboBoxModel())
+          label(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.label"))
+            .applyToComponent { horizontalTextPosition = JBLabel.LEFT }
+            .applyToComponent { icon = AllIcons.General.ContextHelp }
+            .applyToComponent { toolTipText = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.tooltip") }
+          cell(catalogComboBox)
+            .applyToComponent { renderer = CatalogRenderer() }
             .applyToComponent { setSwingPopup(false) }
             .bindItem(catalogItemProperty)
             .columns(COLUMNS_MEDIUM)
@@ -111,8 +118,13 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
             manageCatalogs()
           }
         }.topGap(TopGap.SMALL)
-        row(MavenWizardBundle.message("maven.new.project.wizard.archetype.label")) {
+        row {
+          layout(RowLayout.LABEL_ALIGNED)
           archetypeComboBox = TextCompletionComboBox(context.project, ArchetypeConverter())
+          label(MavenWizardBundle.message("maven.new.project.wizard.archetype.label"))
+            .applyToComponent { horizontalTextPosition = JBLabel.LEFT }
+            .applyToComponent { icon = AllIcons.General.ContextHelp }
+            .applyToComponent { toolTipText = MavenWizardBundle.message("maven.new.project.wizard.archetype.tooltip") }
           cell(archetypeComboBox)
             .applyToComponent { bindSelectedItem(archetypeItemProperty) }
             .graphProperty(archetypeItemProperty)
