@@ -212,24 +212,13 @@ public class SingleClassesTest {
   @Test public void testInheritanceChainCycle() { doTest("pkg/TestInheritanceChainCycle"); }
   @Test public void testDynamicConstantPoolEntry() { doTest("java11/TestDynamicConstantPoolEntry"); }
 
-  @Test
-  public void testInstanceof() {
-    doTest("patterns/TestInstanceof");
-  }
 
-  @Test
-  public void testInvertedInstanceof() {
-    doTest("patterns/TestInvertedInstanceof");
+  @Test public void testInstanceofWithPattern() {
+    doTest("patterns/TestInstanceofWithPattern");
   }
-
-  @Test
-  public void testInstanceofBinaryExpr() {
-    doTest("patterns/TestInstanceofBinaryExpr");
-  }
-
-  @Test
-  public void testInstanceofVarNotSupported() {
-    doTest("patterns/TestInstanceofVarNotSupported");
+  @Test public void testInstanceofVarNotSupported() {
+    // bytecode version of this test data doesn't support patterns in instanceof, so no modifications regarding that are applied
+    doTest("patterns/TestInstanceofPatternNotSupported");
   }
 
   @Test(expected = ClassFormatException.class)

@@ -1,6 +1,6 @@
-package patterns;
+package decompiler;
 
-public class TestInstanceofVarNotSupported {
+public class TestInstanceofPatternNotSupported {
    void typePattern(Object str) {
       if (!(str instanceof String)) {// 5
          System.out.println("no");// 6
@@ -16,7 +16,7 @@ public class TestInstanceofVarNotSupported {
    }// 7 15
 }
 
-class 'patterns/TestInstanceofVarNotSupported' {
+class 'decompiler/TestInstanceofPatternNotSupported' {
    method 'typePattern (Ljava/lang/Object;)V' {
       1      4
       4      4

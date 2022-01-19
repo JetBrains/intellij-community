@@ -138,32 +138,39 @@ public final class SwitchHelper {
             (index instanceof InvocationExprent && ((InvocationExprent)index).getName().equals("ordinal")));
   }
 
-  private static void removeTempVariableDeclarations(@NotNull Map<VarExprent, Statement> tempVarAssignments) {
+  static void removeTempVariableDeclarations(@NotNull Map<VarExprent, Statement> tempVarAssignments) {
     if (tempVarAssignments.isEmpty()) return;
     for (Statement statement : new HashSet<>(tempVarAssignments.values())) {
       Statement parent = statement;
       while (parent != null) {
         boolean removed = false;
-        Statement firstStatement = parent.getFirst();
-        if (firstStatement.type == Statement.TYPE_BASIC_BLOCK) {
-          for (int i = 0; i < firstStatement.getExprents().size(); i++) {
-            Exprent exprent = firstStatement.getExprents().get(i);
-            Exprent assignmentExprent = null;
-            if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
-              assignmentExprent = exprent;
-              exprent = ((AssignmentExprent)exprent).getLeft();
-            }
-            if (exprent.type != Exprent.EXPRENT_VAR) continue;
-            VarExprent varExprent = (VarExprent)exprent;
-            if (varExprent.isDefinition() && tempVarAssignments.keySet().stream()
-              .anyMatch(expr -> expr.getIndex() == varExprent.getIndex() && expr.getVersion() == varExprent.getVersion())) {
-              firstStatement.getExprents().remove(assignmentExprent == null ? varExprent : assignmentExprent);
-              removed = true;
-              break;
-            }
-          }
-          if (removed) break;
+        List<Exprent> varExprents;
+        if (parent.getFirst().type == Statement.TYPE_BASIC_BLOCK) {
+          varExprents = parent.getFirst().getExprents();
         }
+        else if (parent.type == Statement.TYPE_TRY_CATCH) {
+          varExprents = parent.getVarDefinitions();
+        }
+        else {
+          varExprents = Collections.emptyList();
+        }
+        for (int i = 0; i < varExprents.size(); i++) {
+          Exprent exprent = varExprents.get(i);
+          Exprent assignmentExprent = null;
+          if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
+            assignmentExprent = exprent;
+            exprent = ((AssignmentExprent)exprent).getLeft();
+          }
+          if (exprent.type != Exprent.EXPRENT_VAR) continue;
+          VarExprent varExprent = (VarExprent)exprent;
+          if (varExprent.isDefinition() && tempVarAssignments.keySet().stream()
+            .anyMatch(expr -> expr.getIndex() == varExprent.getIndex() && expr.getVersion() == varExprent.getVersion())) {
+            varExprents.remove(assignmentExprent == null ? varExprent : assignmentExprent);
+            removed = true;
+            break;
+          }
+        }
+        if (removed) break;
         parent = parent.getParent();
       }
     }
@@ -176,7 +183,7 @@ public final class SwitchHelper {
 
     @NotNull
     Set<Object> findRealCaseValuesHashCodes(@NotNull SwitchStatement switchStatement) {
-      //noinspection SSBasedInspection,ConstantConditions
+      // noinspection SSBasedInspection
       return switchStatement.getCaseValues().stream()
         // We take only buckets that don't contain null value.
         // null value represents default branch and no temp variable is assigned there.

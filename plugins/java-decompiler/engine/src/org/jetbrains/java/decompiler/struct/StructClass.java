@@ -204,16 +204,32 @@ public class StructClass extends StructMember {
     return majorVersion >= CodeConstants.BYTECODE_JAVA_8;
   }
 
-  public boolean hasSealedClassesSupport() {
-    return majorVersion >= CodeConstants.BYTECODE_JAVA_17 || (majorVersion >= CodeConstants.BYTECODE_JAVA_15 && isPreviewVersion());
+  public boolean isVersion14() {
+    return majorVersion >= CodeConstants.BYTECODE_JAVA_14;
+  }
+
+  public boolean isVersion15() {
+    return majorVersion >= CodeConstants.BYTECODE_JAVA_15;
+  }
+
+  public boolean isVersion16() {
+    return majorVersion >= CodeConstants.BYTECODE_JAVA_16;
+  }
+
+  public boolean isVersion17() {
+    return majorVersion >= CodeConstants.BYTECODE_JAVA_17;
   }
 
   public boolean isPreviewVersion() {
     return minorVersion == 0xFFFF;
   }
 
-  public boolean isVersion16() {
-    return majorVersion >= CodeConstants.BYTECODE_JAVA_16;
+  public boolean hasSealedClassesSupport() {
+    return isVersion17() || (isVersion15() && isPreviewVersion());
+  }
+
+  public boolean hasPatternsInInstanceofSupport() {
+    return isVersion16() || (isVersion14() && isPreviewVersion());
   }
 
   @Override
