@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -616,28 +616,29 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   private <V, E extends Throwable> V computeUnderProgress(@NotNull ThrowableComputable<V, E> process, ProgressIndicator progress) throws E {
-    if (progress == null) myUnsafeProgressCount.incrementAndGet();
-
-    try {
-      ProgressIndicator oldIndicator = null;
-      boolean set = progress != null && progress != (oldIndicator = getProgressIndicator());
-      if (set) {
-        Thread currentThread = Thread.currentThread();
-        long threadId = currentThread.getId();
-        setCurrentIndicator(threadId, progress);
-        try {
-          return registerIndicatorAndRun(progress, currentThread, oldIndicator, process);
-        }
-        finally {
-          setCurrentIndicator(threadId, oldIndicator);
-        }
-      }
-      else {
+    if (progress == null) {
+      myUnsafeProgressCount.incrementAndGet();
+      try {
         return process.compute();
       }
+      finally {
+        myUnsafeProgressCount.decrementAndGet();
+      }
+    }
+
+    ProgressIndicator oldIndicator = getProgressIndicator();
+    if (progress == oldIndicator) {
+      return process.compute();
+    }
+
+    Thread currentThread = Thread.currentThread();
+    long threadId = currentThread.getId();
+    setCurrentIndicator(threadId, progress);
+    try {
+      return registerIndicatorAndRun(progress, currentThread, oldIndicator, process);
     }
     finally {
-      if (progress == null) myUnsafeProgressCount.decrementAndGet();
+      setCurrentIndicator(threadId, oldIndicator);
     }
   }
 
