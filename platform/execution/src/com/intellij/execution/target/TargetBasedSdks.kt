@@ -56,12 +56,12 @@ fun loadTargetBasedSdkAdditionalData(element: Element): Pair<ContributedConfigur
   return targetState to loadedConfiguration
 }
 
-fun saveTargetConfiguration(element: Element, config: TargetEnvironmentConfiguration) {
+fun saveTargetConfiguration(element: Element, config: TargetEnvironmentConfiguration?) {
   val targetStateElement = Element(TARGET_ENVIRONMENT_CONFIGURATION)
   element.addContent(targetStateElement)
-  TargetEnvironmentsManager.TargetsList().also {
-    it.addConfig(config)
-    XmlSerializer.serializeInto(it, targetStateElement)
+  TargetEnvironmentsManager.TargetsList().also { list ->
+    config?.let { list.addConfig(it) }
+    XmlSerializer.serializeInto(list.state, targetStateElement)
   }
 }
 
