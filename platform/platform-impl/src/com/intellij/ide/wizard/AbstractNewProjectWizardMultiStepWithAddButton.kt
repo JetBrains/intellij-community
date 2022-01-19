@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.InstallPluginTask
 import com.intellij.ui.UIBundle
@@ -40,7 +41,7 @@ abstract class AbstractNewProjectWizardMultiStepWithAddButton<S : NewProjectWiza
     }
   }
 
-  private inner class AdditionalStepsAction : AnAction(null, null, AllIcons.General.Add) {
+  private inner class AdditionalStepsAction : DumbAwareAction(null, null, AllIcons.General.Add) {
     override fun actionPerformed(e: AnActionEvent) {
       val additionalSteps = (additionalStepPlugins.keys - steps.keys).map { OpenMarketPlaceAction(it) }
       JBPopupFactory.getInstance().createActionGroupPopup(
