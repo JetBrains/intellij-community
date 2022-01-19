@@ -2677,6 +2677,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         public void testArithmeticInFunctionCall() throws Exception {
             runTest("testData/newJ2k/implicitCasts/arithmeticInFunctionCall.java");
         }
+
+        @TestMetadata("operationsWithChar.java")
+        public void testOperationsWithChar() throws Exception {
+            runTest("testData/newJ2k/implicitCasts/operationsWithChar.java");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -3221,11 +3226,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("kt-9997.java")
         public void testKt_9997() throws Exception {
             runTest("testData/newJ2k/issues/kt-9997.java");
-        }
-
-        @TestMetadata("operationsWithChar.java")
-        public void testOperationsWithChar() throws Exception {
-            runTest("testData/newJ2k/issues/operationsWithChar.java");
         }
 
         @TestMetadata("qualifyStatic.java")
