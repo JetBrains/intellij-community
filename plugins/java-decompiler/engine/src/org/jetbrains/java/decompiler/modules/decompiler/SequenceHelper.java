@@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.modules.decompiler;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
@@ -47,7 +48,7 @@ public final class SequenceHelper {
             // move successors
             Statement last = st.getStats().getLast();
             if (last.getAllSuccessorEdges().isEmpty() && i < lst.size() - 1) {
-              last.addSuccessor(new StatEdge(StatEdge.TYPE_REGULAR, last, lst.get(i + 1)));
+              last.addSuccessor(new StatEdge(EdgeType.REGULAR, last, lst.get(i + 1)));
             }
             else {
               for (StatEdge edge : last.getAllSuccessorEdges()) {
@@ -57,7 +58,7 @@ public final class SequenceHelper {
                   }
                 }
                 else {
-                  edge.getSource().changeEdgeType(Statement.DIRECTION_FORWARD, edge, StatEdge.TYPE_REGULAR);
+                  edge.getSource().changeEdgeType(Statement.DIRECTION_FORWARD, edge, EdgeType.REGULAR);
                   edge.closure.getLabelEdges().remove(edge);
                   edge.closure = null;
                 }
@@ -152,7 +153,7 @@ public final class SequenceHelper {
       }
     }
 
-    for (StatEdge edge : next.getPredecessorEdges(StatEdge.TYPE_BREAK)) {
+    for (StatEdge edge : next.getPredecessorEdges(EdgeType.BREAK)) {
       if (last != edge.getSource() && !last.containsStatementStrict(edge.getSource())) {
         return false;
       }
@@ -178,7 +179,7 @@ public final class SequenceHelper {
         if (st.getExprents() != null && st.getExprents().isEmpty()) {
 
           if (st.getAllSuccessorEdges().isEmpty()) {
-            List<StatEdge> lstBreaks = st.getPredecessorEdges(StatEdge.TYPE_BREAK);
+            List<StatEdge> lstBreaks = st.getPredecessorEdges(EdgeType.BREAK);
 
             if (lstBreaks.isEmpty()) {
               for (StatEdge edge : st.getAllPredecessorEdges()) {
@@ -189,11 +190,11 @@ public final class SequenceHelper {
           }
           else {
             StatEdge sucedge = st.getAllSuccessorEdges().get(0);
-            if (sucedge.getType() != StatEdge.TYPE_FINALLYEXIT) {
+            if (sucedge.getType() != EdgeType.FINALLY_EXIT) {
               st.removeSuccessor(sucedge);
 
               for (StatEdge edge : st.getAllPredecessorEdges()) {
-                if (sucedge.getType() != StatEdge.TYPE_REGULAR) {
+                if (sucedge.getType() != EdgeType.REGULAR) {
                   edge.getSource().changeEdgeType(Statement.DIRECTION_FORWARD, edge, sucedge.getType());
                 }
 

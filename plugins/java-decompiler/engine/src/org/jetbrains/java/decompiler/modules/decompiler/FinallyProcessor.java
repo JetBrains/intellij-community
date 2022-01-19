@@ -12,6 +12,7 @@ import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.code.DeadCodeHelper;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
@@ -248,8 +249,8 @@ public class FinallyProcessor {
       // find finally exits
       if (blockStatement != null && blockStatement.getBlock() != null) {
         Statement handler = fstat.getHandler();
-        for (StatEdge edge : blockStatement.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL)) {
-          if (edge.getType() != StatEdge.TYPE_REGULAR && handler.containsStatement(blockStatement)
+        for (StatEdge edge : blockStatement.getSuccessorEdges(EdgeType.DIRECT_ALL)) {
+          if (edge.getType() != EdgeType.REGULAR && handler.containsStatement(blockStatement)
               && !handler.containsStatement(edge.getDestination())) {
             Boolean existingFlag = mapLast.get(blockStatement.getBlock());
             // note: the dummy node is also processed!

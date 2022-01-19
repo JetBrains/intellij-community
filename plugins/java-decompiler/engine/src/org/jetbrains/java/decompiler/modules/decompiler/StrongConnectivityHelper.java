@@ -2,6 +2,7 @@
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.util.ListStack;
 
@@ -26,7 +27,7 @@ public class StrongConnectivityHelper {
   public StrongConnectivityHelper(@NotNull Statement startStatement) {
     visitTree(startStatement.getFirst());
     for (Statement statement : startStatement.getStats()) {
-      if (!setProcessed.contains(statement) && statement.getPredecessorEdges(Statement.STATEDGE_DIRECT_ALL).isEmpty()) {
+      if (!setProcessed.contains(statement) && statement.getPredecessorEdges(EdgeType.DIRECT_ALL).isEmpty()) {
         visitTree(statement);
       }
     }
@@ -56,7 +57,7 @@ public class StrongConnectivityHelper {
     indices.put(statement, nextIndex);
     lowIndices.put(statement, nextIndex);
     nextIndex++;
-    List<Statement> successors = statement.getNeighbours(StatEdge.TYPE_REGULAR, Statement.DIRECTION_FORWARD); // TODO: set?
+    List<Statement> successors = statement.getNeighbours(EdgeType.REGULAR, Statement.DIRECTION_FORWARD); // TODO: set?
     successors.removeAll(setProcessed);
     for (Statement successor : successors) {
       int successorIndex;
@@ -85,7 +86,7 @@ public class StrongConnectivityHelper {
   public static boolean isExitComponent(@NotNull List<? extends Statement> component) {
     Set<Statement> statements = new HashSet<>();
     for (Statement statement : component) {
-      statements.addAll(statement.getNeighbours(StatEdge.TYPE_REGULAR, Statement.DIRECTION_FORWARD));
+      statements.addAll(statement.getNeighbours(EdgeType.REGULAR, Statement.DIRECTION_FORWARD));
     }
     for (Statement statement : component) {
       statements.remove(statement);

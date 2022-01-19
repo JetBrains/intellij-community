@@ -8,6 +8,7 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -479,10 +480,10 @@ public final class SwitchHelper {
       }
 
       private static void removeOuterBreakEdge(@NotNull IfStatement ifStatement) {
-        List<StatEdge> ifStatementBreakEdges = ifStatement.getSuccessorEdges(StatEdge.TYPE_BREAK);
+        List<StatEdge> ifStatementBreakEdges = ifStatement.getSuccessorEdges(EdgeType.BREAK);
         if (ifStatementBreakEdges.size() != 1) return;
         Statement lastStatement = ifStatement.getStats().get(ifStatement.getStats().size() - 1);
-        List<StatEdge> lastStatementBreakEdges = lastStatement.getSuccessorEdges(StatEdge.TYPE_BREAK);
+        List<StatEdge> lastStatementBreakEdges = lastStatement.getSuccessorEdges(EdgeType.BREAK);
         if (lastStatementBreakEdges.size() != 1) return;
         StatEdge firstIfStatementBreakEdge = ifStatementBreakEdges.get(0);
         StatEdge lastStatementBreakEdge = lastStatementBreakEdges.get(0);

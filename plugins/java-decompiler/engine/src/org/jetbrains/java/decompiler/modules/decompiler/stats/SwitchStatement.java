@@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.SwitchHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
@@ -37,13 +38,13 @@ public final class SwitchStatement extends Statement {
     first = head;
     stats.addWithKey(head, head.id);
     // find post node
-    Set<Statement> regularSuccessors = new HashSet<>(head.getNeighbours(StatEdge.TYPE_REGULAR, DIRECTION_FORWARD));
+    Set<Statement> regularSuccessors = new HashSet<>(head.getNeighbours(EdgeType.REGULAR, DIRECTION_FORWARD));
     // cluster nodes
     if (postStatement != null) {
       post = postStatement;
       regularSuccessors.remove(post);
     }
-    defaultEdge = head.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL).get(0);
+    defaultEdge = head.getSuccessorEdges(EdgeType.DIRECT_ALL).get(0);
     for (Statement successor : regularSuccessors) {
       stats.addWithKey(successor, successor.id);
     }
@@ -155,13 +156,13 @@ public final class SwitchStatement extends Statement {
   @Override
   public void initSimpleCopy() {
     first = stats.get(0);
-    defaultEdge = first.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL).get(0);
+    defaultEdge = first.getSuccessorEdges(EdgeType.DIRECT_ALL).get(0);
     sortEdgesAndNodes();
   }
 
   public void sortEdgesAndNodes() {
     Map<StatEdge, Integer> edgeIndicesMapping = new HashMap<>();
-    List<StatEdge> firstSuccessors = first.getSuccessorEdges(STATEDGE_DIRECT_ALL);
+    List<StatEdge> firstSuccessors = first.getSuccessorEdges(EdgeType.DIRECT_ALL);
     for (int i = 0; i < firstSuccessors.size(); i++) {
       edgeIndicesMapping.put(firstSuccessors.get(i), i == 0 ? firstSuccessors.size() : i);
     }
@@ -192,7 +193,7 @@ public final class SwitchStatement extends Statement {
     for (List<Integer> indices : edgeIndices) {
       List<StatEdge> edges = new ArrayList<>(indices.size());
       List<Exprent> valueExprents = new ArrayList<>(indices.size());
-      List<StatEdge> firstSuccessors = first.getSuccessorEdges(STATEDGE_DIRECT_ALL);
+      List<StatEdge> firstSuccessors = first.getSuccessorEdges(EdgeType.DIRECT_ALL);
       for (Integer in : indices) {
         int index = in == firstSuccessors.size() ? 0 : in;
         edges.add(firstSuccessors.get(index));
@@ -209,7 +210,7 @@ public final class SwitchStatement extends Statement {
     for (int i = 1; i < stats.size(); i++) {
       Statement statement = stats.get(i);
       List<Integer> regularEdgeIndices = new ArrayList<>();
-      for (StatEdge regularEdge : statement.getPredecessorEdges(StatEdge.TYPE_REGULAR)) {
+      for (StatEdge regularEdge : statement.getPredecessorEdges(EdgeType.REGULAR)) {
         if (regularEdge.getSource() == first) {
           regularEdgeIndices.add(edgeIndicesMapping.get(regularEdge));
         }
@@ -223,7 +224,7 @@ public final class SwitchStatement extends Statement {
   private void collectExitEdgesIndices(@NotNull Map<StatEdge, Integer> edgeIndicesMapping,
                                        @NotNull List<@Nullable Statement> nodes,
                                        @NotNull List<List<Integer>> edgeIndices) {
-    List<StatEdge> firstExitEdges = first.getSuccessorEdges(StatEdge.TYPE_BREAK | StatEdge.TYPE_CONTINUE);
+    List<StatEdge> firstExitEdges = first.getSuccessorEdges(EdgeType.BREAK.unite(EdgeType.CONTINUE));
     while (!firstExitEdges.isEmpty()) {
       StatEdge exitEdge = firstExitEdges.get(0);
       List<Integer> exitEdgeIndices = new ArrayList<>();
@@ -252,7 +253,7 @@ public final class SwitchStatement extends Statement {
     for (int index = 0; index < nodes.size(); index++) {
       Statement node = nodes.get(index);
       if (node == null) continue;
-      HashSet<Statement> nodePredecessors = new HashSet<>(node.getNeighbours(StatEdge.TYPE_REGULAR, DIRECTION_BACKWARD));
+      HashSet<Statement> nodePredecessors = new HashSet<>(node.getNeighbours(EdgeType.REGULAR, DIRECTION_BACKWARD));
       nodePredecessors.remove(first);
       if (nodePredecessors.isEmpty()) continue;
       // assumption: at most one predecessor node besides the head. May not hold true for obfuscated code.
@@ -284,7 +285,7 @@ public final class SwitchStatement extends Statement {
         StatEdge sampleEdge = edges.get(i).get(0);
         basicBlock.addSuccessor(new StatEdge(sampleEdge.getType(), basicBlock, sampleEdge.getDestination(), sampleEdge.closure));
         for (StatEdge edge : edges.get(i)) {
-          edge.getSource().changeEdgeType(DIRECTION_FORWARD, edge, StatEdge.TYPE_REGULAR);
+          edge.getSource().changeEdgeType(DIRECTION_FORWARD, edge, EdgeType.REGULAR);
           edge.closure.getLabelEdges().remove(edge);
           edge.getDestination().removePredecessor(edge);
           edge.getSource().changeEdgeNode(DIRECTION_FORWARD, edge, basicBlock);

@@ -5,6 +5,7 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.Arrays;
@@ -39,11 +40,11 @@ public class SequenceStatement extends Statement {
 
     this(Arrays.asList(head, tail));
 
-    List<StatEdge> lstSuccs = tail.getSuccessorEdges(STATEDGE_DIRECT_ALL);
+    List<StatEdge> lstSuccs = tail.getSuccessorEdges(EdgeType.DIRECT_ALL);
     if (!lstSuccs.isEmpty()) {
       StatEdge edge = lstSuccs.get(0);
 
-      if (edge.getType() == StatEdge.TYPE_REGULAR && edge.getDestination() != head) {
+      if (edge.getType() == EdgeType.REGULAR && edge.getDestination() != head) {
         post = edge.getDestination();
       }
     }
@@ -62,15 +63,15 @@ public class SequenceStatement extends Statement {
 
     // at most one outgoing edge
     StatEdge edge = null;
-    List<StatEdge> lstSuccs = head.getSuccessorEdges(STATEDGE_DIRECT_ALL);
+    List<StatEdge> lstSuccs = head.getSuccessorEdges(EdgeType.DIRECT_ALL);
     if (!lstSuccs.isEmpty()) {
       edge = lstSuccs.get(0);
     }
 
-    if (edge != null && edge.getType() == StatEdge.TYPE_REGULAR) {
+    if (edge != null && edge.getType() == EdgeType.REGULAR) {
       Statement stat = edge.getDestination();
 
-      if (stat != head && stat.getPredecessorEdges(StatEdge.TYPE_REGULAR).size() == 1
+      if (stat != head && stat.getPredecessorEdges(EdgeType.REGULAR).size() == 1
           && !stat.isMonitorEnter()) {
 
         if (stat.getLastBasicType() == Statement.LASTBASICTYPE_GENERAL) {

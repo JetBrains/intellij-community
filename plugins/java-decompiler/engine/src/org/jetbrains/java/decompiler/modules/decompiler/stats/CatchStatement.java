@@ -9,11 +9,15 @@ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public final class CatchStatement extends Statement {
   private final List<List<String>> exctstrings = new ArrayList<>();
@@ -33,7 +37,7 @@ public final class CatchStatement extends Statement {
     first = head;
     stats.addWithKey(first, first.id);
 
-    for (StatEdge edge : head.getSuccessorEdges(StatEdge.TYPE_EXCEPTION)) {
+    for (StatEdge edge : head.getSuccessorEdges(EdgeType.EXCEPTION)) {
       Statement stat = edge.getDestination();
 
       if (setHandlers.contains(stat)) {
@@ -66,13 +70,13 @@ public final class CatchStatement extends Statement {
       int hnextcount = 0; // either no statements with connection to next, or more than 1
 
       Statement next = null;
-      List<StatEdge> lstHeadSuccs = head.getSuccessorEdges(STATEDGE_DIRECT_ALL);
-      if (!lstHeadSuccs.isEmpty() && lstHeadSuccs.get(0).getType() == StatEdge.TYPE_REGULAR) {
+      List<StatEdge> lstHeadSuccs = head.getSuccessorEdges(EdgeType.DIRECT_ALL);
+      if (!lstHeadSuccs.isEmpty() && lstHeadSuccs.get(0).getType() == EdgeType.REGULAR) {
         next = lstHeadSuccs.get(0).getDestination();
         hnextcount = 2;
       }
 
-      for (StatEdge edge : head.getSuccessorEdges(StatEdge.TYPE_EXCEPTION)) {
+      for (StatEdge edge : head.getSuccessorEdges(EdgeType.EXCEPTION)) {
         Statement stat = edge.getDestination();
 
         boolean handlerok = true;
@@ -82,8 +86,8 @@ public final class CatchStatement extends Statement {
             handlerok = false;
           }
           else {
-            List<StatEdge> lstStatSuccs = stat.getSuccessorEdges(STATEDGE_DIRECT_ALL);
-            if (!lstStatSuccs.isEmpty() && lstStatSuccs.get(0).getType() == StatEdge.TYPE_REGULAR) {
+            List<StatEdge> lstStatSuccs = stat.getSuccessorEdges(EdgeType.DIRECT_ALL);
+            if (!lstStatSuccs.isEmpty() && lstStatSuccs.get(0).getType() == EdgeType.REGULAR) {
 
               Statement statn = lstStatSuccs.get(0).getDestination();
 

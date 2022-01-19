@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 
 import java.util.ArrayList;
@@ -49,7 +50,7 @@ public final class InlineSingleBlockHelper {
     Statement pre = seq.getStats().get(index - 1);
     pre.removeSuccessor(pre.getAllSuccessorEdges().get(0));   // single regular edge
 
-    StatEdge edge = first.getPredecessorEdges(StatEdge.TYPE_BREAK).get(0);
+    StatEdge edge = first.getPredecessorEdges(EdgeType.BREAK).get(0);
     Statement source = edge.getSource();
     Statement parent = source.getParent();
     source.removeSuccessor(edge);
@@ -65,7 +66,7 @@ public final class InlineSingleBlockHelper {
       SequenceStatement block = new SequenceStatement(lst);
       block.setAllParent();
 
-      StatEdge newedge = new StatEdge(StatEdge.TYPE_REGULAR, source, block);
+      StatEdge newedge = new StatEdge(EdgeType.REGULAR, source, block);
       source.addSuccessor(newedge);
       ifparent.setIfEdge(newedge);
       ifparent.setIfstat(block);
@@ -84,7 +85,7 @@ public final class InlineSingleBlockHelper {
       // LabelHelper.lowContinueLabels not applicable because of forward continue edges
       // LabelHelper.lowContinueLabels(block, new HashSet<StatEdge>());
       // do it by hand
-      for (StatEdge prededge : block.getPredecessorEdges(StatEdge.TYPE_CONTINUE)) {
+      for (StatEdge prededge : block.getPredecessorEdges(EdgeType.CONTINUE)) {
 
         block.removePredecessor(prededge);
         prededge.getSource().changeEdgeNode(Statement.DIRECTION_FORWARD, prededge, source);
@@ -98,7 +99,7 @@ public final class InlineSingleBlockHelper {
         ((SwitchStatement)parent).sortEdgesAndNodes();
       }
 
-      source.addSuccessor(new StatEdge(StatEdge.TYPE_REGULAR, source, first));
+      source.addSuccessor(new StatEdge(EdgeType.REGULAR, source, first));
     }
   }
 
@@ -112,7 +113,7 @@ public final class InlineSingleBlockHelper {
     }
 
 
-    List<StatEdge> lst = first.getPredecessorEdges(StatEdge.TYPE_BREAK);
+    List<StatEdge> lst = first.getPredecessorEdges(EdgeType.BREAK);
 
     if (lst.size() == 1) {
       StatEdge edge = lst.get(0);
@@ -166,7 +167,7 @@ public final class InlineSingleBlockHelper {
   private static boolean noExitLabels(Statement block, Statement sequence) {
 
     for (StatEdge edge : block.getAllSuccessorEdges()) {
-      if (edge.getType() != StatEdge.TYPE_REGULAR && edge.getDestination().type != Statement.TYPE_DUMMY_EXIT) {
+      if (edge.getType() != EdgeType.REGULAR && edge.getDestination().type != Statement.TYPE_DUMMY_EXIT) {
         if (!sequence.containsStatementStrict(edge.getDestination())) {
           return false;
         }

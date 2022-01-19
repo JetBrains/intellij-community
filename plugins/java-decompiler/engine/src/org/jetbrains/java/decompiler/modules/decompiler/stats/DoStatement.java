@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
@@ -39,16 +40,16 @@ public final class DoStatement extends Statement {
     if (head.getLastBasicType() == LASTBASICTYPE_GENERAL && !head.isMonitorEnter()) {
       // at most one outgoing edge
       StatEdge edge = null;
-      List<StatEdge> successorEdges = head.getSuccessorEdges(STATEDGE_DIRECT_ALL);
+      List<StatEdge> successorEdges = head.getSuccessorEdges(EdgeType.DIRECT_ALL);
       if (!successorEdges.isEmpty()) {
         edge = successorEdges.get(0);
       }
       // regular loop
-      if (edge != null && edge.getType() == StatEdge.TYPE_REGULAR && edge.getDestination() == head) {
+      if (edge != null && edge.getType() == EdgeType.REGULAR && edge.getDestination() == head) {
         return new DoStatement(head);
       }
       // continues
-      if (head.type != TYPE_DO && (edge == null || edge.getType() != StatEdge.TYPE_REGULAR) &&
+      if (head.type != TYPE_DO && (edge == null || edge.getType() != EdgeType.REGULAR) &&
           head.getContinueSet().contains(head.getBasichead())) {
         return new DoStatement(head);
       }

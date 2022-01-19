@@ -7,6 +7,7 @@ import org.jetbrains.java.decompiler.code.InstructionSequence;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode;
@@ -803,20 +804,19 @@ public class ExprProcessor implements CodeConstants {
   public static TextBuffer jmpWrapper(Statement stat, int indent, boolean semicolon, BytecodeMappingTracer tracer) {
     TextBuffer buf = stat.toJava(indent, tracer);
 
-    List<StatEdge> lstSuccs = stat.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL);
+    List<StatEdge> lstSuccs = stat.getSuccessorEdges(EdgeType.DIRECT_ALL);
     if (lstSuccs.size() == 1) {
       StatEdge edge = lstSuccs.get(0);
-      if (edge.getType() != StatEdge.TYPE_REGULAR && edge.explicit && edge.getDestination().type != Statement.TYPE_DUMMY_EXIT) {
+      if (edge.getType() != EdgeType.REGULAR && edge.explicit && edge.getDestination().type != Statement.TYPE_DUMMY_EXIT) {
         buf.appendIndent(indent);
 
-        switch (edge.getType()) {
-          case StatEdge.TYPE_BREAK:
-            addDeletedGotoInstructionMapping(stat, tracer);
-            buf.append("break");
-            break;
-          case StatEdge.TYPE_CONTINUE:
-            addDeletedGotoInstructionMapping(stat, tracer);
-            buf.append("continue");
+        if (EdgeType.BREAK.equals(edge.getType())) {
+          addDeletedGotoInstructionMapping(stat, tracer);
+          buf.append("break");
+        }
+        else if (EdgeType.CONTINUE.equals(edge.getType())) {
+          addDeletedGotoInstructionMapping(stat, tracer);
+          buf.append("continue");
         }
 
         if (edge.labeled) {

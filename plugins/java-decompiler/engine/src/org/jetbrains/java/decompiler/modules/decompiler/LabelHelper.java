@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
@@ -39,32 +40,31 @@ public final class LabelHelper {
   private static void liftClosures(Statement stat) {
 
     for (StatEdge edge : stat.getAllSuccessorEdges()) {
-      switch (edge.getType()) {
-        case StatEdge.TYPE_CONTINUE:
-          if (edge.getDestination() != edge.closure) {
-            edge.getDestination().addLabeledEdge(edge);
+      if (EdgeType.CONTINUE.equals(edge.getType())) {
+        if (edge.getDestination() != edge.closure) {
+          edge.getDestination().addLabeledEdge(edge);
+        }
+      }
+      else if (EdgeType.BREAK.equals(edge.getType())) {
+        Statement dest = edge.getDestination();
+        if (dest.type != Statement.TYPE_DUMMY_EXIT) {
+          Statement parent = dest.getParent();
+
+          List<Statement> lst = new ArrayList<>();
+          if (parent.type == Statement.TYPE_SEQUENCE) {
+            lst.addAll(parent.getStats());
           }
-          break;
-        case StatEdge.TYPE_BREAK:
-          Statement dest = edge.getDestination();
-          if (dest.type != Statement.TYPE_DUMMY_EXIT) {
-            Statement parent = dest.getParent();
+          else if (parent.type == Statement.TYPE_SWITCH) {
+            lst.addAll(((SwitchStatement)parent).getCaseStatements());
+          }
 
-            List<Statement> lst = new ArrayList<>();
-            if (parent.type == Statement.TYPE_SEQUENCE) {
-              lst.addAll(parent.getStats());
-            }
-            else if (parent.type == Statement.TYPE_SWITCH) {
-              lst.addAll(((SwitchStatement)parent).getCaseStatements());
-            }
-
-            for (int i = 0; i < lst.size(); i++) {
-              if (lst.get(i) == dest) {
-                lst.get(i - 1).addLabeledEdge(edge);
-                break;
-              }
+          for (int i = 0; i < lst.size(); i++) {
+            if (lst.get(i) == dest) {
+              lst.get(i - 1).addLabeledEdge(edge);
+              break;
             }
           }
+        }
       }
     }
 
@@ -80,7 +80,7 @@ public final class LabelHelper {
     }
 
     if (!stat.hasBasicSuccEdge()) {
-      for (StatEdge edge : stat.getSuccessorEdges(StatEdge.TYPE_CONTINUE | StatEdge.TYPE_BREAK)) {
+      for (StatEdge edge : stat.getSuccessorEdges(EdgeType.CONTINUE.unite(EdgeType.BREAK))) {
         stat.removeSuccessor(edge);
       }
     }
@@ -97,7 +97,7 @@ public final class LabelHelper {
     }
 
     if (ok) {
-      edges.addAll(stat.getPredecessorEdges(StatEdge.TYPE_CONTINUE));
+      edges.addAll(stat.getPredecessorEdges(EdgeType.CONTINUE));
     }
 
     if (ok && stat.type == Statement.TYPE_DO) {
@@ -127,7 +127,7 @@ public final class LabelHelper {
 
     for (StatEdge edge : new ArrayList<>(stat.getLabelEdges())) {
 
-      if (edge.getType() == StatEdge.TYPE_BREAK) {  // FIXME: ?
+      if (edge.getType() == EdgeType.BREAK) {  // FIXME: ?
         for (Statement st : stat.getStats()) {
           if (st.containsStatementStrict(edge.getSource())) {
             if (MergeHelper.isDirectPath(st, edge.getDestination())) {
@@ -159,7 +159,7 @@ public final class LabelHelper {
     Statement exit = root.getDummyExit();
     for (StatEdge edge : exit.getAllPredecessorEdges()) {
       List<Exprent> lst = edge.getSource().getExprents();
-      if (edge.getType() == StatEdge.TYPE_FINALLYEXIT || (lst != null && !lst.isEmpty() &&
+      if (edge.getType() == EdgeType.FINALLY_EXIT || (lst != null && !lst.isEmpty() &&
                                                           lst.get(lst.size() - 1).type == Exprent.EXPRENT_EXIT)) {
         edge.labeled = false;
       }
@@ -425,8 +425,8 @@ public final class LabelHelper {
       boolean shieldType = (stat.type == Statement.TYPE_DO || stat.type == Statement.TYPE_SWITCH);
       if (shieldType) {
         for (StatEdge edge : stat.getLabelEdges()) {
-          if (edge.explicit && ((edge.getType() == StatEdge.TYPE_BREAK && sets.breaks.contains(edge.getSource())) ||
-                                (edge.getType() == StatEdge.TYPE_CONTINUE && sets.continues.contains(edge.getSource())))) {
+          if (edge.explicit && ((edge.getType() == EdgeType.BREAK && sets.breaks.contains(edge.getSource())) ||
+                                (edge.getType() == EdgeType.CONTINUE && sets.continues.contains(edge.getSource())))) {
             edge.labeled = false;
           }
         }
@@ -450,7 +450,7 @@ public final class LabelHelper {
 
     if (stat.type == Statement.TYPE_DO) {
 
-      List<StatEdge> lst = stat.getPredecessorEdges(StatEdge.TYPE_CONTINUE);
+      List<StatEdge> lst = stat.getPredecessorEdges(EdgeType.CONTINUE);
 
       for (StatEdge edge : lst) {
 
@@ -459,7 +459,7 @@ public final class LabelHelper {
 
           if (minclosure != edge.closure &&
               !InlineSingleBlockHelper.isBreakEdgeLabeled(edge.getSource(), minclosure)) {
-            edge.getSource().changeEdgeType(Statement.DIRECTION_FORWARD, edge, StatEdge.TYPE_BREAK);
+            edge.getSource().changeEdgeType(Statement.DIRECTION_FORWARD, edge, EdgeType.BREAK);
             edge.labeled = false;
             minclosure.addLabeledEdge(edge);
           }

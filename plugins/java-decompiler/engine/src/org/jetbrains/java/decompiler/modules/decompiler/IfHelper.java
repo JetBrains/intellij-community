@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.IfExprent;
@@ -148,7 +149,7 @@ public final class IfHelper {
             else {
               ifchild.getFirst().removeSuccessor(ifchild.getIfEdge());
 
-              StatEdge ifedge = new StatEdge(StatEdge.TYPE_REGULAR, ifparent.getFirst(), ifinner);
+              StatEdge ifedge = new StatEdge(EdgeType.REGULAR, ifparent.getFirst(), ifinner);
               ifparent.getFirst().addSuccessor(ifedge);
               ifparent.setIfEdge(ifedge);
               ifparent.setIfstat(ifinner);
@@ -312,7 +313,7 @@ public final class IfHelper {
 
           second.addSuccessor(new StatEdge(ifedge.getType(), second, ifedge.getDestination(), ifedge.closure));
 
-          StatEdge newifedge = new StatEdge(StatEdge.TYPE_REGULAR, firstif.getFirst(), second);
+          StatEdge newifedge = new StatEdge(EdgeType.REGULAR, firstif.getFirst(), second);
           firstif.getFirst().addSuccessor(newifedge);
           firstif.setIfstat(second);
 
@@ -372,7 +373,7 @@ public final class IfHelper {
     Statement elsechild = edge.getDestination();
     IfNode elsenode = new IfNode(elsechild);
 
-    if (stsingle || edge.getType() != StatEdge.TYPE_REGULAR) {
+    if (stsingle || edge.getType() != EdgeType.REGULAR) {
       res.addChild(elsenode, 1);
     }
     else {
@@ -414,19 +415,19 @@ public final class IfHelper {
     if (ifstat.getIfstat() == null) {
       noifstat = true;
 
-      ifdirect = ifstat.getIfEdge().getType() == StatEdge.TYPE_FINALLYEXIT ||
+      ifdirect = ifstat.getIfEdge().getType() == EdgeType.FINALLY_EXIT ||
                  MergeHelper.isDirectPath(from, ifstat.getIfEdge().getDestination());
     }
     else {
       List<StatEdge> lstSuccs = ifstat.getIfstat().getAllSuccessorEdges();
-      ifdirect = !lstSuccs.isEmpty() && lstSuccs.get(0).getType() == StatEdge.TYPE_FINALLYEXIT ||
+      ifdirect = !lstSuccs.isEmpty() && lstSuccs.get(0).getType() == EdgeType.FINALLY_EXIT ||
                  hasDirectEndEdge(ifstat.getIfstat(), from);
     }
 
     Statement last = parent.type == Statement.TYPE_SEQUENCE ? parent.getStats().getLast() : ifstat;
     noelsestat = (last == ifstat);
 
-    elsedirect = !last.getAllSuccessorEdges().isEmpty() && last.getAllSuccessorEdges().get(0).getType() == StatEdge.TYPE_FINALLYEXIT ||
+    elsedirect = !last.getAllSuccessorEdges().isEmpty() && last.getAllSuccessorEdges().get(0).getType() == EdgeType.FINALLY_EXIT ||
                  hasDirectEndEdge(last, from);
 
     if (!noelsestat && existsPath(ifstat, ifstat.getAllSuccessorEdges().get(0).getDestination())) {
@@ -482,7 +483,7 @@ public final class IfHelper {
         sequence.getStats().removeWithKey(st.id);
       }
 
-      StatEdge elseedge = new StatEdge(StatEdge.TYPE_REGULAR, ifstat.getFirst(), stelse);
+      StatEdge elseedge = new StatEdge(EdgeType.REGULAR, ifstat.getFirst(), stelse);
       ifstat.getFirst().addSuccessor(elseedge);
       ifstat.setElsestat(stelse);
       ifstat.setElseEdge(elseedge);
@@ -537,7 +538,7 @@ public final class IfHelper {
           ifstat.getParent().replaceStatement(ifstat, newseq);
           newseq.setAllParent();
 
-          ifstat.addSuccessor(new StatEdge(StatEdge.TYPE_REGULAR, ifstat, ifbranch));
+          ifstat.addSuccessor(new StatEdge(EdgeType.REGULAR, ifstat, ifbranch));
         }
       }
       else {
@@ -583,13 +584,13 @@ public final class IfHelper {
           ifstat.getFirst().removeSuccessor(ifstat.getIfEdge());
           ifstat.getStats().removeWithKey(ifbranch.id);
 
-          ifstat.addSuccessor(new StatEdge(StatEdge.TYPE_REGULAR, ifstat, ifbranch));
+          ifstat.addSuccessor(new StatEdge(EdgeType.REGULAR, ifstat, ifbranch));
 
           sequence.getStats().addWithKey(ifbranch, ifbranch.id);
           ifbranch.setParent(sequence);
         }
 
-        StatEdge newifedge = new StatEdge(StatEdge.TYPE_REGULAR, ifstat.getFirst(), stelse);
+        StatEdge newifedge = new StatEdge(EdgeType.REGULAR, ifstat.getFirst(), stelse);
         ifstat.getFirst().addSuccessor(newifedge);
         ifstat.setIfstat(stelse);
         ifstat.setIfEdge(newifedge);

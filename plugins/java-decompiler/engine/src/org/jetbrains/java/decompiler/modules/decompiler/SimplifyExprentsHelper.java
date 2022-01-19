@@ -6,6 +6,7 @@ import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.SSAConstructorSparseEx;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
@@ -724,7 +725,7 @@ public class SimplifyExprentsHelper {
 
               StatEdge retEdge = ifStatement.getAllSuccessorEdges().get(0);
               Statement closure = retEdge.closure == statement ? statement.getParent() : retEdge.closure;
-              statement.addSuccessor(new StatEdge(StatEdge.TYPE_BREAK, statement, retEdge.getDestination(), closure));
+              statement.addSuccessor(new StatEdge(EdgeType.BREAK, statement, retEdge.getDestination(), closure));
 
               SequenceHelper.destroyAndFlattenStatement(statement);
 
