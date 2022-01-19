@@ -434,42 +434,40 @@ Includes the following features:</p>
     </group>
 
     <group id="Markdown.Toolbar.Floating" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
+      <group id="Markdown.Styling.SetHeaderLevel"
+             class="org.intellij.plugins.markdown.ui.actions.styling.SetHeaderLevelActionGroup"
+             popup="true"
+             compact="true"/>
+      <separator/>
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Bold">
         <keyboard-shortcut first-keystroke="control B" keymap="$default"/>
       </action>
-
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Italic">
         <keyboard-shortcut first-keystroke="control I" keymap="$default"/>
       </action>
-
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Strike_through">
         <keyboard-shortcut first-keystroke="control shift S" keymap="$default"/>
       </action>
-
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Code_span">
         <keyboard-shortcut first-keystroke="control shift C" keymap="$default"/>
       </action>
-
-      <separator/>
-
-      <action class="org.intellij.plugins.markdown.ui.actions.styling.HeaderDownAction"
-              id="org.intellij.plugins.markdown.ui.actions.styling.HeaderDownAction"
-              icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Header_level_down">
-      </action>
-
-      <action class="org.intellij.plugins.markdown.ui.actions.styling.HeaderUpAction"
-              id="org.intellij.plugins.markdown.ui.actions.styling.HeaderUpAction"
-              icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Header_level_up">
-      </action>
     </group>
+
+
+    <action class="org.intellij.plugins.markdown.ui.actions.styling.HeaderDownAction"
+            id="org.intellij.plugins.markdown.ui.actions.styling.HeaderDownAction"
+            icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Header_level_down"/>
+    <action class="org.intellij.plugins.markdown.ui.actions.styling.HeaderUpAction"
+            id="org.intellij.plugins.markdown.ui.actions.styling.HeaderUpAction"
+            icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Header_level_up"/>
 
     <!--
       This group is supposed to override default generate popup.

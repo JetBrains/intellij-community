@@ -233,4 +233,13 @@ public final class MarkdownPsiElementFactory {
     final var file = createFile(project, contents);
     return Objects.requireNonNull(file.findElementAt(1));
   }
+
+  @ApiStatus.Experimental
+  public static @NotNull MarkdownHeader createHeader(@NotNull Project project, int level, @NotNull String text) {
+    final var contents = StringUtil.repeat("#", level) + " " + text;
+    final var file = createFile(project, contents);
+    final var element = Objects.requireNonNull(file.getFirstChild().getFirstChild());
+    assert(element instanceof MarkdownHeader);
+    return (MarkdownHeader)element;
+  }
 }
