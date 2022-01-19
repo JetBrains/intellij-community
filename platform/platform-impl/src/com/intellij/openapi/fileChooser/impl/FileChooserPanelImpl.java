@@ -55,6 +55,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -186,10 +187,10 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private void openItemAtIndex(int idx, InputEvent e) {
     FsItem item = myModel.get(idx);
     if (item.directory) {
-      doLoad(item.path);
+      doLoad(item.path, item.name == FsItem.UPLINK ? UPPER_LEVEL : 0);
     }
     else if (myDescriptor.isChooseJarContents() && myRegistry.getFileTypeByFileName(item.name) == ArchiveFileType.INSTANCE) {
-      doLoad(item.path, true);
+      doLoad(item.path, INTO_ARCHIVE);
     }
     else {
       myCallback.run();
@@ -316,10 +317,13 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   }
 
   private void doLoad(@Nullable Path path) {
-    doLoad(path, false);
+    doLoad(path, 0);
   }
 
-  private void doLoad(@Nullable Path path, boolean asZip) {
+  private static final int UPPER_LEVEL = 1;
+  private static final int INTO_ARCHIVE = 2;
+
+  private void doLoad(@Nullable Path path, int direction) {
     synchronized (myLock) {
       myPath.setItem(path != null ? new FsItem(path) : null);
       myModel.clear();
@@ -327,18 +331,20 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       myList.setPaintBusy(true);
       myList.setEmptyText(StatusText.getDefaultEmptyText());
 
+      var childDir = direction == UPPER_LEVEL ? myCurrentDirectory : null;
       myCurrentDirectory = null;
       myCurrentContent.clear();
       cancelCurrentTask();
       var id = myCounter++;
       if (LOG.isTraceEnabled()) LOG.trace("starting: " + id + ", " + path);
       myCurrentTask = pair(id, ProcessIOExecutorService.INSTANCE.submit(() -> {
-        var directory = directoryToLoad(path, asZip);
+        var directory = directoryToLoad(path, direction == INTO_ARCHIVE);
         if (directory != null) {
-          loadDirectory(directory, id);
+          var pathToSelect = childDir != null && childDir.getParent() == null && isJar(childDir.toUri()) ? parent(childDir) : childDir;
+          loadDirectory(directory, pathToSelect, id);
         }
         else {
-          loadRoots(id);
+          loadRoots(id, childDir);
         }
       }));
     }
@@ -384,7 +390,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     return null;
   }
 
-  private void loadDirectory(Path directory, int id) {
+  private void loadDirectory(Path directory, @Nullable Path pathToSelect, int id) {
     var cancelled = new AtomicBoolean(false);
 
     var uplink = new FsItem(parent(directory));
@@ -393,9 +399,9 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       myPath.setItem(new FsItem(directory));
       myCurrentContent.add(uplink);
       myModel.add(uplink);
-      myList.setSelectedIndex(0);
     });
 
+    var selection = new AtomicReference<>(uplink);
     try {
       var vfsDirectory = new PreloadedDirectory(directory);
       Files.walkFileTree(directory, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
@@ -415,6 +421,9 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
               myModel.add(item);
             }
           });
+          if (pathToSelect != null && file.equals(pathToSelect)) {
+            selection.set(item);
+          }
           return cancelled.get() ? FileVisitResult.TERMINATE : FileVisitResult.CONTINUE;
         }
       });
@@ -439,13 +448,14 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         id,
         () -> {
           myList.setPaintBusy(false);
+          myList.setSelectedValue(selection.get(), true);
           myWatchKey = _watchKey;
         },
         () -> { if (_watchKey != null) _watchKey.cancel(); });
     }
   }
 
-  private void loadRoots(int id) {
+  private void loadRoots(int id, @Nullable Path pathToSelect) {
     var cancelled = new AtomicBoolean(false);
 
     update(id, cancelled, () -> {
@@ -465,6 +475,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       }
     }
 
+    var selection = new AtomicReference<FsItem>();
     for (Path root : roots) {
       if (cancelled.get()) break;
       try {
@@ -473,6 +484,9 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         var selectable = myDescriptor.isFileSelectable(virtualFile);
         var item = new FsItem(root, attrs, true, selectable, AllIcons.Nodes.Folder);
         update(id, cancelled, () -> myModel.add(item));
+        if (pathToSelect != null && root.equals(pathToSelect)) {
+          selection.set(item);
+        }
       }
       catch (Exception e) {
         LOG.warn(root.toString(), e);
@@ -485,6 +499,15 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         if (myModel.getSize() == 0) {
           myList.setEmptyText(IdeBundle.message("chooser.cannot.load.roots"));
         }
+        else {
+          FsItem selectedItem = selection.get();
+          if (selectedItem != null) {
+            myList.setSelectedValue(selectedItem, true);
+          }
+          else {
+            myList.setSelectedIndex(0);
+          }
+        }
       });
     }
   }
@@ -493,7 +516,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     var parent = path.getParent();
     if (parent == null) {
       var uri = path.toUri();
-      if ("jar".equals(uri.getScheme())) {
+      if (isJar(uri)) {
         var fileUri = Strings.trimEnd(uri.getRawSchemeSpecificPart(), SEPARATOR);
         try {
           return Path.of(new URI(fileUri));
@@ -504,6 +527,10 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       }
     }
     return parent;
+  }
+
+  private static boolean isJar(URI uri) {
+    return "jar".equals(uri.getScheme());
   }
 
   private void update(int id, AtomicBoolean cancelled, Runnable operation) {
@@ -561,7 +588,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     @Override
     public String toString() {
       var uri = path.toUri();
-      if ("jar".equals(uri.getScheme())) {
+      if (isJar(uri)) {
         var raw = uri.getRawSchemeSpecificPart();
         var p = raw.lastIndexOf(SEPARATOR);
         if (p > 0) {
