@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target
 
+import com.intellij.execution.target.TargetEnvironmentsManager.OneTargetState.Companion.toOneTargetState
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -72,12 +73,7 @@ class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsMan
 
   internal class TargetsList : ContributedConfigurationsList<TargetEnvironmentConfiguration, TargetEnvironmentType<*>>(
     TargetEnvironmentType.EXTENSION_NAME) {
-    override fun toBaseState(config: TargetEnvironmentConfiguration): OneTargetState =
-      OneTargetState().also {
-        it.loadFromConfiguration(config)
-        it.uuid = config.uuid
-        it.runtimes = config.runtimes.state.configs
-      }
+    override fun toBaseState(config: TargetEnvironmentConfiguration): OneTargetState = config.toOneTargetState()
 
     override fun fromOneState(state: ContributedStateBase): TargetEnvironmentConfiguration? {
       val result = super.fromOneState(state)
@@ -104,5 +100,13 @@ class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsMan
     @get: XCollection(style = XCollection.Style.v2)
     @get: Property(surroundWithTag = false)
     var runtimes by list<ContributedConfigurationsList.ContributedStateBase>()
+
+    companion object {
+      fun TargetEnvironmentConfiguration.toOneTargetState() = OneTargetState().also { result ->
+        result.loadFromConfiguration(this)
+        result.uuid = uuid
+        result.runtimes = runtimes.state.configs
+      }
+    }
   }
 }
