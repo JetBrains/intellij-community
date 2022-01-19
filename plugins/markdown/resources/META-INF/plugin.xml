@@ -470,6 +470,9 @@ Includes the following features:</p>
         <keyboard-shortcut first-keystroke="control shift C" keymap="$default"/>
       </action>
       <reference id="Markdown.Styling.CreateLink"/>
+      <separator/>
+      <action class="org.intellij.plugins.markdown.ui.actions.styling.CreateListPopupAction"
+              id="Markdown.Styling.CreateListPopup"/>
     </group>
 
 

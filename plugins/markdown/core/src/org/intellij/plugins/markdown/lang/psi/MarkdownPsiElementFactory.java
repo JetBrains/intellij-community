@@ -288,7 +288,7 @@ public final class MarkdownPsiElementFactory {
     @NotNull Function<Integer, String> markerSupplier
   ) {
     final var builder = new StringBuilder();
-    var itemIndex = 1;
+    var itemIndex = 0;
     for (final var item: items) {
       builder.append(markerSupplier.apply(itemIndex));
       builder.append(" ");
