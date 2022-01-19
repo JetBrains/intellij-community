@@ -99,7 +99,7 @@ internal class ProgressDialogUI : Disposable {
     UIUtil.dispose(cancelButton)
   }
 
-  fun updateTitle(title: @ProgressTitle String) {
+  fun updateTitle(title: @ProgressTitle String?) {
     EDT.assertIsEdt()
     myTitlePanel.setText(StringUtil.defaultIfEmpty(title, " "))
   }
