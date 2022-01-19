@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build.tasks
@@ -78,7 +78,7 @@ private fun buildKeymapPlugin(keymaps: Array<String>, buildNumber: String, targe
   buffer.flip()
 
   val resultFile = targetDir.resolve("${shortName}Keymap.zip")
-  writeNewZip(resultFile) {
+  writeNewZip(resultFile, compress = true) {
     it.uncompressedData("${shortName}Keymap.jar", buffer)
   }
   return Pair(resultFile, pluginXmlData)
