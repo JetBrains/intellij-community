@@ -1,14 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main.collectors;
 
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
-import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
-import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
 import org.jetbrains.java.decompiler.struct.StructField;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -153,7 +153,7 @@ public class ImportCollector {
 
     if (existsDefaultClass || (mapSimpleNames.containsKey(outerShortName) && !packageName.equals(mapSimpleNames.get(outerShortName)))) {
       //  don't return full name because if the class is a inner class, full name refers to the parent full name, not the child full name
-      return result == null ? fullName : (packageName + "." + result);
+      return result == null ? fullName.replace("$", ".") : (packageName + "." + result);
     }
     else if (!mapSimpleNames.containsKey(outerShortName)) {
       mapSimpleNames.put(outerShortName, packageName);
