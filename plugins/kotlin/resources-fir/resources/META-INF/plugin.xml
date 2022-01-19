@@ -343,5 +343,6 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer"/>
 
     <runLineMarkerContributor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.fir.highlighter.KotlinFirMainRunLineMarkerContributor"/>
+    <pathMacroContributor implementation="org.jetbrains.kotlin.idea.KotlinPluginMacros"/>
   </extensions>
 </idea-plugin>
