@@ -1790,7 +1790,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     for (PsiExpression side : sides) {
       PsiType sideType = side.getType();
       if (sideType != null && !TypeConversionUtil.isAssignable(conditionalType, sideType)) {
-        myHolder.add(HighlightUtil.checkAssignability(conditionalType, sideType, side, side));
+        PsiExpression expressionCopy =
+          PsiElementFactory.getInstance(expression.getProject()).createExpressionFromText(expression.getText(), expression);
+        PsiType type = expressionCopy.getType();
+        HighlightInfo info = HighlightUtil.checkAssignability(conditionalType, sideType, side, side);
+        if (type != null) {
+          HighlightUtil.registerChangeTypeFix(info, expression, type);
+        }
+        myHolder.add(info);
       }
     }
   }
