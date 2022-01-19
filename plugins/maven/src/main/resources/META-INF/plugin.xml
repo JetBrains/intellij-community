@@ -109,6 +109,8 @@
       <configurable instance="org.jetbrains.idea.maven.indices.MavenRepositoriesConfigurable"
                     id="reference.settings.project.maven.repository.indices" key="maven.repositories.title" bundle="messages.MavenIndicesBundle"
                     nonDefaultProject="true"/>
+      <configurable instance="org.jetbrains.idea.maven.wizards.archetype.MavenCatalogsConfigurable"
+                    id="reference.settings.project.maven.archetype.catalogs"/>
     </projectConfigurable>
 
     <stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.tasks.MavenBeforeRunTasksProvider"/>
