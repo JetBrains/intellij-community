@@ -420,10 +420,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareTargetRequest.getTargetEnvironmentRequest();
 
     PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = getRemoteAdditionalData(mySdk);
-    if (remoteSdkAdditionalData != null) {
-      PyRemotePathMapper pathMapper = PydevConsoleRunner.getPathMapper(myProject, myConsoleSettings, remoteSdkAdditionalData);
-      PythonCommandLineState.initEnvironment(myProject, pythonConsoleScriptExecution, runParams, targetEnvironmentRequest, pathMapper);
-    }
+    PyRemotePathMapper pathMapper = remoteSdkAdditionalData != null
+                                    ? PydevConsoleRunner.getPathMapper(myProject, myConsoleSettings, remoteSdkAdditionalData)
+                                    : null;
+    PythonCommandLineState.initEnvironment(myProject, pythonConsoleScriptExecution, runParams, targetEnvironmentRequest, pathMapper);
 
     if (myWorkingDir != null) {
       Function<TargetEnvironment, String> targetWorkingDir =
