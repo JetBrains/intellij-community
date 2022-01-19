@@ -13,10 +13,13 @@ import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
 import org.jetbrains.kotlin.psi.KtFile
 
+private const val COMPOSABLE_SINGLETONS_PREFIX = "ComposableSingletons"
+private const val ANDROIDX_COMPOSE_PACKAGE_NAME = "androidx.compose"
+
 /**
  * Compute the name of the ComposableSingletons class for the given file.
  *
- * The Compose compiler plugin creates per-file ComposableSingletons classes to cache
+ * Compose compiler plugin creates per-file ComposableSingletons classes to cache
  * composable lambdas without captured variables. We need to locate these classes in order
  * to search them for breakpoint locations.
  *
@@ -32,17 +35,17 @@ fun computeComposableSingletonsClassName(file: KtFile): String {
     val fileName = filePath.split('/').last()
     val shortName = PackagePartClassUtils.getFilePartShortName(fileName)
     val fileClassFqName = runReadAction { JvmFileClassUtil.getFileClassInfoNoResolve(file) }.facadeClassFqName
-    val classNameSuffix = "ComposableSingletons\$$shortName"
+    val classNameSuffix = "$COMPOSABLE_SINGLETONS_PREFIX\$$shortName"
     val filePackageName = fileClassFqName.parent()
     if (filePackageName.isRoot) {
         return classNameSuffix
     }
-    return filePackageName.asString() + classNameSuffix
+    return "${filePackageName.asString()}.$classNameSuffix"
 }
 
 fun SourcePosition.isInsideProjectWithCompose(): Boolean =
     ReadAction.nonBlocking<Boolean> {
-        JavaPsiFacade.getInstance(file.project).findPackage("androidx.compose") != null
+        JavaPsiFacade.getInstance(file.project).findPackage(ANDROIDX_COMPOSE_PACKAGE_NAME) != null
     }.executeSynchronously()
 
 fun getComposableSingletonsClasses(debugProcess: DebugProcess, file: KtFile): List<ReferenceType> {
