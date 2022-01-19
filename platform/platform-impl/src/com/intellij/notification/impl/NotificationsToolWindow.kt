@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -556,7 +557,7 @@ private class NotificationGroupComponent(private val myMainContent: Notification
   }
 
   fun add(notification: Notification, singleSelectionHandler: SingleTextSelectionHandler) {
-    val component = NotificationComponent(notification, myTimeComponents, singleSelectionHandler)
+    val component = NotificationComponent(myProject, notification, myTimeComponents, singleSelectionHandler)
     component.setNew(true)
 
     myList.add(component, 0)
@@ -709,7 +710,8 @@ private class NotificationGroupComponent(private val myMainContent: Notification
   override fun isNull(): Boolean = !isVisible
 }
 
-private class NotificationComponent(val notification: Notification,
+private class NotificationComponent(val project: Project,
+                                    val notification: Notification,
                                     timeComponents: ArrayList<JLabel>,
                                     val singleSelectionHandler: SingleTextSelectionHandler) : JPanel() {
 
@@ -876,6 +878,15 @@ private class NotificationComponent(val notification: Notification,
       val group = DefaultActionGroup()
       group.isPopup = true
 
+      if (NotificationsConfigurationImpl.getInstanceImpl().isRegistered(notification.groupId)) {
+        group.add(object : AnAction(IdeBundle.message("action.text.settings")) {
+          override fun actionPerformed(e: AnActionEvent) {
+            doShowSettings()
+          }
+        })
+        group.addSeparator()
+      }
+
       val remindAction = RemindLaterManager.createAction(notification, DateFormatUtil.DAY)
       if (remindAction != null) {
         @Suppress("DialogTitleCapitalization")
@@ -924,11 +935,11 @@ private class NotificationComponent(val notification: Notification,
       button.isVisible = false
       myMoreButton = button
 
-      val panel = JPanel(BorderLayout())
-      panel.isOpaque = false
-      panel.add(button, BorderLayout.NORTH)
-      add(panel, BorderLayout.EAST)
-      setComponentZOrder(panel, 0)
+      val eastPanel = JPanel(BorderLayout())
+      eastPanel.isOpaque = false
+      eastPanel.add(button, BorderLayout.NORTH)
+      add(eastPanel, BorderLayout.EAST)
+      setComponentZOrder(eastPanel, 0)
     }
     else {
       val timeComponent = JBLabel(DateFormatUtil.formatPrettyDateTime(notification.timestamp))
@@ -941,9 +952,35 @@ private class NotificationComponent(val notification: Notification,
       timeComponent.foreground = INFO_COLOR
 
       timeComponents.add(timeComponent)
-      titlePanel!!.add(timeComponent, BorderLayout.EAST)
 
-      myMoreButton = null
+      if (NotificationsConfigurationImpl.getInstanceImpl().isRegistered(notification.groupId)) {
+        val button = object: InplaceButton(IdeBundle.message("tooltip.turn.notification.off"), AllIcons.Ide.Notification.Gear,
+                                   ActionListener { doShowSettings() }) {
+          override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
+            super.setBounds(x, y - 1, width, height)
+          }
+        }
+        button.setIcons(AllIcons.Ide.Notification.Gear, null, AllIcons.Ide.Notification.GearHover)
+        myMoreButton = button
+
+        val buttonWrapper = JPanel(BorderLayout())
+        buttonWrapper.isOpaque = false
+        buttonWrapper.border = JBUI.Borders.emptyRight(10)
+        buttonWrapper.add(button, BorderLayout.NORTH)
+        buttonWrapper.preferredSize = buttonWrapper.preferredSize
+
+        button.isVisible = false
+
+        val eastPanel = JPanel(BorderLayout())
+        eastPanel.isOpaque = false
+        eastPanel.add(buttonWrapper, BorderLayout.WEST)
+        eastPanel.add(timeComponent, BorderLayout.EAST)
+        titlePanel!!.add(eastPanel, BorderLayout.EAST)
+      }
+      else {
+        titlePanel!!.add(timeComponent, BorderLayout.EAST)
+        myMoreButton = null
+      }
     }
   }
 
@@ -953,6 +990,15 @@ private class NotificationComponent(val notification: Notification,
         runAction(action, e.source)
       }
     }
+  }
+
+  private fun doShowSettings() {
+    NotificationCollector.getInstance().logNotificationSettingsClicked(notification.id, notification.displayId, notification.groupId)
+    val configurable = NotificationsConfigurable()
+    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, Runnable {
+      val runnable = configurable.enableSearch(notification.groupId)
+      runnable?.run()
+    })
   }
 
   private fun runAction(action: AnAction, component: Any) {
