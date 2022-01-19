@@ -71,8 +71,9 @@ class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsMan
     }
   }
 
-  internal class TargetsList : ContributedConfigurationsList<TargetEnvironmentConfiguration, TargetEnvironmentType<*>>(
-    TargetEnvironmentType.EXTENSION_NAME) {
+  class TargetsList : ContributedConfigurationsList<TargetEnvironmentConfiguration, TargetEnvironmentType<*>>(
+    TargetEnvironmentType.EXTENSION_NAME
+  ) {
     override fun toBaseState(config: TargetEnvironmentConfiguration): OneTargetState = config.toOneTargetState()
 
     override fun fromOneState(state: ContributedStateBase): TargetEnvironmentConfiguration? {

@@ -25,9 +25,11 @@ fun TargetBasedSdkAdditionalData.getTargetEnvironmentRequest(project: Project?):
 }
 
 /**
+ * @deprecated
  * @param element the "additional" element of IntelliJ SDK data to store state to
  * @param targetState the state that contains target configuration to be stored
  */
+@Deprecated(message = "replace with saveTargetConfiguration")
 fun saveTargetBasedSdkAdditionalData(element: Element, targetState: ContributedConfigurationsList.ContributedStateBase?) {
   val targetStateElement = Element(TARGET_ENVIRONMENT_CONFIGURATION)
   element.addContent(targetStateElement)
@@ -35,8 +37,10 @@ fun saveTargetBasedSdkAdditionalData(element: Element, targetState: ContributedC
 }
 
 /**
+ * @deprecated
  * @param element the "additional" element of IntelliJ SDK data
  */
+@Deprecated(message = "replace with loadTargetConfiguration")
 fun loadTargetBasedSdkAdditionalData(element: Element): Pair<ContributedConfigurationsList.ContributedStateBase?, TargetEnvironmentConfiguration?> {
   // the state that contains information of the target, as for now the target configuration is embedded into the additional data
   val targetConfigurationElement = element.getChild(TARGET_ENVIRONMENT_CONFIGURATION)
@@ -50,6 +54,29 @@ fun loadTargetBasedSdkAdditionalData(element: Element): Pair<ContributedConfigur
     LOG.info("Cannot load SDK target configuration data")
   }
   return targetState to loadedConfiguration
+}
+
+fun saveTargetConfiguration(element: Element, config: TargetEnvironmentConfiguration) {
+  val targetStateElement = Element(TARGET_ENVIRONMENT_CONFIGURATION)
+  element.addContent(targetStateElement)
+  TargetEnvironmentsManager.TargetsList().also {
+    it.addConfig(config)
+    XmlSerializer.serializeInto(it, targetStateElement)
+  }
+}
+
+fun loadTargetConfiguration(element: Element): TargetEnvironmentConfiguration? {
+  val targetConfigurationElement = element.getChild(TARGET_ENVIRONMENT_CONFIGURATION)
+  if (targetConfigurationElement == null) {
+    LOG.warn("Target configuration data is absent")
+    return null
+  }
+
+  val targetState = jdomSerializer.deserialize(targetConfigurationElement, ContributedConfigurationsList.ListState::class.java)
+
+  return TargetEnvironmentsManager.TargetsList().also {
+    it.loadState(targetState)
+  }.resolvedConfigs().firstOrNull()
 }
 
 /**
