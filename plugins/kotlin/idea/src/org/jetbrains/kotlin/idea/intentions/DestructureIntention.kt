@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
@@ -20,6 +19,7 @@ import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -165,7 +165,7 @@ class DestructureIntention : SelfTargetingRangeIntention<KtDeclaration>(
         internal data class UsagesToRemove(val data: List<UsageData>, val removeSelectorInLoopRange: Boolean)
 
         internal fun collectUsagesToRemove(declaration: KtDeclaration): UsagesToRemove? {
-            val context = declaration.analyze()
+            val context = declaration.safeAnalyzeNonSourceRootCode()
 
             val variableDescriptor = when (declaration) {
                 is KtParameter -> context.get(BindingContext.VALUE_PARAMETER, declaration)

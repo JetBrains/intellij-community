@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.classFilter.ClassFilterEditor;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -147,7 +148,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     final JPanel showPanel = new JPanel(new GridBagLayout());
     showPanel.setBorder(IdeBorderFactory.createTitledBorder(JavaDebuggerBundle.message("debugger.data.views.configurable.show.title")));
 
-    showPanel.add(myCbShowDeclaredType, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
+    showPanel.add(myCbShowDeclaredType, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBInsets.emptyInsets(), 0, 0));
     showPanel.add(myCbShowObjectId, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insetsTop(4), 0, 0));
     showPanel.add(myCbShowSyntheticFields, new GridBagConstraints(1, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insetsLeft(10), 0, 0));
     showPanel.add(myCbShowStatic, new GridBagConstraints(1, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insets(4, 10, 0, 0), 0, 0));
@@ -164,7 +165,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     //arraysPanel.add(myCbHideNullArrayElements, BorderLayout.SOUTH);
     //arraysPanel.setBorder(IdeBorderFactory.createTitledBorder("Arrays", true));
     //panel.add(arraysPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-    panel.add(myCbShowStringsType, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, NORTH, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+    panel.add(myCbShowStringsType, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, NORTH, HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
     panel.add(myCbHexValue, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, NORTH, HORIZONTAL, JBUI.insetsTop(4), 0, 0));
     panel.add(myCbHideNullArrayElements, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, NORTH, HORIZONTAL, JBUI.insetsTop(4), 0, 0));
     panel.add(myCbPopulateThrowableStack, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, NORTH, HORIZONTAL, JBUI.insetsTop(4), 0, 0));

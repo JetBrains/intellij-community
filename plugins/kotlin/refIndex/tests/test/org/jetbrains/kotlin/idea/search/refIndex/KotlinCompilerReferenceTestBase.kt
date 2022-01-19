@@ -1,39 +1,29 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.compiler.CompilerReferenceService
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase
 import com.intellij.java.compiler.CompilerReferencesTestBase
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
-import com.intellij.testFramework.runAll
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.addToStdlib.cast
-import kotlin.properties.Delegates
 
 abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase() {
-    private var defaultEnableState by Delegates.notNull<Boolean>()
-
     override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
+        super.tuneFixture(moduleBuilder)
         moduleBuilder.addLibrary(KotlinArtifactNames.KOTLIN_STDLIB, KotlinArtifacts.instance.kotlinStdlib.path)
     }
 
     override fun setUp() {
         super.setUp()
-        defaultEnableState = AdvancedSettings.getBoolean(KotlinCompilerReferenceIndexService.SETTINGS_ID)
-        AdvancedSettings.setBoolean(KotlinCompilerReferenceIndexService.SETTINGS_ID, true)
+        KotlinCompilerReferenceIndexService[project]
     }
-
-    override fun tearDown() = runAll(
-        { AdvancedSettings.setBoolean(KotlinCompilerReferenceIndexService.SETTINGS_ID, defaultEnableState) },
-        { super.tearDown() },
-    )
 
     protected fun getReferentFilesForElementUnderCaret(): Set<String>? {
         val elementAtCaret = myFixture.elementAtCaret

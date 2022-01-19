@@ -11,7 +11,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -449,13 +448,4 @@ public abstract class Decompressor {
     ensureValidPath(entryName);
     return outputDir.resolve(StringUtil.trimLeading(entryName, '/'));
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated please use {@link #postProcessor(Consumer)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public Decompressor postprocessor(com.intellij.util.@Nullable Consumer<? super File> consumer) {
-    return postProcessor(consumer == null ? null : path -> consumer.consume(path.toFile()));
-  }
-  //</editor-fold>
 }

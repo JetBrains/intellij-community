@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.*;
@@ -118,12 +118,12 @@ public class TestsPattern extends TestPackage {
 
   @Nullable
   @Override
-  public RefactoringElementListener getListener(PsiElement element, JUnitConfiguration configuration) {
+  public RefactoringElementListener getListener(PsiElement element) {
     final RefactoringElementListenerComposite composite = new RefactoringElementListenerComposite();
-    final JUnitConfiguration.Data data = configuration.getPersistentData();
+    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Set<String> patterns = data.getPatterns();
     for (final String pattern : patterns) {
-      final PsiClass testClass = getTestClass(configuration.getProject(), pattern.trim());
+      final PsiClass testClass = getTestClass(getConfiguration().getProject(), pattern.trim());
       if (testClass != null && testClass.equals(element)) {
         final RefactoringElementListener listeners =
           RefactoringListeners.getListeners(testClass, new RefactoringListeners.Accessor<>() {

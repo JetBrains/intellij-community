@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -9,6 +9,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
@@ -115,14 +116,16 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
     myPanel.add(startIndexLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsRight(8), 0, 0));
     myPanel.add(myStartIndex, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insetsRight(8), 0, 0));
     myPanel.add(endIndexLabel, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsRight(8), 0, 0));
-    myPanel.add(myEndIndex, new GridBagConstraints(3, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+    myPanel.add(myEndIndex, new GridBagConstraints(3, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                                   JBInsets.emptyInsets(), 0, 0));
 
     myPanel.add(entriesLimitLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insets(4, 0, 0, 8), 0, 0));
     myPanel.add(myEntriesLimit, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(4, 0, 0, 8), 0, 0));
     myPanel.add(new JLabel(JavaDebuggerBundle.message("label.array.renderer.configurable.max.count2")), new GridBagConstraints(2, GridBagConstraints.RELATIVE, 2, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsTop(4), 0, 0));
 
     // push other components up
-    myPanel.add(new JLabel(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+    myPanel.add(new JLabel(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                                     JBInsets.emptyInsets(), 0, 0));
 
     final DocumentListener listener = new DocumentListener() {
       private void updateEntriesLimit() {

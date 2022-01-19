@@ -12,24 +12,13 @@ import com.intellij.openapi.util.registry.Registry
 abstract class AbstractDependencyAnalyzerAction : AnAction(), DumbAware {
   abstract fun getSystemId(e: AnActionEvent): ProjectSystemId?
 
-  abstract fun getExternalProjectPath(e: AnActionEvent): String?
-
-  abstract fun getDependency(e: AnActionEvent): DependencyAnalyzerContributor.Dependency?
+  abstract fun setSelectedState(e: AnActionEvent, view: DependencyAnalyzerView)
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val systemId = getSystemId(e) ?: return
-    val externalProjectPath = getExternalProjectPath(e)
-    val dependency = getDependency(e)
     val tab = DependencyAnalyzerEditorTab(project, systemId)
-    if (externalProjectPath != null) {
-      if (dependency != null) {
-        tab.view.setSelectedDependency(externalProjectPath, dependency)
-      }
-      else {
-        tab.view.setSelectedExternalProject(externalProjectPath)
-      }
-    }
+    setSelectedState(e, tab.view)
     UIComponentEditorTab.show(project, tab)
   }
 

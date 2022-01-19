@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
@@ -382,7 +382,10 @@ public final class GenerateMembersUtil {
                                                           @NotNull PsiSubstitutor substitutor,
                                                           @NotNull PsiMethod sourceMethod) {
     final PsiElement copy = ObjectUtils.notNull(typeParameter instanceof PsiCompiledElement ? ((PsiCompiledElement)typeParameter).getMirror() : typeParameter, typeParameter).copy();
-    LOG.assertTrue(copy != null, typeParameter);
+    if (copy == null) {
+      List<PsiClassType> substitutedSupers = ContainerUtil.map(typeParameter.getSuperTypes(), t -> ObjectUtils.notNull(toClassType(substitutor.substitute(t)), t));
+      return factory.createTypeParameter(Objects.requireNonNull(typeParameter.getName()), substitutedSupers.toArray(PsiClassType.EMPTY_ARRAY));
+    }
     final Map<PsiElement, PsiElement> replacementMap = new HashMap<>();
     copy.accept(new JavaRecursiveElementVisitor() {
       @Override
@@ -396,6 +399,19 @@ public final class GenerateMembersUtil {
       }
     });
     return (PsiTypeParameter)RefactoringUtil.replaceElementsWithMap(copy, replacementMap);
+  }
+
+  private static PsiClassType toClassType(PsiType type) {
+    if (type instanceof PsiClassType) {
+      return (PsiClassType)type;
+    }
+    if (type instanceof PsiCapturedWildcardType) {
+      return toClassType(((PsiCapturedWildcardType)type).getUpperBound());
+    }
+    if (type instanceof PsiWildcardType) {
+      return toClassType(((PsiWildcardType)type).getBound());
+    }
+    return null;
   }
 
   private static void substituteParameters(@NotNull JVMElementFactory factory,

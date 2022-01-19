@@ -38,7 +38,7 @@ class IntroduceVariableSuggester : AbstractFeatureSuggester() {
 
   override fun getSuggestion(action: Action): Suggestion {
     val language = action.language ?: return NoSuggestion
-    val langSupport = LanguageSupport.getForLanguage(language) ?: return NoSuggestion
+    val langSupport = SuggesterSupport.getForLanguage(language) ?: return NoSuggestion
     when (action) {
       is BeforeEditorTextRemovedAction -> {
         with(action) {
@@ -112,11 +112,11 @@ class IntroduceVariableSuggester : AbstractFeatureSuggester() {
     }
   }
 
-  private fun LanguageSupport.isVariableDeclarationAdded(action: ChildReplacedAction): Boolean {
+  private fun SuggesterSupport.isVariableDeclarationAdded(action: ChildReplacedAction): Boolean {
     return isExpressionStatement(action.oldChild) && isVariableDeclaration(action.newChild)
   }
 
-  private fun LanguageSupport.isVariableDeclarationAdded(action: ChildAddedAction): Boolean {
+  private fun SuggesterSupport.isVariableDeclarationAdded(action: ChildAddedAction): Boolean {
     return isCodeBlock(action.parent) && isVariableDeclaration(action.newChild)
   }
 
@@ -128,7 +128,7 @@ class IntroduceVariableSuggester : AbstractFeatureSuggester() {
     }
   }
 
-  private fun LanguageSupport.isVariableInserted(action: ChildReplacedAction): Boolean {
+  private fun SuggesterSupport.isVariableInserted(action: ChildReplacedAction): Boolean {
     if (extractedExprData == null) return false
     with(extractedExprData!!) {
       return variableEditingFinished && declaration != null &&

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usageView.impl;
 
 import com.intellij.find.FindBundle;
@@ -26,6 +26,7 @@ import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -44,8 +45,15 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
 
   @NonInjectable
   public UsageViewContentManagerImpl(@NotNull Project project, @NotNull ToolWindowManager toolWindowManager) {
-    ToolWindow toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.closable(
-      ToolWindowId.FIND, UIBundle.messagePointer("tool.window.name.find"), AllIcons.Toolwindows.ToolWindowFind));
+    ToolWindow toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.build(
+      ToolWindowId.FIND,
+      builder -> {
+        builder.stripeTitle = UIBundle.messagePointer("tool.window.name.find");
+        builder.icon = AllIcons.Toolwindows.ToolWindowFind;
+        builder.shouldBeAvailable = false;
+        return Unit.INSTANCE;
+      }
+    ));
     toolWindow.setHelpId(UsageViewImpl.HELP_ID);
     toolWindow.setToHideOnEmptyContent(true);
 

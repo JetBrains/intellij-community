@@ -57,8 +57,24 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
     versionProperty.dependsOn(parentProperty, ::suggestVersionByParent)
   }
 
-  protected open fun setupAdvancedSettingsUI(panel: Panel) {
-    with(panel) {
+  protected open fun setupSettingsUI(builder: Panel) {
+    with(builder) {
+      if (parents.isNotEmpty()) {
+        row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.parent.label")) {
+          val presentationName = Function<DataView<Data>, String> { it.presentationName }
+          val parentComboBoxModel = SortedComboBoxModel(comparing(presentationName, String.CASE_INSENSITIVE_ORDER))
+          parentComboBoxModel.add(EMPTY_VIEW)
+          parentComboBoxModel.addAll(parents)
+          comboBox(parentComboBoxModel, ParentRenderer())
+            .bindItem(parentProperty)
+            .columns(COLUMNS_MEDIUM)
+        }.topGap(TopGap.SMALL)
+      }
+    }
+  }
+
+  protected open fun setupAdvancedSettingsUI(builder: Panel) {
+    with(builder) {
       row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.label")) {
         textField()
           .bindText(groupIdProperty)
@@ -73,33 +89,14 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
           .validationOnApply { validateArtifactId() }
           .validationOnInput { validateArtifactId() }
       }.bottomGap(BottomGap.SMALL)
-      row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.version.label")) {
-        textField()
-          .bindText(versionProperty)
-          .columns(COLUMNS_MEDIUM)
-          .validationOnApply { validateVersion() }
-          .validationOnInput { validateVersion() }
-      }.bottomGap(BottomGap.SMALL)
     }
   }
 
   override fun setupUI(builder: Panel) {
-    with(builder) {
-      if (parents.isNotEmpty()) {
-        row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.parent.label")) {
-          val presentationName = Function<DataView<Data>, String> { it.presentationName }
-          val parentComboBoxModel = SortedComboBoxModel(comparing(presentationName, String.CASE_INSENSITIVE_ORDER))
-          parentComboBoxModel.add(EMPTY_VIEW)
-          parentComboBoxModel.addAll(parents)
-          comboBox(parentComboBoxModel, ParentRenderer())
-            .bindItem(parentProperty)
-            .columns(COLUMNS_MEDIUM)
-        }.topGap(TopGap.SMALL)
-      }
-      collapsibleGroup(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.advanced.settings.title")) {
-        setupAdvancedSettingsUI(this)
-      }.topGap(TopGap.MEDIUM)
-    }
+    setupSettingsUI(builder)
+    builder.collapsibleGroup(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.advanced.settings.title")) {
+      setupAdvancedSettingsUI(this)
+    }.topGap(TopGap.MEDIUM)
   }
 
   protected fun findAllModules(): List<Module> {

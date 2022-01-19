@@ -555,13 +555,15 @@ private fun getMethodSignatureFromDescriptor(context: KtElement, descriptor: Cal
     return JvmMemberSignature.Method(descriptor.name.asString(), desc)
 }
 
-private fun KotlinType.containsLocalTypes(): Boolean {
+private fun KotlinType.containsLocalTypes(visited: MutableSet<KotlinType> = hashSetOf()): Boolean {
+    if (!visited.add(this)) return false
     val typeDeclarationDescriptor = this.constructor.declarationDescriptor
     if (typeDeclarationDescriptor is ClassDescriptor && DescriptorUtils.isLocal(typeDeclarationDescriptor)) {
         return true
     }
 
-    return arguments.any { !it.isStarProjection && it.type.containsLocalTypes() }
+    return arguments.any { !it.isStarProjection && it.type.containsLocalTypes(visited) }
+            || constructor.supertypes.any { it.containsLocalTypes(visited) }
 }
 
 private fun PsiElement.getMaybeLightElement(sourcePsi: KtExpression? = null): PsiElement? {

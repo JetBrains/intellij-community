@@ -47,7 +47,7 @@ class ReplaceCompletionSuggester : AbstractFeatureSuggester() {
 
   override fun getSuggestion(action: Action): Suggestion {
     val language = action.language ?: return NoSuggestion
-    val langSupport = LanguageSupport.getForLanguage(language) ?: return NoSuggestion
+    val langSupport = SuggesterSupport.getForLanguage(language) ?: return NoSuggestion
     when (action) {
       is BeforeEditorTextRemovedAction -> {
         if (action.textFragment.text == ".") {
@@ -64,6 +64,7 @@ class ReplaceCompletionSuggester : AbstractFeatureSuggester() {
       }
       is EditorCodeCompletionAction -> {
         val caretOffset = action.caretOffset
+        if (caretOffset == 0) return NoSuggestion
         if (action.document.getText(TextRange(caretOffset - 1, caretOffset)) == ".") {
           editedStatementData = langSupport.createEditedStatementData(action, action.caretOffset)?.apply {
             isCompletionStarted = true
@@ -114,7 +115,7 @@ class ReplaceCompletionSuggester : AbstractFeatureSuggester() {
   }
 
   @Suppress("DuplicatedCode")
-  private fun LanguageSupport.createEditedStatementData(action: EditorAction, offset: Int): EditedStatementData? {
+  private fun SuggesterSupport.createEditedStatementData(action: EditorAction, offset: Int): EditedStatementData? {
     val curElement = action.psiFile?.findElementAt(offset) ?: return null
     return if (curElement.getParentByPredicate(::isLiteralExpression) == null &&
                curElement.getParentOfType<PsiComment>() == null

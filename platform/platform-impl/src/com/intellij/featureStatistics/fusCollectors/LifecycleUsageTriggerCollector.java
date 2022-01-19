@@ -200,7 +200,7 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     PROJECT_FRAME_SELECTED.log(optionValue);
   }
 
-  private static class DurationEventField extends PrimitiveEventField<String> {
+  private static final class DurationEventField extends PrimitiveEventField<String> {
     @NotNull
     @Override
     public List<String> getValidationRule() {

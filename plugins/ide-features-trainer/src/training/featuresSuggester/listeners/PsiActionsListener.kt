@@ -4,7 +4,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
-import training.featuresSuggester.LanguageSupport
+import training.featuresSuggester.SuggesterSupport
 import training.featuresSuggester.actions.*
 import training.featuresSuggester.handleAction
 
@@ -153,6 +153,6 @@ class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() 
 
   private fun isLoadedSourceFile(psiFile: PsiFile?): Boolean {
     val language = psiFile?.language ?: return false
-    return LanguageSupport.getForLanguage(language)?.isLoadedSourceFile(psiFile) == true
+    return SuggesterSupport.getForLanguage(language)?.isLoadedSourceFile(psiFile) == true
   }
 }

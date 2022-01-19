@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,18 +6,17 @@ import com.intellij.ui.hover.HoverListener;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.SwingUtilities;
-import java.awt.AWTEvent;
-import java.awt.Component;
-import java.awt.Point;
-import java.awt.Window;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 final class HoverService {
   private static final Logger LOG = Logger.getInstance(HoverService.class);
-  private final SmartList<ComponentPoint> hierarchy = new SmartList<>();
+  private final List<ComponentPoint> hierarchy = new ArrayList<>();
 
   void process(@NotNull AWTEvent event) {
     if (event instanceof MouseEvent) {

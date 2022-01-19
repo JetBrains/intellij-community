@@ -5,6 +5,7 @@ import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
@@ -124,8 +125,8 @@ public abstract class WslDistributionManager implements Disposable {
   }
 
   private @NotNull List<WSLDistribution> loadInstalledDistributions() {
-    final int releaseId = WSLUtil.getWindowsReleaseId();
-    if (releaseId > 0 && releaseId < 2004) {
+    final Long windowsBuild = SystemInfo.getWinBuildNumber();
+    if ( windowsBuild != null && windowsBuild > 0 && windowsBuild < 19041) {
       final WSLUtil.WSLToolFlags wslTool = WSLUtil.getWSLToolFlags();
       if (wslTool == null || (!wslTool.isVerboseFlagAvailable && !wslTool.isQuietFlagAvailable)) {
         //noinspection deprecation

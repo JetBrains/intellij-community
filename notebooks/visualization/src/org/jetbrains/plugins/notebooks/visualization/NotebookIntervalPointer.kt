@@ -29,13 +29,13 @@ interface NotebookIntervalPointerFactory {
       getOrNull(editor)!!
 
     fun getOrNull(editor: Editor): NotebookIntervalPointerFactory? =
-      key.get(editor) ?: tryInstall(editor)
+      key.get(editor.document) ?: tryInstall(editor)
 
     private fun tryInstall(editor: Editor): NotebookIntervalPointerFactory? =
       getLanguage(editor)
         ?.let { NotebookIntervalPointerFactoryProvider.forLanguage(it) }
         ?.create(editor)
-        ?.also { key.set(editor, it) }
+        ?.also { key.set(editor.document, it) }
   }
 
   sealed interface Change

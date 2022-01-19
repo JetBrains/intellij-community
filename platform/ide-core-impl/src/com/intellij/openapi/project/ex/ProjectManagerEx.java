@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.ex;
 
 import com.intellij.ide.impl.OpenProjectTask;
@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -43,15 +42,6 @@ public abstract class ProjectManagerEx extends ProjectManager {
    * Creates project but not open it. Use this method only in a test mode or special cases like new project wizard.
    */
   public abstract @Nullable Project newProject(@NotNull Path file, @NotNull OpenProjectTask options);
-
-  /**
-   * @deprecated Use {@link #openProject(Path, OpenProjectTask)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public final @NotNull Project loadProject(@NotNull String filePath) {
-    return loadProject(Paths.get(filePath).toAbsolutePath());
-  }
 
   public abstract @Nullable Project openProject(@NotNull Path projectStoreBaseDir, @NotNull OpenProjectTask options);
 

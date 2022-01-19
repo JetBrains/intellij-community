@@ -80,6 +80,11 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI"
     },
 
+    "SegmentedButton": {
+      "selectedStartBorderColor": "#5e6060",
+      "selectedEndBorderColor": "#5e6060"
+    },
+
     "CellEditor.border.width": 2,
 
     "CheckBox": {
@@ -120,6 +125,12 @@
       "inactiveWarningFocusColor": "#6E5324",
       "infoForeground": "#787878",
       "warningFocusColor": "#AC7920"
+    },
+
+    "ContextHelp": {
+      "fontSizeOffset": {
+        "os.windows": 0
+      }
     },
 
     "BookmarkMnemonicCurrent": {
@@ -541,11 +552,17 @@
 
     "MainToolbar": {
       "background": "#3c3f41",
-      "icon": {
-        "borderInsets": "10,10,10,10"
+      "Icon": {
+        "borderInsets": "10,10,10,10",
+        "background": "#3C3F41",
+        "hoverBackground": "#4C5052",
+        "pressedBackground": "#4C5052"
       },
-      "dropdown": {
-        "borderInsets": "12,6,12,6"
+      "Dropdown": {
+        "borderInsets": "12,6,12,6",
+        "background": "#3C3F41",
+        "hoverBackground": "#4C5052",
+        "pressedBackground": "#4C5052"
       }
     }
   },

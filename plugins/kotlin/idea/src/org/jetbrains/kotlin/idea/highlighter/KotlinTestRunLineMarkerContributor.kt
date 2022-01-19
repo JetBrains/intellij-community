@@ -8,8 +8,10 @@ import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.psi.PsiElement
 import com.intellij.util.Function
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.MainFunctionDetector
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.platform.tooling
+import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.idea.util.projectStructure.module
@@ -20,13 +22,11 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatformWithTarget
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import javax.swing.Icon
 
 class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
@@ -87,6 +87,24 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
             declaration.resolveToDescriptorIfAny()
         } ?: return null
         
-        return Info(icon, Function { KotlinBundle.message("highlighter.tool.tip.text.run.test") }, *ExecutorAction.getActions(1))
+        return Info(icon, Function { KotlinBundle.message("highlighter.tool.tip.text.run.test") }, *ExecutorAction.getActions(getOrder(declaration)))
+    }
+
+    private fun getOrder(declaration: KtNamedDeclaration): Int {
+        val mainFunctionDetector =
+                MainFunctionDetector(declaration.languageVersionSettings) { it.resolveToDescriptorIfAny(BodyResolveMode.FULL) }
+
+        if (declaration is KtClassOrObject && mainFunctionDetector.hasMain(declaration.companionObjects)) {
+            return 1
+        }
+        
+        if (declaration is KtNamedFunction) {
+            val declarations = declaration.containingClassOrObject?.declarations ?: return 0
+            if (mainFunctionDetector.hasMain(declarations)) return 1
+            return 0
+        }
+
+        val file = declaration.containingFile
+        return if (file is KtFile && mainFunctionDetector.hasMain(file.declarations)) 1 else 0
     }
 }

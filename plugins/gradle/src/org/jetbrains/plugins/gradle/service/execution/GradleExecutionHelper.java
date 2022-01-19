@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -47,6 +47,8 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleProperties;
+import org.jetbrains.plugins.gradle.util.GradlePropertiesUtil;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.*;
@@ -58,9 +60,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.util.containers.ContainerUtil.newHashMap;
+import static com.intellij.util.containers.ContainerUtil.*;
 import static org.jetbrains.plugins.gradle.GradleConnectorService.withGradleConnection;
 import static org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware.LOCAL_TARGET_TYPE_ID;
+import static org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_KEY;
+import static org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_PREFIX_KEY;
 
 /**
  * @author Denis Zhdanov
@@ -455,14 +459,13 @@ public class GradleExecutionHelper {
     if (buildEnvironment == null) {
       return;
     }
-    File gradlePropsFile = new File(buildEnvironment.getBuildIdentifier().getRootDir(), "gradle.properties");
-    if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it)) &&
-        gradlePropsFile.exists()) {
-      try (FileInputStream fis = new FileInputStream(gradlePropsFile)) {
-        Properties gradleProps = new Properties();
-        gradleProps.load(fis);
-        @NonNls String gradleLogLevel = gradleProps.getProperty(LoggingConfigurationBuildOptions.LogLevelOption.GRADLE_PROPERTY);
-        if (gradleLogLevel != null) {
+    GradleProperties properties = GradlePropertiesUtil.getGradleProperties(settings.getServiceDirectory(),
+                                                                           buildEnvironment.getBuildIdentifier().getRootDir().toPath());
+    GradleProperties.GradleProperty<String> loggingLevelProperty = properties.getGradleLoggingLevel();
+    @NonNls String gradleLogLevel = loggingLevelProperty != null ? loggingLevelProperty.getValue() : null;
+
+    if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it))
+        && gradleLogLevel != null) {
           try {
             LogLevel logLevel = LogLevel.valueOf(gradleLogLevel.toUpperCase());
             switch(logLevel) {
@@ -471,13 +474,9 @@ public class GradleExecutionHelper {
               case WARN: settings.withArgument("-w"); break;
               case QUIET: settings.withArgument("-q"); break;
             }
-          } catch (IllegalArgumentException var4) {
+          } catch (IllegalArgumentException e) {
             LOG.warn("org.gradle.logging.level must be one of quiet, warn, lifecycle, info, or debug");
           }
-        }
-      } catch (IOException e) {
-        LOG.debug("Failed to load gradle.properties file", e);
-      }
     }
 
     // Default logging level for integration tests
@@ -651,6 +650,19 @@ public class GradleExecutionHelper {
       }
       return false;
     });
+  }
+
+  @ApiStatus.Experimental
+  @NotNull
+  public static Map<String, String> getConfigurationInitScripts(@NonNls GradleRunConfiguration configuration) {
+    final String initScript = configuration.getUserData(INIT_SCRIPT_KEY);
+    if (StringUtil.isNotEmpty(initScript)) {
+      String prefix = Objects.requireNonNull(configuration.getUserData(INIT_SCRIPT_PREFIX_KEY), "init script file prefix is required");
+      Map<String, String> map = new LinkedHashMap<>();
+      map.put(prefix, initScript);
+      return map;
+    }
+    return Collections.emptyMap();
   }
 
   @ApiStatus.Internal

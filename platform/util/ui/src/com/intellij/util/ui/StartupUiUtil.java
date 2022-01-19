@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
@@ -29,7 +28,6 @@ import java.util.Map;
 import java.util.function.Function;
 
 public final class StartupUiUtil {
-
   @ApiStatus.Internal
   @NonNls public static final String[] ourPatchableFontResources = {"Button.font", "ToggleButton.font", "RadioButton.font",
     "CheckBox.font", "ColorChooser.font", "ComboBox.font", "Label.font", "List.font", "MenuBar.font", "MenuItem.font",
@@ -115,9 +113,13 @@ public final class StartupUiUtil {
     drawImage(g, image, new Rectangle(x, y, -1, -1), null, null, observer);
   }
 
-  static void drawImage(@NotNull Graphics g, @NotNull Image image, int x, int y, int width, int height, @Nullable BufferedImageOp op, ImageObserver observer) {
+  static void drawImage(@NotNull Graphics g, @NotNull Image image, int x, int y, int width, int height, @Nullable BufferedImageOp op) {
     Rectangle srcBounds = width >= 0 && height >= 0 ? new Rectangle(x, y, width, height) : null;
-    drawImage(g, image, new Rectangle(x, y, width, height), srcBounds, op, observer);
+    drawImage(g, image, new Rectangle(x, y, width, height), srcBounds, op, null);
+  }
+
+  public static void drawImage(@NotNull Graphics g, @NotNull Image image) {
+    drawImage(g, image, 0, 0, -1, -1, null);
   }
 
   /**
@@ -177,7 +179,7 @@ public final class StartupUiUtil {
       scale = hidpiImage.getScale();
 
       double delta = 0;
-      if (Registry.is("ide.icon.scale.useAccuracyDelta", true)) {
+      if (Boolean.parseBoolean(System.getProperty("ide.icon.scale.useAccuracyDelta", "true"))) {
         // Calculate the delta based on the image size. The bigger the size - the smaller the delta.
         int maxSize = Math.max(userWidth, userHeight);
         if (maxSize < Integer.MAX_VALUE / 2) { // sanity check
@@ -250,7 +252,7 @@ public final class StartupUiUtil {
    * @see #drawImage(Graphics, Image, int, int, ImageObserver)
    */
   public static void drawImage(@NotNull Graphics g, @NotNull BufferedImage image, @Nullable BufferedImageOp op, int x, int y) {
-    drawImage(g, image, x, y, -1, -1, op, null);
+    drawImage(g, image, x, y, -1, -1, op);
   }
 
   public static Font getLabelFont() {

@@ -62,7 +62,7 @@ internal class PlaceholderPanel(parentDisposable: Disposable) {
 
     panel = panel {
       row {
-        label("<html>Validation of placeholder. Select component and change values. Reset, Apply and isModified should work " +
+        text("Validation of placeholder. Select component and change values. Reset, Apply and isModified should work " +
               "as expected. Check also validation for int text field")
       }.bottomGap(BottomGap.MEDIUM)
 

@@ -396,6 +396,9 @@ public final class ClassPath {
     catch (NoSuchFileException ignore) {
       return null;
     }
+    catch (RuntimeException e) {
+      throw new RuntimeException("Failed to read attributes of file from " + file.getFileSystem(), e);
+    }
 
     if (fileAttributes.isDirectory()) {
       return useCache

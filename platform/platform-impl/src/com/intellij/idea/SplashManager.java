@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -29,31 +28,32 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public final class SplashManager {
-  private static JFrame PROJECT_FRAME;
+  private static volatile JFrame PROJECT_FRAME;
   static Splash SPLASH_WINDOW;
 
-  public static void scheduleShow() {
-    Activity frameActivity = StartUpMeasurer.startActivity("splash as project frame initialization", ActivityCategory.DEFAULT);
+  public static @NotNull Runnable scheduleShow(@NotNull Activity parentActivity) {
+    Activity frameActivity = parentActivity.startChild("splash as project frame initialization");
     try {
-      PROJECT_FRAME = createFrameIfPossible();
+      Runnable task = createFrameIfPossible();
+      if (task != null) {
+        return task;
+      }
     }
     catch (Throwable e) {
       //noinspection UseOfSystemOutOrSystemErr
       System.out.println(e.getMessage());
     }
-    frameActivity.end();
-
-    if (PROJECT_FRAME != null) {
-      return;
+    finally {
+      frameActivity.end();
     }
 
     // must be out of activity measurement
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     assert SPLASH_WINDOW == null;
-    Activity activity = StartUpMeasurer.startActivity("splash initialization", ActivityCategory.DEFAULT);
+    Activity activity = StartUpMeasurer.startActivity("splash initialization");
     SPLASH_WINDOW = new Splash(appInfo);
     Activity queueActivity = activity.startChild("splash initialization (in queue)");
-    EventQueue.invokeLater(() -> {
+    return () -> {
       queueActivity.end();
       Splash splash = SPLASH_WINDOW;
       // can be cancelled if app was started very fast
@@ -61,10 +61,10 @@ public final class SplashManager {
         splash.initAndShow(true);
       }
       activity.end();
-    });
+    };
   }
 
-  private static @Nullable IdeFrameImpl createFrameIfPossible() throws IOException {
+  private static @Nullable Runnable createFrameIfPossible() throws IOException {
     Path infoFile = Paths.get(PathManager.getSystemPath(), "lastProjectFrameInfo");
     ByteBuffer buffer;
     try (SeekableByteChannel channel = Files.newByteChannel(infoFile)) {
@@ -88,7 +88,12 @@ public final class SplashManager {
     @SuppressWarnings("unused")
     boolean isFullScreen = buffer.get() == 1;
     int extendedState = buffer.getInt();
+    return () -> {
+      PROJECT_FRAME = doShowFrame(savedBounds, backgroundColor, extendedState);
+    };
+  }
 
+  private static @NotNull IdeFrameImpl doShowFrame(Rectangle savedBounds, Color backgroundColor, int extendedState) {
     IdeFrameImpl frame = new IdeFrameImpl();
     frame.setAutoRequestFocus(false);
     frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);

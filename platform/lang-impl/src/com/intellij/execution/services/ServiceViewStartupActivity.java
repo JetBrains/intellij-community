@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
@@ -11,12 +12,16 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.execution.services.ServiceViewContributor.CONTRIBUTOR_EP_NAME;
 
-public class ServiceViewStartupActivity implements StartupActivity.DumbAware {
+final class ServiceViewStartupActivity implements StartupActivity.DumbAware {
+  private ServiceViewStartupActivity() {
+    Application app = ApplicationManager.getApplication();
+    if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
+      throw ExtensionNotApplicableException.create();
+    }
+  }
+
   @Override
   public void runActivity(@NotNull Project project) {
-    Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) return;
-
     if (CONTRIBUTOR_EP_NAME.getExtensionList().isEmpty()) {
       CONTRIBUTOR_EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
         @Override

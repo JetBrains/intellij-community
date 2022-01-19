@@ -9,7 +9,6 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -23,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
@@ -1183,8 +1183,26 @@ public final class RefactoringUtil {
                ? docComment.addAfter(psiDocTag, anchor)
                : docComment.add(psiDocTag);
     }
-    CommentFormatter formatter = new CommentFormatter(method.getContainingFile());
-    formatter.processComment(docComment.getNode());
+    formatJavadocIgnoringSettings(method, docComment);
+  }
+
+  public static void formatJavadocIgnoringSettings(@NotNull PsiMethod method, @NotNull PsiDocComment docComment) {
+    PsiFile containingFile = method.getContainingFile();
+    if (containingFile == null) {
+      return;
+    }
+
+    // Here we temporarily enable javadoc (we can't produce reasonable javadoc in change signature without formatting)
+    // This is an explicit action which affects javadoc, so it shouldn't be unexpected for user.
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(containingFile);
+    boolean javadocEnabled = settings.ENABLE_JAVADOC_FORMATTING;
+    try {
+      settings.ENABLE_JAVADOC_FORMATTING = true;
+      CommentFormatter formatter = new CommentFormatter(method.getContainingFile());
+      formatter.processComment(docComment.getNode());
+    } finally {
+      settings.ENABLE_JAVADOC_FORMATTING = javadocEnabled;
+    }
   }
 
   @NotNull

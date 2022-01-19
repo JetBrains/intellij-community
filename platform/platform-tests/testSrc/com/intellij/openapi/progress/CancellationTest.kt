@@ -30,7 +30,7 @@ class CancellationTest {
   }
 
   @Test
-  fun `checkCanceled delegates to job`(): Unit = runBlocking {
+  fun `checkCanceled delegates to job`(): Unit = timeoutRunBlocking {
     val pm = ProgressManager.getInstance()
     val lock = Semaphore(1)
     val cancelled = Semaphore(1)
@@ -61,7 +61,7 @@ class CancellationTest {
     lock.timeoutWaitUp()
     job.cancel()
     cancelled.up()
-    job.timeoutJoin()
+    job.join()
   }
 
   @Test
@@ -132,14 +132,14 @@ class CancellationTest {
   }
 
   @Test
-  fun `cancellable job completes normally`(): Unit = runBlocking {
+  fun `cancellable job completes normally`(): Unit = timeoutRunBlocking {
     lateinit var cancellableJob: Job
     val result = executeCancellable {
       cancellableJob = it
       42
     }
     assertEquals(42, result)
-    cancellableJob.timeoutJoin()
+    cancellableJob.join()
     assertFalse(cancellableJob.isCancelled)
   }
 
@@ -162,7 +162,7 @@ class CancellationTest {
   }
 
   @Test
-  fun `cancellable job fails on exception`(): Unit = runBlocking {
+  fun `cancellable job fails on exception`(): Unit = timeoutRunBlocking {
     lateinit var cancellableJob: Job
     assertThrows<NumberFormatException> {
       executeCancellable {
@@ -170,7 +170,7 @@ class CancellationTest {
         throw NumberFormatException()
       }
     }
-    cancellableJob.timeoutJoin()
+    cancellableJob.join()
     assertTrue(cancellableJob.isCancelled)
   }
 
@@ -244,7 +244,7 @@ class CancellationTest {
   }
 
   @Test
-  fun `indicator cancellable job is cancelled by indicator`(): Unit = runBlocking {
+  fun `indicator cancellable job is cancelled by indicator`(): Unit = timeoutRunBlocking {
     val lock = Semaphore(1)
     val indicator = EmptyProgressIndicator()
     val job = launch(Dispatchers.IO) {
@@ -267,6 +267,6 @@ class CancellationTest {
     }
     lock.timeoutWaitUp()
     indicator.cancel()
-    job.timeoutJoin()
+    job.join()
   }
 }

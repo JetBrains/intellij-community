@@ -17,10 +17,12 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.ULiteralExpression
 import org.jetbrains.uast.expressions.UInjectionHost
 
+@ApiStatus.Internal
 class JavaULiteralExpression(
   override val sourcePsi: PsiLiteralExpressionImpl,
   givenParent: UElement?

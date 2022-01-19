@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.ide.plugins
 
@@ -16,7 +16,7 @@ import java.lang.invoke.MethodType
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import java.util.function.BiPredicate
+import java.util.function.BiFunction
 import java.util.function.Function
 
 private val DEFAULT_CLASSLOADER_CONFIGURATION = UrlClassLoader.build().useCache()
@@ -214,8 +214,8 @@ class ClassLoaderConfigurator(
       assert(corePlugin.pluginId == PluginManagerCore.CORE_ID)
       val resolveScopeManager = createPluginDependencyAndContentBasedScope(descriptor = corePlugin, pluginSet = pluginSet)
       if (resolveScopeManager != null) {
-        coreUrlClassLoader.resolveScopeManager = BiPredicate { name, force ->
-          resolveScopeManager.isDefinitelyAlienClass(name, "", force) != null
+        coreUrlClassLoader.resolveScopeManager = BiFunction { name, force ->
+          resolveScopeManager.isDefinitelyAlienClass(name, "", force)
         }
       }
     }

@@ -220,7 +220,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
     assert id < Short.MAX_VALUE : "file type id = " + id;
     Ref<FileType> fileType = myId2FileTypeCache.get(id);
     if (fileType == null) {
-      String fileTypeName = myFileTypeEnumerator.valueOf((short)id);
+      String fileTypeName = myFileTypeEnumerator.valueOf(id);
       FileType fileTypeByName = fileTypeName == null ? null : FileTypeManager.getInstance().findFileTypeByName(fileTypeName);
       myId2FileTypeCache.put(id, fileType = Ref.create(fileTypeByName));
     }
@@ -368,7 +368,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
     assert id < Short.MAX_VALUE;
     Ref<String> fileType = myId2FileNameCache.get(id);
     if (fileType == null) {
-      String fileTypeName = myFileTypeEnumerator.valueOf((short)id);
+      String fileTypeName = myFileTypeEnumerator.valueOf(id);
       myId2FileNameCache.put(id, fileType = Ref.create(fileTypeName));
     }
     return fileType.get();

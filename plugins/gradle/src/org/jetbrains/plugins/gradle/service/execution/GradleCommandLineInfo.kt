@@ -8,7 +8,7 @@ import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionI
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.observable.properties.AtomicLazyProperty
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.whenTextModified
+import com.intellij.openapi.observable.util.whenTextChanged
 import org.apache.commons.cli.Option
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider
 import org.jetbrains.plugins.gradle.service.project.GradleTasksIndices
@@ -53,10 +53,9 @@ class GradleCommandLineInfo(project: Project, workingDirectoryField: WorkingDire
     }
 
     init {
-      workingDirectoryField.whenTextModified {
+      workingDirectoryField.whenTextChanged {
         completionInfoProperty.reset()
       }
-
     }
   }
 

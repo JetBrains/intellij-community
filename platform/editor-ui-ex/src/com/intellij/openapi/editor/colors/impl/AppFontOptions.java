@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -18,22 +18,21 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-
 public abstract class AppFontOptions<F extends PersistentFontPreferences>
   implements PersistentStateComponentWithModificationTracker<F> {
 
   private static final Logger LOG = Logger.getInstance(AppFontOptions.class);
 
   @ApiStatus.Internal
-  public static final boolean NEW_FONT_SELECTOR        = SystemProperties.getBooleanProperty("new.editor.font.selector", true);
+  public static final boolean NEW_FONT_SELECTOR = SystemProperties.getBooleanProperty("new.editor.font.selector", true);
   @ApiStatus.Internal
   public static final boolean APP_CONSOLE_FONT_ENABLED = SystemProperties.getBooleanProperty("app.console.font.enabled", false);
 
-  private final   FontPreferencesImpl       myFontPreferences = new FontPreferencesImpl();
-  protected final SimpleModificationTracker myTracker         = new SimpleModificationTracker();
+  private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
+  protected final SimpleModificationTracker myTracker = new SimpleModificationTracker();
 
   protected static final int CURR_FONT_PREF_VERSION = 1;
-  private                int myFontPrefVersion;
+  private int myFontPrefVersion;
 
   public AppFontOptions() {
     Application app = ApplicationManager.getApplication();

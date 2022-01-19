@@ -62,7 +62,7 @@ public class FinalPrivateMethodInspection extends BaseInspection {
       if (!PsiUtil.isLanguageLevel9OrHigher(method) && AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_SAFE_VARARGS, 0)) {
         return;
       }
-      if (HighlightUtil.isIllegalModifierCombination(method.getModifierList())) {
+      if (!HighlightUtil.isLegalModifierCombination(method.getModifierList())) {
         return;
       }
       registerModifierError(PsiModifier.FINAL, method, PsiModifier.FINAL);

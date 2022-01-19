@@ -22,6 +22,11 @@ data class JsonScanningStatistics(
   val timeIndexingWithoutContent: JsonDuration = JsonDuration(0),
 
   /**
+   * Available only if [com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.shouldDumpProviderRootPaths] is enabled.
+   */
+  val roots: List<String> = emptyList(),
+
+  /**
    * Available only if [com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles] is enabled.
    */
   val scannedFiles: List<JsonScannedFile>? = null

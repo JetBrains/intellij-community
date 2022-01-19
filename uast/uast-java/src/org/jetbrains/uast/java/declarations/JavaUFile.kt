@@ -4,10 +4,12 @@ package org.jetbrains.uast.java
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 import java.util.*
 
+@ApiStatus.Internal
 class JavaUFile(
   override val sourcePsi: PsiJavaFile,
   override val languagePlugin: UastLanguagePlugin
@@ -16,7 +18,7 @@ class JavaUFile(
   override val packageName: String
     get() = sourcePsi.packageName
 
-  override val imports: List<JavaUImportStatement> by lz {
+  override val imports: List<UImportStatement> by lz {
     sourcePsi.importList?.allImportStatements?.map { JavaUImportStatement(it, this) } ?: listOf()
   }
 

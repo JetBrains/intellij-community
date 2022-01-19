@@ -1,4 +1,5 @@
 import sys
+from _typeshed import SupportsKeysAndGetItem
 from importlib.abc import _LoaderProtocol
 from importlib.machinery import ModuleSpec
 from typing import (
@@ -14,13 +15,14 @@ from typing import (
     Iterator,
     KeysView,
     Mapping,
+    MutableSequence,
     Tuple,
     Type,
     TypeVar,
     ValuesView,
     overload,
 )
-from typing_extensions import Literal, final
+from typing_extensions import Literal, ParamSpec, final
 
 # Note, all classes "defined" here require special handling.
 
@@ -35,7 +37,7 @@ _V_co = TypeVar("_V_co", covariant=True)
 
 @final
 class _Cell:
-    __hash__: None  # type: ignore
+    __hash__: None  # type: ignore[assignment]
     cell_contents: Any
 
 @final
@@ -122,7 +124,30 @@ class CodeType:
             freevars: Tuple[str, ...] = ...,
             cellvars: Tuple[str, ...] = ...,
         ) -> None: ...
-    if sys.version_info >= (3, 8):
+    if sys.version_info >= (3, 10):
+        def replace(
+            self,
+            *,
+            co_argcount: int = ...,
+            co_posonlyargcount: int = ...,
+            co_kwonlyargcount: int = ...,
+            co_nlocals: int = ...,
+            co_stacksize: int = ...,
+            co_flags: int = ...,
+            co_firstlineno: int = ...,
+            co_code: bytes = ...,
+            co_consts: Tuple[Any, ...] = ...,
+            co_names: Tuple[str, ...] = ...,
+            co_varnames: Tuple[str, ...] = ...,
+            co_freevars: Tuple[str, ...] = ...,
+            co_cellvars: Tuple[str, ...] = ...,
+            co_filename: str = ...,
+            co_name: str = ...,
+            co_linetable: object = ...,
+        ) -> CodeType: ...
+        def co_lines(self) -> Iterator[tuple[int, int, int | None]]: ...
+        co_linetable: object
+    elif sys.version_info >= (3, 8):
         def replace(
             self,
             *,
@@ -143,11 +168,13 @@ class CodeType:
             co_name: str = ...,
             co_lnotab: bytes = ...,
         ) -> CodeType: ...
+    if sys.version_info >= (3, 11):
+        def co_positions(self) -> Iterable[tuple[int | None, int | None, int | None, int | None]]: ...
 
 @final
 class MappingProxyType(Mapping[_KT, _VT_co], Generic[_KT, _VT_co]):
-    __hash__: None  # type: ignore
-    def __init__(self, mapping: Mapping[_KT, _VT_co]) -> None: ...
+    __hash__: None  # type: ignore[assignment]
+    def __init__(self, mapping: SupportsKeysAndGetItem[_KT, _VT_co]) -> None: ...
     def __getitem__(self, k: _KT) -> _VT_co: ...
     def __iter__(self) -> Iterator[_KT]: ...
     def __len__(self) -> int: ...
@@ -162,7 +189,7 @@ class MappingProxyType(Mapping[_KT, _VT_co], Generic[_KT, _VT_co]):
         def __ror__(self, __value: Mapping[_T1, _T2]) -> dict[_KT | _T1, _VT_co | _T2]: ...
 
 class SimpleNamespace:
-    __hash__: None  # type: ignore
+    __hash__: None  # type: ignore[assignment]
     def __init__(self, **kwargs: Any) -> None: ...
     def __getattribute__(self, name: str) -> Any: ...
     def __setattr__(self, name: str, value: Any) -> None: ...
@@ -170,12 +197,17 @@ class SimpleNamespace:
 
 class ModuleType:
     __name__: str
-    __file__: str
+    __file__: str | None
     __dict__: dict[str, Any]
     __loader__: _LoaderProtocol | None
     __package__: str | None
+    __path__: MutableSequence[str]
     __spec__: ModuleSpec | None
     def __init__(self, name: str, doc: str | None = ...) -> None: ...
+    # __getattr__ doesn't exist at runtime,
+    # but having it here in typeshed makes dynamic imports
+    # using `builtins.__import__` or `importlib.import_module` less painful
+    def __getattr__(self, name: str) -> Any: ...
 
 @final
 class GeneratorType(Generator[_T_co, _T_contra, _V_co]):
@@ -210,6 +242,8 @@ class AsyncGeneratorType(AsyncGenerator[_T_co, _T_contra]):
     @overload
     def athrow(self, __typ: BaseException, __val: None = ..., __tb: TracebackType | None = ...) -> Awaitable[_T_co]: ...
     def aclose(self) -> Awaitable[None]: ...
+    if sys.version_info >= (3, 9):
+        def __class_getitem__(cls, __item: Any) -> GenericAlias: ...
 
 @final
 class CoroutineType(Coroutine[_T_co, _T_contra, _V_co]):
@@ -368,7 +402,15 @@ def prepare_class(
 # Actually a different type, but `property` is special and we want that too.
 DynamicClassAttribute = property
 
-def coroutine(func: Callable[..., Any]) -> CoroutineType[Any, Any, Any]: ...
+_Fn = TypeVar("_Fn", bound=Callable[..., object])
+_R = TypeVar("_R")
+_P = ParamSpec("_P")
+
+# it's not really an Awaitable, but can be used in an await expression. Real type: Generator & Awaitable
+@overload
+def coroutine(func: Callable[_P, Generator[_R, Any, Any]]) -> Callable[_P, Awaitable[_R]]: ...  # type: ignore[misc]
+@overload
+def coroutine(func: _Fn) -> _Fn: ...  # type: ignore[misc]
 
 if sys.version_info >= (3, 8):
     CellType = _Cell

@@ -14,6 +14,7 @@ import java.util.Set;
  */
 public abstract class ActionPlaces {
   public static final String UNKNOWN = "unknown";
+  public static final String NEW_PROJECT_WIZARD = "NewProjectWizard";
   public static final String TOOLBAR = "toolbar";
   public static final String POPUP = "popup";
 

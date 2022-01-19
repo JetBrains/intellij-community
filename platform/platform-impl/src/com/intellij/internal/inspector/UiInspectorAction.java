@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector;
 
 import com.google.common.base.MoreObjects;
@@ -493,7 +493,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         color = JBColor.BLUE;
       }
 
-      Insets insets = component instanceof JComponent ? ((JComponent)component).getInsets() : JBUI.emptyInsets();
+      Insets insets = component instanceof JComponent ? ((JComponent)component).getInsets() : JBInsets.emptyInsets();
       HighlightComponent highlightComponent = new HighlightComponent(color, insets);
       highlightComponent.setBounds(bounds);
 
@@ -1785,7 +1785,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
 
     private void addToolWindowInfo(Object component) {
       if (component instanceof StripeButton) {
-        ToolWindowImpl window = ((StripeButton)component).getToolWindow();
+        ToolWindowImpl window = ((StripeButton)component).getToolWindow$intellij_platform_ide_impl();
         myProperties.add(new PropertyBean("Tool Window ID", window.getId(), true));
         myProperties.add(new PropertyBean("Tool Window Icon", window.getIcon()));
 

@@ -369,7 +369,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
     if (myModel.getPromptText() != null) {
       JLabel label = new JLabel(myModel.getPromptText());
-      label.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+      label.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
       caption2Tools.add(label, BorderLayout.WEST);
       caption2Tools.add(hBox, BorderLayout.EAST);
     }

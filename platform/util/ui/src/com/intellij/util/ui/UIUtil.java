@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
@@ -31,7 +31,6 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.swing.FocusManager;
-import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
@@ -56,7 +55,6 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
-import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.awt.image.RGBImageFilter;
 import java.awt.print.PrinterGraphics;
@@ -76,7 +74,7 @@ import java.util.regex.Pattern;
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public final class UIUtil {
   static {
-    LoadingState.LAF_INITIALIZED.checkOccurred();
+    LoadingState.BASE_LAF_INITIALIZED.checkOccurred();
   }
 
   public static final @NlsSafe String BORDER_LINE = "<hr size=1 noshade>";
@@ -96,9 +94,6 @@ public final class UIUtil {
   @ApiStatus.Internal
   public static final String NO_BORDER_UNDER_WINDOW_TITLE_KEY = "";
 
-  //TODO: lazy
-  static final StyleSheet NO_GAPS_BETWEEN_PARAGRAPHS_STYLE = StyleSheetUtil.createStyleSheet("p { margin-top: 0; }");
-
   // cannot be static because logging maybe not configured yet
   private static @NotNull Logger getLogger() {
     return Logger.getInstance(UIUtil.class);
@@ -108,10 +103,12 @@ public final class UIUtil {
     if (pane != null && SystemInfo.isMacOSMojave) {
       if (Runtime.version().feature() < 17) {
         pane.putClientProperty("jetbrains.awt.windowDarkAppearance", isUnderDarcula());
-      } else {
+      }
+      else {
         if (isUnderDarcula()) {
           pane.putClientProperty("apple.awt.windowAppearance", "NSAppearanceNameVibrantDark");
-        } else {
+        }
+        else {
           pane.putClientProperty("apple.awt.windowAppearance", "NSAppearanceNameVibrantLight");
         }
       }
@@ -130,15 +127,6 @@ public final class UIUtil {
     else {
       return JBUI.getInt("macOSWindow.Title.height", SystemInfo.isMacOSBigSur ? 29 : 23);
     }
-  }
-
-  // Here we setup window to be checked in IdeEventQueue and reset typeahead state when the window finally appears and gets focus
-  public static void markAsTypeAheadAware(Window window) {
-    ClientProperty.put(window, "TypeAheadAwareWindow", Boolean.TRUE);
-  }
-
-  public static boolean isTypeAheadAware(Window window) {
-    return ClientProperty.isTrue(window, "TypeAheadAwareWindow");
   }
 
   // Here we setup dialog to be suggested in OwnerOptional as owner even if the dialog is not modal
@@ -1180,7 +1168,7 @@ public final class UIUtil {
       UserDataHolder dh = (UserDataHolder)lookAndFeel;
 
       return Boolean.TRUE != dh.getUserData(LAF_WITH_THEME_KEY) &&
-             StringUtil.equals(dh.getUserData(PLUGGABLE_LAF_KEY), "macOS Light");
+             Objects.equals(dh.getUserData(PLUGGABLE_LAF_KEY), "macOS Light");
     }
     return false;
   }
@@ -1191,7 +1179,7 @@ public final class UIUtil {
       UserDataHolder dh = (UserDataHolder)lookAndFeel;
 
       return Boolean.TRUE != dh.getUserData(LAF_WITH_THEME_KEY) &&
-             StringUtil.equals(dh.getUserData(PLUGGABLE_LAF_KEY), "Windows 10 Light");
+             Objects.equals(dh.getUserData(PLUGGABLE_LAF_KEY), "Windows 10 Light");
     }
     return false;
   }
@@ -1986,11 +1974,11 @@ public final class UIUtil {
   }
 
   /**
-   * @deprecated use {@link StyleSheetUtil#loadStyleSheet}
+   * @deprecated use {@link StyleSheetUtil#loadStyleSheet(InputStream)}
    */
   @Deprecated
   public static @Nullable StyleSheet loadStyleSheet(@Nullable URL url) {
-    return StyleSheetUtil.loadStyleSheet(url);
+    return url == null ? null : StyleSheetUtil.INSTANCE.loadStyleSheet(url);
   }
 
   /**
@@ -2533,15 +2521,6 @@ public final class UIUtil {
     if (c == null || !c.isShowing()) return true;
 
     return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane || isFocusProxy(c);
-  }
-
-  /**
-   * @deprecated Use {@link TimerUtil#createNamedTimer(String, int, ActionListener)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static @NotNull Timer createNamedTimer(@NonNls @NotNull String name, int delay, @NotNull ActionListener listener) {
-    return TimerUtil.createNamedTimer(name, delay, listener);
   }
 
   public static boolean isDialogRootPane(JRootPane rootPane) {
@@ -3497,7 +3476,7 @@ public final class UIUtil {
   }
 
   public static void drawImage(@NotNull Graphics g, @NotNull Image image, int x, int y, @Nullable ImageObserver observer) {
-    StartupUiUtil.drawImage(g, image, x, y, null);
+    StartupUiUtil.drawImage(g, image, x, y, observer);
   }
 
   public static @NotNull Point getCenterPoint(@NotNull Dimension container, @NotNull Dimension child) {
@@ -3514,10 +3493,6 @@ public final class UIUtil {
                                @Nullable Rectangle srcBounds,
                                @Nullable ImageObserver observer) {
     StartupUiUtil.drawImage(g, image, dstBounds, srcBounds, null, observer);
-  }
-
-  public static void drawImage(@NotNull Graphics g, @NotNull BufferedImage image, @Nullable BufferedImageOp op, int x, int y) {
-    StartupUiUtil.drawImage(g, image, x, y, -1, -1, op, null);
   }
 
   /**

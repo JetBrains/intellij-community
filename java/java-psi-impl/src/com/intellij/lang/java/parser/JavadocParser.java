@@ -181,8 +181,11 @@ public final class JavadocParser {
         parseSnippetTagBody(builder);
       }
     } else {
-      // guaranteed by lexer and TAG_VALUES_SET (all possible token types are described in SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON state)
-      throw new IllegalStateException("Unexpected token in snippet value: " + builder.getTokenType() + " " + builder.getTokenText());
+      IElementType current = getTokenType(builder);
+      while (current != null && current != JavaDocTokenType.DOC_INLINE_TAG_END) {
+        builder.advanceLexer();
+        current = getTokenType(builder);
+      }
     }
     snippetValue.done(JavaDocElementType.DOC_SNIPPET_TAG_VALUE);
   }

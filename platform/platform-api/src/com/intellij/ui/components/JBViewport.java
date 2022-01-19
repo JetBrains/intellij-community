@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.notification.Notification;
@@ -27,8 +27,6 @@ import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
-
-import static com.intellij.util.ui.JBUI.emptyInsets;
 
 public class JBViewport extends JViewport implements ZoomableViewport {
   public static final Key<Boolean> FORCE_VISIBLE_ROW_COUNT_KEY = Key.create("forceVisibleRowCount");
@@ -333,7 +331,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     Border border = view.getBorder();
     if (border instanceof ViewBorder) {
       ViewBorder vb = (ViewBorder)border;
-      Insets insets = emptyInsets();
+      Insets insets = JBInsets.emptyInsets();
       vb.addViewInsets(view, insets);
       return insets;
     }
@@ -423,7 +421,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
    * This border is used to add additional space for a view.
    */
   private static class ViewBorder extends AbstractBorder {
-    private final Insets myInsets = emptyInsets();
+    private final Insets myInsets = JBInsets.emptyInsets();
     private final Border myBorder;
 
     ViewBorder(Border border) {
@@ -433,7 +431,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     @Override
     public Insets getBorderInsets(Component view, Insets insets) {
       if (insets == null) {
-        insets = emptyInsets();
+        insets = JBInsets.emptyInsets();
       }
       else {
         insets.set(0, 0, 0, 0);

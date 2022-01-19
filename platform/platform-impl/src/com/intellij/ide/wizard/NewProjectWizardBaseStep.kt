@@ -11,7 +11,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.transform
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -129,8 +128,6 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
     }
     return null
   }
-
-  override fun setupProject(project: Project) {}
 
   init {
     data.putUserData(NewProjectWizardBaseData.KEY, this)

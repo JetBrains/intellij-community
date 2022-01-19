@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.core.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.util.FirPluginOracleService
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
@@ -201,26 +202,26 @@ abstract class ScriptClassRootsUpdater(
             if (underProgressManager) {
                 ProgressManager.checkCanceled()
             }
-
             if (Disposer.isDisposed(disposable)) return
 
             if (updates.hasNewRoots) {
                 notifyRootsChanged()
             }
 
-            PsiElementFinder.EP.findExtensionOrFail(KotlinScriptDependenciesClassFinder::class.java, project).clearCache()
+            runReadAction {
+                if (project.isDisposed) return@runReadAction
+                PsiElementFinder.EP.findExtensionOrFail(KotlinScriptDependenciesClassFinder::class.java, project).clearCache()
 
-            ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
+                ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
 
-            if (updates.hasUpdatedScripts) {
-                updateHighlighting(project) {
-                    updates.isScriptChanged(it.path)
+                if (updates.hasUpdatedScripts) {
+                    updateHighlighting(project) { file -> updates.isScriptChanged(file.path) }
                 }
-            }
 
-            val scriptClassRootsCache = updates.cache
-            ScriptCacheDependencies(scriptClassRootsCache).save(project)
-            lastSeen = scriptClassRootsCache
+                val scriptClassRootsCache = updates.cache
+                ScriptCacheDependencies(scriptClassRootsCache).save(project)
+                lastSeen = scriptClassRootsCache
+            }
         } finally {
             scheduledUpdate = null
         }

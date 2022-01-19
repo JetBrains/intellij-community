@@ -1,7 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -334,6 +336,10 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
         if (element instanceof PsiField && !((PsiField)element).hasModifierProperty(PsiModifier.FINAL)) {
           return true;
         }
+
+        if (NullabilityUtil.getExpressionNullability((PsiExpression)expression, true) == Nullability.NULLABLE) {
+          return true;
+        }
       }
       return false;
     };
@@ -411,7 +417,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     else if (element instanceof PsiInstanceOfExpression) {
       if(isSoleParameter(parameters, ((PsiInstanceOfExpression)element).getOperand())) {
         PsiTypeElement type = ((PsiInstanceOfExpression)element).getCheckType();
-        if(type != null) {
+        if(type != null && !PsiUtilCore.hasErrorElementChild(type)) {
           return type.getText() + ".class::isInstance";
         }
       }

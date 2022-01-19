@@ -10,9 +10,9 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.util.getFactoryForImplicitReceiverWithSubtypeOf
 import org.jetbrains.kotlin.idea.util.getResolutionScope
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
@@ -38,7 +38,7 @@ class ImplicitThisInspection : AbstractKotlinInspection() {
         }
 
         private fun handle(expression: KtExpression, reference: KtReferenceExpression, fixFactory: (String) -> LocalQuickFix) {
-            val context = reference.analyze()
+            val context = reference.safeAnalyzeNonSourceRootCode()
             val scope = reference.getResolutionScope(context) ?: return
 
             val resolvedCall = reference.getResolvedCall(context) ?: return

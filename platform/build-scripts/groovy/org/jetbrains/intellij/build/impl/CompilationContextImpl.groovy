@@ -11,6 +11,7 @@ import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.jps.model.JpsElementFactory
@@ -36,7 +37,6 @@ import java.util.function.BiFunction
 @CompileStatic
 final class CompilationContextImpl implements CompilationContext {
   final AntBuilder ant
-  final GradleRunner gradle
   final BuildOptions options
   final BuildMessages messages
   final BuildPaths paths
@@ -60,8 +60,9 @@ final class CompilationContextImpl implements CompilationContext {
 
   static CompilationContextImpl create(String communityHome, String projectHome,
                                        BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
-    // ensure TracerManager is initialized before all other thing since only it can configure GlobalOpenTelemetry correctly
-    TracerManager.spanBuilder("x")
+    // This is not a proper place to initialize tracker for downloader
+    // but this is the only place which is called in most build scripts
+    BuildDependenciesDownloader.TRACER = BuildDependenciesOpenTelemetryTracer.INSTANCE
 
     AntBuilder ant = new AntBuilder()
     def messages = BuildMessagesImpl.create(ant.project)
@@ -70,6 +71,8 @@ final class CompilationContextImpl implements CompilationContext {
       messages.error("communityHome ($communityHome) doesn't point to a directory containing IntelliJ Community sources")
     }
 
+    printEnvironmentDebugInfo()
+
     def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
     logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
     def kotlinBinaries = new KotlinBinaries(communityHome, options, messages)
@@ -77,10 +80,8 @@ final class CompilationContextImpl implements CompilationContext {
     def model = loadProject(projectHome, kotlinBinaries, messages)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
 
-    GradleRunner gradle = new GradleRunner(dependenciesProjectDir, projectHome, messages, options)
-
     projectHome = toCanonicalPath(projectHome)
-    def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, messages, oldToNewModuleName,
+    def context = new CompilationContextImpl(ant, model, communityHome, projectHome, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
     defineJavaSdk(context)
     context.prepareForBuild()
@@ -146,12 +147,11 @@ final class CompilationContextImpl implements CompilationContext {
     return mapping
   }
 
-  private CompilationContextImpl(AntBuilder ant, GradleRunner gradle, JpsModel model, String communityHome,
+  private CompilationContextImpl(AntBuilder ant, JpsModel model, String communityHome,
                                  String projectHome, BuildMessages messages,
                                  Map<String, String> oldToNewModuleName,
                                  BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
     this.ant = ant
-    this.gradle = gradle
     this.projectModel = model
     this.project = model.project
     this.global = model.global
@@ -178,7 +178,7 @@ final class CompilationContextImpl implements CompilationContext {
 
   CompilationContextImpl createCopy(AntBuilder ant, BuildMessages messages, BuildOptions options,
                                     BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator) {
-    CompilationContextImpl copy = new CompilationContextImpl(ant, gradle, projectModel, paths.communityHome, paths.projectHome,
+    CompilationContextImpl copy = new CompilationContextImpl(ant, projectModel, paths.communityHome, paths.projectHome,
                                                              messages, oldToNewModuleName, buildOutputRootEvaluator, options)
     copy.compilationData = compilationData
     return copy
@@ -186,7 +186,6 @@ final class CompilationContextImpl implements CompilationContext {
 
   private CompilationContextImpl(AntBuilder ant, BuildMessages messages, CompilationContextImpl context) {
     this.ant = ant
-    this.gradle = gradle
     this.projectModel = context.projectModel
     this.project = context.project
     this.global = context.global
@@ -445,6 +444,20 @@ final class CompilationContextImpl implements CompilationContext {
   static void logFreeDiskSpace(BuildMessages buildMessages, String directoryPath, String phase) {
     Path dir = Path.of(directoryPath)
     buildMessages.debug("Free disk space $phase: ${Formats.formatFileSize(Files.getFileStore(dir).getUsableSpace())} (on disk containing $dir)")
+  }
+
+  static void printEnvironmentDebugInfo() {
+    // print it to the stdout since TeamCity will remove any sensitive fields from build log automatically
+    // don't write it to debug log file!
+    def env = System.getenv()
+    for (String key : env.keySet().toSorted()) {
+      println("ENV $key = ${env.get(key)}")
+    }
+
+    def properties = System.getProperties()
+    for (String propertyName : properties.keySet().toSorted()) {
+      println("PROPERTY $propertyName = ${properties.get(propertyName)}")
+    }
   }
 }
 

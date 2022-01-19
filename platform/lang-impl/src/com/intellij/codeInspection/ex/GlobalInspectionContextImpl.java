@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
@@ -779,8 +779,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     if (myView != null) {
       return ActionCallback.DONE;
     }
-    return ApplicationManager.getApplication().getInvokator().invokeLater(() -> {
+    ActionCallback callback = new ActionCallback();
+    ApplicationManager.getApplication().invokeLater(() -> {
       if (getCurrentScope() == null) {
+        callback.setDone();
         return;
       }
       InspectionResultsView view = getView();
@@ -788,7 +790,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         view = new InspectionResultsView(this, new InspectionRVContentProviderImpl());
         addView(view);
       }
-    }, x -> getCurrentScope() == null);
+      callback.setDone();
+    });
+    return callback;
   }
 
   private void appendPairedInspectionsForUnfairTools(@NotNull List<? super Tools> globalTools,

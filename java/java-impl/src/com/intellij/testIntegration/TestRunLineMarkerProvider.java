@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,7 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
         if (!isTestClass((PsiClass)element)) return null;
         String url = "java:suite://" + ClassUtil.getJVMClassName((PsiClass)element);
         TestStateStorage.Record state = TestStateStorage.getInstance(e.getProject()).getState(url);
-        return getInfo(state, true, 1);
+        return getInfo(state, true, PsiMethodUtil.findMainInClass((PsiClass)element) != null ? 1 : 0);
       }
       if (element instanceof PsiMethod) {
         PsiClass containingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);

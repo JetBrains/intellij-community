@@ -17,6 +17,10 @@ fun isSupportedRuntimeOnlyScope(gradleVersion: GradleVersion): Boolean {
   return isSupportedJavaLibraryPlugin(gradleVersion)
 }
 
+fun isSupportedTaskConfigurationAvoidance(gradleVersion: GradleVersion): Boolean {
+  return gradleVersion.baseVersion >= GradleVersion.version("4.9")
+}
+
 fun isSupportedJUnit5(gradleVersion: GradleVersion): Boolean {
   return gradleVersion.baseVersion >= GradleVersion.version("4.7")
 }

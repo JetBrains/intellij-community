@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 package com.intellij.idea
 
@@ -14,8 +14,7 @@ import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.internal.inspector.UiInspectorAction
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.Application
@@ -105,8 +104,6 @@ open class IdeStarter : ApplicationStarter {
     if (app.isHeadlessEnvironment) {
       frameInitActivity.end()
       LifecycleUsageTriggerCollector.onIdeStart()
-      @Suppress("DEPRECATION")
-      lifecyclePublisher.appStarting(null)
       return CompletableFuture.completedFuture(null)
     }
 
@@ -120,8 +117,6 @@ open class IdeStarter : ApplicationStarter {
 
     if (uriToOpen != null || args.isNotEmpty() && args[0].contains(SCHEME_SEPARATOR)) {
       frameInitActivity.end()
-      @Suppress("DEPRECATION")
-      lifecyclePublisher.appStarting(null)
       processUriParameter(uriToOpen ?: args.first(), lifecyclePublisher)
     }
     else {
@@ -132,8 +127,6 @@ open class IdeStarter : ApplicationStarter {
       frameInitActivity.end()
 
       if (!needToOpenProject) {
-        @Suppress("DEPRECATION")
-        lifecyclePublisher.appStarting(null)
         return CompletableFuture.completedFuture(null)
       }
 
@@ -142,8 +135,6 @@ open class IdeStarter : ApplicationStarter {
         args.isNotEmpty() -> loadProjectFromExternalCommandLine(args)
         else -> null
       }
-      @Suppress("DEPRECATION")
-      lifecyclePublisher.appStarting(project)
 
       if (project == null && willReopenRecentProjectOnStart) {
         return recentProjectManager.reopenLastProjectsOnStart()
@@ -154,15 +145,19 @@ open class IdeStarter : ApplicationStarter {
           }
       }
     }
-    return CompletableFuture.completedFuture(null)
+    return CompletableFuture.completedFuture(null).thenRun {
+      WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
+    }
   }
 
   private fun showWelcomeFrame(lifecyclePublisher: AppLifecycleListener): Boolean {
-    val doShowWelcomeFrame = WelcomeFrame.prepareToShow()
-    if (doShowWelcomeFrame == null) return true
+    val showWelcomeFrameTask = WelcomeFrame.prepareToShow()
+    if (showWelcomeFrameTask == null) {
+      return true
+    }
 
     ApplicationManager.getApplication().invokeLater {
-      doShowWelcomeFrame.run()
+      showWelcomeFrameTask.run()
       lifecyclePublisher.welcomeScreenDisplayed()
     }
     return false
@@ -269,7 +264,7 @@ private fun reportPluginErrors() {
   ApplicationManager.getApplication().invokeLater({
     val title = IdeBundle.message("title.plugin.error")
     val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrors).toString()
-    Notification(NotificationGroup.createIdWithTitle("Plugin Error", title), title, content, NotificationType.ERROR)
+    NotificationGroupManager.getInstance().getNotificationGroup("Plugin Error").createNotification(title, content, NotificationType.ERROR)
       .setListener { notification, event ->
         notification.expire()
         PluginManagerMain.onEvent(event.description)

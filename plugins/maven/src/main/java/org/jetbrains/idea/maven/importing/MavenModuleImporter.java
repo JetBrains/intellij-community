@@ -229,20 +229,7 @@ public final class MavenModuleImporter {
         String moduleName = myMavenProjectToModuleName.get(depProject);
 
         if (moduleName == null || myMavenTree.isIgnored(depProject)) {
-          MavenArtifact projectsArtifactInRepository = new MavenArtifact(
-            artifact.getGroupId(),
-            artifact.getArtifactId(),
-            artifact.getVersion(),
-            artifact.getBaseVersion(),
-            dependencyType,
-            artifact.getClassifier(),
-            artifact.getScope(),
-            artifact.isOptional(),
-            artifact.getExtension(),
-            null,
-            myMavenProject.getLocalRepository(),
-            false, false
-          );
+          MavenArtifact projectsArtifactInRepository = createCopyForLocalRepo(artifact, myMavenProject);
 
           myRootModelAdapter.addLibraryDependency(projectsArtifactInRepository, scope, myModifiableModelsProvider, myMavenProject);
         }
@@ -260,20 +247,7 @@ public final class MavenModuleImporter {
               && !isTestJar
               && !"system".equals(artifact.getScope())
               && !"false".equals(System.getProperty("idea.maven.classifier.dep"))) {
-            MavenArtifact a = new MavenArtifact(
-              artifact.getGroupId(),
-              artifact.getArtifactId(),
-              artifact.getVersion(),
-              artifact.getBaseVersion(),
-              dependencyType,
-              classifier,
-              artifact.getScope(),
-              artifact.isOptional(),
-              artifact.getExtension(),
-              null,
-              myMavenProject.getLocalRepository(),
-              false, false
-            );
+            MavenArtifact a = createCopyForLocalRepo(artifact, myMavenProject);
 
             myRootModelAdapter.addLibraryDependency(a, scope, myModifiableModelsProvider, myMavenProject);
           }
@@ -307,6 +281,24 @@ public final class MavenModuleImporter {
     }
 
     configSurefirePlugin();
+  }
+
+  @NotNull
+  public static MavenArtifact createCopyForLocalRepo(@NotNull MavenArtifact artifact, @NotNull MavenProject project) {
+    return new MavenArtifact(
+      artifact.getGroupId(),
+      artifact.getArtifactId(),
+      artifact.getVersion(),
+      artifact.getBaseVersion(),
+      artifact.getType(),
+      artifact.getClassifier(),
+      artifact.getScope(),
+      artifact.isOptional(),
+      artifact.getExtension(),
+      null,
+      project.getLocalRepository(),
+      false, false
+    );
   }
 
   private void configSurefirePlugin() {
@@ -403,7 +395,7 @@ public final class MavenModuleImporter {
     myRootModelAdapter.setLanguageLevel(level);
   }
 
-  public static LanguageLevel getLanguageLevel(MavenProject mavenProject) {
+  public static @NotNull LanguageLevel getLanguageLevel(MavenProject mavenProject) {
     LanguageLevel level = null;
 
     Element cfg = mavenProject.getPluginConfiguration("com.googlecode", "maven-idea-plugin");

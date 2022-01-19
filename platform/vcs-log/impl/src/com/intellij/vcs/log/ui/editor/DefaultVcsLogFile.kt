@@ -17,7 +17,7 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.ui.VcsLogPanel
-import com.intellij.vcs.log.util.runWhenVcsAndLogIsReady
+import com.intellij.vcs.log.util.VcsLogUtil
 import java.awt.BorderLayout
 import javax.swing.JComponent
 
@@ -38,17 +38,17 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
 
   override fun createMainComponent(project: Project): JComponent {
     val panel = JBPanelWithEmptyText(BorderLayout()).withEmptyText(VcsLogBundle.message("vcs.log.is.loading"))
-    runWhenVcsAndLogIsReady(project) { logManager ->
+    VcsLogUtil.runWhenVcsAndLogIsReady(project) { logManager ->
       val projectLog = VcsProjectLog.getInstance(project)
       val tabsManager = projectLog.tabsManager
 
       try {
-        val factory = tabsManager.getPersistentVcsLogUiFactory(logManager, tabId, VcsLogManager.LogWindowKind.EDITOR, filters)
-        val ui = logManager.createLogUi(factory, VcsLogManager.LogWindowKind.EDITOR)
+        val factory = tabsManager.getPersistentVcsLogUiFactory(logManager, tabId, VcsLogTabLocation.EDITOR, filters)
+        val ui = logManager.createLogUi(factory, VcsLogTabLocation.EDITOR)
         tabName = VcsLogTabsManager.generateDisplayName(ui)
         ui.filterUi.addFilterListener {
           tabName = VcsLogTabsManager.generateDisplayName(ui)
-          updateTabName(project, ui)
+          VcsLogEditorUtil.updateTabName(project, ui)
         }
         if (filters != null) filters = null
         panel.add(VcsLogPanel(logManager, ui), BorderLayout.CENTER)

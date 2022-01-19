@@ -55,18 +55,19 @@ public class ProgramParametersConfigurator {
     Project project = configuration.getProject();
     Module module = getModule(configuration);
 
-    String parametersString = expandPathAndMacros(configuration.getProgramParameters(), module, project);
-    parameters.getProgramParametersList().addParametersString(parametersString);
-
-    parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
-
     Map<String, String> envs = new HashMap<>(configuration.getEnvs());
     EnvironmentUtil.inlineParentOccurrences(envs);
     for (Map.Entry<String, String> each : envs.entrySet()) {
       each.setValue(expandPath(each.getValue(), module, project));
     }
-
     parameters.setEnv(envs);
+
+    parameters.getProgramParametersList().patchMacroWithEnvs(envs);
+
+    String parametersString = expandPathAndMacros(configuration.getProgramParameters(), module, project);
+    parameters.getProgramParametersList().addParametersString(parametersString);
+
+    parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
     parameters.setPassParentEnvs(configuration.isPassParentEnvs());
   }
 

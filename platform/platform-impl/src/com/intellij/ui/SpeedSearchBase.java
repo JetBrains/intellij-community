@@ -406,8 +406,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   public void showPopup(String searchText) {
     manageSearchPopup(createPopup(searchText));
     if (mySearchPopup != null && myComponent.isDisplayable()) {
-      myProcessKeyEventAlarm.cancelAllRequests();
-      myProcessKeyEventAlarm.addRequest(this::refreshSelection, 300L);
+      mySearchPopup.refreshSelection();
     }
   }
 
@@ -722,6 +721,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
         UIUtil.putClientProperty(myComponent, SEARCH_TEXT_KEY, StringUtil.nullize(getEnteredPrefix()));
       }
       Disposer.dispose(mySearchPopup);
+      myComparator = new SpeedSearchComparator(false);
     }
     else if (searchPopup != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("ui.tree.speedsearch");

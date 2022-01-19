@@ -8,37 +8,40 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.ui.classFilter.ClassFilter
 
 private const val KOTLIN_STDLIB_FILTER = "kotlin.*"
+private const val COMPOSE_RUNTIME_FILTER = "androidx.compose.runtime.*"
 
 class JvmDebuggerAddFilterStartupActivity : StartupActivity {
     override fun runActivity(project: Project) {
-        addKotlinStdlibDebugFilterIfNeeded()
+        val settings = DebuggerSettings.getInstance() ?: return
+        settings.addSteppingFilterIfNeeded(KOTLIN_STDLIB_FILTER)
+        settings.addSteppingFilterIfNeeded(COMPOSE_RUNTIME_FILTER)
     }
 }
 
-fun addKotlinStdlibDebugFilterIfNeeded() {
-    val settings = DebuggerSettings.getInstance() ?: return
-    val existingFilters = settings.steppingFilters
-
-    when (val kotlinFilterCount = existingFilters.count { it.pattern == KOTLIN_STDLIB_FILTER }) {
-        0 -> settings.steppingFilters = existingFilters + ClassFilter(KOTLIN_STDLIB_FILTER)
+private fun DebuggerSettings.addSteppingFilterIfNeeded(pattern: String) {
+    val steppingFilters = this.steppingFilters
+    when (val occurrencesNum = steppingFilters.count { it.pattern == pattern }) {
+        0 -> setSteppingFilters(steppingFilters + ClassFilter(pattern))
         1 -> return
-        else -> {
-            // Older versions of the Kotlin plugin added several filters for Kotlin stdlib
-            val newFilters = ArrayList<ClassFilter>(existingFilters.size - kotlinFilterCount + 1)
+        else -> leaveOnlyFirstOccurenceOfSteppingFilter(pattern, occurrencesNum)
+    }
+}
 
-            var firstOccurrenceFound = false
-            for (filter in existingFilters) {
-                if (filter.pattern == KOTLIN_STDLIB_FILTER) {
-                    if (!firstOccurrenceFound) {
-                        newFilters += filter
-                        firstOccurrenceFound = true
-                    }
-                } else {
-                    newFilters += filter
-                }
+private fun DebuggerSettings.leaveOnlyFirstOccurenceOfSteppingFilter(pattern: String, occurrencesNum: Int) {
+    val steppingFilters = this.steppingFilters
+    val newFilters = ArrayList<ClassFilter>(steppingFilters.size - occurrencesNum + 1)
+
+    var firstOccurrenceFound = false
+    for (filter in steppingFilters) {
+        if (filter.pattern == pattern) {
+            if (!firstOccurrenceFound) {
+                newFilters.add(filter)
+                firstOccurrenceFound = true
             }
-
-            settings.steppingFilters = newFilters.toTypedArray()
+        } else {
+            newFilters.add(filter)
         }
     }
+
+    setSteppingFilters(newFilters.toTypedArray())
 }

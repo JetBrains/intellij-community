@@ -50,9 +50,9 @@ import static com.intellij.diff.util.DiffUtil.getLineCount;
 public class SimpleDiffViewer extends TwosideTextDiffViewer implements DifferencesLabel.DifferencesCounter {
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable;
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
-  @NotNull private final MyStatusPanel myStatusPanel;
+  @NotNull protected final StatusPanel myStatusPanel;
 
-  @NotNull private final SimpleDiffModel myModel = new SimpleDiffModel(this);
+  @NotNull protected final SimpleDiffModel myModel = new SimpleDiffModel(this);
 
   @NotNull private final MyFoldingModel myFoldingModel;
   @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
@@ -750,14 +750,19 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     @Nullable
     @Override
     protected String getMessage() {
-      if (myTextDiffProvider.isHighlightingDisabled()) {
-        return DiffBundle.message("diff.highlighting.disabled.text");
-      }
-      List<SimpleDiffChange> allChanges = myModel.getAllChanges();
-      return DiffUtil.getStatusText(allChanges.size(),
-                                    ContainerUtil.count(allChanges, it -> it.isExcluded()),
-                                    myModel.isContentsEqual());
+      return getStatusTextMessage();
     }
+  }
+
+  @Nullable
+  protected @Nls String getStatusTextMessage() {
+    if (myTextDiffProvider.isHighlightingDisabled()) {
+      return DiffBundle.message("diff.highlighting.disabled.text");
+    }
+    List<SimpleDiffChange> allChanges = myModel.getAllChanges();
+    return DiffUtil.getStatusText(allChanges.size(),
+                                  ContainerUtil.count(allChanges, it -> it.isExcluded()),
+                                  myModel.isContentsEqual());
   }
 
   public class ModifierProvider extends KeyboardModifierListener {

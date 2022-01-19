@@ -6,7 +6,6 @@ _collections_abc.AsyncGenerator.ag_running
 _collections_abc.ItemsView.__reversed__
 _collections_abc.KeysView.__reversed__
 _collections_abc.ValuesView.__reversed__
-_dummy_thread
 ast.Bytes.__new__
 ast.Ellipsis.__new__
 ast.ExtSlice.__new__
@@ -29,45 +28,45 @@ collections.Callable
 collections.ItemsView.__reversed__
 collections.KeysView.__reversed__
 collections.ValuesView.__reversed__
-collections.abc.AsyncGenerator.ag_await
-collections.abc.AsyncGenerator.ag_code
-collections.abc.AsyncGenerator.ag_frame
-collections.abc.AsyncGenerator.ag_running
-collections.abc.ItemsView.__reversed__
-collections.abc.KeysView.__reversed__
-collections.abc.ValuesView.__reversed__
 contextvars.Context.__init__  # Default C __init__ signature is wrong
+contextlib.AbstractAsyncContextManager.__class_getitem__
+contextlib.AbstractContextManager.__class_getitem__
 dataclasses.field
-dummy_threading
 enum.Enum._generate_next_value_
 fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
+ftplib.FTP.trust_server_pasv_ipv4_address  # Dangerous to use, intentionally undocumented, intentionally missing from typeshed. #6154
 functools.partialmethod.__get__
 functools.singledispatchmethod.__call__
 gettext.install
 gettext.translation
+hashlib.sha3_\d+
+hashlib.shake_\d+
 hmac.new  # Stub is a white lie; see comments in the stub
 http.server.SimpleHTTPRequestHandler.__init__  # *args is expanded
 importlib.abc.Traversable.__init__  # Inherits __init__ from typing.Protocol
+importlib.metadata._meta  # Added in 3.10
 ipaddress.IPv4Interface.hostmask
 ipaddress.IPv6Interface.hostmask
 ipaddress._BaseNetwork.broadcast_address
 ipaddress._BaseNetwork.hostmask
 multiprocessing.spawn._main
+os.PathLike.__class_getitem__  # PathLike is a protocol; we don't expect all PathLike classes to implement class_getitem
 pickle.Pickler.reducer_override  # implemented in C pickler
 # platform.uname_result's processor field is now dynamically made to exist
 platform.uname_result.__new__
 platform.uname_result._fields
 platform.uname_result.processor
 queue.SimpleQueue.__init__  # Default C __init__ signature is wrong
+re.Pattern.scanner  # Undocumented and not useful. #6405
 sched.Event.__doc__  # __slots__ is overridden
-smtplib.LMTP.__init__
 ssl.PROTOCOL_SSLv3  # Depends on ssl compilation
 ssl.RAND_egd  # Depends on openssl compilation
 symtable.SymbolTable.has_exec
 sys.UnraisableHookArgs  # Not exported from sys
 types.ClassMethodDescriptorType.__get__
-types.CodeType.replace
+types.CodeType.replace  # stubtest thinks default values are None but None doesn't work at runtime
 types.GenericAlias.__getattr__
+types.GenericAlias.__call__  # Would be complicated to fix properly, Any could silence problems. #6392
 types.MethodDescriptorType.__get__
 types.WrapperDescriptorType.__get__
 typing.ForwardRef._evaluate
@@ -99,6 +98,10 @@ tkinter.EventType.__new__
 
 builtins.memoryview.__iter__  # C type that implements __getitem__
 builtins.memoryview.cast  # inspect.signature is incorrect about shape being kw-only
+sqlite3.dbapi2.Binary.__iter__  # C type that implements __getitem__
+sqlite3.dbapi2.Binary.cast  # inspect.signature is incorrect about shape being kw-only
+sqlite3.Binary.__iter__  # C type that implements __getitem__
+sqlite3.Binary.cast  # inspect.signature is incorrect about shape being kw-only
 collections.Coroutine.cr_await
 collections.Coroutine.cr_code
 collections.Coroutine.cr_frame
@@ -109,3 +112,53 @@ collections.Generator.gi_running
 collections.Generator.gi_yieldfrom
 collections.Mapping.get  # Adding None to the Union messed up mypy
 collections.Sequence.index  # Supporting None in end is not mandatory
+
+# Exists at runtime, but missing from stubs
+_ast.Tuple.dims
+_collections_abc.AsyncIterable.__class_getitem__
+_collections_abc.Awaitable.__class_getitem__
+_collections_abc.Container.__class_getitem__
+_collections_abc.Iterable.__class_getitem__
+_collections_abc.MappingView.__class_getitem__
+_imp.source_hash
+ast.Tuple.dims
+ast.main
+asyncio.BufferedProtocol.eof_received
+asyncio.protocols.BufferedProtocol.eof_received
+collections.AsyncIterable.__class_getitem__
+collections.Awaitable.__class_getitem__
+collections.Container.__class_getitem__
+collections.Iterable.__class_getitem__
+collections.MappingView.__class_getitem__
+distutils.command.bdist_wininst
+distutils.command.bdist_wininst.bdist_wininst
+distutils.dist.DistributionMetadata.set_classifiers
+distutils.dist.DistributionMetadata.set_keywords
+distutils.dist.DistributionMetadata.set_platforms
+distutils.sysconfig.expand_makefile_vars
+distutils.sysconfig.get_python_version
+distutils.util.get_host_platform
+distutils.cygwinccompiler.RE_VERSION
+distutils.dist.command_re
+distutils.fancy_getopt.longopt_re
+distutils.fancy_getopt.neg_alias_re
+hmac.HMAC.digest_cons
+hmac.HMAC.inner
+hmac.HMAC.outer
+multiprocessing.managers.SharedMemoryServer.create
+multiprocessing.managers.SharedMemoryServer.list_segments
+multiprocessing.managers.SharedMemoryServer.public
+multiprocessing.managers.SharedMemoryServer.release_segment
+multiprocessing.managers.SharedMemoryServer.shutdown
+multiprocessing.managers.SharedMemoryServer.track_segment
+pstats.FunctionProfile
+pstats.Stats.get_stats_profile
+pstats.StatsProfile
+pyexpat.XMLParserType.SkippedEntityHandler
+pyexpat.XMLParserType.intern
+stringprep.unicodedata  # re-exported from unicodedata
+types.CoroutineType.cr_origin
+typing._SpecialForm.__call__
+unicodedata.UCD.is_normalized
+xml.parsers.expat.XMLParserType.SkippedEntityHandler
+xml.parsers.expat.XMLParserType.intern

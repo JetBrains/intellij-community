@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -8,7 +8,6 @@ import com.intellij.codeInspection.util.IterableTraversal;
 import com.intellij.codeInspection.util.IteratorDeclaration;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -75,7 +74,7 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
       }
 
       private void registerProblem(PsiLoopStatement statement, PsiJavaToken endToken) {
-        holder.registerProblem(statement, new TextRange(0, endToken.getTextOffset() - statement.getTextOffset() + 1),
+        holder.registerProblem(statement.getFirstChild(),
                                QuickFixBundle.message("java.8.collection.removeif.inspection.description"),
                                new ReplaceWithRemoveIfQuickFix());
       }
@@ -134,7 +133,7 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+      PsiElement element = descriptor.getStartElement().getParent();
       if(!(element instanceof PsiLoopStatement)) return;
       PsiLoopStatement loop = (PsiLoopStatement)element;
       PsiStatement[] statements = ControlFlowUtils.unwrapBlock(loop.getBody());

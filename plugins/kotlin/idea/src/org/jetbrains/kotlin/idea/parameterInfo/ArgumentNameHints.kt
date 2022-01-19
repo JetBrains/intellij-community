@@ -10,10 +10,10 @@ import org.jetbrains.kotlin.builtins.extractParameterNameFromFunctionTypeArgumen
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.resolveCandidates
 import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Companion.toCommentedParameterName
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassConstructorDescriptor
 import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 fun provideArgumentNameHints(element: KtCallElement): List<InlayInfo> {
     if (element.valueArguments.none { it.getArgumentExpression()?.isUnclearExpression() == true }) return emptyList()
-    val ctx = element.analyze(BodyResolveMode.PARTIAL)
+    val ctx = element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
     val call = element.getCall(ctx) ?: return emptyList()
     val resolvedCall = call.getResolvedCall(ctx)
     if (resolvedCall != null) {
@@ -56,7 +56,8 @@ private fun getArgumentNameHintsForCallCandidate(
     }
 
     if (resultingDescriptor.valueParameters.size == 1
-        && resultingDescriptor.name == resultingDescriptor.valueParameters.single().name) {
+        && resultingDescriptor.name == resultingDescriptor.valueParameters.single().name
+    ) {
         // method name equals to single parameter name
         return emptyList()
     }
@@ -69,6 +70,12 @@ private fun getArgumentNameHintsForCallCandidate(
         if (resultingDescriptor is FunctionInvokeDescriptor &&
             valueParam.type.extractParameterNameFromFunctionTypeArgument() == null
         ) {
+            return@mapNotNull null
+        }
+
+        if (resolvedArg == resolvedCall.valueArgumentsByIndex?.firstOrNull()
+            && resultingDescriptor.valueParameters.firstOrNull()?.name == resultingDescriptor.name) {
+            // first argument with the same name as method name
             return@mapNotNull null
         }
 

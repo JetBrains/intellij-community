@@ -2,7 +2,6 @@
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiClassInitializer
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
@@ -12,13 +11,6 @@ import org.jetbrains.uast.visitor.UastVisitor
  * A class initializer wrapper to be used in [UastVisitor].
  */
 interface UClassInitializer : UDeclaration, PsiClassInitializer {
-
-  @Suppress("OverridingDeprecatedMember")
-  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @get:Deprecated("see the base property description")
-  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
-  override val psi: PsiClassInitializer
-
   /**
    * Returns the body of this class initializer.
    */

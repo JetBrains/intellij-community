@@ -54,9 +54,9 @@ public class CustomizableActionsPanel {
   private static final Logger LOG = Logger.getInstance(CustomizableActionsPanel.class);
 
   private JPanel myPanel;
-  private JTree myActionsTree;
+  protected JTree myActionsTree;
   private JPanel myTopPanel;
-  private CustomActionsSchema mySelectedSchema;
+  protected CustomActionsSchema mySelectedSchema;
 
   public CustomizableActionsPanel() {
     //noinspection HardCodedStringLiteral
@@ -81,16 +81,22 @@ public class CustomizableActionsPanel {
     addGroup.getTemplatePresentation().setText(IdeBundle.message("group.customizations.add.action.group"));
     addGroup.getTemplatePresentation().setIcon(AllIcons.General.Add);
     addGroup.setPopup(true);
-    ActionGroup restoreGroup = new DefaultActionGroup(new RestoreSelectionAction(), new RestoreAllAction());
-    restoreGroup.setPopup(true);
-    restoreGroup.getTemplatePresentation().setText(IdeBundle.message("group.customizations.restore.action.group"));
-    restoreGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Rollback);
+    ActionGroup restoreGroup = getRestoreGroup();
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
       .createActionToolbar(ActionPlaces.TOOLBAR, new DefaultActionGroup(addGroup, new RemoveAction(), new EditIconAction(), new MoveUpAction(), new MoveDownAction(), restoreGroup), true);
     toolbar.setForceMinimumSize(true);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     toolbar.setTargetComponent(myTopPanel);
     return toolbar;
+  }
+
+  @NotNull
+  protected ActionGroup getRestoreGroup() {
+    ActionGroup restoreGroup = new DefaultActionGroup(new RestoreSelectionAction(), new RestoreAllAction());
+    restoreGroup.setPopup(true);
+    restoreGroup.getTemplatePresentation().setText(IdeBundle.message("group.customizations.restore.action.group"));
+    restoreGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Rollback);
+    return restoreGroup;
   }
 
   static FilterComponent setupFilterComponent(JTree tree) {
@@ -210,7 +216,7 @@ public class CustomizableActionsPanel {
     return CustomActionsSchema.getInstance().isModified(mySelectedSchema);
   }
 
-  private void patchActionsTreeCorrespondingToSchema(DefaultMutableTreeNode root) {
+  protected void patchActionsTreeCorrespondingToSchema(DefaultMutableTreeNode root) {
     root.removeAllChildren();
     if (mySelectedSchema != null) {
       mySelectedSchema.fillCorrectedActionGroups(root);

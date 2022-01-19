@@ -1,7 +1,7 @@
 [tool.black]
 line_length = 130
 target_version = ["py37"]
-exclude = ".*_pb2.pyi"
+force-exclude = ".*_pb2.pyi"
 skip_magic_trailing_comma = true
 
 [tool.isort]
@@ -13,12 +13,16 @@ extra_standard_library = [
     "typing_extensions",
     "_typeshed",
     # Extra modules not recognized by isort
+    "_ast",
+    "_collections_abc",
     "_compression",
     "_csv",
     "_curses",
     "_markupbase",
     "_random",
     "_tkinter",
+    "_tracemalloc",
+    "_warnings",
     "_weakrefset",
     "genericpath",
     "opcode",

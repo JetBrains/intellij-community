@@ -42,6 +42,9 @@
       <keyboard-shortcut first-keystroke="control T" keymap="$default"/>
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="first"/>
     </action>
+    <action id="Vcs.Toolbar.ShowMoreActions"  class="com.intellij.openapi.vcs.actions.VcsQuickActionsToolbarPopup">
+      <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="last"/>
+    </action>
     <group class="com.intellij.openapi.vcs.actions.VcsGroupsWrapper" id="VcsFileGroupPopup" popup="true">
       <add-to-group group-id="VersionControlsGroup" />
     </group>

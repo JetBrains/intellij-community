@@ -6,7 +6,7 @@ class Test {
         try {
             foo();
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 }

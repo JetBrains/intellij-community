@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.BrowserUtil;
@@ -17,10 +17,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.SwingHelper;
-import com.intellij.util.ui.UI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,7 +65,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       final JComponent comp = createConsentElement(consent, addCheckBox);
       body.add(comp, new GridBagConstraints(
         0, GridBagConstraints.RELATIVE, 1, 1, 1.0, !it.hasNext() && myPreferencesMode ? 1.0 : 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-        it.hasNext() ? JBUI.insets(0, 0, 10, 0) : JBUI.emptyInsets(), 0, 0)
+        it.hasNext() ? JBUI.insets(0, 0, 10, 0) : JBInsets.emptyInsets(), 0, 0)
       );
     }
     if (!ConsentOptions.getInstance().isEAP()) {

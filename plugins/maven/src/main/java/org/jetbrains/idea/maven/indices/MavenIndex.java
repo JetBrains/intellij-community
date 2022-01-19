@@ -82,10 +82,6 @@ public final class MavenIndex implements MavenSearchIndex {
     open();
   }
 
-  public Set<String> getRegisteredRepositoryIds() {
-    return myRegisteredRepositoryIds;
-  }
-
   public String getDataDirName() {
     return myDataDirName;
   }

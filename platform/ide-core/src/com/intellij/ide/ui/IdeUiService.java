@@ -43,7 +43,7 @@ public class IdeUiService {
     return false;
   }
 
-  public void logUsageEvent(Class<?> clazz, String groupId, String eventId) {
+  public void logIdeScriptUsageEvent(Class<?> clazz) {
 
   }
 

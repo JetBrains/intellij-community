@@ -17,7 +17,6 @@ import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -135,15 +134,6 @@ public final class MavenShortcutsManager implements Disposable {
     for (Listener listener : myListeners) {
       listener.shortcutsUpdated();
     }
-  }
-
-  /**
-   * @deprecated use #addListener(Listener, Disposable)
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  public void addListener(Listener l) {
-    myListeners.add(l);
   }
 
   public void addListener(@NotNull Listener l, @NotNull Disposable disposable) {

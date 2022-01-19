@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.projectModel
 
 import java.io.File
 
-interface KotlinSourceSet : KotlinModule {
+interface KotlinSourceSet : KotlinComponent {
     val languageSettings: KotlinLanguageSettings
     val sourceDirs: Set<File>
     val resourceDirs: Set<File>

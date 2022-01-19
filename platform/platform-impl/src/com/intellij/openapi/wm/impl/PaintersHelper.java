@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,6 +16,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.SVGLoader;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -443,7 +444,7 @@ final class PaintersHelper implements Painter.Listener {
       boolean prevOk = image != null;
       clearImages(-1);
       image = newImage;
-      insets = JBUI.emptyInsets();
+      insets = JBInsets.emptyInsets();
       alpha = newAlpha;
       fillType = newFill;
       anchor = newAnchor;

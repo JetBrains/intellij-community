@@ -110,6 +110,10 @@ public final class ProgressSuspender implements AutoCloseable {
     return mySuspended;
   }
 
+  public boolean isClosed() {
+    return myClosed;
+  }
+
   /**
    * @param reason if provided, is displayed in the UI instead of suspended text passed into constructor until the progress is resumed
    */

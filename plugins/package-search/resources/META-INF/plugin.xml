@@ -26,6 +26,11 @@ Supports Maven and Gradle projects.
                         area="IDEA_PROJECT"
                         dynamic="true"/>
 
+        <extensionPoint qualifiedName="com.intellij.packagesearch.flowModuleChangesSignalProvider"
+                        interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.FlowModuleChangesSignalProvider"
+                        area="IDEA_PROJECT"
+                        dynamic="true"/>
+
         <extensionPoint qualifiedName="com.intellij.packagesearch.moduleTransformer"
                         interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer"
                         area="IDEA_PROJECT"
@@ -65,14 +70,6 @@ Supports Maven and Gradle projects.
         <projectService
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration"/>
 
-        <projectService
-                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectService"/>
-
-        <projectService
-                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.UiCommandsService"/>
-
-        <projectService
-                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.lifecycle.ProjectLifecycleHolderService"/>
         <projectService
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageSearchProjectCachesService"/>
 

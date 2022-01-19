@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -74,5 +74,10 @@ public abstract class MoveDialogBase extends RefactoringDialog {
 
   protected MoveDialogBase(@NotNull Project project, boolean canBeParent, boolean addOpenInEditorCheckbox) {
     super(project, canBeParent, addOpenInEditorCheckbox);
+  }
+
+  @Override
+  protected boolean isOpenInEditorEnabledByDefault() {
+    return false;
   }
 }

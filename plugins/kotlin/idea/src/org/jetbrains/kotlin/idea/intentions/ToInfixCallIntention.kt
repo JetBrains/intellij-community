@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
@@ -27,7 +27,7 @@ class ToInfixCallIntention : SelfTargetingIntention<KtCallExpression>(
         if (argument.isNamed()) return false
         if (argument.getArgumentExpression() == null) return false
 
-        val bindingContext = element.analyze(BodyResolveMode.PARTIAL)
+        val bindingContext = element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
         val resolvedCall = element.getResolvedCall(bindingContext) ?: return false
         val function = resolvedCall.resultingDescriptor as? FunctionDescriptor ?: return false
         if (!function.isInfix) return false

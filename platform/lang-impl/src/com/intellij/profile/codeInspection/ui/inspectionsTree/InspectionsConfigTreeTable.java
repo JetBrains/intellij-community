@@ -12,7 +12,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.InspectionsAggregationUtil;
@@ -26,7 +25,10 @@ import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.TextTransferable;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.IconTableCellRenderer;
 import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.NotNull;
@@ -371,7 +373,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       if (myPrimarySeverity == null) {
         myPrimarySeverity = severity;
       }
-      else if (!Comparing.equal(severity, myPrimarySeverity)) {
+      else if (!severity.equals(myPrimarySeverity)) {
         myPrimarySeverity = ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY;
       }
       myOccurrences.put(toolName, severity);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.editor
 
@@ -63,7 +63,7 @@ class KotlinEnterAfterUnmatchedBraceHandler : EnterAfterUnmatchedBraceHandler() 
 
     private fun getRBraceForLambda(functionLiteral: KtFunctionLiteral): Int? {
         val bodyExpression = (functionLiteral.parent as? KtLambdaExpression)?.bodyExpression ?: return null
-        val firstVisibleChild = bodyExpression.firstChild.getNextSiblingIgnoringWhitespace(withItself = true)
+        val firstVisibleChild = bodyExpression.firstChild?.getNextSiblingIgnoringWhitespace(withItself = true)
         return firstVisibleChild?.endOffset
     }
 

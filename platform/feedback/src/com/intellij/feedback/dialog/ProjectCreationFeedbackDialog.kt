@@ -1,13 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.feedback.dialog
 
-import com.intellij.feedback.DEFAULT_NO_EMAIL_ZENDESK_REQUESTER
-import com.intellij.feedback.FEEDBACK_REPORT_ID_KEY
+import com.intellij.feedback.*
 import com.intellij.feedback.bundle.FeedbackBundle
-import com.intellij.feedback.createFeedbackAgreementComponent
 import com.intellij.feedback.state.projectCreation.ProjectCreationInfoService
-import com.intellij.feedback.statistics.ProjectCreationFeedbackCountCollector
-import com.intellij.feedback.submitGeneralFeedback
 import com.intellij.ide.feedback.RatingComponent
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
@@ -22,7 +18,6 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.util.BooleanFunction
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -32,15 +27,20 @@ import kotlinx.serialization.json.*
 import java.awt.event.ActionEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import java.util.function.Predicate
 import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
 class ProjectCreationFeedbackDialog(
   private val project: Project?,
-  createdProjectTypeName: String
+  createdProjectTypeName: String,
+  private val forTest: Boolean
 ) : DialogWrapper(project) {
 
+  /** Increase the additional number when onboarding feedback format is changed */
+  private val FEEDBACK_JSON_VERSION = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 0
+  
   private val TICKET_TITLE_ZENDESK = "Project Creation Feedback"
   private val FEEDBACK_TYPE_ZENDESK = "Project Creation Feedback"
 
@@ -80,11 +80,9 @@ class ProjectCreationFeedbackDialog(
     init()
     title = FeedbackBundle.message("dialog.creation.project.top.title")
     isResizable = false
-    ProjectCreationFeedbackCountCollector.logDialogShowed()
   }
 
   override fun doCancelAction() {
-    ProjectCreationFeedbackCountCollector.logDialogCanceled()
     super.doCancelAction()
   }
 
@@ -92,7 +90,6 @@ class ProjectCreationFeedbackDialog(
     super.doOKAction()
     val projectCreationInfoState = ProjectCreationInfoService.getInstance().state
     projectCreationInfoState.feedbackSent = true
-    ProjectCreationFeedbackCountCollector.logFeedbackAttemptToSend()
     val email = if (checkBoxEmailProperty.get()) textFieldEmailProperty.get() else DEFAULT_NO_EMAIL_ZENDESK_REQUESTER
     submitGeneralFeedback(project,
                           TICKET_TITLE_ZENDESK,
@@ -100,8 +97,9 @@ class ProjectCreationFeedbackDialog(
                           FEEDBACK_TYPE_ZENDESK,
                           createCollectedDataJsonString(),
                           email,
-                          { ProjectCreationFeedbackCountCollector.logFeedbackSentSuccessfully() },
-                          { ProjectCreationFeedbackCountCollector.logFeedbackSentError() }
+                          { },
+                          { },
+                          if (forTest) FeedbackRequestType.TEST_REQUEST else FeedbackRequestType.PRODUCTION_REQUEST
     )
   }
 
@@ -144,6 +142,7 @@ class ProjectCreationFeedbackDialog(
   private fun createCollectedDataJsonString(): String {
     val collectedData = buildJsonObject {
       put(FEEDBACK_REPORT_ID_KEY, "new_project_creation_dialog")
+      put("format_version", FEEDBACK_JSON_VERSION)
       put("rating", ratingProperty.get())
       put("project_type", systemInfoData.createdProjectTypeName)
       putJsonArray("problems") {
@@ -244,7 +243,7 @@ class ProjectCreationFeedbackDialog(
               }
             }
             putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION,
-                              BooleanFunction<JBTextField> { textField -> textField.text.isEmpty() })
+                              Predicate<JBTextField> { textField -> textField.text.isEmpty() })
           }
       }.bottomGap(BottomGap.MEDIUM)
 
@@ -289,7 +288,7 @@ class ProjectCreationFeedbackDialog(
               isEnabled = checkBoxEmailProperty.get()
             }
             putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION,
-                              BooleanFunction<JBTextField> { textField -> textField.text.isEmpty() })
+                              Predicate<JBTextField> { textField -> textField.text.isEmpty() })
           }.errorOnApply(FeedbackBundle.message("dialog.created.project.textfield.email.required")) {
             checkBoxEmailProperty.get() && it.text.isBlank()
           }.errorOnApply(ApplicationBundle.message("feedback.form.email.invalid")) {

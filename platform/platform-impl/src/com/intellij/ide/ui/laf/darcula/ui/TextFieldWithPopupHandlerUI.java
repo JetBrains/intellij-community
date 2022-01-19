@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
@@ -13,7 +13,6 @@ import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextComponent.Extension;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -112,7 +111,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     JTextComponent c = getComponent();
     Insets margin = ComponentUtil.getParentOfType((Class<? extends JComboBox>)JComboBox.class, (Component)c) != null ||
                     ComponentUtil.getParentOfType((Class<? extends JSpinner>)JSpinner.class, (Component)c) != null ||
-                    UIUtil.isClientPropertyTrue(c, "TextFieldWithoutMargins") ? JBUI.emptyInsets() : getDefaultMargins();
+                    UIUtil.isClientPropertyTrue(c, "TextFieldWithoutMargins") ? JBInsets.emptyInsets() : getDefaultMargins();
 
     JBInsets.removeFrom(bounds, c.getInsets());
     JBInsets.removeFrom(bounds, margin);
@@ -426,7 +425,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
   protected Insets getDefaultMargins() {
-    return JBUI.emptyInsets();
+    return JBInsets.emptyInsets();
   }
 
   @Override

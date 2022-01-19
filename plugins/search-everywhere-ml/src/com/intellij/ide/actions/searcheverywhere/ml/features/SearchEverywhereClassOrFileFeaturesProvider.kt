@@ -67,7 +67,7 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(supportedTab: Class<o
 
     cache as Cache?
     val file = getContainingFile(item)
-    val project = item.project
+    val project = ReadAction.compute<Project, Nothing> { item.project }
 
     val data = HashMap<String, Any>()
     if (file != null && cache != null) {

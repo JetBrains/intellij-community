@@ -14,6 +14,7 @@ import com.intellij.openapi.externalSystem.service.ui.getSelectedJdkReference
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesFiled
 import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesInfo
+import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesTable
 import com.intellij.openapi.externalSystem.service.ui.setSelectedJdkReference
 import com.intellij.openapi.externalSystem.service.ui.util.LabeledSettingsFragmentInfo
 import com.intellij.openapi.externalSystem.service.ui.util.PathFragmentInfo
@@ -33,7 +34,7 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.impl.CollapsibleTitledSeparator
-import com.intellij.util.lockOrSkip
+import com.intellij.openapi.observable.util.lockOrSkip
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
@@ -456,7 +457,7 @@ class MavenRunConfigurationSettingsEditor(
         override val settingsHint: String? = null
         override val settingsActionHint: String? = null
       },
-      { it, c -> c.properties = it.runnerSettingsOrDefault.mavenProperties.map { PropertiesFiled.Property(it.key, it.value) } },
+      { it, c -> c.properties = it.runnerSettingsOrDefault.mavenProperties.map { PropertiesTable.Property(it.key, it.value) } },
       { it, c -> it.runnerSettingsOrDefault.mavenProperties = c.properties.associate { it.name to it.value } },
       { it.runnerSettingsOrDefault.mavenProperties.isNotEmpty() }
     )

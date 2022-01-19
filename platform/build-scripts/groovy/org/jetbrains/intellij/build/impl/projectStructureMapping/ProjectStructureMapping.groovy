@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.projectStructureMapping
 
 import com.fasterxml.jackson.core.JsonFactory
@@ -108,17 +108,19 @@ final class ProjectStructureMapping {
 
   static void buildJarContentReport(Collection<DistributionFileEntry> entries, OutputStream out, BuildPaths buildPaths) {
     JsonGenerator writer = new JsonFactory().createGenerator(out).setPrettyPrinter(new IntelliJDefaultPrettyPrinter())
-    Map<Path, List<DistributionFileEntry>> fileToEntry = new TreeMap<>()
+    Map<String, List<DistributionFileEntry>> fileToEntry = new TreeMap<>()
+    Map<Path, String> fileToPresentablePath = new HashMap<>()
     for (DistributionFileEntry entry : entries) {
-      fileToEntry.computeIfAbsent(entry.path, { new ArrayList<DistributionFileEntry>() }).add(entry)
+      String presentablePath = fileToPresentablePath.computeIfAbsent(entry.path, { shortenAndNormalizePath(it, buildPaths, null) })
+      fileToEntry.computeIfAbsent(presentablePath, { new ArrayList<DistributionFileEntry>() }).add(entry)
     }
 
     writer.writeStartArray()
-    for (Map.Entry<Path, List<DistributionFileEntry>> entrySet : fileToEntry.entrySet()) {
+    for (Map.Entry<String, List<DistributionFileEntry>> entrySet : fileToEntry.entrySet()) {
       List<DistributionFileEntry> fileEntries = entrySet.value
-      Path file = entrySet.key
+      String filePath = entrySet.key
       writer.writeStartObject()
-      writer.writeStringField("name", shortenAndNormalizePath(file, buildPaths, null))
+      writer.writeStringField("name", filePath)
 
       writeProjectLibs(fileEntries, writer, buildPaths)
       writeModules(writer, fileEntries, buildPaths)
@@ -237,7 +239,7 @@ final class ProjectStructureMapping {
     writer.writeObjectFieldStart("dependentModules")
     for (Map.Entry<String, List<String>> pluginAndModules : data.dependentModules.entrySet()) {
       writer.writeArrayFieldStart(pluginAndModules.key)
-      for (String moduleName : pluginAndModules.value) {
+      for (String moduleName : pluginAndModules.value.toSorted()) {
         writer.writeString(moduleName)
       }
       writer.writeEndArray()
@@ -269,6 +271,7 @@ final class ProjectStructureMapping {
   }
 
   private static String shortenAndNormalizePath(Path file, BuildPaths buildPaths, @Nullable Path extraRoot) {
-    return shortenPath(file, buildPaths, extraRoot).replace(File.separatorChar, (char)'/')
+    String result = shortenPath(file, buildPaths, extraRoot).replace(File.separatorChar, (char)'/')
+    return result.startsWith("temp/") ? result.substring("temp/".length()) : result
   }
 }

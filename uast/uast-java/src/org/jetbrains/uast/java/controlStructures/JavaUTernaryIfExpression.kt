@@ -16,11 +16,13 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiConditionalExpression
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.UIfExpression
 
+@ApiStatus.Internal
 class JavaUTernaryIfExpression(
   override val sourcePsi: PsiConditionalExpression,
   givenParent: UElement?

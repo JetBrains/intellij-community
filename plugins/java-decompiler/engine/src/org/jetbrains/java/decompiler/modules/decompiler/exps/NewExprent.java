@@ -19,10 +19,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public class NewExprent extends Exprent {
   private InvocationExprent constructor;
@@ -162,7 +159,7 @@ public class NewExprent extends Exprent {
         if (selfReference) {
           buf.append("<anonymous constructor>");
         } else {
-          String typename = ExprProcessor.getCastTypeName(child.anonymousClassType);
+          String typename = ExprProcessor.getCastTypeName(child.anonymousClassType, Collections.emptyList());
           if (enclosing != null) {
             ClassNode anonymousNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(child.anonymousClassType.value);
             if (anonymousNode != null) {
@@ -176,14 +173,14 @@ public class NewExprent extends Exprent {
           GenericClassDescriptor descriptor = ClassWriter.getGenericClassDescriptor(child.classStruct);
           if (descriptor != null) {
             if (descriptor.superinterfaces.isEmpty()) {
-              buf.append(GenericMain.getGenericCastTypeName(descriptor.superclass));
+              buf.append(GenericMain.getGenericCastTypeName(descriptor.superclass, Collections.emptyList()));
             }
             else {
               if (descriptor.superinterfaces.size() > 1 && !lambda) {
                 DecompilerContext.getLogger().writeMessage("Inconsistent anonymous class signature: " + child.classStruct.qualifiedName,
                                                            IFernflowerLogger.Severity.WARN);
               }
-              buf.append(GenericMain.getGenericCastTypeName(descriptor.superinterfaces.get(0)));
+              buf.append(GenericMain.getGenericCastTypeName(descriptor.superinterfaces.get(0), Collections.emptyList()));
             }
           }
           else {
@@ -264,7 +261,7 @@ public class NewExprent extends Exprent {
 
         buf.append("new ");
 
-        String typename = ExprProcessor.getTypeName(newType);
+        String typename = ExprProcessor.getTypeName(newType, Collections.emptyList());
         if (enclosing != null) {
           ClassNode newNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.value);
           if (newNode != null) {
@@ -334,7 +331,7 @@ public class NewExprent extends Exprent {
       }
     }
     else {
-      buf.append("new ").append(ExprProcessor.getTypeName(newType));
+      buf.append("new ").append(ExprProcessor.getTypeName(newType, Collections.emptyList()));
 
       if (lstArrayElements.isEmpty()) {
         for (int i = 0; i < newType.arrayDim; i++) {

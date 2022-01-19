@@ -270,4 +270,8 @@ public final class GitLogUtil {
     handler.setWithMediator(false);
     return handler;
   }
+
+  public static long parseTime(@NotNull String timeString) {
+    return Long.parseLong(timeString.trim()) * 1000;
+  }
 }

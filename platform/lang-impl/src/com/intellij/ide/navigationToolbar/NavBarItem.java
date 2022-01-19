@@ -152,7 +152,7 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
     }
     else {
       fg = myUI.getForeground(selected, focused, isInactive());
-      if (fg != null) fg = myAttributes.getFgColor();
+      if (fg == null) fg = myAttributes.getFgColor();
     }
 
     int style = myAttributes.getStyle();

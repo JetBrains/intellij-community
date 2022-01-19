@@ -38,7 +38,7 @@ Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory.
 1. Configure a JDK named "**corretto-11**", pointing to installation of JDK 11. It's recommended to use Amazon Corretto JDK, but other 
    distributions based on OpenJDK should work as well. You may [download it directly](https://www.jetbrains.com/help/idea/sdk.html#jdk-from-ide) 
    from Project Structure dialog.    
-2. If the _Maven Integration_ plugin is disabled, [add the path variable](https://www.jetbrains.com/help/idea/absolute-path-variables.html)
+2. If the _Maven_ plugin is disabled, [add the path variable](https://www.jetbrains.com/help/idea/absolute-path-variables.html)
    "**MAVEN_REPOSITORY**" pointing to `<USER_HOME>/.m2/repository` directory.
 3. _**Speed Tip:**_ If you have enough RAM on your computer,
    [configure the compiler settings](https://www.jetbrains.com/help/idea/specifying-compilation-settings.html)

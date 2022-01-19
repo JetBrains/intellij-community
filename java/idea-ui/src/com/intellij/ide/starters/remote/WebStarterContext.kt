@@ -11,6 +11,7 @@ class WebStarterContext : UserDataHolderBase() {
   var version: String = DEFAULT_MODULE_VERSION
 
   var isCreatingNewProject: Boolean = false
+  var gitIntegration: Boolean = false
 
   lateinit var serverUrl: String
   lateinit var serverOptions: WebStarterServerOptions

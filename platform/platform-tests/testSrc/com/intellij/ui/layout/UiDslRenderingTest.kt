@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.layout
 
 import com.intellij.openapi.application.AppUIExecutor
@@ -41,7 +41,7 @@ class UiDslRenderingTest : UiDslTest() {
   fun beforeMethod() = runBlocking {
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
       // let's for now to see how it is going on macOS
-      Assume.assumeTrue("macOS or Windows 10 are required", SystemInfo.isMacOSHighSierra /* || SystemInfo.isWin10OrNewer */)
+      Assume.assumeTrue("macOS or Windows 10 are required", SystemInfo.isMac && SystemInfo.isOsVersionAtLeast("10.13") /* || SystemInfo.isWin10OrNewer */)
     }
 
     System.setProperty("idea.ui.comment.copyable", "false")

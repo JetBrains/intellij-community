@@ -6,7 +6,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.net.InetAddress;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
@@ -51,6 +50,7 @@ interface BuildCommandLineBuilder {
   default void setupAdditionalVMOptions() {
   }
 
-  default void copyPathToTarget(Iterable<File> pathFiles) {
+  default @NotNull Path copyPathToTargetIfRequired(@NotNull Path path) {
+    return path;
   }
 }

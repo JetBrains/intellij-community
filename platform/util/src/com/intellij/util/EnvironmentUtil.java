@@ -138,10 +138,16 @@ public final class EnvironmentUtil {
       return false;
     }
 
-    // On macOS, login shell session is not run when a user logs in, so the very presence of `SHLVL` likely means that IDE started from a terminal.
+    // On macOS, login shell session is not run when a user logs in, so 'SHLVL > 0' likely means that IDE started from a terminal.
     String shLvl = System.getenv(SHLVL);
-    if (shLvl != null) {
-      LOG.info("loading shell env is skipped: IDE has been launched from a terminal (" + SHLVL + '=' + shLvl + ')');
+    try {
+      if (shLvl != null && Integer.parseInt(shLvl) > 0) {
+        LOG.info("loading shell env is skipped: IDE has been launched from a terminal (" + SHLVL + '=' + shLvl + ')');
+        return false;
+      }
+    }
+    catch (NumberFormatException e) {
+      LOG.info("loading shell env is skipped: IDE has been launched with malformed " + SHLVL + '=' + shLvl);
       return false;
     }
 

@@ -4,6 +4,8 @@ package com.intellij.ide.actions.searcheverywhere.ml.model
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService
 import com.intellij.internal.ml.DecisionFunction
+import com.intellij.internal.ml.FeaturesInfo
+import com.intellij.internal.ml.catboost.CatBoostResourcesModelMetadataReader
 import com.intellij.openapi.extensions.ExtensionPointName
 
 /**
@@ -59,5 +61,15 @@ internal abstract class SearchEverywhereMLRankingModelProvider {
 
   private fun getLocalModel(): DecisionFunction {
     return LocalRankingModelProviderUtil.getLocalModel(supportedContributor.simpleName)!!
+  }
+
+  protected fun getCatBoostModel(resourceDirectory: String, modelDirectory: String): DecisionFunction {
+    val metadataReader = CatBoostResourcesModelMetadataReader(this::class.java, resourceDirectory, modelDirectory)
+    val metadata = FeaturesInfo.buildInfo(metadataReader)
+    val model = metadataReader.loadModel()
+
+    return object : SearchEverywhereMLRankingDecisionFunction(metadata) {
+      override fun predict(features: DoubleArray): Double = model.makePredict(features)
+    }
   }
 }

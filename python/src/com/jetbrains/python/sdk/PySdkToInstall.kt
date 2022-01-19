@@ -7,8 +7,11 @@ import com.google.common.io.Files
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.process.OSProcessUtil
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.execution.util.ExecUtil.execAndGetOutput
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
@@ -38,9 +41,11 @@ import com.jetbrains.python.sdk.PySdkToInstallCollector.Companion.InstallationRe
 import com.jetbrains.python.sdk.PySdkToInstallCollector.Companion.LookupResult
 import com.jetbrains.python.sdk.PySdkToInstallCollector.Companion.logSdkDownload
 import com.jetbrains.python.sdk.PySdkToInstallCollector.Companion.logSdkInstallation
+import com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor
 import org.jetbrains.annotations.CalledInAny
 import java.io.File
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 import kotlin.math.absoluteValue
 
 private val LOGGER = Logger.getInstance(PySdkToInstall::class.java)
@@ -48,6 +53,7 @@ private val LOGGER = Logger.getInstance(PySdkToInstall::class.java)
 @CalledInAny
 internal fun getSdksToInstall(): List<PySdkToInstall> {
   return if (SystemInfo.isWindows) listOf(getPy39ToInstallOnWindows(), getPy310ToInstallOnWindows())
+  else if (SystemInfo.isMac) listOf(PySdkToInstallViaXCodeSelect())
   else emptyList()
 }
 
@@ -127,7 +133,7 @@ private class PySdkToInstallOnWindows(name: String,
     return HtmlBuilder()
       .append(PyBundle.message("python.sdk.executable.not.found.header"))
       .append(tag("ul").children(
-        tag("li").children(raw(PyBundle.message("python.sdk.executable.not.found.option.specify.path", text("...").bold()))),
+        tag("li").children(raw(PyBundle.message("python.sdk.executable.not.found.option.specify.path", text("...").bold(), "python.exe"))),
         tag("li").children(raw(PyBundle.message("python.sdk.executable.not.found.option.download.and.install",
                                                 text(defaultButtonName).bold(), fileSize)))
       )).toString()
@@ -330,4 +336,88 @@ private class PySdkToInstallOnWindows(name: String,
 
   private class PyInstallationException(val commandLine: GeneralCommandLine, val output: ProcessOutput) : Exception()
   private class PyInstallationExecutionException(val commandLine: GeneralCommandLine, override val cause: ExecutionException) : Exception()
+}
+
+private class PySdkToInstallViaXCodeSelect : PySdkToInstall("Python", "") {
+
+  override fun renderInList(renderer: PySdkListCellRenderer) {
+    renderer.append(name)
+    renderer.append(" ")
+    renderer.append(PyBundle.message("python.cldt.installing.suggestion"), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+  }
+
+  @NlsContexts.DialogMessage
+  override fun getInstallationWarning(defaultButtonName: String): String {
+    val commandChunk = text(MacPythonSdkFlavor.getXCodeSelectInstallCommand().commandLineString)
+
+    return HtmlBuilder()
+      .append(PyBundle.message("python.sdk.executable.not.found.header"))
+      .append(tag("ul").children(
+        tag("li").children(raw(PyBundle.message("python.sdk.executable.not.found.option.specify.path", text("...").bold(), "python"))),
+        tag("li").children(raw(
+          PyBundle.message("python.sdk.executable.not.found.option.install.with.cldt", text(defaultButtonName).bold(), commandChunk.code())
+        )),
+        tag("li").children(text(PyBundle.message("python.sdk.executable.not.found.option.install.or.brew")))
+      )).toString()
+  }
+
+  override fun install(module: Module?, systemWideSdksDetector: () -> List<PyDetectedSdk>): PyDetectedSdk? {
+    val project = module?.project
+    return ProgressManager.getInstance().run(
+      object : Task.WithResult<PyDetectedSdk?, Exception>(project, PyBundle.message("python.cldt.installing.title"), true) {
+        override fun compute(indicator: ProgressIndicator): PyDetectedSdk? {
+          @Suppress("DialogTitleCapitalization")
+          indicator.text = PyBundle.message("python.cldt.installing.indicator")
+          indicator.text2 = PyBundle.message("python.cldt.installing.skip")
+
+          runXCodeSelectInstall()
+
+          while (!MacPythonSdkFlavor.areCommandLineDeveloperToolsAvailable() && isInstallCommandLineDeveloperToolsAppRunning()) {
+            Thread.sleep(TimeUnit.SECONDS.toMillis(5))
+          }
+
+          LOGGER.debug("Resetting system-wide sdks detectors")
+          resetSystemWideSdksDetectors()
+
+          return systemWideSdksDetector()
+            .also { sdks ->
+              LOGGER.debug { sdks.joinToString(prefix = "Detected system-wide sdks: ") { it.homePath ?: it.name } }
+            }
+            .singleOrNull()
+        }
+      }
+        .also {
+          it.cancelText = IdeBundle.message("button.skip")
+          it.cancelTooltipText = IdeBundle.message("button.skip")
+        }
+    )
+  }
+
+  private fun runXCodeSelectInstall() {
+    val commandLine = MacPythonSdkFlavor.getXCodeSelectInstallCommand()
+    try {
+      execAndGetOutput(commandLine)
+        .also {
+          if (LOGGER.isDebugEnabled) {
+            LOGGER.debug("Result of '${commandLine.commandLineString}':\n$it")
+          }
+        }
+    }
+    catch (e: ExecutionException) {
+      LOGGER.warn("Exception during '${commandLine.commandLineString}'", e)
+    }
+  }
+
+  private fun isInstallCommandLineDeveloperToolsAppRunning(): Boolean {
+    val appName = "Install Command Line Developer Tools.app"
+
+    return OSProcessUtil
+      .getProcessList()
+      .any { it.commandLine.contains(appName) }
+      .also {
+        if (LOGGER.isDebugEnabled) {
+          LOGGER.debug("'$appName' is${if (it) "" else " not"} running")
+        }
+      }
+  }
 }

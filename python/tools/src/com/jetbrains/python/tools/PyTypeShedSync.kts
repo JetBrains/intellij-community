@@ -25,8 +25,7 @@ println("Syncing")
 sync(repo, bundled)
 
 val blacklist = sequenceOf(
-  "flask",
-  "jinja2",
+  "google-cloud-ndb",
   "optparse", // deprecated
   "protobuf",
   "xxlimited", // not available in runtime

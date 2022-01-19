@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -34,7 +34,7 @@ import java.io.StringReader;
 import java.util.List;
 
 public class HyperlinkLabel extends HighlightableComponent {
-  private static final TextAttributes BOLD_ATTRIBUTES = new TextAttributes(new JBColor(() -> {
+  private static final TextAttributes BOLD_ATTRIBUTES = new TextAttributes(JBColor.lazy(() -> {
     final Color foreground1 = UIUtil.getLabelTextForeground();
     return foreground1 == null ? UIUtil.getLabelForeground() : foreground1;
   }), null, null, null, Font.BOLD);
@@ -303,7 +303,7 @@ public class HyperlinkLabel extends HighlightableComponent {
   }
 
   private void applyFont() {
-    setFont(myFontSize == null ? UIUtil.getLabelFont() : UIUtil.getLabelFont(myFontSize));
+    setFont(myFontSize == null ? StartupUiUtil.getLabelFont() : UIUtil.getLabelFont(myFontSize));
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -82,7 +82,7 @@ public class TestUniqueId extends TestObject {
   }
 
   @Override
-  public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {
+  public RefactoringElementListener getListener(final PsiElement element) {
     return null;
   }
 

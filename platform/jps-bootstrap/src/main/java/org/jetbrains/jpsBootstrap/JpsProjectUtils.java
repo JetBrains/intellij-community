@@ -22,8 +22,6 @@ import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -64,7 +62,7 @@ public class JpsProjectUtils {
       .findFirst().orElseThrow(() -> new IllegalStateException("Module " + moduleName + " is not found"));
   }
 
-  public static List<URL> getModuleRuntimeClasspath(JpsModule module) throws MalformedURLException {
+  public static List<File> getModuleRuntimeClasspath(JpsModule module) {
     JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService
       .dependencies(module)
       .runtimeOnly()
@@ -72,12 +70,8 @@ public class JpsProjectUtils {
       .recursively()
       .withoutSdk();
 
-    List<URL> roots = new ArrayList<>();
-    for (File file : enumerator.classes().getRoots()) {
-      URL toURL = file.toURI().toURL();
-      roots.add(toURL);
-    }
-    roots.sort(Comparator.comparing(URL::toString));
+    List<File> roots = new ArrayList<>(enumerator.classes().getRoots());
+    roots.sort(Comparator.comparing(File::toString));
 
     return roots;
   }

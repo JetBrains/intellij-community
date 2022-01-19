@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.IndexingBundle
@@ -43,15 +44,20 @@ internal class IndexableSetContributorFilesIterator(private val indexableSetCont
     fileIterator: ContentIterator,
     fileFilter: VirtualFileFilter
   ): Boolean {
+    val allRoots = collectRoots(project)
+    return IndexableFilesIterationMethods.iterateRoots(project, allRoots, fileIterator, fileFilter, excludeNonProjectRoots = false)
+  }
+
+  private fun collectRoots(project: Project): MutableSet<VirtualFile> {
     val allRoots = runReadAction {
       if (projectAware) indexableSetContributor.getAdditionalProjectRootsToIndex(project)
       else indexableSetContributor.additionalRootsToIndex
     }
-    return IndexableFilesIterationMethods.iterateRoots(project, allRoots, fileIterator, fileFilter, excludeNonProjectRoots = false)
+    return allRoots
   }
 
-  override fun getRootUrls(): Set<String> {
-    return indexableSetContributor.additionalRootsToIndex.map { it.url }.toSet()
+  override fun getRootUrls(project: Project): Set<String> {
+    return collectRoots(project).map { it.url }.toSet()
   }
 
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.CommonBundle;
@@ -218,7 +218,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     });
 
     UIThemeProvider.EP_NAME.forEachExtensionSafe(provider -> {
-      if (!DEFAULT_LIGHT_THEME_ID.equals(provider.id)) {
+      if (shouldCreateTheme(provider)) {
         UITheme theme = provider.createTheme();
         if (theme != null) {
           lafList.add(new UIThemeBasedLookAndFeelInfo(theme));
@@ -227,6 +227,13 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     });
     sortThemes(lafList);
     return lafList;
+  }
+
+  private static boolean shouldCreateTheme(UIThemeProvider provider) {
+    if (DEFAULT_LIGHT_THEME_ID.equals(provider.id)) return false;
+    if (!ExperimentalUI.isNewUI() && "ExperimentalLight".equals(provider.id)) return false;
+    if (!ExperimentalUI.isNewUI() && "ExperimentalDark".equals(provider.id)) return false;
+    return true;
   }
 
   private static void sortThemes(@NotNull List<? extends UIManager.LookAndFeelInfo> list) {
@@ -655,7 +662,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     // set L&F
-    if (DarculaLookAndFeelInfo.CLASS_NAME.equals(lookAndFeelInfo.getClassName())) {
+    String lafClassName = lookAndFeelInfo.getClassName();
+    if (DarculaLookAndFeelInfo.CLASS_NAME.equals(lafClassName)) {
       DarculaLaf laf = new DarculaLaf();
       try {
         UIManager.setLookAndFeel(laf);
@@ -682,11 +690,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
           laf = ((PluggableLafInfo)lookAndFeelInfo).createLookAndFeel();
         }
         else {
-          laf = (LookAndFeel)Class.forName(lookAndFeelInfo.getClassName()).getConstructor().newInstance();
-          if (laf instanceof MetalLookAndFeel) {
-            MetalLookAndFeel.setCurrentTheme(new DefaultMetalTheme());
-          }
-          else if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
+          laf = (LookAndFeel)LafManagerImpl.class.getClassLoader().loadClass(lafClassName).getConstructor().newInstance();
+          // avoid loading MetalLookAndFeel class here - check for UIThemeBasedLookAndFeelInfo first
+          if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
             if (laf instanceof UserDataHolder) {
               UserDataHolder userDataHolder = (UserDataHolder)laf;
               userDataHolder.putUserData(UIUtil.LAF_WITH_THEME_KEY, Boolean.TRUE);
@@ -694,6 +700,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
             //if (lafNameOrder.containsKey(lookAndFeelInfo.getName()) && lookAndFeelInfo.getName().endsWith("Light")) {
             //  updateIconsUnderSelection(false);
             //}
+          }
+          else if (laf instanceof MetalLookAndFeel) {
+            MetalLookAndFeel.setCurrentTheme(new DefaultMetalTheme());
           }
         }
 
@@ -915,12 +924,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       String key = entry.getKey().toString();
       if (value instanceof Dimension) {
         if (value instanceof UIResource || myDimensionKeys.contains(key)) {
-          entry.setValue(JBUI.size((Dimension)value).asUIResource());
+          entry.setValue(JBDimension.size((Dimension)value).asUIResource());
         }
       }
       else if (value instanceof Insets) {
         if (value instanceof UIResource) {
-          entry.setValue(JBUI.insets(((Insets)value)).asUIResource());
+          entry.setValue(JBInsets.create(((Insets)value)).asUIResource());
         }
       }
       else if (value instanceof Integer) {
@@ -953,9 +962,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   /**
-   * The following code is a trick! By default Swing uses lightweight and "medium" weight
+   * The following code is a trick! By default, Swing uses lightweight and "medium" weight
    * popups to show JPopupMenu. The code below force the creation of real heavyweight menus -
-   * this increases speed of popups and allows to get rid of some drawing artifacts.
+   * this increases speed of popups and allows getting rid of some drawing artifacts.
    */
   private static void fixPopupWeight() {
     int popupWeight = OurPopupFactory.WEIGHT_MEDIUM;
@@ -1141,7 +1150,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       String cleanupKey = "LafManagerImpl.rootPaneCleanup";
       boolean isHeavyWeightPopup = window instanceof RootPaneContainer && window != ComponentUtil.getWindow(owner);
       if (isHeavyWeightPopup) {
-        UIUtil.markAsTypeAheadAware(window);
         window.setMinimumSize(null); // clear min-size from prev invocations on JBR11
       }
       if (isHeavyWeightPopup && ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
@@ -1178,7 +1186,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     private static Point fixPopupLocation(final Component contents, final int x, int y) {
       if (!(contents instanceof JToolTip)) {
         if (IdeaPopupMenuUI.isUnderPopup(contents)) {
-          int topBorder = JBUI.insets("PopupMenu.borderInsets", JBUI.emptyInsets()).top;
+          int topBorder = JBUI.insets("PopupMenu.borderInsets", JBInsets.emptyInsets()).top;
           Component invoker = ((JPopupMenu)contents).getInvoker();
           if (invoker instanceof ActionMenu) {
             y -= topBorder / 2;

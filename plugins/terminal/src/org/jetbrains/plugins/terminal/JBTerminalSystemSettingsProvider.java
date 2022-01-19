@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsProviderBase {
   @Override
   public boolean shouldCloseTabOnLogout(TtyConnector ttyConnector) {
-    return TerminalOptionsProvider.getInstance().closeSessionOnLogout();
+    return TerminalOptionsProvider.getInstance().getCloseSessionOnLogout();
   }
 
   /**
@@ -45,22 +45,22 @@ public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsPr
 
   @Override
   public boolean audibleBell() {
-    return TerminalOptionsProvider.getInstance().audibleBell();
+    return TerminalOptionsProvider.getInstance().getAudibleBell();
   }
 
   @Override
   public boolean enableMouseReporting() {
-    return TerminalOptionsProvider.getInstance().enableMouseReporting();
+    return TerminalOptionsProvider.getInstance().getMouseReporting();
   }
 
   @Override
   public boolean copyOnSelect() {
-    return TerminalOptionsProvider.getInstance().copyOnSelection();
+    return TerminalOptionsProvider.getInstance().getCopyOnSelection();
   }
 
   @Override
   public boolean pasteOnMiddleMouseClick() {
-    return TerminalOptionsProvider.getInstance().pasteOnMiddleMouseButton();
+    return TerminalOptionsProvider.getInstance().getPasteOnMiddleMouseButton();
   }
 
   @Override
@@ -70,12 +70,12 @@ public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsPr
 
   @Override
   public boolean overrideIdeShortcuts() {
-    return TerminalOptionsProvider.getInstance().overrideIdeShortcuts();
+    return TerminalOptionsProvider.getInstance().getOverrideIdeShortcuts();
   }
 
   @Override
   public HyperlinkStyle.HighlightMode getHyperlinkHighlightingMode() {
-    return TerminalOptionsProvider.getInstance().highlightHyperlinks()
+    return TerminalOptionsProvider.getInstance().getHighlightHyperlinks()
            ? HyperlinkStyle.HighlightMode.ALWAYS
            : HyperlinkStyle.HighlightMode.HOVER;
   }

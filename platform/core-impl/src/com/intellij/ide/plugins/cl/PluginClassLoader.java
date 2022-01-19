@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
@@ -34,7 +34,10 @@ import java.util.function.Function;
 public final class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
   public static final ClassLoader[] EMPTY_CLASS_LOADER_ARRAY = new ClassLoader[0];
 
-  private static final boolean isParallelCapable = registerAsParallelCapable();
+  static {
+    boolean parallelCapable = registerAsParallelCapable();
+    assert parallelCapable;
+  }
 
   private static final @Nullable Writer logStream;
   private static final AtomicInteger instanceIdProducer = new AtomicInteger();
@@ -268,7 +271,19 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
         }
         else if (classloader instanceof UrlClassLoader) {
           try {
-            c = ((UrlClassLoader)classloader).loadClassInsideSelf(name, fileName, packageNameHash, false);
+            UrlClassLoader urlClassLoader = (UrlClassLoader)classloader;
+            BiFunction<String, Boolean, String> resolveScopeManager = urlClassLoader.resolveScopeManager;
+            String consistencyError = resolveScopeManager == null
+                                      ? null
+                                      : resolveScopeManager.apply(name, forceLoadFromSubPluginClassloader);
+            if (consistencyError != null) {
+              if (!consistencyError.isEmpty() && error == null) {
+                // yes, we blame requestor plugin
+                error = new PluginException(consistencyError, pluginId);
+              }
+              continue;
+            }
+            c = urlClassLoader.loadClassInsideSelf(name, fileName, packageNameHash, false);
           }
           catch (IOException e) {
             throw new ClassNotFoundException(name, e);

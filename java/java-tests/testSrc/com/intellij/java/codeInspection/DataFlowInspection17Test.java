@@ -50,4 +50,6 @@ public class DataFlowInspection17Test extends DataFlowInspectionTestCase {
   public void testInstanceof() {
     doTest();
   }
+
+  public void testNewStringWrongEquals() { doTest(); }
 }

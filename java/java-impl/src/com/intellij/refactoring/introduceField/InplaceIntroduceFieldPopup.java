@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.openapi.application.WriteAction;
@@ -14,7 +14,7 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +50,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
 
     final GridBagConstraints constraints =
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                             JBUI.emptyInsets(), 0, 0);
+                             JBInsets.emptyInsets(), 0, 0);
     myWholePanel.add(getPreviewComponent(), constraints);
 
     final JComponent centerPanel = myIntroduceFieldPanel.createCenterPanel();

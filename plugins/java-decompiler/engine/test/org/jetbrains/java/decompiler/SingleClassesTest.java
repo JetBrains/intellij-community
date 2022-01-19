@@ -103,7 +103,6 @@ public class SingleClassesTest {
   @Test public void testConstructorReference() { doTest("pkg/TestConstructorReference"); }
   @Test public void testMemberAnnotations() { doTest("pkg/TestMemberAnnotations"); }
   @Test public void testMoreAnnotations() { doTest("pkg/MoreAnnotations"); }
-  @Test public void testTypeAnnotations() { doTest("pkg/TypeAnnotations"); }
   @Test public void testStaticNameClash() { doTest("pkg/TestStaticNameClash"); }
   @Test public void testExtendingSubclass() { doTest("pkg/TestExtendingSubclass"); }
   @Test public void testSyntheticAccess() { doTest("pkg/TestSyntheticAccess"); }
@@ -140,8 +139,10 @@ public class SingleClassesTest {
   @Test public void testFieldSingleAccess() { doTest("pkg/TestFieldSingleAccess"); }
   @Test public void testPackageInfo() { doTest("pkg/package-info"); }
   @Test public void testIntVarMerge() { doTest("pkg/TestIntVarMerge"); }
+  @Test public void testSwitchOnStringsJavac() { doTest("pkg/TestSwitchOnStringsJavac"); }
+  @Test public void testSwitchOnStringsEcj() { doTest("pkg/TestSwitchOnStringsEcj"); }
+
   // TODO: fix all below
-  //@Test public void testSwitchOnStrings() { doTest("pkg/TestSwitchOnStrings");}
   //@Test public void testUnionType() { doTest("pkg/TestUnionType"); }
   //@Test public void testInnerClassConstructor2() { doTest("pkg/TestInner2"); }
   //@Test public void testInUse() { doTest("pkg/TestInUse"); }
@@ -175,6 +176,39 @@ public class SingleClassesTest {
     "sealed/RootWithInterfaceOuter", "sealed/ClassImplements", "sealed/ClassNonSealedExtendsImplements");
   }
   @Test public void testRootWithModule() { doTest("sealed/foo/RootWithModule", "sealed/bar/BarClassExtends");}
+  @Test public void testArrayTypeAnnotations() { doTest("typeAnnotations/ArrayTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D");
+  }
+  @Test public void testGenericTypeAnnotations() { doTest("typeAnnotations/GenericTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E");
+  }
+  @Test public void testGenericArrayTypeAnnotations() {doTest("typeAnnotations/GenericArrayTypeAnnotations",
+      "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E", "typeAnnotations/F");
+  }
+  @Test public void testNestedTypeAnnotations() {doTest("typeAnnotations/NestedTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E",
+    "typeAnnotations/F", "typeAnnotations/Z");
+  }
+  @Test public void testArrayNestedTypeAnnotations() {doTest("typeAnnotations/ArrayNestedTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/Z");
+  }
+  @Test public void testGenericNestedTypeAnnotations() {doTest("typeAnnotations/GenericNestedTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E",
+    "typeAnnotations/V");
+  }
+  @Test public void testGenericArrayNestedTypeAnnotations() {doTest("typeAnnotations/GenericArrayNestedTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E",
+    "typeAnnotations/F", "typeAnnotations/V");
+  }
+  @Test public void testClassSuperTypeAnnotations() {doTest("typeAnnotations/ClassSuperTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/F");
+  }
+  @Test public void testInterfaceSuperTypeAnnotations() {doTest("typeAnnotations/InterfaceSuperTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/F");
+  }
+  @Test public void testMemberDeclarationTypeAnnotations() {doTest("typeAnnotations/MemberDeclarationTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E",  "typeAnnotations/K");
+  }
   @Test public void testInheritanceChainCycle() { doTest("pkg/TestInheritanceChainCycle"); }
   @Test public void testDynamicConstantPoolEntry() { doTest("java11/TestDynamicConstantPoolEntry"); }
 

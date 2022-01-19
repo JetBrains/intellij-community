@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui.filter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionGroupUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -169,12 +170,12 @@ public abstract class VcsLogPopupComponent extends JPanel {
   @NotNull
   protected ListPopup createPopupMenu() {
     return JBPopupFactory.getInstance().
-      createActionGroupPopup(null, createActionGroup(), DataManager.getInstance().getDataContext(this),
+      createActionGroupPopup(null, ActionGroupUtil.forceRecursiveUpdateInBackground(createActionGroup()), DataManager.getInstance().getDataContext(this),
                              JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
   }
 
-  private static Border createFocusedBorder() {
-    return new FilledRoundedBorder(UIUtil.getFocusedBorderColor(), ARC_SIZE, BORDER_SIZE);
+  protected Border createFocusedBorder() {
+    return new FilledRoundedBorder(UIUtil.getFocusedBorderColor(), ARC_SIZE, BORDER_SIZE, false);
   }
 
   protected Border createUnfocusedBorder() {
@@ -189,11 +190,13 @@ public abstract class VcsLogPopupComponent extends JPanel {
     private final Color myColor;
     private final int myThickness;
     private final int myArcSize;
+    private final boolean myThinBorder;
 
-    public FilledRoundedBorder(@NotNull Color color, int arcSize, int thickness) {
+    public FilledRoundedBorder(@NotNull Color color, int arcSize, int thickness, boolean thinBorder) {
       myColor = color;
       myThickness = thickness;
       myArcSize = arcSize;
+      myThinBorder = thinBorder;
     }
 
     @Override
@@ -202,7 +205,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
 
       g.setColor(myColor);
 
-      int thickness = JBUI.scale(myThickness);
+      int thickness = JBUI.scale(myThinBorder ? 1 : myThickness);
       int arcSize = JBUI.scale(myArcSize);
       Area area = new Area(new RoundRectangle2D.Double(x, y, width, height, arcSize, arcSize));
       int innerArc = Math.max(arcSize - thickness, 0);
@@ -259,7 +262,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
 
     @Override
     public String getAccessibleName() {
-      return VcsLogBundle.message("vcs.log.Accessibility.filter.label", myNameLabel.getText(), myValueLabel.getText());
+      return VcsLogBundle.message("vcs.log.filter.accessible.name", myNameLabel.getText(), myValueLabel.getText());
     }
 
     @Override

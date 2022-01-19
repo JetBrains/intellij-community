@@ -31,6 +31,7 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.animation.AlphaAnimated;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -482,7 +483,7 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
           window.isDisposed() ||
           windowInfo.getType() == ToolWindowType.FLOATING ||
           windowInfo.getType() == ToolWindowType.WINDOWED) {
-        return JBUI.emptyInsets();
+        return JBInsets.emptyInsets();
       }
 
       ToolWindowAnchor anchor = windowInfo.getAnchor();

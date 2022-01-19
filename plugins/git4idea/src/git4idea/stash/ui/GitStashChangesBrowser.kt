@@ -104,7 +104,9 @@ class GitStashChangesBrowser(project: Project, parentDisposable: Disposable) : C
     setData(stash, parents) { statusText -> statusText.text = "" }
   }
 
-  private fun setData(stash: Collection<Change>, parents: Collection<GitCommit>, updateEmptyText: (StatusText) -> Unit) {
+  private fun setData(stash: Collection<Change>,
+                      parents: Collection<GitCommit>,
+                      updateEmptyText: (StatusText) -> Unit) {
     stashedChanges = stash
     otherChanges = parents.associate { parent ->
       val tag = MyTag(StringUtil.capitalize(parent.subject.substringBefore(":")), parent.id)
@@ -138,7 +140,14 @@ class GitStashChangesBrowser(project: Project, parentDisposable: Disposable) : C
     diffPreviewProcessor = newProcessor
 
     if (isInEditor) {
-      editorTabPreview = GitStashEditorDiffPreview(newProcessor, viewer, this)
+      editorTabPreview = object : GitStashEditorDiffPreview(newProcessor, viewer, this@GitStashChangesBrowser) {
+        override fun getCurrentName(): String {
+          return changeViewProcessor.currentChangeName?.let { changeName ->
+            val stashId = currentStash?.stash?.capitalize() ?: GitBundle.message("stash.editor.diff.preview.empty.title")
+            GitBundle.message("stash.editor.diff.preview.id.change.title", stashId, changeName)
+          } ?: GitBundle.message("stash.editor.diff.preview.empty.title")
+        }
+      }
     }
     else {
       editorTabPreview = null

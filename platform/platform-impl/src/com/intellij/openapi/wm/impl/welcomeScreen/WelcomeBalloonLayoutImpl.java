@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
@@ -15,6 +15,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EmptyConsumer;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.AbstractLayoutManager;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +92,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
       });
 
       myPopupBalloon =
-        new BalloonImpl(pane, BORDER_COLOR, JBUI.emptyInsets(), FILL_COLOR, true, false, false, true, false, true, 0, false, false,
+        new BalloonImpl(pane, BORDER_COLOR, JBInsets.emptyInsets(), FILL_COLOR, true, false, false, true, false, true, 0, false, false,
                         null, false, 0, 0, 0, 0, false, null, null, false, false, true, null, false, null, -1);
       myPopupBalloon.setAnimationEnabled(false);
       myPopupBalloon.setShadowBorderProvider(

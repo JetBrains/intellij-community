@@ -60,6 +60,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
   private final MultiMap<FoldingGroup, FoldRegion> myGroups = new MultiMap<>();
   private boolean myDocumentChangeProcessed = true;
+  boolean myComplexDocumentChange;
   private final AtomicLong myExpansionCounter = new AtomicLong();
   private final EditorScrollingPositionKeeper myScrollingPositionKeeper;
 
@@ -343,17 +344,17 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   @Override
   @Nullable
   public FoldRegion getFoldingPlaceholderAt(@NotNull Point p) {
-    return getFoldingPlaceholderAt(new EditorLocation(myEditor, p));
+    return getFoldingPlaceholderAt(new EditorLocation(myEditor, p), false);
   }
 
-  FoldRegion getFoldingPlaceholderAt(@NotNull EditorLocation location) {
+  FoldRegion getFoldingPlaceholderAt(@NotNull EditorLocation location, boolean ignoreCustomRegionWidth) {
     Point p = location.getPoint();
     if (p.y < location.getVisualLineStartY() || p.y >= location.getVisualLineEndY()) {
       // block inlay area
       return null;
     }
     FoldRegion region = location.getCollapsedRegion();
-    return region instanceof CustomFoldRegion &&
+    return !ignoreCustomRegionWidth && region instanceof CustomFoldRegion &&
            p.x >= myEditor.getContentComponent().getInsets().left + ((CustomFoldRegion)region).getWidthInPixels() ? null : region;
   }
 
@@ -653,6 +654,16 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   private void validateAffectedCustomRegions() {
+    if (myComplexDocumentChange) {
+      // validate all custom fold regions
+      myRegionTree.processAll(r -> {
+        if (r instanceof CustomFoldRegionImpl) {
+          myAffectedCustomRegions.add((CustomFoldRegionImpl)r);
+        }
+        return true;
+      });
+      myComplexDocumentChange = false;
+    }
     for (CustomFoldRegionImpl region : myAffectedCustomRegions) {
       if (region.isValid() && !myFoldTree.checkIfValidToCreate(region.getStartOffset(), region.getEndOffset(), true, region)) {
         myRegionTree.removeInterval(region);

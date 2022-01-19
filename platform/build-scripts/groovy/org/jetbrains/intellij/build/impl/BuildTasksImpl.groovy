@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.util.text.Strings
+import com.intellij.util.io.Decompressor
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.system.CpuArch
 import groovy.io.FileType
@@ -14,6 +16,7 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.context.Scope
+import org.eclipse.aether.repository.RemoteRepository
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.idea.maven.aether.ArtifactKind
@@ -39,6 +42,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.ForkJoinTask
+import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Supplier
@@ -83,7 +87,6 @@ final class BuildTasksImpl extends BuildTasks {
   }
 
   @Override
-  @CompileStatic(TypeCheckingMode.SKIP)
   void zipSourcesOfModules(Collection<String> modules, Path targetFile, boolean includeLibraries) {
     buildContext.executeStep(spanBuilder("build module sources archives")
                                .setAttribute("path", buildContext.paths.buildOutputDir.relativize(targetFile).toString())
@@ -91,13 +94,6 @@ final class BuildTasksImpl extends BuildTasks {
                              BuildOptions.SOURCES_ARCHIVE_STEP) {
       Files.createDirectories(targetFile.parent)
       Files.deleteIfExists(targetFile)
-
-      String sourceFilesId = "source.files.only"
-      buildContext.ant.patternset(id: sourceFilesId) {
-        ["java", "groovy", "kt"].each {
-          include(name: "**/*.$it")
-        }
-      }
 
       def includedLibraries = new LinkedHashSet<JpsLibrary>()
       if (includeLibraries) {
@@ -120,7 +116,7 @@ final class BuildTasksImpl extends BuildTasks {
           }
         if (!librariesWithMissingSources.isEmpty()) {
           buildContext.messages.debug("Download missing sources for ${librariesWithMissingSources.size()} libraries")
-          def repositories = JpsRemoteRepositoryService.instance.getRemoteRepositoriesConfiguration(buildContext.project)?.repositories?.collect {
+          List<RemoteRepository> repositories = JpsRemoteRepositoryService.instance.getRemoteRepositoriesConfiguration(buildContext.project)?.repositories?.collect {
             ArtifactRepositoryManager.createRemoteRepository(it.id, it.url)
           } ?: []
           def repositoryManager = new ArtifactRepositoryManager(getLocalArtifactRepositoryRoot(buildContext.projectModel.global), repositories, ProgressConsumer.DEAF)
@@ -136,45 +132,75 @@ final class BuildTasksImpl extends BuildTasks {
         }
       }
 
-      buildContext.ant.zip(destfile: targetFile.toString()) {
-        for (String moduleName in modules) {
-          buildContext.messages.debug(" include module $moduleName")
-          JpsModule module = buildContext.findRequiredModule(moduleName)
-          for (JpsTypedModuleSourceRoot<JavaSourceRootProperties> root in module.getSourceRoots(JavaSourceRootType.SOURCE)) {
-            buildContext.ant.zipfileset(dir: root.file.absolutePath,
-                                        prefix: root.properties.packagePrefix.replace('.', '/'), erroronmissingdir: false) {
-              patternset(refid: sourceFilesId)
+      Map<Path, String> zipFileMap = new LinkedHashMap<Path, String>()
+      for (String moduleName in modules) {
+        buildContext.messages.debug(" include module $moduleName")
+        JpsModule module = buildContext.findRequiredModule(moduleName)
+        for (JpsTypedModuleSourceRoot<JavaSourceRootProperties> root in module.getSourceRoots(JavaSourceRootType.SOURCE)) {
+          if (root.file.absoluteFile.exists()) {
+            Path sourceFiles = filterSourceFilesOnly(root.file.name) {
+              FileUtil.copyDirContent(root.file.absoluteFile, it.toFile())
             }
-          }
-          for (JpsTypedModuleSourceRoot<JavaResourceRootProperties> root in module.getSourceRoots(JavaResourceRootType.RESOURCE)) {
-            buildContext.ant.zipfileset(dir: root.file.absolutePath, prefix: root.properties.relativeOutputPath, erroronmissingdir: false) {
-              patternset(refid: sourceFilesId)
-            }
+            zipFileMap[sourceFiles] = root.properties.packagePrefix.replace('.', '/')
           }
         }
-        def libraryRootUrls = includedLibraries.collectMany { it.getRootUrls(JpsOrderRootType.SOURCES) }
-        buildContext.messages.debug(" include ${libraryRootUrls.size()} roots from ${includedLibraries.size()} libraries:")
-        for (url in libraryRootUrls) {
-          if (url.startsWith(JpsPathUtil.JAR_URL_PREFIX) && url.endsWith(JpsPathUtil.JAR_SEPARATOR)) {
-            def file = JpsPathUtil.urlToFile(url)
-            if (file.isFile()) {
-              buildContext.messages.debug("  $file.absolutePath, ${Formats.formatFileSize(file.length())}, ${file.length().toString().padLeft(9, "0")} bytes")
-              buildContext.ant.zipfileset(src: file.absolutePath) {
-                patternset(refid: sourceFilesId)
-              }
+        for (JpsTypedModuleSourceRoot<JavaResourceRootProperties> root in module.getSourceRoots(JavaResourceRootType.RESOURCE)) {
+          if (root.file.absoluteFile.exists()) {
+            Path sourceFiles = filterSourceFilesOnly(root.file.name) {
+              FileUtil.copyDirContent(root.file.absoluteFile, it.toFile())
             }
-            else {
-              buildContext.messages.debug("  skipped root $file: file doesn't exist")
-            }
-          }
-          else {
-            buildContext.messages.debug("  skipped root $url: not a jar file")
+            zipFileMap[sourceFiles] = root.properties.relativeOutputPath
           }
         }
       }
-
-      buildContext.notifyArtifactBuilt(targetFile)
+      def libraryRootUrls = includedLibraries.collectMany {
+        it.getRootUrls(JpsOrderRootType.SOURCES) as Collection<String>
+      }
+      buildContext.messages.debug(" include ${libraryRootUrls.size()} roots from ${includedLibraries.size()} libraries:")
+      for (url in libraryRootUrls) {
+        if (url.startsWith(JpsPathUtil.JAR_URL_PREFIX) && url.endsWith(JpsPathUtil.JAR_SEPARATOR)) {
+          File file = JpsPathUtil.urlToFile(url).absoluteFile
+          if (file.isFile()) {
+            buildContext.messages.debug("  $file, ${Formats.formatFileSize(file.length())}, ${file.length().toString().padLeft(9, "0")} bytes")
+            Path sourceFiles = filterSourceFilesOnly(file.name) {
+              new Decompressor.Zip(file)
+                .filter { isSourceFile(it) }
+                .extract(it)
+            }
+            zipFileMap[sourceFiles] = ""
+          }
+          else {
+            buildContext.messages.debug("  skipped root $file: file doesn't exist")
+          }
+        }
+        else {
+          buildContext.messages.debug("  skipped root $url: not a jar file")
+        }
+      }
+      BuildHelper.zipWithPrefixes(buildContext, targetFile, zipFileMap, true)
+      buildContext.notifyArtifactWasBuilt(targetFile)
     }
+  }
+
+  private static Boolean isSourceFile(String path) {
+    return path.endsWith(".java") ||
+           path.endsWith(".groovy") ||
+           path.endsWith(".kt")
+  }
+
+  private Path filterSourceFilesOnly(String name, Consumer<Path> configure) {
+    Path sourceFiles = buildContext.paths.tempDir.resolve("${name}-${UUID.randomUUID()}")
+    FileUtil.delete(sourceFiles)
+    Files.createDirectories(sourceFiles)
+    configure.accept(sourceFiles)
+    Files.walk(sourceFiles).withCloseable { stream ->
+      stream.forEach {
+        if (!Files.isDirectory(it) && !isSourceFile(it.toString())) {
+          Files.delete(it)
+        }
+      }
+    }
+    return sourceFiles
   }
 
   //todo replace by DependencyResolvingBuilder#getLocalArtifactRepositoryRoot call after next update of jps-build-script-dependencies-bootstrap
@@ -201,7 +227,8 @@ final class BuildTasksImpl extends BuildTasks {
           Files.deleteIfExists(targetFile)
           // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
           BuildHelper.runApplicationStarter(context, context.paths.tempDir.resolve("builtinModules"), modules,
-                                            List.of("listBundledPlugins", targetFile.toString()))
+                                            List.of("listBundledPlugins", targetFile.toString()), Collections.emptyMap(),
+                                            null, TimeUnit.MINUTES.toMillis(10L), context.classpathCustomizer)
           if (Files.notExists(targetFile)) {
             context.messages.error("Failed to build provided modules list: $targetFile doesn't exist")
           }
@@ -416,7 +443,8 @@ idea.fatal.error.notification=disabled
   private void doBuildDistributions(BuildContext context) {
     checkProductProperties()
     copyDependenciesFile(context)
-    setupBundledMaven()
+    BundledMavenDownloader.downloadMavenCommonLibs(context.paths.buildDependenciesCommunityRoot)
+    BundledMavenDownloader.downloadMavenDistribution(context.paths.buildDependenciesCommunityRoot)
 
     logFreeDiskSpace("before compilation")
 
@@ -459,7 +487,7 @@ idea.fatal.error.notification=disabled
         else {
           Span.current().addEvent("skip building product distributions because " +
                                   "\"intellij.build.target.os\" property is set to \"$BuildOptions.OS_NONE\"")
-          DistributionJARsBuilder.buildSearchableOptions(context, distributionJARsBuilder.getModulesForPluginsToPublish())
+          DistributionJARsBuilder.buildSearchableOptions(context, distributionJARsBuilder.getModulesForPluginsToPublish(), context.classpathCustomizer)
           distributionJARsBuilder.createBuildNonBundledPluginsTask(pluginsToPublish, true, null, context)?.fork()?.join()
         }
         return null
@@ -514,17 +542,15 @@ idea.fatal.error.notification=disabled
                 context.messages.error("Toolbox Lite-Gen version is not specified!")
               }
               else {
-                String[] liteGenArgs = [
-                  'runToolboxLiteGen',
-                  "-Pintellij.build.toolbox.litegen.version=${toolboxLiteGenVersion}",
-                  //NOTE[jo]: right now we assume all installer files are created under the same path
-                  "-Pintellij.build.artifacts=${context.paths.artifacts}",
-                  "-Pintellij.build.productCode=${context.applicationInfo.productCode}",
-                  "-Pintellij.build.isEAP=${context.applicationInfo.isEAP}",
-                  "-Pintellij.build.output=${context.paths.buildOutputRoot}/toolbox-lite-gen",
-                ]
-
-                context.gradle.run('Run Toolbox LiteGen', liteGenArgs)
+                ToolboxLiteGen.runToolboxLiteGen(
+                  context.paths.buildDependenciesCommunityRoot,
+                  context.messages,
+                  toolboxLiteGenVersion,
+                  "/artifacts-dir=${context.paths.artifacts}",
+                  "/product-code=${context.applicationInfo.productCode}",
+                  "/isEAP=${context.applicationInfo.isEAP}",
+                  "/output-dir=${context.paths.buildOutputRoot}/toolbox-lite-gen"
+                )
               }
             }
           })
@@ -562,17 +588,6 @@ idea.fatal.error.notification=disabled
   @Override
   void generateProjectStructureMapping(File targetFile) {
     new DistributionJARsBuilder(buildContext).generateProjectStructureMapping(targetFile.toPath(), buildContext)
-  }
-
-  private void setupBundledMaven() {
-    buildContext.executeStep("set-up bundled maven", BuildOptions.SETUP_BUNDLED_MAVEN, new Runnable() {
-      @Override
-      void run() {
-        logFreeDiskSpace("before downloading Maven")
-        buildContext.gradle.runOneTask("setupBundledMaven")
-        logFreeDiskSpace("after downloading Maven")
-      }
-    })
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
@@ -937,26 +952,36 @@ idea.fatal.error.notification=disabled
   @Override
   void runTestBuild() {
     checkProductProperties()
-    setupBundledMaven()
-    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(buildContext)
-    distributionJARsBuilder.buildJARs(buildContext)
-    layoutShared(buildContext)
-    Map<String, String> checkerConfig = buildContext.productProperties.versionCheckerConfig
+
+    BuildContext context = buildContext
+    BundledMavenDownloader.downloadMavenCommonLibs(context.paths.buildDependenciesCommunityRoot)
+    BundledMavenDownloader.downloadMavenDistribution(context.paths.buildDependenciesCommunityRoot)
+
+    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(context)
+    ProjectStructureMapping projectStructureMapping = distributionJARsBuilder.buildJARs(context)
+    layoutShared(context)
+    Map<String, String> checkerConfig = context.productProperties.versionCheckerConfig
     if (checkerConfig != null) {
-      ClassVersionChecker.checkVersions(checkerConfig, buildContext, buildContext.paths.distAllDir)
+      ClassVersionChecker.checkVersions(checkerConfig, context, context.paths.distAllDir)
+    }
+
+    if (context.productProperties.buildSourcesArchive) {
+      DistributionJARsBuilder.buildSourcesArchive(projectStructureMapping, context)
     }
   }
 
   @Override
   void buildUnpackedDistribution(@NotNull Path targetDirectory, boolean includeBinAndRuntime) {
     BuildContext buildContext = buildContext
-    def currentOs = OsFamily.currentOs
+    OsFamily currentOs = OsFamily.currentOs
 
     buildContext.paths.distAllDir = targetDirectory.toAbsolutePath().normalize()
     buildContext.options.targetOS = currentOs.osId
     buildContext.options.buildStepsToSkip.add(BuildOptions.GENERATE_JAR_ORDER_STEP)
 
-    setupBundledMaven()
+    BundledMavenDownloader.downloadMavenCommonLibs(buildContext.paths.buildDependenciesCommunityRoot)
+    BundledMavenDownloader.downloadMavenDistribution(buildContext.paths.buildDependenciesCommunityRoot)
+
     compileModulesForDistribution(buildContext).buildJARs(buildContext, true)
     JvmArchitecture arch = CpuArch.isArm64() ? JvmArchitecture.aarch64 : JvmArchitecture.x64
     layoutShared(buildContext)

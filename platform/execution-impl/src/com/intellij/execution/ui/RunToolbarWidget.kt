@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui
 
 import com.intellij.execution.*
@@ -13,11 +13,18 @@ import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
-import com.intellij.ide.ui.customization.*
+import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.ide.ui.customization.CustomizableActionGroupProvider
+import com.intellij.ide.ui.customization.CustomizationUtil
+import com.intellij.ide.ui.customization.CustomizeActionGroupPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.components.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
@@ -32,31 +39,27 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarProjectWidgetFactory
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory
-import com.intellij.ui.AnimatedIcon
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.JBColor
+import com.intellij.ui.*
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.*
 import org.jetbrains.annotations.Nls
 import java.awt.*
-import java.awt.event.*
+import java.awt.event.ActionEvent
+import java.awt.event.MouseEvent
 import java.awt.geom.Area
 import java.awt.geom.Line2D
 import java.awt.geom.Rectangle2D
 import java.awt.geom.RoundRectangle2D
-import java.beans.PropertyChangeEvent
-import java.beans.PropertyChangeListener
 import java.util.concurrent.locks.ReentrantLock
 import java.util.function.Predicate
 import java.util.function.Supplier
@@ -68,27 +71,29 @@ import javax.swing.plaf.basic.BasicGraphicsUtils
 import kotlin.concurrent.withLock
 import kotlin.properties.Delegates
 
-object RunToolbarWidgetFactory : MainToolbarWidgetFactory {
-  override fun createWidget(): JComponent = RunToolbarWidget()
+private const val RUN_TOOLBAR_WIDGET_GROUP = "RunToolbarWidgetCustomizableActionGroup"
+
+internal class RunToolbarWidgetFactory : MainToolbarProjectWidgetFactory {
+  override fun createWidget(project: Project): JComponent = RunToolbarWidget(project)
   override fun getPosition() = MainToolbarWidgetFactory.Position.Right
 }
 
-class RunToolbarWidgetCustomizableActionGroupProvider : CustomizableActionGroupProvider() {
+internal class RunToolbarWidgetCustomizableActionGroupProvider : CustomizableActionGroupProvider() {
   override fun registerGroups(registrar: CustomizableActionGroupRegistrar?) {
     if (ExperimentalUI.isNewToolbar()) {
-      registrar?.addCustomizableActionGroup(RunToolbarWidget.RUN_TOOLBAR_WIDGET_GROUP, ExecutionBundle.message("run.toolbar.widget.customizable.group.name"))
+      registrar?.addCustomizableActionGroup(RUN_TOOLBAR_WIDGET_GROUP, ExecutionBundle.message("run.toolbar.widget.customizable.group.name"))
     }
   }
 }
 
-internal class RunToolbarWidget : JBPanel<RunToolbarWidget>(VerticalLayout(0)) {
-
+internal class RunToolbarWidget(val project: Project) : JBPanel<RunToolbarWidget>(VerticalLayout(0)) {
   init {
     isOpaque = false
     add(createRunActionToolbar().component.apply {
       isOpaque = false
     }, VerticalLayout.CENTER)
-    registerProcessListenerWhenActionAdded()
+
+    ExecutionReasonableHistoryManager.register(project)
   }
 
   private fun createRunActionToolbar(): ActionToolbar {
@@ -103,72 +108,9 @@ internal class RunToolbarWidget : JBPanel<RunToolbarWidget>(VerticalLayout(0)) {
       layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     }
   }
-
-  private fun registerProcessListenerWhenActionAdded() {
-    addPropertyChangeListener("ancestor", object : PropertyChangeListener {
-      var watcher: ExecutionReasonableHistory? = null
-
-      override fun propertyChange(evt: PropertyChangeEvent) {
-        if (evt.newValue != null) {
-          val project = findProject(evt.newValue as JComponent)
-          watcher = ExecutionReasonableHistory(
-            project,
-            onHistoryChanged = createProcessHistoryListener(),
-            onAnyChange = createConfigurationHistoryStateUpdater()
-          )
-        }
-        else {
-          watcher?.let(Disposer::dispose)
-          watcher = null
-        }
-      }
-
-      private fun findProject(source: JComponent): Project {
-        val ideFrame = (UIUtil.findUltimateParent(source) as? IdeFrame)
-                       ?: error("Widget must be added into IdeFrame")
-        return ideFrame.project ?: error("Cannot find project")
-      }
-    })
-  }
-
-  private fun createProcessHistoryListener(): (ReasonableHistory.Elem<ExecutionEnvironment, RunState>?) -> Unit {
-    return { latest ->
-      if (latest != null) {
-        val (env, reason) = latest
-        val history = RunConfigurationStartHistory.getInstance(env.project)
-        getPersistedConfiguration(env.runnerAndConfigurationSettings)?.let { conf ->
-          if (reason == RunState.SCHEDULED) {
-            history.register(conf, env.executor.id, reason)
-          }
-          if (reason.isRunningState()) {
-            RunManager.getInstance(env.project).selectedConfiguration = conf
-          }
-        } ?: logger<RunToolbarWidget>().error(java.lang.IllegalStateException("No setting for ${env.configurationSettings}"))
-        ActivityTracker.getInstance().inc()
-      }
-    }
-  }
-
-  private fun createConfigurationHistoryStateUpdater(): (ExecutionEnvironment, RunState) -> Unit {
-    return { env, reason ->
-      RunConfigurationStartHistory.getInstance(env.project).firstOrNull(
-        getPersistedConfiguration(env.runnerAndConfigurationSettings)
-      ) {
-        env.executor.id == it.executorId
-      }?.apply {
-        state = reason
-        ActivityTracker.getInstance().inc()
-      }
-    }
-  }
-
-  companion object {
-    const val RUN_TOOLBAR_WIDGET_GROUP = "RunToolbarWidgetCustomizableActionGroup"
-  }
 }
 
-class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), CustomComponentAction, DumbAware, UpdateInBackground {
-
+internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), CustomComponentAction, DumbAware, UpdateInBackground {
   override fun actionPerformed(e: AnActionEvent) {
     if (!e.presentation.isEnabled) return
     val conf = e.presentation.getClientProperty(CONF)
@@ -206,7 +148,7 @@ class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), CustomComponen
                                       else -> lastExecutorId
                                     })
       e.presentation.text = conf.shortenName()
-      e.presentation.description = RunToolbarWidgetRunAction.reword(getExecutorByIdOrDefault(lastExecutorId), canRestart, conf.name)
+      e.presentation.description = RunToolbarWidgetRunAction.reword(getExecutorByIdOrDefault(lastExecutorId), canRestart, conf.shortenName())
     } else {
       e.presentation.putClientProperty(COLOR, RunButtonColors.BLUE)
       e.presentation.icon = AllIcons.Actions.Execute
@@ -224,11 +166,11 @@ class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), CustomComponen
 
   private fun iconFor(executorId: String): Icon {
     return when (executorId) {
-      DefaultRunExecutor.EXECUTOR_ID -> AllIcons.Actions.Execute
-      ToolWindowId.DEBUG -> AllIcons.Actions.StartDebugger
+      DefaultRunExecutor.EXECUTOR_ID -> IconManager.getInstance().getIcon("expui/run/widget/run.svg", AllIcons::class.java)
+      ToolWindowId.DEBUG -> IconManager.getInstance().getIcon("expui/run/widget/debug.svg", AllIcons::class.java)
       "Coverage" -> AllIcons.General.RunWithCoverage
-      LOADING -> AnimatedIcon.Default()
-      RESTART -> AllIcons.Actions.Restart
+      LOADING -> AnimatedIcon.Default.INSTANCE
+      RESTART -> IconManager.getInstance().getIcon("expui/run/widget/restart.svg", AllIcons::class.java)
       else -> AllIcons.Actions.Execute
     }
   }
@@ -241,9 +183,9 @@ class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), CustomComponen
           ActionManager.getInstance().getAction("editRunConfigurations").actionPerformed(anActionEvent)
         }
         else if (it.modifiers  and ActionEvent.ALT_MASK != 0) {
-          CustomizeActionGroupPanel.showDialog(RunToolbarWidget.RUN_TOOLBAR_WIDGET_GROUP, listOf(IdeActions.GROUP_NAVBAR_TOOLBAR), ExecutionBundle.message("run.toolbar.widget.customizable.group.dialog.title"))
+          CustomizeActionGroupPanel.showDialog(RUN_TOOLBAR_WIDGET_GROUP, listOf(IdeActions.GROUP_NAVBAR_TOOLBAR), ExecutionBundle.message("run.toolbar.widget.customizable.group.dialog.title"))
             ?.let { result ->
-              CustomizationUtil.updateActionGroup(result, RunToolbarWidget.RUN_TOOLBAR_WIDGET_GROUP)
+              CustomizationUtil.updateActionGroup(result, RUN_TOOLBAR_WIDGET_GROUP)
               CustomActionsSchema.setCustomizationSchemaForCurrentProjects()
             }
         }
@@ -364,7 +306,7 @@ class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), CustomComponen
   }
 }
 
-class StopWithDropDownAction : AnAction(AllIcons.Actions.Suspend), CustomComponentAction, DumbAware, UpdateInBackground {
+class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware, UpdateInBackground {
 
   override fun actionPerformed(e: AnActionEvent) {
     ExecutionManagerImpl.getInstance(e.project ?: return)
@@ -382,7 +324,7 @@ class StopWithDropDownAction : AnAction(AllIcons.Actions.Suspend), CustomCompone
     e.presentation.isEnabled = activeProcesses > 0
     // presentations should be visible because it has to take some fixed space
     //e.presentation.isVisible = activeProcesses > 0
-    e.presentation.icon = AllIcons.Actions.Suspend
+    e.presentation.icon = IconManager.getInstance().getIcon("expui/run/widget/stop.svg", AllIcons::class.java)
     if (activeProcesses == 1) {
       val first = running.first()
       getConfigurations(manger, first)
@@ -522,7 +464,7 @@ private enum class RunButtonColors {
 
   companion object {
     private fun getColor(propertyName: String, defaultColor: () -> Color): JBColor {
-      return JBColor {
+      return JBColor.lazy {
         UIManager.getColor(propertyName) ?: let {
           defaultColor().also {
             UIManager.put(propertyName, it)
@@ -737,7 +679,6 @@ private class RunDropDownButtonUI : BasicButtonUI() {
   }
 
   private inner class MyHoverListener(val button: RunDropDownButton) : BasicButtonListener(button) {
-
     private val popupState = PopupState.forPopup()
 
     override fun mouseEntered(e: MouseEvent) {
@@ -875,6 +816,68 @@ class RunConfigurationStartHistory(val project: Project) : PersistentStateCompon
   companion object {
     fun getInstance(project: Project): RunConfigurationStartHistory {
       return project.getService(RunConfigurationStartHistory::class.java)
+    }
+  }
+}
+
+/**
+ * Registers one [ExecutionReasonableHistory] per project and
+ * disposes it with the project.
+ */
+private object ExecutionReasonableHistoryManager {
+  private val registeredListeners = mutableMapOf<Project, ExecutionReasonableHistory>()
+
+  @RequiresEdt
+  fun register(project: Project) {
+    if (!registeredListeners.containsKey(project)) {
+      registeredListeners[project] = ExecutionReasonableHistory(
+        project,
+        onHistoryChanged = ::processHistoryChanged,
+        onAnyChange = ::configurationHistoryStateChanged
+      )
+      Disposer.register(project) {
+        ApplicationManager.getApplication().invokeLater {
+          unregister(project)
+        }
+      }
+    }
+  }
+
+  /**
+   * Unregister [ExecutionReasonableHistory] of the project and dispose it.
+   *
+   * Shouldn't be called directly because it clears runtime history,
+   * that isn't persisted in [RunConfigurationStartHistory].
+   */
+  @RequiresEdt
+  fun unregister(project: Project) {
+    registeredListeners.remove(project)?.let(Disposer::dispose)
+  }
+
+  private fun processHistoryChanged(latest: ReasonableHistory.Elem<ExecutionEnvironment, RunState>?) {
+    if (latest != null) {
+      val (env, reason) = latest
+      val history = RunConfigurationStartHistory.getInstance(env.project)
+      getPersistedConfiguration(env.runnerAndConfigurationSettings)?.let { conf ->
+        if (reason == RunState.SCHEDULED) {
+          history.register(conf, env.executor.id, reason)
+        }
+        if (reason.isRunningState()) {
+          RunManager.getInstance(env.project).selectedConfiguration = conf
+        }
+      } ?: logger<RunToolbarWidget>().error(java.lang.IllegalStateException("No setting for ${env.configurationSettings}"))
+      ActivityTracker.getInstance().inc()
+    }
+  }
+
+  private fun configurationHistoryStateChanged(env: ExecutionEnvironment, reason: RunState) {
+    RunConfigurationStartHistory.getInstance(env.project).firstOrNull(
+      getPersistedConfiguration(env.runnerAndConfigurationSettings)
+    ) {
+      env.executor.id == it.executorId
+    }?.apply {
+      state = reason
+      ActivityTracker.getInstance().inc()
     }
   }
 }
@@ -1025,7 +1028,7 @@ private fun getConfigurations(manager: ExecutionManagerImpl, descriptor: RunCont
 }
 
 @Nls
-private fun RunnerAndConfigurationSettings.shortenName() = shorten(name)
+private fun RunnerAndConfigurationSettings.shortenName() = Executor.shortenNameIfNeeded(name)
 
 @Nls
 private fun shorten(@Nls text: String): String = StringUtil.shortenTextWithEllipsis(text, 27, 8)

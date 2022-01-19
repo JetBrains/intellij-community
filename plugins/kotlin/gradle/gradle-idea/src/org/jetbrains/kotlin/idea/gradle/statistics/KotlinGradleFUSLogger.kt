@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradle.statistics
 
@@ -13,7 +13,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.text.trimMiddle
-import org.jetbrains.kotlin.idea.statistics.*
+import org.jetbrains.kotlin.idea.statistics.FUSEventGroups
+import org.jetbrains.kotlin.idea.statistics.GradleStatisticsEvents
+import org.jetbrains.kotlin.idea.statistics.KotlinFUSLogger
 import org.jetbrains.kotlin.statistics.BuildSessionLogger
 import org.jetbrains.kotlin.statistics.BuildSessionLogger.Companion.STATISTICS_FOLDER_NAME
 import org.jetbrains.kotlin.statistics.fileloggers.MetricsContainer
@@ -24,8 +26,6 @@ import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 
@@ -50,7 +50,7 @@ class KotlinGradleFUSLogger : StartupActivity, DumbAware, Runnable {
                     // 2. the projectId should be stable and independent on IDE version
                     val presentableUrl = FileUtil.toSystemIndependentName(path)
                     val name =
-                        PathUtilRt.getFileName(presentableUrl).toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
+                        PathUtilRt.getFileName(presentableUrl).lowercase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
                     val locationHash = Integer.toHexString((presentableUrl).hashCode())
                     val projectHash =
                         "${name.trimMiddle(name.length.coerceAtMost(254 - locationHash.length), useEllipsisSymbol = false)}.$locationHash"
@@ -244,11 +244,11 @@ class KotlinGradleFUSLogger : StartupActivity, DumbAware, Runnable {
             }
         }
 
-        private var gradleUserDirs: Array<String>
-            set(value) = PropertiesComponent.getInstance().setValues(
+        private var gradleUserDirs: List<String>
+            set(value) = PropertiesComponent.getInstance().setList(
                 GRADLE_USER_DIRS_PROPERTY_NAME, value
             )
-            get() = PropertiesComponent.getInstance().getValues(GRADLE_USER_DIRS_PROPERTY_NAME) ?: emptyArray()
+            get() = PropertiesComponent.getInstance().getList(GRADLE_USER_DIRS_PROPERTY_NAME) ?: emptyList()
 
         fun populateGradleUserDir(path: String) {
             val currentState = gradleUserDirs
@@ -258,7 +258,7 @@ class KotlinGradleFUSLogger : StartupActivity, DumbAware, Runnable {
             result.add(path)
             result.addAll(currentState)
 
-            gradleUserDirs = result.filter { filePath -> Path(filePath).exists() }.take(MAXIMUM_USER_DIRS).toTypedArray()
+            gradleUserDirs = result.filter { filePath -> Path(filePath).exists() }.take(MAXIMUM_USER_DIRS)
         }
     }
 }

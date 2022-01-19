@@ -2245,6 +2245,7 @@
                      implementationClass="com.siyeh.ig.serialization.TransientFieldNotInitializedInspection"/>
 
     <!--group.names.code.style.issues-->
+    <inspectionElementsMerger implementation="com.siyeh.ig.style.UnnecessaryModifierInspectionMerger"/>
     <localInspection groupPath="Java" language="JAVA" shortName="AssertMessageNotString" bundle="messages.InspectionGadgetsBundle"
                      key="assert.message.not.string.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.style.AssertMessageNotStringInspection"/>
@@ -2368,10 +2369,6 @@
                      key="unnecessary.constructor.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.style.UnnecessaryConstructorInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryEnumModifier" bundle="messages.InspectionGadgetsBundle"
-                     key="unnecessary.enum.modifier.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING" cleanupTool="true"
-                     implementationClass="com.siyeh.ig.style.UnnecessaryEnumModifierInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryFinalOnLocalVariableOrParameter" bundle="messages.InspectionGadgetsBundle"
                      key="unnecessary.final.on.local.variable.or.parameter.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING" cleanupTool="true"
@@ -2380,10 +2377,6 @@
                      key="unnecessary.fully.qualified.name.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION" cleanupTool="true"
                      implementationClass="com.siyeh.ig.style.UnnecessaryFullyQualifiedNameInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryInterfaceModifier" bundle="messages.InspectionGadgetsBundle"
-                     key="unnecessary.interface.modifier.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING" cleanupTool="true"
-                     implementationClass="com.siyeh.ig.style.UnnecessaryInterfaceModifierInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryParentheses" bundle="messages.InspectionGadgetsBundle"
                      key="unnecessary.parentheses.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION" cleanupTool="true"
@@ -2396,10 +2389,6 @@
                      key="unnecessary.qualifier.for.this.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING" cleanupTool="true"
                      implementationClass="com.siyeh.ig.style.UnnecessaryQualifierForThisInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryRecordModifier" bundle="messages.InspectionGadgetsBundle"
-                     key="unnecessary.record.modifier.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING" cleanupTool="true"
-                     implementationClass="com.siyeh.ig.style.UnnecessaryRecordModifierInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessarySemicolon" bundle="messages.InspectionGadgetsBundle" key="unnecessary.semicolon.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="true" cleanupTool="true"
                      level="WARNING" implementationClass="com.siyeh.ig.style.UnnecessarySemicolonInspection"/>
@@ -2488,6 +2477,10 @@
                      key="array.can.be.replaced.with.enum.values" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.style.ArrayCanBeReplacedWithEnumValuesInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryModifier" bundle="messages.InspectionGadgetsBundle"
+                     key="unnecessary.modifier.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING" cleanupTool="true"
+                     implementationClass="com.siyeh.ig.style.UnnecessaryModifierInspection"/>
 
     <!--group.names.threading.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="AccessToNonThreadSafeStaticField" shortName="AccessToNonThreadSafeStaticFieldFromInstance"
@@ -2696,6 +2689,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="StringOperationCanBeSimplified" bundle="messages.InspectionGadgetsBundle"
                      key="inspection.redundant.string.operation.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
                      enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.RedundantStringOperationInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ReplaceOnLiteralHasNoEffect" bundle="messages.InspectionGadgetsBundle"
+                     key="inspection.replace.on.literal.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.redundancy.ReplaceOnLiteralHasNoEffectInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StringBufferReplaceableByString" bundle="messages.InspectionGadgetsBundle"
                      key="string.buffer.replaceable.by.string.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"

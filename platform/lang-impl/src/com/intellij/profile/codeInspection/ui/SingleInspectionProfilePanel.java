@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -187,7 +187,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     return null;
   }
 
-  public static @Nls String renderSeverity(HighlightSeverity severity) {
+  public static @Nls String renderSeverity(@NotNull HighlightSeverity severity) {
     if (HighlightSeverity.INFORMATION.equals(severity)) return LangBundle.message("single.inspection.profile.panel.no.highlighting.only.fix");
     return severity.getDisplayCapitalizedName();
   }
@@ -736,7 +736,8 @@ public class SingleInspectionProfilePanel extends JPanel {
           final Descriptor defaultDescriptor = singleNode.getDefaultDescriptor();
           final String description = defaultDescriptor.loadDescription(); //NON-NLS
           try {
-            DescriptionEditorPaneKt.readHTML(myDescription, SearchUtil.markup(DescriptionEditorPaneKt.toHTML(myDescription, description, false), myProfileFilter.getFilter()));
+            if (description == null) throw new NullPointerException();
+            DescriptionEditorPaneKt.readHTML(myDescription, SearchUtil.markup(description, myProfileFilter.getFilter()));
           }
           catch (Throwable t) {
             LOG.error("Failed to load description for: " +
@@ -775,7 +776,7 @@ public class SingleInspectionProfilePanel extends JPanel {
           new LevelChooserAction(myProfile.getProfileManager().getSeverityRegistrar(),
                                  includeDoNotShow(nodes)) {
             @Override
-            protected void onChosen(final HighlightSeverity severity) {
+            protected void onChosen(final @NotNull HighlightSeverity severity) {
               final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
               final List<InspectionConfigTreeNode.Tool> toUpdate = new SmartList<>();
               for (final InspectionConfigTreeNode.Tool node : nodes) {
@@ -937,20 +938,20 @@ public class SingleInspectionProfilePanel extends JPanel {
           myOptionsPanel.add(new ToolOptionsSeparator(configPanelAnchor, scopesAndScopesAndSeveritiesTable),
                              new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0,
                                                     GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                    JBUI.emptyInsets(),
+                                                    JBInsets.emptyInsets(),
                                                     0, 0));
         }
         myOptionsPanel.add(configPanelAnchor,
                            new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0,
                                                   GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                                  JBUI.emptyInsets(),
+                                                  JBInsets.emptyInsets(),
                                                   0, 0));
       }
       else if (scopesNames.isEmpty()) {
         myOptionsPanel.add(configPanelAnchor,
                            new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0,
                                                   GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                                  JBUI.emptyInsets(),
+                                                  JBInsets.emptyInsets(),
                                                   0, 0));
       }
       myOptionsPanel.revalidate();
@@ -1091,12 +1092,12 @@ public class SingleInspectionProfilePanel extends JPanel {
     northPanel.add(myProfileFilter,
                     new GridBagConstraints(0, 0, 1, 1, 0.5, 1,
                                            GridBagConstraints.BASELINE_TRAILING, GridBagConstraints.HORIZONTAL,
-                                           JBUI.emptyInsets(),
+                                           JBInsets.emptyInsets(),
                                            0, 0));
     northPanel.add(createTreeToolbarPanel().getComponent(),
                    new GridBagConstraints(1, 0, 1, 1, 1, 1,
                                           GridBagConstraints.BASELINE_LEADING, GridBagConstraints.HORIZONTAL,
-                                          JBUI.emptyInsets(),
+                                          JBInsets.emptyInsets(),
                                           0, 0));
 
     JBSplitter mainSplitter = new JBSplitter(false, DIVIDER_PROPORTION_DEFAULT, 0.01f, 0.99f);
@@ -1313,7 +1314,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       GridBagConstraints optionsLabelConstraints =
         new GridBagConstraints(0, 0, 1, 1, 0, 1,
                                GridBagConstraints.WEST, GridBagConstraints.NONE,
-                               JBUI.emptyInsets(),
+                               JBInsets.emptyInsets(),
                                0, 0);
       add(myOptionsLabel, optionsLabelConstraints);
       GridBagConstraints separatorConstraints =

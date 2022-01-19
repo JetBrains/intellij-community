@@ -1,6 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.settings;
-
 
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -22,15 +21,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
 import static com.intellij.ui.SimpleTextAttributes.GRAY_ATTRIBUTES;
-import static com.intellij.util.containers.ContainerUtil.concat;
 import static java.util.Arrays.asList;
 
-public class CustomDictionariesPanel extends JPanel {
+public final class CustomDictionariesPanel extends JPanel {
   private final SpellCheckerSettings mySettings;
   @NotNull private final SpellCheckerManager myManager;
   private final CustomDictionariesTableView myCustomDictionariesTableView;
@@ -42,10 +40,9 @@ public class CustomDictionariesPanel extends JPanel {
     myManager = manager;
     defaultDictionaries = project.isDefault() ? new ArrayList<>() : asList(SpellCheckerBundle.message("app.dictionary"), SpellCheckerBundle
       .message("project.dictionary"));
-    myCustomDictionariesTableView =
-      new CustomDictionariesTableView(new ArrayList<>(settings.getCustomDictionariesPaths()), defaultDictionaries);
-    final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myCustomDictionariesTableView)
-
+    myCustomDictionariesTableView = new CustomDictionariesTableView(new ArrayList<>(settings.getCustomDictionariesPaths()),
+                                                                    defaultDictionaries);
+    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myCustomDictionariesTableView)
       .setAddActionName(SpellCheckerBundle.message("add.custom.dictionaries"))
       .setAddAction(new AnActionButtonRunnable() {
         @Override
@@ -104,27 +101,33 @@ public class CustomDictionariesPanel extends JPanel {
   }
 
   public boolean isModified() {
-    final List<String> oldPaths = mySettings.getCustomDictionariesPaths();
-    final List<String> newPaths = ContainerUtil.filter(myCustomDictionariesTableView.getItems(), o -> !defaultDictionaries.contains(o));
-    if (oldPaths.size() != newPaths.size()) {
-      return true;
+    List<String> oldPaths = mySettings.getCustomDictionariesPaths();
+    Collection<String> collection = myCustomDictionariesTableView.getItems();
+
+    if (collection.isEmpty()) {
+      return !oldPaths.isEmpty();
     }
-    if (!newPaths.containsAll(oldPaths) || !oldPaths.containsAll(newPaths)) {
-      return true;
+
+    Set<String> newPaths = new HashSet<>();
+    for (String t : collection) {
+      if (!defaultDictionaries.contains(t)) {
+        newPaths.add(t);
+      }
     }
-    return false;
+    return oldPaths.size() != newPaths.size() || !newPaths.containsAll(oldPaths) || !oldPaths.containsAll(newPaths);
   }
 
   public void reset() {
     myCustomDictionariesTableView.getListTableModel()
-      .setItems(new ArrayList<>(concat(defaultDictionaries, mySettings.getCustomDictionariesPaths())));
+      .setItems(new ArrayList<>(ContainerUtil.concat(defaultDictionaries, mySettings.getCustomDictionariesPaths())));
     removedDictionaries.clear();
   }
 
   public void apply() {
-    final List<String> oldPaths = mySettings.getCustomDictionariesPaths();
-    final List<String> newPaths = new ArrayList<>(ContainerUtil.filter(myCustomDictionariesTableView.getItems(),
-                                                                       dict -> !defaultDictionaries.contains(dict)));
+    List<String> oldPaths = mySettings.getCustomDictionariesPaths();
+    List<String> newPaths = new ArrayList<>(ContainerUtil.filter(myCustomDictionariesTableView.getItems(), dict -> {
+      return !defaultDictionaries.contains(dict);
+    }));
     mySettings.setCustomDictionariesPaths(newPaths);
     myManager.updateBundledDictionaries(ContainerUtil.filter(oldPaths, o -> !newPaths.contains(o)));
   }
@@ -140,7 +143,7 @@ public class CustomDictionariesPanel extends JPanel {
     private CustomDictionariesTableView(@NotNull List<String> dictionaries,
                                         @NotNull List<String> defaultDictionaries) {
       myTypeRenderer = createTypeRenderer(defaultDictionaries);
-      setModelAndUpdateColumns(new ListTableModel<>(createDictionaryColumnInfos(), concat(defaultDictionaries, dictionaries), 0));
+      setModelAndUpdateColumns(new ListTableModel<>(createDictionaryColumnInfos(), ContainerUtil.concat(defaultDictionaries, dictionaries), 0));
       setAutoResizeMode(AUTO_RESIZE_LAST_COLUMN);
       setShowGrid(false);
       setShowVerticalLines(false);
@@ -162,16 +165,19 @@ public class CustomDictionariesPanel extends JPanel {
 
           myLabel.clear();
           myLabel.append((String)value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          final String type;
+          String type;
           if (defaultDictionaries.contains(value)) {
             type = SpellCheckerBundle.message("built.in.dictionary");
           }
           else {
-            final CustomDictionaryProvider provider = CustomDictionaryProvider.EP_NAME.getExtensionList().stream()
-              .filter(dictionaryProvider -> dictionaryProvider.isApplicable((String)value))
-              .findAny()
-              .orElse(null);
-            type = provider != null ? provider.getDictionaryType() : SpellCheckerBundle.message("words.list.dictionary");
+            CustomDictionaryProvider provider = null;
+            for (CustomDictionaryProvider dictionaryProvider : CustomDictionaryProvider.EP_NAME.getExtensionList()) {
+              if (dictionaryProvider.isApplicable((String)value)) {
+                provider = dictionaryProvider;
+                break;
+              }
+            }
+            type = provider == null ? SpellCheckerBundle.message("words.list.dictionary") : provider.getDictionaryType();
           }
           myLabel.append(" [" + type + "]", GRAY_ATTRIBUTES);
           myLabel.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());

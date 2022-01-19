@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.completion
 
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
+import kotlinx.coroutines.channels.onClosed
 import java.lang.System.currentTimeMillis
 
 
@@ -53,7 +54,7 @@ interface CompletionBenchmarkSink {
             if (pendingSessions.isEmpty()) {
                 val firstFlush = perSessionResults.values.filterNot { results -> results.canceled }.minOfOrNull { it.firstFlush } ?: 0
                 val full = perSessionResults.values.maxOfOrNull { it.full } ?: 0
-                channel.offer(CompletionBenchmarkResults(firstFlush, full))
+                channel.trySend(CompletionBenchmarkResults(firstFlush, full)).onClosed { throw IllegalStateException(it) }
                 reset()
             }
         }

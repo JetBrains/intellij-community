@@ -18,10 +18,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicInteger;
 
 final class PersistentFSConnector {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnector.class);
   private static final int MAX_INITIALIZATION_ATTEMPTS = 10;
+  private static final AtomicInteger localModificationCounter = new AtomicInteger();
 
   static @NotNull PersistentFSConnection connect(@NotNull String cachesDir, int version, boolean useContentHashes) {
     return FSRecords.writeAndHandleErrors(() -> {
@@ -32,6 +34,7 @@ final class PersistentFSConnector {
   private static @NotNull PersistentFSConnection init(@NotNull String cachesDir, int expectedVersion, boolean useContentHashes) {
     Exception exception = null;
     for (int i = 0; i < MAX_INITIALIZATION_ATTEMPTS; i++) {
+      localModificationCounter.incrementAndGet();
       Pair<PersistentFSConnection, Exception> pair = tryInit(cachesDir, expectedVersion, useContentHashes);
       exception = pair.getSecond();
       if (exception == null) {
@@ -65,6 +68,7 @@ final class PersistentFSConnector {
     Path contentsFile = basePath.resolve("content" + PersistentFSPaths.VFS_FILES_EXTENSION);
     Path contentsHashesFile = basePath.resolve("contentHashes" + PersistentFSPaths.VFS_FILES_EXTENSION);
     Path recordsFile = basePath.resolve("records" + PersistentFSPaths.VFS_FILES_EXTENSION);
+    Path enumeratedAttributesFile = basePath.resolve("enum_attrib" + PersistentFSPaths.VFS_FILES_EXTENSION);
 
     File vfsDependentEnumBaseFile = persistentFSPaths.getVfsEnumBaseFile();
 
@@ -101,6 +105,8 @@ final class PersistentFSConnector {
       if (contentHashesEnumerator != null) {
         checkContentSanity(contents, contentHashesEnumerator);
       }
+
+      SimpleStringPersistentEnumerator enumeratedAttributes = new SimpleStringPersistentEnumerator(enumeratedAttributesFile);
 
       boolean aligned = PagedFileStorage.BUFFER_SIZE % PersistentFSRecordsStorage.RECORD_SIZE == 0;
       if (!aligned) {
@@ -141,7 +147,9 @@ final class PersistentFSConnector {
                                                     attributes,
                                                     contents,
                                                     contentHashesEnumerator,
+                                                    enumeratedAttributes,
                                                     freeRecords,
+                                                    localModificationCounter,
                                                     markDirty), null);
     }
     catch (Exception e) { // IOException, IllegalArgumentException
@@ -156,9 +164,8 @@ final class PersistentFSConnector {
         deleted &= IOUtil.deleteAllFilesStartingWith(contentsHashesFile);
         deleted &= IOUtil.deleteAllFilesStartingWith(recordsFile);
         deleted &= IOUtil.deleteAllFilesStartingWith(vfsDependentEnumBaseFile);
-
-        Path rootsFile = persistentFSPaths.getRootsFile();
-        deleted &= rootsFile == null || IOUtil.deleteAllFilesStartingWith(rootsFile);
+        deleted &= IOUtil.deleteAllFilesStartingWith(persistentFSPaths.getRootsBaseFile());
+        deleted &= IOUtil.deleteAllFilesStartingWith(enumeratedAttributesFile);
 
         if (!deleted) {
           throw new IOException("Cannot delete filesystem storage files");

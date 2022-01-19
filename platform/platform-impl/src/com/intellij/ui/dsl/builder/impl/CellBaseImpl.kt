@@ -3,6 +3,7 @@ package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.ui.dsl.builder.CellBase
 import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
@@ -21,6 +22,9 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
     private set
 
   var rightGap: RightGap? = null
+    private set
+
+  var customGaps: Gaps? = null
     private set
 
   abstract fun visibleFromParent(parentVisible: Boolean)
@@ -56,6 +60,11 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
 
   override fun gap(rightGap: RightGap): CellBase<T> {
     this.rightGap = rightGap
+    return this
+  }
+
+  override fun customize(customGaps: Gaps): CellBase<T> {
+    this.customGaps = customGaps
     return this
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.util.Function
 import com.intellij.util.messages.Topic
 import com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectService
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineModuleTransformer
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.FlowModuleChangesSignalProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.lifecycle.ProjectLifecycleHolderService
@@ -33,6 +34,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.merge
 import kotlin.experimental.ExperimentalTypeInference
 import kotlin.streams.toList
 
@@ -102,7 +104,7 @@ internal val Project.filesChangedEventFlow
 internal fun Project.getNativeModules(): List<Module> = ModuleManager.getInstance(this).modules.toList()
 
 internal val Project.moduleChangesSignalFlow
-    get() = ModuleChangesSignalProvider.listenToModuleChanges(this)
+    get() = merge(ModuleChangesSignalProvider.listenToModuleChanges(this), FlowModuleChangesSignalProvider.listenToModuleChanges(this))
 
 internal val Project.lifecycleScope: CoroutineScope
     get() = service<ProjectLifecycleHolderService>()

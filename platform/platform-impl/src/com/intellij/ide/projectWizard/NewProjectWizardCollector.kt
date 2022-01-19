@@ -2,6 +2,7 @@
 package com.intellij.ide.projectWizard
 
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.NewProjectWizardLanguageStep
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
@@ -13,14 +14,14 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("new.project.wizard.interactions", 1)
+    private val GROUP = EventLogGroup("new.project.wizard.interactions", 2)
 
     private val sessionIdField = EventFields.Int("wizard_session_id")
     private val screenNumField = IntEventField("screen")
     private val typedCharsField = IntEventField("typed_chars")
     private val hitsField = IntEventField("hits")
     private val generatorTypeField = ClassEventField("generator")
-    private val languageField = ClassEventField("language")
+    private val languageField = EventFields.String("language", NewProjectWizardLanguageStep.allLanguages.keys.toList())
     private val gitField = EventFields.Boolean("git")
     private val isSucceededField = EventFields.Boolean("project_created")
     private val inputMaskField = EventFields.Long("input_mask")
@@ -54,7 +55,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     @JvmStatic fun logSearchChanged(context: WizardContext, chars: Int, results: Int) = search.log(context.project, context.sessionId.id, min(chars, 10), results)
     @JvmStatic fun logLocationChanged(context: WizardContext, generator: Class<*>) = location.log(context.project, context.sessionId.id, generator)
     @JvmStatic fun logNameChanged(context: WizardContext, generator: Class<*>) = name.log(context.project, context.sessionId.id, generator)
-    @JvmStatic fun logLanguageChanged(context: WizardContext, language: Class<*>) = languageSelected.log(context.project, context.sessionId.id, language)
+    @JvmStatic fun logLanguageChanged(context: WizardContext, language: String) = languageSelected.log(context.project, context.sessionId.id, language)
     @JvmStatic fun logGitChanged(context: WizardContext) = gitChanged.log(context.project, context.sessionId.id)
     @JvmStatic fun logGeneratorSelected(context: WizardContext, title: Class<*>) = generator.log(context.project, context.sessionId.id, title)
     @JvmStatic fun logCustomTemplateSelected(context: WizardContext) = templateSelected.log(context.project, context.sessionId.id)
@@ -65,7 +66,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     //finish
     @JvmStatic fun logFinished(activity: StructuredIdeActivity, success: Boolean) = activity.finished { listOf(isSucceededField with success)}
     @JvmStatic fun logProjectCreated(project: Project?, context: WizardContext) = projectCreated.log(project, context.sessionId.id)
-    @JvmStatic fun logLanguageFinished(context: WizardContext, language: Class<*>) = languageFinished.log(context.project, context.sessionId.id, language)
+    @JvmStatic fun logLanguageFinished(context: WizardContext, language: String) = languageFinished.log(context.project, context.sessionId.id, language)
     @JvmStatic fun logGitFinished(context: WizardContext, git: Boolean) = gitFinish.log(context.project, context.sessionId.id, git)
     @JvmStatic fun logGeneratorFinished(context: WizardContext, generator: Class<*>) = generatorFinished.log(context.project, context.sessionId.id, generator)
   }

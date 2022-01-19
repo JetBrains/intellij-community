@@ -1,0 +1,31 @@
+<idea-plugin>
+  <id>com.jetbrains.idea.refactoring.detector</id>
+  <name>Refactoring Detector</name>
+  <category>VCS Integration</category>
+  <vendor>JetBrains</vendor>
+  <description><![CDATA[
+    <p>Plugin help detect Java and Kotlin refactorings and visualize them in different ways.</p>
+  ]]></description>
+
+  <resource-bundle>messages.RefactoringDetectorBundle</resource-bundle>
+
+  <depends>com.intellij.modules.lang</depends>
+  <depends>com.intellij.modules.platform</depends>
+  <depends>org.jetbrains.kotlin</depends>
+  <depends>com.intellij.modules.java</depends>
+  <depends>Git4Idea</depends>
+
+  <actions>
+    <action id="Refactoring.Detector.FindRefactoringInCommitAction"
+            class="com.intellij.refactoring.detector.actions.FindRefactoringInCommitAction" internal="true"/>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="enable.semantic.inlays.in.combined.diff" defaultValue="false"
+                 description="Show semantic diff inlays on top of diff changes in 'All in One Diff'"/>
+
+    <diff.DiffExtension implementation="com.intellij.refactoring.detector.semantic.diff.SemanticViewerExtension"/>
+    <diff.tools.combined.diffBlockFactory implementation="com.intellij.refactoring.detector.semantic.diff.SemanticDiffFragmentBlockFactory"/>
+    <diff.DiffExtension implementation="com.intellij.refactoring.detector.semantic.diff.SemanticDiffRefactoringProcessor"/>
+  </extensions>
+</idea-plugin>

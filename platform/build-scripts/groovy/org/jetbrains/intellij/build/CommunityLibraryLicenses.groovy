@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -502,6 +502,12 @@ final class CommunityLibraryLicenses {
     new LibraryLicense(name: "Kotlin Standard Library for JDK 8",
                        libraryName: "kotlin-stdlib-jdk8",
                        url: "https://github.com/JetBrains/kotlin").apache(),
+    new LibraryLicense(name: "kotlinx-datetime",
+                       libraryName: "kotlinx-datetime",
+                       url: "https://github.com/Kotlin/kotlinx-datetime").apache(),
+    new LibraryLicense(name: "kotlinx-datetime-jvm",
+                       libraryName: "kotlinx-datetime-jvm",
+                       url: "https://github.com/Kotlin/kotlinx-datetime").apache(),
     new LibraryLicense(name: "kotlinx.html", libraryName: "org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.3",
                        licenseUrl: "https://github.com/Kotlin/kotlinx.html/blob/master/LICENSE",
                        url: "https://github.com/Kotlin/kotlinx.html").apache(),
@@ -741,6 +747,7 @@ final class CommunityLibraryLicenses {
     jetbrainsLibrary("intellij-markdown"),
     jetbrainsLibrary("intellij-test-discovery"),
     jetbrainsLibrary("io.ktor.network.jvm"),
+    jetbrainsLibrary("jetbrains.research.refactorinsight.kotlin.impl"),
     jetbrainsLibrary("jps-build-script-dependencies-bootstrap"),
     jetbrainsLibrary("jshell-frontend"),
     jetbrainsLibrary("kotlin-script-runtime"),
@@ -753,6 +760,7 @@ final class CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.kotlin-compiler-cli"),
     jetbrainsLibrary("kotlinc.kotlin-dist"),
     jetbrainsLibrary("kotlinc.kotlin-gradle-statistics"),
+    jetbrainsLibrary("kotlinc.kotlin-jps-common"),
     jetbrainsLibrary("kotlinc.kotlin-reflect"),
     jetbrainsLibrary("kotlinc.kotlin-script-util"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-compiler"),

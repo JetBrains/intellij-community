@@ -438,18 +438,21 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           }
         }
 
-        Semaphore semaphore = new Semaphore(1);
-        invokeLater(() -> {
-          if (checkObsolete()) {
-            semaphore.up();
+        ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(myProgressIndicator);
+        if (shouldFinishOnEdt()) {
+          Semaphore semaphore = new Semaphore(1);
+          invokeLater(() -> {
+            if (checkObsolete()) {
+              semaphore.up();
+            }
+            else {
+              BaseConstrainedExecution.scheduleWithinConstraints(semaphore::up, null, builder.myConstraints);
+            }
+          });
+          ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, myProgressIndicator);
+          if (isCancelled()) {
+            throw new ProcessCanceledException();
           }
-          else {
-            BaseConstrainedExecution.scheduleWithinConstraints(semaphore::up, null, builder.myConstraints);
-          }
-        });
-        ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, myProgressIndicator);
-        if (isCancelled()) {
-          throw new ProcessCanceledException();
         }
       }
     }
@@ -526,7 +529,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
         T result = builder.myComputation.call();
 
-        if (builder.myModalityState != null) {
+        if (shouldFinishOnEdt()) {
           safeTransferToEdt(result);
         }
         else {
@@ -545,6 +548,10 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       catch (Throwable e) {
         setError(e);
       }
+    }
+
+    private boolean shouldFinishOnEdt() {
+      return builder.myModalityState != null;
     }
 
     private boolean checkObsolete() {

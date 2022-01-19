@@ -28,7 +28,7 @@ public class MethodReturnTest extends LightQuickFixParameterizedTestCase {
 
   @Override
   protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_1_5;
+    return LanguageLevel.JDK_14;
   }
 }
 

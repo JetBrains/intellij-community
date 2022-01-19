@@ -334,6 +334,10 @@ public final class ProjectUtil extends ProjectUtilCore {
       if (processors.size() == 1) {
         processor = processors.get(0);
       }
+      else if (options.getOpenProcessorChooser() != null) {
+        LOG.info("options.openProcessorChooser will handle the open processor dilemma");
+        processor = options.getOpenProcessorChooser().invoke(processors);
+      }
       else {
         Ref<ProjectOpenProcessor> ref = new Ref<>();
         ApplicationManager.getApplication().invokeAndWait(() -> {
@@ -364,6 +368,10 @@ public final class ProjectUtil extends ProjectUtilCore {
       processors.removeIf(it -> it instanceof PlatformProjectOpenProcessor);
       if (processors.size() == 1) {
         processorFuture = CompletableFuture.completedFuture(processors.get(0));
+      }
+      else if (options.getOpenProcessorChooser() != null) {
+        LOG.info("options.openProcessorChooser will handle the open processor dilemma");
+        processorFuture = CompletableFuture.completedFuture(options.getOpenProcessorChooser().invoke(processors));
       }
       else {
         processorFuture = CompletableFuture.supplyAsync(() -> {

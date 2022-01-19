@@ -1,8 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
+import com.intellij.codeInsight.StaticAnalysisAnnotationManager;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.completion.impl.LiftShorterItemsClassifier;
 import com.intellij.codeInsight.lookup.*;
@@ -494,6 +496,9 @@ public final class JavaCompletionSorting {
         final PsiDocCommentOwner member = (PsiDocCommentOwner)object;
         if (!JavaPsiFacade.getInstance(member.getProject()).getResolveHelper().isAccessible(member, myPosition, null)) return MyEnum.INACCESSIBLE;
         if (JavaCompletionUtil.isEffectivelyDeprecated(member)) return MyEnum.DEPRECATED;
+        if (AnnotationUtil.isAnnotated(member, StaticAnalysisAnnotationManager.getInstance().getKnownUnstableApiAnnotations(), 0)) {
+          return MyEnum.DISCOURAGED;
+        }
         if (member instanceof PsiClass) {
           PsiFile file = member.getContainingFile();
           if (file instanceof PsiJavaFile) {

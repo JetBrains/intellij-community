@@ -7,7 +7,7 @@ class a {
             g();
         } catch (Error e) {
         } catch (Exception e) {
-            <caret><selection>e.printStackTrace();</selection>
+            <caret><selection>throw new RuntimeException(e);</selection>
         }
     }
 }

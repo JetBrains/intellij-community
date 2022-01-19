@@ -13,9 +13,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public final class CatchStatement extends Statement {
   private final List<List<String>> exctstrings = new ArrayList<>();
@@ -162,7 +160,7 @@ public final class CatchStatement extends Statement {
       if (exception_types.size() > 1) { // multi-catch, Java 7 style
         for (int exc_index = 1; exc_index < exception_types.size(); ++exc_index) {
           VarType exc_type = new VarType(CodeConstants.TYPE_OBJECT, 0, exception_types.get(exc_index));
-          String exc_type_name = ExprProcessor.getCastTypeName(exc_type);
+          String exc_type_name = ExprProcessor.getCastTypeName(exc_type, Collections.emptyList());
 
           buf.append(exc_type_name).append(" | ");
         }

@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
@@ -130,7 +131,7 @@ open class ConvertToStringTemplateIntention : SelfTargetingOffsetIndependentInte
 
         private fun isApplicableToNoParentCheck(expression: KtBinaryExpression): Boolean {
             if (expression.operationToken != KtTokens.PLUS) return false
-            val expressionType = expression.analyze(BodyResolveMode.PARTIAL).getType(expression)
+            val expressionType = expression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL).getType(expression)
             if (!KotlinBuiltIns.isString(expressionType)) return false
             return isSuitable(expression)
         }

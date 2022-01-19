@@ -107,7 +107,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "alt button1",              "EditorCreateRectangularSelectionOnMouseDrag", "QuickEvaluateExpression"},
     { "button2",                  "EditorPasteFromX11", "GotoDeclaration", "EditorCreateRectangularSelectionOnMouseDrag"},
     { "ESCAPE",                   "CloseGotItTooltip", "EditorEscape", "FocusEditor", "Terminal.SwitchFocusToEditor"},
-    { "SPACE",                    "Console.TableResult.ColumnVisibility", "QuickPreview", "SplitChooser.SplitCenter"},
+    { "SPACE",                    "Console.TableResult.ColumnVisibility", "QuickPreview", "SplitChooser.SplitCenter", "CollapsiblePanel-toggle"},
     { "ctrl L",                   "FindNext", "Terminal.ClearBuffer"},
     { "control alt button1",      "GotoImplementation", "UiInspector"},
     {"alt shift RIGHT",           "Diff.NextChange", "NextEditorTab"},

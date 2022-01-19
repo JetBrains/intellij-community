@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.CompilerConfiguration
@@ -12,11 +12,16 @@ import com.intellij.execution.process.*
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.module.ModuleGroupTestsKt
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.compiler.CompilerMessage
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.module.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.JavaSdkVersion
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ModuleRootManager
@@ -26,12 +31,12 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.*
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
-import com.intellij.util.SystemProperties
 import com.intellij.util.io.PathKt
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
@@ -40,8 +45,10 @@ import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType
 import org.jetbrains.plugins.groovy.util.Slow
+import org.junit.jupiter.api.Assumptions
 
 import java.nio.file.Path
+
 /**
  * @author aalmiray
  * @author peter
@@ -65,16 +72,34 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
   @Override
   protected void setUp() throws Exception {
     super.setUp()
-    edt { ModuleGroupTestsKt.renameModule(module, "mainModule") }
     myCompilerTester = new CompilerTester(module)
     CompilerConfiguration.getInstance(project).buildProcessVMOptions = "-XX:TieredStopAtLevel=1" // for faster build process startup
+    edt {
+      ModuleGroupTestsKt.renameModule(module, "mainModule")
+
+      def javaHome = System.getenv("JDK_11_x64")
+      Assumptions.assumeTrue(javaHome != null)
+      javaHome = FileUtil.toSystemIndependentName(javaHome)
+      javaHome = StringUtil.trimEnd(StringUtil.trimEnd(javaHome, '/'), '/jre')
+      VfsRootAccess.allowRootAccess(testRootDisposable, javaHome)
+
+      def jdk = JavaSdk.getInstance().createJdk(module.getName() + "_jdk", javaHome, false)
+      ((ProjectJdkImpl)jdk).setVersionString(JavaSdkVersion.JDK_11.description)
+
+      ApplicationManager.application.runWriteAction {
+        ProjectJdkTable jdkTable = ProjectJdkTable.getInstance()
+        jdkTable.addJdk(jdk, testRootDisposable)
+        ModuleRootModificationUtil.modifyModel(module) { model ->
+          model.setSdk(jdk)
+          return true
+        }
+      }
+    }
   }
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8)
-    def javaHome = FileUtil.toSystemIndependentName(SystemProperties.javaHome)
-    moduleBuilder.addJdk(StringUtil.trimEnd(StringUtil.trimEnd(javaHome, '/'), '/jre'))
     super.tuneFixture(moduleBuilder)
   }
 

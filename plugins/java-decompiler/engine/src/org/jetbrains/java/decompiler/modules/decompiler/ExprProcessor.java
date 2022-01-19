@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -13,8 +13,10 @@ import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper.FinallyPathWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
+import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotationWriteHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.struct.StructClass;
+import org.jetbrains.java.decompiler.struct.StructTypePathEntry;
 import org.jetbrains.java.decompiler.struct.attr.StructBootstrapMethodsAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
@@ -24,9 +26,9 @@ import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.TextBuffer;
-import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ExprProcessor implements CodeConstants {
   @SuppressWarnings("SpellCheckingInspection")
@@ -158,7 +160,7 @@ public class ExprProcessor implements CodeConstants {
 
       String currentEntrypoint = entryPoints.isEmpty() ? null : entryPoints.getLast();
 
-      for (DirectNode nd : node.succs) {
+      for (DirectNode nd : node.successors) {
         boolean isSuccessor = true;
 
         if (currentEntrypoint != null && dgraph.mapLongRangeFinallyPaths.containsKey(node.id)) {
@@ -644,48 +646,129 @@ public class ExprProcessor implements CodeConstants {
     }
   }
 
-  public static String getTypeName(VarType type) {
-    return getTypeName(type, true);
+  public static String getTypeName(VarType type, List<TypeAnnotationWriteHelper> typePathWriteStack) {
+    return getTypeName(type, true, typePathWriteStack);
   }
 
-  public static String getTypeName(VarType type, boolean getShort) {
+  public static String getTypeName(VarType type, boolean getShort, List<TypeAnnotationWriteHelper> typePathWriteStack) {
     int tp = type.type;
+    StringBuilder sb = new StringBuilder();
+    typePathWriteStack.removeIf(typeAnnotationWriteHelper -> {
+      StructTypePathEntry path = typeAnnotationWriteHelper.getPaths().peek();
+      if (path == null && type.arrayDim == 0) { // nested type
+        typeAnnotationWriteHelper.writeTo(sb);
+        return true;
+      }
+      if (path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.ARRAY.getOpcode() &&
+        typeAnnotationWriteHelper.getPaths().size() == type.arrayDim
+      ) {
+        typeAnnotationWriteHelper.writeTo(sb);
+        return true;
+      }
+      return false;
+    });
     if (tp <= CodeConstants.TYPE_BOOLEAN) {
-      return typeNames[tp];
+      sb.append(typeNames[tp]);
+      return sb.toString();
     }
     else if (tp == CodeConstants.TYPE_UNKNOWN) {
-      return UNKNOWN_TYPE_STRING; // INFO: should not occur
+      sb.append(UNKNOWN_TYPE_STRING);
+      return sb.toString(); // INFO: should not occur
     }
     else if (tp == CodeConstants.TYPE_NULL) {
-      return NULL_TYPE_STRING; // INFO: should not occur
+      sb.append(NULL_TYPE_STRING);
+      return sb.toString(); // INFO: should not occur
     }
     else if (tp == CodeConstants.TYPE_VOID) {
-      return "void";
+      sb.append("void");
+      return sb.toString();
     }
     else if (tp == CodeConstants.TYPE_OBJECT) {
-      String ret = buildJavaClassName(type.value);
+      String ret;
       if (getShort) {
-        ret = DecompilerContext.getImportCollector().getShortName(ret);
+        ret = DecompilerContext.getImportCollector().getShortName(type.value);
+      } else {
+        ret = buildJavaClassName(type.value);
       }
 
       if (ret == null) {
         // FIXME: a warning should be logged
-        ret = UNDEFINED_TYPE_STRING;
+        return UNDEFINED_TYPE_STRING;
       }
-      return ret;
+
+      String[] nestedClasses = ret.split("\\.");
+      for (int i = 0; i < nestedClasses.length; i++) {
+        String nestedType = nestedClasses[i];
+        if (i != 0) { // first annotation is written already
+          checkNestedTypeAnnotation(sb, typePathWriteStack);
+        }
+
+        sb.append(nestedType);
+        if (i != nestedClasses.length - 1) sb.append(".");
+      }
+
+      return sb.toString();
     }
 
     throw new RuntimeException("invalid type");
   }
 
-  public static String getCastTypeName(VarType type) {
-    return getCastTypeName(type, true);
+  public static void checkNestedTypeAnnotation(StringBuilder sb, List<TypeAnnotationWriteHelper> typePathWriteStack) {
+    typePathWriteStack.removeIf(typeAnnotationWriteHelper -> {
+      StructTypePathEntry path = typeAnnotationWriteHelper.getPaths().peek();
+      if (path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.NESTED.getOpcode()) {
+        typeAnnotationWriteHelper.getPaths().pop();
+        if (typeAnnotationWriteHelper.getPaths().isEmpty()) {
+          typeAnnotationWriteHelper.writeTo(sb);
+          return true;
+        }
+      }
+      return false;
+    });
   }
 
-  public static String getCastTypeName(VarType type, boolean getShort) {
-    StringBuilder s = new StringBuilder(getTypeName(type, getShort));
-    TextUtil.append(s, "[]", type.arrayDim);
-    return s.toString();
+  public static String getCastTypeName(VarType type, List<TypeAnnotationWriteHelper> typePathWriteStack) {
+    return getCastTypeName(type, true, typePathWriteStack);
+  }
+
+  public static String getCastTypeName(VarType type, boolean getShort, List<TypeAnnotationWriteHelper> typePathWriteStack) {
+    List<TypeAnnotationWriteHelper> arrayPaths = new ArrayList<>();
+    List<TypeAnnotationWriteHelper> notArrayPath = typePathWriteStack.stream().filter(stack -> {
+      boolean isArrayPath = stack.getPaths().size() < type.arrayDim;
+      if (stack.getPaths().size() > type.arrayDim) {
+        for (int i = 0; i < type.arrayDim; i++) {
+          stack.getPaths().poll(); // remove all trailing
+        }
+      }
+      if (isArrayPath) {
+        arrayPaths.add(stack);
+      }
+      return !isArrayPath;
+    }).collect(Collectors.toList());
+    StringBuilder sb = new StringBuilder(getTypeName(type, getShort, notArrayPath));
+    writeArray(sb, type.arrayDim, arrayPaths);
+    return sb.toString();
+  }
+
+  public static void writeArray(StringBuilder sb, int arrayDim, List<TypeAnnotationWriteHelper> typePathWriteStack) {
+    for (int i = 0; i < arrayDim; i++) {
+      var ref = new Object() {
+        boolean firstIteration = true;
+      };
+      final int it = i;
+      typePathWriteStack.removeIf(writeHelper -> {
+        if (it == writeHelper.getPaths().size()) {
+          if (ref.firstIteration) {
+            sb.append(' ');
+            ref.firstIteration = false;
+          }
+          writeHelper.writeTo(sb);
+          return true;
+        }
+        return false;
+      });
+      sb.append("[]");
+    }
   }
 
   public static PrimitiveExpressionList getExpressionData(VarExprent var) {
@@ -857,7 +940,7 @@ public class ExprProcessor implements CodeConstants {
     boolean cast =
       castAlways ||
       (!leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) ||
-      (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType))) ||
+      (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType, Collections.emptyList()))) ||
       (castNarrowing && isIntConstant(exprent) && isNarrowedIntType(leftType));
 
     boolean quote = cast && exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST);
@@ -872,7 +955,7 @@ public class ExprProcessor implements CodeConstants {
       }
     }
 
-    if (cast) buffer.append('(').append(getCastTypeName(leftType)).append(')');
+    if (cast) buffer.append('(').append(ExprProcessor.getCastTypeName(leftType, Collections.emptyList())).append(')');
 
     if (quote) buffer.append('(');
 

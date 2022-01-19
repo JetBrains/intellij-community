@@ -31,6 +31,7 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsLogManager
+import com.intellij.vcs.log.impl.VcsLogTabLocation
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.collection
@@ -136,7 +137,7 @@ private fun createManagerAndContent(project: Project,
                               roots.map { VcsRoot(vcs, it) })
   Disposer.register(disposable, Disposable { manager.dispose { roots.forEach { repositoryManager.removeExternalRepository(it) } } })
   val ui = manager.createLogUi(calcLogId(roots),
-                               if (isToolWindowTab) VcsLogManager.LogWindowKind.TOOL_WINDOW else VcsLogManager.LogWindowKind.STANDALONE)
+                               if (isToolWindowTab) VcsLogTabLocation.TOOL_WINDOW else VcsLogTabLocation.STANDALONE)
   Disposer.register(disposable, ui)
   return MyContentComponent(VcsLogPanel(manager, ui), roots, disposable)
 }

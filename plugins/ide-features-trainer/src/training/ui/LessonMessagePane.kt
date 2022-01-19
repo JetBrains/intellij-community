@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui
 
 import com.intellij.icons.AllIcons
@@ -9,10 +9,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.GraphicsUtil
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.WatermarkIcon
+import com.intellij.util.ui.*
 import training.FeaturesTrainerIcons
 import training.dsl.TaskTextProperties
 import training.learn.lesson.LessonManager
@@ -73,7 +70,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   private val restoreMessages = mutableListOf<LessonMessage>()
   private val inactiveMessages = mutableListOf<LessonMessage>()
 
-  private val fontFamily: String get() = UIUtil.getLabelFont().fontName
+  private val fontFamily: String get() = StartupUiUtil.getLabelFont().fontName
 
   private val ranges = mutableSetOf<RangeData>()
 

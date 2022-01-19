@@ -230,7 +230,18 @@ public class JavaKeywordCompletion {
 
     if (psiElement().withText(";").withSuperParent(2, PsiIfStatement.class).accepts(myPrevLeaf) ||
         psiElement().withText("}").withSuperParent(3, PsiIfStatement.class).accepts(myPrevLeaf)) {
-      addKeyword(new OverridableSpace(createKeyword(PsiKeyword.ELSE), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      LookupElement elseKeyword = new OverridableSpace(createKeyword(PsiKeyword.ELSE), TailType.HUMBLE_SPACE_BEFORE_WORD);
+      CharSequence text = myParameters.getEditor().getDocument().getCharsSequence();
+      int offset = myParameters.getOffset();
+      while (text.length() > offset && Character.isWhitespace(text.charAt(offset))) {
+        offset++;
+      }
+      if (text.length() > offset + PsiKeyword.ELSE.length() &&
+          text.subSequence(offset, offset + PsiKeyword.ELSE.length()).toString().equals(PsiKeyword.ELSE) &&
+          Character.isWhitespace(text.charAt(offset + PsiKeyword.ELSE.length()))) {
+        elseKeyword = PrioritizedLookupElement.withPriority(elseKeyword, -1);
+      }
+      addKeyword(elseKeyword);
     }
   }
 

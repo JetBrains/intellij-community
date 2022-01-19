@@ -19,30 +19,55 @@ public class FileAttribute {
   private final String myId;
   private final int myVersion;
   private final boolean myFixedSize;
+  private final boolean myShouldEnumerate;
 
   public FileAttribute(@NonNls @NotNull String id) {
-    this(id, UNDEFINED_VERSION, false);
+    this(id, UNDEFINED_VERSION, false, false);
   }
 
   public FileAttribute(@NonNls @NotNull String id, int version, boolean fixedSize) {
-    this(version, fixedSize, id);
+    this(id, version, fixedSize, false);
+  }
+
+  public FileAttribute(@NonNls @NotNull String id, int version, boolean fixedSize, boolean shouldEnumerate) {
+    this(version, fixedSize, id, shouldEnumerate);
     boolean added = ourRegisteredIds.add(id);
     assert added : "Attribute id='" + id+ "' is not unique";
   }
 
-  private FileAttribute(int version, boolean fixedSize,@NotNull String id) {
+  private FileAttribute(int version, boolean fixedSize,@NotNull String id, boolean shouldEnumerate) {
     myId = id;
     myVersion = version;
     myFixedSize = fixedSize;
+    // TODO enumerate all binary data if asked
+    myShouldEnumerate = shouldEnumerate;
   }
 
+  /**
+   * @deprecated use {@link FileAttribute#readFileAttribute(VirtualFile)}
+   */
+  @Deprecated
   @Nullable
   public DataInputStream readAttribute(@NotNull VirtualFile file) {
     return ManagingFS.getInstance().readAttribute(file, this);
   }
 
+  /**
+   * @deprecated use {@link FileAttribute#writeFileAttribute(VirtualFile)}
+   */
+  @Deprecated
   @NotNull
   public DataOutputStream writeAttribute(@NotNull VirtualFile file) {
+    return ManagingFS.getInstance().writeAttribute(file, this);
+  }
+
+  @Nullable
+  public AttributeInputStream readFileAttribute(@NotNull VirtualFile file) {
+    return ManagingFS.getInstance().readAttribute(file, this);
+  }
+
+  @NotNull
+  public AttributeOutputStream writeFileAttribute(@NotNull VirtualFile file) {
     return ManagingFS.getInstance().writeAttribute(file, this);
   }
 
@@ -76,7 +101,7 @@ public class FileAttribute {
 
   @NotNull
   public FileAttribute newVersion(int newVersion) {
-    return new FileAttribute(newVersion, myFixedSize, myId);
+    return new FileAttribute(newVersion, myFixedSize, myId, myShouldEnumerate);
   }
 
   public int getVersion() {

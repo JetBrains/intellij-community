@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.updater;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.StatisticsNotificationManager;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogMigration;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
@@ -13,15 +12,17 @@ import com.intellij.internal.statistic.eventLog.uploader.EventLogExternalUploade
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PreloadingActivity;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
+import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @InternalIgnoreDependencyViolation
-final class StatisticsJobsScheduler implements ApplicationInitializedListener {
+final class StatisticsJobsScheduler extends PreloadingActivity {
   private static final int SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS = 5 * 60 * 1000;
   private static final int CHECK_STATISTICS_PROVIDERS_DELAY_IN_MIN = 1;
   private static final int CHECK_EXTERNAL_UPLOADER_DELAY_IN_MIN = 3;
@@ -33,7 +34,7 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
   }
 
   @Override
-  public void componentsInitialized() {
+  public void preload(@NotNull ProgressIndicator indicator) {
     StatisticsNotificationManager notificationManager = ApplicationManager.getApplication().getService(StatisticsNotificationManager.class);
     if (notificationManager != null) {
       notificationManager.showNotificationIfNeeded();

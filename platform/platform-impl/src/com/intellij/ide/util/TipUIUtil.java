@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -47,10 +49,7 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ImageView;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -63,21 +62,24 @@ import static com.intellij.DynamicBundle.findLanguageBundle;
 import static com.intellij.util.ui.UIUtil.drawImage;
 
 /**
- * @author dsl
  * @author Konstantin Bulenkov
  */
 public final class TipUIUtil {
   private static final Logger LOG = Logger.getInstance(TipUIUtil.class);
   private static final Pattern SHORTCUT_PATTERN = Pattern.compile("&shortcut:([\\w.$]+?);");
-  private static final List<TipEntity> ENTITIES = List.of(
+  private static final List<TipEntity> ENTITIES;
 
-    TipEntity.of("productName", ApplicationNamesInfo.getInstance().getFullProductName()),
-    TipEntity.of("majorVersion", ApplicationInfo.getInstance().getMajorVersion()),
-    TipEntity.of("minorVersion", ApplicationInfo.getInstance().getMinorVersion()),
-    TipEntity.of("majorMinorVersion", ApplicationInfo.getInstance().getMajorVersion() +
-                                      ("0".equals(ApplicationInfo.getInstance().getMinorVersion()) ? "" :
-                                       ("." + ApplicationInfo.getInstance().getMinorVersion()))),
-    TipEntity.of("settingsPath", CommonBundle.settingsActionPath()));
+  static {
+    ApplicationInfo appInfo = ApplicationInfo.getInstance();
+    ENTITIES = List.of(
+      TipEntity.of("productName", ApplicationNamesInfo.getInstance().getFullProductName()),
+      TipEntity.of("majorVersion", appInfo.getMajorVersion()),
+      TipEntity.of("minorVersion", appInfo.getMinorVersion()),
+      TipEntity.of("majorMinorVersion", appInfo.getMajorVersion() +
+                                        ("0".equals(appInfo.getMinorVersion()) ? "" :
+                                         ("." + appInfo.getMinorVersion()))),
+      TipEntity.of("settingsPath", CommonBundle.settingsActionPath()));
+  }
 
   private TipUIUtil() {
   }
@@ -90,8 +92,7 @@ public final class TipUIUtil {
            descriptor.getName();
   }
 
-  @Nullable
-  public static TipAndTrickBean getTip(@Nullable FeatureDescriptor feature) {
+  public static @Nullable TipAndTrickBean getTip(@Nullable FeatureDescriptor feature) {
     if (feature == null) {
       return null;
     }
@@ -210,18 +211,18 @@ public final class TipUIUtil {
     final Document tipHtml = Jsoup.parse(text.toString());
     tipHtml.outputSettings().prettyPrint(false);
 
-    //First, inline all custom entities like productName
-    tipHtml.getElementsContainingOwnText("&").forEach(element -> {
-      //It's just cleaner expression here that we can configure entities elsewhere and just replace them here in one loop.
+    // First, inline all custom entities like productName
+    for (Element element : tipHtml.getElementsContainingOwnText("&")) {
+      // It's just cleaner expression here that we can configure entities elsewhere and just replace them here in one loop.
       String textNodeText = element.text();
-      for (final TipEntity entity : ENTITIES) {
+      for (TipEntity entity : ENTITIES) {
         textNodeText = entity.inline(textNodeText);
       }
       element.text(textNodeText);
-    });
+    }
 
-    //Here comes shortcut processing
-    tipHtml.getElementsMatchingOwnText(SHORTCUT_PATTERN).forEach(shortcut -> {
+    // Here comes shortcut processing
+    for (Element shortcut : tipHtml.getElementsMatchingOwnText(SHORTCUT_PATTERN)) {
       shortcut.text(SHORTCUT_PATTERN.matcher(shortcut.text()).replaceAll(result -> {
         String shortcutText = null;
         final String actionId = result.group(1);
@@ -242,7 +243,7 @@ public final class TipUIUtil {
         }
         return Matcher.quoteReplacement(shortcutText);
       }));
-    });
+    }
 
     //And finally images
     tipHtml.getElementsByTag("img")
@@ -361,8 +362,7 @@ public final class TipUIUtil {
     }
   }
 
-  @Nullable
-  private static String getShortcutText(String actionId, Keymap keymap) {
+  private static @Nullable String getShortcutText(String actionId, Keymap keymap) {
     for (final Shortcut shortcut : keymap.getShortcuts(actionId)) {
       if (shortcut instanceof KeyboardShortcut) {
         return KeymapUtil.getShortcutText(shortcut);
@@ -384,7 +384,7 @@ public final class TipUIUtil {
     void setText(@Nls String text);
   }
 
-  private static class TipEntity {
+  private static final class TipEntity {
     private final String name;
     private final String value;
 
@@ -437,7 +437,7 @@ public final class TipUIUtil {
     }
   }
 
-  private static class SwingBrowser extends JEditorPane implements Browser {
+  private static final class SwingBrowser extends JEditorPane implements Browser {
     SwingBrowser() {
       setEditable(false);
       setBackground(UIUtil.getTextFieldBackground());
@@ -457,14 +457,23 @@ public final class TipUIUtil {
         .withGapsBetweenParagraphs()
         .build();
 
-      String fileName = StartupUiUtil.isUnderDarcula() ? "tips_darcula.css" : "tips.css";
-      URL resource = TipUIUtil.class.getClassLoader().getResource("tips/css/" + fileName);
-      kit.getStyleSheet().addStyleSheet(StyleSheetUtil.loadStyleSheet(resource));
+      String fileName = "tips/css/" + (StartupUiUtil.isUnderDarcula() ? "tips_darcula.css" : "tips.css");
+      try {
+        byte[] data = ResourceUtil.getResourceAsBytes(fileName, TipUIUtil.class.getClassLoader());
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          LOG.assertTrue(data != null);
+        }
+        if (data != null) {
+          kit.getStyleSheet().addStyleSheet(StyleSheetUtil.loadStyleSheet(new ByteArrayInputStream(data)));
+        }
+      }
+      catch (IOException e) {
+        LOG.error("Cannot load stylesheet " + fileName, e);
+      }
       setEditorKit(kit);
     }
 
-    @NotNull
-    private ExtendableHTMLViewFactory.Extension getSVGImagesExtension() {
+    private @NotNull ExtendableHTMLViewFactory.Extension getSVGImagesExtension() {
       return (elem, view) -> {
         if (!(view instanceof ImageView)) return null;
         String src = (String)view.getElement().getAttributes().getAttribute(HTML.Attribute.SRC);
@@ -587,8 +596,7 @@ public final class TipUIUtil {
     }
   }
 
-  static class TodImage {
-
+  static final class TodImage {
     static final String RETINA_SUFFIX = "@2x";
     static final String DARK_SUFFIX = "_dark";
 
@@ -646,13 +654,11 @@ public final class TipUIUtil {
       this.retina = retina;
     }
 
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return name;
     }
 
-    @NotNull
-    public String getExtension() {
+    public @NotNull String getExtension() {
       return extension;
     }
 
@@ -664,38 +670,31 @@ public final class TipUIUtil {
       return retina;
     }
 
-    @NotNull
-    public TipUIUtil.TodImage dark() {
+    public @NotNull TipUIUtil.TodImage dark() {
       return new TodImage(name, extension, true, retina);
     }
 
-    @NotNull
-    public TipUIUtil.TodImage nonDark() {
+    public @NotNull TipUIUtil.TodImage nonDark() {
       return new TodImage(name, extension, false, retina);
     }
 
-    @NotNull
-    public TipUIUtil.TodImage retina() {
+    public @NotNull TipUIUtil.TodImage retina() {
       return new TodImage(name, extension, dark, true);
     }
 
-    @NotNull
-    public TipUIUtil.TodImage nonRetina() {
+    public @NotNull TipUIUtil.TodImage nonRetina() {
       return new TodImage(name, extension, dark, false);
     }
 
-    @NotNull
-    public TipUIUtil.TodImage withExtension(final @NotNull String extension) {
+    public @NotNull TipUIUtil.TodImage withExtension(final @NotNull String extension) {
       return new TodImage(name, extension, dark, retina);
     }
 
-    @NotNull
-    public TipUIUtil.TodImage withName(final @NotNull String name) {
+    public @NotNull TipUIUtil.TodImage withName(final @NotNull String name) {
       return new TodImage(name, extension, dark, retina);
     }
 
-    @NotNull
-    public TipUIUtil.TodImage base() {
+    public @NotNull TipUIUtil.TodImage base() {
       return new TodImage(name, defaultExtension, false, false);
     }
 
@@ -708,8 +707,7 @@ public final class TipUIUtil {
              extension;
     }
 
-    @NotNull
-    public static TipUIUtil.TodImage of(final @NotNull String src) {
+    public static @NotNull TipUIUtil.TodImage of(final @NotNull String src) {
       return new TodImage(src);
     }
   }

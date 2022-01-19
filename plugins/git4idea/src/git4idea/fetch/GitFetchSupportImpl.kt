@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.fetch
 
 import com.intellij.dvcs.MultiMessage
@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION
 import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector
 import com.intellij.util.concurrency.AppExecutorUtil
+import git4idea.GitNotificationIdsHolder
 import git4idea.GitUtil.findRemoteByName
 import git4idea.GitUtil.mention
 import git4idea.commands.Git
@@ -298,6 +299,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       val type = if (!isFailed) NotificationType.INFORMATION else NotificationType.ERROR
       val message = buildMessage(failureTitle)
       val notification = STANDARD_NOTIFICATION.createNotification(message, type)
+      notification.setDisplayId(if (!isFailed) GitNotificationIdsHolder.FETCH_RESULT else GitNotificationIdsHolder.FETCH_RESULT_ERROR)
       vcsNotifier.notify(notification)
     }
 

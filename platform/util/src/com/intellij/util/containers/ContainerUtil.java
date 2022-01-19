@@ -217,15 +217,6 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link SmartList(T)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static @NotNull <T> List<T> newSmartList(T element) {
-    return new SmartList<>(element);
-  }
-
-  /**
    * @deprecated Use {@link HashSet#HashSet()}
    */
   @Contract(pure = true)
@@ -2500,15 +2491,6 @@ public final class ContainerUtil {
   @Contract(value = "_ -> new", pure = true)
   public static @NotNull <T> ConcurrentList<T> createConcurrentList(@NotNull Collection <? extends T> c) {
     return new LockFreeCopyOnWriteArrayList<>(c);
-  }
-
-  /**
-   * @deprecated use {@link #addIfNotNull(Collection, Object)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<? super T> result) {
-    addIfNotNull(result,element);
   }
 
   public static <T> void addIfNotNull(@NotNull Collection<? super T> result, @Nullable T element) {

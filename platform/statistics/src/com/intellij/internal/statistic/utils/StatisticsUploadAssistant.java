@@ -31,7 +31,9 @@ public final class StatisticsUploadAssistant {
       return isHeadlessStatisticsEnabled();
     }
     UsageStatisticsPersistenceComponent settings = UsageStatisticsPersistenceComponent.getInstance();
-    return settings != null && settings.isAllowed();
+
+    boolean sendOverride = getSendAllowedOverride();
+    return settings != null && settings.isAllowed() || sendOverride;
   }
 
   public static boolean isCollectAllowed() {
@@ -39,7 +41,24 @@ public final class StatisticsUploadAssistant {
       return isHeadlessStatisticsEnabled();
     }
     final UsageStatisticsPersistenceComponent settings = UsageStatisticsPersistenceComponent.getInstance();
-    return (settings != null && settings.isAllowed()) || isLocalStatisticsWithoutReport();
+    boolean collectOverride = getCollectAllowedOverride();
+    return (settings != null && settings.isAllowed() || collectOverride) || isLocalStatisticsWithoutReport();
+  }
+
+  public static boolean getSendAllowedOverride() {
+    ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
+    if (externalEventLogSettings != null)
+      return externalEventLogSettings.isSendAllowedOverride();
+    else
+      return false;
+  }
+
+  public static boolean getCollectAllowedOverride() {
+    ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
+    if (externalEventLogSettings != null)
+      return externalEventLogSettings.isCollectAllowedOverride();
+    else
+      return false;
   }
 
   private static boolean isHeadlessStatisticsEnabled() {

@@ -55,6 +55,8 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.gist.GistManager;
+import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
@@ -342,7 +344,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       }
       UIUtil.dispatchAllInvocationEvents();
     }
-
+    ((GistManagerImpl)GistManager.getInstance()).clearQueueInTests();
     UIUtil.dispatchAllInvocationEvents();
 
     FileStatusMap fileStatusMap = getFileStatusMap();

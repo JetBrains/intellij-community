@@ -1067,32 +1067,6 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   /**
-   * Checks that code block throw corresponding exception.
-   *
-   * @param exceptionCase Block annotated with some exception type
-   * @deprecated Use {@link #assertThrows(Class, ThrowableRunnable)} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  protected void assertException(@NotNull AbstractExceptionCase<?> exceptionCase) {
-    assertThrows(exceptionCase.getExpectedExceptionClass(), null, ()-> exceptionCase.tryClosure());
-  }
-
-  /**
-   * Checks that code block throw corresponding exception with expected error msg.
-   * If expected error message is null it will not be checked.
-   *
-   * @param exceptionCase    Block annotated with some exception type
-   * @param expectedErrorMsg expected error message
-   * @deprecated Use {@link #assertThrows(Class, String, ThrowableRunnable)} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  protected void assertException(@NotNull AbstractExceptionCase<?> exceptionCase, @Nullable String expectedErrorMsg) {
-    assertThrows(exceptionCase.getExpectedExceptionClass(), expectedErrorMsg, ()->exceptionCase.tryClosure());
-  }
-
-  /**
    * Checks that the code block throws an exception of the specified class.
    *
    * @param exceptionClass   Expected exception type
@@ -1136,23 +1110,6 @@ public abstract class UsefulTestCase extends TestCase {
       if (!wasThrown) {
         fail(exceptionClass + " must be thrown.");
       }
-    }
-  }
-
-  /**
-   * Checks that code block doesn't throw corresponding exception.
-   *
-   * @param exceptionCase Block annotated with some exception type
-   * @deprecated Use {@link #assertNoException(Class, ThrowableRunnable)} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  protected <T extends Throwable> void assertNoException(@NotNull AbstractExceptionCase<T> exceptionCase) throws T {
-    try {
-      assertNoException(exceptionCase.getExpectedExceptionClass(), () -> exceptionCase.tryClosure());
-    }
-    catch (Throwable throwable) {
-      throw new RuntimeException(throwable);
     }
   }
 

@@ -8,6 +8,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.lang.VirtualFormattingListener;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -77,7 +78,25 @@ public class CodeFormatterFacade {
     final PsiFile fileToFormat = elementToFormat.getContainingFile();
 
     RangeMarker rangeMarker = null;
-    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(fileToFormat);
+
+    // Dirty workaround
+    // In case we're formatting not the original file, we have to keep the formatting listener
+    // if any and drop it after creating a VirtualFormattingModel.
+    VirtualFormattingListener listener = VirtualFormattingImplKt.getVirtualFormattingListener(file);
+    final FormattingModelBuilder builder;
+    try {
+      if (listener != null) {
+        VirtualFormattingImplKt.setVirtualFormattingListener(fileToFormat, listener);
+      }
+      builder = LanguageFormatting.INSTANCE.forContext(fileToFormat);
+    }
+    finally {
+      if (listener != null) {
+        VirtualFormattingImplKt.setVirtualFormattingListener(fileToFormat, null);
+      }
+    }
+    // End of dirty workaround
+
     if (builder != null) {
       if (document != null && endOffset < document.getTextLength()) {
         rangeMarker = document.createRangeMarker(startOffset, endOffset);

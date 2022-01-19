@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ProjectUtil")
 package com.intellij.openapi.project
 
@@ -64,7 +64,7 @@ fun calcRelativeToProjectPath(file: VirtualFile,
          else displayUrlRelativeToProject(file, url, project, includeFilePath, keepModuleAlwaysOnTheLeft)
 }
 
-fun guessProjectForFile(file: VirtualFile?): Project? = ProjectLocator.getInstance().guessProjectForFile(file)
+fun guessProjectForFile(file: VirtualFile): Project? = ProjectLocator.getInstance().guessProjectForFile(file)
 
 /**
  * guessProjectForFile works incorrectly - even if file is config (idea config file) first opened project will be returned
@@ -180,7 +180,7 @@ private fun getProjectCacheFileName(presentableUrl: String?,
     isForceNameUse || presentableUrl == null -> projectName
     else -> {
       // lower case here is used for cosmetic reasons (develar - discussed with jeka - leave it as it was, user projects will not have long names as in our tests
-      PathUtilRt.getFileName(presentableUrl).toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
+      PathUtilRt.getFileName(presentableUrl).lowercase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
     }
   }
   return doGetProjectFileName(presentableUrl, sanitizeFileName(name, truncateIfNeeded = false), hashSeparator, extensionWithDot)
@@ -291,5 +291,5 @@ inline fun processOpenedProjects(processor: (Project) -> Unit) {
 }
 
 fun isNotificationSilentMode(project: Project?): Boolean {
-  return ApplicationManager.getApplication().isHeadlessEnvironment || NOTIFICATIONS_SILENT_MODE[project, false]
+  return ApplicationManager.getApplication().isHeadlessEnvironment || NOTIFICATIONS_SILENT_MODE.get(project, false)
 }

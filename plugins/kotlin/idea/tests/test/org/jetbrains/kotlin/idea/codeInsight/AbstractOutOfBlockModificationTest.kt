@@ -14,6 +14,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.caches.trackers.KotlinPackageModificationListener
 import org.jetbrains.kotlin.idea.caches.trackers.outOfBlockModificationCount
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
@@ -32,15 +33,17 @@ abstract class AbstractOutOfBlockModificationTest : KotlinLightCodeInsightFixtur
             ScriptConfigurationManager.updateScriptDependenciesSynchronously(ktFile)
         }
         val expectedOutOfBlock = expectedOutOfBlockResult
-        val isSkipCheckDefined = InTextDirectivesUtils.isDirectiveDefined(
-            ktFile.text,
-            SKIP_ANALYZE_CHECK_DIRECTIVE
-        )
+        val text = ktFile.text
+        val expectedPackageTrackerChange = InTextDirectivesUtils.isDirectiveDefined(text, PACKAGE_CHANGE_DIRECTIVE)
+        val isErrorChecksDisabled = InTextDirectivesUtils.isDirectiveDefined(text, DISABLE_ERROR_CHECKS_DIRECTIVE)
+        val isSkipCheckDefined = InTextDirectivesUtils.isDirectiveDefined(text, SKIP_ANALYZE_CHECK_DIRECTIVE)
         val project = myFixture.project
         val tracker =
             PsiManager.getInstance(project).modificationTracker as PsiModificationTrackerImpl
         val element = ktFile.findElementAt(myFixture.caretOffset)
         assertNotNull("Should be valid element", element)
+        val packageTracker = KotlinPackageModificationListener.getInstance(project).packageTracker
+        val ptcBeforeType = packageTracker.modificationCount
         val oobBeforeType = ktFile.outOfBlockModificationCount
         val modificationCountBeforeType = tracker.modificationCount
 
@@ -50,20 +53,29 @@ abstract class AbstractOutOfBlockModificationTest : KotlinLightCodeInsightFixtur
         myFixture.type(stringToType)
         PsiDocumentManager.getInstance(project).commitDocument(myFixture.getDocument(myFixture.file))
         val oobAfterCount = ktFile.outOfBlockModificationCount
+        val ptcAfterType = packageTracker.modificationCount
         val modificationCountAfterType = tracker.modificationCount
         assertTrue(
             "Modification tracker should always be changed after type",
             modificationCountBeforeType != modificationCountAfterType
         )
+
         assertEquals(
-            "Result for out of block test is differs from expected on element in file:\n"
+            "Result for out of block test differs from expected on element in file:\n"
                     + FileUtil.loadFile(testDataFile()),
             expectedOutOfBlock, oobBeforeType != oobAfterCount
         )
-        checkForUnexpectedErrors(ktFile)
+        assertEquals(
+            "package modification tracker differs from expected:\n"
+                    + FileUtil.loadFile(testDataFile()),
+            expectedPackageTrackerChange, ptcBeforeType != ptcAfterType
+        )
+        if (!isErrorChecksDisabled) {
+            checkForUnexpectedErrors(ktFile)
+        }
         DirectiveBasedActionUtils.inspectionChecks(name, ktFile)
 
-        if (!isSkipCheckDefined) {
+        if (!isSkipCheckDefined && !isErrorChecksDisabled) {
             checkOOBWithDescriptorsResolve(expectedOutOfBlock)
         }
     }
@@ -133,6 +145,8 @@ abstract class AbstractOutOfBlockModificationTest : KotlinLightCodeInsightFixtur
 
     companion object {
         const val OUT_OF_CODE_BLOCK_DIRECTIVE = "OUT_OF_CODE_BLOCK:"
+        const val PACKAGE_CHANGE_DIRECTIVE = "PACKAGE_CHANGE"
+        const val DISABLE_ERROR_CHECKS_DIRECTIVE = "DISABLE_ERROR_CHECKS"
         const val SKIP_ANALYZE_CHECK_DIRECTIVE = "SKIP_ANALYZE_CHECK"
         const val TYPE_DIRECTIVE = "TYPE:"
 

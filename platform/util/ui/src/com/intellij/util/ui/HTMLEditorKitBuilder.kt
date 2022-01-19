@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui
 
 import com.intellij.util.ui.ExtendableHTMLViewFactory.Companion.DEFAULT_EXTENSIONS
@@ -12,7 +12,6 @@ import javax.swing.text.html.StyleSheet
  * Convenient way to create [HTMLEditorKit] to be used in [javax.swing.JEditorPane] and similar
  */
 class HTMLEditorKitBuilder {
-
   private var viewFactory: ViewFactory = ExtendableHTMLViewFactory.DEFAULT
   private var overriddenRootStyle: StyleSheet? = null
   private var needGapsBetweenParagraphs = false
@@ -47,14 +46,14 @@ class HTMLEditorKitBuilder {
    * This stylesheet will be used by default in all documents created via [HTMLEditorKit.createDefaultDocument]
    * Generally - a default stylesheet for [javax.swing.JEditorPane] unless you override the document manually
    *
-   * By default [StyleSheetUtil.createJBDefaultStyleSheet] is used
+   * By default [StyleSheetUtil.getDefaultStyleSheet] is used
    */
   fun withStyleSheet(styleSheet: StyleSheet) = apply {
     overriddenRootStyle = styleSheet
   }
 
   /**
-   * By default, we add [UIUtil.NO_GAPS_BETWEEN_PARAGRAPHS_STYLE] style to the default style
+   * By default, we add [StyleSheetUtil.NO_GAPS_BETWEEN_PARAGRAPHS_STYLE] style to the default style
    * This allows to prevent that
    *
    * Does not affect custom stylesheet set by [withStyleSheet]
@@ -87,13 +86,14 @@ class HTMLEditorKitBuilder {
   }
 
   private fun createHtmlStyleSheet(): StyleSheet {
-    val sheet = StyleSheetUtil.createJBDefaultStyleSheet()
-    if (!needGapsBetweenParagraphs) sheet.addStyleSheet(UIUtil.NO_GAPS_BETWEEN_PARAGRAPHS_STYLE)
+    val sheet = StyleSheetUtil.getDefaultStyleSheet()
+    if (!needGapsBetweenParagraphs) {
+      sheet.addStyleSheet(StyleSheetUtil.NO_GAPS_BETWEEN_PARAGRAPHS_STYLE)
+    }
     return sheet
   }
 
   companion object {
-
     /**
      * Create a simple editor kit with default values
      */

@@ -3,37 +3,43 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DataOutputStream;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.IntSupplier;
 
+import static com.intellij.openapi.vfs.newvfs.persistent.FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER;
+
 final class PersistentFSTreeAccessor {
   private static final FileAttribute ourChildrenAttr = new FileAttribute("FsRecords.DIRECTORY_CHILDREN");
 
   @NotNull
   private final PersistentFSAttributeAccessor myAttributeAccessor;
-  private final boolean myStoreRootsSeparately;
   private final PersistentFSConnection myFSConnection;
+  private final @Nullable FsRootDataLoader myFsRootDataLoader;
   private static final int ROOT_RECORD_ID = 1;
 
-  PersistentFSTreeAccessor(@NotNull PersistentFSAttributeAccessor attributeAccessor, boolean storeRootsSeparately, @NotNull PersistentFSConnection connection) {
+  PersistentFSTreeAccessor(@NotNull PersistentFSAttributeAccessor attributeAccessor, @NotNull PersistentFSConnection connection) {
     myAttributeAccessor = attributeAccessor;
-    myStoreRootsSeparately = storeRootsSeparately;
     myFSConnection = connection;
+    myFsRootDataLoader = SystemProperties.getBooleanProperty(IDE_USE_FS_ROOTS_DATA_LOADER, false)
+                       ? ContainerUtil.getFirstItem(FsRootDataLoader.getEP_NAME().getExtensionList())
+                       : null;
   }
 
   void doSaveChildren(int parentId, @NotNull ListResult toSave) throws IOException {
@@ -86,21 +92,6 @@ final class PersistentFSTreeAccessor {
   }
 
   int @NotNull [] listRoots() throws IOException {
-    if (myStoreRootsSeparately) {
-      IntList result = new IntArrayList();
-
-      try (LineNumberReader stream = new LineNumberReader(Files.newBufferedReader(myFSConnection.getPersistentFSPaths().getRootsFile()))) {
-        String str;
-        while ((str = stream.readLine()) != null) {
-          int index = str.indexOf(' ');
-          int id = Integer.parseInt(str.substring(0, index));
-          result.add(id);
-        }
-      }
-      catch (FileNotFoundException ignored) {
-      }
-      return result.toIntArray();
-    }
     try (DataInputStream input = myAttributeAccessor.readAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
       if (input == null) return ArrayUtilRt.EMPTY_INT_ARRAY;
       final int count = DataInputOutputUtil.readINT(input);
@@ -137,27 +128,6 @@ final class PersistentFSTreeAccessor {
 
   int findOrCreateRootRecord(@NotNull String rootUrl, @NotNull IntSupplier newRecord) throws IOException {
     PersistentFSConnection connection = myFSConnection;
-    if (myStoreRootsSeparately) {
-      try (LineNumberReader stream = new LineNumberReader(Files.newBufferedReader(connection.getPersistentFSPaths().getRootsFile()))) {
-        String str;
-        while ((str = stream.readLine()) != null) {
-          int index = str.indexOf(' ');
-
-          if (str.substring(index + 1).equals(rootUrl)) {
-            return Integer.parseInt(str.substring(0, index));
-          }
-        }
-      }
-      catch (FileNotFoundException ignored) {
-      }
-
-      connection.markDirty();
-      try (Writer stream = Files.newBufferedWriter(connection.getPersistentFSPaths().getRootsFile(), StandardOpenOption.APPEND)) {
-        int id = newRecord.getAsInt();
-        stream.write(id + " " + rootUrl + "\n");
-        return id;
-      }
-    }
 
     int root = connection.getNames().tryEnumerate(rootUrl);
 
@@ -201,30 +171,23 @@ final class PersistentFSTreeAccessor {
     return id;
   }
 
-  void deleteRootRecord(int fileId) throws IOException {
-    PersistentFSConnection connection = myFSConnection;
-    connection.markDirty();
-    if (myStoreRootsSeparately) {
-      List<String> rootsThatLeft = new ArrayList<>();
-      try (LineNumberReader stream = new LineNumberReader(Files.newBufferedReader(connection.getPersistentFSPaths().getRootsFile()))) {
-        String str;
-        while((str = stream.readLine()) != null) {
-          int index = str.indexOf(' ');
-          int rootId = Integer.parseInt(str.substring(0, index));
-          if (rootId != fileId) {
-            rootsThatLeft.add(str);
-          }
-        }
-      }
-      catch (FileNotFoundException ignored) {}
+  void loadDirectoryData(int id, @NotNull String path, @NotNull NewVirtualFileSystem fs) throws IOException {
+    if (myFsRootDataLoader != null) {
+      myFsRootDataLoader.loadDirectoryData(getRootsStoragePath(), id, path, fs);
+    }
+  }
 
-      try (Writer stream = Files.newBufferedWriter(connection.getPersistentFSPaths().getRootsFile())) {
-        for (String line : rootsThatLeft) {
-          stream.write(line);
-          stream.write("\n");
-        }
-      }
-      return;
+  void loadRootData(int id, @NotNull String path, @NotNull NewVirtualFileSystem fs) throws IOException {
+    if (myFsRootDataLoader != null) {
+      myFsRootDataLoader.loadRootData(getRootsStoragePath(), id, path, fs);
+    }
+  }
+
+  void deleteRootRecord(int fileId) throws IOException {
+    myFSConnection.markDirty();
+
+    if (myFsRootDataLoader != null) {
+      myFsRootDataLoader.deleteRootRecord(getRootsStoragePath(), fileId);
     }
 
     int[] names;
@@ -270,5 +233,10 @@ final class PersistentFSTreeAccessor {
       prevId = ids[i];
       prevNameId = names[i];
     }
+  }
+
+  @NotNull
+  private Path getRootsStoragePath() {
+    return myFSConnection.getPersistentFSPaths().getRootsStorage(myFsRootDataLoader.getName());
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.BrowserUtil;
@@ -16,7 +16,6 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -407,7 +406,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         width += myIcon.getIconWidth() + myIconTextGap;
       }
 
-      final Insets borderInsets = myBorder != null ? myBorder.getBorderInsets(this) : JBUI.emptyInsets();
+      final Insets borderInsets = myBorder != null ? myBorder.getBorderInsets(this) : JBInsets.emptyInsets();
       width += borderInsets.left;
 
       Font font = getBaseFont();
@@ -435,7 +434,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     final FontMetrics metrics = getFontMetrics(font);
     int textHeight = Math.max(getMinHeight(), metrics.getHeight()); //avoid too narrow rows
 
-    Insets borderInsets = myBorder != null ? myBorder.getBorderInsets(this) : JBUI.emptyInsets();
+    Insets borderInsets = myBorder != null ? myBorder.getBorderInsets(this) : JBInsets.emptyInsets();
     textHeight += borderInsets.top + borderInsets.bottom;
 
     height += myIcon == null ? textHeight : Math.max(myIcon.getIconHeight(), textHeight);

@@ -78,9 +78,10 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
   public static void markAsSafe(@NotNull Project project, @NotNull Collection<PsiElement> toAnnotate, boolean isHeadlessMode) {
     AnnotationPlace place = getPlace(project, toAnnotate);
     if (place == AnnotationPlace.NEED_ASK_USER && !isHeadlessMode) {
-      PsiElement first = ContainerUtil.getFirstItem(toAnnotate);
+      PsiModifierListOwner first = ContainerUtil.findInstance(toAnnotate, PsiModifierListOwner.class);
       if (first == null) return;
       ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
+      if (!annotationsManager.hasConfiguredAnnotationRoot(first)) return;
       place = WriteAction.compute(() -> annotationsManager.chooseAnnotationsPlace(first));
     }
     if (place != AnnotationPlace.EXTERNAL && place != AnnotationPlace.IN_CODE) return;

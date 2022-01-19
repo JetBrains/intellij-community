@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.impl.FontFallbackIterator;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,7 +14,7 @@ public final class FontUtil {
   @NotNull
   @Nls
   public static String getHtmlWithFonts(@NotNull @Nls String input) {
-    Font font = UIUtil.getLabelFont();
+    Font font = StartupUiUtil.getLabelFont();
     return getHtmlWithFonts(input, font.getStyle(), font);
   }
 
@@ -62,7 +62,7 @@ public final class FontUtil {
   }
 
   public static Font getCommitMetadataFont() {
-    return UIUtil.getLabelFont();
+    return StartupUiUtil.getLabelFont();
   }
 
   public static int getStandardAscent(@NotNull Font font, @NotNull Graphics g) {

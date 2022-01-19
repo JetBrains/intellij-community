@@ -1,0 +1,11 @@
+// "Remove 'inline' modifier" "true"
+open class Base {
+    fun baseFun(param: Any) {}
+}
+
+open class Derived : Base() {
+    val prop: Unit
+        get() {
+            super.baseFun("123")
+        }
+}

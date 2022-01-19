@@ -237,7 +237,7 @@ final class JarPackager {
                                     Map<JpsLibrary, List<Path>> libraryToMerge,
                                     Path outputDir,
                                     Predicate<String> predicate) {
-    Map<JpsLibrary, List<Path>> result = new HashMap<>()
+    Map<JpsLibrary, List<Path>> result = new LinkedHashMap<>()
 
     Iterator<Map.Entry<JpsLibrary, List<Path>>> iterator = libraryToMerge.entrySet().iterator()
     while (iterator.hasNext()) {
@@ -327,9 +327,8 @@ final class JarPackager {
                                                     BaseLayout layout,
                                                     Map<Path, JpsLibrary> copiedFiles,
                                                     Map<String, List> extraLibSources) {
-    Map<JpsLibrary, List<Path>> toMerge = new HashMap<JpsLibrary, List<Path>>()
+    Map<JpsLibrary, List<Path>> toMerge = new LinkedHashMap<JpsLibrary, List<Path>>()
     Predicate<String> isLibraryMergeable = buildHelper.isLibraryMergeable
-
 
     Iterator<ProjectLibraryData> projectLibIterator = layout.includedProjectLibraries.isEmpty()
       ? Collections.<ProjectLibraryData> emptyIterator()
@@ -359,17 +358,16 @@ final class JarPackager {
         packMode = PackMode.STANDALONE_MERGED
       }
 
-      if (packMode == PackMode.MERGED) {
+      String outPath = libraryData.outPath
+      if (packMode == PackMode.MERGED && outPath == null) {
         toMerge.put(library, files)
       }
       else {
         Path libOutputDir = outputDir
-        String outPath = libraryData.outPath
-        String customOutFilename = null
-        if (outPath != null && !outPath.isEmpty()) {
-          if (outPath.contains(".")) {
-            assert !outPath.contains("/")
-            customOutFilename = outPath
+        if (outPath != null) {
+          if (outPath.endsWith(".jar")) {
+            addLibrary(library, outputDir.resolve(outPath), files)
+            continue
           }
           else {
             libOutputDir = outputDir.resolve(outPath)
@@ -377,11 +375,9 @@ final class JarPackager {
         }
 
         if (packMode == PackMode.STANDALONE_MERGED) {
-          String fileName = customOutFilename ?: libNameToMergedJarFileName(libName)
-          addLibrary(library, libOutputDir.resolve(fileName), files)
+          addLibrary(library, libOutputDir.resolve(libNameToMergedJarFileName(libName)), files)
         }
         else {
-          assert customOutFilename == null
           for (Path file : files) {
             String fileName = file.fileName.toString()
             if (packMode == PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME) {

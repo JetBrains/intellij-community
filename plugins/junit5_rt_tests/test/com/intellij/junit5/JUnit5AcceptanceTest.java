@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -50,7 +50,15 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
   void rejectStaticMethods() {
     PsiClass aClass =
       myFixture.addClass("import org.junit.jupiter.api.*; /** @noinspection ALL*/ class MyTest { @Test static void method() {}}");
-    assertTrue(JUnitUtil.isTestClass(aClass, false, false));
+    assertFalse(JUnitUtil.isTestClass(aClass, false, false));
+    assertFalse(JUnitUtil.isTestMethod(MethodLocation.elementInClass(aClass.getMethods()[0], aClass)));
+  }
+  
+  @Test
+  void rejectPrivateMethods() {
+    PsiClass aClass =
+      myFixture.addClass("import org.junit.jupiter.api.*; /** @noinspection ALL*/ class MyTest { @Test private void method() {}}");
+    assertFalse(JUnitUtil.isTestClass(aClass, false, false));
     assertFalse(JUnitUtil.isTestMethod(MethodLocation.elementInClass(aClass.getMethods()[0], aClass)));
   }
 
@@ -88,7 +96,7 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
     final Set<String> frameworks = myFixture.getAllQuickFixes().stream()
       .map(action -> action.getText())
       .filter(name -> name.startsWith("Add")).collect(Collectors.toSet());
-    assertAll("Detected frameworks: " + frameworks.toString(),
+    assertAll("Detected frameworks: " + frameworks,
               () -> assertTrue(frameworks.contains("Add 'JUnit5.8.1' to classpath")));
 
     myFixture.configureByText("MyTest.java",
@@ -98,7 +106,7 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
     Set<String> displayNameFrameworks = myFixture.getAllQuickFixes().stream()
       .map(action -> action.getText())
       .filter(name -> name.startsWith("Add")).collect(Collectors.toSet());
-    assertAll("Detected frameworks: " + displayNameFrameworks.toString(),
+    assertAll("Detected frameworks: " + displayNameFrameworks,
               () -> assertTrue(displayNameFrameworks.contains("Add 'JUnit5.8.1' to classpath")));
   }
 

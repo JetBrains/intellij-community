@@ -74,7 +74,8 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
           }
         }
       })
-    project.messageBus.connect().subscribe(CommitModeManager.COMMIT_MODE_TOPIC, object : CommitModeManager.CommitModeListener {
+    val projectBusConnection = project.messageBus.connect()
+    CommitModeManager.subscribeOnCommitModeChange(projectBusConnection, object : CommitModeManager.CommitModeListener {
       override fun commitModeChanged() = updateToolWindowMapping()
     })
   }
@@ -177,13 +178,16 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     return content.resolveToolWindowId()
   }
 
+  fun initLazyContent(content: Content) {
+    val provider = content.getUserData(CONTENT_PROVIDER_SUPPLIER_KEY)?.invoke() ?: return
+    content.putUserData(CONTENT_PROVIDER_SUPPLIER_KEY, null)
+    provider.initTabContent(content)
+    IJSwingUtilities.updateComponentTreeUI(content.component)
+  }
+
   private inner class ContentProvidersListener : ContentManagerListener {
     override fun selectionChanged(event: ContentManagerEvent) {
-      val content = event.content
-      val provider = content.getUserData(CONTENT_PROVIDER_SUPPLIER_KEY)?.invoke() ?: return
-      provider.initTabContent(content)
-      IJSwingUtilities.updateComponentTreeUI(content.component)
-      content.putUserData(CONTENT_PROVIDER_SUPPLIER_KEY, null)
+      initLazyContent(event.content)
     }
   }
 
@@ -259,6 +263,11 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     fun getToolWindowFor(project: Project, tabName: String): ToolWindow? =
       ToolWindowManager.getInstance(project).getToolWindow(getToolWindowIdFor(project, tabName))
 
+    /**
+     * Specified tab order in toolwindow.
+     *
+     * @see ChangesViewContentManager.TabOrderWeight
+     */
     @JvmField
     val ORDER_WEIGHT_KEY = Key.create<Int>("ChangesView.ContentOrderWeight")
 

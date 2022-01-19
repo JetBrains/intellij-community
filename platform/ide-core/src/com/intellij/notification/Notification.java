@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification;
 
 import com.intellij.ide.DataManager;
@@ -108,16 +108,18 @@ public class Notification {
     return mySuggestionType;
   }
 
-  public void setSuggestionType(boolean suggestionType) {
+  public @NotNull Notification setSuggestionType(boolean suggestionType) {
     mySuggestionType = suggestionType;
+    return this;
   }
 
   public boolean isImportantSuggestion() {
     return myImportantSuggestion;
   }
 
-  public void setImportantSuggestion(boolean importantSuggestion) {
+  public @NotNull Notification setImportantSuggestion(boolean importantSuggestion) {
     myImportantSuggestion = importantSuggestion;
+    return this;
   }
 
   /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -25,6 +25,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.xml.util.XmlStringUtil;
+import git4idea.GitNotificationIdsHolder;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.i18n.GitBundle;
@@ -54,6 +55,7 @@ final class GitPushResultNotification extends Notification {
                                     @NotNull @Nls String content,
                                     @NotNull NotificationType type) {
     super(groupDisplayId, "", emulateTitle(title, content), type);
+    setDisplayId(GitNotificationIdsHolder.PUSH_RESULT);
   }
 
   @NotNull

@@ -162,8 +162,8 @@ public class FinallyProcessor {
       if (node.block != null) {
         blockStatement = node.block;
       }
-      else if (node.preds.size() == 1) {
-        blockStatement = node.preds.get(0).block;
+      else if (node.predecessors.size() == 1) {
+        blockStatement = node.predecessors.get(0).block;
       }
 
       boolean isTrueExit = true;
@@ -213,8 +213,8 @@ public class FinallyProcessor {
 
                 Exprent next = null;
                 if (i == node.exprents.size() - 1) {
-                  if (node.succs.size() == 1) {
-                    DirectNode nd = node.succs.get(0);
+                  if (node.successors.size() == 1) {
+                    DirectNode nd = node.successors.get(0);
                     if (!nd.exprents.isEmpty()) {
                       next = nd.exprents.get(0);
                     }
@@ -261,7 +261,7 @@ public class FinallyProcessor {
         }
       }
 
-      stack.addAll(node.succs);
+      stack.addAll(node.successors);
     }
 
     // empty finally block?

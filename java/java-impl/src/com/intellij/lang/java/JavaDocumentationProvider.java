@@ -6,7 +6,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
-import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.codeInsight.documentation.PlatformDocumentationUtil;
 import com.intellij.codeInsight.documentation.QuickDocUtil;
 import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
@@ -15,8 +14,10 @@ import com.intellij.ide.util.PackageUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LanguageCommenters;
-import com.intellij.lang.documentation.*;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.lang.documentation.CodeDocumentationProvider;
+import com.intellij.lang.documentation.CompositeDocumentationProvider;
+import com.intellij.lang.documentation.DocumentationSettings;
+import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -31,7 +32,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -544,41 +544,35 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   public static void generateParametersTakingDocFromSuperMethods(StringBuilder builder,
                                                                  CodeDocumentationAwareCommenter commenter,
                                                                  PsiMethod psiMethod) {
-    final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-    final Map<String, String> param2Description = new HashMap<>();
-    final PsiMethod[] superMethods = psiMethod.findSuperMethods();
+    PsiParameterList parameterList = psiMethod.getParameterList();
+    final PsiParameter[] parameters = parameterList.getParameters();
+    final Map<Integer, String> index2Description = new HashMap<>();
 
-    for (PsiMethod superMethod : superMethods) {
-      final PsiDocComment comment = superMethod.getDocComment();
-      if (comment != null) {
-        final PsiDocTag[] params = comment.findTagsByName("param");
-        for (PsiDocTag param : params) {
-          final PsiElement[] dataElements = param.getDataElements();
-          String paramName = null;
-          for (PsiElement dataElement : dataElements) {
-            if (dataElement instanceof PsiDocParamRef) {
-              //noinspection ConstantConditions
-              paramName = dataElement.getReference().getCanonicalText();
-              break;
-            }
-          }
-          if (paramName != null) {
-            param2Description.put(paramName, param.getText());
-          }
+    for (int i = 0; i < parameters.length; i++) {
+      PsiDocTag param = JavaDocInfoGenerator.findInheritDocTag(psiMethod, i);
+      if (param == null) continue;
+      final PsiElement[] dataElements = param.getDataElements();
+      String paramName = null;
+      int endOffset = 0;
+      for (PsiElement dataElement : dataElements) {
+        if (dataElement instanceof PsiDocParamRef) {
+          //noinspection ConstantConditions
+          paramName = dataElement.getReference().getCanonicalText();
+          endOffset = dataElement.getTextRangeInParent().getEndOffset();
+          break;
         }
+      }
+      if (paramName != null) {
+        index2Description.put(i, param.getText().substring(endOffset));
       }
     }
 
-    for (PsiParameter parameter : parameters) {
-      String description = param2Description.get(parameter.getName());
+    for (int i = 0; i < parameters.length; i++) {
+      String description = index2Description.get(i);
+      builder.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, psiMethod.getContainingFile(), commenter));
+      builder.append(parameters[i].getName());
       if (description != null) {
-        builder.append(CodeDocumentationUtil.createDocCommentLine("", psiMethod.getContainingFile(), commenter));
-        if (description.indexOf('\n') > -1) description = description.substring(0, description.lastIndexOf('\n'));
-        builder.append(description);
-      }
-      else {
-        builder.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, psiMethod.getContainingFile(), commenter));
-        builder.append(parameter.getName());
+        builder.append(description.replaceFirst("(\\s*\\*)?\\s*$", ""));
       }
       builder.append(LINE_SEPARATOR);
     }

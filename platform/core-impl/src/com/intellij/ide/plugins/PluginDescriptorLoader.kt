@@ -465,6 +465,9 @@ private fun loadCoreProductPlugin(reader: XMLStreamReader2,
     override val pool: ZipFilePool
       get() = throw IllegalStateException("must be not called")
 
+    override val emptyDescriptorIfCannotResolve: Boolean
+      get() = true
+
     override fun load(path: String) = throw IllegalStateException("must be not called")
 
     override fun toString() = "product classpath"

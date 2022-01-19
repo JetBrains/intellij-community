@@ -98,13 +98,6 @@ public final class DialogAppender extends AppenderSkeleton {
   }
 
   private static IdeaLoggingEvent extractLoggingEvent(Object messageObject, Throwable throwable) {
-    Throwable rootCause = ExceptionUtil.getRootCause(throwable);
-    //noinspection deprecation
-    if (rootCause instanceof LogEventException) {
-      //noinspection deprecation
-      return ((LogEventException)rootCause).getLogMessage();
-    }
-
     String message = null;
     List<ExceptionWithAttachments> withAttachments = ExceptionUtil.findCauseAndSuppressed(throwable, ExceptionWithAttachments.class);
     if (!withAttachments.isEmpty() && withAttachments.get(0) instanceof RuntimeExceptionWithAttachments) {

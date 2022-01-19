@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -8,10 +8,12 @@ import java.util.function.Supplier;
 
 /**
  * Compute-once keep-forever lazy value.
+ * Do not extend, but use static factory methods to create instance.
+ * <p/>
  * Clearable version: {@link ClearableLazyValue}.
  */
 @ApiStatus.NonExtendable
-public abstract class NotNullLazyValue<T> {
+public abstract class NotNullLazyValue<T> implements Supplier<T> {
   private T myValue;
 
   /** @deprecated Use {@link NotNullLazyValue#lazy(Supplier)} */
@@ -21,6 +23,11 @@ public abstract class NotNullLazyValue<T> {
   protected NotNullLazyValue() { }
 
   protected abstract @NotNull T compute();
+
+  @Override
+  public final T get() {
+    return getValue();
+  }
 
   public @NotNull T getValue() {
     T result = myValue;

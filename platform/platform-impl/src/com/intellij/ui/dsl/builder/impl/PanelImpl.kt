@@ -19,17 +19,15 @@ import java.awt.Color
 import javax.swing.JComponent
 import javax.swing.JLabel
 
+// todo remove 'open' in version 2022.2
 @ApiStatus.Internal
-internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
+internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
                          private val parent: RowImpl?) : CellBaseImpl<Panel>(), Panel {
 
   val rows: List<RowImpl>
     get() = _rows
 
   var spacingConfiguration: SpacingConfiguration? = null
-    private set
-
-  var customGaps: Gaps? = null
     private set
 
   private var panelContext = PanelContext()
@@ -184,6 +182,31 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
+  override fun group(title: String?, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?, init: Panel.() -> Unit): Panel {
+    lateinit var result: Panel
+    val separator = createSeparator(title)
+    val row = row {
+      result = panel {
+        row {
+          cell(separator)
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+      }
+    }
+
+    if (indent) {
+      result.indent(init)
+    }
+    else {
+      result.init()
+    }
+
+    setTopGroupGap(row, topGroupGap)
+    setBottomGroupGap(row, bottomGroupGap)
+
+    return result
+  }
+
   override fun groupRowsRange(title: String?, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?,
                               init: Panel.() -> Unit): RowsRangeImpl {
     val result = RowsRangeImpl(this, _rows.size)
@@ -222,6 +245,39 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     _rows.add(result)
 
     return result
+  }
+
+  override fun collapsibleGroup(title: String,
+                                indent: Boolean,
+                                topGroupGap: Boolean?,
+                                bottomGroupGap: Boolean?,
+                                init: Panel.() -> Unit): CollapsiblePanel {
+    val row = row { }
+    val result = CollapsiblePanelImpl(dialogPanelConfig, row, title) {
+      if (indent) {
+        indent(init)
+      }
+      else {
+        init()
+      }
+    }
+
+    result.expanded = false
+    row.cell(result)
+
+    setTopGroupGap(row, topGroupGap)
+    setBottomGroupGap(row, bottomGroupGap)
+
+    return result
+  }
+
+  override fun buttonGroup(title: String?, indent: Boolean, init: Panel.() -> Unit) {
+    buttonsGroup(title, indent, init)
+  }
+
+  override fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, title: String?, indent: Boolean, init: Panel.() -> Unit) {
+    buttonsGroup(title, indent, init)
+      .bind(binding, type)
   }
 
   override fun buttonsGroup(title: String?, indent: Boolean, init: Panel.() -> Unit): ButtonsGroupImpl {
@@ -276,8 +332,8 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     }
   }
 
-  override fun customize(customGaps: Gaps): Panel {
-    this.customGaps = customGaps
+  override fun customize(customGaps: Gaps): PanelImpl {
+    super.customize(customGaps)
     return this
   }
 

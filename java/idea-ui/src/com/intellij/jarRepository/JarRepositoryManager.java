@@ -6,9 +6,7 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.jarRepository.services.MavenRepositoryServicesManager;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.PathMacroManager;
@@ -87,6 +85,8 @@ public final class JarRepositoryManager {
     static final ExecutorService INSTANCE = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("RemoteLibraryDownloader",
                                                                                                            ProcessIOExecutorService.INSTANCE);
   }
+
+  public static NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Repository");
 
   public static boolean hasRunningTasks() {
     return ourTasksInProgress.get() > 0;   // todo: count tasks on per-project basis?
@@ -341,7 +341,7 @@ public final class JarRepositoryManager {
       sb.append(root.getFile().getName());
     }
     @NlsSafe final String content = sb.toString();
-    Notifications.Bus.notify(new Notification("Repository", title, content, NotificationType.INFORMATION), project);
+    Notifications.Bus.notify(GROUP.createNotification(title, content, NotificationType.INFORMATION), project);
   }
 
   public static void searchArtifacts(Project project,

@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -299,50 +298,6 @@ public class GradleInstallationManager implements Disposable {
       }
     }
     return null;
-  }
-
-  /**
-   * Tries to return gradle home that is defined as a dependency to the given module.
-   *
-   * @param module target module
-   * @return file handle that points to the gradle installation home defined as a dependency of the given module (if any)
-   * @deprecated unused, obsolete api
-   */
-  @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  public VirtualFile getGradleHome(@Nullable Module module) {
-    if (module == null) {
-      return null;
-    }
-    final VirtualFile[] roots = OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots();
-    for (VirtualFile root : roots) {
-      if (root != null && isGradleSdkHome(module.getProject(), root)) {
-        return root;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Tries to return gradle home defined as a dependency of the given module; falls back to the project-wide settings otherwise.
-   *
-   * @param module  target module that can have gradle home as a dependency
-   * @param project target project which gradle home setting should be used if module-specific gradle location is not defined
-   * @return gradle home derived from the settings of the given entities (if any); {@code null} otherwise
-   * @deprecated unused, obsolete api
-   */
-  @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  public VirtualFile getGradleHome(@Nullable Module module, @Nullable Project project, @NotNull String linkedProjectPath) {
-    final VirtualFile result = getGradleHome(module);
-    if (result != null) {
-      return result;
-    }
-
-    final File home = getGradleHome(project, linkedProjectPath);
-    return home == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByIoFile(home);
   }
 
   /**
