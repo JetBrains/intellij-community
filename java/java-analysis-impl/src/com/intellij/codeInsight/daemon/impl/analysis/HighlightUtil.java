@@ -1601,7 +1601,7 @@ public final class HighlightUtil {
             .message("bad.type.in.switch.expression", expressionType.getCanonicalText(), switchExpressionType.getCanonicalText());
           HighlightInfo info =
             HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(text).create();
-          registerTypeFixes(info, PsiUtil.skipParenthesizedExprUp(switchExpression.getParent()), expressionType);
+          registerChangeTypeFix(info, switchExpression, expressionType);
           infos.add(info);
         }
       }
@@ -1617,21 +1617,22 @@ public final class HighlightUtil {
     return infos;
   }
 
-  private static void registerTypeFixes(@Nullable HighlightInfo info,
-                                        @Nullable PsiElement element,
-                                        @NotNull PsiType expressionType) {
+  public static void registerChangeTypeFix(@Nullable HighlightInfo info,
+                                           @NotNull PsiExpression expression,
+                                           @NotNull PsiType expectedType) {
     if (info == null) return;
-    if (element instanceof PsiReturnStatement) {
-      PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false, PsiLambdaExpression.class);
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    if (parent instanceof PsiReturnStatement) {
+      PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, false, PsiLambdaExpression.class);
       if (method != null) {
-        registerReturnTypeFixes(info, method, expressionType);
+        registerReturnTypeFixes(info, method, expectedType);
       }
     }
-    else if (element instanceof PsiLocalVariable) {
-      HighlightFixUtil.registerChangeVariableTypeFixes((PsiLocalVariable)element, expressionType, null, info);
+    else if (parent instanceof PsiLocalVariable) {
+      HighlightFixUtil.registerChangeVariableTypeFixes((PsiLocalVariable)parent, expectedType, null, info);
     }
-    else if (element instanceof PsiAssignmentExpression) {
-      HighlightFixUtil.registerChangeVariableTypeFixes(((PsiAssignmentExpression)element).getLExpression(), expressionType, null, info);
+    else if (parent instanceof PsiAssignmentExpression) {
+      HighlightFixUtil.registerChangeVariableTypeFixes(((PsiAssignmentExpression)parent).getLExpression(), expectedType, null, info);
     }
   }
 
