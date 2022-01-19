@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeHighlighting.Pass;
@@ -1780,20 +1780,17 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitConditionalExpression(PsiConditionalExpression expression) {
     super.visitConditionalExpression(expression);
-    if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) && PsiPolyExpressionUtil.isPolyExpression(expression)) {
-      PsiExpression thenExpression = expression.getThenExpression();
-      PsiExpression elseExpression = expression.getElseExpression();
-      if (thenExpression != null && elseExpression != null) {
-        PsiType conditionalType = expression.getType();
-        if (conditionalType != null) {
-          PsiExpression[] sides = {thenExpression, elseExpression};
-          for (PsiExpression side : sides) {
-            PsiType sideType = side.getType();
-            if (sideType != null && !TypeConversionUtil.isAssignable(conditionalType, sideType)) {
-              myHolder.add(HighlightUtil.checkAssignability(conditionalType, sideType, side, side));
-            }
-          }
-        }
+    if (!myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) || !PsiPolyExpressionUtil.isPolyExpression(expression)) return;
+    PsiExpression thenExpression = expression.getThenExpression();
+    PsiExpression elseExpression = expression.getElseExpression();
+    if (thenExpression == null || elseExpression == null) return;
+    PsiType conditionalType = expression.getType();
+    if (conditionalType == null) return;
+    PsiExpression[] sides = {thenExpression, elseExpression};
+    for (PsiExpression side : sides) {
+      PsiType sideType = side.getType();
+      if (sideType != null && !TypeConversionUtil.isAssignable(conditionalType, sideType)) {
+        myHolder.add(HighlightUtil.checkAssignability(conditionalType, sideType, side, side));
       }
     }
   }
