@@ -13,7 +13,7 @@ abstract class BadgeShapeProvider {
   abstract fun createShape(width: Int, height: Int, hole: Boolean): Shape?
 
   /** @return size of a hole around the badge relative to the icon size [0..1] */
-  protected open fun getBorder() = getDouble("IconBadge.borderWidth", 1.0) / 20
+  protected open fun getBorder() = getDouble("IconBadge.borderWidth", 1.5) / 20
 
   /** @return value from UIManager, or the default value if the given key is not specified. */
   protected fun getDouble(key: String, default: Double) = when (val value = UIManager.get(key)) {
