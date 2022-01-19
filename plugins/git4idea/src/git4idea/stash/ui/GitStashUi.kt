@@ -17,6 +17,7 @@ import git4idea.index.ui.TwoKeySplitter
 import git4idea.ui.StashInfo
 import java.awt.BorderLayout
 import javax.swing.JPanel
+import javax.swing.JTree
 
 class GitStashUi(project: Project, isVertical: Boolean, isEditorDiffPreview: Boolean, disposable: Disposable) :
   JPanel(BorderLayout()), Disposable, DataProvider {
@@ -37,6 +38,7 @@ class GitStashUi(project: Project, isVertical: Boolean, isEditorDiffPreview: Boo
       changesBrowser.selectStash(VcsTreeModelData.selected(tree).userObjectsStream(StashInfo::class.java).findAny().orNull())
       bottomToolbar.updateActionsImmediately()
     }
+    tree.addPropertyChangeListener(JTree.TREE_MODEL_PROPERTY) { bottomToolbar.updateActionsImmediately() }
 
     val treePanel = JPanel(BorderLayout())
     treePanel.add(ScrollPaneFactory.createScrollPane(tree, true), BorderLayout.CENTER)
