@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.suggested
 
@@ -169,7 +169,7 @@ private fun doRefactor(
   actionPlace: String,
   doRefactor: () -> Unit
 ) {
-  SuggestedRefactoringFeatureUsage.logEvent(SuggestedRefactoringFeatureUsage.REFACTORING_PERFORMED, refactoringData, state, actionPlace)
+  SuggestedRefactoringFeatureUsage.logEvent(SuggestedRefactoringFeatureUsage.PERFORMED, refactoringData, state, actionPlace)
 
   val project = state.declaration.project
   UndoManager.getInstance(project).undoableActionPerformed(SuggestedRefactoringUndoableAction.create(editor.document, state))
