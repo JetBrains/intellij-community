@@ -735,7 +735,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     for (PsiMethod method : methods) {
       final PsiClass containingClass = method.getContainingClass();
       FunctionalExpressionSearch.search(method).forEach(expression -> {
-        usages.add(new SafeDeleteFunctionalExpressionUsageInfo(expression, containingClass, isMethodUsage));
+        usages.add(new SafeDeleteFunctionalExpressionUsageInfo(expression, containingClass, false));
         return true;
       });
     }
