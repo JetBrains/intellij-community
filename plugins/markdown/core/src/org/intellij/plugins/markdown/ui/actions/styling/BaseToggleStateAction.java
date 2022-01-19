@@ -59,7 +59,7 @@ public abstract class BaseToggleStateAction extends ToggleAction implements Dumb
 
     SelectionState lastState = null;
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
-      final Couple<PsiElement> elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(psiFile, caret);
+      final var elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(psiFile, caret);
       if (elements == null) {
         continue;
       }
@@ -101,7 +101,7 @@ public abstract class BaseToggleStateAction extends ToggleAction implements Dumb
       final Document document = editor.getDocument();
       for (Caret caret : ContainerUtil.reverse(editor.getCaretModel().getAllCarets())) {
         if (!state) {
-          final Couple<PsiElement> elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(psiFile, caret);
+          final var elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(psiFile, caret);
           if (elements == null) {
             continue;
           }

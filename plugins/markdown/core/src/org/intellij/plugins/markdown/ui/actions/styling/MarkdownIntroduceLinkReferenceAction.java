@@ -54,7 +54,7 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
     }
 
     Caret caret = fileAndEditor.getSecond().getCaretModel().getCurrentCaret();
-    final Couple<PsiElement> elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(fileAndEditor.getFirst(), caret);
+    final var elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(fileAndEditor.getFirst(), caret);
 
     if (elements == null) {
       e.getPresentation().setEnabled(false);
@@ -83,7 +83,7 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
     final PsiFile file = fileAndEditor.getFirst();
 
     Caret caret = editor.getCaretModel().getCurrentCaret();
-    Couple<PsiElement> elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(file, caret);
+    final var elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(file, caret);
     assert elements != null;
 
     PsiElement link =
