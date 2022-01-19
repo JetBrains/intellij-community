@@ -173,7 +173,7 @@ interface Panel : CellBase<Panel> {
 @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 inline fun <reified T : Any> Panel.buttonGroup(noinline getter: () -> T,
                                                noinline setter: (T) -> Unit,
-                                               @NlsContexts.BorderTitle title: String? = null,
+                                               title: @NlsContexts.BorderTitle String? = null,
                                                indent: Boolean = title != null,
                                                crossinline init: Panel.() -> Unit) {
   buttonGroup(PropertyBinding(getter, setter), title, indent, init)
@@ -181,7 +181,7 @@ inline fun <reified T : Any> Panel.buttonGroup(noinline getter: () -> T,
 
 @Deprecated("Use buttonsGroup(...) instead")
 @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-inline fun <reified T : Any> Panel.buttonGroup(prop: KMutableProperty0<T>, @NlsContexts.BorderTitle title: String? = null,
+inline fun <reified T : Any> Panel.buttonGroup(prop: KMutableProperty0<T>, title: @NlsContexts.BorderTitle String? = null,
                                                indent: Boolean = title != null,
                                                crossinline init: Panel.() -> Unit) {
   buttonGroup(prop.toBinding(), title, indent, init)
@@ -189,7 +189,7 @@ inline fun <reified T : Any> Panel.buttonGroup(prop: KMutableProperty0<T>, @NlsC
 
 @Deprecated("Use buttonsGroup(...) instead")
 @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-inline fun <reified T : Any> Panel.buttonGroup(binding: PropertyBinding<T>, @NlsContexts.BorderTitle title: String? = null,
+inline fun <reified T : Any> Panel.buttonGroup(binding: PropertyBinding<T>, title: @NlsContexts.BorderTitle String? = null,
                                                indent: Boolean = title != null,
                                                crossinline init: Panel.() -> Unit) {
   buttonGroup(binding, T::class.java, title, indent) {

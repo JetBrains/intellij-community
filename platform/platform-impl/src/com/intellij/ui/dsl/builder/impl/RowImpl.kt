@@ -93,7 +93,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
-  override fun rowComment(comment: String, maxLineLength: Int): Row {
+  override fun rowComment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int): Row {
     this.rowComment = ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
     return this
   }
@@ -198,7 +198,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(JBCheckBox(text))
   }
 
-  override fun radioButton(text: String): Cell<JBRadioButton> {
+  override fun radioButton(@NlsContexts.RadioButton text: String): Cell<JBRadioButton> {
     return radioButton(text, null)
   }
 
@@ -266,7 +266,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(Label(text))
   }
 
-  override fun labelHtml(text: String, action: HyperlinkEventAction): Cell<JEditorPane> {
+  override fun labelHtml(@NlsContexts.Label text: String, action: HyperlinkEventAction): Cell<JEditorPane> {
     return text(removeHtml(text), MAX_LINE_LENGTH_WORD_WRAP, action)
   }
 

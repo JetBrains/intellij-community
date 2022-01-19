@@ -14,6 +14,7 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.Font
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -112,7 +113,7 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  override fun comment(comment: String?, maxLineLength: Int): Cell<T> {
+  override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int): Cell<T> {
     this.comment = if (comment == null) null else ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
     return this
   }
@@ -122,7 +123,7 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  override fun commentHtml(comment: String?, action: HyperlinkEventAction): Cell<T> {
+  override fun commentHtml(@NlsContexts.DetailedDescription comment: String?, action: HyperlinkEventAction): Cell<T> {
     return comment(if (comment == null) null else removeHtml(comment), MAX_LINE_LENGTH_WORD_WRAP, action)
   }
 
@@ -229,6 +230,6 @@ private const val HTML = "<html>"
 
 @Deprecated("Not needed in the future")
 @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-internal fun removeHtml(text: String): String {
+internal fun removeHtml(text: @Nls String): @Nls String {
   return if (text.startsWith(HTML, ignoreCase = true)) text.substring(HTML.length) else text
 }
