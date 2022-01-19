@@ -1,9 +1,11 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
+import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.ide.CopyProvider
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SpeedSearchComparator
 import com.intellij.ui.TableSpeedSearch
@@ -27,9 +29,15 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.onMouseMotion
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
+import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import com.jetbrains.packagesearch.intellij.plugin.util.uiStateSource
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
@@ -54,6 +62,8 @@ internal class PackagesTable(
     private val operationExecutor: OperationExecutor,
     private val onSearchResultStateChanged: SearchResultStateChangeListener
 ) : JBTable(), CopyProvider, DataProvider {
+
+    private var lastSelectedDependency: UnifiedDependency? = null
 
     private val operationFactory = PackageSearchOperationFactory()
 
@@ -226,6 +236,25 @@ internal class PackagesTable(
                 cursor = if (isHoveringActionsColumn) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
             }
         )
+        project.uiStateSource.selectedDependencyFlow.onEach { lastSelectedDependency = it }
+            .onEach { setSelection(it) }
+            .flowOn(Dispatchers.EDT)
+            .launchIn(project.lifecycleScope)
+    }
+
+    private fun setSelection(lastSelectedDependencyCopy: UnifiedDependency): Boolean {
+        val index = tableModel.items.map { it.uiPackageModel }
+            .indexOfFirst {
+                it is UiPackageModel.Installed &&
+                    it.selectedVersion.displayName == lastSelectedDependencyCopy.coordinates.version &&
+                    it.packageModel.artifactId == lastSelectedDependencyCopy.coordinates.artifactId &&
+                    it.packageModel.groupId == lastSelectedDependencyCopy.coordinates.groupId &&
+                    (it.selectedScope.displayName == lastSelectedDependencyCopy.scope ||
+                        (it.selectedScope.displayName == "[default]" && lastSelectedDependencyCopy.scope == null))
+            }
+        val indexFound = index >= 0
+        if (indexFound) setRowSelectionInterval(index, index)
+        return indexFound
     }
 
     override fun getCellRenderer(row: Int, column: Int): TableCellRenderer =
@@ -273,6 +302,11 @@ internal class PackagesTable(
 
         selectionModel.addListSelectionListener(listSelectionListener)
 
+        lastSelectedDependency?.let { lastSelectedDependencyCopy ->
+            if (setSelection(lastSelectedDependencyCopy)) {
+                lastSelectedDependency = null
+            }
+        }
         updateAndRepaint()
     }
 
