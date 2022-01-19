@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui
 
 import com.intellij.execution.ExecutionBundle
@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
@@ -34,6 +35,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.AppUIUtil
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.*
 import com.intellij.ui.content.Content.CLOSE_LISTENER_KEY
 import com.intellij.ui.content.impl.ContentManagerImpl
@@ -263,7 +265,11 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         override fun startNotified(event: ProcessEvent) {
           UIUtil.invokeLaterIfNeeded {
             content.icon = ExecutionUtil.getLiveIndicator(descriptor.icon)
-            toolWindow!!.setIcon(ExecutionUtil.getLiveIndicator(toolWindowIdToBaseIcon[toolWindowId]))
+            var icon = toolWindowIdToBaseIcon[toolWindowId]
+            if (ExperimentalUI.isNewUI() && icon is ScalableIcon) {
+              icon = IconLoader.loadCustomVersionOrScale(icon, 20f)
+            }
+            toolWindow!!.setIcon(ExecutionUtil.getLiveIndicator(icon))
           }
         }
 
