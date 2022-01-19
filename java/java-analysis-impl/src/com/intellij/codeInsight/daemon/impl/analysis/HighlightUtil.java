@@ -557,7 +557,9 @@ public final class HighlightUtil {
       QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createWrapExpressionFix(lType, expression));
       QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createWrapWithAdapterFix(lType, expression));
       HighlightFixUtil.registerCollectionToArrayFixAction(highlightInfo, rType, lType, expression);
-      HighlightFixUtil.registerChangeReturnTypeFix(highlightInfo, expression, lType);
+      if (!(expression.getParent() instanceof PsiConditionalExpression && PsiType.VOID.equals(lType))) {
+        HighlightFixUtil.registerChangeReturnTypeFix(highlightInfo, expression, lType);
+      }
     }
     ChangeNewOperatorTypeFix.register(highlightInfo, expression, lType);
     return highlightInfo;
