@@ -63,6 +63,9 @@
         <element id="archive" name="kotlin-script-runtime.jar">
           <element id="extracted-dir" path="$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-script-runtime/1.6.255/kotlin-script-runtime-1.6.255.jar" path-in-jar="/" />
         </element>
+        <element id="archive" name="fe10-analyze-safe-analyze-utils.jar">
+          <element id="module-output" name="fe10-analyze.safe-analyze-utils" />
+        </element>
         <element id="archive" name="kotlin-scripting-jvm.jar">
           <element id="extracted-dir" path="$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-scripting-jvm/1.6.255/kotlin-scripting-jvm-1.6.255.jar" path-in-jar="/" />
         </element>
