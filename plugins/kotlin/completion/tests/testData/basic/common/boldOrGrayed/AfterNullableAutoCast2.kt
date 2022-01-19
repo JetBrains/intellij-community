@@ -19,12 +19,12 @@ fun foo(o: T1?) {
     }
 }
 
-// EXIST: { lookupString: "inT1", attributes: "bold" }
-// EXIST: { lookupString: "inT2", attributes: "bold" }
-// EXIST: { lookupString: "hashCode", attributes: "" }
-// EXIST: { lookupString: "forT1", attributes: "bold" }
-// EXIST: { lookupString: "forT2", attributes: "bold" }
-// EXIST: { lookupString: "forNullableT1", attributes: "" }
-// EXIST: { lookupString: "forNullableT2", attributes: "" }
-// EXIST: { lookupString: "forAny", attributes: "" }
-// EXIST: { lookupString: "forNullableAny", attributes: "" }
+// EXIST: { lookupString: "inT1", attributes: "bold", icon: "nodes/method.svg"}
+// EXIST: { lookupString: "inT2", attributes: "bold", icon: "nodes/method.svg"}
+// EXIST: { lookupString: "hashCode", attributes: "", icon: "nodes/method.svg"}
+// EXIST: { lookupString: "forT1", attributes: "bold", icon: "nodes/function.svg"}
+// EXIST: { lookupString: "forT2", attributes: "bold", icon: "nodes/function.svg"}
+// EXIST: { lookupString: "forNullableT1", attributes: "", icon: "nodes/function.svg"}
+// EXIST: { lookupString: "forNullableT2", attributes: "", icon: "nodes/function.svg"}
+// EXIST: { lookupString: "forAny", attributes: "", icon: "nodes/function.svg"}
+// EXIST: { lookupString: "forNullableAny", attributes: "", icon: "nodes/function.svg"}

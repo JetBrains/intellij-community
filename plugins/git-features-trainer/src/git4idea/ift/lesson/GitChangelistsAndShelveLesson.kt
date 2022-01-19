@@ -41,6 +41,7 @@ import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
 import training.ui.LearningUiUtil.findComponentWithTimeout
+import training.util.LessonEndInfo
 import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JButton
@@ -286,7 +287,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     restoreCommitWindowStateInformer()
   }
 
-  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+  override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
     restorePopupPosition(project, CommitChangeListDialog.DIMENSION_SERVICE_KEY, backupShelveDialogLocation)
     backupShelveDialogLocation = null
     restorePopupPosition(project, ApplyPatchDifferentiatedDialog.DIMENSION_SERVICE_KEY, backupUnshelveDialogLocation)
@@ -316,6 +317,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       val offset = document.charsSequence.indexOf(commentingLineText)
       if (offset == -1) error("Not found '$commentingLineText' item in text")
       document.insertString(offset + commentingLineText.length, "  $commentText")
+      FileDocumentManager.getInstance().saveDocument(document)
     }
   }
 

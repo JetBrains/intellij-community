@@ -232,6 +232,11 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     return label;
   }
 
+  public void clear() {
+    myLabel.setText("");
+    myLinksPanel.removeAll();
+  }
+
   protected void executeAction(@NonNls String actionId) {
     AnAction action = ActionManager.getInstance().getAction(actionId);
     DataContext dataContext = DataManager.getInstance().getDataContext(this);

@@ -178,8 +178,13 @@ public final class GitBranchUtil {
     GitRepository.State state = repository.getState();
     if (state == GitRepository.State.DETACHED) {
       String currentRevision = repository.getCurrentRevision();
-      assert currentRevision != null : "Current revision can't be null in DETACHED state, only on the fresh repository.";
-      return DvcsUtil.getShortHash(currentRevision);
+      if (currentRevision != null) {
+        return DvcsUtil.getShortHash(currentRevision);
+      }
+      else {
+        LOG.warn(String.format("Current revision is null in DETACHED state. isFresh: %s", repository.isFresh()));
+        return GitBundle.message("git.status.bar.widget.text.unknown");
+      }
     }
 
     GitBranch branch = repository.getCurrentBranch();

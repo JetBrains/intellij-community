@@ -13,7 +13,7 @@ class StrMore {
 }
 
 // INVOCATION_COUNT: 1
-// EXIST: { lookupString:"String", tailText:" (kotlin)" }
+// EXIST: { lookupString:"String", tailText:" (kotlin)", icon: "org/jetbrains/kotlin/idea/icons/classKotlin.svg"}
 // EXIST: StrSome
 // EXIST: StrMore
 // EXIST: StrInFun

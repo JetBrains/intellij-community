@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.ide.actions.ShowLogAction;
 import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.ide.impl.OpenResult;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.impl.ProjectUtilCore;
 import com.intellij.ide.lightEdit.LightEdit;
@@ -57,6 +58,8 @@ public final class CommandLineProcessor {
   private static final String OPTION_WAIT = "--wait";
 
   public static final Future<CliResult> OK_FUTURE = CompletableFuture.completedFuture(CliResult.OK);
+
+  @ApiStatus.Internal
   public static final String SCHEME_INTERNAL = "!!!internal!!!";
 
   private CommandLineProcessor() { }
@@ -69,7 +72,13 @@ public final class CommandLineProcessor {
     openProjectOptions.checkDirectoryForFileBasedProjects = false;
     Project project = null;
     if (!LightEditUtil.isForceOpenInLightEditMode()) {
-      project = ProjectUtil.openOrImport(file, openProjectOptions);
+      OpenResult openResult = ProjectUtil.tryOpenOrImport(file, openProjectOptions);
+      if (openResult instanceof OpenResult.Success) {
+        project = ((OpenResult.Success)openResult).getProject();
+      }
+      else if (openResult instanceof OpenResult.Cancel) {
+        return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.open.cancelled"));
+      }
     }
     if (project == null) {
       return doOpenFile(file, -1, -1, false, shouldWait);
@@ -149,13 +158,15 @@ public final class CommandLineProcessor {
   }
 
   @ApiStatus.Internal
-  public static @NotNull CompletableFuture<CliResult> processProtocolCommand(@NotNull @NlsSafe String uri) {
-    LOG.info("external URI request:\n" + uri);
+  public static @NotNull CompletableFuture<CliResult> processProtocolCommand(@NotNull @NlsSafe String rawUri) {
+    LOG.info("external URI request:\n" + rawUri);
 
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       throw new IllegalStateException("cannot process URI requests in headless state");
     }
 
+    boolean internal = rawUri.startsWith(SCHEME_INTERNAL);
+    String uri = internal ? rawUri.substring(SCHEME_INTERNAL.length()) : rawUri;
     int separatorStart = uri.indexOf(SCHEME_SEPARATOR);
     if (separatorStart < 0) throw new IllegalArgumentException(uri);
 
@@ -166,7 +177,7 @@ public final class CommandLineProcessor {
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         indicator.setText(uri);
-        (SCHEME_INTERNAL.equals(scheme) ? processInternalProtocol(query) : ProtocolHandler.process(scheme, query, indicator))
+        (internal ? processInternalProtocol(query) : ProtocolHandler.process(scheme, query, indicator))
           .exceptionally(t -> {
             LOG.error(t);
             return new CliResult(0, IdeBundle.message("ide.protocol.exception", t.getClass().getSimpleName(), t.getMessage()));

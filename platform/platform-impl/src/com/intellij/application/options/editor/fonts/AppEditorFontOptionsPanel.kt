@@ -124,7 +124,7 @@ class AppEditorFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstra
         .bottomGap(BottomGap.SMALL)
 
       row {
-        commentHtml(ApplicationBundle.message("comment.use.ligatures.with.reader.mode")) {
+        comment(ApplicationBundle.message("comment.use.ligatures.with.reader.mode")) {
           goToReaderMode()
         }
       }
@@ -159,7 +159,7 @@ class AppEditorFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstra
           val component = createBoldWeightCombo()
           boldWeightCombo = component
           cell(component)
-            .commentHtml(ApplicationBundle.message("settings.editor.font.bold.weight.hint")) {
+            .comment(ApplicationBundle.message("settings.editor.font.bold.weight.hint")) {
               navigateToColorSchemeTextSettings()
             }
         }.bottomGap(BottomGap.SMALL)

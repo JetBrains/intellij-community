@@ -3,6 +3,7 @@ package training.dsl
 
 import com.intellij.codeInsight.documentation.DocumentationComponent
 import com.intellij.codeInsight.documentation.DocumentationEditorPane
+import com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
@@ -43,6 +44,7 @@ import org.jetbrains.annotations.Nls
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
+import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
 import training.ui.*
 import training.ui.LearningUiUtil.findComponentWithTimeout
@@ -312,6 +314,22 @@ object LessonUtil {
     val isSingleProject = ProjectManager.getInstance().openProjects.size == 1
     return if (isSingleProject) LessonsBundle.message("onboarding.return.to.welcome.remark") else ""
   }
+
+  fun showFeedbackNotification(lesson: Lesson, project: Project) {
+    invokeLater {
+      if (project.isDisposed) {
+        return@invokeLater
+      }
+      lesson.module.primaryLanguage?.let { langSupport ->
+        // exit link will show notification directly and reset this field to null
+        langSupport.onboardingFeedbackData?.let {
+          showOnboardingFeedbackNotification(project, it)
+        }
+        langSupport.onboardingFeedbackData = null
+      }
+    }
+  }
+
 }
 
 fun LessonContext.firstLessonCompletedMessage() {
@@ -545,7 +563,7 @@ fun <ComponentType : Component> LessonContext.highlightAllFoundUiWithClass(compo
 }
 
 fun TaskContext.triggerOnQuickDocumentationPopup() {
-  if (Registry.`is`("documentation.v2")) {
+  if (isDocumentationV2Enabled()) {
     triggerByUiComponentAndHighlight(false, false) { _: DocumentationEditorPane -> true }
   }
   else {

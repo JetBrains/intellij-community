@@ -1,6 +1,7 @@
 <idea-plugin>
   <extensionPoints>
     <extensionPoint name="fileBasedIndex" interface="com.intellij.util.indexing.FileBasedIndexExtension" dynamic="true"/>
+    <extensionPoint name="dumbServiceInitializationCondition" interface="com.intellij.openapi.project.DumbServiceInitializationCondition" dynamic="true"/>
     <extensionPoint name="fileBasedIndexInfrastructureExtension" interface="com.intellij.util.indexing.FileBasedIndexInfrastructureExtension" dynamic="true"/>
     <extensionPoint name="projectIndexingHistoryListener" interface="com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryListener" dynamic="true"/>
     <extensionPoint name="indexedRootsProvider" interface="com.intellij.util.indexing.IndexableSetContributor" dynamic="true"/>

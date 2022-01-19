@@ -10,5 +10,5 @@ fun foo(c: C) {
 
 // we should not include inaccessible extension even on the second completion because the call won't resolve into it anyway
 // INVOCATION_COUNT: 2
-// EXIST: { lookupString: "xxx", itemText: "xxx", tailText: "() for Any in dependency", typeText: "Int" }
+// EXIST: { lookupString: "xxx", itemText: "xxx", tailText: "() for Any in dependency", typeText: "Int", icon: "nodes/function.svg"}
 // NOTHING_ELSE

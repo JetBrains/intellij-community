@@ -11,7 +11,8 @@ internal class SortGroupBookmarksAction : DumbAwareAction(messagePointer("sort.g
   override fun update(event: AnActionEvent) {
     val manager = event.bookmarksManager as? BookmarksManagerImpl
     val node = manager?.let { event.selectedGroupNode }
-    event.presentation.isEnabledAndVisible = node != null
+    val empty = node?.value?.getBookmarks().isNullOrEmpty()
+    event.presentation.isEnabledAndVisible = !empty
   }
 
   override fun actionPerformed(event: AnActionEvent) {

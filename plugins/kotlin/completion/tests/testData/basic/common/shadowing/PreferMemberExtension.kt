@@ -15,5 +15,5 @@ class C : I {
 
 val C.xxx: Int get() = 1
 
-// EXIST: { lookupString: "xxx", itemText: "xxx", tailText: " for Any in C.Inner", typeText: "Int" }
+// EXIST: { lookupString: "xxx", itemText: "xxx", tailText: " for Any in C.Inner", typeText: "Int", icon: "org/jetbrains/kotlin/idea/icons/field_value.svg"}
 // NOTHING_ELSE

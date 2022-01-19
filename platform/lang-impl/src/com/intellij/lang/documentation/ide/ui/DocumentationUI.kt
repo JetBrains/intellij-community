@@ -61,7 +61,7 @@ internal class DocumentationUI(
     scrollPane.addMouseWheelListener(FontSizeMouseWheelListener(editorPane::applyFontProps))
     linkHandler = DocumentationLinkHandler.createAndRegister(editorPane, this, browser::navigateByLink)
 
-    browser.snapshooter = ::uiSnapshot
+    browser.ui = this
     Disposer.register(this, browser)
     Disposer.register(this, browser.addStateListener { request, result, _ ->
       applyStateLater(request, result)
@@ -132,7 +132,6 @@ internal class DocumentationUI(
         null // normal situation, nothing to do
       }
       applyState(request, data)
-      fireContentChanged()
     }
   }
 
@@ -157,7 +156,8 @@ internal class DocumentationUI(
     }
     val linkChunk = getLink(presentation.presentableText, data.externalUrl)
     val decorated = decorate(data.html, locationChunk, linkChunk)
-    update(decorated, data.anchor)
+    val scrollingPosition = data.anchor?.let(ScrollingPosition::Anchor) ?: ScrollingPosition.Reset
+    update(decorated, scrollingPosition)
   }
 
   private fun fetchingProgress() {
@@ -170,40 +170,35 @@ internal class DocumentationUI(
       .addText(message)
       .wrapWith("body")
       .wrapWith("html")
-    update(element.toString(), null)
+    update(element.toString(), ScrollingPosition.Reset)
   }
 
-  private sealed class AnchorOrRect {
-    class Anchor(val anchor: String) : AnchorOrRect()
-    class Rect(val rect: Rectangle) : AnchorOrRect()
-  }
-
-  private fun update(text: @Nls String, anchor: String?) {
+  fun update(text: @Nls String, scrollingPosition: ScrollingPosition) {
     EDT.assertIsEdt()
-    editorPane.text = text
-
-    val anchorOrRect = when {
-      DocumentationManagerProtocol.KEEP_SCROLLING_POSITION_REF == anchor -> AnchorOrRect.Rect(
-        scrollPane.viewport.viewRect) // save current scroll position
-      anchor != null -> AnchorOrRect.Anchor(anchor)
-      else -> null
+    if (editorPane.text == text) {
+      return
     }
-
+    editorPane.text = text
+    fireContentChanged()
     SwingUtilities.invokeLater {
-      when (anchorOrRect) {
-        is AnchorOrRect.Anchor -> UIUtil.scrollToReference(editorPane, anchorOrRect.anchor)
-        is AnchorOrRect.Rect -> editorPane.scrollRectToVisible(anchorOrRect.rect)
-        null -> {
+      when (scrollingPosition) {
+        ScrollingPosition.Keep -> {
+          // do nothing
+        }
+        ScrollingPosition.Reset -> {
           editorPane.scrollRectToVisible(Rectangle(0, 0))
           if (ScreenReader.isActive()) {
             editorPane.caretPosition = 0
           }
         }
+        is ScrollingPosition.Anchor -> {
+          UIUtil.scrollToReference(editorPane, scrollingPosition.anchor)
+        }
       }
     }
   }
 
-  private fun uiSnapshot(): UISnapshot {
+  fun uiSnapshot(): UISnapshot {
     val viewRect = scrollPane.viewport.viewRect
     val highlightedLink = linkHandler.highlightedLink
     return {

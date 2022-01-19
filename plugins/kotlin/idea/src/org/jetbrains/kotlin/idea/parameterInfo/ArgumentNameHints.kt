@@ -55,6 +55,12 @@ private fun getArgumentNameHintsForCallCandidate(
         return emptyList()
     }
 
+    if (resultingDescriptor.valueParameters.size == 1
+        && resultingDescriptor.name == resultingDescriptor.valueParameters.single().name) {
+        // method name equals to single parameter name
+        return emptyList()
+    }
+
     return resolvedCall.valueArguments.mapNotNull { (valueParam: ValueParameterDescriptor, resolvedArg) ->
         if (resultingDescriptor.isAnnotationConstructor() && valueParam.name.asString() == "value") {
             return@mapNotNull null

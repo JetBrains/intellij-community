@@ -138,7 +138,7 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
     for (ProcessorConfigProfile p : profiles) {
       if (p != moduleProfile) {
         p.removeModuleName(module.getName());
-        if (p.getModuleNames().isEmpty()) {
+        if (p.getModuleNames().isEmpty() && p.getName().startsWith(PROFILE_PREFIX)) {
           compilerConfiguration.removeModuleProcessorProfile(p);
         }
       }

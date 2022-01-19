@@ -143,14 +143,16 @@ internal class LessonExecutor(val lesson: KLesson,
   }
 
   override fun dispose() {
-    if (!hasBeenStopped) {
-      ApplicationManager.getApplication().assertIsDispatchThread()
-      continueHighlighting.set(false)
-      clearRestore()
-      disposeRecorders()
-      hasBeenStopped = true
-      taskActions.clear()
-    }
+    if (hasBeenStopped) return
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    val lessonPassed = currentTaskIndex == taskActions.size
+    val visualIndex = if(lessonPassed) currentVisualIndex else (taskActions[currentTaskIndex].taskVisualIndex ?: 0)
+    lesson.onStop(project, lessonPassed, currentTaskIndex, visualIndex)
+    continueHighlighting.set(false)
+    clearRestore()
+    disposeRecorders()
+    hasBeenStopped = true
+    taskActions.clear()
   }
 
   fun stopLesson() {
@@ -220,7 +222,6 @@ internal class LessonExecutor(val lesson: KLesson,
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (currentTaskIndex == taskActions.size) {
       LessonManager.instance.passLesson(lesson)
-      disposeRecorders()
       return
     }
     val taskInfo = taskActions[currentTaskIndex]

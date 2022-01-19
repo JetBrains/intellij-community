@@ -32,19 +32,22 @@ public final class TargetedCommandLine {
   @NotNull private final Charset myCharset;
   private final @NotNull List<? extends TargetValue<String>> myParameters;
   @NotNull private final Map<String, TargetValue<String>> myEnvironment;
+  private final boolean myRedirectErrorStream;
 
-  public TargetedCommandLine(@NotNull TargetValue<String> exePath,
-                             @NotNull TargetValue<String> workingDirectory,
-                             @NotNull TargetValue<String> inputFilePath,
-                             @NotNull Charset charset,
-                             @NotNull List<? extends TargetValue<String>> parameters,
-                             @NotNull Map<String, TargetValue<String>> environment) {
+  TargetedCommandLine(@NotNull TargetValue<String> exePath,
+                      @NotNull TargetValue<String> workingDirectory,
+                      @NotNull TargetValue<String> inputFilePath,
+                      @NotNull Charset charset,
+                      @NotNull List<? extends TargetValue<String>> parameters,
+                      @NotNull Map<String, TargetValue<String>> environment,
+                      boolean redirectErrorStream) {
     myExePath = exePath;
     myWorkingDirectory = workingDirectory;
     myInputFilePath = inputFilePath;
     myCharset = charset;
     myParameters = parameters;
     myEnvironment = environment;
+    myRedirectErrorStream = redirectErrorStream;
   }
 
   /**
@@ -108,6 +111,10 @@ public final class TargetedCommandLine {
   @NotNull
   public Charset getCharset() {
     return myCharset;
+  }
+
+  public boolean isRedirectErrorStream() {
+    return myRedirectErrorStream;
   }
 
   @Nullable

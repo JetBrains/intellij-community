@@ -158,7 +158,7 @@ public final class GitMergeUtil {
       return GitRevisionNumber.resolve(project, root, "HEAD");
     }
     catch (VcsException e) {
-      LOG.error("Couldn't resolve the HEAD in " + root, e);
+      LOG.warn("Couldn't resolve the HEAD in " + root, e);
       return null;
     }
   }

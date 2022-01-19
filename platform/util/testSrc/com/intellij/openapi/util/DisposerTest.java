@@ -36,6 +36,7 @@ public class DisposerTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    Disposer.setDebugMode(true);
     myRoot = new MyDisposable("root");
 
     myFolder1 = new MyDisposable("folder1");
@@ -199,7 +200,7 @@ public class DisposerTest extends TestCase {
       disposeRun.set(true);
       while (!allowToContinueDispose.get());
     };
-    assertFalse(Disposer.isDisposed(disposable));
+
     ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(StringUtil.capitalize(getName()));
     Future<?> future = executor.submit(() -> Disposer.dispose(disposable));
     while (!disposeRun.get());
@@ -386,7 +387,6 @@ public class DisposerTest extends TestCase {
 
     Disposable newDisposable = Disposer.newDisposable();
     UsefulTestCase.assertThrows(IncorrectOperationException.class, () -> Disposer.register(disposable, newDisposable));
-    assertFalse(Disposer.isDisposed(newDisposable));
   }
 
   public void testMustBeAbleToRegisterThenDisposeThenRegisterAgain() {
@@ -569,5 +569,22 @@ public class DisposerTest extends TestCase {
   public void testMustNotAllowToRegisterToItself() {
     Disposable d = Disposer.newDisposable();
     UsefulTestCase.assertThrows(IllegalArgumentException.class, () -> Disposer.register(d, d));
+  }
+
+  public void testCheckedDisposableMustKnowItsDisposalStatus() {
+    CheckedDisposable disposable = Disposer.newCheckedDisposable();
+    assertFalse(disposable.isDisposed());
+    Disposer.dispose(disposable);
+    assertTrue(disposable.isDisposed());
+
+    CheckedDisposable d2 = Disposer.newCheckedDisposable();
+    assertTrue(disposable.isDisposed());
+    Disposer.register(d2, disposable);
+    assertFalse(disposable.isDisposed());
+    assertFalse(d2.isDisposed());
+
+    Disposer.dispose(d2);
+    assertTrue(d2.isDisposed());
+    assertTrue(disposable.isDisposed());
   }
 }

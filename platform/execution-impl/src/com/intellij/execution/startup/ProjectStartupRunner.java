@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.startup;
 
 import com.intellij.execution.*;
@@ -60,7 +60,6 @@ final class ProjectStartupRunner implements StartupActivity.DumbAware {
 
   private static void runActivities(@NotNull Project project) {
     if (!TrustedProjects.isTrusted(project)) {
-      showConfirmationNotification(project);
       return;
     }
 
@@ -90,26 +89,6 @@ final class ProjectStartupRunner implements StartupActivity.DumbAware {
         pause = MyExecutor.PAUSE;
       }
     }, project.getDisposed());
-  }
-
-  private static void showConfirmationNotification(@NotNull Project project) {
-    Notification notification = ProjectStartupTaskManager.NOTIFICATION_GROUP.createNotification(
-      ExecutionBundle.message("startup.tasks.confirmation.notification.text"),
-      NotificationType.INFORMATION);
-    notification.addAction(NotificationAction.createSimpleExpiring(
-      ExecutionBundle.message("startup.tasks.confirmation.notification.action.allow"), () -> {
-        TrustedProjects.setTrusted(project, true);
-        runActivities(project);
-      }));
-    notification.addAction(NotificationAction.createSimpleExpiring(
-      ExecutionBundle.message("startup.tasks.confirmation.notification.action.disallow"), () -> {
-        TrustedProjects.setTrusted(project, false);
-      }));
-    notification.addAction(NotificationAction.createSimple(
-      ExecutionBundle.message("startup.tasks.confirmation.notification.action.review"), () -> {
-        ShowSettingsUtil.getInstance().showSettingsDialog(project, ProjectStartupConfigurable.class);
-      }));
-    notification.notify(project);
   }
 
   private static void showNotification(Project project, @Nls String text) {

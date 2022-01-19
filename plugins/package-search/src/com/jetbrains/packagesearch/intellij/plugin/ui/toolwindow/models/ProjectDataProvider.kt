@@ -4,6 +4,7 @@ import com.jetbrains.packagesearch.api.v2.ApiPackagesResponse
 import com.jetbrains.packagesearch.api.v2.ApiRepository
 import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.api.PackageSearchApiClient
+import com.jetbrains.packagesearch.intellij.plugin.util.CoroutineLRUCache
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.logInfo
@@ -12,13 +13,11 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
-import org.apache.commons.collections.map.LRUMap
 
 internal class ProjectDataProvider(
-    private val apiClient: PackageSearchApiClient
+    private val apiClient: PackageSearchApiClient,
+    private val packageCache: CoroutineLRUCache<InstalledDependency, ApiStandardPackage>
 ) {
-
-    private val packageCache = LRUMap(500)
 
     suspend fun fetchKnownRepositories(): List<ApiRepository> = apiClient.repositories().repositories
 
@@ -43,18 +42,18 @@ internal class ProjectDataProvider(
 
         val apiInfoByDependency = fetchInfoFromCacheOrApiFor(installedDependencies, traceInfo)
 
-        val filteredApiInfo = apiInfoByDependency.filterValues { it == null }
-        if (filteredApiInfo.isNotEmpty() && filteredApiInfo.size != installedDependencies.size) {
-            val failedDependencies = filteredApiInfo.keys
+        val (emptyApiInfoByDependency, successfulApiInfoByDependency) =
+            apiInfoByDependency.partition { (_, v) -> v == null }
+
+        if (emptyApiInfoByDependency.isNotEmpty() && emptyApiInfoByDependency.size != installedDependencies.size) {
+            val failedDependencies = emptyApiInfoByDependency.keys
 
             logInfo(traceInfo, "ProjectDataProvider#fetchInfoFor()") {
-                "Failed obtaining data for ${failedDependencies.size} dependencies:\n" +
-                    failedDependencies.joinToString("\n") { "\t* '${it.coordinatesString}'" }
+                "Failed obtaining data for ${failedDependencies.size} dependencies"
             }
         }
 
-        @Suppress("UNCHECKED_CAST") // We filter out null values before casting, we should be ok
-        return apiInfoByDependency.filterValues { it != null } as Map<InstalledDependency, ApiStandardPackage>
+        return successfulApiInfoByDependency.filterNotNullValues()
     }
 
     private suspend fun fetchInfoFromCacheOrApiFor(
@@ -68,8 +67,8 @@ internal class ProjectDataProvider(
         val remoteInfoByDependencyMap = mutableMapOf<InstalledDependency, ApiStandardPackage?>()
         val packagesToFetch = mutableListOf<InstalledDependency>()
         for (dependency in dependencies) {
-            val standardV2Package = packageCache[dependency]
-            remoteInfoByDependencyMap[dependency] = standardV2Package as ApiStandardPackage?
+            val standardV2Package = packageCache.get(dependency)
+            remoteInfoByDependencyMap[dependency] = standardV2Package
             if (standardV2Package == null) {
                 packagesToFetch += dependency
             }
@@ -101,10 +100,21 @@ internal class ProjectDataProvider(
 
         for (v2Package in fetchedPackages) {
             val dependency = InstalledDependency.from(v2Package)
-            packageCache[dependency] = v2Package
+            packageCache.put(dependency, v2Package)
             remoteInfoByDependencyMap[dependency] = v2Package
         }
 
         return remoteInfoByDependencyMap
     }
+}
+
+private fun <K, V> Map<K, V>.partition(transform: (Map.Entry<K, V>) -> Boolean): Pair<Map<K, V>, Map<K, V>> {
+    val trueMap = mutableMapOf<K, V>()
+    val falseMap = mutableMapOf<K, V>()
+    forEach { if (transform(it)) trueMap[it.key] = it.value else falseMap[it.key] = it.value }
+    return trueMap to falseMap
+}
+
+private fun <K, V> Map<K, V?>.filterNotNullValues() = buildMap<K, V> {
+    this@filterNotNullValues.forEach { (k, v) -> if (v != null) put(k, v) }
 }

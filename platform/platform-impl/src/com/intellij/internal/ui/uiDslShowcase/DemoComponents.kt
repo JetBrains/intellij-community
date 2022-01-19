@@ -57,12 +57,12 @@ fun demoComponents(): DialogPanel {
       segmentedButton(listOf("Button 1", "Button 2", "Button Last"), property) { s -> s }
     }
 
-    row {
-      label("label")
+    row("label:") {
+      label("Some label")
     }
 
-    row("labelHtml:") {
-      labelHtml("labelHtml can contain links, for example try <a href='https://www.jetbrains.com'>jetbrains.com</a>")
+    row("text:") {
+      text("text supports max line width and can contain links, try <a href='https://www.jetbrains.com'>jetbrains.com</a>")
     }
 
     row("link:") {

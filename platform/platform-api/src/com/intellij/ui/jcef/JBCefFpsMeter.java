@@ -118,13 +118,14 @@ class JBCefFpsMeterImpl extends JBCefFpsMeter {
     return Math.min(myFps.get(), 99);
   }
 
+  @SuppressWarnings("UseJBColor")
   private void drawFps(@NotNull Graphics g) {
     Graphics gr = g.create();
     try {
-      gr.setColor(JBColor.blue);
+      gr.setColor(Color.blue);
       Rectangle r = myFpsBarBounds.get();
       gr.fillRect(r.x, r.y, r.width, r.height);
-      gr.setColor(JBColor.green);
+      gr.setColor(Color.green);
       gr.setFont(myFont.get());
       int fps = getFps();
       gr.drawString((fps == 0 ? "__" : fps) + " fps", FPS_STR_OFFSET, FPS_STR_OFFSET + myFont.get().getSize());

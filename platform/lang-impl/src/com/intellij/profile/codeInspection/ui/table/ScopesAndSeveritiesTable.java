@@ -404,15 +404,15 @@ public class ScopesAndSeveritiesTable extends JBTable {
           return;
         }
         if ((Boolean)value) {
-          for (final String keyName : myKeyNames) {
-            myInspectionProfile.enableTool(keyName, myProject);
-          }
           if (rowIndex == lastRowIndex()) {
             myInspectionProfile.enableToolsByDefault(myKeyNames, myProject);
           }
           else {
             //TODO create scopes states if not exist (need scope sorting)
             myInspectionProfile.enableTools(myKeyNames, scope, myProject);
+          }
+          for (final String keyName : myKeyNames) {
+            myInspectionProfile.enableTool(keyName, myProject);
           }
         }
         else {

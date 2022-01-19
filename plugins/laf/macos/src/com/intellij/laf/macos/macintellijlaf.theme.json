@@ -31,7 +31,6 @@
       "foreground": "#000000"
     },
 
-    "BookmarkIcon.background": "#F7C777",
     "Borders.ContrastBorderColor": "#c9c9c9",
 
     "Button": {
@@ -104,10 +103,13 @@
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder"
     },
 
-    "BookmarkMnemonicIcon": {
-      "background": "#FEF7EC",
-      "borderColor": "#F4AF3D",
-      "foreground": "#000000"
+    "Bookmark": {
+      "iconBackground": "#F7C777",
+      "Mnemonic": {
+        "iconForeground": "#000000",
+        "iconBackground": "#FEF7EC",
+        "iconBorderColor": "#F4AF3D"
+      }
     },
 
     "NavBar.borderColor": "#cdcdcd",

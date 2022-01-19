@@ -46,6 +46,7 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
     super(cancelText != null,false, project, parentComponent, cancelText);
     setTitle(title);
     myApp.assertIsDispatchThread();
+    myApp.getService(DialogWrapperPeerFactory.class); // make sure the service is created
     myEventStealer = startStealingInputEvents(this::dispatchInputEvent, this);
   }
 
@@ -123,8 +124,7 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
 
   @Nullable
   private JRootPane considerShowingDialog(long now) {
-    if (now - myLastUiUpdate > myDelayInMillis && myApp.isActive() &&
-        myApp.getServiceIfCreated(DialogWrapperPeerFactory.class) != null) {
+    if (now - myLastUiUpdate > myDelayInMillis && myApp.isActive()) {
       getDialog().getRepaintRunnable().run();
       showDialog();
       return getDialog().getPanel().getRootPane();

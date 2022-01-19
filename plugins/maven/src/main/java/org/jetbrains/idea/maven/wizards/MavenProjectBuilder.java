@@ -39,6 +39,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.idea.maven.importing.MavenModuleNameMapper;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.*;
@@ -266,7 +267,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   private static void renameModuleToProjectName(Project project, Module module, MavenProject root) {
     try {
       ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
-      moduleModel.renameModule(module, root.getDisplayName());
+      moduleModel.renameModule(module, MavenModuleNameMapper.resolveModuleName(root));
       moduleModel.commit();
     }
     catch (ModuleWithNameAlreadyExists ignore) {

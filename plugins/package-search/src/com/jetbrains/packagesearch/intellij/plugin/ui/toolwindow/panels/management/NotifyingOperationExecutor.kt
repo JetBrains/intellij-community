@@ -3,8 +3,8 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
-import com.jetbrains.packagesearch.intellij.plugin.PACKAGE_SEARCH_NOTIFICATION_GROUP_ID
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.OperationFailureRenderer
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
@@ -61,9 +61,11 @@ internal class NotifyingOperationExecutor(
         @Nls subtitle: String? = null,
         @Nls message: String
     ) {
-        val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(PACKAGE_SEARCH_NOTIFICATION_GROUP_ID)
+        val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(
+            PluginEnvironment.PACKAGE_SEARCH_NOTIFICATION_GROUP_ID
+        )
         if (notificationGroup == null) {
-            logError { "Notification group $PACKAGE_SEARCH_NOTIFICATION_GROUP_ID is not properly registered" }
+            logError { "Notification group ${PluginEnvironment.PACKAGE_SEARCH_NOTIFICATION_GROUP_ID} is not properly registered" }
         }
 
         @Suppress("DialogTitleCapitalization") // It's the Package Search plugin name

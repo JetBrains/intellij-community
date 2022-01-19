@@ -55,12 +55,16 @@ public abstract class RefEntityImpl extends UserDataHolderBase implements RefEnt
 
   @Override
   public synchronized void add(@NotNull final RefEntity child) {
+    addChild(child);
+    ((RefEntityImpl)child).setOwner(this);
+  }
+
+  protected synchronized void addChild(@NotNull RefEntity child) {
     List<RefEntity> children = myChildren;
     if (children == null) {
       myChildren = children = new ArrayList<>(1);
     }
     children.add(child);
-    ((RefEntityImpl)child).setOwner(this);
   }
 
   @Override

@@ -26,10 +26,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiFunction;
 
 import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.isCallOf;
@@ -1015,6 +1012,7 @@ class CollectMigration extends BaseStreamApiMigration {
         }
       }
       if (terminal instanceof AddingTerminal) {
+        if (terminal instanceof AddingAllTerminal) return null;
         Nullability nullability = NullabilityUtil.getExpressionNullability(((AddingTerminal)terminal).getMapping(), true);
         // Null is not allowed in unmodifiable list/set
         if (nullability == Nullability.NULLABLE) return null;

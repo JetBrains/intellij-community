@@ -63,9 +63,7 @@ class PackageSearchGeneralConfigurable(project: Project) : SearchableConfigurabl
         for (contributor in extensions) {
             contributor.reset()
         }
-
         modified = false
-        PackageSearchEventsLogger.logPreferencesReset()
     }
 
     private fun restoreDefaults() {
@@ -73,6 +71,7 @@ class PackageSearchGeneralConfigurable(project: Project) : SearchableConfigurabl
             contributor.restoreDefaults()
         }
 
+        PackageSearchEventsLogger.logPreferencesRestoreDefaults()
         modified = true
     }
 
@@ -80,5 +79,6 @@ class PackageSearchGeneralConfigurable(project: Project) : SearchableConfigurabl
         for (contributor in extensions) {
             contributor.apply()
         }
+        modified = false
     }
 }

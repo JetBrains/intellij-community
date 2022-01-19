@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.editor;
 
 import com.intellij.codeHighlighting.Pass;
@@ -23,6 +23,7 @@ import com.intellij.psi.search.TodoAttributes;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,10 +40,12 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
     try {
       TodoPattern todoPattern = new TodoPattern(pattern, new TodoAttributes(new TextAttributes()), false);
       todoConfiguration.setTodoPatterns(new TodoPattern[]{todoPattern});
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
       runnable.run();
     }
     finally {
       todoConfiguration.setTodoPatterns(originalPatterns);
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     }
   }
 

@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.github
 
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
+import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
@@ -69,7 +70,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
                                           AllIcons.Vcs.Vendors.Github) {
   override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
-    e.presentation.isEnabledAndVisible = project != null && !project.isDefault
+    e.presentation.isEnabledAndVisible = project != null && !project.isDefault && project.isTrusted()
   }
 
   // get gitRepository

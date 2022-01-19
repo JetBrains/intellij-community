@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -158,8 +157,7 @@ public class VcsLogManager implements Disposable {
   @ApiStatus.Internal
   @NonNls
   public String getLogWindowsInformation() {
-    return StringUtil.join(myPostponableRefresher.getLogWindows(),
-                           window -> window.toString() + (window.isVisible() ? " (visible)" : ""), "\n");
+    return myPostponableRefresher.getLogWindowsInformation();
   }
 
   private static void refreshLogOnVcsEvents(@NotNull Map<VirtualFile, VcsLogProvider> logProviders,

@@ -9,6 +9,7 @@ import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.junit.Assert
 
 private val ktProjectDescriptor = object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
     listOf(KotlinArtifacts.instance.kotlinStdlib), listOf(KotlinArtifacts.instance.kotlinStdlibSources)
@@ -30,7 +31,16 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
             "org/jetbrains/annotations/Blocking.java",
             """
                 package org.jetbrains.annotations; 
-                annotation class Blocking {}
+                
+                public @interface Blocking {}
+            """.trimIndent()
+        )
+        myFixture.addFileToProject(
+            "org/jetbrains/annotations/NonBlocking.java",
+            """
+                package org.jetbrains.annotations; 
+                
+                public @interface NonBlocking {}
             """.trimIndent()
         )
         myFixture.addFileToProject(
@@ -243,5 +253,70 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
             }
         """.trimIndent()
         )
+    }
+
+    fun `test wrap dot qualified expression`() {
+        myFixture.configureByText(
+            "dotQualified.kt",
+            """
+            import kotlinx.coroutines.Dispatchers
+            import kotlinx.coroutines.withContext
+            import org.jetbrains.annotations.Blocking
+            
+            class Foo {
+                @Blocking
+                fun bar() {}
+            }
+            
+            suspend fun wrapWithContextFix() {
+                val variable = Foo().<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">ba<caret>r</warning>()
+                print(variable)
+            }
+        """.trimIndent()
+        )
+        myFixture.checkHighlighting()
+        val action = myFixture.getAvailableIntention("Wrap call in 'withContext'")
+
+        myFixture.launchAction(action!!)
+        myFixture.checkResult("""
+            import kotlinx.coroutines.Dispatchers
+            import kotlinx.coroutines.withContext
+            import org.jetbrains.annotations.Blocking
+            
+            class Foo {
+                @Blocking
+                fun bar() {}
+            }
+            
+            suspend fun wrapWithContextFix() {
+                val variable = withContext(Dispatchers.IO) {
+                    Foo().bar()
+                }
+                print(variable)
+            }
+        """.trimIndent()
+        )
+    }
+
+    fun `test no fixes in non-suspendable context`() {
+        myFixture.configureByText(
+            "noIntentions.kt",
+            """
+            import kotlinx.coroutines.Dispatchers
+            import kotlinx.coroutines.withContext
+            import org.jetbrains.annotations.NonBlocking
+            
+            fun acceptSimpleBlock(block: () -> Unit) { block() }
+            
+            @NonBlocking
+            fun differentContexts() {
+                acceptSimpleBlock {
+                    <warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">block</warning>()  
+                }
+            }
+        """.trimIndent()
+        )
+        myFixture.checkHighlighting()
+        Assert.assertTrue(myFixture.availableIntentions.isEmpty())
     }
 }

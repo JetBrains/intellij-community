@@ -84,7 +84,7 @@ public final class ConfigImportHelper {
   private static final String PLUGINS = "plugins";
   private static final String SYSTEM = "system";
 
-  public static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?([^\\d]+)(\\d+(?:\\.\\d+)?)");
+  public static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?([^\\d]+)(\\d+(?:\\.\\d+)*)");
   private static final String SHOW_IMPORT_CONFIG_DIALOG_PROPERTY = "idea.initially.ask.config";
 
   // constant is used instead of util method to ensure that ConfigImportHelper class is not loaded by StartupUtil

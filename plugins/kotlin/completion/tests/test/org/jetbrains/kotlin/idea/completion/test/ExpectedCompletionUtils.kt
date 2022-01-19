@@ -11,6 +11,7 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.ui.JBColor
+import com.intellij.ui.icons.RowIcon
 import com.intellij.util.ArrayUtil
 import org.jetbrains.kotlin.idea.completion.LookupElementFactory
 import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
@@ -22,8 +23,8 @@ import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.junit.Assert
-import java.util.*
 
 /**
  * Extract a number of statements about completion from the given text. Those statements
@@ -34,9 +35,12 @@ object ExpectedCompletionUtils {
     class CompletionProposal {
         private val map: Map<String, String?>
 
+        constructor(source: CompletionProposal, filter: (String, String?) -> Boolean) {
+            map = source.map.filter { filter(it.key, it.value) }
+        }
+
         constructor(lookupString: String) {
-            map = HashMap<String, String?>()
-            map.put(LOOKUP_STRING, lookupString)
+            map = mapOf(LOOKUP_STRING to lookupString)
         }
 
         constructor(map: MutableMap<String, String?>) {
@@ -60,6 +64,8 @@ object ExpectedCompletionUtils {
             }
         }
 
+        operator fun get(key: String): String? = map[key]
+
         fun matches(expectedProposal: CompletionProposal): Boolean = expectedProposal.map.entries.none { it.value != map[it.key] }
 
         override fun toString(): String {
@@ -74,12 +80,13 @@ object ExpectedCompletionUtils {
             const val LOOKUP_STRING: String = "lookupString"
             const val ALL_LOOKUP_STRINGS: String = "allLookupStrings"
             const val PRESENTATION_ITEM_TEXT: String = "itemText"
+            const val PRESENTATION_ICON: String = "icon"
             const val PRESENTATION_TYPE_TEXT: String = "typeText"
             const val PRESENTATION_TAIL_TEXT: String = "tailText"
             const val PRESENTATION_TEXT_ATTRIBUTES: String = "attributes"
             const val MODULE_NAME: String = "module"
             val validKeys: Set<String> = setOf(
-                LOOKUP_STRING, ALL_LOOKUP_STRINGS, PRESENTATION_ITEM_TEXT, PRESENTATION_TYPE_TEXT,
+                LOOKUP_STRING, ALL_LOOKUP_STRINGS, PRESENTATION_ITEM_TEXT, PRESENTATION_ICON, PRESENTATION_TYPE_TEXT,
                 PRESENTATION_TAIL_TEXT, PRESENTATION_TEXT_ATTRIBUTES, MODULE_NAME
             )
         }
@@ -244,7 +251,22 @@ object ExpectedCompletionUtils {
                 if (allItemsString.isEmpty()) {
                     Assert.fail("Completion is empty but $expectedProposal is expected")
                 } else {
-                    Assert.fail("Expected $expectedProposal not found in:\n$allItemsString")
+                    var closeMatchWithoutIcon: CompletionProposal? = null
+                    for (index in itemsInformation.indices) {
+                        val proposal = itemsInformation[index]
+
+                        val candidate = CompletionProposal(expectedProposal) { k, _ -> k != CompletionProposal.PRESENTATION_ICON }
+                        if (proposal.matches(candidate)) {
+                            closeMatchWithoutIcon = proposal
+                            break
+                        }
+                    }
+
+                    if (closeMatchWithoutIcon == null) {
+                        Assert.fail("Expected $expectedProposal not found in:\n$allItemsString")
+                    } else {
+                        Assert.fail("Missed ${CompletionProposal.PRESENTATION_ICON}:\"${closeMatchWithoutIcon[CompletionProposal.PRESENTATION_ICON]}\" in $expectedProposal")
+                    }
                 }
             }
         }
@@ -293,21 +315,16 @@ object ExpectedCompletionUtils {
 
             map[CompletionProposal.ALL_LOOKUP_STRINGS] = item.allLookupStrings.sorted().joinToString()
 
-            if (presentation.itemText != null) {
-                map[CompletionProposal.PRESENTATION_ITEM_TEXT] = presentation.itemText
+            presentation.itemText?.let {
+                map[CompletionProposal.PRESENTATION_ITEM_TEXT] = it
                 map[CompletionProposal.PRESENTATION_TEXT_ATTRIBUTES] = textAttributes(presentation)
             }
-
-            if (presentation.typeText != null) {
-                map[CompletionProposal.PRESENTATION_TYPE_TEXT] = presentation.typeText
+            presentation.typeText?.let { map[CompletionProposal.PRESENTATION_TYPE_TEXT] = it }
+            presentation.icon?.let { map[CompletionProposal.PRESENTATION_ICON] =
+                (it.safeAs<RowIcon>()?.allIcons?.firstOrNull() ?: it).toString()
             }
-
-            if (presentation.tailText != null) {
-                map[CompletionProposal.PRESENTATION_TAIL_TEXT] = presentation.tailText
-            }
-            item.moduleName?.let {
-                map.put(CompletionProposal.MODULE_NAME, it)
-            }
+            presentation.tailText?.let { map[CompletionProposal.PRESENTATION_TAIL_TEXT] = it }
+            item.moduleName?.let { map.put(CompletionProposal.MODULE_NAME, it) }
 
             result.add(CompletionProposal(map))
         }

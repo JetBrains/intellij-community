@@ -297,6 +297,7 @@ public final class StartupUtil {
       forkJoinPool.awaitQuiescence(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
     }
     while (!future.isDone());
+    log.info("notify that start-up thread is free");
     AWTAutoShutdown.getInstance().notifyThreadFree(busyThread);
   }
 

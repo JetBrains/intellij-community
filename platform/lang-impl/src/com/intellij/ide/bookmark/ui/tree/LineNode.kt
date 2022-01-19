@@ -19,7 +19,9 @@ class LineNode(project: Project, bookmark: LineBookmark) : BookmarkNode<LineBook
     presentation.setIcon(wrapIcon(null))
     if (parent is FileNode) {
       presentation.addText("$line: ", SimpleTextAttributes.GRAYED_ATTRIBUTES)
-      bookmarkDescription?.let { presentation.addText(it, SimpleTextAttributes.REGULAR_ATTRIBUTES) }
+      bookmarkDescription
+        ?.also { presentation.presentableText = it } // configure speed search
+        ?.also { presentation.addText(it, SimpleTextAttributes.REGULAR_ATTRIBUTES) }
     }
     else {
       addTextTo(presentation, value.file, line)

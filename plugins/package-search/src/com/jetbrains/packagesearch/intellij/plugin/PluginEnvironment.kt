@@ -2,11 +2,14 @@ package com.jetbrains.packagesearch.intellij.plugin
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.PluginId
 
-internal const val PACKAGE_SEARCH_NOTIFICATION_GROUP_ID = "packagesearch.notification"
+internal object PluginEnvironment {
 
-internal class PluginEnvironment {
+    const val PACKAGE_SEARCH_NOTIFICATION_GROUP_ID = "packagesearch.notification"
+
+    const val PLUGIN_ID = "com.jetbrains.packagesearch.intellij-plugin"
 
     val pluginVersion
         get() = PluginManagerCore.getPlugin(PluginId.getId(PLUGIN_ID))?.version
@@ -18,8 +21,9 @@ internal class PluginEnvironment {
     val ideBuildNumber
         get() = ApplicationInfo.getInstance().build
 
-    companion object {
+    val isTestEnvironment
+        get() = ApplicationManager.getApplication().isUnitTestMode || ApplicationManager.getApplication().isHeadlessEnvironment
 
-        const val PLUGIN_ID = "com.jetbrains.packagesearch.intellij-plugin"
-    }
+    val isNonModalLoadingEnabled
+        get() = System.getProperty("idea.pkgs.disableLoading") != "true" && !isTestEnvironment
 }

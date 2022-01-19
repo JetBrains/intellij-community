@@ -14,6 +14,7 @@ import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
@@ -49,7 +50,11 @@ internal class LanguageDetectionInspection : LocalInspectionTool() {
       override fun visitElement(element: PsiElement) {
         if (areChecksDisabled(element)) return
         val context = session.getUserData(key)!!
-        TextExtractor.findUniqueTextsAt(element, domains).forEach { LangDetector.updateContext(it, context) }
+        val texts = TextExtractor.findUniqueTextsAt(element, domains)
+        texts.forEach {
+          ProgressManager.checkCanceled()
+          LangDetector.updateContext(it, context)
+        }
       }
     }
   }

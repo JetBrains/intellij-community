@@ -639,21 +639,21 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    protected void toggleChanges(@NotNull Collection<?> changes) {
+    protected boolean toggleChanges(@NotNull Collection<?> changes) {
       List<AbstractFilePatchInProgress.PatchChange> patchChanges =
         ContainerUtil.findAll(changes, AbstractFilePatchInProgress.PatchChange.class);
 
       if (patchChanges.size() == 1 && !patchChanges.get(0).isValid()) {
-        handleInvalidChangesAndToggle();
+        return handleInvalidChangesAndToggle();
       }
       else {
-        super.toggleChanges(getOnlyValidChanges(patchChanges));
+        return super.toggleChanges(getOnlyValidChanges(patchChanges));
       }
     }
 
-    private void handleInvalidChangesAndToggle() {
+    private boolean handleInvalidChangesAndToggle() {
       new NewBaseSelector(false).run();
-      super.toggleChanges(getOnlyValidChanges(getSelectedChanges()));
+      return super.toggleChanges(getOnlyValidChanges(getSelectedChanges()));
     }
   }
 

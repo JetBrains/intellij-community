@@ -15,4 +15,6 @@ interface EditorConfigDescriptor {
   val parent: EditorConfigDescriptor?
   fun accept(visitor: EditorConfigDescriptorVisitor)
   fun matches(element: PsiElement): Boolean
+
+  fun getPresentableText(): String = ""
 }

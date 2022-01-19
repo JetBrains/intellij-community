@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.ide.IdeBundle;
@@ -165,8 +165,8 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
                  "}\n" +
                  "\n" +
                  "dependencies {\n" +
-                 "    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.2'\n" +
-                 "    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.2'\n" +
+                 "    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'\n" +
+                 "    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'\n" +
                  "}\n" +
                  "\n" +
                  "test {\n" +

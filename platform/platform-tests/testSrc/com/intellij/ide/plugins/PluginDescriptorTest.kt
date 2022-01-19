@@ -31,6 +31,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.function.Function
 import java.util.function.Supplier
+import kotlin.io.path.name
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
@@ -160,6 +161,26 @@ class PluginDescriptorTest {
     val descriptor = loadDescriptorInTest("noId")
     assertThat(descriptor).isNotNull()
     assertThat(descriptor.pluginId.idString).isEqualTo(descriptor.name)
+  }
+
+  @Test
+  fun testMetaInfInClasses() {
+    val descriptor = loadDescriptorInTest("metaInfInClasses")
+    assertThat(descriptor).isNotNull
+    assertThat(descriptor.pluginId.idString).isEqualTo("foo.bar")
+
+    assertThat(descriptor.jarFiles).isNotNull()
+    assertThat(descriptor.jarFiles!!.map { it.name }).isEqualTo(listOf("classes", "empty.jar"))
+  }
+
+  @Test
+  fun testStandaloneMetaInf() {
+    val descriptor = loadDescriptorInTest("standaloneMetaInf")
+    assertThat(descriptor).isNotNull
+    assertThat(descriptor.pluginId.idString).isEqualTo("foo.bar")
+
+    assertThat(descriptor.jarFiles).isNotNull()
+    assertThat(descriptor.jarFiles!!.map { it.name }).isEqualTo(listOf("classes", "empty.jar"))
   }
 
   @Test
@@ -489,7 +510,7 @@ private val testDataPath: String
   get() = "${PlatformTestUtil.getPlatformTestDataPath()}plugins/pluginDescriptor"
 
 private fun loadDescriptorInTest(dirName: String, disabledPlugins: Set<PluginId> = emptySet()): IdeaPluginDescriptorImpl {
-  return loadDescriptorInTest(Path.of(testDataPath, dirName), disabledPlugins)
+  return loadDescriptorInTest(Path.of(testDataPath, dirName), disabledPlugins = disabledPlugins)
 }
 
 fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: PluginId? = null): IdeaPluginDescriptorImpl {

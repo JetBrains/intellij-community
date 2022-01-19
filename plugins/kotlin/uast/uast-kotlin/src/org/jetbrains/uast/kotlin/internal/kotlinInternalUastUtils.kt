@@ -312,7 +312,7 @@ internal fun KotlinULambdaExpression.getFunctionalInterfaceType(): PsiType? {
 
             // Same as if in old inference we would get SamDescriptor
             if (samConvertedArgument != null) {
-                val type = getTypeByArgument(resolvedCall, resolvedCall.candidateDescriptor, parent) ?: return@run
+                val type = getTypeByArgument(resolvedCall, parent) ?: return@run
                 return type.getFunctionalInterfaceType(this, sourcePsi)
             }
         }
@@ -321,9 +321,7 @@ internal fun KotlinULambdaExpression.getFunctionalInterfaceType(): PsiType? {
         when (candidateDescriptor) {
             is SamConstructorDescriptor -> return candidateDescriptor.returnType?.getFunctionalInterfaceType(this, sourcePsi)
             is SamAdapterDescriptor<*>, is SamAdapterExtensionFunctionDescriptor -> {
-                val functionDescriptor = candidateDescriptor.baseDescriptorForSynthetic as? FunctionDescriptor ?: return@run
-
-                val type = getTypeByArgument(resolvedCall, functionDescriptor, parent) ?: return@run
+                val type = getTypeByArgument(resolvedCall, parent) ?: return@run
                 return type.getFunctionalInterfaceType(this, sourcePsi)
             }
         }
@@ -596,11 +594,8 @@ private fun PsiElement.getMaybeLightElement(sourcePsi: KtExpression? = null): Ps
 
 private fun getTypeByArgument(
     resolvedCall: ResolvedCall<*>,
-    descriptor: CallableDescriptor,
     argument: ValueArgument
 ): KotlinType? {
-    val index = (resolvedCall.getArgumentMapping(argument) as? ArgumentMatch)?.valueParameter?.index ?: return null
-    val parameterDescriptor = descriptor.valueParameters.getOrNull(index) ?: return null
-
-    return parameterDescriptor.type
+    val parameterInfo = (resolvedCall.getArgumentMapping(argument) as? ArgumentMatch)?.valueParameter ?: return null
+    return parameterInfo.type
 }

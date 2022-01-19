@@ -18,6 +18,7 @@ import com.intellij.ui.content.TabbedContent
 import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow
 import com.intellij.vcs.log.impl.VcsLogToolWindowTabsWatcher.VcsLogToolWindowTab
 import com.intellij.vcs.log.visible.VisiblePackRefresher
+import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import java.util.*
@@ -88,6 +89,10 @@ internal class VcsLogToolWindowTabsWatcher(private val project: Project,
     override fun isVisible(): Boolean {
       val selectedTab = getSelectedToolWindowTabId(toolWindow)
       return id == selectedTab
+    }
+
+    override fun toString(): @NonNls String {
+      return "VcsLogToolWindowTab '$id'"
     }
   }
 

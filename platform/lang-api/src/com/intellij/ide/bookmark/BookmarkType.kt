@@ -47,7 +47,7 @@ enum class BookmarkType(val mnemonic: Char, private val painter: RegionPainter<C
 }
 
 
-private val BOOKMARK_ICON_BACKGROUND = EditorColorsUtil.createColorKey("BookmarkIcon.background", JBColor(0xF7C777, 0xAA8542))
+private val BOOKMARK_ICON_BACKGROUND = EditorColorsUtil.createColorKey("Bookmark.iconBackground", JBColor(0xF7C777, 0xAA8542))
 
 private class BookmarkPainter : RegionPainter<Component?> {
   override fun toString() = "BookmarkIcon"
@@ -81,9 +81,9 @@ private class BookmarkPainter : RegionPainter<Component?> {
 }
 
 
-private val MNEMONIC_ICON_FOREGROUND = EditorColorsUtil.createColorKey("BookmarkMnemonicIcon.foreground", JBColor(0x000000, 0xBBBBBB))
-private val MNEMONIC_ICON_BACKGROUND = EditorColorsUtil.createColorKey("BookmarkMnemonicIcon.background", JBColor(0xFEF7EC, 0x5B5341))
-private val MNEMONIC_ICON_BORDER_COLOR = EditorColorsUtil.createColorKey("BookmarkMnemonicIcon.borderColor", JBColor(0xF4AF3D, 0xD9A343))
+private val MNEMONIC_ICON_FOREGROUND = EditorColorsUtil.createColorKey("Bookmark.Mnemonic.iconForeground", JBColor(0x000000, 0xBBBBBB))
+private val MNEMONIC_ICON_BACKGROUND = EditorColorsUtil.createColorKey("Bookmark.Mnemonic.iconBackground", JBColor(0xFEF7EC, 0x5B5341))
+private val MNEMONIC_ICON_BORDER_COLOR = EditorColorsUtil.createColorKey("Bookmark.Mnemonic.iconBorderColor", JBColor(0xF4AF3D, 0xD9A343))
 
 private class MnemonicPainter(val mnemonic: String) : RegionPainter<Component?> {
   override fun toString() = "BookmarkMnemonicIcon:$mnemonic"

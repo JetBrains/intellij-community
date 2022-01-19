@@ -127,10 +127,11 @@ abstract class GradleRerunFailedTestsTestCase : GradleImportingTestCase() {
     }
   }
 
-  fun execute(gradleArguments: String) {
+  fun execute(tasksAndArguments: String, parameters: String? = null) {
     val settings = ExternalSystemTaskExecutionSettings().apply {
       externalProjectPath = projectPath
-      scriptParameters = gradleArguments
+      taskNames = tasksAndArguments.split(" ")
+      scriptParameters = parameters
       externalSystemIdString = SYSTEM_ID.id
     }
     ExternalSystemUtil.runTask(settings, EXECUTOR_ID, myProject, SYSTEM_ID, null, NO_PROGRESS_SYNC)

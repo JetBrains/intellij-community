@@ -106,7 +106,7 @@ public final class MultiResolutionImageProvider {
       scaleContext = ScaleContext.create();
     }
     Image image = Objects.requireNonNull(IconLoader.toImage(mrIcon, scaleContext));
-    if (image instanceof MultiResolutionImage) {
+    if (!(image instanceof MultiResolutionImage)) {
       return mrIcon;
     }
     image = getMaxSizeResolutionVariant(image);

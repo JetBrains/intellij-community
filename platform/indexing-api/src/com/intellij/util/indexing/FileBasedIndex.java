@@ -14,7 +14,10 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -135,6 +138,11 @@ public abstract class FileBasedIndex {
   @ApiStatus.Internal
   public abstract <K> void ensureUpToDate(@NotNull ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter);
 
+  /**
+   * Marks index as requiring rebuild and requests asynchronously full indexing.
+   * In unit tests one needs for full effect to dispatch events from event queue
+   * with {@code PlatformTestUtil.dispatchAllEventsInIdeEventQueue()}
+   */
   public abstract void requestRebuild(@NotNull ID<?, ?> indexId, @NotNull Throwable throwable);
 
   public abstract <K> void scheduleRebuild(@NotNull ID<K, ?> indexId, @NotNull Throwable e);

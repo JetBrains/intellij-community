@@ -426,6 +426,8 @@ public class Tool implements SchemeElement {
     // paths in linux. Reset working directory in command line, because linux directory is not valid
     // in windows, and we will fail to start process with it.
     cmd.setWorkDirectory((String)null);
+    // run command in interactive shell so that shell rc files are executed and configure proper environment
+    wslOptions.setShellPath(wsl.getShellPath()).setExecuteCommandInInteractiveShell(true);
     return wsl.patchCommandLine(cmd, project, wslOptions);
   }
 }

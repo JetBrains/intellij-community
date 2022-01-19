@@ -12,5 +12,6 @@ class UrlParameterKeys {
     const val port = "port"
     const val type = "type"
     const val deploy = "deploy"
+    const val sshId = "ssh"
   }
 }

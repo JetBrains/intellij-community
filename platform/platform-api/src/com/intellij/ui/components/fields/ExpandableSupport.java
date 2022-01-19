@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.fields;
 
 import com.intellij.icons.AllIcons;
@@ -32,6 +32,11 @@ import static java.beans.EventHandler.create;
 import static java.util.Collections.singletonList;
 import static javax.swing.KeyStroke.getKeyStroke;
 
+/**
+ * Internal implementation that provides some shared functionality
+ * for {@link ExpandableTextField} and for {@code ExpandableEditorSupport},
+ * which allows similar behavior for {@code EditorTextField} (one-line editor).
+ */
 @Internal
 public abstract class ExpandableSupport<Source extends JComponent> implements Expandable {
   private final Source source;

@@ -31,6 +31,13 @@ public class SuperBuilderHandler extends BuilderHandler {
   private static final String BUILDER_VARIABLE_NAME = "b";
 
   @Override
+  protected boolean validateBuilderConstructor(@NotNull PsiClass psiClass,
+                                               Collection<BuilderInfo> builderInfos,
+                                               @NotNull ProblemBuilder problemBuilder) {
+    return true;
+  }
+
+  @Override
   public boolean validateExistingBuilderClass(@NotNull String builderClassName, @NotNull PsiClass psiClass, @NotNull ProblemBuilder problemBuilder) {
     final Optional<PsiClass> existingInnerBuilderClass = PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName);
 

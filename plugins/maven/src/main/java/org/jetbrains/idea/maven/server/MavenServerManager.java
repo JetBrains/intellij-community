@@ -2,7 +2,8 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.impl.TrustChangeNotifier;
+import com.intellij.ide.impl.TrustStateListener;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
@@ -107,12 +108,20 @@ public final class MavenServerManager implements Disposable {
       }
     });
 
-    connection.subscribe(TrustChangeNotifier.TOPIC, new TrustChangeNotifier() {
+    connection.subscribe(TrustStateListener.TOPIC, new TrustStateListener() {
       @Override
-      public void projectTrusted(@NotNull Project project) {
+      public void onProjectTrusted(@NotNull Project project) {
         MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
         if (manager.isMavenizedProject()) {
           MavenUtil.restartMavenConnectors(project);
+        }
+      }
+
+      @Override
+      public void onProjectTrustedFromNotification(@NotNull Project project) {
+        MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+        if (manager.isMavenizedProject()) {
+          manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
         }
       }
     });
@@ -183,7 +192,7 @@ public final class MavenServerManager implements Disposable {
     String vmOptions = MavenDistributionsCache.getInstance(project).getVmOptions(multimoduleDirectory);
     Integer debugPort = getDebugPort(project);
     MavenServerConnector connector;
-    if (MavenUtil.isProjectTrustedEnoughToImport(project, false)) {
+    if (TrustedProjects.isTrusted(project) || project.isDefault()) {
       connector = new MavenServerConnectorImpl(project, this, jdk, vmOptions, debugPort, distribution, multimoduleDirectory);
       MavenLog.LOG.debug("[connector] new maven connector " + connector);
     }
@@ -528,14 +537,19 @@ public final class MavenServerManager implements Disposable {
     File mavenHome = settings.getEffectiveMavenHome();
     if (mavenHome != null) {
       String remotePath = transformer.toRemotePath(mavenHome.getAbsolutePath());
-      mavenHome = remotePath == null ? null : new File(remotePath);
+      result.setMavenHomePath(remotePath);
     }
-    result.setMavenHome(mavenHome);
-    result.setUserSettingsFile(
-      transformer == RemotePathTransformerFactory.Transformer.ID ? settings.getEffectiveUserSettingsIoFile() : null);
-    result.setGlobalSettingsFile(
-      transformer == RemotePathTransformerFactory.Transformer.ID ? settings.getEffectiveGlobalSettingsIoFile() : null);
-    result.setLocalRepository(transformer == RemotePathTransformerFactory.Transformer.ID ? settings.getEffectiveLocalRepository() : null);
+
+
+    String userSettingsPath = MavenWslUtil.getUserSettings(project, settings.getUserSettingsFile(), settings.getMavenConfig()).getAbsolutePath();
+    result.setUserSettingsPath(transformer.toRemotePath(userSettingsPath));
+
+    String globalSettingsPath = MavenWslUtil.getGlobalSettings(project, settings.getMavenHome(), settings.getMavenConfig()).getAbsolutePath();
+    result.setGlobalSettingsPath(transformer.toRemotePath(globalSettingsPath));
+
+    String localRepository = settings.getEffectiveLocalRepository().getAbsolutePath();
+
+    result.setLocalRepositoryPath(transformer.toRemotePath(localRepository));
     result.setPluginUpdatePolicy(settings.getPluginUpdatePolicy().getServerPolicy());
     result.setSnapshotUpdatePolicy(
       settings.isAlwaysUpdateSnapshots() ? MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE : MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);

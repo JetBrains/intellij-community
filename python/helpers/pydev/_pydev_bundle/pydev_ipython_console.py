@@ -66,3 +66,6 @@ class IPythonInterpreterInterface(BaseInterpreterInterface):
         if hasattr(self.interpreter, 'ipython') and hasattr(self.interpreter.ipython, 'user_ns_hidden'):
             ipython_shell = self.interpreter.ipython
             return get_ipython_hidden_vars(ipython_shell)
+
+    def notify_first_command_executed(self):
+        self.interpreter.ipython.patch_stdout_if_needed()

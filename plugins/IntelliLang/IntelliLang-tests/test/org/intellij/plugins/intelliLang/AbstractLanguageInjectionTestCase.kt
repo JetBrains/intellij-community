@@ -12,7 +12,7 @@ import com.intellij.util.Processor
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
 
 abstract class AbstractLanguageInjectionTestCase : LightJavaCodeInsightFixtureTestCase() {
-  private val injectionTestFixture: InjectionTestFixture get() = InjectionTestFixture(myFixture)
+  val injectionTestFixture: InjectionTestFixture get() = InjectionTestFixture(myFixture)
 
   fun assertInjectedLangAtCaret(lang: String?) {
     injectionTestFixture.assertInjectedLangAtCaret(lang)

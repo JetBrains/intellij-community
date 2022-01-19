@@ -72,6 +72,8 @@ public final class BringVariableIntoScopeFix implements IntentionAction, HighPri
     container.accept(visitor);
 
     if (visitor.variableCount != 1 || visitor.myOutOfScopeVariable instanceof PsiResourceVariable) return null;
+    // E.g., reference in annotation
+    if (PsiTreeUtil.isAncestor(visitor.myOutOfScopeVariable, unresolvedReference, true)) return null;
     return new BringVariableIntoScopeFix(unresolvedReference, visitor.myOutOfScopeVariable);
   }
 

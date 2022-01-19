@@ -85,7 +85,7 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          version = HgVersion.identifyVersion(executable);
+          version = HgVersion.identifyVersion(myProject, executable);
         }
         catch (Exception e) {
           throw new RuntimeException(e);

@@ -9,11 +9,12 @@ import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SmartSelectInContext;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.application.ActionsKt;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
@@ -148,16 +149,26 @@ public final class SelectInContextImpl extends FileSelectInContext {
   private static Object getElementFromStructureView(@NotNull Project project, @NotNull FileEditor editor) {
     StructureViewBuilder builder = editor.getStructureViewBuilder();
     if (builder == null) return null;
-    return ActionsKt.invokeAndWaitIfNeeded(null, () ->
-      getElementFromStructureView(project, editor, builder)
-    );
+    return getElementFromStructureView(project, editor, builder);
   }
 
   @Nullable
   private static Object getElementFromStructureView(@NotNull Project project, @NotNull FileEditor editor, @NotNull StructureViewBuilder builder) {
+    if (builder instanceof TreeBasedStructureViewBuilder) {
+      return getElementFromStructureTreeView(editor, (TreeBasedStructureViewBuilder)builder);
+    }
     StructureView structureView = builder.createStructureView(editor, project);
     Object selectorInFile = structureView.getTreeModel().getCurrentEditorElement();
     Disposer.dispose(structureView);
+    return selectorInFile;
+  }
+
+  @Nullable
+  private static Object getElementFromStructureTreeView(@NotNull FileEditor fileEditor, TreeBasedStructureViewBuilder builder) {
+    Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
+    StructureViewModel model = builder.createStructureViewModel(editor);
+    Object selectorInFile = model.getCurrentEditorElement();
+    Disposer.dispose(model);
     return selectorInFile;
   }
 

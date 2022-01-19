@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.action;
 
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -35,6 +36,12 @@ import static org.zmlx.hg4idea.HgNotificationIdsHolder.REPO_CREATION_ERROR;
 public class HgInit extends DumbAwareAction {
 
   private Project myProject;
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    e.getPresentation().setEnabledAndVisible(project == null || project.isDefault() || TrustedProjects.isTrusted(project));
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

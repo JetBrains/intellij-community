@@ -7,10 +7,9 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.impl.setTrusted
+import com.intellij.ide.impl.TrustedPaths
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
-import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
@@ -36,6 +35,7 @@ import training.lang.LangManager
 import training.lang.LangSupport
 import training.learn.LearnBundle
 import training.util.featureTrainerVersion
+import training.util.iftNotificationGroup
 import java.io.File
 import java.io.FileFilter
 import java.io.IOException
@@ -187,7 +187,6 @@ object ProjectUtils {
           GeneralSettings.getInstance().confirmOpenNewProject = confirmOpenNewProject
         }
       }
-      project.setTrusted(true)
       postInitCallback(project)
     }
   }
@@ -211,8 +210,9 @@ object ProjectUtils {
         error("Cannot create learning demo project. See LOG files for details.")
       }
     }
-    val path = langSupport.getLearningProjectPath(targetDirectory).toAbsolutePath().toString()
-    LangManager.getInstance().setLearningProjectPath(langSupport, path)
+    val path = langSupport.getLearningProjectPath(targetDirectory)
+    LangManager.getInstance().setLearningProjectPath(langSupport, path.toAbsolutePath().toString())
+    TrustedPaths.getInstance().setProjectPathTrusted(path, true)
     return targetDirectory
   }
 
@@ -262,9 +262,7 @@ object ProjectUtils {
   private fun versionFile(dest: Path) = dest.resolve(FEATURE_TRAINER_VERSION)
 
   fun createSdkDownloadingNotification(): Notification {
-    val notificationGroup = NotificationGroup.findRegisteredGroup("IDE Features Trainer")
-                            ?: error("Not found notificationGroup for IDE Features Trainer")
-    return notificationGroup.createNotification(LearnBundle.message("learn.project.initializing.jdk.download.notification.title"),
+    return iftNotificationGroup.createNotification(LearnBundle.message("learn.project.initializing.jdk.download.notification.title"),
                                                 LearnBundle.message("learn.project.initializing.jdk.download.notification.message",
                                                                     ApplicationNamesInfo.getInstance().fullProductName),
                                                 NotificationType.INFORMATION)

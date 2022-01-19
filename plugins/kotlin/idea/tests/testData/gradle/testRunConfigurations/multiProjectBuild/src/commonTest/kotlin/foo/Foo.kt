@@ -4,8 +4,8 @@ package foo
 
 import kotlin.test.Test
 
-class <lineMarker descr="Run Test" project="", settings="cleanJvmTest jvmTest --tests \"foo.Foo\"">Foo</lineMarker> {
+class <lineMarker descr="Run Test" project="", settings=":cleanJvmTest :jvmTest --tests \"foo.Foo\"">Foo</lineMarker> {
     @Test
-    fun <lineMarker descr="Run Test" project="", settings="cleanJvmTest jvmTest --tests \"foo.Foo.test\"">test</lineMarker>() {
+    fun <lineMarker descr="Run Test" project="", settings=":cleanJvmTest :jvmTest --tests \"foo.Foo.test\"">test</lineMarker>() {
     }
 }

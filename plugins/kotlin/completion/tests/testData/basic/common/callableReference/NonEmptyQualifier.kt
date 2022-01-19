@@ -37,15 +37,15 @@ class C {
     }
 }
 
-// EXIST: { lookupString: "class", itemText: "class", attributes: "bold" }
+// EXIST: { lookupString: "class", itemText: "class", attributes: "bold"}
 // EXIST_JAVA_ONLY: { lookupString: "class.java", itemText: "class", tailText: ".java", attributes: "bold" }
-// EXIST: { itemText: "memberFunInA", attributes: "bold" }
-// EXIST: { itemText: "memberValInA", attributes: "bold" }
-// EXIST: { itemText: "InnerInA", attributes: "bold" }
-// EXIST: { itemText: "NestedInA", attributes: "" }
-// EXIST: { itemText: "extensionFun", attributes: "bold" }
-// EXIST: { itemText: "extensionVal", attributes: "bold" }
-// EXIST: { itemText: "anyExtensionFun", attributes: "" }
+// EXIST: { itemText: "memberFunInA", attributes: "bold", icon: "nodes/abstractMethod.svg" }
+// EXIST: { itemText: "memberValInA", attributes: "bold", icon: "org/jetbrains/kotlin/idea/icons/field_value.svg" }
+// EXIST: { itemText: "InnerInA", attributes: "bold", icon: "org/jetbrains/kotlin/idea/icons/classKotlin.svg" }
+// EXIST: { itemText: "NestedInA", attributes: "", icon: "org/jetbrains/kotlin/idea/icons/classKotlin.svg" }
+// EXIST: { itemText: "extensionFun", attributes: "bold", icon: "nodes/function.svg" }
+// EXIST: { itemText: "extensionVal", attributes: "bold", icon: "org/jetbrains/kotlin/idea/icons/field_value.svg" }
+// EXIST: { itemText: "anyExtensionFun", attributes: "", icon: "nodes/function.svg" }
 // ABSENT: wrongExtensionFun
 // ABSENT: globalFun
 // ABSENT: globalVal

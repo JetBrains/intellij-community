@@ -13,6 +13,7 @@ import training.learn.lesson.LessonListener
 import training.learn.lesson.LessonState
 import training.learn.lesson.LessonStateManager
 import training.statistic.LessonStartingWay
+import training.util.LessonEndInfo
 import training.util.filterUnseenLessons
 import training.util.findLanguageByID
 
@@ -49,7 +50,7 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
 
   open val testScriptProperties: TaskTestContext.TestScriptProperties = TaskTestContext.TestScriptProperties()
 
-  open fun onLessonEnd(project: Project, lessonPassed: Boolean) = Unit
+  open fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) = Unit
 
   fun addLessonListener(lessonListener: LessonListener) {
     lessonListeners.add(lessonListener)
@@ -70,9 +71,9 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
     lessonListeners.forEach { it.lessonStarted(this, way) }
   }
 
-  internal fun onStop(project: Project, lessonPassed: Boolean) {
+  internal fun onStop(project: Project, lessonPassed: Boolean, currentTaskIndex: Int, currentVisualIndex: Int) {
     lessonListeners.forEach { it.lessonStopped(this) }
-    onLessonEnd(project, lessonPassed)
+    onLessonEnd(project, LessonEndInfo(lessonPassed, currentTaskIndex, currentVisualIndex))
   }
 
   internal fun pass() {

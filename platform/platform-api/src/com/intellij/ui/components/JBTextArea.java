@@ -19,7 +19,6 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 
 public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
-  public static final String STATUS_VISIBLE_FUNCTION = "StatusVisibleFunction";
 
   //private final DefaultBoundedRangeModel visibility;
 

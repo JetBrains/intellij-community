@@ -219,6 +219,39 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/multiModuleQuickFix/canSealedSubClassBeObject")
+    public static class CanSealedSubClassBeObject extends AbstractQuickFixMultiModuleTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("notConvertActualSubClass")
+        public void testNotConvertActualSubClass() throws Exception {
+            runTest("testData/multiModuleQuickFix/canSealedSubClassBeObject/notConvertActualSubClass/");
+        }
+
+        @TestMetadata("notConvertExpectSubClass")
+        public void testNotConvertExpectSubClass() throws Exception {
+            runTest("testData/multiModuleQuickFix/canSealedSubClassBeObject/notConvertExpectSubClass/");
+        }
+
+        @TestMetadata("notConvertImplicitExpectSubClass")
+        public void testNotConvertImplicitExpectSubClass() throws Exception {
+            runTest("testData/multiModuleQuickFix/canSealedSubClassBeObject/notConvertImplicitExpectSubClass/");
+        }
+
+        @TestMetadata("notGenerateEqualsAndHashCodeForSealedInCommon")
+        public void testNotGenerateEqualsAndHashCodeForSealedInCommon() throws Exception {
+            runTest("testData/multiModuleQuickFix/canSealedSubClassBeObject/notGenerateEqualsAndHashCodeForSealedInCommon/");
+        }
+
+        @TestMetadata("notGenerateEqualsAndHashCodeForSealedInJvmForExpect")
+        public void testNotGenerateEqualsAndHashCodeForSealedInJvmForExpect() throws Exception {
+            runTest("testData/multiModuleQuickFix/canSealedSubClassBeObject/notGenerateEqualsAndHashCodeForSealedInJvmForExpect/");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/changeModifier")
     public static class ChangeModifier extends AbstractQuickFixMultiModuleTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -852,6 +885,34 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/multiModuleQuickFix/initializeProperty")
+    public static class InitializeProperty extends AbstractQuickFixMultiModuleTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("notInitializeNonActualParameterWithConstructorParameter")
+        public void testNotInitializeNonActualParameterWithConstructorParameter() throws Exception {
+            runTest("testData/multiModuleQuickFix/initializeProperty/notInitializeNonActualParameterWithConstructorParameter/");
+        }
+
+        @TestMetadata("notInitializeWithConstructorParameter")
+        public void testNotInitializeWithConstructorParameter() throws Exception {
+            runTest("testData/multiModuleQuickFix/initializeProperty/notInitializeWithConstructorParameter/");
+        }
+
+        @TestMetadata("notMoveNonActualParamterToActualConstructor")
+        public void testNotMoveNonActualParamterToActualConstructor() throws Exception {
+            runTest("testData/multiModuleQuickFix/initializeProperty/notMoveNonActualParamterToActualConstructor/");
+        }
+
+        @TestMetadata("notMoveToActualConstructor")
+        public void testNotMoveToActualConstructor() throws Exception {
+            runTest("testData/multiModuleQuickFix/initializeProperty/notMoveToActualConstructor/");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/makeOverridenMemberOpen")
     public static class MakeOverridenMemberOpen extends AbstractQuickFixMultiModuleTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -914,6 +975,16 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
         @TestMetadata("addActualToTopLevelMember")
         public void testAddActualToTopLevelMember() throws Exception {
             runTest("testData/multiModuleQuickFix/other/addActualToTopLevelMember/");
+        }
+
+        @TestMetadata("addAnnotationTargetToActual")
+        public void testAddAnnotationTargetToActual() throws Exception {
+            runTest("testData/multiModuleQuickFix/other/addAnnotationTargetToActual/");
+        }
+
+        @TestMetadata("addAnnotationTargetToExpect")
+        public void testAddAnnotationTargetToExpect() throws Exception {
+            runTest("testData/multiModuleQuickFix/other/addAnnotationTargetToExpect/");
         }
 
         @TestMetadata("addFunctionToCommonClassFromJavaUsage")
@@ -1166,6 +1237,16 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/other/memberValToExtensionByImpl/");
         }
 
+        @TestMetadata("moveActualPropertyToExistentConstructor")
+        public void testMoveActualPropertyToExistentConstructor() throws Exception {
+            runTest("testData/multiModuleQuickFix/other/moveActualPropertyToExistentConstructor/");
+        }
+
+        @TestMetadata("movePropertyToConstructor")
+        public void testMovePropertyToConstructor() throws Exception {
+            runTest("testData/multiModuleQuickFix/other/movePropertyToConstructor/");
+        }
+
         @TestMetadata("orderHeader")
         public void testOrderHeader() throws Exception {
             runTest("testData/multiModuleQuickFix/other/orderHeader/");
@@ -1189,6 +1270,67 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
         @TestMetadata("safeDeleteUsedInAnotherPlatform")
         public void testSafeDeleteUsedInAnotherPlatform() throws Exception {
             runTest("testData/multiModuleQuickFix/other/safeDeleteUsedInAnotherPlatform/");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/multiModuleQuickFix/packageDirectoryMismatch")
+    public static class PackageDirectoryMismatch extends AbstractQuickFixMultiModuleTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("moveFileToAnotherPackage")
+        public void testMoveFileToAnotherPackage() throws Exception {
+            runTest("testData/multiModuleQuickFix/packageDirectoryMismatch/moveFileToAnotherPackage/");
+        }
+
+        @TestMetadata("moveFileToCommonSourceRoot")
+        public void testMoveFileToCommonSourceRoot() throws Exception {
+            runTest("testData/multiModuleQuickFix/packageDirectoryMismatch/moveFileToCommonSourceRoot/");
+        }
+
+        @TestMetadata("moveFileToJvmSourceRoot")
+        public void testMoveFileToJvmSourceRoot() throws Exception {
+            runTest("testData/multiModuleQuickFix/packageDirectoryMismatch/moveFileToJvmSourceRoot/");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/multiModuleQuickFix/redundantNullableReturnType")
+    public static class RedundantNullableReturnType extends AbstractQuickFixMultiModuleTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("actualMethod")
+        public void testActualMethod() throws Exception {
+            runTest("testData/multiModuleQuickFix/redundantNullableReturnType/actualMethod/");
+        }
+
+        @TestMetadata("actualTopLevelFunction")
+        public void testActualTopLevelFunction() throws Exception {
+            runTest("testData/multiModuleQuickFix/redundantNullableReturnType/actualTopLevelFunction/");
+        }
+
+        @TestMetadata("actualTopLevelProperty")
+        public void testActualTopLevelProperty() throws Exception {
+            runTest("testData/multiModuleQuickFix/redundantNullableReturnType/actualTopLevelProperty/");
+        }
+
+        @TestMetadata("expectMemberProperty")
+        public void testExpectMemberProperty() throws Exception {
+            runTest("testData/multiModuleQuickFix/redundantNullableReturnType/expectMemberProperty/");
+        }
+
+        @TestMetadata("expectTopLevelFunction")
+        public void testExpectTopLevelFunction() throws Exception {
+            runTest("testData/multiModuleQuickFix/redundantNullableReturnType/expectTopLevelFunction/");
+        }
+
+        @TestMetadata("expectTopLevelProperty")
+        public void testExpectTopLevelProperty() throws Exception {
+            runTest("testData/multiModuleQuickFix/redundantNullableReturnType/expectTopLevelProperty/");
         }
     }
 }

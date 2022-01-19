@@ -26,16 +26,19 @@ final class InstallAndEnableTask extends Task.Modal {
   private final Set<PluginDownloader> myPlugins = new HashSet<>();
   private final @NotNull Set<PluginId> myPluginIds;
   private final boolean myShowDialog;
+  private final boolean mySelectAllInDialog;
   private @NotNull final Runnable myOnSuccess;
   private @Nullable List<PluginNode> myCustomPlugins;
 
   InstallAndEnableTask(@Nullable Project project,
                        @NotNull Set<PluginId> pluginIds,
                        boolean showDialog,
+                       boolean selectAllInDialog,
                        @NotNull Runnable onSuccess) {
     super(project, IdeBundle.message("plugins.advertiser.task.searching.for.plugins"), true);
     myPluginIds = pluginIds;
     myShowDialog = showDialog;
+    mySelectAllInDialog = selectAllInDialog;
     myOnSuccess = onSuccess;
   }
 
@@ -75,6 +78,7 @@ final class InstallAndEnableTask extends Task.Modal {
     new PluginsAdvertiserDialog(myProject,
                                 myPlugins,
                                 myCustomPlugins,
+                                mySelectAllInDialog,
                                 this::runOnSuccess)
       .doInstallPlugins(myShowDialog);
   }

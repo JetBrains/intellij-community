@@ -124,6 +124,9 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
       refreshChanges {
         workflow.continueExecution {
           updateWorkflow()
+          CommitSessionCollector.getInstance(project).logCommit(executor?.id,
+                                                                ui.getIncludedChanges().size,
+                                                                ui.getIncludedUnversionedFiles().size)
           doExecuteDefault(executor)
         }
       }
@@ -139,6 +142,9 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
       refreshChanges {
         workflow.continueExecution {
           updateWorkflow()
+          CommitSessionCollector.getInstance(project).logCommit(executor.id,
+                                                                ui.getIncludedChanges().size,
+                                                                ui.getIncludedUnversionedFiles().size)
           doExecuteCustom(executor, session)
         }
       }
@@ -156,16 +162,20 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
       ui.includeIntoCommit(changes)
     }
 
-  protected open fun doExecuteDefault(executor: CommitExecutor?): Boolean = try {
-    workflow.executeDefault(executor)
-  }
-  catch (e: InputException) { // TODO Looks like this catch is unnecessary - check
-    e.show()
-    false
+  protected open fun doExecuteDefault(executor: CommitExecutor?): Boolean {
+    try {
+      return workflow.executeDefault(executor)
+    }
+    catch (e: InputException) { // TODO Looks like this catch is unnecessary - check
+      e.show()
+      return false
+    }
   }
 
   private fun canExecute(executor: CommitExecutor): Boolean = workflow.canExecute(executor, getIncludedChanges())
-  private fun doExecuteCustom(executor: CommitExecutor, session: CommitSession): Boolean = workflow.executeCustom(executor, session)
+  private fun doExecuteCustom(executor: CommitExecutor, session: CommitSession): Boolean {
+    return workflow.executeCustom(executor, session)
+  }
 
   protected open fun saveCommitOptions() = try {
     commitOptions.saveState()

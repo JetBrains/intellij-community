@@ -7,5 +7,5 @@ fun test(p: I, fooI: I.() -> Unit, fooJ: J.() -> Unit) {
     }
 }
 
-// EXIST: { lookupString: "fooI", itemText: "fooI", tailText: "()", typeText: "Unit", attributes: "bold" }
-// EXIST: { lookupString: "fooJ", itemText: "fooJ", tailText: "()", typeText: "Unit", attributes: "bold" }
+// EXIST: { lookupString: "fooI", itemText: "fooI", tailText: "()", typeText: "Unit", attributes: "bold", icon: "org/jetbrains/kotlin/idea/icons/abstract_extension_function.svg"}
+// EXIST: { lookupString: "fooJ", itemText: "fooJ", tailText: "()", typeText: "Unit", attributes: "bold", icon: "org/jetbrains/kotlin/idea/icons/abstract_extension_function.svg"}

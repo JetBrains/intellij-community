@@ -479,8 +479,10 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
         if (lookupString.endsWith("}")) {
           offset--;
         }
-        context.getDocument().insertString(offset, " ");
-        caretModel.moveToOffset(offset + 1);
+        if (context.getCompletionChar() != ' ') {
+          context.getDocument().insertString(offset, " ");
+          caretModel.moveToOffset(offset + 1);
+        }
       }
       if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
         final Project project = context.getProject();

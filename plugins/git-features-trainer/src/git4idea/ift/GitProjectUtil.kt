@@ -3,7 +3,9 @@ package git4idea.ift
 
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -11,7 +13,6 @@ import git4idea.actions.GitInit
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
-import git4idea.index.actions.runProcess
 import git4idea.repo.GitRepositoryManager
 import training.project.FileUtils
 import training.project.ProjectUtils
@@ -72,15 +73,15 @@ object GitProjectUtil {
   }
 
   private fun configureRemote(remoteName: String, remoteProjectRoot: File, project: Project) {
-    runProcess(project, "", false) {
-      val git = Git.getInstance()
-      val repository = GitRepositoryManager.getInstance(project).repositories.first()
-      git.addRemote(repository, remoteName, remoteProjectRoot.path).throwOnError()
-      repository.update()
-      git.fetch(repository, repository.remotes.first(), emptyList()).throwOnError()
-      git.setUpstream(repository, "$remoteName/main", "main").throwOnError()
-      repository.update()
-    }
+    val git = Git.getInstance()
+    val repository = GitRepositoryManager.getInstance(project).repositories.first()
+    val remoteUrl = "file://${remoteProjectRoot.systemIndependentPath}"
+    thisLogger().info("Add remote repository with URL: $remoteUrl")
+    git.addRemote(repository, remoteName, remoteUrl).throwOnError()
+    repository.update()
+    git.fetch(repository, repository.remotes.first(), emptyList()).throwOnError()
+    git.setUpstream(repository, "$remoteName/main", "main").throwOnError()
+    repository.update()
   }
 
   private fun refreshAndGetProjectRoot(project: Project): VirtualFile {

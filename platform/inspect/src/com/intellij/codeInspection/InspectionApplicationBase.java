@@ -64,6 +64,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.AsyncPromise;
 
 import javax.xml.stream.XMLStreamException;
@@ -279,7 +280,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   @Nullable
-  protected AnalysisScope getAnalysisScope(@NotNull Project project) throws ExecutionException, InterruptedException {
+  @VisibleForTesting
+  public AnalysisScope getAnalysisScope(@NotNull Project project) throws ExecutionException, InterruptedException {
     SearchScope scope = getSearchScope(project);
     if (scope == null) return null;
     return new AnalysisScope(scope, project);

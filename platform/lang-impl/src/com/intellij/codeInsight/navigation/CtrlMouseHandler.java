@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -446,6 +447,8 @@ public final class CtrlMouseHandler {
       myHighlighter = installHighlighterSet(info, editor, highlighterOnly);
 
       if (highlighterOnly || docInfo.text == null) return;
+
+      UIEventLogger.QuickNavigateInfoPopupShown.log(myProject, docInfo.context == null ? null : docInfo.context.getLanguage());
 
       HyperlinkListener hyperlinkListener = docInfo.docProvider == null || docInfo.context == null
                                    ? null

@@ -1,0 +1,1 @@
+actual val prop: Any? = 42

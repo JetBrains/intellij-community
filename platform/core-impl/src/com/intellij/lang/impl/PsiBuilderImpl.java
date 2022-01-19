@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.impl;
 
 import com.intellij.lang.*;
@@ -912,7 +912,15 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       }
     }
 
-    assert rootNode.getTextLength() == myText.length() : rootNode.getElementType();
+    if (rootNode.getTextLength() != myText.length()) {
+      LOG.error("Inconsistent root node. " +
+                "; node type: " + rootNode.getElementType() +
+                "; text length: " + myText.length() +
+                "; node length: " + rootNode.getTextLength() +
+                "; partial text: " + StringUtil.shortenTextWithEllipsis(myText.toString(), 512, 256) +
+                "; partial node text: " + StringUtil.shortenTextWithEllipsis(rootNode.getText(), 512, 256)
+      );
+    }
 
     return rootNode;
   }

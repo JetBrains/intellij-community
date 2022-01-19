@@ -15,7 +15,7 @@ internal class JavaCodeVisionConfigurable(val settings: JavaCodeVisionSettings) 
   override fun createComponent(listener: ChangeListener): javax.swing.JPanel {
     return panel {
       row {
-        labelHtml(IdeBundle.message("checkbox.also.in.reader.mode")) {
+        text(IdeBundle.message("checkbox.also.in.reader.mode")) {
           ReaderModeSettingsListener.goToEditorReaderMode()
         }
       }

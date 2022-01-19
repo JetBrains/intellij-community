@@ -136,7 +136,10 @@ public class PinActiveTabAction extends DumbAwareAction {
     Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     Content result = ObjectUtils.doIfNotNull(ComponentUtil.getParentOfType(BaseLabel.class, component), BaseLabel::getContent);
     if (result == null) {
-      result = ObjectUtils.doIfNotNull(InternalDecoratorImpl.findNearestDecorator(component).getContentManager(), ContentManager::getSelectedContent);
+      InternalDecoratorImpl decorator = InternalDecoratorImpl.findNearestDecorator(component);
+      if (decorator != null) {
+        result = ObjectUtils.doIfNotNull(decorator.getContentManager(), ContentManager::getSelectedContent);
+      }
     }
     return result != null && result.isPinnable() ? result : null;
   }

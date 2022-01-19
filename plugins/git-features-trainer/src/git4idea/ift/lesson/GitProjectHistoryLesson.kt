@@ -31,6 +31,7 @@ import org.assertj.swing.fixture.JTableFixture
 import training.dsl.*
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil.findComponentWithTimeout
+import training.util.LessonEndInfo
 import java.util.regex.Pattern
 
 class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle.message("git.project.history.lesson.name")) {
@@ -211,7 +212,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     text(GitLessonsBundle.message("git.project.history.invitation.to.commit.lesson"))
   }
 
-  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+  override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
     if (showGitBranchesBackup != null) {
       val logUiProperties = VcsProjectLog.getInstance(project).mainLogUi?.properties ?: error("Failed to get MainVcsLogUiProperties")
       logUiProperties[SHOW_GIT_BRANCHES_LOG_PROPERTY] = showGitBranchesBackup!!

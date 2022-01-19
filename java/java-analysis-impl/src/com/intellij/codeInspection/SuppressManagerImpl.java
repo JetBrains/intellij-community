@@ -33,20 +33,7 @@ public class SuppressManagerImpl extends SuppressManager implements RedundantSup
 
   @Override
   public boolean isSuppressedFor(@NotNull final PsiElement element, @NotNull final String toolId) {
-    // Android Studio: suppress warnings on composable functions
-    return JavaSuppressionUtil.getElementToolSuppressedIn(element, toolId) != null || isSuppressedForCompose(element, toolId);
-  }
-
-  public boolean isSuppressedForCompose(@NotNull PsiElement element, @NotNull String toolId) {
-    if ("FunctionName".equals(toolId) && "kotlin".equals(element.getLanguage().getID())) {
-      for (InspectionSuppressor suppressor : LanguageInspectionSuppressors.INSTANCE.allForLanguage(element.getLanguage())) {
-        if ("AndroidComposeSuppressor".equals(suppressor.getClass().getSimpleName()) && suppressor.isSuppressedFor(element, toolId)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
+    return JavaSuppressionUtil.getElementToolSuppressedIn(element, toolId) != null;
   }
 
   @Override

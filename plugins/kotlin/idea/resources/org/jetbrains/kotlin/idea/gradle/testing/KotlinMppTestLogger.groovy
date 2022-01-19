@@ -18,7 +18,7 @@ class KotlinMppTestLogger {
         xml.event(type: testEventType) {
             test(id: testDescriptor.id, parentId: testDescriptor.parent?.id ?: '') {
                 if (testDescriptor) {
-                    descriptor(name: testDescriptor.displayName ?: '', className: testDescriptor.className ?: '')
+                    descriptor(name: testDescriptor.name ?: '', displayName: getName(testDescriptor) ?: '', className: testDescriptor.className ?: '')
                 }
                 if (testEvent) {
                     def message = escapeCdata(testEvent.message)
@@ -84,5 +84,13 @@ class KotlinMppTestLogger {
         StringWriter sw = new StringWriter()
         t.printStackTrace(new PrintWriter(sw))
         sw.toString()
+    }
+
+    static def getName(TestDescriptorInternal descriptor) {
+        try {
+            return descriptor.getDisplayName() // available starting from ver. 4.10.3
+        } catch (Throwable ignore) {
+            return descriptor.getName()
+        }
     }
 }

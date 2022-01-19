@@ -2,6 +2,7 @@
 package com.intellij.psi.util
 
 import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.ContributedReferenceHost
@@ -206,6 +207,7 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
           }
         }
         catch (e: Exception) {
+          if (e is ControlFlowException) throw e
           logger<PartiallyKnownString>().error(
             "decoding of ${segmentRange} failed for $host inSegment = [$inSegmentStart, $inSegmentEnd]", e, *mkAttachments()
           )

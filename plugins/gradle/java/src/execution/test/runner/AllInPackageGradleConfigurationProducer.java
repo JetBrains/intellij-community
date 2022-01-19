@@ -23,7 +23,7 @@ import java.util.function.Consumer;
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.getSourceFile;
 import static org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestFilterFrom;
 
-public final class AllInPackageGradleConfigurationProducer extends AbstractGradleTestRunConfigurationProducer<PsiPackage, PsiPackage> {
+public class AllInPackageGradleConfigurationProducer extends AbstractGradleTestRunConfigurationProducer<PsiPackage, PsiPackage> {
   @Override
   public boolean isPreferredConfiguration(@NotNull ConfigurationFromContext self, @NotNull ConfigurationFromContext other) {
     return other.isProducedBy(AllInDirectoryGradleConfigurationProducer.class) || super.isPreferredConfiguration(self, other);
@@ -58,7 +58,7 @@ public final class AllInPackageGradleConfigurationProducer extends AbstractGradl
     @NotNull PsiPackage element,
     @NotNull List<? extends PsiPackage> chosenElements
   ) {
-    return ExecutionBundle.message("test.in.scope.presentable.text", element.getName());
+    return ExecutionBundle.message("test.in.scope.presentable.text", element.getQualifiedName());
   }
 
   @Override
@@ -87,7 +87,7 @@ public final class AllInPackageGradleConfigurationProducer extends AbstractGradl
   }
 
   @Nullable
-  private static PsiElement getSourceElement(@NotNull Module module, @NotNull PsiElement element) {
+  protected static PsiElement getSourceElement(@NotNull Module module, @NotNull PsiElement element) {
     if (element instanceof PsiFileSystemItem) {
       return element;
     }

@@ -110,7 +110,6 @@ final class JarPackager {
       )
       mergeLibsByPredicate("3rd-party-rt.jar", librariesToMerge, outputDir, layoutSpec, buildContext) { libsThatUsedInJps.contains(it) }
     }
-
     List libSources
     if (librariesToMerge.isEmpty()) {
       libSources = null
@@ -340,11 +339,12 @@ final class JarPackager {
         for (int i = files.size() - 1; i >= 0; i--) {
           Path file = files.get(i)
           String fileName = file.fileName.toString()
+          boolean isBnd = libName == "bndlib" || libName == "bndlib-resolve" || libName == "bndlib-repository" || libName == "bundlor"
           //noinspection SpellCheckingInspection
           if (fileName.endsWith("-rt.jar") || fileName.startsWith("jps-") || fileName.contains("-agent") ||
-              fileName == "yjp-controller-api-redist.jar") {
+              fileName == "yjp-controller-api-redist.jar" || isBnd) {
             files.remove(i)
-            buildLibrary(library, basePathToLibFile, outputDir.resolve(removeVersionFromJar(fileName)), List.of(file), layoutSpec, buildContext)
+            buildLibrary(library, basePathToLibFile, outputDir.resolve(isBnd ? fileName : removeVersionFromJar(fileName)), List.of(file), layoutSpec, buildContext)
           }
         }
         if (!files.isEmpty()) {
@@ -355,7 +355,6 @@ final class JarPackager {
 
     return toMerge
   }
-
 
   private static String removeVersionFromJar(String fileName) {
     Matcher matcher = fileName =~ LayoutBuilder.JAR_NAME_WITH_VERSION_PATTERN

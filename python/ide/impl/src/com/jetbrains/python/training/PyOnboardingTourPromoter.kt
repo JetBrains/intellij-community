@@ -7,7 +7,7 @@ import training.ui.welcomeScreen.OnboardingLessonPromoter
 import javax.swing.Icon
 import javax.swing.JPanel
 
-internal class PyOnboardingTourPromoter : OnboardingLessonPromoter("python.onboarding") {
+internal class PyOnboardingTourPromoter : OnboardingLessonPromoter("python.onboarding", "Python") {
   override fun promoImage(): Icon = IconLoader.getIcon("img/pycharm-onboarding-tour.png", PyOnboardingTourPromoter::class.java)
 
   override fun getPromotionForInitialState(): JPanel? {

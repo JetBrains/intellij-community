@@ -95,6 +95,7 @@ open class PyAddCondaEnvPanel(
 
     val supportedLanguageLevels = LanguageLevel.SUPPORTED_LEVELS
       .asReversed()
+      .filter { it < LanguageLevel.PYTHON311 }
       .map { it.toPythonVersion() }
 
     languageLevelsField = ComboBox(supportedLanguageLevels.toTypedArray()).apply {
@@ -188,6 +189,7 @@ open class PyAddCondaEnvPanel(
       sdk = createSdkForTarget(project, targetEnvironmentConfiguration, homePath, existingSdks)
     }
     PyCondaPackageService.onCondaEnvCreated(condaPath)
+    project.excludeInnerVirtualEnv(sdk)
     return sdk
   }
 

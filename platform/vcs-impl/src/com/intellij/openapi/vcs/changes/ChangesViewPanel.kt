@@ -87,6 +87,10 @@ class ChangesViewPanel(project: Project) : BorderLayoutPanel() {
   }
 
   private class MyChangesListView(project: Project) : ChangesListView(project, false) {
+    init {
+      putClientProperty(LOG_COMMIT_SESSION_EVENTS, true)
+    }
+
     override fun getHoverIcon(node: ChangesBrowserNode<*>): HoverIcon? {
       return ChangesViewNodeAction.EP_NAME.computeSafeIfAny(project) { it.createNodeHoverIcon(node) }
     }

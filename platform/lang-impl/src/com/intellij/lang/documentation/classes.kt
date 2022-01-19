@@ -10,7 +10,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.util.function.Supplier
 
 @VisibleForTesting
-class DocumentationData(
+class DocumentationData internal constructor(
   val html: @Nls String,
   val anchor: String?,
   val externalUrl: String?,
@@ -20,6 +20,14 @@ class DocumentationData(
 internal class AsyncDocumentation(
   val supplier: AsyncSupplier<DocumentationResult?>
 ) : DocumentationResult
+
+internal class ResolvedTarget(
+  val target: DocumentationTarget,
+) : LinkResult
+
+internal class UpdateContent(
+  val updater: LinkResult.ContentUpdater,
+) : LinkResult
 
 internal fun <X> Supplier<X>.asAsyncSupplier(): AsyncSupplier<X> = {
   withContext(Dispatchers.IO) {

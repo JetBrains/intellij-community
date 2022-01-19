@@ -6,4 +6,8 @@ public class SomeClass {
     public void doNotInvokeMe(int index, String ... args) {
 
     }
+
+    public void singleParamDslWithSameParamName(String singleParamDslWithSameParamName) {
+
+    }
 }

@@ -14,6 +14,7 @@ import training.learn.exceptons.NoSdkException
 import training.project.FileUtils
 import training.project.ProjectUtils
 import training.project.ReadMeCreator
+import training.util.OnboardingFeedbackData
 import java.io.File
 import java.io.FileFilter
 import java.io.PrintWriter
@@ -27,6 +28,8 @@ abstract class AbstractLangSupport : LangSupport {
   override fun getProjectFilePath(projectName: String): String {
     return ProjectUtil.getBaseDir() + File.separator + projectName
   }
+
+  override var onboardingFeedbackData: OnboardingFeedbackData? = null
 
   override fun installAndOpenLearningProject(contentRoot: Path,
                                              projectToClose: Project?,

@@ -30,12 +30,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 
+import static com.intellij.ide.plugins.DynamicPluginsTestUtil.createPluginLoadingResult;
 import static com.intellij.ide.plugins.DynamicPluginsTestUtil.loadDescriptorInTest;
 import static com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported;
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
@@ -167,10 +165,11 @@ public class PluginManagerTest {
   @Test
   public void testModulePluginIdContract() {
     Path pluginsPath = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "withModules");
-    IdeaPluginDescriptorImpl descriptorBundled = loadDescriptorInTest(pluginsPath, Collections.emptySet(), true);
-    PluginSet pluginSet = new PluginSetBuilder(Collections.singletonList(descriptorBundled))
+    IdeaPluginDescriptorImpl descriptorBundled = loadDescriptorInTest(pluginsPath, true);
+    PluginSet pluginSet = new PluginSetBuilder(List.of(descriptorBundled))
       .computeEnabledModuleMap(null)
-      .createPluginSet(Collections.emptyList());
+      .createPluginSet(List.of());
+
     PluginId moduleId = PluginId.getId("foo.bar");
     PluginId corePlugin = PluginId.getId("my.plugin");
     assertThat(pluginSet.findEnabledPlugin(moduleId).getPluginId()).isEqualTo(corePlugin);
@@ -179,31 +178,13 @@ public class PluginManagerTest {
   @Test
   public void testIdentifyPreInstalledPlugins() {
     Path pluginsPath = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "updatedBundled");
-    IdeaPluginDescriptorImpl descriptorBundled = loadDescriptorInTest(pluginsPath.resolve("bundled"), Collections.emptySet(), true);
-    IdeaPluginDescriptorImpl descriptorInstalled = loadDescriptorInTest(pluginsPath.resolve("updated"), Collections.emptySet(), false);
-    assertEquals(descriptorBundled.getPluginId(), descriptorInstalled.getPluginId());
-    PluginLoadingResult loadingResult = createPluginLoadingResult(false);
-    loadingResult.add(descriptorBundled, false);
-    loadingResult.add(descriptorInstalled, false);
-    assertPluginPreInstalled(loadingResult, descriptorInstalled.getPluginId());
-  }
+    IdeaPluginDescriptorImpl bundled = loadDescriptorInTest(pluginsPath.resolve("bundled"), true);
+    IdeaPluginDescriptorImpl updated = loadDescriptorInTest(pluginsPath.resolve("updated"));
+    PluginId expectedPluginId = updated.getPluginId();
+    assertEquals(expectedPluginId, bundled.getPluginId());
 
-  private static @NotNull PluginLoadingResult createPluginLoadingResult(boolean checkModuleDependencies) {
-    BuildNumber buildNumber = BuildNumber.fromString("2042.42");
-    return new PluginLoadingResult(Collections.emptyMap(), () -> buildNumber, checkModuleDependencies);
-  }
-
-  @Test
-  public void testIdentifyPreInstalledPluginsInReverseOrder() {
-    Path pluginsPath = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "updatedBundled");
-    IdeaPluginDescriptorImpl descriptorBundled = loadDescriptorInTest(pluginsPath.resolve("bundled"), Collections.emptySet(), true);
-    IdeaPluginDescriptorImpl descriptorInstalled = loadDescriptorInTest(pluginsPath.resolve("updated"), Collections.emptySet(), false);
-    assertEquals(descriptorBundled.getPluginId(), descriptorInstalled.getPluginId());
-
-    PluginLoadingResult resultInReverseOrder = createPluginLoadingResult(false);
-    resultInReverseOrder.add(descriptorInstalled, false);
-    resultInReverseOrder.add(descriptorBundled, false);
-    assertPluginPreInstalled(resultInReverseOrder, descriptorInstalled.getPluginId());
+    assertPluginPreInstalled(expectedPluginId, bundled, updated);
+    assertPluginPreInstalled(expectedPluginId, updated, bundled);
   }
 
   @Test
@@ -216,8 +197,13 @@ public class PluginManagerTest {
     assertThat(configPath.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)).hasContent("a" + System.lineSeparator());
   }
 
-  private static void assertPluginPreInstalled(PluginLoadingResult loadingResult, PluginId pluginId) {
-    assertTrue("Plugin should be pre installed", loadingResult.shadowedBundledIds.contains(pluginId));
+  private static void assertPluginPreInstalled(@NotNull PluginId expectedPluginId,
+                                               IdeaPluginDescriptorImpl... descriptors) {
+    PluginLoadingResult loadingResult = createPluginLoadingResult();
+    for (IdeaPluginDescriptorImpl descriptor : descriptors) {
+      loadingResult.add(descriptor, false);
+    }
+    assertTrue("Plugin should be pre installed", loadingResult.shadowedBundledIds.contains(expectedPluginId));
   }
 
   private static void doPluginSortTest(String testDataName, boolean isBundled) throws IOException, XMLStreamException {
@@ -262,8 +248,12 @@ public class PluginManagerTest {
 
   private static PluginManagerState loadAndInitializeDescriptors(String testDataName, boolean isBundled) throws IOException, XMLStreamException {
     Path file = Path.of(getTestDataPath(), testDataName);
-    DescriptorListLoadingContext parentContext =
-      new DescriptorListLoadingContext(Collections.emptySet(), createPluginLoadingResult(true), false, false, false, false);
+    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(Set.of(),
+                                                                                  createPluginLoadingResult(true),
+                                                                                  false,
+                                                                                  false,
+                                                                                  false,
+                                                                                  false);
 
     XmlElement root = XmlDomReader.readXmlAsModel(Files.newInputStream(file));
     Ref<Boolean> autoGenerateModuleDescriptor = new Ref<>(false);
@@ -356,10 +346,14 @@ public class PluginManagerTest {
       else {
         pluginPath = Path.of(Strings.trimStart(Objects.requireNonNull(url), "file://"));
       }
-      IdeaPluginDescriptorImpl descriptor = PluginDescriptorTestKt.createFromDescriptor(
-        pluginPath, isBundled, elementAsBytes(element), parentContext, pathResolver, new LocalFsDataLoader(pluginPath));
+      IdeaPluginDescriptorImpl descriptor = PluginDescriptorTestKt.createFromDescriptor(pluginPath,
+                                                                                        isBundled,
+                                                                                        elementAsBytes(element),
+                                                                                        parentContext,
+                                                                                        pathResolver,
+                                                                                        new LocalFsDataLoader(pluginPath));
       parentContext.result.add(descriptor,  /* overrideUseIfCompatible = */ false);
-      descriptor.jarFiles = Collections.emptyList();
+      descriptor.jarFiles = List.of();
     }
     parentContext.close();
     parentContext.result.finishLoading();

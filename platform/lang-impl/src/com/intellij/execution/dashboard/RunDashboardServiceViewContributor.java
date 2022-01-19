@@ -28,6 +28,7 @@ import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -322,13 +323,15 @@ public final class RunDashboardServiceViewContributor
     @Nullable
     @Override
     public VirtualFile getVirtualFile() {
-      for (RunDashboardCustomizer customizer : myNode.getCustomizers()) {
-        PsiElement psiElement = customizer.getPsiElement(myNode);
-        if (psiElement != null) {
-          return PsiUtilCore.getVirtualFile(psiElement);
+      return ReadAction.compute(() -> {
+        for (RunDashboardCustomizer customizer : myNode.getCustomizers()) {
+          PsiElement psiElement = customizer.getPsiElement(myNode);
+          if (psiElement != null) {
+            return PsiUtilCore.getVirtualFile(psiElement);
+          }
         }
-      }
-      return null;
+        return null;
+      });
     }
 
     @Nullable

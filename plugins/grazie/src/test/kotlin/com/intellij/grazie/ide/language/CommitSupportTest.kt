@@ -12,6 +12,8 @@ class CommitSupportTest : BasePlatformTestCase() {
             This is <caret><warning>a</warning> error.
             
             This reverts commit abcdef00.
+            
+            (cherry picked from commit cafebabe)
           """.trimIndent())
 
     myFixture.checkHighlighting()

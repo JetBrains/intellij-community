@@ -10,8 +10,8 @@ class C {
     }
 }
 
-// EXIST: { lookupString: "xxx", itemText: "xxx", tailText: "()", typeText: "Unit" }
-// EXIST: { lookupString: "xxy", itemText: "xxy", tailText: "()", typeText: "Unit" }
-// EXIST: { lookupString: "xxz", itemText: "xxz", tailText: "(p: Int)", typeText: "Unit" }
-// EXIST: { lookupString: "xxz", itemText: "xxz", tailText: "() (dependency)", typeText: "Int" }
+// EXIST: { lookupString: "xxx", itemText: "xxx", tailText: "()", typeText: "Unit", icon: "nodes/method.svg"}
+// EXIST: { lookupString: "xxy", itemText: "xxy", tailText: "()", typeText: "Unit", icon: "nodes/method.svg"}
+// EXIST: { lookupString: "xxz", itemText: "xxz", tailText: "(p: Int)", typeText: "Unit", icon: "nodes/method.svg"}
+// EXIST: { lookupString: "xxz", itemText: "xxz", tailText: "() (dependency)", typeText: "Int", icon: "nodes/function.svg"}
 // NOTHING_ELSE

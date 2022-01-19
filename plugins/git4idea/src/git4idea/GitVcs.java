@@ -183,8 +183,7 @@ public final class GitVcs extends AbstractVcs {
         return GitRevisionNumber.resolve(myProject, root, revision);
       }
       catch (VcsException e) {
-        LOG.info("Unexpected problem with resolving the git revision number: ", e);
-        throw e;
+        LOG.warn("Unexpected problem with resolving the git revision number: ", e);
       }
     }
     return new GitRevisionNumber(revision);

@@ -20,6 +20,7 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testCollectionConstructors() = doTest()
     fun testComparison() = doTest()
     fun testCustomObjectComparison() = doTest()
+    fun testDestructuringInLoop() = doTest()
     fun testDoubleComparison() = doTest()
     fun testEnumComparison() = doTest()
     fun testExclamation() = doTest()

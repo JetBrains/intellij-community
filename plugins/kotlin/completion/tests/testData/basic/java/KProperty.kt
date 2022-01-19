@@ -6,4 +6,4 @@ fun firstFun() {
 }
 
 // INVOCATION_COUNT: 1
-// EXIST: { lookupString:"KProperty", itemText:"KProperty", tailText:"<V> (kotlin.reflect)" }
+// EXIST: { lookupString:"KProperty", itemText:"KProperty", tailText:"<V> (kotlin.reflect)", icon: "org/jetbrains/kotlin/idea/icons/interfaceKotlin.svg"}

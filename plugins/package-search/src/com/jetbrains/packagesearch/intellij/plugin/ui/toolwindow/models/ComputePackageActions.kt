@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 
-internal inline fun <reified T : PackageModel> CoroutineScope.computeActionsFor(
+internal inline fun <reified T : PackageModel> CoroutineScope.computeActionsAsync(
     packageModel: T,
     targetModules: TargetModules,
     knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,

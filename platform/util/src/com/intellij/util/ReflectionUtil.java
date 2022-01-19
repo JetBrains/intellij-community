@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.ControlFlowException;
@@ -693,5 +693,16 @@ public final class ReflectionUtil {
 
   public static boolean isAssignable(@NotNull Class<?> ancestor, @NotNull Class<?> descendant) {
     return ancestor == descendant || ancestor.isAssignableFrom(descendant);
+  }
+
+  /**
+   * @return concatenated list of field names and values from the {@code object}.
+   */
+  public static String dumpFields(@NotNull Class<?> objectClass, @Nullable Object object, String... fieldNames) {
+    List<String> chunks = new SmartList<>();
+    for (String fieldName : fieldNames) {
+      chunks.add(fieldName + "=" + getField(objectClass, object, null, fieldName));
+    }
+    return String.join("; ", chunks);
   }
 }

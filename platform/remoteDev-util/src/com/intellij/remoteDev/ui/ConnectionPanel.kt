@@ -44,7 +44,7 @@ open class ConnectionPanel(private val manager: ConnectionManager) : ActionPanel
       }
     }
 
-    titleLabel = JBLabel(RemoteDevUtilBundle.message("connection.panel.description", manager.getProductName()), SwingConstants.LEFT).apply {
+    titleLabel = JBLabel(RemoteDevUtilBundle.message("connection.panel.description"), SwingConstants.LEFT).apply {
       isOpaque = false
       font = font.deriveFont(UIUtil.getLabelFont().size + JBUIScale.scale(5).toFloat()).deriveFont(Font.BOLD)
     }

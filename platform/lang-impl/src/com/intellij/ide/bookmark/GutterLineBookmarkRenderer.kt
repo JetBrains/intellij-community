@@ -41,9 +41,9 @@ internal data class GutterLineBookmarkRenderer(val bookmark: LineBookmark) : Dum
 
   override fun getAlignment() = Alignment.RIGHT
 
-  override fun getClickAction() = ActionUtil.getAction("EditBookmark")
+  override fun getClickAction() = ActionUtil.getAction("ToggleBookmark")
 
-  override fun getMiddleButtonClickAction() = ActionUtil.getAction("ToggleBookmark")
+  override fun getMiddleButtonClickAction() = ActionUtil.getAction("EditBookmark")
 
   override fun getPopupMenuActions() = ActionUtil.getActionGroup("popup@BookmarkContextMenu")
 

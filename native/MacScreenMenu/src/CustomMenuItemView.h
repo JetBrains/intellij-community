@@ -10,13 +10,14 @@
     NSSize shortcutSize;
     NSSize textSize;
     NSTrackingArea * trackingArea;
-    MenuItem * owner;
+    @public MenuItem * owner;
 }
 
 @property (retain) NSString * keyShortcut;
 
 - (id)initWithOwner:(MenuItem *)menuItem;
 - (void)recalcSizes;
+- (void)setSelected:(BOOL)selected;
 @end
 
 #endif //MACSCREENMENU_CUSTOMMENUITEMVIEW_H

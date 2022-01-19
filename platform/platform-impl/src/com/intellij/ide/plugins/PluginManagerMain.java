@@ -49,7 +49,7 @@ public final class PluginManagerMain {
   private PluginManagerMain() { }
 
   /**
-   * @deprecated Please migrate to either {@link #downloadPluginsAndCleanup(List, Collection, Runnable, com.intellij.ide.plugins.PluginEnabler, Runnable)}
+   * @deprecated Please migrate to either {@link #downloadPluginsAndCleanup(List, Collection, Runnable, com.intellij.ide.plugins.PluginEnabler, ModalityState, Runnable)}
    * or {@link #downloadPlugins(List, Collection, boolean, Runnable, com.intellij.ide.plugins.PluginEnabler, Consumer)}.
    */
   @Deprecated(since = "2020.2", forRemoval = true)
@@ -58,23 +58,39 @@ public final class PluginManagerMain {
                                         @Nullable Runnable onSuccess,
                                         @NotNull PluginEnabler pluginEnabler,
                                         @Nullable Runnable cleanup) throws IOException {
-    return downloadPluginsAndCleanup(plugins, ContainerUtil.filterIsInstance(customPlugins, PluginNode.class), onSuccess, pluginEnabler, cleanup);
+    return downloadPluginsAndCleanup(plugins, ContainerUtil.filterIsInstance(customPlugins, PluginNode.class), onSuccess, pluginEnabler, ModalityState.any(), cleanup);
   }
 
   public static boolean downloadPluginsAndCleanup(@NotNull List<PluginNode> plugins,
                                                   @NotNull Collection<PluginNode> customPlugins,
                                                   @Nullable Runnable onSuccess,
                                                   @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
+                                                  @NotNull ModalityState modalityState,
                                                   @Nullable Runnable cleanup) throws IOException {
-    return downloadPlugins(plugins, customPlugins, false, onSuccess, pluginEnabler, cleanup != null ? __ -> cleanup.run() : null);
+    return downloadPlugins(plugins, customPlugins, false, onSuccess, pluginEnabler, modalityState, cleanup != null ? __ -> cleanup.run() : null);
   }
 
+  /**
+   * @deprecated Please use the overload with explicitly passed modality state
+   */
+  @Deprecated
   public static boolean downloadPlugins(@NotNull List<PluginNode> plugins,
                                         @NotNull Collection<PluginNode> customPlugins,
                                         boolean allowInstallWithoutRestart,
                                         @Nullable Runnable onSuccess,
                                         @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
                                         @Nullable Consumer<? super Boolean> function) throws IOException {
+    return downloadPlugins(plugins, customPlugins, allowInstallWithoutRestart, onSuccess, pluginEnabler, ModalityState.any(), function);
+  }
+
+  public static boolean downloadPlugins(
+    @NotNull List<PluginNode> plugins,
+    @NotNull Collection<PluginNode> customPlugins,
+    boolean allowInstallWithoutRestart,
+    @Nullable Runnable onSuccess,
+    @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
+    @NotNull final ModalityState modalityState,
+    @Nullable Consumer<? super Boolean> function) throws IOException {
     try {
       boolean[] result = new boolean[1];
       ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("progress.download.plugins"), true, PluginManagerUISettings.getInstance()) {
@@ -98,7 +114,7 @@ public final class PluginManagerMain {
                 if (onSuccess != null) {
                   onSuccess.run();
                 }
-              }, ModalityState.any());
+              }, modalityState);
             }
           }
           finally {

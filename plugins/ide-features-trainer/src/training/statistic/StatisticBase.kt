@@ -23,6 +23,11 @@ import training.statistic.FeatureUsageStatisticConsts.COMPLETED_COUNT
 import training.statistic.FeatureUsageStatisticConsts.COURSE_SIZE
 import training.statistic.FeatureUsageStatisticConsts.DURATION
 import training.statistic.FeatureUsageStatisticConsts.EXPAND_WELCOME_PANEL
+import training.statistic.FeatureUsageStatisticConsts.FEEDBACK_ENTRY_PLACE
+import training.statistic.FeatureUsageStatisticConsts.FEEDBACK_EXPERIENCED_USER
+import training.statistic.FeatureUsageStatisticConsts.FEEDBACK_HAS_BEEN_SENT
+import training.statistic.FeatureUsageStatisticConsts.FEEDBACK_LIKENESS_ANSWER
+import training.statistic.FeatureUsageStatisticConsts.FEEDBACK_OPENED_VIA_NOTIFICATION
 import training.statistic.FeatureUsageStatisticConsts.HELP_LINK_CLICKED
 import training.statistic.FeatureUsageStatisticConsts.KEYMAP_SCHEME
 import training.statistic.FeatureUsageStatisticConsts.LANGUAGE
@@ -37,6 +42,8 @@ import training.statistic.FeatureUsageStatisticConsts.NEED_SHOW_NEW_LESSONS_NOTI
 import training.statistic.FeatureUsageStatisticConsts.NEW_LESSONS_COUNT
 import training.statistic.FeatureUsageStatisticConsts.NEW_LESSONS_NOTIFICATION_SHOWN
 import training.statistic.FeatureUsageStatisticConsts.NON_LEARNING_PROJECT_OPENED
+import training.statistic.FeatureUsageStatisticConsts.ONBOARDING_FEEDBACK_DIALOG_RESULT
+import training.statistic.FeatureUsageStatisticConsts.ONBOARDING_FEEDBACK_NOTIFICATION_SHOWN
 import training.statistic.FeatureUsageStatisticConsts.PASSED
 import training.statistic.FeatureUsageStatisticConsts.PROGRESS
 import training.statistic.FeatureUsageStatisticConsts.REASON
@@ -58,6 +65,14 @@ enum class LessonStartingWay {
   NEXT_BUTTON, PREV_BUTTON, RESTART_BUTTON, RESTORE_LINK, ONBOARDING_PROMOTER, LEARN_TAB, TIP_AND_TRICK_PROMOTER
 }
 
+internal enum class FeedbackEntryPlace {
+  WELCOME_SCREEN, LEARNING_PROJECT, ANOTHER_PROJECT
+}
+
+internal enum class FeedbackLikenessAnswer {
+  NO_ANSWER, LIKE, DISLIKE
+}
+
 internal class StatisticBase : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
@@ -75,7 +90,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val LOG = logger<StatisticBase>()
     private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
     private var prevRestoreLessonProgress: LessonProgress = LessonProgress("", 0)
-    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 15)
+    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 16)
 
     var isLearnProjectCloseLogged = false
 
@@ -96,6 +111,12 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val showNewLessonsState = EventFields.Boolean(SHOULD_SHOW_NEW_LESSONS)
     private val tipFilenameField = EventFields.StringValidatedByCustomRule(TIP_FILENAME, TipInfoValidationRule.RULE_ID)
     private val lessonStartingWayField = EventFields.Enum<LessonStartingWay>(LESSON_STARTING_WAY)
+    private val feedbackEntryPlace = EventFields.Enum<FeedbackEntryPlace>(FEEDBACK_ENTRY_PLACE)
+    private val feedbackHasBeenSent = EventFields.Boolean(FEEDBACK_HAS_BEEN_SENT)
+    private val feedbackOpenedViaNotification = EventFields.Boolean(FEEDBACK_OPENED_VIA_NOTIFICATION)
+    private val feedbackLikenessAnswer = EventFields.Enum<FeedbackLikenessAnswer>(FEEDBACK_LIKENESS_ANSWER)
+    private val feedbackExperiencedUser = EventFields.Boolean(FEEDBACK_EXPERIENCED_USER)
+
     private val lastBuildLearningOpened = object : PrimitiveEventField<String?>() {
       override val name: String = LAST_BUILD_LEARNING_OPENED
       override val validationRule: List<String>
@@ -135,6 +156,17 @@ internal class StatisticBase : CounterUsagesCollector() {
 
     private val lessonLinkClickedFromTip = GROUP.registerEvent(LESSON_LINK_CLICKED_FROM_TIP, lessonIdField, languageField, tipFilenameField)
     private val helpLinkClicked = GROUP.registerEvent(HELP_LINK_CLICKED, lessonIdField, languageField)
+
+    private val onboardingFeedbackNotificationShown = GROUP.registerEvent(ONBOARDING_FEEDBACK_NOTIFICATION_SHOWN,
+                                                                          feedbackEntryPlace)
+
+    private val onboardingFeedbackDialogResult = GROUP.registerVarargEvent(ONBOARDING_FEEDBACK_DIALOG_RESULT,
+                                                                           feedbackEntryPlace,
+                                                                           feedbackHasBeenSent,
+                                                                           feedbackOpenedViaNotification,
+                                                                           feedbackLikenessAnswer,
+                                                                           feedbackExperiencedUser,
+                                                                           )
 
     // LOGGING
     fun logLessonStarted(lesson: Lesson, startingWay: LessonStartingWay) {
@@ -235,6 +267,24 @@ internal class StatisticBase : CounterUsagesCollector() {
 
     fun logHelpLinkClicked(lessonId: String) {
       helpLinkClicked.log(lessonId, courseLanguage())
+    }
+
+    fun logOnboardingFeedbackNotification(place: FeedbackEntryPlace) {
+      onboardingFeedbackNotificationShown.log(place)
+    }
+
+    fun logOnboardingFeedbackDialogResult(place: FeedbackEntryPlace,
+                                          hasBeenSent: Boolean,
+                                          openedViaNotification: Boolean,
+                                          likenessAnswer: FeedbackLikenessAnswer,
+                                          experiencedUser: Boolean) {
+      onboardingFeedbackDialogResult.log(
+        feedbackEntryPlace with place,
+        feedbackHasBeenSent with hasBeenSent,
+        feedbackOpenedViaNotification with openedViaNotification,
+        feedbackLikenessAnswer with likenessAnswer,
+        feedbackExperiencedUser with experiencedUser
+      )
     }
 
     private fun courseLanguage() = LangManager.getInstance().getLangSupport()?.primaryLanguage?.toLowerCase() ?: ""

@@ -123,4 +123,9 @@ public class PyCallHierarchyTest extends PyTestCase {
   public void testSuper() {
     doTestCallHierarchy("main.py");
   }
+
+  // PY-52034
+  public void testQualifierDefinedInside() {
+    doTestCallHierarchy("main.py");
+  }
 }

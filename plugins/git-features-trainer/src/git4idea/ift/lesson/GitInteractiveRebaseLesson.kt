@@ -36,6 +36,7 @@ import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil.findComponentWithTimeout
+import training.util.LessonEndInfo
 import java.awt.Component
 import java.awt.Point
 import java.awt.event.InputEvent
@@ -237,7 +238,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
     text(GitLessonsBundle.message("git.interactive.rebase.congratulations"))
   }
 
-  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+  override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
     restorePopupPosition(project, GIT_INTERACTIVE_REBASE_DIALOG_DIMENSION_KEY, backupRebaseDialogLocation)
     backupRebaseDialogLocation = null
   }

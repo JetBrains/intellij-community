@@ -33,4 +33,11 @@ object FeatureUsageStatisticConsts {
   const val LESSON_LINK_CLICKED_FROM_TIP = "lesson_link_clicked_from_tip"
   const val LESSON_STARTING_WAY = "starting_way"
   const val HELP_LINK_CLICKED = "help_link_clicked"
+  const val ONBOARDING_FEEDBACK_NOTIFICATION_SHOWN = "onboarding_feedback_notification_shown"
+  const val ONBOARDING_FEEDBACK_DIALOG_RESULT = "onboarding_feedback_dialog_result"
+  const val FEEDBACK_ENTRY_PLACE = "feedback_entry_place"
+  const val FEEDBACK_HAS_BEEN_SENT = "feedback_has_been_sent"
+  const val FEEDBACK_OPENED_VIA_NOTIFICATION = "feedback_opened_via_notification"
+  const val FEEDBACK_LIKENESS_ANSWER = "feedback_likeness_answer"
+  const val FEEDBACK_EXPERIENCED_USER = "feedback_experienced_user"
 }

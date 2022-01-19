@@ -134,6 +134,11 @@ public class GitRebaseProcess {
 
     Map<GitRepository, GitRebaseStatus> statuses = new LinkedHashMap<>(myRebaseSpec.getStatuses());
     List<GitRepository> repositoriesToRebase = myRepositoryManager.sortByDependency(myRebaseSpec.getIncompleteRepositories());
+    if (repositoriesToRebase.isEmpty()) {
+      LOG.info("Nothing to rebase");
+      return;
+    }
+
     try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.rebase"))) {
       if (!saveDirtyRootsInitially(repositoriesToRebase)) return;
 

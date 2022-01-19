@@ -8,6 +8,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.jcef.JBCefFpsMeter;
 import org.jetbrains.annotations.NotNull;
@@ -73,8 +74,8 @@ public class JBCefOsrBrowserMeasureFpsAction extends DumbAwareAction {
       // if (scroll) [tav] todo: check the browser is under mouse
 
       while (fpsMeter.isActive()) {
-        if (scroll) robot.mouseWheel(-1);
-        robot.delay(scroll ? 1 : 1000);
+        if (scroll) robot.mouseWheel(SystemInfo.isMac ? -1 : 1);
+        robot.delay(scroll ? 15 : 1000);
       }
     });
   }

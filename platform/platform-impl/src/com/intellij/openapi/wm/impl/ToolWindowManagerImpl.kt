@@ -1755,6 +1755,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val dirtyMode = entry.readOnlyWindowInfo.type == ToolWindowType.DOCKED || entry.readOnlyWindowInfo.type == ToolWindowType.SLIDING
     updateStateAndRemoveDecorator(info, entry, dirtyMode)
     info.type = type
+    if (type != ToolWindowType.FLOATING && type != ToolWindowType.WINDOWED) {
+      info.internalType = type
+    }
 
     val newInfo = info.copy()
     entry.applyWindowInfo(newInfo)
@@ -2275,7 +2278,7 @@ enum class ToolWindowProperty {
 
 private fun isInActiveToolWindow(component: Any?, activeToolWindow: ToolWindowImpl): Boolean {
   var source = if (component is JComponent) component else null
-  val activeToolWindowComponent = activeToolWindow.getComponentIfInitialized()
+  val activeToolWindowComponent = activeToolWindow.decoratorComponent
   if (activeToolWindowComponent != null) {
     while (source != null && source !== activeToolWindowComponent) {
       source = ComponentUtil.getClientProperty(source, ToolWindowManagerImpl.PARENT_COMPONENT) ?: source.parent as? JComponent

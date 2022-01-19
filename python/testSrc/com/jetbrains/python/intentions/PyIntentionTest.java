@@ -153,6 +153,19 @@ public class PyIntentionTest extends PyTestCase {
     doNegativeTest(PyPsiBundle.message("INTN.join.if"));
   }
 
+  public void testJoinIfOrExpressionInOuterCondition() {
+    doTest(PyPsiBundle.message("INTN.join.if"));
+  }
+
+  // EA-401551
+  public void testJoinIfAssignmentExpressionInInnerCondition() {
+    doTest(PyPsiBundle.message("INTN.join.if"));
+  }
+
+  public void testJoinIfAssignmentExpressionsInBothConditions() {
+    doTest(PyPsiBundle.message("INTN.join.if"));
+  }
+
   public void testDictConstructorToLiteralForm() {
     doTest(PyPsiBundle.message("INTN.convert.dict.constructor.to.dict.literal"));
   }

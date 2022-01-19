@@ -74,6 +74,8 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled;
+
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider, WidthBasedLayout {
   private static final Logger LOG = Logger.getInstance(DocumentationComponent.class);
   static final DataProvider HELP_DATA_PROVIDER =
@@ -132,7 +134,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     @NotNull PsiElement element,
     @NotNull Disposable disposable
   ) {
-    if (Registry.is("documentation.v2") && Registry.is("documentation.v2.component")) {
+    if (isDocumentationV2Enabled() && Registry.is("documentation.v2.component")) {
       DocumentationRequest request;
       try (AccessToken ignored = SlowOperations.allowSlowOperations("old API fallback")) {
         request = ImplKt.documentationRequest(new PsiElementDocumentationTarget(project, element));

@@ -7,6 +7,8 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.builtins.isSuspendFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.ShortenReferences
@@ -15,19 +17,30 @@ import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.intentions.receiverType
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.util.reformatted
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.calls.callUtil.getFirstArgumentExpression
+import org.jetbrains.kotlin.resolve.calls.callUtil.getParameterForArgument
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 internal object CoroutineBlockingCallInspectionUtils {
+
+    fun isInSuspendLambdaOrFunction(ktElement: KtElement): Boolean {
+        val lambdaArgument = ktElement.parentOfType<KtLambdaArgument>()
+        if (lambdaArgument != null) {
+            val callExpression = lambdaArgument.getStrictParentOfType<KtCallExpression>() ?: return false
+            val call = callExpression.resolveToCall(BodyResolveMode.PARTIAL) ?: return false
+            val parameterForArgument = call.getParameterForArgument(lambdaArgument) ?: return false
+            return parameterForArgument.returnType?.isSuspendFunctionType ?: false
+        }
+
+        return ktElement.parentOfType<KtNamedFunction>()?.hasModifier(KtTokens.SUSPEND_KEYWORD) ?: false
+    }
 
     fun isKotlinxOnClasspath(ktElement: KtElement): Boolean {
         val module = ModuleUtilCore.findModuleForPsiElement(ktElement) ?: return false

@@ -47,7 +47,7 @@ public abstract class JBDateTimeFormatter {
   }
 
   @NotNull
-  public String formatPrettyDateTime(@NotNull Date date) {
+  public @NlsSafe String formatPrettyDateTime(@NotNull Date date) {
     return formatPrettyDateTime(date.getTime());
   }
 

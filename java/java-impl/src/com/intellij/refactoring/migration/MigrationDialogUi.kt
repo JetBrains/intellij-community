@@ -5,10 +5,12 @@ import com.intellij.application.options.ModulesComboBox
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.ui.JBUI
 import javax.swing.JComponent
+import javax.swing.JEditorPane
 import javax.swing.JLabel
 
 class MigrationDialogUi(map: MigrationMap?) {
@@ -17,7 +19,7 @@ class MigrationDialogUi(map: MigrationMap?) {
   lateinit var nameLabel: JLabel
   var removeLink: ActionLink? = null
   lateinit var editLink: ActionLink
-  lateinit var descriptionLabel: JLabel
+  lateinit var descriptionLabel: JEditorPane
   lateinit var modulesCombo: ModulesComboBox
 
   val panel = panel {
@@ -35,18 +37,14 @@ class MigrationDialogUi(map: MigrationMap?) {
 
     row(JavaRefactoringBundle.message("migration.dialog.scope.label")) {
       modulesCombo = cell(ModulesComboBox())
+        .applyToComponent { setMinimumAndPreferredWidth(JBUI.scale(380)) }
         .horizontalAlign(HorizontalAlign.FILL)
         .component
       bottomGap(BottomGap.SMALL)
     }
 
     row {
-      // IDEA-280515 Add an option to make labels break
-      descriptionLabel = label(map?.description ?: "")
-        .applyToComponent {
-          foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-        }
-        .horizontalAlign(HorizontalAlign.FILL)
+      descriptionLabel = text(map?.description ?: "", DEFAULT_COMMENT_WIDTH)
         .component
     }
   }

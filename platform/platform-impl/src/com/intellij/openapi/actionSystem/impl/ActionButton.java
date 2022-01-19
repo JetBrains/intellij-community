@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -55,6 +56,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private ActionButtonLook myLook = ActionButtonLook.SYSTEM_LOOK;
   private boolean myMouseDown;
   protected boolean myRollover;
+  private boolean wasPopupJustClosedByButtonClick = false;
+
   private static boolean ourGlobalMouseDown;
 
   private boolean myNoIconsInPopup;
@@ -166,7 +169,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   protected void actionPerformed(@NotNull AnActionEvent event) {
     HelpTooltip.hide(this);
     if (isPopupMenuAction(event, myAction)) {
-      showActionGroupPopup((ActionGroup)myAction, event);
+      if (!wasPopupJustClosedByButtonClick) {
+        showActionGroupPopup((ActionGroup)myAction, event);
+      }
+      wasPopupJustClosedByButtonClick = false;
     }
     else {
       myAction.actionPerformed(event);
@@ -183,7 +189,17 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       false, true, false,
       null, -1, null,
       ActionPlaces.getActionGroupPopupPlace(event.getPlace()),
-      createPresentationFactory(), false);
+      createPresentationFactory(), false) {
+      @Override
+      public void cancel(InputEvent inputEvent) {
+        super.cancel(inputEvent);
+        if (inputEvent instanceof MouseEvent && inputEvent.getID() == MouseEvent.MOUSE_PRESSED) {
+          MouseEvent e = (MouseEvent)inputEvent;
+          Component target = ObjectUtils.doIfNotNull(e.getComponent(), c -> SwingUtilities.getDeepestComponentAt(c, e.getX(), e.getY()));
+          if (ActionButton.this == target) wasPopupJustClosedByButtonClick = true;
+        }
+      }
+    };
     popup.setShowSubmenuOnHover(true);
     popup.showUnderneathOf(event.getInputEvent().getComponent());
     return popup;

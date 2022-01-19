@@ -6,6 +6,7 @@ package org.jetbrains.plugins.gradle.util
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
@@ -16,9 +17,13 @@ import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImp
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.all
+import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 
 private fun isResolveTask(id: ExternalSystemTaskId): Boolean {
   if (id.type == ExternalSystemTaskType.RESOLVE_PROJECT) {
@@ -47,7 +52,7 @@ fun whenResolveTaskStarted(action: () -> Unit, parentDisposable: Disposable) {
 @IntellijInternalApi
 fun getProjectDataLoadPromise(parentDisposable: Disposable): Promise<Project> {
   return getResolveTaskFinishPromise(parentDisposable)
-    .thenAsync(::getProjectDataLoadPromise)
+    .thenAsync { project -> getProjectDataLoadPromise(project, null) }
 }
 
 @IntellijInternalApi
@@ -58,7 +63,22 @@ fun getExecutionTaskFinishPromise(parentDisposable: Disposable): Promise<Project
 @TestOnly
 fun getProjectDataLoadPromise(): Promise<Project> {
   return getExternalSystemTaskFinishPromise(::isResolveTask)
-    .thenAsync(::getProjectDataLoadPromise)
+    .thenAsync { project -> getProjectDataLoadPromise(project, null) }
+}
+
+/**
+ * @param expectedProjects specific linked gradle projects paths to wait for
+ */
+@TestOnly
+fun getProjectDataLoadPromise(expectedProjects: List<Path>): Promise<Project> {
+  require(expectedProjects.isNotEmpty())
+
+  return getExternalSystemTaskFinishPromise(::isResolveTask).thenAsync { project ->
+      expectedProjects.map {
+        val linkedProjectPath: String = FileUtil.toCanonicalPath(it.absolutePathString())
+        getProjectDataLoadPromise(project, linkedProjectPath)
+      }.all(project, false)
+    }
 }
 
 @TestOnly
@@ -116,21 +136,26 @@ private fun getExternalSystemTaskFinishPromiseImpl(
   return promise
 }
 
-private fun getProjectDataLoadPromise(project: Project): Promise<Project> {
+private fun getProjectDataLoadPromise(project: Project, expectedProjectPath: String? = null): Promise<Project> {
   val promise = AsyncPromise<Project>()
   val parentDisposable = Disposer.newDisposable()
   val connection = project.messageBus.connect(parentDisposable)
+
   connection.subscribe(ProjectDataImportListener.TOPIC, object : ProjectDataImportListener {
     override fun onImportFinished(projectPath: String?) {
-      Disposer.dispose(parentDisposable)
-      invokeLater {
-        promise.setResult(project)
+      if (expectedProjectPath == null || expectedProjectPath == projectPath) {
+        Disposer.dispose(parentDisposable)
+        invokeLater {
+          promise.setResult(project)
+        }
       }
     }
 
     override fun onImportFailed(projectPath: String?) {
-      Disposer.dispose(parentDisposable)
-      promise.setError("Import failed for $projectPath")
+      if (expectedProjectPath == null || expectedProjectPath == projectPath) {
+        Disposer.dispose(parentDisposable)
+        promise.setError("Import failed for $projectPath")
+      }
     }
   })
   return promise

@@ -1,12 +1,12 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SearchTextField
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.Subscription
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
-import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -34,7 +34,7 @@ class PackagesSmartSearchField(
         PackageSearchUI.overrideKeyStroke(textEditor, "shift ENTER", this::transferFocusBackward)
 
         searchFieldFocus
-            .onEach { withContext(Dispatchers.AppUI) { requestFocus() } }
+            .onEach { withContext(Dispatchers.EDT) { requestFocus() } }
             .launchIn(project.lifecycleScope)
     }
 

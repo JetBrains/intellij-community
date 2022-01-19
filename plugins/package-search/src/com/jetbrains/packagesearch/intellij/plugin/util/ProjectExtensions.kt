@@ -1,7 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.util
 
 import com.intellij.ProjectTopics
-import com.intellij.ide.impl.TrustChangeNotifier
+import com.intellij.ide.impl.TrustStateListener
 import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
@@ -25,7 +25,8 @@ import com.jetbrains.packagesearch.intellij.plugin.lifecycle.ProjectLifecycleHol
 import com.jetbrains.packagesearch.intellij.plugin.ui.UiCommandsService
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateModifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateSource
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageVersionNormalizerService
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageSearchCachesService
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageSearchProjectCachesService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
@@ -38,8 +39,14 @@ import kotlin.streams.toList
 internal val Project.packageSearchProjectService
     get() = service<PackageSearchProjectService>()
 
-internal val Project.packageVersionNormalizer
-    get() = service<PackageVersionNormalizerService>().normalizer
+internal val packageSearchApplicationCaches
+    get() = service<PackageSearchCachesService>()
+
+internal val packageVersionNormalizer
+    get() = packageSearchApplicationCaches.normalizer
+
+internal val Project.packageSearchProjectCachesService
+    get() = service<PackageSearchProjectCachesService>()
 
 @OptIn(ExperimentalTypeInference::class)
 internal fun <L : Any, K> Project.messageBusFlow(
@@ -54,8 +61,12 @@ internal fun <L : Any, K> Project.messageBusFlow(
 }
 
 internal val Project.trustedProjectFlow: Flow<Boolean>
-    get() = messageBusFlow(TrustChangeNotifier.TOPIC, { isTrusted() }) {
-        TrustChangeNotifier { if (it == this@trustedProjectFlow) trySend(isTrusted()) }
+    get() = messageBusFlow(TrustStateListener.TOPIC, { isTrusted() }) {
+        object : TrustStateListener {
+            override fun onProjectTrusted(project: Project) {
+                if (project == this@trustedProjectFlow) trySend(isTrusted())
+            }
+        }
     }.distinctUntilChanged()
 
 internal val Project.nativeModulesChangesFlow
@@ -108,7 +119,7 @@ internal val Project.dumbService: DumbService
 internal val Project.moduleTransformers: List<ModuleTransformer>
     get() = ModuleTransformer.extensionPointName.extensions(this).toList()
 
-internal val Project.coroutineModuleTransformer: List<CoroutineModuleTransformer>
+internal val Project.coroutineModuleTransformers: List<CoroutineModuleTransformer>
     get() = CoroutineModuleTransformer.extensionPointName.extensions(this).toList()
 
 internal val Project.lookAndFeelFlow

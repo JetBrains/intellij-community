@@ -62,6 +62,8 @@
               class="org.jetbrains.plugins.notebooks.editor.outputs.impl.NotebookOutputCollapseSingleInCellAction"/>
       <action id="NotebookOutputCollapseAllInCellAction"
               class="org.jetbrains.plugins.notebooks.editor.outputs.impl.NotebookOutputCollapseAllInCellAction"/>
+      <action id="NotebookOutputCollapseAllInSelectedCellsAction"
+              class="org.jetbrains.plugins.notebooks.editor.outputs.impl.NotebookOutputCollapseAllInSelectedCellsAction"/>
       <action id="NotebookOutputCollapseAllAction"
               class="org.jetbrains.plugins.notebooks.editor.outputs.impl.NotebookOutputCollapseAllAction"/>
     </group>

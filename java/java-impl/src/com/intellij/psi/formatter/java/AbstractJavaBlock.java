@@ -6,6 +6,7 @@ import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -783,6 +784,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private Block createMethodCallExpressionBlock(@NotNull ASTNode node, Wrap blockWrap, Alignment alignment, Indent indent) {
     final ArrayList<ASTNode> nodes = new ArrayList<>();
     collectNodes(nodes, node);
+    if (Registry.is(LegacyChainedMethodCallsBlockBuilder.COMPATIBILITY_KEY)) {
+      return
+        new LegacyChainedMethodCallsBlockBuilder(alignment, blockWrap, indent, mySettings, myJavaSettings, myFormattingMode).build(nodes);
+    }
     return new ChainMethodCallsBlockBuilder(alignment, blockWrap, indent, mySettings, myJavaSettings, myFormattingMode).build(nodes);
   }
 

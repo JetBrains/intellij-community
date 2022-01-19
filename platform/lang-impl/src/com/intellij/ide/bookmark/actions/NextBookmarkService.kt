@@ -21,14 +21,14 @@ internal abstract class IterateBookmarksAction(val forward: Boolean, dynamicText
     get() = project?.service<NextBookmarkService>()?.next(forward, contextBookmark as? LineBookmark)
 
   override fun update(event: AnActionEvent) {
-    event.presentation.isEnabled = when (val view = event.bookmarksToolWindow?.bookmarksView) {
+    event.presentation.isEnabled = when (val view = event.bookmarksViewFromToolWindow) {
       null -> event.nextBookmark != null
       else -> if (forward) view.hasNextOccurence() else view.hasPreviousOccurence()
     }
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    when (val view = event.bookmarksToolWindow?.bookmarksView) {
+    when (val view = event.bookmarksViewFromToolWindow) {
       null -> event.nextBookmark?.run { if (canNavigate()) navigate(true) }
       else -> if (forward) view.goNextOccurence() else view.goPreviousOccurence()
     }

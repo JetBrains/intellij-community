@@ -19,7 +19,7 @@ object JavaRunLessonsUtils {
         for (String s : input) {
           <caret>result += <select id=1>validateNumber(extractNumber(removeQuotes(s)))</select>;
         }
-        <caret id=3/>return result;
+        <caret id=3/>return <select id=4>result / input.length</select>;
       }
     
       private static String[] prepareValues() {

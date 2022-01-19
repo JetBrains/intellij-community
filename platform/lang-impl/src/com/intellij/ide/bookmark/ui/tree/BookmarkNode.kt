@@ -1,12 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui.tree
 
 import com.intellij.ide.bookmark.Bookmark
 import com.intellij.ide.bookmark.BookmarkGroup
 import com.intellij.ide.bookmark.BookmarkType
 import com.intellij.ide.projectView.PresentationData
+import com.intellij.ide.projectView.ProjectViewNode
+import com.intellij.ide.projectView.ProjectViewSettings.Immutable.DEFAULT
 import com.intellij.ide.projectView.impl.CompoundIconProvider.findIcon
-import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsSafe
@@ -20,7 +21,11 @@ import com.intellij.ui.IconManager
 import com.intellij.ui.SimpleTextAttributes
 import javax.swing.Icon
 
-abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B) : BackgroundSupplier, AbstractTreeNode<B>(project, bookmark) {
+abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B)
+  : BackgroundSupplier, ProjectViewNode<B>(project, bookmark, DEFAULT) {
+
+  val bookmarksView
+    get() = parentRootNode?.value
 
   val bookmarkType
     get() = bookmarksManager?.getType(value)
@@ -30,7 +35,8 @@ abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B) : Backg
 
   var bookmarkGroup: BookmarkGroup? = null
 
-  public override fun getVirtualFile(): VirtualFile? = null
+  override fun canRepresent(element: Any?) = virtualFile?.equals(element) ?: false
+  override fun contains(file: VirtualFile) = virtualFile?.let { VfsUtil.isAncestor(it, file, true) } ?: false
 
   override fun canNavigate() = value.canNavigate()
   override fun canNavigateToSource() = value.canNavigateToSource()
@@ -55,16 +61,19 @@ abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B) : Backg
   }
 
   protected fun addTextTo(presentation: PresentationData, file: VirtualFile, line: Int = 0) {
+    val name = file.presentableName
     val location = file.parent?.let { getRelativePath(it) }
     val description = bookmarkDescription
     if (description == null) {
-      presentation.addText(file.presentableName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+      presentation.presentableText = name // configure speed search
+      presentation.addText(name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
       if (line > 0) presentation.addText(" :$line", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       location?.let { presentation.addText("  $it", SimpleTextAttributes.GRAYED_ATTRIBUTES) }
     }
     else {
+      presentation.presentableText = "$description $name" // configure speed search
       presentation.addText("$description  ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
-      presentation.addText(file.presentableName, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      presentation.addText(name, SimpleTextAttributes.GRAYED_ATTRIBUTES)
       if (line > 0) presentation.addText(" :$line", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       location?.let { presentation.addText("  ($it)", SimpleTextAttributes.GRAYED_ATTRIBUTES) }
     }

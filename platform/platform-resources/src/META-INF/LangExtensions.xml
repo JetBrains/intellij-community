@@ -549,7 +549,6 @@
     <getDataRule key="module" implementationClass="com.intellij.ide.impl.dataRules.ModuleRule"/>
     <getDataRule key="symbols" implementationClass="com.intellij.model.psi.impl.TargetSymbolsDataRule" injectedContext="true"/>
     <getDataRule key="search.targets" implementationClass="com.intellij.find.actions.SearchTargetsDataRule"/>
-    <getDataRule key="search.target.variants" implementationClass="com.intellij.find.actions.SearchTargetVariantsDataRule"/>
 
     <dataValidators implementation="com.intellij.ide.impl.LangDataValidators"/>
 
@@ -686,7 +685,6 @@
     <selectInTarget implementation="com.intellij.ide.navigationToolbar.SelectInNavBarTarget"/>
     <selectInTarget implementation="com.intellij.ide.impl.StructureViewSelectInTarget"/>
     <selectInTarget implementation="com.intellij.ide.impl.ProjectViewSelectInExplorerTarget"/>
-    <selectInTarget implementation="com.intellij.ide.favoritesTreeView.FavoritesViewSelectInTarget"/>
 
     <elementLookupRenderer implementation="com.intellij.codeInsight.template.impl.TemplateLookupRenderer"/>
 
@@ -924,8 +922,10 @@
                 factoryClass="com.intellij.ide.projectView.impl.FavoritesViewToolWindowFactory" order="after Structure"/>
     <toolWindow id="Bookmarks" anchor="left" icon="AllIcons.Toolwindows.ToolWindowBookmarks" secondary="true"
                 factoryClass="com.intellij.ide.bookmark.ui.BookmarksViewFactory" order="after Structure"/>
+    <postStartupActivity implementation="com.intellij.ide.bookmark.BookmarksStartupActivity"/>
     <projectService serviceImplementation="com.intellij.ide.bookmark.ui.BookmarksViewStateComponent"/>
     <editorFactoryListener implementation="com.intellij.ide.bookmark.GutterLineBookmarkUpdater"/>
+    <selectInTarget implementation="com.intellij.ide.bookmark.ui.BookmarksSelectInTarget"/>
     <actionPromoter implementation="com.intellij.ide.bookmark.actions.NodeMoveActionPromoter"/>
 
     <toolWindow id="TODO" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowTodo"
@@ -1409,6 +1409,8 @@
 
     <registryKey defaultValue="true" description="Use IndexableEntityProviders to iterate project for indexing"
                  key="indexing.enable.entity.provider.based.indexing"/>
+    <registryKey defaultValue="2000" description="Amount in milliseconds to wait for completion contributors till decide whether to insert the single item"
+                 key="ide.completion.auto.insert.item.timeout"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.LibraryIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ContentRootIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.SourceRootIndexableEntityProvider"/>
@@ -1455,6 +1457,8 @@
     <lang.documentationLinkResolver implementation="com.intellij.lang.documentation.psi.PsiDocumentationLinkResolver"/>
     <projectService serviceInterface="com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider"
                     serviceImplementation="com.intellij.lang.documentation.ide.impl.IdeDocumentationTargetProviderImpl"/>
+
+    <lang.formatter.restriction implementation="com.intellij.lang.InvalidPsiAutoFormatRestriction"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.util.indexing.FileBasedIndexPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>

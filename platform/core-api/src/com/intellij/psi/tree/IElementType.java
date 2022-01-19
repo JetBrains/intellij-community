@@ -163,7 +163,7 @@ public class IElementType {
   }
 
   /**
-   * Don't use it directly. Override or call {@link ElementType#toString()}.
+   * Don't use it directly. Override or call {@link IElementType#toString()}.
    * Note, it should be used only for testing and logging purposes.
    */
   @NonNls

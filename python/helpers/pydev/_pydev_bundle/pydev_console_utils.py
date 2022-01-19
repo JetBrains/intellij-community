@@ -101,6 +101,7 @@ class BaseInterpreterInterface(BaseCodeExecutor):
         self.connect_status_queue = connect_status_queue
 
         self.rpc_client = rpc_client
+        self._first_command_executed = False
 
     def build_banner(self):
         return 'print({0})\n'.format(repr(self.get_greeting_msg()))
@@ -165,8 +166,15 @@ class BaseInterpreterInterface(BaseCodeExecutor):
         if server is not None:
             server.showConsole()
 
+    def notify_first_command_executed(self):
+        pass
+
     def finish_exec(self, more, exception_occurred):
         self.interruptable = False
+
+        if not self._first_command_executed:
+            self.notify_first_command_executed()
+            self._first_command_executed = True
 
         server = self.get_server()
 

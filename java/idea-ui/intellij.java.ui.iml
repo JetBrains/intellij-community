@@ -32,5 +32,6 @@
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.jps" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.feedback" />
   </component>
 </module>

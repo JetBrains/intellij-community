@@ -398,7 +398,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                             val highlightType =
                                 if (shouldReportAsValue(expr)) ProblemHighlightType.WEAK_WARNING
                                 else ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-                            holder.registerProblem(expr, KotlinBundle.message(key), highlightType)
+                            holder.registerProblem(expr, KotlinBundle.message(key, expr.text), highlightType)
                         }
                     }
                     is KotlinWhenConditionAnchor -> {

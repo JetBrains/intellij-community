@@ -79,10 +79,11 @@ internal class ShowTypeBookmarksAction : DumbAwareAction(BookmarkBundle.messageP
     init {
       border = JBUI.Borders.empty()
       viewportBorder = JBUI.Borders.empty()
+      horizontalScrollBarPolicy = HORIZONTAL_SCROLLBAR_NEVER
     }
 
     override fun getPreferredSize(): Dimension? = super.getPreferredSize()?.also {
-      if (!isPreferredSizeSet) it.width = it.width.coerceAtMost(JBUI.scale(800))
+      if (!isPreferredSizeSet) it.width = it.width.coerceAtMost(JBUI.scale(640))
     }
 
     override fun getData(dataId: String): Any? = when {

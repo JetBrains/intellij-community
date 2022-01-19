@@ -26,7 +26,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             buildSystemType = if (useKotlinDsl) GradleKotlinDsl else GradleGroovyDsl,
             projectGroupId = groupId,
             artifactId = artifactId,
-            version = version,
+            version = version
         )
     }
 }

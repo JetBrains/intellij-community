@@ -33,6 +33,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtilRt
@@ -442,6 +443,9 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
     return future
       .whenComplete { _, _ ->
+        ApplicationManager.getApplication().invokeAndWait {
+          WelcomeFrame.showIfNoProjectOpened()
+        }
         disableUpdatingRecentInfo.set(false)
       }
   }

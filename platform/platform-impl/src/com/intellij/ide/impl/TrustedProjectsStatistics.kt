@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 class TrustedProjectsStatistics : CounterUsagesCollector() {
 
   companion object {
-    val GROUP = EventLogGroup("trusted_projects", 2)
+    val GROUP = EventLogGroup("trusted_projects", 3)
     val NEW_PROJECT_OPEN_OR_IMPORT_CHOICE = GROUP.registerEvent("open_new_project",
                                                                 EventFields.Enum("choice", OpenUntrustedProjectChoice::class.java))
     val LOAD_UNTRUSTED_PROJECT_CONFIRMATION_CHOICE = GROUP.registerEvent("load_untrusted_project_confirmation",

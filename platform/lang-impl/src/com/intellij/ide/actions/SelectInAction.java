@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public final class SelectInAction extends AnAction implements DumbAware, PerformWithDocumentsCommitted {
+public final class SelectInAction extends AnAction implements DumbAware, UpdateInBackground, PerformWithDocumentsCommitted {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.select.in");

@@ -86,7 +86,9 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : JvmVariableDes
             val parameters = lambda.valueParameters
             if (parameters.size > 1) return null
             if (parameters.size == 1) {
-                return factory.varFactory.createVariableValue(KtVariableDescriptor(parameters[0]))
+                return if (parameters[0].destructuringDeclaration == null)
+                    factory.varFactory.createVariableValue(KtVariableDescriptor(parameters[0]))
+                else null
             }
             val kotlinType = lambda.resolveType()?.getValueParameterTypesFromFunctionType()?.singleOrNull()?.type ?: return null
             return factory.varFactory.createVariableValue(KtItVariableDescriptor(lambda.functionLiteral, kotlinType))

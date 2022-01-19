@@ -28,6 +28,9 @@ public interface TestEventXmlView {
   String getTestName() throws XmlParserException;
 
   @NotNull
+  String getTestDisplayName() throws XmlParserException;
+
+  @NotNull
   String getTestParentId() throws XmlParserException;
 
   @NotNull

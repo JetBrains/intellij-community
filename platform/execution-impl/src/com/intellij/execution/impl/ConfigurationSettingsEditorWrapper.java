@@ -150,6 +150,10 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
     return result;
   }
 
+  boolean supportsSnapshots() {
+    return myEditor.supportsSnapshots();
+  }
+
   private void doApply(@NotNull RunnerAndConfigurationSettingsImpl settings, boolean isSnapshot) {
     final RunConfiguration runConfiguration = settings.getConfiguration();
 

@@ -134,11 +134,10 @@ public final class GitConfig {
     for (Map.Entry<String, Profile.Section> stringSectionEntry : ini.entrySet()) {
       String sectionName = stringSectionEntry.getKey();
       Profile.Section section = stringSectionEntry.getValue();
-      if (StringUtil.startsWithIgnoreCase(sectionName, "branch")) {
-        BranchConfig branchConfig = parseBranchSection(sectionName, section);
-        if (branchConfig != null) {
-          configs.add(branchConfig);
-        }
+
+      BranchConfig branchConfig = parseBranchSection(sectionName, section);
+      if (branchConfig != null) {
+        configs.add(branchConfig);
       }
     }
     return configs;
@@ -207,7 +206,6 @@ public final class GitConfig {
       LOG.debug(String.format("Common branch option(s) defined .git/config. sectionName: %s%n section: %s", sectionName, section));
       return null;
     }
-    LOG.error(String.format("Invalid branch section format in .git/config. sectionName: %s%n section: %s", sectionName, section));
     return null;
   }
 

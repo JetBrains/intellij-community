@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.impl.cache.impl;
 
 import com.intellij.JavaTestUtil;
@@ -16,6 +16,7 @@ import com.intellij.psi.search.TodoAttributesUtil;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtilRt;
 
@@ -104,6 +105,7 @@ public class IdCacheTest extends JavaCodeInsightTestCase {
     TodoPattern pattern = new TodoPattern("newtodo", TodoAttributesUtil.createDefault(), true);
     TodoPattern[] oldPatterns = TodoConfiguration.getInstance().getTodoPatterns();
     TodoConfiguration.getInstance().setTodoPatterns(new TodoPattern[]{pattern});
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
 
     try{
       final TodoCacheManager todocache = TodoCacheManager.SERVICE.getInstance(myProject);

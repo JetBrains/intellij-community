@@ -82,6 +82,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       "#---------------------------------------------------------------------",
       "com.apple.mrj.application.live-resize=false",
       "apple.laf.useScreenMenuBar=true",
+      "jbScreenMenuBar.enabled=true",
       "apple.awt.fileDialogForDirectories=true",
       "apple.awt.graphics.UseQuartz=true",
       "apple.awt.fullscreencapturealldisplays=false"

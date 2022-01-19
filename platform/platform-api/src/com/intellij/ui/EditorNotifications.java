@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.lightEdit.LightEditService;
@@ -7,13 +7,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 public abstract class EditorNotifications {
+
   private static final EditorNotifications NULL_IMPL = new EditorNotifications() {
     @Override
     public void updateNotifications(@NotNull VirtualFile file) {
@@ -48,22 +52,69 @@ public abstract class EditorNotifications {
     /**
      * Unique key.
      */
-    @NotNull
-    public abstract Key<T> getKey();
+    public abstract @NotNull Key<T> getKey();
 
     /**
      * @deprecated Override {@link #createNotificationPanel(VirtualFile, FileEditor, Project)}
      */
     @SuppressWarnings({"unused"})
-    @Nullable
     @Deprecated
-    public T createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
+    @RequiresEdt
+    @RequiresReadLock
+    public @Nullable T createNotificationPanel(@NotNull VirtualFile file,
+                                               @NotNull FileEditor fileEditor) {
       throw new AbstractMethodError();
     }
 
-    @Nullable
-    public T createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
+    @RequiresEdt
+    @RequiresReadLock
+    public @Nullable T createNotificationPanel(@NotNull VirtualFile file,
+                                               @NotNull FileEditor fileEditor,
+                                               @NotNull Project project) {
       return createNotificationPanel(file, fileEditor);
+    }
+
+    @ApiStatus.Experimental
+    @RequiresReadLock
+    public @NotNull Supplier<JComponent> collectNotificationData(@NotNull VirtualFile file,
+                                                                 @NotNull FileEditor fileEditor,
+                                                                 @NotNull Project project) {
+      if (this instanceof PanelProvider) {
+        PanelProvider.PanelData panelData = ((PanelProvider)this).collectNotificationData(file, project);
+        return () -> panelData != null ? panelData.applyTo(fileEditor, project) : null;
+      }
+      else {
+        JComponent component = createNotificationPanel(file, fileEditor, project);
+        return () -> component;
+      }
+    }
+  }
+
+  @ApiStatus.Experimental
+  public abstract static class PanelProvider extends Provider<EditorNotificationPanel> {
+
+    public interface PanelData {
+
+      @RequiresEdt
+      @Nullable EditorNotificationPanel applyTo(@NotNull FileEditor fileEditor,
+                                                @NotNull Project project);
+    }
+
+    @RequiresReadLock
+    public abstract @Nullable PanelData collectNotificationData(@NotNull VirtualFile file,
+                                                                @NotNull Project project);
+
+    @Override
+    public final @Nullable EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file,
+                                                                           @NotNull FileEditor fileEditor) {
+      return super.createNotificationPanel(file, fileEditor);
+    }
+
+    @Override
+    public final @Nullable EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file,
+                                                                           @NotNull FileEditor fileEditor,
+                                                                           @NotNull Project project) {
+      return super.createNotificationPanel(file, fileEditor, project);
     }
   }
 

@@ -7,6 +7,6 @@ fun f() {
 }
 
 // ABSENT: "xxx"
-// EXIST: { lookupString: "yyy", attributes: "bold" }
+// EXIST: { lookupString: "yyy", attributes: "bold", icon: "nodes/function.svg"}
 // ABSENT: "zzz"
 // ABSENT: "extensionProp"

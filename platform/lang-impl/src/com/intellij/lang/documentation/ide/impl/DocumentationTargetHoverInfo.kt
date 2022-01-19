@@ -3,6 +3,7 @@
 
 package com.intellij.lang.documentation.ide.impl
 
+import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
@@ -41,11 +42,13 @@ internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, h
     if (request == null) {
       return@runBlockingCancellable null
     }
-    val preview = withContext(Dispatchers.EDT) {
-      DocumentationToolWindowManager.instance(project).updateVisibleAutoUpdatingTab(request)
-    }
-    if (preview) {
-      return@runBlockingCancellable null
+    if (!LightEdit.owns(project)) {
+      val preview = withContext(Dispatchers.EDT) {
+        DocumentationToolWindowManager.instance(project).updateVisibleAutoUpdatingTab(request)
+      }
+      if (preview) {
+        return@runBlockingCancellable null
+      }
     }
     val (browser, browseJob) = DocumentationBrowser.createBrowserAndGetJob(project, request)
     withTimeoutOrNull(DEFAULT_UI_RESPONSE_TIMEOUT) {

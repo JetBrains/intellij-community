@@ -62,6 +62,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     if (label == null) {
       result = RowImpl(dialogPanelConfig, panelContext, this, false, RowLayout.INDEPENDENT)
     } else {
+      label.putClientProperty(DslComponentProperty.ROW_LABEL, true)
       result = RowImpl(dialogPanelConfig, panelContext, this, true, RowLayout.LABEL_ALIGNED)
       result.cell(label)
     }
@@ -399,7 +400,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
       if (title != null) {
         val row = row {
           label(title)
-            .applyToComponent { putClientProperty(DslComponentProperty.LABEL_NO_BOTTOM_GAP, true) }
+            .applyToComponent { putClientProperty(DslComponentPropertyInternal.LABEL_NO_BOTTOM_GAP, true) }
         }
         row.internalBottomGap = dialogPanelConfig.spacing.buttonGroupHeaderBottomGap
       }

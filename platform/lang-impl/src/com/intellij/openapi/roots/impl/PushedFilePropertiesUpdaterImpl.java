@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
@@ -356,7 +356,6 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
           return ReadAction.compute(() -> {
             Module module = IndexableEntityProviderMethods.INSTANCE.findModuleForEntity(moduleEntity, project);
             if (module == null) {
-              LOG.error("Failed to find a module from " + moduleEntity.getName() + " entity.");
               return Stream.empty();
             }
             ProgressManager.checkCanceled();

@@ -258,7 +258,7 @@ object JsComposeMppConfigurator : JsBrowserBasedConfigurator, SimpleTargetConfig
         module: Module,
         modulePath: Path,
     ): TaskResult<Unit> = compute {
-        GradlePlugin.gradleProperties.addValues("kotlin.js.webpack.major.version" to 4) //workaround for KT-48273 TODO:remove once 1.5.31 is released
+        GradlePlugin.gradleProperties.addValues("kotlin.js.webpack.major.version" to 4) //workaround for KT-48273 TODO:remove once the issue is fixed
     }
 
 }

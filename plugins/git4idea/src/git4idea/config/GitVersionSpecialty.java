@@ -7,6 +7,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -298,6 +299,15 @@ public enum GitVersionSpecialty {
    */
   public boolean existsIn(@NotNull Project project) {
     GitVersion version = GitExecutableManager.getInstance().tryGetVersion(project);
+    return existsIn(Objects.requireNonNullElse(version, GitVersion.NULL));
+  }
+
+  /**
+   * @param project    to use for progresses and notifications
+   * @param executable to check
+   */
+  public boolean existsIn(@Nullable Project project, @NotNull GitExecutable executable) {
+    GitVersion version = GitExecutableManager.getInstance().tryGetVersion(project, executable);
     return existsIn(Objects.requireNonNullElse(version, GitVersion.NULL));
   }
 

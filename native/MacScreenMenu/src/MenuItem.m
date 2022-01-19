@@ -244,6 +244,11 @@ NSUInteger JavaModifiersToNsKeyModifiers(jint javaModifiers, BOOL isExtMods)
 }
 
 - (void) dealloc {
+    if ([nsMenuItem.view isKindOfClass:CustomMenuItemView.class]) {
+        ((CustomMenuItemView *)nsMenuItem.view)->owner = nil;
+    }
+    nsMenuItem.view = nil;
+
     [nsMenuItem setAction:NULL];
     [nsMenuItem setTarget:nil];
     [nsMenuItem release];
@@ -301,12 +306,12 @@ JNIEXPORT jlong JNICALL
 Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeDispose
 (JNIEnv *env, jobject peer, jlong menuItemObj)
 {
-    JNI_COCOA_ENTER();
-    MenuItem *item = (MenuItem *)menuItemObj;
+    __strong MenuItem *item = (MenuItem *)menuItemObj;
     (*env)->DeleteGlobalRef(env, item->javaPeer);
     item->javaPeer = NULL;
-    [item release];
-    JNI_COCOA_EXIT();
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [item release];
+    });
 }
 
 static unichar AWTKeyToMacShortcut(jint awtKey, BOOL doShift) {
@@ -396,11 +401,11 @@ static unichar AWTKeyToMacShortcut(jint awtKey, BOOL doShift) {
 /*
  * Class:     com_intellij_ui_mac_screenmenu_MenuItem
  * Method:    nativeSetLabel
- * Signature: (JLjava/lang/String;CII)V
+ * Signature: (JLjava/lang/String;CIIZ)V
  */
 JNIEXPORT void JNICALL
 Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeSetLabel
-(JNIEnv *env, jobject peer, jlong menuItemObj, jstring label, jchar shortcutKey, jint shortcutKeyCode, jint mods)
+(JNIEnv *env, jobject peer, jlong menuItemObj, jstring label, jchar shortcutKey, jint shortcutKeyCode, jint mods, jboolean onAppKit)
 {
     JNI_COCOA_ENTER();
     NSString *theLabel = JavaStringToNSString(env, label);
@@ -418,55 +423,71 @@ Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeSetLabel
         theKeyEquivalent = @"";
     }
 
-    [((MenuItem *) menuItemObj) setLabel:theLabel shortcut:theKeyEquivalent modifierMask:mods];
+    __strong MenuItem * item = (MenuItem *)menuItemObj;
+    dispatch_block_t block = ^{
+        [item setLabel:theLabel shortcut:theKeyEquivalent modifierMask:mods];
+    };
+    if (!onAppKit || [NSThread isMainThread]) {
+        block();
+    } else {
+        dispatch_async(dispatch_get_main_queue(), block);
+    }
     JNI_COCOA_EXIT();
 }
 
 /*
  * Class:     com_intellij_ui_mac_screenmenu_MenuItem
  * Method:    nativeSetAcceleratorText
- * Signature: (JLjava/lang/String;)V
+ * Signature: (JLjava/lang/String;Z)V
  */
 JNIEXPORT void JNICALL
 Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeSetAcceleratorText
-(JNIEnv *env, jobject peer, jlong menuItemObj, jstring acceleratorText)
+(JNIEnv *env, jobject peer, jlong menuItemObj, jstring acceleratorText, jboolean onAppKit)
 {
     JNI_COCOA_ENTER();
-    NSString *theText = JavaStringToNSString(env, acceleratorText);
-    [((MenuItem *)menuItemObj) setAcceleratorText:theText];
+    __strong NSString *theText = JavaStringToNSString(env, acceleratorText);
+    __strong MenuItem * item = (MenuItem *)menuItemObj;
+    dispatch_block_t block = ^{
+        [item setAcceleratorText:theText];
+    };
+    if (!onAppKit || [NSThread isMainThread]) {
+        block();
+    } else {
+        dispatch_async(dispatch_get_main_queue(), block);
+    }
     JNI_COCOA_EXIT();
 }
 
 /*
  * Class:     com_intellij_ui_mac_screenmenu_MenuItem
  * Method:    nativeSetImage
- * Signature: (J[III)V
+ * Signature: (J[IIIZ)V
  */
 JNIEXPORT void JNICALL
 Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeSetImage
-(JNIEnv *env, jobject peer, jlong menuItemObj, jintArray buffer, jint width, jint height)
+(JNIEnv *env, jobject peer, jlong menuItemObj, jintArray buffer, jint pointsWidth, jint pointsHeight, jint pixelsWidth, jint pixelsHeight, jboolean onAppKit)
 {
     JNI_COCOA_ENTER();
     NSImage *nsImage = nil;
-    if (width > 0 && height > 0) {
+    if (pixelsWidth > 0 && pixelsHeight > 0) {
         // 1. prepare NSImage
         NSBitmapImageRep *imageRep = [[[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
-                                                                              pixelsWide:width
-                                                                              pixelsHigh:height
+                                                                              pixelsWide:pixelsWidth
+                                                                              pixelsHigh:pixelsHeight
                                                                            bitsPerSample:8
                                                                          samplesPerPixel:4
                                                                                 hasAlpha:YES
                                                                                 isPlanar:NO
                                                                           colorSpaceName:NSDeviceRGBColorSpace
                                                                             bitmapFormat:NSAlphaFirstBitmapFormat
-                                                                             bytesPerRow:width * 4
+                                                                             bytesPerRow:pixelsWidth * 4
                                                                             bitsPerPixel:32] autorelease];
 
         jint *imgData = (jint *) [imageRep bitmapData];
         jint *src = (*env)->GetPrimitiveArrayCritical(env, buffer, NULL);
 
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
+        for (int y = 0; y < pixelsHeight; y++) {
+            for (int x = 0; x < pixelsWidth; x++) {
                 jint pix = src[x];
                 jint a = (pix >> 24) & 0xff;
                 jint r = (pix >> 16) & 0xff;
@@ -474,63 +495,92 @@ Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeSetImage
                 jint b = (pix) & 0xff;
                 imgData[x] = (b << 24) | (g << 16) | (r << 8) | a;
             }
-            src += width;
-            imgData += width;
+            src += pixelsWidth;
+            imgData += pixelsWidth;
         }
 
         (*env)->ReleasePrimitiveArrayCritical(env, buffer, src, JNI_ABORT);
 
-        nsImage = [[NSImage alloc] initWithSize:NSMakeSize(width, height)];
+        nsImage = [[NSImage alloc] initWithSize:NSMakeSize(pointsWidth, pointsHeight)];
         [nsImage addRepresentation:imageRep];
     }
 
     // 2. set image for item
-    [((MenuItem *)menuItemObj) setImage:nsImage];
+    __strong MenuItem * item = (MenuItem *)menuItemObj;
+    dispatch_block_t block = ^{
+        [item setImage:nsImage];
+    };
+    if (!onAppKit || [NSThread isMainThread]) {
+        block();
+    } else {
+        dispatch_async(dispatch_get_main_queue(), block);
+    }
     JNI_COCOA_EXIT();
 }
 
 /*
  * Class:     com_intellij_ui_mac_screenmenu_MenuItem
  * Method:    nativeSetEnabled
- * Signature: (JZ)V
+ * Signature: (JZZ)V
  */
 JNIEXPORT void JNICALL
 Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeSetEnabled
-(JNIEnv *env, jobject peer, jlong menuItemObj, jboolean enable)
+(JNIEnv *env, jobject peer, jlong menuItemObj, jboolean enable, jboolean onAppKit)
 {
     JNI_COCOA_ENTER();
-    MenuItem *item = (MenuItem *)menuItemObj;
-    [item->nsMenuItem setEnabled:(enable == JNI_TRUE)];
+    __strong MenuItem * item = (MenuItem *)menuItemObj;
+    dispatch_block_t block = ^{
+        [item->nsMenuItem setEnabled:(enable == JNI_TRUE)];
+    };
+    if (!onAppKit || [NSThread isMainThread]) {
+        block();
+    } else {
+        dispatch_async(dispatch_get_main_queue(), block);
+    }
     JNI_COCOA_EXIT();
 }
 
 /*
  * Class:     com_intellij_ui_mac_screenmenu_MenuItem
  * Method:    nativeSetSubmenu
- * Signature: (JJ)V
+ * Signature: (JJZ)V
  */
 JNIEXPORT void JNICALL
 Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeSetSubmenu
-(JNIEnv *env, jobject peer, jlong menuItemObj, jlong submenuObj)
+(JNIEnv *env, jobject peer, jlong menuItemObj, jlong submenuObj, jboolean onAppKit)
 {
     JNI_COCOA_ENTER();
-    MenuItem *item = (MenuItem *)menuItemObj;
-    Menu * submenu = (Menu *)submenuObj;
-    [item->nsMenuItem setSubmenu:submenu->nsMenu];
+    __strong MenuItem * item = (MenuItem *)menuItemObj;
+    __strong Menu * submenu = (Menu *)submenuObj;
+    dispatch_block_t block = ^{
+        [item->nsMenuItem setSubmenu:submenu->nsMenu];
+    };
+    if (!onAppKit || [NSThread isMainThread]) {
+        block();
+    } else {
+        dispatch_async(dispatch_get_main_queue(), block);
+    }
     JNI_COCOA_EXIT();
 }
 
 /*
  * Class:     com_intellij_ui_mac_screenmenu_MenuItem
  * Method:    nativeSetState
- * Signature: (JZ)V
+ * Signature: (JZZ)V
  */
 JNIEXPORT void JNICALL
 Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeSetState
-        (JNIEnv *env, jobject peer, jlong menuItemObj, jboolean isToggled)
+        (JNIEnv *env, jobject peer, jlong menuItemObj, jboolean isToggled, jboolean onAppKit)
 {
     JNI_COCOA_ENTER();
-    MenuItem *item = (MenuItem *)menuItemObj;
-    [item->nsMenuItem setState:(isToggled == JNI_TRUE ? NSOnState : NSOffState)];
+    __strong MenuItem * item = (MenuItem *)menuItemObj;
+    dispatch_block_t block = ^{
+        [item->nsMenuItem setState:(isToggled == JNI_TRUE ? NSOnState : NSOffState)];
+    };
+    if (!onAppKit || [NSThread isMainThread]) {
+        block();
+    } else {
+        dispatch_async(dispatch_get_main_queue(), block);
+    }
     JNI_COCOA_EXIT();
 }

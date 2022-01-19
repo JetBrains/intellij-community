@@ -44,6 +44,7 @@ interface RunToolbarProcess {
   val ID: String
   val executorId: String
   val name: @Nls String
+  val shortName: @Nls String
 
   val actionId: String
   fun getMainActionId(): String = "main$actionId"

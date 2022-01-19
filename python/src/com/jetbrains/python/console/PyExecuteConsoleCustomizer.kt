@@ -4,6 +4,7 @@ package com.jetbrains.python.console
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.run.PythonRunConfiguration
@@ -71,6 +72,8 @@ interface PyExecuteConsoleCustomizer {
   fun notifyRunnerStart(virtualFile: VirtualFile, runner: PydevConsoleRunner) {}
 
   fun isHorizontalAndUnitedToolbar(): Boolean = false
+
+  fun notifySciCellGutterExecuted(editor: EditorImpl, actionId: String) {}
 }
 
 enum class DescriptorType {

@@ -1,9 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.assignment;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ExtractParameterAsLocalVariableFix;
@@ -37,6 +39,10 @@ public class AssignmentToMethodParameterInspection extends BaseAssignmentToParam
 
   @Override
   protected boolean isApplicable(PsiParameter parameter) {
-    return parameter.getDeclarationScope() instanceof PsiMethod;
+    final PsiElement scope = parameter.getDeclarationScope();
+    if (!(scope instanceof PsiMethod)) {
+      return false;
+    }
+    return !JavaPsiRecordUtil.isCompactConstructor((PsiMethod)scope);
   }
 }

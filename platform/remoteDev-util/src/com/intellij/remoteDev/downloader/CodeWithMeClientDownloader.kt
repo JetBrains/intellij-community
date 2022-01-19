@@ -7,7 +7,10 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.Key
@@ -22,6 +25,7 @@ import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.io.*
+import com.intellij.util.io.HttpRequests.HttpStatusException
 import com.intellij.util.system.CpuArch
 import com.intellij.util.text.VersionComparatorUtil
 import com.jetbrains.infra.pgpVerifier.JetBrainsPgpConstants
@@ -157,9 +161,15 @@ object CodeWithMeClientDownloader {
     val clientDistributionName = getClientDistributionName(clientBuildVersion)
     val clientJdkDownloadUrl = "${config.clientDownloadLocation}$clientDistributionName-$clientBuildVersion-jdk-build.txt"
     LOG.info("Downloading from $clientJdkDownloadUrl")
-    val jdkBuild = HttpRequests
-      .request(clientJdkDownloadUrl)
-      .readString(jdkBuildProgressIndicator)
+
+    val tempFile = Files.createTempFile("jdk-build", "txt")
+    val jdkBuild = try {
+      downloadWithRetries(URI(clientJdkDownloadUrl), tempFile, EmptyProgressIndicator()).let {
+        tempFile.readText()
+      }
+    } finally {
+      Files.delete(tempFile)
+    }
 
     val sessionInfo = createSessionInfo(clientBuildVersion, jdkBuild, true)
     return downloadClientAndJdk(sessionInfo, progressIndicator.createSubProgress(0.9))
@@ -287,8 +297,7 @@ object CodeWithMeClientDownloader {
 
           try {
             fun download(url: URI, path: Path) {
-              LOG.info("Downloading $url -> $path")
-              HttpRequests.request(url.toString()).saveToFile(path, downloadingDataProgressIndicator)
+              downloadWithRetries(url, path, downloadingDataProgressIndicator)
             }
 
             download(data.url, data.archivePath)
@@ -324,7 +333,7 @@ object CodeWithMeClientDownloader {
           }
           catch (ex: IOException) {
             future.complete(false)
-            LOG.error(ex)
+            LOG.warn(ex)
             return@execute
           }
 
@@ -356,7 +365,7 @@ object CodeWithMeClientDownloader {
         }
         catch (e: Throwable) {
           future.complete(false)
-          LOG.error(e)
+          LOG.warn(e)
         }
         finally {
           synchronized(currentlyDownloading) {
@@ -381,8 +390,12 @@ object CodeWithMeClientDownloader {
         return null
       }
     }
+    catch(e: ProcessCanceledException) {
+      LOG.info("Download was canceled")
+      return null
+    }
     catch (e: Throwable) {
-      LOG.error(e)
+      LOG.warn(e)
       return null
     }
   }
@@ -390,6 +403,45 @@ object CodeWithMeClientDownloader {
   private fun isAlreadyDownloaded(fileData: DownloadableFileData): Boolean {
     val extractDirectory = FileManifestUtil.getExtractDirectory(fileData.targetPath, fileData.includeInManifest)
     return extractDirectory.isUpToDate && !fileData.targetPath.fileName.toString().contains("SNAPSHOT")
+  }
+
+  private fun downloadWithRetries(url: URI, path: Path, progressIndicator: ProgressIndicator) {
+    require(application.isUnitTestMode || !application.isDispatchThread) { "This method should not be called on UI thread" }
+
+    val MAX_ATTEMPTS = 5
+    val BACKOFF_INITIAL_DELAY_MS = 500L
+
+    var delayMs = BACKOFF_INITIAL_DELAY_MS
+
+    for (i in 1..MAX_ATTEMPTS) {
+      try {
+        LOG.info("Downloading from $url to ${path.absolutePathString()}, attempt $i of $MAX_ATTEMPTS")
+
+        HttpRequests.request(url.toString()).saveToFile(path, progressIndicator)
+
+        LOG.info("Download from $url to ${path.absolutePathString()} succeeded on attempt $i of $MAX_ATTEMPTS")
+        return
+      }
+      catch (e: Throwable) {
+        if (e is ControlFlowException) throw e
+
+        if (e is HttpStatusException) {
+          if (e.statusCode in 400..499) {
+            LOG.warn("Received ${e.statusCode} with message ${e.message}, will not retry")
+            throw e
+          }
+        }
+
+        if (i < MAX_ATTEMPTS) {
+          LOG.warn("Attempt $i of $MAX_ATTEMPTS to download from $url to ${path.absolutePathString()} failed, retrying in $delayMs ms", e)
+          Thread.sleep(delayMs)
+          delayMs = (delayMs * 1.5).toLong()
+        } else {
+          LOG.warn("Failed to download from $url to ${path.absolutePathString()} in $MAX_ATTEMPTS attempts", e)
+          throw e
+        }
+      }
+    }
   }
 
   private fun findCwmGuestHome(guestRoot: Path): Path {

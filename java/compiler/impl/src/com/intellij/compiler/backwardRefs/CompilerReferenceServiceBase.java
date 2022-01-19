@@ -49,6 +49,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -456,17 +457,33 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
+  @FunctionalInterface
+  public interface CompilerRefProvider {
+    @Nullable CompilerRef provide(@NotNull NameEnumerator nameEnumerator) throws IOException;
+  }
+
+  /**
+   * @deprecated use {@link #getDirectInheritorsNames(CompilerRefProvider)}
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public @NotNull SearchId @Nullable [] getDirectInheritorsNames(@NotNull Function<? super @NotNull NameEnumerator, ? extends @Nullable CompilerRef> compilerRefFunction) {
+    return getDirectInheritorsNames((CompilerRefProvider) nameEnumerator -> compilerRefFunction.fun(nameEnumerator));
+  }
+
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  public @NotNull SearchId @Nullable [] getDirectInheritorsNames(@NotNull CompilerRefProvider compilerRefFunction) {
     if (!myReadDataLock.tryLock()) return null;
     try {
       if (myReader == null) return null;
       try {
-        CompilerRef hierarchyElement = compilerRefFunction.fun(myReader.getNameEnumerator());
+        CompilerRef hierarchyElement = compilerRefFunction.provide(myReader.getNameEnumerator());
         if (hierarchyElement == null) return null;
         return myReader.getDirectInheritorsNames(hierarchyElement);
       }
-      catch (StorageException e) {
-        throw new RuntimeException(e);
+      catch (RuntimeException | StorageException | IOException e) {
+        return onException(e, "direct inheritors names");
       }
     }
     finally {

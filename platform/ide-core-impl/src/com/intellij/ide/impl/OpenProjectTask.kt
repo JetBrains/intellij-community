@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -46,7 +47,51 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
                             * Ignored if project is explicitly set.
                             */
                            val beforeOpen: ((Project) -> Boolean)? = null,
-                           val preparedToOpen: ((Module) -> Unit)? = null) {
+                           val preparedToOpen: ((Module) -> Unit)? = null,
+                           val openProcessorChooser: ((List<ProjectOpenProcessor>) -> ProjectOpenProcessor)? = null) {
+
+  constructor(forceOpenInNewFrame: Boolean = false,
+              projectToClose: Project? = null,
+              isNewProject: Boolean = false,
+              useDefaultProjectAsTemplate: Boolean = isNewProject,
+              project: Project? = null,
+              projectName: String? = null,
+              showWelcomeScreen: Boolean = true,
+              callback: ProjectOpenedCallback? = null,
+              frameManager: Any? = null,
+              line: Int = -1,
+              column: Int = -1,
+              isRefreshVfsNeeded: Boolean = true,
+              runConfigurators: Boolean = false,
+              runConversionBeforeOpen: Boolean = true,
+              projectWorkspaceId: String? = null,
+              isProjectCreatedWithWizard: Boolean = false,
+              preloadServices: Boolean = true,
+              beforeInit: ((Project) -> Unit)? = null,
+              beforeOpen: ((Project) -> Boolean)? = null,
+              preparedToOpen: ((Module) -> Unit)? = null) :
+    this(forceOpenInNewFrame,
+         projectToClose,
+         isNewProject,
+         useDefaultProjectAsTemplate,
+         project,
+         projectName,
+         showWelcomeScreen,
+         callback,
+         frameManager,
+         line,
+         column,
+         isRefreshVfsNeeded,
+         runConfigurators,
+         runConversionBeforeOpen,
+         projectWorkspaceId,
+         isProjectCreatedWithWizard,
+         preloadServices,
+         beforeInit,
+         beforeOpen,
+         preparedToOpen,
+         null)
+
   @ApiStatus.Internal
   fun withBeforeOpenCallback(callback: Predicate<Project>) = copy(beforeOpen = { callback.test(it) })
 
@@ -64,6 +109,9 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
 
   @ApiStatus.Internal
   fun withForceOpenInNewFrame(value: Boolean) = copy(forceOpenInNewFrame = value)
+
+  @ApiStatus.Internal
+  fun withOpenProcessorChooser(value: (List<ProjectOpenProcessor>) -> ProjectOpenProcessor) = copy(openProcessorChooser = value)
 
   private var _untrusted: Boolean = false
 

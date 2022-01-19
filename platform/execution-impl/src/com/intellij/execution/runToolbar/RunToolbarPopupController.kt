@@ -19,7 +19,6 @@ import javax.swing.event.AncestorListener
 
 class RunToolbarPopupController(val project: Project,
                                 val mainWidgetComponent: RunToolbarMainWidgetComponent) : PopupControllerComponentListener, Disposable {
-  private val manager = RunToolbarSlotManager.getInstance(project)
   private var popup: JBPopup? = null
   private var pane: RunToolbarExtraSlotPane = RunToolbarExtraSlotPane(project, {mainWidgetComponent.width})
 

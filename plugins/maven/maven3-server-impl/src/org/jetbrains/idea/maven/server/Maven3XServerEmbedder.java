@@ -67,7 +67,10 @@ import org.codehaus.plexus.context.DefaultContext;
 import org.codehaus.plexus.logging.BaseLoggerManager;
 import org.codehaus.plexus.logging.Logger;
 import org.codehaus.plexus.personality.plexus.lifecycle.phase.InitializationException;
+import org.codehaus.plexus.util.ExceptionUtils;
+import org.codehaus.plexus.util.StringUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
+import org.eclipse.aether.RepositoryException;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyVisitor;
@@ -150,9 +153,9 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
 
     MavenServerSettings serverSettings = settings.getSettings();
-    File mavenHome = serverSettings.getMavenHome();
+    String mavenHome = serverSettings.getMavenHomePath();
     if (mavenHome != null) {
-      System.setProperty("maven.home", mavenHome.getPath());
+      System.setProperty("maven.home", mavenHome);
     }
 
     myConsoleWrapper = new Maven3ServerConsoleLogger();
@@ -276,8 +279,12 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
                                         Properties systemProperties,
                                         Properties userProperties) throws RemoteException {
     SettingsBuildingRequest settingsRequest = new DefaultSettingsBuildingRequest();
-    settingsRequest.setGlobalSettingsFile(settings.getGlobalSettingsFile());
-    settingsRequest.setUserSettingsFile(settings.getUserSettingsFile());
+    if (settings.getGlobalSettingsPath() != null) {
+      settingsRequest.setGlobalSettingsFile(new File(settings.getGlobalSettingsPath()));
+    }
+    if (settings.getUserSettingsPath() != null) {
+      settingsRequest.setUserSettingsFile(new File(settings.getUserSettingsPath()));
+    }
     settingsRequest.setSystemProperties(systemProperties);
     settingsRequest.setUserProperties(userProperties);
 
@@ -291,8 +298,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
     result.setOffline(settings.isOffline());
 
-    if (settings.getLocalRepository() != null) {
-      result.setLocalRepository(settings.getLocalRepository().getPath());
+    if (settings.getLocalRepositoryPath() != null) {
+      result.setLocalRepository(settings.getLocalRepositoryPath());
     }
 
     if (result.getLocalRepository() == null) {
@@ -600,10 +607,12 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @Override
-  public @NotNull MavenServerPullProgressIndicator customizeAndGetProgressIndicator(@Nullable MavenWorkspaceMap workspaceMap,
-                                                                                    boolean failOnUnresolvedDependency,
-                                                                                    boolean alwaysUpdateSnapshots,
-                                                                                    @Nullable Properties userProperties, MavenToken token) throws RemoteException {
+  public @NotNull
+  MavenServerPullProgressIndicator customizeAndGetProgressIndicator(@Nullable MavenWorkspaceMap workspaceMap,
+                                                                    boolean failOnUnresolvedDependency,
+                                                                    boolean alwaysUpdateSnapshots,
+                                                                    @Nullable Properties userProperties, MavenToken token)
+    throws RemoteException {
     MavenServerUtil.checkToken(token);
 
     try {
@@ -818,7 +827,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         Model model = result.getProject().getModel();
         cacheMavenModelMap.put(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()), model);
       }
-      ((DefaultRepositorySystemSession)session).setWorkspaceReader(new Maven3WorkspaceReader(session.getWorkspaceReader(), cacheMavenModelMap));
+      ((DefaultRepositorySystemSession)session).setWorkspaceReader(
+        new Maven3WorkspaceReader(session.getWorkspaceReader(), cacheMavenModelMap));
     }
   }
 
@@ -1180,7 +1190,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     for (Throwable each : exceptions) {
       if (each == null) continue;
 
-      Maven3ServerGlobals.getLogger().info(each);
+      Maven3ServerGlobals.getLogger().print(ExceptionUtils.getFullStackTrace(each));
       myConsoleWrapper.info("Validation error:", each);
 
       if (each instanceof IllegalStateException && each.getCause() != null) {
@@ -1214,9 +1224,19 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         collector.add(MavenProjectProblem.createStructureProblem(
           traceElement.getFileName() + ":" + traceElement.getLineNumber(), each.getMessage()));
       }
+      else if (each instanceof RepositoryException){
+        myConsoleWrapper.error("Maven server repository problem", each);
+        String message = getRootMessage(each);
+        if (message.contains("Blocked mirror for repositories:")) {
+          String errorMessage = message.substring(message.indexOf("Blocked mirror for repositories:"));
+          collector.add(MavenProjectProblem.createProblem(path, errorMessage, MavenProjectProblem.ProblemType.REPOSITORY_BLOCKED, true));
+        } else {
+          collector.add(MavenProjectProblem.createProblem(path, message, MavenProjectProblem.ProblemType.REPOSITORY, true));
+        }
+      }
       else {
         myConsoleWrapper.error("Maven server structure problem", each);
-        collector.add(MavenProjectProblem.createStructureProblem(path, each.getMessage(), true));
+        collector.add(MavenProjectProblem.createStructureProblem(path, getRootMessage(each), true));
       }
     }
     for (ModelProblem problem : modelProblems) {
@@ -1251,6 +1271,14 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @NotNull
+  private static String getRootMessage(Throwable each) throws RemoteException {
+    String baseMessage = each.getMessage() != null ? each.getMessage() : "";
+    Throwable rootCause = ExceptionUtils.getRootCause(each);
+    String rootMessage = rootCause != null ? rootCause.getMessage() : "";
+    return StringUtils.isNotEmpty(rootMessage) ? rootMessage : baseMessage;
+  }
+
+  @NotNull
   @Override
   public MavenArtifact resolve(@NotNull MavenArtifactInfo info,
                                @NotNull List<MavenRemoteRepository> remoteRepositories,
@@ -1279,10 +1307,10 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         }
       });
       return mavenArtifacts[0];
-    } catch (Exception e){
+    }
+    catch (Exception e) {
       throw new RuntimeException(ExceptionUtilRt.getThrowableText(e, "com.intellij"));
     }
-
   }
 
   @NotNull
@@ -1567,7 +1595,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   public void reset(MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      if(myCurrentIndicator!=null) {
+      if (myCurrentIndicator != null) {
         UnicastRemoteObject.unexportObject(myCurrentIndicator, false);
       }
       myCurrentIndicator = null;

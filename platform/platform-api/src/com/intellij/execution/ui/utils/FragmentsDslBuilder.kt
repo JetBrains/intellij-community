@@ -6,6 +6,7 @@ import com.intellij.execution.ui.NestedGroupFragment
 import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.execution.ui.TagButton
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.ui.ComponentValidator
@@ -149,6 +150,8 @@ class Fragment<Settings : FragmentedSettings, Component : JComponent>(
 
   var validation: ((Settings, Component) -> ValidationInfo?)? = null
 
+  var onToggle: (Boolean) -> Unit = {}
+
   @Nls
   var hint: String? = null
 
@@ -194,6 +197,11 @@ class Fragment<Settings : FragmentedSettings, Component : JComponent>(
       }
 
       override fun isTag(): Boolean = component is TagButton
+
+      override fun toggle(selected: Boolean, e: AnActionEvent?) {
+        onToggle(selected)
+        super.toggle(selected, e)
+      }
     }.also {
       it.isRemovable = isRemovable
       it.setHint(hint)

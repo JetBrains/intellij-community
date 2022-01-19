@@ -328,6 +328,14 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
+  private fun showBuildIssueNode(key: String, buildIssue: BuildIssue) = doIfImportInProcess {
+    hasErrors = true
+    hasUnresolved = true
+    startTask(mySyncId, key)
+    mySyncView.onEvent(mySyncId, BuildIssueEventImpl(key, buildIssue, MessageEvent.Kind.ERROR))
+  }
+
+  @Synchronized
   private fun startTask(parentId: Any, @NlsSafe taskName: String) = doIfImportInProcess {
     debugLog("Maven sync: start $taskName")
     if (myStartedSet.add(parentId to taskName)) {
@@ -479,8 +487,12 @@ class MavenSyncConsole(private val myProject: Project) {
       showError(keyPrefix, dependency)
     }
 
-    override fun showBuildIssue(dependency: String,  quickFix: BuildIssueQuickFix) {
+    override fun showBuildIssue(dependency: String, quickFix: BuildIssueQuickFix) {
       showBuildIssue(keyPrefix, dependency, quickFix)
+    }
+
+    override fun showBuildIssue(dependency: String, buildIssue: BuildIssue) {
+      showBuildIssueNode(keyPrefix, buildIssue)
     }
   }
 
@@ -493,6 +505,7 @@ class MavenSyncConsole(private val myProject: Project) {
 interface ArtifactSyncListener {
   fun showError(dependency: String)
   fun showBuildIssue(dependency: String,  quickFix: BuildIssueQuickFix)
+  fun showBuildIssue(dependency: String,  buildIssue: BuildIssue)
   fun downloadStarted(dependency: String)
   fun downloadCompleted(dependency: String)
   fun downloadFailed(dependency: String, error: String, stackTrace: String?)

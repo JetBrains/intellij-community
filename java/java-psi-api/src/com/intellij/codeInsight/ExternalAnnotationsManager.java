@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
@@ -136,4 +136,11 @@ public abstract class ExternalAnnotationsManager {
   public abstract @Nullable List<PsiFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner listOwner);
 
   public static class CanceledConfigurationException extends RuntimeException {}
+
+  /**
+   * @param owner element to add annotation
+   * @return {@code true} if external annotations are already configured for this element and no user interaction is required,
+   *         {@code false} otherwise
+   */
+  public abstract boolean hasConfiguredAnnotationRoot(@NotNull PsiModifierListOwner owner);
 }

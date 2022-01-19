@@ -274,8 +274,19 @@ public abstract class MetaAnnotationUtil {
   private static List<PsiClass> getResolvedClassesInAnnotationsList(PsiModifierListOwner owner) {
     PsiModifierList modifierList = owner.getModifierList();
     if (modifierList != null) {
-      return ContainerUtil.mapNotNull(modifierList.getApplicableAnnotations(), annotation -> annotation.resolveAnnotationType());
+      return ContainerUtil.mapNotNull(modifierList.getApplicableAnnotations(), MetaAnnotationUtil::resolveAnnotationType);
     }
     return Collections.emptyList();
+  }
+
+  // https://youtrack.jetbrains.com/issue/KTIJ-19454
+  private static @Nullable PsiClass resolveAnnotationType(@NotNull PsiAnnotation psiAnnotation) {
+    PsiClass psiClass = psiAnnotation.resolveAnnotationType();
+    if (psiClass != null) return psiClass;
+
+    String annotationQualifiedName = psiAnnotation.getQualifiedName();
+    if (annotationQualifiedName == null) return null;
+
+    return JavaPsiFacade.getInstance(psiAnnotation.getProject()).findClass(annotationQualifiedName, psiAnnotation.getResolveScope());
   }
 }

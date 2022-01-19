@@ -576,7 +576,7 @@
     <fileType name="PLAIN_TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextFileType" fieldName="INSTANCE" language="TEXT"
               extensions="txt"/>
     <fileType name="Native" implementationClass="com.intellij.openapi.fileTypes.NativeFileType" fieldName="INSTANCE"
-              extensions="chm;doc;docx;hlp;mdb;odt;pdf;ppt;pptx;vsd;xls;xlsx"/>
+              extensions="doc;docx;hlp;mdb;odt;pdf;ppt;pptx;vsd;xls;xlsx"/>
     <fileType name="UNKNOWN" implementationClass="com.intellij.openapi.fileTypes.UnknownFileType" fieldName="INSTANCE"/>
     <fileType name="AUTO_DETECTED" implementationClass="com.intellij.openapi.fileTypes.ex.DetectedByContentFileType" fieldName="INSTANCE"/>
 
@@ -866,6 +866,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <editorNotificationProvider implementation="com.intellij.ide.FileChangedNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserEditorNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.ide.CommandLineWaitingManager$MyNotification"/>
+    <editorNotificationProvider implementation="com.intellij.ide.impl.UntrustedProjectNotificationProvider"/>
 
     <getDataRule key="copyProvider" implementationClass="com.intellij.ide.impl.dataRules.CopyProviderRule"/>
     <getDataRule key="cutProvider" implementationClass="com.intellij.ide.impl.dataRules.CutProviderRule"/>
@@ -1028,6 +1029,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.SystemTroubleInfoCollector"/>
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.DisplayTroubleInfoCollector"/>
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.PluginTroubleInfoCollector"/>
+    <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.ProjectTroubleInfoCollector"/>
 
     <!-- experiments -->
     <experimentalFeature id="wsl.legacy.distribution" percentOfUsers="0">
@@ -1210,7 +1212,6 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService" headlessImplementation=""/>
     <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService$MyActivity" order="last"/>
 
-    <postStartupActivity implementation="com.intellij.ide.bookmarks.BookmarkManager$MyStartupActivity"/>
     <notificationGroup id="System Clipboard" displayType="BALLOON"/>
     <notificationGroup id="Project Startup Tasks Messages" displayType="NONE"/>
     <notificationGroup id="scrolling-capabilities-debug" displayType="NONE"/>
@@ -1279,7 +1280,6 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <editorFactoryListener implementation="com.intellij.codeInsight.editorActions.ReaderModeEditorFactoryListener"/>
     <readerModeMatcher implementation="com.intellij.diff.actions.DiffReaderModeMatcher"/>
     <startupActivity implementation="com.intellij.ide.plugins.LanguagePluginDetectionStartupActivity"/>
-    <experimentalFeature id="language.detect.notification" percentOfUsers="0"/>
     <notificationGroup id="Language Plugins Notifications" displayType="BALLOON"/>
     <applicationService serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowToolbarProvider"/>
     <startupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowToolbarActivity"/>
@@ -1359,5 +1359,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <listener class="com.intellij.ide.plugins.CreateAllServicesAndExtensionsActivity" topic="com.intellij.ide.AppLifecycleListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener" topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
+    <listener class="com.intellij.ide.impl.UntrustedProjectNotificationProvider$TrustedListener" topic="com.intellij.ide.impl.TrustStateListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
   </applicationListeners>
 </idea-plugin>

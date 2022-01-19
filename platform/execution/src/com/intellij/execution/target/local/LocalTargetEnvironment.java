@@ -157,6 +157,7 @@ public class LocalTargetEnvironment extends TargetEnvironment implements TargetE
         generalCommandLine.withWorkDirectory(workingDirectory);
       }
       generalCommandLine.withEnvironment(commandLine.getEnvironmentVariables());
+      generalCommandLine.setRedirectErrorStream(commandLine.isRedirectErrorStream());
       return generalCommandLine;
     }
     catch (ExecutionException e) {

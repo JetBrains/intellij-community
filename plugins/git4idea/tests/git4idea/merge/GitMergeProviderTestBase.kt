@@ -85,9 +85,16 @@ abstract class GitMergeProviderTestBase : GitMergeProviderTestCase() {
     `invoke conflicting operation`("A", "B")
 
     `assert all revisions loaded`("A", "B")
-    `assert revision GOOD, path BAD `(Side.ORIGINAL)
-    `assert revision GOOD, path BAD `(Side.LAST)
-    `assert revision GOOD, path GOOD`(Side.CURRENT)
+    if (gitUsingOrtMergeAlg()) {
+      `assert revision GOOD, path GOOD`(Side.ORIGINAL)
+      `assert revision GOOD, path BAD `(Side.LAST)
+      `assert revision GOOD, path GOOD`(Side.CURRENT)
+    }
+    else {
+      `assert revision GOOD, path BAD `(Side.ORIGINAL)
+      `assert revision GOOD, path BAD `(Side.LAST)
+      `assert revision GOOD, path GOOD`(Side.CURRENT)
+    }
   }
 
   fun `test deleted vs rename`() {
@@ -97,8 +104,15 @@ abstract class GitMergeProviderTestBase : GitMergeProviderTestCase() {
     `invoke conflicting operation`("A", "B")
 
     `assert all revisions loaded`("A", "B")
-    `assert revision GOOD, path BAD `(Side.ORIGINAL)
-    `assert revision GOOD, path GOOD`(Side.LAST)
-    `assert revision GOOD, path BAD `(Side.CURRENT)
+    if (gitUsingOrtMergeAlg()) {
+      `assert revision GOOD, path GOOD`(Side.ORIGINAL)
+      `assert revision GOOD, path GOOD`(Side.LAST)
+      `assert revision GOOD, path BAD `(Side.CURRENT)
+    }
+    else {
+      `assert revision GOOD, path BAD `(Side.ORIGINAL)
+      `assert revision GOOD, path GOOD`(Side.LAST)
+      `assert revision GOOD, path BAD `(Side.CURRENT)
+    }
   }
 }

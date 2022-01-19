@@ -261,7 +261,7 @@ public class AllIcons {
   }
 
   public static final class Debugger {
-    /** 16x16 */ public static final @NotNull Icon AddToWatch = load("debugger/addToWatch.svg", -6351347499396602123L, 2);
+    /** 16x16 */ public static final @NotNull Icon AddToWatch = load("debugger/addToWatch.svg", -1326715062232610899L, 2);
     /** 16x16 */ public static final @NotNull Icon AttachToProcess = load("debugger/attachToProcess.svg", -2177634035436873583L, 2);
     /** 16x16 */ public static final @NotNull Icon ClassLevelWatch = load("debugger/classLevelWatch.svg", -5890180211475556116L, 2);
     /** 16x16 */ public static final @NotNull Icon Console = load("debugger/console.svg", -5803233488332261187L, 2);
@@ -596,7 +596,10 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon FatalErrorRead = load("ide/fatalError-read.svg", 5216761098405937782L, 2);
     /** 16x16 */ public static final @NotNull Icon FatalError = load("ide/fatalError.svg", -6879921752749057624L, 2);
     /** 32x32 */ public static final @NotNull Icon FeedbackRating = load("ide/feedbackRating.svg", 2590524086249803175L, 2);
+    /** 32x32 */ public static final @NotNull Icon FeedbackRatingFocused = load("ide/feedbackRatingFocused.svg", 4181468262878586585L, 2);
+    /** 32x32 */ public static final @NotNull Icon FeedbackRatingFocusedOn = load("ide/feedbackRatingFocusedOn.svg", -8634619171846806517L, 2);
     /** 32x32 */ public static final @NotNull Icon FeedbackRatingOn = load("ide/feedbackRatingOn.svg", 2937973430800616286L, 0);
+    /** 32x32 */ public static final @NotNull Icon FeedbackRatingOnFocused = load("ide/feedbackRatingOnFocused.svg", -8163818592602831220L, 0);
     /** 16x16 */ public static final @NotNull Icon Gift = load("ide/gift.svg", -3269559537649493037L, 2);
     /** 16x16 */ public static final @NotNull Icon HectorOff = load("ide/hectorOff.svg", 2667401865142309246L, 2);
     /** 16x16 */ public static final @NotNull Icon HectorOn = load("ide/hectorOn.svg", 4559603987444558516L, 2);
@@ -844,6 +847,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon TabPin = load("nodes/tabPin.svg", -8793940827139014762L, 0);
     /** 16x16 */ public static final @NotNull Icon Tag = load("nodes/tag.svg", 5038430764463416373L, 0);
     /** 16x16 */ public static final @NotNull Icon Target = load("nodes/target.svg", -8244754026045641436L, 0);
+    /** 16x16 */ public static final @NotNull Icon Template = load("nodes/template.svg", -6619910186185350799L, 0);
     /** 16x16 */ public static final @NotNull Icon Test = load("nodes/test.svg", 7408102464483734600L, 0);
     /** 16x16 */ public static final @NotNull Icon TestGroup = load("nodes/testGroup.svg", -5932419956093628155L, 0);
     /** 16x16 */ public static final @NotNull Icon TestIgnored = load("nodes/testIgnored.svg", -8342046680974698856L, 0);
@@ -860,6 +864,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon WarningMark = load("nodes/warningMark.svg", 4627665105315340846L, 2);
     /** 16x16 */ public static final @NotNull Icon WebFolder = load("nodes/webFolder.svg", 2222154280104242723L, 0);
     /** 16x16 */ public static final @NotNull Icon Weblistener = load("nodes/weblistener.svg", -7166837522849889039L, 0);
+    /** 16x16 */ public static final @NotNull Icon Word = load("nodes/word.svg", -3528636325865459503L, 0);
     /** 16x16 */ public static final @NotNull Icon WriteAccess = load("nodes/write-access.svg", 5767645715036234832L, 0);
   }
 

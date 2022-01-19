@@ -8,6 +8,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import training.learn.exceptons.InvalidSdkException
 import training.learn.exceptons.NoSdkException
+import training.util.OnboardingFeedbackData
 import java.io.File
 import java.io.FileFilter
 import java.nio.file.Path
@@ -25,6 +26,9 @@ interface LangSupport {
     get() = "Learning"
   val langCourseFeedback: String?
     get() = null
+
+  /** The onboarding leson can set this variable to non-null value to invoke feedback dialog and include corresponding data */
+  var onboardingFeedbackData: OnboardingFeedbackData?
 
   /** Relative path inside plugin resources */
   val projectResourcePath: String

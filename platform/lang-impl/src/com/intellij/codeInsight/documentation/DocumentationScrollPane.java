@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -20,6 +19,7 @@ import java.util.Map;
 
 import static com.intellij.codeInsight.documentation.DocumentationComponent.MAX_DEFAULT;
 import static com.intellij.codeInsight.documentation.DocumentationComponent.MIN_DEFAULT;
+import static com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled;
 import static com.intellij.lang.documentation.ide.ui.UiKt.FORCED_WIDTH;
 
 @Internal
@@ -33,7 +33,7 @@ public final class DocumentationScrollPane extends JBScrollPane {
 
   @Override
   public Dimension getPreferredSize() {
-    if (!Registry.is("documentation.v2")) {
+    if (!isDocumentationV2Enabled()) {
       return super.getPreferredSize();
     }
     Integer forcedWidth = UIUtil.getClientProperty(this, FORCED_WIDTH);

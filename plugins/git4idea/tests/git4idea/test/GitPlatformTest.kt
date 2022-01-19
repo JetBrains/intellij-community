@@ -29,10 +29,7 @@ import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.commands.GitHandler
-import git4idea.config.GitExecutableManager
-import git4idea.config.GitSaveChangesPolicy
-import git4idea.config.GitVcsApplicationSettings
-import git4idea.config.GitVcsSettings
+import git4idea.config.*
 import git4idea.log.GitLogProvider
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -246,6 +243,13 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
   protected fun `assert commit dialog was shown`() {
     assertTrue("Commit dialog was not shown", vcsHelper.commitDialogWasShown())
+  }
+
+  /**
+   * There are small differences between 'recursive' (old) and 'ort' (new) merge algorithms.
+   */
+  protected fun gitUsingOrtMergeAlg(): Boolean {
+    return vcs.version.isLaterOrEqual(GitVersion(2, 34, 0, 0))
   }
 
   protected fun assertNoChanges() {

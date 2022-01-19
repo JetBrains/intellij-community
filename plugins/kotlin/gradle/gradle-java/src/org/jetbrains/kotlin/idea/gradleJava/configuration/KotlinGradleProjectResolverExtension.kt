@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.gradleJava.inspections.getDependencyModules
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.kotlin.idea.statistics.KotlinIDEGradleActionsFUSCollector
+import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.idea.util.PsiPrecedences
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import org.jetbrains.plugins.gradle.model.ExternalProjectDependency
@@ -253,9 +254,9 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         .singleOrNull()
 
     private fun DataNode<out ModuleData>.getDependencies(ideProject: DataNode<ProjectData>): Collection<DataNode<out ModuleData>> {
-        val cache = kotlinGradleProjectDataOrFail.dependenciesCache
+        val cache = kotlinGradleProjectDataOrNull?.dependenciesCache ?: dependencyCacheFallback
         if (cache.containsKey(ideProject)) {
-            return cache[ideProject]!!
+            return cache.getValue(ideProject)
         }
         val outputToSourceSet = ideProject.getUserData(GradleProjectResolver.MODULES_OUTPUTS)
         val sourceSetByName = ideProject.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS) ?: return emptySet()
@@ -465,5 +466,10 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
             moduleDependencyData.isProductionOnTestDependency = targetModule.sourceSetName == "test"
             ideModule.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData)
         }
+
+        private var DataNode<out ModuleData>.dependencyCacheFallback by NotNullableCopyableDataNodeUserDataProperty(
+            Key.create<MutableMap<DataNode<ProjectData>, Collection<DataNode<out ModuleData>>>>("MODULE_DEPENDENCIES_CACHE"),
+            hashMapOf()
+        )
     }
 }

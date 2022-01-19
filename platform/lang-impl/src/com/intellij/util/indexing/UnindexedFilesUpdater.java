@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -56,7 +55,6 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.getModuleImmediateValues;
@@ -98,25 +96,30 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     myStartSuspended = startSuspended;
     myIndexingReason = indexingReason;
     myPusher = PushedFilePropertiesUpdater.getInstance(myProject);
-    if (predefinedIndexableFilesIterators == null) {
+    myPredefinedIndexableFilesIterators = predefinedIndexableFilesIterators;
+
+    if (isFullIndexUpdate()) {
       myProject.putUserData(CONTENT_SCANNED, null);
     }
 
     synchronized (ourLastRunningTaskLock) {
       UnindexedFilesUpdater runningTask = myProject.getUserData(RUNNING_TASK);
-      //two tasks with non-null myPredefinedIndexableFilesIterators should be just run one after other
-      if (runningTask == null || predefinedIndexableFilesIterators == null) {
+      //two tasks with limited checks should be just run one after other
+      if (runningTask == null || isFullIndexUpdate()) {
         myProject.putUserData(RUNNING_TASK, this);
 
-        if (runningTask != null) { // => predefinedIndexableFilesIterators == null
-          // In case  of unlimited check followed by a limited change cancelling first and making unlimited check anew results
-          // in endless restart of unlimited checks on Windows with empty Maven cache.
-          // So only in case the second one is unlimited check the first one will be cancelled.
+        if (runningTask != null) { // => isFullIndexUpdate() == null
+          // A case of a full check followed by a limited change cancelling first one and making a full check anew results
+          // in endless restart of full checks on Windows with empty Maven cache.
+          // So only in case the second one is a full check the first one will be cancelled.
           DumbService.getInstance(project).cancelTask(runningTask);
         }
       }
     }
-    myPredefinedIndexableFilesIterators = predefinedIndexableFilesIterators;
+  }
+
+  private boolean isFullIndexUpdate() {
+    return myPredefinedIndexableFilesIterators == null;
   }
 
   @Override
@@ -178,13 +181,18 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
 
     snapshot = PerformanceWatcher.takeSnapshot();
+
+    if (isFullIndexUpdate()) {
+      myIndex.clearIndicesIfNecessary();
+    }
+
     Instant scanFilesStart = Instant.now();
     List<IndexableFilesIterator> orderedProviders;
     Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles;
     try {
       orderedProviders = getOrderedProviders();
       providerToFiles = collectIndexableFilesConcurrently(myProject, indicator, orderedProviders, projectIndexingHistory);
-      if (myPredefinedIndexableFilesIterators == null) {
+      if (isFullIndexUpdate()) {
         myProject.putUserData(CONTENT_SCANNED, true);
       }
     } finally {
@@ -192,8 +200,6 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     }
     String scanningCompletedMessage = getLogScanningCompletedStageMessage(projectIndexingHistory);
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage(scanningCompletedMessage));
-
-    myIndex.clearIndicesIfNecessary();
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       // full VFS refresh makes sense only after it's loaded, i.e. after scanning files to index is finished
@@ -518,9 +524,9 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   }
 
   protected @NotNull ProjectIndexingHistoryImpl performScanningAndIndexing(@NotNull ProgressIndicator indicator) {
-    ProjectIndexingHistoryImpl projectIndexingHistory = new ProjectIndexingHistoryImpl(myProject, myIndexingReason);
+    ProjectIndexingHistoryImpl projectIndexingHistory = new ProjectIndexingHistoryImpl(myProject, myIndexingReason, isFullIndexUpdate());
     myIndex.loadIndexes();
-    myIndex.filesUpdateStarted(myProject, myPredefinedIndexableFilesIterators == null);
+    myIndex.filesUpdateStarted(myProject, isFullIndexUpdate());
     IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
     ((GistManagerImpl)GistManager.getInstance()).startMergingDependentCacheInvalidations();
     try {

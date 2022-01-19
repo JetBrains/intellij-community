@@ -51,6 +51,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     result.addTab("Labels", createLabelsPanel())
     result.addTab("Text Fields", createTextFields())
     result.addTab("Comments", JScrollPane(createCommentsPanel()))
+    result.addTab("Text MaxLine", createTextMaxLinePanel())
     result.addTab("Groups", JScrollPane(createGroupsPanel()))
     result.addTab("Segmented Button", createSegmentedButton())
     result.addTab("Visible/Enabled", createVisibleEnabled())
@@ -277,6 +278,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
             entities["Row 2"] = row("Row 2") {
               entities["textField2"] = textField()
                 .text("textField2")
+                .comment("Comment with a <a>link</a>")
             }
 
             entities["Row 3"] = row("Row 3") {
@@ -427,6 +429,31 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     applyType()
     return result
   }
+
+  fun createTextMaxLinePanel(): JPanel {
+    val longLine = (1..4).joinToString { "A very long string with a <a>link</a>" }
+    val string = "$longLine<br>$longLine"
+    return panel {
+      row("comment(string):") {
+        comment(string)
+      }
+      row("comment(string, DEFAULT_COMMENT_WIDTH):") {
+        comment(string, maxLineLength = DEFAULT_COMMENT_WIDTH)
+      }
+      row("comment(string, MAX_LINE_LENGTH_NO_WRAP):") {
+        comment(string, maxLineLength = MAX_LINE_LENGTH_NO_WRAP)
+      }
+      row("text(string):") {
+        text(string)
+      }
+      row("text(string, DEFAULT_COMMENT_WIDTH):") {
+        text(string, maxLineLength = DEFAULT_COMMENT_WIDTH)
+      }
+      row("text(string, MAX_LINE_LENGTH_NO_WRAP):") {
+        text(string, maxLineLength = MAX_LINE_LENGTH_NO_WRAP)
+      }
+    }
+  }
 }
 
 @Suppress("DialogTitleCapitalization")
@@ -468,7 +495,7 @@ private class CommentPanelBuilder(val type: CommentComponentType) {
             customComponent("Component1 extra width")
               .comment("Component1 comment")
             customComponent("Component2 extra width")
-              .comment("<html>Component2 comment<br>second line")
+              .comment("Component2 comment<br>second line")
             customComponent("One More Long Component3")
               .comment("Component3 comment")
             button("button") { }

@@ -179,7 +179,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
     return (notification, event) -> {
       if (!isApplicable(event, INSTALL)) return;
 
-      PluginsAdvertiser.installAndEnable(project, pluginIds, true, () -> notification.expire());
+      PluginsAdvertiser.installAndEnable(project, pluginIds, true, true, () -> notification.expire());
     };
   }
 

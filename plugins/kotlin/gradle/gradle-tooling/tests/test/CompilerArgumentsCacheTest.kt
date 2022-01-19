@@ -121,6 +121,23 @@ class CompilerArgumentsCacheTest {
         )
     }
 
+    @Test
+    fun `test detach with fallback strategy`() {
+        val firstMapper = mapper.branchOffDetachable(isFallbackStrategy = true)
+        val arguments = generateCompilerArgumentsList(Random.nextInt(10..30))
+        val cachedArguments1 = arguments.map { firstMapper.cacheArgument(it) }
+        val firstDetachedAware = firstMapper.detachCacheAware()
+        val secondMapper = mapper.branchOffDetachable(isFallbackStrategy = true)
+        val cachedArguments2 = arguments.map { secondMapper.cacheArgument(it) }
+        val secondDetachableAware = secondMapper.detachCacheAware()
+        KtUsefulTestCase.assertContainsOrdered(cachedArguments1, cachedArguments2)
+        KtUsefulTestCase.assertContainsOrdered(
+            firstDetachedAware.distributeCacheIds().toList(),
+            secondDetachableAware.distributeCacheIds().toList()
+        )
+        KtUsefulTestCase.assertEmpty(mapper.distributeCacheIds().toList())
+    }
+
     companion object {
         private val alphabet = listOf('a'..'z', 'A'..'Z').map { it.joinToString(separator = "") }.joinToString(separator = "")
 

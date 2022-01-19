@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.testing.common
 
+import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.idea.gradleJava.run.AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -9,4 +11,5 @@ import org.jetbrains.kotlin.platform.isCommon
 
 class KotlinMultiplatformCommonTestMethodGradleConfigurationProducer : AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer() {
     override fun isApplicable(module: Module, platform: TargetPlatform) = platform.isCommon()
+    override fun findExistingConfiguration(context: ConfigurationContext): RunnerAndConfigurationSettings? = null
 }

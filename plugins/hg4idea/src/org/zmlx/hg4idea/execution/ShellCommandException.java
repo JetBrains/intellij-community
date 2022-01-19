@@ -13,18 +13,18 @@
 package org.zmlx.hg4idea.execution;
 
 public class ShellCommandException extends Exception {
-  ShellCommandException() {
+  public ShellCommandException() {
   }
 
-  ShellCommandException(String message) {
+  public ShellCommandException(String message) {
     super(message);
   }
 
-  ShellCommandException(String message, Throwable cause) {
+  public ShellCommandException(String message, Throwable cause) {
     super(message, cause);
   }
 
-  ShellCommandException(Throwable cause) {
+  public ShellCommandException(Throwable cause) {
     super(cause);
   }
 }

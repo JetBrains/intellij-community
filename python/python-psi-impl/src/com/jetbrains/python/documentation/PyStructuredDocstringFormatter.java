@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
@@ -59,7 +60,7 @@ public final class PyStructuredDocstringFormatter {
       output = ApplicationUtil.runWithCheckCanceled(
         () -> PythonRuntimeService.getInstance().formatDocstring(module, format, preparedDocstring),
         // It's supposed to be run inside a non-blocking read action and, thus, have an associated progress indicator
-        ProgressManager.getInstance().getProgressIndicator()
+        EmptyProgressIndicator.notNullize(ProgressManager.getInstance().getProgressIndicator())
       );
     }
     catch (ProcessCanceledException e) {

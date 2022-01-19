@@ -3,6 +3,7 @@ package com.intellij.ide.startup.impl
 
 import com.intellij.diagnostic.*
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginClassLoader
@@ -248,14 +249,17 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         if (edtActivity.get() == null) {
           edtActivity.set(StartUpMeasurer.startActivity("project post-startup edt activities"))
         }
-        counter.incrementAndGet()
-        dumbService.unsafeRunWhenSmart {
-          val duration = runActivityAndMeasureDuration(extension, pluginDescriptor.pluginId)
-          if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
-            reportUiFreeze(uiFreezeWarned)
-          }
+        // DumbService.unsafeRunWhenSmart throws an assertion in LightEdit mode, see LightEditDumbService.unsafeRunWhenSmart
+        if (!LightEdit.owns(project)) {
+          counter.incrementAndGet()
+          dumbService.unsafeRunWhenSmart {
+            val duration = runActivityAndMeasureDuration(extension, pluginDescriptor.pluginId)
+            if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
+              reportUiFreeze(uiFreezeWarned)
+            }
 
-          dumbUnawarePostActivitiesPassed(edtActivity, counter.decrementAndGet())
+            dumbUnawarePostActivitiesPassed(edtActivity, counter.decrementAndGet())
+          }
         }
       }
       dumbUnawarePostActivitiesPassed(edtActivity, counter.get())
@@ -312,28 +316,34 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
   private fun runPostStartupActivitiesRegisteredDynamically() {
     runActivities(postStartupActivities, activityName = "project post-startup")
     postStartupActivitiesPassed = DUMB_AWARE_PASSED
-    DumbService.getInstance(project).unsafeRunWhenSmart(object : Runnable {
-      override fun run() {
-        synchronized(lock) {
-          if (postStartupActivities.isEmpty()) {
+    if (LightEdit.owns(project)) {
+      postStartupActivitiesPassed = ALL_PASSED
+      allActivitiesPassed.complete(null)
+    }
+    else {
+      DumbService.getInstance(project).unsafeRunWhenSmart(object : Runnable {
+        override fun run() {
+          synchronized(lock) {
+            if (postStartupActivities.isEmpty()) {
+              postStartupActivitiesPassed = ALL_PASSED
+              allActivitiesPassed.complete(null)
+              return
+            }
+          }
+
+          runActivities(postStartupActivities)
+          val dumbService = DumbService.getInstance(project)
+          if (dumbService.isDumb) {
+            // return here later to process newly submitted activities (if any) and set postStartupActivitiesPassed
+            dumbService.unsafeRunWhenSmart(this)
+          }
+          else {
             postStartupActivitiesPassed = ALL_PASSED
             allActivitiesPassed.complete(null)
-            return
           }
         }
-
-        runActivities(postStartupActivities)
-        val dumbService = DumbService.getInstance(project)
-        if (dumbService.isDumb) {
-          // return here later to process newly submitted activities (if any) and set postStartupActivitiesPassed
-          dumbService.unsafeRunWhenSmart(this)
-        }
-        else {
-          postStartupActivitiesPassed = ALL_PASSED
-          allActivitiesPassed.complete(null)
-        }
-      }
-    })
+      })
+    }
   }
 
   private fun runActivities(activities: Deque<Runnable>, activityName: String? = null, indicator: ProgressIndicator? = null) {
@@ -420,7 +430,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     if (DumbService.isDumbAware(action)) {
       runAfterOpened { ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.disposed, action) }
     }
-    else {
+    else if (!LightEdit.owns(project)) {
       runAfterOpened { DumbService.getInstance(project).unsafeRunWhenSmart(action) }
     }
   }

@@ -12,5 +12,5 @@ fun usage() {
     "".ext<caret>
 }
 
-// EXIST: { lookupString: "extension", tailText: "() for String in TestImpl (<root>)", itemText: "extension" }
-// EXIST: { lookupString: "extension", tailText: "() for String in Test.Companion (<root>)", itemText: "extension" }
+// EXIST: { lookupString: "extension", tailText: "() for String in TestImpl (<root>)", itemText: "extension", icon: "nodes/function.svg"}
+// EXIST: { lookupString: "extension", tailText: "() for String in Test.Companion (<root>)", itemText: "extension", icon: "nodes/function.svg"}

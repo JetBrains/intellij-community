@@ -11,17 +11,20 @@ import com.intellij.lang.documentation.ide.impl.DocumentationToolWindowManager
 import com.intellij.lang.documentation.ide.ui.DocumentationToolWindowUI
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget
+import com.intellij.lang.documentation.psi.psiDocumentationTarget
 import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTargets
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.wm.impl.content.BaseLabel
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import javax.swing.JComponent
 
 @JvmField
@@ -52,7 +55,17 @@ internal fun registerBackForwardActions(component: JComponent) {
   ), component)
 }
 
-internal fun documentationTargets(dc: DataContext): List<DocumentationTarget> {
+@VisibleForTesting
+fun documentationTargets(dc: DataContext): List<DocumentationTarget> {
+  try {
+    return documentationTargetsInner(dc)
+  }
+  catch (ignored: IndexNotReadyException) {
+    return emptyList()
+  }
+}
+
+private fun documentationTargetsInner(dc: DataContext): List<DocumentationTarget> {
   val contextTargets = dc.getData(DOCUMENTATION_TARGETS)
   if (contextTargets != null) {
     return contextTargets
@@ -75,7 +88,7 @@ internal fun documentationTargets(dc: DataContext): List<DocumentationTarget> {
   }
   val targetElement = dc.getData(CommonDataKeys.PSI_ELEMENT)
   if (targetElement != null) {
-    return listOf(PsiElementDocumentationTarget(project, targetElement))
+    return listOf(psiDocumentationTarget(targetElement) ?: PsiElementDocumentationTarget(project, targetElement))
   }
   return emptyList()
 }

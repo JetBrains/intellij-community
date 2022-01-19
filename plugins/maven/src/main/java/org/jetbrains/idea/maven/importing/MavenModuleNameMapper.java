@@ -27,6 +27,10 @@ public final class MavenModuleNameMapper {
                        dedicatedModuleDir);
   }
 
+  public static String resolveModuleName(MavenProject project) {
+    return new NameItem(project, null).getResultName();
+  }
+
   private static void resolveModuleNames(Collection<MavenProject> projects,
                                          Map<MavenProject, Module> mavenProjectToModule,
                                          Map<MavenProject, String> mavenProjectToModuleName) {

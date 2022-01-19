@@ -58,7 +58,7 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
     myEmptyText = new TextComponentEmptyText(this) {
       @Override
       protected boolean isStatusVisible() {
-        Object function = getClientProperty("StatusVisibleFunction");
+        Object function = getClientProperty(STATUS_VISIBLE_FUNCTION);
         if (function instanceof BooleanFunction) {
           //noinspection unchecked
           return ((BooleanFunction<JTextComponent>)function).fun(JBTextField.this);

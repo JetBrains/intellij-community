@@ -98,7 +98,7 @@ public class YAMLScalarListImpl extends YAMLBlockScalarImpl implements YAMLScala
     int eolOffsetInParent = scalarEol.getStartOffsetInParent();
 
     int startContent = eolOffsetInParent + indent + 1;
-    if (startContent >= commonPrefixLength) {
+    if (startContent > commonPrefixLength) {
       // a very strange situation
       return super.updateText(text);
     }

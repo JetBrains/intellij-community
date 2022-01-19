@@ -7,7 +7,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
@@ -23,7 +22,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBMenu;
 import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.mac.screenmenu.Menu;
-import com.intellij.ui.mac.screenmenu.MenuItem;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SingleAlarm;
@@ -56,41 +54,7 @@ public final class ActionMenu extends JBMenu {
   private StubItem myStubItem;  // A PATCH!!! Do not remove this code, otherwise you will lose all keyboard navigation in JMenuBar.
   private final boolean myUseDarkIcons;
   private Disposable myDisposable;
-  private final Menu myScreenMenuPeer;
-
-  public ActionMenu(@Nullable DataContext context,
-                    @NotNull String place,
-                    @NotNull ActionGroup group,
-                    @NotNull PresentationFactory presentationFactory,
-                    boolean enableMnemonics,
-                    boolean useDarkIcons,
-                    Menu screenMenuPeer) {
-    myContext = context;
-    myPlace = place;
-    myGroup = ActionRef.fromAction(group);
-    myPresentationFactory = presentationFactory;
-    myPresentation = myPresentationFactory.getPresentation(group);
-    myMnemonicEnabled = enableMnemonics;
-    myUseDarkIcons = useDarkIcons;
-    myScreenMenuPeer = screenMenuPeer;
-    if (myScreenMenuPeer != null) {
-      myScreenMenuPeer.setActionDelegate(()-> {
-        // Called on AppKit when menu opening
-        myScreenMenuPeer.addItem(new MenuItem(), false/*already on AppKit thread*/); // stub item
-        ApplicationManager.getApplication().invokeLater(()->fillMenu());
-      });
-
-      // update from presentation
-      myScreenMenuPeer.setEnabled(myPresentation.isEnabled());
-    }
-
-    updateUI();
-
-    init();
-
-    // Triggering initialization of private field "popupMenu" from JMenu with our own JBPopupMenu
-    getPopupMenu();
-  }
+  private final @Nullable Menu myScreenMenuPeer;
 
   public ActionMenu(@Nullable DataContext context,
                     @NotNull String place,
@@ -98,7 +62,28 @@ public final class ActionMenu extends JBMenu {
                     @NotNull PresentationFactory presentationFactory,
                     boolean enableMnemonics,
                     boolean useDarkIcons) {
-    this(context, place, group, presentationFactory, enableMnemonics, useDarkIcons, null);
+    myContext = context;
+    myPlace = place;
+    myGroup = ActionRef.fromAction(group);
+    myPresentationFactory = presentationFactory;
+    myPresentation = myPresentationFactory.getPresentation(group);
+    myMnemonicEnabled = enableMnemonics;
+    myUseDarkIcons = useDarkIcons;
+
+    if (Menu.isJbScreenMenuEnabled() && ActionPlaces.MAIN_MENU.equals(myPlace)) {
+      myScreenMenuPeer = new Menu(myPresentation.getText(enableMnemonics));
+      myScreenMenuPeer.setOnOpen(() -> fillMenu(), this);
+      myScreenMenuPeer.setOnClose(() -> setSelected(false), this);
+      myScreenMenuPeer.listenPresentationChanges(myPresentation);
+    } else
+      myScreenMenuPeer = null;
+
+    updateUI();
+
+    init();
+
+    // Triggering initialization of private field "popupMenu" from JMenu with our own JBPopupMenu
+    getPopupMenu();
   }
 
   @Override
@@ -141,11 +126,7 @@ public final class ActionMenu extends JBMenu {
     }
   }
 
-  public Menu getScreenMenuPeer() {
-    if (!Menu.isEnabled() || !ActionPlaces.MAIN_MENU.equals(myPlace))
-      return null;
-    return myScreenMenuPeer;
-  }
+  public @Nullable Menu getScreenMenuPeer() { return myScreenMenuPeer; }
 
   private void init() {
     boolean macSystemMenu = SystemInfo.isMacSystemMenu && isMainMenuPlace();
@@ -212,6 +193,7 @@ public final class ActionMenu extends JBMenu {
         else {
           setDisabledIcon(icon == null ? null : IconLoader.getDisabledIcon(icon));
         }
+        if (myScreenMenuPeer != null) myScreenMenuPeer.setIcon(icon);
       }
     }
   }

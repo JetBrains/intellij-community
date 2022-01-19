@@ -148,6 +148,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     private fun processDestructuringDeclaration(expr: KtDestructuringDeclaration) {
         processExpression(expr.initializer)
+        for (entry in expr.entries) {
+            addInstruction(FlushVariableInstruction(factory.varFactory.createVariableValue(KtVariableDescriptor(entry))))
+        }
     }
 
     data class KotlinCatchClauseDescriptor(val clause : KtCatchClause): CatchClauseDescriptor {

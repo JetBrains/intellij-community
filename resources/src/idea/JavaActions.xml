@@ -374,11 +374,8 @@
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="RenameElement"/>
     </group>
 
-    <group id="MigrationMenu1" class="com.intellij.refactoring.migration.MigrationGroup" popup="false">
-    </group>
-
-    <group id="MigrationMenu" popup="true">
-      <reference ref="MigrationMenu1"/>
+    <group id="MigrationMenu" popup="true" searchable="false">
+      <group id="MigrationMenu1" class="com.intellij.refactoring.migration.MigrationGroup" popup="false" searchable="false"/>
       <separator/>
       <action id="NewMigration" class="com.intellij.refactoring.actions.MigrateAction"/>
     </group>

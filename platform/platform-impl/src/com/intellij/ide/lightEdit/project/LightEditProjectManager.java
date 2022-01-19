@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit.project;
 
+import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +54,11 @@ public final class LightEditProjectManager {
 
   private static void fireProjectOpened(@NotNull Project project) {
     Application app = ApplicationManager.getApplication();
-    Runnable fireRunnable = () -> app.getMessageBus().syncPublisher(ProjectManager.TOPIC).projectOpened(project);
+    Runnable fireRunnable = () -> {
+      // similar to com.intellij.openapi.project.impl.ProjectManagerExImplKt.openProject
+      app.getMessageBus().syncPublisher(ProjectManager.TOPIC).projectOpened(project);
+      ((StartupManagerImpl)StartupManager.getInstance(project)).projectOpened(null);
+    };
     if (app.isDispatchThread() || app.isUnitTestMode()) {
       fireRunnable.run();
     }

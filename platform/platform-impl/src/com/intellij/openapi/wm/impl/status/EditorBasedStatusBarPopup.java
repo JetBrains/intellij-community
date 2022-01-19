@@ -51,7 +51,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
   private final JPanel myComponent;
   private final boolean myWriteableFileRequired;
-  private boolean actionEnabled;
+  protected volatile boolean actionEnabled;
   private final Alarm update;
   // store editor here to avoid expensive and EDT-only getSelectedEditor() retrievals
   private volatile Reference<Editor> myEditor = new WeakReference<>(null);
@@ -210,6 +210,10 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     return myComponent;
   }
 
+  protected Alarm getUpdateAlarm() {
+    return update;
+  }
+
   protected boolean isEmpty() {
     Boolean result = ObjectUtils.doIfCast(myComponent, TextPanel.WithIconAndArrows.class,
                                           textPanel -> StringUtil.isEmpty(textPanel.getText()) && !textPanel.hasIcon());
@@ -350,6 +354,10 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     @Nls
     public String getText() {
       return text;
+    }
+
+    public boolean isActionEnabled() {
+      return actionEnabled;
     }
 
     public @Tooltip String getToolTip() {

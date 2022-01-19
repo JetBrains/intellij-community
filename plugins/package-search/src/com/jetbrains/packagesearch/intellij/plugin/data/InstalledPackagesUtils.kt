@@ -4,6 +4,7 @@ import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.DigestUtil
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
@@ -23,6 +24,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -36,7 +38,6 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.encoding.decodeStructure
 import kotlinx.serialization.encoding.encodeStructure
 import kotlinx.serialization.json.Json
-import org.apache.commons.codec.binary.Hex
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.absolutePathString
@@ -50,6 +51,7 @@ internal suspend fun installedPackages(
     val usageInfoByDependency = mutableMapOf<UnifiedDependency, MutableList<DependencyUsageInfo>>()
     for (module in dependenciesByModule.keys) {
         dependenciesByModule[module]?.forEach { dependency ->
+            yield()
             // Skip packages we don't know the version for
             val rawVersion = dependency.coordinates.version
 
@@ -82,7 +84,7 @@ internal suspend fun installedPackages(
             unifiedDependency = dependency,
             usageInfo = usageInfo,
             remoteInfo = remoteInfo,
-            normalizer = project.packageVersionNormalizer
+            normalizer = packageVersionNormalizer
         )
     }.filterNotNull().sortedBy { it.sortKey }
 }
@@ -104,11 +106,11 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
     val cacheFile = Paths.get(cacheDirectory.absolutePathString(), "$fileHashCode.json").toFile()
 
     if (!cacheFile.exists()) withContext(Dispatchers.IO) {
-        cacheFile.createNewFile()
+        cacheFile.apply { parentFile.mkdirs() }.createNewFile()
     }
 
     val sha256Deferred: Deferred<String> = async(Dispatchers.IO) {
-        Hex.encodeHexString(DigestUtil.sha256().digest(buildFile.contentsToByteArray()))
+        StringUtil.toHexString(DigestUtil.sha256().digest(buildFile.contentsToByteArray()))
     }
 
     val cache = withContext(Dispatchers.IO) {

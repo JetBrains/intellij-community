@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.search.GlobalSearchScope
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 
 enum class CoroutineDebuggerMode {
@@ -40,7 +39,7 @@ internal object CoroutineAgentConnector {
 
     private fun findKotlinxCoroutinesCoreJar(project: Project, configuration: RunConfigurationBase<*>?): KotlinxCoroutinesSearchResult {
         val matchResult = project
-            .getJarVirtualFiles(project, configuration, kotlinxCoroutinesPackageName)
+            .getJarVirtualFiles(configuration, kotlinxCoroutinesPackageName)
             .asSequence()
             .mapNotNull { kotlinxCoroutinesCoreJarRegex.matchEntire(it) }
             .firstOrNull()
@@ -55,21 +54,19 @@ internal object CoroutineAgentConnector {
     }
 
     private fun Project.getJarVirtualFiles(
-        project: Project,
         configuration: RunConfigurationBase<*>?,
         packageName: String
     ): List<String> {
+        if (configuration !is ModuleBasedConfiguration<*, *>) return emptyList()
+
+        val scope = configuration.configurationModule.module?.getModuleRuntimeScope(
+            configuration is JavaTestConfigurationWithDiscoverySupport
+        ) ?: return emptyList()
+
         val kotlinxCoroutinesPackage = JavaPsiFacade.getInstance(this)
             .findPackage(packageName)
             ?: return emptyList()
-        var scope = GlobalSearchScope.allScope(project)
-        if (configuration is ModuleBasedConfiguration<*, *>) {
-            configuration.configurationModule.module?.let {
-                scope = it.getModuleRuntimeScope(
-                    configuration is JavaTestConfigurationWithDiscoverySupport
-                )
-            }
-        }
+
         return kotlinxCoroutinesPackage.getDirectories(scope).mapNotNull {
             it.virtualFile.path.getParentJarPath()
         }

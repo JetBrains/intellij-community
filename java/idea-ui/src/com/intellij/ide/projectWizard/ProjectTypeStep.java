@@ -501,6 +501,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
         myContext.setProjectBuilder(builder);
       }
       if (step == null) return false;
+      myContext.setProjectBuilder(builder);
       step.updateStep();
       myCustomSteps.put(card, step);
       myOptionsPanel.add(step.getComponent(), card);

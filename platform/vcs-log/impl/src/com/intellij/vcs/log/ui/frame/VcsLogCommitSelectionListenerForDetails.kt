@@ -198,15 +198,19 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
     }
 
     private fun branchesChanged() {
-      requestData(requestedCommits)
+      requestData(requestedCommits, fromCache = true)
     }
 
-    fun requestData(commits: List<CommitId>) {
+    fun requestData(commits: List<CommitId>, fromCache: Boolean = false) {
       val result = mutableMapOf<CommitId, List<String>>()
       for (commit in commits) {
-        val branches = getter.requestContainingBranches(commit.root, commit.hash)
-        if (branches != null)
-          result[commit] = branches
+        val branches = if (fromCache) {
+          getter.getContainingBranchesFromCache(commit.root, commit.hash)
+        }
+        else {
+          getter.requestContainingBranches(commit.root, commit.hash)
+        }
+        if (branches != null) result[commit] = branches
       }
 
       if (result.isNotEmpty()) {

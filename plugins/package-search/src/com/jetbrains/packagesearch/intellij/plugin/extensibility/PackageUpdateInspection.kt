@@ -23,7 +23,7 @@ import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageSearchDepen
 import com.jetbrains.packagesearch.intellij.plugin.tryDoing
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageIdentifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.computeActionsFor
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.computeActionsAsync
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.NotifyingOperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
@@ -125,7 +125,7 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
                 val targetModules = TargetModules.One(moduleModel)
                 val allKnownRepositories = service.allInstalledKnownRepositoriesFlow.value
 
-                val packageOperations = project.lifecycleScope.computeActionsFor(
+                val packageOperations = project.lifecycleScope.computeActionsAsync(
                     packageModel = packageUpdateInfo.packageModel,
                     targetModules = targetModules,
                     knownRepositoriesInTargetModules = allKnownRepositories.filterOnlyThoseUsedIn(targetModules),

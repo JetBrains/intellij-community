@@ -6,9 +6,11 @@ import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.openapi.application.WriteAction;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
+import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
 import org.junit.Assert;
 
 import static org.jetbrains.idea.maven.importing.configurers.MavenAnnotationProcessorConfigurer.MAVEN_DEFAULT_ANNOTATION_PROFILE;
+import static org.jetbrains.idea.maven.importing.configurers.MavenAnnotationProcessorConfigurer.PROFILE_PREFIX;
 
 public class MavenAnnotationProcessorConfigurerTest extends MavenImportingTestCase {
 
@@ -35,5 +37,41 @@ public class MavenAnnotationProcessorConfigurerTest extends MavenImportingTestCa
     profile = compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE);
     Assert.assertNotNull(profile);
     Assert.assertFalse(profile.isEnabled());
+  }
+
+  public void testNotRemoveEmptyUserProfile() {
+    CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+
+    WriteAction.runAndWait(() -> {
+      ProcessorConfigProfile moduleProfile = new ProcessorConfigProfileImpl("test-profile");
+      moduleProfile.setEnabled(true);
+      compilerConfiguration.addModuleProcessorProfile(moduleProfile);
+    });
+    Assert.assertNotNull(compilerConfiguration.findModuleProcessorProfile("test-profile"));
+
+    importProject("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>");
+
+    Assert.assertNotNull(compilerConfiguration.findModuleProcessorProfile("test-profile"));
+  }
+
+  public void testRemoveEmptyInnerProfile() {
+    CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+    final String profileName = PROFILE_PREFIX + " test-profile";
+    WriteAction.runAndWait(() -> {
+      ProcessorConfigProfile moduleProfile = new ProcessorConfigProfileImpl(profileName);
+      moduleProfile.setEnabled(true);
+      compilerConfiguration.addModuleProcessorProfile(moduleProfile);
+    });
+    Assert.assertNotNull(compilerConfiguration.findModuleProcessorProfile(profileName));
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<packaging>pom</packaging>" +
+                  "<version>1</version>");
+
+    Assert.assertNull(compilerConfiguration.findModuleProcessorProfile(profileName));
   }
 }

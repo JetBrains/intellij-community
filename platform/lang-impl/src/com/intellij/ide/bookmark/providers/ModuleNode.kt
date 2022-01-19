@@ -15,6 +15,8 @@ internal class ModuleNode(project: Project, bookmark: ModuleBookmark) : Bookmark
   override fun update(presentation: PresentationData) {
     presentation.setIcon(wrapIcon(if (value.isGroup) Nodes.ModuleGroup else Nodes.Module))
     presentation.tooltip = bookmarkDescription
-    presentation.addText(value.name, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+    value.name
+      .also { presentation.presentableText = it } // configure speed search
+      .also { presentation.addText(it, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES) }
   }
 }

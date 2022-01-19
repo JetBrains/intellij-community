@@ -624,7 +624,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
       visibleRows = Registry.intValue("ide.preferred.scrollable.viewport.visible.rows", 10);
     }
 
-    boolean addExtraSpace = Registry.is("ide.preferred.scrollable.viewport.extra.space", true);
+    boolean addExtraSpace = (modelRows != visibleRows) && Registry.is("ide.preferred.scrollable.viewport.extra.space", true);
     Insets insets = getInnerInsets(tree);
     size.height = insets != null ? insets.top + insets.bottom : 0;
     if (0 < fixedHeight) {

@@ -93,7 +93,7 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
       }
 
       if (value != null) {
-        return new PsiReference[]{new MyPropertyReference(value, element, bundle, getFallbackBundleName())};
+        return new PsiReference[]{new MyPropertyReference(getFinalKeyValue(value), element, bundle, getFallbackBundleName())};
       }
     }
     return PsiReference.EMPTY_ARRAY;
@@ -102,6 +102,11 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
   @Nullable
   protected String getFallbackBundleName() {
     return null;
+  }
+
+  @NotNull
+  protected String getFinalKeyValue(String keyValue) {
+    return keyValue;
   }
 
   private PsiReference[] getTagReferences(XmlTag element) {

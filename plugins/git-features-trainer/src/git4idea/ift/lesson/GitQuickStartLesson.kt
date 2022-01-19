@@ -47,6 +47,7 @@ import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.sampleRestoreNotification
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil.findComponentWithTimeout
+import training.util.LessonEndInfo
 import training.util.toNullableString
 import java.awt.Point
 import java.awt.Rectangle
@@ -334,7 +335,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     GitProjectUtil.createRemoteProject("origin", project)
   }
 
-  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+  override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
     LessonUtil.restorePopupPosition(project, SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupSearchEverywhereLocation)
     backupSearchEverywhereLocation = null
   }

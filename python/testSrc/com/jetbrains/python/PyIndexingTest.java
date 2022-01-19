@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.openapi.module.Module;
@@ -13,6 +13,7 @@ import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.stubs.StubUpdatingIndex;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
@@ -82,6 +83,7 @@ public class PyIndexingTest extends PyTestCase {
         try {
           // mock sdk doesn't fire events
           FileBasedIndex.getInstance().requestRebuild(TodoIndex.NAME);
+          PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
           FileBasedIndex.getInstance().ensureUpToDate(TodoIndex.NAME, myFixture.getProject(), null);
           final List<VirtualFile> updatedIndexFiles = getTodoFiles(myFixture.getProject());
           // but if it is added as a content root - it should be in the TodoIndex

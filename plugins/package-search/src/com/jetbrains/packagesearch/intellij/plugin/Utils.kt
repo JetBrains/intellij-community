@@ -23,9 +23,26 @@ inline fun <reified T, R> T.tryDoing(a: () -> R?): R? = try {
 
 internal fun looksLikeGradleVariable(version: PackageVersion) = version.versionName.startsWith("$")
 
+@NlsSafe
+internal fun @receiver:NlsSafe String.normalizeWhitespace(replaceWith: Char): String {
+    if (replaceWith == ' ') return normalizeWhitespace()
+
+    return map { if (it.isWhitespace()) replaceWith else it }
+        .toCharArray()
+        .concatToString()
+}
+
+@NlsSafe
+internal fun @receiver:NlsSafe String.normalizeNewlines(replaceWith: Char = ' '): String =
+    map { if (it.isNewline()) replaceWith else it }
+        .toCharArray()
+        .concatToString()
+
+private fun Char.isNewline() = this == '\n' || this == '\r'
+
 /**
  * Delegates to [org.apache.commons.lang3.StringUtils#normalizeSpace], but annotates the result
  * as safe for Nls, as the changes are not impacting i18n
  */
 @NlsSafe
-internal fun String?.normalizeSpace() = StringUtils.normalizeSpace(this)
+internal fun @receiver:NlsSafe String?.normalizeWhitespace() = StringUtils.normalizeSpace(this)

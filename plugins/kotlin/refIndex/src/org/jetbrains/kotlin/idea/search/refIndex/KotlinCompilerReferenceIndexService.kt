@@ -17,6 +17,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.module.Module
@@ -36,6 +38,7 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
 import com.intellij.util.containers.generateRecursiveSequence
+import com.intellij.util.indexing.StorageException
 import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.backwardRefs.CompilerRef
@@ -58,6 +61,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import java.io.IOException
 import java.util.*
 import java.util.concurrent.atomic.LongAdder
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -200,13 +204,33 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         withDirtyScopeUnderWriteLock { upToDateCheckFinished(modules) }
     }
 
-    fun scopeWithCodeReferences(element: PsiElement): GlobalSearchScope? = element.takeIf(this::isServiceEnabledFor)?.let {
-        CachedValuesManager.getCachedValue(element) {
-            CachedValueProvider.Result.create(
-                buildScopeWithReferences(referentFiles(element), element),
-                PsiModificationTracker.MODIFICATION_COUNT,
-                this,
-            )
+    private fun <T> runActionSafe(actionName: String, action: () -> T): T? = try {
+        action()
+    } catch (e: Throwable) {
+        if (e is ControlFlowException) throw e
+
+        try {
+            LOG.error("an exception during $actionName calculation", e)
+        } finally {
+            if (e is IOException || e is StorageException) {
+                withWriteLock { closeStorage() }
+            }
+        }
+
+        null
+    }
+
+    fun scopeWithCodeReferences(element: PsiElement): GlobalSearchScope? {
+        if (!isServiceEnabledFor(element)) return null
+
+        return runActionSafe("scope with code references") {
+            CachedValuesManager.getCachedValue(element) {
+                CachedValueProvider.Result.create(
+                    buildScopeWithReferences(referentFiles(element), element),
+                    PsiModificationTracker.MODIFICATION_COUNT,
+                    this,
+                )
+            }
         }
     }
 
@@ -307,7 +331,9 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         .orEmpty()
 
     private fun getDirectJavaSubtypesOf(compilerRefProvider: (NameEnumerator) -> CompilerRef?): Sequence<FqNameWrapper> =
-        compilerReferenceServiceBase?.getDirectInheritorsNames(compilerRefProvider)
+        compilerReferenceServiceBase?.getDirectInheritorsNames(
+            CompilerReferenceServiceBase.CompilerRefProvider { compilerRefProvider(it) }
+        )
             ?.asSequence()
             ?.mapNotNull(FqNameWrapper.Companion::createFromSearchId)
             .orEmpty()
@@ -403,6 +429,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         fun getInstanceIfEnable(project: Project): KotlinCompilerReferenceIndexService? = if (isEnabled) get(project) else null
         const val SETTINGS_ID: String = "kotlin.compiler.ref.index"
         val isEnabled: Boolean get() = AdvancedSettings.getBoolean(SETTINGS_ID)
+        private val LOG = logger<KotlinCompilerReferenceIndexService>()
     }
 
     class InitializationActivity : StartupActivity.DumbAware {

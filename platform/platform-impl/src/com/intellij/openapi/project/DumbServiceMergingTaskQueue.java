@@ -4,20 +4,21 @@ package com.intellij.openapi.project;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DumbServiceMergingTaskQueue {
   private static final Logger LOG = Logger.getInstance(DumbServiceMergingTaskQueue.class);
+  private static final ExtensionPointName<DumbServiceInitializationCondition> DUMB_SERVICE_INITIALIZATION_CONDITION_EXTENSION_POINT_NAME =
+    ExtensionPointName.create("com.intellij.dumbServiceInitializationCondition");
 
   private final Object myLock = new Object();
   //does not include a running task
@@ -25,6 +26,8 @@ public class DumbServiceMergingTaskQueue {
 
   //includes running tasks too
   private final Map<DumbModeTask, ProgressIndicatorBase> myProgresses = new HashMap<>();
+
+  private final AtomicBoolean myFirstExecution = new AtomicBoolean(true);
 
   /**
    * Disposes tasks, cancel underlying progress indicators, clears tasks queue
@@ -159,7 +162,7 @@ public class DumbServiceMergingTaskQueue {
     }
   }
 
-  static class QueuedDumbModeTask implements AutoCloseable {
+  class QueuedDumbModeTask implements AutoCloseable {
     private final DumbModeTask myTask;
     private final ProgressIndicatorEx myIndicator;
 
@@ -194,7 +197,7 @@ public class DumbServiceMergingTaskQueue {
         customIndicator.checkCanceled();
       }
 
-      delayIndexingInTestsIfNecessary();
+      waitRequiredTasksToStartIndexing();
       myTask.performInDumbMode(customIndicator);
     }
 
@@ -208,11 +211,11 @@ public class DumbServiceMergingTaskQueue {
     }
   }
 
-  private static void delayIndexingInTestsIfNecessary() {
-    int delay = SystemProperties.getIntProperty("intellij.indexing.tests.indexing.delay.seconds", -1);
-    long start = System.nanoTime();
-    if (delay != -1) {
-      ProgressIndicatorUtils.awaitWithCheckCanceled(() -> System.nanoTime() - start > TimeUnit.SECONDS.toNanos(delay));
+  private void waitRequiredTasksToStartIndexing() {
+    if (myFirstExecution.compareAndSet(true, false)) {
+      for (DumbServiceInitializationCondition condition : DUMB_SERVICE_INITIALIZATION_CONDITION_EXTENSION_POINT_NAME.getExtensionList()) {
+        condition.waitForInitialization();
+      }
     }
   }
 }
