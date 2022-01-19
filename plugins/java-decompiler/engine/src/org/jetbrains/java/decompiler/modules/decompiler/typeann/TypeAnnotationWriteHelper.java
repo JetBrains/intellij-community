@@ -41,14 +41,17 @@ public class TypeAnnotationWriteHelper {
   }
 
   public void writeTo(@NotNull StringBuilder sb) {
-    String text = annotation.getAnnotationExpr().toJava(0, BytecodeMappingTracer.DUMMY).toString();
-    sb.append(text);
+    sb.append(this);
     sb.append(' ');
   }
 
   public void writeTo(@NotNull TextBuffer sb) {
-    String text = annotation.getAnnotationExpr().toJava(0, BytecodeMappingTracer.DUMMY).toString();
-    sb.append(text);
+    sb.append(toString());
     sb.append(' ');
+  }
+
+  @Override
+  public String toString() {
+    return annotation.getAnnotationExpr().toJava(0, BytecodeMappingTracer.DUMMY).toString();
   }
 }
