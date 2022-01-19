@@ -457,7 +457,7 @@ public class WSLDistribution {
   /**
    * @return environment map of the default user in wsl
    */
-  public @NotNull Map<String, String> getEnvironment() {
+  public @Nullable Map<String, String> getEnvironment() {
     try {
       ProcessOutput processOutput =
         executeOnWsl(Collections.singletonList("env"),
@@ -467,23 +467,24 @@ public class WSLDistribution {
                        .setExecuteCommandInInteractiveShell(true),
                      5000,
                      null);
-      Map<String, String> result = new HashMap<>();
-      for (String string : processOutput.getStdoutLines()) {
-        int assignIndex = string.indexOf('=');
-        if (assignIndex == -1) {
-          result.put(string, "");
+      if (processOutput.checkSuccess(LOG)) {
+        Map<String, String> result = new HashMap<>();
+        for (String string : processOutput.getStdoutLines()) {
+          int assignIndex = string.indexOf('=');
+          if (assignIndex == -1) {
+            result.put(string, "");
+          }
+          else {
+            result.put(string.substring(0, assignIndex), string.substring(assignIndex + 1));
+          }
         }
-        else {
-          result.put(string.substring(0, assignIndex), string.substring(assignIndex + 1));
-        }
+        return result;
       }
-      return result;
     }
     catch (ExecutionException e) {
       LOG.warn(e);
     }
-
-    return Collections.emptyMap();
+    return null;
   }
 
   /**

@@ -39,7 +39,6 @@ import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.WslMavenDistribution
 import org.jetbrains.idea.maven.wizards.MavenProjectBuilder
-import org.jetbrains.idea.maven.server.wsl.BuildIssueWslJdk
 import java.io.File
 import java.util.function.Function
 import java.util.function.Supplier
@@ -50,7 +49,7 @@ internal object MavenWslUtil : MavenUtil() {
   fun getWslJdk(project: Project, name: String): Sdk {
     val projectWslDistr = tryGetWslDistribution(project) ?: throw IllegalStateException("project $project is not WSL based");
     if (name == MavenRunnerSettings.USE_JAVA_HOME) {
-      val jdk = projectWslDistr.environment["JAVA_HOME"]?.let { projectWslDistr.getWindowsPath(it) }?.let {
+      val jdk =MavenWslCache.getInstance().wslEnv(projectWslDistr)?.get("JAVA_HOME")?.let { projectWslDistr.getWindowsPath(it) }?.let {
         JavaSdk.getInstance().createJdk("", it)
       }
       if (jdk != null && jdk.sdkType is JavaSdkType) {
@@ -73,7 +72,7 @@ internal object MavenWslUtil : MavenUtil() {
 
   @JvmStatic
   fun getPropertiesFromMavenOpts(distribution: WSLDistribution): Map<String, String> {
-    return parseMavenProperties(distribution.getEnvironmentVariable("MAVEN_OPTS"))
+    return parseMavenProperties(MavenWslCache.getInstance().wslEnv(distribution)?.get("MAVEN_OPTS"))
   }
 
   @JvmStatic
@@ -117,7 +116,7 @@ internal object MavenWslUtil : MavenUtil() {
 
   @JvmStatic
   fun WSLDistribution.resolveM2Dir(): File {
-    val userHome = MavenWslCache.getInstance().wslEnv(this)["HOME"]
+    val userHome = MavenWslCache.getInstance().wslEnv(this)?.get("HOME")
     if (userHome.isNullOrBlank()) {
       throw CannotStartServerException(SyncBundle.message("maven.sync.wsl.userhome.cannot.resolve"))
     }
@@ -144,7 +143,7 @@ internal object MavenWslUtil : MavenUtil() {
         return null
       }
     }
-    val m2home = this.environment[ENV_M2_HOME]
+    val m2home = MavenWslCache.getInstance().wslEnv(this)?.get(ENV_M2_HOME)
     if (m2home != null && !isEmptyOrSpaces(m2home)) {
       val homeFromEnv = this.getWindowsPath(m2home)?.let(::File)
       if (isValidMavenHome(homeFromEnv)) {
@@ -212,7 +211,7 @@ internal object MavenWslUtil : MavenUtil() {
 
   @JvmStatic
   fun getJdkPath(wslDistribution: WSLDistribution): String? {
-    return wslDistribution.getEnvironmentVariable("JDK_HOME")
+    return MavenWslCache.getInstance().wslEnv(wslDistribution)?.get("JDK_HOME")
   }
 
   @JvmStatic
@@ -411,5 +410,35 @@ internal object MavenWslUtil : MavenUtil() {
       }
     }
     ProgressManager.getInstance().run(jdkTask)
+  }
+}
+
+
+class MavenWslCache {
+
+  private val myEnvCache: MutableMap<String, Map<String, String>> = HashMap()
+
+  fun wslEnv(distribution: WSLDistribution): Map<String, String>? {
+    var result = myEnvCache[distribution.msId];
+    if (result != null) return result
+    for(i in 1..2){
+      result = distribution.environment
+      if(result!=null) {
+        myEnvCache[distribution.msId] = result
+        return result
+      }
+    }
+    return null;
+  }
+
+  fun clearCache() {
+    myEnvCache.clear()
+  }
+
+  companion object {
+    @JvmStatic
+    fun getInstance(): MavenWslCache {
+      return ApplicationManager.getApplication().getService(MavenWslCache::class.java)
+    }
   }
 }
