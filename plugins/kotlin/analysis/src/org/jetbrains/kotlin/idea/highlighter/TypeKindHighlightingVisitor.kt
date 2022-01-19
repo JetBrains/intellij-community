@@ -6,22 +6,14 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors.*
-import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
-import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
-import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.FakeCallableDescriptorForObject
-import org.jetbrains.kotlin.types.DefinitelyNotNullType
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingContext: BindingContext) :
     AfterAnalysisHighlightingVisitor(holder, bindingContext) {
@@ -33,13 +25,10 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
             return
         }
 
-        val intersectionType = expression.getParentOfType<KtIntersectionType>(strict = true)
-        val resolvedType = bindingContext[BindingContext.TYPE, intersectionType?.parent as? KtTypeReference]
-        if (intersectionType != null && resolvedType is DefinitelyNotNullType) {
-            // Do nothing: this name is a component of a definitely non-nullable type
-            // that will be highlighted as a whole in `visitIntersectionType`
-            return
-        }
+        // Prevent custom highlighting for a name that is a part of a definitely non-nullable type
+        // (the only kind of intersection types that is currently supported by the compiler).
+        // The type is highlighted as a whole in `visitIntersectionType`.
+        if (parent?.parent?.parent?.safeAs<KtIntersectionType>() != null) return
 
         if (!NameHighlighter.namesHighlightingEnabled) return
 
@@ -115,11 +104,8 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
     }
 
     override fun visitIntersectionType(type: KtIntersectionType) {
-        val parent = type.parent as? KtTypeReference
-        val kotlinType = bindingContext[BindingContext.TYPE, parent]
-        if (parent != null && kotlinType is DefinitelyNotNullType) {
-            highlightName(parent, TYPE_PARAMETER)
-        }
+        // Currently, the only kind of intersection types is definitely non-nullable type, so highlight it without further analysis
+        type.parent?.safeAs<KtTypeReference>()?.run { highlightName(this, TYPE_PARAMETER) }
         super.visitIntersectionType(type)
     }
 
