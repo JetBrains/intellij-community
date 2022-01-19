@@ -80,15 +80,22 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> extends Default
   public void fillCompletionVariants(@NotNull CompletionParameters parameters,
                                      @NotNull String prefix,
                                      @NotNull CompletionResultSet result) {
+    addCachedItems(parameters, prefix, result);
+    addNonCachedItems(parameters, prefix, result);
+  }
+
+  private void addCachedItems(@NotNull CompletionParameters parameters, @NotNull String prefix, @NotNull CompletionResultSet result) {
     Collection<T> items = getItems(prefix, true, parameters);
     addCompletionElements(result, this, items, -10000);
+  }
 
+  private void addNonCachedItems(@NotNull CompletionParameters parameters, @NotNull String prefix, @NotNull CompletionResultSet result) {
     final ProgressManager progressManager = ProgressManager.getInstance();
     ProgressIndicator mainIndicator = progressManager.getProgressIndicator();
     final ProgressIndicator indicator = mainIndicator != null ? new SensitiveProgressWrapper(mainIndicator) : new EmptyProgressIndicator();
-    Future<Collection<T>>
-      future =
-      ApplicationManager.getApplication().executeOnPooledThread(() -> progressManager.runProcess(() -> getItems(prefix, false, parameters), indicator));
+    Future<Collection<T>> future = ApplicationManager
+      .getApplication()
+      .executeOnPooledThread(() -> progressManager.runProcess(() -> getItems(prefix, false, parameters), indicator));
 
     while (true) {
       try {
@@ -108,10 +115,10 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> extends Default
     }
   }
 
-  private static <T> void addCompletionElements(final CompletionResultSet result,
-                                                final TextCompletionValueDescriptor<T> descriptor,
-                                                final Collection<? extends T> items,
-                                                final int index) {
+  protected static <T> void addCompletionElements(final CompletionResultSet result,
+                                                  final TextCompletionValueDescriptor<T> descriptor,
+                                                  final Collection<? extends T> items,
+                                                  final int index) {
     final AutoCompletionPolicy completionPolicy = ApplicationManager.getApplication().isUnitTestMode()
                                                   ? AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE
                                                   : AutoCompletionPolicy.NEVER_AUTOCOMPLETE;

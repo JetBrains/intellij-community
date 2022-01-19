@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.util.textCompletion.TextCompletionCache;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -15,6 +16,10 @@ public class TextFieldWithAutoCompletionWithBrowseButton
 
   public TextFieldWithAutoCompletionWithBrowseButton(Project project) {
     super(TextFieldWithAutoCompletion.create(project, Collections.emptyList(), false, null), null);
+  }
+
+  public TextFieldWithAutoCompletionWithBrowseButton(Project project, TextCompletionCache<String> cache, boolean prefixMatchesOnly) {
+    super(TextFieldWithAutoCompletionWithCache.create(cache, prefixMatchesOnly, project, null, false, null), null);
   }
 
   @Override
