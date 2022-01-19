@@ -15,7 +15,7 @@ class Fe10RustPerformanceTest : AbstractFE10ProjectBasedTests() {
         val profile = ProjectBasedTestPreferences(
             warmUpIterations = 5,
             iterations = 10,
-            checkForValidity = false,
+            checkForValidity = true,
         )
 
         test("Rust Plugin", RustProject.project, RustProject.actions, profile)

@@ -13,7 +13,7 @@ class FirE2ETest : AbstractFirProjectBasedTests() {
         val profile = ProjectBasedTestPreferences(
             warmUpIterations = 0,
             iterations = 1,
-            checkForValidity = false,
+            checkForValidity = true,
         )
 
         test("Rust Plugin", RustProject.project, RustProject.actions, profile)
