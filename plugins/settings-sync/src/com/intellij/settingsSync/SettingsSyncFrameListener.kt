@@ -13,7 +13,7 @@ class SettingsSyncFrameListener : FrameStateListener {
   private var scheduledFuture: ScheduledFuture<*>? = null
 
   override fun onFrameActivated() {
-    if (!isSettingsSyncEnabled()) {
+    if (!isSettingsSyncEnabledByKey()) {
       return
     }
 

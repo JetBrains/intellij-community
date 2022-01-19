@@ -19,7 +19,7 @@ internal val SETTINGS_CHANGED_TOPIC: Topic<SettingsChangeListener> = Topic(Setti
 
 private const val SETTINGS_SYNC_ENABLED_PROPERTY = "idea.settings.sync.enabled"
 
-internal fun isSettingsSyncEnabled() : Boolean =
+internal fun isSettingsSyncEnabledByKey() : Boolean =
   SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, false)
 
 internal class SettingsSyncMain : Disposable {

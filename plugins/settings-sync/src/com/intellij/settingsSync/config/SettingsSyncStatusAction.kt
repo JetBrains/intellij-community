@@ -7,7 +7,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.SettingsSyncSettings
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
-import com.intellij.settingsSync.isSettingsSyncEnabled
+import com.intellij.settingsSync.isSettingsSyncEnabledByKey
 
 class SettingsSyncStatusAction : AnAction(message("title.settings.sync")) {
   override fun actionPerformed(e: AnActionEvent) {
@@ -16,7 +16,7 @@ class SettingsSyncStatusAction : AnAction(message("title.settings.sync")) {
 
   override fun update(e: AnActionEvent) {
     val p = e.presentation
-    if (!isSettingsSyncEnabled()) {
+    if (!isSettingsSyncEnabledByKey()) {
       p.isEnabledAndVisible = false
       return
     }
