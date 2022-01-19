@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.structuralsearch.visitor
 
@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchReques
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.structuralsearch.*
+import org.jetbrains.kotlin.idea.structuralsearch.predicates.KotlinAlsoMatchValVarPredicate
 import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
@@ -1080,19 +1081,17 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
 
     override fun visitProperty(property: KtProperty) {
         val other = getTreeElementDepar<KtProperty>() ?: return
-
-        myMatchingVisitor.result = matchTypeReferenceWithDeclaration(property.typeReference, other)
+        val handler = getHandler(property.nameIdentifier!!)
+        myMatchingVisitor.result = (
+                property.isVar == other.isVar || (handler is SubstitutionHandler && handler.predicate is KotlinAlsoMatchValVarPredicate)
+                ) && matchTypeReferenceWithDeclaration(property.typeReference, other)
                 && myMatchingVisitor.match(property.modifierList, other.modifierList)
                 && matchTextOrVariable(property.nameIdentifier, other.nameIdentifier)
                 && myMatchingVisitor.match(property.docComment, other.docComment)
-                && myMatchingVisitor.matchOptionally(
-            property.delegateExpressionOrInitializer,
-            other.delegateExpressionOrInitializer
-        )
+                && myMatchingVisitor.matchOptionally(property.delegateExpressionOrInitializer, other.delegateExpressionOrInitializer)
                 && myMatchingVisitor.match(property.getter, other.getter)
                 && myMatchingVisitor.match(property.setter, other.setter)
                 && myMatchingVisitor.match(property.receiverTypeReference, other.receiverTypeReference)
-        val handler = getHandler(property.nameIdentifier!!)
 
         if (myMatchingVisitor.result && handler is SubstitutionHandler) {
             handler.handle(other.nameIdentifier, myMatchingVisitor.matchContext)

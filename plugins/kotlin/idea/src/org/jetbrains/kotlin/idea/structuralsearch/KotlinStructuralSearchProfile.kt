@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.structuralsearch
 
@@ -28,11 +28,11 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType
+import org.jetbrains.kotlin.idea.structuralsearch.filters.AlsoMatchValModifier
+import org.jetbrains.kotlin.idea.structuralsearch.filters.AlsoMatchVarModifier
 import org.jetbrains.kotlin.idea.structuralsearch.filters.OneStateFilter
-import org.jetbrains.kotlin.idea.structuralsearch.filters.ValOnlyFilter
-import org.jetbrains.kotlin.idea.structuralsearch.filters.VarOnlyFilter
+import org.jetbrains.kotlin.idea.structuralsearch.predicates.KotlinAlsoMatchValVarPredicate
 import org.jetbrains.kotlin.idea.structuralsearch.predicates.KotlinExprTypePredicate
-import org.jetbrains.kotlin.idea.structuralsearch.predicates.KotlinVarValOnlyPredicate
 import org.jetbrains.kotlin.idea.structuralsearch.visitor.KotlinCompilingVisitor
 import org.jetbrains.kotlin.idea.structuralsearch.visitor.KotlinMatchingVisitor
 import org.jetbrains.kotlin.idea.structuralsearch.visitor.KotlinRecursiveElementWalkingVisitor
@@ -205,8 +205,8 @@ class KotlinStructuralSearchProfile : StructuralSearchProfile() {
                 UIUtil.MAXIMUM_UNLIMITED -> isApplicableMaxCount(variableNode) || isApplicableMinMaxCount(variableNode)
                 UIUtil.TEXT_HIERARCHY -> isApplicableTextHierarchy(variableNode)
                 UIUtil.REFERENCE -> isApplicableReference(variableNode)
-                ValOnlyFilter.CONSTRAINT_NAME -> variableNode.parent is KtProperty && !(variableNode.parent as KtProperty).isVar
-                VarOnlyFilter.CONSTRAINT_NAME -> variableNode.parent is KtProperty && (variableNode.parent as KtProperty).isVar
+                AlsoMatchVarModifier.CONSTRAINT_NAME -> variableNode.parent is KtProperty && !(variableNode.parent as KtProperty).isVar
+                AlsoMatchValModifier.CONSTRAINT_NAME -> variableNode.parent is KtProperty && (variableNode.parent as KtProperty).isVar
                 else -> super.isApplicableConstraint(constraintName, variableNode, completePattern, target)
             }
 
@@ -331,10 +331,9 @@ class KotlinStructuralSearchProfile : StructuralSearchProfile() {
                 )
                 result.add(if (isInvertExprType) NotPredicate(predicate) else predicate)
             }
-            if (getAdditionalConstraint(VarOnlyFilter.CONSTRAINT_NAME) == OneStateFilter.ENABLED)
-                result.add(KotlinVarValOnlyPredicate(true))
-            else if (getAdditionalConstraint(ValOnlyFilter.CONSTRAINT_NAME) == OneStateFilter.ENABLED)
-                result.add(KotlinVarValOnlyPredicate(false))
+            if (getAdditionalConstraint(AlsoMatchValModifier.CONSTRAINT_NAME) == OneStateFilter.ENABLED ||
+                getAdditionalConstraint(AlsoMatchVarModifier.CONSTRAINT_NAME) == OneStateFilter.ENABLED
+            ) result.add(KotlinAlsoMatchValVarPredicate())
         }
         return result
     }
