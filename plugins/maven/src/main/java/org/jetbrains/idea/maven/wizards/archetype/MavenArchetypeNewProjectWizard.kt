@@ -15,24 +15,24 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.externalSystem.service.ui.completion.*
+import com.intellij.openapi.externalSystem.service.ui.completion.DefaultTextCompletionRenderer.Companion.append
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer.Cell
 import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesTable
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.ui.collectionModel
-import com.intellij.openapi.ui.naturalSorted
+import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes.*
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
-import com.intellij.ui.components.JBLabel
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil.putIfNotNull
 import com.intellij.util.io.systemIndependentPath
@@ -47,9 +47,6 @@ import org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder
 import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizard
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
-import com.intellij.openapi.externalSystem.service.ui.completion.DefaultTextCompletionRenderer.Companion.append
-import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer.Cell
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import java.awt.Component
 import javax.swing.*
 
@@ -131,7 +128,6 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
             .graphProperty(archetypeItemProperty)
             .horizontalAlign(HorizontalAlign.FILL)
             .resizableColumn()
-            .validationOnInput { validateArchetypeId() }
             .validationOnApply { validateArchetypeId() }
           button(MavenWizardBundle.message("maven.new.project.wizard.archetype.add.button")) {
             addArchetype()
@@ -142,7 +138,6 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           cell(archetypeVersionComboBox)
             .applyToComponent { bindSelectedItem(archetypeVersionProperty) }
             .graphProperty(archetypeVersionProperty)
-            .validationOnInput { validateArchetypeVersion() }
             .validationOnApply { validateArchetypeVersion() }
             .columns(10)
         }.topGap(TopGap.SMALL)
@@ -182,20 +177,28 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       val isEmptyGroupId = archetypeItem.groupId.isEmpty()
       val isEmptyArtifactId = archetypeItem.artifactId.isEmpty()
       if (isEmptyGroupId && isEmptyArtifactId) {
-        return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.error.empty"))
+        val message = MavenWizardBundle.message("maven.new.project.wizard.archetype.error.empty")
+        Messages.showErrorDialog(archetypeVersionComboBox, message)
+        return error(message)
       }
       if (isEmptyGroupId) {
-        return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.group.id.error.empty"))
+        val message = MavenWizardBundle.message("maven.new.project.wizard.archetype.group.id.error.empty")
+        Messages.showErrorDialog(archetypeVersionComboBox, message)
+        return error(message)
       }
       if (isEmptyArtifactId) {
-        return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.artifact.id.error.empty"))
+        val message = MavenWizardBundle.message("maven.new.project.wizard.archetype.artifact.id.error.empty")
+        Messages.showErrorDialog(archetypeVersionComboBox, message)
+        return error(message)
       }
       return null
     }
 
     fun ValidationInfoBuilder.validateArchetypeVersion(): ValidationInfo? {
       if (archetypeVersion.isEmpty()) {
-        return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.version.error.empty"))
+        val message = MavenWizardBundle.message("maven.new.project.wizard.archetype.version.error.empty")
+        Messages.showErrorDialog(archetypeVersionComboBox, message)
+        return error(message)
       }
       return null
     }
