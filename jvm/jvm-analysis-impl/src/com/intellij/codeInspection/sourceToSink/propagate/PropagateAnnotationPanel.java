@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sourceToSink.propagate;
 
 import com.intellij.analysis.JvmAnalysisBundle;
@@ -102,7 +102,7 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
     panel.add(toolbar, BorderLayout.NORTH);
     splitter.setSecondComponent(panel);
 
-    add(splitter);
+    add(splitter, BorderLayout.CENTER);
     addTreeActions(myTree, root);
   }
 
@@ -112,7 +112,7 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
   }
 
   private @NotNull JPanel createToolbar() {
-    JPanel panel = new JPanel(new GridBagLayout());
+    JPanel panel = new JPanel(new BorderLayout());
     String annotateText = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.toolwindow.annotate");
     JButton annotateButton = new JButton(annotateText);
     annotateButton.addActionListener(new ActionListener() {
@@ -123,7 +123,7 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
         if (toAnnotate != null) myCallback.accept(toAnnotate);
       }
     });
-    panel.add(annotateButton, new GridBagConstraints());
+    panel.add(annotateButton, BorderLayout.WEST);
     return panel;
   }
 

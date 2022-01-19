@@ -125,7 +125,7 @@ public final class ExternalDiffTool {
     if (!errorRequests.isEmpty()) {
       HtmlBuilder message = new HtmlBuilder()
         .appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(errorRequests, producer -> HtmlChunk.text(producer.getName())));
-      new Notification("Diff", DiffBundle.message("can.t.load.some.changes"), message.toString(), NotificationType.ERROR).notify(project);
+      new Notification("Diff Changes Loading Error", DiffBundle.message("can.t.load.some.changes"), message.toString(), NotificationType.ERROR).notify(project);
     }
 
     return requests;

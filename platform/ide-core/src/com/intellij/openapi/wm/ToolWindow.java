@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
@@ -77,21 +77,11 @@ public interface ToolWindow extends BusyObject {
   /**
    * @throws IllegalStateException if tool window isn't installed.
    */
-  @NotNull
-  ToolWindowAnchor getAnchor();
+  @NotNull ToolWindowAnchor getAnchor();
 
   boolean isVisibleOnLargeStripe();
 
-  void setVisibleOnLargeStripe(boolean visible);
-
-  void setOrderOnLargeStripe(int order);
-
-  int getOrderOnLargeStripe();
-
-  @NotNull
-  ToolWindowAnchor getLargeStripeAnchor();
-
-  void setLargeStripeAnchor(@NotNull ToolWindowAnchor anchor);
+  @NotNull ToolWindowAnchor getLargeStripeAnchor();
 
   /**
    * @throws IllegalStateException if tool window isn't installed.
@@ -125,8 +115,7 @@ public interface ToolWindow extends BusyObject {
   /**
    * @throws IllegalStateException if tool window isn't installed.
    */
-  @NotNull
-  ToolWindowType getType();
+  @NotNull ToolWindowType getType();
 
   /**
    * @throws IllegalStateException if tool window isn't installed.
@@ -136,8 +125,7 @@ public interface ToolWindow extends BusyObject {
   /**
    * @return Window icon. Returns {@code null} if window has no icon.
    */
-  @Nullable
-  Icon getIcon();
+  @Nullable Icon getIcon();
 
   /**
    * Sets new window icon.
@@ -183,8 +171,7 @@ public interface ToolWindow extends BusyObject {
 
   void setDefaultContentUiType(@NotNull ToolWindowContentUiType type);
 
-  @NotNull
-  ToolWindowContentUiType getContentUiType();
+  @NotNull ToolWindowContentUiType getContentUiType();
 
   void installWatcher(ContentManager contentManager);
 
@@ -193,14 +180,11 @@ public interface ToolWindow extends BusyObject {
    *
    * @return component which represents window content.
    */
-  @NotNull
-  JComponent getComponent();
+  @NotNull JComponent getComponent();
 
-  @NotNull
-  ContentManager getContentManager();
+  @NotNull ContentManager getContentManager();
 
-  @Nullable
-  ContentManager getContentManagerIfCreated();
+  @Nullable ContentManager getContentManagerIfCreated();
 
   void addContentManagerListener(@NotNull ContentManagerListener listener);
 
@@ -219,8 +203,7 @@ public interface ToolWindow extends BusyObject {
 
   void showContentPopup(@NotNull InputEvent inputEvent);
 
-  @NotNull
-  Disposable getDisposable();
+  @NotNull Disposable getDisposable();
 
   default void setHelpId(@NotNull @NonNls String helpId) {
   }

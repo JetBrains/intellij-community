@@ -46,7 +46,8 @@
     <!--Auto-link-->
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.autolink.UnlinkedProjectNotificationAware"/>
     <backgroundPostStartupActivity implementation="com.intellij.openapi.externalSystem.autolink.UnlinkedProjectStartupActivity"/>
-    <notificationGroup id="External System Auto-Link Notification Group" displayType="STICKY_BALLOON"/>
+    <notificationGroup id="External System Auto-Link Notification Group" displayType="STICKY_BALLOON"
+                       bundle="messages.ExternalSystemBundle" key="notification.group.external.system.autolink"/>
     <projectService serviceInterface="com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectSettings"
                     serviceImplementation="com.intellij.openapi.externalSystem.autolink.UnlinkedProjectSettings"/>
 

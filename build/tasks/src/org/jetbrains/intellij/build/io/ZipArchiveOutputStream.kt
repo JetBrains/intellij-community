@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 package org.jetbrains.intellij.build.io
 
@@ -414,6 +414,7 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
   }
 
   fun addDirsToIndex(dirNames: Collection<String>) {
+    assert(withOptimizedMetadataEnabled)
     for (dirName in dirNames) {
       val key = dirName.toByteArray(Charsets.UTF_8)
       indexWriter.add(IndexEntry(key = key, offset = -1, size = 0, keyHash = Xxh3.hash(key)))
@@ -448,7 +449,9 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
     // uncompressed size
     buffer.putInt(headerOffset + 24, size)
 
-    indexWriter.add(IndexEntry(key = normalName, offset = dataOffset, size = size, keyHash = Xxh3.hash(normalName)))
+    if (withOptimizedMetadataEnabled) {
+      indexWriter.add(IndexEntry(key = normalName, offset = dataOffset, size = size, keyHash = Xxh3.hash(normalName)))
+    }
 
     // file name length
     buffer.putShort(headerOffset + 28, (name.size and 0xffff).toShort())

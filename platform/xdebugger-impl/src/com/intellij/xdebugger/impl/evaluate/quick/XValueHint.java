@@ -6,8 +6,7 @@ import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -18,12 +17,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -41,6 +39,7 @@ import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
+import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
@@ -189,7 +188,8 @@ public class XValueHint extends AbstractValueHint {
             }
             else if (getType() == ValueHintType.MOUSE_CLICK_HINT) {
               if (!myShown) {
-                showTree(result);
+                Runnable showPopupRunnable = getShowPopupRunnable(result, myFullValueEvaluator);
+                showPopupRunnable.run();
               }
             }
             else {
@@ -207,7 +207,7 @@ public class XValueHint extends AbstractValueHint {
                                .registerCustomShortcutSet(shortcut, getEditor().getContentComponent(), myDisposable);
               }
 
-              showHint(createExpandableHintComponent(icon, text, () -> showTree(result), myFullValueEvaluator));
+              showHint(createExpandableHintComponent(icon, text, getShowPopupRunnable(result, myFullValueEvaluator), myFullValueEvaluator));
             }
             myShown = true;
           }
@@ -272,15 +272,33 @@ public class XValueHint extends AbstractValueHint {
     if (myCurrentHint != null) {
       myCurrentHint.hide();
     }
+    showTreePopup(getTreeCreator(), Pair.create(value, myValueName));
+  }
+
+  private void showText(@NotNull String initialText, @NotNull XValue value, @Nullable XFullValueEvaluator evaluator) {
+    if (myCurrentHint != null) {
+      myCurrentHint.hide();
+    }
+    showTextPopup(getTreeCreator(), Pair.create(value, myValueName), initialText, evaluator);
+  }
+
+  private XDebuggerTreeCreator getTreeCreator() {
     XValueMarkers<?,?> valueMarkers = myDebugSession == null ? null : ((XDebugSessionImpl)myDebugSession).getValueMarkers();
     XSourcePosition position = myDebugSession == null ? null : myDebugSession.getCurrentPosition();
-    XDebuggerTreeCreator creator = new XDebuggerTreeCreator(getProject(), myEditorsProvider, position, valueMarkers) {
+    return new XDebuggerTreeCreator(getProject(), myEditorsProvider, position, valueMarkers) {
       @Override
       public @NotNull String getTitle(@NotNull Pair<XValue, String> descriptor) {
         return "";
       }
     };
-    showTreePopup(creator, Pair.create(value, myValueName));
+  }
+
+  private Runnable getShowPopupRunnable(@NotNull XValue value, @Nullable XFullValueEvaluator evaluator) {
+    if (value instanceof XValueTextProvider && ((XValueTextProvider)value).shouldShowTextValue()) {
+      @NotNull String initialText = StringUtil.notNullize(((XValueTextProvider)value).getValueText());
+      return () -> showText(initialText, value, evaluator);
+    }
+    return () -> showTree(value);
   }
 
   @Override

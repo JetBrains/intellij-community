@@ -285,16 +285,22 @@ final class BuildHelper {
                             @NotNull Path targetFile, List<Path> dirs,
                             @Nullable String prefix,
                             boolean compress) {
+    Map<Path, String> map = new LinkedHashMap<>(dirs.size())
+    for (Path dir : dirs) {
+      map.put(dir, prefix ?: "")
+    }
+    zipWithPrefixes(context, targetFile, map, compress)
+  }
+
+  static void zipWithPrefixes(@NotNull CompilationContext context,
+                              @NotNull Path targetFile,
+                              @NotNull Map<Path, String> map,
+                              boolean compress) {
     Span span = TracerManager.spanBuilder("pack")
       .setAttribute("targetFile", context.paths.buildOutputDir.relativize(targetFile).toString())
       .startSpan()
     Scope scope = span.makeCurrent()
     try {
-      Map<Path, String> map = new LinkedHashMap<>(dirs.size())
-      for (Path dir : dirs) {
-        map.put(dir, prefix ?: "")
-      }
-
       // invoke cannot be called reflectively (as Groovy does)
       getInstance(context).zipHandle.invokeWithArguments(targetFile, map, compress, false)
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.openapi.project.Project
@@ -9,9 +9,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -35,7 +33,7 @@ class GithubChooseAccountDialog @JvmOverloads constructor(project: Project?, par
   private val description: JTextArea? = descriptionText?.let {
     JTextArea().apply {
       minimumSize = Dimension(0, 0)
-      font = UIUtil.getLabelFont()
+      font = StartupUiUtil.getLabelFont()
       text = it
       lineWrap = true
       wrapStyleWord = true
@@ -43,7 +41,7 @@ class GithubChooseAccountDialog @JvmOverloads constructor(project: Project?, par
       isFocusable = false
       isOpaque = false
       border = null
-      margin = JBUI.emptyInsets()
+      margin = JBInsets.emptyInsets()
     }
   }
   private val accountsList: JBList<GithubAccount> = JBList<GithubAccount>(accounts).apply {

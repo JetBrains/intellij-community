@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkout;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -14,65 +14,70 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.List;
 
 /**
  * to be called after checkout - notifiers extenders on checkout completion
  */
 public final class CompositeCheckoutListener implements CheckoutProvider.Listener {
+  private static final Logger LOG = Logger.getInstance(CompositeCheckoutListener.class);
+
   private final Project myProject;
+
   private boolean myFoundProject = false;
   private Path myFirstDirectory;
-  private VcsKey myVcsKey;
 
   public CompositeCheckoutListener(@NotNull Project project) {
     myProject = project;
   }
 
   @Override
-  public void directoryCheckedOut(@NotNull File directory, VcsKey vcs) {
-    myVcsKey = vcs;
-    if (!myFoundProject && directory.isDirectory()) {
-      if (myFirstDirectory == null) {
-        myFirstDirectory = directory.toPath();
-      }
-      notifyCheckoutListeners(directory.toPath(), false);
-    }
-  }
+  public void directoryCheckedOut(@NotNull File file, VcsKey vcs) {
+    if (myFoundProject) return;
+    if (!file.isDirectory()) return;
 
-  private void notifyCheckoutListeners(@NotNull Path directory, boolean checkoutCompleted) {
-    ExtensionPointName<CheckoutListener> epName = checkoutCompleted ? CheckoutListener.COMPLETED_EP_NAME : CheckoutListener.EP_NAME;
+    Path directory = file.toPath();
+    if (myFirstDirectory == null) myFirstDirectory = directory;
 
-    List<CheckoutListener> listeners = epName.getExtensionList();
-    for (CheckoutListener listener: listeners) {
+    for (CheckoutListener listener : CheckoutListener.EP_NAME.getExtensionList()) {
       myFoundProject = listener.processCheckedOutDirectory(myProject, directory);
       if (myFoundProject) {
+        LOG.debug(String.format("Cloned dir '%s' processed by %s", directory, listener));
         break;
       }
     }
 
-    if (!checkoutCompleted) {
-      for (VcsAwareCheckoutListener extension : VcsAwareCheckoutListener.EP_NAME.getExtensionList()) {
-        boolean processingCompleted = extension.processCheckedOutDirectory(myProject, directory, myVcsKey);
-        if (processingCompleted) {
-          break;
-        }
+    for (VcsAwareCheckoutListener listener : VcsAwareCheckoutListener.EP_NAME.getExtensionList()) {
+      boolean processingCompleted = listener.processCheckedOutDirectory(myProject, directory, vcs);
+      if (processingCompleted) {
+        LOG.debug(String.format("Cloned dir '%s' processed by %s", directory, listener));
+        break;
       }
     }
 
     Project project = findProjectByBaseDirLocation(directory);
     if (project != null) {
       VcsStatisticsCollector.CLONED_PROJECT_OPENED.log(project);
-      for (CheckoutListener listener: listeners) {
-        listener.processOpenedProject(project);
-      }
     }
   }
 
   @Override
   public void checkoutCompleted() {
-    if (!myFoundProject && myFirstDirectory != null) {
-      notifyCheckoutListeners(myFirstDirectory, true);
+    if (myFoundProject) return;
+
+    Path directory = myFirstDirectory;
+    if (directory == null) return;
+
+    for (CheckoutListener listener : CheckoutListener.COMPLETED_EP_NAME.getExtensionList()) {
+      boolean foundProject = listener.processCheckedOutDirectory(myProject, directory);
+      if (foundProject) {
+        LOG.debug(String.format("Cloned dir '%s' processed by %s", directory, listener));
+        break;
+      }
+    }
+
+    Project project = findProjectByBaseDirLocation(directory);
+    if (project != null) {
+      VcsStatisticsCollector.CLONED_PROJECT_OPENED.log(project);
     }
   }
 

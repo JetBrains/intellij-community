@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,6 +17,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.TextFieldWithStoredHistory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -103,7 +104,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     mySandboxHome.setHistorySize(5);
     JPanel wholePanel = new JPanel(new GridBagLayout());
     wholePanel.add(mySandboxHomeLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST,
-                                                              GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+                                                              GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
     wholePanel.add(GuiUtils.constructFieldWithBrowseButton(mySandboxHome, e -> {
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
       descriptor.setTitle(DevKitBundle.message("sandbox.home"));
@@ -117,7 +118,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
                                  GridBagConstraints.HORIZONTAL, JBUI.insets(0, 30, 0, 0), 0, 0));
 
     wholePanel.add(myInternalJreLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 1, GridBagConstraints.WEST,
-                                                              GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+                                                              GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
     wholePanel.add(myInternalJres, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.EAST,
                                                           GridBagConstraints.HORIZONTAL, JBUI.insets(0, 30, 0, 0), 0, 0));
     myInternalJres.setRenderer(SimpleListCellRenderer.create("", Sdk::getName));

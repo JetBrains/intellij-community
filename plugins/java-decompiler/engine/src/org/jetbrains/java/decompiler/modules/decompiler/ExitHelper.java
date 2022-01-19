@@ -7,6 +7,7 @@ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -194,7 +195,7 @@ public final class ExitHelper {
 
           if (source.type == Statement.TYPE_BASIC_BLOCK || (source.type == Statement.TYPE_IF &&
                                                            ((IfStatement)source).iftype == IfStatement.IFTYPE_IF) ||
-              (source.type == Statement.TYPE_DO && ((DoStatement)source).getLooptype() != DoStatement.LOOP_DO)) {
+              (source.type == Statement.TYPE_DO && ((DoStatement)source).getLoopType() != LoopType.DO)) {
             return false;
           }
         }

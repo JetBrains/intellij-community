@@ -1,32 +1,15 @@
-from typing import Any
+from typing import Any, Callable
 
-from jsonschema import exceptions as exceptions
-from jsonschema.exceptions import ErrorTree as ErrorTree
-
-class _DontDoThat(Exception): ...
-
-validators: Any
-meta_schemas: Any
-
-def validates(version): ...
-
-class _DefaultTypesDeprecatingMetaClass(type):
-    DEFAULT_TYPES: Any
-
-def create(
-    meta_schema,
-    validators=...,
-    version: Any | None = ...,
-    default_types: Any | None = ...,
-    type_checker: Any | None = ...,
-    id_of=...,
-): ...
+def validates(version: str) -> Callable[..., Any]: ...
+def create(meta_schema, validators=..., version: Any | None = ..., type_checker=..., id_of=..., applicable_validators=...): ...
 def extend(validator, validators=..., version: Any | None = ..., type_checker: Any | None = ...): ...
 
 Draft3Validator: Any
 Draft4Validator: Any
 Draft6Validator: Any
 Draft7Validator: Any
+Draft201909Validator: Any
+Draft202012Validator: Any
 
 class RefResolver:
     referrer: Any

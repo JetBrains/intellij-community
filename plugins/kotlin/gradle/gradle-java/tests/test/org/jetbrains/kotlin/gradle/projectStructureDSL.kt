@@ -169,14 +169,9 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
         checkReport("Additional arguments", arguments, actualArguments)
     }
 
-    @Deprecated(
-        "This assertion might be unsafe. " +
-                "Please use 'noLibraryDependency(Regex)' or " +
-                "calls to 'assertExhaustiveDependencyList' instead!",
-        ReplaceWith("noLibraryDependency(Regex.fromLiteral(libraryNameLiteral))")
-    )
-    fun noLibraryDependency(libraryNameLiteral: String, scope: DependencyScope) {
-        noLibraryDependency(Regex.fromLiteral(libraryNameLiteral))
+    fun kotlinFacetSettingCreated() {
+        val facet = KotlinFacet.get(module)?.configuration?.settings
+        if (facet == null) report("KotlinFacetSettings does not exist")
     }
 
     fun noLibraryDependency(libraryNameRegex: Regex) {

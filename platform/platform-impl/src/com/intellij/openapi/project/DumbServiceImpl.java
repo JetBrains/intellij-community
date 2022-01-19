@@ -56,6 +56,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.project.IndexingStatisticsCollector.IndexingFinishType.FINISHED;
+import static com.intellij.openapi.project.IndexingStatisticsCollector.IndexingFinishType.TERMINATED;
+
 @ApiStatus.Internal
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker, DumbServiceBalloon.Service {
   private static final ExtensionPointName<StartupActivity.RequiredForSmartMode> REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY
@@ -632,7 +635,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
           //this used to be called in EDT from getNextTask(), but moved it here to simplify
           queueUpdateFinished();
 
-          activity.finished();
+          IndexingStatisticsCollector.logProcessFinished(activity, suspender.isClosed() ? TERMINATED : FINISHED);
         }
       });
     }

@@ -158,7 +158,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
       VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     }, this);
 
-    busConnection.subscribe(CommitModeManager.COMMIT_MODE_TOPIC, () -> updateChangeListAvailability());
+    CommitModeManager.subscribeOnCommitModeChange(busConnection, () -> updateChangeListAvailability());
     Registry.get("vcs.disable.changelists").addListener(new RegistryValueListener() {
       @Override
       public void afterValueChanged(@NotNull RegistryValue value) {

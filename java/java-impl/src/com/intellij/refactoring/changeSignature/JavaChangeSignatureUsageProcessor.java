@@ -1079,8 +1079,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           methodDocComment.add(JavaPsiFacade.getElementFactory(method.getProject()).createDocTagFromText("@return"));
         }
       }
-      CommentFormatter formatter = new CommentFormatter(method.getContainingFile());
-      formatter.processComment(methodDocComment.getNode());
+      RefactoringUtil.formatJavadocIgnoringSettings(method, methodDocComment);
     }
   }
 

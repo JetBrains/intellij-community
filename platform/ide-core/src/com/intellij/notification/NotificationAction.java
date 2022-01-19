@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification;
 
+import com.intellij.openapi.actionSystem.ActionWithDelegate;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -62,7 +63,7 @@ public abstract class NotificationAction extends DumbAwareAction {
   }
 
   @ApiStatus.Internal
-  public static final class Simple extends NotificationAction {
+  public static final class Simple extends NotificationAction implements ActionWithDelegate<Object> {
     private final BiConsumer<? super AnActionEvent, ? super Notification> myAction;
     private final boolean myExpire;
     private final Object myActionInstance;  // for FUS
@@ -95,7 +96,8 @@ public abstract class NotificationAction extends DumbAwareAction {
       myAction.accept(e, notification);
     }
 
-    public @NotNull Object getActionInstance() {
+    @Override
+    public @NotNull Object getDelegate() {
       return myActionInstance;
     }
   }

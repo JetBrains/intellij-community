@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
@@ -24,7 +24,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import com.siyeh.ig.dataflow.CreateNullBranchFix;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
 import com.siyeh.ig.psiutils.CodeBlockSurrounder;
@@ -285,7 +285,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
         message("inspection.data.flow.report.problems.that.happen.only.on.some.code.paths"),
         "REPORT_UNSOUND_WARNINGS");
 
-      gc.insets = JBUI.emptyInsets();
+      gc.insets = JBInsets.emptyInsets();
       gc.gridy = 0;
       add(suggestNullables, gc);
 

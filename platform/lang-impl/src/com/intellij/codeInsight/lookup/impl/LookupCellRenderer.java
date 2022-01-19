@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup.impl;
 
@@ -32,6 +32,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -68,13 +69,15 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   private static final Key<Font> CUSTOM_TYPE_FONT = Key.create("CustomLookupElementTypeFont");
 
   public static final Color BACKGROUND_COLOR =
-    new JBColor(() -> Objects.requireNonNullElse(EditorColorsUtil.getGlobalOrDefaultColor(LOOKUP_COLOR),
+    JBColor.lazy(() -> Objects.requireNonNullElse(EditorColorsUtil.getGlobalOrDefaultColor(LOOKUP_COLOR),
                                                  JBColor.namedColor("CompletionPopup.background",
                                                                     new JBColor(new Color(235, 244, 254), JBColor.background()))));
   public static final Color MATCHED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.matchForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);
   public static final Color SELECTED_BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionBackground", new JBColor(0xc5dffc, 0x113a5c));
   public static final Color SELECTED_NON_FOCUSED_BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionInactiveBackground", new JBColor(0xE0E0E0, 0x515457));
   private static final Color NON_FOCUSED_MASK_COLOR = JBColor.namedColor("CompletionPopup.nonFocusedMask", Gray._0.withAlpha(0));
+
+  public static final SimpleTextAttributes REGULAR_MATCHED_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, MATCHED_FOREGROUND_COLOR);
 
   private final LookupImpl myLookup;
 
@@ -107,11 +110,11 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     myNameComponent.setMyBorder(null);
 
     myTailComponent = new MySimpleColoredComponent();
-    myTailComponent.setIpad(JBUI.emptyInsets());
+    myTailComponent.setIpad(JBInsets.emptyInsets());
     myTailComponent.setBorder(JBUI.Borders.emptyRight(10));
 
     myTypeLabel = new MySimpleColoredComponent();
-    myTypeLabel.setIpad(JBUI.emptyInsets());
+    myTypeLabel.setIpad(JBInsets.emptyInsets());
     myTypeLabel.setBorder(JBUI.Borders.emptyRight(10));
 
     myPanel = new LookupPanel();

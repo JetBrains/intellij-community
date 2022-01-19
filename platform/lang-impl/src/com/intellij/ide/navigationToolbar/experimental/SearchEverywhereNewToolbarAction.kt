@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
@@ -72,7 +73,12 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
       ActionsBundle.message("action.SearchEverywhereToolbar.text")
     }
     else {
-      ActionsBundle.message("action.SearchEverywhereToolbarHotKey.text")
+      val shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).shortcuts
+      val shortcut = if (shortcuts.isEmpty()) {
+        ActionsBundle.message("action.SearchEverywhereToolbarHotKey.hotkey")
+      }
+      else KeymapUtil.getShortcutsText(shortcuts)
+      ActionsBundle.message("action.SearchEverywhereToolbarHotKey.text", shortcut)
     }
     event.presentation.icon = AllIcons.Actions.Search
     if (!subscribedForDoubleShift) {
@@ -93,11 +99,15 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
           override fun ancestorAdded(event: AncestorEvent?) {
             rootPane?.addComponentListener(object : ComponentAdapter() {
               override fun componentResized(e: ComponentEvent?) {
-                checkIfEnoughSpace()
+                shouldShow = true
               }
             })
           }
         })
+      }
+
+      override fun getPreferredSize(): Dimension {
+        return Dimension(super.getPreferredSize().width, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height)
       }
 
       override fun updateToolTipText() {
@@ -159,6 +169,7 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
       }
 
       private fun checkIfEnoughSpace(): Boolean {
+        if (parent == null) return false
         if (parent.bounds.width < parent.preferredSize.width) {
           if (shouldShow) {
             shouldShow = false

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -114,7 +114,8 @@ public class ChangesViewManager implements ChangesViewEx,
     myProject = project;
     ChangesViewModifier.KEY.addChangeListener(project, this::refreshImmediately, this);
 
-    project.getMessageBus().connect(this).subscribe(CommitModeManager.COMMIT_MODE_TOPIC, () -> updateCommitWorkflow());
+    MessageBusConnection busConnection = project.getMessageBus().connect(this);
+    CommitModeManager.subscribeOnCommitModeChange(busConnection, () -> updateCommitWorkflow());
     // invokeLater to avoid potential cyclic dependency with ChangesViewCommitPanel constructor
     ApplicationManager.getApplication().invokeLater(() -> updateCommitWorkflow(), myProject.getDisposed());
   }
@@ -203,7 +204,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
   private void migrateShowFlattenSetting() {
     if (!myState.myShowFlatten) {
-      myState.groupingKeys = set(DEFAULT_GROUPING_KEYS);
+      myState.groupingKeys = Set.copyOf(DEFAULT_GROUPING_KEYS);
       myState.myShowFlatten = true;
     }
   }

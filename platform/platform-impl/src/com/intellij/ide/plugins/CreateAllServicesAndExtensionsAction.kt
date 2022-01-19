@@ -124,7 +124,7 @@ private fun checkExtensionPoint(extensionPoint: ExtensionPointImpl<*>, taskExecu
   taskExecutor {
     extensionClass = extensionPoint.extensionClass
   }
-  
+
   extensionPoint.checkImplementations { extension ->
     taskExecutor {
       val extensionInstance: Any
@@ -161,7 +161,7 @@ private fun checkLightServices(taskExecutor: (task: () -> Unit) -> Unit, errors:
         for (lightService in lightServices) {
           if (lightService.name == "org.jetbrains.plugins.grails.runner.GrailsConsole" ||
               lightService.name == "com.jetbrains.rdserver.editors.MultiUserCaretSynchronizerProjectService" ||
-              lightService.name == "com.intellij.javascript.web.webTypes.WebTypesNpmLoader") {
+              lightService.name == "com.intellij.javascript.web.webTypes.nodejs.WebTypesNpmLoader") {
             // wants EDT/read action in constructor
              continue
           }

@@ -98,9 +98,11 @@ public final class RepositoryUtils {
         roots == null || roots.isEmpty() ?
         () -> {
           String message = JavaUiBundle.message("notification.content.no.files.were.downloaded", properties.getMavenId());
-          Notifications.Bus.notify(new Notification("Repository", JavaUiBundle.message(
-            "notification.title.repository.library.synchronization"),
-                                                    message, NotificationType.ERROR), project);
+          Notifications.Bus.notify(
+            JarRepositoryManager.GROUP.createNotification(
+                JavaUiBundle.message("notification.title.repository.library.synchronization"),
+                message, NotificationType.ERROR),
+            project);
           promise.setError(message);
         } :
         () -> {

@@ -96,7 +96,7 @@ public final class MavenModuleNameMapper {
     //assert new HashSet<String>(mavenProjectToModuleName.values()).size() == mavenProjectToModuleName.size() : new HashMap<MavenProject, String>(mavenProjectToModuleName);
   }
 
-  public static class NameItem implements Comparable<NameItem> {
+  private static class NameItem implements Comparable<NameItem> {
     public final MavenProject project;
     public final Module module;
 
@@ -106,7 +106,7 @@ public final class MavenModuleNameMapper {
     public int number = -1; // has no duplicates
     public boolean hasDuplicatedGroup;
 
-    public NameItem(MavenProject project, @Nullable Module module) {
+    private NameItem(MavenProject project, @Nullable Module module) {
       this.project = project;
       this.module = module;
       originalName = calcOriginalName();

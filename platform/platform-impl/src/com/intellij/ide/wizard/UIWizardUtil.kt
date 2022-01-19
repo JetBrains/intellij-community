@@ -3,11 +3,15 @@
 
 package com.intellij.ide.wizard
 
+import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.dsl.builder.Panel
 import java.io.File
 
+
+val WizardContext.projectOrDefault get() = project ?: ProjectManager.getInstance().defaultProject
 
 fun getPresentablePath(path: String): String {
   return FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(path.trim()), false)

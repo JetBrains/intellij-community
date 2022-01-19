@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util
 
 import com.intellij.CommonBundle
@@ -23,11 +23,13 @@ import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.uiDesigner.core.GridConstraints
+import com.intellij.uiDesigner.core.GridConstraints.*
 import com.intellij.uiDesigner.core.GridLayoutManager
 import com.intellij.util.Alarm
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.DialogUtil
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.EdtInvocationManager
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
@@ -45,6 +47,18 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
                      private val myParentWindow: Window?) : Disposable {
   companion object {
     const val UPDATE_INTERVAL = 50 //msec. 20 frames per second.
+
+    @Contract(pure = true)
+    private fun fitTextToLabel(fullText: String?, label: JLabel): String {
+      if (fullText == null || fullText.isEmpty()) return " "
+      var newFullText = StringUtil.last(fullText, 500, true).toString() // avoid super long strings
+      while (label.getFontMetrics(label.font).stringWidth(newFullText) > label.width) {
+        val sep = newFullText.indexOf(File.separatorChar, 4)
+        if (sep < 0) return newFullText
+        newFullText = "..." + newFullText.substring(sep)
+      }
+      return newFullText
+    }
   }
 
   private var myLastTimeDrawn: Long = -1
@@ -89,91 +103,76 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
 
   private val myTitlePanel = TitlePanel()
   private var myPopup: DialogWrapper? = null
-  private val myDisableCancelAlarm = SingleAlarm(this::setCancelButtonDisabledInEDT, 500, null, Alarm.ThreadToUse.SWING_THREAD, ModalityState.any())
-  private val myEnableCancelAlarm = SingleAlarm(this::setCancelButtonEnabledInEDT, 500, null, Alarm.ThreadToUse.SWING_THREAD, ModalityState.any())
+  private val myDisableCancelAlarm = SingleAlarm(
+    this::setCancelButtonDisabledInEDT, 500, null, Alarm.ThreadToUse.SWING_THREAD, ModalityState.any()
+  )
+  private val myEnableCancelAlarm = SingleAlarm(
+    this::setCancelButtonEnabledInEDT, 500, null, Alarm.ThreadToUse.SWING_THREAD, ModalityState.any()
+  )
 
   init {
-    setupUI()
-    initDialog(cancelText)
-  }
-
-  private fun setupUI() {
-    myPanel.layout = GridLayoutManager(2, 1, JBUI.emptyInsets(), -1, -1, false, false)
+    myPanel.layout = GridLayoutManager(2, 1, JBInsets.emptyInsets(), -1, -1, false, false)
 
     val panel = JPanel()
-    panel.layout = GridLayoutManager(1, 2, JBUI.insets(6, 10, 10, 10), -1, -1, false, false)
+    panel.layout = GridLayoutManager(1, 2, JBInsets(6, 10, 10, 10), -1, -1, false, false)
     panel.isOpaque = false
-    myPanel.add(panel, GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
-                                       GridConstraints.SIZEPOLICY_CAN_GROW or GridConstraints.SIZEPOLICY_CAN_SHRINK,
-                                       GridConstraints.SIZEPOLICY_CAN_GROW or GridConstraints.SIZEPOLICY_CAN_SHRINK, null, null, null))
+    myPanel.add(panel, GridConstraints(1, 0, 1, 1, ANCHOR_CENTER, FILL_BOTH,
+                                       SIZEPOLICY_CAN_GROW or SIZEPOLICY_CAN_SHRINK,
+                                       SIZEPOLICY_CAN_GROW or SIZEPOLICY_CAN_SHRINK, null, null, null))
 
     val innerPanel = JPanel()
-    innerPanel.layout = GridLayoutManager(3, 2, JBUI.emptyInsets(), -1, -1, false, false)
+    innerPanel.layout = GridLayoutManager(3, 2, JBInsets.emptyInsets(), -1, -1, false, false)
     innerPanel.preferredSize = Dimension(if (SystemInfo.isMac) 350 else JBUIScale.scale(450), -1)
-    panel.add(innerPanel, GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-                                          GridConstraints.SIZEPOLICY_CAN_SHRINK or GridConstraints.SIZEPOLICY_CAN_GROW or
-                                            GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null))
+    panel.add(innerPanel, GridConstraints(0, 0, 1, 1, ANCHOR_CENTER, FILL_HORIZONTAL,
+                                          SIZEPOLICY_CAN_SHRINK or SIZEPOLICY_CAN_GROW or
+                                            SIZEPOLICY_WANT_GROW, SIZEPOLICY_CAN_GROW, null, null, null))
 
-    innerPanel.add(myTextLabel, GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-                                                (GridConstraints.SIZEPOLICY_CAN_SHRINK or GridConstraints.SIZEPOLICY_CAN_GROW or
-                                                  GridConstraints.SIZEPOLICY_WANT_GROW), GridConstraints.SIZEPOLICY_FIXED,
+    innerPanel.add(myTextLabel, GridConstraints(0, 0, 1, 1, ANCHOR_CENTER, FILL_HORIZONTAL,
+                                                SIZEPOLICY_CAN_SHRINK or SIZEPOLICY_CAN_GROW or
+                                                  SIZEPOLICY_WANT_GROW, SIZEPOLICY_FIXED,
                                                 Dimension(0, -1), null, null))
 
     myText2Label.componentStyle = UIUtil.ComponentStyle.REGULAR
-    innerPanel.add(myText2Label, GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_NORTHWEST, GridConstraints.FILL_HORIZONTAL,
-                                                 (GridConstraints.SIZEPOLICY_CAN_SHRINK or GridConstraints.SIZEPOLICY_CAN_GROW or
-                                                   GridConstraints.SIZEPOLICY_WANT_GROW), GridConstraints.SIZEPOLICY_FIXED,
+    innerPanel.add(myText2Label, GridConstraints(2, 0, 1, 1, ANCHOR_NORTHWEST, FILL_HORIZONTAL,
+                                                 SIZEPOLICY_CAN_SHRINK or SIZEPOLICY_CAN_GROW or
+                                                   SIZEPOLICY_WANT_GROW, SIZEPOLICY_FIXED,
                                                  Dimension(0, -1), null, null))
 
     myProgressBar.putClientProperty("html.disable", java.lang.Boolean.FALSE)
-    innerPanel.add(myProgressBar, GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-                                                  (GridConstraints.SIZEPOLICY_CAN_SHRINK or GridConstraints.SIZEPOLICY_CAN_GROW or
-                                                    GridConstraints.SIZEPOLICY_WANT_GROW), GridConstraints.SIZEPOLICY_FIXED, null, null,
+    innerPanel.add(myProgressBar, GridConstraints(1, 0, 1, 2, ANCHOR_CENTER, FILL_HORIZONTAL,
+                                                  SIZEPOLICY_CAN_SHRINK or SIZEPOLICY_CAN_GROW or
+                                                    SIZEPOLICY_WANT_GROW, SIZEPOLICY_FIXED, null, null,
                                                   null))
 
     innerPanel.add(JLabel(" "),
-                   GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
-                                   GridConstraints.SIZEPOLICY_FIXED, null, null, null))
+                   GridConstraints(2, 1, 1, 1, ANCHOR_WEST, FILL_NONE, SIZEPOLICY_FIXED,
+                                   SIZEPOLICY_FIXED, null, null, null))
     innerPanel.add(JLabel(" "),
-                   GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
-                                   GridConstraints.SIZEPOLICY_FIXED, null, null, null))
+                   GridConstraints(0, 1, 1, 1, ANCHOR_WEST, FILL_NONE, SIZEPOLICY_FIXED,
+                                   SIZEPOLICY_FIXED, null, null, null))
 
     val buttonPanel = JPanel()
-    buttonPanel.layout = GridLayoutManager(2, 1, JBUI.emptyInsets(), -1, -1, false, false)
-    panel.add(buttonPanel, GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-                                           GridConstraints.SIZEPOLICY_CAN_SHRINK, GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+    buttonPanel.layout = GridLayoutManager(2, 1, JBInsets.emptyInsets(), -1, -1, false, false)
+    panel.add(buttonPanel, GridConstraints(0, 1, 1, 1, ANCHOR_CENTER, FILL_HORIZONTAL,
+                                           SIZEPOLICY_CAN_SHRINK, SIZEPOLICY_CAN_GROW, null, null,
                                            null))
 
-    myCancelButton.text = CommonBundle.getCancelButtonText()
+    myCancelButton.text = cancelText ?: CommonBundle.getCancelButtonText()
     DialogUtil.registerMnemonic(myCancelButton, '&')
-    buttonPanel.add(myCancelButton, GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-                                                    GridConstraints.SIZEPOLICY_CAN_GROW or GridConstraints.SIZEPOLICY_CAN_SHRINK,
-                                                    GridConstraints.SIZEPOLICY_FIXED, null, null, null))
+    buttonPanel.add(myCancelButton, GridConstraints(0, 0, 1, 1, ANCHOR_CENTER, FILL_HORIZONTAL,
+                                                    SIZEPOLICY_CAN_GROW or SIZEPOLICY_CAN_SHRINK,
+                                                    SIZEPOLICY_FIXED, null, null, null))
 
     myBackgroundButton.text = CommonBundle.message("button.background")
     DialogUtil.registerMnemonic(myBackgroundButton, '&')
-    buttonPanel.add(myBackgroundButton, GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-                                                        GridConstraints.SIZEPOLICY_CAN_GROW or GridConstraints.SIZEPOLICY_CAN_SHRINK,
-                                                        GridConstraints.SIZEPOLICY_FIXED, null, null, null))
+    buttonPanel.add(myBackgroundButton, GridConstraints(1, 0, 1, 1, ANCHOR_CENTER, FILL_HORIZONTAL,
+                                                        SIZEPOLICY_CAN_GROW or SIZEPOLICY_CAN_SHRINK,
+                                                        SIZEPOLICY_FIXED, null, null, null))
 
-    myPanel.add(myTitlePanel, GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-                                              (GridConstraints.SIZEPOLICY_CAN_SHRINK or GridConstraints.SIZEPOLICY_CAN_GROW or
-                                                GridConstraints.SIZEPOLICY_WANT_GROW), GridConstraints.SIZEPOLICY_FIXED, null, null, null))
-  }
+    myPanel.add(myTitlePanel, GridConstraints(0, 0, 1, 1, ANCHOR_CENTER, FILL_HORIZONTAL,
+                                              SIZEPOLICY_CAN_SHRINK or SIZEPOLICY_CAN_GROW or
+                                                SIZEPOLICY_WANT_GROW, SIZEPOLICY_FIXED, null, null, null))
 
-  @Contract(pure = true)
-  private fun fitTextToLabel(fullText: String?, label: JLabel): String {
-    if (fullText == null || fullText.isEmpty()) return " "
-    var newFullText = StringUtil.last(fullText, 500, true).toString() // avoid super long strings
-    while (label.getFontMetrics(label.font).stringWidth(newFullText) > label.width) {
-      val sep = newFullText.indexOf(File.separatorChar, 4)
-      if (sep < 0) return newFullText
-      newFullText = "..." + newFullText.substring(sep)
-    }
-    return newFullText
-  }
-
-  private fun initDialog(cancelText: @Nls String?) {
     if (SystemInfo.isMac) {
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myText2Label)
     }
@@ -190,12 +189,17 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
       myCancelButton.registerKeyboardAction(cancelFunction, shortcut, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
     }
 
-    if (cancelText != null) {
-      myProgressWindow.setCancelButtonText(cancelText)
-    }
     myProgressBar.isIndeterminate = myProgressWindow.isIndeterminate
     myProgressBar.maximum = 100
-    createCenterPanel()
+
+    myCancelButton.isVisible = myProgressWindow.myShouldShowCancel
+
+    myBackgroundButton.isVisible = myShouldShowBackground
+    myBackgroundButton.addActionListener {
+      if (myShouldShowBackground) {
+        myProgressWindow.background()
+      }
+    }
 
     myTitlePanel.setActive(true)
     val moveListener = object : WindowMoveListener(myTitlePanel) {
@@ -222,10 +226,6 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
 
   fun getPopup(): DialogWrapper? = myPopup
 
-  fun changeCancelButtonText(text: @Nls String) {
-    myCancelButton.text = text
-  }
-
   private fun doCancelAction() {
     if (myProgressWindow.myShouldShowCancel) {
       myProgressWindow.cancel()
@@ -250,33 +250,17 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
     }
   }
 
-  private fun createCenterPanel() {
-    // Cancel button (if any)
-
-    if (myProgressWindow.myCancelText != null) {
-      myCancelButton.text = myProgressWindow.myCancelText
-    }
-    myCancelButton.isVisible = myProgressWindow.myShouldShowCancel
-
-    myBackgroundButton.isVisible = myShouldShowBackground
-    myBackgroundButton.addActionListener {
-      if (myShouldShowBackground) {
-        myProgressWindow.background()
-      }
-    }
-  }
-
   @Synchronized
   fun update() {
     if (myRepaintedFlag) {
       if (System.currentTimeMillis() > myLastTimeDrawn + UPDATE_INTERVAL) {
         myRepaintedFlag = false
-        UIUtil.invokeLaterIfNeeded(myRepaintRunnable)
+        EdtInvocationManager.invokeLaterIfNeeded(myRepaintRunnable)
       }
       else {
         // later to avoid concurrent dispose/addRequest
         if (!myUpdateAlarm.isDisposed && myUpdateAlarm.isEmpty) {
-          UIUtil.invokeLaterIfNeeded {
+          EdtInvocationManager.invokeLaterIfNeeded {
             if (!myUpdateAlarm.isDisposed) {
               myUpdateAlarm.request(myProgressWindow.modalityState)
             }

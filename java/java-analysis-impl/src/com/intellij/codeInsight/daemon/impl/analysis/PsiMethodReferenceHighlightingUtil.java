@@ -29,7 +29,7 @@ public final class PsiMethodReferenceHighlightingUtil {
   }
 
   static @NlsContexts.DetailedDescription String checkMethodReferenceContext(@NotNull PsiMethodReferenceExpression methodRef) {
-    final PsiElement resolve = methodRef.resolve();
+    PsiElement resolve = methodRef.resolve();
 
     if (resolve == null) return null;
     return checkMethodReferenceContext(methodRef, resolve, methodRef.getFunctionalInterfaceType());
@@ -38,22 +38,22 @@ public final class PsiMethodReferenceHighlightingUtil {
   public static @NlsContexts.DetailedDescription String checkMethodReferenceContext(@NotNull PsiMethodReferenceExpression methodRef,
                                                                                     @NotNull PsiElement resolve,
                                                                                     PsiType functionalInterfaceType) {
-    final PsiClass containingClass = resolve instanceof PsiMethod ? ((PsiMethod)resolve).getContainingClass() : (PsiClass)resolve;
-    final boolean isStaticSelector = PsiMethodReferenceUtil.isStaticallyReferenced(methodRef);
-    final PsiElement qualifier = methodRef.getQualifier();
+    PsiClass containingClass = resolve instanceof PsiMethod ? ((PsiMethod)resolve).getContainingClass() : (PsiClass)resolve;
+    boolean isStaticSelector = PsiMethodReferenceUtil.isStaticallyReferenced(methodRef);
+    PsiElement qualifier = methodRef.getQualifier();
 
     boolean isMethodStatic = false;
     boolean receiverReferenced = false;
     boolean isConstructor = true;
 
     if (resolve instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)resolve;
+      PsiMethod method = (PsiMethod)resolve;
 
       isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);
       isConstructor = method.isConstructor();
 
-      final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
-      final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
+      PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+      PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
       receiverReferenced = PsiMethodReferenceUtil.isResolvedBySecondSearch(methodRef,
                                                     interfaceMethod != null ? interfaceMethod.getSignature(LambdaUtil.getSubstitutor(interfaceMethod, resolveResult)) : null,
                                                                            method.isVarArgs(),
@@ -78,9 +78,9 @@ public final class PsiMethodReferenceHighlightingUtil {
     }
 
     if (isMethodStatic && isStaticSelector && qualifier instanceof PsiTypeElement) {
-      final PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.getChildOfType(qualifier, PsiJavaCodeReferenceElement.class);
+      PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.getChildOfType(qualifier, PsiJavaCodeReferenceElement.class);
       if (referenceElement != null) {
-        final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
+        PsiReferenceParameterList parameterList = referenceElement.getParameterList();
         if (parameterList != null && parameterList.getTypeArguments().length > 0) {
           return JavaErrorBundle.message("parameterized.qualifier.on.static.method.reference.context");
         }

@@ -71,6 +71,8 @@
               implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectUsageSearcher"/>
     <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
               implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectRenameUsageSearcher"/>
+
+    <newProjectWizard.groovy.buildSystem implementation="org.jetbrains.plugins.gradle.service.project.wizard.groovy.GradleGroovyNewProjectWizard"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.groovy">

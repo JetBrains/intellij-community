@@ -473,7 +473,7 @@ public class FunctionExprent extends Exprent {
         TextBuffer res = wrapOperandString(arr, false, indent, tracer);
         if (arr.getExprType().arrayDim == 0) {
           VarType objArr = VarType.VARTYPE_OBJECT.resizeArrayDim(1); // type family does not change
-          res.enclose("((" + ExprProcessor.getCastTypeName(objArr) + ")", ")");
+          res.enclose("((" + ExprProcessor.getCastTypeName(objArr, Collections.emptyList()) + ")", ")");
         }
         return res.append(".length");
       case FUNCTION_IIF:
@@ -522,7 +522,7 @@ public class FunctionExprent extends Exprent {
 
     if (funcType <= FUNCTION_I2S) {
       return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("(" + ExprProcessor.getTypeName(
-        TYPES[funcType - FUNCTION_I2L]) + ")");
+        TYPES[funcType - FUNCTION_I2L], Collections.emptyList()) + ")");
     }
 
     //		return "<unknown function>";

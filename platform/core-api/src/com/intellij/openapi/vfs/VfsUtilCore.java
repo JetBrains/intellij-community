@@ -823,10 +823,12 @@ public class VfsUtilCore {
 
   @NotNull
   public static VirtualFileSet createCompactVirtualFileSet() {
+    //noinspection deprecation
     return new CompactVirtualFileSet();
   }
   @NotNull
   public static VirtualFileSet createCompactVirtualFileSet(@NotNull Collection<? extends VirtualFile> files) {
+    //noinspection deprecation
     return new CompactVirtualFileSet(files);
   }
 }

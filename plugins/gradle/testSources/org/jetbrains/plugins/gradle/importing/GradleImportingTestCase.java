@@ -55,6 +55,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleJvmSupportMatriciesKt;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.junit.Assume;
 import org.junit.Rule;
@@ -197,7 +198,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     JavaVersion javaRuntimeVersion = JavaVersion.current();
     assumeTestJavaRuntime(javaRuntimeVersion);
     GradleVersion baseVersion = getCurrentGradleBaseVersion();
-    if (javaRuntimeVersion.feature > 9 && baseVersion.compareTo(GradleVersion.version("4.8")) < 0) {
+    if (!GradleJvmSupportMatriciesKt.isSupported(baseVersion, javaRuntimeVersion)) {
       // fix exception of FJP at JavaHomeFinder.suggestHomePaths => ... => EnvironmentUtil.getEnvironmentMap => CompletableFuture.<clinit>
       IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
       List<String> paths = JavaHomeFinder.suggestHomePaths(true);
@@ -205,13 +206,12 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
         if (JdkUtil.checkForJdk(path)) {
           JdkVersionDetector.JdkVersionInfo jdkVersionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(path);
           if (jdkVersionInfo == null) continue;
-          int feature = jdkVersionInfo.version.feature;
-          if (feature > 6 && feature < 9) {
+          if (GradleJvmSupportMatriciesKt.isSupported(baseVersion, jdkVersionInfo.version)) {
             return path;
           }
         }
       }
-      Assume.assumeTrue("Cannot find JDK for Gradle, checked paths: " + paths, false);
+      fail("Cannot find JDK for Gradle, checked paths: " + paths);
       return null;
     }
     else {

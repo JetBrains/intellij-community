@@ -10,6 +10,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.indices.arhetype.MavenCatalog;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
@@ -39,6 +40,25 @@ public class MavenArchetypeManager {
 
   public MavenArchetypeManager(@NotNull Project project) {
     myProject = project;
+  }
+
+  public Collection<MavenArchetype> getArchetypes(@NotNull MavenCatalog catalog) {
+    if (catalog instanceof MavenCatalog.System.Internal) {
+      return getInnerArchetypes();
+    }
+    if (catalog instanceof MavenCatalog.System.DefaultLocal) {
+      return getArchetypes(((MavenCatalog.System.DefaultLocal)catalog).asLocal());
+    }
+    if (catalog instanceof MavenCatalog.System.MavenCentral) {
+      return getArchetypes(((MavenCatalog.System.MavenCentral)catalog).asRemote());
+    }
+    if (catalog instanceof MavenCatalog.Local) {
+      return getInnerArchetypes(((MavenCatalog.Local)catalog).getPath());
+    }
+    if (catalog instanceof MavenCatalog.Remote) {
+      return getRemoteArchetypes(((MavenCatalog.Remote)catalog).getUrl().toExternalForm());
+    }
+    return Collections.emptyList();
   }
 
   public Set<MavenArchetype> getArchetypes() {

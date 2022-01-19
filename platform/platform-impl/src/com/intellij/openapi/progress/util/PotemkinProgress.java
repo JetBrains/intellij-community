@@ -63,8 +63,7 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
     // and it then just sits in the queue blocking the whole UI until the progress is finished.
 
     //noinspection SpellCheckingInspection
-    return event.toString().contains(",runnable=sun.lwawt.macosx.LWCToolkit") ||
-           event instanceof MyInvocationEvent;
+    return event.toString().contains(",runnable=sun.lwawt.macosx.LWCToolkit");
   }
 
   @NotNull
@@ -200,16 +199,6 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
     });
 
     started.waitFor();
-  }
-
-  public static void invokeLaterNotBlocking(Object source, Runnable runnable) {
-    Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(new MyInvocationEvent(source, runnable));
-  }
-
-  private static final class MyInvocationEvent extends InvocationEvent {
-    MyInvocationEvent(Object source, Runnable runnable) {
-      super(source, runnable);
-    }
   }
 
   static final class EventStealer {

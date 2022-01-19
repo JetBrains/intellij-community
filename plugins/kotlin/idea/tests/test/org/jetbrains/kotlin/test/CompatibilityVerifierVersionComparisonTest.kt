@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.test
 
@@ -49,7 +49,7 @@ class CompatibilityVerifierVersionComparisonTest : LightPlatformTestCase() {
 
         assertEquals("1.4.20", version.kotlinVersion)
         assertEquals("dev", version.status)
-        assertEquals("4575", version.kotlinBuildNumber)
+        assertEquals(4575, version.kotlinVersionVerbose.buildNumber)
         assertEquals("45", version.buildNumber)
         assertEquals(PlatformVersion.Platform.IDEA, version.platformVersion.platform)
         assertEquals("203.1234", version.platformVersion.version)
@@ -89,6 +89,19 @@ class CompatibilityVerifierVersionComparisonTest : LightPlatformTestCase() {
         assertEquals(PlatformVersion.Platform.IDEA, version.platformVersion.platform)
         assertEquals("2020.1", version.platformVersion.version)
         assertEquals("1", version.patchNumber)
+    }
+
+    fun testKotlinVersionVerbose() {
+        assertKotlinVersionVerbose("1.5.0")
+        assertKotlinVersionVerbose("1.3.10-M1-8132")
+        assertKotlinVersionVerbose("1.4.32-release")
+        assertKotlinVersionVerbose("1.4.32-dev-333")
+        assertKotlinVersionVerbose("1.4.32-333")
+        assertKotlinVersionVerbose("1.4.32-SNAPSHOT")
+    }
+
+    private fun assertKotlinVersionVerbose(version: String, expected: String = version) {
+        assertEquals(expected, KotlinVersionVerbose.parse(version)?.toString())
     }
 
     private fun testVersion(

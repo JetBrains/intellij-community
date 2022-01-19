@@ -115,41 +115,47 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   override fun beforeCommitChecksStarted() = ui.startBeforeCommitChecks()
   override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) = ui.endBeforeCommitChecks(result)
 
-  private fun executeDefault(executor: CommitExecutor?): Boolean =
-    checkCommit(executor) &&
-    addUnversionedFiles() &&
-    saveCommitOptions() &&
-    run {
-      saveCommitMessage(true)
-      refreshChanges {
-        workflow.continueExecution {
-          updateWorkflow()
-          CommitSessionCollector.getInstance(project).logCommit(executor?.id,
-                                                                ui.getIncludedChanges().size,
-                                                                ui.getIncludedUnversionedFiles().size)
-          doExecuteDefault(executor)
-        }
-      }
-      true
-    }
+  private fun executeDefault(executor: CommitExecutor?): Boolean {
+    val proceed = checkCommit(executor) &&
+                  addUnversionedFiles() &&
+                  saveCommitOptions()
+    if (!proceed) return false
 
-  private fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean =
-    checkCommit(executor) &&
-    canExecute(executor) &&
-    saveCommitOptions() &&
-    run {
-      saveCommitMessage(true)
-      refreshChanges {
-        workflow.continueExecution {
-          updateWorkflow()
-          CommitSessionCollector.getInstance(project).logCommit(executor.id,
-                                                                ui.getIncludedChanges().size,
-                                                                ui.getIncludedUnversionedFiles().size)
-          doExecuteCustom(executor, session)
-        }
+    saveCommitMessage(true)
+    logCommitEvent(executor)
+
+    refreshChanges {
+      workflow.continueExecution {
+        updateWorkflow()
+        doExecuteDefault(executor)
       }
-      true
     }
+    return true
+  }
+
+  private fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean {
+    val proceed = checkCommit(executor) &&
+                  canExecute(executor) &&
+                  saveCommitOptions()
+    if (!proceed) return false
+
+    saveCommitMessage(true)
+    logCommitEvent(executor)
+
+    refreshChanges {
+      workflow.continueExecution {
+        updateWorkflow()
+        doExecuteCustom(executor, session)
+      }
+    }
+    return true
+  }
+
+  private fun logCommitEvent(executor: CommitExecutor?) {
+    CommitSessionCollector.getInstance(project).logCommit(executor?.id,
+                                                          ui.getIncludedChanges().size,
+                                                          ui.getIncludedUnversionedFiles().size)
+  }
 
   protected open fun updateWorkflow() = Unit
 

@@ -31,9 +31,6 @@ final class JavaPluginLayout {
         // JavacRemoteProto generated against protobuf-java6; don't let it sneak into the IDE classpath and shadow its JavacRemoteProto.
         spec.withModule("intellij.platform.jps.build.javac.rt.rpc", "rt/jps-javac-rt-rpc.jar")
         spec.withModuleLibrary("protobuf-java6", "intellij.platform.jps.build.javac.rt.rpc", "rt")
-        // used by JPS, cannot be packed into 3rd-party.jar
-        //noinspection SpellCheckingInspection
-        spec.withModuleLibrary("qdox-java-parser", "intellij.platform.jps.build", "qdox.jar")
 
         for (String moduleName in List.of(
           "intellij.java.compiler.antTasks",
@@ -44,6 +41,7 @@ final class JavaPluginLayout {
           spec.withModule(moduleName, "javac2.jar")
         }
 
+        // api modules
         for (String moduleName in List.of(
           "intellij.java.compiler",
           "intellij.java.debugger",
@@ -57,7 +55,7 @@ final class JavaPluginLayout {
           "intellij.jsp",
           "intellij.platform.uast"
         )) {
-          spec.withModule(moduleName, "java-api.jar")
+          spec.withModule(moduleName, mainJarName)
         }
 
         for (String moduleName in List.of(

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -68,7 +68,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled;
 import static com.intellij.lang.documentation.ide.impl.DocumentationManager.instance;
 
-class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRenderer {
+final class DocRenderer implements CustomFoldRegionRenderer {
   private static final Logger LOG = Logger.getInstance(DocRenderer.class);
   private static final Key<EditorPane> CACHED_LOADING_PANE = Key.create("cached.loading.pane");
   private static final DocRendererMemoryManager MEMORY_MANAGER = new DocRendererMemoryManager();
@@ -95,73 +95,38 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
   DocRenderer(@NotNull DocRenderItem item) {
     myItem = item;
   }
-
-  private boolean useOldBackend() {
-    return myItem.useOldBackend();
-  }
-
   void update(boolean updateSize, boolean updateContent, List<Runnable> foldingTasks) {
-    if (useOldBackend()) {
-      Inlay<DocRenderer> inlay = myItem.inlay;
-      if (inlay != null) {
-        if (updateSize) {
-          myCachedWidth = -1;
-          myCachedHeight = -1;
-        }
-        myContentUpdateNeeded = updateContent;
-        inlay.update();
+    CustomFoldRegion foldRegion = myItem.foldRegion;
+    if (foldRegion != null) {
+      if (updateSize) {
+        myCachedWidth = -1;
+        myCachedHeight = -1;
+      }
+      myContentUpdateNeeded = updateContent;
+      Runnable task = () -> foldRegion.update();
+      if (foldingTasks == null) {
+        task.run();
+      }
+      else {
+        foldingTasks.add(task);
       }
     }
-    else {
-      FoldRegion foldRegion = myItem.foldRegion;
-      if (foldRegion instanceof CustomFoldRegion) {
-        if (updateSize) {
-          myCachedWidth = -1;
-          myCachedHeight = -1;
-        }
-        myContentUpdateNeeded = updateContent;
-        Runnable task = () -> ((CustomFoldRegion)foldRegion).update();
-        if (foldingTasks == null) {
-          task.run();
-        }
-        else {
-          foldingTasks.add(task);
-        }
-      }
-    }
-  }
-
-  @Override
-  public int calcWidthInPixels(@NotNull Inlay inlay) {
-    return doCalcWidth(inlay.getEditor());
   }
 
   @Override
   public int calcWidthInPixels(@NotNull CustomFoldRegion region) {
-    return doCalcWidth(region.getEditor());
-  }
-
-  @Override
-  public int calcHeightInPixels(@NotNull Inlay inlay) {
-    return doCalcHeight(inlay.getEditor());
-  }
-
-  @Override
-  public int calcHeightInPixels(@NotNull CustomFoldRegion region) {
-    return doCalcHeight(region.getEditor());
-  }
-
-  private int doCalcWidth(Editor editor) {
     if (myCachedWidth < 0) {
-      return myCachedWidth = calcWidth(editor);
+      return myCachedWidth = calcWidth(region.getEditor());
     }
     else {
       return myCachedWidth;
     }
   }
 
-  private int doCalcHeight(Editor editor) {
+  @Override
+  public int calcHeightInPixels(@NotNull CustomFoldRegion region) {
     if (myCachedHeight < 0) {
+      Editor editor = region.getEditor();
       int indent = 0;
       // optimize editor opening: skip 'proper' width calculation for 'Loading...' inlays
       if (myItem.textToRender != null) {
@@ -178,30 +143,19 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
   }
 
   @Override
-  public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
-    doPaint(inlay.getEditor(), g, r.x, r.y, r.width, r.height, textAttributes);
-  }
-
-  @Override
   public void paint(@NotNull CustomFoldRegion region,
                     @NotNull Graphics2D g,
                     @NotNull Rectangle2D r,
                     @NotNull TextAttributes textAttributes) {
-    doPaint(region.getEditor(), g, (int)r.getX(), (int)r.getY(), (int)r.getWidth(), (int)r.getHeight(), textAttributes);
-  }
-
-  private void doPaint(@NotNull Editor editor,
-                       @NotNull Graphics g,
-                       int x, int y, int width, int height,
-                       @NotNull TextAttributes textAttributes) {
     int startX = calcInlayStartX();
-    int endX = x + width;
+    int endX = (int)r.getX() + (int)r.getWidth();
     if (startX >= endX) return;
     int margin = scale(TOP_BOTTOM_MARGINS);
-    int filledHeight = height - margin * 2;
+    int filledHeight = (int)r.getHeight() - margin * 2;
     if (filledHeight <= 0) return;
-    int filledStartY = y + margin;
+    int filledStartY = (int)r.getY() + margin;
 
+    Editor editor = region.getEditor();
     Color defaultBgColor = ((EditorEx)editor).getBackgroundColor();
     Color currentBgColor = textAttributes.getBackgroundColor();
     Color bgColor = currentBgColor == null ? defaultBgColor
@@ -211,10 +165,10 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
       int arcDiameter = ARC_RADIUS * 2;
       if (endX - startX >= arcDiameter) {
         g.fillRect(startX, filledStartY, endX - startX - ARC_RADIUS, filledHeight);
-        Object savedHint = ((Graphics2D)g).getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-        ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        Object savedHint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.fillRoundRect(endX - arcDiameter, filledStartY, arcDiameter, filledHeight, arcDiameter, arcDiameter);
-        ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, savedHint);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, savedHint);
       }
       else {
         g.fillRect(startX, filledStartY, endX - startX, filledHeight);
@@ -237,17 +191,7 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
   }
 
   @Override
-  public GutterIconRenderer calcGutterIconRenderer(@NotNull Inlay inlay) {
-    return doCalcGutterRenderer();
-  }
-
-  @Override
   public @Nullable GutterIconRenderer calcGutterIconRenderer(@NotNull CustomFoldRegion region) {
-    return doCalcGutterRenderer();
-  }
-
-  @Nullable
-  private GutterIconRenderer doCalcGutterRenderer() {
     DocRenderItem.MyGutterIconRenderer highlighterIconRenderer =
       (DocRenderItem.MyGutterIconRenderer)myItem.highlighter.getGutterIconRenderer();
     return highlighterIconRenderer == null ? null : myItem.new MyGutterIconRenderer(AllIcons.Gutter.JavadocEdit,
@@ -255,17 +199,7 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
   }
 
   @Override
-  public ActionGroup getContextMenuGroup(@NotNull Inlay inlay) {
-    return doGetContextMenu();
-  }
-
-  @Override
-  public @Nullable ActionGroup getContextMenuGroup(@NotNull CustomFoldRegion region) {
-    return doGetContextMenu();
-  }
-
-  @NotNull
-  private DefaultActionGroup doGetContextMenu() {
+  public ActionGroup getContextMenuGroup(@NotNull CustomFoldRegion region) {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new CopySelection());
     group.addSeparator();
@@ -511,18 +445,9 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
   }
 
   private @NotNull Point popupPosition(@NotNull Rectangle2D linkLocationWithinInlay) {
-    Point rendererPosition;
-    Rectangle relativeBounds;
-    if (useOldBackend()) {
-      Inlay<DocRenderer> inlay = myItem.inlay;
-      rendererPosition = Objects.requireNonNull(inlay.getBounds()).getLocation();
-      relativeBounds = getEditorPaneBoundsWithinRenderer(inlay.getWidthInPixels(), inlay.getHeightInPixels());
-    }
-    else {
-      CustomFoldRegion foldRegion = (CustomFoldRegion)myItem.foldRegion;
-      rendererPosition = Objects.requireNonNull(foldRegion.getLocation());
-      relativeBounds = getEditorPaneBoundsWithinRenderer(foldRegion.getWidthInPixels(), foldRegion.getHeightInPixels());
-    }
+    CustomFoldRegion foldRegion = myItem.foldRegion;
+    Point rendererPosition = Objects.requireNonNull(foldRegion.getLocation());
+    Rectangle relativeBounds = getEditorPaneBoundsWithinRenderer(foldRegion.getWidthInPixels(), foldRegion.getHeightInPixels());
     return new Point(
       rendererPosition.x + relativeBounds.x + (int)linkLocationWithinInlay.getX(),
       rendererPosition.y + relativeBounds.y + (int)Math.ceil(linkLocationWithinInlay.getMaxY())
@@ -551,7 +476,7 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
     String linkColorHex = ColorUtil.toHex(linkColor);
     if (!Objects.equals(linkColorHex, ourCachedStyleSheetLinkColor)) {
       String editorFontNamePlaceHolder = EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER;
-      ourCachedStyleSheet = StyleSheetUtil.createStyleSheet(
+      ourCachedStyleSheet = StyleSheetUtil.loadStyleSheet(
         "body {overflow-wrap: anywhere}" + // supported by JetBrains Runtime
         "code {font-family: \"" + editorFontNamePlaceHolder + "\"}" +
         "pre {font-family: \"" + editorFontNamePlaceHolder + "\";" +
@@ -610,15 +535,9 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
     }
 
     private void repaintRenderer() {
-      if (useOldBackend()) {
-        Inlay<DocRenderer> inlay = myItem.inlay;
-        if (inlay != null) inlay.repaint();
-      }
-      else {
-        FoldRegion foldRegion = myItem.foldRegion;
-        if (foldRegion instanceof CustomFoldRegion) {
-          ((CustomFoldRegion)foldRegion).repaint();
-        }
+      CustomFoldRegion foldRegion = myItem.foldRegion;
+      if (foldRegion != null) {
+        foldRegion.repaint();
       }
     }
 
@@ -647,31 +566,15 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
       if (myPane != this) {
         return null;
       }
-      Point rendererLocation;
-      Rectangle boundsWithinRenderer;
-      if (useOldBackend()) {
-        Inlay<DocRenderer> inlay = myItem.inlay;
-        if (inlay == null || inlay.getRenderer() != DocRenderer.this) {
-          return null;
-        }
-        Rectangle bounds = inlay.getBounds();
-        if (bounds == null) {
-          return null;
-        }
-        rendererLocation = bounds.getLocation();
-        boundsWithinRenderer = getEditorPaneBoundsWithinRenderer(inlay.getWidthInPixels(), inlay.getHeightInPixels());
+      CustomFoldRegion foldRegion = myItem.foldRegion;
+      if (foldRegion == null || foldRegion.getRenderer() != DocRenderer.this) {
+        return null;
       }
-      else {
-        CustomFoldRegion foldRegion = (CustomFoldRegion)myItem.foldRegion;
-        if (foldRegion == null || foldRegion.getRenderer() != DocRenderer.this) {
-          return null;
-        }
-        rendererLocation = foldRegion.getLocation();
-        if (rendererLocation == null) {
-          return null;
-        }
-        boundsWithinRenderer = getEditorPaneBoundsWithinRenderer(foldRegion.getWidthInPixels(), foldRegion.getHeightInPixels());
+      Point rendererLocation = foldRegion.getLocation();
+      if (rendererLocation == null) {
+        return null;
       }
+      Rectangle boundsWithinRenderer = getEditorPaneBoundsWithinRenderer(foldRegion.getWidthInPixels(), foldRegion.getHeightInPixels());
       Rectangle2D locationInPane;
       try {
         locationInPane = modelToView2D(getSelectionStart());
@@ -690,17 +593,9 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
           myRepaintScheduled.set(false);
           myUpdateScheduled.set(false);
           if (this == myPane) {
-            if (useOldBackend()) {
-              Inlay<DocRenderer> inlay = myItem.inlay;
-              if (inlay != null) {
-                DocRenderItemUpdater.getInstance().updateInlays(Collections.singleton(inlay), false);
-              }
-            }
-            else {
-              FoldRegion foldRegion = myItem.foldRegion;
-              if (foldRegion instanceof CustomFoldRegion) {
-                DocRenderItemUpdater.getInstance().updateFoldRegions(Collections.singleton((CustomFoldRegion)foldRegion), false);
-              }
+            CustomFoldRegion foldRegion = myItem.foldRegion;
+            if (foldRegion != null) {
+              DocRenderItemUpdater.getInstance().updateFoldRegions(Collections.singleton(foldRegion), false);
             }
           }
         });

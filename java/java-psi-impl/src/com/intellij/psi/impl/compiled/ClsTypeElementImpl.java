@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -9,6 +9,7 @@ import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.impl.cache.TypeAnnotationContainer;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import one.util.streamex.StreamEx;
@@ -102,9 +103,11 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.TYPE);
 
+    PsiTypeElement mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
     ClsElementImpl child = myChild.getValue();
-    if (child != null) {
-      child.setMirror(element.getFirstChildNode());
+    PsiJavaCodeReferenceElement innerRefElement = mirror.getInnermostComponentReferenceElement();
+    if (child instanceof PsiJavaCodeReferenceElement && innerRefElement != null) {
+      child.setMirror(SourceTreeToPsiMap.psiToTreeNotNull(innerRefElement));
     }
   }
 

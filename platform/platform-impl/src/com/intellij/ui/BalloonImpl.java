@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.application.Topics;
@@ -458,7 +458,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   }
 
   private Insets getInsetsCopy() {
-    return JBUI.insets(myBorderInsets);
+    return JBInsets.create(myBorderInsets);
   }
 
   private void show(RelativePoint target, AbstractPosition position) {

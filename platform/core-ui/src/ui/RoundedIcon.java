@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.IconLoader;
@@ -23,7 +23,7 @@ import java.awt.image.BufferedImage;
 import java.util.Objects;
 
 @ApiStatus.Experimental
-public class RoundedIcon extends JBScalableIcon implements DarkIconProvider, IconWithToolTip {
+public final class RoundedIcon extends JBScalableIcon implements DarkIconProvider, IconWithToolTip {
   private final Icon mySourceIcon;
   private final double myArcRatio;
   private final boolean mySuperEllipse;

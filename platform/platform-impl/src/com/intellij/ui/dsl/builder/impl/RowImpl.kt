@@ -11,6 +11,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsContexts
@@ -25,6 +26,7 @@ import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.builder.components.SegmentedButtonAction
@@ -88,6 +90,11 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun resizableRow(): RowImpl {
     resizableRow = true
+    return this
+  }
+
+  override fun rowComment(comment: String, maxLineLength: Int): Row {
+    this.rowComment = ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
     return this
   }
 
@@ -191,6 +198,10 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(JBCheckBox(text))
   }
 
+  override fun radioButton(text: String): Cell<JBRadioButton> {
+    return radioButton(text, null)
+  }
+
   override fun radioButton(text: String, value: Any?): Cell<JBRadioButton> {
     val buttonsGroup = dialogPanelConfig.context.getButtonsGroup() ?: throw UiDslException(
       "Button group must be defined before using radio button")
@@ -231,6 +242,13 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(toolbar)
   }
 
+  override fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> String): SegmentedButton<T> {
+    val result = SegmentedButtonImpl(this, renderer)
+    result.items(items)
+    cells.add(result)
+    return result
+  }
+
   override fun slider(min: Int, max: Int, minorTickSpacing: Int, majorTickSpacing: Int): Cell<JSlider> {
     val slider = JSlider()
     UIUtil.setSliderIsFilled(slider, true)
@@ -248,15 +266,28 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(Label(text))
   }
 
+  override fun labelHtml(text: String, action: HyperlinkEventAction): Cell<JEditorPane> {
+    return text(removeHtml(text), MAX_LINE_LENGTH_WORD_WRAP, action)
+  }
+
   override fun text(@NlsContexts.Label text: String, maxLineLength: Int, action: HyperlinkEventAction): Cell<JEditorPane> {
     val dslLabel = DslLabel(DslLabelType.LABEL)
     dslLabel.action = action
-    dslLabel.setHtmlText(text, maxLineLength)
+    dslLabel.maxLineLength = maxLineLength
+    dslLabel.text = text
     return cell(dslLabel)
+  }
+
+  override fun comment(@NlsContexts.DetailedDescription text: String, maxLineLength: Int): Cell<JLabel> {
+    return cell(ComponentPanelBuilder.createCommentComponent(text, true, maxLineLength, true))
   }
 
   override fun comment(comment: String, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<JEditorPane> {
     return cell(createComment(comment, maxLineLength, action))
+  }
+
+  override fun commentNoWrap(text: String): Cell<JLabel> {
+    return cell(ComponentPanelBuilder.createNonWrappingCommentComponent(text))
   }
 
   override fun commentHtml(text: String, action: HyperlinkEventAction): Cell<JEditorPane> {
@@ -364,14 +395,20 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(textArea, JBScrollPane(textArea))
   }
 
-  override fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
+  override fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<in T?>?): Cell<ComboBox<T>> {
     val component = ComboBox(model)
     component.renderer = renderer ?: SimpleListCellRenderer.create("") { it.toString() }
     return cell(component)
   }
 
-  override fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
+  override fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<in T?>?): Cell<ComboBox<T>> {
     val component = ComboBox(DefaultComboBoxModel(Vector(items)))
+    component.renderer = renderer ?: SimpleListCellRenderer.create("") { it.toString() }
+    return cell(component)
+  }
+
+  override fun <T> comboBox(items: Array<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
+    val component = ComboBox(items)
     component.renderer = renderer ?: SimpleListCellRenderer.create("") { it.toString() }
     return cell(component)
   }

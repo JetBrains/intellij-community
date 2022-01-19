@@ -3,15 +3,18 @@ package com.intellij.settingsSync
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.settingsSync.SettingsSyncSettings.Companion.FILE_SPEC
 import com.intellij.util.EventDispatcher
 import java.util.*
 
-@State(name = "SettingsSyncSettings", storages = [Storage("settingsSync.xml")])
+@State(name = "SettingsSyncSettings", storages = [Storage(FILE_SPEC)])
 internal class SettingsSyncSettings : SimplePersistentStateComponent<SettingsSyncSettings.SettingsSyncSettingsState>(
   SettingsSyncSettingsState()) {
 
   companion object {
     fun getInstance() = ApplicationManager.getApplication().getService(SettingsSyncSettings::class.java)
+
+    const val FILE_SPEC = "settingsSync.xml"
   }
 
   private val evenDispatcher = EventDispatcher.create(Listener::class.java)

@@ -8,11 +8,11 @@ import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionP
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.observable.properties.AtomicObservableProperty
 import com.intellij.openapi.observable.properties.transform
+import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.ui.layout.*
 import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 

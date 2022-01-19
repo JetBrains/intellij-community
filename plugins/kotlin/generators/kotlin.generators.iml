@@ -23,7 +23,6 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.tests" />
     <orderEntry type="module" module-name="kotlin.j2k.old.tests" />
     <orderEntry type="module" module-name="kotlin.j2k.new.tests" />
-    <orderEntry type="module" module-name="kotlin.jps-plugin" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-fir" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
@@ -33,7 +32,6 @@
     <orderEntry type="module" module-name="intellij.platform.jps.build" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.jps-plugin.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.refIndex.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.coverage.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.copyright.tests" scope="TEST" />

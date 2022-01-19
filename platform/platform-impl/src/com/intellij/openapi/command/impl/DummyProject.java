@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -20,7 +20,7 @@ import org.picocontainer.PicoContainer;
 import java.util.Map;
 
 public final class DummyProject extends UserDataHolderBase implements Project {
-  private static class DummyProjectHolder {
+  private static final class DummyProjectHolder {
     private static final DummyProject ourInstance = new DummyProject();
   }
 

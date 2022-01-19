@@ -33,7 +33,7 @@ internal class VcsLogEditorTabsWatcher(private val project: Project,
 
   override fun closeTabs(tabs: List<VcsLogWindow>) {
     val editorTabs = tabs.filterIsInstance(VcsLogEditorTab::class.java).filter { it.isClosedOnDispose }.map { it.id }
-    val closed = closeLogTabs(project, editorTabs)
+    val closed = VcsLogEditorUtil.closeLogTabs(project, editorTabs)
     LOG.assertTrue(closed, "Could not close tabs: $editorTabs")
   }
 
@@ -50,7 +50,7 @@ internal class VcsLogEditorTabsWatcher(private val project: Project,
   private inner class MyFileManagerListener : FileEditorManagerListener {
     override fun selectionChanged(e: FileEditorManagerEvent) {
       e.newEditor?.let { editor ->
-        for (tabId in getLogIds(editor)) {
+        for (tabId in VcsLogEditorUtil.getLogIds(editor)) {
           tabSelectedCallback(tabId)
         }
       }
@@ -61,7 +61,7 @@ internal class VcsLogEditorTabsWatcher(private val project: Project,
     private val LOG = Logger.getInstance(VcsLogEditorTabsWatcher::class.java)
 
     private fun getSelectedEditorTabIds(project: Project): Set<String> {
-      return findSelectedLogIds(project)
+      return VcsLogEditorUtil.findSelectedLogIds(project)
     }
   }
 }

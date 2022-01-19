@@ -275,9 +275,7 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
     def attributes = valueElement.attributeList.attributes
     assert ["attr1", "attr2"] == attributes.collect { it.name }
     assert ['"Value1"', "value2"] == attributes.collect { it.value.text }
-    assert ['    Body Line 1', '    Body Line 2', ' '] == valueElement.body.children.findAll {
-      it.node.elementType == JavaDocTokenType.DOC_COMMENT_DATA
-    }.collect { it.text }
+    assert ['    Body Line 1', '    Body Line 2', ' '] == valueElement.body.content.collect { it.text }
   }
 
   private void withLanguageLevel(LanguageLevel level, Runnable r) {

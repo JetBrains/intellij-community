@@ -3,7 +3,7 @@ class Foo {
       try {
           new AddException().foo();
       } catch (java.io.IOException e) {
-          e.printStackTrace();
+          throw new RuntimeException(e);
       }
   }
 }

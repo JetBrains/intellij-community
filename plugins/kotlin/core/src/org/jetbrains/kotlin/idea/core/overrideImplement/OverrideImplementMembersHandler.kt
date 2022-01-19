@@ -145,7 +145,7 @@ abstract class OverrideImplementMembersHandler : LanguageCodeInsightActionHandle
                 val lastElement = classOrObject.declarations.lastOrNull()
                 val selectedMemberDescriptor = selectedMemberDescriptors[selectedElement] ?: return lastElement
                 val superMemberDescriptors = allSuperMemberDescriptors[selectedMemberDescriptor.containingDeclaration] ?: return lastElement
-                val index = superMemberDescriptors.indexOf(selectedMemberDescriptor)
+                val index = superMemberDescriptors.indexOf(selectedMemberDescriptor.original)
                 if (index == -1) return lastElement
                 val classDescriptor = classOrObject.descriptor as? ClassDescriptor ?: return lastElement
 

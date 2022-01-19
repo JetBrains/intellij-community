@@ -1,6 +1,7 @@
 package com.jetbrains.python.markdown
 
 import com.jetbrains.python.fixtures.PyTestCase
+import com.jetbrains.python.inspections.PyTypeCheckerInspection
 
 /**
  * Tests for [PyCodeFenceLanguageProvider].
@@ -125,6 +126,28 @@ class PyCodeFenceTest : PyTestCase() {
     """.trimIndent())
     myFixture.completeBasic()
     assertContainsElements(lookupStrings, "doctest", "python", "pycon")
+  }
+
+  //PY-40313
+  fun testStringsAndBytesResolvedCorrectlyInPythonFragment() {
+    myFixture.configureByText("a.md", """
+    ```python
+    def expect_str(s:str):
+        pass
+    
+    def expect_bytes(b:bytes):
+        pass
+    
+    # Should not warn
+    expect_str("abc")
+    
+    # Should warn
+    expect_bytes(<warning descr="Expected type 'bytes', got 'str' instead">"abc"</warning>)
+    ```
+    """.trimIndent())
+    myFixture.enableInspections(PyTypeCheckerInspection::class.java);
+    myFixture.checkHighlighting(true, false, true);
+    assertSdkRootsNotParsed(myFixture.file)
   }
 
   private val lookupStrings: List<String>

@@ -12,9 +12,9 @@ class CatchExceptions {
 		try {
 		foo();
 		} catch (FileNotFoundException e) {
-            <selection>e.printStackTrace();</selection>
+            <selection><caret>throw new RuntimeException(e);</selection>
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 }

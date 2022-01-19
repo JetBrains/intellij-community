@@ -250,6 +250,11 @@ final class BuildOptions {
 
   static final String TARGET_OS = "intellij.build.target.os"
 
+  /**
+   * See https://reproducible-builds.org/specs/source-date-epoch/
+   */
+  long buildDateInSeconds = System.getenv("SOURCE_DATE_EPOCH")?.toLong() ?: System.currentTimeSeconds()
+
   BuildOptions() {
     targetOS = System.getProperty(TARGET_OS)
     if (targetOS == OS_CURRENT) {

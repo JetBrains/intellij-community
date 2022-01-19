@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
@@ -24,7 +24,6 @@ import com.intellij.ide.ui.TopHitCache
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.ide.util.TipDialog
 import com.intellij.idea.IdeaLogger
-import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.lang.Language
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -95,9 +94,6 @@ private val LOG = logger<DynamicPlugins>()
 private val classloadersFromUnloadedPlugins = mutableMapOf<PluginId, WeakList<PluginClassLoader>>()
 
 private const val GROUP_ID = "Dynamic plugin installation"
-private const val LOAD_EVENT_ID = "load"
-private const val UNLOAD_SUCCESS_EVENT_ID = "unload.success"
-private const val UNLOAD_FAILURE_EVENT_ID = "unload.fail"
 
 object DynamicPlugins {
   @JvmStatic
@@ -474,7 +470,7 @@ object DynamicPlugins {
     }
     catch (e: Exception) {
       logger<DynamicPlugins>().error(e)
-      reportOperationToFus(pluginDescriptor, eventId = UNLOAD_FAILURE_EVENT_ID) // TODO move outside
+      logDescriptorUnload(pluginDescriptor, success = false)
       return false
     }
 
@@ -597,8 +593,7 @@ object DynamicPlugins {
           InstalledPluginsState.getInstance().isRestartRequired = true
         }
 
-        reportOperationToFus(pluginDescriptor,
-                             if (classLoaderUnloaded) UNLOAD_SUCCESS_EVENT_ID else UNLOAD_FAILURE_EVENT_ID) // TODO move outside
+        logDescriptorUnload(pluginDescriptor, success = classLoaderUnloaded)
       }
     }
 
@@ -849,7 +844,7 @@ object DynamicPlugins {
 
         listenerCallbacks.forEach(Runnable::run)
 
-        reportOperationToFus(pluginDescriptor, eventId = LOAD_EVENT_ID) // TODO move outside
+        logDescriptorLoad(pluginDescriptor)
         LOG.info("Plugin ${pluginDescriptor.pluginId} loaded without restart in ${System.currentTimeMillis() - loadStartTime} ms")
       }
       finally {
@@ -1362,11 +1357,4 @@ private fun clearCachedValues() {
   for (project in ProjectUtil.getOpenProjects()) {
     (CachedValuesManager.getManager(project) as? CachedValuesManagerImpl)?.clearCachedValues()
   }
-}
-
-private fun reportOperationToFus(
-  descriptor: IdeaPluginDescriptorImpl,
-  eventId: String,
-) {
-    PluginsDynamicCollector.log(eventId, getPluginInfoByDescriptor(descriptor))
 }

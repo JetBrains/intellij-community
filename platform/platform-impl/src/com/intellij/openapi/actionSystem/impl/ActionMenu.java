@@ -383,10 +383,6 @@ public final class ActionMenu extends JBMenu {
   }
 
   public void fillMenu() {
-    Utils.performWithRetries(this::fillMenuInner, () -> !isSelected());
-  }
-
-  private void fillMenuInner() {
     DataContext context;
 
     if (myContext != null) {
@@ -405,7 +401,7 @@ public final class ActionMenu extends JBMenu {
 
     final boolean isDarkMenu = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar();
     Utils.fillMenu(myGroup.getAction(), this, myMnemonicEnabled, myPresentationFactory, context, myPlace, true, isDarkMenu,
-                   RelativePoint.getNorthEastOf(this));
+                   RelativePoint.getNorthEastOf(this), () -> !isSelected());
   }
 
   private static final class UsabilityHelper implements IdeEventQueue.EventDispatcher, AWTEventListener, Disposable {

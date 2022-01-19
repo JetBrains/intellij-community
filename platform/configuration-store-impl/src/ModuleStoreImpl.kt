@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
@@ -63,7 +63,7 @@ private class TestModuleStore(module: Module) : ModuleStoreImpl(module) {
 
 // used in upsource
 abstract class ModuleStoreBase : ChildlessComponentStore(), ModuleStore {
-  final override fun isReportStatisticAllowed(stateSpec: State) = false
+  final override fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage) = false
 
   abstract override val storageManager: StateStorageManagerImpl
 

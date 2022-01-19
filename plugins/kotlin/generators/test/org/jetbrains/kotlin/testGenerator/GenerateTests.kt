@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.testGenerator
 
@@ -128,9 +128,6 @@ import org.jetbrains.kotlin.idea.stubs.AbstractResolveByStubTest
 import org.jetbrains.kotlin.idea.stubs.AbstractStubBuilderTest
 import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinConverterMultiFileTest
 import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinConverterSingleFileTest
-import org.jetbrains.kotlin.jps.build.*
-import org.jetbrains.kotlin.jps.incremental.AbstractJsProtoComparisonTest
-import org.jetbrains.kotlin.jps.incremental.AbstractJvmProtoComparisonTest
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.inference.common.AbstractCommonConstraintCollectorTest
 import org.jetbrains.kotlin.nj2k.inference.mutability.AbstractMutabilityInferenceTest
@@ -1386,69 +1383,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("jps/jps-plugin/tests") {
-        testClass<AbstractIncrementalJvmJpsTest> {
-            model("incremental/multiModule/common", pattern = DIRECTORY, targetBackend = TargetBackend.JVM_IR)
-            model("incremental/multiModule/jvm", pattern = DIRECTORY)
-            model("incremental/multiModule/multiplatform/custom", pattern = DIRECTORY, targetBackend = TargetBackend.JVM_IR)
-            model("incremental/pureKotlin", pattern = DIRECTORY, isRecursive = false, targetBackend = TargetBackend.JVM_IR)
-            model("incremental/withJava", pattern = DIRECTORY, targetBackend = TargetBackend.JVM_IR)
-            model("incremental/inlineFunCallSite", pattern = DIRECTORY, targetBackend = TargetBackend.JVM_IR)
-            model("incremental/classHierarchyAffected", pattern = DIRECTORY, targetBackend = TargetBackend.JVM_IR)
-        }
-
-        //actualizeMppJpsIncTestCaseDirs(testDataAbsoluteRoot, "incremental/multiModule/multiplatform/withGeneratedContent")
-
-        testClass<AbstractIncrementalJsJpsTest> {
-            model("incremental/multiModule/common", pattern = DIRECTORY)
-        }
-
-        testClass<AbstractMultiplatformJpsTestWithGeneratedContent> {
-            model("incremental/multiModule/multiplatform/withGeneratedContent", isRecursive = true, pattern = DIRECTORY, testClassName = "MultiplatformMultiModule")
-        }
-
-        testClass<AbstractJvmLookupTrackerTest> {
-            model("incremental/lookupTracker/jvm", pattern = DIRECTORY, isRecursive = false)
-        }
-        testClass<AbstractJsLookupTrackerTest> {
-            model("incremental/lookupTracker/js", pattern = DIRECTORY, isRecursive = false)
-        }
-        testClass<AbstractJsKlibLookupTrackerTest> { // todo: investigate why lookups are different from non-klib js
-            model("incremental/lookupTracker/jsKlib", pattern = DIRECTORY, isRecursive = false)
-        }
-
-        testClass<AbstractIncrementalLazyCachesTest> {
-            model("incremental/lazyKotlinCaches", pattern = DIRECTORY)
-            model("incremental/changeIncrementalOption", pattern = DIRECTORY)
-        }
-
-        testClass<AbstractIncrementalCacheVersionChangedTest35> {
-            model("incremental/cacheVersionChanged", pattern = DIRECTORY)
-        }
-
-        testClass<AbstractDataContainerVersionChangedTest30> {
-            model("incremental/cacheVersionChanged", pattern = DIRECTORY)
-        }
-
-        fun MutableTSuite.commonProtoComparisonTests() {
-            model("comparison/classSignatureChange", pattern = DIRECTORY)
-            model("comparison/classPrivateOnlyChange", pattern = DIRECTORY)
-            model("comparison/classMembersOnlyChanged", pattern = DIRECTORY)
-            model("comparison/packageMembers", pattern = DIRECTORY)
-            model("comparison/unchanged", pattern = DIRECTORY)
-        }
-
-        testClass<AbstractJvmProtoComparisonTest> {
-            commonProtoComparisonTests()
-            model("comparison/jvmOnly", pattern = DIRECTORY)
-        }
-
-        testClass<AbstractJsProtoComparisonTest> {
-            commonProtoComparisonTests()
-            model("comparison/jsOnly", pattern = DIRECTORY)
-        }
-    }
-
     testGroup("refIndex/tests") {
         testClass<AbstractKotlinCompilerReferenceTest> {
             model("compilerIndex", pattern = DIRECTORY, testPerClass = true)
@@ -1465,58 +1399,58 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("performance-tests", testDataPath = "../idea/tests/testData") {
         testClass<AbstractPerformanceJavaToKotlinCopyPasteConversionTest> {
-            model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = """^([^.]+)\.java$""".toRegex(), splitToBuckets = false)
+            model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = """^([^.]+)\.java$""".toRegex())
         }
 
         testClass<AbstractPerformanceNewJavaToKotlinCopyPasteConversionTest> {
-            model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = """^([^.]+)\.java$""".toRegex(), splitToBuckets = false)
+            model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = """^([^.]+)\.java$""".toRegex())
         }
 
         testClass<AbstractPerformanceLiteralKotlinToKotlinCopyPasteTest> {
-            model("copyPaste/literal", testMethodName = "doPerfTest", pattern = """^([^.]+)\.kt$""".toRegex(), splitToBuckets = false)
+            model("copyPaste/literal", testMethodName = "doPerfTest", pattern = """^([^.]+)\.kt$""".toRegex())
         }
 
         testClass<AbstractPerformanceHighlightingTest> {
-            model("highlighter", testMethodName = "doPerfTest", splitToBuckets = false)
+            model("highlighter", testMethodName = "doPerfTest")
         }
 
         testClass<AbstractPerformanceHighlightingStatNamesTest> {
-            model("highlighter", testMethodName = "doPerfTest", pattern = """^(InvokeCall)\.kt$""".toRegex(), splitToBuckets = false)
+            model("highlighter", testMethodName = "doPerfTest", pattern = """^(InvokeCall)\.kt$""".toRegex())
         }
 
         testClass<AbstractPerformanceAddImportTest> {
-            model("addImport", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS, splitToBuckets = false)
+            model("addImport", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractPerformanceTypingIndentationTest> {
-            model("editor/enterHandler", pattern = """^([^.]+)\.after\.kt.*$""".toRegex(), testMethodName = "doNewlineTest", testClassName = "DirectSettings", splitToBuckets = false)
-            model("editor/enterHandler", pattern = """^([^.]+)\.after\.inv\.kt.*$""".toRegex(), testMethodName = "doNewlineTestWithInvert", testClassName = "InvertedSettings", splitToBuckets = false)
+            model("editor/enterHandler", pattern = """^([^.]+)\.after\.kt.*$""".toRegex(), testMethodName = "doNewlineTest", testClassName = "DirectSettings")
+            model("editor/enterHandler", pattern = """^([^.]+)\.after\.inv\.kt.*$""".toRegex(), testMethodName = "doNewlineTestWithInvert", testClassName = "InvertedSettings")
         }
     }
 
     testGroup("performance-tests", testDataPath = "../completion/tests/testData") {
         testClass<AbstractPerformanceCompletionIncrementalResolveTest> {
-            model("incrementalResolve", testMethodName = "doPerfTest", splitToBuckets = false)
+            model("incrementalResolve", testMethodName = "doPerfTest")
         }
 
         testClass<AbstractPerformanceBasicCompletionHandlerTest> {
-            model("handlers/basic", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS, splitToBuckets = false)
+            model("handlers/basic", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractPerformanceBasicCompletionHandlerStatNamesTest> {
-            model("handlers/basic", testMethodName = "doPerfTest", pattern = """^(GetOperator)\.kt$""".toRegex(), splitToBuckets = false)
+            model("handlers/basic", testMethodName = "doPerfTest", pattern = """^(GetOperator)\.kt$""".toRegex())
         }
 
         testClass<AbstractPerformanceSmartCompletionHandlerTest> {
-            model("handlers/smart", testMethodName = "doPerfTest", splitToBuckets = false)
+            model("handlers/smart", testMethodName = "doPerfTest")
         }
 
         testClass<AbstractPerformanceKeywordCompletionHandlerTest> {
-            model("handlers/keywords", testMethodName = "doPerfTest", splitToBuckets = false)
+            model("handlers/keywords", testMethodName = "doPerfTest")
         }
 
         testClass<AbstractPerformanceCompletionCharFilterTest> {
-            model("handlers/charFilter", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS, splitToBuckets = false)
+            model("handlers/charFilter", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS)
         }
     }
 }

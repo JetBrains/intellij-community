@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.structureView
 
@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.Iconable
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.util.PsiIconUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
@@ -110,6 +110,6 @@ internal class KotlinStructureElementPresentation(
 
     private fun withRightArrow(str: String): String {
         val rightArrow = '\u2192'
-        return if (UIUtil.getLabelFont().canDisplay(rightArrow)) rightArrow + str else "->" + str
+        return if (StartupUiUtil.getLabelFont().canDisplay(rightArrow)) rightArrow + str else "->" + str
     }
 }

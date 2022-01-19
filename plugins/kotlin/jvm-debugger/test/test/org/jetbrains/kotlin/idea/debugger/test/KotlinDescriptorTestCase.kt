@@ -175,9 +175,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
 
         val environment = ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
             .runnerSettings(debuggerRunnerSettings)
-            .runProfile(object : MockConfiguration() {
-                override fun getProject() = myProject
-            })
+            .runProfile(MockConfiguration(myProject))
             .build()
 
         val javaCommandLineState: JavaCommandLineState = object : JavaCommandLineState(environment) {

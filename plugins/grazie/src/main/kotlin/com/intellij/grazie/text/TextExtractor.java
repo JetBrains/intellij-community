@@ -115,7 +115,7 @@ public abstract class TextExtractor {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
 
       List<TextContent> contents = obtainContents(allowedDomains, fileLanguage, each);
-      if (stamp.mayCacheNow()) {
+      if (stamp.mayCacheNow() && !contents.isEmpty()) {
         StreamEx.of(contents)
           .groupingBy(TextContent::getCommonParent)
           .forEach((commonParent, group) -> obtainCache(commonParent, COMMON_PARENT_CACHE).register(allowedDomains, group));

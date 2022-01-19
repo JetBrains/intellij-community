@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui;
 
 import com.google.common.collect.ImmutableList;
@@ -372,7 +372,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       col.setCellEditor(new StatefulValidatingCellEditor(rightEditor, getDisposable()));
       col.setCellRenderer(new ValidatingTableCellRendererWrapper(new ColoredTableCellRenderer() {
 
-        { setIpad(JBUI.emptyInsets()); } // Reset standard pads
+        {
+          setIpad(JBInsets.emptyInsets()); } // Reset standard pads
 
         @Override
         protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected,

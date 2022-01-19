@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
-import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
+import org.jetbrains.kotlin.idea.caches.trackers.KotlinPackageModificationListener
 import org.jetbrains.kotlin.idea.core.util.runInReadActionWithWriteActionPriority
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
@@ -19,8 +19,8 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 class VfsCodeBlockModificationListener: StartupActivity.Background {
     override fun runActivity(project: Project) {
-        val disposable = KotlinPluginDisposable.getInstance(project)
-        val kotlinOCBModificationListener = KotlinCodeBlockModificationListener.getInstance(project)
+        val packageModificationListener = KotlinPackageModificationListener.getInstance(project)
+        val ocbModificationListener = KotlinCodeBlockModificationListener.getInstance(project)
         val vfsEventsListener = AsyncVfsEventsListener { events: List<VFileEvent> ->
             val projectRelatedVfsFileChange = events.any { event ->
                 val file = event.takeIf { it.isFromRefresh || it is VFileContentChangeEvent }?.file ?: return@any false
@@ -30,26 +30,28 @@ class VfsCodeBlockModificationListener: StartupActivity.Background {
             }
             if (projectRelatedVfsFileChange) {
                 if (isDispatchThread()) {
-                    kotlinOCBModificationListener.incModificationCount()
+                    packageModificationListener.incModificationCount()
+                    ocbModificationListener.incModificationCount()
                 } else {
                     // it is not fully correct - OCB has to be triggered ASAP as we detect VFS-change out of IJ that
                     // can affect Kotlin resolve, we can't do that properly before Kotlin 1.6.0
                     // see [org.jetbrains.kotlin.descriptors.InvalidModuleNotifier]
                     invokeLater {
-                        kotlinOCBModificationListener.incModificationCount()
+                        packageModificationListener.incModificationCount()
+                        ocbModificationListener.incModificationCount()
                     }
                 }
             }
         }
         if (isUnitTestMode()) {
-            val connection = project.messageBus.connect(disposable)
+            val connection = project.messageBus.connect(packageModificationListener)
             connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
                 override fun after(events: List<VFileEvent>) {
                     vfsEventsListener.filesChanged(events)
                 }
             })
         } else {
-            AsyncVfsEventsPostProcessor.getInstance().addListener(vfsEventsListener, disposable)
+            AsyncVfsEventsPostProcessor.getInstance().addListener(vfsEventsListener, packageModificationListener)
         }
     }
 }

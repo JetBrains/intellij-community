@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -26,7 +26,10 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -74,7 +77,7 @@ public class BigJavaFilesPerformanceTest extends LightJavaCodeInsightFixtureTest
   public void testTypingWithInspectionsThinletBig() {
     MadTestingUtil.enableDefaultInspections(getFixture().getProject());
     long mean = doTypingTest("/psi/resolve/ThinletBig.java", 50,true);
-    Assertions.assertTrue(mean < 70);
+    Assertions.assertTrue(mean < 70, "Slow typing, delay is " + mean);
   }
 
   private void doTest(String filename, int samples, Consumer<DaemonListener> processSample) {

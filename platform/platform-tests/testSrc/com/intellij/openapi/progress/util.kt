@@ -1,37 +1,45 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.testFramework.UsefulTestCase.assertInstanceOf
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.getValue
 import com.intellij.util.setValue
-import junit.framework.TestCase.*
+import junit.framework.TestCase.assertFalse
+import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.*
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Semaphore as KSemaphore
 
 const val TEST_TIMEOUT_MS: Long = 1000
 
-fun submitTasks(service: ExecutorService, task: () -> Unit) {
-  service.execute(task)
-  service.submit(task)
-}
-
-fun submitTasksBlocking(service: ExecutorService, task: () -> Unit) {
-  val callable = Callable(task)
-  val callables = listOf(callable, callable)
-  service.invokeAny(callables) // one of callables may not be executed
-  service.invokeAll(callables)
+internal fun timeoutRunBlocking(action: suspend CoroutineScope.() -> Unit) {
+  runBlocking {
+    withTimeout(TEST_TIMEOUT_MS, action)
+  }
 }
 
 fun neverEndingStory(): Nothing {
   while (true) {
-    ProgressManager.checkCanceled()
+    Cancellation.checkCancelled()
     Thread.sleep(1)
+  }
+}
+
+fun timeoutRunBlockingWithContext(action: suspend CoroutineScope.() -> Unit) {
+  timeoutRunBlocking {
+    resetThreadContext().use {
+      action()
+    }
   }
 }
 
@@ -62,13 +70,10 @@ fun waitAssertCompletedNormally(future: Future<*>) {
 }
 
 fun waitAssertCompletedWith(future: Future<*>, clazz: KClass<out Throwable>) {
-  try {
+  val ee = assertThrows<ExecutionException> {
     future.timeoutGet()
-    fail("ExecutionException expected")
   }
-  catch (e: ExecutionException) {
-    assertInstanceOf(e.cause, clazz.java)
-  }
+  assertInstanceOf(clazz.java, ee.cause)
 }
 
 fun waitAssertCompletedWithCancellation(future: Future<*>) {
@@ -140,4 +145,31 @@ fun loggedError(canThrow: Semaphore): Throwable {
 
 internal fun withIndicator(indicator: ProgressIndicator, action: () -> Unit) {
   ProgressManager.getInstance().runProcess(action, indicator)
+}
+
+internal suspend fun <X> childCallable(cs: CoroutineScope, action: () -> X): Callable<X> {
+  val lock = KSemaphore(permits = 1, acquiredPermits = 1)
+  var callable by AtomicReference<Callable<X>>()
+  cs.launch(Dispatchers.IO) {
+    suspendCancellableCoroutine { continuation: Continuation<Unit> ->
+      callable = Callable<X> {
+        try {
+          action().also {
+            continuation.resume(Unit)
+          }
+        }
+        catch (e: JobCanceledException) {
+          continuation.resume(Unit)
+          throw e
+        }
+        catch (e: Throwable) {
+          continuation.resumeWithException(e) // fail parent scope
+          throw e
+        }
+      }
+      lock.release()
+    }
+  }
+  lock.acquire()
+  return callable
 }

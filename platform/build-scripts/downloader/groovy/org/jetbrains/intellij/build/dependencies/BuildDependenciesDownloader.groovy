@@ -2,12 +2,13 @@
 package org.jetbrains.intellij.build.dependencies
 
 import groovy.transform.CompileStatic
-import io.opentelemetry.api.GlobalOpenTelemetry
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.trace.Span
-import io.opentelemetry.api.trace.StatusCode
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesNoopTracer
+import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesSpan
+import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesTraceEventAttributes
+import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesTracer
 
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -22,10 +23,17 @@ import java.time.Instant
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Collectors
 
+@ApiStatus.Internal
 @CompileStatic
 final class BuildDependenciesDownloader {
   private static final String HTTP_HEADER_CONTENT_LENGTH = "Content-Length"
   private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build()
+
+  /**
+   * Set tracer to get telemetry. e.g. it's set for build scripts to get opentelemetry events
+   */
+  @NotNull
+  static BuildDependenciesTracer TRACER = BuildDependenciesNoopTracer.INSTANCE
 
   static void debug(String message) {
     println(message)
@@ -48,25 +56,20 @@ final class BuildDependenciesDownloader {
   }
 
   static URI getUriForMavenArtifact(String mavenRepository, String groupId, String artifactId, String version, String packaging) {
+    return getUriForMavenArtifact(mavenRepository, groupId, artifactId, version, null, packaging)
+  }
+
+  static URI getUriForMavenArtifact(String mavenRepository, String groupId, String artifactId, String version, String classifier, String packaging) {
     String result = mavenRepository
     if (!result.endsWith("/")) {
       result += "/"
     }
 
-    result += "${groupId.replace('.', '/')}/$artifactId/$version/$artifactId-$version.$packaging"
+    result += "${groupId.replace('.', '/')}/$artifactId/$version/$artifactId-$version" +
+              (classifier != null ? "-$classifier" : "") +
+              ".$packaging"
 
     return new URI(result)
-  }
-
-  static void checkCommunityRoot(BuildDependenciesCommunityRoot communityRoot) {
-    if (communityRoot == null) {
-      throw new IllegalStateException("passed community root is null")
-    }
-
-    def probeFile = communityRoot.communityRoot.resolve("intellij.idea.community.main.iml")
-    if (!Files.exists(probeFile)) {
-      throw new IllegalStateException("community root was not found at $communityRoot")
-    }
   }
 
   private static Path getProjectLocalDownloadCache(BuildDependenciesCommunityRoot communityRoot) {
@@ -76,8 +79,6 @@ final class BuildDependenciesDownloader {
   }
 
   private static Path getDownloadCachePath(BuildDependenciesCommunityRoot communityRoot) {
-    checkCommunityRoot(communityRoot)
-
     Path path
     if (TeamCityHelper.isUnderTeamCity) {
       def persistentCachePath = TeamCityHelper.systemProperties["agent.persistent.cache"]
@@ -191,22 +192,23 @@ options:${getExtractOptionsShortString(options)}\n""".getBytes(StandardCharsets.
   }
 
   static void extractFile(Path archiveFile, Path target, BuildDependenciesCommunityRoot communityRoot, BuildDependenciesExtractOptions... options) {
+    // Extracting different archive files into the same target should overwrite target each time
+    // That's why flagFile should be dependent only on target location
     Path flagFile = getProjectLocalDownloadCache(communityRoot)
-      .resolve((archiveFile.toString() + target.toString()).sha256().substring(0, 6) + "-" + archiveFile.fileName.toString() + ".flag.txt")
+      .resolve(target.toString().sha256().substring(0, 6) + "-" + target.fileName.toString() + ".flag.txt")
     extractFileWithFlagFileLocation(archiveFile, target, flagFile, options)
   }
 
   private static void downloadFile(URI uri, Path target) {
-    Attributes attributes = Attributes.of(
-      AttributeKey.stringKey("uri"), uri.toString(),
-      AttributeKey.stringKey("target"), target.toString(),
-    )
+    BuildDependenciesTraceEventAttributes attributes = TRACER.createAttributes()
+    attributes.setAttribute("uri", uri.toString())
+    attributes.setAttribute("target", target.toString())
 
-    Span span = GlobalOpenTelemetry.getTracer("build-script").spanBuilder("download").setAllAttributes(attributes).startSpan()
+    BuildDependenciesSpan span = TRACER.startSpan("download", attributes)
     try {
       Instant now = Instant.now()
       if (Files.exists(target)) {
-        span.addEvent("skip downloading because target file already exists")
+        span.addEvent("skip downloading because target file already exists", TRACER.createAttributes())
 
         // Update file modification time to maintain FIFO caches i.e.
         // in persistent cache folder on TeamCity agent
@@ -250,11 +252,11 @@ options:${getExtractOptionsShortString(options)}\n""".getBytes(StandardCharsets.
     }
     catch (Throwable e) {
       span.recordException(e)
-      span.setStatus(StatusCode.ERROR)
+      span.setStatus(BuildDependenciesSpan.SpanStatus.ERROR)
       throw e
     }
     finally {
-      span.end()
+      span.close()
     }
   }
 

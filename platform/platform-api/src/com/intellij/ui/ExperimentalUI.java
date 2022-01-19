@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.LafManager;
@@ -110,8 +110,8 @@ public final class ExperimentalUI {
 
   private static IconPathPatcher createPathPatcher() {
     Map<String, String> paths = new HashMap<>();
-    paths.put("actions/collapseall.svg", "/expui/actions/collapseAll.svg");
-    paths.put("actions/expandall.svg", "/expui/actions/expandAll.svg");
+    paths.put("actions/collapseall.svg", "/expui/general/collapseAll.svg");
+    paths.put("actions/expandall.svg", "/expui/general/expandAll.svg");
     paths.put("nodes/class.svg", "/expui/nodes/class.svg");
     paths.put("nodes/folder.svg", "/expui/nodes/folder.svg");
     paths.put("nodes/interface.svg", "/expui/nodes/interface.svg");
@@ -145,6 +145,7 @@ public final class ExperimentalUI {
     paths.put("toolwindows/toolWindowChanges.svg", "/expui/toolwindow/vcs.svg");
     paths.put("toolwindows/webToolWindow.svg", "/expui/toolwindow/web.svg");
     paths.put("actions/more.svg", "/expui/general/moreVertical.svg");
+    paths.put("actions/moreHorizontal.svg", "/expui/general/moreHorizontal.svg");
     paths.put("general/hideToolWindow.svg", "/expui/general/close.svg");
     paths.put("actions/find.svg", "/expui/general/search.svg");
     paths.put("general/gearPlain.svg", "/expui/general/settings.svg");
@@ -153,15 +154,33 @@ public final class ExperimentalUI {
     paths.put("general/chevron-right.svg", "expui/general/chevronRight.svg");
     paths.put("general/chevron-up.svg", "expui/general/chevronUp.svg");
     paths.put("vcs/branch.svg", "expui/toolwindow/vcs.svg");
+    paths.put("fileTypes/css.svg", "expui/fileTypes/css.svg");
+    paths.put("icons/Docker.svg", "expui/fileTypes/docker.svg");
+    paths.put("icons/gradle.svg", "expui/fileTypes/gradle.svg");
+    paths.put("fileTypes/html.svg", "expui/fileTypes/html.svg");
+    paths.put("nodes/ideaModule.svg", "expui/fileTypes/ideaModule.svg");
+    paths.put("fileTypes/java.svg", "expui/fileTypes/java.svg");
+    paths.put("fileTypes/javaScript.svg", "expui/fileTypes/javascript.svg");
+    paths.put("fileTypes/json.svg", "expui/fileTypes/json.svg");
+    paths.put("fileTypes/manifest.svg", "expui/fileTypes/manifest.svg");
+    paths.put("icons/php-icon.svg", "expui/fileTypes/php.svg");
+    paths.put("fileTypes/properties.svg", "expui/fileTypes/properties.svg");
+    paths.put("icons/ruby.svg", "expui/fileTypes/ruby.svg");
+    paths.put("icons/sql.svg", "expui/fileTypes/sql.svg");
+    paths.put("fileTypes/text.svg", "expui/fileTypes/text.svg");
+    paths.put("icons/fileTypes/TypeScriptFile.svg", "expui/fileTypes/typescript.svg");
+    paths.put("fileTypes/unknown.svg", "expui/fileTypes/unknown.svg");
+    paths.put("fileTypes/xml.svg", "expui/fileTypes/xml.svg");
+    paths.put("fileTypes/yaml.svg", "expui/fileTypes/yaml.svg");
     if (isNewToolbar()) {
-      paths.put("actions/execute.svg", "expui/run/widget/run.svg");
-      paths.put("actions/execute_dark.svg", "expui/run/widget/run_dark.svg");
-      paths.put("actions/startDebugger.svg", "expui/run/widget/debug.svg");
-      paths.put("actions/startDebugger_dark.svg", "expui/run/widget/debug_dark.svg");
-      paths.put("actions/restart.svg", "expui/run/widget/restart.svg");
-      paths.put("actions/restart_dark.svg", "expui/run/widget/restart_dark.svg");
-      paths.put("actions/suspend.svg", "expui/run/widget/stop.svg");
-      paths.put("actions/suspend_dark.svg", "expui/run/widget/stop_dark.svg");
+      paths.put("actions/execute.svg", "expui/run/run.svg");
+      paths.put("actions/execute_dark.svg", "expui/run/run_dark.svg");
+      paths.put("actions/startDebugger.svg", "expui/run/debug.svg");
+      paths.put("actions/startDebugger_dark.svg", "expui/run/debug_dark.svg");
+      paths.put("actions/restart.svg", "expui/run/restart.svg");
+      paths.put("actions/restart_dark.svg", "expui/run/restart_dark.svg");
+      paths.put("actions/suspend.svg", "expui/run/stop.svg");
+      paths.put("actions/suspend_dark.svg", "expui/run/stop_dark.svg");
     }
     return new IconPathPatcher() {
       @Override

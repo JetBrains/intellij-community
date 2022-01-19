@@ -6,6 +6,9 @@ import com.intellij.lang.LangBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.observable.util.onceWhenFocusGained
+import com.intellij.openapi.observable.util.whenFocusGained
+import com.intellij.openapi.observable.util.whenTextChanged
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.popup.ListPopupStep
@@ -110,7 +113,7 @@ class TextCompletionPopup<C : JTextComponent>(
         updatePopup(UpdatePopupType.SHOW_IF_HAS_VARIANCES)
       }
     }
-    textComponent.whenFirstFocusGained {
+    textComponent.onceWhenFocusGained {
       updatePopup(UpdatePopupType.SHOW_IF_HAS_VARIANCES)
     }
     textComponent.addKeyboardAction(getKeyStrokes(IdeActions.ACTION_CODE_COMPLETION)) {
@@ -121,7 +124,7 @@ class TextCompletionPopup<C : JTextComponent>(
         updatePopup(UpdatePopupType.UPDATE)
       }
     }
-    textComponent.whenTextModified {
+    textComponent.whenTextChanged {
       if (!isSkipTextUpdate.get()) {
         // Listener for caret update is invoked after all other modification listeners,
         // But we needed crop text completion by updated caret position.

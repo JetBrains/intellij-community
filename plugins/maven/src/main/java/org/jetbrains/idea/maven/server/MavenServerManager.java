@@ -542,11 +542,14 @@ public final class MavenServerManager implements Disposable {
     }
 
 
-    String userSettingsPath = MavenWslUtil.getUserSettings(project, settings.getUserSettingsFile(), settings.getMavenConfig()).getAbsolutePath();
+    String userSettingsPath =
+      MavenWslUtil.getUserSettings(project, settings.getUserSettingsFile(), settings.getMavenConfig()).getAbsolutePath();
     result.setUserSettingsPath(transformer.toRemotePath(userSettingsPath));
 
-    String globalSettingsPath = MavenWslUtil.getGlobalSettings(project, settings.getMavenHome(), settings.getMavenConfig()).getAbsolutePath();
-    result.setGlobalSettingsPath(transformer.toRemotePath(globalSettingsPath));
+    File globalSettings = MavenWslUtil.getGlobalSettings(project, settings.getMavenHome(), settings.getMavenConfig());
+    if (globalSettings != null) {
+      result.setGlobalSettingsPath(transformer.toRemotePath(globalSettings.getAbsolutePath()));
+    }
 
     String localRepository = settings.getEffectiveLocalRepository().getAbsolutePath();
 

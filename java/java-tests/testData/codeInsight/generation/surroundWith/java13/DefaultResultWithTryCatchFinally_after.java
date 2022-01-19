@@ -6,7 +6,7 @@ class C {
                 try {
                     yield "a" + "b";
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    throw new RuntimeException(e);
                 } finally {
                 }
             }

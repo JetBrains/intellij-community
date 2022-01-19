@@ -504,6 +504,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
         }
 
         val shouldPrintScannedFiles = projectIndexingHistory.scanningStatistics.any { it.scannedFiles.orEmpty().isNotEmpty() }
+        val shouldPrintProviderRoots = projectIndexingHistory.scanningStatistics.any { it.roots.isNotEmpty() }
         div(id = SECTION_SCANNING_ID) {
           h1(SECTION_SCANNING_TITLE)
           table {
@@ -519,6 +520,9 @@ fun JsonIndexDiagnostic.generateHtml(): String {
                 th("Time processing up-to-date files")
                 th("Time updating content-less indexes")
                 th("Time indexing without content")
+                if (shouldPrintProviderRoots) {
+                  th("Roots")
+                }
                 if (shouldPrintScannedFiles) {
                   th("Scanned files")
                 }
@@ -537,6 +541,15 @@ fun JsonIndexDiagnostic.generateHtml(): String {
                   td(scanningStats.timeProcessingUpToDateFiles.presentableDuration())
                   td(scanningStats.timeUpdatingContentLessIndexes.presentableDuration())
                   td(scanningStats.timeIndexingWithoutContent.presentableDuration())
+                  if (shouldPrintProviderRoots) {
+                    td {
+                      textarea {
+                        rawText(
+                          scanningStats.roots.sorted().joinToString("\n")
+                        )
+                      }
+                    }
+                  }
                   if (shouldPrintScannedFiles) {
                     td {
                       textarea {

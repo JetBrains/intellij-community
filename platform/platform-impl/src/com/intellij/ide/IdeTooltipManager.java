@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.application.options.RegistryManager;
@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -21,6 +20,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,10 +53,11 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
   private static final MouseEventAdapter<Void> DUMMY_LISTENER = new MouseEventAdapter<>(null);
 
   public static final Color GRAPHITE_COLOR = new Color(100, 100, 100, 230);
-  private final RegistryValue myIsEnabled;
-  private final RegistryValue myHelpTooltip;
+  private static final String IDE_TOOLTIP_CALLOUT_KEY = "ide.tooltip.callout";
+  private static final String IDE_HELPTOOLTIP_ENABLED_KEY = "ide.helptooltip.enabled";
+  private boolean isEnabled;
 
-  private HelpTooltipManager myHelpTooltipManager;
+  private HelpTooltipManager helpTooltipManager;
   private boolean myHideHelpTooltip;
 
   private volatile Component myCurrentComponent;
@@ -68,9 +69,9 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
   private MouseEvent myCurrentEvent;
   private boolean myCurrentTipIsCentered;
 
-  private Disposable myLastDisposable;
+  private Disposable lastDisposable;
 
-  private Runnable myHideRunnable;
+  private Runnable hideRunnable;
 
   private boolean myShowDelay = true;
 
@@ -79,40 +80,43 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
   private int myX;
   private int myY;
 
-  private IdeTooltip myCurrentTooltip;
+  private IdeTooltip currentTooltip;
   private Runnable myShowRequest;
   private IdeTooltip myQueuedTooltip;
 
   public IdeTooltipManager() {
-    RegistryManager registryManager = RegistryManager.getInstance();
-    myIsEnabled = registryManager.get("ide.tooltip.callout");
-    myHelpTooltip = registryManager.get("ide.helptooltip.enabled");
-
-    RegistryValueListener listener = new RegistryValueListener() {
-      @Override
-      public void afterValueChanged(@NotNull RegistryValue value) {
-        processEnabled();
-      }
-    };
-    Application app = ApplicationManager.getApplication();
-    myIsEnabled.addListener(listener, app);
-    myHelpTooltip.addListener(listener, app);
-
     Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
 
-    app.getMessageBus().connect().subscribe(AnActionListener.TOPIC, new AnActionListener() {
+    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
         hideCurrent(null, action, event);
       }
     });
 
-    processEnabled();
+    RegistryManager registryManager = RegistryManager.getInstance();
+    isEnabled = registryManager.is(IDE_TOOLTIP_CALLOUT_KEY);
+    processEnabled(registryManager.is(IDE_HELPTOOLTIP_ENABLED_KEY));
+  }
+
+  static final class MyRegistryListener implements RegistryValueListener {
+    @Override
+    public void afterValueChanged(@NotNull RegistryValue value) {
+      String key = value.getKey();
+      if (key.equals(IDE_TOOLTIP_CALLOUT_KEY)) {
+        IdeTooltipManager instance = getInstance();
+        instance.isEnabled = value.asBoolean();
+        instance.processEnabled(Registry.is(IDE_HELPTOOLTIP_ENABLED_KEY));
+      }
+      if (key.equals(IDE_HELPTOOLTIP_ENABLED_KEY)) {
+        getInstance().processEnabled(value.asBoolean());
+      }
+    }
   }
 
   @Override
   public void eventDispatched(AWTEvent event) {
-    if (!myIsEnabled.asBoolean()) {
+    if (!isEnabled) {
       return;
     }
 
@@ -131,8 +135,8 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
       else if (me.getID() == MouseEvent.MOUSE_EXITED) {
         // we hide tooltip (but not hint!) when it's shown over myComponent and mouse exits this component
         if (myProcessingComponent == myCurrentComponent &&
-            myCurrentTooltip != null &&
-            !myCurrentTooltip.isHint() &&
+            currentTooltip != null &&
+            !currentTooltip.isHint() &&
             myBalloon != null) {
           myBalloon.setAnimationEnabled(false);
           hideCurrent(null, null, null, null, false);
@@ -260,10 +264,10 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
                                    final boolean now) {
     IdeTooltip tooltip = getCustomTooltip(c);
     if (tooltip == null) {
-      if (myHelpTooltipManager != null) {
+      if (helpTooltipManager != null) {
         myCurrentComponent = c;
         myHideHelpTooltip = true;
-        myHelpTooltipManager.showTooltip(c, me);
+        helpTooltipManager.showTooltip(c, me);
         return;
       }
 
@@ -291,7 +295,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
         }
       }.setToCenter(toCenter).setCalloutShift(shift).setPositionChangeShift(posChangeX, posChangeY).setLayer(Balloon.Layer.top);
     }
-    else if (myCurrentTooltip == tooltip) {
+    else if (currentTooltip == tooltip) {
       return;//Don't re-show the same custom tooltip on every mouse movement
     }
 
@@ -353,7 +357,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
   }
 
   public void setCustomTooltip(JComponent component, IdeTooltip tooltip) {
-    ComponentUtil.putClientProperty(component, CUSTOM_TOOLTIP, tooltip);
+    component.putClientProperty(CUSTOM_TOOLTIP, tooltip);
     // We need to register a dummy mouse listener to make sure events will be generated for this specific component, not its parent
     component.removeMouseListener(DUMMY_LISTENER);
     component.removeMouseMotionListener(DUMMY_LISTENER);
@@ -364,7 +368,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
   }
 
   public IdeTooltip getCustomTooltip(JComponent component) {
-    return ComponentUtil.getClientProperty(component, CUSTOM_TOOLTIP);
+    return ClientProperty.get(component, CUSTOM_TOOLTIP);
   }
 
   public IdeTooltip show(final IdeTooltip tooltip, boolean now) {
@@ -471,22 +475,22 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     myX = effectivePoint.x;
     myY = effectivePoint.y;
     myCurrentTipIsCentered = toCenter;
-    myCurrentTooltip = tooltip;
+    currentTooltip = tooltip;
     myShowRequest = null;
     myQueuedComponent = null;
     myQueuedTooltip = null;
 
-    myLastDisposable = myBalloon;
-    Disposer.register(myLastDisposable, new Disposable() {
+    lastDisposable = myBalloon;
+    Disposer.register(lastDisposable, new Disposable() {
       @Override
       public void dispose() {
-        myLastDisposable = null;
+        lastDisposable = null;
       }
     });
 
     myBalloon.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
     myAlarm.addRequest(() -> {
-      if (myCurrentTooltip == tooltip && tooltip.canBeDismissedOnTimeout()) {
+      if (currentTooltip == tooltip && tooltip.canBeDismissedOnTimeout()) {
         hideCurrent(null, null, null);
       }
     }, tooltip.getDismissDelay());
@@ -540,7 +544,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
   }
 
   public boolean hasCurrent() {
-    return myCurrentTooltip != null;
+    return currentTooltip != null;
   }
 
   public boolean hideCurrent(@Nullable MouseEvent me) {
@@ -561,12 +565,12 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
                               @Nullable AnAction action,
                               @Nullable AnActionEvent event,
                               final boolean animationEnabled) {
-    if (myHelpTooltipManager != null && myHideHelpTooltip) {
+    if (helpTooltipManager != null && myHideHelpTooltip) {
       hideCurrentNow(false);
       return true;
     }
 
-    if (myCurrentTooltip != null && me != null && myCurrentTooltip.isInside(new RelativePoint(me))) {
+    if (currentTooltip != null && me != null && currentTooltip.isInside(new RelativePoint(me))) {
       if (me.getButton() == MouseEvent.NOBUTTON || myBalloon == null || isBlockClicks(myBalloon)) {
         return false;
       }
@@ -576,62 +580,62 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     myQueuedComponent = null;
     myQueuedTooltip = null;
 
-    if (myCurrentTooltip == null) return true;
+    if (currentTooltip == null) return true;
 
     if (myBalloon != null) {
       RelativePoint target = me != null ? new RelativePoint(me) : null;
       boolean isInsideOrMovingForward = target != null &&
                                         (isInside(myBalloon, target) || isMovingForward(myBalloon, target));
-      boolean canAutoHide = myCurrentTooltip.canAutohideOn(new TooltipEvent(me, isInsideOrMovingForward, action, event));
+      boolean canAutoHide = currentTooltip.canAutohideOn(new TooltipEvent(me, isInsideOrMovingForward, action, event));
       boolean implicitMouseMove = me != null &&
                                   (me.getID() == MouseEvent.MOUSE_MOVED ||
                                    me.getID() == MouseEvent.MOUSE_EXITED ||
                                    me.getID() == MouseEvent.MOUSE_ENTERED);
       if (!canAutoHide
           || (isInsideOrMovingForward && implicitMouseMove)
-          || (myCurrentTooltip.isExplicitClose() && implicitMouseMove)
-          || (tooltipToShow != null && !tooltipToShow.isHint() && Comparing.equal(myCurrentTooltip, tooltipToShow))) {
-        if (myHideRunnable != null) {
-          myHideRunnable = null;
+          || (currentTooltip.isExplicitClose() && implicitMouseMove)
+          || (tooltipToShow != null && !tooltipToShow.isHint() && Comparing.equal(currentTooltip, tooltipToShow))) {
+        if (hideRunnable != null) {
+          hideRunnable = null;
         }
         return false;
       }
     }
 
-    myHideRunnable = () -> {
-      if (myHideRunnable != null) {
+    hideRunnable = () -> {
+      if (hideRunnable != null) {
         hideCurrentNow(animationEnabled);
-        myHideRunnable = null;
+        hideRunnable = null;
       }
     };
 
     if (me != null && me.getButton() == MouseEvent.NOBUTTON) {
-      myAlarm.addRequest(myHideRunnable, RegistryManager.getInstance().intValue("ide.tooltip.autoDismissDeadZone"));
+      myAlarm.addRequest(hideRunnable, RegistryManager.getInstance().intValue("ide.tooltip.autoDismissDeadZone"));
     }
     else {
-      myHideRunnable.run();
-      myHideRunnable = null;
+      hideRunnable.run();
+      hideRunnable = null;
     }
 
     return true;
   }
 
   public void hideCurrentNow(boolean animationEnabled) {
-    if (myHelpTooltipManager != null) {
-      myHelpTooltipManager.hideTooltip();
+    if (helpTooltipManager != null) {
+      helpTooltipManager.hideTooltip();
     }
 
     if (myBalloon != null) {
       myBalloon.setAnimationEnabled(animationEnabled);
       myBalloon.hide();
-      myCurrentTooltip.onHidden();
+      currentTooltip.onHidden();
       myShowDelay = false;
       myAlarm.addRequest(() -> myShowDelay = true, RegistryManager.getInstance().intValue("ide.tooltip.reshowDelay"));
     }
 
     myHideHelpTooltip = false;
     myShowRequest = null;
-    myCurrentTooltip = null;
+    currentTooltip = null;
 
     myBalloon = null;
 
@@ -644,12 +648,12 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     myY = -1;
   }
 
-  private void processEnabled() {
-    if (myIsEnabled.asBoolean()) {
+  private void processEnabled(boolean isHelpTooltipEnabled) {
+    if (isEnabled) {
       ToolTipManager.sharedInstance().setEnabled(false);
-      if (myHelpTooltip.asBoolean()) {
-        if (myHelpTooltipManager == null) {
-          myHelpTooltipManager = new HelpTooltipManager();
+      if (isHelpTooltipEnabled) {
+        if (helpTooltipManager == null) {
+          helpTooltipManager = new HelpTooltipManager();
         }
         return;
       }
@@ -657,17 +661,17 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     else {
       ToolTipManager.sharedInstance().setEnabled(true);
     }
-    if (myHelpTooltipManager != null) {
-      myHelpTooltipManager.hideTooltip();
-      myHelpTooltipManager = null;
+    if (helpTooltipManager != null) {
+      helpTooltipManager.hideTooltip();
+      helpTooltipManager = null;
     }
   }
 
   @Override
   public void dispose() {
     hideCurrentNow(false);
-    if (myLastDisposable != null) {
-      Disposer.dispose(myLastDisposable);
+    if (lastDisposable != null) {
+      Disposer.dispose(lastDisposable);
     }
   }
 
@@ -676,15 +680,14 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
   }
 
   public void hide(@Nullable IdeTooltip tooltip) {
-    if (myCurrentTooltip == tooltip || tooltip == null || tooltip == myQueuedTooltip) {
+    if (currentTooltip == tooltip || tooltip == null || tooltip == myQueuedTooltip) {
       hideCurrent(null, null, null);
     }
   }
 
   public void cancelAutoHide() {
-    myHideRunnable = null;
+    hideRunnable = null;
   }
-
 
   public static JEditorPane initPane(@Tooltip String text, final HintHint hintHint, @Nullable final JLayeredPane layeredPane) {
     return initPane(new Html(text), hintHint, layeredPane, true);

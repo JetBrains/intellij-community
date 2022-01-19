@@ -18,7 +18,7 @@ package com.intellij.openapi.util;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Nikolay Matveev
+ * Deprecated. Use {@link java.util.function.Supplier} with {@code @NotNull} annotation on the type parameter instead.
  */
 @FunctionalInterface
 public interface NotNullComputable<T> extends Computable<T> {

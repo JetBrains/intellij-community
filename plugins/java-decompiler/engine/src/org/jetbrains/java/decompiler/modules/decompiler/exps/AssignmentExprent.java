@@ -14,10 +14,7 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public class AssignmentExprent extends Exprent {
 
@@ -140,7 +137,7 @@ public class AssignmentExprent extends Exprent {
         res.enclose("(", ")");
       }
 
-      res.prepend("(" + ExprProcessor.getCastTypeName(leftType) + ")");
+      res.prepend("(" + ExprProcessor.getCastTypeName(leftType, Collections.emptyList()) + ")");
     }
 
     buffer.append(condType == CONDITION_NONE ? " = " : OPERATORS[condType]).append(res);

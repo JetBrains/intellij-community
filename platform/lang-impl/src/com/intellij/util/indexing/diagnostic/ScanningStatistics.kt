@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.UnindexedFileStatus
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths
+import com.intellij.util.indexing.roots.IndexableFilesIterator
 
 class ScanningStatistics(val fileSetName: String) {
   var numberOfScannedFiles: Int = 0
@@ -28,6 +29,7 @@ class ScanningStatistics(val fileSetName: String) {
   var timeUpdatingContentLessIndexes: TimeNano = 0
   var timeIndexingWithoutContent: TimeNano = 0
 
+  var providerRoots = emptyList<String>()
   val scannedFiles = arrayListOf<ScannedFile>()
 
   data class ScannedFile(val portableFilePath: PortableFilePath, val isUpToDate: Boolean, val wasFullyIndexedByInfrastructureExtension: Boolean)
@@ -64,5 +66,25 @@ class ScanningStatistics(val fileSetName: String) {
 
   fun addScanningTime(time: Long) {
     scanningTime += time
+  }
+
+  fun setNoRootsForRefresh() {
+    providerRoots = listOf("Not collected for refresh")
+  }
+
+  fun setProviderRoots(provider: IndexableFilesIterator, project: Project) {
+    if(!IndexDiagnosticDumper.shouldDumpProviderRootPaths) return
+    val rootUrls = provider.getRootUrls(project)
+    if (rootUrls.isEmpty()) return
+    val basePath = project.basePath
+    if (basePath == null) {
+      providerRoots = rootUrls.toList()
+    }
+    else {
+      val baseUrl = "file://$basePath"
+      providerRoots = rootUrls.map { url ->
+        if (url.startsWith(baseUrl)) url.replaceRange(0, baseUrl.length, "<project root>") else url
+      }.toList()
+    }
   }
 }

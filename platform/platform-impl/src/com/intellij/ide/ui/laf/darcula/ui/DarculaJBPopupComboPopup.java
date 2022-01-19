@@ -24,6 +24,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Locale;
 
+import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
+
 /**
  * @author gregsh
  */
@@ -121,6 +123,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
     list.setFont(myComboBox.getFont());
     list.setForeground(myComboBox.getForeground());
     list.setBackground(myComboBox.getBackground());
+    list.putClientProperty(ANIMATION_IN_RENDERER_ALLOWED, myComboBox.getClientProperty(ANIMATION_IN_RENDERER_ALLOWED));
   }
 
   @Override

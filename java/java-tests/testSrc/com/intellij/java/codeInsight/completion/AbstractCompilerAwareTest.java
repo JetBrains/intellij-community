@@ -5,18 +5,22 @@ import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.CompilerTester;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
-/**
- * @author Dmitry Batkovich
- */
 public abstract class AbstractCompilerAwareTest extends JavaCodeInsightFixtureTestCase {
   private CompilerTester myCompilerTester;
+
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder<?> moduleBuilder) throws Exception {
+    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_11);
+  }
 
   @Override
   protected void tearDown() throws Exception {

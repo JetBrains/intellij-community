@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -15,7 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -142,7 +142,7 @@ public final class NotificationsUtil {
     if (uiSettings.getOverrideLafFonts()) {
       return uiSettings.getFontSize();
     }
-    Font font = UIUtil.getLabelFont();
+    Font font = StartupUiUtil.getLabelFont();
     return font == null ? null : font.getSize();
   }
 
@@ -152,7 +152,7 @@ public final class NotificationsUtil {
     if (uiSettings.getOverrideLafFonts()) {
       return uiSettings.getFontFace();
     }
-    Font font = UIUtil.getLabelFont();
+    Font font = StartupUiUtil.getLabelFont();
     return font == null ? null : font.getName();
   }
 

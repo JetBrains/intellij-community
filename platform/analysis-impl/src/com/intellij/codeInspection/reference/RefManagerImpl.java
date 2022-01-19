@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.lang.RefManagerExtension;
 import com.intellij.lang.Language;
@@ -306,6 +307,39 @@ public class RefManagerImpl extends RefManager {
 
     new SmartRefElementPointerImpl(refEntity, true).writeExternal(problem);
     return problem;
+  }
+
+  @Override
+  @Nullable
+  public Element export(@NotNull RefEntity entity) {
+    Element element = export(entity, -1);
+    if (element == null) return null;
+
+    if (!(entity instanceof RefElement)) return element;
+
+    SmartPsiElementPointer<?> pointer = ((RefElement)entity).getPointer();
+    PsiFile psiFile = pointer.getContainingFile();
+
+    if (psiFile == null) return element;
+
+    Document document = PsiDocumentManager.getInstance(pointer.getProject()).getDocument(psiFile);
+    if (document == null) return element;
+
+    Segment range = pointer.getRange();
+    if (range == null) return element;
+
+    int firstRangeLine = document.getLineNumber(range.getStartOffset());
+    int lineStartOffset = document.getLineStartOffset(firstRangeLine);
+    int endOffset = Math.min(range.getEndOffset(), document.getLineEndOffset(firstRangeLine));
+
+    TextRange exportedRange = new TextRange(range.getStartOffset(), endOffset);
+    String text = ProblemDescriptorUtil.extractHighlightedText(exportedRange, psiFile);
+
+    element.addContent(new Element("offset").addContent(String.valueOf(exportedRange.getStartOffset() - lineStartOffset)));
+    element.addContent(new Element("length").addContent(String.valueOf(exportedRange.getLength())));
+    element.addContent(new Element("highlighted_element").addContent(ProblemDescriptorUtil.sanitizeIllegalXmlChars(text)));
+
+    return element;
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.ide.ui.UISettings;
@@ -35,8 +35,6 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.lang.reflect.Field;
 import java.util.function.Supplier;
-
-import static com.intellij.util.ui.JBUI.emptyInsets;
 
 public class JBScrollPane extends JScrollPane {
 
@@ -125,15 +123,6 @@ public class JBScrollPane extends JScrollPane {
     Component view = viewport.getView();
     if (view == null) return null;
     return view.getBackground();
-  }
-
-  /**
-   * @deprecated use {@link ComponentUtil#getScrollPane} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static JScrollPane findScrollPane(Component c) {
-    return ComponentUtil.getScrollPane(c);
   }
 
   private void init() {
@@ -430,7 +419,7 @@ public class JBScrollPane extends JScrollPane {
    * ScrollBar flipping and non-opaque ScrollBars.
    */
   public static class Layout extends ScrollPaneLayout {
-    private static final Insets EMPTY_INSETS = emptyInsets();
+    private static final Insets EMPTY_INSETS = JBInsets.emptyInsets();
 
     protected Component statusComponent;
 

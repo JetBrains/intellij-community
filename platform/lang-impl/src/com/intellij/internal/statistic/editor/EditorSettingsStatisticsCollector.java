@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.tabs.FileColorManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -182,7 +183,7 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
     Boolean value = valueFunction.apply(settingsBean);
     Boolean defaultValue = valueFunction.apply(defaultSettingsBean);
     if (!Comparing.equal(value, defaultValue)) {
-      List<EventPair<?>> values = Arrays.asList(pairs);
+      List<EventPair<?>> values = new ArrayList<>(Arrays.asList(pairs));
       values.add(SETTING_ID.with(setting));
       values.add(EventFields.Enabled.with(value));
       set.add(SETTING.metric(values));
@@ -333,15 +334,12 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
   }
 
   public static class ProjectUsages extends ProjectUsagesCollector {
-    @NotNull
-    @Override
-    public String getGroupId() {
-      return "editor.settings.project";
-    }
+    private static final EventLogGroup GROUP = new EventLogGroup("editor.settings.project", 3);
+    private static final VarargEventId AUTO_OPTIMIZE_IMPORTS = GROUP.registerVarargEvent("autoOptimizeImports", EventFields.Enabled);
 
     @Override
-    public int getVersion() {
-      return 2;
+    public EventLogGroup getGroup() {
+      return GROUP;
     }
 
     @NotNull
@@ -350,7 +348,7 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
       Set<MetricEvent> set = new HashSet<>();
       CodeInsightWorkspaceSettings ciws = CodeInsightWorkspaceSettings.getInstance(project);
       CodeInsightWorkspaceSettings ciwsDefault = new CodeInsightWorkspaceSettings();
-      MetricEventUtilKt.addBoolIfDiffers(set, ciws, ciwsDefault, s -> s.isOptimizeImportsOnTheFly(), "autoOptimizeImports");
+      MetricEventUtilKt.addBoolIfDiffers(set, ciws, ciwsDefault, s -> s.isOptimizeImportsOnTheFly(), AUTO_OPTIMIZE_IMPORTS);
       return set;
     }
   }

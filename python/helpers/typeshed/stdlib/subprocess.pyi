@@ -1016,7 +1016,12 @@ class Popen(Generic[AnyStr]):
 # The result really is always a str.
 def getstatusoutput(cmd: _TXT) -> tuple[int, str]: ...
 def getoutput(cmd: _TXT) -> str: ...
-def list2cmdline(seq: Iterable[str]) -> str: ...  # undocumented
+
+if sys.version_info >= (3, 8):
+    def list2cmdline(seq: Iterable[StrOrBytesPath]) -> str: ...  # undocumented
+
+else:
+    def list2cmdline(seq: Iterable[str]) -> str: ...  # undocumented
 
 if sys.platform == "win32":
     class STARTUPINFO:

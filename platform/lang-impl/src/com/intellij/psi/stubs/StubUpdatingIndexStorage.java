@@ -79,7 +79,7 @@ final class StubUpdatingIndexStorage extends TransientFileContentIndex<Integer, 
   public void removeTransientDataForKeys(int inputId, @NotNull InputDataDiffBuilder<Integer, SerializedStubTree> diffBuilder) {
     Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> maps = getStubIndexMaps((StubCumulativeInputDiffBuilder)diffBuilder);
 
-    if (FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE) {
+    if (FileBasedIndexEx.DO_TRACE_STUB_INDEX_UPDATE) {
       LOG.info("removing transient data for inputId = " + inputId +
                ", keys = " + ((StubCumulativeInputDiffBuilder)diffBuilder).getKeys() +
                ", data = " + maps);

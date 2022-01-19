@@ -87,8 +87,9 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
                                                  boolean enabled) {
     String title = IdeBundle.message(enabled ? "plugins.auto.enabled.notification.title" : "plugins.auto.disabled.notification.title");
     Notification switchNotification = NotificationGroupManager.getInstance()
-      .getNotificationGroup("Plugins AutoSwitch")
+      .getNotificationGroup("Plugin Update Results")
       .createNotification(content, NotificationType.INFORMATION)
+      .setDisplayId("plugin.auto.switch")
       .setTitle(title)
       .addAction(new NotificationAction(IdeBundle.message("plugins.auto.switch.action.name")) {
         @Override
@@ -178,11 +179,12 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
     }
 
     Notification newNotification = NotificationGroupManager.getInstance()
-      .getNotificationGroup("Plugins updates")
+      .getNotificationGroup("IDE and Plugin Updates")
       .createNotification(
         IdeBundle.message("plugins.changed.notification.content", ApplicationNamesInfo.getInstance().getFullProductName()),
         NotificationType.INFORMATION)
       .setTitle(IdeBundle.message("plugins.changed.notification.title"))
+      .setDisplayId("plugins.updated.restart.required")
       .addAction(new DumbAwareAction(IdeBundle.message("ide.restart.action")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {

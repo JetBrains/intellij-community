@@ -29,6 +29,8 @@ class PlaceholderTest {
       assertEquals(panel.validateCallbacks.size, validateCallbacksCount)
       assertEquals(getDocumentListenersCount(), documentListenersCount)
     }
+
+    Disposer.dispose(placeholderTestData.disposable)
   }
 
   @Test
@@ -72,10 +74,12 @@ class PlaceholderTest {
       assertFalse(panel.isModified())
       assertTrue(isValid())
     }
+
+    Disposer.dispose(placeholderTestData.disposable)
   }
 }
 
-internal class PlaceholderTestData() {
+internal class PlaceholderTestData {
 
   val disposable = Disposer.newDisposable()
 

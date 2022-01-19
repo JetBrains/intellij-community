@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -12,6 +13,7 @@ import com.intellij.openapi.ui.FixedSizeButton
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.AbstractMenuFrameHeader
@@ -20,15 +22,13 @@ import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
 import com.intellij.ui.IconManager
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.hover.addHoverAndPressStateListener
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
 import java.awt.*
 import java.awt.GridBagConstraints.*
-import javax.swing.AbstractButton
-import javax.swing.Box
-import javax.swing.JFrame
-import javax.swing.JPanel
+import javax.swing.*
 import kotlin.math.roundToInt
 
 private enum class ShowMode {
@@ -36,14 +36,13 @@ private enum class ShowMode {
 }
 
 internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : AbstractMenuFrameHeader(frame), UISettingsListener, ToolbarHolder {
-
   private val myMenuBar = ideMenu
   private val myMenuButton = createMenuButton()
   private var myToolbar : MainToolbar? = null
   private val myToolbarPlaceholder = NonOpaquePanel()
   private val myHeaderContent = createHeaderContent()
 
-  private var myMode = ShowMode.MENU
+  private var mode = ShowMode.MENU
 
   init {
     layout = GridBagLayout()
@@ -61,7 +60,12 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
 
   override fun updateToolbar() {
     removeToolbar()
-    myToolbar = createToolbar()
+
+    val toolbar = MainToolbar()
+    toolbar.init((frame as? IdeFrame)?.project)
+    toolbar.isOpaque = false
+    myToolbar = toolbar
+
     myToolbarPlaceholder.add(myToolbar)
     myToolbarPlaceholder.revalidate()
   }
@@ -75,18 +79,18 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
     updateLayout(uiSettings)
-    when (myMode) {
+    when (mode) {
       ShowMode.TOOLBAR -> updateToolbar()
       ShowMode.MENU -> removeToolbar()
     }
   }
 
   override fun getHitTestSpots(): List<RelativeRectangle> {
-    val res = super.getHitTestSpots().toMutableList()
+    val result = super.getHitTestSpots().toMutableList()
 
-    when (myMode) {
+    when (mode) {
       ShowMode.MENU -> {
-        res.add(getElementRect(myMenuBar) { rect ->
+        result.add(getElementRect(myMenuBar) { rect ->
           val state = frame.extendedState
           if (state != Frame.MAXIMIZED_VERT && state != Frame.MAXIMIZED_BOTH) {
             val topGap = (rect.height / 3).toFloat().roundToInt()
@@ -96,17 +100,19 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
         })
       }
       ShowMode.TOOLBAR -> {
-        res.add(getElementRect(myMenuButton))
-        myToolbar?.components?.filter { it.isVisible }?.forEach { res.add(getElementRect(it)) }
+        result.add(getElementRect(myMenuButton))
+        myToolbar?.components?.filter { it.isVisible }?.forEach { result.add(getElementRect(it)) }
       }
     }
 
-    return res
+    return result
   }
 
-  private fun getElementRect(comp: Component, rectProcessor: (Rectangle) -> Unit = {}): RelativeRectangle {
+  override fun getHeaderBackground(active: Boolean) = CustomFrameDecorations.mainToolbarBackground(active)
+
+  private fun getElementRect(comp: Component, rectProcessor: ((Rectangle) -> Unit)? = null): RelativeRectangle {
     val rect = Rectangle(comp.size)
-    rectProcessor(rect)
+    rectProcessor?.invoke(rect)
     return RelativeRectangle(comp, rect)
   }
 
@@ -132,20 +138,41 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
   }
 
   private fun updateLayout(settings: UISettings) {
-    myMode = if (isToolbarInHeader(settings)) ShowMode.TOOLBAR else ShowMode.MENU
+    mode = if (isToolbarInHeader(settings)) ShowMode.TOOLBAR else ShowMode.MENU
     val layout = myHeaderContent.layout as CardLayout
-    layout.show(myHeaderContent, myMode.name)
+    layout.show(myHeaderContent, mode.name)
   }
 
-  private fun createToolbar(): MainToolbar = MainToolbar().apply { isOpaque = false }
-
   private fun createMenuButton(): AbstractButton {
-    val button = FixedSizeButton(20)
+    val button = FixedSizeButton(36)
     val icon = IconManager.getInstance().getIcon("expui/general/windowsMenu.svg", AllIcons::class.java)
     if (icon is ScalableIcon) {
       button.icon = IconLoader.loadCustomVersionOrScale(icon, 20f) //todo change to precompiled icon later
     }
-    button.isOpaque = false
+
+    button.isContentAreaFilled = false
+    addHoverAndPressStateListener(button,
+                                  hoveredStateCallback = { cmp, hovered ->
+                                    if (cmp !is AbstractButton) return@addHoverAndPressStateListener
+                                    if (hovered) {
+                                      cmp.putClientProperty("JButton.backgroundColor", UIManager.getColor("MainToolbar.Icon.hoverBackground"))
+                                      cmp.isContentAreaFilled = true
+                                    }
+                                    else {
+                                      cmp.putClientProperty("JButton.backgroundColor", CustomFrameDecorations.mainToolbarBackground(true))
+                                      cmp.isContentAreaFilled = false
+                                    }
+                                  },
+                                  pressedStateCallback = { cmp, pressed ->
+                                    if (cmp !is JComponent) return@addHoverAndPressStateListener
+                                    if (pressed) {
+                                      cmp.putClientProperty("JButton.backgroundColor", UIManager.getColor("MainToolbar.Icon.pressedBackground"))
+                                    }
+                                    else {
+                                      cmp.putClientProperty("JButton.backgroundColor", UIManager.getColor("MainToolbar.Icon.hoverBackground"))
+                                    }
+                                  })
+
     button.addActionListener {
       DataManager.getInstance().dataContextFromFocusAsync.blockingGet(200)?.let { context ->
         val mainMenu = ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup
@@ -157,8 +184,10 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
     }
 
     button.border = JBUI.Borders.empty()
-    button.putClientProperty("JButton.backgroundColor", CustomFrameDecorations.titlePaneBackground())
+    button.putClientProperty("JButton.backgroundColor", getHeaderBackground())
     button.putClientProperty("ActionToolbar.smallVariant", true)
+
+    button.toolTipText = IdeBundle.message("main.toolbar.menu.button")
 
     return button
   }

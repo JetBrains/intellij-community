@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.diagnostic.LoadingState;
@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Ref;
@@ -74,30 +73,13 @@ public final class LaterInvocator {
     return window instanceof Dialog && ((Dialog)window).isModal();
   }
 
-  @NotNull
-  static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull Condition<?> expired) {
-    ModalityState modalityState = ModalityState.defaultModalityState();
-    return invokeLater(modalityState, expired, runnable);
-  }
-
-  @NotNull
-  static ActionCallback invokeLater(@NotNull ModalityState modalityState, @NotNull Condition<?> expired, @NotNull Runnable runnable) {
-    ActionCallback callback = new ActionCallback();
-    invokeLaterWithCallback(modalityState, expired, callback, runnable);
-    return callback;
-  }
-
-  static void invokeLaterWithCallback(@NotNull ModalityState modalityState,
-                                      @NotNull Condition<?> expired,
-                                      @Nullable ActionCallback callback,
-                                      @NotNull Runnable runnable) {
+  static void invokeLater(@NotNull ModalityState modalityState,
+                          @NotNull Condition<?> expired,
+                          @NotNull Runnable runnable) {
     if (expired.value(null)) {
-      if (callback != null) {
-        callback.setRejected();
-      }
       return;
     }
-    FlushQueue.RunnableInfo runnableInfo = new FlushQueue.RunnableInfo(runnable, modalityState, expired, callback);
+    FlushQueue.RunnableInfo runnableInfo = new FlushQueue.RunnableInfo(runnable, modalityState, expired);
     ourEdtQueue.push(runnableInfo);
   }
 
@@ -127,7 +109,7 @@ public final class LaterInvocator {
         return "InvokeAndWait[" + runnable + "]";
       }
     };
-    invokeLaterWithCallback(modalityState, Conditions.alwaysFalse(), null, runnable1);
+    invokeLater(modalityState, Conditions.alwaysFalse(), runnable1);
     semaphore.waitFor();
     if (!exception.isNull()) {
       Throwable cause = exception.get();
@@ -314,10 +296,6 @@ public final class LaterInvocator {
 
   private static void assertIsDispatchThread() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-  }
-
-  private static boolean isWriteThread() {
-    return ApplicationManager.getApplication().isWriteThread();
   }
 
   static boolean isFlushNow(@NotNull Runnable runnable) {

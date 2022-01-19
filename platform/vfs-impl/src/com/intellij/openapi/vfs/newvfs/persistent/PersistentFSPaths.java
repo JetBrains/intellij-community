@@ -9,6 +9,7 @@ import java.nio.file.Path;
 
 final class PersistentFSPaths {
   @NonNls private static final String DEPENDENT_PERSISTENT_LIST_START_PREFIX = "vfs_enum_";
+  @NonNls private static final String ROOTS_START_PREFIX = "roots_";
   static final String VFS_FILES_EXTENSION = System.getProperty("idea.vfs.files.extension", ".dat");
 
   @NotNull
@@ -30,8 +31,11 @@ final class PersistentFSPaths {
     return Path.of(myCachesDir).resolve(DEPENDENT_PERSISTENT_LIST_START_PREFIX + enumName + VFS_FILES_EXTENSION);
   }
 
-  Path getRootsFile() {
-    if (FSRecords.ourStoreRootsSeparately) return new File(myCachesDir).getAbsoluteFile().toPath().resolve("roots" + VFS_FILES_EXTENSION);
-    else return null;
+  @NotNull File getRootsBaseFile() {
+    return new File(new File(myCachesDir), ROOTS_START_PREFIX);
+  }
+
+  @NotNull Path getRootsStorage(@NotNull String storageName) {
+    return Path.of(myCachesDir).resolve(ROOTS_START_PREFIX + storageName + VFS_FILES_EXTENSION);
   }
 }

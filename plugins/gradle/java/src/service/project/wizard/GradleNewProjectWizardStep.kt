@@ -51,12 +51,12 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
           .columns(COLUMNS_MEDIUM)
       }.bottomGap(BottomGap.SMALL)
       row(GradleBundle.message("gradle.dsl.new.project.wizard")) {
-        segmentedButton(listOf(false, true), useKotlinDslProperty) {
+        segmentedButton(listOf(false, true)) {
           when (it) {
             true -> GradleBundle.message("gradle.dsl.new.project.wizard.kotlin")
             else -> GradleBundle.message("gradle.dsl.new.project.wizard.groovy")
           }
-        }
+        }.bind(useKotlinDslProperty)
       }.bottomGap(BottomGap.SMALL)
     }
     super.setupUI(builder)

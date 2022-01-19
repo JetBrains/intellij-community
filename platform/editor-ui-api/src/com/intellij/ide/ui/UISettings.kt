@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.diagnostic.LoadingState
@@ -117,7 +117,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var separateMainMenu: Boolean
-    get() = SystemInfo.isWindows && state.separateMainMenu
+    get() = SystemInfoRt.isWindows && state.separateMainMenu
     set(value) {
       state.separateMainMenu = value
       state.showMainToolbar = value
@@ -215,7 +215,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     set(value) {
       state.showMainToolbar = value
 
-      val toolbarSettingsState = ToolbarSettings.Instance.state!!
+      val toolbarSettingsState = ToolbarSettings.getInstance().state!!
       toolbarSettingsState.showNewMainToolbar = !value && toolbarSettingsState.showNewMainToolbar
     }
 

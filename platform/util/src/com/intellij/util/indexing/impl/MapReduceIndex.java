@@ -142,7 +142,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   public void clear() {
     myLock.writeLock().lock();
     try {
-      myModificationStamp.incrementAndGet();
+      incrementModificationStamp();
       doClear();
     }
     catch (StorageException | IOException e) {
@@ -322,7 +322,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   private final RemovedKeyProcessor<Key> myRemovedKeyProcessor = new RemovedKeyProcessor<Key>() {
     @Override
     public void process(Key key, int inputId) throws StorageException {
-      myModificationStamp.incrementAndGet();
+      incrementModificationStamp();
       myStorage.removeAllValues(key, inputId);
     }
   };
@@ -330,7 +330,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   private final KeyValueUpdateProcessor<Key, Value> myAddedKeyProcessor = new KeyValueUpdateProcessor<Key, Value>() {
     @Override
     public void process(Key key, Value value, int inputId) throws StorageException {
-      myModificationStamp.incrementAndGet();
+      incrementModificationStamp();
       myStorage.addValue(key, inputId, value);
     }
   };
@@ -338,10 +338,14 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   private final KeyValueUpdateProcessor<Key, Value> myUpdatedKeyProcessor = new KeyValueUpdateProcessor<Key, Value>() {
     @Override
     public void process(Key key, Value value, int inputId) throws StorageException {
-      myModificationStamp.incrementAndGet();
+      incrementModificationStamp();
       myStorage.updateValue(key, inputId, value);
     }
   };
+
+  protected void incrementModificationStamp() {
+    myModificationStamp.incrementAndGet();
+  }
 
   public void updateWithMap(@NotNull AbstractUpdateData<Key, Value> updateData) throws StorageException {
     myLock.writeLock().lock();

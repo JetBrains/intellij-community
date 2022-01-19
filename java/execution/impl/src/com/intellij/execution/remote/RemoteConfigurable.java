@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.remote;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
@@ -24,6 +24,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.NotNull;
@@ -222,7 +223,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
 
     gc.gridy++;
     gc.fill = GridBagConstraints.REMAINDER;
-    gc.insets = JBUI.emptyInsets();
+    gc.insets = JBInsets.emptyInsets();
     gc.weighty = 1.0;
     mainPanel.add(new JPanel(), gc);
 
@@ -341,7 +342,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     gc.gridwidth = 1;
     gc.weightx = 1.0;
     gc.fill = GridBagConstraints.HORIZONTAL;
-    gc.insets = JBUI.emptyInsets();
+    gc.insets = JBInsets.emptyInsets();
     panel.add(new JPanel(), gc);
 
     if (SystemInfo.isWindows) {
@@ -424,7 +425,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     gc.gridx++;
     gc.weightx = 1.0;
     gc.fill = GridBagConstraints.HORIZONTAL;
-    gc.insets = JBUI.emptyInsets();
+    gc.insets = JBInsets.emptyInsets();
     panel.add(new JPanel(), gc);
 
     return panel;

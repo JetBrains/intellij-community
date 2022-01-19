@@ -155,7 +155,7 @@ public class TransientFileContentIndex<Key, Value> extends VfsAwareMapReduceInde
       }
     }
     if (modified) {
-      myModificationStamp.incrementAndGet();
+      incrementModificationStamp();
     }
   }
 
@@ -165,7 +165,7 @@ public class TransientFileContentIndex<Key, Value> extends VfsAwareMapReduceInde
     TransientChangesIndexStorage<Key, Value> memStorage = (TransientChangesIndexStorage<Key, Value>)getStorage();
     ConcurrencyUtil.withLock(getLock().writeLock(), () -> {
       if (memStorage.clearMemoryMap()) {
-        myModificationStamp.incrementAndGet();
+        incrementModificationStamp();
       }
     });
     memStorage.fireMemoryStorageCleared();

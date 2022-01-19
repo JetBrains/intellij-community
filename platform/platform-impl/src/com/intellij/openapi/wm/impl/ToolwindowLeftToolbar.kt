@@ -1,22 +1,35 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
-import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
+import java.awt.Point
+import java.awt.Rectangle
+import javax.swing.JComponent
 import javax.swing.JPanel
 
-class ToolwindowLeftToolbar : ToolwindowToolbar() {
-  private val topPane = JPanel(VerticalFlowLayout(0, 0))
-  private val bottomPane = JPanel(VerticalFlowLayout(0, 0))
-  lateinit var moreButton: MoreSquareStripeButton
+internal class ToolwindowLeftToolbar : ToolwindowToolbar() {
+  private val topPane = object : AbstractDroppableStripe(VerticalFlowLayout(0, 0)) {
+    override fun getAnchor(): ToolWindowAnchor = ToolWindowAnchor.LEFT
+    override fun getButtonFor(toolWindowId: String): JComponent? = this@ToolwindowLeftToolbar.getButtonFor(toolWindowId)
+    override fun tryDroppingOnGap(data: LayoutData, gap: Int, insertOrder: Int) =
+      tryDroppingOnGap(data, gap, myDropRectangle) { layoutDragButton(data, gap) }
+  }
+
+  private val bottomPane = object : AbstractDroppableStripe(VerticalFlowLayout(0, 0)) {
+    override fun getAnchor(): ToolWindowAnchor = ToolWindowAnchor.BOTTOM
+    override fun getButtonFor(toolWindowId: String): JComponent? = this@ToolwindowLeftToolbar.getButtonFor(toolWindowId)
+    override fun tryDroppingOnGap(data: LayoutData, gap: Int, insertOrder: Int) =
+      tryDroppingOnGap(data, gap, myDropRectangle) { layoutDragButton(data, gap) }
+  }
+
+  val moreButton = MoreSquareStripeButton(this, topPane)
 
   init {
     border = JBUI.Borders.customLine(JBUI.CurrentTheme.ToolWindow.borderColor(), 1, 0, 0, 1)
-    moreButton = MoreSquareStripeButton(this)
     topPane.background = JBUI.CurrentTheme.ToolWindow.background()
     bottomPane.background = JBUI.CurrentTheme.ToolWindow.background()
 
@@ -27,17 +40,30 @@ class ToolwindowLeftToolbar : ToolwindowToolbar() {
     add(bottomPane, BorderLayout.SOUTH)
   }
 
-  override fun removeStripeButton(project: Project, toolWindow: ToolWindow, anchor: ToolWindowAnchor) {
-    when (anchor) {
-      ToolWindowAnchor.LEFT -> remove(topPane, toolWindow)
-      ToolWindowAnchor.BOTTOM -> remove(bottomPane, toolWindow)
+  override fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe {
+    return when (anchor) {
+      ToolWindowAnchor.LEFT -> topPane
+      ToolWindowAnchor.BOTTOM -> bottomPane
+      else -> throw IllegalArgumentException("Wrong anchor $anchor")
     }
   }
 
-  override fun addStripeButton(project: Project, anchor: ToolWindowAnchor, toolWindow: ToolWindow) {
-    when (anchor) {
-      ToolWindowAnchor.LEFT -> rebuildStripe(project, topPane, toolWindow)
-      ToolWindowAnchor.BOTTOM -> rebuildStripe(project, bottomPane, toolWindow, addToBeginning = true)
+  override fun getStripeFor(screenPoint: Point): AbstractDroppableStripe? {
+    if (!isVisible || !moreButton.isVisible) {
+      return null
+    }
+
+    val moreButtonRect = Rectangle(moreButton.locationOnScreen, moreButton.size)
+    return if (Rectangle(topPane.locationOnScreen, topPane.size).contains(screenPoint) ||
+               topPane.buttons.isEmpty() && moreButtonRect.contains(screenPoint)) {
+      topPane
+    }
+    else if (!moreButtonRect.contains(screenPoint) &&
+             Rectangle(locationOnScreen, size).also { JBInsets.removeFrom(it, insets) }.contains(screenPoint)) {
+      bottomPane
+    }
+    else {
+      null
     }
   }
 
@@ -49,7 +75,9 @@ class ToolwindowLeftToolbar : ToolwindowToolbar() {
   }
 
   override fun getButtonFor(toolWindowId: String): SquareStripeButton? {
-    topPane.components.filterIsInstance(SquareStripeButton::class.java).find {it.button.id == toolWindowId}?.let { return it }
-    return bottomPane.components.filterIsInstance(SquareStripeButton::class.java).find {it.button.id == toolWindowId}
+    return topPane.components.asSequence()
+             .filterIsInstance(SquareStripeButton::class.java)
+             .find { it.button.id == toolWindowId }
+           ?: bottomPane.components.asSequence().filterIsInstance(SquareStripeButton::class.java).find { it.button.id == toolWindowId }
   }
 }

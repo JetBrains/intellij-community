@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.ide.ui.AntialiasingType
@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
@@ -40,7 +41,7 @@ class InlayTextMetricsStorage(val editor: EditorImpl) {
     val familyName = if (EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays) {
       EditorColorsManager.getInstance().globalScheme.editorFontName
     } else {
-      UIUtil.getLabelFont().family
+      StartupUiUtil.getLabelFont().family
     }
     val fontType = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLAY_DEFAULT).fontType
 
@@ -76,7 +77,7 @@ class InlayTextMetrics(
         val editorFont = EditorUtil.getEditorFont()
         editorFont.deriveFont(fontType, size.toFloat())
       } else {
-        val familyName = UIUtil.getLabelFont().family
+        val familyName = StartupUiUtil.getLabelFont().family
         UIUtil.getFontWithFallback(familyName, fontType, size)
       }
       val context = getCurrentContext(editor)

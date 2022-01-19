@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow;
 
 import com.intellij.codeInsight.daemon.impl.IntentionsUI;
@@ -90,8 +90,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     Root root = myTreeModel.getRoot();
     int count = root == null ? 0 : root.getProblemCount();
     content.setDisplayName(getName(count));
-    Icon icon = getToolWindowIcon(count);
-    if (icon != null) window.setIcon(icon);
+    ProblemsViewIconUpdater.update(getProject());
   }, 50, stateForComponent(this), this);
 
   private final Option myAutoscrollToSource = new Option() {
@@ -285,10 +284,6 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
 
   protected void updateToolWindowContent() {
     myUpdateAlarm.cancelAndRequest();
-  }
-
-  public @Nullable Icon getToolWindowIcon(int count) {
-    return null;
   }
 
   @Override

@@ -34,6 +34,7 @@ import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.DownloadArtifactBuildIssue
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenResolveResultProcessor
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.CannotStartServerException
 import org.jetbrains.idea.maven.server.MavenServerManager
@@ -258,15 +259,16 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   private fun createMessageEvent(e: Throwable): MessageEventImpl {
-    if (e is CannotStartServerException) {
-      val cause = ExceptionUtil.findCause(e, ExecutionException::class.java)
+    val csse = ExceptionUtil.findCause(e, CannotStartServerException::class.java)
+    if (csse != null) {
+      val cause = ExceptionUtil.findCause(csse, ExecutionException::class.java)
       if (cause != null) {
         return MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("build.event.title.internal.server.error"),
                                 getExceptionText(cause), getExceptionText(cause))
       }
       else {
         return MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("build.event.title.internal.server.error"),
-                                getExceptionText(e), getExceptionText(e))
+                                getExceptionText(csse), getExceptionText(csse))
       }
     }
     return MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("build.event.title.error"),
@@ -543,6 +545,7 @@ class MavenSyncConsole(private val myProject: Project) {
     @JvmStatic
     fun finishTransaction(project: Project) {
       debugLog("Maven sync: finish sync transaction")
+      MavenResolveResultProcessor.notifyMavenProblems(project)
       val syncConsole = MavenProjectsManager.getInstance(project).syncConsole
       synchronized(syncConsole) {
         syncConsole.syncTransactionStarted = false

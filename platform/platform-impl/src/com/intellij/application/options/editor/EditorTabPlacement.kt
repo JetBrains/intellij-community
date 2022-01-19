@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.UISettings
@@ -31,6 +31,7 @@ internal fun Row.tabPlacementComboBox(): Cell<ComboBox<Int>> {
 }
 
 internal fun Row.tabPlacementComboBox(model: ComboBoxModel<Int>): Cell<ComboBox<Int>> {
+  val ui = UISettings.instance.state
   return comboBox(model,
                   renderer = SimpleListCellRenderer.create { label, value, _ ->
                     label.text = value.asTabPlacement()
@@ -38,12 +39,13 @@ internal fun Row.tabPlacementComboBox(model: ComboBoxModel<Int>): Cell<ComboBox<
 }
 
 private fun asOptionDescriptor(i: Int): BooleanOptionDescription {
-  return object : BooleanOptionDescription(TAB_PLACEMENT + " | " + i.asTabPlacement(), ID), NotABooleanOptionDescription {
-    override fun isOptionEnabled() = ui.editorTabPlacement == i
+  return object : BooleanOptionDescription(TAB_PLACEMENT + " | " + i.asTabPlacement(), EDITOR_TABS_OPTIONS_ID), NotABooleanOptionDescription {
+    override fun isOptionEnabled() = UISettings.instance.state.editorTabPlacement == i
 
     override fun setOptionState(enabled: Boolean) {
-      ui.editorTabPlacement = next(ui.editorTabPlacement, enabled)
-      UISettings.instance.fireUISettingsChanged()
+      val ui = UISettings.instance
+      ui.state.editorTabPlacement = next(ui.editorTabPlacement, enabled)
+      ui.fireUISettingsChanged()
     }
 
     private fun next(prev: Int, enabled: Boolean) = when {

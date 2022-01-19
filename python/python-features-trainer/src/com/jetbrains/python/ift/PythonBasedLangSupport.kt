@@ -26,7 +26,6 @@ import com.jetbrains.python.statistics.modules
 import training.lang.AbstractLangSupport
 import training.project.ProjectUtils
 import training.project.ReadMeCreator
-import training.util.getFeedbackLink
 import java.awt.Dimension
 import java.nio.file.Path
 import javax.swing.JComponent
@@ -34,8 +33,6 @@ import javax.swing.JLabel
 import kotlin.math.max
 
 abstract class PythonBasedLangSupport : AbstractLangSupport() {
-  override val langCourseFeedback get() = getFeedbackLink(this, false)
-
   override val readMeCreator = ReadMeCreator()
 
   override fun installAndOpenLearningProject(contentRoot: Path,

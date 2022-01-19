@@ -247,7 +247,7 @@ public class NestedMemberAccess {
             }
           }
 
-          stack.addAll(nd.succs);
+          stack.addAll(nd.successors);
         }
 
         if (replaced) {

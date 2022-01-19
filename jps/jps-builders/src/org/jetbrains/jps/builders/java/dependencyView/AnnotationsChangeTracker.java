@@ -73,6 +73,20 @@ public abstract class AnnotationsChangeTracker {
   public static final Set<Recompile> RECOMPILE_NONE = Collections.unmodifiableSet(EnumSet.noneOf(Recompile.class));
 
   /**
+   * @deprecated Use {@link AnnotationsChangeTracker#methodAnnotationsChanged(NamingContext, ProtoMethodEntity, Difference.Specifier, Difference.Specifier)}
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated // Make sure that Kotlin JPS plugin (located in kotlin repo) doesn't use this API before removing the API
+  @NotNull
+  public Set<Recompile> methodAnnotationsChanged(
+    DependencyContext context, MethodRepr method,
+    Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff,
+    Difference.Specifier<ParamAnnotation, Difference> paramAnnotationsDiff
+  ) {
+    return RECOMPILE_NONE;
+  }
+
+  /**
    * Invoked when changes in annotation list or parameter annotations for some method are detected
    * @param method the method in question
    * @param annotationsDiff differences descriptor for annotations on the method
@@ -86,6 +100,22 @@ public abstract class AnnotationsChangeTracker {
     Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff,
     Difference.Specifier<ParamAnnotation, Difference> paramAnnotationsDiff
   ) {
+    if (method instanceof MethodRepr && context instanceof DependencyContext) {
+      Set<Recompile> result =
+        methodAnnotationsChanged((DependencyContext)context, (MethodRepr)method, annotationsDiff, paramAnnotationsDiff);
+      if (!result.isEmpty()) {
+        return result;
+      }
+    }
+    return RECOMPILE_NONE;
+  }
+
+  /**
+   * @deprecated Use {@link AnnotationsChangeTracker#fieldAnnotationsChanged(NamingContext, ProtoFieldEntity, Difference.Specifier)}
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated // Make sure that Kotlin JPS plugin (located in kotlin repo) doesn't use this API before removing the API
+  public Set<Recompile> fieldAnnotationsChanged(NamingContext context, FieldRepr field, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff) {
     return RECOMPILE_NONE;
   }
 
@@ -99,6 +129,12 @@ public abstract class AnnotationsChangeTracker {
   @NotNull
   @ApiStatus.Internal
   public Set<Recompile> fieldAnnotationsChanged(NamingContext context, ProtoFieldEntity field, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff) {
+    if (field instanceof FieldRepr) {
+      Set<Recompile> result = fieldAnnotationsChanged(context, (FieldRepr)field, annotationsDiff);
+      if (!result.isEmpty()) {
+        return result;
+      }
+    }
     return RECOMPILE_NONE;
   }
 

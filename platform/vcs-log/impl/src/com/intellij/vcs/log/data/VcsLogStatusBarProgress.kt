@@ -24,6 +24,7 @@ import com.intellij.vcs.log.util.VcsLogUtil
 
 class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, VcsLogProvider>,
                               vcsLogProgress: VcsLogProgress) : Disposable {
+  private val disposableFlag = Disposer.newCheckedDisposable()
   private val roots = VcsLogPersistentIndex.getRootsForIndexing(logProviders)
   private val vcsName = VcsLogUtil.getVcsDisplayName(project, roots.mapNotNull { logProviders[it] })
   private val statusBar: StatusBarEx by lazy {
@@ -34,6 +35,7 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
 
   init {
     vcsLogProgress.addProgressIndicatorListener(MyProgressListener(), this)
+    Disposer.register(this, disposableFlag)
   }
 
   @RequiresEdt
@@ -58,19 +60,19 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
 
   inner class MyProgressListener : VcsLogProgress.ProgressListener {
     override fun progressStarted(keys: MutableCollection<out VcsLogProgress.ProgressKey>) {
-      if (Disposer.isDisposed(this@VcsLogStatusBarProgress)) return
+      if (disposableFlag.isDisposed) return
       if (keys.contains(VcsLogPersistentIndex.INDEXING)) {
         start()
       }
     }
 
     override fun progressStopped() {
-      if (Disposer.isDisposed(this@VcsLogStatusBarProgress)) return
+      if (disposableFlag.isDisposed) return
       stop()
     }
 
     override fun progressChanged(keys: MutableCollection<out VcsLogProgress.ProgressKey>) {
-      if (Disposer.isDisposed(this@VcsLogStatusBarProgress)) return
+      if (disposableFlag.isDisposed) return
       if (keys.contains(VcsLogPersistentIndex.INDEXING)) {
         start()
       }

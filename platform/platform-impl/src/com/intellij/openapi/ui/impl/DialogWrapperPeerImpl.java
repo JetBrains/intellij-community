@@ -529,7 +529,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
                     Project project,
                     @NotNull ActionCallback focused) {
       super(owner);
-      UIUtil.markAsTypeAheadAware(this);
       myDialogWrapper = new WeakReference<>(dialogWrapper);
       myProject = project != null ? new WeakReference<>(project) : null;
 

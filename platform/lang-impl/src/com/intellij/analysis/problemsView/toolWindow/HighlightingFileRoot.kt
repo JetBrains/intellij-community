@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.Problem
@@ -57,7 +57,7 @@ internal class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualF
     notify(problem, synchronized(problems) { SetUpdateState.add(problem, problems) })
     if (Registry.`is`("wolf.the.problem.solver")) return
     // start filling HighlightingErrorsProvider if WolfTheProblemSolver is disabled
-    if (!ProblemsView.isProjectErrorsEnabled() || problem.severity < HighlightSeverity.ERROR.myVal) return
+    if (problem.severity < HighlightSeverity.ERROR.myVal) return
     HighlightingErrorsProviderBase.getInstance(problem.provider.project).problemsAppeared(file)
   }
 

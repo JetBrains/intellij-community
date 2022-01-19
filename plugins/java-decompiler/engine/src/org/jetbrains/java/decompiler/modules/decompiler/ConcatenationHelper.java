@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
+import org.jetbrains.java.decompiler.ClassNameConstants;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
@@ -17,7 +18,6 @@ public final class ConcatenationHelper {
 
   private static final String builderClass = "java/lang/StringBuilder";
   private static final String bufferClass = "java/lang/StringBuffer";
-  private static final String stringClass = "java/lang/String";
 
   private static final VarType builderType = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/StringBuilder");
   private static final VarType bufferType = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/StringBuffer");
@@ -256,7 +256,7 @@ public final class ConcatenationHelper {
 
     if (exprent.type == Exprent.EXPRENT_INVOCATION) {
       InvocationExprent iex = (InvocationExprent)exprent;
-      if ("valueOf".equals(iex.getName()) && stringClass.equals(iex.getClassName())) {
+      if ("valueOf".equals(iex.getName()) && ClassNameConstants.JAVA_LANG_STRING.equals(iex.getClassName())) {
         MethodDescriptor md = iex.getDescriptor();
         if (md.params.length == 1) {
           VarType param = md.params[0];

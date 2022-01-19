@@ -13,6 +13,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.properties.map
+import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.addKeyboardAction
 import com.intellij.openapi.ui.getKeyStrokes
@@ -23,7 +24,6 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.ui.layout.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.plaf.basic.BasicTextUI

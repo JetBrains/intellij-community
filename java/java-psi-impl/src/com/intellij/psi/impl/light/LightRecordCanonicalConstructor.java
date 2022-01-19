@@ -1,6 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
+import com.intellij.model.BranchableSyntheticPsiElement;
+import com.intellij.model.ModelBranch;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -16,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Objects;
 
-public class LightRecordCanonicalConstructor extends LightMethod implements SyntheticElement {
+public class LightRecordCanonicalConstructor extends LightMethod implements SyntheticElement, BranchableSyntheticPsiElement {
   public LightRecordCanonicalConstructor(@NotNull PsiMethod method,
                                          @NotNull PsiClass containingClass) {
     super(method.getManager(), method, containingClass);
@@ -59,6 +61,19 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
     return baseIcon;
   }
 
+  @Override
+  public @NotNull LightRecordCanonicalConstructor obtainBranchCopy(@NotNull ModelBranch branch) {
+    PsiClass recordCopy = branch.obtainPsiCopy(myContainingClass);
+    PsiMethod accessorCopy = recordCopy.findMethodBySignature(this, false);
+    assert accessorCopy instanceof LightRecordCanonicalConstructor;
+    return (LightRecordCanonicalConstructor)accessorCopy;
+  }
+  
+  @Override
+  public @Nullable ModelBranch getModelBranch() {
+    return ModelBranch.getPsiBranch(myContainingClass);
+  }
+  
   @Override
   public @NotNull PsiParameterList getParameterList() {
     PsiParameterList parameterList = super.getParameterList();

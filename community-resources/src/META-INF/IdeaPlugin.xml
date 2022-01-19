@@ -24,5 +24,7 @@
 
   <content>
     <module name="intellij.notebooks.visualization"/>
+    <module name="intellij.platform.feedback"/>
+    <module name="intellij.platform.images.copyright"/>
   </content>
 </idea-plugin>

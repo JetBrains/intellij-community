@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.UISettings;
@@ -19,7 +19,7 @@ import java.awt.event.MouseEvent;
 /**
  * @author Alexander Lobas
  */
-public class IdeaPopupMenuUI extends BasicPopupMenuUI {
+public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
   private static final JBValue CORNER_RADIUS_X = new JBValue.UIInteger("PopupMenu.borderCornerRadiusX", 8);
   private static final JBValue CORNER_RADIUS_Y = new JBValue.UIInteger("PopupMenu.borderCornerRadiusY", 8);
 

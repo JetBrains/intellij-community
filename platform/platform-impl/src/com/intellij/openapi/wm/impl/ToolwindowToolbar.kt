@@ -1,21 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.actionSystem.ActionPlaces.TOOLWINDOW_TOOLBAR_BAR
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.ui.ComponentUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
+import java.awt.Point
+import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-abstract class ToolwindowToolbar : JPanel() {
-  lateinit var toolwindowPane: ToolWindowsPane
+internal abstract class ToolwindowToolbar : JPanel() {
   lateinit var defaults: List<String>
 
   init {
@@ -24,55 +26,73 @@ abstract class ToolwindowToolbar : JPanel() {
     background = JBUI.CurrentTheme.ToolWindow.background()
   }
 
+  abstract fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe
+
   abstract fun getButtonFor(toolWindowId: String): SquareStripeButton?
 
-  abstract fun removeStripeButton(project: Project, toolWindow: ToolWindow, anchor: ToolWindowAnchor)
+  abstract fun getStripeFor(screenPoint: Point): AbstractDroppableStripe?
 
-  abstract fun addStripeButton(project: Project, anchor: ToolWindowAnchor, toolWindow: ToolWindow)
+  fun removeStripeButton(toolWindow: ToolWindow, anchor: ToolWindowAnchor) {
+    remove(getStripeFor(anchor), toolWindow)
+  }
+
+  fun addStripeButton(toolWindow: ToolWindowImpl) {
+    rebuildStripe(getStripeFor(toolWindow.windowInfo.largeStripeAnchor), toolWindow)
+  }
 
   abstract fun reset()
 
-  fun rebuildStripe(project: Project, panel: JPanel, toolWindow: ToolWindow, addToBeginning: Boolean = false) {
-    if (toolWindow !is ToolWindowImpl) return
+  fun startDrag() {
+    revalidate()
+    repaint()
+  }
 
-    if (toolWindow.orderOnLargeStripe == -1) {
-      if (addToBeginning) {
-        toolWindow.orderOnLargeStripe = 0
-        panel.components
-          .filterIsInstance(SquareStripeButton::class.java)
-          .forEach { it.button.toolWindow.orderOnLargeStripe++ }
-      } else {
-        toolWindow.orderOnLargeStripe = panel.components.filterIsInstance(SquareStripeButton::class.java).count()
-      }
+  fun stopDrag() = startDrag()
+
+  private fun rebuildStripe(panel: AbstractDroppableStripe, toolWindow: ToolWindowImpl) {
+    // temporary add new button
+    if (panel.buttons.asSequence().filterIsInstance(SquareStripeButton::class.java).find { it.button.id == toolWindow.id } == null) {
+      panel.add(SquareStripeButton(toolWindow.project, StripeButton(toolWindow).also(StripeButton::updatePresentation)))
     }
 
-    //temporary add new button
-    panel.add(SquareStripeButton(project, StripeButton(toolwindowPane, toolWindow).also { it.updatePresentation() }))
-    val sortedSquareButtons = panel.components.filterIsInstance(SquareStripeButton::class.java)
+    val sortedSquareButtons = panel.components.asSequence()
+      .filterIsInstance(SquareStripeButton::class.java)
       .map { it.button.toolWindow }
       .sortedWith(Comparator.comparingInt<ToolWindow> { (it as? ToolWindowImpl)?.windowInfo?.orderOnLargeStripe ?: -1 })
+      .toList()
     panel.removeAll()
+    panel.buttons.clear()
     sortedSquareButtons.forEach {
-      panel.add(SquareStripeButton(project, StripeButton(toolwindowPane, it).also { button -> button.updatePresentation() }))
+      val button = SquareStripeButton(toolWindow.project, StripeButton(it).also(StripeButton::updatePresentation))
+      panel.add(button)
+      panel.buttons.add(button)
+    }
+  }
+
+  protected fun tryDroppingOnGap(data: LayoutData, gap: Int, dropRectangle: Rectangle, doLayout: () -> Unit) {
+    val sideDistance = data.eachY + gap - dropRectangle.y + dropRectangle.height
+
+    if (sideDistance > 0) {
+      data.dragInsertPosition = -1
+      data.dragToSide = false
+      data.dragTargetChosen = true
+      doLayout()
     }
   }
 
   companion object {
     fun updateButtons(panel: JComponent) {
-      UIUtil.findComponentsOfType(panel, SquareStripeButton::class.java).forEach { it.update() }
+      ComponentUtil.findComponentsOfType(panel, SquareStripeButton::class.java).forEach { it.update() }
       panel.revalidate()
       panel.repaint()
     }
 
-    fun remove(panel: JPanel, toolWindow: ToolWindow) {
-      val components = panel.components
-      val index = components.filterIsInstance(SquareStripeButton::class.java).indexOfFirst { it.button.id == toolWindow.id }
-      // shift all button indexes beneath
-      components.drop(index + 1)
-        .filterIsInstance(SquareStripeButton::class.java)
-        .map { it.button.toolWindow }
-        .forEach { it.orderOnLargeStripe-- }
-      components[index]?.let { panel.remove(it); panel.revalidate(); panel.repaint() }
+    fun remove(panel: AbstractDroppableStripe, toolWindow: ToolWindow) {
+      val component = panel.components.firstOrNull { it is SquareStripeButton && it.button.id == toolWindow.id } ?: return
+      panel.remove(component)
+      panel.buttons.remove(component)
+      panel.revalidate()
+      panel.repaint()
     }
   }
 

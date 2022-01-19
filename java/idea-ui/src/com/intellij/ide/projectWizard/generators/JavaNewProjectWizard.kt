@@ -5,12 +5,13 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.wizard.*
 
 class JavaNewProjectWizard : LanguageNewProjectWizard {
-  override val name: String = "Java"
+  override val name: String = JAVA
+  override val ordinal = 0
 
   override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 
   class Step(parent: NewProjectWizardLanguageStep) :
-    AbstractNewProjectWizardMultiStep<Step>(parent, BuildSystemJavaNewProjectWizard.EP_NAME),
+    AbstractNewProjectWizardMultiStep<Step, BuildSystemJavaNewProjectWizard>(parent, BuildSystemJavaNewProjectWizard.EP_NAME),
     LanguageNewProjectWizardData by parent,
     BuildSystemJavaNewProjectWizardData {
 
@@ -24,5 +25,9 @@ class JavaNewProjectWizard : LanguageNewProjectWizard {
     init {
       data.putUserData(BuildSystemJavaNewProjectWizardData.KEY, this)
     }
+  }
+
+  companion object {
+    const val JAVA = "Java"
   }
 }

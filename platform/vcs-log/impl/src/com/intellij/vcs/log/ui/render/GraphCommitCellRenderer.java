@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,6 +12,7 @@ import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -159,7 +160,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   }
 
   public static Font getLabelFont() {
-    return UIUtil.getLabelFont();
+    return StartupUiUtil.getLabelFont();
   }
 
   private static class MyComponent extends SimpleColoredRenderer {
@@ -167,7 +168,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     @NotNull private final VcsLogGraphTable myGraphTable;
     @NotNull private final GraphCellPainter myPainter;
     @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
-    @NotNull private final LabelPainter myReferencePainter;
+    @NotNull private final VcsLogLabelPainter myReferencePainter;
 
     @NotNull protected GraphImage myGraphImage = new GraphImage(ImageUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB), 0);
     @NotNull private Font myFont;
@@ -181,7 +182,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       myPainter = painter;
       myGraphTable = table;
 
-      myReferencePainter = new LabelPainter(data, table, iconCache);
+      myReferencePainter = new VcsLogLabelPainter(data, table, iconCache);
       myIssueLinkRenderer = new IssueLinkRenderer(data.getProject(), this);
       setCellState(new BorderlessTableCellState());
 
@@ -326,7 +327,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     }
 
     @NotNull
-    public LabelPainter getReferencePainter() {
+    public VcsLogLabelPainter getReferencePainter() {
       return myReferencePainter;
     }
 

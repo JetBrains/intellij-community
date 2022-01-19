@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -28,6 +29,8 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   override fun resizableColumn(): Cell<T>
 
   override fun gap(rightGap: RightGap): Cell<T>
+
+  override fun customize(customGaps: Gaps): Cell<T>
 
   /**
    * Component that occupies the cell
@@ -51,6 +54,11 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    */
   fun bold(): Cell<T>
 
+  @Deprecated("Use overloaded comment(...) instead", level = DeprecationLevel.HIDDEN)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  fun comment(@NlsContexts.DetailedDescription comment: String?,
+              maxLineLength: Int = DEFAULT_COMMENT_WIDTH): Cell<T>
+
   /**
    * Adds comment under the cell aligned by left edge with appropriate color and font size (macOS uses smaller font).
    * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically.
@@ -68,6 +76,11 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun comment(@NlsContexts.DetailedDescription comment: String?,
               maxLineLength: Int = DEFAULT_COMMENT_WIDTH,
               action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<T>
+
+  @Deprecated("Use comment(...) instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  fun commentHtml(@NlsContexts.DetailedDescription comment: String?,
+                  action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<T>
 
   /**
    * See doc for overloaded method
@@ -135,10 +148,5 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * Registers [callback] that will be called for [component] from [DialogPanel.isModified] method
    */
   fun onIsModified(callback: () -> Boolean): Cell<T>
-
-  /**
-   * Overrides all gaps around cell by [customGaps]. Should be used for very specific cases
-   */
-  fun customize(customGaps: Gaps): Cell<T>
 
 }

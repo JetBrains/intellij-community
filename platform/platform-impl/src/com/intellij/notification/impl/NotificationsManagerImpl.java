@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl;
 
 import com.intellij.codeInsight.hint.TooltipController;
@@ -103,7 +103,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
   public void expireAll() {
     if (ActionCenter.isEnabled()) {
-      NotificationsToolWindowFactory.Companion.expire(null);
+      NotificationsToolWindowFactory.Companion.expireAll();
     }
     else {
       EventLog.expireNotifications();
@@ -689,7 +689,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       .setHideOnKeyOutside(hideOnClickOutside)
       .setHideOnFrameResize(false)
       .setBorderColor(layoutData.borderColor)
-      .setBorderInsets(JBUI.emptyInsets());
+      .setBorderInsets(JBInsets.emptyInsets());
 
     if (layoutData.fadeoutTime != 0) {
       builder.setFadeoutTime(layoutData.fadeoutTime);
@@ -729,7 +729,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     return balloon;
   }
 
-  private static void setTextAccessibleName(@NotNull JComponent component, @NotNull String htmlContent) {
+  public static void setTextAccessibleName(@NotNull JComponent component, @NotNull String htmlContent) {
     component.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY,
                                 StringUtil.unescapeXmlEntities(StringUtil.stripHtml(htmlContent, " ")));
   }

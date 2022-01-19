@@ -11,7 +11,6 @@ import com.intellij.util.Consumer
 import org.jdom.Element
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import javax.swing.JComponent
@@ -21,18 +20,14 @@ class KotlinSdkType : SdkType("KotlinSDK") {
         @JvmField
         val INSTANCE = KotlinSdkType()
 
-        val defaultHomePath: String
-            get() = KotlinArtifacts.instance.kotlincDirectory.absolutePath
-
         @JvmOverloads
         fun setUpIfNeeded(disposable: Disposable? = null, checkIfNeeded: () -> Boolean = { true }) {
             val projectSdks: Array<Sdk> = ProjectJdkTable.getInstance().allJdks
             if (projectSdks.any { it.sdkType is KotlinSdkType }) return
             if (!checkIfNeeded()) return // do not create Kotlin SDK
 
-            val newSdkName = SdkConfigurationUtil.createUniqueSdkName(INSTANCE, defaultHomePath, projectSdks.toList())
+            val newSdkName = SdkConfigurationUtil.createUniqueSdkName(INSTANCE, "", projectSdks.toList())
             val newJdk = ProjectJdkImpl(newSdkName, INSTANCE)
-            newJdk.homePath = defaultHomePath
             INSTANCE.setupSdkPaths(newJdk)
 
             ApplicationManager.getApplication().invokeAndWait {
@@ -70,9 +65,7 @@ class KotlinSdkType : SdkType("KotlinSDK") {
 
     fun createSdkWithUniqueName(existingSdks: Collection<Sdk>): ProjectJdkImpl {
         val sdkName = suggestSdkName(SdkConfigurationUtil.createUniqueSdkName(this, "", existingSdks), "")
-        return ProjectJdkImpl(sdkName, this).apply {
-            homePath = defaultHomePath
-        }
+        return ProjectJdkImpl(sdkName, this)
     }
 
     override fun createAdditionalDataConfigurable(sdkModel: SdkModel, sdkModificator: SdkModificator) = null

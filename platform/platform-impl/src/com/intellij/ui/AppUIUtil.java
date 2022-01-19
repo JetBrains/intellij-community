@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.IdeBundle;
@@ -226,12 +226,13 @@ public final class AppUIUtil {
     }
   }
 
-  public static void updateFrameClass(@NotNull Toolkit toolkit) {
+  public static void updateFrameClass() {
     if (SystemInfoRt.isWindows || SystemInfoRt.isMac) {
       return;
     }
 
     try {
+      Toolkit toolkit = Toolkit.getDefaultToolkit();
       Class<? extends Toolkit> aClass = toolkit.getClass();
       if ("sun.awt.X11.XToolkit".equals(aClass.getName())) {
         ReflectionUtil.setField(aClass, toolkit, null, "awtAppClassName", getFrameClass());
@@ -272,10 +273,6 @@ public final class AppUIUtil {
     }
 
     return null;
-  }
-
-  public static boolean needToShowUsageStatsConsent() {
-    return ConsentOptions.getInstance().getConsents(ConsentOptions.condUsageStatsConsent()).getSecond();
   }
 
   public static boolean showConsentsAgreementIfNeeded(@NotNull Logger log) {

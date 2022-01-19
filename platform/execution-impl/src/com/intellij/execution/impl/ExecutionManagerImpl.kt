@@ -952,7 +952,10 @@ private class ProcessExecutionListener(private val project: Project,
 
     project.messageBus.syncPublisher(ExecutionManager.EXECUTION_TOPIC).processTerminated(executorId, environment, processHandler, event.exitCode)
 
-    RunConfigurationUsageTriggerCollector.logProcessFinished(activity, RunConfigurationFinishType.UNKNOWN)
+    val runConfigurationFinishType =
+      if (event.processHandler.getUserData(ProcessHandler.TERMINATION_REQUESTED) == true) RunConfigurationFinishType.TERMINATED
+      else RunConfigurationFinishType.UNKNOWN
+    RunConfigurationUsageTriggerCollector.logProcessFinished(activity, runConfigurationFinishType)
 
     processHandler.removeProcessListener(this)
     SaveAndSyncHandler.getInstance().scheduleRefresh()

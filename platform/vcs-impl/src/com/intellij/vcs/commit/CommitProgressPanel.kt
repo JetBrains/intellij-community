@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.icons.AllIcons
@@ -30,8 +30,8 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.HtmlPanel
 import com.intellij.util.ui.JBUI.Borders.empty
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil.getErrorForeground
-import com.intellij.util.ui.UIUtil.getLabelFont
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.*
@@ -263,7 +263,7 @@ private class FailuresDescriptionPanel : HtmlPanel() {
     return Dimension(size).apply { width = preferredSize.width }
   }
 
-  override fun getBodyFont(): Font = getLabelFont()
+  override fun getBodyFont(): Font = StartupUiUtil.getLabelFont()
   override fun getBody(): String = if (isInitialized) buildDescription().toString() else ""
   override fun hyperlinkUpdate(e: HyperlinkEvent) = showDetails(e)
 

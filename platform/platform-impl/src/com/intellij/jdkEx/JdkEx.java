@@ -1,13 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jdkEx;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.MethodInvocator;
-import com.intellij.util.lang.JavaVersion;
-import io.netty.util.internal.SystemPropertyUtil;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
@@ -23,10 +20,10 @@ import java.util.List;
  *
  * @author tav
  */
+@ApiStatus.Internal
 public final class JdkEx {
   @SuppressWarnings("unused")
-  @NotNull
-  public static InputEventEx getInputEventEx() {
+  public static @NotNull InputEventEx getInputEventEx() {
     if (SystemInfo.isJetBrainsJvm) {
       return new JBInputEventEx();
     }
@@ -102,8 +99,7 @@ public final class JdkEx {
       return myInvocator != null && myInvocator.isAvailable();
     }
 
-    @Nullable
-    public Object invoke(Object object, Object... arguments) {
+    public @Nullable Object invoke(Object object, Object... arguments) {
       if (isAvailable()) {
         //noinspection ConstantConditions
         return myInvocator.invoke(object, arguments);
@@ -129,8 +125,7 @@ public final class JdkEx {
 
   private static MethodInvocator mySetTabbingMode;
 
-  @Nullable
-  private static MethodInvocator getTabbingModeInvocator() {
+  private static @Nullable MethodInvocator getTabbingModeInvocator() {
     if (!SystemInfo.isJetBrainsJvm || !SystemInfo.isMacOSBigSur || !Registry.is("ide.mac.bigsur.window.with.tabs.enabled", true)) {
       return null;
     }

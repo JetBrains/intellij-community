@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GrModifierListUtil")
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers
 
 import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.parentOfType
@@ -25,7 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP
 import org.jetbrains.plugins.groovy.lang.psi.impl.findDeclaredDetachedValue
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionImpl
-import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil.isInterface
 import org.jetbrains.plugins.groovy.lang.psi.util.isCompactConstructor
 import org.jetbrains.plugins.groovy.transformations.immutable.hasImmutableAnnotation
@@ -81,7 +81,9 @@ private fun GrModifierList.isAbstract(): Boolean {
 }
 
 private fun GrMethod.isAbstractMethod(): Boolean =
-  containingClass?.let { it.isInterface && !GrTraitUtil.isTrait(it) } ?: false
+  containingClass?.let { it.isInterface && !it.isCodeTrait() && !this.modifierList.hasExplicitModifier(PsiModifier.DEFAULT) } ?: false
+
+private fun PsiClass.isCodeTrait() : Boolean = this is GrTypeDefinition && this.isTrait
 
 private fun GrTypeDefinition.isAbstractClass(): Boolean {
   if (isEnum) {

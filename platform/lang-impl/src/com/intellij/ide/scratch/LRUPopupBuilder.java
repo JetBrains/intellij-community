@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
@@ -13,9 +13,7 @@ import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EmptyIcon;
@@ -243,21 +241,25 @@ public abstract class LRUPopupBuilder<T> {
     return popup;
   }
 
-  private String @NotNull [] restoreLRUItems() {
-    return ObjectUtils.notNull(myPropertiesComponent.getValues(getLRUKey()), ArrayUtilRt.EMPTY_STRING_ARRAY);
+  private @NotNull List<String> restoreLRUItems() {
+    return Objects.requireNonNullElse(myPropertiesComponent.getList(getLRUKey()), Collections.emptyList());
   }
 
   private void storeLRUItems(@NotNull T t) {
-    String[] values = myPropertiesComponent.getValues(getLRUKey());
+    List<String> values = myPropertiesComponent.getList(getLRUKey());
     List<String> lastUsed = new ArrayList<>(LRU_ITEMS);
     lastUsed.add(getStorageId(t));
     if (values != null) {
       for (String value : values) {
-        if (!lastUsed.contains(value)) lastUsed.add(value);
-        if (lastUsed.size() == LRU_ITEMS) break;
+        if (!lastUsed.contains(value)) {
+          lastUsed.add(value);
+        }
+        if (lastUsed.size() == LRU_ITEMS) {
+          break;
+        }
       }
     }
-    myPropertiesComponent.setValues(getLRUKey(), ArrayUtilRt.toStringArray(lastUsed));
+    myPropertiesComponent.setList(getLRUKey(), lastUsed);
   }
 
 

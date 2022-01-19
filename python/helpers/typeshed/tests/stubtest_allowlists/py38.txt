@@ -5,6 +5,7 @@ _collections_abc.AsyncGenerator.ag_running
 _collections_abc.ItemsView.__reversed__
 _collections_abc.KeysView.__reversed__
 _collections_abc.ValuesView.__reversed__
+_dummy_threading
 ast.Bytes.__new__
 ast.Ellipsis.__new__
 ast.NameConstant.__new__
@@ -25,23 +26,18 @@ collections.Callable
 collections.ItemsView.__reversed__
 collections.KeysView.__reversed__
 collections.ValuesView.__reversed__
-collections.abc.AsyncGenerator.ag_await
-collections.abc.AsyncGenerator.ag_code
-collections.abc.AsyncGenerator.ag_frame
-collections.abc.AsyncGenerator.ag_running
-collections.abc.ItemsView.__reversed__
-collections.abc.KeysView.__reversed__
-collections.abc.ValuesView.__reversed__
 contextvars.Context.__init__  # Default C __init__ signature is wrong
 dataclasses.field
 enum.Enum._generate_next_value_
 fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
+ftplib.FTP.trust_server_pasv_ipv4_address  # Dangerous to use, intentionally undocumented, intentionally missing from typeshed. #6154
 functools.partialmethod.__get__
 functools.singledispatchmethod.__call__  # A lie to reflect that the descriptor get returns a callable
 gettext.install  # codeset default value is ['unspecified'] so can't be specified
 gettext.translation  # codeset default value is ['unspecified'] so can't be specified
 hmac.new  # Stub is a white lie; see comments in the stub
 http.server.SimpleHTTPRequestHandler.__init__  # *args is expanded
+importlib.metadata._meta  # Added in 3.10
 ipaddress.IPv4Interface.hostmask
 ipaddress.IPv6Interface.hostmask
 ipaddress._BaseNetwork.broadcast_address
@@ -51,12 +47,13 @@ pickle.Pickler.reducer_override  # implemented in C pickler
 queue.SimpleQueue.__init__  # Default C __init__ signature is wrong
 random.Random.randrange  # missing undocumented arg _int
 random.randrange  # missing undocumented arg _int
+re.Pattern.scanner  # Undocumented and not useful. #6405
 sched.Event.__doc__  # __slots__ is overridden
 ssl.PROTOCOL_SSLv3  # Depends on ssl compilation
 ssl.RAND_egd  # Depends on openssl compilation
 sys.UnraisableHookArgs  # Not exported from sys
 types.ClassMethodDescriptorType.__get__
-types.CodeType.replace
+types.CodeType.replace  # stubtest thinks default values are None but None doesn't work at runtime
 types.MethodDescriptorType.__get__
 types.WrapperDescriptorType.__get__
 typing.NamedTuple.__new__
@@ -72,6 +69,7 @@ typing.SupportsInt.__init__
 typing.SupportsRound.__init__
 typing._SpecialForm.__init__
 typing._SpecialForm.__new__
+unittest._log  # New in Python 3.9
 uuid.getnode  # undocumented, unused parameter getters that was later removed
 weakref.WeakValueDictionary.update
 xml.etree.ElementTree.TreeBuilder.start  # Discrepancy between Python and C modules, fixed in bpo-39495
@@ -84,6 +82,10 @@ tkinter.EventType.__new__
 
 builtins.memoryview.__iter__  # C type that implements __getitem__
 builtins.memoryview.cast  # inspect.signature is incorrect about shape being kw-only
+sqlite3.dbapi2.Binary.__iter__  # C type that implements __getitem__
+sqlite3.dbapi2.Binary.cast  # inspect.signature is incorrect about shape being kw-only
+sqlite3.Binary.__iter__  # C type that implements __getitem__
+sqlite3.Binary.cast  # inspect.signature is incorrect about shape being kw-only
 collections.Coroutine.cr_await
 collections.Coroutine.cr_code
 collections.Coroutine.cr_frame
@@ -94,3 +96,82 @@ collections.Generator.gi_running
 collections.Generator.gi_yieldfrom
 collections.Mapping.get  # Adding None to the Union messed up mypy
 collections.Sequence.index  # Supporting None in end is not mandatory
+
+# Exists at runtime, but missing from stubs
+_dummy_thread.RLock
+_imp.source_hash
+asyncio.BufferedProtocol.eof_received
+asyncio.protocols.BufferedProtocol.eof_received
+contextvars.ContextVar.__class_getitem__
+datetime.datetime_CAPI
+distutils.command.bdist_wininst
+distutils.command.bdist_wininst.bdist_wininst
+distutils.dist.DistributionMetadata.set_classifiers
+distutils.dist.DistributionMetadata.set_keywords
+distutils.dist.DistributionMetadata.set_platforms
+distutils.sysconfig.expand_makefile_vars
+distutils.sysconfig.get_python_version
+distutils.util.get_host_platform
+distutils.cygwinccompiler.RE_VERSION
+distutils.dist.command_re
+distutils.fancy_getopt.longopt_re
+distutils.fancy_getopt.neg_alias_re
+dummy_threading.Barrier
+dummy_threading.BoundedSemaphore
+dummy_threading.BrokenBarrierError
+dummy_threading.Condition
+dummy_threading.Event
+dummy_threading.ExceptHookArgs
+dummy_threading.Lock
+dummy_threading.RLock
+dummy_threading.Semaphore
+dummy_threading.TIMEOUT_MAX
+dummy_threading.Thread
+dummy_threading.ThreadError
+dummy_threading.Timer
+dummy_threading.active_count
+dummy_threading.current_thread
+dummy_threading.enumerate
+dummy_threading.excepthook
+dummy_threading.get_ident
+dummy_threading.local
+dummy_threading.main_thread
+dummy_threading.setprofile
+dummy_threading.settrace
+dummy_threading.stack_size
+html.parser.HTMLParser.unescape
+multiprocessing.managers.SharedMemoryServer.create
+multiprocessing.managers.SharedMemoryServer.list_segments
+multiprocessing.managers.SharedMemoryServer.public
+multiprocessing.managers.SharedMemoryServer.release_segment
+multiprocessing.managers.SharedMemoryServer.shutdown
+multiprocessing.managers.SharedMemoryServer.track_segment
+plistlib.Data.asBase64
+plistlib.Data.fromBase64
+pyexpat.XMLParserType.SkippedEntityHandler
+pyexpat.XMLParserType.intern
+stringprep.unicodedata  # re-exported from unicodedata
+sys.callstats
+tempfile.SpooledTemporaryFile.softspace
+tkinter.commondialog.[A-Z_]+
+tkinter.commondialog.TclVersion
+tkinter.commondialog.TkVersion
+tkinter.commondialog.wantobjects
+tkinter.dialog.[A-Z_]+
+tkinter.dialog.TclVersion
+tkinter.dialog.TkVersion
+tkinter.dialog.wantobjects
+tkinter.dnd.Icon
+tkinter.dnd.Tester
+tkinter.dnd.test
+tkinter.filedialog.[A-Z_]+
+tkinter.filedialog.TclVersion
+tkinter.filedialog.TkVersion
+tkinter.filedialog.wantobjects
+tkinter.simpledialog.wantobjects
+tkinter.tix.wantobjects
+types.CoroutineType.cr_origin
+typing._SpecialForm.__call__
+unicodedata.UCD.is_normalized
+xml.parsers.expat.XMLParserType.SkippedEntityHandler
+xml.parsers.expat.XMLParserType.intern

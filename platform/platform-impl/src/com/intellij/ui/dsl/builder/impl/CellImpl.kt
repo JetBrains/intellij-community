@@ -3,6 +3,7 @@ package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.builder.*
@@ -35,11 +36,6 @@ internal class CellImpl<T : JComponent>(
 
   var labelPosition: LabelPosition = LabelPosition.LEFT
     private set
-
-  var customGaps: Gaps? = null
-    private set
-
-  val visualPaddings = getViewComponentVisualPaddings()
 
   private var property: GraphProperty<*>? = null
   private var applyIfEnabled = false
@@ -116,9 +112,18 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
+  override fun comment(comment: String?, maxLineLength: Int): Cell<T> {
+    this.comment = if (comment == null) null else ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
+    return this
+  }
+
   override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<T> {
     this.comment = if (comment == null) null else createComment(comment, maxLineLength, action)
     return this
+  }
+
+  override fun commentHtml(comment: String?, action: HyperlinkEventAction): Cell<T> {
+    return comment(if (comment == null) null else removeHtml(comment), MAX_LINE_LENGTH_WORD_WRAP, action)
   }
 
   override fun label(label: String, position: LabelPosition): CellImpl<T> {
@@ -194,7 +199,7 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun customize(customGaps: Gaps): CellImpl<T> {
-    this.customGaps = customGaps
+    super.customize(customGaps)
     return this
   }
 
@@ -218,11 +223,12 @@ internal class CellImpl<T : JComponent>(
     comment?.let { it.isEnabled = isEnabled }
     label?.let { it.isEnabled = isEnabled }
   }
+}
 
-  private fun getViewComponentVisualPaddings(): Gaps {
-    val origin = viewComponent.origin
-    val insets = origin.insets
-    val customGaps = origin.getClientProperty(DslComponentProperty.VISUAL_PADDINGS) as? Gaps
-    return customGaps ?: Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
-  }
+private const val HTML = "<html>"
+
+@Deprecated("Not needed in the future")
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+internal fun removeHtml(text: String): String {
+  return if (text.startsWith(HTML, ignoreCase = true)) text.substring(HTML.length) else text
 }

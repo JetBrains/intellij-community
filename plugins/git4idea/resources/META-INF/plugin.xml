@@ -219,11 +219,11 @@
       <add-to-group group-id="VcsGroup" anchor="last"/>
     </group>
 
-    <action id="Vcs.ShowBranches" class="git4idea.actions.GitBranchesComboBoxAction" icon="AllIcons.Vcs.Branch">
+    <action id="Git.ShowBranches" class="git4idea.actions.GitBranchesComboBoxAction" icon="AllIcons.Vcs.Branch">
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="first"/>
     </action>
 
-    <action id="Vcs.Toolbar.ShowMoreActions" class="git4idea.actions.GitQuickActionsToolbarPopup">
+    <action id="Git.Toolbar.ShowMoreActions" class="git4idea.actions.GitQuickActionsToolbarPopup">
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="last"/>
     </action>
 
@@ -367,10 +367,6 @@
     <action id="Git.Show.Stash" class="git4idea.stash.ui.GitShowStashToolWindowTabAction"/>
     <action id="Git.Stash.Refresh" class="git4idea.stash.ui.GitRefreshStashesAction" icon="AllIcons.Actions.Refresh"/>
 
-    <group id="Git.Stash.Toolbar">
-      <reference id="Diff.ShowDiff"/>
-      <reference id="Git.Stash.Refresh"/>
-    </group>
     <group id="Git.Stash.ContextMenu">
       <reference id="Git.Stash.Pop"/>
       <reference id="Git.Stash.Apply"/>
@@ -660,7 +656,7 @@
     <vcs.commitMessageProvider implementation="git4idea.commit.GitCommitTemplateMessageProvider" order="first"/>
     <jbProtocolRevisionResolver implementation="git4idea.GitNavigateRevisionResolver"/>
 
-    <toolbarWidget implementation="git4idea.ui.toolbar.GitToolbarWidgetFactory"/>
+    <projectToolbarWidget implementation="git4idea.ui.toolbar.GitToolbarWidgetFactory"/>
   </extensions>
 
   <extensionPoints>

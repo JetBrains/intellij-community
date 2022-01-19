@@ -2,7 +2,9 @@
 <body>
 Reports calls to <code>containsAll()</code> on <code>java.util.List</code>.
 <p>
-  The time complexity of this method call is O(n&middot;m). When the list is large, this can be an expensive operation.
+  The time complexity of this method call is O(n&middot;m), where n is the number of elements in the list on which
+  the method is called, and m is the number of elements in the collection passed to the method as a parameter.
+  When the list is large, this can be an expensive operation.
 </p>
 <p>
   The quick-fix wraps the list in <code>new java.util.HashSet&lt;&gt;()</code> since the time required to create

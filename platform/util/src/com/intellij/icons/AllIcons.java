@@ -545,12 +545,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon SnapToGrid = load("graph/snapToGrid.svg", -2048322498, 2);
     /** 16x16 */ public static final @NotNull Icon ZoomIn = load("graph/zoomIn.svg", 97508505, 2);
     /** 16x16 */ public static final @NotNull Icon ZoomOut = load("graph/zoomOut.svg", -1574578211, 2);
-
-    /** @deprecated to be removed in IDEA 2021.1 - use AllIcons.General.FitContent */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
-    /** 16x16 */ public static final @NotNull Icon FitContent = load("general/fitContent.svg", -952079922, 0);
   }
 
   public static final class Gutter {
@@ -999,8 +993,10 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Tarantool = load("providers/tarantool.svg", -1011831593, 0);
     /** 16x16 */ public static final @NotNull Icon Teradata = load("providers/teradata.svg", 507962851, 0);
     /** 16x16 */ public static final @NotNull Icon Tibero = load("providers/tibero.svg", -1201793474, 2);
+    /** 16x16 */ public static final @NotNull Icon Tidb = load("providers/tidb.svg", 1031303552, 0);
     /** 16x16 */ public static final @NotNull Icon Trino = load("providers/trino.svg", 245019578, 2);
     /** 16x16 */ public static final @NotNull Icon Vertica = load("providers/vertica.svg", -1457002626, 2);
+    /** 16x16 */ public static final @NotNull Icon Yugabyte = load("providers/yugabyte.svg", -1054474169, 2);
   }
 
   public static final class RunConfigurations {
@@ -1122,6 +1118,7 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ToolWindowStructure = load("toolwindows/toolWindowStructure.svg", 1275982556, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowTodo = load("toolwindows/toolWindowTodo.svg", -1371075097, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowUIDesigner = load("toolwindows/toolWindowUIDesigner.svg", -151942562, 2);
+    /** 13x13 */ public static final @NotNull Icon ToolWindowVariableView = load("toolwindows/toolWindowVariableView.svg", 1680878393, 2);
     /** 13x13 */ public static final @NotNull Icon WarningEvents = load("toolwindows/warningEvents.svg", -1480999657, 2);
     /** 13x13 */ public static final @NotNull Icon WebToolWindow = load("toolwindows/webToolWindow.svg", 1415711858, 2);
   }

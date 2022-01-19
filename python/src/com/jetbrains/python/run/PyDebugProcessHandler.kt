@@ -3,8 +3,11 @@ package com.jetbrains.python.run
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.util.io.BaseOutputReader
+import java.nio.charset.Charset
 
-class PyDebugProcessHandler(commandLine: GeneralCommandLine) : PythonProcessHandler(commandLine) {
+class PyDebugProcessHandler : PythonProcessHandler {
+  constructor(commandLine: GeneralCommandLine) : super(commandLine)
+  constructor(process: Process, commandLine: String, charset: Charset) : super(process, commandLine, charset)
 
   override fun readerOptions(): BaseOutputReader.Options {
     return BaseOutputReader.Options.forMostlySilentProcess()

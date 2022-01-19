@@ -87,34 +87,34 @@ public class SequenceStatement extends Statement {
   @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     TextBuffer buf = new TextBuffer();
-    boolean islabeled = isLabeled();
+    boolean isLabeled = isLabeled();
 
     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
 
-    if (islabeled) {
+    if (isLabeled) {
       buf.appendIndent(indent++).append("label").append(this.id.toString()).append(": {").appendLineSeparator();
       tracer.incrementCurrentSourceLine();
     }
 
-    boolean notempty = false;
+    boolean notEmpty = false;
 
     for (int i = 0; i < stats.size(); i++) {
 
-      Statement st = stats.get(i);
+      Statement stat = stats.get(i);
 
-      if (i > 0 && notempty) {
+      if (i > 0 && notEmpty) {
         buf.appendLineSeparator();
         tracer.incrementCurrentSourceLine();
       }
 
-      TextBuffer str = ExprProcessor.jmpWrapper(st, indent, false, tracer);
+      TextBuffer str = ExprProcessor.jmpWrapper(stat, indent, false, tracer);
       buf.append(str);
 
-      notempty = !str.containsOnlyWhitespaces();
+      notEmpty = !str.containsOnlyWhitespaces();
     }
 
-    if (islabeled) {
-      buf.appendIndent(indent-1).append("}").appendLineSeparator();
+    if (isLabeled) {
+      buf.appendIndent(indent - 1).append("}").appendLineSeparator();
       tracer.incrementCurrentSourceLine();
     }
 

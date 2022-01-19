@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util;
 
 import com.intellij.application.options.CodeStyle;
@@ -427,7 +427,7 @@ public final class DiffUtil {
 
   @NotNull
   public static JPanel createMessagePanel(@NotNull JComponent label) {
-    Color commentFg = new JBColor(() -> {
+    Color commentFg = JBColor.lazy(() -> {
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
       TextAttributes commentAttributes = scheme.getAttributes(DefaultLanguageHighlighterColors.LINE_COMMENT);
       if (commentAttributes.getForegroundColor() != null && commentAttributes.getBackgroundColor() == null) {
@@ -441,7 +441,7 @@ public final class DiffUtil {
 
     JPanel panel = new JPanel(new SingleComponentCenteringLayout());
     panel.setBorder(JBUI.Borders.empty(5));
-    panel.setBackground(new JBColor(() -> EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()));
+    panel.setBackground(JBColor.lazy(() -> EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()));
     panel.add(label);
     return panel;
   }
@@ -1719,16 +1719,6 @@ public final class DiffUtil {
       if (data != null) return data;
     }
     return null;
-  }
-
-  /**
-   * @deprecated Use {@link #addNotification(DiffNotificationProvider, UserDataHolder)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  public static void addNotification(@Nullable JComponent component, @NotNull UserDataHolder holder) {
-    if (component == null) return;
-    addNotification(viewer -> component, holder);
   }
 
   public static void addNotification(@Nullable DiffNotificationProvider provider, @NotNull UserDataHolder holder) {

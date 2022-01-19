@@ -21,6 +21,8 @@ class GraphPropertyImpl<T>(private val propertyGraph: PropertyGraph, initial: ()
   }
 
   companion object {
+    fun <T> PropertyGraph.graphProperty(initial: T) = graphProperty { initial }
+
     fun <T> PropertyGraph.graphProperty(initial: () -> T): GraphProperty<T> = GraphPropertyImpl(this, initial)
 
     fun <S, T> PropertyGraph.graphPropertyView(initial: () -> T, map: (S) -> T, comap: (T) -> S): GraphProperty<T> =

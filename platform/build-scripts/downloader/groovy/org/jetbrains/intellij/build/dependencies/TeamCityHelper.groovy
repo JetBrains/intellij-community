@@ -1,10 +1,12 @@
 package org.jetbrains.intellij.build.dependencies
 
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nullable
 
 @CompileStatic
 @SuppressWarnings("GroovyUnusedDeclaration")
+@ApiStatus.Internal
 class TeamCityHelper {
   @Lazy @Nullable static File checkoutDirectory = {
     if (!isUnderTeamCity) {

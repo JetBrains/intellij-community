@@ -70,17 +70,6 @@ public final class PyResolveContext {
     return new PyResolveContext(true, true, false, context);
   }
 
-  /**
-   * @deprecated Please use {@link PyResolveContext#noProperties(TypeEvalContext)}
-   * to explicitly specify type evaluation context.
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  public static PyResolveContext noProperties() {
-    return new PyResolveContext(false, false, false, TypeEvalContext.codeInsightFallback(null));
-  }
-
   @NotNull
   public static PyResolveContext noProperties(@NotNull TypeEvalContext context) {
     return new PyResolveContext(false, false, false, context);

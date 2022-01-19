@@ -34,7 +34,7 @@ import javax.swing.JTree
 
 class CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
   companion object {
-    val GROUP = EventLogGroup("commit.interactions", 2)
+    val GROUP = EventLogGroup("commit.interactions", 3)
 
     val FILES_TOTAL = EventFields.RoundedInt("files_total")
     val FILES_INCLUDED = EventFields.RoundedInt("files_included")

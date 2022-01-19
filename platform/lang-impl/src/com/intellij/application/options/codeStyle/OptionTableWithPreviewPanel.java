@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.LangBundle;
@@ -24,10 +24,7 @@ import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableCellRenderer;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.AbstractTableCellEditor;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -89,12 +86,12 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     };
     myPanel.add(scrollPane
       , new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                               JBUI.emptyInsets(), 0, 0));
+                               JBInsets.emptyInsets(), 0, 0));
 
     final JPanel previewPanel = createPreviewPanel();
     myPanel.add(previewPanel,
                 new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                       JBUI.emptyInsets(), 0, 0));
+                                       JBInsets.emptyInsets(), 0, 0));
 
     installPreviewPanel(previewPanel);
     addPanelToWatch(myPanel);

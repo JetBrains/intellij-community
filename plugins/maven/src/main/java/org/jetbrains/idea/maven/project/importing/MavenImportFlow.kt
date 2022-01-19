@@ -230,11 +230,12 @@ class MavenImportFlow {
     val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(context.project)
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     val projectManager = MavenProjectsManager.getInstance(context.project)
-    val projectImporter = MavenProjectImporter(context.project, context.readContext.projectsTree,
-                                               projectManager.getFileToModuleMapping(MavenDefaultModelsProvider(context.project)),
-                                               context.projectsToImport.map {
-                                                 it to MavenProjectChanges.ALL
-                                               }.toMap(), false, modelsProvider, context.initialContext.importingSettings, null)
+    val projectImporter = MavenProjectImporter.createImporter(context.project, context.readContext.projectsTree,
+                                                              projectManager.getFileToModuleMapping(MavenDefaultModelsProvider(context.project)),
+                                                              context.projectsToImport.map {
+                                                                it to MavenProjectChanges.ALL
+                                                              }.toMap(), false, modelsProvider,
+                                                              context.initialContext.importingSettings, null)
     val postImportTasks = projectImporter.importProject();
     val modulesCreated = projectImporter.createdModules
     return MavenImportedContext(context.project, modulesCreated, postImportTasks, context.initialContext);

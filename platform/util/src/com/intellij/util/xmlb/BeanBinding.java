@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.serialization.PropertyCollector;
 import com.intellij.util.ReflectionUtil;
@@ -41,7 +41,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     assert !beanClass.isPrimitive() : "Bean is primitive type: " + beanClass;
     myBeanClass = beanClass;
     myTagName = getTagName(beanClass);
-    assert !Strings.isEmptyOrSpaces(myTagName) : "Bean name is empty: " + beanClass;
+    assert !StringUtilRt.isEmptyOrSpaces(myTagName) : "Bean name is empty: " + beanClass;
   }
 
   private static final class XmlSerializerPropertyCollector extends PropertyCollector {
@@ -203,7 +203,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
   public final void deserializeInto(@NotNull Object result, @NotNull Element element, @Nullable Set<String> accessorNameTracker) {
     nextAttribute:
     for (org.jdom.Attribute attribute : element.getAttributes()) {
-      if (Strings.isEmpty(attribute.getNamespaceURI())) {
+      if (StringUtilRt.isEmpty(attribute.getNamespaceURI())) {
         for (NestedBinding binding : bindings) {
           if (binding instanceof AttributeBinding && ((AttributeBinding)binding).name.equals(attribute.getName())) {
             if (accessorNameTracker != null) {

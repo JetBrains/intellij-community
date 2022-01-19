@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -105,5 +107,13 @@ public final class AppExecutorUtil {
   @ApiStatus.Internal
   public static void shutdownApplicationScheduledExecutorService() {
     ((AppScheduledExecutorService)AppScheduledExecutorService.getInstance()).shutdownAppScheduledExecutorService();
+  }
+
+  @ApiStatus.Internal
+  public static boolean propagateContextOrCancellation() {
+    return LoadingState.APP_STARTED.isOccurred() && (
+      Registry.is("ide.propagate.context") ||
+      Registry.is("ide.propagate.cancellation")
+    );
   }
 }

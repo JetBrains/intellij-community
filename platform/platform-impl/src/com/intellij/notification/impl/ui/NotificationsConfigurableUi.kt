@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.ui
 
 import com.intellij.ide.IdeBundle
@@ -6,6 +6,7 @@ import com.intellij.notification.ActionCenter
 import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.SimpleListCellRenderer
@@ -63,7 +64,9 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
   }
 
   private fun createNotificationsList(): JBList<NotificationSettingsWrapper> {
-    return JBList(*NotificationsConfigurablePanel.NotificationsTreeTableModel().allSettings.toTypedArray())
+    return JBList(*NotificationsConfigurablePanel.NotificationsTreeTableModel().allSettings
+      .sortedWith(Comparator { nsw1, nsw2 -> NaturalComparator.INSTANCE.compare(nsw1.toString(), nsw2.toString()) })
+      .toTypedArray())
       .apply {
         cellRenderer = SimpleListCellRenderer.create("") { it.toString() }
         selectionModel.addListSelectionListener {

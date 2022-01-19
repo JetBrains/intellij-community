@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.codeInsight.runner.JavaMainMethodProvider;
@@ -25,12 +25,16 @@ public final class PsiMethodUtil {
       }
     }
     final PsiMethod[] mainMethods = aClass.findMethodsByName("main", true);
-    return findMainMethod(mainMethods);
+    return findMainMethod(mainMethods, aClass);
   }
 
   @Nullable
-  private static PsiMethod findMainMethod(final PsiMethod[] mainMethods) {
+  private static PsiMethod findMainMethod(final PsiMethod[] mainMethods, PsiClass aClass) {
     for (final PsiMethod mainMethod : mainMethods) {
+      PsiClass containingClass = mainMethod.getContainingClass();
+      if (containingClass != null && containingClass != aClass && containingClass.isInterface()) {
+        continue;
+      }
       if (isMainMethod(mainMethod)) return mainMethod;
     }
     return null;
@@ -55,7 +59,7 @@ public final class PsiMethodUtil {
         return provider.hasMainMethod(psiClass);
       }
     }
-    return findMainMethod(psiClass.findMethodsByName("main", true)) != null;
+    return findMainMethod(psiClass.findMethodsByName("main", true), psiClass) != null;
   }
 
   @Nullable

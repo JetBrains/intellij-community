@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DeprecatedCallableAddReplaceWith", "ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.*
-import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.idea.Main
@@ -241,7 +240,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     val isHeadless = app == null || app.isHeadlessEnvironment
     val isUnitTestMode = app?.isUnitTestMode ?: false
 
-    var activity = activityNamePrefix?.let { startActivity("${it}service and ep registration") }
+    var activity = activityNamePrefix?.let { StartUpMeasurer.startActivity("${it}service and ep registration") }
 
     // register services before registering extensions because plugins can access services in their
     // extensions which can be invoked right away if the plugin is loaded dynamically
@@ -384,6 +383,20 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     return count
   }
 
+  fun createInitOldComponentsTask(): Runnable? {
+    val components = componentAdapters.getImmutableSet().filterIsInstance<MyComponentAdapter>()
+    if (components.isEmpty()) {
+      return null
+    }
+    return Runnable {
+      for (componentAdapter in componentAdapters.getImmutableSet()) {
+        if (componentAdapter is MyComponentAdapter) {
+          componentAdapter.getInstance<Any>(this, keyClass = null, indicator = null)
+        }
+      }
+    }
+  }
+
   protected fun createComponents(indicator: ProgressIndicator?) {
     LOG.assertTrue(containerState.get() == ContainerState.PRE_INIT)
 
@@ -393,7 +406,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
 
     val activity = when (val activityNamePrefix = activityNamePrefix()) {
       null -> null
-      else -> startActivity("$activityNamePrefix${StartUpMeasurer.Activities.CREATE_COMPONENTS_SUFFIX}")
+      else -> StartUpMeasurer.startActivity("$activityNamePrefix${StartUpMeasurer.Activities.CREATE_COMPONENTS_SUFFIX}")
     }
 
     for (componentAdapter in componentAdapters.getImmutableSet()) {
@@ -969,9 +982,11 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
 
   open fun activityNamePrefix(): String? = null
 
+  class PreloadServicesResult(@JvmField val sync: CompletableFuture<*>, @JvmField val async: CompletableFuture<*>)
+
   open fun preloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
                            activityPrefix: String,
-                           onlyIfAwait: Boolean = false): Pair<CompletableFuture<Void?>, CompletableFuture<Void?>> {
+                           onlyIfAwait: Boolean = false): PreloadServicesResult {
     val asyncPreloadedServices = mutableListOf<ForkJoinTask<*>>()
     val syncPreloadedServices = mutableListOf<ForkJoinTask<*>>()
     for (plugin in modules) {
@@ -1014,8 +1029,9 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
             return@task
           }
 
+          val activity = StartUpMeasurer.startActivity("${service.`interface`} preloading")
           try {
-            instantiateService(service)
+            preloadService(service)
           }
           catch (ignore: AlreadyDisposedException) {
           }
@@ -1023,29 +1039,37 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
             isServicePreloadingCancelled = true
             throw e
           }
+
+          activity.end()
         })
       }
     }
 
-    return Pair(
-      CompletableFuture.runAsync({
-        runActivity("${activityPrefix}service async preloading") {
-          ForkJoinTask.invokeAll(asyncPreloadedServices)
-        }
-      }, ForkJoinPool.commonPool()),
-      CompletableFuture.runAsync({
-        runActivity("${activityPrefix}service sync preloading") {
-          ForkJoinTask.invokeAll(syncPreloadedServices)
-        }
-      }, ForkJoinPool.commonPool())
+    return PreloadServicesResult(
+      sync = CompletableFuture.runAsync({
+                                          runActivity("${activityPrefix}service sync preloading") {
+                                            ForkJoinTask.invokeAll(syncPreloadedServices)
+                                          }
+                                        }, ForkJoinPool.commonPool()),
+      async = CompletableFuture.runAsync({
+                                           runActivity("${activityPrefix}service async preloading") {
+                                             ForkJoinTask.invokeAll(asyncPreloadedServices)
+                                           }
+                                         }, ForkJoinPool.commonPool())
     )
   }
 
-  protected open fun instantiateService(service: ServiceDescriptor) {
+  protected open fun preloadService(service: ServiceDescriptor) {
     val adapter = componentKeyToAdapter.get(service.getInterface()) as ServiceComponentAdapter? ?: return
+    if (adapter.isInitializing) {
+      // already in initialization
+      return
+    }
+
     val instance = adapter.getInstance<Any>(this, null)
     if (instance != null) {
       val implClass = instance.javaClass
+      // well, we don't know the interface class, so, we cannot add any service to a hot cache
       if (Modifier.isFinal(implClass.modifiers)) {
         serviceInstanceHotCache.putIfAbsent(implClass, instance)
       }

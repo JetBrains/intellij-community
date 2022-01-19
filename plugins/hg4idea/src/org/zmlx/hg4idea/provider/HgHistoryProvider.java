@@ -119,11 +119,6 @@ public class HgHistoryProvider implements VcsHistoryProvider {
       }
 
       @Override
-      public HistoryAsTreeProvider getHistoryAsTreeProvider() {
-        return null;
-      }
-
-      @Override
       public VcsHistorySession copy() {
         return createAppendableSession(vcsRoot, filePath, getRevisionList(), getCurrentRevisionNumber());
       }

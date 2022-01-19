@@ -141,12 +141,21 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
     return ApplicationManager.getApplication().getService(ActionMacroManager.class);
   }
 
-  public void startRecording(String macroName) {
+  public void startRecording(Project project, String macroName) {
     LOG.assertTrue(!myIsRecording);
     myIsRecording = true;
     myRecordingMacro = new ActionMacro(macroName);
 
-    StatusBar statusBar = WindowManager.getInstance().getIdeFrame(null).getStatusBar();
+    IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
+    if (frame == null) {
+      LOG.warn("Cannot start macro recording: ide frame not found");
+      return;
+    }
+    StatusBar statusBar = frame.getStatusBar();
+    if (statusBar == null) {
+      LOG.warn("Cannot start macro recording: status bar not found");
+      return;
+    }
     myWidget = new Widget(statusBar);
     statusBar.addWidget(myWidget);
   }
@@ -303,12 +312,12 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
 
     myIsRecording = false;
     myLastActionInputEvent.clear();
-    String macroName;
+    String macroName = "";
     do {
       macroName = Messages.showInputDialog(project,
                                            IdeBundle.message("prompt.enter.macro.name"),
                                            IdeBundle.message("title.enter.macro.name"),
-                                           Messages.getQuestionIcon());
+                                           Messages.getQuestionIcon(), macroName, null);
       if (macroName == null) {
         myRecordingMacro = null;
         return;
@@ -316,7 +325,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
 
       if (macroName.isEmpty()) macroName = null;
     }
-    while (macroName != null && !checkCanCreateMacro(macroName));
+    while (macroName != null && !checkCanCreateMacro(project, macroName));
 
     myLastMacro = myRecordingMacro;
     addRecordedMacroWithName(macroName);
@@ -482,12 +491,12 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
     if (!renamingMap.isEmpty()) CustomActionsSchema.setCustomizationSchemaForCurrentProjects();
   }
 
-  public boolean checkCanCreateMacro(String name) {
+  private boolean checkCanCreateMacro(Project project, String name) {
     final ActionManagerEx actionManager = (ActionManagerEx)ActionManager.getInstance();
     final String actionId = ActionMacro.MACRO_ACTION_PREFIX + name;
     if (actionManager.getAction(actionId) != null) {
       if (!MessageDialogBuilder.yesNo(IdeBundle.message("title.macro.name.already.used"), IdeBundle.message("message.macro.exists", name))
-            .icon(Messages.getWarningIcon()).ask(myWidget.getComponent())) {
+            .icon(Messages.getWarningIcon()).ask(project)) {
         return false;
       }
       actionManager.unregisterAction(actionId);

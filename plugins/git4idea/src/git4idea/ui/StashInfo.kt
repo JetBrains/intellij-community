@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui
 
 import com.intellij.openapi.util.NlsSafe
@@ -20,14 +6,16 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.util.VcsLogUtil
 import org.jetbrains.annotations.Nls
+import java.util.regex.Pattern
 
 /**
  * Information about one stash.
  *
  * @param stash stash codename (e.g. stash@{1})
  */
-class StashInfo(val root: VirtualFile, val hash: Hash, val parentHashes: List<Hash>,
+class StashInfo(val root: VirtualFile, val hash: Hash, val parentHashes: List<Hash>, val authorTime: Long,
                 val stash: @NlsSafe String, val branch: @NlsSafe String?, val message: @NlsSafe @Nls String) {
   val text: @Nls String // The formatted text representation
 
@@ -42,4 +30,17 @@ class StashInfo(val root: VirtualFile, val hash: Hash, val parentHashes: List<Ha
   }
 
   override fun toString() = text
+
+  companion object {
+    val StashInfo.subject: @NlsSafe String
+      get() {
+        return Pattern.compile("^" + VcsLogUtil.HASH_REGEX.pattern()).matcher(message).replaceFirst("").trim()
+      }
+
+    val StashInfo.branchName: @NlsSafe String?
+      get() {
+        if (branch == null || branch.endsWith("(no branch)")) return null
+        return branch.split(" ").lastOrNull()
+      }
+  }
 }

@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.ui.editor.VcsLogFile
-import com.intellij.vcs.log.util.runWhenVcsAndLogIsReady
+import com.intellij.vcs.log.util.VcsLogUtil
 import java.awt.BorderLayout
 import javax.swing.JComponent
 
@@ -20,7 +20,7 @@ internal class GitCompareBranchesFile(project: Project,
 
   override fun createMainComponent(project: Project): JComponent {
     val panel = JBPanelWithEmptyText(BorderLayout()).withEmptyText(VcsLogBundle.message("vcs.log.is.loading"))
-    runWhenVcsAndLogIsReady(project) { logManger ->
+    VcsLogUtil.runWhenVcsAndLogIsReady(project) { logManger ->
       val component = compareBranchesUiFactory().create(logManger)
       panel.add(component, BorderLayout.CENTER)
     }

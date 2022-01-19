@@ -16,14 +16,15 @@
 
 package com.intellij.vcs.log.graph.utils;
 
-import com.intellij.util.BooleanFunction;
-import com.intellij.vcs.log.graph.utils.impl.BooleanFunctionFlags;
+import com.intellij.vcs.log.graph.utils.impl.PredicateFlags;
 import com.intellij.vcs.log.graph.utils.impl.ListIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Predicate;
+
 public class ListIntToIntMapTest extends UpdatableIntToIntMapTest {
   @Override
-  protected UpdatableIntToIntMap createUpdatableIntToIntMap(@NotNull BooleanFunction<? super Integer> thisIsVisible, int longSize) {
-    return ListIntToIntMap.newInstance(new BooleanFunctionFlags(thisIsVisible, longSize), 3);
+  protected UpdatableIntToIntMap createUpdatableIntToIntMap(@NotNull Predicate<? super Integer> thisIsVisible, int longSize) {
+    return ListIntToIntMap.newInstance(new PredicateFlags(thisIsVisible, longSize), 3);
   }
 }

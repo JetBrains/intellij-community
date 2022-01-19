@@ -22,5 +22,8 @@
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
   </component>
 </module>

@@ -29,26 +29,29 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.Location;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.function.Function;
 
-public final class AlternativeSourceNotificationProvider implements EditorNotificationProvider<EditorNotificationPanel> {
-  private static final Key<EditorNotificationPanel> KEY = Key.create("AlternativeSource");
+public final class AlternativeSourceNotificationProvider implements EditorNotificationProvider {
+
   private static final Key<Boolean> FILE_PROCESSED_KEY = Key.create("AlternativeSourceCheckDone");
 
-  @NotNull
   @Override
-  public Key<EditorNotificationPanel> getKey() {
-    return KEY;
-  }
-
-  @Override
-  public @NotNull ComponentProvider<EditorNotificationPanel> collectNotificationData(@NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
+                                                                                                                @NotNull VirtualFile file) {
     if (!DebuggerSettings.getInstance().SHOW_ALTERNATIVE_SOURCE) {
-      return ComponentProvider.getDummy();
+      return CONST_NULL;
+    }
+
+    if (DumbService.getInstance(project).isDumb()) {
+      return CONST_NULL;
     }
 
     DebuggerSession javaSession = DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession();
@@ -56,29 +59,30 @@ public final class AlternativeSourceNotificationProvider implements EditorNotifi
 
     if (session == null) {
       setFileProcessed(file, false);
-      return ComponentProvider.getDummy();
+      return CONST_NULL;
     }
 
     XSourcePosition position = session.getCurrentPosition();
     if (position == null || !file.equals(position.getFile())) {
       setFileProcessed(file, false);
-      return ComponentProvider.getDummy();
+      return CONST_NULL;
     }
 
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    if (psiFile == null) return ComponentProvider.getDummy();
-
-    if (!(psiFile instanceof PsiJavaFile)) return ComponentProvider.getDummy();
+    if (!(psiFile instanceof PsiJavaFile)) {
+      return CONST_NULL;
+    }
 
     PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
-    if (classes.length == 0) return ComponentProvider.getDummy();
+    if (classes.length == 0) {
+      return CONST_NULL;
+    }
 
     PsiClass baseClass = classes[0];
     String name = baseClass.getQualifiedName();
-
-    if (name == null) return ComponentProvider.getDummy();
-
-    if (DumbService.getInstance(project).isDumb()) return ComponentProvider.getDummy();
+    if (name == null) {
+      return CONST_NULL;
+    }
 
     PsiClass[] altClasses = JavaPsiFacade.getInstance(project).findClasses(name, javaSession.getSearchScope());
     if (altClasses.length == 0) {
@@ -89,32 +93,39 @@ public final class AlternativeSourceNotificationProvider implements EditorNotifi
 
     setFileProcessed(file, true);
 
-    if (alts.size() > 1) {
-      for (PsiClass cls : alts) {
-        if (cls.equals(baseClass) || cls.getNavigationElement().equals(baseClass)) {
-          alts.remove(cls);
-          break;
-        }
-      }
-      alts.add(0, baseClass);
-
-      ComboBoxClassElement[] elems = ContainerUtil.map2Array(alts,
-                                                             ComboBoxClassElement.class,
-                                                             psiClass -> new ComboBoxClassElement((PsiClass)psiClass.getNavigationElement()));
-
-      String locationDeclName = null;
-      XStackFrame frame = session.getCurrentStackFrame();
-      if (frame instanceof JavaStackFrame) {
-        Location location = ((JavaStackFrame)frame).getDescriptor().getLocation();
-        if (location != null) {
-          locationDeclName = location.declaringType().name();
-        }
-      }
-
-      String finalLocationDeclName = locationDeclName;
-      return fileEditor -> new AlternativeSourceNotificationPanel(elems, baseClass, project, file, fileEditor, finalLocationDeclName);
+    if (alts.size() <= 1) {
+      return CONST_NULL;
     }
-    return ComponentProvider.getDummy();
+
+    for (PsiClass cls : alts) {
+      if (cls.equals(baseClass) || cls.getNavigationElement().equals(baseClass)) {
+        alts.remove(cls);
+        break;
+      }
+    }
+    alts.add(0, baseClass);
+
+    ComboBoxClassElement[] elems = ContainerUtil.map2Array(alts,
+                                                           ComboBoxClassElement.class,
+                                                           psiClass -> new ComboBoxClassElement((PsiClass)psiClass.getNavigationElement()));
+
+    String locationDeclName = null;
+    XStackFrame frame = session.getCurrentStackFrame();
+    if (frame instanceof JavaStackFrame) {
+      Location location = ((JavaStackFrame)frame).getDescriptor().getLocation();
+      if (location != null) {
+        locationDeclName = location.declaringType().name();
+      }
+    }
+
+    String finalLocationDeclName = locationDeclName;
+    return fileEditor -> new AlternativeSourceNotificationPanel(fileEditor,
+                                                                project,
+                                                                JavaDebuggerBundle.message("editor.notification.alternative.source", name),
+                                                                file,
+                                                                elems,
+                                                                finalLocationDeclName
+    );
   }
 
   private static class ComboBoxClassElement {
@@ -145,15 +156,17 @@ public final class AlternativeSourceNotificationProvider implements EditorNotifi
   }
 
   private static class AlternativeSourceNotificationPanel extends EditorNotificationPanel {
-    AlternativeSourceNotificationPanel(ComboBoxClassElement[] alternatives,
-                                              final PsiClass aClass,
-                                              @NotNull Project project,
-                                              @NotNull VirtualFile file,
-                                              @NotNull FileEditor fileEditor,
-                                              String locationDeclName) {
+
+    AlternativeSourceNotificationPanel(@NotNull FileEditor fileEditor,
+                                       @NotNull Project project,
+                                       @NotNull @Nls String text,
+                                       @NotNull VirtualFile file,
+                                       ComboBoxClassElement[] alternatives,
+                                       @Nullable String locationDeclName) {
       super(fileEditor);
 
-      setText(JavaDebuggerBundle.message("editor.notification.alternative.source", aClass.getQualifiedName()));
+      setText(text);
+
       final ComboBox<ComboBoxClassElement> switcher = new ComboBox<>(alternatives);
       switcher.addActionListener(new ActionListener() {
         @Override

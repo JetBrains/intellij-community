@@ -1,41 +1,41 @@
 <fold text='---'>
 <fold text='head-region-without---'>#region head-region-without---
-head1: <fold text='true'>true</fold>
-head2: <fold text='true'>true</fold>
+head1: true
+head2: true
 #endregion</fold>
 
-node: <fold text='value'>value</fold>
+node: value
 </fold>
 <fold text='---'>---
 
 <fold text='head-top-level-region'>#region head-top-level-region
-node1: <fold text='true'>true</fold>
-node2: <fold text='true'>true</fold>
+node1: true
+node2: true
 #endregion</fold>
 
 <fold text='list1: <3 items>'>list1:
   <fold text='head-region'>#region head-region
-  - <fold text='item1'>item1</fold>
-  - <fold text='item2'>item2</fold>
+  - item1
+  - item2
   #endregion</fold>
-  - <fold text='item3'>item3</fold></fold>
+  - item3</fold>
 
 <fold text='list2: <4 items>'>list2:
-  - <fold text='item1'>item1</fold>
+  - item1
   <fold text='internal-region'># region internal-region
-  - <fold text='item2'>item2</fold>
-  - <fold text='item3'>item3</fold>
+  - item2
+  - item3
   # endregion</fold>
-  - <fold text='item4'>item4</fold></fold>
+  - item4</fold>
 
 <fold text='list3: <3 items>'>list3:
-  - <fold text='item1'>item1</fold>
+  - item1
   <fold text='tail-region'>#region tail-region
-  - <fold text='item2'>item2</fold>
-  - <fold text='item3'>item3</fold>
+  - item2
+  - item3
   #endregion</fold></fold>
 
 <fold text='tail-top-level-region'>#region tail-top-level-region
-last1: <fold text='true'>true</fold>
-last2: <fold text='true'>true</fold>
+last1: true
+last2: true
 #endregion</fold></fold>

@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.MainConfigurationStateSplitter
+import com.intellij.openapi.components.impl.stores.DirectoryStorageUtil
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
@@ -16,6 +17,7 @@ import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import java.nio.file.Files
 
 private suspend fun StateStorageBase<*>.setStateAndSave(componentName: String, state: String?) {
   val saveSessionProducer = createSaveSessionProducer()!!
@@ -39,6 +41,14 @@ internal class DirectoryBasedStorageTest {
   @Rule
   @JvmField
   val ruleChain = RuleChain(tempDirManager)
+
+  @Test
+  fun readEmptyFile() {
+    val dir = tempDirManager.newPath(refreshVfs = true)
+    Files.createDirectories(dir)
+    Files.write(dir.resolve("empty.xml"), ByteArray(0))
+    DirectoryStorageUtil.loadFrom(dir, null)
+  }
 
   @Test
   fun save() = runBlocking<Unit> {

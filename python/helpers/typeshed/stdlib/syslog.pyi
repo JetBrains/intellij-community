@@ -1,7 +1,9 @@
 from typing import overload
+from typing_extensions import Literal
 
 LOG_ALERT: int
 LOG_AUTH: int
+LOG_AUTHPRIV: Literal[80]
 LOG_CONS: int
 LOG_CRIT: int
 LOG_CRON: int
@@ -25,6 +27,7 @@ LOG_NDELAY: int
 LOG_NEWS: int
 LOG_NOTICE: int
 LOG_NOWAIT: int
+LOG_ODELAY: Literal[4]
 LOG_PERROR: int
 LOG_PID: int
 LOG_SYSLOG: int

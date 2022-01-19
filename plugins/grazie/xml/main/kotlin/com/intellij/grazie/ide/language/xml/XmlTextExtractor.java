@@ -9,6 +9,7 @@ import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
@@ -34,7 +35,7 @@ import java.util.function.Function;
 import static com.intellij.grazie.text.TextContent.TextDomain.*;
 
 public class XmlTextExtractor extends TextExtractor {
-  private static final TextContentBuilder builder = TextContentBuilder.FromPsi.removingIndents(" \t");
+  private static final TextContentBuilder builder = TextContentBuilder.FromPsi.removingIndents(" \t").removingLineSuffixes(" \t");
   private final Set<Class<? extends Language>> myEnabledDialects;
 
   protected XmlTextExtractor(Class<? extends Language>... enabledDialects) {
@@ -79,6 +80,8 @@ public class XmlTextExtractor extends TextExtractor {
     var classifier = tagClassifier(container);
     var unknownContainer = container instanceof XmlTag && classifier.apply((XmlTag) container) == TagKind.Unknown;
 
+    var fullContent = NotNullLazyValue.lazy(() -> TextContent.psiFragment(PLAIN_TEXT, container));
+
     var visitor = new PsiRecursiveElementWalkingVisitor() {
       final Map<PsiElement, TextContent> result = new HashMap<>();
       final List<PsiElement> group = new ArrayList<>();
@@ -105,7 +108,8 @@ public class XmlTextExtractor extends TextExtractor {
       private void flushGroup(boolean unknownAfter) {
         int containerStart = container.getTextRange().getStartOffset();
         TextContent content = TextContent.join(ContainerUtil.map(group, e ->
-          TextContent.psiFragment(PLAIN_TEXT, container, e.getTextRange().shiftLeft(containerStart))));
+          extractRange(fullContent.getValue(), e.getTextRange().shiftLeft(containerStart))
+        ));
         if (content != null) {
           if (unknownBefore) content = content.markUnknown(TextRange.from(0, 0));
           if (unknownAfter) content = content.markUnknown(TextRange.from(content.length(), 0));
@@ -122,6 +126,10 @@ public class XmlTextExtractor extends TextExtractor {
     container.acceptChildren(visitor);
     visitor.flushGroup(unknownContainer);
     return visitor.result;
+  }
+
+  private static TextContent extractRange(TextContent full, TextRange range) {
+    return full.excludeRange(new TextRange(range.getEndOffset(), full.length())).excludeRange(new TextRange(0, range.getStartOffset()));
   }
 
   private static boolean isText(IElementType type) {

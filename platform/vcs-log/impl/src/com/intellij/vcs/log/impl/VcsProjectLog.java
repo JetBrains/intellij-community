@@ -22,7 +22,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -52,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import static com.intellij.vcs.log.VcsLogProvider.LOG_PROVIDER_EP;
 import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
@@ -61,8 +61,10 @@ import static java.util.Objects.requireNonNull;
 @Service(Service.Level.PROJECT)
 public final class VcsProjectLog implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsProjectLog.class);
+  @Topic.ProjectLevel
   public static final Topic<ProjectLogListener> VCS_PROJECT_LOG_CHANGED = new Topic<>(ProjectLogListener.class,
-                                                                                      Topic.BroadcastDirection.TO_CHILDREN, true);
+                                                                                      Topic.BroadcastDirection.NONE,
+                                                                                      true);
   private static final int RECREATE_LOG_TRIES = 5;
   @NotNull private final Project myProject;
   @NotNull private final MessageBus myMessageBus;
@@ -153,16 +155,16 @@ public final class VcsProjectLog implements Disposable {
   @RequiresEdt
   @Nullable
   public MainVcsLogUi openLogTab(@NotNull VcsLogFilterCollection filters) {
-    return openLogTab(filters, VcsLogManager.LogWindowKind.TOOL_WINDOW);
+    return openLogTab(filters, VcsLogTabLocation.TOOL_WINDOW);
   }
 
   @RequiresEdt
   @Nullable
   public MainVcsLogUi openLogTab(@NotNull VcsLogFilterCollection filters,
-                                 @NotNull VcsLogManager.LogWindowKind kind) {
+                                 @NotNull VcsLogTabLocation location) {
     VcsLogManager logManager = getLogManager();
     if (logManager == null) return null;
-    return myTabsManager.openAnotherLogTab(logManager, filters, kind);
+    return myTabsManager.openAnotherLogTab(logManager, filters, location);
   }
 
   @CalledInAny
@@ -263,9 +265,9 @@ public final class VcsProjectLog implements Disposable {
   public void dispose() {
   }
 
-  private static <T> T invokeAndWait(@NotNull Computable<T> computable) {
+  private static <T> T invokeAndWait(@NotNull Supplier<T> computable) {
     Ref<T> result = new Ref<>();
-    ApplicationManager.getApplication().invokeAndWait(() -> result.set(computable.compute()), getModality());
+    ApplicationManager.getApplication().invokeAndWait(() -> result.set(computable.get()), getModality());
     return result.get();
   }
 

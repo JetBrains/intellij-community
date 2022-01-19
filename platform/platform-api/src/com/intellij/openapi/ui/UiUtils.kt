@@ -6,19 +6,15 @@ package com.intellij.openapi.ui
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.components.DropDownLink
+import com.intellij.openapi.util.text.NaturalComparator
+import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBTextField
-import com.intellij.util.ui.tree.TreeModelAdapter
-import java.awt.ItemSelectable
 import java.awt.event.*
 import javax.swing.*
-import javax.swing.event.DocumentEvent
 import javax.swing.text.JTextComponent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
-
 
 fun JTextComponent.isTextUnderMouse(e: MouseEvent): Boolean {
   val position = viewToModel2D(e.point)
@@ -67,68 +63,6 @@ fun JComponent.addKeyboardAction(keyStrokes: List<KeyStroke>, action: (ActionEve
   }
 }
 
-fun <E> ComboBox<E>.whenItemSelected(listener: (E) -> Unit) {
-  (this as ItemSelectable).whenItemSelected(listener)
-}
-
-fun <E> DropDownLink<E>.whenItemSelected(listener: (E) -> Unit) {
-  (this as ItemSelectable).whenItemSelected(listener)
-}
-
-fun <T> ItemSelectable.whenItemSelected(listener: (T) -> Unit) {
-  addItemListener { event ->
-    if (event.stateChange == ItemEvent.SELECTED) {
-      @Suppress("UNCHECKED_CAST")
-      listener(event.item as T)
-    }
-  }
-}
-
-fun JTree.whenStructureChanged(listener: () -> Unit) {
-  model.whenStructureChanged(listener)
-}
-
-fun TreeModel.whenStructureChanged(listener: () -> Unit) {
-  addTreeModelListener(
-    TreeModelAdapter.create { _, _ ->
-      listener()
-    }
-  )
-}
-
-fun JTextComponent.whenTextModified(listener: () -> Unit) {
-  document.addDocumentListener(object : DocumentAdapter() {
-    override fun textChanged(e: DocumentEvent) {
-      listener()
-    }
-  })
-}
-
-fun JComponent.whenFocusGained(listener: () -> Unit) {
-  addFocusListener(object : FocusAdapter() {
-    override fun focusGained(e: FocusEvent) {
-      listener()
-    }
-  })
-}
-
-fun JComponent.whenFirstFocusGained(listener: () -> Unit) {
-  addFocusListener(object : FocusAdapter() {
-    override fun focusGained(e: FocusEvent) {
-      removeFocusListener(this)
-      listener()
-    }
-  })
-}
-
-fun JComponent.whenMousePressed(listener: (MouseEvent) -> Unit) {
-  addMouseListener(object : MouseAdapter() {
-    override fun mousePressed(e: MouseEvent) {
-      listener(e)
-    }
-  })
-}
-
 fun <T> ListModel<T>.asSequence() = sequence<T> {
   for (i in 0 until size) {
     yield(getElementAt(i))
@@ -151,3 +85,8 @@ fun TreeModel.getTreePath(userObject: Any?): TreePath? =
 
 val TextFieldWithBrowseButton.emptyText
   get() = (textField as JBTextField).emptyText
+
+val <E> ComboBox<E>.collectionModel: CollectionComboBoxModel<E>
+  get() = model as CollectionComboBoxModel
+
+fun <T> Iterable<T>.naturalSorted() = sortedWith(Comparator.comparing({ it.toString() }, NaturalComparator.INSTANCE))

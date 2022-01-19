@@ -3,25 +3,34 @@ package org.jetbrains.idea.devkit.module
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.fileTemplates.FileTemplateManager
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.starters.local.*
 import com.intellij.ide.starters.local.gradle.GradleResourcesProvider
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
 import com.intellij.ide.starters.shared.*
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
+import com.intellij.ide.util.projectWizard.ProjectWizardUtil
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.Strings
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.layout.*
 import com.intellij.util.lang.JavaVersion
+import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.DevKitFileTemplatesFactory
+import org.jetbrains.idea.devkit.projectRoots.IdeaJdk
 import java.util.function.Supplier
 import javax.swing.Icon
 
@@ -58,6 +67,16 @@ class DevKitModuleBuilder : StarterModuleBuilder() {
 
   override fun createOptionsStep(contextProvider: StarterContextProvider): StarterInitialStep {
     return DevKitInitialStep(contextProvider)
+  }
+
+  override fun isSuitableSdkType(sdkType: SdkTypeId?): Boolean {
+    val pluginType = starterContext.getUserData(PLUGIN_TYPE_KEY) ?: PluginType.PLUGIN
+
+    if (pluginType == PluginType.PLUGIN) {
+      return super.isSuitableSdkType(sdkType)
+    }
+
+    return sdkType == IdeaJdk.getInstance()
   }
 
   override fun setupModule(module: Module) {
@@ -118,22 +137,44 @@ class DevKitModuleBuilder : StarterModuleBuilder() {
 
       starterContext.putUserData(PLUGIN_TYPE_KEY, PluginType.PLUGIN)
 
-      typeProperty.afterPropagation {
-        val pluginType = typeProperty.get()
+      typeProperty.afterChange { pluginType ->
         starterContext.putUserData(PLUGIN_TYPE_KEY, pluginType)
 
         languageRow.visible = pluginType == PluginType.PLUGIN
         groupRow.visible = pluginType == PluginType.PLUGIN
         artifactRow.visible = pluginType == PluginType.PLUGIN
+
+        // Theme / Plugin projects require different SDK type
+        sdkComboBox.selectedJdk = null
+        sdkComboBox.reloadModel()
+        ProjectWizardUtil.preselectJdkForNewModule(wizardContext.project, null, sdkComboBox, Condition(::isSuitableSdkType))
       }
     }
 
     override fun addFieldsAfter(layout: LayoutBuilder) {
-      // todo Help links
+      layout.row {
+        hyperLink(DevKitBundle.message("module.builder.how.to.link"),
+                  "https://plugins.jetbrains.com/docs/intellij/intellij-platform.html")
+      }
+      layout.row {
+        hyperLink(DevKitBundle.message("module.builder.github.template.link"),
+                  "https://github.com/JetBrains/intellij-platform-plugin-template")
+      }
 
-      // [1] How to build plugin for JetBrains IDEs: https://plugins.jetbrains.com/docs/intellij/intellij-platform.html
-      // [2] GitHub template: https://github.com/JetBrains/intellij-platform-plugin-template
+      if (PluginManager.isPluginInstalled(PluginId.findId("org.intellij.scala"))) {
+        layout.row {
+          hyperLink(DevKitBundle.message("module.builder.scala.github.template.link"),
+                    "https://github.com/JetBrains/sbt-idea-plugin")
+        }
+      }
     }
+  }
+
+  private fun Row.hyperLink(@Nls title: String, @NlsSafe url: String) {
+    val hyperlinkLabel = HyperlinkLabel(title)
+    hyperlinkLabel.setHyperlinkTarget(url)
+    hyperlinkLabel.toolTipText = url
+    this.component(hyperlinkLabel)
   }
 
   private enum class PluginType(

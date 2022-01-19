@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UsePropertyAccessSyntax", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.configurationStore
@@ -550,7 +550,7 @@ internal class ApplicationStoreTest {
 
     override fun setPath(path: Path) {
       // yes, in tests APP_CONFIG equals to ROOT_CONFIG (as ICS does)
-      storageManager.setMacros(listOf(Macro(APP_CONFIG, path), Macro(ROOT_CONFIG, path)))
+      storageManager.setMacros(listOf(Macro(APP_CONFIG, path), Macro(ROOT_CONFIG, path), Macro(StoragePathMacros.CACHE_FILE, path)))
     }
 
     override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {

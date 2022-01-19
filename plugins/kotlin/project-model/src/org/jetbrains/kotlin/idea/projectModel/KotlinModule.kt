@@ -3,10 +3,29 @@ package org.jetbrains.kotlin.idea.projectModel
 
 import java.io.Serializable
 
-typealias KotlinDependencyId = Long
+sealed interface KotlinModuleIdentifier : Serializable {
+    val moduleClassifier: String?
+}
+
+interface KotlinLocalModuleIdentifier : KotlinModuleIdentifier {
+    val buildId: String
+    val projectId: String
+}
+
+interface KotlinMavenModuleIdentifier : KotlinModuleIdentifier {
+    val group: String
+    val name: String
+}
 
 interface KotlinModule : Serializable {
-    val name: String
-    val dependencies: Array<KotlinDependencyId>
-    val isTestModule: Boolean
+    val moduleIdentifier: KotlinModuleIdentifier
+    val fragments: Collection<KotlinFragment>
+
+    companion object {
+        const val MAIN_MODULE_NAME = "main"
+        const val TEST_MODULE_NAME = "test"
+    }
 }
+
+val KotlinModule.variants: Collection<KotlinVariant>
+    get() = fragments.filterIsInstance<KotlinVariant>()

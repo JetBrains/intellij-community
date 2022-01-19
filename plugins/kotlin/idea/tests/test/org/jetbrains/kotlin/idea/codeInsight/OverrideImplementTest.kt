@@ -350,4 +350,8 @@ class OverrideImplementTest : AbstractOverrideImplementTest() {
     fun testImplementWithComment4() {
         doMultiImplementFileTest()
     }
+
+    fun testGenericClass() {
+        doMultiImplementFileTest()
+    }
 }

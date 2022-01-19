@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.openapi.Disposable
@@ -73,6 +73,7 @@ class SingleAlarm @JvmOverloads constructor(
         else -> null
       }
     }
+
     fun pooledThreadSingleAlarm(delay: Int, parentDisposable: Disposable, task: () -> Unit): SingleAlarm {
       return SingleAlarm(Runnable(task), delay = delay, threadToUse = ThreadToUse.POOLED_THREAD, parentDisposable = parentDisposable)
     }

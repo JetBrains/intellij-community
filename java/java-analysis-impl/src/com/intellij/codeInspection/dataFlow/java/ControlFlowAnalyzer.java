@@ -2011,6 +2011,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private @Nullable PsiMethod pushConstructorArguments(PsiConstructorCall call) {
     PsiExpressionList args = call.getArgumentList();
     PsiMethod ctr = call.resolveConstructor();
+    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    if (call instanceof PsiNewExpression) {
+      substitutor = call.resolveMethodGenerics().getSubstitutor();
+    }
     if (args != null) {
       PsiExpression[] arguments = args.getExpressions();
       PsiParameter[] parameters = ctr == null ? null : ctr.getParameterList().getParameters();
@@ -2018,7 +2022,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         PsiExpression argument = arguments[i];
         argument.accept(this);
         if (parameters != null && i < parameters.length) {
-          generateBoxingUnboxingInstructionFor(argument, parameters[i].getType());
+          generateBoxingUnboxingInstructionFor(argument, substitutor.substitute(parameters[i].getType()));
         }
       }
       foldVarArgs(call, parameters);
@@ -2390,7 +2394,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private static final CallInliner[] INLINERS = {
-    new OptionalChainInliner(), new LambdaInliner(),
+    new OptionalChainInliner(), new LambdaInliner(), new CollectionUpdateInliner(),
     new StreamChainInliner(), new MapUpdateInliner(), new AssumeInliner(), new ClassMethodsInliner(),
     new AssertAllInliner(), new BoxingInliner(), new SimpleMethodInliner(),
     new TransformInliner(), new EnumCompareInliner(), new IndexOfInliner()

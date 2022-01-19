@@ -1,12 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.*;
@@ -23,12 +25,24 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntPredicate;
 
 public final class EmptyFileBasedIndex extends FileBasedIndexEx {
+  private static final Logger LOG = Logger.getInstance(EmptyFileBasedIndex.class);
+
   @Override
   public void registerProjectFileSets(@NotNull Project project) {
   }
 
   @Override
   public void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, @Nullable ProgressIndicator indicator) {
+  }
+
+  @Override
+  public @Nullable VirtualFile findFileById(int id) {
+    return PersistentFS.getInstance().findFileByIdIfCached(id);
+  }
+
+  @Override
+  public @NotNull Logger getLogger() {
+    return LOG;
   }
 
   @Override

@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.ui.classFilter.ClassFilterEditor;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -101,11 +102,11 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
     myCbSkipClassLoaders = new JCheckBox(JavaDebuggerBundle.message("label.debugger.general.configurable.skip.classLoaders"));
     myCbSkipSimpleGetters = new JCheckBox(JavaDebuggerBundle.message("label.debugger.general.configurable.skip.simple.getters"));
     myCbStepInfoFiltersEnabled = new JCheckBox(JavaDebuggerBundle.message("label.debugger.general.configurable.step.filters.list.header"));
-    panel.add(myCbAlwaysSmartStep, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
+    panel.add(myCbAlwaysSmartStep, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBInsets.emptyInsets(), 0, 0));
     panel.add(myCbSkipSyntheticMethods, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBUI.insetsTop(8), 0, 0));
-    panel.add(myCbSkipConstructors, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
-    panel.add(myCbSkipClassLoaders, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
-    panel.add(myCbSkipSimpleGetters, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
+    panel.add(myCbSkipConstructors, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBInsets.emptyInsets(), 0, 0));
+    panel.add(myCbSkipClassLoaders, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBInsets.emptyInsets(), 0, 0));
+    panel.add(myCbSkipSimpleGetters, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBInsets.emptyInsets(), 0, 0));
     panel.add(myCbStepInfoFiltersEnabled, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBUI.insetsTop(8), 0, 0));
 
     mySteppingFilterEditor = new ClassFilterEditor(JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables(), null, "reference.viewBreakpoints.classFilters.newPattern");

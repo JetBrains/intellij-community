@@ -2,12 +2,14 @@
 package org.jetbrains.intellij.build.dependencies
 
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.ApiStatus
 
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
 @CompileStatic
+@ApiStatus.Internal
 class BuildDependenciesManualRunOnly {
   static BuildDependenciesCommunityRoot getCommunityRootFromWorkingDirectory() {
     // This method assumes the current working directory is inside intellij-based product checkout root

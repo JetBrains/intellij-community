@@ -1,1 +1,19 @@
 select.epoll.register
+
+# Exists at runtime, but missing from stubs
+os.POSIX_SPAWN_CLOSE
+os.POSIX_SPAWN_DUP2
+os.POSIX_SPAWN_OPEN
+os.RWF_DSYNC
+os.RWF_HIPRI
+os.RWF_NOWAIT
+os.RWF_SYNC
+os.copy_file_range
+os.preadv
+os.pwritev
+posix.POSIX_SPAWN_[A-Z0-9]+
+posix.RWF_[A-Z]+
+posix.copy_file_range
+posix.preadv
+posix.pwritev
+time.pthread_getcpuclockid

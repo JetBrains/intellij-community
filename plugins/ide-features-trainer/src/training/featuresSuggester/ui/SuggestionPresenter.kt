@@ -16,9 +16,6 @@ import training.featuresSuggester.PopupSuggestion
 import training.featuresSuggester.TipSuggestion
 import training.featuresSuggester.settings.FeatureSuggesterSettings
 import training.featuresSuggester.statistics.FeatureSuggesterStatistics
-import training.featuresSuggester.statistics.FeatureSuggesterStatistics.Companion.NOTIFICATION_DONT_SUGGEST_EVENT_ID
-import training.featuresSuggester.statistics.FeatureSuggesterStatistics.Companion.NOTIFICATION_LEARN_MORE_EVENT_ID
-import training.featuresSuggester.statistics.FeatureSuggesterStatistics.Companion.NOTIFICATION_SHOWED_EVENT_ID
 
 interface SuggestionPresenter {
   fun showSuggestion(project: Project, suggestion: PopupSuggestion)
@@ -51,7 +48,7 @@ class NotificationSuggestionPresenter :
     }
 
     notification.notify(project)
-    FeatureSuggesterStatistics.sendStatistics(NOTIFICATION_SHOWED_EVENT_ID, suggestion.suggesterId)
+    FeatureSuggesterStatistics.logNotificationShowed(suggestion.suggesterId)
   }
 
   private fun createDontSuggestAction(notification: Notification, suggestion: PopupSuggestion): AnAction {
@@ -60,7 +57,7 @@ class NotificationSuggestionPresenter :
         val settings = FeatureSuggesterSettings.instance()
         settings.setEnabled(suggestion.suggesterId, false)
         notification.hideBalloon()
-        FeatureSuggesterStatistics.sendStatistics(NOTIFICATION_DONT_SUGGEST_EVENT_ID, suggestion.suggesterId)
+        FeatureSuggesterStatistics.logNotificationDontSuggest(suggestion.suggesterId)
       }
     }
   }
@@ -78,7 +75,7 @@ class NotificationSuggestionPresenter :
       override fun actionPerformed(e: AnActionEvent) {
         BrowserUtil.open(suggestion.documentURL)
         notification.hideBalloon()
-        FeatureSuggesterStatistics.sendStatistics(NOTIFICATION_LEARN_MORE_EVENT_ID, suggestion.suggesterId)
+        FeatureSuggesterStatistics.logNotificationLearnMore(suggestion.suggesterId)
       }
     }
   }
@@ -93,7 +90,7 @@ class NotificationSuggestionPresenter :
       override fun actionPerformed(e: AnActionEvent) {
         SingleTipDialog.showForProject(project, tip)
         notification.hideBalloon()
-        FeatureSuggesterStatistics.sendStatistics(NOTIFICATION_LEARN_MORE_EVENT_ID, suggestion.suggesterId)
+        FeatureSuggesterStatistics.logNotificationLearnMore(suggestion.suggesterId)
       }
     }
   }

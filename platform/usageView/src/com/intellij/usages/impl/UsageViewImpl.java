@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.concurrency.JobSchedulerImpl;
@@ -1363,7 +1363,10 @@ public class UsageViewImpl implements UsageViewEx {
     for (UsageViewElementsListener listener : UsageViewElementsListener.EP_NAME.getExtensionList()) {
       listener.beforeUsageAdded(this, usage);
     }
-    reportToFUS(usage);
+
+    if (usage instanceof PsiElementUsage) {
+      reportToFUS((PsiElementUsage)usage);
+    }
 
     UsageNode child = myBuilder.appendOrGet(usage, isFilterDuplicateLines(), edtModelToSwingNodeChangesQueue);
     myUsageNodes.put(usage, child == null ? NULL_NODE : child);
@@ -1383,13 +1386,13 @@ public class UsageViewImpl implements UsageViewEx {
     return child;
   }
 
-  private void reportToFUS(@NotNull Usage usage) {
+  private void reportToFUS(@NotNull PsiElementUsage usage) {
     Class<? extends PsiReference> referenceClass = UsageReferenceClassProvider.Companion.getReferenceClass(usage);
-    PsiElement element = usage instanceof PsiElementUsage ? ((PsiElementUsage)usage).getElement() : null;
-    if (element != null || referenceClass != null) {
-      Pair<Class<? extends PsiReference>, Language> pair = Pair.create(referenceClass, element != null ? element.getLanguage() : null);
-      if (myReportedReferenceClasses.add(pair)) {
-        UsageViewStatisticsCollector.logUsageShown(myProject, pair.first, pair.second);
+    PsiElement element = usage.getElement();
+    if (element != null && referenceClass != null) {
+      Language language = element.getLanguage();
+      if (myReportedReferenceClasses.add(Pair.create(referenceClass, language))) {
+        UsageViewStatisticsCollector.logUsageShown(myProject, referenceClass, language);
       }
     }
   }

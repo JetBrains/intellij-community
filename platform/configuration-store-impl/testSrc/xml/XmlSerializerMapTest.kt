@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("PropertyName")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("PropertyName", "ReplacePutWithAssignment", "ReplacePutWithAssignment")
 
 package com.intellij.configurationStore.xml
 
@@ -281,9 +281,10 @@ internal class XmlSerializerMapTest {
   @Test
   fun `no nullize of empty data`() {
     val element = JDOMUtil.load("""
-        <extensions>
-          <option name="extensionsMap" />
-        </extensions>
+        <state>
+<![CDATA[{
+}]]>
+        </state>
       """.trimIndent())
     val result = element.deserialize(PluginFeatureMap::class.java)
     assertThat(result.featureMap).isNotNull()
@@ -292,22 +293,22 @@ internal class XmlSerializerMapTest {
   @Test
   fun `knownExtensions serialization`() {
     val pluginData = PluginData("foo", "Foo")
-    val extensions = PluginFeatureMap(mapOf("foo" to setOf(pluginData)))
+    val extensions = PluginFeatureMap(mapOf("foo" to hashSetOf(pluginData)))
 
     testSerializer(
       """
-        <features>
-          <featureMap>
-            <entry key="foo">
-              <plugins>
-                <dataSet>
-                  <plugin pluginId="foo" pluginName="Foo" bundled="false" fromCustomRepository="false" />
-                </dataSet>
-              </plugins>
-            </entry>
-          </featureMap>
-          <option name="lastUpdateTime" value="0" />
-        </features>
+<state><![CDATA[{
+  "featureMap": {
+    "foo": {
+      "dataSet": [
+        {
+          "pluginIdString": "foo",
+          "nullablePluginName": "Foo"
+        }
+      ]
+    }
+  }
+}]]></state>
       """.trimIndent(),
       extensions,
     )
@@ -315,21 +316,17 @@ internal class XmlSerializerMapTest {
 
   @Test
   fun `PluginFeatureCacheService serialization`() {
-    val state = PluginFeatureCacheService.State()
-    state.extensions = PluginFeatureMap(mapOf())
+    val component = PluginFeatureCacheService()
+    component.extensions = PluginFeatureMap()
 
     testSerializer(
       """
-        <State>
-          <option name="extensions">
-            <features>
-              <featureMap />
-              <option name="lastUpdateTime" value="0" />
-            </features>
-          </option>
-        </State>
+<state><![CDATA[{
+  "extensions": {
+  }
+}]]></state>
       """.trimIndent(),
-      state,
+      component.state,
     )
   }
 
@@ -342,9 +339,13 @@ internal class XmlSerializerMapTest {
 
     testSerializer(
       """
-        <featurePlugin displayName="foo">
-          <plugin pluginId="foo" pluginName="Foo" bundled="false" fromCustomRepository="false" />
-        </featurePlugin>
+<state><![CDATA[{
+  "displayName": "foo",
+  "pluginData": {
+    "pluginIdString": "foo",
+    "nullablePluginName": "Foo"
+  }
+}]]></state>
       """.trimIndent(),
       pluginData,
     )
@@ -353,17 +354,16 @@ internal class XmlSerializerMapTest {
   @Test
   fun `pluginFeatureService serialization`() {
     val state = PluginFeatureService.State()
-    state["foo"] = PluginFeatureService.FeaturePluginsList()
+    state.features.put("foo", PluginFeatureService.FeaturePluginList())
 
     testSerializer(
       """
-        <pluginFeatures>
-          <features>
-            <entry key="foo">
-              <features />
-            </entry>
-          </features>
-        </pluginFeatures>
+<state><![CDATA[{
+  "features": {
+    "foo": {
+    }
+  }
+}]]></state>
       """.trimIndent(),
       state,
     )

@@ -8,4 +8,5 @@ interface IntelliJNewProjectWizardData {
   var moduleName: String
   var contentRoot: String
   var moduleFileLocation: String
+  var addSampleCode: Boolean
 }

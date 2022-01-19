@@ -1,14 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionAssignabilityCache;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xml.DomElement;
@@ -28,23 +29,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * @author peter
- */
+@Service(Service.Level.APP)
 public final class DomApplicationComponent {
   private final MultiMap<String, DomFileMetaData> myRootTagName2FileDescription = MultiMap.createSet();
   private final Set<DomFileMetaData> myAcceptingOtherRootTagNamesDescriptions = new HashSet<>();
   private final ImplementationClassCache myCachedImplementationClasses = new ImplementationClassCache(DomImplementationClassEP.EP_NAME);
   private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
   final ReflectionAssignabilityCache assignabilityCache = new ReflectionAssignabilityCache();
-  private final Map<Class<?>, DomElementsAnnotator> myClass2Annotator = ConcurrentFactoryMap.createMap(key-> {
-      final DomFileDescription<?> desc = findFileDescription(key);
-      return desc == null ? null : desc.createAnnotator();
-    }
-  );
+  private final Map<Class<?>, DomElementsAnnotator> classToAnnotator = new ConcurrentHashMap<>();
   private final Map<Class<?>, DomFileDescription<?>> classToDescription = new ConcurrentHashMap<>();
 
-  private final Map<Class<?>, InvocationCache> myInvocationCaches = ContainerUtil.createConcurrentSoftValueMap();
+  private final Map<Class<?>, InvocationCache> myInvocationCaches = CollectionFactory.createConcurrentSoftValueMap();
   private final Map<Class<? extends DomElementVisitor>, VisitorDescription> myVisitorDescriptions = new ConcurrentHashMap<>();
 
   public DomApplicationComponent() {
@@ -78,7 +73,7 @@ public final class DomApplicationComponent {
     myRootTagName2FileDescription.clear();
 
     myAcceptingOtherRootTagNamesDescriptions.clear();
-    myClass2Annotator.clear();
+    classToAnnotator.clear();
     classToDescription.clear();
 
     myCachedImplementationClasses.clearCache();
@@ -172,7 +167,10 @@ public final class DomApplicationComponent {
   }
 
   public DomElementsAnnotator getAnnotator(@NotNull Class<?> rootElementClass) {
-    return myClass2Annotator.get(rootElementClass);
+    return classToAnnotator.computeIfAbsent(rootElementClass, key -> {
+      DomFileDescription<?> desc = findFileDescription(key);
+      return desc == null ? null : desc.createAnnotator();
+    });
   }
 
   @Nullable Class<? extends DomElement> getImplementation(Class<?> concreteInterface) {

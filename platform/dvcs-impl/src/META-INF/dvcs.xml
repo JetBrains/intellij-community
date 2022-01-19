@@ -85,6 +85,7 @@
     <iconDescriptionBundle resourceBundle="messages.DvcsBundle"/>
 
     <editorNotificationProvider implementation="com.intellij.dvcs.ignore.IgnoredToExcludeNotificationProvider"/>
+    <statistics.notificationIdsHolder implementation="com.intellij.dvcs.DvcsNotificationIdsHolder"/>
   </extensions>
 </idea-plugin>
 

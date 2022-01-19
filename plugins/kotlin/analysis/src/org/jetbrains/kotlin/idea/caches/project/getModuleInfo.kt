@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.project
 
@@ -154,7 +154,7 @@ private fun <T> PsiElement.collectInfos(c: ModuleInfoCollector<T>): T {
     val containingFile =
         containingFile ?: return c.onFailure("Analyzing element of type ${this::class.java} with no containing file\nText:\n$text")
 
-    val containingKtFile = (this as? KtElement)?.containingFile as? KtFile
+    val containingKtFile = containingFile as? KtFile
     containingKtFile?.analysisContext?.let {
         return it.collectInfos(c)
     }
@@ -307,8 +307,8 @@ private fun OrderEntry.toIdeaModuleInfo(
 /**
  * @see [org.jetbrains.kotlin.types.typeUtil.closure].
  */
-fun <T> Collection<T>.lazyClosure(f: (T) -> Collection<T>): Sequence<T> = sequence<T> {
-    if (size == 0) return@sequence
+fun <T> Collection<T>.lazyClosure(f: (T) -> Collection<T>): Sequence<T> = sequence {
+    if (isEmpty()) return@sequence
     var sizeBeforeIteration = 0
 
     yieldAll(this@lazyClosure)

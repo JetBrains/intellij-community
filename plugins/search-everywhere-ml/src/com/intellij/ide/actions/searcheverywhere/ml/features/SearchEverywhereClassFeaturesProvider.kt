@@ -48,11 +48,11 @@ class SearchEverywhereClassFeaturesProvider : SearchEverywhereClassOrFileFeature
   }
 
   private fun isAccessibleFromModule(element: PsiElement, openedFile: VirtualFile?): Boolean? {
-    if (openedFile == null) {
+    val elementFile = element.containingFile?.virtualFile
+
+    if (openedFile == null || elementFile == null) {
       return null
     }
-
-    val elementFile = element.containingFile.virtualFile
 
     val (openedFileModule, elementModule) = ReadAction.compute<Pair<com.intellij.openapi.module.Module?,
       com.intellij.openapi.module.Module?>, Nothing> {

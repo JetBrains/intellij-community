@@ -3,13 +3,11 @@ package org.jetbrains.plugins.gradle.dependency.analyzer
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.dependency.analyzer.AbstractDependencyAnalyzerAction
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class GradleDependencyAnalyzerAction : AbstractDependencyAnalyzerAction() {
   override fun getSystemId(e: AnActionEvent) = GradleConstants.SYSTEM_ID
 
-  override fun getExternalProjectPath(e: AnActionEvent): String? = null
-
-  override fun getDependency(e: AnActionEvent): DependencyAnalyzerContributor.Dependency? = null
+  override fun setSelectedState(e: AnActionEvent, view: DependencyAnalyzerView) {}
 }

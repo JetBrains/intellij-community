@@ -87,10 +87,15 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
                   gaps: Gaps = Gaps.EMPTY,
                   visualPaddings: Gaps = Gaps.EMPTY,
                   componentHelper: ComponentHelper? = null): Constraints {
-    return Constraints(grid, x, if (y == GRID_EMPTY) 0 else y,
-                       width = width, horizontalAlign = horizontalAlign,
-                       verticalAlign = verticalAlign, baselineAlign = baselineAlign,
-                       gaps = gaps, visualPaddings = visualPaddings, componentHelper = componentHelper)
+    if (y == GRID_EMPTY) {
+      y = 0
+    }
+    val result = Constraints(grid, x, y,
+                             width = width, horizontalAlign = horizontalAlign,
+                             verticalAlign = verticalAlign, baselineAlign = baselineAlign,
+                             gaps = gaps, visualPaddings = visualPaddings, componentHelper = componentHelper)
+    skip(width)
+    return result
   }
 
   fun subGrid(width: Int = 1,
@@ -167,7 +172,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
     return this
   }
 
-  private fun addResizableColumn() {
+  fun addResizableColumn() {
     grid.resizableColumns += x
   }
 

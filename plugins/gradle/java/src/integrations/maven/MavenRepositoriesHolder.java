@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.integrations.maven;
 
 import com.intellij.CommonBundle;
@@ -33,7 +33,7 @@ import java.util.Set;
 
 import static org.jetbrains.idea.maven.indices.MavenIndexUpdateManager.IndexUpdatingState.IDLE;
 
-public class MavenRepositoriesHolder {
+public final class MavenRepositoriesHolder {
   private static final String UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP = "Unindexed maven repositories gradle detection";
   private static final Key<String> NOTIFICATION_KEY = Key.create(UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP);
   private final Project myProject;
@@ -88,7 +88,7 @@ public class MavenRepositoriesHolder {
       protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
         List<MavenIndex> notIndexed =
           ContainerUtil.filter(indicesManager.getIndex().getIndices(), index -> isNotIndexed(index.getRepositoryPathOrUrl()));
-        indicesManager.scheduleUpdateContent(notIndexed).onSuccess(aVoid -> {
+        indicesManager.scheduleUpdateContent(notIndexed).thenRun(() -> {
           if (myNotIndexedUrls.isEmpty()) return;
           for (MavenSearchIndex index : notIndexed) {
             if (index.getUpdateTimestamp() != -1 || index.getFailureMessage() != null) {

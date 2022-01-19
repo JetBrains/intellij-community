@@ -64,6 +64,6 @@ internal class MavenConfigurableContributorDriver(project: Project) : AnalyticsA
 
     override fun provideApplyEventAnalyticsData(): List<EventPair<*>> = listOf(
         PackageSearchEventsLogger.preferencesDefaultMavenScopeChangedField
-            .with(configuration.defaultMavenScope != configuration.determineDefaultMavenScope())
+            .with(configuration.defaultMavenScope != PackageSearchMavenConfiguration.DEFAULT_MAVEN_SCOPE)
     )
 }

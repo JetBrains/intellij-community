@@ -5,9 +5,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedBarActionComponent
 import org.jetbrains.annotations.NotNull
-import java.awt.BorderLayout
-import javax.swing.JComponent
-import javax.swing.JPanel
 
 class SegmentedVcsControlAction : SegmentedBarActionComponent() {
   init {
@@ -25,12 +22,6 @@ class SegmentedVcsControlAction : SegmentedBarActionComponent() {
     }
     super.update(e)
     e.presentation.isVisible = actionGroup != null
-  }
-
-  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    return JPanel(BorderLayout()).apply {
-      add(super.createCustomComponent(presentation, place), BorderLayout.CENTER)
-    }
   }
 
   override fun createSegmentedActionToolbar(presentation: Presentation,

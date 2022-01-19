@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -17,7 +17,7 @@ import com.intellij.refactoring.move.MoveDialogBase;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -60,7 +60,7 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
     gbConstraints.gridheight = 1;
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 0;
-    gbConstraints.insets = JBUI.emptyInsets();
+    gbConstraints.insets = JBInsets.emptyInsets();
     hBox.add(scrollPane, gbConstraints);
     hBox.add(Box.createHorizontalStrut(4));
     gbConstraints.weightx = 0;

@@ -7,25 +7,16 @@ internal class SettingsSyncUpdateChecker(private val application: Application,
                                          private val remoteCommunicator: SettingsSyncRemoteCommunicator) {
 
   @RequiresBackgroundThread
-  fun updateFromServer() {
+  fun scheduleUpdateFromServer() : UpdateResult {
     val updateResult = remoteCommunicator.receiveUpdates()
-    when (updateResult) {
-      is UpdateResult.Success -> {
-        val snapshot = updateResult.settingsSnapshot
-        val event = SettingsChangeEvent(ChangeSource.FROM_SERVER, snapshot)
-        application.messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(event)
-      }
-      is UpdateResult.Error -> {
-        // todo remove the error notification after next successful update
-        notifyError(SettingsSyncBundle.message("notification.title.update.error"), updateResult.message)
-        return
-      }
-      is UpdateResult.NoFileOnServer -> {
-        notifyError(SettingsSyncBundle.message("notification.title.update.error"),
-                    SettingsSyncBundle.message("notification.title.update.no.such.file"))
-      }
+    if (updateResult is UpdateResult.Success) {
+      val snapshot = updateResult.settingsSnapshot
+      application.messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(SyncSettingsEvent.CloudChange(snapshot))
     }
+    return updateResult
   }
 
-  // todo update by app focus receive & by timer
+  fun isUpdateNeeded(): Boolean {
+    return remoteCommunicator.isUpdateNeeded()
+  }
 }

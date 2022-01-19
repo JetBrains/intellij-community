@@ -108,8 +108,8 @@ public class RepositoryLibrarySynchronizer implements StartupActivity.DumbAware 
         String libraryText = validLibraries.size() == 1
                              ? "'" + validLibraries.iterator().next().getPresentableName() + "' library"
                              : validLibraries.size() + " libraries";
-        Notifications.Bus.notify(new Notification(
-          "Repository", JavaUiBundle.message("notification.title.repository.libraries.cleanup"),
+        Notifications.Bus.notify(JarRepositoryManager.GROUP.createNotification(
+          JavaUiBundle.message("notification.title.repository.libraries.cleanup"),
           JavaUiBundle.message("notification.text.duplicated.urls.were.removed", libraryText, ApplicationNamesInfo.getInstance().getFullProductName()),
           NotificationType.INFORMATION
         ), project);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.log
 
 import com.intellij.notification.NotificationType
@@ -12,6 +12,7 @@ import com.intellij.vcs.log.VcsShortCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsCommitMetadataImpl
 import com.intellij.vcs.log.util.VcsLogUtil
+import git4idea.GitNotificationIdsHolder
 import git4idea.i18n.GitBundle
 
 private val LOG = Logger.getInstance("Git.Rebase.Log.Action.CommitDetailsLoader")
@@ -72,7 +73,7 @@ private fun loadDetails(
         LOG.warn(error, e)
         val notification = VcsNotifier.STANDARD_NOTIFICATION
           .createNotification(error, NotificationType.ERROR)
-          .setDisplayId("git.log.could.not.load.changes.of.commit")
+          .setDisplayId(GitNotificationIdsHolder.COULD_NOT_LOAD_CHANGES_OF_COMMIT_LOG)
         VcsNotifier.getInstance(project).notify(notification)
       }
     },

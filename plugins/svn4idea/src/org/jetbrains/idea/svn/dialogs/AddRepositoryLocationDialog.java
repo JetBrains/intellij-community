@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Url;
@@ -17,7 +18,8 @@ import java.awt.*;
 import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.sorted;
-import static com.intellij.util.ui.JBUI.*;
+import static com.intellij.util.ui.JBUI.insets;
+import static com.intellij.util.ui.JBUI.size;
 import static java.awt.GridBagConstraints.*;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
@@ -62,7 +64,7 @@ public class AddRepositoryLocationDialog extends DialogWrapper {
     myComboField = (JTextField)myCombo.getEditor().getEditorComponent();
 
     JPanel wrapper = new JPanel(new GridBagLayout());
-    wrapper.add(mainPanel, new GridBagConstraints(0, 0, 1, 1, 1, 1, NORTHWEST, HORIZONTAL, emptyInsets(), 0, 0));
+    wrapper.add(mainPanel, new GridBagConstraints(0, 0, 1, 1, 1, 1, NORTHWEST, HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
     wrapper.setPreferredSize(size(400, 70));
     return wrapper;
   }

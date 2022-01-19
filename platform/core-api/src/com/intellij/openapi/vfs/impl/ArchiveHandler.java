@@ -281,29 +281,6 @@ public abstract class ArchiveHandler {
 
   /** @deprecated please use {@link #processEntry} instead to correctly handle invalid entry names */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  protected @NotNull EntryInfo getOrCreate(@NotNull Map<String, EntryInfo> map, @NotNull String entryName) {
-    EntryInfo entry = map.get(entryName);
-    if (entry == null) {
-      int slashP = entryName.lastIndexOf('/');
-      int p = Math.max(slashP, entryName.lastIndexOf('\\'));
-      String parentName = p > 0 ? entryName.substring(0, p) : "";
-      String shortName = p > 0 ? entryName.substring(p + 1) : entryName;
-      String fixedParent = parentName.replace('\\', '/');
-      //noinspection StringEquality
-      if (fixedParent != parentName || slashP == -1 && p != -1) {
-        parentName = fixedParent;
-        entryName = parentName + '/' + shortName;
-      }
-      EntryInfo parent = getOrCreate(map, parentName);
-      entry = new EntryInfo(shortName, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parent);
-      map.put(entryName, entry);
-    }
-    return entry;
-  }
-
-  /** @deprecated please use {@link #processEntry} instead to correctly handle invalid entry names */
-  @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected @NotNull Pair<String, String> splitPath(@NotNull String entryName) {
     return split(entryName);

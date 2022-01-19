@@ -1,17 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.diagnostic.Checks;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.MathUtil;
-import com.intellij.util.NotNullProducer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.function.Supplier;
 
 /**
- * @author max
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("UseJBColor")
@@ -19,47 +18,25 @@ public final class ColorUtil {
   private ColorUtil() {
   }
 
-  @NotNull
-  public static Color marker(@NotNull final String name) {
-    return new JBColor(() -> {
-      throw new AssertionError(name);
-    }) {
-      @Override
-      public boolean equals(Object obj) {
-        return this == obj;
-      }
-
-      @Override
-      public String toString() {
-        return name;
-      }
-    };
-  }
-
-  @NotNull
-  public static Color softer(@NotNull Color color) {
+  public static @NotNull Color softer(@NotNull Color color) {
     if (color.getBlue() > 220 && color.getRed() > 220 && color.getGreen() > 220) return color;
     final float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
     return Color.getHSBColor(hsb[0], 0.6f * hsb[1], hsb[2]);
   }
 
-  @NotNull
-  public static Color darker(@NotNull Color color, int tones) {
+  public static @NotNull Color darker(@NotNull Color color, int tones) {
     return hackBrightness(color, tones, 1 / 1.1F);
   }
 
-  @NotNull
-  public static Color brighter(@NotNull Color color, int tones) {
+  public static @NotNull Color brighter(@NotNull Color color, int tones) {
     return hackBrightness(color, tones, 1.1F);
   }
 
-  @NotNull
-  public static Color tuneHue(@NotNull Color color, int howMuch, float hackValue) {
+  public static @NotNull Color tuneHue(@NotNull Color color, int howMuch, float hackValue) {
     return tuneHSBComponent(color, 0, howMuch, hackValue);
   }
 
-  @NotNull
-  public static Color tuneSaturation(@NotNull Color color, int howMuch, float hackValue) {
+  public static @NotNull Color tuneSaturation(@NotNull Color color, int howMuch, float hackValue) {
     return tuneHSBComponent(color, 1, howMuch, hackValue);
   }
 
@@ -72,8 +49,7 @@ public final class ColorUtil {
    *   <li>For remaining grey tones we will do nothing.</li>
    * </ul>
    */
-  @NotNull
-  public static Color tuneSaturationEspeciallyGrey(@NotNull Color color, int howMuch, float hackValue) {
+  public static @NotNull Color tuneSaturationEspeciallyGrey(@NotNull Color color, int howMuch, float hackValue) {
     if (color.getRed() == color.getBlue() && color.getBlue() == color.getGreen()) {
       return color.getGreen() <= 64 ? shiftHSBComponent(color, 2, howMuch * (1 - hackValue) / 1.5f) :
              color.getGreen() >= 192 ? shiftHSBComponent(color, 2, howMuch * (hackValue - 1) / 1.5f) :
@@ -82,13 +58,11 @@ public final class ColorUtil {
     return tuneHSBComponent(color, 1, howMuch, hackValue);
   }
 
-  @NotNull
-  public static Color hackBrightness(@NotNull Color color, int howMuch, float hackValue) {
+  public static @NotNull Color hackBrightness(@NotNull Color color, int howMuch, float hackValue) {
     return tuneHSBComponent(color, 2, howMuch, hackValue);
   }
 
-  @NotNull
-  private static Color tuneHSBComponent(@NotNull Color color, int componentIndex, int howMuch, float factor) {
+  private static @NotNull Color tuneHSBComponent(@NotNull Color color, int componentIndex, int howMuch, float factor) {
     Checks.checkIndex(componentIndex, 3);
     float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
     float component = hsb[componentIndex];
@@ -100,16 +74,14 @@ public final class ColorUtil {
     return Color.getHSBColor(hsb[0], hsb[1], hsb[2]);
   }
 
-  @NotNull
-  private static Color shiftHSBComponent(@NotNull Color color, int componentIndex, float shift) {
+  private static @NotNull Color shiftHSBComponent(@NotNull Color color, int componentIndex, float shift) {
     Checks.checkIndex(componentIndex, 3);
     float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
     hsb[componentIndex] = MathUtil.clamp(hsb[componentIndex] + shift, 0, 1);
     return Color.getHSBColor(hsb[0], hsb[1], hsb[2]);
   }
 
-  @NotNull
-  public static Color saturate(@NotNull Color color, int tones) {
+  public static @NotNull Color saturate(@NotNull Color color, int tones) {
     final float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
     float saturation = hsb[1];
     for (int i = 0; i < tones; i++) {
@@ -119,8 +91,7 @@ public final class ColorUtil {
     return Color.getHSBColor(hsb[0], saturation, hsb[2]);
   }
 
-  @NotNull
-  public static Color desaturate(@NotNull Color color, int tones) {
+  public static @NotNull Color desaturate(@NotNull Color color, int tones) {
     final float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
     float saturation = hsb[1];
     for (int i = 0; i < tones; i++) {
@@ -130,8 +101,7 @@ public final class ColorUtil {
     return Color.getHSBColor(hsb[0], saturation, hsb[2]);
   }
 
-  @NotNull
-  public static Color dimmer(@NotNull final Color color) {
+  public static @NotNull Color dimmer(final @NotNull Color color) {
     return wrap(color, () -> {
       float[] rgb = color.getRGBColorComponents(null);
 
@@ -141,8 +111,8 @@ public final class ColorUtil {
     });
   }
 
-  private static Color wrap(@NotNull Color color, NotNullProducer<? extends Color> func) {
-    return color instanceof JBColor ? new JBColor(func) : func.produce();
+  private static Color wrap(@NotNull Color color, Supplier<? extends Color> func) {
+    return color instanceof JBColor ? JBColor.lazy(func) : func.get();
   }
 
   private static int shift(int colorComponent, double d) {
@@ -150,39 +120,33 @@ public final class ColorUtil {
     return n > 255 ? 255 : Math.max(n, 0);
   }
 
-  @NotNull
-  public static Color shift(@NotNull final Color c, final double d) {
-    NotNullProducer<Color> func = () -> new Color(shift(c.getRed(), d), shift(c.getGreen(), d), shift(c.getBlue(), d), c.getAlpha());
+  public static @NotNull Color shift(final @NotNull Color c, final double d) {
+    Supplier<Color> func = () -> new Color(shift(c.getRed(), d), shift(c.getGreen(), d), shift(c.getBlue(), d), c.getAlpha());
     return wrap(c, func);
   }
 
-  @NotNull
-  public static Color withAlpha(@NotNull Color c, double a) {
+  public static @NotNull Color withAlpha(@NotNull Color c, double a) {
     return toAlpha(c, (int)(255 * a));
   }
 
-  @NotNull
-  public static Color withPreAlpha(@NotNull Color c, double a) {
+  public static @NotNull Color withPreAlpha(@NotNull Color c, double a) {
     float[] rgba = new float[4];
 
     rgba = withAlpha(c, a).getRGBComponents(rgba);
     return new Color(rgba[0] * rgba[3], rgba[1] * rgba[3], rgba[2] * rgba[3], 1.0f);
   }
 
-  @NotNull
-  public static Color toAlpha(@Nullable Color color, final int a) {
+  public static @NotNull Color toAlpha(@Nullable Color color, final int a) {
     final Color c = color == null ? Color.black : color;
-    NotNullProducer<Color> func = () -> new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
+    Supplier<Color> func = () -> new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
     return wrap(c, func);
   }
 
-  @NotNull
-  public static String toHex(@NotNull final Color c) {
+  public static @NotNull String toHex(final @NotNull Color c) {
     return toHex(c, false);
   }
 
-  @NotNull
-  public static String toHex(@NotNull final Color c, final boolean withAlpha) {
+  public static @NotNull String toHex(final @NotNull Color c, final boolean withAlpha) {
     final String R = Integer.toHexString(c.getRed());
     final String G = Integer.toHexString(c.getGreen());
     final String B = Integer.toHexString(c.getBlue());
@@ -196,8 +160,7 @@ public final class ColorUtil {
     return rgbHex + (A.length() < 2 ? "0" : "") + A;
   }
 
-  @NotNull
-  public static @NlsSafe String toHtmlColor(@NotNull final Color c) {
+  public static @NotNull @NlsSafe String toHtmlColor(final @NotNull Color c) {
     return "#" + toHex(c);
   }
 
@@ -212,13 +175,11 @@ public final class ColorUtil {
    * @param str hex string
    * @return Color object
    */
-  @NotNull
-  public static Color fromHex(@NotNull String str) {
+  public static @NotNull Color fromHex(@NotNull String str) {
     return ColorHexUtil.fromHex(str);
   }
 
-  @Nullable
-  public static Color fromHex(@Nullable String str, @Nullable Color defaultValue) {
+  public static @Nullable Color fromHex(@Nullable String str, @Nullable Color defaultValue) {
     return ColorHexUtil.fromHex(str, defaultValue);
   }
 
@@ -260,11 +221,10 @@ public final class ColorUtil {
     return Math.pow(((colorValue + 0.055) / 1.055), 2.4);
   }
 
-  @NotNull
-  public static Color mix(@NotNull final Color c1, @NotNull final Color c2, double balance) {
+  public static @NotNull Color mix(final @NotNull Color c1, final @NotNull Color c2, double balance) {
     if (balance <= 0) return c1;
     if (balance >= 1) return c2;
-    NotNullProducer<Color> func = new MixedColorProducer(c1, c2, balance);
-    return c1 instanceof JBColor || c2 instanceof JBColor ? new JBColor(func) : func.produce();
+    Supplier<Color> func = new MixedColorProducer(c1, c2, balance);
+    return c1 instanceof JBColor || c2 instanceof JBColor ? JBColor.lazy(func) : func.get();
   }
 }

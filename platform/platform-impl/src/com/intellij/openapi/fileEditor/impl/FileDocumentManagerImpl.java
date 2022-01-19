@@ -107,7 +107,8 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
       Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
       if (project == null) {
-        project = ProjectUtil.guessProjectForFile(getFile(document));
+        VirtualFile virtualFile = getFile(document);
+        project = virtualFile == null ? null : ProjectUtil.guessProjectForFile(virtualFile);
       }
       String lineSeparator = CodeStyle.getProjectOrDefaultSettings(project).getLineSeparator();
       document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);

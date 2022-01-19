@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -59,6 +59,11 @@ class IndexDiagnosticDumper : Disposable {
     val shouldDumpPathsOfIndexedFiles: Boolean
       get() =
         SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.paths.of.indexed.files", false)
+
+    @JvmStatic
+    val shouldDumpProviderRootPaths: Boolean
+      get() =
+        SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.provider.root.paths", false)
 
     @JvmStatic
     @TestOnly

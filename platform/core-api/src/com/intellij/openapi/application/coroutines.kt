@@ -8,7 +8,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
-import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -125,11 +124,7 @@ private class SmartRunnable<T>(action: (ctx: CoroutineContext) -> T, continuatio
   }
 }
 
-fun ModalityState.asContextElement(): CoroutineContext.Element = ModalityStateElement(this)
-
-private class ModalityStateElement(val modalityState: ModalityState) : AbstractCoroutineContextElement(ModalityStateElementKey)
-
-private object ModalityStateElementKey : CoroutineContext.Key<ModalityStateElement>
+fun ModalityState.asContextElement(): CoroutineContext = coroutineSupport().asContextElement(this)
 
 /**
  * Please don't use unless you know what you are doing.
@@ -139,13 +134,6 @@ private object ModalityStateElementKey : CoroutineContext.Key<ModalityStateEleme
  * @return a special coroutine dispatcher that's equivalent to using no modality state at all in `invokeLater`.
  */
 @Suppress("unused") // unused receiver
-val Dispatchers.EDT: CoroutineDispatcher
-  get() = EdtCoroutineDispatcher
+val Dispatchers.EDT: CoroutineContext get() = coroutineSupport().edtDispatcher()
 
-private object EdtCoroutineDispatcher : CoroutineDispatcher() {
-
-  override fun dispatch(context: CoroutineContext, block: Runnable) {
-    val state = context[ModalityStateElementKey]?.modalityState ?: ModalityState.any()
-    ApplicationManager.getApplication().invokeLater(block, state)
-  }
-}
+private fun coroutineSupport() = ApplicationManager.getApplication().getService(CoroutineSupport::class.java)

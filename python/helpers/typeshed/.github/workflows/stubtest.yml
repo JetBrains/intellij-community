@@ -1,0 +1,57 @@
+name: Run stubtest on all stubs
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+
+permissions:
+  contents: read
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
+
+jobs:
+  stubtest-stdlib:
+    name: Check stdlib with stubtest
+    if: github.repository == 'python/typeshed'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # Temporarily disable "macos-latest", since Python 3.10.1 is not available.
+        # os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+        os: ["ubuntu-latest", "windows-latest"]
+        # Temporarily hard-coded 3.10.1 due to stubtest incompatibilities.
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10.1"]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Update pip
+        run: python -m pip install -U pip
+      - name: Install dependencies
+        run: pip install $(grep tomli== requirements-tests.txt) $(grep mypy== requirements-tests.txt)
+      - name: Run stubtest
+        run: python tests/stubtest_stdlib.py
+
+  stubtest-third-party:
+    name: Check third party stubs with stubtest
+    if: github.repository == 'python/typeshed'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shard-index: [0, 1, 2, 3]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: pip install $(grep tomli== requirements-tests.txt)
+      - name: Run stubtest
+        run: python tests/stubtest_third_party.py --num-shards 4 --shard-index ${{ matrix.shard-index }}

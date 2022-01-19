@@ -184,7 +184,12 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
               // look for extended crash logs
               File extraLog = findExtraLogFile(pid, appInfoFileLastModified);
               if (extraLog != null) {
-                Attachment extraAttachment = new Attachment("jbr_err.txt", FileUtil.loadFile(extraLog));
+                String jbrErrContent = FileUtil.loadFile(extraLog);
+                // Detect crashes caused by OOME
+                if (jbrErrContent.contains("java.lang.OutOfMemoryError: Java heap space")) {
+                  LowMemoryNotifier.showNotification(VMOptions.MemoryKind.HEAP, true);
+                }
+                Attachment extraAttachment = new Attachment("jbr_err.txt", jbrErrContent);
                 extraAttachment.setIncluded(true);
                 attachments = ArrayUtil.append(attachments, extraAttachment);
               }

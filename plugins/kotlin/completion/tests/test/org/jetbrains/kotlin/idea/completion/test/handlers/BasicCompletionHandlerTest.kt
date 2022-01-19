@@ -68,6 +68,8 @@ class BasicCompletionHandlerTest12 : CompletionHandlerTestBase() {
 
     fun testAddNameToExistingArgument() = doTest()
 
+    fun testBasicCompletionWorksAfterLastAllowedArgument() = doTest()
+
     fun testNamedParameterBeforeAnotherNamedParameter() = doTest() // The test checks parsing error
 
     fun testNamedParameterCompletionWithLeadingSpace() = doTest()

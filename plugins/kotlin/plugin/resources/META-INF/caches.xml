@@ -13,6 +13,7 @@
 
     <applicationService serviceImplementation="org.jetbrains.kotlin.load.kotlin.KotlinBinaryClassCache"/>
 
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.trackers.KotlinPackageModificationListener"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.trackers.PureKotlinCodeBlockModificationListener"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker"/>

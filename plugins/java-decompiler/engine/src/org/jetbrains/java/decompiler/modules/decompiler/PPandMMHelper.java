@@ -42,7 +42,7 @@ public class PPandMMHelper {
 
       res |= processExprentList(node.exprents);
 
-      stack.addAll(node.succs);
+      stack.addAll(node.successors);
     }
 
     return res;

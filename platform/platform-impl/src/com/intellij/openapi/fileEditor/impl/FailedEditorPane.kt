@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.icons.AllIcons
@@ -9,6 +10,7 @@ import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.Link
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
 import java.awt.BorderLayout
@@ -159,7 +161,7 @@ class FailedEditorBuilder internal constructor(@DialogMessage val message: Strin
       isFocusable = false
       isEditable = false
       border = null
-      font = UIUtil.getLabelFont()
+      font = StartupUiUtil.getLabelFont()
       background = UIUtil.getLabelBackground()
       val centerAttribute = SimpleAttributeSet()
       StyleConstants.setAlignment(centerAttribute, StyleConstants.ALIGN_CENTER)

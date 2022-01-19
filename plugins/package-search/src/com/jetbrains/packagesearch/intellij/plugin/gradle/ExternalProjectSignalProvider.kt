@@ -4,12 +4,20 @@ import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImp
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.SimpleMessageBusConnection
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DumbAwareMessageBusModuleChangesSignalProvider
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.FileWatcherSignalProvider
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.FlowModuleChangesSignalProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.invoke
+import com.jetbrains.packagesearch.intellij.plugin.util.filesChangedEventFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import org.jetbrains.plugins.gradle.settings.TestRunner
+import java.nio.file.Paths
 
 internal class ExternalProjectSignalProvider : DumbAwareMessageBusModuleChangesSignalProvider() {
 
@@ -61,3 +69,16 @@ internal class GradleModuleLinkSignalProvider : DumbAwareMessageBusModuleChanges
         )
     }
 }
+
+internal class GradlePropertiesChangedSignalProvider : FlowModuleChangesSignalProvider {
+
+    override fun registerModuleChangesListener(project: Project) =
+        project.filesChangedEventFlow.flatMapMerge { it.asFlow() }
+            .filter { it.file?.name == "gradle.properties" || it.file?.name == "local.properties" }
+            .map { }
+}
+
+internal class GlobalGradlePropertiesChangedSignalProvider : FileWatcherSignalProvider(
+    System.getenv("GRADLE_USER_HOME")?.let { Paths.get(it, "gradle.properties") }
+        ?: Paths.get(System.getProperty("user.home"), ".gradle", "gradle.properties")
+)

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.application.Application;
@@ -262,7 +262,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
         final ArrayList<String> consumed = new ArrayList<>();
         synchronized (LaterInvocatorTest.this) {
           blockSwingThread();
-          ApplicationManager.getApplication().getInvokator().invokeLater(new Runnable() {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
               ApplicationManager.getApplication().invokeLater(new MyRunnable("1") {
@@ -272,10 +272,13 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
                   TestCase.fail("Should not be executed");
                 }
               }, Conditions.alwaysTrue());
+              consumed.add("1");
             }
-          }, ModalityState.NON_MODAL).doWhenDone(() -> consumed.add("1"));
-          ApplicationManager.getApplication().getInvokator().invokeLater(new MyRunnable("2"), ModalityState.NON_MODAL)
-            .doWhenDone(() -> consumed.add("2"));
+          }, ModalityState.NON_MODAL);
+          ApplicationManager.getApplication().invokeLater(() -> {
+            new MyRunnable("2").run();
+            consumed.add("2");
+          }, ModalityState.NON_MODAL);
         }
         flushSwingQueue();
 

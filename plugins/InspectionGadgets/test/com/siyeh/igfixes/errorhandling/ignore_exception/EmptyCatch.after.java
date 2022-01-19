@@ -6,7 +6,7 @@ class AAA {
     try {
       System.out.println(System.in.read());
     } c<caret>atch (IOException ex) {
-        ex.printStackTrace();
+        throw new RuntimeException(ex);
     }
   }
 }
