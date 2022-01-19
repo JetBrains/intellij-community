@@ -1,0 +1,52 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInspection.javaDoc
+
+import com.intellij.codeInspection.ex.InspectionElementsMergerBase
+import org.jdom.Element
+
+class MissingJavadocMerger: InspectionElementsMergerBase() {
+  override fun getMergedToolName(): String = "MissingJavadoc"
+  override fun getSourceToolNames(): Array<String> = arrayOf("JavaDoc")
+  override fun transformElement(sourceToolName: String, sourceElement: Element, toolElement: Element): Element {
+    val oldInspection = JavaDocLocalInspection()
+    oldInspection.readSettings(sourceElement)
+    val newInspection = MissingJavadocInspection()
+    newInspection.ignoreAccessors = oldInspection.isIgnoreSimpleAccessors
+    newInspection.ignoreDeprecated = oldInspection.IGNORE_DEPRECATED
+    newInspection.packageOptions = transformOptions(oldInspection.PACKAGE_OPTIONS)
+    newInspection.moduleOptions = transformOptions(oldInspection.MODULE_OPTIONS)
+    newInspection.topLevelClassOptions = transformOptions(oldInspection.TOP_LEVEL_CLASS_OPTIONS)
+    newInspection.innerClassOptions = transformOptions(oldInspection.INNER_CLASS_OPTIONS)
+    newInspection.fieldOptions = transformOptions(oldInspection.FIELD_OPTIONS)
+    newInspection.methodOptions = transformOptions(oldInspection.METHOD_OPTIONS)
+    newInspection.writeSettings(toolElement)
+    return toolElement
+  }
+
+  override fun isEnabledByDefault(sourceToolName: String): Boolean {
+    return false
+  }
+
+  override fun writeMergedContent(toolElement: Element): Boolean {
+    val oldInspection = JavaDocLocalInspection()
+    oldInspection.readSettings(toolElement)
+    val options = with (oldInspection) {
+      sequenceOf(PACKAGE_OPTIONS, FIELD_OPTIONS, METHOD_OPTIONS, MODULE_OPTIONS, INNER_CLASS_OPTIONS, TOP_LEVEL_CLASS_OPTIONS)
+    }
+    return options.any { it.ACCESS_JAVADOC_REQUIRED_FOR != JavaDocLocalInspection.NONE }
+  }
+
+  private fun transformOptions(oldOption: JavaDocLocalInspection.Options): MissingJavadocInspection.Options {
+    val newOption = MissingJavadocInspection.Options()
+    newOption.isEnabled = oldOption.ACCESS_JAVADOC_REQUIRED_FOR != JavaDocLocalInspection.NONE
+    if (oldOption.ACCESS_JAVADOC_REQUIRED_FOR.equals(JavaDocLocalInspection.NONE)) {
+      newOption.minimalVisibility = JavaDocLocalInspection.PUBLIC
+    }
+    else {
+      newOption.minimalVisibility = oldOption.ACCESS_JAVADOC_REQUIRED_FOR
+    }
+    newOption.minimalVisibility = oldOption.ACCESS_JAVADOC_REQUIRED_FOR
+    newOption.requiredTags = oldOption.REQUIRED_TAGS
+    return newOption
+  }
+}

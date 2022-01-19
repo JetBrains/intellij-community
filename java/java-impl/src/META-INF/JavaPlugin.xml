@@ -1734,6 +1734,14 @@
     <localInspection groupPath="Java" language="JAVA" shortName="JavaDoc" bundle="messages.JavaBundle" key="inspection.javadoc.display.name"
                      groupKey="group.names.javadoc.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.javaDoc.JavaDocLocalInspection" alternativeId="javadoc"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="MissingJavadoc" bundle="messages.JavaBundle" key="inspection.missingJavadoc.display.name"
+                     groupKey="group.names.javadoc.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.javaDoc.MissingJavadocInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="JavadocDeclaration" bundle="messages.JavaBundle" key="inspection.javadocDeclaration.display.name"
+                     groupKey="group.names.javadoc.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection" alternativeId="javadoc"/>
+    <inspectionElementsMerger implementation="com.intellij.codeInspection.javaDoc.JavadocDeclarationMerger" />
+    <inspectionElementsMerger implementation="com.intellij.codeInspection.javaDoc.MissingJavadocMerger" />
     <localInspection groupPath="Java" language="JAVA" shortName="ReturnSeparatedFromComputation" bundle="messages.JavaBundle"
                      key="inspection.return.separated.from.computation.name"
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle"
