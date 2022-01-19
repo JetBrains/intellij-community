@@ -14,6 +14,7 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.ui.AppUIUtil
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativeRectangle
@@ -38,7 +39,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     private val LOGGER = logger<CustomHeader>()
 
     val H
-      get() = 7
+      get() = if (ExperimentalUI.isNewUI()) 12 else 7
     val V
       get() = 5
 

@@ -35,8 +35,6 @@ private enum class ShowMode {
   MENU, TOOLBAR
 }
 
-private const val APP_ICON_LEFT_INSET = 12
-
 internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : AbstractMenuFrameHeader(frame), UISettingsListener, ToolbarHolder {
   private val myMenuBar = ideMenu
   private val myMenuButton = createMenuButton()
@@ -53,7 +51,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
     updateLayout(UISettings.instance)
 
     productIcon.border = JBUI.Borders.empty(V, 0, V, 0)
-    add(productIcon, gb.nextLine().next().anchor(WEST).insetLeft(APP_ICON_LEFT_INSET))
+    add(productIcon, gb.nextLine().next().anchor(WEST).insetLeft(H))
     add(myHeaderContent, gb.next().fillCell().anchor(CENTER).weightx(1.0).weighty(1.0))
     add(buttonPanes.getView(), gb.next().anchor(EAST))
 
