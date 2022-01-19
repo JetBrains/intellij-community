@@ -49,6 +49,7 @@ import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 import com.intellij.openapi.externalSystem.service.ui.completion.DefaultTextCompletionRenderer.Companion.append
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer.Cell
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import java.awt.Component
 import javax.swing.*
 
@@ -156,8 +157,10 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
               ))
             cell(archetypeDescriptorTable.component)
               .horizontalAlign(HorizontalAlign.FILL)
-          }
-        }
+              .verticalAlign(VerticalAlign.FILL)
+              .resizableColumn()
+          }.resizableRow()
+        }.resizableRow()
       }
       reloadCatalogs()
     }
