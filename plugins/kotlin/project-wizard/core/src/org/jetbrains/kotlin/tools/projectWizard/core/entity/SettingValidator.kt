@@ -107,7 +107,7 @@ interface Validatable<out V> {
     val validator: SettingValidator<@UnsafeVariance V>
 }
 
-fun <V, Q : Validatable<Q>> Reader.validateList(list: List<Q>) = settingValidator<V> {
+fun <V, Q : Validatable<Q>> validateList(list: List<Q>) = settingValidator<V> {
     list.fold(ValidationResult.OK as ValidationResult) { result, value ->
         result and value.validator.validate(this, value).withTarget(value)
     }

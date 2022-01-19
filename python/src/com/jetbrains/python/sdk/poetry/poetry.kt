@@ -324,7 +324,7 @@ fun runCommand(projectPath: @SystemDependent String, command: String, vararg arg
 /**
  * The URLs of package sources configured in the Pipfile.lock of the module associated with this SDK.
  */
-val Sdk.poetrySources: List<String>
+val poetrySources: List<String>
   // TODO parse pyproject.toml for tool.poetry.source.url
   get() = listOf(POETRY_DEFAULT_SOURCE_URL)
 
