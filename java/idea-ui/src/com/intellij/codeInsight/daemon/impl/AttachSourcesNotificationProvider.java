@@ -191,7 +191,6 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
             if (sdkVersion != null) {
               info.append(" ")
                 .append(JavaUiBundle.message("class.file.decompiled.sdk.version.text",
-                                             sdkVersion.getDescription(),
                                              getSdkDescription(sdkVersion, ClsParsingUtil.isPreviewLevel(minor))));
             }
           }
