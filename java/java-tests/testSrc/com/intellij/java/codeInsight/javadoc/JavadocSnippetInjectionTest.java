@@ -8,6 +8,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.intellij.psi.javadoc.PsiSnippetDocTag;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -22,8 +23,6 @@ public class JavadocSnippetInjectionTest extends LightQuickFixParameterizedTestC
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    MyTestInjector testInjector = new MyTestInjector(getPsiManager());
-    testInjector.injectAll(getTestRootDisposable());
   }
 
   @Override
@@ -39,8 +38,9 @@ public class JavadocSnippetInjectionTest extends LightQuickFixParameterizedTestC
 
   @NotNull
   private Language getInjectedLanguage() {
-    int offset = getEditor().getCaretModel().getPrimaryCaret().getOffset();
-    final PsiSnippetDocTag snippet = (PsiSnippetDocTag) PsiUtilCore.getElementAtOffset(getFile(), offset).getParent();
+    final int offset = getEditor().getCaretModel().getPrimaryCaret().getOffset();
+    final PsiElement element = PsiUtilCore.getElementAtOffset(getFile(), offset);
+    final PsiSnippetDocTag snippet = PsiTreeUtil.getParentOfType(element, PsiSnippetDocTag.class);
     final AtomicReference<PsiElement> injected = new AtomicReference<>();
     final InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(getProject());
     injectionManager.enumerate(snippet, (injectedPsi, places) -> { injected.set(injectedPsi); });
