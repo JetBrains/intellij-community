@@ -217,8 +217,16 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     private fun reloadCatalogs() {
       val catalogManager = MavenCatalogManager.getInstance()
       val catalogs = catalogManager.getCatalogs(context.projectOrDefault)
+      val oldCatalogs = catalogComboBox.collectionModel.items
+      val addedCatalogs = catalogs.toSet() - oldCatalogs.toSet()
+
       catalogComboBox.collectionModel.replaceAll(catalogs)
-      catalogItem = catalogs.firstOrNull() ?: MavenCatalog.System.Internal
+      when {
+        addedCatalogs.isNotEmpty() ->
+          catalogItem = addedCatalogs.first()
+        catalogItem !in catalogs ->
+          catalogItem = catalogs.firstOrNull() ?: MavenCatalog.System.Internal
+      }
     }
 
     private fun manageCatalogs() {
