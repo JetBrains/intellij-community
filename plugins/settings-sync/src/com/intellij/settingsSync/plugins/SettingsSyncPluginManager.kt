@@ -38,6 +38,7 @@ class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginMan
 
   class SettingsSyncPluginState : BaseState() {
     var isEnabled by property(true)
+    var requires by stringSet()
   }
 
   private fun updateStateFromIde() {
@@ -45,9 +46,18 @@ class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginMan
     PluginManagerCore.getPlugins().forEach {
       val idString = it.pluginId.idString
       if (shouldSaveState(it)) {
-        val pluginState = SettingsSyncPluginState()
+        var pluginState = state.plugins.get(idString)
+        if (pluginState == null) {
+          pluginState = SettingsSyncPluginState()
+          it.dependencies.forEach { dependency ->
+            if (!dependency.isOptional) {
+              pluginState.requires.add(dependency.pluginId.idString)
+              pluginState.intIncrementModificationCount()
+            }
+          }
+          state.plugins[idString] = pluginState
+        }
         pluginState.isEnabled = it.isEnabled
-        state.plugins[idString] = pluginState
       }
       else {
         if (state.plugins.containsKey(idString)) {
@@ -74,8 +84,10 @@ class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginMan
         }
       }
       else {
-        val newPluginId = PluginId.getId(mapEntry.key)
-        installer.addPluginId(newPluginId)
+        if (checkDependencies(mapEntry.value)) {
+          val newPluginId = PluginId.getId(mapEntry.key)
+          installer.addPluginId(newPluginId)
+        }
       }
     }
     installer.installUnderProgress()
@@ -83,6 +95,15 @@ class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginMan
 
   private fun findPlugin(idString : String) : IdeaPluginDescriptor? {
     return PluginId.findId(idString)?.let { PluginManagerCore.findPlugin(it) }
+  }
+
+  private fun checkDependencies(pluginState: SettingsSyncPluginState) : Boolean {
+    pluginState.requires.forEach {
+      if (findPlugin(it) == null) {
+        return false
+      }
+    }
+    return true
   }
 
   fun doWithNoUpdateFromIde(runnable: Runnable) {
