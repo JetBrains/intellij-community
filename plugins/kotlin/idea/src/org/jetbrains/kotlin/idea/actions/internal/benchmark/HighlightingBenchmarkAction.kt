@@ -90,7 +90,7 @@ class HighlightingBenchmarkAction : AnAction() {
 
     private data class Settings(val seed: Long, val files: Int, val lines: Int)
 
-    private inner class DaemonFinishListener : DaemonCodeAnalyzer.DaemonListener {
+    private class DaemonFinishListener : DaemonCodeAnalyzer.DaemonListener {
         val channel = Channel<String>(capacity = Channel.CONFLATED)
 
         override fun daemonFinished() {

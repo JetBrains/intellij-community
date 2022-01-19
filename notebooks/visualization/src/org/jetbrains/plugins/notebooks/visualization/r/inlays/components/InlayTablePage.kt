@@ -129,7 +129,7 @@ class InlayTablePage : JPanel(BorderLayout()), ToolBarProvider {
     table.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_A, Event.CTRL_MASK), actionName)
   }
 
-  private inner class NumberComparator<T : Comparable<*>> : Comparator<T> {
+  private class NumberComparator<T : Comparable<*>> : Comparator<T> {
     override fun compare(o1: T, o2: T): Int {
       return compareValues(o1, o2)
     }

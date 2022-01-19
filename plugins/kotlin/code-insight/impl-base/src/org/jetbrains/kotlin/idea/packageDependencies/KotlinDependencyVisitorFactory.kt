@@ -14,7 +14,7 @@ class KotlinDependencyVisitorFactory : DependencyVisitorFactory() {
     override fun getVisitor(processor: DependenciesBuilder.DependencyProcessor, options: VisitorOptions): PsiElementVisitor =
         KotlinDependencyVisitor(processor, options)
 
-    inner class KotlinDependencyVisitor(
+    class KotlinDependencyVisitor(
         private val myProcessor: DependenciesBuilder.DependencyProcessor,
         private val myOptions: VisitorOptions
     ) : KtTreeVisitorVoid() {

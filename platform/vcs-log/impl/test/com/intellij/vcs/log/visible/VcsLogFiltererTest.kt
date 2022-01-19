@@ -347,7 +347,7 @@ class VcsLogFiltererTest {
     fun done() = MultiRootGraph(graphsByRoots)
   }
 
-  inner class GraphBuilder {
+  class GraphBuilder {
     val commits = ArrayList<GraphCommit<Int>>()
     val refs = HashSet<Ref>()
     val data = HashMap<GraphCommit<Int>, CommitMetaData>()

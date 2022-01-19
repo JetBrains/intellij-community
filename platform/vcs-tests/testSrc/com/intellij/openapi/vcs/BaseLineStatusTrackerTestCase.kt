@@ -73,7 +73,7 @@ abstract class BaseLineStatusTrackerTestCase : BaseLineStatusTrackerManagerTest(
     }
   }
 
-  protected inner class SimpleTest(val simpleTracker: SimpleLocalLineStatusTracker) : TrackerModificationsTest(simpleTracker)
+  protected class SimpleTest(val simpleTracker: SimpleLocalLineStatusTracker) : TrackerModificationsTest(simpleTracker)
 
   protected inner class PartialTest(val partialTracker: ChangelistsLocalLineStatusTracker) : TrackerModificationsTest(partialTracker) {
     fun assertAffectedChangeLists(vararg expected: String) {

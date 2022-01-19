@@ -56,7 +56,7 @@ class KotlinRuntimeTypeCastSurrounder : KotlinExpressionSurrounder() {
         return KotlinDebuggerEvaluationBundle.message("surround.with.runtime.type.cast.template")
     }
 
-    private inner class SurroundWithCastWorker(
+    private class SurroundWithCastWorker(
         private val myEditor: Editor,
         expression: KtExpression,
         context: DebuggerContextImpl,

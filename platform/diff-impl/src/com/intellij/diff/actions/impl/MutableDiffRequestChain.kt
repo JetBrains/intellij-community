@@ -193,7 +193,7 @@ internal class SwapThreeWayColorModeAction : ComboBoxAction() {
     }
   }
 
-  private inner class MyAction(text: @NlsActions.ActionText String, val option: ThreeSideDiffColors) : DumbAwareAction(text) {
+  private class MyAction(text: @NlsActions.ActionText String, val option: ThreeSideDiffColors) : DumbAwareAction(text) {
     override fun actionPerformed(e: AnActionEvent) {
       val helper = MutableDiffRequestChain.createHelper(e.dataContext) ?: return
       helper.chain.baseColorMode = option

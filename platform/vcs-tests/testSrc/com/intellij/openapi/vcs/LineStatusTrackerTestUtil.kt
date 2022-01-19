@@ -148,7 +148,7 @@ open class TrackerModificationsTest(val tracker: LocalLineStatusTracker<*>) {
 
   operator fun Int.not(): Helper = Helper(this)
   operator fun Helper.minus(end: Int): TestRange = TestRange(this.start, end)
-  inner class Helper(val start: Int)
+  class Helper(val start: Int)
 
   infix fun String.at(range: TestRange): TestRange {
     TestCase.assertEquals(parseInput(this), range.text)

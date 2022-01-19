@@ -45,7 +45,7 @@ class MavenTreeStructureProvider : TreeStructureProvider, DumbAware {
     return children
   }
 
-  private inner class MavenPomFileNode(project: Project?,
+  private class MavenPomFileNode(project: Project?,
                                        value: PsiFile,
                                        viewSettings: ViewSettings?,
                                        val myIgnored: Boolean) : PsiFileNode(project, value, viewSettings) {
