@@ -74,12 +74,14 @@ interface NewProjectWizardStep {
    * See related doc for [NewProjectWizardStep.keywords].
    */
   class Keywords {
-    private val keywords = HashSet<String>()
+    private val keywords = HashMap<Any, Set<String>>()
 
-    fun toSet() = keywords.toSet()
+    fun toSet(): Set<String> {
+      return keywords.values.flatten().toSet()
+    }
 
-    fun add(keywords: Iterable<String>) {
-      this.keywords.addAll(keywords)
+    fun add(owner: Any, keywords: Iterable<String>) {
+      this.keywords[owner] = keywords.toSet()
     }
   }
 }

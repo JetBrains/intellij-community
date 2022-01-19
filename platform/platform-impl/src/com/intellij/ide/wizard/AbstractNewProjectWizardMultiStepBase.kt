@@ -18,17 +18,18 @@ abstract class AbstractNewProjectWizardMultiStepBase(
 
   protected abstract val label: @NlsContexts.Label String
 
-  internal val stepsProperty = AtomicObservableProperty<Map<String, NewProjectWizardStep>>(emptyMap())
+  val stepsProperty = AtomicObservableProperty<Map<String, NewProjectWizardStep>>(emptyMap())
   var steps: Map<String, NewProjectWizardStep> by stepsProperty
 
-  val stepProperty = propertyGraph.graphProperty { "" }.bindStorage("${javaClass.name}.selectedStep")
+  val stepProperty = propertyGraph.graphProperty { "" }
+    .bindStorage("${javaClass.name}.selectedStep")
   var step by stepProperty
 
   private val stepsPanels = HashMap<String, DialogPanel>()
 
   protected open fun initSteps() = emptyMap<String, NewProjectWizardStep>()
 
-  open fun setupSwitcherUi(builder: Row) {
+  protected open fun setupSwitcherUi(builder: Row) {
     with(builder) {
       val segmentedButton = segmentedButton(steps.keys) { it }
         .bind(stepProperty)
@@ -40,14 +41,6 @@ abstract class AbstractNewProjectWizardMultiStepBase(
 
   override fun setupUI(builder: Panel) {
     steps = initSteps()
-    if (!steps.keys.contains(step)) step = ""
-    step = step.ifBlank { steps.keys.first() }
-
-    keywords.add(steps.keys)
-
-    stepsProperty.afterChange {
-      stepsPanels.clear()
-    }
 
     with(builder) {
       row(label) {
@@ -77,5 +70,25 @@ abstract class AbstractNewProjectWizardMultiStepBase(
 
   override fun setupProject(project: Project) {
     steps[step]?.setupProject(project)
+  }
+
+  init {
+    stepsProperty.afterChange {
+      keywords.add(this, steps.keys)
+    }
+    stepsProperty.afterChange {
+      stepsPanels.clear()
+    }
+    var oldSteps: Set<String> = emptySet()
+    stepsProperty.afterChange {
+      val addedSteps = steps.keys - oldSteps
+      step = when {
+        oldSteps.isNotEmpty() && addedSteps.isNotEmpty() -> addedSteps.first()
+        step.isEmpty() -> steps.keys.first()
+        step !in steps -> steps.keys.first()
+        else -> step // Update all dependent things
+      }
+      oldSteps = steps.keys
+    }
   }
 }
