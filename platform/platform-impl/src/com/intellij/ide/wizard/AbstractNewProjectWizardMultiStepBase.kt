@@ -50,29 +50,38 @@ abstract class AbstractNewProjectWizardMultiStepBase(
         setupSwitcherUi(this@row)
       }.bottomGap(BottomGap.SMALL)
 
-      val panelBuilder = NewProjectWizardPanelBuilder.getInstance(context)
-      val stepsPanels = HashMap<String, DialogPanel>()
-      for ((name, step) in steps) {
-        val panel = panelBuilder.panel(step::setupUI)
-        row {
-          cell(panel)
-            .horizontalAlign(HorizontalAlign.FILL)
-        }
-        stepsPanels[name] = panel
+      var stepsPanels = initStepPanels()
+      stepsProperty.afterChange {
+        stepsPanels = initStepPanels()
       }
 
       stepProperty.afterChange {
-        updateStepPanels(stepsPanels, panelBuilder)
+        showStepPanel(stepsPanels)
       }
-      updateStepPanels(stepsPanels, panelBuilder)
+      showStepPanel(stepsPanels)
     }
   }
 
-  private fun updateStepPanels(stepsPanels: HashMap<String, DialogPanel>, panelBuilder: NewProjectWizardPanelBuilder) {
+  private fun showStepPanel(stepsPanels: Map<String, DialogPanel>) {
+    val panelBuilder = NewProjectWizardPanelBuilder.getInstance(context)
     for ((key, panel) in stepsPanels) {
       panelBuilder.setVisible(panel, key == step)
       panel.repaint()
     }
+  }
+
+  fun Panel.initStepPanels(): Map<String, DialogPanel> {
+    val stepsPanels = HashMap<String, DialogPanel>()
+    val panelBuilder = NewProjectWizardPanelBuilder.getInstance(context)
+    for ((name, step) in steps) {
+      val panel = panelBuilder.panel(step::setupUI)
+      row {
+        cell(panel)
+          .horizontalAlign(HorizontalAlign.FILL)
+      }
+      stepsPanels[name] = panel
+    }
+    return stepsPanels
   }
 
   override fun setupProject(project: Project) {
