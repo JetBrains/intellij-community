@@ -68,6 +68,9 @@ Supports Maven and Gradle projects.
                              instance="com.jetbrains.packagesearch.intellij.plugin.configuration.ui.PackageSearchGeneralConfigurable"/>
 
         <projectService
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.services.DependencyNavigationService"/>
+
+        <projectService
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration"/>
 
         <projectService

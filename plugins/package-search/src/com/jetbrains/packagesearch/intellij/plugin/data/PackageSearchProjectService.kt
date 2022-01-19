@@ -2,6 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin.data
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
@@ -57,12 +58,11 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.job
 import kotlinx.serialization.json.Json
-import java.util.concurrent.Executors
 import kotlin.time.Duration
 
-internal class PackageSearchProjectService(val project: Project) : CoroutineScope by project.lifecycleScope {
+@Service(Service.Level.PROJECT)
+internal class PackageSearchProjectService(private val project: Project) : CoroutineScope by project.lifecycleScope {
 
     private val retryFromErrorChannel = Channel<Unit>()
     private val restartChannel = Channel<Unit>()
@@ -195,7 +195,7 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
             )
             .stateIn(this, SharingStarted.Eagerly, KnownRepositories.All.EMPTY)
 
-    private val dependenciesByModuleStateFlow = projectModulesSharedFlow
+    val dependenciesByModuleStateFlow = projectModulesSharedFlow
         .mapLatestTimedWithLoading("installedPackagesStep1LoadingFlow", installedPackagesStep1LoadingFlow) {
             fetchProjectDependencies(it, cacheDirectory, json)
         }
@@ -215,7 +215,7 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
             retryChannel = retryFromErrorChannel
         )
         .flowOn(AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher())
-        .shareIn(this, SharingStarted.Eagerly)
+        .stateIn(this, SharingStarted.Eagerly, emptyMap())
 
     val installedPackagesStateFlow = dependenciesByModuleStateFlow
         .mapLatestTimedWithLoading("installedPackagesStep2LoadingFlow", installedPackagesStep2LoadingFlow) {
