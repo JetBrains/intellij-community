@@ -27,7 +27,8 @@ import java.util.stream.Collectors
 @CompileStatic
 final class BuildDependenciesDownloader {
   private static final String HTTP_HEADER_CONTENT_LENGTH = "Content-Length"
-  private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build()
+  private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)
+    .version(HttpClient.Version.HTTP_1_1).build()
 
   /**
    * Set tracer to get telemetry. e.g. it's set for build scripts to get opentelemetry events
