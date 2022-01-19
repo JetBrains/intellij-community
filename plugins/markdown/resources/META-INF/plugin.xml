@@ -433,6 +433,12 @@ Includes the following features:</p>
       </group>
     </group>
 
+    <action class="org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"
+            id="org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"
+            icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Link">
+      <keyboard-shortcut first-keystroke="control shift U" keymap="$default"/>
+    </action>
+
     <group id="Markdown.Toolbar.Floating" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
       <group id="Markdown.Styling.SetHeaderLevel"
              class="org.intellij.plugins.markdown.ui.actions.styling.SetHeaderLevelActionGroup"
@@ -459,6 +465,7 @@ Includes the following features:</p>
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Code_span">
         <keyboard-shortcut first-keystroke="control shift C" keymap="$default"/>
       </action>
+      <reference id="org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"/>
     </group>
 
 
@@ -476,11 +483,7 @@ Includes the following features:</p>
     <group id="Markdown.InsertGroup">
       <!-- Also add all insert actions into default generate popup -->
       <add-to-group group-id="GenerateGroup" anchor="last"/>
-      <action class="org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"
-              id="org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"
-              icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Link">
-        <keyboard-shortcut first-keystroke="control shift U" keymap="$default"/>
-      </action>
+      <reference id="org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"/>
       <action id="Markdown.InsertEmptyTable"
               class="org.intellij.plugins.markdown.editor.tables.actions.InsertEmptyTableAction"
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Table"/>
