@@ -9,6 +9,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
@@ -37,7 +39,7 @@ internal class MoreSquareStripeButton(toolwindowSideBar: ToolwindowToolbar, val 
 
     fun createPresentation(): Presentation {
       return Presentation().apply {
-        icon = AllIcons.Actions.MoreHorizontal
+        icon = IconLoader.loadCustomVersionOrScale(AllIcons.Actions.MoreHorizontal as ScalableIcon, 20f)
         isEnabledAndVisible = true
       }
     }
