@@ -35,6 +35,8 @@ private enum class ShowMode {
   MENU, TOOLBAR
 }
 
+private const val APP_ICON_LEFT_INSET = 12
+
 internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : AbstractMenuFrameHeader(frame), UISettingsListener, ToolbarHolder {
   private val myMenuBar = ideMenu
   private val myMenuButton = createMenuButton()
@@ -50,8 +52,8 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
 
     updateLayout(UISettings.instance)
 
-    productIcon.border = JBUI.Borders.empty(V, H)
-    add(productIcon, gb.nextLine().next().anchor(WEST))
+    productIcon.border = JBUI.Borders.empty(V, 0, V, 0)
+    add(productIcon, gb.nextLine().next().anchor(WEST).insetLeft(APP_ICON_LEFT_INSET))
     add(myHeaderContent, gb.next().fillCell().anchor(CENTER).weightx(1.0).weighty(1.0))
     add(buttonPanes.getView(), gb.next().anchor(EAST))
 
@@ -118,17 +120,17 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
 
   fun createHeaderContent(): JPanel {
     val res = NonOpaquePanel(CardLayout())
-    res.border = JBUI.Borders.emptyLeft(15)
+    res.border = JBUI.Borders.empty()
 
     val menuPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
-      add(myMenuBar, gb.next())
+      add(myMenuBar, gb.next().insetLeft(JBUI.scale(20)))
       add(Box.createHorizontalGlue(), gb.next().weightx(1.0).fillCell())
     }
     val toolbarPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
-      add(myMenuButton, gb.next().insetRight(25))
-      add(myToolbarPlaceholder, gb.next().weightx(1.0).fillCellHorizontally())
+      add(myMenuButton, gb.next().insetLeft(JBUI.scale(20)))
+      add(myToolbarPlaceholder, gb.next().weightx(1.0).fillCellHorizontally().insetLeft(JBUI.scale(16)))
     }
 
     res.add(ShowMode.MENU.name, menuPnl)
