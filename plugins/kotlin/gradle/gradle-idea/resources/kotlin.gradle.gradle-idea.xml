@@ -41,6 +41,9 @@
                  defaultValue="false"
                  restartRequired="false"/>
 
+    <applicationService
+            serviceImplementation="org.jetbrains.kotlin.idea.gradle.configuration.state.DontShowAgainKotlinAdditionPluginSuggestionService"/>
+
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.gradle.scripting.settings.StandaloneScriptsStorage"/>
 
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger"/>
