@@ -16,19 +16,15 @@ abstract class AbstractNewProjectWizardMultiStep<S : NewProjectWizardStep, F : N
       object : ExtensionPointListener<F> {
         override fun extensionAdded(extension: F, pluginDescriptor: PluginDescriptor) {
           steps = initSteps()
-          selectLanguage(pluginDescriptor)
-        }
-
-        override fun extensionRemoved(extension: F, pluginDescriptor: PluginDescriptor) {
-          steps = initSteps()
-          selectLanguage(pluginDescriptor)
-        }
-
-        private fun selectLanguage(pluginDescriptor: PluginDescriptor) {
           val language = NewProjectWizardLanguageStep.allLanguages.reverse()[pluginDescriptor.pluginId.idString]
           if (language != null) {
             step = language
           }
+        }
+
+        override fun extensionRemoved(extension: F, pluginDescriptor: PluginDescriptor) {
+          steps = initSteps()
+          step = step.ifBlank { steps.keys.first() }
         }
       }, context.disposable
     )
