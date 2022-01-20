@@ -23,6 +23,7 @@ internal class ValidationException(val error: ValidationError, vararg val args: 
   }
 }
 
+@ApiStatus.Internal
 fun catchValidationException(block: () -> Unit) {
   try {
     block.invoke()

@@ -27,15 +27,23 @@ class GridLayout : LayoutManager2 {
   private val _rootGrid = GridImpl()
 
   override fun addLayoutComponent(comp: Component?, constraints: Any?) {
-    val jbConstraints = checkConstraints(constraints)
+    val checkedConstraints = checkConstraints(constraints)
+    val checkedComponent = checkComponent(comp)
 
-    (jbConstraints.grid as GridImpl).register(checkComponent(comp), jbConstraints)
+    (checkedConstraints.grid as GridImpl).register(checkedComponent, checkedConstraints)
   }
 
   /**
    * Creates sub grid in the specified cell
    */
   fun addLayoutSubGrid(constraints: Constraints): Grid {
+    if (constraints.horizontalSizeGroup != null) {
+      throw UiDslException("Sub-grids cannot use horizontalSizeGroup: ${constraints.horizontalSizeGroup}")
+    }
+    if (constraints.verticalSizeGroup != null) {
+      throw UiDslException("Sub-grids cannot use verticalSizeGroup: ${constraints.verticalSizeGroup}")
+    }
+
     return (constraints.grid as GridImpl).registerSubGrid(constraints)
   }
 
@@ -93,6 +101,7 @@ class GridLayout : LayoutManager2 {
     return _rootGrid.getConstraints(component)
   }
 
+  @ApiStatus.Internal
   internal fun getPreferredSizeData(parent: Container): PreferredSizeData {
     return _rootGrid.getPreferredSizeData(parent.insets)
   }

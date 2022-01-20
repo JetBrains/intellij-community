@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui.gridLayoutTestAction
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -46,6 +46,7 @@ class GridLayoutTestAction : DumbAwareAction("Show GridLayout Test") {
         result.addTab("Col/row gaps", createColRowGapsPanel())
         result.addTab("VisualPaddings", createVisualPaddingsPanel())
         result.addTab("Baseline", createBaselinePanel())
+        result.addTab("SizeGroup", SizeGroupPanel().panel)
 
         return result
       }
@@ -369,23 +370,6 @@ class GridLayoutTestAction : DumbAwareAction("Show GridLayout Test") {
     return result
   }
 
-  fun gridToHtmlString(grid: Grid): String {
-    val result = mutableListOf<String>()
-    if (grid.resizableColumns.isNotEmpty()) {
-      result.add("resizableColumns = ${grid.resizableColumns.joinToString()}")
-    }
-    if (grid.resizableRows.isNotEmpty()) {
-      result.add("resizableRows = ${grid.resizableRows.joinToString()}")
-    }
-    if (grid.columnsGaps.isNotEmpty()) {
-      result.add("<br>columnsGaps = ${grid.columnsGaps.joinToString()}")
-    }
-    if (grid.rowsGaps.isNotEmpty()) {
-      result.add("<br>rowsGaps = ${grid.rowsGaps.joinToString()}")
-    }
-    return result.joinToString()
-  }
-
   fun label(x: Int, y: Int, longLabel: Boolean = false): JLabel {
     val text = if (longLabel) "Very very very very very long label" else "Label"
     return JLabel("$text [x = $x, y = $y]")
@@ -395,92 +379,109 @@ class GridLayoutTestAction : DumbAwareAction("Show GridLayout Test") {
     val label = label(constraints, longLabel)
     add(label, constraints)
   }
+}
 
-  fun createTabPanel(title: String, content: JComponent): JPanel {
-    val layoutManager = GridLayout()
-    val rootGrid = layoutManager.rootGrid
-    val result = JPanel(layoutManager)
-    rootGrid.resizableColumns.add(0)
-    rootGrid.resizableRows.add(1)
-    val label = JLabel("<html>$title<br>${gridToHtmlString((content.layout as GridLayout).rootGrid)}")
-    label.background = Color.LIGHT_GRAY
-    label.isOpaque = true
-    result.add(label, Constraints(rootGrid, 0, 0, width = 2, horizontalAlign = HorizontalAlign.FILL))
-    result.add(
-      content, Constraints(
-      rootGrid, 0, 1, verticalAlign = VerticalAlign.FILL,
-      horizontalAlign = HorizontalAlign.FILL
-    )
-    )
-
-    val controlGrid = layoutManager.addLayoutSubGrid(
-      Constraints(
-        rootGrid,
-        1,
-        1,
-        verticalAlign = VerticalAlign.FILL
-      )
-    )
-    createControls(result, content, controlGrid)
-
-    return result
+private fun gridToHtmlString(grid: Grid): String {
+  val result = mutableListOf<String>()
+  if (grid.resizableColumns.isNotEmpty()) {
+    result.add("resizableColumns = ${grid.resizableColumns.joinToString()}")
   }
+  if (grid.resizableRows.isNotEmpty()) {
+    result.add("resizableRows = ${grid.resizableRows.joinToString()}")
+  }
+  if (grid.columnsGaps.isNotEmpty()) {
+    result.add("<br>columnsGaps = ${grid.columnsGaps.joinToString()}")
+  }
+  if (grid.rowsGaps.isNotEmpty()) {
+    result.add("<br>rowsGaps = ${grid.rowsGaps.joinToString()}")
+  }
+  return result.joinToString()
+}
 
-  fun createControls(container: JComponent, content: JComponent, grid: Grid) {
-    val cbHighlight = JCheckBox("Highlight components")
-    cbHighlight.addActionListener {
-      for (component in content.components) {
-        if (component is JLabel) {
-          component.background = if (cbHighlight.isSelected) Color(Random.nextInt()) else null
-          component.isOpaque = cbHighlight.isSelected
-        }
-      }
-    }
-    cbHighlight.doClick()
+fun createTabPanel(title: String, content: JComponent): JPanel {
+  val layoutManager = GridLayout()
+  val rootGrid = layoutManager.rootGrid
+  val result = JPanel(layoutManager)
+  rootGrid.resizableColumns.add(0)
+  rootGrid.resizableRows.add(1)
+  val label = JLabel("<html>$title<br>${gridToHtmlString((content.layout as GridLayout).rootGrid)}")
+  label.background = Color.LIGHT_GRAY
+  label.isOpaque = true
+  result.add(label, Constraints(rootGrid, 0, 0, width = 2, horizontalAlign = HorizontalAlign.FILL))
+  result.add(
+    content, Constraints(
+    rootGrid, 0, 1, verticalAlign = VerticalAlign.FILL,
+    horizontalAlign = HorizontalAlign.FILL
+  )
+  )
 
-    val list = JBList(content.components.filterIsInstance<JLabel>())
-    val btnHide = JButton("Hide")
-    val btnShow = JButton("Show")
-    list.cellRenderer = object : DefaultListCellRenderer() {
-      override fun getListCellRendererComponent(
-        list: JList<*>?,
-        value: Any?,
-        index: Int,
-        isSelected: Boolean,
-        cellHasFocus: Boolean
-      ): Component {
-        val label = value as JLabel
-        val result = super.getListCellRendererComponent(
-          list,
-          label.text,
-          index,
-          isSelected,
-          cellHasFocus
-        ) as DefaultListCellRenderer
-        result.foreground = if (label.isVisible) Color.BLACK else Color.LIGHT_GRAY
-
-        return result
-      }
-    }
-    btnHide.addActionListener {
-      list.selectedValuesList.forEach { it.isVisible = false }
-      list.updateUI()
-    }
-    btnShow.addActionListener {
-      list.selectedValuesList.forEach { it.isVisible = true }
-      list.updateUI()
-    }
-
-    grid.resizableColumns.addAll(0..1)
-    grid.resizableRows.add(0)
-    container.add(
-      JScrollPane(list), Constraints(
-      grid, 0, 0, width = 2, horizontalAlign = HorizontalAlign.FILL,
+  val controlGrid = layoutManager.addLayoutSubGrid(
+    Constraints(
+      rootGrid,
+      1,
+      1,
       verticalAlign = VerticalAlign.FILL
     )
-    )
-    container.add(btnHide, Constraints(grid, 0, 1, horizontalAlign = HorizontalAlign.CENTER))
-    container.add(btnShow, Constraints(grid, 1, 1, horizontalAlign = HorizontalAlign.CENTER))
-    container.add(cbHighlight, Constraints(grid, 0, 2, width = 2))
+  )
+  createControls(result, content, controlGrid)
+
+  return result
+}
+
+private fun createControls(container: JComponent, content: JComponent, grid: Grid) {
+  val cbHighlight = JCheckBox("Highlight components")
+  cbHighlight.addActionListener {
+    for (component in content.components) {
+      if (component is JLabel) {
+        component.background = if (cbHighlight.isSelected) Color(Random.nextInt()) else null
+        component.isOpaque = cbHighlight.isSelected
+      }
+    }
   }
+  cbHighlight.doClick()
+
+  val list = JBList(content.components.filterIsInstance<JLabel>())
+  val btnHide = JButton("Hide")
+  val btnShow = JButton("Show")
+  list.cellRenderer = object : DefaultListCellRenderer() {
+    override fun getListCellRendererComponent(
+      list: JList<*>?,
+      value: Any?,
+      index: Int,
+      isSelected: Boolean,
+      cellHasFocus: Boolean
+    ): Component {
+      val label = value as JLabel
+      val result = super.getListCellRendererComponent(
+        list,
+        label.text,
+        index,
+        isSelected,
+        cellHasFocus
+      ) as DefaultListCellRenderer
+      result.foreground = if (label.isVisible) Color.BLACK else Color.LIGHT_GRAY
+
+      return result
+    }
+  }
+  btnHide.addActionListener {
+    list.selectedValuesList.forEach { it.isVisible = false }
+    list.updateUI()
+  }
+  btnShow.addActionListener {
+    list.selectedValuesList.forEach { it.isVisible = true }
+    list.updateUI()
+  }
+
+  grid.resizableColumns.addAll(0..1)
+  grid.resizableRows.add(0)
+  container.add(
+    JScrollPane(list), Constraints(
+    grid, 0, 0, width = 2, horizontalAlign = HorizontalAlign.FILL,
+    verticalAlign = VerticalAlign.FILL
+  )
+  )
+  container.add(btnHide, Constraints(grid, 0, 1, horizontalAlign = HorizontalAlign.CENTER))
+  container.add(btnShow, Constraints(grid, 1, 1, horizontalAlign = HorizontalAlign.CENTER))
+  container.add(cbHighlight, Constraints(grid, 0, 2, width = 2))
 }

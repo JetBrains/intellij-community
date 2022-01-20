@@ -15,18 +15,21 @@ fun checkTrue(value: Boolean) {
   }
 }
 
+@ApiStatus.Internal
 fun checkNonNegative(name: String, value: Int) {
   if (value < 0) {
     throw UiDslException("Value cannot be negative: $name = $value")
   }
 }
 
+@ApiStatus.Internal
 fun checkPositive(name: String, value: Int) {
   if (value <= 0) {
     throw UiDslException("Value must be positive: $name = $value")
   }
 }
 
+@ApiStatus.Internal
 fun checkComponent(component: Component?): JComponent {
   if (component !is JComponent) {
     throw UiDslException("Only JComponents are supported: $component")
@@ -35,6 +38,7 @@ fun checkComponent(component: Component?): JComponent {
   return component
 }
 
+@ApiStatus.Internal
 fun checkConstraints(constraints: Any?): Constraints {
   if (constraints !is Constraints) {
     throw UiDslException("Invalid constraints: $constraints")

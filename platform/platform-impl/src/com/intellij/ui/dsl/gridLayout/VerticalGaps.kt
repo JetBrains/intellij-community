@@ -5,6 +5,7 @@ import com.intellij.ui.dsl.checkNonNegative
 
 data class VerticalGaps(val top: Int = 0, val bottom: Int = 0) {
   companion object {
+    @JvmField
     val EMPTY = VerticalGaps()
   }
 
