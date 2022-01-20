@@ -191,6 +191,8 @@
                  key="feature.suggester.enabled"/>
     <registryKey defaultValue="true" description="Send statistics about IDE Feature Suggester plugin usage"
                  key="feature.suggester.send.statistics"/>
+    <registryKey defaultValue="false" description="Show suggestion even if corresponding action has been used recently"
+                 key="feature.suggester.force.show.suggestions"/>
     <notificationGroup id="IDE Feature Suggester" displayType="STICKY_BALLOON" isLogByDefault="false"/>
   </extensions>
 

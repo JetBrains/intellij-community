@@ -51,7 +51,7 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
     val suggestion = suggester.getSuggestion(action)
     if (suggestion is PopupSuggestion) {
       FeatureSuggesterStatistics.logSuggestionFound(suggester.id)
-      if (suggester.isSuggestionNeeded()) {
+      if (forceShowSuggestions || suggester.isSuggestionNeeded()) {
         suggestionPresenter.showSuggestion(project, suggestion)
         fireSuggestionFound(suggestion)
       }

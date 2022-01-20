@@ -38,6 +38,10 @@ internal fun Editor.getSelection(): TextFragment? {
   }
 }
 
+internal var forceShowSuggestions: Boolean
+  get() = Registry.`is`("feature.suggester.force.show.suggestions")
+  set(value) = Registry.get("feature.suggester.force.show.suggestions").setValue(value)
+
 internal val isActionsProcessingEnabled: Boolean
   get() = Registry.`is`("feature.suggester.enabled")
 
