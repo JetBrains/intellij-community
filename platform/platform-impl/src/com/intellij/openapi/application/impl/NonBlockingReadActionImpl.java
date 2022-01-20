@@ -439,14 +439,15 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
         }
 
         ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(myProgressIndicator);
-        if (shouldFinishOnEdt()) {
+        ContextConstraint[] constraints = builder.myConstraints;
+        if (shouldFinishOnEdt() || constraints.length != 0) {
           Semaphore semaphore = new Semaphore(1);
           invokeLater(() -> {
             if (checkObsolete()) {
               semaphore.up();
             }
             else {
-              BaseConstrainedExecution.scheduleWithinConstraints(semaphore::up, null, builder.myConstraints);
+              BaseConstrainedExecution.scheduleWithinConstraints(semaphore::up, null, constraints);
             }
           });
           ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, myProgressIndicator);
