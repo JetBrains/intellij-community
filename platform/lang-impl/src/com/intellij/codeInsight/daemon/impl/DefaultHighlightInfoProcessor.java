@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -117,8 +118,11 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
             if (existing.equalsByActualOffset(created)) return true;
           }
         }
-        // seems that highlight info 'existing' is going to disappear; remove it earlier
-        ((HighlightingSessionImpl)highlightingSession).queueDisposeHighlighterFor(existing);
+        RangeHighlighterEx highlighter = existing.highlighter;
+        if (highlighter != null && UpdateHighlightersUtil.shouldRemoveHighlighter(highlightingSession.getPsiFile(), highlighter)) {
+          // seems that highlight info 'existing' is going to disappear; remove it earlier
+          ((HighlightingSessionImpl)highlightingSession).queueDisposeHighlighter(existing);
+        }
       }
       return true;
     });
