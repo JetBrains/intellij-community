@@ -133,12 +133,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
       }
     });
     if (model.isOperationsEnabled()) {
-      new DumbAwareAction(DiffBundle.messagePointer("action.Anonymous.text.change.diff.operation")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          changeOperationForSelection();
-        }
-      }.registerCustomShortcutSet(CustomShortcutSet.fromString("SPACE"), myTable);
+      DumbAwareAction.create(e -> changeOperationForSelection())
+        .registerCustomShortcutSet(new CustomShortcutSet(KeyEvent.VK_SPACE), myTable);
       new ClickListener() {
         @Override
         public boolean onClick(@NotNull MouseEvent e, int clickCount) {
@@ -207,11 +203,11 @@ public class DirDiffPanel implements Disposable, DataProvider {
     sourcePanel.setBorder(JBUI.Borders.empty(0, 8));
     targetPanel.setBorder(JBUI.Borders.empty(0, 8));
 
-    GridBag gb = new GridBag();
+    GridBag gb = new GridBag().setDefaultFill(GridBagConstraints.HORIZONTAL).setDefaultWeightX(1);
     JPanel headerPanel = new JPanel(new GridBagLayout());
     headerPanel.add(myToolbarPanel, gb.nextLine().next().coverLine());
-    headerPanel.add(sourcePanel, gb.next().fillCellHorizontally().weightx(1));
-    headerPanel.add(targetPanel, gb.next().fillCellHorizontally().weightx(1));
+    headerPanel.add(sourcePanel, gb.nextLine().next());
+    headerPanel.add(targetPanel, gb.next());
 
     Splitter tableSplitter = new OnePixelSplitter(true, SPLITTER_PROPORTION_KEY, 0.4f);
     tableSplitter.setFirstComponent(JBUI.Panels.simplePanel(filesPanel)
