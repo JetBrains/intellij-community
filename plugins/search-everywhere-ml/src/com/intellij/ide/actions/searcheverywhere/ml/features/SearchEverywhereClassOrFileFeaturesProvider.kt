@@ -20,8 +20,8 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.textMatching.PrefixMatchingUtil
 import com.intellij.util.Time
 
-abstract class SearchEverywhereClassOrFileFeaturesProvider(supportedTab: Class<out SearchEverywhereContributor<*>>)
-  : SearchEverywhereElementFeaturesProvider(supportedTab) {
+abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: Class<out SearchEverywhereContributor<*>>)
+  : SearchEverywhereElementFeaturesProvider(*supportedTab) {
   companion object {
     internal const val IS_SAME_MODULE_DATA_KEY = "isSameModule"
     internal const val PACKAGE_DISTANCE_DATA_KEY = "packageDistance"

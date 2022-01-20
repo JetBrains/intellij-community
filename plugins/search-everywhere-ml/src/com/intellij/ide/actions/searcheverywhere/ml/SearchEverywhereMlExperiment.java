@@ -1,26 +1,37 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml;
 
+import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
 import com.intellij.ide.actions.searcheverywhere.ml.settings.SearchEverywhereMlSettings;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public class SearchEverywhereMlExperiment {
   private static final int NUMBER_OF_GROUPS = 4;
 
   private final boolean myIsExperimentalMode;
+  private final Set<String> myTabsWithEnabledLogging;
   private final Map<SearchEverywhereTabWithMl, Experiment> myTabExperiments;
 
   public SearchEverywhereMlExperiment() {
     myIsExperimentalMode = StatisticsUploadAssistant.isSendAllowed() && ApplicationManager.getApplication().isEAP();
     myTabExperiments = createExperiments();
+    myTabsWithEnabledLogging = ContainerUtil.newHashSet(
+      SearchEverywhereTabWithMl.ACTION.getTabId(),
+      SearchEverywhereTabWithMl.FILES.getTabId(),
+      ClassSearchEverywhereContributor.class.getSimpleName(),
+      SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
+    );
   }
 
   private static HashMap<SearchEverywhereTabWithMl, Experiment> createExperiments() {
@@ -38,6 +49,10 @@ public class SearchEverywhereMlExperiment {
   public boolean isAllowed() {
     final SearchEverywhereMlSettings settings = ApplicationManager.getApplication().getService(SearchEverywhereMlSettings.class);
     return settings.isSortingByMlEnabledInAnyTab() || !isDisableLoggingAndExperiments();
+  }
+
+  public boolean isLoggingEnabledForTab(@NotNull String tabId) {
+    return myTabsWithEnabledLogging.contains(tabId);
   }
 
   @NotNull

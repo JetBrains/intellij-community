@@ -28,12 +28,13 @@ internal class SearchEverywhereMlSearchState(
                          priority: Int): SearchEverywhereMLItemInfo {
     return cachedElementsInfo.computeIfAbsent(elementId) {
       val features = mutableMapOf<String, Any>()
-      SearchEverywhereElementFeaturesProvider.getFeatureProvidersForTab(tabId).forEach { provider ->
+      val contributorId = contributor.searchProviderId
+      SearchEverywhereElementFeaturesProvider.getFeatureProvidersForContributor(contributorId).forEach { provider ->
         val cache = providersCaches[provider::class.java]
         features.putAll(provider.getElementFeatures(element, sessionStartTime, searchQuery, priority, cache))
       }
 
-      return@computeIfAbsent SearchEverywhereMLItemInfo(elementId, contributor.searchProviderId, features)
+      return@computeIfAbsent SearchEverywhereMLItemInfo(elementId, contributorId, features)
     }
   }
 

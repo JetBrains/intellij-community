@@ -35,7 +35,6 @@ class OpenFeaturesInScratchFileAction : AnAction() {
     return e.project != null
            && seManager.isShown
            && session != null
-           && session.isMLSupportedTab(seManager.selectedTabID)
            && session.getCurrentSearchState() != null
   }
 
