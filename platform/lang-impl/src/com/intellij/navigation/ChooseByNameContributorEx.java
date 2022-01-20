@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public interface ChooseByNameContributorEx extends ChooseByNameContributor {
 
@@ -22,6 +23,14 @@ public interface ChooseByNameContributorEx extends ChooseByNameContributor {
   void processElementsWithName(@NotNull String name,
                                @NotNull Processor<? super NavigationItem> processor,
                                @NotNull FindSymbolParameters parameters);
+
+  default void processElementsWithNames(@NotNull Set<String> names,
+                                        @NotNull Processor<? super NavigationItem> processor,
+                                        @NotNull FindSymbolParameters parameters) {
+    for (String name : names) {
+      processElementsWithName(name, processor, parameters);
+    }
+  }
 
   /** @deprecated Use {@link #processNames(Processor, GlobalSearchScope, IdFilter)} instead */
   @Deprecated

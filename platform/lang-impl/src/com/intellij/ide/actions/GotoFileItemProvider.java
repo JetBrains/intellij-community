@@ -231,34 +231,33 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   private JBIterable<FoundItemDescriptor<PsiFileSystemItem>> getFilesMatchingPath(@NotNull FindSymbolParameters parameters,
                                                                                   @NotNull List<MatchResult> fileNames,
                                                                                   @NotNull DirectoryPathMatcher dirMatcher,
-                                                                                  @NotNull ProgressIndicator indicator) {
+                                                                                  Object @NotNull [] indexResult) {
     GlobalSearchScope scope = dirMatcher.narrowDown(parameters.getSearchScope());
-    FindSymbolParameters adjusted = parameters.withScope(scope);
 
     List<List<MatchResult>> sortedNames = sortAndGroup(fileNames, Comparator.comparing(mr -> StringUtil.toLowerCase(FileUtilRt.getNameWithoutExtension(mr.elementName))));
-    return JBIterable.from(sortedNames).flatMap(nameGroup -> getItemsForNames(indicator, adjusted, nameGroup));
+    return JBIterable.from(sortedNames).flatMap(nameGroup -> getItemsForNames(scope, nameGroup, indexResult));
   }
 
   @NotNull
-  private Iterable<FoundItemDescriptor<PsiFileSystemItem>> getItemsForNames(@NotNull ProgressIndicator indicator,
-                                                                            @NotNull FindSymbolParameters parameters,
-                                                                            @NotNull List<? extends MatchResult> matchResults) {
+  private Iterable<FoundItemDescriptor<PsiFileSystemItem>> getItemsForNames(@NotNull GlobalSearchScope scope,
+                                                                            @NotNull List<? extends MatchResult> matchResults,
+                                                                            Object @NotNull [] indexResult) {
     List<PsiFileSystemItem> group = new ArrayList<>();
     Map<PsiFileSystemItem, Integer> nesting = new HashMap<>();
     Map<PsiFileSystemItem, Integer> matchDegrees = new HashMap<>();
-    for (MatchResult matchResult : matchResults) {
+    for (Object o : indexResult) {
       ProgressManager.checkCanceled();
-      for (Object o : myModel.getElementsByName(matchResult.elementName, parameters, indicator)) {
-        ProgressManager.checkCanceled();
-        if (o instanceof PsiFileSystemItem) {
-          PsiFileSystemItem psiItem = (PsiFileSystemItem)o;
-          String qualifier = getParentPath(psiItem);
-          if (qualifier != null) {
-            group.add(psiItem);
-            nesting.put(psiItem, StringUtil.countChars(qualifier, '/'));
-            matchDegrees.put(psiItem, matchResult.matchingDegree);
-          }
-        }
+      if (!(o instanceof PsiFileSystemItem)) continue;
+      PsiFileSystemItem psiItem = (PsiFileSystemItem)o;
+      String name = psiItem.getName();
+      MatchResult matchResult = ContainerUtil.find(matchResults, mr -> mr.elementName.equals(name));
+      if (matchResult == null) continue;
+      if (!scope.contains(psiItem.getVirtualFile())) continue;
+      String qualifier = getParentPath(psiItem);
+      if (qualifier != null) {
+        group.add(psiItem);
+        nesting.put(psiItem, StringUtil.countChars(qualifier, '/'));
+        matchDegrees.put(psiItem, matchResult.matchingDegree);
       }
     }
 
@@ -387,7 +386,6 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
                          @NotNull Processor<? super FoundItemDescriptor<?>> processor,
                          @NotNull Ref<Boolean> hasSuggestions,
                          @NotNull DirectoryPathMatcher dirMatcher) {
-      MinusculeMatcher qualifierMatcher = getQualifiedNameMatcher(parameters.getLocalPatternName());
 
       List<MatchResult> matchingNames = this.matchingNames;
       if (patternSuffix.length() <= 3 && !dirMatcher.dirPattern.isEmpty()) {
@@ -398,10 +396,12 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
           matchingNames = ContainerUtil.filter(matchingNames, mr -> existingNames.contains(mr.elementName));
         }
       }
-
+      MinusculeMatcher qualifierMatcher = getQualifiedNameMatcher(parameters.getLocalPatternName());
+      Object[] indexResult = myModel.getElementsByNames(ContainerUtil.map2Set(matchingNames, o -> o.elementName), parameters, indicator);
       List<List<MatchResult>> groups = groupByMatchingDegree(matchingNames);
       for (List<MatchResult> group : groups) {
-        JBIterable<FoundItemDescriptor<PsiFileSystemItem>> filesMatchingPath = getFilesMatchingPath(parameters, group, dirMatcher, indicator);
+        JBIterable<FoundItemDescriptor<PsiFileSystemItem>> filesMatchingPath = getFilesMatchingPath(
+          parameters, group, dirMatcher, indexResult);
         Iterable<FoundItemDescriptor<PsiFileSystemItem>> matchedFiles =
           parameters.getLocalPatternName().isEmpty()
           ? filesMatchingPath
@@ -421,15 +421,24 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       // instead of worse-matching ones in project (that are very expensive to calculate)
       return hasSuggestions.get() ||
              parameters.isSearchInLibraries() ||
-             !hasSuggestionsOutsideProject(parameters.getCompletePattern(), groups, dirMatcher);
+             !hasSuggestionsOutsideProject(parameters.getCompletePattern(), matchingNames, dirMatcher);
     }
 
     private boolean hasSuggestionsOutsideProject(@NotNull String pattern,
-                                                 @NotNull List<? extends List<MatchResult>> groups,
+                                                 @NotNull List<MatchResult> group,
                                                  @NotNull DirectoryPathMatcher dirMatcher) {
-      return ContainerUtil.exists(groups, group ->
-        !getFilesMatchingPath(FindSymbolParameters.wrap(pattern, myProject, true),
-                              group, dirMatcher, indicator).isEmpty());
+      FindSymbolParameters parameters = FindSymbolParameters.wrap(pattern, myProject, true);
+      GlobalSearchScope scope = dirMatcher.narrowDown(parameters.getSearchScope());
+      FindSymbolParameters adjusted = parameters.withScope(scope);
+      for (Object o : myModel.getElementsByNames(ContainerUtil.map2Set(group, o -> o.elementName), adjusted, indicator)) {
+        ProgressManager.checkCanceled();
+        if (o instanceof PsiFileSystemItem) {
+          PsiFileSystemItem psiItem = (PsiFileSystemItem)o;
+          String qualifier = getParentPath(psiItem);
+          if (qualifier != null) return true;
+        }
+      }
+      return false;
     }
 
     private @NotNull List<List<MatchResult>> groupByMatchingDegree(@NotNull List<MatchResult> matchingNames) {

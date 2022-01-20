@@ -22,49 +22,58 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 public class DefaultFileNavigationContributor implements ChooseByNameContributorEx, DumbAware {
   private static final Logger LOG = Logger.getInstance(DefaultFileNavigationContributor.class);
 
   @Override
   public void processNames(@NotNull final Processor<? super String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
-    long started = System.currentTimeMillis();
+    long start = System.nanoTime();
     FilenameIndex.processAllFileNames(processor, scope, filter);
     if (LOG.isDebugEnabled()) {
-      LOG.debug("All names retrieved:" + (System.currentTimeMillis() - started));
+      LOG.debug("All names retrieved:" + TimeoutUtil.getDurationMillis(start));
     }
   }
 
   @Override
   public void processElementsWithName(@NotNull String name,
-                                      @NotNull final Processor<? super NavigationItem> _processor,
+                                      @NotNull Processor<? super NavigationItem> processor,
                                       @NotNull FindSymbolParameters parameters) {
-    final boolean globalSearch = parameters.getSearchScope().isSearchInLibraries();
-    final Processor<PsiFileSystemItem> processor = item -> {
-      if (!globalSearch && ProjectUtil.isProjectOrWorkspaceFile(item.getVirtualFile())) {
-        return true;
-      }
-      return _processor.process(item);
-    };
+    processElementsWithNames(Set.of(name), processor, parameters);
+  }
 
+  @Override
+  public void processElementsWithNames(@NotNull Set<String> name,
+                                       @NotNull Processor<? super NavigationItem> processor,
+                                       @NotNull FindSymbolParameters parameters) {
+    boolean globalSearch = parameters.getSearchScope().isSearchInLibraries();
     boolean directoriesOnly = isDirectoryOnlyPattern(parameters);
-    if (!directoriesOnly) {
-      FilenameIndex.processFilesByName(
-        name, false, processor, parameters.getSearchScope(), parameters.getProject(), parameters.getIdFilter()
-      );
-    }
+    boolean withFiles = !directoriesOnly;
+    boolean withDirs = directoriesOnly || Registry.is("ide.goto.file.include.directories");
+    PsiManager psiManager = PsiManager.getInstance(parameters.getProject());
+    FilenameIndex.processFilesByNames(
+      name, false, parameters.getSearchScope(), parameters.getIdFilter(), file -> {
+        if (!file.isValid()) return true;
+        boolean isDir = file.isDirectory();
+        if (!withFiles && !isDir || !withDirs && isDir) return true;
 
-    if (directoriesOnly || Registry.is("ide.goto.file.include.directories")) {
-      FilenameIndex.processFilesByName(
-        name, true, processor, parameters.getSearchScope(), parameters.getProject(), parameters.getIdFilter()
-      );
-    }
+        if (!globalSearch && ProjectUtil.isProjectOrWorkspaceFile(file)) {
+          return true;
+        }
+        PsiFileSystemItem psi = isDir ? psiManager.findDirectory(file) : psiManager.findFile(file);
+        if (psi == null) return true;
+        return processor.process(psi);
+      });
   }
 
   private static boolean isDirectoryOnlyPattern(@NotNull FindSymbolParameters parameters) {
