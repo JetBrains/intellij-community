@@ -12,7 +12,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DocumentAdapter;
@@ -231,7 +230,7 @@ public class ComponentValidator {
     if (info == null && validationInfo != null) return true;
     else if (info != null && validationInfo != null) {
       if (info.warning != validationInfo.warning) return true;
-      if (tipComponent != null && Strings.isNotEmpty(info.message) && !Objects.equals(info.message, validationInfo.message)) {
+      if (tipComponent != null && !Objects.equals(info.message, validationInfo.message)) {
         String message = HtmlChunk.div().attr("width", MAX_WIDTH.get()).addRaw(trimMessage(info.message, tipComponent)).
                            wrapWith(HtmlChunk.html()).toString();
         View v = BasicHTML.createHTMLView(tipComponent, message);

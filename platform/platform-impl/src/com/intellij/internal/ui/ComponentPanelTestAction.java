@@ -236,8 +236,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         }).withValidator(() -> {
           String tt = text2.getText();
           return StringUtil.isEmpty(tt) || tt.length() < 5 ?
-            new ValidationInfo("Message is too short.<br/>Should contain at least 5 symbols. 8 is preferred <a href=\"#check.rules\">check rules.</a>", text2) :
-                 tt.length() < 8 ? new ValidationInfo("Message of 8 symbols is preferred", text2).asWarning() : null;
+            new ValidationInfo("'" + tt + "': message is too short.<br/>Should contain at least 5 symbols. 8 is preferred <a href=\"#check.rules\">check rules.</a>", text2) :
+                 tt.length() < 8 ? new ValidationInfo("'" + tt + "': message of 8 symbols is preferred", text2).asWarning() : null;
         }).andStartOnFocusLost().andRegisterOnDocumentListener(text2).installOn(text2);
 
       gc.gridy++;
