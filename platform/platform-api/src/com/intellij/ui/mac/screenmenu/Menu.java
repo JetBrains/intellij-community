@@ -164,6 +164,10 @@ public class Menu extends MenuItem {
     // So we can destroy menu-item before item's action performed, and because of that action will not be executed.
     // Defer clearing to avoid this problem.
     disposeChildren(1000);
+    synchronized (this) {
+      // clean native NSMenu item
+      if (nativePeer != 0) nativeRefill(nativePeer, null, true);
+    }
     if (myOnClose != null) invokeWithLWCToolkit(myOnClose, null, myComponent);
   }
 
