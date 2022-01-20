@@ -29,6 +29,7 @@ public class JpsBootstrapMain {
 
   private static final String ARG_HELP = "help";
   private static final String ARG_VERBOSE = "verbose";
+  private static final String ARG_SYSTEM_PROPERTY = "system-prop";
   private static final String ARG_JAVA_ARGFILE_TARGET = "java-argfile-target";
   private static final String ARG_BUILD_TARGET_XMX = "build-target-xmx";
 
@@ -37,6 +38,7 @@ public class JpsBootstrapMain {
 
     opts.addOption(Option.builder("h").longOpt("help").argName(ARG_HELP).build());
     opts.addOption(Option.builder("v").longOpt("verbose").desc("Show more logging from jps-bootstrap and the building process").argName(ARG_VERBOSE).build());
+    opts.addOption(Option.builder("D").hasArgs().valueSeparator('=').desc("Pass system property to the build script").argName(ARG_SYSTEM_PROPERTY).build());
     opts.addOption(Option.builder().longOpt("build-target-xmx").hasArg().desc("Specify Xmx to run build script. default: 4g").argName(ARG_BUILD_TARGET_XMX).build());
     opts.addOption(Option.builder().longOpt("java-argfile-target").required().hasArg().desc("Write java argfile to this file").argName(ARG_JAVA_ARGFILE_TARGET).build());
 
@@ -63,6 +65,7 @@ public class JpsBootstrapMain {
   private final Path ideaHomePath;
   private final Path javaArgsFileTarget;
   private final List<String> mainArgsToRun;
+  private final Properties additionalSystemProperties;
 
   public JpsBootstrapMain(String[] args) throws IOException {
     CommandLine cmdline;
@@ -87,6 +90,8 @@ public class JpsBootstrapMain {
       fatal("Class name must end with 'BuildTarget': " + classNameToRun +
         "\nThis is just a convention helping to find build targets in the monorepo");
     }
+
+    additionalSystemProperties = cmdline.getOptionProperties("D");
 
     String verboseEnv = System.getenv(JPS_BOOTSTRAP_VERBOSE);
     JpsBootstrapUtil.setVerboseEnabled(cmdline.hasOption(ARG_VERBOSE) || (verboseEnv != null && toBooleanChecked(verboseEnv)));
@@ -152,6 +157,7 @@ public class JpsBootstrapMain {
     args.add("-Djava.system.class.loader=org.jetbrains.intellij.build.impl.BuildScriptsSystemClassLoader");
 
     args.addAll(systemPropertiesArgsFromTeamCityBuild());
+    args.addAll(convertPropertiesToCommandLineArgs(additionalSystemProperties));
 
     args.add("-classpath");
     args.add(StringUtil.join(moduleRuntimeClasspath, File.pathSeparator));
@@ -223,11 +229,13 @@ public class JpsBootstrapMain {
 
   private static List<String> systemPropertiesArgsFromTeamCityBuild() throws IOException {
     if (!underTeamCity) return Collections.emptyList();
+    return convertPropertiesToCommandLineArgs(getTeamCitySystemProperties());
+  }
 
+  private static List<String> convertPropertiesToCommandLineArgs(Properties properties) {
     List<String> result = new ArrayList<>();
-    final Properties systemProperties = getTeamCitySystemProperties();
-    for (String propertyName : systemProperties.stringPropertyNames()) {
-      String value = systemProperties.getProperty(propertyName);
+    for (String propertyName : properties.stringPropertyNames()) {
+      String value = properties.getProperty(propertyName);
 
       result.add("-D" + propertyName + "=" + value);
     }
