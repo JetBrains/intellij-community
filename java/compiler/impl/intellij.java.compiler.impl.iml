@@ -42,7 +42,8 @@
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="module" module-name="intellij.platform.tracing.rt" />
     <orderEntry type="library" name="winp" level="project" />
-    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="library" name="jackson-databind" level="project" />
   </component>
   <component name="copyright">
     <Base>

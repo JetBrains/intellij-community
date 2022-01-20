@@ -22,7 +22,6 @@ import org.jetbrains.jps.TimingLog;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
-import org.jetbrains.jps.cache.client.JpsServerConnectionUtil;
 import org.jetbrains.jps.cache.loader.JpsOutputLoaderManager;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
@@ -167,7 +166,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       myCacheLoadManager = null;
       if (ProjectStamps.PORTABLE_CACHES && myCacheDownloadSettings != null) {
         LOG.info("Trying to download JPS caches before build");
-        myCacheLoadManager = new JpsOutputLoaderManager(myBuildRunner.getLoadedJpsProject(), this, myProjectPath, myChannel,
+        myCacheLoadManager = new JpsOutputLoaderManager(myBuildRunner.loadModelAndGetJpsProject(), this, myProjectPath, myChannel,
                                                         mySessionId, myCacheDownloadSettings);
         myCacheLoadManager.load(myBuildRunner, true, myScopes);
       }

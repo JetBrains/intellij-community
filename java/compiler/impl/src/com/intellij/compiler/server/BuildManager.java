@@ -928,7 +928,7 @@ public final class BuildManager implements Disposable {
         }
         else {
           params = CmdlineProtoUtil.createBuildRequest(mappedProjectPath, scopes, isMake ? Collections.emptyList() : mappedPaths, userData, globals, currentFSChanges,
-                                                       isMake ? CompilerCacheConfigurator.INSTANCE.getCacheDownloadSettings(project) : null);
+                                                       isMake ? CompilerCacheConfigurator.getCacheDownloadSettings(project) : null);
         }
         if (!usingPreloadedProcess) {
           myMessageDispatcher.registerBuildMessageHandler(future, params);
@@ -1410,7 +1410,7 @@ public final class BuildManager implements Disposable {
 
     // portable caches
     if (Registry.is("compiler.process.use.portable.caches")
-        && GitRepositoryUtil.isIntelliJRepository(project)
+        && CompilerCacheConfigurator.isServerUrlConfigured(project)
         && CompilerCacheStartupActivity.isLineEndingsConfiguredCorrectly()) {
       //cmdLine.addParameter("-Didea.resizeable.file.truncate.on.close=true");
       //cmdLine.addParameter("-Dkotlin.jps.non.caching.storage=true");

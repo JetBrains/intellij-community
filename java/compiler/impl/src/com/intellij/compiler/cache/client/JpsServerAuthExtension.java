@@ -40,11 +40,11 @@ public interface JpsServerAuthExtension {
   /**
    * The method provides HTTP authentication headers for the requests to the server.
    * It will be called in the background thread. The assertion that thread isn't EDT can
-   * be added to the implementation. If it's not possible to get the authentication headers,
-   * empty map or `null` can be return.
-   * @return
+   * be added to the implementation.
+   * @return Map with header name as key and token. If it's not possible to get the authentication
+   * headers, `null` will be returned.
    */
-  Map<String, String> getAuthHeader(boolean force);
+  @Nullable Map<String, String> getAuthHeader(boolean force);
 
   @Nullable
   static JpsServerAuthExtension getInstance() {

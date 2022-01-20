@@ -2,8 +2,6 @@ package com.intellij.compiler.cache;
 
 import com.intellij.compiler.cache.client.JpsServerAuthExtension;
 import com.intellij.compiler.cache.git.GitRepositoryUtil;
-import com.intellij.ide.browsers.BrowserLauncher;
-import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -27,7 +25,7 @@ public final class CompilerCacheStartupActivity implements StartupActivity.Backg
       LOG.debug("JPS Caches registry key is not enabled");
       return;
     }
-    if (!GitRepositoryUtil.isIntelliJRepository(project)) {
+    if (!CompilerCacheConfigurator.isServerUrlConfigured(project)) {
       LOG.debug("Not an Intellij project, JPS Caches will not be available");
       return;
     }
@@ -43,10 +41,8 @@ public final class CompilerCacheStartupActivity implements StartupActivity.Backg
       lineEndingsConfiguredCorrectly = false;
       ATTENTION
         .createNotification(JavaCompilerBundle.message("notification.title.git.crlf.config"),
-                            JavaCompilerBundle.message("notification.content.git.crlf.config"),
+                            JavaCompilerBundle.message("notification.content.git.crlf.config", "git config --global core.autocrlf input"),
                             NotificationType.WARNING)
-        .addAction(NotificationAction.createSimple(JavaCompilerBundle.message("notification.action.git.crlf.config"),
-                                                   () -> BrowserLauncher.getInstance().open("https://confluence.jetbrains.com/pages/viewpage.action?title=Git+Repository&spaceKey=IDEA")))
         .notify(project);
     }
   }

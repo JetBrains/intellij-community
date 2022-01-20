@@ -1,7 +1,8 @@
 package com.intellij.compiler.cache.client;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -13,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
@@ -22,7 +22,7 @@ import java.util.zip.GZIPInputStream;
 
 public final class CompilerCachesServerClient {
   private static final Logger LOG = Logger.getInstance(CompilerCachesServerClient.class);
-  private static final Type GSON_MAPPER = new TypeToken<Map<String, List<String>>>() {}.getType();
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
   @NotNull
   public static Map<String, Set<String>> getCacheKeysPerRemote(@NotNull Project project, @NotNull String serverUrl) {
@@ -48,8 +48,8 @@ public final class CompilerCachesServerClient {
           if (connection instanceof HttpURLConnection) {
             HttpURLConnection httpConnection = (HttpURLConnection)connection;
             if (httpConnection.getResponseCode() == 200) {
-              Gson gson = new Gson();
-              return gson.fromJson(new InputStreamReader(getInputStream(httpConnection), StandardCharsets.UTF_8) , GSON_MAPPER);
+              return OBJECT_MAPPER.readValue(getInputStream(httpConnection), new TypeReference<>() {
+              });
             }
             else {
               String statusLine = httpConnection.getResponseCode() + ' ' + httpConnection.getRequestMethod();

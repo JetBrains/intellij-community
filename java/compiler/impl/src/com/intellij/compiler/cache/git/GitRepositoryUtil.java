@@ -21,42 +21,9 @@ public final class GitRepositoryUtil {
   private static final Logger LOG = Logger.getInstance(GitRepositoryUtil.class);
   private static final String LATEST_COMMIT_ID = "JpsOutputLoaderManager.latestCommitId";
   private static final String LATEST_BUILT_MASTER_COMMIT_ID = "JpsOutputLoaderManager.latestBuiltMasterCommitId";
-  private static final String INTELLIJ_REPO_NAME = "intellij.git";
   private static final int FETCH_SIZE = 100;
 
   private GitRepositoryUtil() {}
-
-  public static boolean isIntelliJRepository(@NotNull Project project) {
-    String projectBasePath = project.getBasePath();
-    if (projectBasePath == null) return false;
-    GeneralCommandLine commandLine = new GeneralCommandLine()
-      .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
-      .withWorkDirectory(projectBasePath)
-      .withExePath("git")
-      .withParameters("remote")
-      .withParameters("-v");
-
-    AtomicBoolean result = new AtomicBoolean();
-    try {
-      OSProcessHandler handler = new OSProcessHandler(commandLine.withCharset(StandardCharsets.UTF_8));
-      handler.addProcessListener(new CapturingProcessAdapter() {
-        @Override
-        public void processTerminated(@NotNull ProcessEvent event) {
-          if (event.getExitCode() != 0) {
-            LOG.warn("Couldn't fetch repository remote URL: " + getOutput().getStderr());
-          } else {
-            result.set(getOutput().getStdout().contains(INTELLIJ_REPO_NAME));
-          }
-        }
-      });
-      handler.startNotify();
-      handler.waitFor();
-    }
-    catch (ExecutionException e) {
-      LOG.warn("Couldn't execute command for fetching remote URL", e);
-    }
-    return result.get();
-  }
 
   public static @NotNull List<String> fetchRepositoryCommits(@NotNull Project project, @NotNull String latestCommit) {
     String projectBasePath = project.getBasePath();

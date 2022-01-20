@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.cache;
 
+import com.intellij.compiler.CompilerConfigurationSettings;
 import com.intellij.compiler.cache.client.CompilerCacheServerAuthUtil;
 import com.intellij.compiler.cache.client.CompilerCachesServerClient;
 import com.intellij.compiler.cache.git.GitCommitsIterator;
@@ -14,8 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.Map;
 import java.util.Set;
 
@@ -23,22 +22,15 @@ import static org.jetbrains.jps.cache.JpsCachesLoaderUtil.INTELLIJ_REPO_NAME;
 
 public class CompilerCacheConfigurator {
   private static final Logger LOG = Logger.getInstance(CompilerCacheConfigurator.class);
-  public static final CompilerCacheConfigurator INSTANCE = new CompilerCacheConfigurator();
-  private final String serverUrl;
 
-  private CompilerCacheConfigurator() {
-    byte[] decodedBytes = Base64.getDecoder().decode("aHR0cHM6Ly9kMWxjNWs5bGVyZzZrbS5jbG91ZGZyb250Lm5ldA==");
-    serverUrl = new String(decodedBytes, StandardCharsets.UTF_8);
-  }
-
-  public @Nullable CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings getCacheDownloadSettings(@NotNull Project project) {
-    if (!Registry.is("compiler.process.use.portable.caches") ||
-        !GitRepositoryUtil.isIntelliJRepository(project) ||
-        !CompilerCacheStartupActivity.isLineEndingsConfiguredCorrectly()) return null;
+  public static @Nullable CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings getCacheDownloadSettings(@NotNull Project project) {
+    if (!Registry.is("compiler.process.use.portable.caches")) return null;
+    String serverUrl = getServerUrl(project);
+    if (serverUrl == null || !CompilerCacheStartupActivity.isLineEndingsConfiguredCorrectly()) return null;
 
     Map<String, String> authHeaders = CompilerCacheServerAuthUtil.getRequestHeaders(project, true);
     if (authHeaders.isEmpty()) return null;
-    Pair<String, Integer> commit = getCommitToDownload(project);
+    Pair<String, Integer> commit = getCommitToDownload(project, serverUrl);
     if (commit == null) return null;
 
     CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings.Builder builder =
@@ -52,8 +44,12 @@ public class CompilerCacheConfigurator {
     return builder.build();
   }
 
+  public static boolean isServerUrlConfigured(@NotNull Project project) {
+    return getServerUrl(project) != null;
+  }
+
   @Nullable
-  private Pair<String, Integer> getCommitToDownload(@NotNull Project project) {
+  private static Pair<String, Integer> getCommitToDownload(@NotNull Project project, @NotNull String serverUrl) {
     Map<String, Set<String>> availableCommitsPerRemote = CompilerCachesServerClient.getCacheKeysPerRemote(project, serverUrl);
     GitCommitsIterator commitsIterator = new GitCommitsIterator(project, INTELLIJ_REPO_NAME);
     String latestDownloadedCommit = GitRepositoryUtil.getLatestDownloadedCommit();
@@ -101,5 +97,9 @@ public class CompilerCacheConfigurator {
       return null;
     }
     return Pair.create(commitToDownload, commitsCountBetweenCompilation);
+  }
+
+  private static @Nullable String getServerUrl(@NotNull Project project) {
+    return CompilerConfigurationSettings.Companion.getInstance(project).getCacheServerUrl();
   }
 }
