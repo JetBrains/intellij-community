@@ -15,7 +15,7 @@ import org.jetbrains.jps.backwardRefs.CompilerRef
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.highlighter.markers.OVERRIDDEN_FUNCTION
 import org.jetbrains.kotlin.idea.highlighter.markers.SUBCLASSED_CLASS
-import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
