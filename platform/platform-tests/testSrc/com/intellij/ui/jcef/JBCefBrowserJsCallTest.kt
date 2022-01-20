@@ -51,6 +51,18 @@ class JBCefBrowserJsCallTest {
   }
 
   @Test
+  fun `execute multiline expression`() {
+    val js = """
+      function myFunction(p1, p2) {
+        return p1 * p2;   // The function returns the product of p1 and p2
+      }
+      
+      myFunction(2,2)
+    """.trimIndent()
+    doTest(js, "4")
+  }
+
+  @Test
   fun `execute the same call twice and simultaneously`() {
     val browser = prepareBrowser()
     val jsCall = JBCefBrowserJsCall("""2+2""", browser)

@@ -4,6 +4,7 @@ package com.intellij.ui.jcef
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.StringUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -93,10 +94,17 @@ class JBCefBrowserJsCall(val javaScriptExpression: JsExpression, val browser: JB
 
   private fun createQuery(parentDisposable: Disposable) = JBCefJSQuery.create(browser).also { Disposer.register(parentDisposable, it) }
 
+  private fun JsExpression.minimize(): JsExpression = let { expression ->
+    when {
+      StringUtil.containsLineBreak(expression) -> StringUtil.escapeLineBreak(expression)
+      else -> expression
+    }
+  }
+
   @Language("JavaScript")
   private fun @receiver:Language("JavaScript") JsExpression.wrapWithErrorHandling(resultQuery: JBCefJSQuery, errorQuery: JBCefJSQuery) = """
       try {
-        let result = eval("$this")
+        let result = eval("${minimize()}")
 
         // call back the related JBCefJSQuery
         window.${resultQuery.funcName} (     
