@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit2.inspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -9,13 +9,15 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
-
-import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE;
 
 public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
   private static final String MOCK = "org.mockito.Mock";
@@ -34,30 +36,44 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
   private static boolean isReferencedInsideEnumSourceAnnotation(@NotNull PsiElement element) {
     if (element instanceof PsiEnumConstant) {
       PsiClass psiClass = ((PsiEnumConstant)element).getContainingClass();
-      String className = psiClass != null ? psiClass.getName() : null;
-      if (className == null) return false;
-      SearchScope useScope = psiClass.getUseScope();
-
-      if (isExpensiveSearch(psiClass, className, useScope)) return false;
-      return ReferencesSearch.search(psiClass, useScope, false)
-        .anyMatch(reference -> {
-          PsiElement referenceElement = reference.getElement();
-          PsiAnnotation annotation = PsiTreeUtil.getParentOfType(referenceElement, PsiAnnotation.class);
-          if (annotation != null) {
-            String annotationName = annotation.getQualifiedName();
-            if (ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE.equals(annotationName) && annotation.getAttributes().size() == 1) {
-              return true;
-            }
-          }
-          return false;
-        });
+      return psiClass != null &&
+             CachedValuesManager.getCachedValue(psiClass, 
+                                                () -> CachedValueProvider.Result.create(areEnumConstantsReferenced(psiClass), 
+                                                                                        PsiModificationTracker.MODIFICATION_COUNT));
     }
     return false;
+  }
+
+  private static boolean areEnumConstantsReferenced(PsiClass psiClass) {
+    String className = psiClass.getName();
+    if (className == null) {
+      return false;
+    }
+    SearchScope useScope = psiClass.getUseScope();
+    if (isExpensiveSearch(psiClass, className, useScope)) {
+      return false;
+    }
+    return ReferencesSearch.search(psiClass, useScope, false)
+      .anyMatch(reference -> {
+        PsiElement referenceElement = reference.getElement();
+        PsiAnnotation annotation = PsiTreeUtil.getParentOfType(referenceElement, PsiAnnotation.class, true, PsiStatement.class, PsiMember.class);
+        if (annotation != null) {
+          String annotationName = annotation.getQualifiedName();
+          if (JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE.equals(annotationName) && annotation.getAttributes().size() == 1) {
+            return true;
+          }
+        }
+        return false;
+      });
   }
 
   private static boolean isExpensiveSearch(PsiClass psiClass, String name, SearchScope useScope) {
     if (!(useScope instanceof LocalSearchScope)) {
       PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(psiClass.getProject());
+      if (PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES ==
+          searchHelper.isCheapEnoughToSearch(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE_SHORT, (GlobalSearchScope)useScope, null, null)) {
+        return true;
+      }
       PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, null, null);
       if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES ||
           cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {

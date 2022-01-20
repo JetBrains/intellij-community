@@ -25,6 +25,7 @@ public final class JUnitCommonClassNames {
   public static final String ORG_JUNIT_JUPITER_CONDITION_PROVIDER_DISABLED_IF = "org.junit.jupiter.api.condition.DisabledIf";
   public static final String ORG_JUNIT_JUPITER_PARAMS_VALUES_SOURCE = "org.junit.jupiter.params.provider.ValueSource";
   public static final String ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE = "org.junit.jupiter.params.provider.EnumSource";
+  public static final String ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE_SHORT = "EnumSource";
   public static final String ORG_JUNIT_JUPITER_PARAMS_NULL_SOURCE = "org.junit.jupiter.params.provider.NullSource";
   public static final String ORG_JUNIT_JUPITER_PARAMS_EMPTY_SOURCE = "org.junit.jupiter.params.provider.EmptySource";
   public static final String ORG_JUNIT_JUPITER_PARAMS_NULL_AND_EMPTY_SOURCE = "org.junit.jupiter.params.provider.NullAndEmptySource";
