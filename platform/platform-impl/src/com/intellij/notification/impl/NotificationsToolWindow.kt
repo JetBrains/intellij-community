@@ -744,7 +744,9 @@ private class NotificationComponent(val project: Project,
   companion object {
     val BG_COLOR = UIUtil.getListBackground()
     val INFO_COLOR = JBColor.namedColor("Label.infoForeground", JBColor(Gray.x80, Gray.x8C))
-    val NEW_COLOR = JBColor.namedColor("NotificationsToolwindow.newNotification.background", JBColor(0xE6EEF7, 0x45494A))
+    internal const val NEW_COLOR_NAME = "NotificationsToolwindow.newNotification.background"
+    internal val NEW_DEFAULT_COLOR = JBColor(0xE6EEF7, 0x45494A)
+    val NEW_COLOR = JBColor.namedColor(NEW_COLOR_NAME, NEW_DEFAULT_COLOR)
     val NEW_HOVER_COLOR = JBColor.namedColor("NotificationsToolwindow.newNotification.hoverBackground", JBColor(0xE6EEF7, 0x45494A))
     val HOVER_COLOR = JBColor.namedColor("NotificationsToolwindow.Notification.hoverBackground", BG_COLOR)
     const val TIME_KEY = "TimestampKey"
@@ -1142,7 +1144,12 @@ private class NotificationComponent(val project: Project,
       }
     }
     else if (myIsNew) {
-      setColor(NEW_COLOR)
+      if (UIManager.getColor(NEW_COLOR_NAME) != null) {
+        setColor(NEW_COLOR)
+      }
+      else {
+        setColor(NEW_DEFAULT_COLOR)
+      }
     }
     else {
       setColor(BG_COLOR)
