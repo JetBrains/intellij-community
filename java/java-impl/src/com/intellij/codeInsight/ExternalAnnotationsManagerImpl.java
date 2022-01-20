@@ -993,7 +993,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
       }
     }
     Runnable openAnnotationXml =
-      () -> new OpenFileDescriptor(project, file, exception.getLineNumber(), exception.getColumnNumber()).navigate(true);
+      () -> new OpenFileDescriptor(project, file, exception.getLineNumber() - 1, exception.getColumnNumber() - 1).navigate(true);
     EXTERNAL_ANNOTATIONS_MESSAGES.createNotification(
         JavaBundle.message("external.annotations.problem.title"),
         JavaBundle.message("external.annotations.problem.parse.error", filePath, exception.getMessage()),
