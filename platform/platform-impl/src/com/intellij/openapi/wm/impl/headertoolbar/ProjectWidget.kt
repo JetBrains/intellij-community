@@ -126,20 +126,23 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
 
   override fun dispose() {}
 
-  private fun createActionsList(): List<AnAction> {
-    val res = mutableListOf<AnAction>()
-
+  private fun createActionsList(): Map<AnAction, String?> {
     val actionManager = ActionManager.getInstance()
-    res.add(actionManager.getAction("NewProject"))
-    res.add(actionManager.getAction("ImportProject"))
-    res.add(actionManager.getAction("ProjectFromVersionControl"))
+    val res = mutableMapOf<AnAction, String?>(
+      actionManager.getAction("NewProject") to IdeBundle.message("project.widget.new"),
+      actionManager.getAction("ImportProject") to IdeBundle.message("project.widget.open"),
+      actionManager.getAction("ProjectFromVersionControl") to IdeBundle.message("project.widget.from.vcs")
+    )
 
-    RecentProjectListActionProvider.getInstance().getActions().take(MAX_RECENT_COUNT).forEach { res.add(it) }
+    RecentProjectListActionProvider.getInstance().getActions().take(MAX_RECENT_COUNT).forEach { res[it] = null }
 
     return res
   }
 
-  private class MyStep(private val actions: List<AnAction>): ListPopupStep<AnAction> {
+  private class MyStep(private val actionsMap: Map<AnAction, String?>): ListPopupStep<AnAction> {
+    private val actions: List<AnAction> = actionsMap.keys.toList()
+    private val nameMapper: (AnAction?) -> String = { action -> action?.let { actionsMap[it] } ?: "" }
+
     override fun getTitle(): String? = null
 
     override fun onChosen(selectedValue: AnAction?, finalChoice: Boolean): PopupStep<*>? {
@@ -169,7 +172,7 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
 
     override fun getIconFor(value: AnAction?): Icon? = value?.templatePresentation?.icon
 
-    override fun getTextFor(value: AnAction?): String = value?.templateText ?: ""
+    override fun getTextFor(value: AnAction?): String = nameMapper(value)
 
     override fun getSeparatorAbove(value: AnAction?): ListSeparator? {
       val index = actions.indexOf(value)
