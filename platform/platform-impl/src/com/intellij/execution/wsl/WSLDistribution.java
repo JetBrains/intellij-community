@@ -156,7 +156,13 @@ public class WSLDistribution {
     if (processHandlerConsumer != null) {
       processHandlerConsumer.consume(processHandler);
     }
-    return processHandler.runProcess(timeout);
+    ProcessOutput output = processHandler.runProcess(timeout);
+    if (output.getExitCode() != 0 || output.isTimeout() || output.isCancelled()) {
+      LOG.warn("command on wsl: " + commandLine.getCommandLineString() + " was failed:" +
+               "ec=" + output.getExitCode() + ",timeout=" + output.isTimeout() + ",cancelled=" + output.isCancelled()
+               + ",stderr=" + output.getStderr() + ",stdout=" + output.getStdout());
+    }
+    return output;
   }
 
   private @NotNull ProcessOutput executeOnWsl(@NotNull GeneralCommandLine commandLine,
@@ -467,7 +473,7 @@ public class WSLDistribution {
                        .setExecuteCommandInInteractiveShell(true),
                      5000,
                      null);
-      if (processOutput.checkSuccess(LOG)) {
+      if (processOutput.getExitCode() == 0){
         Map<String, String> result = new HashMap<>();
         for (String string : processOutput.getStdoutLines()) {
           int assignIndex = string.indexOf('=');
