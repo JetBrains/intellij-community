@@ -101,6 +101,10 @@ public final class ExtensionsRootType extends RootType {
       if (bundledResourcesDir == null || !bundledResourcesDir.isDirectory()) {
         continue;
       }
+
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(new Throwable("Extract bundled resources " + pluginId.getIdString() + " to " + resourcesDirectory));
+      }
       extractResources(bundledResourcesDir, resourcesDirectory);
     }
   }
