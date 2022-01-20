@@ -153,7 +153,7 @@ public final class NewMappings implements Disposable {
 
       dumpMappedRootsToLog();
     }
-    mappingsChanged();
+    notifyMappingsChanged();
 
     scheduleMappedRootsUpdate();
   }
@@ -185,7 +185,7 @@ public final class NewMappings implements Disposable {
 
     updateMappedRoots(false);
 
-    mappingsChanged();
+    notifyMappingsChanged();
   }
 
   private void updateMappedRoots(boolean fireMappingsChangedEvent) {
@@ -216,7 +216,7 @@ public final class NewMappings implements Disposable {
       }
     }
 
-    if (fireMappingsChangedEvent && mappedRootsChanged) mappingsChanged();
+    if (fireMappingsChangedEvent && mappedRootsChanged) notifyMappingsChanged();
   }
 
   private void refreshMainMenu() {
@@ -407,7 +407,7 @@ public final class NewMappings implements Disposable {
     });
   }
 
-  public void mappingsChanged() {
+  public void notifyMappingsChanged() {
     BackgroundTaskUtil.syncPublisher(myProject, ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
     myFileWatchRequestsManager.ping();
   }

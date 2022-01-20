@@ -666,7 +666,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @Override
   public void fireDirectoryMappingsChanged() {
     if (myProject.isOpen() && !myProject.isDisposed()) {
-      myMappings.mappingsChanged();
+      myMappings.notifyMappingsChanged();
     }
   }
 
