@@ -27,20 +27,20 @@ public class JpsBootstrapMain {
   private static final String COMMUNITY_HOME_ENV = "JPS_BOOTSTRAP_COMMUNITY_HOME";
   private static final String JPS_BOOTSTRAP_VERBOSE = "JPS_BOOTSTRAP_VERBOSE";
 
-  private static final String ARG_HELP = "help";
-  private static final String ARG_VERBOSE = "verbose";
-  private static final String ARG_SYSTEM_PROPERTY = "system-prop";
-  private static final String ARG_JAVA_ARGFILE_TARGET = "java-argfile-target";
-  private static final String ARG_BUILD_TARGET_XMX = "build-target-xmx";
+  private static final Option OPT_HELP = Option.builder("h").longOpt("help").build();
+  private static final Option OPT_VERBOSE = Option.builder("v").longOpt("verbose").desc("Show more logging from jps-bootstrap and the building process").build();
+  private static final Option OPT_SYSTEM_PROPERTY = Option.builder("D").hasArgs().valueSeparator('=').desc("Pass system property to the build script").build();
+  private static final Option OPT_BUILD_TARGET_XMX = Option.builder().longOpt("build-target-xmx").hasArg().desc("Specify Xmx to run build script. default: 4g").build();
+  private static final Option OPT_JAVA_ARGFILE_TARGET = Option.builder().longOpt("java-argfile-target").required().hasArg().desc("Write java argfile to this file").build();
+  private static final List<Option> ALL_OPTIONS =
+    Arrays.asList(OPT_HELP, OPT_VERBOSE, OPT_SYSTEM_PROPERTY, OPT_JAVA_ARGFILE_TARGET, OPT_BUILD_TARGET_XMX);
 
   private static Options createCliOptions() {
     Options opts = new Options();
 
-    opts.addOption(Option.builder("h").longOpt("help").argName(ARG_HELP).build());
-    opts.addOption(Option.builder("v").longOpt("verbose").desc("Show more logging from jps-bootstrap and the building process").argName(ARG_VERBOSE).build());
-    opts.addOption(Option.builder("D").hasArgs().valueSeparator('=').desc("Pass system property to the build script").argName(ARG_SYSTEM_PROPERTY).build());
-    opts.addOption(Option.builder().longOpt("build-target-xmx").hasArg().desc("Specify Xmx to run build script. default: 4g").argName(ARG_BUILD_TARGET_XMX).build());
-    opts.addOption(Option.builder().longOpt("java-argfile-target").required().hasArg().desc("Write java argfile to this file").argName(ARG_JAVA_ARGFILE_TARGET).build());
+    for (Option option : ALL_OPTIONS) {
+      opts.addOption(option);
+    }
 
     return opts;
   }
@@ -79,7 +79,7 @@ public class JpsBootstrapMain {
     }
 
     final List<String> freeArgs = Arrays.asList(cmdline.getArgs());
-    if (cmdline.hasOption(ARG_HELP) || freeArgs.size() < 2) {
+    if (cmdline.hasOption(OPT_HELP) || freeArgs.size() < 2) {
       showUsagesAndExit();
     }
 
@@ -94,7 +94,7 @@ public class JpsBootstrapMain {
     additionalSystemProperties = cmdline.getOptionProperties("D");
 
     String verboseEnv = System.getenv(JPS_BOOTSTRAP_VERBOSE);
-    JpsBootstrapUtil.setVerboseEnabled(cmdline.hasOption(ARG_VERBOSE) || (verboseEnv != null && toBooleanChecked(verboseEnv)));
+    JpsBootstrapUtil.setVerboseEnabled(cmdline.hasOption(OPT_VERBOSE) || (verboseEnv != null && toBooleanChecked(verboseEnv)));
 
     String communityHomeString = System.getenv(COMMUNITY_HOME_ENV);
     if (communityHomeString == null) fatal("Please set " + COMMUNITY_HOME_ENV + " environment variable");
@@ -130,8 +130,8 @@ public class JpsBootstrapMain {
     Files.createDirectories(jpsBootstrapWorkDir);
 
     mainArgsToRun = freeArgs.subList(2, freeArgs.size());
-    javaArgsFileTarget = Path.of(cmdline.getOptionValue(ARG_JAVA_ARGFILE_TARGET));
-    buildTargetXmx = cmdline.hasOption(ARG_BUILD_TARGET_XMX) ? cmdline.getOptionValue(ARG_BUILD_TARGET_XMX) : "4g";
+    javaArgsFileTarget = Path.of(cmdline.getOptionValue(OPT_JAVA_ARGFILE_TARGET));
+    buildTargetXmx = cmdline.hasOption(OPT_BUILD_TARGET_XMX) ? cmdline.getOptionValue(OPT_BUILD_TARGET_XMX) : "4g";
   }
 
   private void main() throws Throwable {
