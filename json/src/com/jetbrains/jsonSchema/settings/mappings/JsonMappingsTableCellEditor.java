@@ -20,7 +20,6 @@ import com.intellij.util.ui.JBUI;
 import com.jetbrains.jsonSchema.JsonMappingKind;
 import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -123,12 +122,6 @@ class JsonMappingsTableCellEditor extends AbstractTableCellEditor {
       myTextField = textField;
       myProject = project;
       myAutopopup = true;
-    }
-
-    @Override
-    public @Nullable VirtualFile getSelectedFile() {
-      LookupFile lookupFile = getFile();
-      return lookupFile != null ? ((LocalFsFinder.VfsFile)lookupFile).getFile() : null;
     }
 
     @Override

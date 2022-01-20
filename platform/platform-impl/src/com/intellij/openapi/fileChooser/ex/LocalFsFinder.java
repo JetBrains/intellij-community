@@ -3,11 +3,11 @@ package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.ex.FileLookup.Finder;
 import com.intellij.openapi.fileChooser.ex.FileLookup.LookupFile;
 import com.intellij.openapi.fileChooser.ex.FileLookup.LookupFilter;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,45 +21,66 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.function.BooleanSupplier;
 
 public class LocalFsFinder implements Finder {
-  private File myBaseDir = new File(SystemProperties.getUserHome());
+  private final boolean myUseVfs;
+  private @Nullable Path myBaseDir = Path.of(SystemProperties.getUserHome());
+
+  public LocalFsFinder() {
+    this(true);
+  }
+
+  public LocalFsFinder(boolean useVfs) {
+    myUseVfs = useVfs;
+  }
 
   @Override
   public LookupFile find(@NotNull String path) {
-    VirtualFile byUrl = VirtualFileManager.getInstance().findFileByUrl(path);
-    if (byUrl != null) {
-      return new VfsFile(byUrl);
+    if (myUseVfs) {
+      VirtualFile byUrl = VirtualFileManager.getInstance().findFileByUrl(path);
+      if (byUrl != null) {
+        return new VfsFile(byUrl);
+      }
     }
 
     String toFind = normalize(path);
     if (toFind.isEmpty()) {
-      File[] roots = File.listRoots();
-      if (roots.length > 0) {
-        toFind = roots[0].getAbsolutePath();
+      toFind = FileSystems.getDefault().getRootDirectories().iterator().next().toString();
+    }
+
+    if (myUseVfs) {
+      // '..' and '.' path components will be eliminated
+      VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(toFind);
+      if (vFile != null) {
+        return new VfsFile(vFile);
       }
     }
-    File file = new File(toFind);
-    // '..' and '.' path components will be eliminated
-    VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-    if (vFile != null) {
-      return new VfsFile(vFile);
+
+    try {
+      Path file = Path.of(toFind);
+      if (file.isAbsolute()) {
+        return new IoFile(file);
+      }
     }
-    if (file.isAbsolute()) {
-      return new IoFile(new File(path));
-    }
+    catch (InvalidPathException ignored) { }
+
     return null;
   }
 
   @Override
   public String normalize(@NotNull String path) {
-    File file = new File(FileUtil.expandUserHome(path));
-    if (file.isAbsolute()) return file.getAbsolutePath();
-    if (myBaseDir != null) return new File(myBaseDir, path).getAbsolutePath();
+    try {
+      Path file = Path.of(FileUtil.expandUserHome(path));
+      if (file.isAbsolute()) return file.toString();
+      if (myBaseDir != null) return myBaseDir.resolve(path).toAbsolutePath().toString();
+    }
+    catch (InvalidPathException ignored) { }
     return path;
   }
 
@@ -68,28 +89,28 @@ public class LocalFsFinder implements Finder {
     return File.separator;
   }
 
-  public void setBaseDir(@Nullable File baseDir) {
+  public LocalFsFinder withBaseDir(@Nullable Path baseDir) {
     myBaseDir = baseDir;
+    return this;
+  }
+
+  public void setBaseDir(@Nullable File baseDir) {
+    withBaseDir(baseDir != null ? baseDir.toPath() : null);
   }
 
   public static class FileChooserFilter implements LookupFilter {
     private final FileChooserDescriptor myDescriptor;
-    private final BooleanSupplier myShowHidden;
+    private final boolean myShowHidden;
 
     public FileChooserFilter(FileChooserDescriptor descriptor, boolean showHidden) {
-      myShowHidden = () -> showHidden;
+      myShowHidden = showHidden;
       myDescriptor = descriptor;
-    }
-
-    public FileChooserFilter(FileChooserDescriptor descriptor, FileSystemTree tree) {
-      myDescriptor = descriptor;
-      myShowHidden = () -> tree.areHiddensShown();
     }
 
     @Override
     public boolean isAccepted(LookupFile file) {
       VirtualFile vFile = ((VfsFile)file).getFile();
-      return vFile != null && myDescriptor.isFileVisible(vFile, myShowHidden.getAsBoolean());
+      return vFile != null && myDescriptor.isFileVisible(vFile, myShowHidden);
     }
   }
 
@@ -104,19 +125,19 @@ public class LocalFsFinder implements Finder {
       this(file);
     }
 
-    public VfsFile(VirtualFile file) {
+    public VfsFile(@NotNull VirtualFile file) {
       myFile = file;
-      if (file != null) RefreshQueue.getInstance().refresh(true, false, null, file);
+      RefreshQueue.getInstance().refresh(true, false, null, file);
     }
 
     @Override
     public String getName() {
-      return myFile.getParent() == null && myFile.getName().length() == 0 ? "/" : myFile.getName();
+      return myFile.getParent() == null && myFile.getName().isEmpty() ? "/" : myFile.getName();
     }
 
     @Override
     public boolean isDirectory() {
-      return myFile != null && myFile.isDirectory();
+      return myFile.isDirectory();
     }
 
     @Override
@@ -131,7 +152,8 @@ public class LocalFsFinder implements Finder {
 
     @Override
     public LookupFile getParent() {
-      return myFile != null && myFile.getParent() != null ? new VfsFile(myFile.getParent()) : null;
+      VirtualFile parent = myFile.getParent();
+      return parent != null ? new VfsFile(parent) : null;
     }
 
     @Override
@@ -141,10 +163,8 @@ public class LocalFsFinder implements Finder {
 
     @Override
     public List<LookupFile> getChildren(LookupFilter filter) {
-      List<LookupFile> result = new ArrayList<>();
-      if (myFile == null) return result;
-
       VirtualFile[] kids = myFile.getChildren();
+      List<LookupFile> result = new ArrayList<>(kids.length);
       for (VirtualFile each : kids) {
         LookupFile eachFile = new VfsFile(each);
         if (filter.isAccepted(eachFile)) {
@@ -166,37 +186,41 @@ public class LocalFsFinder implements Finder {
     }
 
     @Override
-    public @Nullable Icon getIcon() {
-      return myFile == null ? null : myFile.isDirectory() ? PlatformIcons.FOLDER_ICON : VirtualFilePresentation.getIcon(myFile);
+    public Icon getIcon() {
+      return myFile.isDirectory() ? PlatformIcons.FOLDER_ICON : VirtualFilePresentation.getIcon(myFile);
     }
 
     @Override
     public boolean equals(Object o) {
-      return this == o || o != null && getClass() == o.getClass() && Objects.equals(myFile, ((VfsFile)o).myFile);
+      return this == o || o != null && getClass() == o.getClass() && myFile.equals(((VfsFile)o).myFile);
     }
 
     @Override
     public int hashCode() {
-      return myFile != null ? myFile.hashCode() : 0;
+      return myFile.hashCode();
     }
   }
 
   public static final class IoFile implements LookupFile {
-    private final File myIoFile;
+    private final Path myFile;
     private String myMacro;
 
-    public IoFile(File ioFile) {
-      myIoFile = ioFile;
+    public IoFile(@NotNull File file) {
+      this(file.toPath());
+    }
+
+    public IoFile(@NotNull Path file) {
+      myFile = file;
     }
 
     @Override
     public String getName() {
-      return myIoFile.getName();
+      return NioFiles.getFileName(myFile);
     }
 
     @Override
     public boolean isDirectory() {
-      return myIoFile != null && myIoFile.isDirectory();
+      return Files.isDirectory(myFile);
     }
 
     @Override
@@ -211,21 +235,22 @@ public class LocalFsFinder implements Finder {
 
     @Override
     public LookupFile getParent() {
-      return myIoFile != null && myIoFile.getParentFile() != null ? new IoFile(myIoFile.getParentFile()) : null;
+      Path parent = myFile.getParent();
+      return parent != null ? new IoFile(parent) : null;
     }
 
     @Override
     public String getAbsolutePath() {
-      return myIoFile.getAbsolutePath();
+      return myFile.toAbsolutePath().toString();
     }
 
     @Override
     public List<LookupFile> getChildren(LookupFilter filter) {
-      List<LookupFile> result = new ArrayList<>();
-      File[] files = myIoFile.listFiles();
-      if (files == null) return result;
+      List<Path> files = NioFiles.list(myFile);
+      List<LookupFile> result = new ArrayList<>(files.size());
+      if (files.isEmpty()) return result;
 
-      for (File each : files) {
+      for (Path each : files) {
         IoFile file = new IoFile(each);
         if (filter.isAccepted(file)) {
           result.add(file);
@@ -238,7 +263,7 @@ public class LocalFsFinder implements Finder {
 
     @Override
     public boolean exists() {
-      return myIoFile.exists();
+      return Files.exists(myFile);
     }
 
     @Override
@@ -248,13 +273,12 @@ public class LocalFsFinder implements Finder {
 
     @Override
     public boolean equals(Object o) {
-      return this == o || o != null && getClass() == o.getClass() && Objects.equals(myIoFile, ((IoFile)o).myIoFile);
+      return this == o || o != null && getClass() == o.getClass() && myFile.equals(((IoFile)o).myFile);
     }
 
     @Override
-    @SuppressWarnings("FileEqualsUsage")
     public int hashCode() {
-      return myIoFile != null ? myIoFile.hashCode() : 0;
+      return myFile.hashCode();
     }
   }
 }

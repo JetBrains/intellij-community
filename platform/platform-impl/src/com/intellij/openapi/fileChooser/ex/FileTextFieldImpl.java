@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.ui.ListActions;
@@ -48,7 +47,7 @@ import static com.intellij.openapi.actionSystem.IdeActions.ACTION_CODE_COMPLETIO
 import static com.intellij.openapi.application.ModalityState.stateForComponent;
 import static com.intellij.openapi.fileChooser.ex.FileTextFieldUtil.createMatcher;
 
-public abstract class FileTextFieldImpl implements FileTextField, Disposable {
+public class FileTextFieldImpl implements FileTextField, Disposable {
   private final Object myLock = new Object();
   private final JTextField myPathTextField;
 
@@ -168,7 +167,7 @@ public abstract class FileTextFieldImpl implements FileTextField, Disposable {
 
   private void processTextChanged() {
     if (myAutopopup && !isPathUpdating()) {
-      // Hide current popup as early as we can
+      // hide current popup ASAP
       hideCurrentPopup();
       suggestCompletion(false, false);
     }
@@ -230,8 +229,7 @@ public abstract class FileTextFieldImpl implements FileTextField, Disposable {
     }
   }
 
-  @Nullable
-  public static @NlsContexts.PopupAdvertisement String getAdText(CompletionResult result) {
+  public static @Nullable @NlsContexts.PopupAdvertisement String getAdText(CompletionResult result) {
     if (result.myCompletionBase == null) return null;
     if (result.myCompletionBase.length() == result.myFieldText.length()) return null;
 
@@ -462,11 +460,9 @@ public abstract class FileTextFieldImpl implements FileTextField, Disposable {
     }
   }
 
-  @Nullable
-  public LookupFile getFile() {
+  public @Nullable LookupFile getFile() {
     String text = getTextFieldText();
-    if (text == null) return null;
-    return myFinder.find(text);
+    return text != null ? myFinder.find(text) : null;
   }
 
   protected void setTextToFile(LookupFile file) {
@@ -602,8 +598,7 @@ public abstract class FileTextFieldImpl implements FileTextField, Disposable {
     myCurrentCompletion = null;
   }
 
-  @Nullable
-  public String getTextFieldText() {
+  public @Nullable String getTextFieldText() {
     String text = myPathTextField.getText();
     if (text == null) return null;
     return text;
@@ -638,22 +633,6 @@ public abstract class FileTextFieldImpl implements FileTextField, Disposable {
     if (text == null) return null;
     int pos = myPathTextField.getCaretPosition();
     return pos < text.length() ? text.substring(0, pos) : text;
-  }
-
-  public static class Vfs extends FileTextFieldImpl {
-    public Vfs(JTextField field, Map<String, String> macroMap, Disposable parent, LookupFilter chooserFilter) {
-      super(field, new LocalFsFinder(), chooserFilter, macroMap, parent);
-    }
-
-    public Vfs(Map<String, String> macroMap, Disposable parent, LookupFilter chooserFilter) {
-      this(new JTextField(), macroMap, parent, chooserFilter);
-    }
-
-    @Override
-    public VirtualFile getSelectedFile() {
-      LookupFile lookupFile = getFile();
-      return lookupFile != null ? ((LocalFsFinder.VfsFile)lookupFile).getFile() : null;
-    }
   }
 
   private class CancelAction implements ActionListener {

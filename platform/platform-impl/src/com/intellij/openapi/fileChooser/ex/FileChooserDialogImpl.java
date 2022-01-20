@@ -242,16 +242,19 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     myPath = new ComboBox<>(getRecentFiles().toArray(ArrayUtilRt.EMPTY_STRING_ARRAY));
     myPath.setEditable(true);
     myPath.setRenderer(SimpleListCellRenderer.create((var label, @NlsContexts.Label var value, var index) -> {
-          label.setText(value);
-          VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(value));
-          label.setIcon(file == null ? EmptyIcon.ICON_16 : IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null));
-        }));
+      label.setText(value);
+      VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(value));
+      label.setIcon(file == null ? EmptyIcon.ICON_16 : IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null));
+    }));
 
     JTextField pathEditor = (JTextField)myPath.getEditor().getEditorComponent();
-    LocalFsFinder.FileChooserFilter filter = new LocalFsFinder.FileChooserFilter(myChooserDescriptor, myFileSystemTree);
-    myPathTextField = new FileTextFieldImpl.Vfs(pathEditor, FileChooserFactoryImpl.getMacroMap(), getDisposable(), filter) {
+    FileLookup.LookupFilter filter = file -> {
+      VirtualFile vFile = ((LocalFsFinder.VfsFile)file).getFile();
+      return vFile != null && myChooserDescriptor.isFileVisible(vFile, myFileSystemTree.areHiddensShown());
+    };
+    myPathTextField = new FileTextFieldImpl(pathEditor, new LocalFsFinder(), filter, FileChooserFactoryImpl.getMacroMap(), getDisposable()) {
       @Override
-      protected void onTextChanged(final String newValue) {
+      protected void onTextChanged(String newValue) {
         myUiUpdater.cancelAllUpdates();
         updateTreeFromPath(newValue);
       }

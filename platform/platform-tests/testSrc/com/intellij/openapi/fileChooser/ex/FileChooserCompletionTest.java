@@ -1,13 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
-import com.intellij.openapi.fileChooser.ex.FileLookup.LookupFile;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -76,21 +72,10 @@ public class FileChooserCompletionTest extends BareTestFixtureTestCase {
   }
 
   private void assertComplete(String typed, String[] expected, Map<String, String> macros, String completionBase, String preselected) {
-    LocalFsFinder finder = new LocalFsFinder() {
-      @Override
-      public LookupFile find(@NotNull String path) {
-        File ioFile = new File(path);
-        return ioFile.isAbsolute() ? new IoFile(ioFile) : null;
-      }
-    };
+    LocalFsFinder finder = new LocalFsFinder(false).withBaseDir(null);
     FileTextFieldImpl.CompletionResult result = new FileTextFieldImpl.CompletionResult();
     result.myCompletionBase = completionBase + typed.replace("/", finder.getSeparator());
-    new FileTextFieldImpl(new JTextField(), finder, file -> true, macros, getTestRootDisposable()) {
-      @Override
-      public @Nullable VirtualFile getSelectedFile() {
-        return null;
-      }
-    }.processCompletion(result);
+    new FileTextFieldImpl(new JTextField(), finder, file -> true, macros, getTestRootDisposable()).processCompletion(result);
 
     String[] actualVariants = result.myToComplete.stream().map(f -> toFileText(f, result, finder.getSeparator())).toArray(String[]::new);
     String[] expectedVariants = Stream.of(expected).map(s -> s.replace("/", finder.getSeparator())).toArray(String[]::new);
