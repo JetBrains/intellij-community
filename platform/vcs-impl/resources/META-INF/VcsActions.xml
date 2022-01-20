@@ -245,6 +245,12 @@
     <action id="Vcs.Shelf.Apply" class="com.intellij.openapi.vcs.changes.savedPatches.ApplyShelfAction"/>
     <action id="Vcs.Shelf.Pop" class="com.intellij.openapi.vcs.changes.savedPatches.PopShelfAction"/>
 
+    <group id="Vcs.Shelf.Operations.ContextMenu" class="com.intellij.openapi.vcs.changes.savedPatches.ShelfOperationsGroup">
+      <reference id="Vcs.Shelf.Apply"/>
+      <reference id="Vcs.Shelf.Pop"/>
+      <reference id="ShelveChanges.UnshelveWithDialog"/>
+    </group>
+
     <!--a group for plugins to add their actions-->
     <group id="VcsHistoryActionsGroup"/>
     <group id="VcsHistoryActionsGroup.Toolbar"/>

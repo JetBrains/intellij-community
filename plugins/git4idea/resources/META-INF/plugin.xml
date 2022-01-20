@@ -396,11 +396,16 @@
     <action id="Git.Show.Stash" class="git4idea.stash.ui.GitShowStashToolWindowTabAction"/>
     <action id="Git.Stash.Refresh" class="git4idea.stash.ui.GitRefreshStashesAction" icon="AllIcons.Actions.Refresh"/>
 
-    <group id="Git.Stash.ContextMenu">
+    <group id="Git.Stash.Operations.ContextMenu" class="git4idea.stash.ui.GitStashOperationsGroup">
       <reference id="Git.Stash.Pop"/>
       <reference id="Git.Stash.Apply"/>
       <reference id="Git.Stash.UnstashAs"/>
       <reference id="Git.Stash.Drop"/>
+    </group>
+
+    <group id="Git.Stash.ContextMenu">
+      <reference id="Git.Stash.Operations.ContextMenu"/>
+      <reference id="Vcs.Shelf.Operations.ContextMenu"/>
       <separator/>
       <reference id="Diff.ShowDiff"/>
       <reference ref="Diff.ShowStandaloneDiff"/>

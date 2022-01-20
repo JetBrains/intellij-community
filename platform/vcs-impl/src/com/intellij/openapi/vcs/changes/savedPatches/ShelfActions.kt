@@ -43,3 +43,9 @@ class PopShelfAction : ShelfAction(VcsBundle.messagePointer("saved.patch.pop.act
     ShelveChangesManager.getInstance(project).unshelveSilentlyAsynchronously(project, shelves, emptyList(), emptyList(), null, true)
   }
 }
+
+class ShelfOperationsGroup : SavedPatchesOperationsGroup() {
+  override fun isApplicable(patchObject: SavedPatchesProvider.PatchObject<*>): Boolean {
+    return patchObject.data is ShelvedChangeList
+  }
+}

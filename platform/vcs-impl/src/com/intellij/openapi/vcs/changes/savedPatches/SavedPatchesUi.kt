@@ -114,7 +114,7 @@ class SavedPatchesUi(project: Project, private val providers: List<SavedPatchesP
     return null
   }
 
-  private fun selectedPatchObjectOrNull() = tree.selectedPatchObjects().findAny().orNull()
+  internal fun selectedPatchObjectOrNull() = tree.selectedPatchObjects().findAny().orNull()
 
   private fun selectedProvider(): SavedPatchesProvider<*> {
     val selectedPatch = selectedPatchObjectOrNull() ?: return providers.first()
