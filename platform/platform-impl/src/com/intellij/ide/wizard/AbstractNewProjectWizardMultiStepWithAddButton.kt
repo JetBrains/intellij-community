@@ -2,6 +2,7 @@
 package com.intellij.ide.wizard
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -9,14 +10,17 @@ import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.InstallPluginTask
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.components.SegmentedButtonBorder
+import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.swing.JComponent
 
@@ -56,7 +60,14 @@ abstract class AbstractNewProjectWizardMultiStepWithAddButton<S : NewProjectWiza
     override fun actionPerformed(e: AnActionEvent) {
       val pluginId = PluginId.getId(additionalStepPlugins[language]!!)
       val component = e.dataContext.getData(CONTEXT_COMPONENT)!!
-      ProgressManager.getInstance().run(InstallPluginTask(setOf(pluginId), ModalityState.stateForComponent(component)))
+      if (Registry.`is`("new.project.wizard.modal.plugin.install", false)) {
+        ProgressManager.getInstance().run(InstallPluginTask(setOf(pluginId), ModalityState.stateForComponent(component)))
+      }
+      else {
+        ShowSettingsUtil.getInstance().editConfigurable(null, PluginManagerConfigurable(), Consumer {
+          it.openMarketplaceTab("/tag:Languages $language")
+        })
+      }
     }
   }
 }

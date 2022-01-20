@@ -1331,6 +1331,8 @@
     <persistentFsConnectionListener implementation="com.intellij.openapi.vfs.impl.jar.ArchiveCachesCleaner"/>
     <applicationService serviceInterface="com.intellij.openapi.progress.TaskSupport"
                         serviceImplementation="com.intellij.openapi.progress.impl.PlatformTaskSupport"/>
+    <registryKey key="new.project.wizard.modal.plugin.install" description="Enables modal lanungage plugins installing"
+                 defaultValue="false"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
