@@ -282,7 +282,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     private fun reloadArchetypeVersions() {
       val versions = archetypeItem.versions.naturalSorted().reversed()
       archetypeVersionComboBox.collectionModel.replaceAll(versions)
-      archetypeVersion = ""
+      archetypeVersion = versions.firstOrNull() ?: ""
     }
 
     private fun reloadArchetypeDescriptor() {
