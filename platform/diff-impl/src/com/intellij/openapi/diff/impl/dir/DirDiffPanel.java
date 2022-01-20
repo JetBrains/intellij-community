@@ -71,6 +71,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
   public static final DataKey<JTable> DIR_DIFF_TABLE = DataKey.create("DIR_DIFF_TABLE");
   private static final String SPLITTER_PROPORTION_KEY = "dir.diff.panel.splitter.proportion";
 
+  private final Project myProject;
   private final DirDiffTableModel myModel;
   private final DirDiffWindow myDiffWindow;
 
@@ -85,6 +86,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
   private final JPanel myToolbarPanel;
 
   public DirDiffPanel(DirDiffTableModel model, DirDiffWindow wnd) {
+    myProject = model.getProject();
     myModel = model;
     myDiffWindow = wnd;
 
@@ -99,13 +101,11 @@ public class DirDiffPanel implements Disposable, DataProvider {
     myTable.setModel(myModel);
     new TableSpeedSearch(myTable);
 
-    final DirDiffTableCellRenderer renderer = new DirDiffTableCellRenderer();
     myTable.setExpandableItemsEnabled(false);
     myTable.getTableHeader().setReorderingAllowed(false);
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
-    myTable.setDefaultRenderer(Object.class, renderer);
+    myTable.setDefaultRenderer(Object.class, new DirDiffTableCellRenderer());
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-    final Project project = myModel.getProject();
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
@@ -283,10 +283,10 @@ public class DirDiffPanel implements Disposable, DataProvider {
     myFilterPanel.add(myFilter, BorderLayout.CENTER);
     myFilterPanel.add(filterLabel, BorderLayout.WEST);
 
-    setDirFieldChooser(myModel.getSourceDir().getElementChooser(project), false);
-    setDirFieldChooser(myModel.getTargetDir().getElementChooser(project), true);
+    setDirFieldChooser(myModel.getSourceDir().getElementChooser(myProject), false);
+    setDirFieldChooser(myModel.getTargetDir().getElementChooser(myProject), true);
 
-    myDiffRequestProcessor = new MyDiffRequestProcessor(project);
+    myDiffRequestProcessor = new MyDiffRequestProcessor(myProject);
     Disposer.register(this, myDiffRequestProcessor);
     actions.setUp(myModel, myDiffRequestProcessor.getComponent());
     tableSplitter.setSecondComponent(myDiffRequestProcessor.getComponent());
@@ -420,10 +420,9 @@ public class DirDiffPanel implements Disposable, DataProvider {
   }
 
   public void focusTable() {
-    final Project project = myModel.getProject();
-    final IdeFocusManager focusManager = project == null || project.isDefault() ?
+    final IdeFocusManager focusManager = myProject == null || myProject.isDefault() ?
                                          IdeFocusManager.getGlobalInstance() :
-                                         IdeFocusManager.getInstance(project);
+                                         IdeFocusManager.getInstance(myProject);
     focusManager.requestFocus(myTable, true);
   }
 
@@ -455,7 +454,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myModel.getProject();
+      return myProject;
     }
     else if (DIR_DIFF_MODEL.is(dataId)) {
       return myModel;
@@ -473,14 +472,13 @@ public class DirDiffPanel implements Disposable, DataProvider {
   }
 
   private Navigatable @NotNull [] getNavigatableArray() {
-    Project project = myModel.getProject();
     List<DirDiffElementImpl> elements = myModel.getSelectedElements();
     List<Navigatable> navigatables = new ArrayList<>();
     for (DirDiffElementImpl element : elements) {
       DiffElement source = element.getSource();
       DiffElement target = element.getTarget();
-      Navigatable navigatable1 = source != null ? source.getNavigatable(project) : null;
-      Navigatable navigatable2 = target != null ? target.getNavigatable(project) : null;
+      Navigatable navigatable1 = source != null ? source.getNavigatable(myProject) : null;
+      Navigatable navigatable2 = target != null ? target.getNavigatable(myProject) : null;
       if (navigatable1 != null) navigatables.add(navigatable1);
       if (navigatable2 != null) navigatables.add(navigatable2);
     }
@@ -569,13 +567,12 @@ public class DirDiffPanel implements Disposable, DataProvider {
     @Override
     protected DiffRequest loadRequest(@NotNull ElementWrapper element, @NotNull ProgressIndicator indicator)
       throws ProcessCanceledException, DiffRequestProducerException {
-      final Project project = myModel.getProject();
       DiffElement sourceElement = element.sourceElement;
       DiffElement targetElement = element.targetElement;
 
-      DiffContent sourceContent = sourceElement != null ? sourceElement.createDiffContent(project, indicator) :
+      DiffContent sourceContent = sourceElement != null ? sourceElement.createDiffContent(myProject, indicator) :
                                   DiffContentFactory.getInstance().createEmpty();
-      DiffContent targetContent = targetElement != null ? targetElement.createDiffContent(project, indicator) :
+      DiffContent targetContent = targetElement != null ? targetElement.createDiffContent(myProject, indicator) :
                                   DiffContentFactory.getInstance().createEmpty();
 
       return new SimpleDiffRequest(null, sourceContent, targetContent, null, null);
