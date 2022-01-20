@@ -328,7 +328,7 @@ private class EvaluatorModuleDescriptor(
     val packageFragmentForEvaluator = LazyPackageDescriptor(this, FqName.ROOT, resolveSession, declarationProvider)
     val rootPackageDescriptorWrapper: PackageViewDescriptor =
         object : DeclarationDescriptorImpl(Annotations.EMPTY, FqName.ROOT.shortNameOrSpecial()), PackageViewDescriptor {
-            private val rootPackageDescriptor = moduleDescriptor.getPackage(FqName.ROOT)
+            private val rootPackageDescriptor = moduleDescriptor.safeGetPackage(FqName.ROOT)
 
             override fun getContainingDeclaration() = rootPackageDescriptor.containingDeclaration
 
@@ -351,12 +351,19 @@ private class EvaluatorModuleDescriptor(
             }
         }
 
-    override fun getPackage(fqName: FqName): PackageViewDescriptor {
+    override fun getPackage(fqName: FqName): PackageViewDescriptor =
         if (fqName != FqName.ROOT) {
-            return moduleDescriptor.getPackage(fqName)
+            moduleDescriptor.safeGetPackage(fqName)
+        } else {
+            rootPackageDescriptorWrapper
         }
-        return rootPackageDescriptorWrapper
-    }
+
+    private fun ModuleDescriptor.safeGetPackage(fqName: FqName): PackageViewDescriptor =
+        try {
+            getPackage(fqName)
+        } catch (e: InvalidModuleException) {
+            throw ProcessCanceledException(e)
+        }
 }
 
 private val OutputFile.internalClassName: String
