@@ -9,7 +9,7 @@ import com.intellij.searchEverywhere.model.PredictionModel
 import com.intellij.searchEverywhere.model.actions.exp.PredictionModel as ExperimentalPredictionModel
 
 
-internal class SearchEverywhereActionsRankingModelProvider : SearchEverywhereMLRankingModelProvider() {
+internal class SearchEverywhereActionsRankingModelLoader : SearchEverywhereMLRankingModelLoader() {
   private val standardResourceDirectory = "features"
   private val experimentalResourceDirectory = "actions_features_exp"
 

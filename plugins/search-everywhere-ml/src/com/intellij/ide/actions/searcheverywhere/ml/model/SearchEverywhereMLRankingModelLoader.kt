@@ -9,14 +9,14 @@ import com.intellij.internal.ml.catboost.CatBoostResourcesModelMetadataReader
 import com.intellij.openapi.extensions.ExtensionPointName
 
 /**
- * Provides model to predict relevance of each element in Search Everywhere tab
+ * Loads ML model from module dependency or local file, loaded models predict relevance of each element in Search Everywhere tab
  */
-internal abstract class SearchEverywhereMLRankingModelProvider {
+internal abstract class SearchEverywhereMLRankingModelLoader {
   companion object {
-    private val EP_NAME: ExtensionPointName<SearchEverywhereMLRankingModelProvider>
-      = ExtensionPointName.create("com.intellij.searcheverywhere.ml.rankingModelProvider")
+    private val EP_NAME: ExtensionPointName<SearchEverywhereMLRankingModelLoader>
+      = ExtensionPointName.create("com.intellij.searcheverywhere.ml.rankingModelLoader")
 
-    fun getForTab(contributorId: String): SearchEverywhereMLRankingModelProvider {
+    fun getForTab(contributorId: String): SearchEverywhereMLRankingModelLoader {
       return EP_NAME.findFirstSafe {
         it.supportedContributor.simpleName == contributorId
       } ?: throw IllegalArgumentException("Unsupported contributor $contributorId")
@@ -31,14 +31,12 @@ internal abstract class SearchEverywhereMLRankingModelProvider {
    * If no path is specified, then a bundled model will be provided which can either be experimental or standard,
    * depending on the return value of [shouldProvideExperimentalModel].
    */
-  val model: DecisionFunction
-    get() {
-      return if (shouldProvideLocalModel() && shouldProvideExperimentalModel()) {
-        getLocalModel()
-      } else {
-        getBundledModel()
-      }
+  fun loadModel(): DecisionFunction {
+    if (shouldProvideLocalModel() && shouldProvideExperimentalModel()) {
+      return getLocalModel()
     }
+    return getBundledModel()
+  }
 
   /**
    * Returns a model bundled with the IDE.

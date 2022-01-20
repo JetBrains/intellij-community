@@ -56,8 +56,8 @@
                     interface="com.intellij.ide.actions.searcheverywhere.ml.id.ElementKeyForIdProvider"
                     dynamic="true"/>
 
-    <extensionPoint name="rankingModelProvider"
-                    interface="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereMLRankingModelProvider"
+    <extensionPoint name="rankingModelLoader"
+                    interface="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereMLRankingModelLoader"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -74,10 +74,10 @@
     <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.ActionKeyProvider"/>
     <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.ClassAndFileKeyProvider"/>
 
-    <rankingModelProvider
-      implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModelProvider"/>
-    <rankingModelProvider
-      implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereFilesRankingModelProvider"/>
+    <rankingModelLoader
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModelLoader"/>
+    <rankingModelLoader
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereFilesRankingModelLoader"/>
   </extensions>
 
   <applicationListeners>

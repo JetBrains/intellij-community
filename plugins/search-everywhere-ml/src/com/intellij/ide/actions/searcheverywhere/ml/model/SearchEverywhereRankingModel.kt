@@ -4,8 +4,8 @@ package com.intellij.ide.actions.searcheverywhere.ml.model
 import com.intellij.internal.ml.FeatureMapper
 
 
-internal class SearchEverywhereRankingModel(private val provider: SearchEverywhereMLRankingModelProvider) {
-  val model by lazy { provider.model }
+internal class SearchEverywhereRankingModel(private val loader: SearchEverywhereMLRankingModelLoader) {
+  val model by lazy { loader.loadModel() }
 
   fun predict(features: Map<String, Any>): Double {
     return model.predict(buildArray(model.featuresOrder, features))

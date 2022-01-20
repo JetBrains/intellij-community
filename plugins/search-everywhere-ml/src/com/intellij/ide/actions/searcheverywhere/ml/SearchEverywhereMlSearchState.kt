@@ -4,7 +4,7 @@ package com.intellij.ide.actions.searcheverywhere.ml
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
-import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereMLRankingModelProvider
+import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereMLRankingModelLoader
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereRankingModel
 
 internal class SearchEverywhereMlSearchState(
@@ -17,8 +17,8 @@ internal class SearchEverywhereMlSearchState(
   private val cachedMLWeight: MutableMap<Int, Double> = hashMapOf()
 
   private val model: SearchEverywhereRankingModel by lazy {
-    val provider = SearchEverywhereMLRankingModelProvider.getForTab(tabId)
-    SearchEverywhereRankingModel(provider)
+    val loader = SearchEverywhereMLRankingModelLoader.getForTab(tabId)
+    SearchEverywhereRankingModel(loader)
   }
 
   @Synchronized
