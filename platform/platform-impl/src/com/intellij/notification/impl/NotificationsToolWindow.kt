@@ -1040,6 +1040,7 @@ private class NotificationComponent(val project: Project,
 
   fun expire() {
     myNotificationWrapper.notification = null
+    setNew(false)
 
     for (component in UIUtil.findComponentsOfType(this, LinkLabel::class.java)) {
       component.isEnabled = false
