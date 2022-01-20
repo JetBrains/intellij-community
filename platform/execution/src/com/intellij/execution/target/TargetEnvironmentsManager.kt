@@ -76,13 +76,9 @@ class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsMan
   ) {
     override fun toBaseState(config: TargetEnvironmentConfiguration): OneTargetState = config.toOneTargetState()
 
-    override fun fromOneState(state: ContributedStateBase): TargetEnvironmentConfiguration? {
-      val result = super.fromOneState(state)
-      if (result != null && state is OneTargetState) {
-        result.uuid = state.uuid ?: UUID.randomUUID().toString()
-        result.runtimes.loadState(state.runtimes)
-      }
-      return result
+    override fun fromOneState(state: ContributedStateBase) = when (state) {
+      is OneTargetState -> state.toTargetConfiguration()
+      else -> super.fromOneState(state) // unexpected, but I do not want to fail just in case
     }
   }
 
@@ -102,11 +98,18 @@ class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsMan
     @get: Property(surroundWithTag = false)
     var runtimes by list<ContributedConfigurationsList.ContributedStateBase>()
 
+    fun toTargetConfiguration(): TargetEnvironmentConfiguration? {
+      return TargetEnvironmentType.EXTENSION_NAME.deserializeState(this)?.also { result ->
+        result.uuid = uuid ?: UUID.randomUUID().toString()
+        result.runtimes.loadState(runtimes)
+      }
+    }
+
     companion object {
-      fun TargetEnvironmentConfiguration.toOneTargetState() = OneTargetState().also { result ->
-        result.loadFromConfiguration(this)
-        result.uuid = uuid
-        result.runtimes = runtimes.state.configs
+      fun TargetEnvironmentConfiguration.toOneTargetState() = OneTargetState().also { state ->
+        state.loadFromConfiguration(this)
+        state.uuid = uuid
+        state.runtimes = runtimes.state.configs
       }
     }
   }

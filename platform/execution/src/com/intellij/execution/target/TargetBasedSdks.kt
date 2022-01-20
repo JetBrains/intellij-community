@@ -6,6 +6,7 @@ package com.intellij.execution.target
 import com.intellij.configurationStore.ComponentSerializationUtil
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.execution.target.ContributedConfigurationsList.Companion.getSerializer
+import com.intellij.execution.target.TargetEnvironmentsManager.OneTargetState.Companion.toOneTargetState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -57,26 +58,19 @@ fun loadTargetBasedSdkAdditionalData(element: Element): Pair<ContributedConfigur
 }
 
 fun saveTargetConfiguration(element: Element, config: TargetEnvironmentConfiguration?) {
-  val targetStateElement = Element(TARGET_ENVIRONMENT_CONFIGURATION)
-  element.addContent(targetStateElement)
-  TargetEnvironmentsManager.TargetsList().also { list ->
-    config?.let { list.addConfig(it) }
-    XmlSerializer.serializeInto(list.state, targetStateElement)
+  val targetStateElement = Element(TARGET_ENVIRONMENT_CONFIGURATION).also {
+    element.addContent(it)
+  }
+
+  config?.toOneTargetState()?.let {
+    jdomSerializer.serializeObjectInto(it, targetStateElement)
   }
 }
 
 fun loadTargetConfiguration(element: Element): TargetEnvironmentConfiguration? {
-  val targetConfigurationElement = element.getChild(TARGET_ENVIRONMENT_CONFIGURATION)
-  if (targetConfigurationElement == null) {
-    LOG.warn("Target configuration data is absent")
-    return null
-  }
-
-  val targetState = jdomSerializer.deserialize(targetConfigurationElement, ContributedConfigurationsList.ListState::class.java)
-
-  return TargetEnvironmentsManager.TargetsList().also {
-    it.loadState(targetState)
-  }.resolvedConfigs().firstOrNull()
+  val targetConfigurationElement = element.getChild(TARGET_ENVIRONMENT_CONFIGURATION) ?: return null
+  val targetState = jdomSerializer.deserialize(targetConfigurationElement, TargetEnvironmentsManager.OneTargetState::class.java)
+  return targetState.toTargetConfiguration()
 }
 
 /**
