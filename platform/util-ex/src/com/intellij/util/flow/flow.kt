@@ -31,23 +31,28 @@ import kotlinx.coroutines.launch
  * 1, 3, 4
  * ```
  */
-fun <X> Flow<X>.throttle(timeMs: Long): Flow<X> = channelFlow {
-  val latch = Channel<Unit>()
-  val latchJob = launch(start = CoroutineStart.UNDISPATCHED) {
-    while (isActive) {
-      latch.send(Unit)
-      delay(timeMs)
-    }
+fun <X> Flow<X>.throttle(timeMs: Long): Flow<X> {
+  if (timeMs <= 0) {
+    return this
   }
-  try {
-    collectLatest {
-      latch.receive()
-      @Suppress("EXPERIMENTAL_API_USAGE")
-      send(it)
+  return channelFlow {
+    val latch = Channel<Unit>()
+    val latchJob = launch(start = CoroutineStart.UNDISPATCHED) {
+      while (isActive) {
+        latch.send(Unit)
+        delay(timeMs)
+      }
     }
-  }
-  finally {
-    latchJob.cancel()
-    latch.close()
+    try {
+      collectLatest {
+        latch.receive()
+        @Suppress("EXPERIMENTAL_API_USAGE")
+        send(it)
+      }
+    }
+    finally {
+      latchJob.cancel()
+      latch.close()
+    }
   }
 }
