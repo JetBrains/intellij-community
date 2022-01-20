@@ -2,7 +2,9 @@
 package com.intellij.internal.statistic.devkit.actions
 
 import com.google.gson.GsonBuilder
+import com.intellij.icons.AllIcons
 import com.intellij.ide.scratch.ScratchRootType
+import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil
 import com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilder
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
@@ -12,7 +14,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 
-class GenerateEventsScheme : DumbAwareAction() {
+class GenerateEventsScheme : DumbAwareAction(ActionsBundle.message("action.GenerateEventsScheme.text"),
+                                             ActionsBundle.message("action.GenerateEventsScheme.description"),
+                                             AllIcons.FileTypes.Json) {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = StatisticsRecorderUtil.isTestModeEnabled("FUS") && e.project != null
   }
