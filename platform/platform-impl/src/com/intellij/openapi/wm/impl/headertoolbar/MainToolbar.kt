@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.util.ui.JBUI
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
@@ -64,7 +65,11 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
 
   private fun createActionsBar(): JComponent? {
     val group = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_ACTIONS) as ActionGroup?
-    return group?.let { ActionToolbar(it.getChildren(null).asList()) }
+    return group?.let {
+      val toolbar = ActionToolbar(it.getChildren(null).asList())
+      toolbar.border = JBUI.Borders.emptyRight(8)
+      return@let toolbar
+    }
   }
 
   private inner class ResizeListener : ComponentAdapter() {
