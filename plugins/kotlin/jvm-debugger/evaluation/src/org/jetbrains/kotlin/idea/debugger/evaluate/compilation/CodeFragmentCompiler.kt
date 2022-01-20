@@ -73,8 +73,12 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext, priva
         bindingContext: BindingContext, moduleDescriptor: ModuleDescriptor
     ): CompilationResult {
         val result = ReadAction.nonBlocking<Result<CompilationResult>> {
-            runCatching {
-                doCompile(codeFragment, filesToCompile, bindingContext, moduleDescriptor)
+            try {
+                Result.success(doCompile(codeFragment, filesToCompile, bindingContext, moduleDescriptor))
+            } catch (ex: ProcessCanceledException) {
+                throw ex
+            } catch (ex: Exception) {
+                Result.failure(ex)
             }
         }.executeSynchronously()
         return result.getOrThrow()
