@@ -38,10 +38,8 @@ class KotlinBuildProcessParametersProvider(private val project: Project) : Build
         return res
     }
 
-    override fun getPathParameters() =
-        listOf(Pair("-Djps.kotlin.home=", KotlinPathsProvider.getKotlinPaths(project).homePath.toPath().also {
-            check(it.isDirectory()) {
-                "$it should be existing directory because '${SetupKotlinJpsPluginBeforeCompileTask::class.simpleName}' had to create it"
-            }
-        }))
+    override fun getPathParameters(): List<Pair<String, Path>> =
+        listOfNotNull(
+            Pair("-Djps.kotlin.home=", KotlinPathsProvider.getKotlinPaths(project).homePath.toPath()).takeIf { it.second.isDirectory() }
+        )
 }
