@@ -12,9 +12,10 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager
 import java.util.function.Supplier
 
-abstract class ShelfAction(dynamicText: Supplier<@NlsActions.ActionText String>,
-                           dynamicDescription: Supplier<@NlsActions.ActionDescription String>) :
-  DumbAwareAction(dynamicText, dynamicDescription, null) {
+abstract class ShelfAction : DumbAwareAction {
+  constructor(): super()
+  constructor(dynamicText: Supplier<@NlsActions.ActionText String>,
+              dynamicDescription: Supplier<@NlsActions.ActionDescription String>) : super(dynamicText, dynamicDescription, null)
 
   abstract fun perform(project: Project, shelves: List<ShelvedChangeList>)
 
@@ -41,6 +42,13 @@ class PopShelfAction : ShelfAction(VcsBundle.messagePointer("saved.patch.pop.act
                                    VcsBundle.messagePointer("shelf.pop.action.description")) {
   override fun perform(project: Project, shelves: List<ShelvedChangeList>) {
     ShelveChangesManager.getInstance(project).unshelveSilentlyAsynchronously(project, shelves, emptyList(), emptyList(), null, true)
+  }
+}
+
+class DropShelfAction : ShelfAction(VcsBundle.messagePointer("shelf.drop.action"),
+                                    VcsBundle.messagePointer("shelf.drop.action.description")) {
+  override fun perform(project: Project, shelves: List<ShelvedChangeList>) {
+    ShelvedChangesViewManager.deleteShelves(project, shelves)
   }
 }
 
