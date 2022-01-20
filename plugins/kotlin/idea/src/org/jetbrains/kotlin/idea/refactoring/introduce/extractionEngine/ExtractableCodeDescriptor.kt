@@ -35,6 +35,8 @@ import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.types.typeUtil.nullability
+import org.jetbrains.kotlin.utils.IDEAPlatforms
+import org.jetbrains.kotlin.utils.IDEAPluginsCompatibilityAPI
 import java.util.*
 
 interface Parameter {
@@ -352,6 +354,40 @@ data class ExtractableCodeDescriptor(
     val name: String get() = suggestedNames.firstOrNull() ?: ""
     val duplicates: List<DuplicateInfo> by lazy { findDuplicates() }
 }
+
+@IDEAPluginsCompatibilityAPI(
+    usedIn = [IDEAPlatforms._213],
+    message = "Provided for binary backward compatibility",
+    plugins = "Jetpack Compose plugin in IDEA"
+)
+fun ExtractableCodeDescriptor.copy(
+ extractionData: ExtractionData = this.extractionData,
+ originalContext: BindingContext = this.originalContext,
+ suggestedNames: List<String> = this.suggestedNames,
+ visibility: KtModifierKeywordToken? = this.visibility,
+ parameters: List<Parameter> = this.parameters,
+ receiverParameter: Parameter? = this.receiverParameter,
+ typeParameters: List<TypeParameter> = this.typeParameters,
+ replacementMap: MultiMap<KtSimpleNameExpression, Replacement> = this.replacementMap,
+ controlFlow: ControlFlow = this.controlFlow,
+ returnType: KotlinType = this.returnType,
+ modifiers: List<KtKeywordToken> = this.modifiers,
+ annotations: List<AnnotationDescriptor> = this.annotations
+) = copy(
+    extractionData,
+    originalContext,
+    suggestedNames,
+    visibility,
+    parameters,
+    receiverParameter,
+    typeParameters,
+    replacementMap,
+    controlFlow,
+    returnType,
+    modifiers,
+    annotations,
+    emptyList()
+)
 
 fun ExtractableCodeDescriptor.copy(
     newName: String,
