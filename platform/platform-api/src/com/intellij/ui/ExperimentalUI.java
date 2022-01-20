@@ -154,33 +154,39 @@ public final class ExperimentalUI {
     paths.put("general/chevron-right.svg", "expui/general/chevronRight.svg");
     paths.put("general/chevron-up.svg", "expui/general/chevronUp.svg");
     paths.put("vcs/branch.svg", "expui/toolwindow/vcs.svg");
-    paths.put("fileTypes/css.svg", "expui/fileTypes/css.svg");
+    paths.put("vcs/ignore_file.svg", "/expui/fileTypes/gitignore.svg");
     paths.put("icons/Docker.svg", "expui/fileTypes/docker.svg");
+    paths.put("icons/DockerFile_1.svg", "expui/fileTypes/docker.svg");
     paths.put("icons/gradle.svg", "expui/fileTypes/gradle.svg");
-    paths.put("fileTypes/html.svg", "expui/fileTypes/html.svg");
+    paths.put("icons/gradleFile.svg", "expui/fileTypes/gradle.svg");
     paths.put("nodes/ideaModule.svg", "expui/fileTypes/ideaModule.svg");
+    paths.put("nodes/editorconfig.svg", "/expui/fileTypes/editorConfig.svg");
+    paths.put("fileTypes/css.svg", "expui/fileTypes/css.svg");
+    paths.put("fileTypes/html.svg", "expui/fileTypes/html.svg");
     paths.put("fileTypes/java.svg", "expui/fileTypes/java.svg");
     paths.put("fileTypes/javaScript.svg", "expui/fileTypes/javascript.svg");
     paths.put("fileTypes/json.svg", "expui/fileTypes/json.svg");
     paths.put("fileTypes/manifest.svg", "expui/fileTypes/manifest.svg");
     paths.put("icons/php-icon.svg", "expui/fileTypes/php.svg");
     paths.put("fileTypes/properties.svg", "expui/fileTypes/properties.svg");
-    paths.put("icons/ruby.svg", "expui/fileTypes/ruby.svg");
+    paths.put("icons/ruby/ruby.svg", "expui/fileTypes/ruby.svg");
+    paths.put("icons/ruby/ruby_file.svg", "expui/fileTypes/ruby.svg");
     paths.put("icons/sql.svg", "expui/fileTypes/sql.svg");
     paths.put("fileTypes/text.svg", "expui/fileTypes/text.svg");
     paths.put("icons/fileTypes/TypeScriptFile.svg", "expui/fileTypes/typescript.svg");
     paths.put("fileTypes/unknown.svg", "expui/fileTypes/unknown.svg");
     paths.put("fileTypes/xml.svg", "expui/fileTypes/xml.svg");
     paths.put("fileTypes/yaml.svg", "expui/fileTypes/yaml.svg");
+    paths.put("fileTypes/archive.svg", "/expui/fileTypes/archive.svg");
+    paths.put("org/intellij/images/icons/ImagesFileType.svg", "/expui/fileTypes/image.svg");
+    paths.put("org/jetbrains/plugins/sass/sass.svg", "/expui/fileTypes/scss.svg");
+    paths.put("icons/shFile.svg", "/expui/fileTypes/shell.svg");
+    paths.put("icons/MarkdownPlugin.svg", "/expui/fileTypes/markdown.svg");
     if (isNewToolbar()) {
       paths.put("actions/execute.svg", "expui/run/run.svg");
-      paths.put("actions/execute_dark.svg", "expui/run/run_dark.svg");
       paths.put("actions/startDebugger.svg", "expui/run/debug.svg");
-      paths.put("actions/startDebugger_dark.svg", "expui/run/debug_dark.svg");
       paths.put("actions/restart.svg", "expui/run/restart.svg");
-      paths.put("actions/restart_dark.svg", "expui/run/restart_dark.svg");
       paths.put("actions/suspend.svg", "expui/run/stop.svg");
-      paths.put("actions/suspend_dark.svg", "expui/run/stop_dark.svg");
     }
     return new IconPathPatcher() {
       @Override
