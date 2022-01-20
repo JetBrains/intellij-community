@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.actions
 
 import com.intellij.ide.bookmark.BookmarkBundle
 import com.intellij.ide.bookmark.ui.BookmarksView
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
@@ -15,6 +16,10 @@ internal class ShowLineBookmarksAction : DumbAwareAction(BookmarkBundle.messageP
 
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabled = event.project != null
+    event.presentation.text = when (AdvancedSettings.getBoolean("show.line.bookmarks.in.popup")) {
+      true -> BookmarkBundle.message("show.line.bookmarks.action.text")
+      else -> BookmarkBundle.message("show.bookmarks.action.text")
+    }
   }
 
   override fun actionPerformed(event: AnActionEvent) {
