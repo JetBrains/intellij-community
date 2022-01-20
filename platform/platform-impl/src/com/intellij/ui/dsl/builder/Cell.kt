@@ -100,7 +100,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   /**
    * All components from the same width group will have the same width equals to maximum width from the group.
    */
-  fun widthGroup(group: String)
+  fun widthGroup(group: String): Cell<T>
 
   /**
    * If this method is called, the value of the component will be stored to the backing property only if the component is enabled

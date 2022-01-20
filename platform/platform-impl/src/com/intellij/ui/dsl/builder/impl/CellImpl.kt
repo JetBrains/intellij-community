@@ -141,8 +141,9 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  override fun widthGroup(group: String) {
+  override fun widthGroup(group: String): CellImpl<T> {
     widthGroup = group
+    return this
   }
 
   override fun applyIfEnabled(): CellImpl<T> {
