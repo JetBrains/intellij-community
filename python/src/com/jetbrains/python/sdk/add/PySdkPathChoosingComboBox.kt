@@ -155,7 +155,9 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(sdks: List<Sdk> = empt
         (component.selectedItem as? ExistingPySdkComboBoxItem)?.getText().orEmpty()
 
       override fun setText(component: JComboBox<PySdkComboBoxItem>, text: String) {
-        component.addItem(ExistingPySdkComboBoxItem(createDetectedSdk(text, isLocal = false)))
+        val newItem = ExistingPySdkComboBoxItem(createDetectedSdk(text, isLocal = false))
+        component.addItem(newItem)
+        component.selectedItem = newItem
       }
     }
 
