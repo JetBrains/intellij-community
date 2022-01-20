@@ -92,12 +92,6 @@ data class Constraints(
   val widthGroup: String? = null,
 
   /**
-   * All components from the same height group will have the same height equals to maximum height from the group.
-   * Cannot be used together with [VerticalAlign.FILL] or for sub-grids (see [GridLayout.addLayoutSubGrid])
-   */
-  val heightGroup: String? = null,
-
-  /**
    * Component helper for custom behaviour
    */
   @ApiStatus.Experimental
@@ -112,9 +106,6 @@ data class Constraints(
 
     if (widthGroup != null && horizontalAlign == HorizontalAlign.FILL) {
       throw UiDslException("Width group cannot be used with horizontal align FILL: $widthGroup")
-    }
-    if (heightGroup != null && verticalAlign == VerticalAlign.FILL) {
-      throw UiDslException("Height group cannot be used with vertical align FILL: $heightGroup")
     }
   }
 }

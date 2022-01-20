@@ -40,9 +40,6 @@ class GridLayout : LayoutManager2 {
     if (constraints.widthGroup != null) {
       throw UiDslException("Sub-grids cannot use widthGroup: ${constraints.widthGroup}")
     }
-    if (constraints.heightGroup != null) {
-      throw UiDslException("Sub-grids cannot use heightGroup: ${constraints.heightGroup}")
-    }
 
     return (constraints.grid as GridImpl).registerSubGrid(constraints)
   }

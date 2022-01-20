@@ -125,17 +125,6 @@ internal class GridImpl : Grid {
       }
     }
 
-    val heightGroups = result.values.groupBy { it.constraints.heightGroup }
-    for ((heightGroup, preCalculationDataList) in heightGroups) {
-      if (heightGroup == null) {
-        continue
-      }
-      val maxHeight = preCalculationDataList.maxOf { it.calculatedPreferredSize.height }
-      for (preCalculationData in preCalculationDataList) {
-        preCalculationData.calculatedPreferredSize.height = maxHeight
-      }
-    }
-
     return result
   }
 
