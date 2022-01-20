@@ -65,8 +65,8 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
            resizableColumn: Boolean = false,
            gaps: Gaps = Gaps.EMPTY,
            visualPaddings: Gaps = Gaps.EMPTY,
-           horizontalSizeGroup: String? = null,
-           verticalSizeGroup: String? = null,
+           widthGroup: String? = null,
+           heightGroup: String? = null,
            componentHelper: ComponentHelper? = null): RowsGridBuilder {
     if (y == GRID_EMPTY) {
       y = 0
@@ -76,8 +76,8 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
     }
 
     val constraints = Constraints(grid, x, y, width = width, horizontalAlign = horizontalAlign,
-      verticalAlign = verticalAlign, baselineAlign = baselineAlign,
-      gaps = gaps, visualPaddings = visualPaddings, horizontalSizeGroup = horizontalSizeGroup, verticalSizeGroup = verticalSizeGroup,
+                                  verticalAlign = verticalAlign, baselineAlign = baselineAlign,
+                                  gaps = gaps, visualPaddings = visualPaddings, widthGroup = widthGroup, heightGroup = heightGroup,
                                   componentHelper = componentHelper)
     panel.add(component, constraints)
     return skip(width)
@@ -89,8 +89,8 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
                   baselineAlign: Boolean = defaultBaselineAlign,
                   gaps: Gaps = Gaps.EMPTY,
                   visualPaddings: Gaps = Gaps.EMPTY,
-                  horizontalSizeGroup: String? = null,
-                  verticalSizeGroup: String? = null,
+                  widthGroup: String? = null,
+                  heightGroup: String? = null,
                   componentHelper: ComponentHelper? = null): Constraints {
     if (y == GRID_EMPTY) {
       y = 0
@@ -99,7 +99,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
                              width = width, horizontalAlign = horizontalAlign,
                              verticalAlign = verticalAlign, baselineAlign = baselineAlign,
                              gaps = gaps, visualPaddings = visualPaddings,
-                             horizontalSizeGroup = horizontalSizeGroup, verticalSizeGroup = verticalSizeGroup,
+                             widthGroup = widthGroup, heightGroup = heightGroup,
                              componentHelper = componentHelper)
     skip(width)
     return result

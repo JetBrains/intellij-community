@@ -12,7 +12,7 @@ import kotlin.test.assertTrue
 class GridLayoutSizeGroupTest {
 
   @Test
-  fun testHorizontalSizeGroup() {
+  fun testWidthGroup() {
     val panel = JPanel(GridLayout())
     val builder = RowsGridBuilder(panel)
     val label1 = label("Label")
@@ -20,9 +20,9 @@ class GridLayoutSizeGroupTest {
     val label = label("Label")
     val bigLabel = label("A very long label<br>second line")
     builder.cell(label1)
-    builder.cell(label2, horizontalSizeGroup = "anotherGroup")
-    builder.cell(label, horizontalSizeGroup = "group")
-    builder.cell(bigLabel, horizontalSizeGroup = "group")
+    builder.cell(label2, widthGroup = "anotherGroup")
+    builder.cell(label, widthGroup = "group")
+    builder.cell(bigLabel, widthGroup = "group")
 
     doLayout(panel)
 
@@ -37,7 +37,7 @@ class GridLayoutSizeGroupTest {
   }
 
   @Test
-  fun testVerticalSizeGroup() {
+  fun testHeightGroup() {
     val panel = JPanel(GridLayout())
     val builder = RowsGridBuilder(panel)
     val label1 = label("Label")
@@ -45,9 +45,9 @@ class GridLayoutSizeGroupTest {
     val label = label("Label")
     val bigLabel = label("A very long label<br>second line")
     builder.cell(label1)
-    builder.cell(label2, verticalSizeGroup = "anotherGroup")
-    builder.cell(label, verticalSizeGroup = "group")
-    builder.cell(bigLabel, verticalSizeGroup = "group")
+    builder.cell(label2, heightGroup = "anotherGroup")
+    builder.cell(label, heightGroup = "group")
+    builder.cell(bigLabel, heightGroup = "group")
 
     doLayout(panel)
 

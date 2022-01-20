@@ -86,16 +86,16 @@ data class Constraints(
   var visualPaddings: Gaps = Gaps.EMPTY,
 
   /**
-   * Horizontal size group for the component: all components from the same group will have the same width equals to maximum width from the
-   * group. Cannot be used together with [HorizontalAlign.FILL] or for sub-grids (see [GridLayout.addLayoutSubGrid])
+   * All components from the same width group will have the same width equals to maximum width from the group.
+   * Cannot be used together with [HorizontalAlign.FILL] or for sub-grids (see [GridLayout.addLayoutSubGrid])
    */
-  val horizontalSizeGroup: String? = null,
+  val widthGroup: String? = null,
 
   /**
-   * Vertical size group for the component: all components from the same group will have the same height equals to maximum height from the
-   * group. Cannot be used together with [VerticalAlign.FILL] or for sub-grids (see [GridLayout.addLayoutSubGrid])
+   * All components from the same height group will have the same height equals to maximum height from the group.
+   * Cannot be used together with [VerticalAlign.FILL] or for sub-grids (see [GridLayout.addLayoutSubGrid])
    */
-  val verticalSizeGroup: String? = null,
+  val heightGroup: String? = null,
 
   /**
    * Component helper for custom behaviour
@@ -110,11 +110,11 @@ data class Constraints(
     checkPositive("width", width)
     checkPositive("height", height)
 
-    if (horizontalSizeGroup != null && horizontalAlign == HorizontalAlign.FILL) {
-      throw UiDslException("Horizontal size group cannot be used with horizontal align FILL: $horizontalSizeGroup")
+    if (widthGroup != null && horizontalAlign == HorizontalAlign.FILL) {
+      throw UiDslException("Width group cannot be used with horizontal align FILL: $widthGroup")
     }
-    if (verticalSizeGroup != null && verticalAlign == VerticalAlign.FILL) {
-      throw UiDslException("Vertical size group cannot be used with vertical align FILL: $verticalSizeGroup")
+    if (heightGroup != null && verticalAlign == VerticalAlign.FILL) {
+      throw UiDslException("Height group cannot be used with vertical align FILL: $heightGroup")
     }
   }
 }

@@ -114,9 +114,9 @@ internal class GridImpl : Grid {
     val result = mutableMapOf<JComponent, PreCalculationData>()
     collectPreCalculationData(result)
 
-    val horizontalSizeGroups = result.values.groupBy { it.constraints.horizontalSizeGroup }
-    for ((horizontalSizeGroup, preCalculationDataList) in horizontalSizeGroups) {
-      if (horizontalSizeGroup == null) {
+    val widthGroups = result.values.groupBy { it.constraints.widthGroup }
+    for ((widthGroup, preCalculationDataList) in widthGroups) {
+      if (widthGroup == null) {
         continue
       }
       val maxWidth = preCalculationDataList.maxOf { it.calculatedPreferredSize.width }
@@ -125,9 +125,9 @@ internal class GridImpl : Grid {
       }
     }
 
-    val verticalSizeGroups = result.values.groupBy { it.constraints.verticalSizeGroup }
-    for ((verticalSizeGroup, preCalculationDataList) in verticalSizeGroups) {
-      if (verticalSizeGroup == null) {
+    val heightGroups = result.values.groupBy { it.constraints.heightGroup }
+    for ((heightGroup, preCalculationDataList) in heightGroups) {
+      if (heightGroup == null) {
         continue
       }
       val maxHeight = preCalculationDataList.maxOf { it.calculatedPreferredSize.height }

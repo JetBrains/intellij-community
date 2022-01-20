@@ -15,27 +15,27 @@ class SizeGroupPanel {
     val builder = RowsGridBuilder(result)
 
     builder.label("Label")
-      .label("Label", horizontalSizeGroup = "horiz1")
+      .label("Label", widthGroup = "horiz1")
       .row()
-      .label("Label a very very very very long label", horizontalSizeGroup = "horiz1")
+      .label("Label a very very very very long label", widthGroup = "horiz1")
       .row()
-      .label("High label<br>second line", verticalSizeGroup = "vert1")
+      .label("High label<br>second line", heightGroup = "vert1")
       .label("Label")
-      .label("Label", verticalSizeGroup = "vert1")
+      .label("Label", heightGroup = "vert1")
 
     return result
   }
 
-  private fun RowsGridBuilder.label(text: String, horizontalSizeGroup: String? = null, verticalSizeGroup: String? = null): RowsGridBuilder {
+  private fun RowsGridBuilder.label(text: String, widthGroup: String? = null, heightGroup: String? = null): RowsGridBuilder {
     val lines = mutableListOf(text)
-    if (horizontalSizeGroup != null) {
-      lines += "horizontalSizeGroup = $horizontalSizeGroup"
+    if (widthGroup != null) {
+      lines += "widthGroup = $widthGroup"
     }
-    if (verticalSizeGroup != null) {
-      lines += "verticalSizeGroup = $verticalSizeGroup"
+    if (heightGroup != null) {
+      lines += "heightGroup = $heightGroup"
     }
     cell(JLabel(lines.joinToString("<br>", prefix = "<html>")),
-         horizontalSizeGroup = horizontalSizeGroup, verticalSizeGroup = verticalSizeGroup)
+         widthGroup = widthGroup, heightGroup = heightGroup)
     return this
   }
 }
