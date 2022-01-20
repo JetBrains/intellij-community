@@ -38,6 +38,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class UpdateCacheTest extends JavaPsiTestCase {
   @Override
@@ -135,6 +137,8 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     root.refresh(false, true);
 
     LocalFileSystem.getInstance().refresh(false);
+    Set<String> rootChildren = Stream.of(root.getChildren()).map(f -> f.getName()).collect(Collectors.toSet());
+    assertTrue(rootChildren.contains("1.java"));
 
     myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(projectLocation), getTestRootDisposable());
     InjectedLanguageManagerImpl.pushInjectors(getProject());
