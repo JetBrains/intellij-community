@@ -425,6 +425,11 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.mergeMainMenuWithWindowTitle = value
     }
 
+  var showVisualFormattingLayer: Boolean
+    get() = state.showVisualFormattingLayer
+    set(value) {
+      state.showVisualFormattingLayer = value
+    }
 
   companion object {
     init {

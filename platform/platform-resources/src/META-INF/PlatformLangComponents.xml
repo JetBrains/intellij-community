@@ -110,6 +110,12 @@
                     serviceInterface="com.intellij.facet.pointers.FacetPointersManager"/>
     <postStartupActivity implementation="com.intellij.facet.impl.pointers.FacetPointersPostStartupActivity"/>
 
+    <applicationService
+      serviceInterface="com.intellij.formatting.visualLayer.VisualFormattingLayerService"
+      serviceImplementation="com.intellij.formatting.visualLayer.VisualFormattingLayerServiceImpl"/>
+
+    <postStartupActivity implementation="com.intellij.formatting.visualLayer.VisualFormattingLayerStartup" />
+
     <!-- as last - to preload after all others preloaded services -->
     <applicationService serviceImplementation="com.intellij.ide.IdeTooltipManager" preload="notHeadless"/>
   </extensions>

@@ -1,31 +1,39 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.visualLayer
 
-import com.intellij.application.options.RegistryManager
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.editor.Editor
 
 
 class ToggleVisualLayerAction : ToggleAction() {
 
-  override fun isSelected(e: AnActionEvent): Boolean = getFacade(e).enabled
+  val service: VisualFormattingLayerService by lazy { VisualFormattingLayerService.getInstance() }
+
+  override fun isSelected(e: AnActionEvent): Boolean =
+    getEditor(e)?.let { service.enabledForEditor(it) } ?: false
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    if (state) {
-      getFacade(e).enable()
-    }
-    else {
-      getFacade(e).disable()
+    getEditor(e)?.let { editor ->
+      if (state) {
+        service.enableForEditor(editor)
+      }
+      else {
+        service.disableForEditor(editor)
+      }
     }
   }
 
   override fun update(e: AnActionEvent) {
-    if (!RegistryManager.getInstance().`is`("editor.appearance.visual.formatting.layer.enabled")) {
+    if (!service.enabledByRegistry) {
       e.presentation.isEnabledAndVisible = false
     }
+    super.update(e)
   }
 
-  fun getFacade(e: AnActionEvent): VisualFormattingLayerFacade =
-    requireNotNull(e.project).getService(VisualFormattingLayerFacade::class.java)
+  private fun getEditor(e: AnActionEvent): Editor? {
+    return e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE)
+  }
 
 }

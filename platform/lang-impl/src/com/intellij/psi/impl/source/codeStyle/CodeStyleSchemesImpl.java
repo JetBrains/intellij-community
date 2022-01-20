@@ -93,6 +93,11 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
     }, null);
   }
 
+  @Override
+  public List<CodeStyleScheme> getAllSchemes() {
+    return mySchemeManager.getAllSchemes();
+  }
+
   private List<CodeStyleSettings> getAllSettings() {
     return ContainerUtil.map(mySchemeManager.getAllSchemes(), scheme -> scheme.getCodeStyleSettings());
   }

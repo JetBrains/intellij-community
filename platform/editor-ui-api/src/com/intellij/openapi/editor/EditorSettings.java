@@ -167,4 +167,7 @@ public interface EditorSettings {
 
   boolean isShowingSpecialChars();
   void setShowingSpecialChars(boolean value);
+
+  @Nullable Boolean isShowVisualFormattingLayer();
+  void setShowVisualFormattingLayer(@Nullable Boolean showVisualFormattingLayer);
 }
