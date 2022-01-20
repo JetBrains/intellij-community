@@ -5,6 +5,7 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.*
 import org.jetbrains.kotlin.backend.common.descriptors.explicitParameters
 import org.jetbrains.kotlin.builtins.createFunctionType
+import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.references.readWriteAccess
@@ -36,6 +37,10 @@ import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
 interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderService {
     fun getBindingContext(element: KtElement): BindingContext
     fun getBindingContextIfAny(element: KtElement): BindingContext? = getBindingContext(element)
+
+    @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
+    fun getTypeMapper(element: KtElement): KotlinTypeMapper?
+
     fun getLanguageVersionSettings(element: KtElement): LanguageVersionSettings
 
     override val languagePlugin: UastLanguagePlugin
