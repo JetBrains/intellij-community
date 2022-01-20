@@ -153,7 +153,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return new MouseEvent(this, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
   }
 
-  private void performAction(MouseEvent e) {
+  protected void performAction(MouseEvent e) {
     AnActionEvent event = AnActionEvent.createFromInputEvent(e, myPlace, myPresentation, getDataContext(), false, true);
     if (ActionUtil.lastUpdateAndCheckDumb(myAction, event, false) && isEnabled()) {
       ActionUtil.performDumbAwareWithCallbacks(myAction, event, () -> actionPerformed(event));
