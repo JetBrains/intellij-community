@@ -65,7 +65,9 @@ import java.util.function.Consumer
 import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.event.DocumentEvent
+import javax.swing.event.HyperlinkEvent
 import javax.swing.text.JTextComponent
+import kotlin.streams.toList
 
 internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
   companion object {
@@ -256,8 +258,8 @@ internal class NotificationContent(val project: Project,
 
       myNotifications.clear()
       myIconNotifications.clear()
-      suggestions.clear()
-      timeline.clear()
+      suggestions.expireAll()
+      timeline.expireAll()
       searchController.update()
       setStatusMessage(null)
       updateIcon()
@@ -574,9 +576,9 @@ private class NotificationGroupComponent(private val myMainContent: Notification
 
     if (mySuggestionType) {
       component.setDoNotAskHandler { forProject ->
-        component.notification.setDoNotAsFor(if (forProject) myProject else null)
-        myRemoveCallback.accept(component.notification)
-        component.notification.hideBalloon()
+        component.myNotificationWrapper.notification!!.setDoNotAsFor(if (forProject) myProject else null)
+        myRemoveCallback.accept(component.myNotificationWrapper.notification!!)
+        component.myNotificationWrapper.notification!!.hideBalloon()
       }
 
       component.setRemoveCallback(myRemoveCallback)
@@ -599,9 +601,14 @@ private class NotificationGroupComponent(private val myMainContent: Notification
     val count = myList.componentCount
     for (i in 0 until count) {
       val component = myList.getComponent(i) as NotificationComponent
-      if (component.notification === notification) {
-        component.removeFromParent()
-        myList.remove(i)
+      if (component.myNotificationWrapper.notification === notification) {
+        if (notification.isSuggestionType) {
+          component.removeFromParent()
+          myList.remove(i)
+        }
+        else {
+          component.expire()
+        }
         break
       }
     }
@@ -618,9 +625,28 @@ private class NotificationGroupComponent(private val myMainContent: Notification
     balloonLayout.closeAll()
 
     val notifications = ArrayList<Notification>()
-    iterateComponents { notifications.add(it.notification) }
+    iterateComponents {
+      val notification = it.myNotificationWrapper.notification
+      if (notification != null) {
+        notifications.add(notification)
+      }
+    }
     clear()
     myClearCallback.invoke(notifications)
+  }
+
+  fun expireAll() {
+    if (mySuggestionType) {
+      clear()
+    }
+    else {
+      iterateComponents {
+        if (it.myNotificationWrapper.notification != null) {
+          it.expire()
+        }
+      }
+      updateContent()
+    }
   }
 
   fun clear() {
@@ -711,7 +737,7 @@ private class NotificationGroupComponent(private val myMainContent: Notification
 }
 
 private class NotificationComponent(val project: Project,
-                                    val notification: Notification,
+                                    notification: Notification,
                                     timeComponents: ArrayList<JLabel>,
                                     val singleSelectionHandler: SingleTextSelectionHandler) : JPanel() {
 
@@ -724,6 +750,7 @@ private class NotificationComponent(val project: Project,
     const val TIME_KEY = "TimestampKey"
   }
 
+  val myNotificationWrapper = NotificationWrapper(notification)
   private val myBgComponents = ArrayList<Component>()
   private var myIsNew = false
   private var myHoverState = false
@@ -893,8 +920,8 @@ private class NotificationComponent(val project: Project,
         group.add(object : AnAction(IdeBundle.message("notifications.toolwindow.remind.tomorrow")) {
           override fun actionPerformed(e: AnActionEvent) {
             remindAction.run()
-            myRemoveCallback.accept(notification)
-            notification.hideBalloon()
+            myRemoveCallback.accept(myNotificationWrapper.notification!!)
+            myNotificationWrapper.notification!!.hideBalloon()
           }
         })
       }
@@ -993,19 +1020,33 @@ private class NotificationComponent(val project: Project,
   }
 
   private fun doShowSettings() {
-    NotificationCollector.getInstance().logNotificationSettingsClicked(notification.id, notification.displayId, notification.groupId)
+    NotificationCollector.getInstance().logNotificationSettingsClicked(myNotificationWrapper.id, myNotificationWrapper.displayId,
+                                                                       myNotificationWrapper.groupId)
     val configurable = NotificationsConfigurable()
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, Runnable {
-      val runnable = configurable.enableSearch(notification.groupId)
+      val runnable = configurable.enableSearch(myNotificationWrapper.groupId)
       runnable?.run()
     })
   }
 
   private fun runAction(action: AnAction, component: Any) {
     setNew(false)
-    NotificationCollector.getInstance()
-      .logNotificationActionInvoked(null, notification, action, NotificationCollector.NotificationPlace.ACTION_CENTER)
-    Notification.fire(notification, action, DataManager.getInstance().getDataContext(component as Component))
+    NotificationCollector.getInstance().logNotificationActionInvoked(null, myNotificationWrapper.notification!!, action,
+                                                                     NotificationCollector.NotificationPlace.ACTION_CENTER)
+    Notification.fire(myNotificationWrapper.notification!!, action, DataManager.getInstance().getDataContext(component as Component))
+  }
+
+  fun expire() {
+    myNotificationWrapper.notification = null
+
+    for (component in UIUtil.findComponentsOfType(this, LinkLabel::class.java)) {
+      component.isEnabled = false
+    }
+
+    val dropDownAction = UIUtil.findComponentOfType(this, MyDropDownAction::class.java)
+    if (dropDownAction != null) {
+      DataManager.removeDataProvider(dropDownAction)
+    }
   }
 
   fun removeFromParent() {
@@ -1026,9 +1067,17 @@ private class NotificationComponent(val project: Project,
     NotificationsUtil.setLinkForeground(kit.styleSheet)
     component.editorKit = kit
 
-    val listener = NotificationsUtil.wrapListener(notification)
-    if (listener != null) {
-      component.addHyperlinkListener(listener)
+    if (myNotificationWrapper.notification!!.listener != null) {
+      component.addHyperlinkListener { e ->
+        val notification = myNotificationWrapper.notification
+        if (notification != null && e.eventType == HyperlinkEvent.EventType.ACTIVATED) {
+          val listener = notification.listener
+          if (listener != null) {
+            NotificationCollector.getInstance().logHyperlinkClicked(notification)
+            listener.hyperlinkUpdate(notification, e)
+          }
+        }
+      }
     }
 
     component.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, StringUtil.unescapeXmlEntities(StringUtil.stripHtml(text, " ")))
@@ -1131,19 +1180,18 @@ private class NotificationComponent(val project: Project,
   }
 
   private fun matchQuery(query: @NlsSafe String): Boolean {
-    if (notification.title.contains(query, true)) {
+    if (myNotificationWrapper.title.contains(query, true)) {
       return true
     }
-    val subtitle = notification.subtitle
+    val subtitle = myNotificationWrapper.subtitle
     if (subtitle != null && subtitle.contains(query, true)) {
       return true
     }
-    if (notification.content.contains(query, true)) {
+    if (myNotificationWrapper.content.contains(query, true)) {
       return true
     }
-    for (action in notification.actions) {
-      val text = action.templateText
-      if (text != null && text.contains(query, true)) {
+    for (action in myNotificationWrapper.actions) {
+      if (action != null && action.contains(query, true)) {
         return true
       }
     }
@@ -1152,7 +1200,7 @@ private class NotificationComponent(val project: Project,
 }
 
 private class MyDropDownAction(notificationComponent: NotificationComponent) : NotificationsManagerImpl.DropDownAction(null, null) {
-  var collapseActionsDirection: Notification.CollapseActionsDirection = notificationComponent.notification.collapseDirection
+  var collapseActionsDirection: Notification.CollapseActionsDirection = notificationComponent.myNotificationWrapper.notification!!.collapseDirection
 
   init {
     setListener(LinkListener { link, _ ->
@@ -1180,11 +1228,22 @@ private class MyDropDownAction(notificationComponent: NotificationComponent) : N
       NotificationsManagerImpl.showPopup(link, group)
     }, null)
 
-    text = notificationComponent.notification.dropDownText
+    text = notificationComponent.myNotificationWrapper.notification!!.dropDownText
     isVisible = false
 
-    Notification.setDataProvider(notificationComponent.notification, this)
+    Notification.setDataProvider(notificationComponent.myNotificationWrapper.notification!!, this)
   }
+}
+
+private class NotificationWrapper(notification: Notification) {
+  val title = notification.title
+  val subtitle = notification.subtitle
+  val content = notification.content
+  val id = notification.id
+  val displayId = notification.displayId
+  val groupId = notification.groupId
+  val actions: List<String?> = notification.actions.stream().map { it.templateText }.toList()
+  var notification: Notification? = notification
 }
 
 private class DropDownActionLayout(layout: LayoutManager2) : FinalLayoutWrapper(layout) {
