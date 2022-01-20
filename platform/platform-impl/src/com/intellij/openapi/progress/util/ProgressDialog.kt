@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer.GlasspanePeerUnavailableException
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.PopupBorder
 import com.intellij.util.Alarm
@@ -224,7 +225,20 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
     return myProgressWindow is PotemkinProgress
   }
 
-  private fun createDialog(window: Window): MyDialogWrapper {
+  private fun createDialog(window: Window): DialogWrapper {
+    if (Registry.`is`("ide.modal.progress.wrapper.refactoring")) {
+      return createDialogWrapper(
+        panel = panel,
+        cancelAction = {
+          if (myProgressWindow.myShouldShowCancel) {
+            myProgressWindow.cancel()
+          }
+        },
+        window = window,
+        lightPopup = !isWriteActionProgress(),
+        project = myProgressWindow.myProject,
+      )
+    }
     if (System.getProperty("vintage.progress") != null || isWriteActionProgress()) {
       if (window.isShowing) {
         return object : MyDialogWrapper(window) {
