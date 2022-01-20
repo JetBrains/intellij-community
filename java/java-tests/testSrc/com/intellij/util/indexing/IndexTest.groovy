@@ -1144,7 +1144,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   void "test indexed state for file without content requiring indices"() {
     def scope = GlobalSearchScope.allScope(getProject())
-    FileBasedIndex.instance.ensureUpToDate(FilenameIndex.NAME, project, scope)
+    FileBasedIndex.instance.ensureUpToDate(FileTypeIndex.NAME, project, scope)
 
     def files = FilenameIndex.getFilesByName(getProject(), "intellij.exe", scope)
     def file = assertOneElement(files).virtualFile
@@ -1152,7 +1152,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertTrue(((VirtualFileSystemEntry)file).isFileIndexed())
 
     WriteCommandAction.runWriteCommandAction(getProject(), { file.rename(this, 'intellij2.exe') })
-    FileBasedIndex.instance.ensureUpToDate(FilenameIndex.NAME, project, scope)
+    FileBasedIndex.instance.ensureUpToDate(FileTypeIndex.NAME, project, scope)
     assertTrue(((VirtualFileSystemEntry)file).isFileIndexed())
   }
 

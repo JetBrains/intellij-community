@@ -12,8 +12,10 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePathWrapper;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
@@ -123,7 +125,10 @@ final class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
 
   @NotNull
   private static ModificationTracker getFilenameIndexModificationTracker(@NotNull Project project) {
-    return () -> disableIndexUpToDateCheckInEdt(() -> FileBasedIndex.getInstance().getIndexModificationStamp(FilenameIndex.NAME, project));
+    if (Registry.is("indexing.filename.over.vfs")) {
+      return () -> ManagingFS.getInstance().getModificationCount();
+    }
+    return () -> disableIndexUpToDateCheckInEdt(() -> FileBasedIndex.getInstance().getIndexModificationStamp(FilenameIndex.NAME, project)); //
   }
 
   @Nullable
