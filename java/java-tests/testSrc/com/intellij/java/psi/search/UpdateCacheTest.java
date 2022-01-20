@@ -366,7 +366,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
       }
     }
 
-    assertEquals(expectedFiles.length, files.size());
+    assertEquals(Arrays.toString(expectedFiles) + ".length != " + files + ".size()", expectedFiles.length, files.size());
 
     Collections.sort(files, Comparator.comparing(PsiFileSystemItem::getName));
     Arrays.sort(expectedFiles);
