@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaContext
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaHelper
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaState
+import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
@@ -33,6 +34,9 @@ abstract class AbstractJoinListIntention<TList : KtElement, TElement : KtElement
         val document = editor?.document ?: return
         val elements = element.elements()
         val pointer = element.createSmartPointer()
+
+        elements.forEach { it.reformatted() }
+
         nextBreak(elements.last())?.let { document.deleteString(it.startOffset, it.endOffset) }
         elements.dropLast(1).asReversed().forEach { tElement ->
             nextBreak(tElement)?.let { document.replaceString(it.startOffset, it.endOffset, " ") }
