@@ -1269,6 +1269,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       setTitle(getDefaultTitle());
       myReplacePanel.setVisible(myReplace);
       updateCenterPanelRowConstraints();
+      setUseLastConfiguration(true);
       loadConfiguration(myConfiguration);
       final Dimension size =
         DimensionService.getInstance().getSize(myReplace ? REPLACE_DIMENSION_SERVICE_KEY : SEARCH_DIMENSION_SERVICE_KEY, e.getProject());
