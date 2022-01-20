@@ -452,8 +452,10 @@ fun @Nls String.dropMnemonic(): @Nls String {
 fun TaskContext.waitSmartModeStep() {
   val future = CompletableFuture<Boolean>()
   addStep(future)
-  DumbService.getInstance(project).runWhenSmart {
-    future.complete(true)
+  before {
+    DumbService.getInstance(project).runWhenSmart {
+      future.complete(true)
+    }
   }
 }
 
