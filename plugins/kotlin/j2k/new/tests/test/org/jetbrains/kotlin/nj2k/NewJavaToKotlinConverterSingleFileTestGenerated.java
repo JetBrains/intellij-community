@@ -482,6 +482,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/assignmentExpression/inExpressionAssignmentsChain.java");
         }
 
+        @TestMetadata("ktij-16986.java")
+        public void testKtij_16986() throws Exception {
+            runTest("testData/newJ2k/assignmentExpression/ktij-16986.java");
+        }
+
         @TestMetadata("minusAssign.java")
         public void testMinusAssign() throws Exception {
             runTest("testData/newJ2k/assignmentExpression/minusAssign.java");
