@@ -66,16 +66,18 @@ public class DefaultLineModificationDetailsProvider implements FileAnnotation.Li
     String annotatedContent = myAnnotation.getAnnotatedContent();
     if (annotatedContent == null) return null;
 
+    LineOffsets offsets = LineOffsetsUtil.create(annotatedContent);
+    String originalLine = getLine(annotatedContent, offsets, lineNumber);
+
     VcsFileRevision afterRevision = myCurrentRevisionProvider.getRevision(lineNumber);
     String afterContent = loadRevision(myAnnotation.getProject(), afterRevision, myFilePath);
     if (afterContent == null) return null;
 
     VcsFileRevision beforeRevision = myPreviousRevisionProvider.getPreviousRevision(lineNumber);
     String beforeContent = loadRevision(myAnnotation.getProject(), beforeRevision, myFilePath);
-    if (beforeContent == null) return null;
-
-    LineOffsets offsets = LineOffsetsUtil.create(annotatedContent);
-    String originalLine = getLine(annotatedContent, offsets, lineNumber);
+    if (beforeContent == null) {
+      return createNewLineDetails(originalLine); // whole file is new. Skip searching for original line.
+    }
 
     return createDetailsFor(beforeContent, afterContent, originalLine);
   }
