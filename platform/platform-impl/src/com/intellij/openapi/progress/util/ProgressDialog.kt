@@ -227,42 +227,37 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
   private fun createDialog(window: Window): MyDialogWrapper {
     if (System.getProperty("vintage.progress") != null || isWriteActionProgress()) {
       if (window.isShowing) {
-        return object : MyDialogWrapper(window, myProgressWindow.myShouldShowCancel) {
+        return object : MyDialogWrapper(window) {
           override fun useLightPopup(): Boolean {
             return false
           }
         }
       }
-      return object : MyDialogWrapper(myProgressWindow.myProject, myProgressWindow.myShouldShowCancel) {
+      return object : MyDialogWrapper(myProgressWindow.myProject) {
         override fun useLightPopup(): Boolean {
           return false
         }
       }
     }
     if (window.isShowing) {
-      return MyDialogWrapper(window, myProgressWindow.myShouldShowCancel)
+      return MyDialogWrapper(window)
     }
-    return MyDialogWrapper(myProgressWindow.myProject, myProgressWindow.myShouldShowCancel)
+    return MyDialogWrapper(myProgressWindow.myProject)
   }
 
   private open inner class MyDialogWrapper : DialogWrapper {
-    private val myIsCancellable: Boolean
 
-    constructor(project: Project?, cancellable: Boolean) : super(project, false) {
+    constructor(project: Project?) : super(project, false) {
       init()
-      myIsCancellable = cancellable
     }
 
-    constructor(parent: Component, cancellable: Boolean) : super(parent, false) {
+    constructor(parent: Component) : super(parent, false) {
       init()
-      myIsCancellable = cancellable
     }
 
     override fun doCancelAction() {
-      if (myIsCancellable) {
-        if (myProgressWindow.myShouldShowCancel) {
-          myProgressWindow.cancel()
-        }
+      if (myProgressWindow.myShouldShowCancel) {
+        myProgressWindow.cancel()
       }
     }
 
