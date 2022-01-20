@@ -375,6 +375,18 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return set != null && processVirtualFiles(set, filter, processor);
   }
 
+  @Override
+  public <K, V> boolean processFilesContainingAnyKey(@NotNull ID<K, V> indexId,
+                                                     @NotNull Collection<? extends K> dataKeys,
+                                                     @NotNull GlobalSearchScope filter,
+                                                     @Nullable IdFilter idFilter,
+                                                     @Nullable Condition<? super V> valueChecker,
+                                                     @NotNull Processor<? super VirtualFile> processor) {
+    IdFilter idFilterAdjusted = idFilter != null ? idFilter : extractIdFilter(filter, filter.getProject());
+    IntSet set = collectFileIdsContainingAnyKey(indexId, dataKeys, filter, valueChecker, idFilterAdjusted);
+    return set != null && processVirtualFiles(set, filter, processor);
+  }
+
   private boolean processFilesContainingAllKeysInPhysicalFiles(@NotNull Collection<? extends AllKeysQuery<?, ?>> queries,
                                                                @NotNull GlobalSearchScope filter,
                                                                Processor<? super VirtualFile> processor,
@@ -501,11 +513,11 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @Nullable
-  private <K, V> IntSet collectFileIdsContainingAllKeys(@NotNull final ID<K, V> indexId,
-                                                        @NotNull final Collection<? extends K> dataKeys,
-                                                        @NotNull final GlobalSearchScope filter,
-                                                        @Nullable final Condition<? super V> valueChecker,
-                                                        @Nullable final IdFilter projectFilesFilter,
+  private <K, V> IntSet collectFileIdsContainingAllKeys(@NotNull ID<K, V> indexId,
+                                                        @NotNull Collection<? extends K> dataKeys,
+                                                        @NotNull GlobalSearchScope filter,
+                                                        @Nullable Condition<? super V> valueChecker,
+                                                        @Nullable IdFilter projectFilesFilter,
                                                         @Nullable IntSet restrictedIds) {
     IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(filter.getProject());
     IntPredicate idChecker = id -> (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) &&
@@ -515,6 +527,28 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       IndexDebugProperties.DEBUG_INDEX_ID.set(indexId);
       try {
         return InvertedIndexUtil.collectInputIdsContainingAllKeys(index, dataKeys, valueChecker, idChecker);
+      }
+      finally {
+        IndexDebugProperties.DEBUG_INDEX_ID.remove();
+      }
+    };
+
+    return processExceptions(indexId, null, filter, convertor);
+  }
+
+  @Nullable
+  private <K, V> IntSet collectFileIdsContainingAnyKey(@NotNull ID<K, V> indexId,
+                                                        @NotNull Collection<? extends K> dataKeys,
+                                                        @NotNull GlobalSearchScope filter,
+                                                        @Nullable Condition<? super V> valueChecker,
+                                                        @Nullable IdFilter projectFilesFilter) {
+    IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(filter.getProject());
+    IntPredicate idChecker = id -> (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) &&
+                                   accessibleFileFilter.test(id);
+    ThrowableConvertor<UpdatableIndex<K, V, FileContent>, IntSet, StorageException> convertor = index -> {
+      IndexDebugProperties.DEBUG_INDEX_ID.set(indexId);
+      try {
+        return InvertedIndexUtil.collectInputIdsContainingAnyKey(index, dataKeys, valueChecker, idChecker);
       }
       finally {
         IndexDebugProperties.DEBUG_INDEX_ID.remove();

@@ -30,6 +30,7 @@ import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentHashMapValueStorage;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.*;
 
 import java.io.DataInputStream;
@@ -37,6 +38,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
@@ -555,12 +557,16 @@ public final class FSRecords {
     return readAndHandleErrors(() -> ourConnection.getNames().processAllDataObjects(processor));
   }
 
-  public static boolean processFilesWithName(@NotNull String name, @NotNull IntPredicate processor) {
-    int nameId = getNameId(name);
+  public static boolean processFilesWithNames(@NotNull Set<String> names, @NotNull IntPredicate processor) {
+    if (names.isEmpty()) return true;
+    IntOpenHashSet nameIds = new IntOpenHashSet();
+    for (String name : names) {
+      nameIds.add(getNameId(name));
+    }
     return readAndHandleErrors(() -> {
       PersistentFSRecordsStorage records = ourConnection.getRecords();
       return records.processAll(r -> {
-        if (r.name == nameId &&
+        if (nameIds.contains(r.name) &&
             !(BitUtil.isSet(r.flags, PersistentFSRecordAccessor.FREE_RECORD_FLAG) ||
               ourRecordAccessor.getNewFreeRecords().contains(r.id))) {
           if (!processor.test(r.id)) return false;

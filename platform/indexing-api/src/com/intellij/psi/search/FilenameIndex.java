@@ -214,12 +214,10 @@ public final class FilenameIndex {
                                                                   @NotNull GlobalSearchScope scope,
                                                                   @Nullable IdFilter filter) {
     Set<VirtualFile> files = CollectionFactory.createSmallMemoryFootprintSet();
-    for (String name : names) {
-      FileBasedIndex.getInstance().processValues(NAME, name, null, (file, value) -> {
-        files.add(file);
-        return true;
-      }, scope, filter);
-    }
+    FileBasedIndex.getInstance().processFilesContainingAnyKey(NAME, names, scope, filter, null, file -> {
+      files.add(file);
+      return true;
+    });
     return files;
   }
 }
