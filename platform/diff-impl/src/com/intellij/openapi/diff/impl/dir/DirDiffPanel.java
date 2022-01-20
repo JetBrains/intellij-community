@@ -79,13 +79,10 @@ public class DirDiffPanel implements Disposable, DataProvider {
   private final TextFieldWithBrowseButton myTargetDirField = new TextFieldWithBrowseButton(null, this);
   private final FilterComponent myFilter = new MyFilterComponent();
   private final MyDiffRequestProcessor myDiffRequestProcessor;
-  private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
 
   private final JPanel myRootPanel;
   private final JPanel myFilterPanel;
   private final JPanel myToolbarPanel;
-
-  private String oldFilter;
 
   public DirDiffPanel(DirDiffTableModel model, DirDiffWindow wnd) {
     myModel = model;
@@ -277,7 +274,6 @@ public class DirDiffPanel implements Disposable, DataProvider {
     });
     myFilter.getTextEditor().setColumns(10);
     myFilter.setFilter(myModel.getSettings().getFilter());
-    oldFilter = myFilter.getFilter();
 
     JBLabel filterLabel = new JBLabel();
     LabeledComponent.TextWithMnemonic.fromTextWithMnemonic(DiffBundle.message("button.dirdiff.filter"))
@@ -294,8 +290,6 @@ public class DirDiffPanel implements Disposable, DataProvider {
     Disposer.register(this, myDiffRequestProcessor);
     actions.setUp(myModel, myDiffRequestProcessor.getComponent());
     tableSplitter.setSecondComponent(myDiffRequestProcessor.getComponent());
-
-    myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
   }
 
   private void setDirFieldChooser(@Nullable Callable<DiffElement<?>> chooser, boolean isTarget) {
@@ -439,8 +433,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
 
   private void fireFilterUpdated() {
     final String newFilter = myFilter.getFilter();
-    if (!StringUtil.equals(oldFilter, newFilter)) {
-      oldFilter = newFilter;
+    if (!StringUtil.equals(myModel.getSettings().getFilter(), newFilter)) {
       myModel.getSettings().setFilter(newFilter);
       myModel.applySettings();
     }
@@ -474,7 +467,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
       return getNavigatableArray();
     }
     else if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.is(dataId)) {
-      return myPrevNextDifferenceIterable;
+      return new MyPrevNextDifferenceIterable();
     }
     return null;
   }
