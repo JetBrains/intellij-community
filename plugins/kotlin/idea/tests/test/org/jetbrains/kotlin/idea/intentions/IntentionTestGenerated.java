@@ -16662,6 +16662,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/replaceSizeZeroCheckWithIsEmpty/gteq.kt");
         }
 
+        @TestMetadata("implicitReceiver.kt")
+        public void testImplicitReceiver() throws Exception {
+            runTest("testData/intentions/replaceSizeZeroCheckWithIsEmpty/implicitReceiver.kt");
+        }
+
         @TestMetadata("list.kt")
         public void testList() throws Exception {
             runTest("testData/intentions/replaceSizeZeroCheckWithIsEmpty/list.kt");
