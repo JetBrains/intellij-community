@@ -68,7 +68,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     return group?.let {
       val toolbar = ActionToolbar(it.getChildren(null).asList())
       toolbar.border = JBUI.Borders.emptyRight(8)
-      return@let toolbar
+      toolbar
     }
   }
 
