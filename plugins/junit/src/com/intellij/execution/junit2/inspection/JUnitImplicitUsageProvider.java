@@ -4,6 +4,7 @@ package com.intellij.execution.junit2.inspection;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -31,8 +32,26 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
 
   @Override
   public boolean isImplicitUsage(@NotNull PsiElement element) {
-    return isReferencedInsideEnumSourceAnnotation(element);
+    return element instanceof PsiParameter && isParameterUsedInParameterizedPresentation((PsiParameter)element) || isReferencedInsideEnumSourceAnnotation(element);
   }
+
+  private static boolean isParameterUsedInParameterizedPresentation(PsiParameter parameter) {
+    PsiElement declarationScope = parameter.getDeclarationScope();
+    if (declarationScope instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)declarationScope;
+      PsiAnnotation annotation = method.getModifierList().findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST);
+      if (annotation != null) {
+        PsiAnnotationMemberValue attributeValue = annotation.findDeclaredAttributeValue("name");
+        if (attributeValue instanceof PsiExpression) {
+          String indexInDisplayName = "{" + method.getParameterList().getParameterIndex(parameter) + "}";
+          Object value = JavaConstantExpressionEvaluator.computeConstantExpression((PsiExpression)attributeValue, null, false);
+          return indexInDisplayName.equals(value);
+        }
+      }
+    }
+    return false;
+  }
+
   private static boolean isReferencedInsideEnumSourceAnnotation(@NotNull PsiElement element) {
     if (element instanceof PsiEnumConstant) {
       PsiClass psiClass = ((PsiEnumConstant)element).getContainingClass();

@@ -9,7 +9,7 @@ public class JUnit5TestFrameworkSetupUtil {
                         "public @interface MethodSource {String[] value() default \"\";}");
     fixture.addClass( "package org.junit.jupiter.params;\n" +
                         "@org.junit.platform.commons.annotation.Testable\n" +
-                        "public @interface ParameterizedTest {}");
+                        "public @interface ParameterizedTest {String name() default  \"\";}");
     fixture.addClass( "package org.junit.jupiter.params.provider;\n" +
                         "public interface Arguments {static Arguments of(Object... arguments){}}\n");
     fixture.addClass("package org.junit.platform.commons.annotation;\n" +
