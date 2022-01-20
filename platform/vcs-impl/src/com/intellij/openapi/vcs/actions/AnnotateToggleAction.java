@@ -243,7 +243,7 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
       }
     }
 
-    InlineDiffFromAnnotation.startShowingDiff(editor, fileAnnotation, presentation, disposable);
+    InlineDiffFromAnnotation.showDiffOnHover(editor, fileAnnotation, presentation, disposable);
   }
 
   @NotNull

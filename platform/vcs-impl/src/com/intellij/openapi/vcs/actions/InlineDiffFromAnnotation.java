@@ -69,25 +69,18 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
     removeDiff();
   }
 
-  public static void startShowingDiff(@NotNull Editor editor,
-                                      @NotNull FileAnnotation fileAnnotation,
-                                      @NotNull TextAnnotationPresentation textPresentation,
-                                      @NotNull Disposable disposable) {
+  public static void showDiffOnHover(@NotNull Editor editor,
+                                     @NotNull FileAnnotation fileAnnotation,
+                                     @NotNull TextAnnotationPresentation textPresentation,
+                                     @NotNull Disposable disposable) {
     if (!(editor instanceof EditorEx)) return;
     FileAnnotation.LineModificationDetailsProvider provider = fileAnnotation.getLineModificationDetailsProvider();
     if (provider == null) return;
 
     InlineDiffFromAnnotation inlineDiffFromAnnotation =
       new InlineDiffFromAnnotation((EditorEx)editor, textPresentation, provider, disposable);
-    editor.addEditorMouseMotionListener(inlineDiffFromAnnotation);
-    editor.addEditorMouseListener(inlineDiffFromAnnotation);
-    Disposer.register(disposable, new Disposable() {
-      @Override
-      public void dispose() {
-        editor.removeEditorMouseMotionListener(inlineDiffFromAnnotation);
-        editor.removeEditorMouseListener(inlineDiffFromAnnotation);
-      }
-    });
+    editor.addEditorMouseMotionListener(inlineDiffFromAnnotation, disposable);
+    editor.addEditorMouseListener(inlineDiffFromAnnotation, disposable);
   }
 
   @Override
