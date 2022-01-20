@@ -362,14 +362,17 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   private void updateToolbarVisibility() {
-    if (myToolbar != null) {
-      UISettings uiSettings = UISettings.getShadowInstance();
-      boolean isNewToolbar = ExperimentalUI.isNewToolbar();
-      boolean visible = ((isNewToolbar && !MainToolbarKt.isToolbarInHeader(uiSettings))
-                         || (!isNewToolbar && uiSettings.getShowMainToolbar()))
-                        && !uiSettings.getPresentationMode();
-      myToolbar.setVisible(visible);
+    if (myToolbar == null) {
+      myToolbar = createToolbar();
+      myNorthPanel.add(myToolbar, 0);
     }
+
+    UISettings uiSettings = UISettings.getShadowInstance();
+    boolean isNewToolbar = ExperimentalUI.isNewToolbar();
+    boolean visible = ((isNewToolbar && !MainToolbarKt.isToolbarInHeader(uiSettings))
+                       || (!isNewToolbar && uiSettings.getShowMainToolbar()))
+                      && !uiSettings.getPresentationMode();
+    myToolbar.setVisible(visible);
   }
 
   private void updateStatusBarVisibility() {
