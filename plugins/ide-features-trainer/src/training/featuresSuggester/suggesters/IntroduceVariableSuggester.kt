@@ -14,6 +14,7 @@ class IntroduceVariableSuggester : AbstractFeatureSuggester() {
   override val message = FeatureSuggesterBundle.message("introduce.variable.message")
   override val suggestingActionId = "IntroduceVariable"
   override val suggestingTipFileName = "IntroduceVariable.html"
+  override val minSuggestingIntervalDays = 14
 
   override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 

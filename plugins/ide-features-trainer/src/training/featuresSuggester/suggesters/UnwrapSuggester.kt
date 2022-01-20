@@ -15,6 +15,7 @@ class UnwrapSuggester : AbstractFeatureSuggester() {
   override val suggestingActionId = "Unwrap"
   override val suggestingDocUrl =
     "https://www.jetbrains.com/help/idea/working-with-source-code.html#unwrap_remove_statement"
+  override val minSuggestingIntervalDays = 14
 
   override val languages = listOf("JAVA", "kotlin", "ECMAScript 6")
 

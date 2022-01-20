@@ -20,6 +20,7 @@ class CopyPasteSuggester : AbstractFeatureSuggester() {
   override val message = FeatureSuggesterBundle.message("paste.from.history.message")
   override val suggestingActionId = "PasteMultiple"
   override val suggestingDocUrl = "https://www.jetbrains.com/help/idea/working-with-source-code.html#copy_paste"
+  override val minSuggestingIntervalDays = 14
 
   override val languages = listOf(Language.ANY.id)
 

@@ -3,7 +3,7 @@
 package training.featuresSuggester.suggesters
 
 import training.featuresSuggester.*
-import java.util.concurrent.TimeUnit
+import training.featuresSuggester.settings.FeatureSuggesterSettings
 
 abstract class AbstractFeatureSuggester : FeatureSuggester {
   protected open val suggestingTipFileName: String? = null
@@ -12,17 +12,11 @@ abstract class AbstractFeatureSuggester : FeatureSuggester {
   protected abstract val message: String
   protected abstract val suggestingActionId: String
 
-  override fun isSuggestionNeeded(minNotificationIntervalDays: Int): Boolean {
-    val actionStats = actionsLocalSummary().getActionsStats()
-    val summary = actionStats[suggestingActionId]
-    return if (summary == null) {
-      true
-    }
-    else {
-      val lastTimeUsed = summary.lastUsedTimestamp
-      val delta = System.currentTimeMillis() - lastTimeUsed
-      delta > TimeUnit.DAYS.toMillis(minNotificationIntervalDays.toLong())
-    }
+  override fun isSuggestionNeeded(): Boolean {
+    val summary = actionsLocalSummary().getActionStatsById(suggestingActionId) ?: return true
+    val lastTimeUsed = summary.lastUsedTimestamp
+    val oldestWorkingDayStart = FeatureSuggesterSettings.instance().getOldestWorkingDayStartMillis(minSuggestingIntervalDays)
+    return lastTimeUsed < oldestWorkingDayStart
   }
 
   protected fun createSuggestion(): Suggestion {

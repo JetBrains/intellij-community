@@ -19,6 +19,7 @@ class RunToCursorSuggester : AbstractFeatureSuggester() {
   override val suggestingActionId = "RunToCursor"
   override val suggestingDocUrl =
     "https://www.jetbrains.com/help/idea/stepping-through-the-program.html#run-to-cursor"
+  override val minSuggestingIntervalDays = 30
 
   override val languages = listOf(Language.ANY.id)
 
