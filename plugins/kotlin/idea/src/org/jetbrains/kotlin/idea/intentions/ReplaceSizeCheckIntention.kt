@@ -14,9 +14,12 @@ abstract class ReplaceSizeCheckIntention(textGetter: () -> String) : SelfTargeti
 ) {
     override fun applyTo(element: KtBinaryExpression, editor: Editor?) {
         val target = getTargetExpression(element)
-        if (target !is KtDotQualifiedExpression) return
-        val createExpression = KtPsiFactory(element).createExpression("${target.receiverExpression.text}.${getGenerateMethodSymbol()}")
-        element.replaced(createExpression)
+        val newExpression = if (target is KtDotQualifiedExpression) {
+            "${target.receiverExpression.text}.${getGenerateMethodSymbol()}"
+        } else {
+            getGenerateMethodSymbol()
+        }
+        element.replaced(KtPsiFactory(element).createExpression(newExpression))
     }
 
     override fun isApplicableTo(element: KtBinaryExpression): Boolean {
