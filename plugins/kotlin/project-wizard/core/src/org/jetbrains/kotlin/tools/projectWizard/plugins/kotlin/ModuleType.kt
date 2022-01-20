@@ -13,10 +13,7 @@ enum class ModuleType(@Nls val projectTypeName: String) {
     js(KotlinNewProjectWizardBundle.message("module.type.js")),
     native(KotlinNewProjectWizardBundle.message("module.type.native")),
     common(KotlinNewProjectWizardBundle.message("module.type.common")),
-    android(KotlinNewProjectWizardBundle.message("module.type.android")),
-//    ios(KotlinNewProjectWizardBundle.message("module.type.ios"))
-
-    ;
+    android(KotlinNewProjectWizardBundle.message("module.type.android"));
 
     companion object {
         val ALL = setOf(jvm, js, native, common, android)
