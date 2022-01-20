@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
@@ -72,6 +73,21 @@ public final class JdkEx {
   }
 
   // }} CUSTOM DECOR SUPPORT
+
+  public static void setTransparent(@NotNull JWindow window) {
+    // disable -Dswing.bufferPerWindow=true for the window
+    JComponent rootPane = window.getRootPane();
+    if (rootPane != null) {
+      rootPane.setDoubleBuffered(false);
+    }
+    JComponent contentPane = (JComponent)window.getContentPane();
+    if (contentPane != null) {
+      contentPane.setDoubleBuffered(false);
+    }
+
+    //noinspection UseJBColor
+    window.setBackground(new Color(1, 1, 1, 0));
+  }
 
   private static final class MyMethod {
     private static final MyMethod EMPTY_INSTANCE = new MyMethod(null);
