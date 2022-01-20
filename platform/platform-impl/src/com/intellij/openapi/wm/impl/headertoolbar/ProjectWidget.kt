@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.headertoolbar
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManagerBase
@@ -22,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.GroupHeaderSeparator
+import com.intellij.ui.IconManager
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -126,12 +128,12 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
 
   override fun dispose() {}
 
-  private fun createActionsList(): Map<AnAction, String?> {
+  private fun createActionsList(): Map<AnAction, Presentation?> {
     val actionManager = ActionManager.getInstance()
-    val res = mutableMapOf<AnAction, String?>(
-      actionManager.getAction("NewProject") to IdeBundle.message("project.widget.new"),
-      actionManager.getAction("ImportProject") to IdeBundle.message("project.widget.open"),
-      actionManager.getAction("ProjectFromVersionControl") to IdeBundle.message("project.widget.from.vcs")
+    val res = mutableMapOf<AnAction, Presentation?>(
+      actionManager.createActionPair("NewProject", IdeBundle.message("project.widget.new"), "expui/general/add.svg"),
+      actionManager.createActionPair("ImportProject", IdeBundle.message("project.widget.open"), "expui/toolwindow/project.svg"),
+      actionManager.createActionPair("ProjectFromVersionControl", IdeBundle.message("project.widget.from.vcs"), "expui/vcs/vcs.svg")
     )
 
     RecentProjectListActionProvider.getInstance().getActions().take(MAX_RECENT_COUNT).forEach { res[it] = null }
@@ -139,9 +141,17 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
     return res
   }
 
-  private class MyStep(private val actionsMap: Map<AnAction, String?>): ListPopupStep<AnAction> {
+  private fun ActionManager.createActionPair(actionID: String, name: String, iconPath: String): Pair<AnAction, Presentation> {
+    val action = getAction(actionID)
+    val presentation = action.templatePresentation.clone()
+    presentation.text = name
+    presentation.icon = IconManager.getInstance().getIcon(iconPath, AllIcons::class.java)
+    return Pair(action, presentation)
+  }
+
+  private class MyStep(private val actionsMap: Map<AnAction, Presentation?>): ListPopupStep<AnAction> {
     private val actions: List<AnAction> = actionsMap.keys.toList()
-    private val nameMapper: (AnAction?) -> String = { action -> action?.let { actionsMap[it] } ?: "" }
+    private val presentationMapper: (AnAction?) -> Presentation? = { action -> action?.let { actionsMap[it] } }
 
     override fun getTitle(): String? = null
 
@@ -170,9 +180,9 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
 
     override fun isSelectable(value: AnAction?): Boolean = value !is SeparatorAction
 
-    override fun getIconFor(value: AnAction?): Icon? = value?.templatePresentation?.icon
+    override fun getIconFor(value: AnAction?): Icon? = presentationMapper(value)?.let { it.icon }
 
-    override fun getTextFor(value: AnAction?): String = nameMapper(value)
+    override fun getTextFor(value: AnAction?): String = presentationMapper(value)?.let { it.text } ?: ""
 
     override fun getSeparatorAbove(value: AnAction?): ListSeparator? {
       val index = actions.indexOf(value)
