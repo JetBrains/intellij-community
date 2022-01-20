@@ -23,6 +23,11 @@ public class JulLogger extends Logger {
   }
 
   @Override
+  public boolean isTraceEnabled() {
+    return myLogger.isLoggable(java.util.logging.Level.FINER);
+  }
+
+  @Override
   public void debug(String message) {
     myLogger.log(java.util.logging.Level.FINE, message);
 
