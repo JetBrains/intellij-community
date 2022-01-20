@@ -21,6 +21,33 @@ import org.jetbrains.plugins.groovy.lang.psi.util.skipParenthesesDown
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 
+/**
+ * Invocation kinds for closures are __temporarily__ disabled.
+ *
+ * At first, I tried to solve the problem of handling side effects of functional expressions, such as
+ * ```
+ * if (a instanceof A) {
+ *    with(1) {
+ *      // here a has type A
+ *    }
+ * }
+ * ```
+ * Not every closure should be inlined in that way, so it required kotlin-like distinction of types for closure invocation.
+ * That is why this class was created. Unfortunately, it has some drawbacks:
+ * it required enormous amount of computation power to determine the kind of closure, like resolve of the method, invoking the closure,
+ * and some auxiliary precomputations before actually running type inference. Also, increased number of dependencies in control flow graph
+ * implied more time spent in thread-local resolves.
+ * It must be noted that most of the closures are actually [UNKNOWN] or [IN_PLACE_UNKNOWN], because amount of [IN_PLACE_ONCE] closures is very low.
+ * Users do not have the ability to specify the kind of closure execution, and, considering groovy popularity, it's unlikely to appear.
+ * Therefore, it makes little sense in [IN_PLACE_ONCE].
+ *
+ * [UNKNOWN], on the other hand, is likely to be the most popular invocation kind. But correct handling of it is too complicated: we need to
+ * track all side effects, happening in the unknown closure, and considering them at __every__ usage of side-effect-affected object.
+ *
+ * So at last I decided to remove the effects of [UNKNOWN] and [IN_PLACE_ONCE] in favor of [IN_PLACE_UNKNOWN], because its handling is relatively easy.
+ * I do not completely lose my hope to distinguish different closures and reach the primary goal specified above, but the
+ * low number of code parts that can benefit from these changes (in their current implementation) do not worth performance degradation.
+ */
 enum class InvocationKind {
   /**
    * Indicates that functional expressions will be invoked inplace and only one time.

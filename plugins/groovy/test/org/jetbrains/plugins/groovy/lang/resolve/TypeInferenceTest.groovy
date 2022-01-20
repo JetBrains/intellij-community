@@ -1404,7 +1404,7 @@ def foo(def p) {
     }
     <caret>x
   }
-''', JAVA_LANG_INTEGER
+''', "[java.io.Serializable,java.lang.Comparable<? extends java.io.Serializable>]"
   }
 
   void 'test assignment inside closure 2'() {

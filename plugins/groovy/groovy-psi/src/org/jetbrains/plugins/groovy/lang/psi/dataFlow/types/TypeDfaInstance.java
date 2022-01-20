@@ -8,7 +8,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -67,7 +66,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       newState = handleStartFunctionalExpression(state, instruction);
     }
     else if (instruction instanceof FunctionalBlockEndInstruction) {
-      newState = handleFunctionalExpression(state, (FunctionalBlockEndInstruction)instruction);
+      newState = handleFunctionalExpression(state);
     }
     else {
       newState = state;
@@ -103,13 +102,12 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     return true;
   }
 
-  private TypeDfaState handleFunctionalExpression(@NotNull TypeDfaState state, @NotNull FunctionalBlockEndInstruction instruction) {
-    GrFunctionalExpression block = instruction.getStartNode().getElement();
+  private TypeDfaState handleFunctionalExpression(@NotNull TypeDfaState state) {
     ClosureFrame currentClosureFrame = state.getTopClosureFrame();
     if (currentClosureFrame.getStartInstructionState() == state || hasNoChanges(currentClosureFrame.getStartInstructionState(), state.getRawVarTypes())) {
       return currentClosureFrame.getStartInstructionState().withRemovedBindings(state.getRemovedBindings());
     }
-    InvocationKind kind = getInvocationKind(block, state, instruction);
+    InvocationKind kind = InvocationKind.IN_PLACE_UNKNOWN; // FunctionalExpressionFlowUtil.computeInvocationKind(block, state, instruction);
     TypeDfaState newState = state.withoutTopClosureState();
     switch (kind) {
       case IN_PLACE_ONCE:
@@ -132,18 +130,6 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
         return TypeDfaState.merge(newState.withNewMap(stateTypes), currentClosureFrame.getStartInstructionState(), myManager);
     }
     return newState;
-  }
-
-  @NotNull
-  private InvocationKind getInvocationKind(GrFunctionalExpression block,
-                                           @NotNull TypeDfaState state,
-                                           @NotNull FunctionalBlockEndInstruction instruction) {
-    if (myFlowInfo.getAcyclicInstructions().contains(instruction)) {
-      return FunctionalExpressionFlowUtil.getInvocationKind(block, true);
-    }
-    else {
-      return runWithoutCaching(state, () -> FunctionalExpressionFlowUtil.getInvocationKind(block, false));
-    }
   }
 
   private TypeDfaState handleMixin(@NotNull final TypeDfaState state, @NotNull final MixinTypeInstruction instruction) {
