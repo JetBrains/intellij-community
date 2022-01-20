@@ -23,6 +23,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -37,8 +39,10 @@ import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBLoadingPanelListener;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,52 +59,43 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings({"unchecked"})
+@SuppressWarnings("unchecked")
 public class DirDiffPanel implements Disposable, DataProvider {
   private static final Logger LOG = Logger.getInstance(DirDiffPanel.class);
 
-  public static final String DIVIDER_PROPERTY = "dir.diff.panel.divider.location";
-
-  private static final int DIVIDER_PROPERTY_DEFAULT_VALUE = 200;
-
-  private JPanel myDiffPanel;
-  private JBTable myTable;
-  private JPanel myComponent;
-  private JSplitPane mySplitPanel;
-  private TextFieldWithBrowseButton mySourceDirField;
-  private TextFieldWithBrowseButton myTargetDirField;
-  private JBLabel myTargetDirLabel;
-  private JBLabel mySourceDirLabel;
-  private JPanel myToolBarPanel;
-  private JPanel myRootPanel;
-  private JPanel myFilterPanel;
-  private JBLabel myFilterLabel;
-  private JPanel myFilesPanel;
-  private JPanel myHeaderPanel;
-  private final FilterComponent myFilter;
-  private final DirDiffTableModel myModel;
-  private final DirDiffWindow myDiffWindow;
-  private final MyDiffRequestProcessor myDiffRequestProcessor;
-  private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
-  private String oldFilter;
   public static final DataKey<DirDiffTableModel> DIR_DIFF_MODEL = DataKey.create("DIR_DIFF_MODEL");
   public static final DataKey<JTable> DIR_DIFF_TABLE = DataKey.create("DIR_DIFF_TABLE");
+  private static final String SPLITTER_PROPORTION_KEY = "dir.diff.panel.splitter.proportion";
+
+  private final DirDiffTableModel myModel;
+  private final DirDiffWindow myDiffWindow;
+
+  private final JBTable myTable = new MyJBTable();
+  private final TextFieldWithBrowseButton mySourceDirField = new TextFieldWithBrowseButton(null, this);
+  private final TextFieldWithBrowseButton myTargetDirField = new TextFieldWithBrowseButton(null, this);
+  private final FilterComponent myFilter = new MyFilterComponent();
+  private final MyDiffRequestProcessor myDiffRequestProcessor;
+  private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
+
+  private final JPanel myRootPanel;
+  private final JPanel myFilterPanel;
+  private final JPanel myToolbarPanel;
+
+  private String oldFilter;
 
   public DirDiffPanel(DirDiffTableModel model, DirDiffWindow wnd) {
     myModel = model;
     myDiffWindow = wnd;
+
     mySourceDirField.setText(model.getSourceDir().getPath());
     myTargetDirField.setText(model.getTargetDir().getPath());
-    mySourceDirField.setBorder(JBUI.Borders.emptyRight(8));
-    myTargetDirField.setBorder(JBUI.Borders.emptyRight(12));
-    mySourceDirLabel.setIcon(model.getSourceDir().getIcon());
-    myTargetDirLabel.setIcon(model.getTargetDir().getIcon());
-    myTargetDirLabel.setBorder(JBUI.Borders.emptyLeft(8));
+    JBLabel sourceDirLabel = new JBLabel(model.getSourceDir().getIcon());
+    JBLabel targetDirLabel = new JBLabel(model.getTargetDir().getIcon());
+
     myModel.setTable(myTable);
     myModel.setPanel(this);
     Disposer.register(this, myModel);
@@ -192,21 +187,39 @@ public class DirDiffPanel implements Disposable, DataProvider {
     }
 
     final DirDiffToolbarActions actions = new DirDiffToolbarActions(myModel);
-    actions.setUp(myModel, myDiffPanel);
     final ActionManager actionManager = ActionManager.getInstance();
     final ActionToolbar toolbar = actionManager.createActionToolbar("DirDiff", actions, true);
     toolbar.setTargetComponent(myTable);
     registerCustomShortcuts(actions, myTable);
-    myToolBarPanel.add(toolbar.getComponent(), BorderLayout.CENTER);
+
+    BorderLayoutPanel filesPanel = JBUI.Panels.simplePanel(ScrollPaneFactory.createScrollPane(myTable));
 
     if (model.isOperationsEnabled()) {
       final JBLabel label = new JBLabel(DiffBundle.message("use.space.button.or.mouse.click"), SwingConstants.CENTER);
       label.setForeground(UIUtil.getInactiveTextColor());
       UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, label);
-      myFilesPanel.add(label, BorderLayout.SOUTH);
+      filesPanel.addToBottom(label);
     }
-    DataManager.registerDataProvider(myFilesPanel, this);
+    DataManager.registerDataProvider(filesPanel, this);
     PopupHandler.installPopupMenu(myTable, "DirDiffMenu", "DirDiffPanel");
+
+    myFilterPanel = new JPanel(new BorderLayout());
+    myToolbarPanel = JBUI.Panels.simplePanel(toolbar.getComponent()).addToRight(myFilterPanel);
+    JPanel sourcePanel = JBUI.Panels.simplePanel(mySourceDirField).addToLeft(sourceDirLabel);
+    JPanel targetPanel = JBUI.Panels.simplePanel(myTargetDirField).addToLeft(targetDirLabel);
+    sourcePanel.setBorder(JBUI.Borders.empty(0, 8));
+    targetPanel.setBorder(JBUI.Borders.empty(0, 8));
+
+    GridBag gb = new GridBag();
+    JPanel headerPanel = new JPanel(new GridBagLayout());
+    headerPanel.add(myToolbarPanel, gb.nextLine().next().coverLine());
+    headerPanel.add(sourcePanel, gb.next().fillCellHorizontally().weightx(1));
+    headerPanel.add(targetPanel, gb.next().fillCellHorizontally().weightx(1));
+
+    Splitter tableSplitter = new OnePixelSplitter(true, SPLITTER_PROPORTION_KEY, 0.4f);
+    tableSplitter.setFirstComponent(JBUI.Panels.simplePanel(filesPanel)
+                                      .addToTop(headerPanel));
+
     final JBLoadingPanel loadingPanel = new JBLoadingPanel(new BorderLayout(), wnd.getDisposable());
     loadingPanel.addListener(new JBLoadingPanelListener.Adapter() {
       boolean showHelp = true;
@@ -216,8 +229,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
         if (showHelp && myModel.isOperationsEnabled() && myModel.getRowCount() > 0) {
           final long count = PropertiesComponent.getInstance().getLong("dir.diff.space.button.info", 0);
           if (count < 3) {
-            JBPopupFactory.getInstance().createBalloonBuilder(new JLabel(
-              DiffBundle.message("use.space.button.to.change.operation")))
+            JBPopupFactory.getInstance()
+              .createBalloonBuilder(new JLabel(DiffBundle.message("use.space.button.to.change.operation")))
               .setFadeoutTime(5000)
               .setContentInsets(JBUI.insets(15))
               .createBalloon().show(new RelativePoint(myTable, new Point(myTable.getWidth() / 2, 0)), Balloon.Position.above);
@@ -227,7 +240,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
         showHelp = false;
       }
     });
-    loadingPanel.add(myComponent, BorderLayout.CENTER);
+    loadingPanel.add(tableSplitter, BorderLayout.CENTER);
     ComponentUtil.putClientProperty(myTable, DirDiffTableModel.DECORATOR_KEY, loadingPanel);
     myTable.addComponentListener(new ComponentAdapter() {
       @Override
@@ -236,9 +249,20 @@ public class DirDiffPanel implements Disposable, DataProvider {
         myModel.reloadModel(false);
       }
     });
-    myRootPanel.removeAll();
+
+    myRootPanel = new JPanel(new BorderLayout()) {
+      private boolean myFirstUpdate = true;
+
+      @Override
+      protected void paintChildren(Graphics g) {
+        super.paintChildren(g);
+        if (myFirstUpdate) {
+          myFirstUpdate = false;
+          myModel.reloadModel(false);
+        }
+      }
+    };
     myRootPanel.add(loadingPanel, BorderLayout.CENTER);
-    myFilter = new MyFilterComponent();
 
     myModel.addModelListener(new DirDiffModelListener() {
       @Override
@@ -254,15 +278,22 @@ public class DirDiffPanel implements Disposable, DataProvider {
     myFilter.getTextEditor().setColumns(10);
     myFilter.setFilter(myModel.getSettings().getFilter());
     oldFilter = myFilter.getFilter();
+
+    JBLabel filterLabel = new JBLabel();
+    LabeledComponent.TextWithMnemonic.fromTextWithMnemonic(DiffBundle.message("button.dirdiff.filter"))
+      .setToLabel(filterLabel);
+    filterLabel.setLabelFor(myFilter);
+
     myFilterPanel.add(myFilter, BorderLayout.CENTER);
-    myFilterLabel.setLabelFor(myFilter);
+    myFilterPanel.add(filterLabel, BorderLayout.WEST);
 
     setDirFieldChooser(myModel.getSourceDir().getElementChooser(project), false);
     setDirFieldChooser(myModel.getTargetDir().getElementChooser(project), true);
 
     myDiffRequestProcessor = new MyDiffRequestProcessor(project);
     Disposer.register(this, myDiffRequestProcessor);
-    myDiffPanel.add(myDiffRequestProcessor.getComponent(), BorderLayout.CENTER);
+    actions.setUp(myModel, myDiffRequestProcessor.getComponent());
+    tableSplitter.setSecondComponent(myDiffRequestProcessor.getComponent());
 
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
   }
@@ -363,7 +394,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
   }
 
   public JComponent extractFilterPanel() {
-    myHeaderPanel.setVisible(false);
+    myToolbarPanel.setVisible(false);
     return myFilterPanel;
   }
 
@@ -426,31 +457,6 @@ public class DirDiffPanel implements Disposable, DataProvider {
   @Override
   public void dispose() {
     myModel.stopUpdating();
-    PropertiesComponent.getInstance().setValue(DIVIDER_PROPERTY, mySplitPanel.getDividerLocation(), DIVIDER_PROPERTY_DEFAULT_VALUE);
-  }
-
-  private void createUIComponents() {
-    myTable = new MyJBTable();
-
-    mySourceDirField = new TextFieldWithBrowseButton(null, this);
-    myTargetDirField = new TextFieldWithBrowseButton(null, this);
-
-    final AtomicBoolean callUpdate = new AtomicBoolean(true);
-    myRootPanel = new JPanel(new BorderLayout()) {
-      @Override
-      protected void paintChildren(Graphics g) {
-        super.paintChildren(g);
-        if (callUpdate.get()) {
-          callUpdate.set(false);
-          myModel.reloadModel(false);
-        }
-      }
-    };
-  }
-
-  public void setupSplitter() {
-    int value = PropertiesComponent.getInstance().getInt(DIVIDER_PROPERTY, DIVIDER_PROPERTY_DEFAULT_VALUE);
-    mySplitPanel.setDividerLocation(Integer.valueOf(value));
   }
 
   @Override
