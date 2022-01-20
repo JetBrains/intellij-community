@@ -232,6 +232,11 @@ public abstract class DialogWrapper {
     myPeer = parentComponent == null ? createPeer(project, canBeParent, project == null ? IdeModalityType.IDE : ideModalityType)
                                      : createPeer(parentComponent, canBeParent);
     myCreateSouthSection = createSouth;
+    initResizeListener();
+    createDefaultActions();
+  }
+
+  protected final void initResizeListener() {
     Window window = myPeer.getWindow();
     if (window != null) {
       myResizeListener = new ComponentAdapter() {
@@ -247,7 +252,6 @@ public abstract class DialogWrapper {
       };
       window.addComponentListener(myResizeListener);
     }
-    createDefaultActions();
   }
 
   /**
