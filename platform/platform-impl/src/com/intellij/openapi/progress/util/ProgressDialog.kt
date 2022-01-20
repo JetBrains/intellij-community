@@ -117,12 +117,6 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
 
   fun getPopup(): DialogWrapper? = myPopup
 
-  private fun doCancelAction() {
-    if (myProgressWindow.myShouldShowCancel) {
-      myProgressWindow.cancel()
-    }
-  }
-
   fun cancel() {
     enableCancelButtonIfNeeded(false)
   }
@@ -266,7 +260,9 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
 
     override fun doCancelAction() {
       if (myIsCancellable) {
-        this@ProgressDialog.doCancelAction()
+        if (myProgressWindow.myShouldShowCancel) {
+          myProgressWindow.cancel()
+        }
       }
     }
 
