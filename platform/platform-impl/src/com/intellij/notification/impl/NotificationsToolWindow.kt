@@ -857,6 +857,9 @@ private class NotificationComponent(val project: Project,
         centerPanel.add(text)
       }
     }
+    else {
+      myLafUpdater = Runnable(::updateColor)
+    }
 
     val actions = notification.actions
     val actionsSize = actions.size
@@ -1099,6 +1102,8 @@ private class NotificationComponent(val project: Project,
       component.text = text
       component.revalidate()
       component.repaint()
+
+      updateColor()
     }
 
     return component
