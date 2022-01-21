@@ -220,7 +220,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       }
       if (object instanceof String && !((String)object).isBlank()) {
         var path = findByPath(FileUtil.expandUserHome(((String)object).trim()));
-        if (path != null) {
+        if (path != null && path.isAbsolute()) {
           return List.of(path);
         }
       }
