@@ -1,0 +1,18 @@
+<idea-plugin>
+  <name>Platform Color Schemes</name>
+  <id>com.intellij.plugins.platformcolorschemes</id>
+  <vendor>JetBrains</vendor>
+  <category>UI</category>
+  <depends>com.intellij.modules.lang</depends>
+  <extensions defaultExtensionNs="com.intellij">
+    <bundledColorScheme path="/colorSchemes/all_hallows_eve"/>
+    <bundledColorScheme path="/colorSchemes/blackboard"/>
+    <bundledColorScheme path="/colorSchemes/cobalt"/>
+    <bundledColorScheme path="/colorSchemes/github"/>
+    <bundledColorScheme path="/colorSchemes/monokai"/>
+    <bundledColorScheme path="/colorSchemes/rails_casts"/>
+    <bundledColorScheme path="/colorSchemes/twilight"/>
+    <bundledColorScheme path="/colorSchemes/vibrant_ink"/>
+    <bundledColorScheme path="/colorSchemes/WarmNeon"/>
+  </extensions>
+</idea-plugin>

@@ -1,0 +1,10 @@
+<idea-plugin>
+  <name>VibrantInk Color Scheme</name>
+  <id>com.intellij.plugins.vibrantinkcolorscheme</id>
+  <vendor>JetBrains</vendor>
+  <category>UI</category>
+  <depends>com.intellij.modules.lang</depends>
+  <extensions defaultExtensionNs="com.intellij">
+    <bundledColorScheme path="/colorSchemes/vibrant_ink"/>
+  </extensions>
+</idea-plugin>
