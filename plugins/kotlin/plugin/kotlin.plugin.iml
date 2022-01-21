@@ -66,6 +66,7 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.maven" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-wizard-compose" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.properties" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.refIndex" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.repl" scope="PROVIDED" />
