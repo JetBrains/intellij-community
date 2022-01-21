@@ -679,18 +679,18 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   }
 
   private Object getData(@NotNull String dataId) {
+    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+      return List.of((DataProvider)this::getSlowData);
+    }
+    return null;
+
+  }
+  private Object getSlowData(@NotNull String dataId) {
     if (SelectInContext.DATA_KEY.is(dataId)) {
       VirtualFile file = getSelectedPropertiesFile();
       return file == null ? null : new FileSelectInContext(myProject, file);
     }
-    else if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
-      return List.of((DataProvider)this::getSlowData);
-    }
 
-    return null;
-  }
-
-  private Object getSlowData(@NotNull String dataId) {
     if (!CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return null;
 
     for (Map.Entry<VirtualFile, EditorEx> entry : myEditors.entrySet()) {
