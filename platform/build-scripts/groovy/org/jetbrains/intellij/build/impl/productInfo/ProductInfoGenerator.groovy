@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.impl.SkipTransientPropertiesJrExtension
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -74,6 +75,6 @@ final class ProductInfoGenerator {
       launch: launch,
       customProperties: context.productProperties.generateCustomPropertiesForProductInfo()
     )
-    return JSON.std.with(JSON.Feature.PRETTY_PRINT_OUTPUT).asBytes(json)
+    return JSON.builder().enable(JSON.Feature.PRETTY_PRINT_OUTPUT).register(new SkipTransientPropertiesJrExtension()).build().asBytes(json)
   }
 }

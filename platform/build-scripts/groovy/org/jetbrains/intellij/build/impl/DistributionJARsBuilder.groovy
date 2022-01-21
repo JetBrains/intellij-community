@@ -8,7 +8,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.Compressor
 import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -71,7 +70,6 @@ final class DistributionJARsBuilder {
   private final Set<PluginLayout> pluginsToPublish
   private final PluginXmlPatcher pluginXmlPatcher
 
-  @CompileStatic(TypeCheckingMode.SKIP)
   DistributionJARsBuilder(BuildContext context, Set<PluginLayout> pluginsToPublish = Collections.emptySet()) {
     this.pluginsToPublish = filterPluginsToPublish(pluginsToPublish, context)
 

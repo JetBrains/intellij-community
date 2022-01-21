@@ -9,12 +9,11 @@ import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 
 @CompileStatic
 class PyCharmCommunityProperties extends PyCharmPropertiesBase {
-  @CompileStatic(TypeCheckingMode.SKIP)
   PyCharmCommunityProperties(String communityHome) {
     platformPrefix = "PyCharmCore"
     customProductCode = "PC"
     applicationInfoModule = "intellij.pycharm.community"
-    brandingResourcePaths = ["$communityHome/python/resources"]
+    brandingResourcePaths = ["$communityHome/python/resources".toString()]
     scrambleMainJar = false
     buildSourcesArchive = true
 
