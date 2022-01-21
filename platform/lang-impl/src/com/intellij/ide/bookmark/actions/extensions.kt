@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.actions
 
 import com.intellij.ide.bookmark.Bookmark
@@ -27,9 +27,12 @@ import com.intellij.util.OpenSourceUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.Component
+import java.awt.event.ActionListener
+import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JTree
+import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 
 
@@ -128,3 +131,18 @@ private fun createBookmarkTypeAction(type: BookmarkType) = GotoBookmarkTypeActio
 internal fun JComponent.registerEditSourceAction(parent: Disposable) = LightEditActionFactory
   .create { OpenSourceUtil.navigate(*it.getData(CommonDataKeys.NAVIGATABLE_ARRAY)) }
   .registerCustomShortcutSet(CommonShortcuts.getEditSource(), this, parent)
+
+internal fun JTree.registerNavigateOnEnterAction() {
+  val enter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)
+  // perform previous action if the specified action is failed
+  // it is needed to expand/collapse a tree node
+  val oldListener = getActionForKeyStroke(enter)
+  val newListener = ActionListener {
+    when (val node = TreeUtil.getAbstractTreeNode(selectionPath)) {
+      null -> oldListener?.actionPerformed(it)
+      is GroupNode -> oldListener?.actionPerformed(it)
+      else -> node.navigate(true)
+    }
+  }
+  registerKeyboardAction(newListener, enter, JComponent.WHEN_FOCUSED)
+}

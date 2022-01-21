@@ -32,6 +32,7 @@ internal class ShowLineBookmarksAction : DumbAwareAction(BookmarkBundle.messageP
 
     event.bookmarksManager?.assignedTypes?.forEach { panel.registerBookmarkTypeAction(panel, it) }
     panel.registerEditSourceAction(panel)
+    panel.tree.registerNavigateOnEnterAction()
 
     val popup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(panel, panel.tree)

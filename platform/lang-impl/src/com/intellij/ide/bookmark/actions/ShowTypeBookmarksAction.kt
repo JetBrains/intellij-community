@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.actions
 
 import com.intellij.ide.bookmark.Bookmark
@@ -24,7 +24,6 @@ import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.EditSourceOnDoubleClickHandler
-import com.intellij.util.EditSourceOnEnterKeyHandler
 import com.intellij.util.containers.toArray
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
@@ -55,8 +54,8 @@ internal class ShowTypeBookmarksAction : DumbAwareAction(BookmarkBundle.messageP
     }
     bookmarks.forEach { tree.registerBookmarkTypeAction(root, it.first) }
     tree.registerEditSourceAction(root)
+    tree.registerNavigateOnEnterAction()
 
-    EditSourceOnEnterKeyHandler.install(tree)
     EditSourceOnDoubleClickHandler.install(tree)
     TreeUtil.promiseSelectFirstLeaf(tree).onSuccess {
       // show popup when tree is loaded
