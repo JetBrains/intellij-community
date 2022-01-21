@@ -187,7 +187,7 @@
       implementationClass="training.featuresSuggester.statistics.FeatureSuggesterStatistics"/>
     <statistics.validation.customValidationRule
       implementation="training.featuresSuggester.statistics.FeatureSuggesterIdRuleValidator"/>
-    <registryKey defaultValue="true" description="Enable actions processing by IDE Feature Suggester plugin"
+    <registryKey defaultValue="false" description="Enable actions processing by IDE Feature Suggester plugin"
                  key="feature.suggester.enabled"/>
     <registryKey defaultValue="true" description="Send statistics about IDE Feature Suggester plugin usage"
                  key="feature.suggester.send.statistics"/>
