@@ -256,7 +256,7 @@ fun configureFacetByGradleModule(
         return null
     }
 
-    val compilerVersion = sourceSetName?.let { moduleNode.kotlinTaskPropertiesBySourceSet.getValue(it).pluginVersion }
+    val compilerVersion = sourceSetName?.let { moduleNode.kotlinTaskPropertiesBySourceSet[it]?.pluginVersion }
         // required for GradleFacetImportTest.{testCommonImportByPlatformPlugin, testKotlinAndroidPluginDetection}
         ?: moduleNode.findAll(BuildScriptClasspathData.KEY).firstOrNull()?.data?.let(::findKotlinPluginVersion)
         ?: return null
