@@ -57,8 +57,6 @@
     <orderEntry type="module" module-name="intellij.externalSystem.dependencyUpdater" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
-    <orderEntry type="module" module-name="intellij.gradle" />
-    <orderEntry type="module" module-name="intellij.maven" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
@@ -86,5 +84,6 @@
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
+    <orderEntry type="module" module-name="intellij.java.psi" />
   </component>
 </module>

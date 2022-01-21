@@ -38,10 +38,9 @@ internal open class GradleProjectModuleOperationProvider : AbstractProjectModule
         operationMetadata: DependencyOperationMetadata,
         module: ProjectModule
     ): List<OperationFailure<out OperationItem>> {
-        requireNotNull(operationMetadata.newScope) {
+        saveAdditionalScopeToConfigurationIfNeeded(module.nativeModule.project, requireNotNull(operationMetadata.newScope) {
             PackageSearchBundle.getMessage("packagesearch.operation.error.gradle.missing.configuration")
-        }
-        saveAdditionalScopeToConfigurationIfNeeded(module.nativeModule.project, operationMetadata.newScope)
+        })
 
         return super.addDependencyToModule(operationMetadata, module)
     }

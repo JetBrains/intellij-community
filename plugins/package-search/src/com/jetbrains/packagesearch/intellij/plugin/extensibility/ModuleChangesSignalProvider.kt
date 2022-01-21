@@ -66,9 +66,9 @@ interface FlowModuleChangesSignalProvider {
     fun registerModuleChangesListener(project: Project): Flow<Unit>
 }
 
-internal operator fun <T> Supplier<T>.invoke() = get()
+operator fun <T> Supplier<T>.invoke() = get()
 
-internal operator fun Runnable.invoke() = run()
+operator fun Runnable.invoke() = run()
 
 /**
  * Functional interface used to unsubscribe listeners for [ModuleChangesSignalProvider].
