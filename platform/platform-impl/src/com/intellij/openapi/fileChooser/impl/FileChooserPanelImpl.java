@@ -78,7 +78,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private final @Nullable WatchService myWatcher;
   private final Map<Path, FileSystem> myOpenFileSystems;
 
-  private final ComboBox<FsItem> myPath;
+  private final ComboBox<PathWrapper> myPath;
   private final SortedListModel<FsItem> myModel;
   private final JBList<FsItem> myList;
   private boolean myShowPathBar;
@@ -110,7 +110,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     var toolBar = ActionManager.getInstance().createActionToolbar("FileChooserDialog", group, true);
     toolBar.setTargetComponent(this);
 
-    myPath = new ComboBox<>(Stream.of(recentPaths).map(FsItem::new).toArray(FsItem[]::new));
+    myPath = new ComboBox<>(Stream.of(recentPaths).map(PathWrapper::new).toArray(PathWrapper[]::new));
     myPath.setVisible(myShowPathBar);
     myPath.setEditable(true);
     var pathEditor = (JTextField)myPath.getEditor().getEditorComponent();
@@ -214,18 +214,15 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   @NotNull List<@NotNull Path> chosenPaths() {
     if (myShowPathBar && myPath.isAncestorOf(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner())) {
       var object = myPath.getEditor().getItem();
-
-      if (object instanceof FsItem) {
-        return List.of(((FsItem)object).path);
+      if (object instanceof PathWrapper) {
+        return List.of(((PathWrapper)object).path);
       }
-
       if (object instanceof String && !((String)object).isBlank()) {
         var path = findByPath(((String)object).trim());
         if (path != null) {
           return List.of(path);
         }
       }
-
       return List.of();
     }
     else {
@@ -316,7 +313,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
   private void doLoad(@Nullable Path path, int direction) {
     synchronized (myLock) {
-      myPath.setItem(path != null ? new FsItem(path) : null);
+      myPath.setItem(path != null ? new PathWrapper(path) : null);
       myModel.clear();
       myList.clearSelection();
       myList.setPaintBusy(true);
@@ -387,7 +384,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     var uplink = new FsItem(parent(directory));
     update(id, cancelled, () -> {
       myCurrentDirectory = directory;
-      myPath.setItem(new FsItem(directory));
+      myPath.setItem(new PathWrapper(directory));
       myCurrentContent.add(uplink);
       myModel.add(uplink);
     });
@@ -560,34 +557,10 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     });
   }
 
-  private static final class FsItem {
-    private static final String UPLINK = "..";
-
+  private static final class PathWrapper {
     private final Path path;
-    private final @NlsSafe String name;
-    private final boolean directory;
-    private final boolean visible;
-    private final boolean selectable;
-    private final @Nullable Icon icon;
 
-    private FsItem(Path path) {
-      this.path = path;
-      this.name = UPLINK;
-      this.directory = true;
-      this.visible = true;
-      this.selectable = false;
-      this.icon = AllIcons.Nodes.UpFolder;
-    }
-
-    private FsItem(Path path, BasicFileAttributes attrs, boolean visible, boolean selectable, @Nullable Icon icon) {
-      this.path = path;
-      var name = NioFiles.getFileName(path);
-      this.name = name.length() > 1 && name.endsWith(File.separator) ? name.substring(0, name.length() - 1) : name;
-      this.directory = attrs.isDirectory();
-      this.visible = visible;
-      this.selectable = selectable;
-      this.icon = icon;
-    }
+    private PathWrapper(Path path) { this.path = path; }
 
     @Override
     public boolean equals(Object o) {
@@ -615,6 +588,36 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         }
       }
       return path.toString();
+    }
+  }
+
+  private static final class FsItem {
+    private static final String UPLINK = "..";
+
+    private final Path path;
+    private final @NlsSafe String name;
+    private final boolean directory;
+    private final boolean visible;
+    private final boolean selectable;
+    private final @Nullable Icon icon;
+
+    private FsItem(Path path) {
+      this.path = path;
+      this.name = UPLINK;
+      this.directory = true;
+      this.visible = true;
+      this.selectable = false;
+      this.icon = AllIcons.Nodes.UpFolder;
+    }
+
+    private FsItem(Path path, BasicFileAttributes attrs, boolean visible, boolean selectable, @Nullable Icon icon) {
+      this.path = path;
+      var name = NioFiles.getFileName(path);
+      this.name = name.length() > 1 && name.endsWith(File.separator) ? name.substring(0, name.length() - 1) : name;
+      this.directory = attrs.isDirectory();
+      this.visible = visible;
+      this.selectable = selectable;
+      this.icon = icon;
     }
 
     private static final Comparator<FsItem> COMPARATOR = (o1, o2) -> {
