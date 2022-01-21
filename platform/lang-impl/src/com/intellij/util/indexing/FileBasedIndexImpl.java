@@ -111,7 +111,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @ApiStatus.Internal
   public static final Logger LOG = Logger.getInstance(FileBasedIndexImpl.class);
-  private final boolean myTraceIndexUpdates;
+  private static final boolean ourTraceIndexUpdates = SystemProperties.getBooleanProperty("trace.file.based.index.update", false);
+  private static final boolean ourTraceStubIndexUpdates = SystemProperties.getBooleanProperty("trace.stub.index.update", false);
+  private static final boolean ourTraceSharedIndexUpdates = SystemProperties.getBooleanProperty("trace.shared.index.update", false);
 
   private volatile RegisteredIndexes myRegisteredIndexes;
   private volatile @Nullable String myShutdownReason;
@@ -223,21 +225,20 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }, null);
 
     myIndexableFilesFilterHolder = new IncrementalProjectIndexableFilesFilterHolder();
-    myTraceIndexUpdates = SystemProperties.getBooleanProperty("trace.file.based.index.update", false);
+  }
+
+  boolean doTraceIndexUpdates() {
+    return ourTraceIndexUpdates;
   }
 
   @ApiStatus.Internal
-  public boolean doTraceStubUpdates() {
-    return myTraceIndexUpdates;
-  }
-
-  boolean doTraceStubUpdates(@NotNull ID<?, ?> indexId) {
-    return myTraceIndexUpdates && indexId.equals(StubUpdatingIndex.INDEX_ID);
+  public boolean doTraceStubUpdates(@NotNull ID<?, ?> indexId) {
+    return ourTraceStubIndexUpdates && indexId.equals(StubUpdatingIndex.INDEX_ID);
   }
 
   @ApiStatus.Internal
   boolean doTraceSharedIndexUpdates() {
-    return myTraceIndexUpdates && SystemProperties.getBooleanProperty("trace.shared.index.updates", false);
+    return ourTraceSharedIndexUpdates && SystemProperties.getBooleanProperty("trace.shared.index.updates", false);
   }
 
   void scheduleFullIndexesRescan(@NotNull Collection<ID<?, ?>> indexesToRebuild, @NotNull String reason) {
@@ -1544,16 +1545,19 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
+  private static String getFileInfo(int inputId, @Nullable VirtualFile file, @Nullable FileContent currentFC) {
+    if (file == null && currentFC == null) {
+      return String.valueOf(inputId);
+    }
+    String fileName = currentFC != null ? currentFC.getFileName() : file.getName();
+    return fileName + "(id=" + inputId + ")";
+  }
+
   @Nullable("null in case index update is not necessary or the update has failed")
   SingleIndexUpdateStats updateSingleIndex(@NotNull ID<?, ?> indexId, @Nullable VirtualFile file, int inputId, @Nullable FileContent currentFC) {
     if (doTraceStubUpdates(indexId)) {
-      String fileInfo = file == null ? String.valueOf(inputId) : file.getName();
-      if (currentFC == null) {
-        LOG.info("index " + indexId + " deletion requested for " + fileInfo);
-      }
-      else {
-        LOG.info("index " + indexId + " update requested for " + fileInfo);
-      }
+      String fileInfo = getFileInfo(inputId, file, currentFC);
+      LOG.info("index " + indexId + " " + (currentFC == null ? "deletion" : "update") + " requested for " + fileInfo);
     }
     if (!myRegisteredIndexes.isExtensionsDataLoaded()) reportUnexpectedAsyncInitState();
     if (!RebuildStatus.isOk(indexId) && !myIsUnitTestMode) {
@@ -1610,14 +1614,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                  ((IndexInfrastructureExtensionUpdateComputation)storageUpdate).isIndexProvided();
 
       if (runUpdateForPersistentData(storageUpdate)) {
-        if (doTraceStubUpdates(indexId)) {
-          String fileInfo = file == null ? String.valueOf(inputId) : file.getName();
-          if (currentFC == null) {
-            LOG.info("index " + indexId + " deletion finished for " + fileInfo);
-          }
-          else {
-            LOG.info("index " + indexId + " update finished for " + fileInfo);
-          }
+        if (doTraceStubUpdates(indexId) || doTraceIndexUpdates()) {
+          String fileInfo = getFileInfo(inputId, file, currentFC);
+          LOG.info("index " + indexId + " " + (currentFC == null ? "deletion" : "update") + " finished for " + fileInfo);
         }
         ConcurrencyUtil.withLock(myReadLock, () -> {
           if (currentFC != null) {

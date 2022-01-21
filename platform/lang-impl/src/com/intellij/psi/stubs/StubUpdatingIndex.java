@@ -88,7 +88,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       FileBasedIndexImpl fileBasedIndex = ObjectUtils.tryCast(FileBasedIndex.getInstance(), FileBasedIndexImpl.class);
 
       if (parserDefinition == null) {
-        if (fileBasedIndex != null && fileBasedIndex.doTraceStubUpdates()) {
+        if (fileBasedIndex != null && fileBasedIndex.doTraceStubUpdates(StubUpdatingIndex.INDEX_ID)) {
           FileBasedIndexImpl.LOG.info("No parser definition for " + file.getName());
         }
         return false;
@@ -96,13 +96,13 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
 
       final IFileElementType elementType = parserDefinition.getFileNodeType();
       if (elementType instanceof IStubFileElementType && ((IStubFileElementType<?>)elementType).shouldBuildStubFor(file)) {
-        if (fileBasedIndex != null && fileBasedIndex.doTraceStubUpdates()) {
+        if (fileBasedIndex != null && fileBasedIndex.doTraceStubUpdates(StubUpdatingIndex.INDEX_ID)) {
           FileBasedIndexImpl.LOG.info("Should build stub for " + file.getName());
         }
         return true;
       }
 
-      if (fileBasedIndex != null && fileBasedIndex.doTraceStubUpdates()) {
+      if (fileBasedIndex != null && fileBasedIndex.doTraceStubUpdates(StubUpdatingIndex.INDEX_ID)) {
         FileBasedIndexImpl.LOG.info("Can't build stub using stub file element type " + file.getName() +
                                     ", properties: " + PushedFilePropertiesRetriever.getInstance().dumpSortedPushedProperties(file));
       }
