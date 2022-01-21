@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Objects;
+import java.util.function.Function;
 
 public final class MarkdownPsiElementFactory {
   private MarkdownPsiElementFactory() { }
@@ -241,5 +242,63 @@ public final class MarkdownPsiElementFactory {
     final var element = Objects.requireNonNull(file.getFirstChild().getFirstChild());
     assert(element instanceof MarkdownHeader);
     return (MarkdownHeader)element;
+  }
+
+  @ApiStatus.Experimental
+  public static @NotNull PsiElement createListMarker(@NotNull Project project, @NotNull String markerText) {
+    final var contents = markerText + " list item";
+    final var file = createFile(project, contents);
+    return Objects.requireNonNull(file.getFirstChild().getFirstChild().getFirstChild().getFirstChild());
+  }
+
+  @ApiStatus.Experimental
+  public static @NotNull Pair<PsiElement, PsiElement> createListMarkerWithCheckbox(@NotNull Project project, @NotNull String markerText, boolean checked) {
+    var text = markerText;
+    if (checked) {
+      text += " [x]";
+    } else {
+      text += " [ ]";
+    }
+    final var marker = createListMarker(project, text);
+    final var checkbox = Objects.requireNonNull(marker.getNextSibling());
+    return new Pair<>(marker, checkbox);
+  }
+
+  @ApiStatus.Experimental
+  public static @NotNull MarkdownList createEmptyList(@NotNull Project project, boolean ordered) {
+    final String contents;
+    if (ordered) {
+      contents = "1) list item";
+    } else {
+      contents = "* list item";
+    }
+    final var file = createFile(project, contents);
+    final var list = Objects.requireNonNull(file.getFirstChild().getFirstChild());
+    assert(list instanceof MarkdownList);
+    for (final var child: list.getChildren()) {
+      child.delete();
+    }
+    return (MarkdownList)list;
+  }
+
+  @ApiStatus.Experimental
+  public static @NotNull MarkdownList createList(
+    @NotNull Project project,
+    @NotNull Iterable<@NotNull String> items,
+    @NotNull Function<Integer, String> markerSupplier
+  ) {
+    final var builder = new StringBuilder();
+    var itemIndex = 1;
+    for (final var item: items) {
+      builder.append(markerSupplier.apply(itemIndex));
+      builder.append(" ");
+      builder.append(item);
+      builder.append("\n");
+      itemIndex += 1;
+    }
+    final var file = createFile(project, builder.toString());
+    final var list = Objects.requireNonNull(file.getFirstChild().getFirstChild());
+    assert(list instanceof MarkdownList);
+    return (MarkdownList)list;
   }
 }
