@@ -56,7 +56,7 @@ private fun <T> CachedValuesManager.cache(
     return getCachedValue(
         holder,
         getKeyForClass(classForKey),
-        { CachedValueProvider.Result.create(provider(), dependencies) },
+        { CachedValueProvider.Result.create(provider(), *dependencies) },
         false
     )
 }

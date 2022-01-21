@@ -138,7 +138,7 @@ class SubpackagesIndexService(private val project: Project): Disposable {
         }
 
         private fun cachedPartialFqNames(scope: GlobalSearchScope): MutableMap<FqName, Boolean>? =
-            scope.safeAs<ModuleSourceScope>()?.module?.cacheByProvider(dependencies) {
+            scope.safeAs<ModuleSourceScope>()?.module?.cacheByProvider(*dependencies) {
                 Collections.synchronizedMap(mutableMapOf<FqName, Boolean>())
             }
 
