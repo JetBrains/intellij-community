@@ -10,35 +10,35 @@ import com.intellij.settingsSync.SettingsSyncSettings
 import com.intellij.settingsSync.config.BUNDLED_PLUGINS_ID
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager.Companion.FILE_SPEC
 
-@State(name = "SettingsSyncPluginData", storages = [Storage(FILE_SPEC)])
-class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginManager.PluginData> {
+@State(name = "SettingsSyncPlugins", storages = [Storage(FILE_SPEC)])
+class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginManager.SyncPluginsState> {
 
   companion object {
     fun getInstance() = ApplicationManager.getApplication().getService(SettingsSyncPluginManager::class.java)
 
-    const val FILE_SPEC = "settingsSyncPluginData.xml"
+    const val FILE_SPEC = "settingsSyncPlugins.xml"
   }
 
-  private var state = PluginData()
+  private var state = SyncPluginsState()
 
   private var noUpdateFromIde : Boolean = false
 
-  override fun getState(): PluginData {
+  override fun getState(): SyncPluginsState {
     updateStateFromIde()
     return state
   }
 
-  override fun loadState(state: PluginData) {
+  override fun loadState(state: SyncPluginsState) {
     this.state = state
   }
 
-  class PluginData : BaseState() {
-    var plugins by map<String, SettingsSyncPluginState>()
+  class SyncPluginsState : BaseState() {
+    var plugins by map<String, PluginData>()
   }
 
-  class SettingsSyncPluginState : BaseState() {
+  class PluginData : BaseState() {
     var isEnabled by property(true)
-    var requires by stringSet()
+    var dependencies by stringSet()
   }
 
   private fun updateStateFromIde() {
@@ -46,18 +46,18 @@ class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginMan
     PluginManagerCore.getPlugins().forEach {
       val idString = it.pluginId.idString
       if (shouldSaveState(it)) {
-        var pluginState = state.plugins.get(idString)
-        if (pluginState == null) {
-          pluginState = SettingsSyncPluginState()
+        var pluginData = state.plugins[idString]
+        if (pluginData == null) {
+          pluginData = PluginData()
           it.dependencies.forEach { dependency ->
             if (!dependency.isOptional) {
-              pluginState.requires.add(dependency.pluginId.idString)
-              pluginState.intIncrementModificationCount()
+              pluginData.dependencies.add(dependency.pluginId.idString)
+              pluginData.intIncrementModificationCount()
             }
           }
-          state.plugins[idString] = pluginState
+          state.plugins[idString] = pluginData
         }
-        pluginState.isEnabled = it.isEnabled
+        pluginData.isEnabled = it.isEnabled
       }
       else {
         if (state.plugins.containsKey(idString)) {
@@ -97,8 +97,8 @@ class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginMan
     return PluginId.findId(idString)?.let { PluginManagerCore.findPlugin(it) }
   }
 
-  private fun checkDependencies(pluginState: SettingsSyncPluginState) : Boolean {
-    pluginState.requires.forEach {
+  private fun checkDependencies(pluginState: PluginData) : Boolean {
+    pluginState.dependencies.forEach {
       if (findPlugin(it) == null) {
         return false
       }
