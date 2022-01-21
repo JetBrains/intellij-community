@@ -27,7 +27,8 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
     "org.mockito.Spy",
     "org.mockito.Captor",
     "org.mockito.InjectMocks",
-    "org.assertj.core.api.junit.jupiter.InjectSoftAssertions");
+    "org.assertj.core.api.junit.jupiter.InjectSoftAssertions", 
+    "org.junit.jupiter.api.io.TempDir");
 
 
   @Override
