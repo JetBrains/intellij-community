@@ -136,29 +136,14 @@ private fun getLanguageSettingsForScripts(project: Project, file: VirtualFile, s
             parseCommandLineArguments(environmentCompilerOptions.toList(), compilerArguments)
             parseCommandLineArguments(args.toList(), compilerArguments)
             // TODO: reporting
-            val verSettings = compilerArguments.toLanguageVersionSettings(MessageCollector.NONE)
+            val versionSettings = compilerArguments.toLanguageVersionSettings(MessageCollector.NONE)
             val jvmTarget =
                 compilerArguments.jvmTarget?.let { JvmTarget.fromString(it) } ?: detectDefaultTargetPlatformVersion(scriptModule?.platform)
-
-            val languageVersionSettings = project.getLanguageVersionSettings(contextModule = scriptModule)
-            val versionSettings = if (languageVersionSettings.languageVersion.isLess(verSettings.languageVersion)) {
-                languageVersionSettings
-            } else {
-                verSettings
-            }
-
             ScriptLanguageSettings(versionSettings, jvmTarget)
         }.also { scriptDefinition.putUserData(SCRIPT_LANGUAGE_SETTINGS, it) }
         settings.value
     }
 }
-
-private fun LanguageVersion.isLess(languageVersion: LanguageVersion): Boolean =
-    if (major < languageVersion.major) {
-        true
-    } else {
-        minor < languageVersion.minor
-    }
 
 private inline fun createCachedValue(
     project: Project,
