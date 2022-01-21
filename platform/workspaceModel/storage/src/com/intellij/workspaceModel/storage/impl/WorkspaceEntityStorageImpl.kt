@@ -277,10 +277,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
       e as WorkspaceEntityBase
       removeEntity(e.id)
 
-      if (LOG.isTraceEnabled) {
-        this.assertConsistency()
-        LOG.trace("After remove operation storage has no consistency issues")
-      }
+      // NB: This method is called from `createEntity` inside persistent id checking. It's possible that after the method execution
+      //  the store is in inconsistent state, so we can't call assertConsistency here.
     }
     finally {
       unlockWrite()
