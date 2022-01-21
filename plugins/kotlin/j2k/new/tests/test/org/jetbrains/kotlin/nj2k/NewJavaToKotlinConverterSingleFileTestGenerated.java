@@ -2693,6 +2693,16 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/implicitCasts/arithmeticInFunctionCall.java");
         }
 
+        @TestMetadata("bitwise.java")
+        public void testBitwise() throws Exception {
+            runTest("testData/newJ2k/implicitCasts/bitwise.java");
+        }
+
+        @TestMetadata("ktij-16665.java")
+        public void testKtij_16665() throws Exception {
+            runTest("testData/newJ2k/implicitCasts/ktij-16665.java");
+        }
+
         @TestMetadata("operationsWithChar.java")
         public void testOperationsWithChar() throws Exception {
             runTest("testData/newJ2k/implicitCasts/operationsWithChar.java");

@@ -64,7 +64,9 @@ interface JKOperatorToken {
         val GTGTEQ = JKJavaOperatorToken(JavaTokenType.GTGTEQ)
         val GTGTGTEQ = JKJavaOperatorToken(JavaTokenType.GTGTGTEQ)
 
-        internal val ARITHMETIC_OPERATORS = listOf(PLUS, MINUS, DIV, MUL, PERC, AND, OR, SHL, SHR, USHR)
+        internal val ARITHMETIC_OPERATORS = listOf(PLUS, MINUS, DIV, MUL, PERC)
+        internal val BITWISE_LOGICAL_OPERATORS = listOf(AND, OR, XOR)
+        internal val SHIFT_OPERATORS = listOf(SHL, SHR, USHR)
 
         private val elementTypeToToken: Map<IElementType, JKOperatorToken> = mapOf(
             JavaTokenType.DIV to DIV,

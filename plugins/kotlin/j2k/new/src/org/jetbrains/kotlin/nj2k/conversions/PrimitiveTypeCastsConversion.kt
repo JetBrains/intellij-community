@@ -30,13 +30,13 @@ class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : RecursiveA
                 && (expression.operator.token == JKOperatorToken.PLUS || expression.operator.token == JKOperatorToken.MINUS)
             ) {
                 val casted = castToAsPrimitiveTypes(expression.expression, toType, strict) ?: return null
-                return JKPrefixExpression(casted, expression.operator)
+                return JKPrefixExpression(casted, expression.operator).withFormattingFrom(expression)
             }
 
             if (expression is JKQualifiedExpression) {
                 if (expression.selector.safeAs<JKCallExpression>()?.identifier?.fqName == "kotlin.Int.inv") {
                     val casted = castToAsPrimitiveTypes(expression.receiver, toType, strict) ?: return null
-                    return JKQualifiedExpression(casted, expression::selector.detached())
+                    return JKQualifiedExpression(casted, expression::selector.detached()).withFormattingFrom(expression)
                 }
             }
 
@@ -59,7 +59,7 @@ class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : RecursiveA
                     return JKLiteralExpression(
                         expression.literal,
                         expectedType
-                    )
+                    ).withFormattingFrom(expression)
                 }
             }
 
@@ -73,7 +73,7 @@ class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : RecursiveA
                     symbolProvider.provideMethodSymbol("kotlin.$initialTypeName.$conversionFunctionName"),
                     JKArgumentList()
                 )
-            )
+            ).withFormattingFrom(expression)
         }
 
         fun RecursiveApplicableConversionBase.charConversion(
@@ -83,10 +83,10 @@ class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : RecursiveA
         ): JKExpression? {
             if (fromType == toType || moduleApiVersion < ApiVersion.KOTLIN_1_5) return null
             if (fromType == JKJavaPrimitiveType.CHAR) {
-                return charToPrimitiveConversion(expression, toType)
+                return charToPrimitiveConversion(expression, toType)?.withFormattingFrom(expression)
             }
             if (toType == JKJavaPrimitiveType.CHAR) {
-                return primitiveToCharConversion(expression, fromType)
+                return primitiveToCharConversion(expression, fromType)?.withFormattingFrom(expression)
             }
             return null
         }
