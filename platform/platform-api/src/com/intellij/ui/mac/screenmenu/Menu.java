@@ -21,6 +21,7 @@ import java.util.List;
 @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
 public class Menu extends MenuItem {
   private static final boolean USE_STUB = Boolean.getBoolean("jbScreenMenuBar.useStubItem"); // just for tests/experiments
+  private static final int CLOSE_DELAY = Integer.getInteger("jbScreenMenuBar.closeDelay", 500); // in milliseconds
   private static Boolean IS_ENABLED = null;
   private final List<MenuItem> myItems = new ArrayList<>();
   private final List<MenuItem> myBuffer = new ArrayList<>();
@@ -160,14 +161,16 @@ public class Menu extends MenuItem {
   public void invokeMenuClosing() {
     // Called on AppKit when menu closed
 
-    // When user selects item of system menu (under macOS) AppKit generates such sequence: CloseParentMenu -> PerformItemAction
+    // When user selects item of system menu (under macOS) AppKit sometimes generates such sequence: CloseParentMenu -> PerformItemAction
     // So we can destroy menu-item before item's action performed, and because of that action will not be executed.
     // Defer clearing to avoid this problem.
-    disposeChildren(1000);
-    synchronized (this) {
-      // clean native NSMenu item
-      if (nativePeer != 0) nativeRefill(nativePeer, null, true);
-    }
+    disposeChildren(CLOSE_DELAY);
+    SimpleTimer.getInstance().setUp(() -> {
+      synchronized (this) {
+        // clean native NSMenu item
+        if (nativePeer != 0) nativeRefill(nativePeer, null, true);
+      }
+    }, CLOSE_DELAY);
     if (myOnClose != null) invokeWithLWCToolkit(myOnClose, null, myComponent);
   }
 
