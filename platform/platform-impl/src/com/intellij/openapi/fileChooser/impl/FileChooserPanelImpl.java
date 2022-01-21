@@ -23,6 +23,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -218,7 +219,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         return List.of(((PathWrapper)object).path);
       }
       if (object instanceof String && !((String)object).isBlank()) {
-        var path = findByPath(((String)object).trim());
+        var path = findByPath(FileUtil.expandUserHome(((String)object).trim()));
         if (path != null) {
           return List.of(path);
         }
