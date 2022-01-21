@@ -19,6 +19,9 @@ import kotlin.math.min
 class FeatureSuggesterSettings : PersistentStateComponent<FeatureSuggesterSettings> {
   var suggesters: MutableMap<String, Boolean> = FeatureSuggester.suggesters.associate { it.id to true }.toMutableMap()
 
+  // SuggesterId to the last time this suggestion was shown
+  var suggestionLastShownTime: MutableMap<String, Long> = mutableMapOf()
+
   // List of timestamps (millis) of the first IDE session start for the last days
   var workingDays: MutableList<Long> = mutableListOf()
 
@@ -28,6 +31,7 @@ class FeatureSuggesterSettings : PersistentStateComponent<FeatureSuggesterSettin
 
   override fun loadState(state: FeatureSuggesterSettings) {
     suggesters = state.suggesters
+    suggestionLastShownTime = state.suggestionLastShownTime
     workingDays = state.workingDays
   }
 
@@ -38,6 +42,12 @@ class FeatureSuggesterSettings : PersistentStateComponent<FeatureSuggesterSettin
   fun setEnabled(suggesterId: String, enabled: Boolean) {
     suggesters[suggesterId] = enabled
   }
+
+  fun updateSuggestionShownTime(suggesterId: String) {
+    suggestionLastShownTime[suggesterId] = System.currentTimeMillis()
+  }
+
+  fun getSuggestionLastShownTime(suggesterId: String) = suggestionLastShownTime[suggesterId] ?: 0L
 
   fun updateWorkingDays() {
     val curTime = System.currentTimeMillis()

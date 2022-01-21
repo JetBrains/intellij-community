@@ -54,6 +54,7 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
       if (forceShowSuggestions || suggester.isSuggestionNeeded()) {
         suggestionPresenter.showSuggestion(project, suggestion)
         fireSuggestionFound(suggestion)
+        FeatureSuggesterSettings.instance().updateSuggestionShownTime(suggestion.suggesterId)
       }
     }
   }
