@@ -1,11 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.projectView;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.dnd.*;
-import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
-import com.intellij.ide.projectView.impl.ProjectViewPane;
-import com.intellij.ide.projectView.impl.ProjectViewTree;
+import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
