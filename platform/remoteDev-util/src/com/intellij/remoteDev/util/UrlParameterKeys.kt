@@ -13,5 +13,7 @@ class UrlParameterKeys {
     const val type = "type"
     const val deploy = "deploy"
     const val sshId = "ssh"
+    const val buildNumber = "buildNumber"
+    const val productCode = "productCode"
   }
 }
