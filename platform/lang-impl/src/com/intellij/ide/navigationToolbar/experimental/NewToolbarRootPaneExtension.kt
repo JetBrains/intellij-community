@@ -37,8 +37,6 @@ import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Executor
-import java.util.function.Consumer
 import javax.swing.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -110,7 +108,12 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
 
   @RequiresBackgroundThread
   private fun correctedToolbarActions(): Map<String, ActionGroup?> {
-    val toolbarGroup = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR) as? ActionGroup
+    val mainGroupName = if (RunWidgetAvailabilityManager.getInstance(project).isAvailable()) {
+      IdeActions.GROUP_EXPERIMENTAL_TOOLBAR
+    } else {
+      IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_WITHOUT_RIGHT_PART
+    }
+    val toolbarGroup = CustomActionsSchema.getInstance().getCorrectedAction(mainGroupName) as? ActionGroup
                        ?: return emptyMap()
     val children = toolbarGroup.getChildren(null)
 
