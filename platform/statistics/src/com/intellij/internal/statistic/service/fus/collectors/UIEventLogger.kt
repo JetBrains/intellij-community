@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 
 class UIEventLogger : CounterUsagesCollector() {
   companion object {
-    private val group = EventLogGroup("ui.event", 14)
+    private val group = EventLogGroup("ui.event", 15)
 
     @JvmField val NavBarShowPopup = group.registerEvent("NavBarShowPopup")
     @JvmField val NavBarNavigate = group.registerEvent("NavBarNavigate")
@@ -36,6 +36,8 @@ class UIEventLogger : CounterUsagesCollector() {
     @JvmField val EditorFoldingIconClicked = group.registerEvent("EditorFoldingIconClicked", EventFields.Boolean("expand"), EventFields.Boolean("recursive"))
     @JvmField val QuickNavigateInfoPopupShown = group.registerEvent("QuickNavigateInfoPopupShown", EventFields.Language)
     @JvmField val EditorAnnotationClicked = group.registerEvent("EditorAnnotationClicked", EventFields.Class("class"))
+    @JvmField val StatusBarWidgetClicked = group.registerEvent("StatusBarWidgetClicked", EventFields.Class("class"))
+    @JvmField val StatusBarPopupShown = group.registerEvent("StatusBarPopupShown", EventFields.Class("class"))
   }
 
   override fun getGroup(): EventLogGroup = Companion.group
