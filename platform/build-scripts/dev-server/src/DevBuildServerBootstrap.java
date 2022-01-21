@@ -34,6 +34,8 @@ final class DevBuildServerBootstrap {
       "jps_build_script_dependencies_bootstrap.xml",
       "kotlinx_serialization_core.xml",
       "kotlinx_serialization_json.xml",
+      "jsch_agent_proxy.xml",
+      "jsch_agent_proxy_sshj.xml",
       "commons_compress.xml"
     )) {
       collectLibUrls(projectDir.resolve(".idea/libraries/" + libFilename), m2RepositoryPath, jarUrls);
