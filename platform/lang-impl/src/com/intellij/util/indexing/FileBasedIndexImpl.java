@@ -111,9 +111,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @ApiStatus.Internal
   public static final Logger LOG = Logger.getInstance(FileBasedIndexImpl.class);
-  private static final boolean ourTraceIndexUpdates = SystemProperties.getBooleanProperty("trace.file.based.index.update", false);
-  private static final boolean ourTraceStubIndexUpdates = SystemProperties.getBooleanProperty("trace.stub.index.update", false);
-  private static final boolean ourTraceSharedIndexUpdates = SystemProperties.getBooleanProperty("trace.shared.index.update", false);
+  private volatile boolean myTraceIndexUpdates;
+  private volatile boolean myTraceStubIndexUpdates;
+  private volatile boolean myTraceSharedIndexUpdates;
 
   private volatile RegisteredIndexes myRegisteredIndexes;
   private volatile @Nullable String myShutdownReason;
@@ -228,17 +228,17 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   boolean doTraceIndexUpdates() {
-    return ourTraceIndexUpdates;
+    return myTraceIndexUpdates;
   }
 
   @ApiStatus.Internal
   public boolean doTraceStubUpdates(@NotNull ID<?, ?> indexId) {
-    return ourTraceStubIndexUpdates && indexId.equals(StubUpdatingIndex.INDEX_ID);
+    return myTraceStubIndexUpdates && indexId.equals(StubUpdatingIndex.INDEX_ID);
   }
 
   @ApiStatus.Internal
   boolean doTraceSharedIndexUpdates() {
-    return ourTraceSharedIndexUpdates && SystemProperties.getBooleanProperty("trace.shared.index.updates", false);
+    return myTraceSharedIndexUpdates && SystemProperties.getBooleanProperty("trace.shared.index.updates", false);
   }
 
   void scheduleFullIndexesRescan(@NotNull Collection<ID<?, ?>> indexesToRebuild, @NotNull String reason) {
@@ -418,6 +418,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   public synchronized void loadIndexes() {
     if (myRegisteredIndexes == null) {
+      myTraceIndexUpdates = SystemProperties.getBooleanProperty("trace.file.based.index.update", false);
+      myTraceStubIndexUpdates = SystemProperties.getBooleanProperty("trace.stub.index.update", false);
+      myTraceSharedIndexUpdates = SystemProperties.getBooleanProperty("trace.shared.index.update", false);
+
       LOG.assertTrue(myRegisteredIndexes == null);
       myStorageBufferingHandler.resetState();
       myRegisteredIndexes = new RegisteredIndexes(myFileDocumentManager, this);
