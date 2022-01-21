@@ -8,8 +8,11 @@ import com.intellij.completion.ml.util.CompletionUtil
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.stats.completion.LookupState
 import com.intellij.stats.completion.events.*
+
+private val LOG = logger<CompletionFileLogger>()
 
 class CompletionFileLogger(private val installationUID: String,
                            private val completionUID: String,
@@ -97,6 +100,10 @@ class CompletionFileLogger(private val installationUID: String,
     val event = TypedSelectEvent(installationUID, completionUID, state, state.selectedId, performance, bucket, timestamp, languageName)
     event.fillCompletionParameters()
 
+    // remove after fixing EA-215359
+    if (state.ids.isEmpty()) {
+      LOG.error("Invalid state of lookup. Selected item [exists: ${lookup.currentItem != null}], but items list is empty.")
+    }
     eventLogger.log(event)
   }
 
