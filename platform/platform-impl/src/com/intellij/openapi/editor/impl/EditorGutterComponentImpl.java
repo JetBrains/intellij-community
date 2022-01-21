@@ -2309,7 +2309,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         for (AnAction addAction : addActions) {
           actionGroup.add(addAction);
         }
-        JPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.EDITOR_GUTTER_POPUP, actionGroup).getComponent();
+        JPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.EDITOR_ANNOTATIONS_AREA_POPUP, actionGroup).getComponent();
         menu.show(this, e.getX(), e.getY());
       }
     }
