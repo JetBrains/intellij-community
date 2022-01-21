@@ -17,7 +17,7 @@ internal class SettingsSyncStreamProvider(private val application: Application,
     get() = true
 
   override val enabled: Boolean
-    get() = true
+    get() = isSettingsSyncEnabledByKey() && SettingsSyncMain.isAvailable() && isSettingsSyncEnabledInSettings()
 
   override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean {
     return true

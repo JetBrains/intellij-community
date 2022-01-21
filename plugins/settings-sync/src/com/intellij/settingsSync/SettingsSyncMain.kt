@@ -28,6 +28,7 @@ internal fun isSettingsSyncEnabledInSettings() : Boolean =
 internal class SettingsSyncMain : Disposable {
 
   internal val controls: SettingsSyncControls
+  private val componentStore: ComponentStoreImpl
 
   init {
     val application = ApplicationManager.getApplication()
@@ -37,8 +38,8 @@ internal class SettingsSyncMain : Disposable {
       LocalDirSettingsSyncRemoteCommunicator(settingsSyncStorage)
     else CloudConfigServerCommunicator()
 
-    controls = init(application, this, settingsSyncStorage, appConfigPath,
-                    application.stateStore as ComponentStoreImpl, remoteCommunicator)
+    componentStore = application.stateStore as ComponentStoreImpl
+    controls = init(application, this, settingsSyncStorage, appConfigPath, componentStore, remoteCommunicator)
   }
 
   override fun dispose() {
@@ -62,6 +63,14 @@ internal class SettingsSyncMain : Disposable {
     }
   }
 
+  fun enableSyncing() {
+    componentStore.storageManager.addStreamProvider(controls.streamProvider)
+  }
+
+  fun disableSyncing() {
+    componentStore.storageManager.removeStreamProvider(controls.streamProvider::class.java)
+  }
+
   internal companion object {
 
     fun isAvailable(): Boolean {
@@ -78,7 +87,6 @@ internal class SettingsSyncMain : Disposable {
                       componentStore: ComponentStoreImpl,
                       remoteCommunicator: SettingsSyncRemoteCommunicator): SettingsSyncControls {
       // todo migrate from cloud config or settings-repository
-      // todo set provider only if connected
 
       val settingsLog = GitSettingsLog(settingsSyncStorage, appConfigPath, parentDisposable) {
         getExportableItemsFromLocalStorage(getExportableComponentsMap(false), componentStore.storageManager).keys
@@ -90,14 +98,14 @@ internal class SettingsSyncMain : Disposable {
       val streamProvider = SettingsSyncStreamProvider(application, appConfigPath)
       componentStore.storageManager.addStreamProvider(streamProvider)
 
-
-      return SettingsSyncControls(updateChecker, bridge, remoteCommunicator)
+      return SettingsSyncControls(streamProvider, updateChecker, bridge, remoteCommunicator)
     }
 
     private val LOG = logger<SettingsSyncMain>()
   }
 
-  internal class SettingsSyncControls(val updateChecker: SettingsSyncUpdateChecker,
+  internal class SettingsSyncControls(val streamProvider: SettingsSyncStreamProvider,
+                                      val updateChecker: SettingsSyncUpdateChecker,
                                       val bridge: SettingsSyncBridge,
                                       val remoteCommunicator: SettingsSyncRemoteCommunicator)
 }

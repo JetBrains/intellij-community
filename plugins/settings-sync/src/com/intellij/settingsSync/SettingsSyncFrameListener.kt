@@ -50,10 +50,12 @@ internal class SettingsSyncFrameListener : FrameStateListener {
     @RequiresEdt
     override fun settingsChanged() {
       if (SettingsSyncSettings.getInstance().syncEnabled) {
+        SettingsSyncMain.getInstance().enableSyncing()
         scheduleSyncing()
       }
       else {
         stopSyncingByTimer()
+        SettingsSyncMain.getInstance().disableSyncing()
       }
     }
   }
