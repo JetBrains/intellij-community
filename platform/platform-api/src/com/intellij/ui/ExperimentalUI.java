@@ -112,6 +112,12 @@ public final class ExperimentalUI {
     Map<String, String> paths = new HashMap<>();
     paths.put("actions/collapseall.svg", "/expui/general/collapseAll.svg");
     paths.put("actions/expandall.svg", "/expui/general/expandAll.svg");
+    paths.put("actions/back.svg", "/expui/general/left.svg");
+    paths.put("actions/forward.svg", "/expui/general/right.svg");
+    paths.put("actions/previousOccurence.svg", "/expui/general/up.svg");
+    paths.put("actions/nextOccurence.svg", "/expui/general/down.svg");
+    paths.put("actions/refresh.svg", "/expui/general/refresh.svg");
+    paths.put("general/remove.svg", "/expui/general/remove.svg");
     paths.put("nodes/class.svg", "/expui/nodes/class.svg");
     paths.put("nodes/folder.svg", "/expui/nodes/folder.svg");
     paths.put("nodes/interface.svg", "/expui/nodes/interface.svg");
