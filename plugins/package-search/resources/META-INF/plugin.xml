@@ -44,9 +44,9 @@ Supports Maven and Gradle projects.
     </extensionPoints>
 
     <content>
-        <module name="intellij.packageSearch/gradle"/>
-        <module name="intellij.packageSearch/kotlin"/>
-        <module name="intellij.packageSearch/maven"/>
+        <module name="intellij.packageSearch.gradle"/>
+        <module name="intellij.packageSearch.kotlin"/>
+        <module name="intellij.packageSearch.maven"/>
     </content>
     <dependencies>
         <plugin id="com.intellij.java"/>

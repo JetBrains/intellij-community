@@ -9,6 +9,7 @@ import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.components.BrowsableLinkLabel
@@ -34,7 +35,7 @@ import javax.swing.JTextField
 import javax.swing.KeyStroke
 import javax.swing.Scrollable
 
-internal object PackageSearchUI {
+object PackageSearchUI {
 
     private val MAIN_BG_COLOR: Color = JBColor.namedColor("Plugins.background", UIUtil.getListBackground())
 
@@ -98,7 +99,7 @@ internal object PackageSearchUI {
         override fun getBackground() = backgroundColor
     }
 
-    internal fun checkBox(@Nls title: String, init: JCheckBox.() -> Unit = {}) = object : JCheckBox(title) {
+    fun checkBox(@Nls title: String, init: JCheckBox.() -> Unit = {}) = object : JCheckBox(title) {
 
         init {
             init()
@@ -118,20 +119,20 @@ internal object PackageSearchUI {
         return JMenuItem(title).apply { addActionListener { handler() } }
     }
 
-    internal fun createLabel(@Nls text: String? = null, init: JLabel.() -> Unit = {}) = JLabel().apply {
-        font = UIUtil.getLabelFont()
+    fun createLabel(@Nls text: String? = null, init: JLabel.() -> Unit = {}) = JLabel().apply {
+        font = StartupUiUtil.getLabelFont()
         if (text != null) this.text = text
         init()
     }
 
     internal fun createLabelWithLink(init: BrowsableLinkLabel.() -> Unit = {}) = BrowsableLinkLabel().apply {
-        font = UIUtil.getLabelFont()
+        font = StartupUiUtil.getLabelFont()
         init()
     }
 
     internal fun getTextColorPrimary(isSelected: Boolean = false): Color = when {
-        isSelected -> JBColor { UIUtil.getListSelectionForeground(true) }
-        else -> JBColor { UIUtil.getListForeground() }
+        isSelected -> JBColor.lazy { UIUtil.getListSelectionForeground(true) }
+        else -> JBColor.lazy { UIUtil.getListForeground() }
     }
 
     internal fun getTextColorSecondary(isSelected: Boolean = false): Color = when {
