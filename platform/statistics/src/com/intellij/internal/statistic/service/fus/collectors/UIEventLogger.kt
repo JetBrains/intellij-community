@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.service.fus.collectors
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 
 class UIEventLogger : CounterUsagesCollector() {
   companion object {
-    private val group = EventLogGroup("ui.event", 13)
+    private val group = EventLogGroup("ui.event", 14)
 
     @JvmField val NavBarShowPopup = group.registerEvent("NavBarShowPopup")
     @JvmField val NavBarNavigate = group.registerEvent("NavBarNavigate")
@@ -35,6 +35,7 @@ class UIEventLogger : CounterUsagesCollector() {
     @JvmField val ImplementationViewToolWindowOpened = group.registerEvent("ImplementationViewToolWindowOpened")
     @JvmField val EditorFoldingIconClicked = group.registerEvent("EditorFoldingIconClicked", EventFields.Boolean("expand"), EventFields.Boolean("recursive"))
     @JvmField val QuickNavigateInfoPopupShown = group.registerEvent("QuickNavigateInfoPopupShown", EventFields.Language)
+    @JvmField val EditorAnnotationClicked = group.registerEvent("EditorAnnotationClicked", EventFields.Class("class"))
   }
 
   override fun getGroup(): EventLogGroup = Companion.group
