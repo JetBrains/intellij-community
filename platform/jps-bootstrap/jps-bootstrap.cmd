@@ -90,10 +90,10 @@ if errorlevel 1 goto fail
 REM Run user class via wrapper from platform to correctly capture and report exception to TeamCity build log
 "%JAVA_HOME%\bin\java.exe" "@%_JPS_BOOTSTRAP_JAVA_ARGS_FILE%"
 set _exit_code=%ERRORLEVEL%
-del /Y "%_JPS_BOOTSTRAP_JAVA_ARGS_FILE%"
+del /F /Q "%_JPS_BOOTSTRAP_JAVA_ARGS_FILE%"
 exit /B %_exit_code%
 
 :fail
-if exist "%_JPS_BOOTSTRAP_JAVA_ARGS_FILE%" DEL /Y "%_JPS_BOOTSTRAP_JAVA_ARGS_FILE%"
+if exist "%_JPS_BOOTSTRAP_JAVA_ARGS_FILE%" DEL /F /Q "%_JPS_BOOTSTRAP_JAVA_ARGS_FILE%"
 echo ERROR occurred, see the output above
 exit /B 1
