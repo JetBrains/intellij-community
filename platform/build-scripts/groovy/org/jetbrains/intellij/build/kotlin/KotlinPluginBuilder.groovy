@@ -285,15 +285,8 @@ class KotlinPluginBuilder {
           }
           // Build number isn't recognized as IJ build number then it means build
           // number must be plain Kotlin plugin version (build configuration in kt-branch)
-          // 221-1.5.10-release-IJ916
-          Matcher kotlinPluginIJBuildNumber = Pattern.compile("^(\\d+)-([.\\d]+)-(\\w+)-([A-Z]+)(\\d+)\$").matcher(buildNumber)
-          if (kotlinPluginIJBuildNumber.matches()) {
-            String major = kotlinPluginIJBuildNumber.group(1)
-            String kotlinVersion = kotlinPluginIJBuildNumber.group(2)
-            String type = kotlinPluginIJBuildNumber.group(3)
-            String minor = kotlinPluginIJBuildNumber.group(5)
-
-            String version = "${major}-${kotlinVersion}-${type}-${kind}${minor}"
+          if (buildNumber.contains("IJ")) {
+            String version = buildNumber.replace("IJ", kind.toString())
             context.messages.info("Kotlin plugin IJ version: $version")
             return version
           }
