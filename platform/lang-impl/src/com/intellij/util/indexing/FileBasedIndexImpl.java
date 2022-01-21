@@ -241,7 +241,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @ApiStatus.Internal
   boolean doTraceSharedIndexUpdates() {
-    return myTraceSharedIndexUpdates && SystemProperties.getBooleanProperty("trace.shared.index.updates", false);
+    return myTraceSharedIndexUpdates;
   }
 
   void scheduleFullIndexesRescan(@NotNull Collection<ID<?, ?>> indexesToRebuild, @NotNull String reason) {
