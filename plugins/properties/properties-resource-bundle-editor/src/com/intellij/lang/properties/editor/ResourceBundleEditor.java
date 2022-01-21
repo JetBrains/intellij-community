@@ -154,12 +154,7 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
           return;
         }
 
-        if (getSelectedProperty() == null) {
-          ((CardLayout)myValuesPanel.getLayout()).show(myValuesPanel, NO_PROPERTY_SELECTED);
-          return;
-        }
-
-        if (Comparing.equal(e.getNewLeadSelectionPath(), e.getOldLeadSelectionPath())) return;
+        if (Comparing.equal(e.getNewLeadSelectionPath(), e.getOldLeadSelectionPath()) || getSelectedProperty() == null) return;
         if (!arePropertiesEquivalent(selectedProperty, getSelectedProperty()) ||
             !Comparing.equal(selectedPropertiesFile, getSelectedPropertiesFile())) {
           writePreviouslySelectedPropertyValue(e);
@@ -433,29 +428,17 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
       });
 
       editor.addFocusListener(new FocusChangeListener() {
-        private IProperty myProperty;
-
         @Override
         public void focusGained(@NotNull final Editor editor) {
-          myProperty = getSelectedProperty();
           mySelectedEditor = editor;
         }
 
         @Override
         public void focusLost(@NotNull final Editor editor) {
-          if (editor.isViewer() || !propertiesFile.getContainingFile().isValid()) {
-            return;
+          if (!editor.isViewer() && propertiesFile.getContainingFile().isValid()) {
+            writeEditorPropertyValue(null, editor, propertiesFile.getVirtualFile());
+            myVfsListener.flush();
           }
-
-          // When a new property is added it gets selected right away,
-          // so there is no point saving the current editor value,
-          // because it belongs to the previously selected property at this time.
-          // The current editor's value has already been saved when the new property dialog appeared.
-          final boolean newPropertiesAdded = myProperty != getSelectedProperty();
-          if (newPropertiesAdded) return;
-
-          writeEditorPropertyValue(myProperty.getName(), editor, propertiesFile.getVirtualFile());
-          myVfsListener.flush();
         }
       });
       gc.gridx = 0;
