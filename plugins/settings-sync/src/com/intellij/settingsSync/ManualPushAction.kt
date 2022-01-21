@@ -6,7 +6,7 @@ import com.intellij.openapi.project.DumbAwareAction
 class ManualPushAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
-    SettingsSyncMain.getInstance().pushSettingsToServer()
+    SettingsSyncMain.getInstance().schedulePushingSettingsToServer()
   }
 
   override fun update(e: AnActionEvent) {

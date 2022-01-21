@@ -102,7 +102,7 @@ private const val TIMEOUT = 10000
       try {
         FileUtil.writeToFile(tempFile, stream.readAllBytes())
         val snapshot = extractZipFile(tempFile.toPath())
-        return UpdateResult.Success(snapshot)
+        return if (snapshot.isEmpty()) UpdateResult.NoFileOnServer else UpdateResult.Success(snapshot)
       }
       finally {
         FileUtil.delete(tempFile)

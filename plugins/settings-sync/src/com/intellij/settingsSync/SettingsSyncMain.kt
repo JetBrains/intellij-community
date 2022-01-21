@@ -44,7 +44,7 @@ internal class SettingsSyncMain : Disposable {
   override fun dispose() {
   }
 
-  internal fun pushSettingsToServer() {
+  internal fun schedulePushingSettingsToServer() {
     ApplicationManager.getApplication().messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(SyncSettingsEvent.PushRequest)
   }
 
@@ -55,6 +55,7 @@ internal class SettingsSyncMain : Disposable {
     if (controls.updateChecker.isUpdateNeeded()) {
       LOG.info("Syncing settings...")
       controls.updateChecker.scheduleUpdateFromServer()
+      schedulePushingSettingsToServer()
     }
     else {
       LOG.info("Syncing settings... is not needed.")
