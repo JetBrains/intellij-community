@@ -58,19 +58,19 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
       PsiClass psiClass = ((PsiEnumConstant)element).getContainingClass();
       return psiClass != null &&
              CachedValuesManager.getCachedValue(psiClass, 
-                                                () -> CachedValueProvider.Result.create(areEnumConstantsReferenced(psiClass), 
+                                                () -> CachedValueProvider.Result.create(isEnumClassReferencedInEnumSourceAnnotation(psiClass),
                                                                                         PsiModificationTracker.MODIFICATION_COUNT));
     }
     return false;
   }
 
-  private static boolean areEnumConstantsReferenced(PsiClass psiClass) {
+  private static boolean isEnumClassReferencedInEnumSourceAnnotation(PsiClass psiClass) {
     String className = psiClass.getName();
     if (className == null) {
       return false;
     }
     SearchScope useScope = psiClass.getUseScope();
-    if (isExpensiveSearch(psiClass, className, useScope)) {
+    if (!shouldCheckClassUsages(psiClass, className, useScope)) {
       return false;
     }
     return ReferencesSearch.search(psiClass, useScope, false)
@@ -87,20 +87,20 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
       });
   }
 
-  private static boolean isExpensiveSearch(PsiClass psiClass, String name, SearchScope useScope) {
+  private static boolean shouldCheckClassUsages(PsiClass psiClass, String name, SearchScope useScope) {
     if (!(useScope instanceof LocalSearchScope)) {
       PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(psiClass.getProject());
       if (PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES ==
           searchHelper.isCheapEnoughToSearch(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE_SHORT, (GlobalSearchScope)useScope, null, null)) {
-        return true;
+        return false;
       }
       PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, null, null);
       if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES ||
           cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
-        return true;
+        return false;
       }
     }
-    return false;
+    return true;
   }
 
   @Override
