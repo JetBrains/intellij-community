@@ -1,12 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex.util;
 
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -1103,7 +1104,11 @@ public final class EditorUtil {
     long currentTimeStamp = System.currentTimeMillis();
     if (lastTimeStamp != null && (currentTimeStamp - lastTimeStamp) < EditorNotification.MAX_CARETS_NOTIFY_INTERVAL_MS) return;
     editor.putUserData(EditorNotification.LAST_MAX_CARETS_NOTIFY_TIMESTAMP, currentTimeStamp);
-    HintManager.getInstance().showErrorHint(editor, EditorBundle.message("editor.max.carets.hint", editor.getCaretModel().getMaxCaretCount()));
+    NotificationGroupManager.getInstance().getNotificationGroup("Editor notifications")
+            .createNotification(
+                    EditorBundle.message("editor.max.carets.hint", editor.getCaretModel().getMaxCaretCount()),
+                    NotificationType.INFORMATION)
+            .notify(editor.getProject());
   }
 
   /**
