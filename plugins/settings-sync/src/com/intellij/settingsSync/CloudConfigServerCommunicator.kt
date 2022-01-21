@@ -98,7 +98,7 @@ private const val TIMEOUT = 10000
         return UpdateResult.NoFileOnServer
       }
 
-      val tempFile = FileUtil.createTempFile(SETTINGS_SYNC_SNAPSHOT_ZIP, UUID.randomUUID().toString())
+      val tempFile = FileUtil.createTempFile(SETTINGS_SYNC_SNAPSHOT, UUID.randomUUID().toString() + ".zip")
       try {
         FileUtil.writeToFile(tempFile, stream.readAllBytes())
         val snapshot = extractZipFile(tempFile.toPath())

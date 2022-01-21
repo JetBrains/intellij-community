@@ -15,7 +15,8 @@ import java.nio.file.StandardCopyOption
 // TODO remove: this is temporary decision for prototyping and debugging purposes only
 internal const val SETTINGS_SYNC_LOCAL_SERVER_PATH_PROPERTY = "idea.settings.sync.local.server.path"
 
-internal const val SETTINGS_SYNC_SNAPSHOT_ZIP = "settings.sync.snapshot.zip"
+internal const val SETTINGS_SYNC_SNAPSHOT = "settings.sync.snapshot"
+internal const val SETTINGS_SYNC_SNAPSHOT_ZIP = "$SETTINGS_SYNC_SNAPSHOT.zip"
 
 internal class LocalDirSettingsSyncRemoteCommunicator(private val settingsSyncStorage: Path) : SettingsSyncRemoteCommunicator {
   companion object {
