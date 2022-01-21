@@ -1253,6 +1253,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/typeParameterRef.kt");
             }
 
+            @TestMetadata("typealiasFromCommonCode.kt")
+            public void testTypealiasFromCommonCode() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/typealiasFromCommonCode.kt");
+            }
+
             @TestMetadata("typedArray.kt")
             public void testTypedArray() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/typedArray.kt");
