@@ -32,6 +32,11 @@
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingSuspender"/>
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingSuspendNotificationProvider"/>
 
+    <registryKey key="kotlin.show.suspended.highlighting.notification"
+                 description="Whether to show highlighting is temporarily turned off"
+                 defaultValue="true"
+                 restartRequired="true"/>
+
     <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.highlighter.KotlinBeforeResolveHighlightingPass$Registrar"/>
     <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.highlighter.DebugInfoHighlightingPass$Registrar"/>
     <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.highlighter.ScriptExternalHighlightingPass$Registrar"/>
