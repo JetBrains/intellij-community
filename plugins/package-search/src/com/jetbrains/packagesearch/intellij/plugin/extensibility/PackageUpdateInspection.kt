@@ -12,7 +12,6 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ui.ListEditForm
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
@@ -31,9 +30,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelForEach
 import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedDependency
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import javax.swing.JPanel
 
@@ -117,7 +114,7 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
             ?: return null
 
         val problemsHolder = ProblemsHolder(manager, file, isOnTheFly)
-        runBlocking(Dispatchers.EDT) {
+        runBlocking {
             availableUpdates.parallelForEach { packageUpdateInfo ->
                 val currentVersion = packageUpdateInfo.usageInfo.version
                 val scope = packageUpdateInfo.usageInfo.scope
@@ -142,7 +139,7 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
                     return@parallelForEach
                 }
 
-                val operations = withContext(Dispatchers.Default) { packageOperations.primaryOperations.await() }
+                val operations = packageOperations.primaryOperations.await()
 
                 problemsHolder.registerProblem(
                     versionElement,
