@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -19,7 +19,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
@@ -106,13 +105,13 @@ public final class OldDirectoryCleaner {
       Stats.completed(groups.size(), groups.stream().mapToLong(g -> g.size).sum());
     }
     else if (!groups.isEmpty()) {
-      NotificationGroupManager.getInstance().getNotificationGroup("notification.group.leftover.directories")
+      NotificationGroupManager.getInstance().getNotificationGroup("leftover.ide.directories")
         .createNotification(message("old.dirs.notification.text"), NotificationType.INFORMATION)
         .addAction(createSimpleExpiring(message("old.dirs.notification.action"), () -> confirmAndDelete(project, groups)))
         .notify(project);
     }
     else {
-      NotificationGroupManager.getInstance().getNotificationGroup("notification.group.leftover.directories")
+      NotificationGroupManager.getInstance().getNotificationGroup("leftover.ide.directories")
         .createNotification(message("old.dirs.not.found.notification.text"), NotificationType.INFORMATION)
         .notify(project);
     }
@@ -264,7 +263,7 @@ public final class OldDirectoryCleaner {
 
             if (!errors.isEmpty()) {
               @NlsSafe String content = String.join("<br>", errors);
-              NotificationGroupManager.getInstance().getNotificationGroup("notification.group.leftover.directories")
+              NotificationGroupManager.getInstance().getNotificationGroup("leftover.ide.directories")
                 .createNotification(message("old.dirs.delete.error"), content, NotificationType.WARNING)
                 .addAction(ShowLogAction.notificationAction())
                 .notify(project);
