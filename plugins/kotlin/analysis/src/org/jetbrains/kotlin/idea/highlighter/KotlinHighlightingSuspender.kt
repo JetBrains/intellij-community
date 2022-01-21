@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotifications
 import java.util.concurrent.TimeUnit
@@ -14,14 +15,18 @@ import java.util.concurrent.TimeUnit
  * Do not rethrow exception too often to disable HL for a while
  */
 class KotlinHighlightingSuspender(private val project: Project) {
+    private val timeoutSeconds = Registry.intValue("kotlin.suspended.highlighting.timeout", 10)
+
     private val lastThrownExceptionTimestampPerFile = mutableMapOf<VirtualFile, Long>()
-    private val suspendTimeoutMs = TimeUnit.MINUTES.toMillis(1)
+    private val suspendTimeoutMs = TimeUnit.SECONDS.toMillis(timeoutSeconds.toLong())
 
     /**
      * @return true, when file is suspended for the 1st time (within a timeout window)
      */
     fun suspend(file: VirtualFile): Boolean {
         cleanup()
+
+        if (suspendTimeoutMs <= 0) return false
 
         val timestamp = System.currentTimeMillis()
         // daemon is restarted when exception is thrown
