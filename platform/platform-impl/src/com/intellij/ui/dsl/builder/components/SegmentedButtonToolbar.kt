@@ -264,7 +264,9 @@ internal object SegmentedButtonLook : IdeaActionButtonLook() {
 
     return when (state) {
       ActionButtonComponent.POPPED -> JBUI.CurrentTheme.ActionButton.hoverBackground()
-      ActionButtonComponent.PUSHED -> if (focused) JBUI.CurrentTheme.TabbedPane.FOCUS_COLOR else JBUI.CurrentTheme.Button.buttonColorStart()
+      ActionButtonComponent.PUSHED ->
+        if (focused) JBUI.CurrentTheme.SegmentedButton.FOCUSED_SELECTED_BUTTON_COLOR
+        else JBUI.CurrentTheme.SegmentedButton.SELECTED_BUTTON_COLOR
       else -> component.background
     }
   }

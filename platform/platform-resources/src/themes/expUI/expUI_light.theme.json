@@ -146,7 +146,9 @@
 
     "SegmentedButton": {
       "selectedStartBorderColor": "Grey9",
-      "selectedEndBorderColor": "Grey9"
+      "selectedEndBorderColor": "Grey9",
+      "selectedButtonColor": "Grey13",
+      "focusedSelectedButtonColor": "Blue6"
     },
 
     "ComboBox": {

@@ -1012,6 +1012,16 @@
       "since": "2022.1"
     },
     {
+      "key": "SegmentedButton.selectedButtonColor",
+      "description": "Color of non-focused selected button in segmented button",
+      "since": "2022.1"
+    },
+    {
+      "key": "SegmentedButton.focusedSelectedButtonColor",
+      "description": "Color of focused selected button in segmented button",
+      "since": "2022.1"
+    },
+    {
       "key": "SegmentedButton.selectedEndBorderColor",
       "description": "Gradient bottom color of a selected button border in segmented button",
       "since": "2022.1"

@@ -417,6 +417,9 @@ public final class JBUI {
     public interface SegmentedButton {
       Color SELECTED_START_BORDER_COLOR = JBColor.namedColor("SegmentedButton.selectedStartBorderColor", Gray.xBF);
       Color SELECTED_END_BORDER_COLOR = JBColor.namedColor("SegmentedButton.selectedEndBorderColor", Gray.xB8);
+
+      Color SELECTED_BUTTON_COLOR = JBColor.namedColor("SegmentedButton.selectedButtonColor", 0x555a5c);
+      Color FOCUSED_SELECTED_BUTTON_COLOR = JBColor.namedColor("SegmentedButton.focusedSelectedButtonColor", 0xDAE4ED);
     }
 
     public static final class CustomFrameDecorations {

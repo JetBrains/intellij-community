@@ -64,7 +64,9 @@
 
     "SegmentedButton": {
       "selectedStartBorderColor": "#1AEBFF",
-      "selectedEndBorderColor": "#1AEBFF"
+      "selectedEndBorderColor": "#1AEBFF",
+      "selectedButtonColor": "#000000",
+      "focusedSelectedButtonColor": "#0f6780"
     },
 
     "Borders": {
