@@ -159,7 +159,7 @@ public class WSLDistribution implements AbstractWslDistribution {
     }
     ProcessOutput output = processHandler.runProcess(timeout);
     if (output.getExitCode() != 0 || output.isTimeout() || output.isCancelled()) {
-      LOG.warn("command on wsl: " + commandLine.getCommandLineString() + " was failed:" +
+      LOG.info("command on wsl: " + commandLine.getCommandLineString() + " was failed:" +
                "ec=" + output.getExitCode() + ",timeout=" + output.isTimeout() + ",cancelled=" + output.isCancelled()
                + ",stderr=" + output.getStderr() + ",stdout=" + output.getStdout());
     }
