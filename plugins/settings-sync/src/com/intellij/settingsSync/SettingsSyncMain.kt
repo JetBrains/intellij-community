@@ -22,6 +22,9 @@ private const val SETTINGS_SYNC_ENABLED_PROPERTY = "idea.settings.sync.enabled"
 internal fun isSettingsSyncEnabledByKey() : Boolean =
   SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, false)
 
+internal fun isSettingsSyncEnabledInSettings() : Boolean =
+  SettingsSyncSettings.getInstance().syncEnabled
+
 internal class SettingsSyncMain : Disposable {
 
   internal val controls: SettingsSyncControls
@@ -36,7 +39,6 @@ internal class SettingsSyncMain : Disposable {
 
     controls = init(application, this, settingsSyncStorage, appConfigPath,
                     application.stateStore as ComponentStoreImpl, remoteCommunicator)
-
   }
 
   override fun dispose() {

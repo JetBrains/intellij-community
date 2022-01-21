@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.settingsSync.SettingsSyncSettings.Companion.FILE_SPEC
 import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.*
 
 @State(name = "SettingsSyncSettings", storages = [Storage(FILE_SPEC)])
@@ -78,6 +79,7 @@ internal class SettingsSyncSettings : SimplePersistentStateComponent<SettingsSyn
   }
 
   interface Listener : EventListener {
+    @RequiresEdt
     fun settingsChanged()
   }
 
