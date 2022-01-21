@@ -192,8 +192,16 @@ public final class ProcessListUtil {
 
   public static @Nullable List<ProcessInfo> parseLinuxOutputMacStyle(@NotNull String commandOnly, @NotNull String full) {
     List<MacProcessInfo> commands = doParseMacOutput(commandOnly);
+    if (commands == null) {
+      LOG.debug("Failed to parse commands output: ", commandOnly);
+      return null;
+    }
     List<MacProcessInfo> fulls = doParseMacOutput(full);
-    if (commands == null || fulls == null) return null;
+    if (fulls == null) {
+      LOG.debug("Failed to parse comm output: ", full);
+      return null;
+    }
+
 
     Int2ObjectMap<String> idToCommand = new Int2ObjectOpenHashMap<>();
     for (MacProcessInfo each : commands) {
