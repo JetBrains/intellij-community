@@ -9,14 +9,12 @@ import java.io.IOException;
 
 public final class CachedFileContent {
   private final VirtualFile myVirtualFile;
-  private long myLength;
   private byte[] myCachedBytes;
   private long myCachedTimeStamp = -1;
   private Boolean myCachedWritable;
 
   public CachedFileContent(@NotNull VirtualFile virtualFile) {
     myVirtualFile = virtualFile;
-    myLength = virtualFile.getLength();
   }
 
   public byte @NotNull [] getBytes() throws IOException {
@@ -35,16 +33,11 @@ public final class CachedFileContent {
 
   public void setEmptyContent() {
     myCachedBytes = ArrayUtilRt.EMPTY_BYTE_ARRAY;
-    myLength = 0;
   }
 
   @NotNull
   public VirtualFile getVirtualFile() {
     return myVirtualFile;
-  }
-
-  public long getLength() {
-    return myLength;
   }
 
   public long getTimeStamp() {
