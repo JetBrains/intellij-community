@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.google.gson.Gson
@@ -30,7 +30,7 @@ class CompilationPartsUploader implements Closeable {
   CompilationPartsUploader(@NotNull String serverUrl, @NotNull BuildMessages messages) {
     myServerUrl = fixServerUrl(serverUrl)
     myMessages = messages
-    CompilationPartsUtil.initLog4J(messages)
+    CompilationPartsUtil.initLogging(messages)
     def timeout = TimeUnit.MINUTES.toMillis(1).toInteger()
     def config = RequestConfig.custom()
       .setConnectTimeout(timeout)
@@ -48,7 +48,7 @@ class CompilationPartsUploader implements Closeable {
   @Override
   void close() throws IOException {
     CloseStreamUtil.closeStream(myHttpClient)
-    CompilationPartsUtil.deinitLog4J()
+    CompilationPartsUtil.deinitLogging()
   }
 
   @SuppressWarnings("unused")

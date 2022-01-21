@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.google.gson.Gson
@@ -18,11 +18,6 @@ import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpHead
 import org.apache.http.impl.client.HttpClientBuilder
-import org.apache.log4j.AppenderSkeleton
-import org.apache.log4j.Level
-import org.apache.log4j.Logger
-import org.apache.log4j.PatternLayout
-import org.apache.log4j.spi.LoggingEvent
 import org.apache.tools.ant.BuildException
 import org.apache.tools.ant.taskdefs.ExecTask
 import org.jetbrains.annotations.NotNull
@@ -45,30 +40,32 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
 import java.util.function.Predicate
+import java.util.logging.Handler
+import java.util.logging.Level
+import java.util.logging.LogRecord
+import java.util.logging.Logger
 import java.util.zip.GZIPOutputStream
 
 @CompileStatic
 class CompilationPartsUtil {
 
-  static void initLog4J(BuildMessages messages) {
-    def logger = Logger.getRootLogger()
+  static void initLogging(BuildMessages messages) {
+    def logger = Logger.getLogger("")
     logger.setLevel(Level.INFO)
-    if (logger.allAppenders.hasMoreElements()) {
-      messages.
-        warning("Will override existing log4j appenders: ${logger.allAppenders.iterator().collect { it -> it.toString() }.join(",")}")
-      logger.removeAllAppenders()
-    }
-    logger.addAppender(new AppenderSkeleton() {
-      {
-        setLayout(new PatternLayout("[%c] %m"))
+    def handlers = logger.handlers
+    if (handlers.length > 0) {
+      messages.warning("Will override existing java.util.logging appenders: ${handlers.collect { it -> it.toString() }.join(",")}")
+      for (Handler handler : handlers) {
+        logger.removeHandler(handler)
       }
-
+    }
+    logger.addHandler(new Handler() {
       @Override
-      protected void append(LoggingEvent event) {
-        def level = event.getLevel()
-        String message = getLayout().format(event)
-        if (level.isGreaterOrEqual(Level.ERROR)) {
-          def throwable = event.throwableInformation?.throwable
+      void publish(LogRecord record) {
+        def level = record.getLevel()
+        String message = "[${record.loggerName}] ${record.message}"
+        if (level.intValue() >= Level.SEVERE.intValue()) {
+          def throwable = record.thrown
           if (throwable != null) {
             messages.error(message, throwable)
           }
@@ -77,15 +74,15 @@ class CompilationPartsUtil {
           }
           return
         }
-        if (level.isGreaterOrEqual(Level.WARN)) {
+        if (level.intValue() >= Level.WARNING.intValue()) {
           messages.warning(message)
           return
         }
-        if (level.isGreaterOrEqual(Level.INFO)) {
+        if (level.intValue() >= Level.INFO.intValue()) {
           messages.info(message)
           return
         }
-        if (level.isGreaterOrEqual(Level.DEBUG)) {
+        if (level.intValue() >= Level.FINE.intValue()) {
           messages.debug(message)
           return
         }
@@ -94,20 +91,22 @@ class CompilationPartsUtil {
       }
 
       @Override
-      void close() {
+      void flush() {
       }
 
       @Override
-      boolean requiresLayout() {
-        return false
+      void close(){
       }
     })
   }
 
-  static void deinitLog4J() {
-    def logger = Logger.getRootLogger()
-    logger.setLevel(Level.DEBUG)
-    logger.removeAllAppenders()
+  static void deinitLogging() {
+    def logger = Logger.getLogger("")
+    logger.setLevel(Level.FINE)
+    def handlers = logger.handlers
+    for (Handler handler : handlers) {
+      logger.removeHandler(handler)
+    }
   }
 
   static void packAndUploadToServer(CompilationContextImpl context, String zipsLocation) {
@@ -459,7 +458,7 @@ class CompilationPartsUtil {
       Set<Pair<FetchAndUnpackContext, Integer>> failed = ContainerUtil.newConcurrentSet()
 
       if (!toDownload.isEmpty()) {
-        initLog4J(messages)
+        initLogging(messages)
 
         def httpClient = HttpClientBuilder.create()
           .setUserAgent('Parts Downloader')
@@ -512,7 +511,7 @@ class CompilationPartsUtil {
 
         StreamUtil.closeStream(httpClient)
 
-        deinitLog4J()
+        deinitLogging()
       }
 
       messages.reportStatisticValue('compile-parts:download:time',
