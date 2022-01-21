@@ -15,7 +15,12 @@ import net.schmizz.sshj.DefaultConfig
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.SFTPClient
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier
+import net.schmizz.sshj.userauth.method.AuthKeyboardInteractive
 import net.schmizz.sshj.userauth.method.AuthMethod
+import net.schmizz.sshj.userauth.method.AuthPassword
+import net.schmizz.sshj.userauth.method.PasswordResponseProvider
+import net.schmizz.sshj.userauth.password.PasswordFinder
+import net.schmizz.sshj.userauth.password.Resource
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntryPredicate
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
@@ -306,11 +311,11 @@ private fun generateRemoteDirName(remoteDirPrefix: String): String {
 }
 
 @Throws(java.lang.Exception::class)
-private fun getAuthMethods(agent: AgentProxy): List<AuthMethod> {
-  val identities = agent.identities
+private fun AgentProxy.getAuthMethods(): List<AuthMethod> {
+  val identities = identities
   System.getLogger("org.jetbrains.intellij.build.tasks.Sign")
     .info("SSH-Agent identities: ${identities.joinToString { String(it.comment, StandardCharsets.UTF_8) }}")
-  return identities.map { AuthAgent(agent, it) }
+  return identities.map { AuthAgent(this, it) }
 }
 
 private fun getAgentConnector(): Connector? {
@@ -336,14 +341,15 @@ private inline fun executeTask(host: String,
   SSHClient(config).use { ssh ->
     ssh.addHostKeyVerifier(PromiscuousVerifier())
     ssh.connect(host)
-    val agentProxy = getAgentConnector()?.let { AgentProxy(it) }
-    if (agentProxy != null) {
-      ssh.auth(user, getAuthMethods(agentProxy))
+    val passwordFinder = object : PasswordFinder {
+      override fun reqPassword(resource: Resource<*>?) = password.toCharArray().clone()
+      override fun shouldRetry(resource: Resource<*>?) = false
     }
-    else {
-      ssh.authPassword(user, password)
-    }
+    val authMethods: List<AuthMethod> =
+      (getAgentConnector()?.let { AgentProxy(it) }?.getAuthMethods() ?: emptyList()) +
+      listOf(AuthPassword(passwordFinder), AuthKeyboardInteractive(PasswordResponseProvider(passwordFinder)))
 
+    ssh.auth(user, authMethods)
     ssh.newSFTPClient().use { sftp ->
       val remoteDir = generateRemoteDirName(remoteDirPrefix)
       sftp.mkdir(remoteDir)
