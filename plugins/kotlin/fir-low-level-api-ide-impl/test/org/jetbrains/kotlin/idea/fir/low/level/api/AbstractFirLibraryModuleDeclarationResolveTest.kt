@@ -5,10 +5,11 @@
 package org.jetbrains.kotlin.idea.fir.low.level.api
 
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.withFirDeclaration
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.resolveToFirSymbol
 import org.jetbrains.kotlin.fir.FirRenderer
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.render
+import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.SdkAndMockLibraryProjectDescriptor
@@ -33,6 +34,7 @@ abstract class AbstractFirLibraryModuleDeclarationResolveTest : KotlinLightCodeI
      * Compiled PSI-elements might come from indices, for example, and we need to be able to work with them
      * and to resolve them to FIR declarations.
      */
+    @OptIn(SymbolInternals::class)
     fun doTest(path: String) {
         val testDataFile = File(path)
         val expectedFile = File(path.removeSuffix(".kt") + ".txt")
@@ -52,10 +54,8 @@ abstract class AbstractFirLibraryModuleDeclarationResolveTest : KotlinLightCodeI
         // We intentionally use ktFile here as a context element, because resolving
         // from compiled PSI-elements (e.g. caretResolutionTarget) is not yet supported
         resolveWithClearCaches(ktFile) { resolveState ->
-            val renderedDeclaration = caretResolutionTarget.withFirDeclaration(resolveState, FirResolvePhase.TYPES) { firDeclaration ->
-                firDeclaration.render(FirRenderer.RenderMode.WithResolvePhases)
-            }
-
+            val firSymbol = caretResolutionTarget.resolveToFirSymbol(resolveState, FirResolvePhase.TYPES)
+            val renderedDeclaration = firSymbol.fir.render(FirRenderer.RenderMode.WithResolvePhases)
             KotlinTestUtils.assertEqualsToFile(expectedFile, renderedDeclaration)
         }
     }
