@@ -714,6 +714,7 @@ class QuickFixRegistrar : QuickFixContributor {
         WRONG_TYPE_PARAMETER_NULLABILITY_FOR_JAVA_OVERRIDE.registerFactory(MakeUpperBoundNonNullableFix)
         WRONG_NULLABILITY_FOR_JAVA_OVERRIDE.registerFactory(MakeUpperBoundNonNullableFix)
         TYPE_MISMATCH.registerFactory(MakeUpperBoundNonNullableFix)
+        TYPE_MISMATCH_WARNING.registerFactory(MakeUpperBoundNonNullableFix)
         NOTHING_TO_OVERRIDE.registerFactory(MakeUpperBoundNonNullableFix)
 
         OVERRIDE_DEPRECATION.registerFactory(AddAnnotationWithArgumentsFix.CopyDeprecatedAnnotation)

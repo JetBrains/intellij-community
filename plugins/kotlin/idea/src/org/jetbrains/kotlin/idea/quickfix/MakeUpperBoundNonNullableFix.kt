@@ -127,6 +127,11 @@ open class MakeUpperBoundNonNullableFix(
                     createActionsForTypeMismatch(actual = info.b, expected = info.a)
                 }
 
+                Errors.TYPE_MISMATCH_WARNING -> {
+                    val info = Errors.TYPE_MISMATCH_WARNING.cast(diagnostic)
+                    createActionsForTypeMismatch(actual = info.b, expected = info.a)
+                }
+
                 ErrorsJvm.WRONG_NULLABILITY_FOR_JAVA_OVERRIDE -> {
                     val info = ErrorsJvm.WRONG_NULLABILITY_FOR_JAVA_OVERRIDE.cast(diagnostic)
                     createActionsForOverride(actual = info.a, expected = info.b)
