@@ -11,9 +11,14 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.BlockInlayPriority;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.search.PsiSearchHelperImpl;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.SmartList;
@@ -257,5 +262,15 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
   @Override
   public String getProperty(@NotNull String key) {
     return JavaBundle.message(key);
+  }
+
+  @NotNull
+  @Override
+  public PsiFile createFile(@NotNull Project project,
+                            @NotNull FileType fileType,
+                            @NotNull Document document) {
+    PsiFile file = InlayHintsProvider.super.createFile(project, fileType, document);
+    file.putUserData(PsiSearchHelperImpl.USE_SCOPE_KEY, new LocalSearchScope(file));
+    return file;
   }
 }
