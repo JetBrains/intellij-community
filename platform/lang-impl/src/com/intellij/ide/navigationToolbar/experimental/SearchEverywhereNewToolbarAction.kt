@@ -37,6 +37,7 @@ import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.KeyEvent
+import java.beans.PropertyChangeListener
 import javax.swing.FocusManager
 import javax.swing.JComponent
 import javax.swing.SwingConstants
@@ -91,8 +92,10 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
 
     return object : ActionButtonWithText(this, presentation, place,
                                          Dimension(0, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height)) {
+
+      private val listener = PropertyChangeListener { this.repaint() }
+
       init {
-        FocusManager.getCurrentManager().addPropertyChangeListener { this.repaint() }
         setHorizontalTextAlignment(SwingConstants.LEFT)
         cursor = Cursor.getPredefinedCursor(TEXT_CURSOR)
         this.addAncestorListener(object : AncestorListenerAdapter() {
@@ -104,6 +107,14 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
             })
           }
         })
+      }
+
+      override fun addNotify() {
+        FocusManager.getCurrentManager().addPropertyChangeListener(listener)
+      }
+
+      override fun removeNotify() {
+        FocusManager.getCurrentManager().removePropertyChangeListener(listener)
       }
 
       override fun getPreferredSize(): Dimension {
