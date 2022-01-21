@@ -25,8 +25,8 @@ import java.util.Objects;
 public class NewGantScriptAction extends NewGroovyActionBase {
 
   @Override
-  protected String getActionName(PsiDirectory directory, String newName) {
-    return null;
+  protected @NotNull String getActionName(@NotNull PsiDirectory directory, @NotNull String newName) {
+    return GroovyBundle.message("new.gant.script.dialog.title");
   }
 
   @Override

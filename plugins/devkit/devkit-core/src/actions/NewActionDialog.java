@@ -78,7 +78,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     }
   }
 
-  NewActionDialog(Project project, PsiDirectory directory) {
+  NewActionDialog(Project project, @Nullable PsiDirectory directory) {
     super(project, false);
     myProject = project;
     myDirectory = directory;
