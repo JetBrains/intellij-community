@@ -248,10 +248,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }));
 
     JTextField pathEditor = (JTextField)myPath.getEditor().getEditorComponent();
-    FileLookup.LookupFilter filter = file -> {
-      VirtualFile vFile = ((LocalFsFinder.VfsFile)file).getFile();
-      return vFile != null && myChooserDescriptor.isFileVisible(vFile, myFileSystemTree.areHiddensShown());
-    };
+    FileLookup.LookupFilter filter =
+      f -> myChooserDescriptor.isFileVisible(((LocalFsFinder.VfsFile)f).getFile(), myFileSystemTree.areHiddensShown());
     myPathTextField = new FileTextFieldImpl(pathEditor, new LocalFsFinder(), filter, FileChooserFactoryImpl.getMacroMap(), getDisposable()) {
       @Override
       protected void onTextChanged(String newValue) {

@@ -98,7 +98,7 @@ public class LocalFsFinder implements Finder {
     withBaseDir(baseDir != null ? baseDir.toPath() : null);
   }
 
-  public static class FileChooserFilter implements LookupFilter {
+  public static final class FileChooserFilter implements LookupFilter {
     private final FileChooserDescriptor myDescriptor;
     private final boolean myShowHidden;
 
@@ -114,9 +114,22 @@ public class LocalFsFinder implements Finder {
     }
   }
 
-  public static final class VfsFile implements LookupFile {
-    private final VirtualFile myFile;
+  private static abstract class LookupFileWithMacro implements LookupFile {
     private String myMacro;
+
+    @Override
+    public final void setMacro(String macro) {
+      myMacro = macro;
+    }
+
+    @Override
+    public final String getMacro() {
+      return myMacro;
+    }
+  }
+
+  public static final class VfsFile extends LookupFileWithMacro {
+    private final VirtualFile myFile;
 
     /** @deprecated please use {@link #VfsFile(VirtualFile)} instead */
     @Deprecated(forRemoval = true)
@@ -130,6 +143,10 @@ public class LocalFsFinder implements Finder {
       RefreshQueue.getInstance().refresh(true, false, null, file);
     }
 
+    public VirtualFile getFile() {
+      return myFile;
+    }
+
     @Override
     public String getName() {
       return myFile.getParent() == null && myFile.getName().isEmpty() ? "/" : myFile.getName();
@@ -138,16 +155,6 @@ public class LocalFsFinder implements Finder {
     @Override
     public boolean isDirectory() {
       return myFile.isDirectory();
-    }
-
-    @Override
-    public void setMacro(String macro) {
-      myMacro = macro;
-    }
-
-    @Override
-    public String getMacro() {
-      return myMacro;
     }
 
     @Override
@@ -176,10 +183,6 @@ public class LocalFsFinder implements Finder {
       return result;
     }
 
-    public VirtualFile getFile() {
-      return myFile;
-    }
-
     @Override
     public boolean exists() {
       return myFile.exists();
@@ -201,9 +204,8 @@ public class LocalFsFinder implements Finder {
     }
   }
 
-  public static final class IoFile implements LookupFile {
+  public static final class IoFile extends LookupFileWithMacro {
     private final Path myFile;
-    private String myMacro;
 
     public IoFile(@NotNull File file) {
       this(file.toPath());
@@ -225,16 +227,6 @@ public class LocalFsFinder implements Finder {
     @Override
     public boolean isDirectory() {
       return Files.isDirectory(myFile);
-    }
-
-    @Override
-    public void setMacro(String macro) {
-      myMacro = macro;
-    }
-
-    @Override
-    public @Nullable String getMacro() {
-      return myMacro;
     }
 
     @Override

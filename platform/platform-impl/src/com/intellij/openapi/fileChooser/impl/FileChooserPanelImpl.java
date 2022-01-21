@@ -220,25 +220,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       }
 
       if (object instanceof String && !((String)object).isBlank()) {
-        var text = ((String)object).trim();
-        var p = text.lastIndexOf(SEPARATOR);
-        if (p > 0 && myDescriptor.isChooseJarContents()) {
-          var archive = NioFiles.toPath(text.substring(0, p));
-          if (archive != null && myRegistry.getFileTypeByFileName(archive.getFileName().toString()) == ArchiveFileType.INSTANCE) {
-            @SuppressWarnings("resource") var fs = myOpenFileSystems.computeIfAbsent(archive, k -> {
-              try {
-                return FileSystems.newFileSystem(archive, null);
-              }
-              catch (IOException e) {
-                LOG.warn(e);
-                return null;
-              }
-            });
-            return fs != null ? List.of(fs.getRootDirectories().iterator().next().resolve(text.substring(p + 2))) : List.of();
-          }
-        }
-
-        var path = NioFiles.toPath(text);
+        var path = findByPath(((String)object).trim());
         if (path != null) {
           return List.of(path);
         }
@@ -538,6 +520,29 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     return parent;
   }
 
+  private @Nullable Path findByPath(String text) {
+    var p = text.lastIndexOf(SEPARATOR);
+    if (p > 0 && myDescriptor.isChooseJarContents()) {
+      var archive = NioFiles.toPath(text.substring(0, p));
+      if (archive != null && myRegistry.getFileTypeByFileName(archive.getFileName().toString()) == ArchiveFileType.INSTANCE) {
+        @SuppressWarnings("resource") var fs = myOpenFileSystems.computeIfAbsent(archive, k -> {
+          try {
+            return FileSystems.newFileSystem(archive, null);
+          }
+          catch (IOException e) {
+            LOG.warn(e);
+            return null;
+          }
+        });
+        if (fs != null) {
+          return fs.getRootDirectories().iterator().next().resolve(text.substring(p + 2));
+        }
+      }
+    }
+
+    return NioFiles.toPath(text);
+  }
+
   private static boolean isJar(URI uri) {
     return "jar".equals(uri.getScheme());
   }
@@ -620,7 +625,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     };
   }
 
-  private static class MyListCellRenderer extends JLabel implements ListCellRenderer<FsItem> {
+  private static final class MyListCellRenderer extends JLabel implements ListCellRenderer<FsItem> {
     @Override
     public Component getListCellRendererComponent(JList<? extends FsItem> list, FsItem value, int index, boolean selected, boolean focused) {
       setIcon(value.icon);
@@ -630,9 +635,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     }
   }
 
-  private static class PreloadedDirectory extends CoreLocalVirtualFile {
-    private static final CoreLocalFileSystem FS = new CoreLocalFileSystem();
-
+  private static final class PreloadedDirectory extends CoreLocalVirtualFile {
     private final List<LazyDirectoryOrFile> myChildren = new ArrayList<>();
 
     private PreloadedDirectory(Path file) {
@@ -656,9 +659,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     }
   }
 
-  private static class LazyDirectoryOrFile extends CoreLocalVirtualFile {
-    private static final CoreLocalFileSystem FS = new CoreLocalFileSystem();
-
+  private static final class LazyDirectoryOrFile extends CoreLocalVirtualFile {
     private final @Nullable VirtualFile myParent;
     private final @Nullable Map<String, Optional<LazyDirectoryOrFile>> myChildren;
 
