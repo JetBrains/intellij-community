@@ -69,7 +69,7 @@ public class PersistentEnumerator<Data> implements DataEnumeratorEx<Data>, Close
 
   @ApiStatus.Internal
   public static int getVersion() {
-    return PersistentBTreeEnumerator.VERSION;
+    return PersistentBTreeEnumerator.baseVersion();
   }
 
   @Override

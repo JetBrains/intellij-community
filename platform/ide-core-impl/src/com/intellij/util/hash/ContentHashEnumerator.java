@@ -68,7 +68,7 @@ public class ContentHashEnumerator extends PersistentBTreeEnumerator<byte[]> {
   }
 
   public static int getVersion() {
-    return PersistentBTreeEnumerator.VERSION;
+    return PersistentBTreeEnumerator.baseVersion();
   }
 
   private static class ContentHashesDescriptor implements KeyDescriptor<byte[]>, DifferentSerializableBytesImplyNonEqualityPolicy {
