@@ -213,6 +213,10 @@ public class LocalFsFinder implements Finder {
       myFile = file;
     }
 
+    public Path getFile() {
+      return myFile;
+    }
+
     @Override
     public String getName() {
       return NioFiles.getFileName(myFile);

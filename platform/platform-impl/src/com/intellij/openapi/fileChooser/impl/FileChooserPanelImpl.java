@@ -16,6 +16,9 @@ import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserPanel;
+import com.intellij.openapi.fileChooser.ex.FileLookup;
+import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
+import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
@@ -67,6 +70,7 @@ import static java.util.Objects.requireNonNull;
 final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implements FileChooserPanel, Disposable {
   private static final Logger LOG = Logger.getInstance(FileChooserPanelImpl.class);
   private static final String SEPARATOR = "!/";
+  private static final CoreLocalFileSystem FS = new CoreLocalFileSystem();
 
   private final FileTypeRegistry myRegistry;
   private final FileChooserDescriptor myDescriptor;
@@ -109,6 +113,11 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     myPath = new ComboBox<>(Stream.of(recentPaths).map(FsItem::new).toArray(FsItem[]::new));
     myPath.setVisible(myShowPathBar);
     myPath.setEditable(true);
+    var pathEditor = (JTextField)myPath.getEditor().getEditorComponent();
+    var finder = new LocalFsFinder(false).withBaseDir(null);
+    FileLookup.LookupFilter filter =
+      f -> myDescriptor.isFileVisible(new CoreLocalVirtualFile(FS, ((LocalFsFinder.IoFile)f).getFile()), myShowHiddenFiles);
+    new FileTextFieldImpl(pathEditor, finder, filter, FileChooserFactoryImpl.getMacroMap(), this);
     Insets pathInsets = myPath.getInsets(), pathBorder = myPath.getBorder().getBorderInsets(myPath);
 
     myModel = new SortedListModel<>(FsItem.COMPARATOR);
