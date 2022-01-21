@@ -765,6 +765,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       if (actionsSize == 1) {
         AnAction action = actions.get(0);
         JButton button = new JButton(action.getTemplateText());
+        button.setOpaque(false);
         actionPanel.addAction(button);
         button.addActionListener(e -> {
           NotificationCollector.getInstance()
