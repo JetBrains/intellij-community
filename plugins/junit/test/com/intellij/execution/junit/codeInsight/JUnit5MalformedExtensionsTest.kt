@@ -6,16 +6,15 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.siyeh.ig.LightJavaInspectionTestCase
 
-class JUnit5MalformedNestedClassTest : LightJavaInspectionTestCase() {
+class JUnit5MalformedExtensionsTest : LightJavaInspectionTestCase() {
   override fun getInspection(): InspectionProfileEntry {
-    return JUnit5MalformedNestedClassInspection()
+    return JUnit5MalformedExtensionsInspection()
   }
 
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
-    addEnvironmentClass("package org.junit.jupiter.api;" +
-                        "public @interface Nested {}")
+    JUnit5TestFrameworkSetupUtil.setupJUnit5Library(myFixture)
   }
 
   fun testMalformed() {
@@ -23,7 +22,7 @@ class JUnit5MalformedNestedClassTest : LightJavaInspectionTestCase() {
   }
 
   override fun getBasePath(): String {
-    return "/plugins/junit/testData/codeInsight/malformedNested"
+    return "/plugins/junit/testData/codeInsight/malformedExtension"
   }
 
   override fun getProjectDescriptor(): LightProjectDescriptor {

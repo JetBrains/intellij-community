@@ -72,6 +72,12 @@ public class JUnit5TestFrameworkSetupUtil {
                         "public @interface BeforeEach {}");
     fixture.addClass("package org.junit.jupiter.api;\n" +
                         "public interface RepetitionInfo {}");
+    fixture.addClass("package org.junit.jupiter.api.extension;\n" +
+                     "public @interface RegisterExtension {\n" +
+                     "}\n");
+    fixture.addClass("package org.junit.jupiter.api.extension;\n" +
+                     "public interface Extension {\n" +
+                     "}\n");
     return fixture;
   }
 }

@@ -54,4 +54,5 @@ public final class JUnitCommonClassNames {
   public static final String ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE = "org.junit.platform.engine.TestEngine";
   public static final String ORG_JUNIT_PLATFORM_ENGINE = "org.junit.platform.engine";
   public static final String ORG_JUNIT_JUPITER_API_EXTENSION_REGISTER_EXTENSION = "org.junit.jupiter.api.extension.RegisterExtension";
+  public static final String ORG_JUNIT_JUPITER_API_EXTENSION = "org.junit.jupiter.api.extension.Extension";
 }
