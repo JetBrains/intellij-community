@@ -1,6 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.wizard.groovy
 
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleCodeChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logArtifactIdChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logDslChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logGroupIdChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logParentChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.project.Project
@@ -22,7 +30,8 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
   override fun createStep(parent: GroovyNewProjectWizard.Step): GradleNewProjectWizardStep<GroovyNewProjectWizard.Step> = Step(parent)
 
   class Step(parent: GroovyNewProjectWizard.Step) :
-    GradleNewProjectWizardStep<GroovyNewProjectWizard.Step>(parent) {
+    GradleNewProjectWizardStep<GroovyNewProjectWizard.Step>(parent),
+    BuildSystemGroovyNewProjectWizardData by parent {
 
     private val addSampleCodeProperty = propertyGraph.graphProperty { false }
     private val groovySdkVersionProperty = propertyGraph.graphProperty<Optional<String>> { Optional.empty() }
@@ -54,7 +63,18 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
           builder.createSampleGroovyCodeFile(project, directory)
         }
       }
+
+      logSdkFinished(sdk)
     }
 
+    init {
+      sdkProperty.afterChange { logSdkChanged(it) }
+      useKotlinDslProperty.afterChange { logDslChanged(it) }
+      parentProperty.afterChange { logParentChanged(!it.isPresent) }
+      addSampleCodeProperty.afterChange { logAddSampleCodeChanged() }
+      groupIdProperty.afterChange { logGroupIdChanged() }
+      artifactIdProperty.afterChange { logArtifactIdChanged() }
+      versionProperty.afterChange { logVersionChanged() }
+    }
   }
 }

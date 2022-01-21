@@ -46,11 +46,11 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
     }
   }
 
-  private val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
-  private val moduleNameProperty = propertyGraph.graphProperty { parent.name }
-  private val contentRootProperty = propertyGraph.graphProperty(pathFromParent)
-  private val moduleFileLocationProperty = propertyGraph.graphProperty(pathFromParent)
-  private val addSampleCodeProperty = propertyGraph.graphProperty { false }
+  val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
+  val moduleNameProperty = propertyGraph.graphProperty { parent.name }
+  val contentRootProperty = propertyGraph.graphProperty(pathFromParent)
+  val moduleFileLocationProperty = propertyGraph.graphProperty(pathFromParent)
+  val addSampleCodeProperty = propertyGraph.graphProperty { false }
 
   final override var sdk by sdkProperty
   final override var moduleName by moduleNameProperty

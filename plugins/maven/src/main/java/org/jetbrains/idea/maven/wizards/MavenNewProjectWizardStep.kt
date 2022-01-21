@@ -29,7 +29,7 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
-  private val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
+  val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
 
   val sdk by sdkProperty
 
