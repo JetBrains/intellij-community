@@ -39,7 +39,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     private val LOGGER = logger<CustomHeader>()
 
     val H
-      get() = if (ExperimentalUI.isNewUI()) 12 else 7
+      get() = 12
     val V
       get() = 5
 
