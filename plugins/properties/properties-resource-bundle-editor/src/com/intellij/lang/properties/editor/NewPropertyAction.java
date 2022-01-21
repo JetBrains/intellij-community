@@ -51,8 +51,25 @@ class NewPropertyAction extends AnAction {
     if (project == null) {
       return;
     }
-    final ResourceBundleEditor resourceBundleEditor = getResourceBundleEditor(project, e.getDataContext());
-    if (resourceBundleEditor == null) return;
+    ResourceBundleEditor resourceBundleEditor;
+    final DataContext context = e.getDataContext();
+    FileEditor fileEditor = PlatformCoreDataKeys.FILE_EDITOR.getData(context);
+    if (fileEditor instanceof ResourceBundleEditor) {
+      resourceBundleEditor = (ResourceBundleEditor)fileEditor;
+    } else {
+      final Editor editor = CommonDataKeys.EDITOR.getData(context);
+      resourceBundleEditor = editor != null ? editor.getUserData(ResourceBundleEditor.RESOURCE_BUNDLE_EDITOR_KEY) : null;
+    }
+    if (resourceBundleEditor == null) {
+      for (FileEditor editor : FileEditorManager.getInstance(project).getSelectedEditors()) {
+        if (editor instanceof ResourceBundleEditor) {
+          resourceBundleEditor = (ResourceBundleEditor)editor;
+        }
+      }
+      if (resourceBundleEditor == null) {
+        return;
+      }
+    }
 
     final ResourceBundle bundle = resourceBundleEditor.getResourceBundle();
     final VirtualFile file = bundle.getDefaultPropertiesFile().getVirtualFile();
@@ -131,36 +148,17 @@ class NewPropertyAction extends AnAction {
           updateManager.insertAfter(keyToInsert, "", anchorKey);
         }
       };
+      ResourceBundleEditor finalResourceBundleEditor = resourceBundleEditor;
       ApplicationManager.getApplication().runWriteAction(() -> {
         WriteCommandAction.runWriteCommandAction(bundle.getProject(), ResourceBundleEditorBundle.message("action.NewPropertyAction.text"), null, insertionAction);
-        resourceBundleEditor.flush();
+        finalResourceBundleEditor.flush();
       });
 
       resourceBundleEditor.updateTreeRoot();
-      resourceBundleEditor.selectProperty(keyToInsert);
+      resourceBundleEditor.getStructureViewComponent()
+        .select(keyToInsert, false)
+        .onProcessed(p -> finalResourceBundleEditor.selectProperty(keyToInsert));
     }
-  }
-
-  private static @Nullable ResourceBundleEditor getResourceBundleEditor(Project project, DataContext context) {
-    ResourceBundleEditor resourceBundleEditor;
-    FileEditor fileEditor = PlatformCoreDataKeys.FILE_EDITOR.getData(context);
-    if (fileEditor instanceof ResourceBundleEditor) {
-      resourceBundleEditor = (ResourceBundleEditor)fileEditor;
-    } else {
-      final Editor editor = CommonDataKeys.EDITOR.getData(context);
-      resourceBundleEditor = editor != null ? editor.getUserData(ResourceBundleEditor.RESOURCE_BUNDLE_EDITOR_KEY) : null;
-    }
-    if (resourceBundleEditor == null) {
-      for (FileEditor editor : FileEditorManager.getInstance(project).getSelectedEditors()) {
-        if (editor instanceof ResourceBundleEditor) {
-          resourceBundleEditor = (ResourceBundleEditor)editor;
-        }
-      }
-      if (resourceBundleEditor == null) {
-        return null;
-      }
-    }
-    return resourceBundleEditor;
   }
 
   @Override
