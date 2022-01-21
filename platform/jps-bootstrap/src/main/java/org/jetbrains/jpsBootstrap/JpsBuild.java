@@ -133,7 +133,13 @@ public class JpsBuild {
           warn(text);
         case ERROR:
         case INTERNAL_BUILDER_ERROR:
-          error(text);
+          if (text.contains("Groovyc:WARNING")) {
+            warn(text);
+          }
+          else {
+            error(text);
+            myFirstError.compareAndSet(null, text);
+          }
           break;
         default:
           if (!msg.getMessageText().isBlank()) {
@@ -145,10 +151,6 @@ public class JpsBuild {
             }
           }
           break;
-      }
-
-      if ((kind == BuildMessage.Kind.ERROR || kind == BuildMessage.Kind.INTERNAL_BUILDER_ERROR)) {
-        myFirstError.compareAndSet(null, text);
       }
     }
 
