@@ -700,7 +700,8 @@ public class SwitchBlockHighlightingModel {
           if (isConstantLabelElement(next)) {
             PsiExpression constExpr = ObjectUtils.tryCast(next, PsiExpression.class);
             assert constExpr != null;
-            if (JavaPsiPatternUtil.isTotalForType(currPattern, mySelectorType) &&
+            if ((PsiUtil.getLanguageLevel(constExpr).isAtLeast(LanguageLevel.JDK_18_PREVIEW) ||
+                JavaPsiPatternUtil.isTotalForType(currPattern, mySelectorType)) &&
                 JavaPsiPatternUtil.dominates(currPattern, constExpr.getType())) {
               result.put(next, currPattern);
             }
@@ -937,7 +938,7 @@ public class SwitchBlockHighlightingModel {
   /**
    * @param switchBlock switch statement/expression to check
    * @return a set of label elements that are duplicates. If a switch block contains patterns,
-   * then dominated patterns will be also included in the result set.
+   * then dominated label elements will be also included in the result set.
    */
   @NotNull
   public static Set<PsiElement> findSuspiciousLabelElements(@Nullable PsiSwitchBlock switchBlock) {
@@ -961,9 +962,8 @@ public class SwitchBlockHighlightingModel {
     List<PsiCaseLabelElement> dominanceCheckingCandidates = new SmartList<>();
     labelElements.forEach(label -> PatternsInSwitchBlockHighlightingModel.fillElementsToCheckDominance(dominanceCheckingCandidates, label));
     if (dominanceCheckingCandidates.isEmpty()) return result;
-    var dominatedPatterns =
-      StreamEx.ofKeys(patternInSwitchModel.findDominatedLabels(dominanceCheckingCandidates), value -> value instanceof PsiPattern)
-        .filter(key -> key instanceof PsiPattern).toSet();
+    var dominatedPatterns = StreamEx.ofKeys(
+      patternInSwitchModel.findDominatedLabels(dominanceCheckingCandidates), value -> value instanceof PsiPattern).toSet();
     result.addAll(dominatedPatterns);
 
     return result;
