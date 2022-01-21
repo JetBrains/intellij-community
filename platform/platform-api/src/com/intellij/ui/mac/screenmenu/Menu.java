@@ -28,6 +28,7 @@ public class Menu extends MenuItem {
   private Runnable myOnOpen;
   private Runnable myOnClose; // we assume that can run it only on EDT (to change swing components)
   private Component myComponent;
+  private boolean myIsOpened = false;
 
   long[] myCachedPeers;
 
@@ -137,6 +138,7 @@ public class Menu extends MenuItem {
 
   public void invokeOpenLater() {
     // Called on AppKit when menu opening
+    myIsOpened = true;
     if (myOnOpen != null) {
       if (USE_STUB) {
         // NOTE: must add stub item when menu opens (otherwise AppKit considers it as empty and we can't fill it later)
@@ -160,12 +162,18 @@ public class Menu extends MenuItem {
 
   public void invokeMenuClosing() {
     // Called on AppKit when menu closed
+    myIsOpened = false;
 
     // When user selects item of system menu (under macOS) AppKit sometimes generates such sequence: CloseParentMenu -> PerformItemAction
     // So we can destroy menu-item before item's action performed, and because of that action will not be executed.
     // Defer clearing to avoid this problem.
     disposeChildren(CLOSE_DELAY);
+
+    // NOTE: we can't perform native cleaning immediately, because items from 'Help' menu stop work.
     SimpleTimer.getInstance().setUp(() -> {
+      if (myIsOpened)
+        return;
+
       synchronized (this) {
         // clean native NSMenu item
         if (nativePeer != 0) nativeRefill(nativePeer, null, true);
