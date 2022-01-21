@@ -55,6 +55,7 @@
     <registryKey key="unknown.sdk.show.editor.actions" defaultValue="true" description="Show editor suggestions to fix missing SKDs"/>
 
     <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification"/>
+    <editorNotificationProvider implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotificationsProvider"/>
     <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkBalloonNotification"/>
     <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkTracker"/>
 

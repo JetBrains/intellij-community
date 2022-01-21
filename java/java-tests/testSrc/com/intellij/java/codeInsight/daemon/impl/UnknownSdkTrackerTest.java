@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.idea.TestFor;
@@ -51,9 +51,6 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
       .withFailMessage(String.valueOf(fixes))
       .hasSize(1)
       .first().asString().startsWith("SdkFixInfo:");
-
-    assertThat(unknownSdkNotificationsFor("Sample.java", "class Sample { java.lang.String foo; }")).hasSize(1);
-    assertThat(unknownSdkNotificationsFor("jonnyzzz.js", "(function() { })();")).isEmpty();
   }
 
   public void testMissingProjectUnknownJdk() {
@@ -265,11 +262,6 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
     super.setUp();
 
     setProjectSdk2(IdeaTestUtil.getMockJdk17());
-  }
-
-  private @Nullable List<EditorNotificationPanel> unknownSdkNotificationsFor(@NotNull String fileName, @NotNull String text) {
-    return SdkSetupNotificationTestBase.openTextInEditor(myFixture, fileName, text)
-      .getUserData(UnknownSdkEditorNotification.NOTIFICATIONS);
   }
 
   private @NotNull List<String> detectMissingSdks() {
