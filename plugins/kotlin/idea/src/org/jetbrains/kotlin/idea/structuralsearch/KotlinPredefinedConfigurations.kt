@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package org.jetbrains.kotlin.idea.structuralsearch
 
 import com.intellij.structuralsearch.PatternContext
@@ -9,6 +8,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.structuralsearch.filters.AlsoMatchCompanionObjectModifier
 import org.jetbrains.kotlin.idea.structuralsearch.filters.AlsoMatchValModifier
 import org.jetbrains.kotlin.idea.structuralsearch.filters.OneStateFilter
 
@@ -52,7 +52,7 @@ object KotlinPredefinedConfigurations {
         ),
         searchTemplate(
             KotlinBundle.message("predefined.configuration.all.vars.of.the.object"),
-            "all vars of an object or companion object",
+            "all vars of an object",
             """
                 object '_Object {  
                     var 'Field+ = '_Init?
@@ -70,6 +70,14 @@ object KotlinPredefinedConfigurations {
             "annotated classes",
             """
                 @'_Annotation class 'Name
+            """.trimIndent(),
+            CLASS_TYPE
+        ),
+        searchTemplate(
+            KotlinBundle.message("predefined.configuration.object.companion.object"),
+            "object also match companion object",
+            """
+                object '_Object{0,1}:[_${AlsoMatchCompanionObjectModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})]
             """.trimIndent(),
             CLASS_TYPE
         ),
