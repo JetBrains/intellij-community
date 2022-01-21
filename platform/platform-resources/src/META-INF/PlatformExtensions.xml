@@ -1275,7 +1275,7 @@
     <editorFactoryListener implementation="com.intellij.codeInsight.editorActions.ReaderModeEditorFactoryListener"/>
     <readerModeMatcher implementation="com.intellij.diff.actions.DiffReaderModeMatcher"/>
     <backgroundPostStartupActivity implementation="com.intellij.ide.plugins.LanguagePluginDetectionStartupActivity"/>
-    <notificationGroup id="Language Plugins Notifications" displayType="BALLOON"/>
+    <notificationGroup id="Language Plugins Notifications" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.language.plugin"/>
 
     <settingsEntryPointActionProvider implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsEntryPointActionProvider" order="first"/>
 
