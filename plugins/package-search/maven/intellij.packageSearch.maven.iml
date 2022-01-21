@@ -12,5 +12,6 @@
     <orderEntry type="module" module-name="intellij.maven" />
     <orderEntry type="module" module-name="intellij.externalSystem.dependencyUpdater" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
   </component>
 </module>

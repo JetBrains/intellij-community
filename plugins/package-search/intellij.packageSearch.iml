@@ -83,7 +83,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
-    <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
+    <orderEntry type="library" scope="TEST" name="org.junit.jupiter:junit-jupiter-params:5.7.0" level="project" />
     <orderEntry type="module" module-name="intellij.java.psi" />
   </component>
 </module>
