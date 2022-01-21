@@ -13,10 +13,13 @@ import com.sun.jdi.Location
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.idea.core.KotlinFileTypeFactoryUtils
+import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil.findFilesWithExactPackage
 import org.jetbrains.kotlin.idea.stubindex.StaticFacadeIndexUtil
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.platform.isCommon
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import java.util.*
@@ -59,6 +62,7 @@ object DebuggerUtils {
 
         for (scope in scopes) {
             val files = findFilesByNameInPackage(className, fileName, project, scope)
+                .filter { it.platform.isJvm() || it.platform.isCommon() }
 
             if (files.isEmpty()) {
                 continue
