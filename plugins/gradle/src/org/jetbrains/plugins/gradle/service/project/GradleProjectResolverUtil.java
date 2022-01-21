@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
-import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.module.Module;
@@ -819,16 +818,29 @@ public final class GradleProjectResolverUtil {
     return infos.stream().noneMatch((info) -> info.myModuleData.equals(data));
   }
 
+  private static final Key<Map<String, DataNode<LibraryData>>> FOUND_LIBRARIES =
+    Key.create("GradleProjectResolverUtil.FOUND_LIBRARIES");
+
   public static boolean linkProjectLibrary(/*@NotNull*/ ProjectResolverContext context,
                                                         @Nullable DataNode<ProjectData> ideProject,
                                                         @NotNull final LibraryData library) {
     if (ideProject == null) return false;
 
+    Map<String, DataNode<LibraryData>> cache = ideProject.getUserData(FOUND_LIBRARIES);
+    if (cache == null) {
+      cache = new HashMap<>();
+      ideProject.putUserData(FOUND_LIBRARIES, cache);
+    }
+
     String libraryName = library.getExternalName();
-    DataNode<LibraryData> libraryData = ExternalSystemApiUtil.find(ideProject, ProjectKeys.LIBRARY,
+    DataNode<LibraryData> cachedLibraryData = cache.get(libraryName);
+    DataNode<LibraryData> libraryData = cachedLibraryData != null
+                                        ? cachedLibraryData :
+                                        ExternalSystemApiUtil.find(ideProject, ProjectKeys.LIBRARY,
                                                                    node -> libraryName.equals(node.getData().getExternalName()));
     if (libraryData == null) {
-      ideProject.createChild(ProjectKeys.LIBRARY, library);
+      libraryData = ideProject.createChild(ProjectKeys.LIBRARY, library);
+      cache.put(libraryName, libraryData);
       return true;
     }
     return libraryData.getData().equals(library);
