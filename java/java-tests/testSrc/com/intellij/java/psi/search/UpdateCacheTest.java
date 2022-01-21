@@ -18,6 +18,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.cache.impl.id.IdIndex;
+import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
@@ -153,8 +155,17 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     myPsiManager = (PsiManagerImpl) PsiManager.getInstance(myProject);
     myJavaFacade = JavaPsiFacadeEx.getInstanceEx(myProject);
 
-    objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()));
+    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, scope);
     assertNotNull(objectClass);
+
+    Set<String> filesWithObject =
+      FileBasedIndex
+        .getInstance()
+        .getContainingFiles(IdIndex.NAME, new IdIndexEntry("Object", true), scope)
+        .stream().map(f -> f.getName()).collect(Collectors.toSet());
+    assertTrue(filesWithObject.contains("1.java"));
+
     checkUsages(objectClass, new String[]{"1.java"});
   }
 
