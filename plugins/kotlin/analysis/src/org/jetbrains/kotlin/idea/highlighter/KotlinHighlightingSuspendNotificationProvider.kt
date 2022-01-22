@@ -5,7 +5,6 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
@@ -15,15 +14,10 @@ import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
 class KotlinHighlightingSuspendNotificationProvider(private val project: Project) :
     EditorNotifications.Provider<EditorNotificationPanel>() {
 
-    private val enabled = Registry.`is`("kotlin.show.suspended.highlighting.notification", true)
-
     override fun getKey(): Key<EditorNotificationPanel> = KEY
 
     override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel? {
-        if (!enabled &&
-            file.extension != KotlinFileType.EXTENSION &&
-            !FileTypeRegistry.getInstance().isFileOfType(file, KotlinFileType.INSTANCE)
-        ) return null
+        if (file.extension != KotlinFileType.EXTENSION && !FileTypeRegistry.getInstance().isFileOfType(file, KotlinFileType.INSTANCE)) return null
 
         if (!KotlinHighlightingSuspender.getInstance(project).isSuspended(file)) return null
 
