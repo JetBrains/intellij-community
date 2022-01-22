@@ -133,7 +133,7 @@ public class JpsBuild {
           warn(text);
         case ERROR:
         case INTERNAL_BUILDER_ERROR:
-          if (text.contains("Groovyc:WARNING")) {
+          if (text.contains("Groovyc:WARNING") || text.contains("Kotlin:WARNING")) {
             warn(text);
           }
           else {
