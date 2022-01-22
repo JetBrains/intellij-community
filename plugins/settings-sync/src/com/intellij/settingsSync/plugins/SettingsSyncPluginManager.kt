@@ -39,6 +39,7 @@ class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginMan
   class PluginData : BaseState() {
     var isEnabled by property(true)
     var dependencies by stringSet()
+    var category by enum(SettingsCategory.PLUGINS)
   }
 
   private fun updateStateFromIde() {
@@ -49,6 +50,7 @@ class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginMan
         var pluginData = state.plugins[idString]
         if (pluginData == null) {
           pluginData = PluginData()
+          pluginData.category = SettingsSyncPluginCategoryFinder.getPluginCategory(it)
           it.dependencies.forEach { dependency ->
             if (!dependency.isOptional) {
               pluginData.dependencies.add(dependency.pluginId.idString)
@@ -72,7 +74,7 @@ class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginMan
     this.state.plugins.forEach { mapEntry ->
       val plugin = findPlugin(mapEntry.key)
       if (plugin != null) {
-        if (isPluginSyncEnabled(plugin)) {
+        if (isPluginSyncEnabled(plugin.pluginId.idString, plugin.isBundled, SettingsSyncPluginCategoryFinder.getPluginCategory(plugin))) {
           if (mapEntry.value.isEnabled != plugin.isEnabled) {
             if (mapEntry.value.isEnabled) {
               PluginManagerCore.enablePlugin(plugin.pluginId)
@@ -84,7 +86,7 @@ class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginMan
         }
       }
       else {
-        if (checkDependencies(mapEntry.value)) {
+        if (isPluginSyncEnabled(mapEntry.key, false, mapEntry.value.category) && checkDependencies(mapEntry.value)) {
           val newPluginId = PluginId.getId(mapEntry.key)
           installer.addPluginId(newPluginId)
         }
@@ -117,15 +119,16 @@ class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginMan
   }
 
   private fun shouldSaveState(plugin: IdeaPluginDescriptor): Boolean {
-    return isPluginSyncEnabled(plugin) &&
+    return isPluginSyncEnabled(plugin.pluginId.idString, plugin.isBundled, SettingsSyncPluginCategoryFinder.getPluginCategory(plugin)) &&
            (!plugin.isBundled || !plugin.isEnabled || state.plugins.containsKey(plugin.pluginId.idString))
   }
 
-  private fun isPluginSyncEnabled(plugin: IdeaPluginDescriptor): Boolean {
+  private fun isPluginSyncEnabled(idString: String, isBundled: Boolean, category: SettingsCategory): Boolean {
     val settings = SettingsSyncSettings.getInstance()
-    return settings.isCategoryEnabled(SettingsCategory.PLUGINS) &&
-           (plugin.isBundled && settings.isSubcategoryEnabled(SettingsCategory.PLUGINS, BUNDLED_PLUGINS_ID) ||
-            settings.isSubcategoryEnabled(SettingsCategory.PLUGINS, plugin.pluginId.idString))
+    return settings.isCategoryEnabled(category) &&
+           (category != SettingsCategory.PLUGINS ||
+            isBundled && settings.isSubcategoryEnabled(SettingsCategory.PLUGINS, BUNDLED_PLUGINS_ID) ||
+            settings.isSubcategoryEnabled(SettingsCategory.PLUGINS, idString))
   }
 
   class StartupInitializer : ApplicationInitializedListener {

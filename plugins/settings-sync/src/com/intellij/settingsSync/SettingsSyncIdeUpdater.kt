@@ -16,7 +16,6 @@ import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.SchemeManagerFactory
@@ -41,12 +40,10 @@ internal class SettingsSyncIdeUpdater(application: Application,
     // todo race between this code and SettingsSyncStreamProvider.write which can write other user settings at the same time
 
     updateComponent(snapshot, SettingsSyncSettings.FILE_SPEC, SettingsSyncSettings.getInstance().javaClass)
-    if (SettingsSyncSettings.getInstance().isCategoryEnabled(SettingsCategory.PLUGINS)) {
-      val pluginManager = SettingsSyncPluginManager.getInstance()
-      pluginManager.doWithNoUpdateFromIde {
-        updateComponent(snapshot, SettingsSyncPluginManager.FILE_SPEC, pluginManager.javaClass)
-        pluginManager.pushChangesToIDE()
-      }
+    val pluginManager = SettingsSyncPluginManager.getInstance()
+    pluginManager.doWithNoUpdateFromIde {
+      updateComponent(snapshot, SettingsSyncPluginManager.FILE_SPEC, pluginManager.javaClass)
+      pluginManager.pushChangesToIDE()
     }
 
     val changedFileSpecs = ArrayList<String>()
