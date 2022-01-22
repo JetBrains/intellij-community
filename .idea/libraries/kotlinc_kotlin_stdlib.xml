@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-stdlib" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.10-release-947" >
+    <properties maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.10-release-950" >
       <exclude>
         <dependency maven-id="org.jetbrains:annotations" />
       </exclude>
@@ -9,17 +9,17 @@
       <root url="file://$PROJECT_DIR$/lib/annotations/kotlin" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.10-release-947/kotlin-stdlib-jdk8-1.6.10-release-947.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.6.10-release-947/kotlin-stdlib-1.6.10-release-947.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.10-release-947/kotlin-stdlib-common-1.6.10-release-947.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.10-release-947/kotlin-stdlib-jdk7-1.6.10-release-947.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.10-release-950/kotlin-stdlib-jdk8-1.6.10-release-950.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.6.10-release-950/kotlin-stdlib-1.6.10-release-950.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.10-release-950/kotlin-stdlib-common-1.6.10-release-950.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.10-release-950/kotlin-stdlib-jdk7-1.6.10-release-950.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.10-release-947/kotlin-stdlib-jdk8-1.6.10-release-947-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.6.10-release-947/kotlin-stdlib-1.6.10-release-947-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.10-release-947/kotlin-stdlib-common-1.6.10-release-947-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.10-release-947/kotlin-stdlib-jdk7-1.6.10-release-947-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.10-release-950/kotlin-stdlib-jdk8-1.6.10-release-950-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.6.10-release-950/kotlin-stdlib-1.6.10-release-950-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.10-release-950/kotlin-stdlib-common-1.6.10-release-950-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.10-release-950/kotlin-stdlib-jdk7-1.6.10-release-950-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
