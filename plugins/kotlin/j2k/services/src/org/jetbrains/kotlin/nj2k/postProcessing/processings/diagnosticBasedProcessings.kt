@@ -51,7 +51,7 @@ val fixTypeMismatchDiagnosticBasedProcessing =
             element is KtExpression
                     && realType.isSignedOrUnsignedNumberType()
                     && expectedType.isSignedOrUnsignedNumberType() -> {
-                val fix = NumberConversionFix(element, expectedType, disableIfAvailable = null)
+                val fix = NumberConversionFix(element, realType, expectedType, disableIfAvailable = null)
                 fix.invoke(element.project, null, element.containingFile)
             }
             element is KtLambdaExpression
