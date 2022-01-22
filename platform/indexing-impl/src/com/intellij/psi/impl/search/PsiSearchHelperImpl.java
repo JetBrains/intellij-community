@@ -64,7 +64,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static final ExtensionPointName<ScopeOptimizer> USE_SCOPE_OPTIMIZER_EP_NAME = ExtensionPointName.create("com.intellij.useScopeOptimizer");
 
   public static final Logger LOG = Logger.getInstance(PsiSearchHelperImpl.class);
-  public static final Key<SearchScope> USE_SCOPE_KEY = Key.create("search.use.scope");
   private final PsiManagerEx myManager;
   private final DumbService myDumbService;
 
@@ -83,7 +82,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private static @NotNull SearchScope getUseScope(@NotNull PsiElement element, boolean restrictToCodeUsageScope) {
-    SearchScope scope = USE_SCOPE_KEY.get(element.getContainingFile());
+    SearchScope scope = PsiSearchScopeUtil.USE_SCOPE_KEY.get(element.getContainingFile());
     if (scope != null) return scope;
     scope = element.getUseScope();
     for (UseScopeEnlarger enlarger : UseScopeEnlarger.EP_NAME.getExtensions()) {

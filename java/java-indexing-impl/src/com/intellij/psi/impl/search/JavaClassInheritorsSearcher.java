@@ -134,31 +134,40 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
     VirtualFile[] virtualFiles = searchScope.getVirtualFiles();
 
     final boolean[] success = {true};
+    if (virtualFiles.length == 0) {
+      for (PsiElement element : searchScope.getScope()) {
+        processFile(element.getContainingFile(), consumer, parameters, baseClass, success);
+      }
+    }
     for (VirtualFile virtualFile : virtualFiles) {
       ProgressManager.checkCanceled();
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-          if (psiFile != null) {
-            psiFile.accept(new JavaRecursiveElementVisitor() {
-              @Override
-              public void visitClass(PsiClass candidate) {
-                ProgressManager.checkCanceled();
-                if (!success[0]) return;
-                if (candidate.isInheritor(baseClass, true)
-                    && checkCandidate(candidate, parameters)
-                    && !consumer.process(candidate)) {
-                  success[0] = false;
-                  return;
-                }
-                super.visitClass(candidate);
-              }
-            });
-          }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+        if (psiFile != null) {
+          processFile(psiFile, consumer, parameters, baseClass, success);
         }
       });
     }
+  }
+
+  private static void processFile(PsiFile psiFile,
+                           final Processor<? super PsiClass> consumer,
+                           final ClassInheritorsSearch.@NotNull SearchParameters parameters,
+                           @NotNull final PsiClass baseClass, final boolean[] success) {
+    psiFile.accept(new JavaRecursiveElementVisitor() {
+      @Override
+      public void visitClass(PsiClass candidate) {
+        ProgressManager.checkCanceled();
+        if (!success[0]) return;
+        if (candidate.isInheritor(baseClass, true)
+            && checkCandidate(candidate, parameters)
+            && !consumer.process(candidate)) {
+          success[0] = false;
+          return;
+        }
+        super.visitClass(candidate);
+      }
+    });
   }
 
   private static boolean checkCandidate(@NotNull PsiClass candidate, @NotNull ClassInheritorsSearch.SearchParameters parameters) {

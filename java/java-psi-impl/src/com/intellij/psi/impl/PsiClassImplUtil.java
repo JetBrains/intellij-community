@@ -22,10 +22,7 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.PackageScope;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.*;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.*;
 import com.intellij.ui.IconManager;
@@ -284,6 +281,8 @@ public final class PsiClassImplUtil {
     GlobalSearchScope maximalUseScope = ResolveScopeManager.getElementUseScope(aClass);
     PsiFile file = aClass.getContainingFile();
     if (PsiImplUtil.isInServerPage(file)) return maximalUseScope;
+    SearchScope searchScope = PsiSearchScopeUtil.USE_SCOPE_KEY.get(file);
+    if (searchScope != null) return searchScope;
     PsiClass containingClass = aClass.getContainingClass();
     if (aClass.hasModifierProperty(PsiModifier.PUBLIC) ||
         aClass.hasModifierProperty(PsiModifier.PROTECTED)) {

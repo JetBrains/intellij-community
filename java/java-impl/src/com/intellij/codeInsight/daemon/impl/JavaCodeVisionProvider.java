@@ -17,8 +17,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.SmartList;
@@ -270,7 +270,7 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
                             @NotNull FileType fileType,
                             @NotNull Document document) {
     PsiFile file = InlayHintsProvider.super.createFile(project, fileType, document);
-    file.putUserData(PsiSearchHelperImpl.USE_SCOPE_KEY, new LocalSearchScope(file));
+    file.putUserData(PsiSearchScopeUtil.USE_SCOPE_KEY, new LocalSearchScope(file));
     return file;
   }
 }
