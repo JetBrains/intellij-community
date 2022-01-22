@@ -17,7 +17,7 @@ public class GitlabRepositoryType extends BaseRepositoryType<GitlabRepository>{
   @NotNull
   @Override
   public String getName() {
-    return "Gitlab";
+    return "GitLab";
   }
 
   @NotNull
