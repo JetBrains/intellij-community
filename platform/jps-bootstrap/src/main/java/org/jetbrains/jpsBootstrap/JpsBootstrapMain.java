@@ -234,7 +234,7 @@ public class JpsBootstrapMain {
 
   private static List<String> convertPropertiesToCommandLineArgs(Properties properties) {
     List<String> result = new ArrayList<>();
-    for (String propertyName : properties.stringPropertyNames()) {
+    for (String propertyName : properties.stringPropertyNames().stream().sorted().collect(Collectors.toList())) {
       String value = properties.getProperty(propertyName);
 
       result.add("-D" + propertyName + "=" + value);
