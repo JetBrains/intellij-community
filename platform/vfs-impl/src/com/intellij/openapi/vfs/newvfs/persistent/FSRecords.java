@@ -268,6 +268,10 @@ public final class FSRecords {
         r.unlock();
       }
     }
+    catch (ProcessCanceledException e) {
+      // long reads like processXXX can be safely cancelled
+      throw e;
+    }
     catch (Throwable e) {
       handleError(e);
       throw new RuntimeException(e);
