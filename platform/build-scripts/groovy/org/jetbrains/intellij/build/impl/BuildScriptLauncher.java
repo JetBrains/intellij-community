@@ -21,6 +21,8 @@ public class BuildScriptLauncher {
       MethodHandles.lookup()
         .findStatic(mainClass, "main", MethodType.methodType(Void.TYPE, String[].class))
         .invokeExact(args);
+
+      System.exit(0);
     } catch (Throwable t) {
       String message = ExceptionUtil.getThrowableText(t);
 
