@@ -13896,29 +13896,139 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/typeMismatch/numberConversion")
-        public static class NumberConversion extends AbstractQuickFixTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        public abstract static class NumberConversion extends AbstractQuickFixTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/quickfix/typeMismatch/numberConversion/fromChar")
+            public static class FromChar extends AbstractQuickFixTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("byte.kt")
+                public void testByte() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/fromChar/byte.kt");
+                }
+
+                @TestMetadata("double.kt")
+                public void testDouble() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/fromChar/double.kt");
+                }
+
+                @TestMetadata("float.kt")
+                public void testFloat() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/fromChar/float.kt");
+                }
+
+                @TestMetadata("int.kt")
+                public void testInt() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/fromChar/int.kt");
+                }
+
+                @TestMetadata("intFromCharLiteral.kt")
+                public void testIntFromCharLiteral() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/fromChar/intFromCharLiteral.kt");
+                }
+
+                @TestMetadata("long.kt")
+                public void testLong() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/fromChar/long.kt");
+                }
+
+                @TestMetadata("longFromCharLiteral.kt")
+                public void testLongFromCharLiteral() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/fromChar/longFromCharLiteral.kt");
+                }
+
+                @TestMetadata("short.kt")
+                public void testShort() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/fromChar/short.kt");
+                }
+
+                @TestMetadata("shortWithVer1_4.kt")
+                public void testShortWithVer1_4() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/fromChar/shortWithVer1_4.kt");
+                }
             }
 
-            @TestMetadata("convertBinaryExpression.kt")
-            public void testConvertBinaryExpression() throws Exception {
-                runTest("testData/quickfix/typeMismatch/numberConversion/convertBinaryExpression.kt");
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/quickfix/typeMismatch/numberConversion/toChar")
+            public static class ToChar extends AbstractQuickFixTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("byte.kt")
+                public void testByte() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toChar/byte.kt");
+                }
+
+                @TestMetadata("double.kt")
+                public void testDouble() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toChar/double.kt");
+                }
+
+                @TestMetadata("doubleLiteral.kt")
+                public void testDoubleLiteral() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toChar/doubleLiteral.kt");
+                }
+
+                @TestMetadata("float.kt")
+                public void testFloat() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toChar/float.kt");
+                }
+
+                @TestMetadata("floatLiteral.kt")
+                public void testFloatLiteral() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toChar/floatLiteral.kt");
+                }
+
+                @TestMetadata("long.kt")
+                public void testLong() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toChar/long.kt");
+                }
+
+                @TestMetadata("longLiteral.kt")
+                public void testLongLiteral() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toChar/longLiteral.kt");
+                }
+
+                @TestMetadata("short.kt")
+                public void testShort() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toChar/short.kt");
+                }
+
+                @TestMetadata("shortWithVer1_4.kt")
+                public void testShortWithVer1_4() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toChar/shortWithVer1_4.kt");
+                }
             }
 
-            @TestMetadata("convertExpression.kt")
-            public void testConvertExpression() throws Exception {
-                runTest("testData/quickfix/typeMismatch/numberConversion/convertExpression.kt");
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/quickfix/typeMismatch/numberConversion")
+            public static class Uncategorized extends AbstractQuickFixTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("convertToSigned.kt")
-            public void testConvertToSigned() throws Exception {
-                runTest("testData/quickfix/typeMismatch/numberConversion/convertToSigned.kt");
-            }
+                @TestMetadata("convertBinaryExpression.kt")
+                public void testConvertBinaryExpression() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/convertBinaryExpression.kt");
+                }
 
-            @TestMetadata("convertToUnsigned.kt")
-            public void testConvertToUnsigned() throws Exception {
-                runTest("testData/quickfix/typeMismatch/numberConversion/convertToUnsigned.kt");
+                @TestMetadata("convertExpression.kt")
+                public void testConvertExpression() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/convertExpression.kt");
+                }
+
+                @TestMetadata("convertToSigned.kt")
+                public void testConvertToSigned() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/convertToSigned.kt");
+                }
+
+                @TestMetadata("convertToUnsigned.kt")
+                public void testConvertToUnsigned() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/convertToUnsigned.kt");
+                }
             }
         }
 

@@ -1,0 +1,7 @@
+// "Convert expression to 'Char'" "true"
+// LANGUAGE_VERSION: 1.4
+fun char(x: Char) {}
+
+fun test(s: Short) {
+    char(<caret>s)
+}

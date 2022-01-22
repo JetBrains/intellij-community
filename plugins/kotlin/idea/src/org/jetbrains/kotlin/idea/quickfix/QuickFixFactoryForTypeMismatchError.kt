@@ -104,7 +104,7 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
                 wrongPrimitiveLiteralFix = WrongPrimitiveLiteralFix(diagnosticElement, expectedType)
                 actions.add(wrongPrimitiveLiteralFix)
             }
-            actions.add(NumberConversionFix(diagnosticElement, expectedType, wrongPrimitiveLiteralFix))
+            actions.add(NumberConversionFix(diagnosticElement, expressionType, expectedType, wrongPrimitiveLiteralFix))
             actions.add(RoundNumberFix(diagnosticElement, expectedType, wrongPrimitiveLiteralFix))
         }
 
