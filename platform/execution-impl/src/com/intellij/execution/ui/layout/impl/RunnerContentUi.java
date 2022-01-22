@@ -39,7 +39,6 @@ import com.intellij.ui.components.TwoSideComponent;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
-import com.intellij.ui.content.custom.options.CustomContentLayoutOptions;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
@@ -833,11 +832,16 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
             if (action instanceof ViewLayoutModificationAction && ((ViewLayoutModificationAction)action).getContent() == event.getContent()) return;
           }
 
-          CustomContentLayoutOptions layoutOptions = event.getContent().getUserData(CustomContentLayoutOptions.KEY);
-          AnAction viewAction = layoutOptions != null && layoutOptions.getAvailableOptions().length > 0 ?
-                                new ViewLayoutModeActionGroup(RunnerContentUi.this, event.getContent()) :
-                                new RestoreViewAction(RunnerContentUi.this, event.getContent());
-          myViewActions.addAction(viewAction).setAsSecondary(true);
+          CustomContentLayoutSettings layoutOptionsCollection = event.getContent().getUserData(CustomContentLayoutSettings.KEY);
+          if (layoutOptionsCollection != null) {
+            for (AnAction action: layoutOptionsCollection.getActions(RunnerContentUi.this)) {
+              myViewActions.addAction(action).setAsSecondary(true);
+            }
+          }
+          else {
+            AnAction viewAction = new RestoreViewAction(RunnerContentUi.this, event.getContent());
+            myViewActions.addAction(viewAction).setAsSecondary(true);
+          }
 
           List<AnAction> toAdd = new ArrayList<>();
           for (AnAction anAction : myViewActions.getChildren(null)) {
@@ -1364,9 +1368,9 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     myLayoutSettings.resetToDefault();
     for (Content each : all) {
       myManager.addContent(each);
-      CustomContentLayoutOptions customLayoutOptions = each.getUserData(CustomContentLayoutOptions.KEY);
-      if (customLayoutOptions != null) {
-        customLayoutOptions.restore();
+      CustomContentLayoutSettings customLayoutOptionsCollection = each.getUserData(CustomContentLayoutSettings.KEY);
+      if (customLayoutOptionsCollection != null) {
+       customLayoutOptionsCollection.restore();
       }
     }
 
