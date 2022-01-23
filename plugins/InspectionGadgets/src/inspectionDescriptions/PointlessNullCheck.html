@@ -7,7 +7,7 @@ Reports null checks followed by a method call that will definitely return
 <pre><code>
   if (x != null && myClass.isInstance(x)) { ... }
 </code></pre>
-<p>After the quick-fix is applied:</p>
+<p>After the cleanup/quick-fix is applied:</p>
 <pre><code>
   if (myClass.isInstance(x)) { ... }
 </code></pre>

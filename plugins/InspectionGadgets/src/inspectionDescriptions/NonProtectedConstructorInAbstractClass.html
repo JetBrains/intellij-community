@@ -5,7 +5,7 @@ Reports <code>public</code> constructors of <code>abstract</code> classes.
   Constructors of <code>abstract</code> classes can only be called from the constructors of
   their subclasses, declaring them <code>public</code> may be confusing.
 </p>
-<p>The quick-fix makes such constructors protected.</p>
+<p>The cleanup/quick-fix makes such constructors protected.</p>
 <p><b>Example:</b></p>
 <pre><code>
   <b>public abstract class</b> Foo {
@@ -14,7 +14,7 @@ Reports <code>public</code> constructors of <code>abstract</code> classes.
     }
   }
 </code></pre>
-<p>After the quick-fix is applied:</p>
+<p>After the cleanup/quick-fix is applied:</p>
 <pre><code>
   <b>public abstract class</b> Foo {
     <b>protected</b> Foo () {

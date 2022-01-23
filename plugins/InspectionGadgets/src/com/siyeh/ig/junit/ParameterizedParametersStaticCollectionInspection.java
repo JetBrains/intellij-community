@@ -3,6 +3,7 @@ package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ParameterizedParametersStaticCollectionInspection extends BaseInspection {
+public class ParameterizedParametersStaticCollectionInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   protected static final String PARAMETERS_FQN = "org.junit.runners.Parameterized.Parameters";
 

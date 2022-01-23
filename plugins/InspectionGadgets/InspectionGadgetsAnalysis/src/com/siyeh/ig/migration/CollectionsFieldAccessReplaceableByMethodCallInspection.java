@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.migration;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -36,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class CollectionsFieldAccessReplaceableByMethodCallInspection extends BaseInspection {
+public class CollectionsFieldAccessReplaceableByMethodCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

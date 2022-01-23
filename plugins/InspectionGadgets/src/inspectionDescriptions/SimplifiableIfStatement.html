@@ -2,12 +2,12 @@
 <body>
 Reports <code>if</code> statements that can be replaced with conditions using the <code>&&</code>, <code>||</code>,
 <code>==</code>, <code>!=</code>, or <code>?:</code> operator.
-<p>The result is usually shorter, but not always clearer, so it's not advised to apply the fix  in every case.</p>
+<p>The result is usually shorter, but not always clearer, so it's not advised to apply the fix in every case.</p>
 <p>Example:</p>
 <pre><code>
   if (condition) return true; else return foo;
 </code></pre>
-<p>After the quick-fix is applied:</p>
+<p>After the cleanup/quick-fix is applied:</p>
 <pre><code>
   return condition || foo;
 </code></pre>

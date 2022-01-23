@@ -9,7 +9,7 @@ Reports type parameters declared to extend a <code>final</code> class.
     List&lt;? <b>extends</b> Integer&gt; list; // Warning: the Integer class is a final class
   }
 </code></pre>
-<p>After the quick-fix is applied:</p>
+<p>After the cleanup/quick-fix is applied:</p>
 <pre><code>
   <b>void</b> foo() {
     List&lt;Integer&gt; list;

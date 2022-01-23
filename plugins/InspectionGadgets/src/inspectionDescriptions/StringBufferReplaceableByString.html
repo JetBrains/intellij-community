@@ -16,7 +16,7 @@ performance drawback on modern JVMs. In many cases, <code>String</code> concaten
   result.append(";");
   return result.toString();
 </code></pre>
-<p>After the quick-fix is applied:</p>
+<p>After the cleanup/quick-fix is applied:</p>
 <pre><code>
   String result = "i = " + i + ";";
   return result;

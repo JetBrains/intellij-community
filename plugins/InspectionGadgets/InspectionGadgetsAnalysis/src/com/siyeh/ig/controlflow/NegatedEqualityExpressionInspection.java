@@ -3,6 +3,7 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class NegatedEqualityExpressionInspection extends BaseInspection {
+public class NegatedEqualityExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

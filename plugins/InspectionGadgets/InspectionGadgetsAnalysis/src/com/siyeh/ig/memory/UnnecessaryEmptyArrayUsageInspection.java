@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.memory;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Konstantin Bulenkov
  */
-public class UnnecessaryEmptyArrayUsageInspection extends BaseInspection {
+public class UnnecessaryEmptyArrayUsageInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

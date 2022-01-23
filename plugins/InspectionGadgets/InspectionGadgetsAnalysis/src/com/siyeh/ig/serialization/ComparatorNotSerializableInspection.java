@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.serialization;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
@@ -28,7 +29,7 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ComparatorNotSerializableInspection extends BaseInspection {
+public class ComparatorNotSerializableInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

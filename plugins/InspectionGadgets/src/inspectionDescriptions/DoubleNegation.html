@@ -5,7 +5,7 @@ Reports double negations that can be simplified.
 <pre><code>
   if (!!functionCall()) {}
 </code></pre>
-<p>After the quick-fix is applied:</p>
+<p>After the cleanup/quick-fix is applied:</p>
 <pre><code>
   if (functionCall()) {}
 </code></pre>
@@ -13,7 +13,7 @@ Reports double negations that can be simplified.
 <pre><code>
   if (!(a != b)) {}
 </code></pre>
-<p>After the quick-fix is applied:</p>
+<p>After the cleanup/quick-fix is applied:</p>
 <pre><code>
   if (a == b) {}
 </code></pre>

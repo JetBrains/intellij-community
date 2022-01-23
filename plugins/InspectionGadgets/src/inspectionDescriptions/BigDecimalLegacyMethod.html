@@ -4,7 +4,7 @@ Reports calls to <code>BigDecimal.divide()</code> or <code>BigDecimal.setScale()
 Since JDK 1.5, consider using methods that take the <code>RoundingMode</code> <code>enum</code> parameter instead.
 <p><b>Example:</b></p>
 <pre><code>new BigDecimal("42").setScale(2, BigDecimal.ROUND_FLOOR);</code></pre>
-<p>After the quick-fix is applied:</p>
+<p>After the cleanup/quick-fix is applied:</p>
 <pre><code>new BigDecimal("42").setScale(2, RoundingMode.FLOOR);</code></pre>
 <!-- tooltip end -->
 <p>

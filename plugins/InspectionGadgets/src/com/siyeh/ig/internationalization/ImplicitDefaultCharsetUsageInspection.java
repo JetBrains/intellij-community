@@ -2,6 +2,7 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.intention.FileModifier.SafeTypeForPreview;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.Project;
@@ -32,7 +33,7 @@ import java.util.stream.Stream;
 /**
  * @author Bas Leijdekkers
  */
-public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
+public class ImplicitDefaultCharsetUsageInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   private static final List<String> UTF_8_ARG = Collections.singletonList("java.nio.charset.StandardCharsets.UTF_8");
   private static final List<String> FALSE_AND_UTF_8_ARG = Arrays.asList("false", "java.nio.charset.StandardCharsets.UTF_8");

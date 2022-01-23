@@ -27,7 +27,7 @@ import java.util.Locale;
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
-public final class RedundantStringFormatCallInspection extends LocalInspectionTool {
+public final class RedundantStringFormatCallInspection extends LocalInspectionTool implements CleanupLocalInspectionTool {
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {

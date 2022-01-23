@@ -10,7 +10,7 @@ Reports calls to <code>java.lang.String.concat()</code>.
     return name.concat("foo");
   }
 </code></pre>
-<p>After the quick-fix is applied:</p>
+<p>After the cleanup/quick-fix is applied:</p>
 <pre><code>
   String foo(String name) {
     return name + "foo";

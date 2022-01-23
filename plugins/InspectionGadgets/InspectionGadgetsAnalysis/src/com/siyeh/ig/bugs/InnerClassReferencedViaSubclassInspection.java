@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class InnerClassReferencedViaSubclassInspection extends BaseInspection {
+public class InnerClassReferencedViaSubclassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

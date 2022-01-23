@@ -4,8 +4,8 @@ Reports Javadoc <code>@see</code>,
 <code>{@link}</code>, and <code>{@linkplain}</code>
 tags that refer to the method owning the comment, the super method of the
 method owning the comment, or the class containing the comment.
-<p>Such links are unnecessary and can be safely removed with this inspection's quick-fix. The
-  quick-fix will remove the entire Javadoc comment if the tag is its only content.</p>
+<p>Such links are unnecessary and can be safely removed with this inspection's cleanup/quick-fix. The
+  fix will remove the entire Javadoc comment if the tag is its only content.</p>
 <p><b>Example:</b></p>
 <pre><code>
   class Example {
@@ -15,7 +15,7 @@ method owning the comment, or the class containing the comment.
     public void method() { }
   }
 </code></pre>
-<p>After the quick-fix is applied:</p>
+<p>After the cleanup/quick-fix is applied:</p>
 <pre><code>
 class Example {
   public void method() { }

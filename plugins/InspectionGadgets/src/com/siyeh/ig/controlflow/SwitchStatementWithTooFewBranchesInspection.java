@@ -17,6 +17,7 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ConvertSwitchToIfIntention;
 import com.intellij.codeInsight.daemon.impl.quickfix.UnwrapSwitchLabelFix;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SetInspectionOptionFix;
@@ -40,7 +41,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection {
+public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   private static final int DEFAULT_BRANCH_LIMIT = 2;
 

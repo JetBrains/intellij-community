@@ -8,7 +8,7 @@ Reports calls to <code>Enumeration</code> methods that are used on collections a
     String name = keys.nextElement();
   }</code>
 </pre>
-<p>After the quick-fix is applied:</p>
+<p>After the cleanup/quick-fix is applied:</p>
 <pre><code>Iterator&lt;String&gt; iterator = map.keySet().iterator();
   while (iterator.hasNext()) {
     String name = iterator.next();

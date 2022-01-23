@@ -8,7 +8,7 @@ declared <code>public</code>.
   means that the method can be used by users.
 </p>
 <p>
-  The quick-fix makes the method protected to prevent it from being explicitly invoked
+  The cleanup/quick-fix makes the method protected to prevent it from being explicitly invoked
   by other classes.
 </p>
 <!-- tooltip end -->
@@ -20,7 +20,7 @@ declared <code>public</code>.
     }
   }
 </code></pre>
-<p>After the quick-fix is applied:</p>
+<p>After the cleanup/quick-fix is applied:</p>
 <pre><code>
   <b>class</b> X {
     <b>protected void</b> finalize() {

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.junit;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class AssertEqualsCalledOnArrayInspection extends BaseInspection {
+public class AssertEqualsCalledOnArrayInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

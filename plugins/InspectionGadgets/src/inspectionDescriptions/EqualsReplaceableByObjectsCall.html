@@ -7,7 +7,7 @@ Reports expressions that can be replaced with a call to <code>java.util.Objects#
     boolean result = a != null && a.equals(b);
   }
 </code></pre>
-<p>After the quick-fix is applied:</p>
+<p>After the cleanup/quick-fix is applied:</p>
 <pre><code>
   void f(Object a, Object b) {
     boolean result = Objects.equals(a, b);

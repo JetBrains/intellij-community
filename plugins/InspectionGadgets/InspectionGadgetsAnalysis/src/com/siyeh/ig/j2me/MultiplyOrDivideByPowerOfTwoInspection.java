@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.j2me;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -35,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class MultiplyOrDivideByPowerOfTwoInspection
-  extends BaseInspection {
+  extends BaseInspection implements CleanupLocalInspectionTool {
 
   /**
    * @noinspection PublicField

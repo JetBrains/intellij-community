@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiBinaryExpression;
@@ -24,7 +25,7 @@ import static com.intellij.psi.JavaTokenType.*;
 /**
  * @author Fabrice TIERCELIN
  */
-public class ExpressionMayBeFactorizedInspection extends BaseInspection {
+public class ExpressionMayBeFactorizedInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

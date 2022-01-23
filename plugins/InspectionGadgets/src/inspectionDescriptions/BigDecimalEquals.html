@@ -5,7 +5,7 @@ Reports <code>.equals()</code> being called to compare two <code>java.math.BigDe
   they are equal in both value and scale.</p>
 <p><b>Example:</b></p>
 <pre><code>if (new BigDecimal("2.0").equals(new BigDecimal("2.00"))) {}</code></pre>
-<p>After the quick-fix is applied:</p>
+<p>After the cleanup/quick-fix is applied:</p>
 <pre><code>if (new BigDecimal("2.0").compareTo(new BigDecimal("2.00")) == 0) {}</code></pre>
 <!-- tooltip end -->
 </body>

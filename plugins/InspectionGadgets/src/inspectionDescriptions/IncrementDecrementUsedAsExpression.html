@@ -2,7 +2,7 @@
 <body>
 Reports increment or decrement expressions that are nested inside other expressions.
 Such expressions may be confusing and violate the general design principle, which states that any construct should do precisely one thing.
-<p>The quick-fix extracts the increment or decrement operation to a separate expression statement.</p>
+<p>The cleanup/quick-fix extracts the increment or decrement operation to a separate expression statement.</p>
 <p><b>Example:</b></p>
 <pre><code>
   int i = 10;
@@ -10,7 +10,7 @@ Such expressions may be confusing and violate the general design principle, whic
     System.out.println(i);
   }
 </code></pre>
-<p>After the quick-fix is applied:</p>
+<p>After the cleanup/quick-fix is applied:</p>
 <pre><code>
   int i = 10;
   while (i > 0) {

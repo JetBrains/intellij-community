@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.project.Project;
@@ -19,7 +20,7 @@ import java.util.Set;
 /**
  * @author Bas Leijdekkers
  */
-public final class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
+public final class UnnecessaryExplicitNumericCastInspection extends BaseInspection implements CleanupLocalInspectionTool {
   private static final Set<IElementType> binaryPromotionOperators = Set.of(
     JavaTokenType.ASTERISK,
     JavaTokenType.DIV,

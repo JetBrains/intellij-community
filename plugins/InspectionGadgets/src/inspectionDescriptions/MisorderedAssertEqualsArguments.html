@@ -7,13 +7,13 @@ Reports calls to <code>assertEquals()</code> that have the expected argument and
 </p>
 <p>
   Such calls will behave fine for assertions that pass, but may give confusing error reports on failure.
-  Use the quick-fix to flip the order of the arguments.
+  Use the cleanup/quick-fix to flip the order of the arguments.
 </p>
 <p><b>Example (JUnit):</b></p>
 <pre><code>
   assertEquals(actual, expected)
 </code></pre>
-<p>After the quick-fix is applied:</p>
+<p>After the cleanup/quick-fix is applied:</p>
 <pre><code>
   assertEquals(expected, actual)
 </code></pre>

@@ -3,7 +3,7 @@
 Reports <code>switch</code> statements or expressions in which the <code>default</code> case
 comes before another case.
 <p>This construct is unnecessarily confusing.
-There is a quick-fix that moves the <code>default</code> case to the last position.
+There is a cleanup/quick-fix that moves the <code>default</code> case to the last position.
   The fix is available only when a given branch has <code>break</code>/<code>yield</code> at the end.</p>
 <p>Example:</p>
 <pre><code>
@@ -15,7 +15,7 @@ There is a quick-fix that moves the <code>default</code> case to the last positi
           break;
   }
 </code></pre>
-<p>After the quick-fix is applied:</p>
+<p>After the cleanup/quick-fix is applied:</p>
 <pre><code>
   switch (n) {
     case 1:

@@ -95,11 +95,11 @@ public class MissingPackageInfoInspection extends PackageGlobalInspection {
         @Override
         protected void doFix(Project project, ProblemDescriptor descriptor) {
           DataManager.getInstance()
-                     .getDataContextFromFocusAsync()
-                     .onSuccess(context -> {
-                       final AnActionEvent event = new AnActionEvent(null, context, "", new Presentation(), ActionManager.getInstance(), 0);
-                       new CreatePackageInfoAction().actionPerformed(event);
-                     });
+            .getDataContextFromFocusAsync()
+            .onSuccess(context -> {
+              final AnActionEvent event = new AnActionEvent(null, context, "", new Presentation(), ActionManager.getInstance(), 0);
+              new CreatePackageInfoAction().actionPerformed(event);
+            });
         }
       };
     }

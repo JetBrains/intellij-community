@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.migration;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -40,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EnumerationCanBeIterationInspection extends BaseInspection {
+public class EnumerationCanBeIterationInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   static final int KEEP_NOTHING = 0;
   static final int KEEP_INITIALIZATION = 1;

@@ -2,6 +2,7 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.InspectionOptionsPanel;
@@ -33,7 +34,7 @@ import javax.swing.*;
 import java.util.*;
 import java.util.function.BiPredicate;
 
-public class TryWithIdenticalCatchesInspection extends BaseInspection {
+public class TryWithIdenticalCatchesInspection extends BaseInspection implements CleanupLocalInspectionTool {
   public boolean ignoreBlocksWithDifferentComments = true;
 
   @Override

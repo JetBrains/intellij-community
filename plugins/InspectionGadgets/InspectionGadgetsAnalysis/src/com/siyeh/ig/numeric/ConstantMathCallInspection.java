@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ConstantMathCallInspection extends BaseInspection {
+public class ConstantMathCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NonNls static final Set<String> constantMathCall =
     new HashSet<>(23);

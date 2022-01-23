@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.junit;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -30,7 +31,7 @@ import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class MultipleExceptionsDeclaredOnTestMethodInspection
-  extends BaseInspection {
+  extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

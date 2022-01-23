@@ -7,7 +7,7 @@ systems that use different default charsets. It might result in unexpected behav
   String s = new String(bytes);
 }</code>
 </pre>
-<p>You can use a quick-fix that specifies the explicit UTF-8 charset if the corresponding overloaded method is available.
+<p>You can use a cleanup/quick-fix that specifies the explicit UTF-8 charset if the corresponding overloaded method is available.
   After the quick-fix is applied:</p>
 <pre><code>void foo(byte[] bytes) {
   String s = new String(bytes, StandardCharsets.UTF_8);

@@ -10,10 +10,10 @@ expressions that can be replaced with the
     return list.indexOf("") &gt;= 0;
   }
 </code></pre>
-<p>The provided quick-fix replaces the <code>indexOf</code> call with the <code>contains</code> call:</p>
+<p>The provided cleanup/quick-fix replaces the <code>indexOf</code> call with the <code>contains</code> call:</p>
 <pre><code>
   boolean hasEmptyString(List&lt;String&gt; list) {
-    // Quick-fix is applied
+    // Cleanup/quick-fix is applied
     return list.contains("");
   }
 </code></pre>

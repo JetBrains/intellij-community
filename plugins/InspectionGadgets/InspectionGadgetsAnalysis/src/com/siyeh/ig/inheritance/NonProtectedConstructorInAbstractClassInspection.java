@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.inheritance;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class NonProtectedConstructorInAbstractClassInspection
-  extends BaseInspection {
+  extends BaseInspection implements CleanupLocalInspectionTool {
 
   /**
    * @noinspection PublicField

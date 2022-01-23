@@ -16,6 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -36,7 +37,7 @@ import javax.swing.*;
 import java.util.*;
 import java.util.function.Supplier;
 
-public class PointlessBooleanExpressionInspection extends BaseInspection {
+public class PointlessBooleanExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
   private enum BooleanExpressionKind {
     USELESS, USELESS_WITH_SIDE_EFFECTS, UNKNOWN
   }
