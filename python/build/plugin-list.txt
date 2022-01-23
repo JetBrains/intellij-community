@@ -25,3 +25,7 @@ intellij.vcs.github
 intellij.vcs.hg
 intellij.vcs.svn
 intellij.yaml
+intellij.monokai.color.scheme
+intellij.twilight.color.scheme
+intellij.warmNeon.colorScheme
+intellij.github.color.scheme
