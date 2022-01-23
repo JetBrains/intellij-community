@@ -16,9 +16,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.typeUtil.isChar
-import org.jetbrains.kotlin.types.typeUtil.isInt
-import org.jetbrains.kotlin.types.typeUtil.isSignedOrUnsignedNumberType
+import org.jetbrains.kotlin.types.typeUtil.*
 
 class NumberConversionFix(
     element: KtExpression,
@@ -32,10 +30,11 @@ class NumberConversionFix(
     private val typePresentation = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(expectedType)
 
     private val expressionTypeIsChar = expressionType.isChar()
+    private val expressionTypeIsFloatOrDouble = expressionType.isFloat() || expressionType.isDouble()
 
     private val expectedTypeIsChar = expectedType.isChar()
-
     private val expectedTypeIsInt = expectedType.isInt()
+    private val expectedTypeIsByteOrShort = expectedType.isByte() || expectedType.isShort()
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile) =
         disableIfAvailable?.isAvailable(project, editor, file) != true && isConversionAvailable
@@ -46,21 +45,20 @@ class NumberConversionFix(
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
         val psiFactory = KtPsiFactory(file)
-        val expressionToInsert = if (element.languageVersionSettings.languageVersion >= LanguageVersion.KOTLIN_1_5) {
-            when {
-                expressionTypeIsChar ->
-                    if (expectedTypeIsInt) {
-                        psiFactory.createExpressionByPattern("$0.code", element)
-                    } else {
-                        psiFactory.createExpressionByPattern("$0.code.to$1()", element, typePresentation)
-                    }
-                expectedTypeIsChar ->
-                    psiFactory.createExpressionByPattern("$0.toInt().toChar()", element)
-                else ->
-                    psiFactory.createExpressionByPattern("$0.to$1()", element, typePresentation)
-            }
-        } else {
-            psiFactory.createExpressionByPattern("$0.to$1()", element, typePresentation)
+        val langVersion = element.languageVersionSettings.languageVersion
+        val expressionToInsert = when {
+            expressionTypeIsChar && langVersion >= LanguageVersion.KOTLIN_1_5 ->
+                if (expectedTypeIsInt) {
+                    psiFactory.createExpressionByPattern("$0.code", element)
+                } else {
+                    psiFactory.createExpressionByPattern("$0.code.to$1()", element, typePresentation)
+                }
+            expectedTypeIsChar && langVersion >= LanguageVersion.KOTLIN_1_5 ->
+                psiFactory.createExpressionByPattern("$0.toInt().toChar()", element)
+            expressionTypeIsFloatOrDouble && expectedTypeIsByteOrShort && langVersion >= LanguageVersion.KOTLIN_1_3 ->
+                psiFactory.createExpressionByPattern("$0.toInt().to$1()", element, typePresentation)
+            else ->
+                psiFactory.createExpressionByPattern("$0.to$1()", element, typePresentation)
         }
         val newExpression = element.replaced(expressionToInsert)
         editor?.caretModel?.moveToOffset(newExpression.endOffset)

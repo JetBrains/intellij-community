@@ -1,0 +1,7 @@
+// "Convert expression to 'Byte'" "true"
+// LANGUAGE_VERSION: 1.2
+fun byte(x: Byte) {}
+
+fun test(f: Float) {
+    byte(f.toByte())
+}

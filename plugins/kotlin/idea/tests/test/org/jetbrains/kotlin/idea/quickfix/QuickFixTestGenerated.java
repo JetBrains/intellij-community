@@ -13951,6 +13951,34 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/quickfix/typeMismatch/numberConversion/toByte")
+            public static class ToByte extends AbstractQuickFixTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("double.kt")
+                public void testDouble() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toByte/double.kt");
+                }
+
+                @TestMetadata("float.kt")
+                public void testFloat() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toByte/float.kt");
+                }
+
+                @TestMetadata("floatWithVer1_2.kt")
+                public void testFloatWithVer1_2() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toByte/floatWithVer1_2.kt");
+                }
+
+                @TestMetadata("long.kt")
+                public void testLong() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toByte/long.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/typeMismatch/numberConversion/toChar")
             public static class ToChar extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
@@ -14000,6 +14028,34 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 @TestMetadata("shortWithVer1_4.kt")
                 public void testShortWithVer1_4() throws Exception {
                     runTest("testData/quickfix/typeMismatch/numberConversion/toChar/shortWithVer1_4.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/quickfix/typeMismatch/numberConversion/toShort")
+            public static class ToShort extends AbstractQuickFixTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("double.kt")
+                public void testDouble() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toShort/double.kt");
+                }
+
+                @TestMetadata("float.kt")
+                public void testFloat() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toShort/float.kt");
+                }
+
+                @TestMetadata("floatWithVer1_2.kt")
+                public void testFloatWithVer1_2() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toShort/floatWithVer1_2.kt");
+                }
+
+                @TestMetadata("long.kt")
+                public void testLong() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toShort/long.kt");
                 }
             }
 
