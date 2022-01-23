@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
@@ -16,9 +16,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.typeUtil.isChar
-import org.jetbrains.kotlin.types.typeUtil.isInt
-import org.jetbrains.kotlin.types.typeUtil.isSignedOrUnsignedNumberType
+import org.jetbrains.kotlin.types.typeUtil.*
 
 class NumberConversionFix(
     element: KtExpression,
@@ -31,12 +29,13 @@ class NumberConversionFix(
 
     private val typePresentation = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(toType)
 
-    private val fromChar = fromType.isChar()
     private val fromInt = fromType.isInt()
+    private val fromChar = fromType.isChar()
+    private val fromFloatOrDouble = fromType.isFloat() || fromType.isDouble()
 
     private val toChar = toType.isChar()
-
     private val toInt = toType.isInt()
+    private val toByteOrShort = toType.isByte() || toType.isShort()
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile) =
         disableIfAvailable?.isAvailable(project, editor, file) != true && isConversionAvailable
@@ -47,21 +46,20 @@ class NumberConversionFix(
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
         val psiFactory = KtPsiFactory(file)
-        val expressionToInsert = if (element.languageVersionSettings.languageVersion >= LanguageVersion.KOTLIN_1_5) {
-            when {
-                fromChar ->
-                    if (toInt) {
-                        psiFactory.createExpressionByPattern("$0.code", element)
-                    } else {
-                        psiFactory.createExpressionByPattern("$0.code.to$1()", element, typePresentation)
-                    }
-                !fromInt && toChar ->
-                    psiFactory.createExpressionByPattern("$0.toInt().toChar()", element)
-                else ->
-                    psiFactory.createExpressionByPattern("$0.to$1()", element, typePresentation)
-            }
-        } else {
-            psiFactory.createExpressionByPattern("$0.to$1()", element, typePresentation)
+        val apiVersion = element.languageVersionSettings.apiVersion
+        val expressionToInsert = when {
+            fromChar && apiVersion >= ApiVersion.KOTLIN_1_5 ->
+                if (toInt) {
+                    psiFactory.createExpressionByPattern("$0.code", element)
+                } else {
+                    psiFactory.createExpressionByPattern("$0.code.to$1()", element, typePresentation)
+                }
+            !fromInt && toChar && apiVersion >= ApiVersion.KOTLIN_1_5 ->
+                psiFactory.createExpressionByPattern("$0.toInt().toChar()", element)
+            fromFloatOrDouble && toByteOrShort && apiVersion >= ApiVersion.KOTLIN_1_3 ->
+                psiFactory.createExpressionByPattern("$0.toInt().to$1()", element, typePresentation)
+            else ->
+                psiFactory.createExpressionByPattern("$0.to$1()", element, typePresentation)
         }
         val newExpression = element.replaced(expressionToInsert)
         editor?.caretModel?.moveToOffset(newExpression.endOffset)
