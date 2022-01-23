@@ -534,16 +534,13 @@ public class ClassWriter {
       if (!allSubClassesAreNested) { // only generate permits lists for non-nested classes
         buffer.append("permits ");
         for (int i = 0; i < permittedSubclassQualifiedNames.size(); i++) {
-          String qualifiedName = permittedSubclassQualifiedNames.get(i);
-          boolean isNested = qualifiedNested.contains(qualifiedName);
-          if (!isNested) {
-            if (i > 0) {
-              buffer.append(", ");
-            }
-            DecompilerContext.getImportCollector().getShortName(qualifiedName);
-            String simpleName = qualifiedName.substring(qualifiedName.lastIndexOf('/') + 1);
-            buffer.append(simpleName);
+          String qualifiedName = permittedSubclassQualifiedNames.get(i).replace("$", ".");
+          if (i > 0) {
+            buffer.append(", ");
           }
+          DecompilerContext.getImportCollector().getShortName(qualifiedName);
+          String simpleName = qualifiedName.substring(qualifiedName.lastIndexOf('/') + 1);
+          buffer.append(simpleName);
         }
         buffer.append(' ');
       }
