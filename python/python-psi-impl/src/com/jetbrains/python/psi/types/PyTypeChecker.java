@@ -312,7 +312,7 @@ public final class PyTypeChecker {
     }
 
     if (actual instanceof PyTypedDictType) {
-      final Optional<PyTypedDictType.TypeCheckingResult> matchResult = PyTypedDictType.Companion.checkTypes(expected, (PyTypedDictType)actual, context);
+      final Optional<PyTypedDictType.TypeCheckingResult> matchResult = PyTypedDictType.Companion.checkTypes(expected, (PyTypedDictType)actual, context, null);
       if (matchResult.isPresent()) return Optional.of(matchResult.get().getMatch());
     }
 
