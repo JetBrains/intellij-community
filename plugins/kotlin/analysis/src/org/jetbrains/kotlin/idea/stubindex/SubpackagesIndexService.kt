@@ -138,9 +138,7 @@ class SubpackagesIndexService(private val project: Project): Disposable {
         }
 
         private fun cachedPartialFqNames(scope: GlobalSearchScope): MutableMap<FqName, Boolean>? =
-            scope.safeAs<ModuleSourceScope>()?.module?.cacheByProvider(*dependencies) {
-                Collections.synchronizedMap(mutableMapOf<FqName, Boolean>())
-            }
+            scope.safeAs<ModuleSourceScope>()?.module?.cacheByProvider(*dependencies, provider = ::cachedPartialFqNamesProvider)
 
         fun packageExists(fqName: FqName): Boolean = fqName in allPackageFqNames || fqNameByPrefix.containsKey(fqName)
 
@@ -184,3 +182,6 @@ class SubpackagesIndexService(private val project: Project): Disposable {
         }
     }
 }
+
+// to avoid capture of extra field (esp. `dependencies`) into a provider lambda
+private fun cachedPartialFqNamesProvider() = Collections.synchronizedMap(mutableMapOf<FqName, Boolean>())
