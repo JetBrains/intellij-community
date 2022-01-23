@@ -1,6 +1,14 @@
 <component name="libraryTable">
   <library name="jps-build-script-dependencies-bootstrap" type="repository">
-    <properties maven-id="com.jetbrains.intellij.tools:jps-build-script-dependencies:221.3526" />
+    <properties maven-id="com.jetbrains.intellij.tools:jps-build-script-dependencies:221.3526">
+      <exclude>
+        <dependency maven-id="org.apache.commons:commons-compress" />
+        <dependency maven-id="com.jetbrains.intellij.platform:build-scripts-downloader" />
+      </exclude>
+    </properties>
+    <ANNOTATIONS>
+      <root url="file://$PROJECT_DIR$/lib/annotations" />
+    </ANNOTATIONS>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/tools/jps-build-script-dependencies/221.3526/jps-build-script-dependencies-221.3526.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/tools/jps-build-standalone/221.3526/jps-build-standalone-221.3526.jar!/" />
@@ -108,8 +116,6 @@
       <root url="jar://$MAVEN_REPOSITORY$/junit/junit/4.12/junit-4.12.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/devkit/devkit-jps/221.3526/devkit-jps-221.3526.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/build-scripts-downloader/221.3526/build-scripts-downloader-221.3526.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.21/commons-compress-1.21.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/space/space-java-jps/221.3526/space-java-jps-221.3526.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/util-zip/221.3526/util-zip-221.3526.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/util-rt-java8/221.3526/util-rt-java8-221.3526.jar!/" />
