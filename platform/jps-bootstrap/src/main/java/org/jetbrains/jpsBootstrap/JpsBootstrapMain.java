@@ -181,6 +181,9 @@ public class JpsBootstrapMain {
     boolean runJpsBuild = fromJpsBuildEnvValue != null && JpsBootstrapUtil.toBooleanChecked(fromJpsBuildEnvValue);
 
     String manifestJsonUrl = System.getenv(ClassesFromCompileInc.MANIFEST_JSON_URL_ENV_NAME);
+    if (manifestJsonUrl != null && manifestJsonUrl.isBlank()) {
+      manifestJsonUrl = null;
+    }
 
     if (runJpsBuild && manifestJsonUrl != null) {
       throw new IllegalStateException("Both env. variables are set, choose only one: " +
