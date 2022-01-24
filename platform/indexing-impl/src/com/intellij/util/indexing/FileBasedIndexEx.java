@@ -588,7 +588,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(filter.getProject());
     IntPredicate idChecker = id -> (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) &&
                                    accessibleFileFilter.test(id);
-    ThrowableConvertor<UpdatableIndex<K, V, FileContent>, IntSet, StorageException> convertor = index -> {
+    ThrowableConvertor<UpdatableIndex<K, V, FileContent, ?>, IntSet, StorageException> convertor = index -> {
       IndexDebugProperties.DEBUG_INDEX_ID.set(indexId);
       try {
         return InvertedIndexUtil.collectInputIdsContainingAnyKey(index, dataKeys, valueChecker, idChecker);

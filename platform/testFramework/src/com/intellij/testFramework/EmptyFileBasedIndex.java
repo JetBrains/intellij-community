@@ -51,6 +51,11 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
   }
 
   @Override
+  public @Nullable IndexWritingFile getFileWritingCurrentlyIndexes() {
+    return null;
+  }
+
+  @Override
   public VirtualFile findFileById(Project project, int id) {
     return null;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.contentQueue;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,8 +19,7 @@ import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
+import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
 import com.intellij.util.progress.SubTaskProgressIndicator;
@@ -262,20 +261,23 @@ public final class IndexUpdateRunner {
     try {
       indexingJob.setLocationBeingIndexed(file);
       if (!file.isDirectory()) {
-        FileIndexingStatistics fileIndexingStatistics = ReadAction
+        FileIndexesValuesApplier applier = ReadAction
           .nonBlocking(() -> myFileBasedIndex.indexFileContent(indexingJob.myProject, fileContent))
           .expireWith(indexingJob.myProject)
           .wrapProgress(indexingJob.myIndicator)
           .executeSynchronously();
+        applier.apply(file);
         long processingTime = System.nanoTime() - startTime;
         IndexingFileSetStatistics statistics = indexingJob.getStatistics(file);
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (statistics) {
           statistics.addFileStatistics(file,
-                                       fileIndexingStatistics,
+                                       applier.stats,
                                        processingTime,
                                        contentLoadingTime,
-                                       loadingResult.fileLength
+                                       loadingResult.fileLength,
+                                       applier.isWriteValuesSeparately,
+                                       applier.getSeparateApplicationTimeNanos()
           );
         }
       }
@@ -293,6 +295,8 @@ public final class IndexUpdateRunner {
     }
     finally {
       signalThatFileIsUnloaded(loadingResult.fileLength);
+      IndexingStamp.flushCache(FileBasedIndex.getFileId(file));
+      IndexingFlag.unlockFile(file);
     }
   }
 
