@@ -8,4 +8,5 @@ public class ArrayTypeAnnotations implements ParentInterface {
     @A String[] s5() { return null; }
     String @B [] s6() { return null; }
     @A String @B [] @C [] @D [] s7() { return null; }
+    @L String @L [][] @L [] s8() { return null; }
 }
