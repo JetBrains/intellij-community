@@ -5,7 +5,6 @@ package com.intellij.openapi.observable.util
 
 import java.util.concurrent.atomic.AtomicBoolean
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.observable.properties.ObservableClearableProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.transform
@@ -56,12 +55,12 @@ fun <T> ObservableMutableProperty<T>.bind(property: ObservableMutableProperty<T>
   }
 }
 
-fun <P : ObservableClearableProperty<Boolean>> P.bindBooleanStorage(propertyName: String): P = apply {
+fun <P : ObservableMutableProperty<Boolean>> P.bindBooleanStorage(propertyName: String): P = apply {
   transform({ it.toString() }, { it.toBoolean() })
     .bindStorage(propertyName)
 }
 
-fun <P : ObservableClearableProperty<String>> P.bindStorage(propertyName: String): P = apply {
+fun <P : ObservableMutableProperty<String>> P.bindStorage(propertyName: String): P = apply {
   val properties = PropertiesComponent.getInstance()
   val value = properties.getValue(propertyName)
   if (value != null) {
@@ -97,7 +96,7 @@ fun <C : TextFieldWithBrowseButton> C.bindEmptyText(property: ObservableProperty
  * Note: Ignores proportion of selected item for deselected event.
  * @see java.awt.event.ItemEvent.DESELECTED
  */
-fun <T, C : JComboBox<T>> C.bind(property: ObservableClearableProperty<T>): C = apply {
+fun <T, C : JComboBox<T>> C.bind(property: ObservableMutableProperty<T>): C = apply {
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {
@@ -111,7 +110,7 @@ fun <T, C : JComboBox<T>> C.bind(property: ObservableClearableProperty<T>): C = 
   }
 }
 
-fun <T, C : DropDownLink<T>> C.bind(property: ObservableClearableProperty<T>): C = apply {
+fun <T, C : DropDownLink<T>> C.bind(property: ObservableMutableProperty<T>): C = apply {
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {
@@ -125,7 +124,7 @@ fun <T, C : DropDownLink<T>> C.bind(property: ObservableClearableProperty<T>): C
   }
 }
 
-fun <T, C : JList<T>> C.bind(property: ObservableClearableProperty<T?>): C = apply {
+fun <T, C : JList<T>> C.bind(property: ObservableMutableProperty<T?>): C = apply {
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {
@@ -141,7 +140,7 @@ fun <T, C : JList<T>> C.bind(property: ObservableClearableProperty<T?>): C = app
   }
 }
 
-fun <T, C : JTree> C.bind(property: ObservableClearableProperty<T?>) = apply {
+fun <T, C : JTree> C.bind(property: ObservableMutableProperty<T?>) = apply {
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {

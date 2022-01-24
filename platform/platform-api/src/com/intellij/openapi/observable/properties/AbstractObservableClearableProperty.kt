@@ -3,7 +3,10 @@ package com.intellij.openapi.observable.properties
 
 import com.intellij.openapi.Disposable
 import com.intellij.util.containers.DisposableWrapperList
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
+@Suppress("DEPRECATION")
 abstract class AbstractObservableClearableProperty<T> : AbstractObservableProperty<T>(), ObservableClearableProperty<T> {
 
   private val resetListeners = DisposableWrapperList<() -> Unit>()

@@ -3,10 +3,18 @@ package com.intellij.openapi.observable.properties
 
 import com.intellij.openapi.Disposable
 
+@Suppress("DEPRECATION")
 interface BooleanProperty : ObservableClearableProperty<Boolean> {
+
   fun set()
+
+  override fun reset()
 
   fun afterSet(listener: () -> Unit)
 
   fun afterSet(listener: () -> Unit, parentDisposable: Disposable)
+
+  override fun afterReset(listener: () -> Unit)
+
+  override fun afterReset(listener: () -> Unit, parentDisposable: Disposable)
 }

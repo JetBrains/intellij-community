@@ -8,16 +8,12 @@ fun <T> GraphProperty<T>.comap(transform: (T) -> T) = transform({ it }, transfor
 fun <S, T> GraphProperty<S>.transform(map: (S) -> T, comap: (T) -> S): GraphProperty<T> =
   GraphPropertyView(this, map, comap)
 
-fun <T> ObservableClearableProperty<T>.map(transform: (T) -> T) = transform(transform, { it })
-fun <T> ObservableClearableProperty<T>.comap(transform: (T) -> T) = transform({ it }, transform)
-fun <S, T> ObservableClearableProperty<S>.transform(map: (S) -> T, comap: (T) -> S): ObservableClearableProperty<T> =
-  ObservableClearablePropertyView(this, map, comap)
-
 fun <T> ObservableMutableProperty<T>.map(transform: (T) -> T) = transform(transform, { it })
 fun <T> ObservableMutableProperty<T>.comap(transform: (T) -> T) = transform({ it }, transform)
 fun <S, T> ObservableMutableProperty<S>.transform(map: (S) -> T, comap: (T) -> S): ObservableMutableProperty<T> =
   ObservableMutablePropertyView(this, map, comap)
 
+@Suppress("DEPRECATION")
 private class GraphPropertyView<S, T>(
   private val instance: GraphProperty<S>,
   map: (S) -> T,
@@ -33,6 +29,7 @@ private class GraphPropertyView<S, T>(
     instance.afterPropagation(listener)
 }
 
+@Suppress("DEPRECATION")
 private open class ObservableClearablePropertyView<S, T>(
   private val instance: ObservableClearableProperty<S>,
   map: (S) -> T,

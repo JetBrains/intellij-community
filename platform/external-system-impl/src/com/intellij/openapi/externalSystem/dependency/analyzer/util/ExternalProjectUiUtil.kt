@@ -5,7 +5,7 @@ import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerProject
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-import com.intellij.openapi.observable.properties.ObservableClearableProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -19,7 +19,7 @@ import java.awt.Component
 import javax.swing.*
 
 internal class ExternalProjectSelector(
-  property: ObservableClearableProperty<DependencyAnalyzerProject?>,
+  property: ObservableMutableProperty<DependencyAnalyzerProject?>,
   externalProjects: List<DependencyAnalyzerProject>,
   private val iconProvider: ExternalSystemIconProvider
 ) : JPanel() {
@@ -78,7 +78,7 @@ internal class ExternalProjectSelector(
   }
 
   private inner class ExternalProjectDropDownLink(
-    property: ObservableClearableProperty<DependencyAnalyzerProject?>,
+    property: ObservableMutableProperty<DependencyAnalyzerProject?>,
     externalProjects: List<DependencyAnalyzerProject>,
   ) : DropDownLink<DependencyAnalyzerProject?>(
     property.get(),

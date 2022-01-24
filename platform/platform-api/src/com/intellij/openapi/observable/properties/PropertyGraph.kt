@@ -18,19 +18,15 @@ class PropertyGraph(debugName: String? = null, private val isBlockPropagation: B
   constructor(debugName: String? = null) : this(debugName, true)
 
   private val propagation = AnonymousParallelOperationTrace((if (debugName == null) "" else " of $debugName") + ": Graph propagation")
-  private val properties = ConcurrentHashMap<ObservableClearableProperty<*>, PropertyNode>()
+  private val properties = ConcurrentHashMap<ObservableProperty<*>, PropertyNode>()
   private val dependencies = ConcurrentHashMap<PropertyNode, CopyOnWriteArrayList<Dependency<*>>>()
   private val recursionGuard = RecursionManager.createGuard<PropertyNode>(PropertyGraph::class.java.name)
 
-  fun <T> dependsOn(child: AtomicProperty<T>, parent: ObservableClearableProperty<*>) {
-    addDependency(child, parent) { reset() }
-  }
-
-  fun <T> dependsOn(child: AtomicProperty<T>, parent: ObservableClearableProperty<*>, update: () -> T) {
+  fun <T> dependsOn(child: AtomicProperty<T>, parent: ObservableProperty<*>, update: () -> T) {
     addDependency(child, parent) { updateAndGet { update() } }
   }
 
-  private fun <T> addDependency(child: AtomicProperty<T>, parent: ObservableClearableProperty<*>, update: AtomicProperty<T>.() -> Unit) {
+  private fun <T> addDependency(child: AtomicProperty<T>, parent: ObservableProperty<*>, update: AtomicProperty<T>.() -> Unit) {
     val childNode = properties[child] ?: throw IllegalArgumentException("Unregistered child property")
     val parentNode = properties[parent] ?: throw IllegalArgumentException("Unregistered parent property")
     dependencies.putIfAbsent(parentNode, CopyOnWriteArrayList())
@@ -42,7 +38,7 @@ class PropertyGraph(debugName: String? = null, private val isBlockPropagation: B
     propagation.afterOperation(listener)
   }
 
-  fun register(property: ObservableClearableProperty<*>) {
+  fun register(property: ObservableProperty<*>) {
     val node = PropertyNode()
     properties[property] = node
     property.afterChange {
@@ -52,9 +48,6 @@ class PropertyGraph(debugName: String? = null, private val isBlockPropagation: B
           propagateChange(node)
         }
       }
-    }
-    property.afterReset {
-      node.isPropagationBlocked = false
     }
   }
 
@@ -71,7 +64,7 @@ class PropertyGraph(debugName: String? = null, private val isBlockPropagation: B
   }
 
   @TestOnly
-  fun isPropagationBlocked(property: ObservableClearableProperty<*>) =
+  fun isPropagationBlocked(property: ObservableProperty<*>) =
     properties.getValue(property).isPropagationBlocked
 
   private inner class PropertyNode {

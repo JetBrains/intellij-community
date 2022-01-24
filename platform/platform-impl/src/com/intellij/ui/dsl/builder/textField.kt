@@ -2,7 +2,7 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.observable.properties.ObservableClearableProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.observable.util.whenTextChanged
 import com.intellij.ui.dsl.ValidationException
@@ -101,7 +101,7 @@ private fun JTextComponent.getValidatedIntValue(value: String): Int {
   return result
 }
 
-private fun JTextComponent.bind(property: ObservableClearableProperty<String>) {
+private fun JTextComponent.bind(property: ObservableMutableProperty<String>) {
   // See: IDEA-238573 removed cyclic update of UI components that bound with properties
   val mutex = AtomicBoolean()
   property.afterChange {
