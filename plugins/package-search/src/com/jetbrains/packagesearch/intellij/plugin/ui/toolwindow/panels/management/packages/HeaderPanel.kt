@@ -50,7 +50,7 @@ internal class HeaderPanel(
     private var updateAllOperations: Deferred<List<PackageSearchOperation<*>>>? = null
 
     init {
-        PackageSearchUI.setHeight(this, PackageSearchUI.SmallHeaderHeight.get())
+        PackageSearchUI.setHeightPreScaled(this, PackageSearchUI.SmallHeaderHeight.get())
         border = emptyBorder(top = 5, left = 5, right = 1 + scrollbarWidth())
         background = PackageSearchUI.SectionHeaderBackgroundColor
 
