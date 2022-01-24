@@ -264,7 +264,7 @@ public final class ActionsTreeUtil {
     List<AnAction> children = ContainerUtil.newArrayList(getActions(actionGroup, actionManager));
 
     for (ActionUrl actionUrl : actionUrls) {
-      if (path.equals(actionUrl.getGroupPath())) {
+      if (areEqual(path, actionUrl)) { //actual path is shorter when we use custom root
         AnAction componentAction = actionUrl.getComponentAction();
         if (componentAction != null) {
           if (actionUrl.getActionType() == ActionUrl.ADDED) {
@@ -307,6 +307,16 @@ public final class ActionsTreeUtil {
     path.remove(path.size() - 1);
 
     return group;
+  }
+
+  private static boolean areEqual(@NotNull List<? super String> path, ActionUrl actionUrl) {
+    ArrayList<String> groupPath = actionUrl.getGroupPath();
+    if (path.size() > groupPath.size()) return false;
+    for (int i = 0; i < path.size(); i++) {
+      if (!Objects.equals(path.get(path.size() - 1 - i), groupPath.get(groupPath.size() - 1 - i)))
+        return false;
+    }
+    return true;
   }
 
   private static Group createEditorActionsGroup(Condition<? super AnAction> filtered) {

@@ -30,6 +30,7 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +64,7 @@ public class CustomizableActionsPanel {
     Group rootGroup = new Group("root", null, null);
     final DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
     DefaultTreeModel model = new DefaultTreeModel(root);
-    myActionsTree.setModel(model);
+    myActionsTree = new Tree(model);
     myActionsTree.setRootVisible(false);
     myActionsTree.setShowsRootHandles(true);
     myActionsTree.setCellRenderer(createDefaultRenderer());
@@ -71,9 +72,13 @@ public class CustomizableActionsPanel {
     patchActionsTreeCorrespondingToSchema(root);
 
     TreeExpansionMonitor.install(myActionsTree);
-    myTopPanel.setLayout(new BorderLayout());
+    myTopPanel = new BorderLayoutPanel();
     myTopPanel.add(setupFilterComponent(myActionsTree), BorderLayout.WEST);
     myTopPanel.add(createToolbar(), BorderLayout.CENTER);
+
+    myPanel = new BorderLayoutPanel(5, 5);
+    myPanel.add(myTopPanel, BorderLayout.NORTH);
+    myPanel.add(ScrollPaneFactory.createScrollPane(myActionsTree), BorderLayout.CENTER);
   }
 
   private ActionToolbarImpl createToolbar() {
