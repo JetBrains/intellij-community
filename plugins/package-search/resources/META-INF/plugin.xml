@@ -111,6 +111,8 @@ Supports Maven and Gradle projects.
                            icon="/icons/artifactSmall.svg"
                            bundle="messages.packageSearchBundle"
                            key="packagesearch.title"/>
+
+        <themeMetadataProvider path="/META-INF/PackageSearch.themeMetadata.json"/>
     </extensions>
 
     <actions>

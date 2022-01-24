@@ -3,6 +3,8 @@ package com.jetbrains.packagesearch.intellij.plugin.ui
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
@@ -44,10 +46,11 @@ object PackageSearchUI {
     internal val GRAY_COLOR: Color = JBColor.namedColor("Label.infoForeground", JBColor(Gray._120, Gray._135))
 
     internal val HeaderBackgroundColor = MAIN_BG_COLOR
-    internal val SectionHeaderBackgroundColor = JBColor.namedColor("Plugins.SectionHeader.background", JBColor(0xF7F7F7, 0x3C3F41))
+    internal val SectionHeaderBackgroundColor = JBColor.namedColor("Plugins.SectionHeader.background", 0xF7F7F7, 0x3C3F41)
     internal val UsualBackgroundColor = MAIN_BG_COLOR
-    internal val ListRowHighlightBackground = JBColor(0xF2F5F9, 0x4C5052)
-    internal val InfoBannerBackground = JBColor(0xE6EEF7, 0x1C3956)
+    internal val ListRowHighlightBackground = JBColor.namedColor("PackageSearch.SearchResult.background", 0xF2F5F9, 0x4C5052)
+    internal val InfoBannerBackground = JBColor.lazy { EditorColorsManager.getInstance().globalScheme.getColor(EditorColors.NOTIFICATION_BACKGROUND) }
+        ?: JBColor(0xE6EEF7, 0x1C3956)
 
     internal val MediumHeaderHeight = JBValue.Float(30f)
     internal val SmallHeaderHeight = JBValue.Float(24f)

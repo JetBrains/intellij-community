@@ -45,10 +45,10 @@ internal object PackageNameCellRenderer : TableCellRenderer {
         )
     }
 
-    private val tagForeground = JBColor(0x808080, 0x9C9C9C)
-    private val tagBackground = JBColor(0xE5E5E5, 0x666B6E)
-    private val tagForegroundSelected = JBColor(0xFFFFFF, 0xFFFFFF)
-    private val tagBackgroundSelected = JBColor(0x4395E2, 0x78ADE2)
+    private val tagForeground = JBColor.namedColor("PackageSearch.PackageTag.foreground", 0x808080, 0x9C9C9C)
+    private val tagBackground = JBColor.namedColor("PackageSearch.PackageTag.background", 0xE5E5E5, 0x666B6E)
+    private val tagForegroundSelected = JBColor.namedColor("PackageSearch.PackageTagSelected.foreground", 0xFFFFFF, 0xFFFFFF)
+    private val tagBackgroundSelected = JBColor.namedColor("PackageSearch.PackageTagSelected.background", 0x4395E2, 0x78ADE2)
 
     private fun componentConstraint(x: Int = 0, y: Int = 0, gapAfter: Int? = null): CC = CC().apply {
         cellX = x

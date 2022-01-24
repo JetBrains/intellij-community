@@ -14,7 +14,7 @@ sealed class TargetModules(
             .sorted()
 
     fun defaultScope(project: Project): PackageScope =
-        if (!isMixedBuildSystems) {
+        if (!isMixedBuildSystems && this !is None) {
             PackageScope.from(modules.first().projectModule.moduleType.defaultScope(project))
         } else {
             PackageScope.Missing
