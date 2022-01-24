@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration.notifications
 
@@ -29,6 +29,7 @@ internal fun notifyKotlinStyleUpdateIfNeeded(project: Project) {
             KotlinBundle.htmlMessage("configuration.notification.update.code.style.to.official"),
             NotificationType.WARNING,
         )
+        .setSuggestionType(true)
         .addAction(applyCodeStyleAction())
         .addAction(dontAskAgainAction())
         .setImportant(true)
