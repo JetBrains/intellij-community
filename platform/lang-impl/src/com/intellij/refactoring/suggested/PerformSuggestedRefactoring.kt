@@ -18,6 +18,8 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -46,7 +48,7 @@ import javax.swing.UIManager
 
 internal fun performSuggestedRefactoring(
   project: Project,
-  editor: Editor,
+  originalEditor: Editor,
   popupAnchorComponent: JComponent?,
   popupAnchorPoint: Point?,
   showReviewBalloon: Boolean,
@@ -55,12 +57,22 @@ internal fun performSuggestedRefactoring(
   PsiDocumentManager.getInstance(project).commitAllDocuments()
 
   val state = SuggestedRefactoringProviderImpl.getInstance(project).state
-    ?.takeIf { it.errorLevel == ErrorLevel.NO_ERRORS }
-    ?.let {
-      it.refactoringSupport.availability.refineSignaturesWithResolve(it)
-    } ?: return
+                ?.takeIf { it.errorLevel == ErrorLevel.NO_ERRORS }
+                ?.let {
+                  it.refactoringSupport.availability.refineSignaturesWithResolve(it)
+                } ?: return
   if (state.errorLevel != ErrorLevel.NO_ERRORS || state.oldSignature == state.newSignature) return
   val refactoringSupport = state.refactoringSupport
+
+  val file = state.declaration.containingFile
+  val editor: Editor
+  if (originalEditor.document == file.viewProvider.document) {
+    editor = originalEditor
+  }
+  else {
+    val descriptor = OpenFileDescriptor(project, file.virtualFile)
+    editor = (FileEditorManager.getInstance(project).openTextEditor(descriptor, true) ?: return)
+  }
 
   when (val refactoringData = refactoringSupport.availability.detectAvailableRefactoring(state)) {
     is SuggestedRenameData -> {
@@ -77,7 +89,7 @@ internal fun performSuggestedRefactoring(
         return
       }
 
-      val rangeToHighlight = state.refactoringSupport.nameRange(state.declaration)!!
+      val rangeToHighlight = state.refactoringSupport.nameRange(state.anchor)!!
 
       val callbacks = createAndShowBalloon<Unit>(
         popup, project, editor, popupAnchorComponent, popupAnchorPoint, rangeToHighlight,
@@ -98,23 +110,40 @@ internal fun performSuggestedRefactoring(
     }
 
     is SuggestedChangeSignatureData -> {
-      fun doRefactor(newParameterValues: List<NewParameterValue>) {
+      fun doRefactor(newParameterInfo: List<NewParameterInfo>) {
         doRefactor(refactoringData, state, editor, actionPlace) {
-          performChangeSignature(refactoringSupport, refactoringData, newParameterValues, project, editor)
+          val sig = refactoringData.newSignature
+          val newSig = SuggestedRefactoringSupport.Signature.create(
+            sig.name, sig.type, sig.parameters.map { param ->
+            val updated = newParameterInfo.firstOrNull { p -> p.newParameterData.presentableName == param.name }
+            if (updated == null) param else param.copy(name = updated.name)
+          }, sig.additionalData)
+          performChangeSignature(refactoringSupport, refactoringData.copy(newSignature = newSig!!),
+                                 newParameterInfo.map { info -> info.value }, project, editor)
         }
       }
 
       val newParameterData = refactoringSupport.ui.extractNewParameterData(refactoringData)
 
       if (!showReviewBalloon || ApplicationManager.getApplication().isHeadlessEnvironment || isForeignClientOnServer()) {
-        val newParameterValues = if (ApplicationManager.getApplication().isUnitTestMode) {
-          // for testing
-          newParameterData.indices.map {
-            _suggestedChangeSignatureNewParameterValuesForTests?.invoke(it) ?: NewParameterValue.None
+        val indexToExpression = if (ApplicationManager.getApplication().isUnitTestMode) {
+          _suggestedChangeSignatureNewParameterValuesForTests
+        }
+        else {
+          { NewParameterValue.None }
+        }
+        val newParameterValues: List<NewParameterInfo>
+        if (indexToExpression != null) {
+          newParameterValues = newParameterData.mapIndexed { index, data ->
+            NewParameterInfo(data, data.presentableName, indexToExpression.invoke(index))
           }
         }
         else {
-          newParameterData.map { NewParameterValue.None }
+          newParameterValues = newParameterData.map { data ->
+            NewParameterInfo(data, data.presentableName,
+                             if (data.offerToUseAnyVariable) NewParameterValue.AnyVariable
+                             else NewParameterValue.Expression(data.valueFragment))
+          }
         }
         doRefactor(newParameterValues)
         return
@@ -375,7 +404,13 @@ private fun performChangeSignature(
   runWriteAction {
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
     restoreNewSignature()
-    editor.caretModel.moveToOffset(relativeCaretOffset + refactoringSupport.anchorOffset(data.declaration))
+    val offset = if (data.anchor != data.declaration) {
+      refactoringSupport.anchorOffset(data.declaration)
+    }
+    else {
+      relativeCaretOffset + refactoringSupport.anchorOffset(data.declaration)
+    }
+    editor.caretModel.moveToOffset(offset)
   }
 }
 

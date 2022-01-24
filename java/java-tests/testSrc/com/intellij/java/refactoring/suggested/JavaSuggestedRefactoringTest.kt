@@ -971,6 +971,161 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     )
   }
 
+  fun testFromUsageSimple() {
+    doTestChangeSignature(
+      """
+        class X {
+          void test(int a, int b) {}
+          
+          void call() {
+            test(1, <caret>2);
+          }
+        }
+      """.trimIndent(),
+      """
+        class X {
+          void test(int a, int i, int b) {}
+          
+          void call() {
+            test(1, 5,2);
+          }
+        }
+      """.trimIndent(),
+      "declaration",
+      { myFixture.type("5,") },
+      expectedPresentation = """
+        Old:
+          'void'
+          ' '
+          'test'
+          '('
+          LineBreak('', true)
+          Group:
+            'int'
+            ' '
+            'a'
+          ','
+          LineBreak(' ', true)
+          Group:
+            'int'
+            ' '
+            'b'
+          LineBreak('', false)
+          ')'
+        New:
+          'void'
+          ' '
+          'test'
+          '('
+          LineBreak('', true)
+          Group:
+            'int'
+            ' '
+            'a'
+          ','
+          LineBreak(' ', true)
+          Group (added):
+            'int'
+            ' '
+            'i'
+          ','
+          LineBreak(' ', true)
+          Group:
+            'int'
+            ' '
+            'b'
+          LineBreak('', false)
+          ')'
+      """.trimIndent()
+    )
+  }
+
+  fun testFromUsageHasOtherUsages() {
+    _suggestedChangeSignatureNewParameterValuesForTests = null
+    doTestChangeSignature(
+      """
+        class X {
+          void test(int a, int b) {}
+          
+          void call() {
+            test(1, <caret>2);
+          }
+          
+          void another() {
+            String s = "string";
+            test(3, 4);
+          }
+        }
+      """.trimIndent(),
+      """
+        class X {
+          void test(int a, int i, String hello, int b) {}
+          
+          void call() {
+            test(1, 5, "hello",2);
+          }
+          
+          void another() {
+            String s = "string";
+            test(3, 5, s, 4);
+          }
+        }
+      """.trimIndent(),
+      "declaration",
+      { myFixture.type("5, \"hello\",") },
+      expectedPresentation = """
+        Old:
+          'void'
+          ' '
+          'test'
+          '('
+          LineBreak('', true)
+          Group:
+            'int'
+            ' '
+            'a'
+          ','
+          LineBreak(' ', true)
+          Group:
+            'int'
+            ' '
+            'b'
+          LineBreak('', false)
+          ')'
+        New:
+          'void'
+          ' '
+          'test'
+          '('
+          LineBreak('', true)
+          Group:
+            'int'
+            ' '
+            'a'
+          ','
+          LineBreak(' ', true)
+          Group (added):
+            'int'
+            ' '
+            'i'
+          ','
+          LineBreak(' ', true)
+          Group (added):
+            'String'
+            ' '
+            'hello'
+          ','
+          LineBreak(' ', true)
+          Group:
+            'int'
+            ' '
+            'b'
+          LineBreak('', false)
+          ')'
+      """.trimIndent()
+    )
+  }
+
   fun testChangeVisibility1() {
     //TODO: see IDEA-230741
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts<Throwable> {

@@ -19,13 +19,13 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
    *
    * For performance reasons, don't use any resolve in this method. More accurate information about changes can be obtained later
    * with use of [SuggestedRefactoringAvailability.refineSignaturesWithResolve].
-   * @param declaration declaration in its current state.
-   * Only PsiElement's that are classified as declarations by [SuggestedRefactoringSupport.isDeclaration] may be passed to this parameter.
+   * @param anchor declaration or call-site in its current state.
+   * Only PsiElement's that are classified as anchors by [SuggestedRefactoringSupport.isAnchor] may be passed to this parameter.
    * @param prevState previous state of accumulated signature changes, or *null* if the user is just about to start editing the signature.
    * @return An instance of [Signature] class, representing the current state of the declaration,
    * or *null* if the declaration is in an incorrect state and no signature can be created.
    */
-  abstract fun signature(declaration: PsiElement, prevState: SuggestedRefactoringState?): Signature?
+  abstract fun signature(anchor: PsiElement, prevState: SuggestedRefactoringState?): Signature?
 
   /**
    * Provides "marker ranges" for parameters in the declaration.
@@ -35,20 +35,22 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
    * If the language has a fixed separator between parameter name and type such as ':'  - use it as a marker.
    * A whitespace between the type and the name is not so reliable because it may change its length or temporarily disappear.
    * Parameter type range is also a good marker because it's unlikely to change at the same time as the name changes.
-   * @param declaration declaration in its current state.
-   * Only PsiElement's that are classified as declarations by [SuggestedRefactoringSupport.isDeclaration] may be passed to this parameter.
+   * @param anchor declaration or call-site in its current state.
+   * Only PsiElement's that are classified as anchors by [SuggestedRefactoringSupport.isAnchor] may be passed to this parameter.
    * @return a list containing a marker range for each parameter, or *null* if no marker can be provided for this parameter
    */
-  abstract fun parameterMarkerRanges(declaration: PsiElement): List<TextRange?>
+  abstract fun parameterMarkerRanges(anchor: PsiElement): List<TextRange?>
 
-  open fun createInitialState(declaration: PsiElement): SuggestedRefactoringState? {
-    val signature = signature(declaration, null) ?: return null
-    val signatureRange = refactoringSupport.signatureRange(declaration) ?: return null
+  open fun createInitialState(anchor: PsiElement): SuggestedRefactoringState? {
+    val declaration = findDeclaration(null, anchor) ?: return null
+    val signature = signature(anchor, null) ?: return null
+    val signatureRange = refactoringSupport.signatureRange(anchor) ?: return null
     val psiDocumentManager = PsiDocumentManager.getInstance(declaration.project)
-    val file = declaration.containingFile
+    val file = anchor.containingFile
     val document = psiDocumentManager.getDocument(file)!!
     require(psiDocumentManager.isCommitted(document))
     return SuggestedRefactoringState(
+      anchor,
       declaration,
       refactoringSupport,
       errorLevel = ErrorLevel.NO_ERRORS,
@@ -58,12 +60,28 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
         ?.let { document.getText(it) },
       oldSignature = signature,
       newSignature = signature,
-      parameterMarkers = parameterMarkers(declaration, signature)
+      parameterMarkers = parameterMarkers(anchor, signature)
     )
   }
 
-  open fun updateState(state: SuggestedRefactoringState, declaration: PsiElement): SuggestedRefactoringState {
-    val newSignature = signature(declaration, state)
+  /**
+   * Returns a declaration for a given anchor. Returns anchor itself if it's already a declaration,
+   * or a declaration if anchor is a use-site.
+   *
+   * @param state previous state, could be used to get previous declaration from.
+   * Null if there's no previous state.
+   * @param anchor declaration or call-site in its current state.
+   * Only PsiElement's that are classified as anchors by [SuggestedRefactoringSupport.isAnchor] may be passed to this parameter.
+   * @return found declaration. Could be null if anchor is a call-site that does not properly resolve.
+   */
+  open fun findDeclaration(state: SuggestedRefactoringState?, anchor: PsiElement): PsiElement? = anchor
+
+  open fun updateState(state: SuggestedRefactoringState, anchor: PsiElement): SuggestedRefactoringState {
+    val declaration = findDeclaration(state, anchor)
+    if (declaration == null) {
+      return state.withAnchor(anchor).withErrorLevel(ErrorLevel.INCONSISTENT)
+    }
+    val newSignature = signature(anchor, state)
                        ?: return state.withDeclaration(declaration).withErrorLevel(ErrorLevel.SYNTAX_ERROR)
 
     val idsPresent = newSignature.parameters.map { it.id }.toSet()
@@ -77,8 +95,8 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
       }
     }
 
-    val parameterMarkers = parameterMarkers(declaration, newSignature).toMutableList()
-    val syntaxError = refactoringSupport.hasSyntaxError(declaration)
+    val parameterMarkers = parameterMarkers(anchor, newSignature).toMutableList()
+    val syntaxError = refactoringSupport.hasSyntaxError(anchor)
     if (syntaxError) {
       // when there is a syntax error inside the signature, there can be parameters which are temporarily not parsed as parameters
       // we must keep their markers in order to match them later
@@ -90,6 +108,7 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
     }
 
     return state
+      .withAnchor(anchor)
       .withDeclaration(declaration)
       .withNewSignature(newSignature)
       .withErrorLevel(if (syntaxError) ErrorLevel.SYNTAX_ERROR else ErrorLevel.NO_ERRORS)
@@ -141,12 +160,12 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
    * Use this implementation of [SuggestedRefactoringStateChanges], if only Rename refactoring is supported for the language.
    */
   class RenameOnly(refactoringSupport: SuggestedRefactoringSupport) : SuggestedRefactoringStateChanges(refactoringSupport) {
-    override fun signature(declaration: PsiElement, prevState: SuggestedRefactoringState?): Signature? {
-      val name = (declaration as? PsiNamedElement)?.name ?: return null
+    override fun signature(anchor: PsiElement, prevState: SuggestedRefactoringState?): Signature? {
+      val name = (anchor as? PsiNamedElement)?.name ?: return null
       return Signature.create(name, null, emptyList(), null)!!
     }
 
-    override fun parameterMarkerRanges(declaration: PsiElement): List<TextRange?> {
+    override fun parameterMarkerRanges(anchor: PsiElement): List<TextRange?> {
       return emptyList()
     }
   }

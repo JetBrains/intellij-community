@@ -49,6 +49,7 @@ class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactor
   // we use resolve to filter out annotations that we don't want to spread over hierarchy
   override fun refineSignaturesWithResolve(state: SuggestedRefactoringState): SuggestedRefactoringState {
     val declaration = state.declaration as? PsiMethod ?: return state
+    if (state.anchor is PsiCallExpression) return state // TODO
     val restoredDeclarationCopy = state.restoredDeclarationCopy() as PsiMethod
     val psiFile = declaration.containingFile
     return state
@@ -66,10 +67,20 @@ class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactor
       return SuggestedRenameData(declaration as PsiNamedElement, oldSignature.name)
     }
 
+    val anchor = state.anchor
+    val whatToUpdate: String
+    if (anchor is PsiCallExpression) {
+      // Do not suggest refactoring from usage if usage is correctly resolved
+      if (anchor.resolveMethodGenerics().isValidResult) return null
+      whatToUpdate = RefactoringBundle.message("suggested.refactoring.declaration")
+    } else {
+      whatToUpdate = RefactoringBundle.message("suggested.refactoring.usages")
+    }
+
     val canHaveOverrides = declaration.canHaveOverrides(oldSignature) && state.additionalData[HAS_OVERRIDES] != false
     if (state.additionalData[HAS_USAGES] == false && !canHaveOverrides) return null
 
-    val updateUsagesData = SuggestedChangeSignatureData.create(state, RefactoringBundle.message("suggested.refactoring.usages"))
+    val updateUsagesData = SuggestedChangeSignatureData.create(state, whatToUpdate)
 
     if (hasParameterAddedRemovedOrReordered(oldSignature, newSignature)) return updateUsagesData
 
@@ -120,7 +131,7 @@ class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactor
         val annotations = extractAnnotations(psiParameter.type, psiParameter, psiFile)
         parameter.copy(additionalData = JavaParameterAdditionalData(annotations))
       },
-      JavaSignatureAdditionalData(
+      JavaDeclarationAdditionalData(
         signature.visibility,
         extractAnnotations(declaration.returnType, declaration, psiFile),
         signature.exceptionTypes

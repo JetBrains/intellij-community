@@ -19,18 +19,20 @@ object JavaSuggestedRefactoringUI : SuggestedRefactoringUI() {
 
   override fun extractNewParameterData(data: SuggestedChangeSignatureData): List<NewParameterData> {
     val psiMethod = data.declaration as PsiMethod
-    val psiParameters = psiMethod.parameterList.parameters
+    val parameterTypes = data.correctParameterTypes(psiMethod.parameterList.parameters.map { p -> p.type })
     val project = psiMethod.project
     val factory = JavaCodeFragmentFactory.getInstance(project)
+    val fromCallSite = data.anchor is PsiCallExpression
 
-    fun createCodeFragment(parameterType: PsiType) =
-      factory.createExpressionCodeFragment("", psiMethod, parameterType, true)
+    fun createCodeFragment(parameterType: PsiType, value: String) =
+      factory.createExpressionCodeFragment(value, psiMethod, parameterType, true)
 
-    return data.newSignature.parameters.zip(psiParameters)
+    return data.newSignature.parameters.zip(parameterTypes)
       .filter { (parameter, _) -> data.oldSignature.parameterById(parameter.id) == null }
-      .map { (parameter, psiParameter) ->
-        val type = psiParameter.type
-        NewParameterData(parameter.name, createCodeFragment(type), offerToUseAnyVariable(type))
+      .map { (parameter, type) ->
+        NewParameterData(parameter.name, createCodeFragment(type, (parameter.additionalData as JavaParameterAdditionalData).defaultValue),
+                         offerToUseAnyVariable(type),
+                         suggestRename = fromCallSite)
       }
   }
 

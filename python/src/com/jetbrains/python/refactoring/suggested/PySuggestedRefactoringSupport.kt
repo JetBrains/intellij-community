@@ -55,15 +55,15 @@ class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
     }
   }
 
-  override fun isDeclaration(psiElement: PsiElement): Boolean = findSupport(psiElement) != null
+  override fun isAnchor(psiElement: PsiElement): Boolean = findSupport(psiElement) != null
 
-  override fun signatureRange(declaration: PsiElement): TextRange? = findSupport(declaration)?.signatureRange(declaration)?.takeIf {
-    !declaration.containingFile.hasErrorElementInRange(it)
+  override fun signatureRange(anchor: PsiElement): TextRange? = findSupport(anchor)?.signatureRange(anchor)?.takeIf {
+    !anchor.containingFile.hasErrorElementInRange(it)
   }
 
   override fun importsRange(psiFile: PsiFile): TextRange? = null
 
-  override fun nameRange(declaration: PsiElement): TextRange? = (declaration as? PsiNameIdentifierOwner)?.nameIdentifier?.textRange
+  override fun nameRange(anchor: PsiElement): TextRange? = (anchor as? PsiNameIdentifierOwner)?.nameIdentifier?.textRange
 
   override fun isIdentifierStart(c: Char): Boolean = c == '_' || Character.isLetter(c)
 

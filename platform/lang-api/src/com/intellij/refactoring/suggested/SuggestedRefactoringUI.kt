@@ -43,7 +43,8 @@ abstract class SuggestedRefactoringUI {
     val valueFragment: PsiCodeFragment,
     val offerToUseAnyVariable: Boolean,
     @Nls(capitalization = Nls.Capitalization.Sentence) val placeholderText: String? = null,
-    val additionalData: NewParameterAdditionalData? = null
+    val additionalData: NewParameterAdditionalData? = null,
+    val suggestRename: Boolean = false
   )
 
   /**

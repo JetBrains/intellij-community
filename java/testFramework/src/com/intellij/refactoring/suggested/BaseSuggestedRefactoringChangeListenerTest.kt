@@ -81,11 +81,11 @@ abstract class BaseSuggestedRefactoringChangeListenerTest : LightJavaCodeInsight
       log.append("\n")
     }
 
-    override fun nextSignature(declaration: PsiElement, refactoringSupport: SuggestedRefactoringSupport) {
-      if (refactoringSupport.hasSyntaxError(declaration)) return
+    override fun nextSignature(anchor: PsiElement, refactoringSupport: SuggestedRefactoringSupport) {
+      if (refactoringSupport.hasSyntaxError(anchor)) return
 
       log.append("nextSignature: ")
-      log.appendSignature(declaration)
+      log.appendSignature(anchor)
       log.append("\n")
     }
 

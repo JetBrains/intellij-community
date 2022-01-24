@@ -16,9 +16,13 @@ import com.intellij.refactoring.util.CanonicalTypes
 
 class JavaSuggestedRefactoringExecution(refactoringSupport: SuggestedRefactoringSupport) :
   SuggestedRefactoringExecution(refactoringSupport) {
-  override fun prepareChangeSignature(data: SuggestedChangeSignatureData): Any? {
+  override fun prepareChangeSignature(data: SuggestedChangeSignatureData): Any {
     val method = data.declaration as PsiMethod
-    return extractTypes(method, method.containingFile)
+    val extractedTypes = extractTypes(method, method.containingFile)
+    val parameterTypes = extractedTypes.parameterTypes
+    val correctedTypes = data.correctParameterTypes(parameterTypes)
+    return if (correctedTypes === parameterTypes) extractedTypes else
+      ExtractedTypes(correctedTypes, extractedTypes.returnType, extractedTypes.exceptionTypes)
   }
 
   private data class ExtractedTypes(

@@ -6,24 +6,32 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.ChildRole
 import com.intellij.psi.impl.source.tree.java.MethodElement
+import com.intellij.refactoring.suggested.SuggestedChangeSignatureData
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
+import com.siyeh.ig.psiutils.TypeUtils
 
 class JavaSuggestedRefactoringSupport : SuggestedRefactoringSupport {
-  override fun isDeclaration(psiElement: PsiElement): Boolean {
+  override fun isAnchor(psiElement: PsiElement): Boolean {
+    if (psiElement is PsiCallExpression) {
+      return psiElement.argumentList != null
+    }
     if (psiElement !is PsiNameIdentifierOwner) return false
     if (psiElement is PsiParameter && psiElement.parent is PsiParameterList && psiElement.parent.parent is PsiMethod) return false
     return true
   }
 
-  override fun signatureRange(declaration: PsiElement): TextRange? {
-    val nameIdentifier = (declaration as PsiNameIdentifierOwner).nameIdentifier ?: return null
-    return when (declaration) {
+  override fun signatureRange(anchor: PsiElement): TextRange? {
+    if (anchor is PsiCallExpression) {
+      return anchor.argumentList!!.textRange
+    }
+    val nameIdentifier = (anchor as PsiNameIdentifierOwner).nameIdentifier ?: return null
+    return when (anchor) {
       is PsiMethod -> {
-        val startOffset = declaration.modifierList.startOffset
-        val semicolon = (declaration.node as MethodElement).findChildByRole(ChildRole.CLOSING_SEMICOLON)
-        val endOffset = semicolon?.startOffset ?: declaration.body?.startOffset ?: declaration.endOffset
+        val startOffset = anchor.modifierList.startOffset
+        val semicolon = (anchor.node as MethodElement).findChildByRole(ChildRole.CLOSING_SEMICOLON)
+        val endOffset = semicolon?.startOffset ?: anchor.body?.startOffset ?: anchor.endOffset
         TextRange(startOffset, endOffset)
       }
 
@@ -35,8 +43,13 @@ class JavaSuggestedRefactoringSupport : SuggestedRefactoringSupport {
     return (psiFile as PsiJavaFile).importList!!.textRange
   }
 
-  override fun nameRange(declaration: PsiElement): TextRange? {
-    return (declaration as PsiNameIdentifierOwner).nameIdentifier?.textRange
+  override fun nameRange(anchor: PsiElement): TextRange? {
+    return (when (anchor) {
+      is PsiMethodCallExpression -> anchor.methodExpression.referenceNameElement
+      is PsiNewExpression -> anchor.classOrAnonymousClassReference
+      is PsiNameIdentifierOwner -> anchor.nameIdentifier
+      else -> null
+    })?.textRange
   }
 
   override fun isIdentifierStart(c: Char) = c.isJavaIdentifierStart()
@@ -72,14 +85,33 @@ class JavaSuggestedRefactoringSupport : SuggestedRefactoringSupport {
 }
 
 data class JavaParameterAdditionalData(
-  val annotations: String
+  val annotations: String,
+  val defaultValue: String = ""
 ) : SuggestedRefactoringSupport.ParameterAdditionalData
 
-data class JavaSignatureAdditionalData(
-  val visibility: String?,
-  val annotations: String,
+interface JavaSignatureAdditionalData : SuggestedRefactoringSupport.SignatureAdditionalData {
+  val visibility: String?
+  val annotations: String
   val exceptionTypes: List<String>
-) : SuggestedRefactoringSupport.SignatureAdditionalData
+}
+
+data class JavaDeclarationAdditionalData(
+  override val visibility: String?,
+  override val annotations: String,
+  override val exceptionTypes: List<String>
+) : JavaSignatureAdditionalData
+
+data class JavaCallAdditionalData(
+  val origArguments: List<String>,
+  val origMethod: PsiMethod
+) : JavaSignatureAdditionalData {
+  override val visibility: String?
+    get() = origMethod.visibility()
+  override val annotations: String
+    get() = origMethod.extractAnnotations()
+  override val exceptionTypes: List<String>
+    get() = origMethod.extractExceptions()
+}
 
 internal val SuggestedRefactoringSupport.Parameter.annotations: String
   get() = (additionalData as JavaParameterAdditionalData?)?.annotations ?: ""
@@ -92,3 +124,38 @@ internal val SuggestedRefactoringSupport.Signature.annotations: String
 
 internal val SuggestedRefactoringSupport.Signature.exceptionTypes: List<String>
   get() = (additionalData as JavaSignatureAdditionalData?)?.exceptionTypes ?: emptyList()
+
+internal val SuggestedRefactoringSupport.Signature.origArguments: List<String>?
+  get() = (additionalData as? JavaCallAdditionalData)?.origArguments
+
+private val visibilityModifiers = listOf(PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE)
+
+internal fun PsiMethod.visibility(): String? {
+  return visibilityModifiers.firstOrNull { hasModifierProperty(it) }
+}
+
+internal fun PsiJvmModifiersOwner.extractAnnotations(): String {
+  return annotations.joinToString(separator = " ") { it.text } //TODO: skip comments and spaces
+}
+
+internal fun PsiMethod.extractExceptions(): List<String> {
+  return throwsList.referenceElements.map { it.text }
+}
+
+internal fun SuggestedChangeSignatureData.correctParameterTypes(origTypes: List<PsiType>): List<PsiType> {
+  val anchor = this.anchor
+  return if (anchor is PsiCallExpression) {
+    // From call site
+    val expressions = anchor.argumentList!!.expressions
+    this.newSignature.parameters.mapIndexed { idx, param ->
+      val oldParam = this.oldSignature.parameterById(param.id)
+      if (oldParam != null) {
+        origTypes[this.oldSignature.parameterIndex(oldParam)]
+      }
+      else {
+        expressions[idx].type ?: TypeUtils.getObjectType(this.declaration)
+      }
+    }
+  }
+  else origTypes
+}
