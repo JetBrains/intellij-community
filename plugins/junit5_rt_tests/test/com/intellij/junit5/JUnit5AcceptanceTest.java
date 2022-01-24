@@ -1,7 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.junit.JUnit4Framework;
 import com.intellij.execution.junit.JUnit5Framework;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
@@ -68,6 +71,19 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
     assertNotNull(aClass);
     TestFramework framework = TestFrameworks.detectFramework(aClass);
     assertTrue(framework instanceof JUnit5Framework, framework.getName());
+  }
+  
+  @Test
+  void testFrameworkDetectionWithMixedJunit4Junit5() throws ExecutionException {
+    myFixture.addClass("package org.junit; public @interface Test {}");
+    PsiClass aClass = myFixture.addClass("/** @noinspection ALL*/ public class MyTest {@org.junit.jupiter.api.Test void method() {} @org.junit.Test void method2(){} }");
+    assertNotNull(aClass);
+    TestFramework framework = TestFrameworks.detectFramework(aClass);
+    assertTrue(framework instanceof JUnit4Framework, framework.getName());
+    JUnitConfiguration configuration = new JUnitConfiguration("", myFixture.getProject());
+    configuration.beClassConfiguration(aClass);
+    JavaParameters parameters = configuration.getTestObject().createJavaParameters4Tests();
+    assertTrue(parameters.getProgramParametersList().hasParameter("-junit5"));
   }
 
   @Test
