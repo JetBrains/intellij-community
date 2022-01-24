@@ -911,7 +911,7 @@ private class NotificationComponent(val project: Project,
       group.isPopup = true
 
       if (NotificationsConfigurationImpl.getInstanceImpl().isRegistered(notification.groupId)) {
-        group.add(object : AnAction(IdeBundle.message("action.text.settings")) {
+        group.add(object : DumbAwareAction(IdeBundle.message("action.text.settings")) {
           override fun actionPerformed(e: AnActionEvent) {
             doShowSettings()
           }
@@ -922,7 +922,7 @@ private class NotificationComponent(val project: Project,
       val remindAction = RemindLaterManager.createAction(notification, DateFormatUtil.DAY)
       if (remindAction != null) {
         @Suppress("DialogTitleCapitalization")
-        group.add(object : AnAction(IdeBundle.message("notifications.toolwindow.remind.tomorrow")) {
+        group.add(object : DumbAwareAction(IdeBundle.message("notifications.toolwindow.remind.tomorrow")) {
           override fun actionPerformed(e: AnActionEvent) {
             remindAction.run()
             myRemoveCallback.accept(myNotificationWrapper.notification!!)
@@ -932,13 +932,13 @@ private class NotificationComponent(val project: Project,
       }
 
       @Suppress("DialogTitleCapitalization")
-      group.add(object : AnAction(IdeBundle.message("notifications.toolwindow.dont.show.again.for.this.project")) {
+      group.add(object : DumbAwareAction(IdeBundle.message("notifications.toolwindow.dont.show.again.for.this.project")) {
         override fun actionPerformed(e: AnActionEvent) {
           myDoNotAskHandler.invoke(true)
         }
       })
       @Suppress("DialogTitleCapitalization")
-      group.add(object : AnAction(IdeBundle.message("notifications.toolwindow.dont.show.again")) {
+      group.add(object : DumbAwareAction(IdeBundle.message("notifications.toolwindow.dont.show.again")) {
         override fun actionPerformed(e: AnActionEvent) {
           myDoNotAskHandler.invoke(false)
         }
