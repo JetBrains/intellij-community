@@ -76,7 +76,7 @@ public class DefaultLineModificationDetailsProvider implements FileAnnotation.Li
     VcsFileRevision beforeRevision = myPreviousRevisionProvider.getPreviousRevision(lineNumber);
     String beforeContent = loadRevision(myAnnotation.getProject(), beforeRevision, myFilePath);
     if (beforeContent == null) {
-      return createNewLineDetails(originalLine); // whole file is new. Skip searching for original line.
+      return createNewLineDetails(originalLine); // the whole file is new. Skip searching for the original line.
     }
 
     return createDetailsFor(beforeContent, afterContent, originalLine);
@@ -128,7 +128,7 @@ public class DefaultLineModificationDetailsProvider implements FileAnnotation.Li
     String lineContentAfter = getLine(afterContent, afterLineOffsets, originalLineNumber);
 
     if (beforeContent == null) {
-      return createNewLineDetails(lineContentAfter); // whole file is new
+      return createNewLineDetails(lineContentAfter); // the whole file is new
     }
 
     if (StringUtil.isEmptyOrSpaces(lineContentAfter)) {
@@ -150,12 +150,12 @@ public class DefaultLineModificationDetailsProvider implements FileAnnotation.Li
     if (lineFragment == null) return null; // line unmodified
 
     if (lineFragment.getStartLine1() == lineFragment.getEndLine1()) {
-      return createNewLineDetails(lineContentAfter); // whole line is new
+      return createNewLineDetails(lineContentAfter); // the whole line is new
     }
 
     List<DiffFragment> innerFragments = lineFragment.getInnerFragments();
     if (innerFragments == null) {
-      return createModifiedLineDetails(lineContentAfter); // whole line is modified
+      return createModifiedLineDetails(lineContentAfter); // the whole line is modified
     }
 
     int lineStart = afterLineOffsets.getLineStart(originalLineNumber);
