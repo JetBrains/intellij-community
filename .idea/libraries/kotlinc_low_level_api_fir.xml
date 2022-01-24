@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.low-level-api-fir" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:low-level-api-fir-for-ide:1.6.10-release-950" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:low-level-api-fir-for-ide:1.6.10-release-951" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/1.6.10-release-950/low-level-api-fir-for-ide-1.6.10-release-950.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/1.6.10-release-951/low-level-api-fir-for-ide-1.6.10-release-951.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/1.6.10-release-950/low-level-api-fir-for-ide-1.6.10-release-950-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/1.6.10-release-951/low-level-api-fir-for-ide-1.6.10-release-951-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
