@@ -807,7 +807,9 @@ public class SwitchBlockHighlightingModel {
             for (PsiClass permittedClass : getPermittedClasses(psiClass)) {
               if (!visited.add(permittedClass)) continue;
               PsiPattern pattern = patternClasses.get(permittedClass);
-              if (pattern == null || !JavaPsiPatternUtil.isTotalForType(pattern, TypeUtils.getType(permittedClass))) {
+              if (pattern == null && (PsiUtil.getLanguageLevel(permittedClass).isLessThan(LanguageLevel.JDK_18_PREVIEW) ||
+                                      TypeConversionUtil.areTypesConvertible(mySelectorType, TypeUtils.getType(permittedClass))) ||
+                  pattern != null && !JavaPsiPatternUtil.isTotalForType(pattern, TypeUtils.getType(permittedClass))) {
                 nonVisited.add(permittedClass);
               }
             }

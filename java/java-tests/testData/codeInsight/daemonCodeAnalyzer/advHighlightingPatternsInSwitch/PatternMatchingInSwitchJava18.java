@@ -221,6 +221,175 @@ class Main {
       case  <error descr="Label is dominated by a preceding case label '(Day dd && true)'">MONDAY</error>: break;
     }
   }
+
+  void completeness(Day d, I i, I2 i2, I3 i3, AorBorC abc, J1 j, II<Integer> ii) {
+    // old style switch, no completeness check
+    switch (d) {
+      case MONDAY, TUESDAY -> System.out.println("ok");
+    }
+
+    // If the type of the selector expression is an enum type E
+    String str;
+    switch (d) {
+      case Day dd && dd != null:
+        System.out.println("ok");
+      case <error descr="Label is dominated by a preceding case label 'Day dd && dd != null'">MONDAY</error>:
+        System.out.println("mon");
+    };
+    switch (<error descr="'switch' statement does not cover all possible input values">d</error>) {
+      case Day dd && dd != null:
+        System.out.println("ok");
+    };
+
+    str = switch (<error descr="'switch' expression does not cover all possible input values">d</error>) {
+      case MONDAY, TUESDAY -> System.out.println("ok");
+    };
+    str = switch (d) {
+      case MONDAY, TUESDAY, WEDNESDAY -> "ok";
+    };
+    str = switch (d) {
+      case MONDAY, TUESDAY, default -> "ok";
+    };
+
+    switch (d) {
+      case <error descr="'switch' has both a total pattern and a default label">((Day dd && true))</error>:
+        System.out.println("ok");
+      <error descr="'switch' has both a total pattern and a default label">default</error>: // blah blah blah
+        System.out.println("mon");
+    };
+    switch (d) {
+      case ((Day dd && dd != null)):
+        System.out.println("ok");
+      default:
+        System.out.println("mon");
+    };
+
+    // If the type of the selector expression, T, names a sealed interface or a sealed class that is abstract
+    switch(i) {
+      case Sub1 s1:
+        System.out.println("ok");
+        break;
+      case Sub2 s2:
+        System.out.println("ok");
+        break;
+      case Sub3 s3:
+        System.out.println("ok");
+        break;
+    }
+    str = switch(i) {
+      case Sub1 s1 -> "ok";
+      case Sub2 s2 -> "ok";
+      case Sub3 s3 && true -> "ok";
+    };
+
+    switch (<error descr="'switch' statement does not cover all possible input values">i</error>) {
+      case Sub1 s1:
+        System.out.println("ok");
+        break;
+      case Sub2 s2:
+        System.out.println("ok");
+        break;
+    }
+    str = switch(<error descr="'switch' expression does not cover all possible input values">i</error>) {
+      case Sub1 s1 -> "ok";
+      case Sub2 s2 -> "ok";
+    };
+    switch (<error descr="'switch' statement does not cover all possible input values">i</error>) {
+      case Sub1 s1:
+        System.out.println("ok");
+        break;
+      case Sub2 s2:
+        System.out.println("ok");
+        break;
+      case Sub4 s4:
+        System.out.println("ok");
+        break;
+      case Sub6 s6:
+        System.out.println("ok");
+        break;
+    }
+    str = switch(<error descr="'switch' expression does not cover all possible input values">i</error>) {
+      case Sub1 s1 -> "ok";
+      case Sub2 s2 -> "ok";
+      case Sub4 s4 -> "ok";
+      case Sub6 s6 -> "ok";
+    };
+
+    switch (<error descr="'switch' statement does not cover all possible input values">i</error>) {
+      case Sub1 s1:
+        break;
+      case (Sub2 s2 && false):
+        break;
+      case Sub3 s3:
+        break;
+    }
+    str = switch(<error descr="'switch' expression does not cover all possible input values">i</error>) {
+      case I in && in != null -> "ok";
+    };
+
+    switch (i3) {
+      case (Sub9 s && true):
+        break;
+      case Sub11 s:
+        break;
+      case Sub12 s && true:
+        break;
+    }
+
+    str = switch (abc) {
+      case A a -> "1";
+      case B b -> "2";
+      case C c -> "3";
+    };
+    str = switch (abc) {
+      case A a -> "1";
+      case C c -> "2";
+      case AorB ab -> "3";
+      case BorC bc -> "4";
+    };
+
+    switch (j) {
+      case R1 r1:
+        break;
+      case R2 r2:
+        break;
+    }
+
+    // If the type of the selector expression, T, is not an enum type and also does not name a sealed interface or a sealed class that is abstract
+    switch (<error descr="'switch' statement does not cover all possible input values">i2</error>) {
+      case Sub7 s1:
+        System.out.println("ok");
+        break;
+      case Sub8 s2:
+        System.out.println("ok");
+        break;
+    }
+    str = switch (<error descr="'switch' expression does not cover all possible input values">i2</error>) {
+      case Sub7 s1 -> "ok";
+      case Sub8 s2 -> "ok";
+    };
+
+    // empty switches
+    switch (d) {
+    }
+    str = switch (<error descr="'switch' expression does not have any case clauses">d</error>) {
+    };
+
+    switch (<error descr="'switch' statement does not have any case clauses">i</error>) {
+    }
+    str = switch (<error descr="'switch' expression does not have any case clauses">i</error>) {
+    };
+
+    switch (<error descr="'switch' statement does not have any case clauses">i2</error>) {
+    }
+    str = switch (<error descr="'switch' expression does not have any case clauses">i2</error>) {
+    };
+
+    // 'case AA' is redundant brach here as 'AA' is not castable to II<Integer>, so the code compiles correctly
+    switch (ii) {
+      case BB b -> {}
+    }
+  }
 }
 
 sealed interface I {
@@ -283,3 +452,7 @@ sealed interface J1 {}
 sealed interface J2 extends J1 permits R1 {}
 record R1() implements J1, J2 {}
 record R2() implements J1 {}
+
+sealed interface II<T> {}
+final class AA implements II<String> {}
+final class BB<T> implements II<Object> {}
