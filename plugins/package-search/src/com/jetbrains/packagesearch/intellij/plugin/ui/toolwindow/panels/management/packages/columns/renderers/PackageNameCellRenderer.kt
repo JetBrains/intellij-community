@@ -17,7 +17,6 @@ import net.miginfocom.layout.DimConstraint
 import net.miginfocom.layout.LC
 import net.miginfocom.layout.UnitValue
 import net.miginfocom.swing.MigLayout
-import org.apache.commons.lang3.StringUtils
 import java.awt.Dimension
 import java.awt.Graphics
 import javax.swing.JLabel
@@ -154,7 +153,7 @@ internal object PackageNameCellRenderer : TableCellRenderer {
                 color = background
                 fillRect(tagX - componentGapX, 0, columnWidth - tagX, height)
 
-                // Then we manually translate the tag to the right hand side of the row and paint it
+                // Then we manually translate the tag to the right-hand side of the row and paint it
                 translate(tagX, tagY)
                 tagComponent.apply {
                     isVisible = true

@@ -7,12 +7,14 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.components.BrowsableLinkLabel
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScalableUnits
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScaledPixels
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import org.jetbrains.annotations.Nls
 import java.awt.CardLayout
 import java.awt.Color
@@ -140,13 +142,15 @@ object PackageSearchUI {
         else -> GRAY_COLOR
     }
 
-    internal fun setHeight(component: JComponent, height: Int, keepWidth: Boolean = false, scale: Boolean = true) {
-        val scaledHeight = if (scale) JBUI.scale(height) else height
+    internal fun setHeight(component: JComponent, @ScalableUnits height: Int, keepWidth: Boolean = false) {
+        setHeightPreScaled(component, height.scaled(), keepWidth)
+    }
 
+    internal fun setHeightPreScaled(component: JComponent, @ScaledPixels height: Int, keepWidth: Boolean = false) {
         component.apply {
-            preferredSize = Dimension(if (keepWidth) preferredSize.width else 0, scaledHeight)
-            minimumSize = Dimension(if (keepWidth) minimumSize.width else 0, scaledHeight)
-            maximumSize = Dimension(if (keepWidth) maximumSize.width else Int.MAX_VALUE, scaledHeight)
+            preferredSize = Dimension(if (keepWidth) preferredSize.width else 0, height)
+            minimumSize = Dimension(if (keepWidth) minimumSize.width else 0, height)
+            maximumSize = Dimension(if (keepWidth) maximumSize.width else Int.MAX_VALUE, height)
         }
     }
 

@@ -177,7 +177,7 @@ internal class PackagesListPanel(
     }
 
     private val searchPanel = PackageSearchUI.headerPanel {
-        PackageSearchUI.setHeight(this, PackageSearchUI.MediumHeaderHeight.get())
+        PackageSearchUI.setHeightPreScaled(this, PackageSearchUI.MediumHeaderHeight.get())
 
         border = BorderFactory.createEmptyBorder()
 
