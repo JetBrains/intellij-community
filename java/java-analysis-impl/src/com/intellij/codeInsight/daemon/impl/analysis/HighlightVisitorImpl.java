@@ -1792,19 +1792,30 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     PsiType conditionalType = expression.getType();
     if (conditionalType == null) return;
     PsiExpression[] sides = {thenExpression, elseExpression};
-    PsiType type = null;
-    for (PsiExpression side : sides) {
+    PsiType expectedType = null;
+    boolean isExpectedTypeComputed = false;
+    for (int i = 0; i < sides.length; i++) {
+      PsiExpression side = sides[i];
+      PsiExpression otherSide = i == 0 ? sides[1] : sides[0];
       PsiType sideType = side.getType();
       if (sideType != null && !TypeConversionUtil.isAssignable(conditionalType, sideType)) {
         HighlightInfo info = HighlightUtil.checkAssignability(conditionalType, sideType, side, side);
         if (info == null) continue;
-        if (side == thenExpression) {
-          PsiElementFactory factory = PsiElementFactory.getInstance(expression.getProject());
-          PsiExpression expressionCopy = factory.createExpressionFromText(expression.getText(), expression);
-          type = expressionCopy.getType();
-        }
-        if (type != null) {
-          HighlightUtil.registerChangeTypeFix(info, expression, type);
+        if (!TypeConversionUtil.isVoidType(sideType)) {
+          if (TypeConversionUtil.isVoidType(otherSide.getType())) {
+            HighlightUtil.registerChangeTypeFix(info, expression, sideType);
+          }
+          else {
+            if (!isExpectedTypeComputed) {
+              PsiElementFactory factory = PsiElementFactory.getInstance(expression.getProject());
+              PsiExpression expressionCopy = factory.createExpressionFromText(expression.getText(), expression);
+              expectedType = expressionCopy.getType();
+              isExpectedTypeComputed = true;
+            }
+            if (expectedType != null) {
+              HighlightUtil.registerChangeTypeFix(info, expression, expectedType);
+            }
+          }
         }
         myHolder.add(info);
       }
