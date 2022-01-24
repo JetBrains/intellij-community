@@ -106,15 +106,11 @@ public class InstructionImpl implements Instruction {
   }
 
   public void addSuccessor(InstructionImpl instruction) {
-    if (!mySuccessors.contains(instruction)) {
-      mySuccessors.add(instruction);
-    }
+    mySuccessors.add(instruction);
   }
 
   public void addPredecessor(InstructionImpl instruction) {
-    if (!mySuccessors.contains(instruction)) {
-      myPredecessors.add(instruction);
-    }
+    myPredecessors.add(instruction);
   }
 
   void addNegationsFrom(Instruction instruction) {
