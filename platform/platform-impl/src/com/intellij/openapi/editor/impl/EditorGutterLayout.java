@@ -115,6 +115,7 @@ public class EditorGutterLayout {
         .as(EditorMouseEventArea.LINE_NUMBERS_AREA)
         .showIf(this::isLineNumbersShown),
 
+      area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationExtraSize),
       area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationGuttersSize),
       areaGap()
         .as(EditorMouseEventArea.ANNOTATIONS_AREA)
@@ -135,6 +136,7 @@ public class EditorGutterLayout {
 
   private List<GutterArea> createExperimentalLayout() {
     return List.of(
+      area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationExtraSize),
       areaGap()
         .as(EditorMouseEventArea.ANNOTATIONS_AREA)
         .showIf(() -> myEditorGutter.isShowGapAfterAnnotations()),
