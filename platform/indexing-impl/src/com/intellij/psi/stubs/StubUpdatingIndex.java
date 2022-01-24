@@ -16,16 +16,17 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesRetriever;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
-import com.intellij.util.*;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.IndexStorage;
@@ -33,13 +34,16 @@ import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.storage.TransientChangesIndexStorage;
+import com.intellij.util.indexing.storage.MapReduceIndexBase;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.PersistentHashMapValueStorage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
@@ -47,15 +51,13 @@ import java.util.function.Consumer;
 
 public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<SerializedStubTree>
   implements CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree> {
-  private static final Logger LOG = Logger.getInstance(StubUpdatingIndex.class);
+  @ApiStatus.Internal
+  static final Logger LOG = Logger.getInstance(StubUpdatingIndex.class);
   private static final boolean DEBUG_PREBUILT_INDICES = SystemProperties.getBooleanProperty("debug.prebuilt.indices", false);
 
   public static final boolean USE_SNAPSHOT_MAPPINGS = false; //TODO
 
   private static final int VERSION = 45 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1 : 0);
-
-  // todo remove once we don't need this for stub-ast mismatch debug info
-  private static final FileAttribute INDEXED_STAMP = new FileAttribute("stubIndexStamp", 3, true);
 
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("Stubs");
 
@@ -76,7 +78,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   }
 
   public static boolean canHaveStub(@NotNull VirtualFile file) {
-    Project project = ProjectUtil.guessProjectForFile(file);
+    Project project = ProjectLocator.getInstance().guessProjectForFile(file);
     FileType fileType = SubstitutedFileType.substituteFileType(file, file.getFileType(), project);
     return canHaveStub(file, fileType);
   }
@@ -85,11 +87,11 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     if (fileType instanceof LanguageFileType) {
       Language l = ((LanguageFileType)fileType).getLanguage();
       ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
-      FileBasedIndexImpl fileBasedIndex = ObjectUtils.tryCast(FileBasedIndex.getInstance(), FileBasedIndexImpl.class);
+      FileBasedIndexEx fileBasedIndex = ObjectUtils.tryCast(FileBasedIndex.getInstance(), FileBasedIndexEx.class);
 
       if (parserDefinition == null) {
         if (fileBasedIndex != null && fileBasedIndex.doTraceStubUpdates(StubUpdatingIndex.INDEX_ID)) {
-          FileBasedIndexImpl.LOG.info("No parser definition for " + file.getName());
+          fileBasedIndex.getLogger().info("No parser definition for " + file.getName());
         }
         return false;
       }
@@ -97,14 +99,14 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       final IFileElementType elementType = parserDefinition.getFileNodeType();
       if (elementType instanceof IStubFileElementType && ((IStubFileElementType<?>)elementType).shouldBuildStubFor(file)) {
         if (fileBasedIndex != null && fileBasedIndex.doTraceStubUpdates(StubUpdatingIndex.INDEX_ID)) {
-          FileBasedIndexImpl.LOG.info("Should build stub for " + file.getName());
+          fileBasedIndex.getLogger().info("Should build stub for " + file.getName());
         }
         return true;
       }
 
       if (fileBasedIndex != null && fileBasedIndex.doTraceStubUpdates(StubUpdatingIndex.INDEX_ID)) {
-        FileBasedIndexImpl.LOG.info("Can't build stub using stub file element type " + file.getName() +
-                                    ", properties: " + PushedFilePropertiesRetriever.getInstance().dumpSortedPushedProperties(file));
+        fileBasedIndex.getLogger().info("Can't build stub using stub file element type " + file.getName() +
+                                        ", properties: " + PushedFilePropertiesRetriever.getInstance().dumpSortedPushedProperties(file));
       }
     }
     final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
@@ -278,8 +280,6 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     }
   }
 
-  private static final byte IS_BINARY_MASK = 1;
-  private static final byte BYTE_AND_CHAR_LENGTHS_ARE_THE_SAME_MASK = 1 << 1;
   @NotNull
   static IndexingStampInfo calculateIndexingStamp(@NotNull FileContent content) {
     VirtualFile file = content.getFile();
@@ -290,61 +290,9 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     return new IndexingStampInfo(file.getTimeStamp(), byteLength, contentLength, isBinary);
   }
 
-  static void saveIndexingStampInfo(@Nullable IndexingStampInfo indexingStampInfo, int fileId) {
-    try (DataOutputStream stream = FSRecords.writeAttribute(fileId, INDEXED_STAMP)) {
-      if (indexingStampInfo == null) return;
-      DataInputOutputUtil.writeTIME(stream, indexingStampInfo.indexingFileStamp);
-      DataInputOutputUtil.writeLONG(stream, indexingStampInfo.indexingByteLength);
-
-      boolean lengthsAreTheSame = indexingStampInfo.indexingCharLength == indexingStampInfo.indexingByteLength;
-      byte flags = 0;
-      flags = BitUtil.set(flags, IS_BINARY_MASK, indexingStampInfo.isBinary);
-      flags = BitUtil.set(flags, BYTE_AND_CHAR_LENGTHS_ARE_THE_SAME_MASK, lengthsAreTheSame);
-      stream.writeByte(flags);
-
-      if (!lengthsAreTheSame && !indexingStampInfo.isBinary) {
-        DataInputOutputUtil.writeINT(stream, indexingStampInfo.indexingCharLength);
-      }
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-  }
-
   @Override
   public int getCacheSize() {
     return super.getCacheSize() * Runtime.getRuntime().availableProcessors();
-  }
-
-  @Nullable
-  static IndexingStampInfo readSavedIndexingStampInfo(@NotNull VirtualFile file) {
-    try (DataInputStream stream = INDEXED_STAMP.readAttribute(file)) {
-      if (stream == null || stream.available() <= 0) {
-        return null;
-      }
-      long stamp = DataInputOutputUtil.readTIME(stream);
-      long byteLength = DataInputOutputUtil.readLONG(stream);
-
-      byte flags = stream.readByte();
-      boolean isBinary = BitUtil.isSet(flags, IS_BINARY_MASK);
-      boolean readOnlyOneLength = BitUtil.isSet(flags, BYTE_AND_CHAR_LENGTHS_ARE_THE_SAME_MASK);
-
-      int charLength;
-      if (isBinary) {
-        charLength = -1;
-      }
-      else if (readOnlyOneLength) {
-        charLength = (int)byteLength;
-      }
-      else {
-        charLength = DataInputOutputUtil.readINT(stream);
-      }
-      return new IndexingStampInfo(stamp, byteLength, charLength, isBinary);
-    }
-    catch (IOException e) {
-      LOG.error(e);
-      return null;
-    }
   }
 
   @NotNull
@@ -377,7 +325,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
 
   @Override
   public void handleInitializationError(@NotNull Throwable e) {
-    ((StubIndexImpl)StubIndex.getInstance()).initializationFailed(e);
+    ((StubIndexEx)StubIndex.getInstance()).initializationFailed(e);
   }
 
   @NotNull
@@ -385,11 +333,11 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   public UpdatableIndex<Integer, SerializedStubTree, FileContent> createIndexImplementation(@NotNull final FileBasedIndexExtension<Integer, SerializedStubTree> extension,
                                                                                             @NotNull VfsAwareIndexStorageLayout<Integer, SerializedStubTree> layout)
     throws StorageException, IOException {
-    ((StubIndexImpl)StubIndex.getInstance()).initializeStubIndexes();
+    ((StubIndexEx)StubIndex.getInstance()).initializeStubIndexes();
     checkNameStorage();
     mySerializationManager.initialize();
 
-    StubUpdatingIndexStorage index = new StubUpdatingIndexStorage(extension, new VfsAwareIndexStorageLayout<>() {
+    MapReduceIndexBase<Integer, SerializedStubTree> index = StubUpdatableIndexFactory.getInstance().createIndex(extension, new VfsAwareIndexStorageLayout<>() {
       @Override
       public void clearIndexData() {
         layout.clearIndexData();
@@ -416,12 +364,12 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       memStorage.addBufferingStateListener(new TransientChangesIndexStorage.BufferingStateListener() {
         @Override
         public void bufferingStateChanged(final boolean newState) {
-          ((StubIndexImpl)StubIndex.getInstance()).setDataBufferingEnabled(newState);
+          ((StubIndexEx)StubIndex.getInstance()).setDataBufferingEnabled(newState);
         }
 
         @Override
         public void memoryStorageCleared() {
-          ((StubIndexImpl)StubIndex.getInstance()).cleanupMemoryStorage();
+          ((StubIndexEx)StubIndex.getInstance()).cleanupMemoryStorage();
         }
       });
     }

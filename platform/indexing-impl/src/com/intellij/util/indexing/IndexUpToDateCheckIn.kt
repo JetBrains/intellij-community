@@ -2,8 +2,10 @@
 package com.intellij.util.indexing
 
 import com.intellij.openapi.util.ThrowableComputable
+import org.jetbrains.annotations.ApiStatus
 
-internal object IndexUpToDateCheckIn {
+@ApiStatus.Internal
+object IndexUpToDateCheckIn {
   private val upToDateCheckState = ThreadLocal<Int>()
 
   @JvmStatic

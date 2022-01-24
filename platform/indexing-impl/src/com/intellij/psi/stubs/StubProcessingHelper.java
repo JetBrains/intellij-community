@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.application.AppUIExecutor;
@@ -35,7 +35,7 @@ public final class StubProcessingHelper extends StubProcessingHelperBase {
                                                                      boolean failOnMissedKeys) {
     int id = ((VirtualFileWithId)file).getId();
     try {
-      Map<Integer, SerializedStubTree> data = StubIndexImpl.getStubUpdatingIndex().getIndexedFileData(id);
+      Map<Integer, SerializedStubTree> data = StubIndexEx.getStubUpdatingIndex().getIndexedFileData(id);
       if (data.size() != 1) {
         if (failOnMissedKeys) {
           LOG.error("Stub index points to a file (" + getFileTypeInfo(file, project) + ") without indexed stub tree; " +

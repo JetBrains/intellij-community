@@ -37,10 +37,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.psi.PsiBinaryFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -82,8 +79,7 @@ import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,9 +110,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @ApiStatus.Internal
   public static final Logger LOG = Logger.getInstance(FileBasedIndexImpl.class);
-  private volatile boolean myTraceIndexUpdates;
-  private volatile boolean myTraceStubIndexUpdates;
-  private volatile boolean myTraceSharedIndexUpdates;
 
   private volatile RegisteredIndexes myRegisteredIndexes;
   private volatile @Nullable String myShutdownReason;
@@ -228,20 +221,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }, null);
 
     myIndexableFilesFilterHolder = new IncrementalProjectIndexableFilesFilterHolder();
-  }
-
-  boolean doTraceIndexUpdates() {
-    return myTraceIndexUpdates;
-  }
-
-  @ApiStatus.Internal
-  public boolean doTraceStubUpdates(@NotNull ID<?, ?> indexId) {
-    return myTraceStubIndexUpdates && indexId.equals(StubUpdatingIndex.INDEX_ID);
-  }
-
-  @ApiStatus.Internal
-  boolean doTraceSharedIndexUpdates() {
-    return myTraceSharedIndexUpdates;
   }
 
   void scheduleFullIndexesRescan(@NotNull Collection<ID<?, ?>> indexesToRebuild, @NotNull String reason) {
@@ -419,11 +398,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
+  @Override
   public synchronized void loadIndexes() {
     if (myRegisteredIndexes == null) {
-      myTraceIndexUpdates = SystemProperties.getBooleanProperty("trace.file.based.index.update", false);
-      myTraceStubIndexUpdates = SystemProperties.getBooleanProperty("trace.stub.index.update", false);
-      myTraceSharedIndexUpdates = SystemProperties.getBooleanProperty("trace.shared.index.update", false);
+      super.loadIndexes();
 
       LOG.assertTrue(myRegisteredIndexes == null);
       myStorageBufferingHandler.resetState();
@@ -771,10 +749,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
 
     SnapshotHashEnumeratorService.getInstance().flush();
-  }
-
-  public static <T,E extends Throwable> T disableUpToDateCheckIn(@NotNull ThrowableComputable<T, E> runnable) throws E {
-    return IndexUpToDateCheckIn.disableUpToDateCheckIn(runnable);
   }
 
   private final ThreadLocal<Boolean> myReentrancyGuard = ThreadLocal.withInitial(() -> Boolean.FALSE);
@@ -1214,6 +1188,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   };
 
   @ApiStatus.Internal
+  @Override
   public void runCleanupAction(@NotNull Runnable cleanupAction) {
     Computable<Boolean> updateComputable = () -> {
       ProgressManager.getInstance().executeNonCancelableSection(cleanupAction);
