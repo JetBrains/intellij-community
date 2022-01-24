@@ -55,6 +55,7 @@ fun getAddExclExclCallFix(element: PsiElement?, checkImplicitReceivers: Boolean 
         is KtExpression -> {
             val parent = psiElement.parent
             val context = psiElement.analyze()
+
             if (checkImplicitReceivers && psiElement.getResolvedCall(context)?.getImplicitReceiverValue() is ExtensionReceiver) {
                 val expressionToReplace = parent as? KtCallExpression ?: parent as? KtCallableReferenceExpression ?: psiElement
                 expressionToReplace.asFix(implicitReceiver = true)

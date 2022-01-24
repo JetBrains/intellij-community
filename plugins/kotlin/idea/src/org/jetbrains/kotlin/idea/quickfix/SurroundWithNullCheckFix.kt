@@ -22,8 +22,10 @@ import org.jetbrains.kotlin.psi.psiUtil.getLastParentOfTypeInRow
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
+import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isNullabilityMismatch
 
 class SurroundWithNullCheckFix(
@@ -98,10 +100,28 @@ class SurroundWithNullCheckFix(
     }
 
     object TypeMismatchFactory : KotlinSingleIntentionActionFactory() {
-
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-            val typeMismatch = Errors.TYPE_MISMATCH.cast(diagnostic)
-            val nullableExpression = typeMismatch.psiElement as? KtReferenceExpression ?: return null
+            val nullableExpression = diagnostic.psiElement as? KtReferenceExpression ?: return null
+            val expectedType: KotlinType
+            val actualType: KotlinType
+            when (diagnostic.factory) {
+                Errors.TYPE_MISMATCH -> {
+                    val diagnosticWithParameters = Errors.TYPE_MISMATCH.cast(diagnostic)
+                    expectedType = diagnosticWithParameters.a
+                    actualType = diagnosticWithParameters.b
+                }
+                Errors.TYPE_MISMATCH_WARNING -> {
+                    val diagnosticWithParameters = Errors.TYPE_MISMATCH_WARNING.cast(diagnostic)
+                    expectedType = diagnosticWithParameters.a
+                    actualType = diagnosticWithParameters.b
+                }
+                ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS -> {
+                    val diagnosticWithParameters = ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.cast(diagnostic)
+                    expectedType = diagnosticWithParameters.a
+                    actualType = diagnosticWithParameters.b
+                }
+                else -> return null
+            }
             val root = when (val parent = nullableExpression.parent) {
                 is KtValueArgument -> {
                     val call = parent.getParentOfType<KtCallExpression>(true) ?: return null
@@ -114,7 +134,7 @@ class SurroundWithNullCheckFix(
                 else -> return null
             }
             if (root.parent !is KtBlockExpression) return null
-            if (!isNullabilityMismatch(expected = typeMismatch.a, actual = typeMismatch.b)) return null
+            if (!isNullabilityMismatch(expected = expectedType, actual = actualType)) return null
             if (!nullableExpression.isStableSimpleExpression()) return null
             return SurroundWithNullCheckFix(root, nullableExpression)
         }

@@ -16,6 +16,8 @@ import org.jetbrains.kotlin.idea.intentions.canBeReplacedWithInvokeCall
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
+import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.isNullabilityMismatch
 
@@ -87,13 +89,47 @@ class WrapWithSafeLetCallFix(
 
     object TypeMismatchFactory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-            val typeMismatch = Errors.TYPE_MISMATCH.cast(diagnostic)
-            val argument = typeMismatch.psiElement.parent as? KtValueArgument ?: return null
+            val element = diagnostic.psiElement as? KtExpression ?: return null
+            val argument = element.parent as? KtValueArgument ?: return null
             val call = argument.getParentOfType<KtCallExpression>(true) ?: return null
 
-            if (!isNullabilityMismatch(expected = typeMismatch.a, actual = typeMismatch.b)) return null
+            val expectedType: KotlinType
+            val actualType: KotlinType
+            when (diagnostic.factory) {
+                Errors.TYPE_MISMATCH -> {
+                    val diagnosticWithParameters = Errors.TYPE_MISMATCH.cast(diagnostic)
+                    expectedType = diagnosticWithParameters.a
+                    actualType = diagnosticWithParameters.b
+                }
+                Errors.TYPE_MISMATCH_WARNING -> {
+                    val diagnosticWithParameters = Errors.TYPE_MISMATCH_WARNING.cast(diagnostic)
+                    expectedType = diagnosticWithParameters.a
+                    actualType = diagnosticWithParameters.b
+                }
+                ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS -> {
+                    val diagnosticWithParameters = ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.cast(diagnostic)
+                    expectedType = diagnosticWithParameters.a
+                    actualType = diagnosticWithParameters.b
+                }
+                else -> return null
+            }
 
-            return WrapWithSafeLetCallFix(call.getLastParentOfTypeInRow<KtQualifiedExpression>() ?: call, typeMismatch.psiElement)
+            if (!isNullabilityMismatch(expected = expectedType, actual = actualType)) return null
+
+            return WrapWithSafeLetCallFix(call.getLastParentOfTypeInRow<KtQualifiedExpression>() ?: call, element)
+        }
+    }
+
+    object NullabilityMismatchBasedOnJavaAnnotationsFactory : KotlinSingleIntentionActionFactory() {
+        override fun createAction(diagnostic: Diagnostic): IntentionAction? {
+            val nullabilityMismatch = ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.cast(diagnostic)
+            val element = nullabilityMismatch.psiElement as? KtExpression ?: return null
+            val argument = element.parent as? KtValueArgument ?: return null
+            val call = argument.getParentOfType<KtCallExpression>(strict = true) ?: return null
+
+            if (!isNullabilityMismatch(expected = nullabilityMismatch.a, actual = nullabilityMismatch.b)) return null
+
+            return WrapWithSafeLetCallFix(call.getLastParentOfTypeInRow<KtQualifiedExpression>() ?: call, element)
         }
     }
 }
