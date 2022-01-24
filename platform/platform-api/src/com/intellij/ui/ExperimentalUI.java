@@ -188,12 +188,10 @@ public final class ExperimentalUI {
     paths.put("org/jetbrains/plugins/sass/sass.svg", "/expui/fileTypes/scss.svg");
     paths.put("icons/shFile.svg", "/expui/fileTypes/shell.svg");
     paths.put("icons/MarkdownPlugin.svg", "/expui/fileTypes/markdown.svg");
-    if (isNewToolbar()) {
-      paths.put("actions/execute.svg", "expui/run/run.svg");
-      paths.put("actions/startDebugger.svg", "expui/run/debug.svg");
-      paths.put("actions/restart.svg", "expui/run/restart.svg");
-      paths.put("actions/suspend.svg", "expui/run/stop.svg");
-    }
+    paths.put("actions/execute.svg", "expui/run/run.svg");
+    paths.put("actions/startDebugger.svg", "expui/run/debug.svg");
+    paths.put("actions/restart.svg", "expui/run/restart.svg");
+    paths.put("actions/suspend.svg", "expui/run/stop.svg");
     return new IconPathPatcher() {
       @Override
       public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
