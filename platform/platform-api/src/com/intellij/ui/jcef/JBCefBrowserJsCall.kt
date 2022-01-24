@@ -4,6 +4,7 @@ package com.intellij.ui.jcef
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.StringUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -13,15 +14,46 @@ typealias JsExpressionResult = String?
 typealias JsExpressionResultPromise = AsyncPromise<JsExpressionResult>
 
 /**
- * Performs JavaScript expression in the JCEF browser asynchronously.
+ * Asynchronously runs JavaScript code in the JCEF browser.
+ *
+ * @param javaScriptExpression
+ * The passed JavaScript code should be either:
+ * * a valid single-line JavaScript expression
+ * * a valid multi-line function-body with at least one "return" statement
+ *
+ * Examples:
+ * ```Kotlin
+ *  browser.executeJavaScriptAsync("2 + 2")
+ *     .onSuccess { r -> r /* r is 4 */ }
+ *
+ *  browser.executeJavaScriptAsync("return 2 + 2")
+ *     .onSuccess { r -> r /* r is 4 */ }
+ *
+ *  browser.executeJavaScriptAsync("""
+ *        function sum(s1, s2) {
+ *            return s1 + s2;
+ *        };
+ *
+ *        return sum(2,2);
+ *  """.trimIndent())
+ *     .onSuccess { r -> r /* r is 4 */ }
+ *
+ * ```
+ *
  * @return The [Promise] that provides JS execution result or an error.
  */
 fun JBCefBrowser.executeJavaScriptAsync(@Language("JavaScript") javaScriptExpression: JsExpression): Promise<JsExpressionResult> =
   JBCefBrowserJsCall(javaScriptExpression, this)()
 
+
 /**
  * Encapsulates the [javaScriptExpression] which is executed in the provided [browser] by the [invoke] method.
  * Handles JavaScript errors and submits them to the execution result.
+ * @param javaScriptExpression
+ * The passed JavaScript code should be either:
+ * * a valid single-line JavaScript expression
+ * * a valid multi-line function-body with at least one "return" statement
+ *
  * @see [executeJavaScriptAsync]
  */
 class JBCefBrowserJsCall(val javaScriptExpression: JsExpression, val browser: JBCefBrowser) {
@@ -93,14 +125,23 @@ class JBCefBrowserJsCall(val javaScriptExpression: JsExpression, val browser: JB
 
   private fun createQuery(parentDisposable: Disposable) = JBCefJSQuery.create(browser).also { Disposer.register(parentDisposable, it) }
 
+  private fun JsExpression.asFunctionBody(): JsExpression = let { expression ->
+    when {
+      StringUtil.containsLineBreak(expression) -> expression
+      StringUtil.startsWith(expression, "return") -> expression
+      else -> "return $expression"
+    }
+  }
+
+  @Suppress("JSVoidFunctionReturnValueUsed")
   @Language("JavaScript")
   private fun @receiver:Language("JavaScript") JsExpression.wrapWithErrorHandling(resultQuery: JBCefJSQuery, errorQuery: JBCefJSQuery) = """
+      function payload() {
+          ${asFunctionBody()}
+      }
+    
       try {
-          let exp = `
-              $this
-          `;      
-          
-          let result = eval(exp);
+          let result = payload();
 
           // call back the related JBCefJSQuery
           window.${resultQuery.funcName}({

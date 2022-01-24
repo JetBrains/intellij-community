@@ -42,7 +42,12 @@ class JBCefBrowserJsCallTest {
 
   @Test
   fun `execute throw expression`() {
-    doTest(""" throw 'error' """)
+    doTest(""" 
+      let r = 2 + 2
+      throw 'error'
+      return r
+""".trimIndent()
+    )
   }
 
   @Test
@@ -55,9 +60,9 @@ class JBCefBrowserJsCallTest {
     val js = """
       function myFunction(p1, p2) {
         return p1 * p2;   // The function returns the product of p1 and p2
-      }
+      };
       
-      myFunction(2,2)
+      return myFunction(2,2)
     """.trimIndent()
     doTest(js, "4")
   }
