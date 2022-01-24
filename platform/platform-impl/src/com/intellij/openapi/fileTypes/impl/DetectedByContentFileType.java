@@ -3,9 +3,13 @@ package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypesBundle;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,5 +50,12 @@ public final class DetectedByContentFileType implements FileType {
   @Override
   public boolean isBinary() {
     return false;
+  }
+
+  static boolean isMyFileType(@NotNull VirtualFile file) {
+    return FileTypeDetectionService.isDetectable(file)
+           && !(file instanceof StubVirtualFile)
+           && file.getLength() == 0
+           && FileTypeManager.getInstance().getFileTypeByFileName(file.getNameSequence()) == UnknownFileType.INSTANCE;
   }
 }

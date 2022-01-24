@@ -199,11 +199,13 @@ final class FileTypeDetectionService implements Disposable {
     myFileTypeManager.log(s);
   }
 
-  @NotNull FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content) {
+  @NotNull
+  FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content) {
     return getOrDetectFromContent(file, content, myCanUseCachedDetectedFileType);
   }
 
-  @NotNull FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content, boolean useCache) {
+  @NotNull
+  FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content, boolean useCache) {
     if (!isDetectable(file)) {
       if (myFileTypeManager.getFileTypeByFileName(file.getName()) == DetectedByContentFileType.INSTANCE) {
         // allow opening empty file in IDEA's editor
@@ -329,12 +331,11 @@ final class FileTypeDetectionService implements Disposable {
     LOG.info(String.format("%s auto-detected files. Detection took %s ms", counterAutoDetect, elapsedAutoDetect));
   }
 
-  private static boolean isDetectable(@NotNull final VirtualFile file) {
-    if (file.isDirectory() || !file.isValid() || file.is(VFileProperty.SPECIAL)) {
-      // for empty file there is still hope its type will change
-      return false;
-    }
-    return file.getFileSystem() instanceof FileSystemInterface;
+  static boolean isDetectable(@NotNull final VirtualFile file) {
+    return !file.isDirectory()
+           && file.isValid()
+           && !file.is(VFileProperty.SPECIAL)
+           && file.getFileSystem() instanceof FileSystemInterface;
   }
 
   // read auto-detection flags from the persistent FS file attributes. If file attributes are absent, return 0 for flags
