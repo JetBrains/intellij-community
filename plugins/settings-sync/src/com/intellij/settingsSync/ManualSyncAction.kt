@@ -32,6 +32,6 @@ class ManualSyncAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = SettingsSyncMain.isAvailable()
+    e.presentation.isEnabledAndVisible = isSettingsSyncEnabledByKey() && SettingsSyncMain.isAvailable() && isSettingsSyncEnabledInSettings()
   }
 }
