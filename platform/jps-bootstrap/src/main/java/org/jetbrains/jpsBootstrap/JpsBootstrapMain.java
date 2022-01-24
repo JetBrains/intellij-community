@@ -204,7 +204,7 @@ public class JpsBootstrapMain {
     if (manifestJsonUrl != null) {
       jpsBuild.resolveProjectDependencies();
       info("Downloading project classes from " + manifestJsonUrl);
-      ClassesFromCompileInc.downloadProjectClasses(model.getProject(), communityHome);
+      ClassesFromCompileInc.downloadProjectClasses(model.getProject(), communityHome, JpsProjectUtils.getRuntimeModulesClasspath(module));
     } else {
       jpsBuild.buildModule(module);
     }
