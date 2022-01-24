@@ -338,22 +338,6 @@ abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : JPanel(la
   private fun getButtonsToLayOut(): List<JComponent> {
     val tools: MutableList<JComponent> = mutableListOf()
     val sideTools: MutableList<JComponent> = mutableListOf()
-    //for (button in buttons()) {
-    //  if (!button.isVisible) {
-    //    continue
-    //  }
-    //
-    //  if (button is StripeButton) {
-    //    if (button.windowInfo.isSplit) {
-    //      sideTools.add(button)
-    //    }
-    //    else {
-    //      tools.add(button)
-    //    }
-    //  }
-    //}
-    //result.addAll(tools)
-    //result.addAll(sideTools)
 
     buttons.filter { it.isVisible }.forEach {
       if (it is StripeButton) {

@@ -150,6 +150,7 @@ public final class ExperimentalUI {
     paths.put("toolwindows/toolWindowTodo.svg", "/expui/toolwindow/todo.svg");
     paths.put("toolwindows/toolWindowChanges.svg", "/expui/toolwindow/vcs.svg");
     paths.put("toolwindows/webToolWindow.svg", "/expui/toolwindow/web.svg");
+    paths.put("toolwindows/toolWindowFind.svg", "/expui/toolwindow/find.svg");
     paths.put("actions/more.svg", "/expui/general/moreVertical.svg");
     paths.put("actions/moreHorizontal.svg", "/expui/general/moreHorizontal.svg");
     paths.put("general/hideToolWindow.svg", "/expui/general/close.svg");
