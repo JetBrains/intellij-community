@@ -5122,6 +5122,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/typeCastExpression/intCast.java");
         }
 
+        @TestMetadata("ktij-17648.java")
+        public void testKtij_17648() throws Exception {
+            runTest("testData/newJ2k/typeCastExpression/ktij-17648.java");
+        }
+
         @TestMetadata("primitiveType.java")
         public void testPrimitiveType() throws Exception {
             runTest("testData/newJ2k/typeCastExpression/primitiveType.java");
