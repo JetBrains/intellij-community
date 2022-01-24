@@ -118,7 +118,7 @@ class PyCharmCommunityMacDistributionCustomizer extends PyCharmMacDistributionCu
   PyCharmCommunityMacDistributionCustomizer(projectHome) {
     icnsPath = "$projectHome/python/resources/PyCharmCore.icns"
     icnsPathForEAP = "$projectHome/python/resources/PyCharmCore_EAP.icns"
-    bundleIdentifier = "com.jetbrains.pycharm"
+    bundleIdentifier = "com.jetbrains.pycharm.ce"
     dmgImagePath = "$projectHome/python/build/dmg_background.tiff"
   }
 
