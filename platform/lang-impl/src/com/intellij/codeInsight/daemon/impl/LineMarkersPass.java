@@ -71,6 +71,10 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
+    if (!EditorSettingsExternalizable.getInstance().areGutterIconsShown()) {
+      // optimization: do not even try to query expensive providers if icons they are going to produce are not to be displayed
+      return;
+    }
     final List<LineMarkerInfo<?>> lineMarkers = new ArrayList<>();
     FileViewProvider viewProvider = myFile.getViewProvider();
     for (Language language : viewProvider.getLanguages()) {
