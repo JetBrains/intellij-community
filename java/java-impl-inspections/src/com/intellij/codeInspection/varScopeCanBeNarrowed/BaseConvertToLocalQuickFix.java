@@ -14,7 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.InlineUtil;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NotNullFunction;
@@ -67,7 +67,8 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
 
       if (VariableAccessUtils.isLocalVariableCopy(newVariable, initializer)) {
         for (PsiReference reference : ReferencesSearch.search(newVariable).findAll()) {
-          InlineUtil.inlineVariable(newVariable, initializer, (PsiJavaCodeReferenceElement)reference);
+          JavaSpecialRefactoringProvider.getInstance()
+            .inlineVariable(newVariable, initializer, (PsiJavaCodeReferenceElement)reference, null);
         }
         declaration.delete();
       }

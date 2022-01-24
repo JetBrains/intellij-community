@@ -21,6 +21,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -263,7 +264,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
                                                    PsiElement anchor, final JavaReplaceChoice replaceChoice) {
         final PsiType type = typeSelectorManager.getDefaultType();
         assertEquals(type.getPresentableText(), expectedTypeName, type.getPresentableText());
-        assertEquals("path", getSuggestedName(type, expr).names[0]);
+        assertEquals("path", CommonJavaRefactoringUtil.getSuggestedName(type, expr).names[0]);
         return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS,
                                  validator, anchor, replaceChoice);
       }

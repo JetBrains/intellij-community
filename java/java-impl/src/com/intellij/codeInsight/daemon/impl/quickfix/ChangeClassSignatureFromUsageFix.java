@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog;
 import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -123,11 +124,11 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
       else {
         suggestedName = suggester.suggestUnusedName("T");
       }
-      final PsiTypeCodeFragment boundFragment = ChangeClassSignatureDialog.createTableCodeFragment(boundType, typeElement, factory, true);
+      final PsiTypeCodeFragment boundFragment = CommonJavaRefactoringUtil.createTableCodeFragment(boundType, typeElement, factory, true);
       result.add(new TypeParameterInfoView(new TypeParameterInfo.New(suggestedName, defaultType, null),
                                            boundFragment,
                                            boundType == null ? factory.createTypeCodeFragment(suggestedName, typeElement, true)
-                                                             : ChangeClassSignatureDialog
+                                                             : CommonJavaRefactoringUtil
                                              .createTableCodeFragment(boundType, typeElement, factory, false)));
     }
     return result;

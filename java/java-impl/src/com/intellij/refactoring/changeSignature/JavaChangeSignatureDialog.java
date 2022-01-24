@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
@@ -31,6 +31,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
 import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
@@ -46,7 +47,6 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.DialogUtil;
@@ -121,24 +121,22 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       @Override
       protected BaseRefactoringProcessor createRefactoringProcessor() {
         final List<ParameterInfoImpl> parameters = getParameters();
-        return new ChangeSignatureProcessor(myProject,
-                                            myMethod.getMethod(),
-                                            isGenerateDelegate(),
-                                            getVisibility(),
-                                            getMethodName(),
-                                            getReturnType(),
-                                            parameters.toArray(new ParameterInfoImpl[0]),
-                                            getExceptions(),
-                                            myMethodsToPropagateParameters,
-                                            myMethodsToPropagateExceptions) {
-          @Override
-          protected void performRefactoring(UsageInfo @NotNull [] usages) {
-            super.performRefactoring(usages);
+        var provider = JavaSpecialRefactoringProvider.getInstance();
+        return provider.getChangeSignatureProcessorWithCallback(
+          myProject,
+          myMethod.getMethod(),
+          isGenerateDelegate(),
+          getVisibility(),
+          getMethodName(),
+          getReturnType(),
+          parameters.toArray(new ParameterInfoImpl[0]),
+          getExceptions(),
+          myMethodsToPropagateParameters,
+          myMethodsToPropagateExceptions, () -> {
             if (callback != null) {
               callback.consume(getParameters());
             }
-          }
-        };
+          });
       }
     };
   }
@@ -518,10 +516,13 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     return ActionUtil.underModalProgress(
       myProject,
       JavaRefactoringBundle.message("changeSignature.processing.changes.title"),
-      () -> new ChangeSignatureProcessor(
-        myProject, getMethod(), isGenerateDelegate(), getVisibility(), getMethodName(), getReturnType(),
-        parameters.toArray(new ParameterInfoImpl[0]), getExceptions(), myMethodsToPropagateParameters, myMethodsToPropagateExceptions
-      )
+      () -> {
+        var provider = JavaSpecialRefactoringProvider.getInstance();
+        return provider.getChangeSignatureProcessorWithCallback(
+          myProject, getMethod(), isGenerateDelegate(), getVisibility(), getMethodName(), getReturnType(),
+          parameters.toArray(new ParameterInfoImpl[0]), getExceptions(), myMethodsToPropagateParameters, myMethodsToPropagateExceptions,
+          null);
+      }
     );
   }
 

@@ -1,0 +1,412 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.refactoring;
+
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.actions.TypeCookAction;
+import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureProcessor;
+import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
+import com.intellij.refactoring.changeSignature.*;
+import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
+import com.intellij.refactoring.extractMethod.PrepareFailedException;
+import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
+import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
+import com.intellij.refactoring.introduceField.InplaceIntroduceFieldPopup;
+import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
+import com.intellij.refactoring.introduceField.JavaIntroduceFieldHandlerBase;
+import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
+import com.intellij.refactoring.introduceVariable.*;
+import com.intellij.refactoring.makeStatic.MakeMethodStaticProcessor;
+import com.intellij.refactoring.makeStatic.Settings;
+import com.intellij.refactoring.memberPullUp.PullUpProcessor;
+import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
+import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor;
+import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
+import com.intellij.refactoring.typeMigration.TypeMigrationRules;
+import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.refactoring.util.DocCommentPolicy;
+import com.intellij.refactoring.util.InlineUtil;
+import com.intellij.refactoring.util.RefactoringConflictsUtil;
+import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.refactoring.util.duplicates.Match;
+import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Consumer;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
+
+public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactoringProvider {
+  @Override
+  public @NotNull RefactoringActionHandler getTypeCookHandler() {
+    return new TypeCookAction().getHandler();
+  }
+
+  @Override
+  public @NotNull JavaIntroduceVariableHandlerBase getIntroduceVariableUnitTestAwareHandler() {
+    return new IntroduceVariableHandler() {
+      @Override
+      public IntroduceVariableSettings getSettings(Project project, Editor editor, PsiExpression expr,
+                                                   PsiExpression[] occurrences, TypeSelectorManagerImpl typeSelectorManager,
+                                                   boolean declareFinalIfAll, boolean anyAssignmentLHS, InputValidator validator,
+                                                   PsiElement anchor, JavaReplaceChoice replaceChoice) {
+        if (replaceChoice == null && ApplicationManager.getApplication().isUnitTestMode()) {
+          replaceChoice = JavaReplaceChoice.ALL;
+        }
+        return super.getSettings(project, editor, expr, occurrences, typeSelectorManager,
+                                 declareFinalIfAll, anyAssignmentLHS, validator, anchor, replaceChoice);
+      }
+    };
+  }
+
+  @Override
+  public @NotNull JavaIntroduceVariableHandlerBase getMockIntroduceVariableHandler() {
+    return new IntroduceVariableHandler() {
+      // mock default settings
+      @Override
+      public IntroduceVariableSettings getSettings(Project project, Editor editor, final PsiExpression expr,
+                                                   PsiExpression[] occurrences, TypeSelectorManagerImpl typeSelectorManager,
+                                                   boolean declareFinalIfAll, boolean anyAssignmentLHS, InputValidator validator,
+                                                   PsiElement anchor, JavaReplaceChoice replaceChoice) {
+        return new IntroduceVariableSettings() {
+          @Override
+          public @NlsSafe String getEnteredName() {
+            return "foo";
+          }
+
+          @Override
+          public boolean isReplaceAllOccurrences() {
+            return false;
+          }
+
+          @Override
+          public boolean isDeclareFinal() {
+            return false;
+          }
+
+          @Override
+          public boolean isReplaceLValues() {
+            return false;
+          }
+
+          @Override
+          public PsiType getSelectedType() {
+            return expr.getType();
+          }
+
+          @Override
+          public boolean isOK() {
+            return true;
+          }
+        };
+      }
+
+      @Override
+      protected boolean isInplaceAvailableInTestMode() {
+        return true;
+      }
+    };
+  }
+
+  @Override
+  public @NotNull JavaIntroduceEmptyVariableHandlerBase getEmptyVariableHandler() {
+    return new IntroduceEmptyVariableHandlerImpl();
+  }
+
+  @Override
+  public @NotNull ChangeSignatureProcessorBase getChangeSignatureProcessor(Project project, JavaChangeInfo changeInfo, Runnable beforeRefactoringCallback) {
+    return new ParameterToLocalProcessor(project, changeInfo, beforeRefactoringCallback);
+  }
+
+  private static class ParameterToLocalProcessor extends ChangeSignatureProcessor {
+    private final Runnable myBeforeRefactoringCallback;
+
+    ParameterToLocalProcessor(Project project, JavaChangeInfo changeInfo, Runnable beforeRefactoringCallback) {
+      super(project, changeInfo);
+      myBeforeRefactoringCallback = beforeRefactoringCallback;
+    }
+
+    @Override
+    protected void performRefactoring(UsageInfo @NotNull [] usages) {
+      myBeforeRefactoringCallback.run();
+      super.performRefactoring(usages);
+    }
+  }
+
+  @Override
+  public @NotNull ChangeSignatureProcessorBase getChangeSignatureProcessor(Project project,
+                                                                           PsiMethod method,
+                                                                           final boolean generateDelegate,
+                                                                           @Nullable // null means unchanged
+                                                                           @PsiModifier.ModifierConstant String newVisibility,
+                                                                           String newName,
+                                                                           PsiType newType,
+                                                                           ParameterInfoImpl[] parameterInfo,
+                                                                           ThrownExceptionInfo[] exceptionInfos) {
+    return new ChangeSignatureProcessor(project, method, generateDelegate, newVisibility, newName, newType, parameterInfo, exceptionInfos);
+  }
+
+  @Override
+  public @NotNull ChangeSignatureProcessorBase getChangeSignatureProcessorWithCallback(Project project,
+                                                                                       PsiMethod method,
+                                                                                       boolean generateDelegate,
+                                                                                       @Nullable String newVisibility,
+                                                                                       String newName,
+                                                                                       PsiType newType,
+                                                                                       ParameterInfoImpl @NotNull [] parameterInfo,
+                                                                                       boolean changeAllUsages,
+                                                                                       Consumer<? super List<ParameterInfoImpl>> callback) {
+    return new ChangeSignatureProcessor(project, method, generateDelegate, newVisibility, newName, newType, parameterInfo) {
+      @Override
+      protected UsageInfo @NotNull [] findUsages() {
+        return changeAllUsages ? super.findUsages() : UsageInfo.EMPTY_ARRAY;
+      }
+
+      @Override
+      protected void performRefactoring(UsageInfo @NotNull [] usages) {
+        CommandProcessor.getInstance().setCurrentCommandName(getCommandName());
+        super.performRefactoring(usages);
+        if (callback  != null) {
+          callback.consume(Arrays.asList(parameterInfo));
+        }
+      }
+    };
+  }
+
+  @Override
+  public @NotNull ChangeSignatureProcessorBase getChangeSignatureProcessorWithCallback(Project project,
+                                                                                       PsiMethod method,
+                                                                                       boolean generateDelegate,
+                                                                                       @Nullable String newVisibility,
+                                                                                       String newName,
+                                                                                       CanonicalTypes.Type newType,
+                                                                                       ParameterInfoImpl @NotNull [] parameterInfo,
+                                                                                       ThrownExceptionInfo[] thrownExceptions,
+                                                                                       Set<PsiMethod> propagateParametersMethods,
+                                                                                       Set<PsiMethod> propagateExceptionsMethods,
+                                                                                       Runnable callback) {
+    return new ChangeSignatureProcessor(project, method, generateDelegate, newVisibility, newName, newType, parameterInfo, thrownExceptions, propagateParametersMethods, propagateExceptionsMethods) {
+      @Override
+      protected void performRefactoring(UsageInfo @NotNull [] usages) {
+        super.performRefactoring(usages);
+        if (callback != null) {
+          callback.run();
+        }
+      }
+    };
+  }
+
+  @Override
+  public @NotNull ChangeSignatureProcessorBase getUsagesAwareChangeSignatureProcessor(Project project,
+                                                                                      PsiMethod method,
+                                                                                      boolean generateDelegate,
+                                                                                      String newVisibility,
+                                                                                      String newName,
+                                                                                      PsiType newType,
+                                                                                      ParameterInfoImpl @NotNull [] parameterInfo,
+                                                                                      UsageVisitor usageVisitor) {
+    return new UsagesAwareChangeSignatureProcessor(project, method, generateDelegate, newVisibility, newName, newType, parameterInfo, usageVisitor);
+  }
+
+  @Override
+  public void runHighlightingTypeMigration(Project project,
+                                           Editor editor,
+                                           SearchScope boundScope,
+                                           PsiElement root,
+                                           PsiType migrationType) {
+    final TypeMigrationRules rules = new TypeMigrationRules(project);
+    rules.setBoundScope(boundScope);
+
+    TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, root, migrationType);
+  }
+
+  @Override
+  public JavaIntroduceFieldHandlerBase getMockIntroduceFieldHandler(PsiElement expression) {
+
+    final PsiClass containingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+    assert containingClass != null;
+
+    return new IntroduceFieldHandler() {
+      // mock default settings
+      @Override
+      protected Settings showRefactoringDialog(Project project, Editor editor, PsiClass parentClass,
+                                               PsiExpression expr, PsiType type, PsiExpression[] occurrences,
+                                               PsiElement anchorElement, PsiElement anchorElementIfAll) {
+        return new Settings(
+          "foo", (PsiExpression)expression, PsiExpression.EMPTY_ARRAY, false, false, false,
+          InitializationPlace.IN_CURRENT_METHOD, PsiModifier.PRIVATE, null,
+          null, false, containingClass, false, false);
+      }
+    };
+  }
+
+  @Override
+  public void runPullUpProcessor(@NotNull PsiClass sourceClass,
+                                 PsiClass targetSuperClass,
+                                 MemberInfo[] membersToMove,
+                                 DocCommentPolicy javaDocPolicy) {
+    new PullUpProcessor(sourceClass, targetSuperClass, membersToMove, javaDocPolicy).run();
+  }
+
+  @Override
+  public void runMakeMethodStaticProcessor(Project project, PsiMethod method, boolean replaceQualifier) {
+    new MakeMethodStaticProcessor(project, method, new Settings(replaceQualifier, null, null)).run();
+  }
+
+  @Override
+  public PsiExpression inlineVariable(PsiVariable variable,
+                                      PsiExpression initializer,
+                                      PsiJavaCodeReferenceElement ref,
+                                      PsiExpression thisAccessExpr) throws IncorrectOperationException {
+    return InlineUtil.inlineVariable(variable, initializer, ref, thisAccessExpr);
+  }
+
+  @Override
+  public void tryToInlineArrayCreationForVarargs(PsiExpression expr) {
+    InlineUtil.tryToInlineArrayCreationForVarargs(expr);
+  }
+
+  @Override
+  public void searchForHierarchyConflicts(PsiMethod method,
+                                          MultiMap<PsiElement, @Nls String> conflicts,
+                                          String modifier) {
+    JavaChangeSignatureUsageProcessor.ConflictSearcher.searchForHierarchyConflicts(method, conflicts, modifier);
+  }
+
+  @Override
+  public void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination) throws IncorrectOperationException {
+    MoveClassesOrPackagesUtil.moveDirectoryRecursively(dir, destination);
+  }
+
+  @Override
+  public void analyzeAccessibilityConflicts(@NotNull Set<? extends PsiMember> membersToMove,
+                                            @NotNull PsiClass targetClass,
+                                            @NotNull MultiMap<PsiElement, String> conflicts,
+                                            @Nullable String newVisibility) {
+    RefactoringConflictsUtil.analyzeAccessibilityConflicts(membersToMove, targetClass, conflicts, newVisibility);
+  }
+
+  @Override
+  public void moveClassesOrPackages(Project project,
+                                    PsiElement[] elements,
+                                    @NotNull MoveDestination moveDestination,
+                                    boolean searchInComments,
+                                    boolean searchInNonJavaFiles,
+                                    MoveCallback moveCallback) {
+    new MoveClassesOrPackagesProcessor(project, elements, moveDestination, searchInComments, searchInNonJavaFiles, moveCallback).run();
+  }
+
+  @Override
+  public SuggestedNameInfo suggestFieldName(@Nullable PsiType defaultType,
+                                            @Nullable PsiLocalVariable localVariable,
+                                            PsiExpression initializer,
+                                            boolean forStatic,
+                                            @NotNull PsiClass parentClass) {
+    return InplaceIntroduceFieldPopup.suggestFieldName(defaultType, localVariable, initializer, forStatic, parentClass);
+  }
+
+  @Override
+  public void collectMethodConflicts(MultiMap<PsiElement, String> conflicts,
+                                     PsiMethod method,
+                                     PsiParameter parameter) {
+    JavaSafeDeleteProcessor.collectMethodConflicts(conflicts, method, parameter);
+  }
+
+  @Override
+  public void analyzeModuleConflicts(Project project,
+                                     Collection<? extends PsiElement> scopes,
+                                     UsageInfo[] usages,
+                                     PsiElement target,
+                                     MultiMap<PsiElement, String> conflicts) {
+    RefactoringConflictsUtil.analyzeModuleConflicts(project, scopes, usages, target, conflicts);
+  }
+
+  @Override
+  public void analyzeModuleConflicts(Project project,
+                                     Collection<? extends PsiElement> scopes,
+                                     UsageInfo[] usages,
+                                     VirtualFile vFile,
+                                     MultiMap<PsiElement, String> conflicts) {
+    RefactoringConflictsUtil.analyzeModuleConflicts(project, scopes, usages, vFile, conflicts);
+  }
+
+  @Override
+  public boolean canBeStatic(PsiClass targetClass,
+                             PsiElement place,
+                             PsiElement[] elements,
+                             Set<? super PsiField> usedFields) {
+    return ExtractMethodProcessor.canBeStatic(targetClass, place, elements, usedFields);
+  }
+
+  @Override
+  public void replaceDuplicate(Project project,
+                               Map<PsiMember, List<Match>> duplicates,
+                               Set<? extends PsiMember> methods) {
+    MethodDuplicatesHandler.replaceDuplicate(project, duplicates, methods);
+  }
+
+  @Override
+  public List<Match> hasDuplicates(PsiElement file, PsiMember member) {
+    return MethodDuplicatesHandler.hasDuplicates(file, member);
+  }
+
+  @Override
+  public BaseRefactoringProcessor getChangeClassSignatureProcessor(Project project, PsiClass aClass, TypeParameterInfo[] newSignature) {
+    return new ChangeClassSignatureProcessor(project, aClass, newSignature);
+  }
+
+  @Override
+  public LightMethodObjectExtractedData extractLightMethodObject(Project project,
+                                                                 @Nullable PsiElement originalContext,
+                                                                 @NotNull PsiCodeFragment fragment,
+                                                                 @NotNull String methodName,
+                                                                 @Nullable JavaSdkVersion javaVersion) throws PrepareFailedException {
+    return ExtractLightMethodObjectHandler.extractLightMethodObject(project, originalContext, fragment, methodName, javaVersion);
+  }
+
+  @Override
+  public PsiMethod chooseEnclosingMethod(@NotNull PsiMethod method) {
+    return IntroduceParameterHandler.chooseEnclosingMethod(method);
+  }
+
+  private static final class UsagesAwareChangeSignatureProcessor extends ChangeSignatureProcessor {
+    private final JavaSpecialRefactoringProvider.UsageVisitor myUsageVisitor;
+
+    private UsagesAwareChangeSignatureProcessor(final Project project, final PsiMethod method, final boolean generateDelegate,
+                                                @PsiModifier.ModifierConstant final String newVisibility, final String newName, final PsiType newType,
+                                                final ParameterInfoImpl @NotNull [] parameterInfo, final JavaSpecialRefactoringProvider.UsageVisitor usageVisitor) {
+      super(project, method, generateDelegate, newVisibility, newName, newType, parameterInfo);
+      myUsageVisitor = usageVisitor;
+    }
+
+    @Override
+    protected void preprocessCovariantOverriders(final List<UsageInfo> covariantOverriderInfos) {
+      myUsageVisitor.preprocessCovariantOverriders(covariantOverriderInfos);
+    }
+
+    @Override
+    protected void performRefactoring(final UsageInfo @NotNull [] usages) {
+      super.performRefactoring(usages);
+
+      for (UsageInfo usage : usages) {
+        myUsageVisitor.visit(usage);
+      }
+    }
+  }
+}

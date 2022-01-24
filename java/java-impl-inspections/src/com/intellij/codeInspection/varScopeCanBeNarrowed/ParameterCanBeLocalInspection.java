@@ -5,15 +5,15 @@ import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.changeSignature.JavaChangeInfo;
 import com.intellij.refactoring.changeSignature.JavaChangeInfoImpl;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.util.CanonicalTypes;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.VisibilityUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -171,26 +171,16 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
         final JavaChangeInfo changeInfo = new JavaChangeInfoImpl(visibilityModifier, method, method.getName(),
                                                                  returnType != null ? CanonicalTypes.createTypeWrapper(returnType) : null,
                                                                  newParams, null, false, new HashSet<>(), new HashSet<>());
-        class ParameterToLocalProcessor extends ChangeSignatureProcessor {
-          private PsiElement newDeclaration;
+        Ref<PsiElement> newDeclaration = new Ref<>();
+        var processor = JavaSpecialRefactoringProvider.getInstance().getChangeSignatureProcessor(project, changeInfo, () -> {
+          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+          newDeclaration.set(WriteAction.compute(
+            () -> moveDeclaration(elementFactory, localName, parameter, initializer, action, references)));
+        });
 
-          ParameterToLocalProcessor(Project project, JavaChangeInfo changeInfo) {
-            super(project, changeInfo);
-          }
-
-          @Override
-          protected void performRefactoring(UsageInfo @NotNull [] usages) {
-            final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-            newDeclaration = WriteAction.compute(
-              () -> moveDeclaration(elementFactory, localName, parameter, initializer, action, references));
-            super.performRefactoring(usages);
-          }
-        }
-
-        final ParameterToLocalProcessor processor = new ParameterToLocalProcessor(project, changeInfo);
         processor.run();
 
-        return processor.newDeclaration;
+        return newDeclaration.get();
       }
       return null;
     }

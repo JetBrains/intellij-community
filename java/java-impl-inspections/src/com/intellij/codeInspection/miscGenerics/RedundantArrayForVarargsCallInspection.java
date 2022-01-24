@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.util.InlineUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NonNls;
@@ -198,7 +198,7 @@ public class RedundantArrayForVarargsCallInspection extends AbstractBaseJavaLoca
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         PsiNewExpression arrayCreation = (PsiNewExpression)descriptor.getPsiElement();
         if (arrayCreation == null) return;
-        InlineUtil.inlineArrayCreationForVarargs(arrayCreation);
+        CommonJavaRefactoringUtil.inlineArrayCreationForVarargs(arrayCreation);
       }
 
       @Override

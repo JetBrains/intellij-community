@@ -8,7 +8,7 @@ import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.refactoring.IntroduceVariableUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -34,7 +34,7 @@ public class JavaExpressionSurroundDescriptor implements SurroundDescriptor {
   public PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     PsiExpression expr = CodeInsightUtil.findExpressionInRange(file, startOffset, endOffset);
     if (expr == null) {
-      expr = IntroduceVariableBase.getSelectedExpression(file.getProject(), file, startOffset, endOffset);
+      expr = IntroduceVariableUtil.getSelectedExpression(file.getProject(), file, startOffset, endOffset);
       if (expr == null || expr.isPhysical()) {
         return PsiElement.EMPTY_ARRAY;
       }

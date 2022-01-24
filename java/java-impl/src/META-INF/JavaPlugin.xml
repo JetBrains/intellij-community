@@ -288,6 +288,8 @@
                        bundle="messages.JavaBundle"
                        key="notification.group.jdk.resolve.problems"/>
 
+    <registryKey key="ide.jps.use.build.tool.window" defaultValue="true" description="Enables 'Build' toolwindow for JPS compilation messages"/>
+    <applicationService serviceInterface="com.intellij.refactoring.JavaSpecialRefactoringProvider" serviceImplementation="com.intellij.refactoring.JavaSpecialRefactoringProviderImpl"/>
     <applicationService serviceImplementation="com.intellij.compiler.server.BuildManager" preload="true"/>
     <applicationService serviceInterface="com.intellij.execution.filters.ExceptionLineParserFactory"
             serviceImplementation="com.intellij.execution.filters.ExceptionLineParserFactoryImpl"/>

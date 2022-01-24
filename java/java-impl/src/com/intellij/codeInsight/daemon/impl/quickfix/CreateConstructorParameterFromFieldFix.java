@@ -33,7 +33,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -100,8 +100,8 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     Arrays.sort(constructors, new Comparator<>() {
       @Override
       public int compare(PsiMethod c1, PsiMethod c2) {
-        final PsiMethod cc1 = RefactoringUtil.getChainedConstructor(c1);
-        final PsiMethod cc2 = RefactoringUtil.getChainedConstructor(c2);
+        final PsiMethod cc1 = CommonJavaRefactoringUtil.getChainedConstructor(c1);
+        final PsiMethod cc2 = CommonJavaRefactoringUtil.getChainedConstructor(c2);
         if (cc1 == c2) return 1;
         if (cc2 == c1) return -1;
         if (cc1 == null) {

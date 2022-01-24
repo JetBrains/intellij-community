@@ -15,12 +15,13 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
+import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
+import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.refactoring.introduceField.JavaIntroduceFieldHandlerBase;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NON_VOID;
@@ -33,28 +34,21 @@ public class IntroduceFieldPostfixTemplate extends PostfixTemplateWithExpression
 
   @Override
   protected void expandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
-    IntroduceFieldHandler handler =
-      ApplicationManager.getApplication().isUnitTestMode() ? getMockHandler(expression) : new IntroduceFieldHandler();
+    JavaIntroduceFieldHandlerBase handler;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      handler = getMockHandler(expression);
+    }
+    else {
+      var supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+      handler = (JavaIntroduceFieldHandlerBase)supportProvider.getIntroduceFieldHandler();
+    }
+    assert handler != null;
     handler.invoke(expression.getProject(), expression, editor);
   }
 
   @NotNull
-  private static IntroduceFieldHandler getMockHandler(@NotNull final PsiElement expression) {
-    final PsiClass containingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
-    assert containingClass != null;
-
-    return new IntroduceFieldHandler() {
-      // mock default settings
-      @Override
-      protected Settings showRefactoringDialog(Project project, Editor editor, PsiClass parentClass,
-                                               PsiExpression expr, PsiType type, PsiExpression[] occurrences,
-                                               PsiElement anchorElement, PsiElement anchorElementIfAll) {
-        return new Settings(
-          "foo", (PsiExpression)expression, PsiExpression.EMPTY_ARRAY, false, false, false,
-          InitializationPlace.IN_CURRENT_METHOD, PsiModifier.PRIVATE, null,
-          null, false, containingClass, false, false);
-      }
-    };
+  private static JavaIntroduceFieldHandlerBase getMockHandler(@NotNull final PsiElement expression) {
+    return JavaSpecialRefactoringProvider.getInstance().getMockIntroduceFieldHandler(expression);
   }
 
   @Override

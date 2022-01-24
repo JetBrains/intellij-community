@@ -25,7 +25,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jdom.Element;
@@ -456,7 +456,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
 
       final String propertyName = styleManager.variableNameToPropertyName(field.getName(), VariableKind.FIELD);
       final String localName = styleManager.propertyNameToVariableName(propertyName, VariableKind.LOCAL_VARIABLE);
-      return RefactoringUtil.suggestUniqueVariableName(localName, scope, field);
+      return CommonJavaRefactoringUtil.suggestUniqueVariableName(localName, scope, field);
     }
   }
 }

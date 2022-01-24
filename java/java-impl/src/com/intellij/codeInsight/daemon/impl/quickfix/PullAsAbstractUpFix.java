@@ -26,15 +26,14 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.java.JavaBundle;
+import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.refactoring.extractInterface.ExtractInterfaceHandler;
-import com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler;
-import com.intellij.refactoring.memberPullUp.JavaPullUpHandler;
-import com.intellij.refactoring.memberPullUp.PullUpProcessor;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import org.jetbrains.annotations.NotNull;
@@ -98,7 +97,10 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
       if (classesToPullUp.isEmpty()) {
         //check visibility
-        new ExtractInterfaceHandler().invoke(project, new PsiElement[]{containingClass}, null);
+        var supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+        var handler = supportProvider.getExtractInterfaceHandler();
+        assert handler != null;
+        handler.invoke(project, new PsiElement[]{containingClass}, null);
       }
       else if (classesToPullUp.size() == 1) {
         pullUp(method, containingClass, classesToPullUp.iterator().next());
@@ -132,7 +134,8 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final MemberInfo memberInfo = new MemberInfo(method);
     memberInfo.setChecked(true);
     memberInfo.setToAbstract(true);
-    new PullUpProcessor(containingClass, baseClass, new MemberInfo[]{memberInfo}, new DocCommentPolicy<>(DocCommentPolicy.ASIS)).run();
+    var provider = JavaSpecialRefactoringProvider.getInstance();
+    provider.runPullUpProcessor(containingClass, baseClass, new MemberInfo[]{memberInfo}, new DocCommentPolicy<>(DocCommentPolicy.ASIS));
   }
 
   @Override
@@ -169,13 +172,16 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
     registrar.register(new PullAsAbstractUpFix(methodWithOverrides, name));
     if (canBePulledUp) {
-      registrar.register(new RunRefactoringAction(new JavaPullUpHandler(), JavaBundle.message("pull.members.up.fix.name")));
+      var supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+      registrar.register(new RunRefactoringAction(supportProvider.getPullUpHandler(), JavaBundle.message("pull.members.up.fix.name")));
     }
 
 
     if (! (containingClass instanceof PsiAnonymousClass)){
-      registrar.register(new RunRefactoringAction(new ExtractInterfaceHandler(), JavaBundle.message("extract.interface.command.name")));
-      registrar.register(new RunRefactoringAction(new ExtractSuperclassHandler(), JavaBundle.message("extract.superclass.command.name")));
+      var supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+
+      registrar.register(new RunRefactoringAction(supportProvider.getExtractInterfaceHandler(), JavaBundle.message("extract.interface.command.name")));
+      registrar.register(new RunRefactoringAction(supportProvider.getExtractSuperClassHandler(), JavaBundle.message("extract.superclass.command.name")));
     }
   }
 }

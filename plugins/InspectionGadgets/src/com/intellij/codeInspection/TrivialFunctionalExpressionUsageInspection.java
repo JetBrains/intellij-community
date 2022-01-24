@@ -9,7 +9,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.InlineUtil;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -260,7 +260,8 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
         final PsiElement referenceElement = reference.getElement();
         if (referenceElement instanceof PsiJavaCodeReferenceElement) {
           ct.markUnchanged(initializer);
-          InlineUtil.inlineVariable(parameter, initializer, (PsiJavaCodeReferenceElement)referenceElement);
+          JavaSpecialRefactoringProvider.getInstance()
+            .inlineVariable(parameter, initializer, (PsiJavaCodeReferenceElement)referenceElement, null);
         }
       }
     }

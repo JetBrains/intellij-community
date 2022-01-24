@@ -15,7 +15,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.InlineUtil;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
@@ -211,7 +211,7 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
         final PsiElement referenceElement = reference.getElement();
         if (referenceElement instanceof PsiJavaCodeReferenceElement) {
           ct.markUnchanged(expression);
-          InlineUtil.inlineVariable(variable, expression, (PsiJavaCodeReferenceElement)referenceElement);
+          JavaSpecialRefactoringProvider.getInstance().inlineVariable(variable, expression, (PsiJavaCodeReferenceElement)referenceElement, null);
         }
       }
       PsiStatement body = copy.getBody();

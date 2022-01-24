@@ -31,6 +31,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="library" name="org.codehaus.groovy:groovy" level="project" />
+    <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
   </component>
   <component name="copyright">
     <Base>

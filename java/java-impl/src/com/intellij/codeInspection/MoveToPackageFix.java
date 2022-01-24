@@ -24,10 +24,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
+import com.intellij.refactoring.util.CommonMoveClassesOrPackagesUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +76,7 @@ public class MoveToPackageFix extends LocalQuickFixAndIntentionActionOnPsiElemen
       String error;
       PsiDirectory directory = null;
       try {
-        directory = MoveClassesOrPackagesUtil.chooseDestinationPackage(project, myTargetPackage, myFile.getContainingDirectory());
+        directory = CommonMoveClassesOrPackagesUtil.chooseDestinationPackage(project, myTargetPackage, myFile.getContainingDirectory());
 
         if (directory == null) {
           return;
@@ -92,12 +92,13 @@ public class MoveToPackageFix extends LocalQuickFixAndIntentionActionOnPsiElemen
         Messages.showMessageDialog(project, error, CommonBundle.getErrorTitle(), Messages.getErrorIcon());
         return;
       }
-      new MoveClassesOrPackagesProcessor(
-              project,
-              ((PsiJavaFile) myFile).getClasses(),
-              new SingleSourceRootMoveDestination(PackageWrapper.create(JavaDirectoryService.getInstance().getPackage(directory)), directory), false,
-              false,
-              null).run();
+      JavaSpecialRefactoringProvider.getInstance().moveClassesOrPackages(
+        project,
+        ((PsiJavaFile) myFile).getClasses(),
+        new SingleSourceRootMoveDestination(PackageWrapper.create(JavaDirectoryService.getInstance().getPackage(directory)), directory), false,
+        false,
+        null
+      );
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

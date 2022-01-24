@@ -25,11 +25,9 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.fields.IntegerField;
@@ -319,7 +317,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       Map<PsiParameter, Collection<PsiReference>> paramsToInline = new HashMap<>();
       for (PsiMethod psiMethod : methods) {
         PsiParameter psiParameter = psiMethod.getParameterList().getParameters()[parameterIndex];
-        JavaSafeDeleteProcessor.collectMethodConflicts(conflicts, psiMethod, psiParameter);
+        JavaSpecialRefactoringProvider.getInstance().collectMethodConflicts(conflicts, psiMethod, psiParameter);
         final Collection<PsiReference> refsToInline = ReferencesSearch.search(psiParameter).findAll();
         for (PsiReference reference : refsToInline) {
           PsiElement referenceElement = reference.getElement();
@@ -340,12 +338,12 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
             int idx = 0;
             for (PsiReference reference : refsToInline) {
               if (reference instanceof PsiJavaCodeReferenceElement) {
-                exprs[idx++] = InlineUtil.inlineVariable(entry.getKey(), defToInline, (PsiJavaCodeReferenceElement)reference);
+                exprs[idx++] = JavaSpecialRefactoringProvider.getInstance().inlineVariable(entry.getKey(), defToInline, (PsiJavaCodeReferenceElement)reference, null);
               }
             }
 
             for (final PsiExpression expr : exprs) {
-              if (expr != null) InlineUtil.tryToInlineArrayCreationForVarargs(expr);
+              if (expr != null) JavaSpecialRefactoringProvider.getInstance().tryToInlineArrayCreationForVarargs(expr);
             }
           }
           catch (IncorrectOperationException e) {
@@ -369,8 +367,12 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
         paramIdx++;
       }
 
-      new ChangeSignatureProcessor(method.getProject(), method, false, null, method.getName(), method.getReturnType(),
-                                   psiParameters.toArray(new ParameterInfoImpl[0])).run();
+      var provider = JavaSpecialRefactoringProvider.getInstance();
+      var processor = provider.getChangeSignatureProcessorWithCallback(
+        method.getProject(), method, false, null, method.getName(), method.getReturnType(),
+        psiParameters.toArray(new ParameterInfoImpl[0]), true, null
+      );
+      processor.run();
     }
 
     public String getParamName() {

@@ -15,10 +15,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +70,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     final String varName = myReferenceExpression.getReferenceName();
     PsiMethod method = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiMethod.class);
     LOG.assertTrue(method != null);
-    method = IntroduceParameterHandler.chooseEnclosingMethod(method);
+    method = JavaSpecialRefactoringProvider.getInstance().chooseEnclosingMethod(method);
     if (method == null) return;
 
     method = SuperMethodWarningUtil.checkSuperMethod(method);
@@ -90,8 +89,10 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ParameterInfoImpl[] array = parameterInfos.toArray(new ParameterInfoImpl[0]);
       String modifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(method.getModifierList()));
-      ChangeSignatureProcessor processor =
-        new ChangeSignatureProcessor(project, method, false, modifier, method.getName(), method.getReturnType(), array);
+      var provider = JavaSpecialRefactoringProvider.getInstance();
+      var processor = provider.getChangeSignatureProcessorWithCallback(
+        project, method, false, modifier, method.getName(), method.getReturnType(),
+        array, true, null);
       processor.run();
     }
     else {

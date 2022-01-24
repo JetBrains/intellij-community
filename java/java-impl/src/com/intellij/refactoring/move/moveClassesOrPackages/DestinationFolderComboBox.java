@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryChooser;
@@ -25,6 +25,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
+import com.intellij.refactoring.util.CommonMoveClassesOrPackagesUtil;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -124,7 +125,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        VirtualFile root = MoveClassesOrPackagesUtil
+        VirtualFile root = CommonMoveClassesOrPackagesUtil
           .chooseSourceRoot(new PackageWrapper(PsiManager.getInstance(project), getTargetPackage()), mySourceRoots, initialTargetDirectory);
         if (root == null) return;
         final ComboBoxModel model = getComboBox().getModel();
@@ -195,7 +196,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     if (showChooserWhenDefault &&
         myInitialTargetDirectory != null && Comparing.equal(selectedDestination, myInitialTargetDirectory.getVirtualFile()) &&
         mySourceRoots.size() > 1) {
-      selectedDestination = MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, mySourceRoots, myInitialTargetDirectory);
+      selectedDestination = CommonMoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, mySourceRoots, myInitialTargetDirectory);
     }
     if (selectedDestination == null) return null;
     return new AutocreatingSingleSourceRootMoveDestination(targetPackage, selectedDestination);
@@ -239,7 +240,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     ReadAction.nonBlocking(() -> {
         final LinkedHashSet<PsiDirectory> targetDirectories = new LinkedHashSet<>();
         final HashMap<PsiDirectory, String> pathsToCreate = new HashMap<>();
-        MoveClassesOrPackagesUtil
+        CommonMoveClassesOrPackagesUtil
           .buildDirectoryList(new PackageWrapper(PsiManager.getInstance(myProject), getTargetPackage()), mySourceRoots, targetDirectories,
                               pathsToCreate);
         if (!forceIncludeAll && targetDirectories.size() > pathsToCreate.size()) {

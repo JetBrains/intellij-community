@@ -35,11 +35,9 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.changeSignature.OverriderUsageInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
-import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -330,19 +328,20 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final MethodSignatureChangeVisitor methodSignatureChangeVisitor = new MethodSignatureChangeVisitor();
     for (PsiMethod targetMethod : methods) {
       methodSignatureChangeVisitor.addBase(targetMethod);
-      ChangeSignatureProcessor processor = new UsagesAwareChangeSignatureProcessor(method.getProject(), targetMethod,
-                                                                                   false, null,
-                                                                                   myName,
-                                                                                   returnType,
-                                                                                   ParameterInfoImpl.fromMethod(targetMethod),
-                                                                                   methodSignatureChangeVisitor);
+      var provider = JavaSpecialRefactoringProvider.getInstance();
+      var processor = provider.getUsagesAwareChangeSignatureProcessor(method.getProject(), targetMethod,
+                                                                      false, null,
+                                                                      myName,
+                                                                      returnType,
+                                                                      ParameterInfoImpl.fromMethod(targetMethod),
+                                                                      methodSignatureChangeVisitor);
       processor.run();
     }
 
     return methodSignatureChangeVisitor.getAffectedMethods();
   }
 
-  private static final class MethodSignatureChangeVisitor implements UsageVisitor {
+  private static final class MethodSignatureChangeVisitor implements JavaSpecialRefactoringProvider.UsageVisitor {
     private final List<PsiMethod> myAffectedMethods;
 
     private MethodSignatureChangeVisitor() {
@@ -374,36 +373,6 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
             usageInfoIterator.remove();
           }
         }
-      }
-    }
-  }
-
-  private interface UsageVisitor {
-    void visit(final UsageInfo usage);
-    void preprocessCovariantOverriders(final List<UsageInfo> covariantOverriderInfos);
-  }
-
-  private static final class UsagesAwareChangeSignatureProcessor extends ChangeSignatureProcessor {
-    private final UsageVisitor myUsageVisitor;
-
-    private UsagesAwareChangeSignatureProcessor(final Project project, final PsiMethod method, final boolean generateDelegate,
-                                                @PsiModifier.ModifierConstant final String newVisibility, final String newName, final PsiType newType,
-                                                final ParameterInfoImpl @NotNull [] parameterInfo, final UsageVisitor usageVisitor) {
-      super(project, method, generateDelegate, newVisibility, newName, newType, parameterInfo);
-      myUsageVisitor = usageVisitor;
-    }
-
-    @Override
-    protected void preprocessCovariantOverriders(final List<UsageInfo> covariantOverriderInfos) {
-      myUsageVisitor.preprocessCovariantOverriders(covariantOverriderInfos);
-    }
-
-    @Override
-    protected void performRefactoring(final UsageInfo @NotNull [] usages) {
-      super.performRefactoring(usages);
-
-      for (UsageInfo usage : usages) {
-        myUsageVisitor.visit(usage);
       }
     }
   }
@@ -452,12 +421,11 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
                                        new PsiType[]{returnType},
                                        PsiUtil.getLanguageLevel(superClass));
 
-    final TypeMigrationRules rules = new TypeMigrationRules(project);
     final PsiSubstitutor compoundSubstitutor =
       TypeConversionUtil.getSuperClassSubstitutor(superClass, derivedClass, PsiSubstitutor.EMPTY).putAll(psiSubstitutor);
-    rules.setBoundScope(new LocalSearchScope(derivedClass));
-    TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, referenceParameterList,
-                                                        JavaPsiFacade.getElementFactory(project).createType(baseClass, compoundSubstitutor));
+    var scope = new LocalSearchScope(derivedClass);
+    var type = JavaPsiFacade.getElementFactory(project).createType(baseClass, compoundSubstitutor);
+    JavaSpecialRefactoringProvider.getInstance().runHighlightingTypeMigration(project, editor, scope, referenceParameterList, type);
 
     return false;
   }

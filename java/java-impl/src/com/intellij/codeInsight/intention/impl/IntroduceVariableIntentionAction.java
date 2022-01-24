@@ -17,14 +17,18 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.java.JavaBundle;
+import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
-import com.intellij.refactoring.introduceVariable.IntroduceEmptyVariableHandler;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.refactoring.introduceVariable.JavaIntroduceEmptyVariableHandlerBase;
+import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +83,8 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAc
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     PsiType type = getTypeOfUnfilledParameter(editor, element);
     if (type != null) {
-      new IntroduceEmptyVariableHandler().invoke(editor, element.getContainingFile(), type);
+      JavaIntroduceEmptyVariableHandlerBase handler = JavaSpecialRefactoringProvider.getInstance().getEmptyVariableHandler();
+      handler.invoke(editor, element.getContainingFile(), type);
       return;
     }
 
@@ -88,7 +93,10 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAc
       return;
     }
 
-    new IntroduceVariableHandler().invoke(project, editor, expression);
+    RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+    JavaIntroduceVariableHandlerBase handler = (JavaIntroduceVariableHandlerBase)supportProvider.getIntroduceVariableHandler();
+    assert handler != null;
+    handler.invoke(project, editor, expression);
   }
 
   @Override

@@ -27,7 +27,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.actions.TypeCookAction;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import org.jetbrains.annotations.NotNull;
 
 public class GenerifyFileFix implements IntentionAction, LocalQuickFix {
@@ -76,7 +76,8 @@ public class GenerifyFileFix implements IntentionAction, LocalQuickFix {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-    new TypeCookAction().getHandler().invoke(project, editor, file, null);
+    var provider = JavaSpecialRefactoringProvider.getInstance();
+    provider.getTypeCookHandler().invoke(project, editor, file, null);
   }
 
   @Override

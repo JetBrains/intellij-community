@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.model.ModelBranch;
@@ -12,10 +12,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.util.RefactoringConflictsUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -42,12 +42,12 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
 
   @Override
   public PsiDirectory getTargetIfExists(PsiDirectory source) {
-    return RefactoringUtil.findPackageDirectoryInSourceRoot(myPackage, mySourceRoot);
+    return CommonJavaRefactoringUtil.findPackageDirectoryInSourceRoot(myPackage, mySourceRoot);
   }
 
   @Override
   public PsiDirectory getTargetIfExists(@NotNull PsiFile source) {
-    return RefactoringUtil.findPackageDirectoryInSourceRoot(myPackage, mySourceRoot);
+    return CommonJavaRefactoringUtil.findPackageDirectoryInSourceRoot(myPackage, mySourceRoot);
   }
 
   @Override
@@ -79,7 +79,8 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
   @Override
   public void analyzeModuleConflicts(@NotNull final Collection<? extends PsiElement> elements,
                                      @NotNull MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
-    RefactoringConflictsUtil.analyzeModuleConflicts(getTargetPackage().getManager().getProject(), elements, usages, mySourceRoot, conflicts);
+    JavaSpecialRefactoringProvider.getInstance()
+      .analyzeModuleConflicts(getTargetPackage().getManager().getProject(), elements, usages, mySourceRoot, conflicts);
   }
 
   @Override
@@ -102,7 +103,7 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
       if (branch != null) {
         sourceRoot = branch.findFileCopy(mySourceRoot);
       }
-      myTargetDirectory = RefactoringUtil.createPackageDirectoryInSourceRoot(myPackage, sourceRoot);
+      myTargetDirectory = CommonJavaRefactoringUtil.createPackageDirectoryInSourceRoot(myPackage, sourceRoot);
     }
     return myTargetDirectory;
   }

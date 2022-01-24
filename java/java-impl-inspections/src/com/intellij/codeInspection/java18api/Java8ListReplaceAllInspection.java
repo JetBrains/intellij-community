@@ -16,7 +16,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.InlineUtil;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -176,7 +176,7 @@ public class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalInspecti
       List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable, body);
       PsiExpression initializer = variable.getInitializer();
       if (initializer == null) return;
-      references.forEach(reference -> InlineUtil.inlineVariable(variable, initializer, reference));
+      references.forEach(reference -> JavaSpecialRefactoringProvider.getInstance().inlineVariable(variable, initializer, reference, null));
       variable.delete();
     }
 

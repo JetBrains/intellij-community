@@ -21,11 +21,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,8 +109,9 @@ public class MoveToTestRootFix extends LocalQuickFixAndIntentionActionOnPsiEleme
     PsiPackage targetPackage = JavaDirectoryService.getInstance().getPackage(myFile.getContainingDirectory());
     
     PackageWrapper wrapper = PackageWrapper.create(targetPackage);
-    
-    PsiDirectory selectedDirectory = WriteAction.compute(() -> RefactoringUtil.createPackageDirectoryInSourceRoot(wrapper, sourceRoot.getVirtualFile()));
+
+    PsiDirectory selectedDirectory =
+      WriteAction.compute(() -> CommonJavaRefactoringUtil.createPackageDirectoryInSourceRoot(wrapper, sourceRoot.getVirtualFile()));
 
     try {
       String error;
@@ -126,12 +127,12 @@ public class MoveToTestRootFix extends LocalQuickFixAndIntentionActionOnPsiEleme
         return;
       }
 
-      new MoveClassesOrPackagesProcessor(
+      JavaSpecialRefactoringProvider.getInstance().moveClassesOrPackages(
         project,
-        ((PsiJavaFile) myFile).getClasses(),
+        ((PsiJavaFile)myFile).getClasses(),
         new SingleSourceRootMoveDestination(wrapper, selectedDirectory), false,
         false,
-        null).run();
+        null);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

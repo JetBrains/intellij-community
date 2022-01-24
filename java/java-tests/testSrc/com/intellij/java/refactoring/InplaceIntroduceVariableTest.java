@@ -17,8 +17,8 @@ import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.MapDataContext;
@@ -37,7 +37,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   protected PsiExpression getExpressionFromEditor() {
     SelectionModel selectionModel = getEditor().getSelectionModel();
     if (selectionModel.hasSelection()) {
-      return IntroduceVariableBase.getSelectedExpression(getProject(), getFile(), selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+      return IntroduceVariableUtil.getSelectedExpression(getProject(), getFile(), selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
     }
     final PsiExpression expression = super.getExpressionFromEditor();
     if (expression != null) {
