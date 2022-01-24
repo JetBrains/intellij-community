@@ -423,6 +423,12 @@ abstract class Cell : BaseBuilder {
   @JvmOverloads
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Deprecated("Use Kotlin UI DSL Version 2")
+  fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> {
+    return intTextField(prop, columns, range, null)
+  }
+
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null, step: Int? = null): CellBuilder<JBTextField> {
     return intTextField(prop.toBinding(), columns, range, step)
   }
@@ -434,10 +440,17 @@ abstract class Cell : BaseBuilder {
     return intTextField(PropertyBinding(getter, setter), columns, range, step)
   }
 
+
+  @JvmOverloads
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL Version 2")
+  fun intTextField(binding: PropertyBinding<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> {
+    return intTextField(binding, columns, range, null)
+  }
+
   /**
    * @param step allows changing value by up/down keys on keyboard
    */
-  @JvmOverloads
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun intTextField(binding: PropertyBinding<Int>,
