@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmark.providers
 
 import com.intellij.ide.bookmark.*
@@ -168,7 +168,8 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
     val set = mutableSetOf<Int>()
     for (bookmark in manager.bookmarks) {
       if (bookmark is LineBookmarkImpl && bookmark.file == file) {
-        val line = bookmark.descriptor.rangeMarker?.let { if (it.isValid) it.document.getLineNumber(it.startOffset) else null } ?: -1
+        val rangeMarker = (manager as? BookmarksManagerImpl)?.findLineHighlighter(bookmark) ?: bookmark.descriptor.rangeMarker
+        val line = rangeMarker?.let { if (it.isValid) it.document.getLineNumber(it.startOffset) else null } ?: -1
         when (bookmark.line) {
           line -> set.add(line)
           else -> map[bookmark] = line
