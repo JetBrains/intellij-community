@@ -24,15 +24,7 @@ internal class SettingsSyncStreamProvider(private val application: Application,
   }
 
   override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
-    // For PersistentStateComponents the fileSpec is passed without the 'options' folder, e.g. 'editor.xml' or 'mac/keymaps.xml'
-    // OTOH for schemas it is passed together with the containing folder, e.g. 'keymaps/mykeymap.xml'
-    val file: String =
-      if (!fileSpec.contains("/") || fileSpec.startsWith(getPerOsSettingsStorageFolderName() + "/")) {
-        PathManager.OPTIONS_DIRECTORY + "/" + fileSpec
-      }
-      else {
-        fileSpec
-      }
+    val file = getFileRelativeToRootConfig(fileSpec)
 
     // todo can we call default "stream provider" instead of duplicating logic?
     rootConfig.resolve(file).write(content, 0, size)
@@ -61,11 +53,24 @@ internal class SettingsSyncStreamProvider(private val application: Application,
         }
       }
     }
+    // this method is called only for reading => no SETTINGS_CHANGED_TOPIC message is needed
     return true
   }
 
   override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
-    rootConfig.resolve(fileSpec).delete()
+    rootConfig.resolve(getFileRelativeToRootConfig(fileSpec)).delete()
+    // todo shall we sent the message to the SETTINGS_CHANGED_TOPIC? which one?
     return true
+  }
+
+  private fun getFileRelativeToRootConfig(fileSpecPassedToProvider: String): String {
+    // For PersistentStateComponents the fileSpec is passed without the 'options' folder, e.g. 'editor.xml' or 'mac/keymaps.xml'
+    // OTOH for schemas it is passed together with the containing folder, e.g. 'keymaps/mykeymap.xml'
+    return if (!fileSpecPassedToProvider.contains("/") || fileSpecPassedToProvider.startsWith(getPerOsSettingsStorageFolderName() + "/")) {
+      PathManager.OPTIONS_DIRECTORY + "/" + fileSpecPassedToProvider
+    }
+    else {
+      fileSpecPassedToProvider
+    }
   }
 }
