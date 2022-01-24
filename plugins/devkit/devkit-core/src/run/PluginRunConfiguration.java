@@ -188,8 +188,8 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           }
         }
 
-        String buildNumber = IdeaJdk.getBuildNumber(ideaJdkHome);
         if (!vm.hasProperty(PlatformUtils.PLATFORM_PREFIX_KEY)) {
+          String buildNumber = IdeaJdk.getBuildNumber(ideaJdkHome);
           if (buildNumber != null) {
             String prefix = IntelliJPlatformProduct.fromBuildNumber(buildNumber).getPlatformPrefix();
             if (prefix != null) {
@@ -209,15 +209,9 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           }
         }
         else {
-          final BuildNumber number = BuildNumber.fromString(buildNumber);
-          final List<String> jars;
-          if (number != null && number.getBaselineVersion() <= 201) {
-            jars = List.of("log4j.jar", "jdom.jar", "trove4j.jar",
-                           "openapi.jar", "util.jar", "bootstrap.jar", "idea_rt.jar", "idea.jar");
-          }
-          else {
-            jars = List.of("openapi.jar", "util.jar", "bootstrap.jar", "idea_rt.jar", "idea.jar");
-          }
+          // log4j, jdom and trove4j needed for running on branch 202 and older
+          final List<String> jars = List.of("log4j.jar", "jdom.jar", "trove4j.jar",
+                         "openapi.jar", "util.jar", "bootstrap.jar", "idea_rt.jar", "idea.jar");
           for (String path : jars) {
             params.getClassPath().add(ideaJdkHome + FileUtil.toSystemDependentName("/lib/" + path));
           }
