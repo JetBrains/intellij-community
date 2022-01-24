@@ -107,7 +107,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         val files = getFilesForElements(elements)
         val moduleInfo = files.first().getModuleInfo()
 
-        if (!project.useCompositeAnalysis) {
+        if (!project.useCompositeAnalysis || moduleInfo.platform == platform) {
             // No need to force platform, just get facade as usual
             return getFacadeToAnalyzeFiles(files, platform)
         }
