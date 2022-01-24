@@ -35,6 +35,7 @@ from traitlets import CBool, Unicode
 
 
 from _pydevd_bundle.pydevd_constants import dict_keys, dict_iter_items
+from _pydevd_bundle.pydevd_ipython_console_output import PyDevDebugDisplayHook, PyDevDebugDisplayPub
 from _pydev_bundle.pydev_ipython_rich_output import PyDevDisplayHook, PyDevDisplayPub, \
     patch_stdout
 from _pydev_bundle.pydev_ipython_completer import init_shell_completer
@@ -228,7 +229,21 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
         super(PyDevTerminalInteractiveShell, self).init_magics()
         # TODO Any additional magics for PyDev?
 
+
+class PyDebuggerTerminalInteractiveShell(PyDevTerminalInteractiveShell):
+    """
+    InteractiveShell for the Jupyter Debug Console.
+    Print result outputs to the shell.
+    See method 'do_add_exec' from  'pydev/_pydev_bundle/pydev_ipython_code_executor.py'.
+    """
+
+    displayhook_class = Type(PyDevDebugDisplayHook)
+    display_pub_class = Type(PyDevDebugDisplayPub)
+    new_instance = None
+
+
 InteractiveShellABC.register(PyDevTerminalInteractiveShell)  # @UndefinedVariable
+InteractiveShellABC.register(PyDebuggerTerminalInteractiveShell)
 
 #=======================================================================================================================
 # _PyDevIPythonFrontEnd
@@ -237,12 +252,25 @@ class _PyDevIPythonFrontEnd:
 
     version = release.__version__
 
-    def __init__(self):
+    def __init__(self, is_jupyter_debugger=False):
         # Create and initialize our IPython instance.
-        if hasattr(PyDevTerminalInteractiveShell, '_instance') and PyDevTerminalInteractiveShell._instance is not None:
-            self.ipython = PyDevTerminalInteractiveShell._instance
+        self.is_jupyter_debugger = is_jupyter_debugger
+        if is_jupyter_debugger:
+            if hasattr(PyDebuggerTerminalInteractiveShell, 'new_instance') and PyDebuggerTerminalInteractiveShell.new_instance is not None:
+                self.ipython = PyDebuggerTerminalInteractiveShell.new_instance
+            else:
+                # if we already have some InteractiveConsole instance (Python Console: Attach Debugger)
+                if hasattr(PyDevTerminalInteractiveShell, '_instance') and PyDevTerminalInteractiveShell._instance is not None:
+                    PyDevTerminalInteractiveShell.clear_instance()
+
+                InteractiveShell.clear_instance()
+                self.ipython = PyDebuggerTerminalInteractiveShell.instance(config=load_default_config())
+                PyDebuggerTerminalInteractiveShell.new_instance = PyDebuggerTerminalInteractiveShell._instance
         else:
-            self.ipython = PyDevTerminalInteractiveShell.instance(config=load_default_config())
+            if hasattr(PyDevTerminalInteractiveShell, '_instance') and PyDevTerminalInteractiveShell._instance is not None:
+                self.ipython = PyDevTerminalInteractiveShell._instance
+            else:
+                self.ipython = PyDevTerminalInteractiveShell.instance(config=load_default_config())
 
         self._curr_exec_line = 0
         self._curr_exec_lines = []
@@ -379,7 +407,10 @@ class _PyDevIPythonFrontEnd:
             else:
                 self._curr_exec_line += 1
                 self.ipython.pydev_curr_exec_line = self._curr_exec_line
-                res = self.ipython.run_cell(line, store_history=True)
+                if not self.is_jupyter_debugger:
+                    res = self.ipython.run_cell(line, store_history=True)
+                else:
+                    res = self.ipython.run_cell(line, store_history=False)
                 if res.error_in_exec is not None:
                     return False, True
                 else:
@@ -396,14 +427,22 @@ class _PyDevFrontEndContainer:
     _instance = None
     _last_rpc_client = None
 
+class _PyDebuggerFrontEndContainer:
+    _instance = None
 
 def get_client():
     return _PyDevFrontEndContainer._last_rpc_client
 
 
-def get_pydev_ipython_frontend(rpc_client):
+def get_pydev_ipython_frontend(rpc_client, is_jupyter_debugger=False):
+    if is_jupyter_debugger:
+        if _PyDebuggerFrontEndContainer._instance is None:
+            _PyDebuggerFrontEndContainer._instance = _PyDevIPythonFrontEnd(is_jupyter_debugger)
+
+        return _PyDebuggerFrontEndContainer._instance
+
     if _PyDevFrontEndContainer._instance is None:
-        _PyDevFrontEndContainer._instance = _PyDevIPythonFrontEnd()
+        _PyDevFrontEndContainer._instance = _PyDevIPythonFrontEnd(is_jupyter_debugger)
 
     if _PyDevFrontEndContainer._last_rpc_client != rpc_client:
         _PyDevFrontEndContainer._last_rpc_client = rpc_client
