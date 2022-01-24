@@ -200,6 +200,32 @@
       <reference id="Git.Rebase.Skip"/>
     </group>
 
+    <group id="Git.Branches.List">
+      <reference ref="Git.Ongoing.Rebase.Actions"/>
+      <action class="git4idea.actions.branch.GitNewBranchAction"/>
+      <action class="git4idea.actions.branch.GitCheckoutFromInputAction"/>
+    </group>
+
+    <group id="Git.Branch">
+      <action class="git4idea.actions.branch.GitCheckoutAction"/>
+      <action class="git4idea.actions.branch.GitCheckoutAsNewBranch"/>
+      <action class="git4idea.actions.branch.GitCheckoutWithRebaseAction"/>
+      <separator/>
+      <action class="git4idea.actions.branch.GitCompareWithBranchAction"/>
+      <action class="git4idea.actions.branch.GitShowDiffWithBranchAction"/>
+      <separator/>
+      <action class="git4idea.actions.branch.GitRebaseBranchAction"/>
+      <action class="git4idea.actions.branch.GitMergeBranchAction"/>
+      <separator/>
+      <action class="git4idea.actions.branch.GitUpdateSelectedBranchAction"/>
+      <action class="git4idea.actions.branch.GitPushBranchAction"/>
+      <action class="git4idea.actions.branch.GitPullBranchAction$WithMerge"/>
+      <action class="git4idea.actions.branch.GitPullBranchAction$WithRebase"/>
+      <separator/>
+      <action class="git4idea.actions.branch.GitRenameBranchAction"/>
+      <action class="git4idea.actions.branch.GitDeleteBranchAction"/>
+    </group>
+
     <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true" searchable="false">
       <reference ref="Git.FileActions"/>
       <separator/>
@@ -478,6 +504,8 @@
     <registryKey key="git.show.full.branch.name.instead.current.selected"
                  description="Show full branch names instead of Current/Selected"
                  defaultValue="true"/>
+    <registryKey key="git.branches.popup.tree" defaultValue="false"
+                 description="Show branches tree in a popup instead of a list"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
