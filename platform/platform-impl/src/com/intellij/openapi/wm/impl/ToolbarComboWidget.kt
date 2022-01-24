@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.ui.JBColor
 import com.intellij.ui.hover.HoverStateListener
 import java.awt.Color
 import java.awt.Component
@@ -22,7 +23,12 @@ abstract class ToolbarComboWidget: JComponent() {
   var hoverBackground: Color by Delegates.observable(UIManager.getColor("ToolbarComboWidget.hoverBackground"), this::fireUpdateEvents)
 
   init {
-    updateUI()
+    updateUI() //set UI for component
+
+    foreground = JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground())
+    background = JBColor.namedColor("MainToolbar.Dropdown.background", JBColor.background())
+    hoverBackground = JBColor.namedColor("MainToolbar.Dropdown.hoverBackground", JBColor.background())
+
     val hoverListener = object : HoverStateListener() {
       override fun hoverChanged(component: Component, hovered: Boolean) {
         (component as JComponent).isOpaque = hovered
@@ -40,9 +46,6 @@ abstract class ToolbarComboWidget: JComponent() {
 
   override fun updateUI() {
     setUI(UIManager.getUI(this))
-    UIManager.getColor("MainToolbar.Dropdown.foreground")?.let { foreground = it }
-    UIManager.getColor("MainToolbar.Dropdown.background")?.let { background = it}
-    UIManager.getColor("MainToolbar.Dropdown.hoverBackground")?.let { hoverBackground = it }
   }
 
   fun addPressListener(action: ActionListener) {
