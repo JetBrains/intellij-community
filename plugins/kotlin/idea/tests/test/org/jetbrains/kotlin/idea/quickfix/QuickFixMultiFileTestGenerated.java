@@ -33,6 +33,57 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/addExclExclCall")
+    public static class AddExclExclCall extends AbstractQuickFixMultiFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("javaNullabilityMismatchWithImplicitReceiver.test")
+        public void testJavaNullabilityMismatchWithImplicitReceiver() throws Exception {
+            runTest("testData/quickfix/addExclExclCall/javaNullabilityMismatchWithImplicitReceiver.test");
+        }
+
+        @TestMetadata("javaReceiverNullability1.test")
+        public void testJavaReceiverNullability1() throws Exception {
+            runTest("testData/quickfix/addExclExclCall/javaReceiverNullability1.test");
+        }
+
+        @TestMetadata("javaReceiverNullability2.test")
+        public void testJavaReceiverNullability2() throws Exception {
+            runTest("testData/quickfix/addExclExclCall/javaReceiverNullability2.test");
+        }
+
+        @TestMetadata("javaReceiverNullabilityInvoke.test")
+        public void testJavaReceiverNullabilityInvoke() throws Exception {
+            runTest("testData/quickfix/addExclExclCall/javaReceiverNullabilityInvoke.test");
+        }
+
+        @TestMetadata("javaReceiverNullabilityProperty.test")
+        public void testJavaReceiverNullabilityProperty() throws Exception {
+            runTest("testData/quickfix/addExclExclCall/javaReceiverNullabilityProperty.test");
+        }
+
+        @TestMetadata("javaReceiverNullabilityWithThisReceiver.test")
+        public void testJavaReceiverNullabilityWithThisReceiver() throws Exception {
+            runTest("testData/quickfix/addExclExclCall/javaReceiverNullabilityWithThisReceiver.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/addGenericUpperBound")
+    public static class AddGenericUpperBound extends AbstractQuickFixMultiFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("javaUpperBoundViolated.test")
+        public void testJavaUpperBoundViolated() throws Exception {
+            runTest("testData/quickfix/addGenericUpperBound/javaUpperBoundViolated.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/addJvmDefault")
     public static class AddJvmDefault extends AbstractQuickFixMultiFileTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -1922,6 +1973,29 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/override/nothingToOverride/twoPackages.before.Main.kt");
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/override/wrongNullabilityForJavaOverride")
+        public static class WrongNullabilityForJavaOverride extends AbstractQuickFixMultiFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("makeArgumentNonNullable.test")
+            public void testMakeArgumentNonNullable() throws Exception {
+                runTest("testData/quickfix/override/wrongNullabilityForJavaOverride/makeArgumentNonNullable.test");
+            }
+
+            @TestMetadata("makeArgumentNullable.test")
+            public void testMakeArgumentNullable() throws Exception {
+                runTest("testData/quickfix/override/wrongNullabilityForJavaOverride/makeArgumentNullable.test");
+            }
+
+            @TestMetadata("makeReturnValueNonNullable.test")
+            public void testMakeReturnValueNonNullable() throws Exception {
+                runTest("testData/quickfix/override/wrongNullabilityForJavaOverride/makeReturnValueNonNullable.test");
+            }
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -1969,6 +2043,100 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
         @TestMetadata("usedObjectAsAliasMulti.before.Main.kt")
         public void testUsedObjectAsAliasMulti() throws Exception {
             runTest("testData/quickfix/removeUnused/usedObjectAsAliasMulti.before.Main.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/replaceWithSafeCall")
+    public static class ReplaceWithSafeCall extends AbstractQuickFixMultiFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("javaNullabilityMismatchWithImplicitReceiver.test")
+        public void testJavaNullabilityMismatchWithImplicitReceiver() throws Exception {
+            runTest("testData/quickfix/replaceWithSafeCall/javaNullabilityMismatchWithImplicitReceiver.test");
+        }
+
+        @TestMetadata("javaReceiverNullability1.test")
+        public void testJavaReceiverNullability1() throws Exception {
+            runTest("testData/quickfix/replaceWithSafeCall/javaReceiverNullability1.test");
+        }
+
+        @TestMetadata("javaReceiverNullability2.test")
+        public void testJavaReceiverNullability2() throws Exception {
+            runTest("testData/quickfix/replaceWithSafeCall/javaReceiverNullability2.test");
+        }
+
+        @TestMetadata("javaReceiverNullabilityArrayGet.test")
+        public void testJavaReceiverNullabilityArrayGet() throws Exception {
+            runTest("testData/quickfix/replaceWithSafeCall/javaReceiverNullabilityArrayGet.test");
+        }
+
+        @TestMetadata("javaReceiverNullabilityArraySet.test")
+        public void testJavaReceiverNullabilityArraySet() throws Exception {
+            runTest("testData/quickfix/replaceWithSafeCall/javaReceiverNullabilityArraySet.test");
+        }
+
+        @TestMetadata("javaReceiverNullabilityInfixPlus.test")
+        public void testJavaReceiverNullabilityInfixPlus() throws Exception {
+            runTest("testData/quickfix/replaceWithSafeCall/javaReceiverNullabilityInfixPlus.test");
+        }
+
+        @TestMetadata("javaReceiverNullabilityInvoke.test")
+        public void testJavaReceiverNullabilityInvoke() throws Exception {
+            runTest("testData/quickfix/replaceWithSafeCall/javaReceiverNullabilityInvoke.test");
+        }
+
+        @TestMetadata("javaReceiverNullabilityProperty.test")
+        public void testJavaReceiverNullabilityProperty() throws Exception {
+            runTest("testData/quickfix/replaceWithSafeCall/javaReceiverNullabilityProperty.test");
+        }
+
+        @TestMetadata("javaReceiverNullabilityWithThisReceiver.test")
+        public void testJavaReceiverNullabilityWithThisReceiver() throws Exception {
+            runTest("testData/quickfix/replaceWithSafeCall/javaReceiverNullabilityWithThisReceiver.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/replaceWithSafeCallForScopeFunction")
+    public static class ReplaceWithSafeCallForScopeFunction extends AbstractQuickFixMultiFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("javaReceiverNullabilityAlso.test")
+        public void testJavaReceiverNullabilityAlso() throws Exception {
+            runTest("testData/quickfix/replaceWithSafeCallForScopeFunction/javaReceiverNullabilityAlso.test");
+        }
+
+        @TestMetadata("javaReceiverNullabilityRunExplicitThis.test")
+        public void testJavaReceiverNullabilityRunExplicitThis() throws Exception {
+            runTest("testData/quickfix/replaceWithSafeCallForScopeFunction/javaReceiverNullabilityRunExplicitThis.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/surroundWithNullCheck")
+    public static class SurroundWithNullCheck extends AbstractQuickFixMultiFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("javaNullabilityArgument.test")
+        public void testJavaNullabilityArgument() throws Exception {
+            runTest("testData/quickfix/surroundWithNullCheck/javaNullabilityArgument.test");
+        }
+
+        @TestMetadata("javaReceiverNullability.test")
+        public void testJavaReceiverNullability() throws Exception {
+            runTest("testData/quickfix/surroundWithNullCheck/javaReceiverNullability.test");
+        }
+
+        @TestMetadata("javaReceiverNullabilityInvoke.test")
+        public void testJavaReceiverNullabilityInvoke() throws Exception {
+            runTest("testData/quickfix/surroundWithNullCheck/javaReceiverNullabilityInvoke.test");
         }
     }
 
@@ -2031,6 +2199,34 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
         @TestMetadata("addRemainingBranchesAnotherPackageAll.before.Main.kt")
         public void testAddRemainingBranchesAnotherPackageAll() throws Exception {
             runTest("testData/quickfix/when/addRemainingBranchesAnotherPackageAll.before.Main.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/wrapWithSafeLetCall")
+    public static class WrapWithSafeLetCall extends AbstractQuickFixMultiFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("javaNullabilityMismatchArgument.test")
+        public void testJavaNullabilityMismatchArgument() throws Exception {
+            runTest("testData/quickfix/wrapWithSafeLetCall/javaNullabilityMismatchArgument.test");
+        }
+
+        @TestMetadata("javaNullabilityMismatchArgument2.test")
+        public void testJavaNullabilityMismatchArgument2() throws Exception {
+            runTest("testData/quickfix/wrapWithSafeLetCall/javaNullabilityMismatchArgument2.test");
+        }
+
+        @TestMetadata("javaReceiverNullabilityInvoke.test")
+        public void testJavaReceiverNullabilityInvoke() throws Exception {
+            runTest("testData/quickfix/wrapWithSafeLetCall/javaReceiverNullabilityInvoke.test");
+        }
+
+        @TestMetadata("javaReceiverNullabilityInvoke2.test")
+        public void testJavaReceiverNullabilityInvoke2() throws Exception {
+            runTest("testData/quickfix/wrapWithSafeLetCall/javaReceiverNullabilityInvoke2.test");
         }
     }
 }

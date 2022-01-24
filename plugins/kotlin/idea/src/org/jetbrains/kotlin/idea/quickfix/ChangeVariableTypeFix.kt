@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.ErrorUtils
 import org.jetbrains.kotlin.types.KotlinType
@@ -166,7 +167,14 @@ open class ChangeVariableTypeFix(element: KtCallableDeclaration, type: KotlinTyp
             if (binaryExpression.operationToken != KtTokens.EQ) return null
             val property = left.mainReference?.resolve() as? KtProperty ?: return null
             if (!property.isVar || property.typeReference != null || !property.initializer.isNullExpression()) return null
-            return ChangeVariableTypeFix(property, Errors.TYPE_MISMATCH.cast(diagnostic).b.makeNullable())
+            val actualType = when (diagnostic.factory) {
+                Errors.TYPE_MISMATCH -> Errors.TYPE_MISMATCH.cast(diagnostic).b
+                Errors.TYPE_MISMATCH_WARNING -> Errors.TYPE_MISMATCH_WARNING.cast(diagnostic).b
+                ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS ->
+                    ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.cast(diagnostic).b
+                else -> null
+            } ?: return null
+            return ChangeVariableTypeFix(property, actualType.makeNullable())
         }
     }
 }

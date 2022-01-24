@@ -65,6 +65,7 @@ class ChangeToLabeledReturnFix(
                 Errors.RETURN_NOT_ALLOWED ->
                     diagnostic.psiElement as? KtReturnExpression
                 Errors.TYPE_MISMATCH,
+                Errors.TYPE_MISMATCH_WARNING,
                 Errors.CONSTANT_EXPECTED_TYPE_MISMATCH,
                 Errors.NULL_FOR_NONNULL_TYPE ->
                     getLambdaReturnExpression(diagnostic.psiElement, context)

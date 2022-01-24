@@ -5,12 +5,10 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isKFunctionType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
@@ -38,6 +36,7 @@ import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.constants.IntegerValueTypeConstant
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeProjection
 import org.jetbrains.kotlin.types.TypeUtils
@@ -70,6 +69,11 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
                 expectedType = diagnosticWithParameters.a
                 expressionType = diagnosticWithParameters.b
             }
+            Errors.TYPE_MISMATCH_WARNING -> {
+                val diagnosticWithParameters = Errors.TYPE_MISMATCH_WARNING.cast(diagnostic)
+                expectedType = diagnosticWithParameters.a
+                expressionType = diagnosticWithParameters.b
+            }
             Errors.NULL_FOR_NONNULL_TYPE -> {
                 val diagnosticWithParameters = Errors.NULL_FOR_NONNULL_TYPE.cast(diagnostic)
                 expectedType = diagnosticWithParameters.a
@@ -96,6 +100,11 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
                     // And here we have signed type
                     expressionType = signedConstantValue.getType(NO_EXPECTED_TYPE)
                 } else return emptyList()
+            }
+            ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS -> {
+                val diagnosticWithParameters = ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.cast(diagnostic)
+                expectedType = diagnosticWithParameters.a
+                expressionType = diagnosticWithParameters.b
             }
             else -> {
                 LOG.error("Unexpected diagnostic: " + DefaultErrorMessages.render(diagnostic))
@@ -166,7 +175,13 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
             val nullableExpected = expectedType.makeNullable()
             if (expressionType.isSubtypeOf(nullableExpected)) {
                 val targetExpression = diagnosticElement.getTopMostQualifiedForSelectorIfAny()
-                getAddExclExclCallFix(targetExpression)?.let { actions.add(it) }
+                // With implicit receivers (e.g., inside a scope function),
+                // NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS is reported on the callee, so we need
+                // to explicitly check for nullable implicit receiver
+                val checkCalleeExpression =
+                    diagnostic.factory == ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS &&
+                    targetExpression.parent?.safeAs<KtCallExpression>()?.calleeExpression == targetExpression
+                getAddExclExclCallFix(targetExpression, checkCalleeExpression)?.let { actions.add(it) }
                 if (expectedType.isBoolean()) {
                     actions.add(AddEqEqTrueFix(targetExpression))
                 }
