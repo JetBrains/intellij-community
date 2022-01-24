@@ -1,0 +1,52 @@
+// FILE: test.before.kt
+// "Surround with null check" "true"
+package p;
+
+fun f(x: A) {}
+
+fun test(x: Foo) {
+    val y = x.foo()
+    f(y<caret>)
+}
+
+// FILE: org/jspecify/nullness/Nullable.java
+package org.jspecify.nullness;
+
+import static java.lang.annotation.ElementType.TYPE_USE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+@Target(TYPE_USE)
+@Retention(RUNTIME)
+public @interface Nullable {}
+
+// FILE: p/A.java
+package p;
+
+public class A {
+    public void bar() {}
+}
+
+// FILE: p/Foo.java
+package p;
+
+import org.jspecify.nullness.Nullable;
+
+public class Foo {
+    public @Nullable A foo() { return null; }
+}
+
+// FILE: test.after.kt
+// "Surround with null check" "true"
+package p;
+
+fun f(x: A) {}
+
+fun test(x: Foo) {
+    val y = x.foo()
+    if <caret>(y != null) {
+        f(y)
+    }
+}

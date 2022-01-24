@@ -1,0 +1,44 @@
+// FILE: test.before.kt
+// "Replace scope function with safe (?.) call" "true"
+// WITH_RUNTIME
+package p;
+
+fun test(x: Foo) {
+    x.findAvailable().run {
+        this<caret>.foo()
+    }
+}
+
+// FILE: org/jspecify/nullness/Nullable.java
+package org.jspecify.nullness;
+
+import static java.lang.annotation.ElementType.TYPE_USE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+@Target(TYPE_USE)
+@Retention(RUNTIME)
+public @interface Nullable {}
+
+// FILE: p/Foo.java
+package p;
+
+import org.jspecify.nullness.Nullable;
+
+public class Foo {
+    public void foo() {}
+    public @Nullable Foo findAvailable() { return this; }
+}
+
+// FILE: test.after.kt
+// "Replace scope function with safe (?.) call" "true"
+// WITH_RUNTIME
+package p;
+
+fun test(x: Foo) {
+    x.findAvailable()?.run {
+        this<caret>.foo()
+    }
+}
