@@ -1,15 +1,15 @@
 package com.intellij.settingsSync.config
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.SettingsSyncSettings
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.isSettingsSyncEnabledByKey
 
-class SettingsSyncStatusAction : AnAction(message("title.settings.sync")) {
+class SettingsSyncStatusAction : DumbAwareAction(message("title.settings.sync")) {
   override fun actionPerformed(e: AnActionEvent) {
     ShowSettingsUtil.getInstance().showSettingsDialog(null, SettingsSyncConfigurable::class.java)
   }
