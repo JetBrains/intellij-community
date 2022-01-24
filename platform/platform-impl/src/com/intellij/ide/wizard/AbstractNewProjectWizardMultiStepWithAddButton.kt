@@ -56,7 +56,7 @@ abstract class AbstractNewProjectWizardMultiStepWithAddButton<S : NewProjectWiza
     }
   }
 
-  private inner class OpenMarketPlaceAction(private val language: String) : AnAction(Supplier { language }) {
+  private inner class OpenMarketPlaceAction(private val language: String) : DumbAwareAction(Supplier { language }) {
     override fun actionPerformed(e: AnActionEvent) {
       val pluginId = PluginId.getId(additionalStepPlugins[language]!!)
       val component = e.dataContext.getData(CONTEXT_COMPONENT)!!
