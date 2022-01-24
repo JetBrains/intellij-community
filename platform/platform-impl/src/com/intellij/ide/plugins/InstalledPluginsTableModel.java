@@ -180,7 +180,6 @@ public class InstalledPluginsTableModel {
         }
 
         if (!dependencyId.equals(pluginId) &&
-            !isHidden(descriptor) &&
             pluginIds.contains(dependencyId)) {
           result.add(descriptor);
         }
