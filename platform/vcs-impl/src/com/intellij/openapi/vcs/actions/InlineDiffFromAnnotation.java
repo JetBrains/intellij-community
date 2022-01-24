@@ -47,6 +47,7 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
   private static final Logger LOG = Logger.getInstance(InlineDiffFromAnnotation.class);
 
   @NotNull private final EditorEx myEditor;
+  @NotNull private final FileAnnotation myFileAnnotation;
   @NotNull private final TextAnnotationPresentation myTextPresentation;
   @NotNull private final FileAnnotation.LineModificationDetailsProvider myProvider;
 
@@ -55,10 +56,12 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
   @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
 
   private InlineDiffFromAnnotation(@NotNull EditorEx editor,
+                                   @NotNull FileAnnotation fileAnnotation,
                                    @NotNull TextAnnotationPresentation textPresentation,
                                    @NotNull FileAnnotation.LineModificationDetailsProvider provider,
                                    @NotNull Disposable disposable) {
     myEditor = editor;
+    myFileAnnotation = fileAnnotation;
     myTextPresentation = textPresentation;
     myProvider = provider;
     Disposer.register(disposable, this);
@@ -78,7 +81,7 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
     if (provider == null) return;
 
     InlineDiffFromAnnotation inlineDiffFromAnnotation =
-      new InlineDiffFromAnnotation((EditorEx)editor, textPresentation, provider, disposable);
+      new InlineDiffFromAnnotation((EditorEx)editor, fileAnnotation, textPresentation, provider, disposable);
     editor.addEditorMouseMotionListener(inlineDiffFromAnnotation, disposable);
     editor.addEditorMouseListener(inlineDiffFromAnnotation, disposable);
   }
@@ -99,7 +102,7 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
     if (!AnnotateDiffOnHoverToggleAction.isShowDiffOnHover()) return;
 
     int annotationLine = myTextPresentation.getAnnotationLine(editorLine);
-    if (annotationLine >= 0) {
+    if (annotationLine >= 0 && annotationLine < myFileAnnotation.getLineCount()) {
       myCurrentLine = editorLine;
       myIndicator = updateDiff(editorLine, annotationLine);
     }

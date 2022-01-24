@@ -67,6 +67,9 @@ public class DefaultLineModificationDetailsProvider implements FileAnnotation.Li
     if (annotatedContent == null) return null;
 
     LineOffsets offsets = LineOffsetsUtil.create(annotatedContent);
+    if (lineNumber >= offsets.getLineCount()) {
+      return null; // invalid line or content
+    }
     String originalLine = getLine(annotatedContent, offsets, lineNumber);
 
     VcsFileRevision afterRevision = myCurrentRevisionProvider.getRevision(lineNumber);
@@ -110,6 +113,9 @@ public class DefaultLineModificationDetailsProvider implements FileAnnotation.Li
     if (originalLineNumber == -1) {
       return null; // line not found
     }
+    if (originalLineNumber >= afterLineOffsets.getLineCount()) {
+      return null; // invalid line or content
+    }
 
     String lineContentAfter = getLine(afterContent, afterLineOffsets, originalLineNumber);
 
@@ -125,6 +131,9 @@ public class DefaultLineModificationDetailsProvider implements FileAnnotation.Li
                                                                   @NotNull String afterContent,
                                                                   int originalLineNumber) {
     LineOffsets afterLineOffsets = LineOffsetsUtil.create(afterContent);
+    if (originalLineNumber >= afterLineOffsets.getLineCount()) {
+      return null; // invalid line or content
+    }
     String lineContentAfter = getLine(afterContent, afterLineOffsets, originalLineNumber);
 
     if (beforeContent == null) {

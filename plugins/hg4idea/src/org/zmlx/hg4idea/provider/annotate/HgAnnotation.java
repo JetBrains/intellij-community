@@ -108,7 +108,9 @@ public class HgAnnotation extends FileAnnotation {
   public String getAnnotatedContent() {
     if (myContentBuffer == null) {
       myContentBuffer = new StringBuilder();
-      for (HgAnnotationLine line : myLines) {
+      for (int i = 0; i < myLines.size(); i++) {
+        HgAnnotationLine line = myLines.get(i);
+        if (i > 0) myContentBuffer.append("\n");
         myContentBuffer.append(line.get(FIELD.CONTENT));
       }
     }
