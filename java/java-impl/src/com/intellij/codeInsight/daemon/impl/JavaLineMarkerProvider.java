@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -249,7 +248,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @NotNull
   protected List<LineMarkerInfo<PsiElement>> collectInheritingClasses(@NotNull PsiClass aClass) {
-    if (!shouldSearchImplementedMethods() && !shouldSearchOverriddenMethods()) {
+    if (!myImplementedOption.isEnabled() && !myOverriddenOption.isEnabled()) {
       return Collections.emptyList();
     }
     if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
@@ -263,11 +262,11 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
     if (subClass != null || FunctionalExpressionSearch.search(aClass).findFirst() != null) {
       final Icon icon;
       if (aClass.isInterface()) {
-        if (!shouldSearchImplementedMethods()) return Collections.emptyList();
+        if (!myImplementedOption.isEnabled()) return Collections.emptyList();
         icon = AllIcons.Gutter.ImplementedMethod;
       }
       else {
-        if (!shouldSearchOverriddenMethods()) return Collections.emptyList();
+        if (!myOverriddenOption.isEnabled()) return Collections.emptyList();
         icon = AllIcons.Gutter.OverridenMethod;
       }
       PsiElement range = aClass.getNameIdentifier();
@@ -286,17 +285,9 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
     return Collections.emptyList();
   }
 
-  private boolean shouldSearchOverriddenMethods() {
-    return EditorSettingsExternalizable.getInstance().areGutterIconsShown() && myOverriddenOption.isEnabled();
-  }
-
-  private boolean shouldSearchImplementedMethods() {
-    return EditorSettingsExternalizable.getInstance().areGutterIconsShown() && myImplementedOption.isEnabled();
-  }
-
   @NotNull
   private List<LineMarkerInfo<PsiElement>> collectOverridingMethods(@NotNull final Set<PsiMethod> methodSet, @NotNull PsiClass containingClass) {
-    if (!shouldSearchOverriddenMethods() && !shouldSearchImplementedMethods()) return Collections.emptyList();
+    if (!myOverriddenOption.isEnabled() && !myImplementedOption.isEnabled()) return Collections.emptyList();
     final Set<PsiMethod> overridden = new HashSet<>();
 
     AllOverridingMethodsSearch.search(containingClass).forEach(pair -> {
@@ -322,8 +313,8 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
     for (PsiMethod method : overridden) {
       ProgressManager.checkCanceled();
       boolean overrides = !method.hasModifierProperty(PsiModifier.ABSTRACT);
-      if (overrides && !shouldSearchOverriddenMethods()) continue;
-      if (!overrides && !shouldSearchImplementedMethods()) continue;
+      if (overrides && !myOverriddenOption.isEnabled()) continue;
+      if (!overrides && !myImplementedOption.isEnabled()) continue;
       PsiElement range = getMethodRange(method);
       final MarkerType type = MarkerType.OVERRIDDEN_METHOD;
       final Icon icon = overrides ? AllIcons.Gutter.OverridenMethod : AllIcons.Gutter.ImplementedMethod;
