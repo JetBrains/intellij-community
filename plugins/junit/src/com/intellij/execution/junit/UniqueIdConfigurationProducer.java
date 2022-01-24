@@ -51,8 +51,12 @@ public class UniqueIdConfigurationProducer extends JUnitConfigurationProducer {
           StringJoiner stringJoiner = new StringJoiner(".");
           MethodLocation methodLocation = (MethodLocation)location;
           stringJoiner.add(methodLocation.getContainingClass().getName());
-          stringJoiner.add(methodLocation.getPsiElement().getName());
-          stringJoiner.add(selectedProxy.getName());
+          String methodName = methodLocation.getPsiElement().getName();
+          String proxyName = selectedProxy.getName();
+          if (!proxyName.startsWith(methodName + "(")) {
+            stringJoiner.add(methodName);
+          }
+          stringJoiner.add(proxyName);
           return stringJoiner.toString(); 
         }
       }
