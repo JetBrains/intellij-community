@@ -9,6 +9,8 @@ import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.reactive.Signal
 import com.intellij.codeInsight.codeVision.ui.CodeVisionView
 import com.intellij.codeInsight.hints.settings.InlaySettingsConfigurable
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -52,8 +54,7 @@ open class CodeVisionHost(val project: Project) {
 
   protected val lifeSettingModel = CodeVisionSettingsLiveModel(codeVisionLifetime)
 
-  // TODO after plugin loading/unloading this will remain as is, it is required to set up plugin listener here
-  val providers: List<CodeVisionProvider<*>> = CodeVisionProviderFactory.createAllProviders(project)
+  var providers: List<CodeVisionProvider<*>> = CodeVisionProviderFactory.createAllProviders(project)
 
 
   init {
@@ -76,8 +77,21 @@ open class CodeVisionHost(val project: Project) {
 
       }
 
-      //todo support dynamic providers adding
       rearrangeProviders()
+
+      project.messageBus.connect(enableCodeVisionLifetime.createNestedDisposable()).subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener{
+        private fun recollectAndRearrangeProviders(){
+          providers = CodeVisionProviderFactory.createAllProviders(project)
+          rearrangeProviders()
+        }
+        override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+          recollectAndRearrangeProviders()
+        }
+
+        override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+          recollectAndRearrangeProviders()
+        }
+      })
     }
   }
 

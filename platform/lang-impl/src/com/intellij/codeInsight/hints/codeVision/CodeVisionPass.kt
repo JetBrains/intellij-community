@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.util.Processor
 import com.jetbrains.rd.util.reactive.adviseOnce
@@ -30,11 +29,8 @@ class CodeVisionPass(
 ) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true) {
   private val providerIdToLenses: MutableMap<String, List<Pair<TextRange, CodeVisionEntry>>> = ConcurrentHashMap()
   private val currentIndicator = ProgressManager.getGlobalProgressIndicator()
-  private val registry = Registry.get("editor.codeVision.new")
 
   override fun doCollectInformation(progress: ProgressIndicator) {
-    if (registry.asBoolean().not()) return
-
     val providers = DaemonBoundCodeVisionProvider.extensionPoint.extensionList
     JobLauncher.getInstance().invokeConcurrentlyUnderProgress(providers, progress, Processor { provider ->
       val results = provider.computeForEditor(editor)
@@ -44,8 +40,6 @@ class CodeVisionPass(
   }
 
   override fun doApplyInformationToEditor() {
-    if (registry.asBoolean().not()) return
-
     val cacheService = DaemonBoundCodeVisionCacheService.getInstance(myProject)
     for ((providerId, results) in providerIdToLenses) {
       cacheService.storeVisionDataForEditor(myEditor, providerId, results)

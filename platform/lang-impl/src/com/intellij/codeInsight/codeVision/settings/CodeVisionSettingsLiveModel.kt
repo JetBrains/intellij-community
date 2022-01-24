@@ -14,7 +14,7 @@ import com.jetbrains.rd.util.reactive.ViewableSet
 
 class CodeVisionSettingsLiveModel(lifetime: Lifetime) {
 
-  val isRegistryEnabled = Property(Registry.`is`("editor.codeVision.new")).also {
+  val isRegistryEnabled: Property<Boolean> = Property(Registry.`is`("editor.codeVision.new")).also {
     val registry = Registry.get("editor.codeVision.new")
     registry.addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
@@ -26,7 +26,7 @@ class CodeVisionSettingsLiveModel(lifetime: Lifetime) {
 
   val isEnabled: Property<Boolean> = Property(CodeVisionSettings.instance().codeVisionEnabled)
 
-  val isEnabledWithRegistry = Property(isRegistryEnabled.value && isEnabled.value).also { property ->
+  val isEnabledWithRegistry: Property<Boolean> = Property(isRegistryEnabled.value && isEnabled.value).also { property ->
     isRegistryEnabled.advise(lifetime) {
       property.value = it && isEnabled.value
     }

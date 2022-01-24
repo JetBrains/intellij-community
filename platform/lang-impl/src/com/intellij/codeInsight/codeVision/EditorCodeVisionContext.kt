@@ -147,10 +147,10 @@ internal fun List<Pair<String, CodeVisionProvider<*>>>.getTopSortedIdList(): Lis
   this.forEach { (k, v) ->
     v.relativeOrderings.forEach {
       when (it) {
-        is CodeVisionRelativeOrderingBefore -> nodesAfter.getOrPut(k) { ArrayList() }.add(it.id)
-        is CodeVisionRelativeOrderingAfter -> nodesAfter.getOrPut(it.id) { ArrayList() }.add(k)
-        is CodeVisionRelativeOrderingFirst -> nodesAfter.getOrPut(fakeFirstNode) { ArrayList() }.add(k)
-        is CodeVisionRelativeOrderingLast -> nodesAfter.getOrPut(fakeLastNode) { ArrayList() }.add(k)
+        is CodeVisionRelativeOrdering.CodeVisionRelativeOrderingBefore -> nodesAfter.getOrPut(k) { ArrayList() }.add(it.id)
+        is CodeVisionRelativeOrdering.CodeVisionRelativeOrderingAfter -> nodesAfter.getOrPut(it.id) { ArrayList() }.add(k)
+        is CodeVisionRelativeOrdering.CodeVisionRelativeOrderingFirst -> nodesAfter.getOrPut(fakeFirstNode) { ArrayList() }.add(k)
+        is CodeVisionRelativeOrdering.CodeVisionRelativeOrderingLast -> nodesAfter.getOrPut(fakeLastNode) { ArrayList() }.add(k)
         else -> error("Unknown node ordering class ${it.javaClass.simpleName}")
       }
     }

@@ -15,12 +15,12 @@ interface CodeVisionGroupSettingProvider {
   val groupId: String
 
   /**
-   * Name that shown in settings
+   * Name that is shown in settings
    */
-  open val groupName: String
+  val groupName: String
     get() = CodeVisionBundle.message("codeLens.${groupId}.name")
 
-  open val description: String
+  val description: String
     get() = CodeVisionBundle.message("codeLens.${groupId}.description")
 
   fun createModel(project: Project): CodeVisionGroupSettingModel {
@@ -47,6 +47,9 @@ interface CodeVisionGroupSettingProvider {
       return distinctExtensions
     }
 
+    /**
+     * Find all registered [CodeVisionProvider] without [CodeVisionGroupSettingProvider]
+     */
     fun findSingleModels(project: Project): List<CodeVisionGroupSettingProvider> {
       val registeredGroupIds = EXTENSION_POINT_NAME.extensions.distinctBy { it.groupId }.map { it.groupId }
       val providersWithoutGroup = CodeVisionHost.getInstance(project).providers.filter { registeredGroupIds.contains(it.groupId).not() }
