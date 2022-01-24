@@ -8045,6 +8045,66 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/equalityNotApplicable")
+    public abstract static class EqualityNotApplicable extends AbstractQuickFixTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/equalityNotApplicable/charLiteralConversion")
+        public static class CharLiteralConversion extends AbstractQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("charEqString.kt")
+            public void testCharEqString() throws Exception {
+                runTest("testData/quickfix/equalityNotApplicable/charLiteralConversion/charEqString.kt");
+            }
+
+            @TestMetadata("charEqString2.kt")
+            public void testCharEqString2() throws Exception {
+                runTest("testData/quickfix/equalityNotApplicable/charLiteralConversion/charEqString2.kt");
+            }
+
+            @TestMetadata("charEqString3.kt")
+            public void testCharEqString3() throws Exception {
+                runTest("testData/quickfix/equalityNotApplicable/charLiteralConversion/charEqString3.kt");
+            }
+
+            @TestMetadata("charEqString4.kt")
+            public void testCharEqString4() throws Exception {
+                runTest("testData/quickfix/equalityNotApplicable/charLiteralConversion/charEqString4.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/equalityNotApplicable/numberConversion")
+        public static class NumberConversion extends AbstractQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("left.kt")
+            public void testLeft() throws Exception {
+                runTest("testData/quickfix/equalityNotApplicable/numberConversion/left.kt");
+            }
+
+            @TestMetadata("nullableLeft.kt")
+            public void testNullableLeft() throws Exception {
+                runTest("testData/quickfix/equalityNotApplicable/numberConversion/nullableLeft.kt");
+            }
+
+            @TestMetadata("nullableRight.kt")
+            public void testNullableRight() throws Exception {
+                runTest("testData/quickfix/equalityNotApplicable/numberConversion/nullableRight.kt");
+            }
+
+            @TestMetadata("right.kt")
+            public void testRight() throws Exception {
+                runTest("testData/quickfix/equalityNotApplicable/numberConversion/right.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/expressions")
     public static class Expressions extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
