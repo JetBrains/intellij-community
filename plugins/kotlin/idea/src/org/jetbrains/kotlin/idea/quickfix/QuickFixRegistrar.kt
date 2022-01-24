@@ -160,6 +160,7 @@ class QuickFixRegistrar : QuickFixContributor {
         TOO_MANY_ARGUMENTS.registerFactory(ImportForMismatchingArgumentsFix)
         NO_VALUE_FOR_PARAMETER.registerFactory(ImportForMismatchingArgumentsFix)
         TYPE_MISMATCH.registerFactory(ImportForMismatchingArgumentsFix)
+        TYPE_MISMATCH_WARNING.registerFactory(ImportForMismatchingArgumentsFix)
         CONSTANT_EXPECTED_TYPE_MISMATCH.registerFactory(ImportForMismatchingArgumentsFix)
         NAMED_PARAMETER_NOT_FOUND.registerFactory(ImportForMismatchingArgumentsFix)
         NONE_APPLICABLE.registerFactory(ImportForMismatchingArgumentsFix)
@@ -242,6 +243,8 @@ class QuickFixRegistrar : QuickFixContributor {
         UNNECESSARY_SAFE_CALL.registerFactory(ReplaceWithDotCallFixFactory)
         UNSAFE_CALL.registerFactory(ReplaceWithSafeCallFixFactory)
         SAFE_CALL_WILL_CHANGE_NULLABILITY.registerFactory(ReplaceWithDotCallFixFactory)
+        RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(ReplaceWithSafeCallFixFactory)
+        NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(ReplaceWithSafeCallFixFactory)
 
         UNSAFE_CALL.registerFactory(SurroundWithNullCheckFix)
         UNSAFE_IMPLICIT_INVOKE_CALL.registerFactory(SurroundWithNullCheckFix)
@@ -249,12 +252,18 @@ class QuickFixRegistrar : QuickFixContributor {
         UNSAFE_OPERATOR_CALL.registerFactory(SurroundWithNullCheckFix)
         ITERATOR_ON_NULLABLE.registerFactory(SurroundWithNullCheckFix.IteratorOnNullableFactory)
         TYPE_MISMATCH.registerFactory(SurroundWithNullCheckFix.TypeMismatchFactory)
+        TYPE_MISMATCH_WARNING.registerFactory(SurroundWithNullCheckFix.TypeMismatchFactory)
+        RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(SurroundWithNullCheckFix)
+        NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(SurroundWithNullCheckFix.TypeMismatchFactory)
 
         UNSAFE_CALL.registerFactory(WrapWithSafeLetCallFix.UnsafeFactory)
         UNSAFE_IMPLICIT_INVOKE_CALL.registerFactory(WrapWithSafeLetCallFix.UnsafeFactory)
         UNSAFE_INFIX_CALL.registerFactory(WrapWithSafeLetCallFix.UnsafeFactory)
         UNSAFE_OPERATOR_CALL.registerFactory(WrapWithSafeLetCallFix.UnsafeFactory)
         TYPE_MISMATCH.registerFactory(WrapWithSafeLetCallFix.TypeMismatchFactory)
+        TYPE_MISMATCH_WARNING.registerFactory(WrapWithSafeLetCallFix.TypeMismatchFactory)
+        RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(WrapWithSafeLetCallFix.UnsafeFactory)
+        NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(WrapWithSafeLetCallFix.TypeMismatchFactory)
 
         UNSAFE_CALL.registerFactory(UnsafeCallExclExclFixFactory)
         UNSAFE_INFIX_CALL.registerFactory(UnsafeCallExclExclFixFactory)
@@ -265,6 +274,9 @@ class QuickFixRegistrar : QuickFixContributor {
         UNSAFE_CALL.registerFactory(ReplaceInfixOrOperatorCallFixFactory) // [] only
         UNSAFE_IMPLICIT_INVOKE_CALL.registerFactory(ReplaceInfixOrOperatorCallFixFactory)
         UNSAFE_CALL.registerFactory(ReplaceWithSafeCallForScopeFunctionFixFactory)
+        RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(UnsafeCallExclExclFixFactory)
+        RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(ReplaceInfixOrOperatorCallFixFactory)
+        RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(ReplaceWithSafeCallForScopeFunctionFixFactory)
 
         AMBIGUOUS_ANONYMOUS_TYPE_INFERRED.registerActions(SpecifyTypeExplicitlyFix())
         PROPERTY_WITH_NO_TYPE_NO_INITIALIZER.registerActions(SpecifyTypeExplicitlyFix())
@@ -312,6 +324,7 @@ class QuickFixRegistrar : QuickFixContributor {
         VAR_TYPE_MISMATCH_ON_OVERRIDE.registerFactory(changeVariableTypeFix)
         COMPONENT_FUNCTION_RETURN_TYPE_MISMATCH.registerFactory(ChangeVariableTypeFix.ComponentFunctionReturnTypeMismatchFactory)
         TYPE_MISMATCH.registerFactory(ChangeVariableTypeFix.VariableInitializedWithNullFactory)
+        TYPE_MISMATCH_WARNING.registerFactory(ChangeVariableTypeFix.VariableInitializedWithNullFactory)
 
         val changeFunctionReturnTypeFix = ChangeCallableReturnTypeFix.ChangingReturnTypeToUnitFactory
         RETURN_TYPE_MISMATCH.registerFactory(changeFunctionReturnTypeFix)
@@ -331,6 +344,7 @@ class QuickFixRegistrar : QuickFixContributor {
         NO_VALUE_FOR_PARAMETER.registerFactory(ChangeFunctionSignatureFix)
 
         TYPE_MISMATCH.registerFactory(AddFunctionParametersFix)
+        TYPE_MISMATCH_WARNING.registerFactory(AddFunctionParametersFix)
         CONSTANT_EXPECTED_TYPE_MISMATCH.registerFactory(AddFunctionParametersFix)
         NULL_FOR_NONNULL_TYPE.registerFactory(AddFunctionParametersFix)
 
@@ -356,6 +370,7 @@ class QuickFixRegistrar : QuickFixContributor {
         NO_VALUE_FOR_PARAMETER.registerFactory(CreateBinaryOperationActionFactory)
         TOO_MANY_ARGUMENTS.registerFactory(CreateBinaryOperationActionFactory)
         TYPE_MISMATCH_ERRORS.forEach { it.registerFactory(CreateBinaryOperationActionFactory) }
+        TYPE_MISMATCH_WARNING.registerFactory(CreateBinaryOperationActionFactory)
 
         UNRESOLVED_REFERENCE_WRONG_RECEIVER.registerFactory(*CreateCallableFromCallActionFactory.INSTANCES)
         UNRESOLVED_REFERENCE.registerFactory(*CreateCallableFromCallActionFactory.INSTANCES)
@@ -365,6 +380,7 @@ class QuickFixRegistrar : QuickFixContributor {
         EXPRESSION_EXPECTED_PACKAGE_FOUND.registerFactory(*CreateCallableFromCallActionFactory.INSTANCES)
         NONE_APPLICABLE.registerFactory(*CreateCallableFromCallActionFactory.INSTANCES)
         TYPE_MISMATCH.registerFactory(*CreateCallableFromCallActionFactory.FUNCTIONS)
+        TYPE_MISMATCH_WARNING.registerFactory(*CreateCallableFromCallActionFactory.FUNCTIONS)
 
         NO_VALUE_FOR_PARAMETER.registerFactory(CreateConstructorFromDelegationCallActionFactory)
         TOO_MANY_ARGUMENTS.registerFactory(CreateConstructorFromDelegationCallActionFactory)
@@ -390,10 +406,12 @@ class QuickFixRegistrar : QuickFixContributor {
 
         val factoryForTypeMismatchError = QuickFixFactoryForTypeMismatchError()
         TYPE_MISMATCH.registerFactory(factoryForTypeMismatchError)
+        TYPE_MISMATCH_WARNING.registerFactory(factoryForTypeMismatchError)
         NULL_FOR_NONNULL_TYPE.registerFactory(factoryForTypeMismatchError)
         CONSTANT_EXPECTED_TYPE_MISMATCH.registerFactory(factoryForTypeMismatchError)
         TYPE_INFERENCE_EXPECTED_TYPE_MISMATCH.registerFactory(factoryForTypeMismatchError)
         SIGNED_CONSTANT_CONVERTED_TO_UNSIGNED.registerFactory(factoryForTypeMismatchError)
+        NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(factoryForTypeMismatchError)
 
         SMARTCAST_IMPOSSIBLE.registerFactory(SmartCastImpossibleExclExclFixFactory)
         SMARTCAST_IMPOSSIBLE.registerFactory(CastExpressionFix.SmartCastImpossibleFactory)
@@ -405,8 +423,10 @@ class QuickFixRegistrar : QuickFixContributor {
 
         NO_GET_METHOD.registerFactory(CreateGetFunctionActionFactory)
         TYPE_MISMATCH_ERRORS.forEach { it.registerFactory(CreateGetFunctionActionFactory) }
+        TYPE_MISMATCH_WARNING.registerFactory(CreateGetFunctionActionFactory)
         NO_SET_METHOD.registerFactory(CreateSetFunctionActionFactory)
         TYPE_MISMATCH_ERRORS.forEach { it.registerFactory(CreateSetFunctionActionFactory) }
+        TYPE_MISMATCH_WARNING.registerFactory(CreateSetFunctionActionFactory)
         HAS_NEXT_MISSING.registerFactory(CreateHasNextFunctionActionFactory)
         HAS_NEXT_FUNCTION_NONE_APPLICABLE.registerFactory(CreateHasNextFunctionActionFactory)
         NEXT_MISSING.registerFactory(CreateNextFunctionActionFactory)
@@ -473,6 +493,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         UPPER_BOUND_VIOLATED.registerFactory(AddGenericUpperBoundFix.Factory)
         TYPE_INFERENCE_UPPER_BOUND_VIOLATED.registerFactory(AddGenericUpperBoundFix.Factory)
+        UPPER_BOUND_VIOLATED_BASED_ON_JAVA_ANNOTATIONS.registerFactory(AddGenericUpperBoundFix.Factory)
 
         TYPE_INFERENCE_EXPECTED_TYPE_MISMATCH.registerFactory(ConvertClassToKClassFix)
 
@@ -580,6 +601,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         RETURN_NOT_ALLOWED.registerFactory(ChangeToLabeledReturnFix)
         TYPE_MISMATCH.registerFactory(ChangeToLabeledReturnFix)
+        TYPE_MISMATCH_WARNING.registerFactory(ChangeToLabeledReturnFix)
         CONSTANT_EXPECTED_TYPE_MISMATCH.registerFactory(ChangeToLabeledReturnFix)
         NULL_FOR_NONNULL_TYPE.registerFactory(ChangeToLabeledReturnFix)
 
@@ -634,6 +656,7 @@ class QuickFixRegistrar : QuickFixContributor {
         ASSIGN_OPERATOR_AMBIGUITY.registerFactory(AssignOperatorAmbiguityFactory)
 
         TYPE_MISMATCH.registerFactory(SurroundWithLambdaFix)
+        TYPE_MISMATCH_WARNING.registerFactory(SurroundWithLambdaFix)
         CONSTANT_EXPECTED_TYPE_MISMATCH.registerFactory(SurroundWithLambdaFix)
 
         NO_SET_METHOD.registerFactory(ChangeToMutableCollectionFix)
@@ -694,5 +717,7 @@ class QuickFixRegistrar : QuickFixContributor {
         NOTHING_TO_OVERRIDE.registerFactory(MakeUpperBoundNonNullableFix)
 
         OVERRIDE_DEPRECATION.registerFactory(AddAnnotationWithArgumentsFix.CopyDeprecatedAnnotation)
+
+        WRONG_NULLABILITY_FOR_JAVA_OVERRIDE.registerFactory(ChangeMemberFunctionSignatureFix)
     }
 }

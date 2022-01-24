@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -15,13 +16,19 @@ import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.resolve.calls.util.getImplicitReceiverValue
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object ReplaceInfixOrOperatorCallFixFactory : KotlinSingleIntentionActionFactory() {
+    private fun findArrayAccessExpression(expression: PsiElement): KtArrayAccessExpression? {
+        return expression.safeAs<KtArrayAccessExpression>() ?: expression.parent?.safeAs<KtArrayAccessExpression>()
+    }
+
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val expression = diagnostic.psiElement
-        if (expression is KtArrayAccessExpression && diagnostic.factory != Errors.UNSAFE_IMPLICIT_INVOKE_CALL) {
-            if (expression.arrayExpression == null) return null
-            return ReplaceInfixOrOperatorCallFix(expression, expression.shouldHaveNotNullType())
+        val arrayAccessExpression = findArrayAccessExpression(expression)
+        if (arrayAccessExpression != null && diagnostic.factory != Errors.UNSAFE_IMPLICIT_INVOKE_CALL) {
+            if (arrayAccessExpression.arrayExpression == null) return null
+            return ReplaceInfixOrOperatorCallFix(arrayAccessExpression, arrayAccessExpression.shouldHaveNotNullType())
         }
 
         when (val parent = expression.parent) {

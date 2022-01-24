@@ -73,6 +73,10 @@ class AddGenericUpperBoundFix(
                     val inferenceData = Errors.TYPE_INFERENCE_UPPER_BOUND_VIOLATED.cast(diagnostic).a
                     createActionsByInferenceData(inferenceData)
                 }
+                ErrorsJvm.UPPER_BOUND_VIOLATED_BASED_ON_JAVA_ANNOTATIONS -> {
+                    val upperBoundViolated = ErrorsJvm.UPPER_BOUND_VIOLATED_BASED_ON_JAVA_ANNOTATIONS.cast(diagnostic)
+                    listOfNotNull(createAction(upperBoundViolated.b, upperBoundViolated.a))
+                }
                 else -> emptyList()
             }
         }

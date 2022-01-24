@@ -67,7 +67,8 @@ sealed class CreateCallableFromCallActionFactory<E : KtExpression>(
             Errors.NONE_APPLICABLE ->
                 if (diagElement is KtOperationReferenceExpression) null else diagElement.getNonStrictParentOfType<KtCallExpression>()
 
-            Errors.TYPE_MISMATCH -> (diagElement.parent as? KtValueArgument)?.getStrictParentOfType<KtCallExpression>()
+            Errors.TYPE_MISMATCH,
+            Errors.TYPE_MISMATCH_WARNING -> (diagElement.parent as? KtValueArgument)?.getStrictParentOfType<KtCallExpression>()
 
             else -> throw AssertionError("Unexpected diagnostic: ${diagnostic.factory}")
         } as? KtExpression

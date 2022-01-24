@@ -247,6 +247,7 @@ class AddFunctionParametersFix(
             val element = DiagnosticFactory.cast(
                 this,
                 Errors.TYPE_MISMATCH,
+                Errors.TYPE_MISMATCH_WARNING,
                 Errors.CONSTANT_EXPECTED_TYPE_MISMATCH,
                 Errors.NULL_FOR_NONNULL_TYPE,
             ).psiElement
