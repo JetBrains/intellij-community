@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark
 
 import com.intellij.ide.bookmark.BookmarkBundle.message
@@ -91,7 +91,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     }
     project.messageBus.connect().subscribe(BookmarksListener.TOPIC, listener)
     StartupManager.getInstance(project).runAfterOpened {
-      LOG.info("no state loaded for new bookmarks");
+      LOG.info("no state loaded for new bookmarks")
       com.intellij.ide.bookmarks.BookmarkManager.getInstance(project).allBookmarks.forEach { listener.bookmarkAdded(it) }
       invoker.invokeLater { noStateLoaded(FavoritesManager.getInstance(project)) }
     }
@@ -613,6 +613,10 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     }
   }
 
+
+  internal fun findLineHighlighter(bookmark: Bookmark) = synchronized(notifier) {
+    allBookmarks[bookmark]?.renderer?.highlighter
+  }
 
   internal fun refreshRenderers(file: VirtualFile) = synchronized(notifier) {
     allBookmarks.values.forEach { if (it.renderer?.bookmark?.file == file) it.refreshRenderer() }
