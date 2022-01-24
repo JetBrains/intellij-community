@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -208,7 +208,8 @@ public class EditorMouseHoverPopupManager implements Disposable {
             return;
           }
 
-          PopupBridge popupBridge = new PopupBridge();
+          VisualPosition position = context.getPopupPosition(topLevelEditor);
+          PopupBridge popupBridge = new PopupBridge(editor, position);
           JComponent component = info.createComponent(topLevelEditor, popupBridge, requestFocus);
           if (component == null) {
             closeHint();
@@ -219,7 +220,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
             }
             else {
               AbstractPopup hint = createHint(component, popupBridge, requestFocus);
-              showHintInEditor(hint, topLevelEditor, context);
+              showHintInEditor(hint, topLevelEditor, position);
               myPopupReference = new WeakReference<>(hint);
               myCurrentEditor = new WeakReference<>(topLevelEditor);
             }
@@ -273,11 +274,11 @@ public class EditorMouseHoverPopupManager implements Disposable {
     return result;
   }
 
-  protected void showHintInEditor(AbstractPopup hint, Editor editor, Context context) {
+  protected void showHintInEditor(AbstractPopup hint, Editor editor, @NotNull VisualPosition position) {
     closeHint();
     myMouseMovementTracker.reset();
     myKeepPopupOnMouseMove = false;
-    editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, context.getPopupPosition(editor));
+    editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, position);
     try {
       hint.showInBestPositionFor(editor);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -603,7 +603,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     show(getBestPositionFor(editor));
   }
 
-  private @NotNull RelativePoint getBestPositionFor(@NotNull Editor editor) {
+  @ApiStatus.Internal
+  public final @NotNull RelativePoint getBestPositionFor(@NotNull Editor editor) {
     if (editor instanceof EditorEx) {
       DataContext context = ((EditorEx)editor).getDataContext();
       PopupLocator popupLocator = PlatformDataKeys.CONTEXT_MENU_LOCATOR.getData(context);
