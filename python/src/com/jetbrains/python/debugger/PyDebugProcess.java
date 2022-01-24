@@ -820,7 +820,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         if (values == null) {
           return null;
         }
-        myStackFrameCache.put(frame.getThreadFrameId(), values);
+        if (values != null) {
+          myStackFrameCache.put(frame.getThreadFrameId(), values);
+        }
       }
       showFailedTestInfoIfNecessary(frame);
     }
@@ -1422,7 +1424,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if (pyType == null) {
       PyElementGenerator generator = PyElementGenerator.getInstance(getProject());
       PyPsiFacade psiFacade = PyPsiFacade.getInstance(getProject());
-      PsiFile dummyFile = generator.createDummyFile(((PyFile)file).getLanguageLevel(), "");
+      PsiFile dummyFile = generator.createDummyFile((LanguageLevel.forElement(file)), "");
       Module moduleForFile = ModuleUtilCore.findModuleForPsiElement(file);
       dummyFile.putUserData(ModuleUtilCore.KEY_MODULE, moduleForFile);
 
