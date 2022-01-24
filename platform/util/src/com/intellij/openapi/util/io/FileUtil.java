@@ -1085,8 +1085,8 @@ public class FileUtil extends FileUtilRt {
     writeToFile(file, text.getBytes(StandardCharsets.UTF_8), true);
   }
 
-  public static void writeToFile(@NotNull File file, byte @NotNull [] text) throws IOException {
-    writeToFile(file, text, false);
+  public static void writeToFile(@NotNull File file, byte @NotNull [] content) throws IOException {
+    writeToFile(file, content, false);
   }
 
   public static void writeToFile(@NotNull File file, @NotNull String text) throws IOException {
@@ -1099,19 +1099,19 @@ public class FileUtil extends FileUtilRt {
     writeToFile(file, text.getBytes(StandardCharsets.UTF_8), append);
   }
 
-  public static void writeToFile(@NotNull File file, byte @NotNull [] text, int off, int len) throws IOException {
-    writeToFile(file, text, off, len, false);
+  public static void writeToFile(@NotNull File file, byte @NotNull [] content, int off, int len) throws IOException {
+    writeToFile(file, content, off, len, false);
   }
 
-  public static void writeToFile(@NotNull File file, byte @NotNull [] text, boolean append) throws IOException {
-    writeToFile(file, text, 0, text.length, append);
+  public static void writeToFile(@NotNull File file, byte @NotNull [] content, boolean append) throws IOException {
+    writeToFile(file, content, 0, content.length, append);
   }
 
-  private static void writeToFile(@NotNull File file, byte @NotNull [] text, int off, int len, boolean append) throws IOException {
+  private static void writeToFile(@NotNull File file, byte @NotNull [] content, int off, int len, boolean append) throws IOException {
     createParentDirs(file);
 
     try (OutputStream stream = new FileOutputStream(file, append)) {
-      stream.write(text, off, len);
+      stream.write(content, off, len);
     }
   }
 
