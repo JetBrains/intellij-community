@@ -15,7 +15,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class GitRepositoryUtil {
   private static final Logger LOG = Logger.getInstance(GitRepositoryUtil.class);
@@ -70,7 +69,7 @@ public final class GitRepositoryUtil {
     if (projectBasePath == null) return "";
     String remoteName = getRemoteName(project);
     Optional<String> optionalRemoteName = remoteName.lines().findFirst();
-    if (!optionalRemoteName.isPresent()) return "";
+    if (optionalRemoteName.isEmpty()) return "";
 
     GeneralCommandLine commandLine = new GeneralCommandLine()
       .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
