@@ -61,12 +61,12 @@ public class JpsBuild {
     info("Compilation log directory: " + System.getProperty(GlobalOptions.LOG_DIR_OPTION));
   }
 
-  public void buildModule(JpsModule module) throws Exception {
+  public void buildModules(Set<JpsModule> modules) throws Exception {
     // kotlin.util.compiler-dependencies downloads all dependencies required for running Kotlin JPS compiler
     // see org.jetbrains.kotlin.idea.artifacts.KotlinArtifactsFromSources
-    runBuild("kotlin.util.compiler-dependencies");
+    runBuild(ContainerUtil.set("kotlin.util.compiler-dependencies"));
 
-    runBuild(module.getName());
+    runBuild(modules.stream().map(JpsNamedElement::getName).collect(Collectors.toSet()));
   }
 
   public void resolveProjectDependencies() throws Exception {
@@ -92,27 +92,29 @@ public class JpsBuild {
     messageHandler.assertNoErrors();
   }
 
-  private void runBuild(String moduleName) throws Exception {
+  private void runBuild(Set<String> modules) throws Exception {
     final long buildStart = System.currentTimeMillis();
 
     JpsMessageHandler messageHandler = new JpsMessageHandler();
 
-    if (!myModuleNames.contains(moduleName)) {
-      throw new IllegalStateException("Module '" + moduleName + "' was not found");
+    for (String moduleName : modules) {
+      if (!myModuleNames.contains(moduleName)) {
+        throw new IllegalStateException("Module '" + moduleName + "' was not found");
+      }
     }
 
     Standalone.runBuild(
       () -> myModel,
       myDataStorageRoot,
       false,
-      ContainerUtil.set(moduleName),
+      modules,
       false,
       Collections.emptyList(),
       false,
       messageHandler
     );
 
-    System.out.println("Finished building '" + moduleName + "' in " + (System.currentTimeMillis() - buildStart) + " ms");
+    System.out.println("Finished building '" + String.join(" ", modules) + "' in " + (System.currentTimeMillis() - buildStart) + " ms");
 
     messageHandler.assertNoErrors();
   }
@@ -133,7 +135,7 @@ public class JpsBuild {
           warn(text);
         case ERROR:
         case INTERNAL_BUILDER_ERROR:
-          if (text.contains("Groovyc:WARNING") || text.contains("Kotlin:WARNING")) {
+          if (text.contains("Groovyc:WARNING") || text.contains("Kotlin:WARNING") || text.contains("java:WARNING")) {
             warn(text);
           }
           else {

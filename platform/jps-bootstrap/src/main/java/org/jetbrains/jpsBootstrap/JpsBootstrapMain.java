@@ -200,13 +200,15 @@ public class JpsBootstrapMain {
       }
     }
 
+    Set<JpsModule> modulesSubset = JpsProjectUtils.getRuntimeModulesClasspath(module);
+
     JpsBuild jpsBuild = new JpsBuild(ideaHomePath, model, jpsBootstrapWorkDir);
     if (manifestJsonUrl != null) {
       jpsBuild.resolveProjectDependencies();
       info("Downloading project classes from " + manifestJsonUrl);
-      ClassesFromCompileInc.downloadProjectClasses(model.getProject(), communityHome, JpsProjectUtils.getRuntimeModulesClasspath(module));
+      ClassesFromCompileInc.downloadProjectClasses(model.getProject(), communityHome, modulesSubset);
     } else {
-      jpsBuild.buildModule(module);
+      jpsBuild.buildModules(modulesSubset);
     }
   }
 
