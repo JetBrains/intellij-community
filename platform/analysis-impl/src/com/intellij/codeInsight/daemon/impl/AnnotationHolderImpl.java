@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -185,22 +185,41 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
                                         @NotNull String methodName) {
     Annotation annotation = new Annotation(range.getStartOffset(), range.getEndOffset(), severity, message, tooltip);
     add(annotation);
-    String callerInfo = callerClass == null ? "" : " (the call to which was found in "+callerClass+")";
+
+    if (isCLionAnnotator(callerClass)) {
+      if (!isWarningReportedForCLionAlready) {
+        //todo temporary fix, CLion guys promised to fix their annotator eventually
+        //Log warning only once. Otherwise, log in tests get flooded with hundreds of warnings
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        isWarningReportedForCLionAlready = true;
+        reportNewAPIWarning(callerClass, methodName, false);
+      }
+    }
+    else {
+      reportNewAPIWarning(callerClass, methodName, true);
+    }
+    return annotation;
+  }
+
+
+  private void reportNewAPIWarning(@Nullable Class<?> callerClass, @NotNull String methodName, boolean reportInProduction) {
+    String callerInfo = callerClass == null ? "" : " (the call to which was found in " + callerClass + ")";
     PluginException pluginException = PluginException.createByClass(
-      new IncorrectOperationException("'AnnotationHolder."+methodName + "()' method" + callerInfo + " is slow, non-incremental " +
+      new IncorrectOperationException("'AnnotationHolder." + methodName + "()' method" + callerInfo + " is slow, non-incremental " +
                                       "and thus can cause unexpected behaviour (e.g. annoying blinking), " +
                                       "is deprecated and will be removed soon. " +
                                       "Please use `newAnnotation().create()` instead"), callerClass == null ? getClass() : callerClass);
-    // temporary fix, CLion guys promised to fix their annotator eventually
-    if ("com.jetbrains.cidr.lang.daemon.OCAnnotator".equals(callerClass == null ? null : callerClass.getName())) {
-      //todo
-      //LOG.warnInProduction(pluginException);
-      LOG.warn(pluginException);
-    }
-    else {
+    if (reportInProduction) {
       LOG.warnInProduction(pluginException);
     }
-    return annotation;
+    else {
+      LOG.warn(pluginException);
+    }
+  }
+
+  private static volatile boolean isWarningReportedForCLionAlready = false;
+  private static boolean isCLionAnnotator(@Nullable Class<?> callerClass) {
+    return callerClass != null && "com.jetbrains.cidr.lang.daemon.OCAnnotator".equals(callerClass.getName());
   }
 
   public boolean hasAnnotations() {
