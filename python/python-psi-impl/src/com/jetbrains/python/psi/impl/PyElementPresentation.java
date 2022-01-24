@@ -67,18 +67,18 @@ public class PyElementPresentation implements ColoredItemPresentation {
     PyClass containingClass = myElement instanceof PyPossibleClassMember ? ((PyPossibleClassMember)myElement).getContainingClass() : null;
     if (containingClass != null) {
       if (isPyiFile) {
-        return PyPsiBundle.message("element.presentation.location.string.in.class", containingClass.getName(), packageForFile);
+        return PyPsiBundle.message("element.presentation.location.string.in.class.stub", containingClass.getName(), packageForFile);
       }
       else {
-        return PyPsiBundle.message("element.presentation.location.string.in.class.stub", containingClass.getName(), packageForFile);
+        return PyPsiBundle.message("element.presentation.location.string.in.class", containingClass.getName(), packageForFile);
       }
     }
 
     if (isPyiFile) {
-      return PyPsiBundle.message("element.presentation.location.string.module", packageForFile);
+      return PyPsiBundle.message("element.presentation.location.string.module.stub", packageForFile);
     }
     else {
-      return PyPsiBundle.message("element.presentation.location.string.module.stub", packageForFile);
+      return PyPsiBundle.message("element.presentation.location.string.module", packageForFile);
     }
   }
 
