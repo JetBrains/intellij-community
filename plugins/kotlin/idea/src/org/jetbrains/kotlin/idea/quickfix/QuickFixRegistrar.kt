@@ -422,6 +422,9 @@ class QuickFixRegistrar : QuickFixContributor {
         TYPE_INFERENCE_EXPECTED_TYPE_MISMATCH.registerFactory(factoryForTypeMismatchError)
         SIGNED_CONSTANT_CONVERTED_TO_UNSIGNED.registerFactory(factoryForTypeMismatchError)
         NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(factoryForTypeMismatchError)
+        INCOMPATIBLE_TYPES.registerFactory(factoryForTypeMismatchError)
+
+        EQUALITY_NOT_APPLICABLE.registerFactory(EqualityNotApplicableFactory)
 
         SMARTCAST_IMPOSSIBLE.registerFactory(SmartCastImpossibleExclExclFixFactory)
         SMARTCAST_IMPOSSIBLE.registerFactory(CastExpressionFix.SmartCastImpossibleFactory)

@@ -105,6 +105,11 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
                 expectedType = diagnosticWithParameters.a
                 expressionType = diagnosticWithParameters.b
             }
+            Errors.INCOMPATIBLE_TYPES -> {
+                val diagnosticWithParameters = Errors.INCOMPATIBLE_TYPES.cast(diagnostic)
+                expectedType = diagnosticWithParameters.b
+                expressionType = diagnosticWithParameters.a
+            }
             else -> {
                 LOG.error("Unexpected diagnostic: " + DefaultErrorMessages.render(diagnostic))
                 return emptyList()
@@ -113,6 +118,13 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
         if (expressionType == null) {
             LOG.error("No type inferred: " + diagnosticElement.text)
             return emptyList()
+        }
+
+        if (diagnosticElement is KtStringTemplateExpression &&
+            expectedType.isChar() &&
+            ConvertStringToCharLiteralFix.isApplicable(diagnosticElement)
+        ) {
+            actions.add(ConvertStringToCharLiteralFix(diagnosticElement))
         }
 
         if (expressionType.isSignedOrUnsignedNumberType() && expectedType.isSignedOrUnsignedNumberType()) {
