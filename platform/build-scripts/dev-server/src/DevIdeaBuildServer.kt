@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.devServer
@@ -8,7 +8,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.sun.net.httpserver.HttpContext
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
-import org.apache.log4j.helpers.AbsoluteTimeDateFormat
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.PrintWriter
@@ -20,7 +19,6 @@ import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
@@ -83,7 +81,7 @@ class DevIdeaBuildServer {
       root.addHandler(ConsoleHandler().apply {
         formatter = object : Formatter() {
           override fun format(record: LogRecord): String {
-            val timestamp = AbsoluteTimeDateFormat().format(Date.from(record.instant))
+            val timestamp = String.format("%1\$tT,%1\$tL", record.millis)
             return "$timestamp ${record.message}\n" + (record.thrown?.let { thrown ->
               StringWriter().also {
                 thrown.printStackTrace(PrintWriter(it))
