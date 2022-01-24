@@ -10,6 +10,7 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.emptyText
 import com.intellij.openapi.ui.getTreePath
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.DropDownLink
@@ -82,6 +83,12 @@ fun <C : Component> C.bindVisible(property: ObservableProperty<Boolean>): C = ap
 }
 
 fun <C : ComponentWithEmptyText> C.bindEmptyText(property: ObservableProperty<@NlsContexts.StatusText String>): C = apply {
+  emptyText.text = property.get()
+  emptyText.bind(property)
+}
+
+fun <C : TextFieldWithBrowseButton> C.bindEmptyText(property: ObservableProperty<@NlsContexts.StatusText String>): C = apply {
+  emptyText.text = property.get()
   emptyText.bind(property)
 }
 
