@@ -71,7 +71,7 @@
 
     <applicationService serviceInterface="com.intellij.codeInsight.intention.IntentionManager"
                         serviceImplementation="com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl"/>
-    <applicationInitializedListener implementation="com.intellij.codeInsight.intention.impl.IntentionShortcutManager"/>
+    <applicationInitializedListener implementation="com.intellij.codeInsight.intention.impl.IntentionShortcutManager$InitListener"/>
     <applicationService serviceInterface="com.intellij.codeStyle.CodeStyleFacade"
                         serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleFacadeImpl"/>
     <applicationService serviceInterface="com.intellij.psi.codeStyle.CodeStyleSettingsService"
