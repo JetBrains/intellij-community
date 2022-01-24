@@ -179,7 +179,7 @@ sealed interface RecoveryScope {
 
 data class ProjectRecoveryScope(override val project: Project) : RecoveryScope
 
-data class FilesRecoveryScope(override val project: Project, val files: Set<VirtualFile>) : RecoveryScope
+data class FilesRecoveryScope(override val project: Project, val files: Collection<VirtualFile>) : RecoveryScope
 
 data class AsyncRecoveryResult(val scope: RecoveryScope, val problems: List<CacheInconsistencyProblem>)
 
