@@ -211,7 +211,7 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
     assert layout != null : myFrame;
 
     BalloonLayoutData layoutData = BalloonLayoutData.createEmpty();
-    layoutData.fadeoutTime = 5000;
+    layoutData.fadeoutTime = 10000;
     layoutData.textColor = JBUI.CurrentTheme.Notification.Error.FOREGROUND;
     layoutData.fillColor = JBUI.CurrentTheme.Notification.Error.BACKGROUND;
     layoutData.borderColor = JBUI.CurrentTheme.Notification.Error.BORDER_COLOR;

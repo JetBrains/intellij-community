@@ -691,10 +691,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       .setBorderColor(layoutData.borderColor)
       .setBorderInsets(JBInsets.emptyInsets());
 
-    if (layoutData.fadeoutTime != 0) {
-      builder.setFadeoutTime(layoutData.fadeoutTime);
-    }
-
     Balloon balloon = builder.createBalloon();
 
     if (balloon instanceof BalloonImpl) {
@@ -712,6 +708,10 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       if (!layoutData.welcomeScreen) {
         balloonImpl.setActionProvider(new NotificationBalloonActionProvider(
           balloonImpl, centerPanel.getTitle(), layoutData, notification.getGroupId(), notification.id, notification.getDisplayId()));
+      }
+
+      if (layoutData.fadeoutTime != 0) {
+        ((BalloonImpl)balloon).startSmartFadeoutTimer((int)layoutData.fadeoutTime);
       }
     }
     notification.setBalloon(balloon);
