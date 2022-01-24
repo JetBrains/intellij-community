@@ -787,7 +787,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
     public static @NlsSafe String getMethodPresentation(PsiMethod method) {
       String methodName = method.getName();
-      if ((!method.getParameterList().isEmpty() || methodName.contains("(") || methodName.contains(")")) && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)) {
+      if ((!method.getParameterList().isEmpty() || methodName.contains("(") || methodName.contains(")")) && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.CUSTOM_TESTABLE_ANNOTATION_LIST)) {
         return methodName + "(" + ClassUtil.getVMParametersMethodSignature(method) + ")";
       }
       else {

@@ -70,6 +70,7 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
     PsiClass aClass = myFixture.addClass("/** @noinspection ALL*/ class MyTest {@org.junit.jupiter.api.Test void method() {}}");
     assertNotNull(aClass);
     TestFramework framework = TestFrameworks.detectFramework(aClass);
+    assertNotNull(framework, "No test framework detected");
     assertTrue(framework instanceof JUnit5Framework, framework.getName());
   }
   
