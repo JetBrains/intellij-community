@@ -1039,7 +1039,9 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "p6: Point = <warning descr=\"TypedDict 'Point' has missing key: 'x'\">{'y': 123}</warning>\n" +
                          "p7: Movie = dict(name='Alien', year=1979)\n" +
                          "p8: Movie = dict(name='Alien', year=<warning descr=\"Expected type 'int', got 'str' instead\">'1979'</warning>)\n" +
-                         "p9: Movie = dict(name='Alien', year=1979, <warning descr=\"Extra key 'director' for TypedDict 'Movie'\">director='Ridley Scott'</warning>)\n"
+                         "p9: Movie = dict(name='Alien', year=1979, <warning descr=\"Extra key 'director' for TypedDict 'Movie'\">director='Ridley Scott'</warning>)\n" +
+                         "p10 = {'x': 'x', 'y': 42, 'z': 42}\n" +
+                         "p11: Point = <warning descr=\"Expected type 'Point', got 'dict[str, str | int]' instead\">p10</warning>"
       ));
   }
 
@@ -1366,14 +1368,14 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "y = {}\n" +
                          "z = {'foo': 'bar'}\n" +
                          "n = {\"foo\": \"\", \"quux\": 3}\n" +
-                         "f(<warning descr=\"TypedDict 'C' has missing key: 'foo'\">y</warning>)\n" +
-                         "f(<warning descr=\"Extra key 'quux' for TypedDict 'C'\">n</warning>)\n" +
+                         "f(<warning descr=\"Expected type 'C', got 'dict' instead\">y</warning>)\n" +
+                         "f(<warning descr=\"Expected type 'C', got 'dict[str, int | str]' instead\">n</warning>)\n" +
                          "f(z)\n" +
-                         "f(x=<warning descr=\"TypedDict 'C' has missing key: 'foo'\">y</warning>)\n" +
-                         "f(x=<warning descr=\"Extra key 'quux' for TypedDict 'C'\">n</warning>)\n" +
+                         "f(x=<warning descr=\"Expected type 'C', got 'dict' instead\">y</warning>)\n" +
+                         "f(x=<warning descr=\"Expected type 'C', got 'dict[str, int | str]' instead\">n</warning>)\n" +
                          "f(x=z)\n" +
-                         "z2: C = <warning descr=\"TypedDict 'C' has missing key: 'foo'\">y</warning>\n" +
-                         "z2: C = <warning descr=\"Extra key 'quux' for TypedDict 'C'\">n</warning>\n" +
+                         "z2: C = <warning descr=\"Expected type 'C', got 'dict' instead\">y</warning>\n" +
+                         "z2: C = <warning descr=\"Expected type 'C', got 'dict[str, int | str]' instead\">n</warning>\n" +
                          "z2: C = z" )
     );
   }
@@ -1394,35 +1396,54 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
       () -> doTestByText("from typing_extensions import TypedDict\n" +
-                         "\n" +
-                         "class EasyDicttt(TypedDict):\n" +
+                         "class EasyDict(TypedDict):\n" +
                          "    a: str\n" +
                          "    b: str\n" +
                          "    c: str\n" +
                          "\n" +
-                         "class EasyDict(TypedDict):\n" +
+                         "\n" +
+                         "class NotSoHardDict(TypedDict):\n" +
                          "    a: str\n" +
-                         "    b: EasyDicttt\n" +
+                         "    b: EasyDict\n" +
+                         "\n" +
                          "\n" +
                          "class HardDict(TypedDict):\n" +
                          "    a: str\n" +
-                         "    d: EasyDict\n" +
+                         "    d: NotSoHardDict\n" +
+                         "\n" +
                          "\n" +
                          "q: HardDict = {\n" +
                          "    'a': <warning descr=\"Expected type 'str', got 'int' instead\">42</warning>,\n" +
                          "    'd': {\n" +
-                         "        'b': <warning descr=\"TypedDict 'EasyDicttt' has missing keys: 'b', 'c'\">{'a': '42'}</warning>,\n" +
+                         "        'b': <warning descr=\"TypedDict 'EasyDict' has missing keys: 'b', 'c'\">{'a': <warning descr=\"Expected type 'str', got 'int' instead\">42</warning>, <warning descr=\"Extra key 'd' for TypedDict 'EasyDict'\">'d': 42</warning>}</warning>,\n" +
                          "        'a': 'xx',\n" +
-                         "        <warning descr=\"Extra key 'c' for TypedDict 'HardDict'\">'c': 42</warning>\n" +
+                         "        <warning descr=\"Extra key 'c' for TypedDict 'NotSoHardDict'\">'c': 42</warning>\n" +
                          "    },\n" +
                          "}\n" +
-                         "\n" +
-                         "t: HardDict = {\n" +
+                         "t = {\n" +
                          "    'a': 'xx',\n" +
-                         "    'd': <warning descr=\"Expected type 'EasyDict', got 'dict[int, str]' instead\">{\n" +
+                         "    'd': {\n" +
                          "        0: 'zero',\n" +
-                         "    }</warning>\n" +
-                         "}")
+                         "    }\n" +
+                         "}\n" +
+                         "s: HardDict = {'a': 'xx', 'd': <warning descr=\"Expected type 'NotSoHardDict', got 'dict[str, dict[int, str] | str]' instead\">t</warning>}\n" +
+                         "s1: HardDict = <warning descr=\"Expected type 'HardDict', got 'dict[str, dict[int, str] | str]' instead\">t</warning>\n" +
+                         "t1 = {\n" +
+                         "    'a': 'xx',\n" +
+                         "    'd': {\n" +
+                         "        'a': 0,\n" +
+                         "        'd': {}\n" +
+                         "    }\n" +
+                         "}\n" +
+                         "s2: HardDict = {'a': 'xx', 'd': <warning descr=\"Expected type 'NotSoHardDict', got 'dict[str, dict[str, dict | int] | str]' instead\">t1</warning>}\n" +
+                         "s3: HardDict = <warning descr=\"Expected type 'HardDict', got 'dict[str, dict[str, dict | int] | str]' instead\">t1</warning>\n" +
+                         "s4: HardDict = <warning descr=\"TypedDict 'HardDict' has missing key: 'a'\">{\n" +
+                         "    'd': {\n" +
+                         "        'a': 'a',\n" +
+                         "        'b': {'a': 'a', 'b': 'b', 'c': 'c'}\n" +
+                         "    }\n" +
+                         "}</warning>\n"
+                         )
     );
   }
 

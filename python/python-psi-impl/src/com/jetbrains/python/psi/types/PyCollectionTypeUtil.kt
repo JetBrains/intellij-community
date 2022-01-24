@@ -609,7 +609,7 @@ object PyCollectionTypeUtil {
     private val strKeysToValueTypes = LinkedHashMap<String, Pair<PyExpression?, PyType?>>()
 
     override val typedDictType: PyTypedDictType?
-      get() = if (hasAllStrKeys) PyTypedDictType.createFromKeysToValueTypes(myElement, strKeysToValueTypes)
+      get() = if (isModificationExist && hasAllStrKeys) PyTypedDictType.createFromKeysToValueTypes(myElement, strKeysToValueTypes)
       else null
 
     override val elementTypes: List<PyType?>

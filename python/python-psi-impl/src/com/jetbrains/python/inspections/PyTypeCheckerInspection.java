@@ -5,7 +5,6 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,7 +17,6 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -93,6 +91,11 @@ public class PyTypeCheckerInspection extends PyInspection {
           PyExpression returnExpr = node.getExpression();
           PyType expected = getExpectedReturnType(function);
           PyType actual = returnExpr != null ? tryPromotingType(returnExpr, expected) : PyNoneType.INSTANCE;
+
+          if (expected != null && actual instanceof PyTypedDictType) {
+            if (reportTypedDictProblems(expected, (PyTypedDictType)actual, returnExpr)) return;
+          }
+
           if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
             String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
             String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
@@ -123,8 +126,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @Nullable
-    public static PyType getActualReturnType(@NotNull PyFunction function,
-                                             @Nullable PyExpression returnExpr,
+    public static PyType getActualReturnType(@NotNull PyFunction function, @Nullable PyExpression returnExpr,
                                              @NotNull TypeEvalContext context) {
       PyType returnTypeExpected = getExpectedReturnType(function, context);
       return returnExpr != null ? tryPromotingType(returnExpr, returnTypeExpected, context) : PyNoneType.INSTANCE;
@@ -140,10 +142,8 @@ public class PyTypeCheckerInspection extends PyInspection {
       final PyType expected = myTypeEvalContext.getType(node);
       final PyType actual = tryPromotingType(value, expected);
 
-      if (expected != null &&
-          actual instanceof PyTypedDictType) {
-        final boolean errorsHighlighted = reportTypedDictProblems(expected, actual, value);
-        if (errorsHighlighted) return;
+      if (expected != null && actual instanceof PyTypedDictType) {
+        if (reportTypedDictProblems(expected, (PyTypedDictType)actual, value)) return;
       }
 
       if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
@@ -153,44 +153,46 @@ public class PyTypeCheckerInspection extends PyInspection {
       }
     }
 
-    private boolean reportTypedDictProblems(@NotNull PyType expected, @NotNull PyType actual, @NotNull PyExpression value) {
+    private boolean reportTypedDictProblems(@NotNull PyType expected, @NotNull PyTypedDictType actual, @NotNull PyExpression value) {
+      final PyExpression valueWithoutKeyword = value instanceof PyKeywordArgument ? ((PyKeywordArgument)value).getValueExpression() : value;
       final Optional<PyTypedDictType.TypeCheckingResult> result =
-        PyTypedDictType.Companion.checkTypes(expected, (PyTypedDictType)actual, myTypeEvalContext,
-                                             value instanceof PyKeywordArgument ? ((PyKeywordArgument)value).getValueExpression() : value);
+        PyTypedDictType.Companion.checkTypes(expected, actual, myTypeEvalContext, valueWithoutKeyword);
       if (result.isEmpty()) return false;
       if (!result.get().getMatch()) {
         final PyTypedDictType.TypeCheckingResult typeCheckingResult = result.get();
-        final String expectedTypedDictName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
-        final String actualTypedDictName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
-
         if (typeCheckingResult.getValueTypesErrors().isEmpty() &&
             typeCheckingResult.getExtraKeys().isEmpty() &&
             typeCheckingResult.getMissingKeys().isEmpty()) {
-          registerProblem(value, PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedTypedDictName,
-                                                     actualTypedDictName));
+          registerProblem(valueWithoutKeyword, PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead",
+                                                                   PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext),
+                                                                   PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext)));
         }
 
         if (!typeCheckingResult.getValueTypesErrors().isEmpty()) {
           typeCheckingResult.getValueTypesErrors().forEach(error -> {
-            final String expectedName = PythonDocumentationProvider.getTypeName(error.getExpectedType(), myTypeEvalContext);
-            final String actualName = PythonDocumentationProvider.getTypeName(error.getActualType(), myTypeEvalContext);
             registerProblem(error.getActualExpression(), PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead",
-                                                                          error.getUseOriginalNames() ? expectedTypedDictName : expectedName,
-                                                                          error.getUseOriginalNames() ? actualTypedDictName : actualName));
+                                                                             PythonDocumentationProvider.getTypeName(
+                                                                               error.getExpectedType(), myTypeEvalContext),
+                                                                             PythonDocumentationProvider.getTypeName(error.getActualType(),
+                                                                                                                     myTypeEvalContext)));
           });
-          if (!((PyTypedDictType)actual).isInferred()) return true;
+          if (!actual.isInferred()) {
+            return true;
+          }
         }
         if (!typeCheckingResult.getExtraKeys().isEmpty()) {
           typeCheckingResult.getExtraKeys().forEach(error -> {
-            registerProblem(Objects.requireNonNullElse(error.getActualExpression(), value),
-                            PyPsiBundle.message("INSP.type.checker.typed.dict.extra.key", error.getKey(), expectedTypedDictName));
+            registerProblem(Objects.requireNonNullElse(error.getActualExpression(), valueWithoutKeyword),
+                            PyPsiBundle.message("INSP.type.checker.typed.dict.extra.key", error.getKey(),
+                                                error.getExpectedTypedDictName()));
           });
         }
         if (!typeCheckingResult.getMissingKeys().isEmpty()) {
           typeCheckingResult.getMissingKeys().forEach(error -> {
             final List<String> missingKeys = error.getMissingKeys();
-            registerProblem(error.getActualExpression() != null ? error.getActualExpression() : value,
-                            PyPsiBundle.message("INSP.type.checker.typed.dict.missing.keys", error.getExpectedTypedDictName(), missingKeys.size(),
+            registerProblem(error.getActualExpression() != null ? error.getActualExpression() : valueWithoutKeyword,
+                            PyPsiBundle.message("INSP.type.checker.typed.dict.missing.keys", error.getExpectedTypedDictName(),
+                                                missingKeys.size(),
                                                 String.join(", ", ContainerUtil.map(missingKeys, s -> String.format("'%s'", s)))));
           });
         }
@@ -261,13 +263,16 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     private void checkCallSite(@NotNull PyCallSiteExpression callSite) {
-      final List<AnalyzeCalleeResults> calleesResults = StreamEx.of(mapArguments(callSite, getResolveContext()))
+      final List<AnalyzeCalleeResults> calleesResults = StreamEx
+        .of(mapArguments(callSite, getResolveContext()))
         .filter(mapping -> mapping.getUnmappedArguments().isEmpty() && mapping.getUnmappedParameters().isEmpty())
-        .map(mapping -> analyzeCallee(callSite, mapping)).nonNull().toList();
+        .map(mapping -> analyzeCallee(callSite, mapping))
+        .nonNull()
+        .toList();
 
       if (!matchedCalleeResultsExist(calleesResults)) {
-        PyTypeCheckerInspectionProblemRegistrar.registerProblem(this, callSite, getArgumentTypes(calleesResults), calleesResults,
-                                                                myTypeEvalContext);
+        PyTypeCheckerInspectionProblemRegistrar
+          .registerProblem(this, callSite, getArgumentTypes(calleesResults), calleesResults, myTypeEvalContext);
       }
     }
 
@@ -347,8 +352,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       return new AnalyzeCalleeResults(callableType, callableType.getCallable(), result);
     }
 
-    private void analyzeParamSpec(@NotNull PyParamSpecType paramSpec,
-                                  @NotNull List<PyExpression> arguments,
+    private void analyzeParamSpec(@NotNull PyParamSpecType paramSpec, @NotNull List<PyExpression> arguments,
                                   @NotNull PyTypeChecker.GenericSubstitutions substitutions,
                                   @NotNull List<AnalyzeArgumentResult> result) {
       final var substParamSpec = substitutions.getParamSpecs().get(paramSpec);
@@ -359,8 +363,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       matchArgumentsAndTypes(arguments, parametersTypes, substitutions, result);
     }
 
-    private void matchArgumentsAndTypes(@NotNull List<PyExpression> arguments,
-                                        @NotNull List<PyType> types,
+    private void matchArgumentsAndTypes(@NotNull List<PyExpression> arguments, @NotNull List<PyType> types,
                                         @NotNull PyTypeChecker.GenericSubstitutions substitutions,
                                         @NotNull List<AnalyzeArgumentResult> result) {
       final var size = Math.min(arguments.size(), types.size());
@@ -387,11 +390,14 @@ public class PyTypeCheckerInspection extends PyInspection {
                                  argument -> new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched));
       }
       else {
-        return ContainerUtil.map(arguments, argument -> {
-          final PyType actual = myTypeEvalContext.getType(argument);
-          final boolean matched = matchParameterAndArgument(expected, actual, argument, substitutions);
-          return new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched);
-        });
+        return ContainerUtil.map(
+          arguments,
+          argument -> {
+            final PyType actual = myTypeEvalContext.getType(argument);
+            final boolean matched = matchParameterAndArgument(expected, actual, argument, substitutions);
+            return new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched);
+          }
+        );
       }
     }
 
@@ -400,8 +406,7 @@ public class PyTypeCheckerInspection extends PyInspection {
                                               @Nullable PyExpression argument,
                                               @NotNull PyTypeChecker.GenericSubstitutions substitutions) {
       if (parameterType != null && argumentType instanceof PyTypedDictType && argument != null) {
-        final boolean errorsHighlighted = reportTypedDictProblems(parameterType, argumentType, argument);
-        if (errorsHighlighted) return true;
+        if (reportTypedDictProblems(parameterType, (PyTypedDictType)argumentType, argument)) return true;
       }
 
       return PyTypeChecker.match(parameterType, argumentType, myTypeEvalContext, substitutions) &&
@@ -416,14 +421,21 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     private static boolean matchedCalleeResultsExist(@NotNull List<AnalyzeCalleeResults> calleesResults) {
-      return calleesResults.stream()
+      return calleesResults
+        .stream()
         .anyMatch(calleeResults -> calleeResults.getResults().stream().allMatch(AnalyzeArgumentResult::isMatched));
     }
 
     @NotNull
     private static List<PyType> getArgumentTypes(@NotNull List<AnalyzeCalleeResults> calleesResults) {
-      return ContainerUtil.map(calleesResults.stream().map(AnalyzeCalleeResults::getResults).max(Comparator.comparingInt(List::size))
-                                 .orElse(Collections.emptyList()), AnalyzeArgumentResult::getActualType);
+      return ContainerUtil.map(
+        calleesResults
+          .stream()
+          .map(AnalyzeCalleeResults::getResults)
+          .max(Comparator.comparingInt(List::size))
+          .orElse(Collections.emptyList()),
+        AnalyzeArgumentResult::getActualType
+      );
     }
   }
 
@@ -432,18 +444,23 @@ public class PyTypeCheckerInspection extends PyInspection {
     if (LOG.isDebugEnabled()) {
       final Long startTime = session.getUserData(TIME_KEY);
       if (startTime != null) {
-        LOG.debug(String.format("[%d] elapsed time: %d ms\n", Thread.currentThread().getId(), (System.nanoTime() - startTime) / 1000000));
+        LOG.debug(String.format("[%d] elapsed time: %d ms\n",
+                                Thread.currentThread().getId(),
+                                (System.nanoTime() - startTime) / 1000000));
       }
     }
   }
 
   static class AnalyzeCalleeResults {
 
-    @NotNull private final PyCallableType myCallableType;
+    @NotNull
+    private final PyCallableType myCallableType;
 
-    @Nullable private final PyCallable myCallable;
+    @Nullable
+    private final PyCallable myCallable;
 
-    @NotNull private final List<AnalyzeArgumentResult> myResults;
+    @NotNull
+    private final List<AnalyzeArgumentResult> myResults;
 
     AnalyzeCalleeResults(@NotNull PyCallableType callableType,
                          @Nullable PyCallable callable,
@@ -471,13 +488,17 @@ public class PyTypeCheckerInspection extends PyInspection {
 
   static class AnalyzeArgumentResult {
 
-    @NotNull private final PyExpression myArgument;
+    @NotNull
+    private final PyExpression myArgument;
 
-    @Nullable private final PyType myExpectedType;
+    @Nullable
+    private final PyType myExpectedType;
 
-    @Nullable private final PyType myExpectedTypeAfterSubstitution;
+    @Nullable
+    private final PyType myExpectedTypeAfterSubstitution;
 
-    @Nullable private final PyType myActualType;
+    @Nullable
+    private final PyType myActualType;
 
     private final boolean myIsMatched;
 
