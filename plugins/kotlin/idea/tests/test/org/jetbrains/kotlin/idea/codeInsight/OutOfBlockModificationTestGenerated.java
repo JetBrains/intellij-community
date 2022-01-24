@@ -368,6 +368,11 @@ public class OutOfBlockModificationTestGenerated extends AbstractOutOfBlockModif
         runTest("testData/codeInsight/outOfBlock/InUninitializedPropertyAccessor.kt");
     }
 
+    @TestMetadata("InWhenCondition.kt")
+    public void testInWhenCondition() throws Exception {
+        runTest("testData/codeInsight/outOfBlock/InWhenCondition.kt");
+    }
+
     @TestMetadata("InfixFunWhitespace.kt")
     public void testInfixFunWhitespace() throws Exception {
         runTest("testData/codeInsight/outOfBlock/InfixFunWhitespace.kt");
