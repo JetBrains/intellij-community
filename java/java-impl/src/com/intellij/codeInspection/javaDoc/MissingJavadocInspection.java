@@ -222,7 +222,7 @@ public class MissingJavadocInspection extends LocalInspectionTool {
     return element.isDeprecated() || element.getContainingClass() != null && element.getContainingClass().isDeprecated();
   }
 
-  private static boolean isInherited(PsiDocComment docComment, PsiMethod psiMethod) {
+  public static boolean isInherited(PsiDocComment docComment, PsiMethod psiMethod) {
     for (PsiElement descriptionElement : docComment.getDescriptionElements()) {
       if (descriptionElement instanceof PsiInlineDocTag && "inheritDoc".equals(((PsiInlineDocTag)descriptionElement).getName())) {
         return true;
