@@ -100,7 +100,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
             lockContext,
             VALUE_PAGE_SIZE,
             true,
-            IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER
+            IOUtil.useNativeByteOrderForByteBuffers()
           ),
           dataDescriptor,
           initialSize,

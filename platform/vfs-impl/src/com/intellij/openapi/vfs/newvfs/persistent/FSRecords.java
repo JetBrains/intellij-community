@@ -75,7 +75,7 @@ public final class FSRecords {
     return nextMask(59,  // acceptable range is [0..255]
                     8,
                     nextMask(useContentHashes,
-                    nextMask(IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER,
+                    nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
                     nextMask(bulkAttrReadSupport,
                     nextMask(inlineAttributes,
                     nextMask(SystemProperties.getBooleanProperty(IDE_USE_FS_ROOTS_DATA_LOADER, false),

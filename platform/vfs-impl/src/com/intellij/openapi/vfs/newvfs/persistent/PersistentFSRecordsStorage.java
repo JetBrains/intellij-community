@@ -289,7 +289,7 @@ public final class PersistentFSRecordsStorage {
     Record r = new Record();
     byte[] bytes = new byte[RECORD_SIZE];
     ByteBuffer buffer = ByteBuffer.wrap(bytes);
-    if (IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER) buffer.order(ByteOrder.nativeOrder());
+    if (IOUtil.useNativeByteOrderForByteBuffers()) buffer.order(ByteOrder.nativeOrder());
     return read(() -> {
       ProgressManager.checkCanceled();
       myFile.force();

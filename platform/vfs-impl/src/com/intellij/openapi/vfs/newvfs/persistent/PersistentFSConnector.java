@@ -117,7 +117,7 @@ final class PersistentFSConnector {
                                                                         storageLockContext,
                                                                         PagedFileStorage.BUFFER_SIZE,
                                                                         aligned,
-                                                                        IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER));
+                                                                        IOUtil.useNativeByteOrderForByteBuffers()));
 
       boolean initial = records.length() == 0;
 
