@@ -1146,6 +1146,7 @@
           <action id="UiDslTestAction" internal="true" class="com.intellij.internal.ui.uiDslTestAction.UiDslTestAction"/>
           <action id="JBTabsDemo" internal="true" class="com.intellij.internal.JBTabsDemoAction"/>
           <action id="JTabbedPaneDemo" internal="true" class="com.intellij.internal.JTabbedPaneDemoAction"/>
+          <action id="TestTooltipsAction" internal="true" class="com.intellij.internal.TestTooltipsAction"/>
         </group>
         <action id="JBCefOsrMeasureFps" class="com.intellij.internal.jcef.JBCefOsrBrowserMeasureFpsAction"/>
         <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"/>
