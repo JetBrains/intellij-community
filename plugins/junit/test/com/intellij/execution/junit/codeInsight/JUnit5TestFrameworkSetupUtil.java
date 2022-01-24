@@ -52,6 +52,8 @@ public class JUnit5TestFrameworkSetupUtil {
     fixture.addClass( "package org.junit.jupiter.params.provider;\n" +
                         "public @interface CsvSource {String[] value();}");
     fixture.addClass( "package org.junit.jupiter.params.provider;\n" +
+                        "public @interface CsvFileSource {String[] value();}");
+    fixture.addClass( "package org.junit.jupiter.params.provider;\n" +
                         "public @interface ArgumentsSource {}");
     fixture.addClass("package org.junit.jupiter.params.provider;\n" +
                        "public @interface ArgumentsSources {\n" +
