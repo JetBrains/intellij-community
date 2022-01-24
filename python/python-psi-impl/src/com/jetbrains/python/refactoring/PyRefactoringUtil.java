@@ -1,36 +1,28 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring;
 
-import com.google.common.collect.Collections2;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.NotNullPredicate;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
-import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.BiPredicate;
 
 public final class PyRefactoringUtil {
@@ -334,78 +326,5 @@ public final class PyRefactoringUtil {
 
   public static boolean isValidNewName(@NotNull String name, @NotNull PsiElement scopeAnchor) {
     return !(IntroduceValidator.isDefinedInScope(name, scopeAnchor) || PyNames.isReserved(name));
-  }
-
-  @NotNull
-  public static PyFile getOrCreateFile(String path, Project project) {
-    final VirtualFile vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
-    final PsiFile psi;
-    if (vfile == null) {
-      final File file = new File(path);
-      try {
-        final VirtualFile baseDir = project.getBaseDir();
-        final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance(project);
-        final FileTemplate template = fileTemplateManager.getInternalTemplate("Python Script");
-        final Properties properties = fileTemplateManager.getDefaultProperties();
-        properties.setProperty("NAME", FileUtilRt.getNameWithoutExtension(file.getName()));
-        final String content = template.getText(properties);
-        psi = PyExtractSuperclassHelper.placeFile(project,
-                                                  StringUtil.notNullize(
-                                                    file.getParent(),
-                                                    baseDir != null ? baseDir
-                                                      .getPath() : "."
-                                                  ),
-                                                  file.getName(),
-                                                  content
-        );
-      }
-      catch (IOException e) {
-        throw new IncorrectOperationException(String.format("Cannot create file '%s'", path), (Throwable)e);
-      }
-    }
-    else {
-      psi = PsiManager.getInstance(project).findFile(vfile);
-    }
-    if (!(psi instanceof PyFile)) {
-      throw new IncorrectOperationException(PyBundle.message(
-        "refactoring.move.module.members.error.cannot.place.elements.into.nonpython.file"));
-    }
-    return (PyFile)psi;
-  }
-
-  /**
-   * Filters out {@link PyMemberInfo}
-   * that should not be displayed in this refactoring (like object)
-   *
-   * @param pyMemberInfos collection to sort
-   * @return sorted collection
-   */
-  @NotNull
-  public static Collection<PyMemberInfo<PyElement>> filterOutObject(@NotNull final Collection<PyMemberInfo<PyElement>> pyMemberInfos) {
-    return Collections2.filter(pyMemberInfos, new ObjectPredicate(false));
-  }
-
-  /**
-   * Filters only PyClass object (new class)
-   */
-  public static class ObjectPredicate extends NotNullPredicate<PyMemberInfo<PyElement>> {
-    private final boolean myAllowObjects;
-
-    /**
-     * @param allowObjects allows only objects if true. Allows all but objects otherwise.
-     */
-    public ObjectPredicate(final boolean allowObjects) {
-      myAllowObjects = allowObjects;
-    }
-
-    @Override
-    public boolean applyNotNull(@NotNull final PyMemberInfo<PyElement> input) {
-      return myAllowObjects == isObject(input);
-    }
-
-    private static boolean isObject(@NotNull final PyMemberInfo<PyElement> classMemberInfo) {
-      final PyElement element = classMemberInfo.getMember();
-      return (element instanceof PyClass) && PyNames.OBJECT.equals(element.getName());
-    }
   }
 }

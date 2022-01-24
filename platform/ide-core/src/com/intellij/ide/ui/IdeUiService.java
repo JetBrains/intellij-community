@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.UnlockOption;
 import com.intellij.openapi.project.Project;
@@ -124,7 +125,18 @@ public class IdeUiService {
 
   }
 
+  public void showRefactoringMessageDialog(String title,
+                                           String message,
+                                           String helpTopic,
+                                           String iconId,
+                                           boolean showCancelButton,
+                                           Project project) {
 
+  }
+
+  public void showErrorHint(Editor editor, String message) {
+
+  }
 
 
   public static IdeUiService getInstance() {

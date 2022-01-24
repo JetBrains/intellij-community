@@ -383,6 +383,7 @@
     <applicationService serviceInterface="com.jetbrains.python.PythonUiService" serviceImplementation="com.jetbrains.python.PythonUiServiceImpl"/>
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.PyImportCollectorFactory" serviceImplementation="com.jetbrains.python.codeInsight.imports.CodeStylePyImportCollectorFactory"/>
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.ImportChooser" serviceImplementation="com.jetbrains.python.codeInsight.imports.PyImportChooser"/>
+    <applicationService serviceInterface="com.jetbrains.python.refactoring.PyRefactoringUiService" serviceImplementation="com.jetbrains.python.refactoring.PyRefactoringUiServiceImpl"/>
 
     <registryKey key="python.relative.import.depth" defaultValue="3" description="Specifies default acceptable number of dots in a relative import statement"/>
 

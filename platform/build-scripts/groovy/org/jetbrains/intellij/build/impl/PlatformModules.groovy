@@ -84,6 +84,7 @@ final class PlatformModules {
     "intellij.platform.elevation.client",
     "intellij.platform.elevation.common",
     "intellij.platform.elevation.daemon",
+    "intellij.platform.refactoring",
     "intellij.platform.inspect",
     "intellij.platform.lang.impl",
     "intellij.platform.workspaceModel.storage",

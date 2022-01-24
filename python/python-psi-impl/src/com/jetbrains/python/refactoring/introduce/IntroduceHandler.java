@@ -16,7 +16,7 @@
 package com.jetbrains.python.refactoring.introduce;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateManagerUtilBase;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -29,21 +29,17 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
-import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
@@ -55,6 +51,7 @@ import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.NameSuggesterUtil;
+import com.jetbrains.python.refactoring.PyRefactoringUiService;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
 import one.util.streamex.StreamEx;
@@ -253,7 +250,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     }
     final Editor editor = operation.getEditor();
     if (editor.getSettings().isVariableInplaceRenameEnabled()) {
-      final TemplateState templateState = TemplateManagerImpl.getTemplateState(operation.getEditor());
+      final TemplateState templateState = (TemplateState)TemplateManagerUtilBase.getTemplateState(operation.getEditor());
       if (templateState != null && !templateState.isFinished()) {
         return;
       }
@@ -398,7 +395,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   private void showCannotPerformError(Project project, Editor editor) {
-    CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message("refactoring.introduce.selection.error"), myDialogTitle,
+    CommonRefactoringUtil.showErrorHint(project, editor, PyPsiBundle.message("refactoring.introduce.selection.error"), myDialogTitle,
                                         "refactoring.extractMethod");
   }
 
@@ -427,13 +424,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       return true;
     }
     else if (expressions.size() > 1) {
-      IntroduceTargetChooser.showChooser(editor, expressions, new Pass<>() {
-        @Override
-        public void pass(PyExpression pyExpression) {
-          operation.setElement(pyExpression);
-          performActionOnElement(operation);
-        }
-      }, pyExpression -> pyExpression.getText());
+      PyRefactoringUiService.getInstance().showIntroduceTargetChooser(operation, editor, expressions, this::performActionOnElement);
       return true;
     }
     return false;
@@ -441,7 +432,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
 
   protected boolean checkIntroduceContext(PsiFile file, Editor editor, PsiElement element) {
     if (!isValidIntroduceContext(element)) {
-      CommonRefactoringUtil.showErrorHint(file.getProject(), editor, PyBundle.message("refactoring.introduce.selection.error"),
+      CommonRefactoringUtil.showErrorHint(file.getProject(), editor, PyPsiBundle.message("refactoring.introduce.selection.error"),
                                           myDialogTitle, "refactoring.extractMethod");
       return false;
     }
@@ -497,19 +488,21 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         performInplaceIntroduce(operation);
       }
       else {
-        OccurrencesChooser.simpleChooser(editor).showChooser(operation.getElement(), operation.getOccurrences(), new Pass<>() {
-          @Override
-          public void pass(OccurrencesChooser.ReplaceChoice replaceChoice) {
-            operation.setReplaceAll(replaceChoice == OccurrencesChooser.ReplaceChoice.ALL);
-            performInplaceIntroduce(operation);
-          }
-        });
+        PyRefactoringUiService.getInstance().showOccurrencesChooser(operation, editor, this::performInplaceIntroduce);
       }
     }
     else {
-      performIntroduceWithDialog(operation);
+      PyRefactoringUiService.getInstance().performIntroduceWithDialog(operation, myDialogTitle, myValidator, getHelpId(),
+                                                                      o -> {
+                                                                        PsiElement declaration = performRefactoring(o);
+                                                                        final Editor editor1 = o.getEditor();
+                                                                        editor1.getCaretModel()
+                                                                          .moveToOffset(declaration.getTextRange().getEndOffset());
+                                                                        editor1.getSelectionModel().removeSelection();
+                                                                      });
     }
   }
+
 
   protected @Nullable PyExpression getInitializerForElement(@Nullable PsiElement element) {
     if (element == null) return null;
@@ -520,34 +513,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
 
   protected void performInplaceIntroduce(IntroduceOperation operation) {
     final PsiElement statement = performRefactoring(operation);
-    if (statement instanceof PyAssignmentStatement) {
-      PyTargetExpression target = (PyTargetExpression) ((PyAssignmentStatement)statement).getTargets() [0];
-      final List<PsiElement> occurrences = operation.getOccurrences();
-      final PsiElement occurrence = findOccurrenceUnderCaret(occurrences, operation.getEditor());
-      PsiElement elementForCaret = occurrence != null ? occurrence : target;
-      operation.getEditor().getCaretModel().moveToOffset(elementForCaret.getTextRange().getStartOffset());
-      final InplaceVariableIntroducer<PsiElement> introducer =
-              new PyInplaceVariableIntroducer(target, operation, occurrences);
-      introducer.performInplaceRefactoring(new LinkedHashSet<>(operation.getSuggestedNames()));
-    }
-  }
-
-  protected void performIntroduceWithDialog(IntroduceOperation operation) {
-    final Project project = operation.getProject();
-    if (operation.getName() == null) {
-      PyIntroduceDialog dialog = new PyIntroduceDialog(project, myDialogTitle, myValidator, getHelpId(), operation);
-      if (!dialog.showAndGet()) {
-        return;
-      }
-      operation.setName(dialog.getName());
-      operation.setReplaceAll(dialog.doReplaceAllOccurrences());
-      operation.setInitPlace(dialog.getInitPlace());
-    }
-
-    PsiElement declaration = performRefactoring(operation);
-    final Editor editor = operation.getEditor();
-    editor.getCaretModel().moveToOffset(declaration.getTextRange().getEndOffset());
-    editor.getSelectionModel().removeSelection();
+    PyRefactoringUiService.getInstance().performInplaceIntroduceVariable(operation, statement);
   }
 
   protected PsiElement performRefactoring(IntroduceOperation operation) {
@@ -742,20 +708,5 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   protected void postRefactoring(PsiElement element) {
   }
 
-  private static class PyInplaceVariableIntroducer extends InplaceVariableIntroducer<PsiElement> {
-    private final PyTargetExpression myTarget;
 
-    PyInplaceVariableIntroducer(PyTargetExpression target,
-                                       IntroduceOperation operation,
-                                       List<PsiElement> occurrences) {
-      super(target, operation.getEditor(), operation.getProject(), PyBundle.message("python.introduce.variable.refactoring.name"),
-            occurrences.toArray(PsiElement.EMPTY_ARRAY), null);
-      myTarget = target;
-    }
-
-    @Override
-    protected PsiElement checkLocalScope() {
-      return myTarget.getContainingFile();
-    }
-  }
 }

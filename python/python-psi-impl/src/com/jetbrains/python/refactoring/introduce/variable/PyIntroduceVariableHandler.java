@@ -17,7 +17,7 @@ package com.jetbrains.python.refactoring.introduce.variable;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
@@ -30,7 +30,7 @@ import java.util.List;
  */
 public class PyIntroduceVariableHandler extends IntroduceHandler {
   public PyIntroduceVariableHandler() {
-    super(new VariableValidator(), PyBundle.message("refactoring.introduce.variable.dialog.title"));
+    super(new VariableValidator(), PyPsiBundle.message("refactoring.introduce.variable.dialog.title"));
   }
 
   @Override
@@ -44,7 +44,7 @@ public class PyIntroduceVariableHandler extends IntroduceHandler {
                                                PsiElement declaration,
                                                List<? extends PsiElement> occurrences,
                                                boolean replaceAll) {
-    PsiElement anchor = replaceAll ? findAnchor(occurrences) : PsiTreeUtil.getParentOfType(expression, PyStatement.class);
+    PsiElement anchor = replaceAll ? IntroduceHandler.findAnchor(occurrences) : PsiTreeUtil.getParentOfType(expression, PyStatement.class);
     assert anchor != null;
     final PsiElement parent = anchor.getParent();
     return parent.addBefore(declaration, anchor);

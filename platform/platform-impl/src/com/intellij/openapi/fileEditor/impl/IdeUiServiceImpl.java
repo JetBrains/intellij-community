@@ -1,19 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.ui.IdeUiService;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
-import com.intellij.internal.statistic.utils.PluginInfo;
-import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.EdtDataContext;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.UnlockOption;
@@ -25,6 +23,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.ui.SystemNotifications;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IOExceptionDialog;
@@ -182,5 +181,21 @@ public class IdeUiServiceImpl extends IdeUiService {
   @Override
   public boolean showErrorDialog(@NlsContexts.DialogTitle String title, @NlsContexts.DetailedDescription String message) {
     return IOExceptionDialog.showErrorDialog(title, message);
+  }
+
+  @Override
+  public void showRefactoringMessageDialog(String title,
+                                           String message,
+                                           String helpTopic,
+                                           String iconId,
+                                           boolean showCancelButton,
+                                           Project project) {
+    RefactoringMessageDialog dialog = new RefactoringMessageDialog(title, message, helpTopic, iconId, showCancelButton, project);
+    dialog.show();
+  }
+
+  @Override
+  public void showErrorHint(Editor editor, String message) {
+    HintManager.getInstance().showErrorHint(editor, message);
   }
 }

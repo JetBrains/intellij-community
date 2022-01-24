@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
-import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
@@ -46,8 +46,7 @@ public final class CommonRefactoringUtil {
                                       @NonNls @Nullable String helpId,
                                       @NotNull Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
-    RefactoringMessageDialog dialog = new RefactoringMessageDialog(title, message, helpId, "OptionPane.errorIcon", false, project);
-    dialog.show();
+    IdeUiService.getInstance().showRefactoringMessageDialog(title, message, helpId, "OptionPane.errorIcon", false, project);
   }
 
   // order of usages across different files is irrelevant
@@ -84,7 +83,7 @@ public final class CommonRefactoringUtil {
         showErrorMessage(title, message, helpId, project);
       }
       else {
-        HintManager.getInstance().showErrorHint(editor, message);
+        IdeUiService.getInstance().showErrorHint(editor, message);
       }
     });
   }
