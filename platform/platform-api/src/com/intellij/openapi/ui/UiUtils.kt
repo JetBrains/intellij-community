@@ -7,6 +7,8 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBTextField
@@ -15,6 +17,7 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.ui.ComponentWithEmptyText
 import java.awt.Component
 import java.awt.event.*
+import java.io.File
 import javax.swing.*
 import javax.swing.text.JTextComponent
 import javax.swing.tree.DefaultMutableTreeNode
@@ -111,3 +114,11 @@ val <E> ComboBox<E>.collectionModel: CollectionComboBoxModel<E>
   get() = model as CollectionComboBoxModel
 
 fun <T> Iterable<T>.naturalSorted() = sortedWith(Comparator.comparing({ it.toString() }, NaturalComparator.INSTANCE))
+
+fun getPresentablePath(path: String): @NlsSafe String {
+  return FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(path.trim()), false)
+}
+
+fun getCanonicalPath(path: String, removeLastSlash: Boolean = true): String {
+  return FileUtil.toCanonicalPath(FileUtil.expandUserHome(path.trim()), File.separatorChar, removeLastSlash)
+}

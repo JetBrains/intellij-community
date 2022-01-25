@@ -19,7 +19,6 @@ import com.intellij.openapi.observable.operations.asProperty
 import com.intellij.openapi.observable.operations.whenOperationCompleted
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
-import com.intellij.openapi.observable.properties.and
 import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project

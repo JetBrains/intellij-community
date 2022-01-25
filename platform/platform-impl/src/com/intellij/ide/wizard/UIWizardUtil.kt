@@ -7,25 +7,19 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.util.ui.UIUtil
-import java.io.File
 import javax.swing.JComponent
 import javax.swing.JLabel
 
 
 val WizardContext.projectOrDefault get() = project ?: ProjectManager.getInstance().defaultProject
 
-fun getPresentablePath(path: String): String {
-  return FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(path.trim()), false)
-}
+fun getPresentablePath(path: String) = com.intellij.openapi.ui.getPresentablePath(path)
 
-fun getCanonicalPath(path: String, removeLastSlash: Boolean = true): String {
-  return FileUtil.toCanonicalPath(FileUtil.expandUserHome(path.trim()), File.separatorChar, removeLastSlash)
-}
+fun getCanonicalPath(path: String, removeLastSlash: Boolean = true) = com.intellij.openapi.ui.getCanonicalPath(path, removeLastSlash)
 
 fun <T1, T2> T1.chain(f1: (T1) -> T2): NewProjectWizardStep
   where T1 : NewProjectWizardStep, T2 : NewProjectWizardStep {
