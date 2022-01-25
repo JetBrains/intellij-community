@@ -58,7 +58,7 @@ internal fun RunContentDescriptor.environment(): ExecutionEnvironment? {
   }
 }
 
-internal fun AnActionEvent.runToolbarData(): RunToolbarData? {
+fun AnActionEvent.runToolbarData(): RunToolbarData? {
   return this.dataContext.runToolbarData()
 }
 
