@@ -4915,6 +4915,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/toKotlinClasses/LibraryFunctions.java");
         }
 
+        @TestMetadata("MutableIterator.java")
+        public void testMutableIterator() throws Exception {
+            runTest("testData/newJ2k/toKotlinClasses/MutableIterator.java");
+        }
+
         @TestMetadata("TypeParameterBound.java")
         public void testTypeParameterBound() throws Exception {
             runTest("testData/newJ2k/toKotlinClasses/TypeParameterBound.java");
