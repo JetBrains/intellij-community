@@ -14,7 +14,7 @@ class GroovyNewProjectWizardUsageCollector : CounterUsagesCollector() {
   internal enum class DistributionType { MAVEN, LOCAL }
 
   companion object {
-    private val GROUP = EventLogGroup("new.project.wizard.interactions", 3)
+    private val GROUP = EventLogGroup("new.project.wizard.interactions.groovy", 1)
 
     private val SESSION_ID_FIELD = EventFields.Int("wizard_session_id")
     private val VERSION_FIELD = EventFields.StringValidatedByInlineRegexp("version", GroovyConfigUtils.GROOVY_VERSION_REGEX.pattern())
