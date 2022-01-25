@@ -3,21 +3,20 @@
 package org.jetbrains.kotlin.idea.fir.highlighter.visitors
 
 import com.intellij.lang.annotation.AnnotationHolder
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiModifier
-import com.intellij.psi.PsiVariable
-import com.intellij.psi.util.PsiUtilCore
-import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
-import org.jetbrains.kotlin.idea.fir.highlighter.textAttributesKeyForPropertyDeclaration
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtBackingFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtVariableSymbol
+import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
+import org.jetbrains.kotlin.idea.fir.highlighter.textAttributesKeyForPropertyDeclaration
 import org.jetbrains.kotlin.idea.highlighter.NameHighlighter
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
+import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtValueArgumentName
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors as Colors
 
 internal class VariableReferenceHighlightingVisitor(
@@ -41,15 +40,17 @@ internal class VariableReferenceHighlightingVisitor(
 
         with(analysisSession) {
             val targetSymbol = expression.mainReference.resolveToSymbol()
-            val target = expression.mainReference.resolve()
+            val targetPsi = targetSymbol?.psi
             when {
                 targetSymbol is KtBackingFieldSymbol -> Colors.BACKING_FIELD_VARIABLE
-                target is PsiMethod -> Colors.SYNTHETIC_EXTENSION_PROPERTY
-                target != null -> textAttributesKeyForPropertyDeclaration(target)
+                targetSymbol is KtSyntheticJavaPropertySymbol -> Colors.SYNTHETIC_EXTENSION_PROPERTY
+                targetPsi != null -> textAttributesKeyForPropertyDeclaration(targetPsi)
                 else -> null
             }?.let { attribute ->
                 highlightName(expression, attribute)
-                if (target?.isMutableVariable() == true || targetSymbol != null && isBackingFieldReferencingMutableVariable(targetSymbol)) {
+                if (isMutableVariable(targetSymbol) == true
+                    || targetSymbol != null && isBackingFieldReferencingMutableVariable(targetSymbol)
+                ) {
                     highlightName(expression, Colors.MUTABLE_VARIABLE)
                 }
             }
@@ -71,9 +72,9 @@ internal class VariableReferenceHighlightingVisitor(
     }
 }
 
-private fun PsiElement.isMutableVariable() = when {
-    this is KtValVarKeywordOwner && PsiUtilCore.getElementType(valOrVarKeyword) == KtTokens.VAR_KEYWORD -> true
-    this is PsiVariable && !hasModifierProperty(PsiModifier.FINAL) -> true
+@Suppress("unused")
+private fun KtAnalysisSession.isMutableVariable(symbol: KtSymbol?): Boolean = when (symbol) {
+    is KtVariableSymbol -> !symbol.isVal
     else -> false
 }
 
