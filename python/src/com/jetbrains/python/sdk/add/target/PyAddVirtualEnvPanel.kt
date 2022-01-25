@@ -225,7 +225,12 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
       sdk.associateWithModule(module, newProjectPath)
     }
     project.excludeInnerVirtualEnv(sdk)
-    PySdkSettings.instance.onVirtualEnvCreated(baseSdk, FileUtil.toSystemIndependentName(root), projectBasePath)
+    if (isUnderLocalTarget) {
+      // The method `onVirtualEnvCreated(..)` stores preferred base path to virtual envs. Storing here the base path from the non-local
+      // target (e.g. a path from SSH machine or a Docker image) ends up with a meaningless default for the local machine.
+      // If we would like to store preferred paths for non-local targets we need to use some key to identify the exact target.
+      PySdkSettings.instance.onVirtualEnvCreated(baseSdk, FileUtil.toSystemIndependentName(root), projectBasePath)
+    }
     return sdk
   }
 
