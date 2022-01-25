@@ -185,8 +185,8 @@ public final class ConfigImportHelper {
         Path oldIdeHome = oldConfigDirAndOldIdePath.second;
 
         ConfigImportOptions configImportOptions = new ConfigImportOptions(log);
+        configImportOptions.importSettings = settings;
         if (!guessedOldConfigDirs.fromSameProduct) {
-          configImportOptions.importSettings = settings;
           importScenarioStatistics = IMPORTED_FROM_OTHER_PRODUCT;
         }
         else if (importScenarioStatistics == null) {
