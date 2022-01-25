@@ -17,7 +17,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.UIBundle;
@@ -71,11 +70,11 @@ public final class BuildContentManagerImpl implements BuildContentManager, Dispo
       return toolWindow;
     }
 
-    toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.build(TOOL_WINDOW_ID, builder -> {
+    toolWindow = toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, builder -> {
       builder.stripeTitle = UIBundle.messagePointer("tool.window.name.build");
       builder.icon = AllIcons.Toolwindows.ToolWindowBuild;
       return Unit.INSTANCE;
-    }));
+    });
     toolWindow.setToHideOnEmptyContent(true);
     return toolWindow;
   }

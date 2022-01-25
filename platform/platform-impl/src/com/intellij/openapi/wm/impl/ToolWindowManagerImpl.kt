@@ -961,7 +961,9 @@ open class ToolWindowManagerImpl(val project: Project, private val isNewUi: Bool
                                     contentFactory = factory,
                                     isAvailable = task.shouldBeAvailable,
                                     stripeTitle = stripeTitle)
-
+    if (task.hideOnEmptyContent) {
+      toolWindow.setToHideOnEmptyContent(true)
+    }
     toolWindow.windowInfoDuringInit = infoSnapshot
     try {
       factory?.init(toolWindow)

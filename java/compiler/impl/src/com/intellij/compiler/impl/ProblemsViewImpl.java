@@ -14,7 +14,6 @@ import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
@@ -51,12 +50,12 @@ final class ProblemsViewImpl extends ProblemsView {
 
         ProblemsViewPanel panel = new ProblemsViewPanel(project);
 
-        ToolWindow toolWindow = ToolWindowManager.getInstance(project)
-          .registerToolWindow(RegisterToolWindowTask.build(AUTO_BUILD_TOOLWINDOW_ID, builder -> {
-            builder.icon = AllIcons.Toolwindows.ProblemsEmpty;
-            builder.stripeTitle = IdeBundle.messagePointer("toolwindow.stripe.Problems");
-            return Unit.INSTANCE;
-          }));
+        ToolWindow toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(AUTO_BUILD_TOOLWINDOW_ID, builder -> {
+          builder.icon = AllIcons.Toolwindows.ProblemsEmpty;
+          builder.stripeTitle = IdeBundle.messagePointer("toolwindow.stripe.Problems");
+          builder.canCloseContent = false;
+          return Unit.INSTANCE;
+        });
         Disposer.register(toolWindow.getDisposable(), panel);
 
         Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);

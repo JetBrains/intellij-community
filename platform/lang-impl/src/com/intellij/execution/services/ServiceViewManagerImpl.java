@@ -35,7 +35,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -51,6 +50,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SmartHashSet;
+import kotlin.Unit;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -171,15 +171,17 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
 
       myRegisteringToolWindowAvailable = active;
       try {
-        ToolWindow toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.lazyAndClosableWithStripeTitle(
-          toolWindowId,
-          new ServiceViewToolWindowFactory(),
-          AllIcons.Toolwindows.ToolWindowServices,
-          toolWindowId == ToolWindowId.SERVICES ? null : () -> {
-            @NlsSafe String title = toolWindowId;
-            return title;
+        ToolWindow toolWindow = toolWindowManager.registerToolWindow(toolWindowId, builder -> {
+          builder.contentFactory = new ServiceViewToolWindowFactory();
+          builder.icon = AllIcons.Toolwindows.ToolWindowServices;
+          if (toolWindowId == ToolWindowId.SERVICES) {
+            builder.stripeTitle = () -> {
+              @NlsSafe String title = toolWindowId;
+              return title;
+            };
           }
-        ));
+          return Unit.INSTANCE;
+        });
         if (active) {
           myActiveToolWindowIds.add(toolWindowId);
         }

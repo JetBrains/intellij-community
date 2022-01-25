@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.execution.RunManagerListener;
@@ -20,7 +20,10 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowFactory;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
@@ -31,6 +34,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
 import icons.MavenIcons;
+import kotlin.Unit;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -270,13 +274,18 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     editSource.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree, this);
 
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    ToolWindow toolWindow = toolWindowManager.registerToolWindow(
-      RegisterToolWindowTask.lazyAndNotClosable(TOOL_WINDOW_ID, new ToolWindowFactory() {
+    ToolWindow toolWindow = toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, builder -> {
+      builder.icon = MavenIcons.ToolWindowMaven;
+      builder.anchor = ToolWindowAnchor.RIGHT;
+      builder.canCloseContent = false;
+      builder.contentFactory = new ToolWindowFactory() {
         @Override
-        public void createToolWindowContent(@NotNull Project project,
-                                            @NotNull ToolWindow toolWindow) {
+        public void createToolWindowContent (@NotNull Project project,
+          @NotNull ToolWindow toolWindow){
         }
-      }, MavenIcons.ToolWindowMaven, ToolWindowAnchor.RIGHT));
+      } ;
+      return Unit.INSTANCE;
+    });
 
     ContentManager contentManager = toolWindow.getContentManager();
     Disposer.register(this, () -> {

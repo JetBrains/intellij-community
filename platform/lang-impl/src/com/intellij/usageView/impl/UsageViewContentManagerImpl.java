@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -44,7 +43,7 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
 
   @NonInjectable
   public UsageViewContentManagerImpl(@NotNull Project project, @NotNull ToolWindowManager toolWindowManager) {
-    ToolWindow toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.build(
+    ToolWindow toolWindow = toolWindowManager.registerToolWindow(
       ToolWindowId.FIND,
       builder -> {
         builder.stripeTitle = UIBundle.messagePointer("tool.window.name.find");
@@ -52,7 +51,7 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
         builder.shouldBeAvailable = false;
         return Unit.INSTANCE;
       }
-    ));
+    );
     toolWindow.setHelpId(UsageViewImpl.HELP_ID);
     toolWindow.setToHideOnEmptyContent(true);
 
