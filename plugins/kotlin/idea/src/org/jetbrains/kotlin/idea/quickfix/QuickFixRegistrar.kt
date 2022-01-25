@@ -241,6 +241,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         UNNECESSARY_SAFE_CALL.registerFactory(ReplaceWithDotCallFixFactory)
         UNSAFE_CALL.registerFactory(ReplaceWithSafeCallFixFactory)
+        SAFE_CALL_WILL_CHANGE_NULLABILITY.registerFactory(ReplaceWithDotCallFixFactory)
 
         UNSAFE_CALL.registerFactory(SurroundWithNullCheckFix)
         UNSAFE_IMPLICIT_INVOKE_CALL.registerFactory(SurroundWithNullCheckFix)

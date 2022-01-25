@@ -1594,6 +1594,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("callWillChangeNullability.kt")
+        public void testCallWillChangeNullability() throws Exception {
+            runTest("../idea/tests/testData/quickfix/replaceWithDotCall/callWillChangeNullability.kt");
+        }
+
+        @TestMetadata("callWillChangeNullability2.kt")
+        public void testCallWillChangeNullability2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/replaceWithDotCall/callWillChangeNullability2.kt");
+        }
+
         @TestMetadata("comment.kt")
         public void testComment() throws Exception {
             runTest("../idea/tests/testData/quickfix/replaceWithDotCall/comment.kt");
