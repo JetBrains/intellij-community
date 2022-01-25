@@ -152,7 +152,7 @@ public class PlaybackRunner {
     if (cmdIndex < myCommands.size()) {
       CommandDescriptor commandDescriptor = myCommands.get(cmdIndex);
       final PlaybackCommand cmd = createCommand(commandDescriptor.fullLine, commandDescriptor.line, commandDescriptor.scriptDir);
-      if (myStopRequested) {
+      if (myStopRequested || cmd == null) {
         myCallback.message(null, "Stopped", StatusCallback.Type.message);
         myActionCallback.setRejected();
         return;
@@ -332,7 +332,7 @@ public class PlaybackRunner {
     }
   }
 
-  @NotNull
+  @Nullable
   protected PlaybackCommand createCommand(String string, int line, File scriptDir) {
     AbstractCommand cmd;
 
@@ -380,12 +380,16 @@ public class PlaybackRunner {
     }
     else {
       if(string.startsWith(AbstractCommand.CMD_PREFIX)){
+        cmd = null;
         LOG.error("Command " + string + " is not found");
       }
-      cmd = new AlphaNumericTypeCommand(string, line);
+      else {
+        cmd = new AlphaNumericTypeCommand(string, line);
+      }
     }
-
-    cmd.setScriptDir(scriptDir);
+    if (cmd != null) {
+      cmd.setScriptDir(scriptDir);
+    }
 
     return cmd;
   }
