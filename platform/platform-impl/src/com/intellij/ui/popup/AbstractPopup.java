@@ -1776,16 +1776,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     result.height += getAdComponentHeight();
     JBInsets.addTo(result, myContent.getInsets());
 
-    Insets insets = myContent.getInsets();
-    if (insets != null && (insets.top != 0 || insets.left != 0)) {
-      bounds.x -= insets.left;
-      bounds.y -= insets.top;
-    }
-
     if (myLocateByContent) {
       Dimension headerCorrectionSize = myHeaderPanel.getPreferredSize();
       if (headerCorrectionSize != null) {
-        bounds.y -= headerCorrectionSize.height;
+        result.y -= headerCorrectionSize.height;
       }
     }
 
