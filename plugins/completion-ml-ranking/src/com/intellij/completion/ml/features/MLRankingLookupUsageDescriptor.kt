@@ -4,23 +4,26 @@ package com.intellij.completion.ml.features
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.LookupUsageDescriptor
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.completion.ml.features.MLRankingCompletionCollectorExtension.Companion.mlUsed
+import com.intellij.completion.ml.features.MLRankingCompletionCollectorExtension.Companion.totalMlTime
 import com.intellij.completion.ml.storage.LookupStorage
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
 
 class MLRankingLookupUsageDescriptor : LookupUsageDescriptor {
   override fun getExtensionKey(): String = "ml"
 
-  override fun fillUsageData(lookup: Lookup, usageData: FeatureUsageData) {
+  override fun getAdditionalUsageData(lookup: Lookup): List<EventPair<*>> {
+    val data = mutableListOf<EventPair<*>>()
     if (lookup.isCompletion && lookup is LookupImpl) {
       val storage = LookupStorage.get(lookup)
       if (storage != null) {
-        usageData.apply {
-          addData("total_ml_time", storage.performanceTracker.totalMLTimeContribution())
+        data.add(totalMlTime.with(storage.performanceTracker.totalMLTimeContribution()))
 
-          addData("ml_used", storage.mlUsed())
-          addData("version", storage.model?.version() ?: "unknown")
-        }
+        data.add(mlUsed.with(storage.mlUsed()))
+        data.add(EventFields.Version.with( storage.model?.version() ?: "unknown"))
       }
     }
+    return data
   }
 }

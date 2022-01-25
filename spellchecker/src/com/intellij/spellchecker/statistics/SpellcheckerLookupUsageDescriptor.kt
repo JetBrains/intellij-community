@@ -5,21 +5,23 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.LookupUsageDescriptor
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.util.Key
+import com.intellij.spellchecker.statistics.SpellcheckerCompletionCollectorExtension.Companion.spellchecker
+import java.util.*
 
 class SpellcheckerLookupUsageDescriptor : LookupUsageDescriptor {
   companion object {
-    private const val SPELLCHECKER = "spellchecker"
+    internal const val SPELLCHECKER = "spellchecker"
     val SPELLCHECKER_KEY = Key<Boolean>(SPELLCHECKER)
   }
 
   override fun getExtensionKey(): String = SPELLCHECKER
 
-  override fun fillUsageData(lookup: Lookup, usageData: FeatureUsageData) {
+  override fun getAdditionalUsageData(lookup: Lookup): MutableList<EventPair<*>> {
     if (lookup is LookupImpl && lookup.getUserData(SPELLCHECKER_KEY) == true) {
-      usageData.apply {
-        addData(SPELLCHECKER, true)
-      }
+      return Collections.singletonList(spellchecker.with(true))
     }
+    return Collections.emptyList()
   }
 }

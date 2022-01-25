@@ -3,9 +3,13 @@ package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Allows to extend information in fus logs about shown lookup.
@@ -24,8 +28,18 @@ public interface LookupUsageDescriptor {
   @NotNull
   String getExtensionKey();
 
-  /*
+  /**
+   * @deprecated use {@link LookupUsageDescriptor#getAdditionalUsageData(com.intellij.codeInsight.lookup.Lookup)}
+   */
+  @Deprecated
+  default void fillUsageData(@NotNull Lookup lookup, @NotNull FeatureUsageData usageData) {
+    getAdditionalUsageData(lookup).forEach(pair -> pair.addData(usageData));
+  }
+
+  /**
    * The method is triggered after the lookup usage finishes. Use it to fill usageData with information to collect.
    */
-  void fillUsageData(@NotNull Lookup lookup, @NotNull FeatureUsageData usageData);
+  default List<EventPair<?>> getAdditionalUsageData(@NotNull Lookup lookup) {
+    return Collections.emptyList();
+  }
 }

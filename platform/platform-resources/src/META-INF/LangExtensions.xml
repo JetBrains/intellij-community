@@ -1031,7 +1031,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.move.MoveUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.actions.RefactoringUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.webcore.packaging.PackageManagementUsageCollector"/>
-    <statistics.counterUsagesCollector groupId="completion" version="8"/>
+    <statistics.counterUsagesCollector groupId="completion" version="9"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.find.findUsages.FindUsagesStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.usages.impl.UsageViewStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.fileTypes.impl.FileTypeConfigurableInteractions"/>
