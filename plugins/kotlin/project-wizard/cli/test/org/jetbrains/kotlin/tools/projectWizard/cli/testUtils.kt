@@ -3,14 +3,12 @@
 package org.jetbrains.kotlin.tools.projectWizard.cli
 
 import com.intellij.testFramework.UsefulTestCase
-import org.hamcrest.core.Is
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.tools.projectWizard.core.ExceptionError
 import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
 import org.jetbrains.kotlin.tools.projectWizard.core.div
 import org.jetbrains.kotlin.tools.projectWizard.core.onFailure
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
-import org.junit.Assert.assertThat
 import org.junit.Assert.fail
 import java.nio.file.Files
 import java.nio.file.Path
@@ -66,14 +64,14 @@ enum class BuildSystem(
 ) {
     GRADLE_KOTLIN_DSL(
         buildFileName = "build.gradle.kts",
-        additionalFileNames = listOf("settings.gradle.kts"),
+        additionalFileNames = listOf("settings.gradle.kts", "gradle-wrapper.properties"),
         yaml = """buildSystem:
                             type: GradleKotlinDsl
                             """.trimIndent()
     ),
     GRADLE_GROOVY_DSL(
         buildFileName = "build.gradle",
-        additionalFileNames = listOf("settings.gradle"),
+        additionalFileNames = listOf("settings.gradle", "gradle-wrapper.properties"),
         yaml = """buildSystem:
                             type: GradleGroovyDsl
                             """.trimIndent()
