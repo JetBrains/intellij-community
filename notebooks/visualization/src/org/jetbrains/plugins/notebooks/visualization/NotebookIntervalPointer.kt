@@ -33,7 +33,7 @@ interface NotebookIntervalPointerFactory {
 
     fun onRemoved(ordinal: Int)
 
-    fun onMovedPointer(fromOrdinal: Int, toOrdinal: Int)
+    fun onMoved(fromOrdinal: Int, toOrdinal: Int)
   }
 
   val changeListeners: EventDispatcher<ChangeListener>
