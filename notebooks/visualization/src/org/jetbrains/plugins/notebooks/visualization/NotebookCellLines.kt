@@ -56,10 +56,11 @@ interface NotebookCellLines {
      * Intervals in the lists are valid only until the document changes. Check their validity
      * when postponing handling of intervals.
      *
-     * If document edited, but intervals weren't changed, both oldIntervals and newIntervals are empty,
-     * modification stamp don't changed
+     * If document is changed, but intervals aren’t changed, both [oldIntervals] and [newIntervals] are empty,
+     * and the [modificationStamp] stamp doesn’t change.
      *
-     * eventAffectedIntervals are current (not old) intervals, which content or markers were modified by event
+     * [eventAffectedIntervals] are current (not old) intervals, which text or markers were modified by events.
+     * If existing line is edited, [eventAffectedIntervals] contains one interval with the line, but [newIntervals] are empty.
      *
      * It is guaranteed that:
      * * Ordinals from every list defines an arithmetical progression where
