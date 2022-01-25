@@ -1,7 +1,7 @@
 class Main {
   /**
    * A simple program.
-   * {@snippet:
+   * {@snippet :
    * class HelloWorld {
    *  @Override
    * public boolean equals(Object obj) {
