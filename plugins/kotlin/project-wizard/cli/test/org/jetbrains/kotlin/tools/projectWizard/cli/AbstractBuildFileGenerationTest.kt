@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.tools.projectWizard.cli
 
 import com.intellij.testFramework.UsefulTestCase
+import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.div
 import org.jetbrains.kotlin.tools.projectWizard.core.service.Services
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
@@ -44,7 +45,7 @@ abstract class AbstractBuildFileGenerationTest : UsefulTestCase() {
             tempDirectory.allBuildFiles(buildSystem), tempDirectory
         ) { path ->
             val fileContent = path.readFile()
-            if (testParameters.keepKotlinVersion) {
+            (if (testParameters.keepKotlinVersion) {
                 fileContent
             } else {
                 val pathString = path.toString()
@@ -55,10 +56,10 @@ abstract class AbstractBuildFileGenerationTest : UsefulTestCase() {
                         fileContent.replaceKotlinVersion(GRADLE_KOTLIN_VERSION_REPLACE_REGEX, KOTLIN_VERSION_PLACEHOLDER)
                     else -> fileContent.replace(ACTUAL_KOTLIN_VERSION_STRING, KOTLIN_VERSION_PLACEHOLDER)
                 }
-            }.also { it.replaceAllTo(
+            }).replaceAllTo(
                 listOf(Repositories.JETBRAINS_KOTLIN_DEV.url),
                 KOTLIN_REPO_PLACEHOLDER
-            ) }
+            ).replace("gradle-${Versions.GRADLE.text}-bin.zip", "gradle-GRADLE_VERSION-bin.zip")
         }
     }
 
