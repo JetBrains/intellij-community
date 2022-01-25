@@ -138,6 +138,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       "bin/remote-dev-server.sh",
     ] + customizer.extraExecutables
     if (includeJre) {
+      // When changing this list of patterns, also change patch_bin_file in launcher.sh (for remote dev)
       patterns += "jbr/bin/*"
       patterns += "jbr/lib/jexec"
       patterns += "jbr/lib/jcef_helper"
