@@ -20,7 +20,7 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
     val libraries = HashMap<JpsLibrary, JpsModule>()
     project.modules.filter { it.name !in nonPublicModules
                              && !it.name.contains("guiTests")
-                             && !it.name.startsWith("fleet")
+                             && !it.name.startsWith("fleet.draft")
                              && it.name != "intellij.platform.util.immutableKeyValueStore.benchmark"
                              && !it.name.contains("integrationTests", ignoreCase = true)}.forEach { module ->
       JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.forEach {
