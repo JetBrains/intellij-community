@@ -1,0 +1,6 @@
+// "Replace with safe (?.) call" "true"
+// WITH_STDLIB
+
+fun foo(bar: String?) {
+    bar?.contains("foo")
+}

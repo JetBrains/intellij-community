@@ -75,14 +75,23 @@ class ReplaceInfixOrOperatorCallFix(
             is KtBinaryExpression -> {
                 val left = element.left ?: return
                 val right = element.right ?: return
-
                 // `a += b` is replaced with `a = a?.plus(b)` when the += operator is not available
                 val isNormalAssignment = element.operationToken in KtTokens.AUGMENTED_ASSIGNMENTS &&
                         Name.identifier(binaryOperatorName) !in OperatorConventions.ASSIGNMENT_OPERATIONS.values
-                val newExpression = if (isNormalAssignment) {
-                    psiFactory.createExpressionByPattern("$0 = $0?.$1($2)", left, binaryOperatorName, right)
-                } else {
-                    psiFactory.createExpressionByPattern("$0?.$1($2)$elvis", left, binaryOperatorName, right)
+
+                val isContainsOperator = element.operationToken == KtTokens.IN_KEYWORD
+                val isNotContainsOperator = element.operationToken == KtTokens.NOT_IN
+                val newExpression = when {
+                    isContainsOperator || isNotContainsOperator -> {
+                        val negationSuffix = if (isNotContainsOperator) " == false" else ""
+                        psiFactory.createExpressionByPattern("$2?.$1($0)$negationSuffix", left, binaryOperatorName, right)
+                    }
+                    isNormalAssignment -> {
+                        psiFactory.createExpressionByPattern("$0 = $0?.$1($2)", left, binaryOperatorName, right)
+                    }
+                    else -> {
+                        psiFactory.createExpressionByPattern("$0?.$1($2)$elvis", left, binaryOperatorName, right)
+                    }
                 }
                 replacement = element.replace(newExpression)
             }

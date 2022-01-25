@@ -11634,6 +11634,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/replaceInfixOrOperatorCall/callExpressionInSafeQualified2.kt");
         }
 
+        @TestMetadata("containsBinaryOperator.kt")
+        public void testContainsBinaryOperator() throws Exception {
+            runTest("testData/quickfix/replaceInfixOrOperatorCall/containsBinaryOperator.kt");
+        }
+
         @TestMetadata("hasElvis.kt")
         public void testHasElvis() throws Exception {
             runTest("testData/quickfix/replaceInfixOrOperatorCall/hasElvis.kt");
@@ -11642,6 +11647,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("list.kt")
         public void testList() throws Exception {
             runTest("testData/quickfix/replaceInfixOrOperatorCall/list.kt");
+        }
+
+        @TestMetadata("notContainsBinaryOperator.kt")
+        public void testNotContainsBinaryOperator() throws Exception {
+            runTest("testData/quickfix/replaceInfixOrOperatorCall/notContainsBinaryOperator.kt");
         }
     }
 
