@@ -112,13 +112,14 @@ public class EditorGutterLayout {
       area(LINE_NUMBERS_AREA, () -> myEditorGutter.myLineNumberAreaWidth).showIf(this::isLineNumbersShown),
       area(ADDITIONAL_LINE_NUMBERS_AREA, () -> myEditorGutter.myAdditionalLineNumberAreaWidth),
       areaGap()
-        .as(EditorMouseEventArea.LINE_NUMBERS_AREA)
+        .as(EditorMouseEventArea.LINE_MARKERS_AREA)
         .showIf(this::isLineNumbersShown),
 
-      area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationExtraSize),
+      area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationExtraSize)
+        .as(EditorMouseEventArea.LINE_MARKERS_AREA),
       area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationGuttersSize),
       areaGap()
-        .as(EditorMouseEventArea.ANNOTATIONS_AREA)
+        .as(EditorMouseEventArea.LINE_MARKERS_AREA)
         .showIf(() -> myEditorGutter.isShowGapAfterAnnotations()),
 
       area(LEFT_FREE_PAINTERS_AREA, myEditorGutter::getLeftFreePaintersAreaWidth),
