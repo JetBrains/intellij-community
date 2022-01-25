@@ -22,7 +22,10 @@ import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.util.*;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DataOutputStream;
@@ -567,17 +570,7 @@ public final class FSRecords {
     for (String name : names) {
       nameIds.add(getNameId(name));
     }
-    return readAndHandleErrors(() -> {
-      PersistentFSRecordsStorage records = ourConnection.getRecords();
-      return records.processAll(r -> {
-        if (nameIds.contains(r.name) &&
-            !(BitUtil.isSet(r.flags, PersistentFSRecordAccessor.FREE_RECORD_FLAG) ||
-              ourRecordAccessor.getNewFreeRecords().contains(r.id))) {
-          if (!processor.test(r.id)) return false;
-        }
-        return true;
-      });
-    });
+    return readAndHandleErrors(() -> ourConnection.getRecords().processByName(nameIds::contains, processor));
   }
 
   public static int getNameId(@NotNull String name) {

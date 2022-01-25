@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -265,6 +266,11 @@ public class ResizeableMappedFile implements Forceable {
   public <R> @NotNull R readInputStream(@NotNull ThrowableNotNullFunction<? super InputStream, R, ? extends IOException> consumer)
     throws IOException {
     return myStorage.readInputStream(consumer);
+  }
+
+  public <R> @NotNull R readChannel(@NotNull ThrowableNotNullFunction<? super ReadableByteChannel, R, ? extends IOException> consumer)
+    throws IOException {
+    return myStorage.readChannel(consumer);
   }
 
   public void lockRead() {

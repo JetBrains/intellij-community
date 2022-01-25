@@ -3,17 +3,16 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.util.Processor;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.ResizeableMappedFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.IntPredicate;
 
 public final class PersistentFSRecordsStorage {
   private static final int PARENT_OFFSET = 0;
@@ -285,33 +284,24 @@ public final class PersistentFSRecordsStorage {
     return myFile.isDirty();
   }
 
-  boolean processAll(@NotNull Processor<? super Record> processor) throws IOException {
-    Record r = new Record();
-    byte[] bytes = new byte[RECORD_SIZE];
-    ByteBuffer buffer = ByteBuffer.wrap(bytes);
-    if (IOUtil.useNativeByteOrderForByteBuffers()) buffer.order(ByteOrder.nativeOrder());
+  boolean processByName(@NotNull IntPredicate nameFilter, @NotNull IntPredicate idProcessor) throws IOException {
     return read(() -> {
       ProgressManager.checkCanceled();
       myFile.force();
-      return myFile.readInputStream(is -> {
-        try (BufferedInputStream bis = new BufferedInputStream(is)) {
-          if (bis.read(bytes) != bytes.length) return true; // header
-          int id = 1;
-          while (bis.read(bytes) == bytes.length) {
-            if (id % 100 == 0) {
-              ProgressManager.checkCanceled();
+      return myFile.readChannel(ch -> {
+        ByteBuffer buffer = ByteBuffer.allocateDirect(RECORD_SIZE * 1024);
+        if (IOUtil.useNativeByteOrderForByteBuffers()) buffer.order(ByteOrder.nativeOrder());
+        try {
+          int id = 1, limit, offset;
+          while ((limit = ch.read(buffer)) >= RECORD_SIZE) {
+            ProgressManager.checkCanceled();
+            offset = id == 1 ? RECORD_SIZE : 0; // skip header
+            for (; offset < limit; offset += RECORD_SIZE) {
+              if (nameFilter.test(buffer.getInt(offset + 4)) && // name offset is 4
+                  !idProcessor.test(id)) return false;
+              id ++;
             }
-            r.id = id++;
             buffer.position(0);
-            r.parent = buffer.getInt();
-            r.name = buffer.getInt();
-            r.flags = buffer.getInt();
-            r.attr_ref = buffer.getInt();
-            r.content = buffer.getInt();
-            r.timestamp = buffer.getLong();
-            r.mod_count = buffer.getInt();
-            r.length = buffer.getLong();
-            if (!processor.process(r)) return false;
           }
         }
         catch (IOException ignore) {
@@ -319,10 +309,5 @@ public final class PersistentFSRecordsStorage {
         return true;
       });
     });
-  }
-
-  static final class Record {
-    int id, parent, name, flags, attr_ref, content, mod_count;
-    long timestamp, length;
   }
 }
