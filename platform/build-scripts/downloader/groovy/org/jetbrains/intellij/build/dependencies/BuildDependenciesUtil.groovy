@@ -6,6 +6,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipFile
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nullable
@@ -17,6 +18,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.PosixFilePermissions
+import java.util.function.Function
 
 @CompileStatic
 @ApiStatus.Internal
@@ -177,8 +179,17 @@ final class BuildDependenciesUtil {
     }
   }
 
+  static void extractTarBz2(Path archiveFile, Path target, boolean stripRoot) {
+    extractTarBasedArchive(archiveFile, target, stripRoot, {is -> new BZip2CompressorInputStream(is)})
+  }
+
   static void extractTarGz(Path archiveFile, Path target, boolean stripRoot) {
-    new TarArchiveInputStream(new GzipCompressorInputStream(new BufferedInputStream(Files.newInputStream(archiveFile)))).withCloseable { archive ->
+    extractTarBasedArchive(archiveFile, target, stripRoot, {is -> new GzipCompressorInputStream(is)})
+  }
+
+  @SuppressWarnings('GroovyAssignabilityCheck')
+  static void extractTarBasedArchive(Path archiveFile, Path target, boolean stripRoot, Function<InputStream, InputStream> compressionStreamFactory) {
+    new TarArchiveInputStream(compressionStreamFactory(new BufferedInputStream(Files.newInputStream(archiveFile)))).withCloseable { archive ->
       EntryNameConverter converter = new EntryNameConverter(archiveFile, target, stripRoot)
 
       while (true) {
