@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -167,6 +168,11 @@ public final class VcsProjectLog implements Disposable {
 
   @CalledInAny
   private void disposeLog(boolean recreate) {
+    disposeLog(recreate, EmptyRunnable.getInstance());
+  }
+
+  @CalledInAny
+  private void disposeLog(boolean recreate, @NotNull Runnable beforeCreateLog) {
     myExecutor.execute(() -> {
       VcsLogManager logManager = invokeAndWait(() -> {
         VcsLogManager manager = myLogManager.dropValue();
@@ -179,7 +185,16 @@ public final class VcsProjectLog implements Disposable {
         Disposer.dispose(logManager);
       }
       if (recreate) {
-        createLog(false);
+        try {
+          if (!myDisposeStarted.get()) {
+            beforeCreateLog.run();
+          }
+        } catch (Exception e) {
+          LOG.error("Unable to execute 'beforeCreateLog'", e);
+        }
+        finally {
+          createLog(false);
+        }
       }
     });
   }
@@ -208,6 +223,20 @@ public final class VcsProjectLog implements Disposable {
     }
 
     disposeLog(true);
+  }
+
+  /**
+   * Disposes log and performs the given {@code task} before recreating the log
+   */
+  @ApiStatus.Internal
+  @CalledInAny
+  public void runOnDisposedLog(Runnable task) {
+    try {
+      disposeLog(true, task);
+    }
+    catch (Exception e) {
+      LOG.error("Unable to execute on disposed log: " + task, e);
+    }
   }
 
   @NotNull
