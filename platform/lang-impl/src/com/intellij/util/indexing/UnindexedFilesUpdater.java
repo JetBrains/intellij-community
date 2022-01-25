@@ -254,7 +254,9 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     String scanningCompletedMessage = getLogScanningCompletedStageMessage(projectIndexingHistory);
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage(scanningCompletedMessage));
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    boolean skipInitialRefresh = skipInitialRefresh();
+    boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+    if (!isUnitTestMode && !skipInitialRefresh) {
       // full VFS refresh makes sense only after it's loaded, i.e. after scanning files to index is finished
       scheduleInitialVfsRefresh();
     }
@@ -632,6 +634,10 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     int coresToLeaveForOtherActivity = DumbServiceImpl.ALWAYS_SMART
                                        ? getMaxNumberOfIndexingThreads() : ApplicationManager.getApplication().isCommandLine() ? 0 : 1;
     return Math.max(Runtime.getRuntime().availableProcessors() - coresToLeaveForOtherActivity, getNumberOfIndexingThreads());
+  }
+
+  private static boolean skipInitialRefresh() {
+    return SystemProperties.getBooleanProperty("ij.indexes.skip.initial.refresh", false);
   }
 
   public static void indexProject(@NotNull Project project, boolean startSuspended, @Nullable @NonNls String indexingReason) {
