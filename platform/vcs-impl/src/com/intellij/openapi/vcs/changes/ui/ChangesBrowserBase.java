@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.DiffDialogHints;
@@ -304,8 +304,21 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
       previewManager.showDiffPreview(diffPreview);
     }
     else {
-      ShowStandaloneDiff.showStandaloneDiff(myProject, this);
+      showStandaloneDiff(myProject, this);
     }
+  }
+
+  public static void showStandaloneDiff(@NotNull Project project, @NotNull ChangesBrowserBase changesBrowser) {
+    showStandaloneDiff(project, changesBrowser, VcsTreeModelData.getListSelectionOrAll(changesBrowser.myViewer));
+  }
+
+  public static void showStandaloneDiff(@NotNull Project project,
+                                        @NotNull ChangesBrowserBase changesBrowser,
+                                        @NotNull ListSelection<Object> selection) {
+    ListSelection<ChangeDiffRequestChain.Producer> producers = selection.map(changesBrowser::getDiffRequestProducer);
+    DiffRequestChain chain = new ChangeDiffRequestChain(producers.getList(), producers.getSelectedIndex());
+    changesBrowser.updateDiffContext(chain);
+    DiffManager.getInstance().showDiff(project, chain, new DiffDialogHints(null, changesBrowser));
   }
 
   public static class ShowStandaloneDiff implements AnActionExtensionProvider {
@@ -327,14 +340,6 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
       Project project = e.getRequiredData(CommonDataKeys.PROJECT);
 
       showStandaloneDiff(project, changesBrowser);
-    }
-
-    public static void showStandaloneDiff(@NotNull Project project, @NotNull ChangesBrowserBase changesBrowser) {
-      ListSelection<Object> selection = VcsTreeModelData.getListSelectionOrAll(changesBrowser.myViewer);
-      ListSelection<ChangeDiffRequestChain.Producer> producers = selection.map(changesBrowser::getDiffRequestProducer);
-      DiffRequestChain chain = new ChangeDiffRequestChain(producers.getList(), producers.getSelectedIndex());
-      changesBrowser.updateDiffContext(chain);
-      DiffManager.getInstance().showDiff(project, chain, new DiffDialogHints(null, changesBrowser));
     }
   }
 

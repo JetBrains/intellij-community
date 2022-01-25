@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash.ui
 
 import com.intellij.openapi.Disposable
@@ -120,7 +120,7 @@ class GitStashChangesBrowser(project: Project, parentDisposable: Disposable) : C
     return editorTabPreview
   }
 
-  override fun getDiffRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
+  public override fun getDiffRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
     if (userObject !is Change) return null
 
     val context: MutableMap<Key<*>, Any> = mutableMapOf()
