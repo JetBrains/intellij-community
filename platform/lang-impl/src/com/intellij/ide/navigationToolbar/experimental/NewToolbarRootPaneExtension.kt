@@ -86,16 +86,16 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
     if (panel.isEnabled && panel.isVisible && ToolbarSettings.getInstance().isEnabled) {
       CompletableFuture.supplyAsync(::correctedToolbarActions, AppExecutorUtil.getAppExecutorService())
         .thenAcceptAsync({ placeToActionGroup ->
-          applyTo(placeToActionGroup, panel, extension.layout)
-          for ((place, actionGroup) in placeToActionGroup) {
-            if (actionGroup == null) {
-              val comp = extension.layout.getLayoutComponent(place)
-              if (comp != null) {
-                panel.remove(comp)
-              }
-            }
-          }
-        }
+                           applyTo(placeToActionGroup, panel, extension.layout)
+                           for ((place, actionGroup) in placeToActionGroup) {
+                             if (actionGroup == null) {
+                               val comp = extension.layout.getLayoutComponent(place)
+                               if (comp != null) {
+                                 panel.remove(comp)
+                               }
+                             }
+                           }
+                         }
         ) {
           ApplicationManager.getApplication().invokeLater(it, project.disposed)
         }
@@ -110,31 +110,21 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
   private fun correctedToolbarActions(): Map<String, ActionGroup?> {
     val mainGroupName = if (RunWidgetAvailabilityManager.getInstance(project).isAvailable()) {
       IdeActions.GROUP_EXPERIMENTAL_TOOLBAR
-    } else {
+    }
+    else {
       IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_WITHOUT_RIGHT_PART
     }
     val toolbarGroup = CustomActionsSchema.getInstance().getCorrectedAction(mainGroupName) as? ActionGroup
                        ?: return emptyMap()
     val children = toolbarGroup.getChildren(null)
 
-    var leftGroup: ActionGroup? = null
-    var rightGroup: ActionGroup? = null
-    val restItems = ArrayList<AnAction>(children.size - 2)
-
-    val actionManager = ActionManager.getInstance()
-    for (action in children) {
-      when (actionManager.getId(action)) {
-        "LeftToolbarSideGroup" -> leftGroup = action as? ActionGroup
-        "RightToolbarSideGroup" -> rightGroup = action as? ActionGroup
-        else -> restItems.add(action)
-      }
-    }
-
-    val restGroup = DefaultActionGroup(restItems)
+    val leftGroup = children.firstOrNull { it.templateText.equals(ActionsBundle.message("group.LeftToolbarSideGroup.text")) }
+    val rightGroup = children.firstOrNull { it.templateText.equals(ActionsBundle.message("group.RightToolbarSideGroup.text")) }
+    val restGroup = DefaultActionGroup(children.filter { it != leftGroup && it != rightGroup })
 
     val map = mutableMapOf<String, ActionGroup?>()
-    map[BorderLayout.WEST] = leftGroup
-    map[BorderLayout.EAST] = rightGroup
+    map[BorderLayout.WEST] = leftGroup as? ActionGroup
+    map[BorderLayout.EAST] = rightGroup as? ActionGroup
     map[BorderLayout.CENTER] = restGroup
 
     return map
