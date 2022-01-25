@@ -31,6 +31,9 @@ val DataNode<out ModuleData>.kotlinAndroidSourceSets: List<KotlinSourceSetInfo>?
         get() = ExternalSystemApiUtil.getChildren(this, KotlinAndroidSourceSetData.KEY).firstOrNull()?.data?.sourceSetInfos
 
 class KotlinSourceSetInfo @PropertyMapping("kotlinModule") constructor(val kotlinComponent: KotlinComponent) : Serializable {
+    @Suppress("DEPRECATION_ERROR")
+    val kotlinModule: KotlinModule
+        get() = kotlinComponent
     var moduleId: String? = null
     var gradleModuleId: String = ""
 
@@ -52,7 +55,8 @@ class KotlinSourceSetInfo @PropertyMapping("kotlinModule") constructor(val kotli
     var externalSystemRunTasks: Collection<ExternalSystemRunTask> = emptyList()
 }
 
-class KotlinAndroidSourceSetData @PropertyMapping("sourceSetInfos") constructor(val sourceSetInfos: List<KotlinSourceSetInfo>
+class KotlinAndroidSourceSetData @PropertyMapping("sourceSetInfos") constructor(
+    val sourceSetInfos: List<KotlinSourceSetInfo>
 ) : AbstractExternalEntityData(GradleConstants.SYSTEM_ID) {
     companion object {
         val KEY = ExternalKey.create(KotlinAndroidSourceSetData::class.java, KotlinTargetData.KEY.processingWeight + 1)

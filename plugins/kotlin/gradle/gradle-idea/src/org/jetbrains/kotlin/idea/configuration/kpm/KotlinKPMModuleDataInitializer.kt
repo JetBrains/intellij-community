@@ -120,11 +120,11 @@ class KotlinKPMModuleDataInitializer(private val model: KotlinKPMGradleModel) : 
                         it.version = externalProject.version
 
                         when (module.moduleIdentifier.moduleClassifier) {
-                            KotlinModule.MAIN_MODULE_NAME -> {
+                            KotlinKPMModule.MAIN_MODULE_NAME -> {
                                 it.publication = ProjectId(externalProject.group, externalProject.name, externalProject.version)
                             }
 
-                            KotlinModule.TEST_MODULE_NAME -> {
+                            KotlinKPMModule.TEST_MODULE_NAME -> {
                                 it.productionModuleId = moduleInternalName
                             }
                         }
@@ -145,7 +145,7 @@ class KotlinKPMModuleDataInitializer(private val model: KotlinKPMGradleModel) : 
         }
 
         private fun calculateFragmentExternalModuleName(gradleModule: IdeaModule, fragment: KotlinFragment): String =
-            "${gradleModule.name}:${fragment.moduleIdentifier.moduleClassifier ?: KotlinModule.MAIN_MODULE_NAME}.${fragment.fragmentName}"
+            "${gradleModule.name}:${fragment.moduleIdentifier.moduleClassifier ?: KotlinKPMModule.MAIN_MODULE_NAME}.${fragment.fragmentName}"
 
         private fun calculateFragmentInternalModuleName(
             gradleModule: IdeaModule,
@@ -171,7 +171,7 @@ class KotlinKPMModuleDataInitializer(private val model: KotlinKPMGradleModel) : 
                 moduleName.append(gradleModule.name)
             }
             moduleName.append(delimiter)
-            moduleName.append("${fragment.moduleIdentifier.moduleClassifier ?: KotlinModule.MAIN_MODULE_NAME}.${fragment.fragmentName}")
+            moduleName.append("${fragment.moduleIdentifier.moduleClassifier ?: KotlinKPMModule.MAIN_MODULE_NAME}.${fragment.fragmentName}")
             return PathUtilRt.suggestFileName(moduleName.toString(), true, false)
         }
 

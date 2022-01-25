@@ -4,13 +4,13 @@
  */
 package org.jetbrains.kotlin.builders
 
-import org.jetbrains.kotlin.gradle.KotlinModule
+import org.jetbrains.kotlin.gradle.KotlinKPMModule
 import org.jetbrains.kotlin.gradle.KotlinModuleImpl
 import org.jetbrains.kotlin.gradle.KotlinProjectModelImportingContext
 import org.jetbrains.kotlin.reflect.KotlinModuleReflection
 
-object KotlinModuleBuilder : KotlinProjectModelComponentBuilder<KotlinModuleReflection, KotlinModule> {
-    override fun buildComponent(origin: KotlinModuleReflection, importingContext: KotlinProjectModelImportingContext): KotlinModule? {
+object KotlinModuleBuilder : KotlinProjectModelComponentBuilder<KotlinModuleReflection, KotlinKPMModule> {
+    override fun buildComponent(origin: KotlinModuleReflection, importingContext: KotlinProjectModelImportingContext): KotlinKPMModule? {
         return KotlinModuleImpl(
             moduleIdentifier = KotlinModuleIdentifierBuilder.buildComponent(origin.moduleIdentifier ?: return null) ?: return null,
             fragments = origin.fragments.orEmpty().mapNotNull { fragmentReflection ->

@@ -49,7 +49,7 @@ class KotlinSourceSetImpl(
     @Suppress("OverridingDeprecatedMember")
     override val allDependsOnSourceSets: Set<String>,
     defaultActualPlatforms: KotlinPlatformContainerImpl = KotlinPlatformContainerImpl(),
-    defaultIsTestModule: Boolean = false
+    defaultIsTestComponent: Boolean = false
 ) : KotlinSourceSet {
 
     override val dependencies: Array<KotlinDependencyId> = regularDependencies + intransitiveDependencies
@@ -72,10 +72,8 @@ class KotlinSourceSetImpl(
     override var actualPlatforms: KotlinPlatformContainer = defaultActualPlatforms
         internal set
 
-    override var isTestComponent: Boolean = defaultIsTestModule
+    override var isTestComponent: Boolean = defaultIsTestComponent
         internal set
-
-    override fun toString() = name
 
     init {
         @Suppress("DEPRECATION")

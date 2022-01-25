@@ -6,7 +6,7 @@ package org.jetbrains.kotlin.builders
 
 import org.jetbrains.kotlin.gradle.KotlinFragment
 import org.jetbrains.kotlin.gradle.KotlinFragmentImpl
-import org.jetbrains.kotlin.gradle.KotlinModule.Companion.TEST_MODULE_NAME
+import org.jetbrains.kotlin.gradle.KotlinKPMModule.Companion.TEST_MODULE_NAME
 import org.jetbrains.kotlin.gradle.KotlinProjectModelImportingContext
 import org.jetbrains.kotlin.gradle.KotlinVariantImpl
 import org.jetbrains.kotlin.reflect.KotlinFragmentReflection

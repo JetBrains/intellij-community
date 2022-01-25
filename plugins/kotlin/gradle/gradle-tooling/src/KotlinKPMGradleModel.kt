@@ -45,7 +45,7 @@ interface KotlinMavenModuleIdentifier : KotlinModuleIdentifier {
     val name: String
 }
 
-interface KotlinModule : Serializable {
+interface KotlinKPMModule : Serializable {
     val moduleIdentifier: KotlinModuleIdentifier
     val fragments: Collection<KotlinFragment>
 
@@ -55,7 +55,7 @@ interface KotlinModule : Serializable {
     }
 }
 
-val KotlinModule.variants: Collection<KotlinVariant>
+val KotlinKPMModule.variants: Collection<KotlinVariant>
     get() = fragments.filterIsInstance<KotlinVariant>()
 
 interface KotlinProjectModelSettings : Serializable {
@@ -64,7 +64,7 @@ interface KotlinProjectModelSettings : Serializable {
 }
 
 interface KotlinKPMGradleModel : Serializable {
-    val kpmModules: Collection<KotlinModule>
+    val kpmModules: Collection<KotlinKPMModule>
     val kotlinNativeHome: String
     val settings: KotlinProjectModelSettings
 }

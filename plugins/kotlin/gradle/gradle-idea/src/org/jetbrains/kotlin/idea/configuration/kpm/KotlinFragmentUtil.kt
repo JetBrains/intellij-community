@@ -5,14 +5,14 @@ package org.jetbrains.kotlin.idea.configuration.kpm
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.KotlinFragment
-import org.jetbrains.kotlin.gradle.KotlinModule
+import org.jetbrains.kotlin.gradle.KotlinKPMModule
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
 
 private val KotlinFragment.fullName
-    get() = fragmentName + (moduleIdentifier.moduleClassifier ?: KotlinModule.MAIN_MODULE_NAME).capitalizeAsciiOnly()
+    get() = fragmentName + (moduleIdentifier.moduleClassifier ?: KotlinKPMModule.MAIN_MODULE_NAME).capitalizeAsciiOnly()
 
 internal fun calculateKotlinFragmentModuleId(
     gradleModule: IdeaModule,
