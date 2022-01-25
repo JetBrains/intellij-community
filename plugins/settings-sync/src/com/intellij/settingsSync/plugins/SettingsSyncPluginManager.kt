@@ -3,6 +3,9 @@ package com.intellij.settingsSync.plugins
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginStateListener
+import com.intellij.ide.plugins.PluginStateManager
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.PluginId
@@ -11,7 +14,7 @@ import com.intellij.settingsSync.config.BUNDLED_PLUGINS_ID
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager.Companion.FILE_SPEC
 
 @State(name = "SettingsSyncPlugins", storages = [Storage(FILE_SPEC)])
-class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginManager.SyncPluginsState> {
+class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginManager.SyncPluginsState>, Disposable {
 
   companion object {
     fun getInstance() = ApplicationManager.getApplication().getService(SettingsSyncPluginManager::class.java)
@@ -19,9 +22,28 @@ class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginMan
     const val FILE_SPEC = "settingsSyncPlugins.xml"
   }
 
+  private val pluginStateListener = object : PluginStateListener {
+
+    override fun install(descriptor: IdeaPluginDescriptor) {
+      sessionUninstalledPlugins.remove(descriptor.pluginId.idString)
+    }
+
+    override fun uninstall(descriptor: IdeaPluginDescriptor) {
+      val idString = descriptor.pluginId.idString
+      state.plugins[idString]?.let { it.isEnabled = false }
+      sessionUninstalledPlugins.add(idString)
+    }
+  }
+
+  init {
+    PluginStateManager.addStateListener(pluginStateListener)
+  }
+
   private var state = SyncPluginsState()
 
-  private var noUpdateFromIde : Boolean = false
+  private var noUpdateFromIde: Boolean = false
+
+  private val sessionUninstalledPlugins = HashSet<String>()
 
   override fun getState(): SyncPluginsState {
     updateStateFromIde()
@@ -59,7 +81,7 @@ class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginMan
           }
           state.plugins[idString] = pluginData
         }
-        pluginData.isEnabled = it.isEnabled
+        pluginData.isEnabled = it.isEnabled && !sessionUninstalledPlugins.contains(idString)
       }
       else {
         if (state.plugins.containsKey(idString)) {
@@ -86,7 +108,9 @@ class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginMan
         }
       }
       else {
-        if (isPluginSyncEnabled(mapEntry.key, false, mapEntry.value.category) && checkDependencies(mapEntry.value)) {
+        if (mapEntry.value.isEnabled &&
+            isPluginSyncEnabled(mapEntry.key, false, mapEntry.value.category) &&
+            checkDependencies(mapEntry.value)) {
           val newPluginId = PluginId.getId(mapEntry.key)
           installer.addPluginId(newPluginId)
         }
@@ -95,11 +119,11 @@ class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginMan
     installer.installUnderProgress()
   }
 
-  private fun findPlugin(idString : String) : IdeaPluginDescriptor? {
+  private fun findPlugin(idString: String): IdeaPluginDescriptor? {
     return PluginId.findId(idString)?.let { PluginManagerCore.findPlugin(it) }
   }
 
-  private fun checkDependencies(pluginState: PluginData) : Boolean {
+  private fun checkDependencies(pluginState: PluginData): Boolean {
     pluginState.dependencies.forEach {
       if (findPlugin(it) == null) {
         return false
@@ -129,6 +153,11 @@ class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginMan
            (category != SettingsCategory.PLUGINS ||
             isBundled && settings.isSubcategoryEnabled(SettingsCategory.PLUGINS, BUNDLED_PLUGINS_ID) ||
             settings.isSubcategoryEnabled(SettingsCategory.PLUGINS, idString))
+  }
+
+
+  override fun dispose() {
+    PluginStateManager.removeStateListener(pluginStateListener)
   }
 
   class StartupInitializer : ApplicationInitializedListener {
