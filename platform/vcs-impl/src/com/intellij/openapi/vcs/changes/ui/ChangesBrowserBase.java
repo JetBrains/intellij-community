@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -309,13 +310,15 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   public static void showStandaloneDiff(@NotNull Project project, @NotNull ChangesBrowserBase changesBrowser) {
-    showStandaloneDiff(project, changesBrowser, VcsTreeModelData.getListSelectionOrAll(changesBrowser.myViewer));
+    showStandaloneDiff(project, changesBrowser, VcsTreeModelData.getListSelectionOrAll(changesBrowser.myViewer),
+                       changesBrowser::getDiffRequestProducer);
   }
 
-  public static void showStandaloneDiff(@NotNull Project project,
-                                        @NotNull ChangesBrowserBase changesBrowser,
-                                        @NotNull ListSelection<Object> selection) {
-    ListSelection<ChangeDiffRequestChain.Producer> producers = selection.map(changesBrowser::getDiffRequestProducer);
+  public static <T> void showStandaloneDiff(@NotNull Project project,
+                                            @NotNull ChangesBrowserBase changesBrowser,
+                                            @NotNull ListSelection<T> selection,
+                                            @NotNull NullableFunction<? super T, ? extends ChangeDiffRequestChain.Producer> getDiffRequestProducer) {
+    ListSelection<ChangeDiffRequestChain.Producer> producers = selection.map(getDiffRequestProducer);
     DiffRequestChain chain = new ChangeDiffRequestChain(producers.getList(), producers.getSelectedIndex());
     changesBrowser.updateDiffContext(chain);
     DiffManager.getInstance().showDiff(project, chain, new DiffDialogHints(null, changesBrowser));

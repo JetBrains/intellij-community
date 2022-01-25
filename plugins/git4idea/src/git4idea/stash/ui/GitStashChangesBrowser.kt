@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.vcs.changes.EditorTabPreview
+import com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
@@ -122,10 +123,19 @@ class GitStashChangesBrowser(project: Project, parentDisposable: Disposable) : C
 
   public override fun getDiffRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
     if (userObject !is Change) return null
+    return ChangeDiffRequestProducer.create(myProject, userObject, prepareChangeContext(userObject))
+  }
 
-    val context: MutableMap<Key<*>, Any> = mutableMapOf()
+  fun getDiffWithLocalRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
+    if (userObject !is Change) return null
+    val changeWithLocal = ShowDiffWithLocalAction.getChangeWithLocal(userObject, false) ?: return null
+    return ChangeDiffRequestProducer.create(myProject, changeWithLocal, prepareChangeContext(userObject))
+  }
+
+  private fun prepareChangeContext(userObject: Change): Map<Key<*>, Any> {
+    val context = mutableMapOf<Key<*>, Any>()
     getTag(userObject)?.let { context[ChangeDiffRequestProducer.TAG_KEY] = it }
-    return ChangeDiffRequestProducer.create(myProject, userObject, context)
+    return context
   }
 
   private fun getTag(change: Change): ChangesBrowserNode.Tag? {
