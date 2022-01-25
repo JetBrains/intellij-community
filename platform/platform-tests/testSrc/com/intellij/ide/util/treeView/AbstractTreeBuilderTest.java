@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tree.TreeTestUtil;
@@ -257,8 +256,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     return findNode((DefaultMutableTreeNode)myTree.getModel().getRoot(), element, shouldBeSelected);
   }
 
-  @Nullable
-  private DefaultMutableTreeNode findNode(DefaultMutableTreeNode treeNode, NodeElement toFind, boolean shouldBeSelected) {
+  private @Nullable DefaultMutableTreeNode findNode(DefaultMutableTreeNode treeNode, NodeElement toFind, boolean shouldBeSelected) {
     final Object object = treeNode.getUserObject();
     assertNotNull(object);
     if (!(object instanceof NodeDescriptor)) return null;
@@ -328,8 +326,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
       myChildElements.clear();
     }
 
-    @Nullable
-    public Node getChildNode(String name) {
+    public @Nullable Node getChildNode(String name) {
       for (Node each : myChildElements) {
         if (name.equals(each.myElement.myName)) return each;
       }
@@ -352,8 +349,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
       myStructure.getNodeFor(parent).remove(myElement, true);
     }
 
-    @Nullable
-    private Node remove(final NodeElement name, boolean removeRefToParent) {
+    private @Nullable Node remove(final NodeElement name, boolean removeRefToParent) {
       final Iterator<Node> kids = myChildElements.iterator();
       Node removed = null;
       while (kids.hasNext()) {
@@ -379,9 +375,8 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     private final Set<NodeElement> myLeaves = new HashSet<>();
     private ReValidator myReValidator;
 
-    @NotNull
     @Override
-    public Object getRootElement() {
+    public @NotNull Object getRootElement() {
       return myRoot.myElement;
     }
 
@@ -402,7 +397,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     }
 
     @Override
-    public Object getParentElement(@NotNull final Object element) {
+    public Object getParentElement(final @NotNull Object element) {
       NodeElement nodeElement = (NodeElement)element;
       return nodeElement.getForcedParent() != null ? nodeElement.getForcedParent() : myChild2Parent.get(nodeElement);
     }
@@ -422,8 +417,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     }
 
     @Override
-    @NotNull
-      public NodeDescriptor doCreateDescriptor(final Object element, final NodeDescriptor parentDescriptor) {
+    public @NotNull NodeDescriptor doCreateDescriptor(final Object element, final NodeDescriptor parentDescriptor) {
       return new PresentableNodeDescriptor(null, parentDescriptor) {
         @Override
         protected void update(@NotNull PresentationData presentation) {
@@ -437,9 +431,8 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
           }
         }
 
-        @Nullable
         @Override
-        public PresentableNodeDescriptor getChildToHighlightAt(int index) {
+        public @Nullable PresentableNodeDescriptor getChildToHighlightAt(int index) {
           return null;
         }
 
@@ -475,10 +468,9 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
       return myElement2Node.get(element);
     }
 
-    @NotNull
     @Override
-    public AsyncResult<Object> revalidateElement(@NotNull Object element) {
-      return myReValidator != null ? myReValidator.revalidate((NodeElement)element) : super.revalidateElement(element);
+    public @NotNull Object revalidateElement(@NotNull Object element) {
+      return myReValidator == null ? super.revalidateElement(element) : myReValidator.revalidate((NodeElement)element);
     }
 
     public void setReValidator(@Nullable ReValidator reValidator) {
@@ -487,8 +479,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   }
 
   interface ReValidator {
-    @NotNull
-    AsyncResult<Object> revalidate(@NotNull NodeElement element);
+    @Nullable Object revalidate(@NotNull NodeElement element);
   }
 
   final class MyBuilder extends BaseTreeBuilder {

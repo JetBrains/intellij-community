@@ -199,11 +199,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public void activate(@Nullable Runnable runnable) {
-      if (runnable != null) runnable.run();
-    }
-
-    @Override
     public boolean isDisposed() {
       return false;
     }
@@ -353,19 +348,14 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public void setDefaultState(final @Nullable ToolWindowAnchor anchor,
-                                final @Nullable ToolWindowType type,
-                                final @Nullable Rectangle floatingBounds) {
-    }
-
-    @Override
-    public void activate(final @Nullable Runnable runnable, final boolean autoFocusContents) {
-      activate(runnable);
+    public void setDefaultState(@Nullable ToolWindowAnchor anchor, @Nullable ToolWindowType type, @Nullable Rectangle floatingBounds) {
     }
 
     @Override
     public void activate(@Nullable Runnable runnable, boolean autoFocusContents, boolean forced) {
-      activate(runnable);
+      if (runnable != null) {
+        runnable.run();
+      }
     }
 
     @Override

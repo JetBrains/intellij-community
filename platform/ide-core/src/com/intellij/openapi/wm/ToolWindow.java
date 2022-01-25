@@ -37,9 +37,13 @@ public interface ToolWindow extends BusyObject {
    * @param runnable A command to execute right after the window gets activated. The call is asynchronous since it may require animation.
    * @throws IllegalStateException if tool window isn't installed.
    */
-  void activate(@Nullable Runnable runnable);
+  default void activate(@Nullable Runnable runnable) {
+    activate(runnable, true, true);
+  }
 
-  void activate(@Nullable Runnable runnable, boolean autoFocusContents);
+  default void activate(@Nullable Runnable runnable, boolean autoFocusContents) {
+    activate(runnable, autoFocusContents, true);
+  }
 
   void activate(@Nullable Runnable runnable, boolean autoFocusContents, boolean forced);
 
@@ -153,7 +157,7 @@ public interface ToolWindow extends BusyObject {
 
   /**
    * Sets whether the tool window available or not. Term "available" means that tool window
-   * can be shown and it has button on tool window bar.
+   * can be shown, and it has a button on tool window bar.
    *
    * @throws IllegalStateException if tool window isn't installed.
    */

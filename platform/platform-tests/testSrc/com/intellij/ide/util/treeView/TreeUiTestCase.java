@@ -1,9 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NamedRunnable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.ui.LoadingNode;
 import com.intellij.util.Time;
 import com.intellij.util.WaitFor;
@@ -1357,8 +1360,8 @@ abstract class TreeUiTestCase extends AbstractTreeBuilderTest {
   private void buildSiblings(final Node node,
                              final int start,
                              final int end,
-                             @Nullable final Runnable eachRunnable,
-                             @Nullable final Runnable endRunnable) {
+                             final @Nullable Runnable eachRunnable,
+                             final @Nullable Runnable endRunnable) {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       for (int i = start; i <= end; i++) {
         Node eachFile = node.addChild("File " + i);
@@ -1929,16 +1932,15 @@ abstract class TreeUiTestCase extends AbstractTreeBuilderTest {
     assertSame(myRoot.getElement(), myStructure.getParentElement(fabrique));
 
     myStructure.setReValidator(new ReValidator() {
-      @NotNull
       @Override
-      public AsyncResult<Object> revalidate(@NotNull NodeElement element) {
+      public @Nullable Object revalidate(@NotNull NodeElement element) {
         if (element == actionSystem) {
-          return AsyncResult.done(newActionSystem);
+          return newActionSystem;
         }
         else if (element == fabrique) {
-          return AsyncResult.done(newFabrique);
+          return newFabrique;
         }
-        return AsyncResult.done(null);
+        return null;
       }
     });
 
@@ -1972,11 +1974,10 @@ abstract class TreeUiTestCase extends AbstractTreeBuilderTest {
     };
     final Ref<Object> reValidatedElement = new Ref<>();
     myStructure.setReValidator(new ReValidator() {
-      @NotNull
       @Override
-      public AsyncResult<Object> revalidate(@NotNull NodeElement element) {
+      public @Nullable Object revalidate(@NotNull NodeElement element) {
         reValidatedElement.set(element);
-        return AsyncResult.done(null);
+        return null;
       }
     });
 
@@ -2321,7 +2322,7 @@ abstract class TreeUiTestCase extends AbstractTreeBuilderTest {
       System.err.println("The following error is part of the test, no need to fix it");
       buildNode("idea", true);
     }
-    catch (AssertionFailedError e) {
+    catch (AssertionFailedError ignore) {
     }
 
     assertTrue(getBuilder().getUi().isReady());
