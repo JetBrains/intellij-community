@@ -12,7 +12,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.actions.TypeCookAction;
 import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureProcessor;
 import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
 import com.intellij.refactoring.changeSignature.*;
@@ -53,10 +52,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactoringProvider {
-  @Override
-  public @NotNull RefactoringActionHandler getTypeCookHandler() {
-    return new TypeCookAction().getHandler();
-  }
+  
 
   @Override
   public @NotNull JavaIntroduceVariableHandlerBase getIntroduceVariableUnitTestAwareHandler() {

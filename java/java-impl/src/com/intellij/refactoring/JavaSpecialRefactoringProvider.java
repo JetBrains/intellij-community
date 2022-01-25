@@ -50,9 +50,6 @@ public interface JavaSpecialRefactoringProvider {
   }
 
   @NotNull
-  RefactoringActionHandler getTypeCookHandler();
-
-  @NotNull
   JavaIntroduceVariableHandlerBase getIntroduceVariableUnitTestAwareHandler();
 
   @NotNull
