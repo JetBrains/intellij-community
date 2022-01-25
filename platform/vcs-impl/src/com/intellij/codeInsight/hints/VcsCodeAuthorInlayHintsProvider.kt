@@ -97,6 +97,7 @@ abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> 
   override val name: String get() = message("label.code.author.inlay.hints")
   override val key: SettingsKey<NoSettings> get() = KEY
   override val previewText: String? get() = null
+  override fun getProperty(key: String): String? = message(key)
 
   override fun createConfigurable(settings: NoSettings): ImmediateConfigurable =
     object : ImmediateConfigurable {
