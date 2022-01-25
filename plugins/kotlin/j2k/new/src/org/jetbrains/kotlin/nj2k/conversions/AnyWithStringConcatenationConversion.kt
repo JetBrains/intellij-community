@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
@@ -17,10 +17,11 @@ class AnyWithStringConcatenationConversion(context: NewJ2kConverterContext) : Re
         ) {
             return recurse(
                 JKBinaryExpression(
-                    element::left.detached().parenthesizeIfBinaryExpression().callOn(symbolProvider.provideMethodSymbol("kotlin.Any.toString")),
+                    element::left.detached().parenthesizeIfBinaryExpression()
+                        .callOn(symbolProvider.provideMethodSymbol("kotlin.Any.toString")),
                     element::right.detached(),
                     element.operator
-                )
+                ).withFormattingFrom(element)
             )
         }
         return recurse(element)
