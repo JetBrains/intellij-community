@@ -30,8 +30,13 @@ class NewProjectWizardStepPanel(val step: NewProjectWizardStep) {
   fun reset() = component.reset()
 
   val component by lazy {
-    panel(step::setupUI)
-      .apply { withBorder(JBUI.Borders.empty(14, 20)) }
-      .apply { setMinimumWidthForAllRowLabels(JBUI.scale(90)) }
+    panel {
+      propertyGraph(step.propertyGraph)
+      step.setupUI(this)
+    }.apply {
+      registerValidators(step.context.disposable)
+      withBorder(JBUI.Borders.empty(14, 20))
+      setMinimumWidthForAllRowLabels(JBUI.scale(90))
+    }
   }
 }

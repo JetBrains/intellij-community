@@ -61,7 +61,11 @@ abstract class AbstractNewProjectWizardMultiStepBase(
   private fun getOrCreateStepPanel(): DialogPanel? {
     if (step !in stepsPanels) {
       val stepUi = steps[step] ?: return null
-      val panel = panel(stepUi::setupUI)
+      val panel = panel{
+        propertyGraph(stepUi.propertyGraph)
+        stepUi.setupUI(this)
+      }
+      panel.registerValidators(stepUi.context.disposable)
       panel.setMinimumWidthForAllRowLabels(JBUI.scale(90))
       stepsPanels[step] = panel
     }

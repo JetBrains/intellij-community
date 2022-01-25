@@ -126,6 +126,12 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun graphProperty(property: GraphProperty<*>): Cell<T>
 
   /**
+   * Registers custom validation requestor for current [component].
+   * @param validationRequestor gets callback (component validator) that should be subscribed on custom event.
+   */
+  fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): Cell<T>
+
+  /**
    * Adds [component] validation
    */
   fun validationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>

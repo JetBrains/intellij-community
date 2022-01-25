@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder.impl
 
+import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.SeparatorComponent
@@ -459,6 +460,15 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     else {
       row.bottomGap(if (bottomGap) BottomGap.MEDIUM else BottomGap.NONE)
     }
+  }
+
+  override fun propertyGraph(propertyGraph: PropertyGraph) {
+    validationRequestor(propertyGraph::afterPropagation)
+  }
+
+  override fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): PanelImpl {
+    dialogPanelConfig.validationRequestors.add(validationRequestor)
+    return this
   }
 }
 

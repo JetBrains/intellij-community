@@ -28,6 +28,7 @@ class DialogPanel : JBPanel<DialogPanel> {
     }
 
   var componentValidateCallbacks: Map<JComponent, () -> ValidationInfo?> = emptyMap()
+  var validationRequestors: List<(() -> Unit) -> Unit> = emptyList()
   var customValidationRequestors: Map<JComponent, List<(() -> Unit) -> Unit>> = emptyMap()
   var applyCallbacks: Map<JComponent?, List<() -> Unit>> = emptyMap()
   var resetCallbacks: Map<JComponent?, List<() -> Unit>> = emptyMap()
@@ -138,7 +139,8 @@ class DialogPanel : JBPanel<DialogPanel> {
   }
 
   private fun registerCustomValidationRequestors(component: JComponent, validator: ComponentValidator) {
-    for (onCustomValidationRequest in customValidationRequestors.get(component) ?: return) {
+    val customValidationRequestors = validationRequestors + (customValidationRequestors[component] ?: emptyList())
+    for (onCustomValidationRequest in customValidationRequestors) {
       onCustomValidationRequest { validator.revalidate() }
     }
   }

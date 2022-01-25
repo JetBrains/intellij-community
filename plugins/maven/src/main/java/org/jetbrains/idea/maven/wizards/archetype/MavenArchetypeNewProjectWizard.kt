@@ -125,7 +125,6 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
             .applyToComponent { toolTipText = MavenWizardBundle.message("maven.new.project.wizard.archetype.tooltip") }
           cell(archetypeComboBox)
             .applyToComponent { bindSelectedItem(archetypeItemProperty) }
-            .graphProperty(archetypeItemProperty)
             .horizontalAlign(HorizontalAlign.FILL)
             .resizableColumn()
             .validationOnApply { validateArchetypeId() }
@@ -137,7 +136,6 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           archetypeVersionComboBox = TextCompletionComboBox(context.project, ArchetypeVersionConverter())
           cell(archetypeVersionComboBox)
             .applyToComponent { bindSelectedItem(archetypeVersionProperty) }
-            .graphProperty(archetypeVersionProperty)
             .validationOnApply { validateArchetypeVersion() }
             .columns(10)
         }.topGap(TopGap.SMALL)

@@ -41,7 +41,6 @@ internal class CellImpl<T : JComponent>(
   var widthGroup: String? = null
     private set
 
-  private var property: GraphProperty<*>? = null
   private var applyIfEnabled = false
 
   private var visible = viewComponent.isVisible
@@ -171,7 +170,14 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun graphProperty(property: GraphProperty<*>): CellImpl<T> {
-    this.property = property
+    validationRequestor(property::afterPropagation)
+    return this
+  }
+
+  override fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): CellImpl<T> {
+    val origin = component.origin
+    dialogPanelConfig.componentValidationRequestors.getOrPut(origin) { SmartList() }
+      .add(validationRequestor)
     return this
   }
 
@@ -188,7 +194,6 @@ internal class CellImpl<T : JComponent>(
   override fun validationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
     val origin = component.origin
     dialogPanelConfig.componentValidateCallbacks[origin] = { callback(ValidationInfoBuilder(origin), component) }
-    property?.let { dialogPanelConfig.customValidationRequestors.getOrPut(origin, { SmartList() }).add(it::afterPropagation) }
     return this
   }
 
