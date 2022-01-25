@@ -15,7 +15,7 @@ import java.util.Arrays;
 
 public final class IntToIntBtree {
   public static int version() {
-    return 4 + (IOUtil.useNativeByteOrderForByteBuffers() ? 0xFF : 0);
+    return 4 + (false ? 0xFF : 0);
   }
 
   private static final int HAS_ZERO_KEY_MASK = 0xFF000000;
