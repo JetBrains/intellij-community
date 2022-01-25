@@ -853,7 +853,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       return className;
     }
 
-    public @NlsSafe String getMainClassName() {
+    public @NlsSafe @NotNull String getMainClassName() {
       return MAIN_CLASS_NAME != null ? MAIN_CLASS_NAME : "";
     }
 
