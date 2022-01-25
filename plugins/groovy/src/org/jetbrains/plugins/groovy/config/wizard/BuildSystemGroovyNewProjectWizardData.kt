@@ -3,7 +3,9 @@ package org.jetbrains.plugins.groovy.config.wizard
 
 import com.intellij.ide.wizard.BuildSystemNewProjectWizardData
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.util.Key
+import java.util.*
 
 interface BuildSystemGroovyNewProjectWizardData: BuildSystemNewProjectWizardData {
   companion object {
@@ -14,4 +16,8 @@ interface BuildSystemGroovyNewProjectWizardData: BuildSystemNewProjectWizardData
     @JvmStatic val NewProjectWizardStep.buildSystemProperty get() = buildSystemData.buildSystemProperty
     @JvmStatic var NewProjectWizardStep.buildSystem get() = buildSystemData.buildSystem; set(it) { buildSystemData.buildSystem = it }
   }
+
+  val groovySdkMavenVersionProperty : GraphProperty<Optional<String>>
+
+  var groovySdkMavenVersion : Optional<String>
 }

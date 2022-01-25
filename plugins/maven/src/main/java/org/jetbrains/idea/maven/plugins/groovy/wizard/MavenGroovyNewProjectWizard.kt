@@ -18,7 +18,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.config.wizard.*
-import java.util.*
+import org.jetbrains.plugins.groovy.config.wizard.GroovyNewProjectWizardUsageCollector.Companion.logGroovyLibrarySelected
 
 class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
   override val name = MAVEN
@@ -32,19 +32,17 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     BuildSystemGroovyNewProjectWizardData by parent {
 
     private val addSampleCodeProperty = propertyGraph.graphProperty { false }
-    private val groovySdkVersionProperty = propertyGraph.graphProperty<Optional<String>> { Optional.empty() }
 
-    private var groovySdkVersion by groovySdkVersionProperty
     var addSampleCode by addSampleCodeProperty
 
     override fun setupSettingsUI(builder: Panel) {
       super.setupSettingsUI(builder)
-      builder.row(GroovyBundle.message("label.groovy.sdk")) { groovySdkComboBox(groovySdkVersionProperty) }
+      builder.row(GroovyBundle.message("label.groovy.sdk")) { groovySdkComboBox(groovySdkMavenVersionProperty) }
       builder.addSampleCodeCheckbox(addSampleCodeProperty)
     }
 
     override fun setupProject(project: Project) {
-      val builder = MavenGroovyNewProjectBuilder(groovySdkVersion.orElse(GROOVY_SDK_FALLBACK_VERSION)).apply {
+      val builder = MavenGroovyNewProjectBuilder(groovySdkMavenVersion.orElse(GROOVY_SDK_FALLBACK_VERSION)).apply {
         moduleJdk = sdk
         name = parentStep.name
         parentProject = parentData
@@ -69,6 +67,7 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       groupIdProperty.afterChange { logGroupIdChanged() }
       artifactIdProperty.afterChange { logArtifactIdChanged() }
       versionProperty.afterChange { logVersionChanged() }
+      groovySdkMavenVersionProperty.afterChange { if (it.isPresent) logGroovyLibrarySelected(context, it.get()) }
     }
   }
 

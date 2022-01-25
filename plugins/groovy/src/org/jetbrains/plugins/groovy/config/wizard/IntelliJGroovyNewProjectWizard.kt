@@ -148,7 +148,6 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
-      reportFeature()
       val groovyModuleBuilder = GroovyAwareModuleBuilder().apply {
         val contentRoot = FileUtil.toSystemDependentName(contentRoot)
         contentEntryPath = contentRoot
@@ -184,6 +183,7 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       moduleNameProperty.afterChange { logModuleNameChanged() }
       contentRootProperty.afterChange { logContentRootChanged() }
       moduleFileLocationProperty.afterChange { logModuleFileLocationChanged() }
+      distributionsProperty.afterChange { logGroovySdkSelected(it) }
     }
 
     private fun openSampleCodeInEditorLater(project: Project, contentEntryPath: String) {
@@ -199,11 +199,10 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       }
     }
 
-    private fun reportFeature() {
-      val (distributionType, version) = when (val distr = distribution) {
-        is FrameworkLibraryDistributionInfo -> GroovyNewProjectWizardUsageCollector.DistributionType.MAVEN to distr.version.versionString
-        is LocalDistributionInfo -> GroovyNewProjectWizardUsageCollector.DistributionType.LOCAL to GroovyConfigUtils.getInstance().getSDKVersionOrNull(
-          distr.path)
+    private fun logGroovySdkSelected(distribution: DistributionInfo?) {
+      val (distributionType, version) = when (distribution) {
+        is FrameworkLibraryDistributionInfo -> GroovyNewProjectWizardUsageCollector.DistributionType.MAVEN to distribution.version.versionString
+        is LocalDistributionInfo -> GroovyNewProjectWizardUsageCollector.DistributionType.LOCAL to GroovyConfigUtils.getInstance().getSDKVersionOrNull(distribution.path)
         else -> return
       }
       if (version == null) {
