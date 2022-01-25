@@ -344,6 +344,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/stepOut/souSuspendFun.kt");
         }
 
+        @TestMetadata("stepOutFromInlineFunctionThenResume.kt")
+        public void testStepOutFromInlineFunctionThenResume() throws Exception {
+            runTest("testData/stepping/stepOut/stepOutFromInlineFunctionThenResume.kt");
+        }
+
         @TestMetadata("stepOutInlineFunction.kt")
         public void testStepOutInlineFunction() throws Exception {
             runTest("testData/stepping/stepOut/stepOutInlineFunction.kt");
