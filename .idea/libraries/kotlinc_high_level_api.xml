@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.high-level-api" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-for-ide:1.6.10-release-951" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-for-ide:1.6.10-release-952" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-for-ide/1.6.10-release-951/high-level-api-for-ide-1.6.10-release-951.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-for-ide/1.6.10-release-952/high-level-api-for-ide-1.6.10-release-952.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-for-ide/1.6.10-release-951/high-level-api-for-ide-1.6.10-release-951-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-for-ide/1.6.10-release-952/high-level-api-for-ide-1.6.10-release-952-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

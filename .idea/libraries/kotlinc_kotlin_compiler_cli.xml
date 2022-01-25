@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-compiler-cli" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-cli-for-ide:1.6.10-release-951" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-cli-for-ide:1.6.10-release-952" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/1.6.10-release-951/kotlin-compiler-cli-for-ide-1.6.10-release-951.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/1.6.10-release-952/kotlin-compiler-cli-for-ide-1.6.10-release-952.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/1.6.10-release-951/kotlin-compiler-cli-for-ide-1.6.10-release-951-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/1.6.10-release-952/kotlin-compiler-cli-for-ide-1.6.10-release-952-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
