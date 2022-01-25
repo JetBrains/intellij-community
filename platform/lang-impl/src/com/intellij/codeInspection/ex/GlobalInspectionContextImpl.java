@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
@@ -547,7 +547,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           FileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
           scope.accept(file -> {
             ProgressManager.checkCanceled();
-            if (!forceInspectAllScope && (ProjectUtil.isProjectOrWorkspaceFile(file) || !fileIndex.isInContent(file))) return true;
+            if (!forceInspectAllScope &&
+                (ProjectUtil.isProjectOrWorkspaceFile(file) || !ReadAction.compute(() -> fileIndex.isInContent(file)))) return true;
 
             PsiFile psiFile = ReadAction.compute(() -> {
               if (project.isDisposed()) throw new ProcessCanceledException();
