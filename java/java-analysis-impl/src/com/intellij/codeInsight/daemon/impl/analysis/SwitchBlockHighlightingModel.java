@@ -942,9 +942,7 @@ public class SwitchBlockHighlightingModel {
    * @return a set of label elements that are duplicates. If a switch block contains patterns,
    * then dominated label elements will be also included in the result set.
    */
-  @NotNull
-  public static Set<PsiElement> findSuspiciousLabelElements(@Nullable PsiSwitchBlock switchBlock) {
-    if (switchBlock == null) return Collections.emptySet();
+  public static @NotNull Set<PsiElement> findSuspiciousLabelElements(@NotNull PsiSwitchBlock switchBlock) {
     var switchModel = createInstance(PsiUtil.getLanguageLevel(switchBlock), switchBlock, switchBlock.getContainingFile());
     if (switchModel == null) return Collections.emptySet();
     var labelElements = StreamEx.of(SwitchUtils.getSwitchBranches(switchBlock)).select(PsiCaseLabelElement.class).toList();
