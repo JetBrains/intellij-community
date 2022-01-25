@@ -40,7 +40,7 @@ val DataNode<out ModuleData>.kotlinSourceSetData: KotlinSourceSetData?
 val DataNode<out ModuleData>.kotlinAndroidSourceSets: List<KotlinSourceSetInfo>?
     get() = ExternalSystemApiUtil.getChildren(this, KotlinAndroidSourceSetData.KEY).firstOrNull()?.data?.sourceSetInfos
 
-class KotlinSourceSetInfo @PropertyMapping("kotlinModule") constructor(val kotlinComponent: KotlinComponent) : Serializable {
+class KotlinSourceSetInfo @PropertyMapping("kotlinComponent") constructor(val kotlinComponent: KotlinComponent) : Serializable {
     var moduleId: String? = null
     var gradleModuleId: String = ""
 
