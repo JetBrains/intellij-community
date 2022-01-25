@@ -296,11 +296,6 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     return null;
   }
 
-  @Override
-  public void setValidationDelay(int delay) {
-    super.setValidationDelay(delay);
-  }
-
   @NotNull
   @Override
   protected List<ValidationInfo> doValidateAll() {

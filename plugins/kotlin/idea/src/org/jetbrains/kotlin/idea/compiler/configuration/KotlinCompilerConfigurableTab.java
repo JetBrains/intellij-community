@@ -517,12 +517,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
 
     @Nullable
     @Override
-    public Runnable enableSearch(String option) {
-        return null;
-    }
-
-    @Nullable
-    @Override
     public JComponent createComponent() {
         return contentPane;
     }

@@ -229,11 +229,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
   }
 
   @Override
-  public boolean isFileColorsEnabled() {
-    return false;
-  }
-
-  @Override
   protected boolean paintNodes() {
     return true;
   }
@@ -499,10 +494,5 @@ public class SimpleTree extends Tree implements CellEditorListener {
       boxWidth = 8;
     }
     return boxWidth;
-  }
-
-  @Override
-  public void updateUI() {
-    super.updateUI();
   }
 }

@@ -743,11 +743,6 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   }
 
   @Override
-  public void selectNotify() {
-
-  }
-
-  @Override
   public void deselectNotify() {
     final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (statusBar != null) {

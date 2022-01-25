@@ -483,8 +483,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   //the main function for drawing the queue
   public void showQueue() {
     JBPopupListener listener = new JBPopupListener() {
-      @Override
-      public void beforeShown(@NotNull LightweightWindowEvent event) { }
 
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {

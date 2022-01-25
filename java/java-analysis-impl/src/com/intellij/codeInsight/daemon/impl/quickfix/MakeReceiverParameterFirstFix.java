@@ -87,9 +87,4 @@ public class MakeReceiverParameterFirstFix extends LocalQuickFixAndIntentionActi
       }
     }
   }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

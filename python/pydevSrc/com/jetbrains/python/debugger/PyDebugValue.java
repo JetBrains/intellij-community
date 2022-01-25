@@ -550,11 +550,6 @@ public class PyDebugValue extends XNamedValue {
   }
 
   @Override
-  public boolean canNavigateToSource() {
-    return true;
-  }
-
-  @Override
   public void computeSourcePosition(@NotNull XNavigatable navigatable) {
     ApplicationManager.getApplication().executeOnPooledThread(
       () -> ReadAction.run(

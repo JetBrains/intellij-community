@@ -86,16 +86,6 @@ class FilterListCellRenderer extends JComponent implements ListCellRenderer {
 
             return this;
         }
-
-        @Override protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            //if (currentCustomChoice != null) {
-            //    editor.getLook()
-            //        .getCustomChoiceDecorator()
-            //        .decorateComponent(currentCustomChoice, editor, isSelected,
-            //            this, g);
-            //}
-        }
     }
 
     /**

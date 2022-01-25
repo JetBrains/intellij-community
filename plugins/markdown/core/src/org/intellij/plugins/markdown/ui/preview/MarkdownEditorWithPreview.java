@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
@@ -16,7 +15,6 @@ import com.intellij.openapi.util.Key;
 import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownSettings;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.EventListener;
@@ -104,11 +102,6 @@ public class MarkdownEditorWithPreview extends TextEditorWithPreview {
   @Override
   protected @NotNull ToggleAction getShowPreviewAction() {
     return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("Markdown.Layout.PreviewOnly"));
-  }
-
-  @Override
-  protected @Nullable ActionGroup createLeftToolbarActionGroup() {
-    return null;
   }
 
   public interface SplitLayoutListener extends EventListener {

@@ -4,7 +4,6 @@ package com.intellij.openapi.fileChooser.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.fileChooser.FileChooserPanel;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -25,11 +24,6 @@ public class NewFolderAction extends FileChooserAction implements LightEditCompa
 
   public NewFolderAction(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon) {
     super(text, description, icon);
-  }
-
-  @Override
-  protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(false);
   }
 
   @Override

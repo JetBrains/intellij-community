@@ -211,10 +211,6 @@ public class Mock {
     }
 
     @Override
-    public void updateFilePresentation(@NotNull VirtualFile file) {
-    }
-
-    @Override
     public void unsplitWindow() {
 
     }

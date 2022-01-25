@@ -897,12 +897,6 @@ public final class EditorTestUtil {
     public int calcHeightInPixels(@NotNull Inlay inlay) {
       return height == null ? EditorCustomElementRenderer.super.calcHeightInPixels(inlay) : height;
     }
-
-    @Override
-    public void paint(@NotNull Inlay inlay,
-                      @NotNull Graphics g,
-                      @NotNull Rectangle targetRegion,
-                      @NotNull TextAttributes textAttributes) {}
   }
 
   private static class EmptyCustomFoldingRenderer implements CustomFoldRegionRenderer {

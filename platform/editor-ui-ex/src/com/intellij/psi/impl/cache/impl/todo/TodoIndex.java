@@ -116,11 +116,6 @@ public final class TodoIndex extends SingleEntryFileBasedIndexExtension<Map<Todo
     return 12;
   }
 
-  @Override
-  public boolean dependsOnFileContent() {
-    return true;
-  }
-
   @NotNull
   @Override
   public ID<Integer, Map<TodoIndexEntry, Integer>> getName() {

@@ -124,12 +124,6 @@ public class AddModuleWizard extends AbstractProjectWizard {
   }
 
   @Override
-  @NotNull
-  public WizardContext getWizardContext() {
-    return myWizardContext;
-  }
-
-  @Override
   protected String getDimensionServiceKey() {
     return "NewModule_or_Project.wizard";
   }

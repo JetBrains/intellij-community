@@ -68,10 +68,6 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Co
   }
 
   @Override
-  public void disposeUIResources() {
-  }
-
-  @Override
   public boolean isModified() {
     return !MavenUtil.equalAsSets(myOriginallyIgnoredFilesPaths, myIgnoredFilesPathsChooser.getMarkedElements()) ||
            !myOriginallyIgnoredFilesPatterns.equals(myIgnoredFilesPattersEditor.getText());

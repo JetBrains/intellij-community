@@ -79,9 +79,6 @@ public class PyDataViewerPanel extends JPanel {
       public void frameChanged() {
         ApplicationManager.getApplication().executeOnPooledThread(() -> updateModel());
       }
-
-      @Override
-      public void sessionStopped() { }
     });
   }
 

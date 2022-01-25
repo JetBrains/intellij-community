@@ -157,11 +157,6 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   }
 
   @Override
-  public void checkDelete() throws IncorrectOperationException {
-    CheckUtil.checkWritable(this);
-  }
-
-  @Override
   public void delete() throws IncorrectOperationException {
     PsiElement parent = getParent();
     if (parent instanceof GroovyFileImpl) {

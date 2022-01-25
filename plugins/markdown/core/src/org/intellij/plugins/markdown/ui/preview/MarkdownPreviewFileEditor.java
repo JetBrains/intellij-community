@@ -2,7 +2,6 @@
 package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -207,18 +206,10 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
   }
 
   @Override
-  public void deselectNotify() { }
-
-  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
   @Override
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
-
-  @Override
-  public @Nullable BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
-  }
 
   @Override
   public @Nullable FileEditorLocation getCurrentLocation() {

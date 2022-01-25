@@ -205,11 +205,6 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
             public boolean splitToLines() {
               return false;
             }
-
-            @Override
-            public boolean withSeparators() {
-              return true;
-            }
           };
         }
       };

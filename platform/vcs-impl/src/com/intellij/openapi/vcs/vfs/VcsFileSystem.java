@@ -64,21 +64,6 @@ public class VcsFileSystem extends DeprecatedVirtualFileSystem implements NonPhy
     super.fireContentsChanged(requestor, file, oldModificationStamp);
   }
 
-  @Override
-  protected void fireBeforeFileDeletion(Object requestor, @NotNull VirtualFile file) {
-    super.fireBeforeFileDeletion(requestor, file);
-  }
-
-  @Override
-  protected void fireFileDeleted(Object requestor, @NotNull VirtualFile file, @NotNull String fileName, VirtualFile parent) {
-    super.fireFileDeleted(requestor, file, fileName, parent);
-  }
-
-  @Override
-  protected void fireBeforeContentsChange(Object requestor, @NotNull VirtualFile file) {
-    super.fireBeforeContentsChange(requestor, file);
-  }
-
   @Nls
   public static String getCouldNotImplementMessage() {
     return VcsBundle.message("exception.text.internal.errror.could.not.implement.method");

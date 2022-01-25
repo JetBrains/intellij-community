@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.vfs;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -72,21 +71,10 @@ public final class TerminalSessionEditor extends UserDataHolderBase implements F
   }
 
   @Override
-  public void selectNotify() { }
-
-  @Override
-  public void deselectNotify() { }
-
-  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
   @Override
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
-
-  @Override
-  public @Nullable BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
-  }
 
   @Override
   public @Nullable FileEditorLocation getCurrentLocation() {
