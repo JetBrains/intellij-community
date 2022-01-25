@@ -22,7 +22,7 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = In
     UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = Runnable) -> Decompiled_Class: Runnable
     UTypeReferenceExpression (name = java.io.Closeable) -> USimpleNameReferenceExpression (identifier = Closeable) -> Decompiled_Class: Closeable
     ULocalVariable (name = runnableIs) -> UObjectLiteralExpression -> Decompiled_Method:
-    UTypeReferenceExpression (name = java.io.InputStream) -> USimpleNameReferenceExpression (identifier = InputStream) -> Decompiled_Class: InputStream
+    UTypeReferenceExpression (name = java.io.InputStream) -> USimpleNameReferenceExpression (identifier = InputStream) -> Decompiled_Method: InputStream
     UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = Runnable) -> Decompiled_Class: Runnable
     UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
     ULocalVariable (name = runnable) -> UObjectLiteralExpression -> null:
