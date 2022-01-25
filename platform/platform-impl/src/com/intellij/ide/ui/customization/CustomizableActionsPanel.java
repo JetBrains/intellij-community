@@ -194,13 +194,17 @@ public class CustomizableActionsPanel {
       CustomizationUtil.optimizeSchema(myActionsTree, mySelectedSchema);
     }
     restorePathsAfterTreeOptimization(treePaths);
-    CustomActionsSchema.getInstance().copyFrom(mySelectedSchema);
+    updateGlobalScheme();
     CustomActionsSchema.setCustomizationSchemaForCurrentProjects();
     if (SystemInfo.isMac) {
       TouchbarSupport.reloadAllActions();
     }
 
     CustomActionsListener.fireSchemaChanged();
+  }
+
+  protected void updateGlobalScheme() {
+    CustomActionsSchema.getInstance().copyFrom(mySelectedSchema);
   }
 
   private void restorePathsAfterTreeOptimization(final List<? extends TreePath> treePaths) {

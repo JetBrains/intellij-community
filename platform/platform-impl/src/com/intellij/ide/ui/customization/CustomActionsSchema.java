@@ -156,10 +156,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     myIconCustomizations.clear();
 
     for (ActionUrl actionUrl : result.myActions) {
-      ActionUrl url = new ActionUrl(new ArrayList<>(actionUrl.getGroupPath()), actionUrl.getComponent(),
-                                    actionUrl.getActionType(), actionUrl.getAbsolutePosition());
-      url.setInitialPosition(actionUrl.getInitialPosition());
-      myActions.add(url);
+      myActions.add(actionUrl.copy());
     }
     resortActions();
 

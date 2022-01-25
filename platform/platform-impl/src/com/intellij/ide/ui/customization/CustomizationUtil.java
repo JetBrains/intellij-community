@@ -509,11 +509,11 @@ public final class CustomizationUtil {
 
   private static class ToolbarCustomizableActionsPanel extends CustomizableActionsPanel {
     @NotNull private final String myGroupID;
-    @NotNull private final String myName;
+    @NotNull private final String myGroupName;
 
-    private ToolbarCustomizableActionsPanel(@NotNull String groupID, @NotNull String name) {
+    private ToolbarCustomizableActionsPanel(@NotNull String groupID, @NotNull String groupName) {
       myGroupID = groupID;
-      myName = name;
+      myGroupName = groupName;
     }
 
     @Override
@@ -555,6 +555,17 @@ public final class CustomizationUtil {
     }
 
     @Override
+    protected void updateGlobalScheme() {
+      CustomActionsSchema.getInstance().getActions().forEach(url -> {
+        // Foreign (global) customization shouldn't be lost, so we add them to a scheme with local action group root
+        if (!url.getGroupPath().contains(myGroupName)) {
+          mySelectedSchema.addAction(url.copy());
+        }
+      });
+      super.updateGlobalScheme();
+    }
+
+    @Override
     protected void patchActionsTreeCorrespondingToSchema(DefaultMutableTreeNode root) {
       if (myGroupID == null) return;
       fillTreeFromActions(root, (ActionGroup)ActionManager.getInstance().getAction(myGroupID));
@@ -565,7 +576,7 @@ public final class CustomizationUtil {
       if (mySelectedSchema != null && actionGroup != null && root != null) {
         root.removeAllChildren();
         root.add(ActionsTreeUtil.createNode(
-          ActionsTreeUtil.createCorrectedGroup(actionGroup, myName, new ArrayList<>(), mySelectedSchema.getActions())));
+          ActionsTreeUtil.createCorrectedGroup(actionGroup, myGroupName, new ArrayList<>(), mySelectedSchema.getActions())));
         ((DefaultTreeModel)(myActionsTree.getModel())).reload();
         TreeUtil.selectPaths(myActionsTree, selectedPaths);
       }
