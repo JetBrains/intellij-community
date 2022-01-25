@@ -209,7 +209,7 @@ class UISettingsState : BaseState() {
   var showInplaceComments by property(false)
 
   @get:OptionTag("SHOW_VISUAL_FORMATTING_LAYER")
-  var showVisualFormattingLayer: Boolean = false
+  var showVisualFormattingLayer by property(false)
 
   @Suppress("FunctionName")
   fun _incrementModificationCount() = incrementModificationCount()

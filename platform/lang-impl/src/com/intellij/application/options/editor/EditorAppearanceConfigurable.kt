@@ -120,19 +120,14 @@ internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurab
       VisualFormattingLayerService.getInstance()
         .takeIf { it.enabledByRegistry }
         ?.let { service ->
-          lateinit var checkbox: Cell<JBCheckBox>
-          val apply = {
-            ApplicationManager.getApplication().invokeLater(service::refreshGlobally)
-          }
           row {
-            checkbox = checkBox(myCdShowVisualFormattingLayer)
-              .onApply(apply)
+            checkBox(myCdShowVisualFormattingLayer)
+              .bindSelected({service.enabledGlobally}, {service.enabledGlobally = it})
           }
           indent {
             row(IdeBundle.message("combobox.label.visual.formatting.layer.scheme")) {
               comboBox(service.getSchemes())
                 .bindItem(service::scheme)
-                .onApply(apply)
             }
           }
         }
