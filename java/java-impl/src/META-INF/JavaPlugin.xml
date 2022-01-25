@@ -1854,7 +1854,11 @@
                      groupKey="group.names.compiler.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.preview.PreviewFeatureInspection"/>
-
+    <localInspection groupPath="Java" language="JAVA" shortName="IOStreamConstructor"
+                     key="inspection.io.stream.constructor.description" bundle="messages.JavaBundle"
+                     groupKey="group.names.performance.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.IOStreamConstructorInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"
                       key="inspection.empty.method.display.name" bundle="messages.JavaBundle"/>

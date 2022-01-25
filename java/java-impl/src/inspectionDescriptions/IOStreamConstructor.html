@@ -1,0 +1,18 @@
+<html>
+<body>
+Reports <code>FileInputStream</code> or <code>FileOutputStream</code> constructors in cases when it is possible to replace
+them with <code>Files.newInputStream</code> or <code>Files.newOutputStream</code> accordingly.
+<br>
+Streams that are created using <code>Files</code> methods usually are more efficient than regular ones.
+<p>Example:</p>
+<pre><code>
+InputStream is = new BufferedInputStream(new FileInputStream(file));
+</code></pre>
+<p>After quick-fix is applied:</p>
+<pre><code>
+InputStream is = new BufferedInputStream(Files.newInputStream(file.toPath()));
+</code></pre>
+<!-- tooltip end -->
+<p><small>New in 2022.1</small></p>
+</body>
+</html>
