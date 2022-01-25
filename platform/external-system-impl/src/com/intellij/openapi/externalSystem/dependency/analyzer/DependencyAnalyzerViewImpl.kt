@@ -17,7 +17,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
 import com.intellij.openapi.observable.operations.asProperty
 import com.intellij.openapi.observable.operations.whenOperationCompleted
-import com.intellij.openapi.observable.properties.AtomicObservableProperty
+import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.and
 import com.intellij.openapi.observable.util.*
@@ -50,19 +50,19 @@ class DependencyAnalyzerViewImpl(
   private val dependencyLoadingOperation = AnonymousParallelOperationTrace("DA: Dependency loading")
   private val dependencyLoadingProperty = dependencyLoadingOperation.asProperty()
 
-  private val externalProjectProperty = AtomicObservableProperty<DependencyAnalyzerProject?>(null)
-  private val dependencyDataFilterProperty = AtomicObservableProperty("")
-  private val dependencyScopeFilterProperty = AtomicObservableProperty(emptyList<ScopeItem>())
-  private val showDependencyWarningsProperty = AtomicObservableProperty(false)
-  private val showDependencyGroupIdProperty = AtomicObservableProperty(false)
+  private val externalProjectProperty = AtomicProperty<DependencyAnalyzerProject?>(null)
+  private val dependencyDataFilterProperty = AtomicProperty("")
+  private val dependencyScopeFilterProperty = AtomicProperty(emptyList<ScopeItem>())
+  private val showDependencyWarningsProperty = AtomicProperty(false)
+  private val showDependencyGroupIdProperty = AtomicProperty(false)
     .bindBooleanStorage(SHOW_GROUP_ID_PROPERTY)
 
-  private val dependencyModelProperty = AtomicObservableProperty(emptyList<DependencyGroup>())
-  private val dependencyProperty = AtomicObservableProperty<Dependency?>(null)
-  private val showDependencyTreeProperty = AtomicObservableProperty(false)
+  private val dependencyModelProperty = AtomicProperty(emptyList<DependencyGroup>())
+  private val dependencyProperty = AtomicProperty<Dependency?>(null)
+  private val showDependencyTreeProperty = AtomicProperty(false)
     .bindBooleanStorage(SHOW_AS_TREE_PROPERTY)
-  private val dependencyEmptyTextProperty = AtomicObservableProperty("")
-  private val usagesTitleProperty = AtomicObservableProperty("")
+  private val dependencyEmptyTextProperty = AtomicProperty("")
+  private val usagesTitleProperty = AtomicProperty("")
 
   private var externalProject by externalProjectProperty
   private var dependencyDataFilter by dependencyDataFilterProperty

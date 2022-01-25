@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.execution.run.configuration
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.openapi.externalSystem.service.ui.completion.*
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
-import com.intellij.openapi.observable.properties.AtomicObservableProperty
+import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.project.Project
@@ -18,7 +18,7 @@ class MavenProfilesFiled(
   private val workingDirectoryField: WorkingDirectoryField
 ) : TextCompletionField<TextCompletionInfo>(project) {
 
-  private val textProperty = AtomicObservableProperty("")
+  private val textProperty = AtomicProperty("")
 
   var profiles by textProperty.transform(::decodeProfiles, ::encodeProfiles)
 

@@ -45,8 +45,11 @@ class PropertyGraph(debugName: String? = null, private val isBlockPropagation: B
    * @param update, result of this function will be applied into [child] when [parent] is modified.
    * @see PropertyGraph
    */
-  fun <T> dependsOn(child: AtomicProperty<T>, parent: ObservableProperty<*>, update: () -> T) {
-    addDependency(child, parent) { updateAndGet { update() } }
+  fun <T> dependsOn(child: ObservableMutableProperty<T>, parent: ObservableProperty<*>, update: () -> T) {
+    val childNode = getOrRegisterNode(child)
+    val parentNode = getOrRegisterNode(parent)
+    dependencies.computeIfAbsent(parentNode) { CopyOnWriteArrayList() }
+      .add(Dependency(childNode, child, update))
   }
 
   /**
@@ -55,17 +58,6 @@ class PropertyGraph(debugName: String? = null, private val isBlockPropagation: B
    */
   fun afterPropagation(listener: () -> Unit) {
     propagation.afterOperation(listener)
-  }
-
-  private fun <T> addDependency(
-    child: AtomicProperty<T>,
-    parent: ObservableProperty<*>,
-    update: AtomicProperty<T>.() -> Unit
-  ) {
-    val childNode = getOrRegisterNode(child)
-    val parentNode = getOrRegisterNode(parent)
-    dependencies.computeIfAbsent(parentNode) { CopyOnWriteArrayList() }
-      .add(Dependency(childNode, child, update))
   }
 
   private fun getOrRegisterNode(property: ObservableProperty<*>): PropertyNode {
@@ -111,9 +103,16 @@ class PropertyGraph(debugName: String? = null, private val isBlockPropagation: B
 
   private data class Dependency<T>(
     val node: PropertyNode,
-    val property: AtomicProperty<T>,
-    val update: AtomicProperty<T>.() -> Unit
+    private val property: ObservableMutableProperty<T>,
+    private val update: () -> T
   ) {
-    fun applyUpdate() = property.update()
+    fun applyUpdate() {
+      if (property is AtomicMutableProperty) {
+        property.updateAndGet { update() }
+      }
+      else {
+        property.set(update())
+      }
+    }
   }
 }

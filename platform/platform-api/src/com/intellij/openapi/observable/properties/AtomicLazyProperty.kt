@@ -3,7 +3,11 @@ package com.intellij.openapi.observable.properties
 
 import java.util.concurrent.atomic.AtomicReference
 
-open class AtomicLazyProperty<T>(private val initial: () -> T) : AbstractObservableClearableProperty<T>(), AtomicProperty<T> {
+/**
+ * Atomic implementation of lazy property.
+ * @param initial will be called only when methods [get] and [updateAndGet] is called.
+ */
+open class AtomicLazyProperty<T>(private val initial: () -> T) : AbstractObservableClearableProperty<T>(), AtomicMutableProperty<T> {
 
   private val value = AtomicReference<Any?>(UNINITIALIZED_VALUE)
 
