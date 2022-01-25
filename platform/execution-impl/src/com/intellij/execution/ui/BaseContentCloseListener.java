@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
@@ -36,7 +36,7 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
   private static final Logger LOG = Logger.getInstance(BaseContentCloseListener.class);
 
   private Content myContent;
-  private final Project myProject;
+  protected final Project myProject;
 
   public BaseContentCloseListener(@NotNull Content content, @NotNull Project project) {
     this(content, project, project);
@@ -136,7 +136,7 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
 
   protected boolean askUserAndWait(@NotNull ProcessHandler processHandler, @NotNull String sessionName, @NotNull WaitForProcessTask task) {
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-      // This might happens from Application.exit(force=true, ...) call.
+      // This might happen from Application.exit(force=true, ...) call.
       // Do not show any UI, destroy the process silently, do not wait for process termination.
       processHandler.destroyProcess();
       LOG.info("Destroying process under write action (name: " + sessionName + ", "

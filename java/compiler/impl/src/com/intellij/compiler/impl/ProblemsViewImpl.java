@@ -21,6 +21,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import kotlin.Unit;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,8 @@ final class ProblemsViewImpl extends ProblemsView {
 
   private volatile ProblemsViewPanel myPanel;
   private final ExecutorService myViewUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("ProblemsView Pool");
+  private static final EnumSet<ErrorTreeElementKind> interestingMessageKinds =
+    EnumSet.of(ErrorTreeElementKind.ERROR, ErrorTreeElementKind.WARNING, ErrorTreeElementKind.NOTE);
 
   ProblemsViewImpl(@NotNull Project project) {
     super(project);
@@ -49,7 +52,11 @@ final class ProblemsViewImpl extends ProblemsView {
         ProblemsViewPanel panel = new ProblemsViewPanel(project);
 
         ToolWindow toolWindow = ToolWindowManager.getInstance(project)
-          .registerToolWindow(RegisterToolWindowTask.notClosable(AUTO_BUILD_TOOLWINDOW_ID));
+          .registerToolWindow(RegisterToolWindowTask.build(AUTO_BUILD_TOOLWINDOW_ID, builder -> {
+            builder.icon = AllIcons.Toolwindows.ProblemsEmpty;
+            builder.stripeTitle = IdeBundle.messagePointer("toolwindow.stripe.Problems");
+            return Unit.INSTANCE;
+          }));
         Disposer.register(toolWindow.getDisposable(), panel);
 
         Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
@@ -129,11 +136,8 @@ final class ProblemsViewImpl extends ProblemsView {
   }
 
   private static void doUpdateIcon(@NotNull ProblemsViewPanel panel, @NotNull ToolWindow toolWindow) {
-    boolean active = panel.getErrorViewStructure().hasMessages(
-      EnumSet.of(ErrorTreeElementKind.ERROR, ErrorTreeElementKind.WARNING, ErrorTreeElementKind.NOTE));
+    boolean active = panel.getErrorViewStructure().hasMessages(interestingMessageKinds);
     toolWindow.setIcon(active ? AllIcons.Toolwindows.Problems : AllIcons.Toolwindows.ProblemsEmpty);
-    //noinspection DialogTitleCapitalization
-    toolWindow.setStripeTitle(IdeBundle.message("toolwindow.stripe.Problems"));
   }
 
   @Override
