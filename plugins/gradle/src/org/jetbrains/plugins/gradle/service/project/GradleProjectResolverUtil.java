@@ -818,7 +818,7 @@ public final class GradleProjectResolverUtil {
     return infos.stream().noneMatch((info) -> info.myModuleData.equals(data));
   }
 
-  private static final Key<Map<String, DataNode<LibraryData>>> FOUND_LIBRARIES =
+  private static final Key<Map<String, DataNode<LibraryData>>> LIBRARIES_BY_NAME_CACHE =
     Key.create("GradleProjectResolverUtil.FOUND_LIBRARIES");
 
   public static boolean linkProjectLibrary(/*@NotNull*/ ProjectResolverContext context,
@@ -826,23 +826,23 @@ public final class GradleProjectResolverUtil {
                                                         @NotNull final LibraryData library) {
     if (ideProject == null) return false;
 
-    Map<String, DataNode<LibraryData>> cache = ideProject.getUserData(FOUND_LIBRARIES);
+    Map<String, DataNode<LibraryData>> cache = ideProject.getUserData(LIBRARIES_BY_NAME_CACHE);
     if (cache == null) {
       cache = new HashMap<>();
-      ideProject.putUserData(FOUND_LIBRARIES, cache);
+      ideProject.putUserData(LIBRARIES_BY_NAME_CACHE, cache);
     }
 
     String libraryName = library.getExternalName();
-    DataNode<LibraryData> cachedLibraryData = cache.get(libraryName);
-    DataNode<LibraryData> libraryData = cachedLibraryData != null
-                                        ? cachedLibraryData :
-                                        ExternalSystemApiUtil.find(ideProject, ProjectKeys.LIBRARY,
-                                                                   node -> libraryName.equals(node.getData().getExternalName()));
-    if (libraryData == null) {
-      libraryData = ideProject.createChild(ProjectKeys.LIBRARY, library);
-      cache.put(libraryName, libraryData);
-      return true;
-    }
+
+    DataNode<LibraryData> libraryData = cache.computeIfAbsent(libraryName, (String name) -> {
+      DataNode<LibraryData> newValueToCache =
+        ExternalSystemApiUtil.find(ideProject, ProjectKeys.LIBRARY, node -> libraryName.equals(node.getData().getExternalName()));
+      if (newValueToCache == null) {
+        newValueToCache = ideProject.createChild(ProjectKeys.LIBRARY, library);
+      }
+      return newValueToCache;
+    });
+
     return libraryData.getData().equals(library);
   }
 
