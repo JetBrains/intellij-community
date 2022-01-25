@@ -576,8 +576,13 @@ fun getPoetryEnvs(projectPath: String): List<String> =
 
 
 fun isVirtualEnvsInProject(projectPath: String): Boolean? =
-  syncRunPoetry(projectPath, "config", "virtualenvs.in-project", defaultResult = null) {
-    it.trim() == "true"
+  if (FileUtil.exists(projectPath)) {
+    syncRunPoetry(projectPath, "config", "virtualenvs.in-project", defaultResult = null) {
+      it.trim() == "true"
+    }
+  }
+  else {
+    false
   }
 
 val poetryVersion: String?
