@@ -38,6 +38,7 @@ fun testDefaultLayout(isNewUi: Boolean, project: Project) {
   }
 
   assertThat(manager.getEntry("TODO")!!.readOnlyWindowInfo.isShowStripeButton).isEqualTo(!isNewUi)
+  assertThat(manager.getEntry("TODO")!!.readOnlyWindowInfo.order).isNotEqualTo(-1)
 }
 
 fun testButtonLayout(isNewUi: Boolean, anchor: ToolWindowAnchor) {

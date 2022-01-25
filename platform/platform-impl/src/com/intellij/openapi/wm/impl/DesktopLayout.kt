@@ -34,7 +34,9 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
     val info = WindowInfoImpl()
     info.id = task.id
     info.isFromPersistentSettings = false
-    info.order = -1
+    // we must allocate order - otherwise, on drag-n-drop, we cannot move some tool windows to the end
+    // because sibling's order is equal to -1, so, always in the end
+    info.order = getMaxOrder(idToInfo.values, task.anchor)
     if (isNewUi) {
       info.isShowStripeButton = false
     }

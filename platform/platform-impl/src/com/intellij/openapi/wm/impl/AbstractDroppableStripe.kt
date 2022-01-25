@@ -187,9 +187,8 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
     val dragButton = dragButton
     val processDrop = dragButton != null && !noDrop &&
                       containsPoint(dropRectangle.location.also { SwingUtilities.convertPointToScreen(it, this) })
-
-    if (!isNewStripes && processDrop) {
-      data.shouldSwapCoordinates = anchor.isHorizontal != getToolWindowFor(dragButton!!)?.anchor?.isHorizontal
+    if (!isNewStripes && dragButton != null) {
+      data.shouldSwapCoordinates = anchor.isHorizontal != getToolWindowFor(dragButton)?.anchor?.isHorizontal
     }
     data.fitSize = toFitWith ?: JBUI.emptySize()
 
@@ -265,7 +264,7 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
           data.dragTargetChosen = true
         }
       }
-      layoutButton(data, button, setBounds)
+      layoutButton(data, button, setBounds, shouldSwapCoordinates = false)
     }
 
     if (!sidesStarted && processDrop && !data.dragTargetChosen) {
@@ -300,9 +299,9 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
     d.height = tmp
   }
 
-  private fun layoutButton(data: LayoutData, button: JComponent, setBounds: Boolean) {
+  private fun layoutButton(data: LayoutData, button: JComponent, setBounds: Boolean, shouldSwapCoordinates: Boolean) {
     val preferredSize = button.preferredSize
-    if (data.shouldSwapCoordinates && isNewStripes) {
+    if (shouldSwapCoordinates) {
       swap(preferredSize)
     }
 
@@ -348,10 +347,10 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
     drawRectangle.x = data.eachX
     drawRectangle.y = data.eachY
     if (isNewStripes) {
-      dragButton?.let { layoutButton(data, it, false) }
+      dragButton?.let { layoutButton(data, it, setBounds = false, shouldSwapCoordinates = false) }
     }
     else {
-      dragButtonImage?.let { layoutButton(data, it, false) }
+      dragButtonImage?.let { layoutButton(data, it, setBounds = false, shouldSwapCoordinates = data.shouldSwapCoordinates) }
     }
 
     if (data.horizontal) {
