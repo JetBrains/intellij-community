@@ -23,11 +23,11 @@ class ClassToIntConverterTest {
           }
         }
       }
-      val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("Test executor", 1)
+      val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("Test executor", 4)
       ConcurrencyUtil.invokeAll(threads, service).map { it.get() }
 
-      val res = classes.map { converter.getInt(it.javaClass) }.toSet()
-      assertEquals(20, res.size)
+      val res = classes.map { converter.getInt(it.javaClass) }.sorted()
+      assertEquals(List(20) { it }, res)
     }
   }
 }
