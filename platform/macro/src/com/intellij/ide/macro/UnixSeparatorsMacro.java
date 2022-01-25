@@ -22,7 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class UnixSeparatorsMacro extends Macro implements SecondQueueExpandMacro{
+public final class UnixSeparatorsMacro extends Macro implements SecondQueueExpandMacro, MacroWithParams {
   @NotNull
   @Override
   public String getName() {
