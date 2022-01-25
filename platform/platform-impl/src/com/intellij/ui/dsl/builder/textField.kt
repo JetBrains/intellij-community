@@ -39,7 +39,6 @@ fun <T : JTextComponent> Cell<T>.bindText(binding: PropertyBinding<String>): Cel
 }
 
 fun <T : JTextComponent> Cell<T>.bindText(property: GraphProperty<String>): Cell<T> {
-  component.text = property.get()
   return graphProperty(property)
     .applyToComponent { bind(property) }
 }
@@ -103,6 +102,7 @@ private fun JTextComponent.getValidatedIntValue(value: String): Int {
 }
 
 private fun JTextComponent.bind(property: ObservableMutableProperty<String>) {
+  text = property.get()
   // See: IDEA-238573 removed cyclic update of UI components that bound with properties
   val mutex = AtomicBoolean()
   property.afterChange {

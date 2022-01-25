@@ -18,7 +18,6 @@ fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(binding: PropertyBinding<St
 }
 
 fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(property: GraphProperty<String>): Cell<T> {
-  component.text = property.get()
   return graphProperty(property)
     .applyToComponent { bind(property) }
 }

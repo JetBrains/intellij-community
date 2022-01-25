@@ -15,7 +15,6 @@ fun <T, C : ComboBox<T>> Cell<C>.bindItem(binding: PropertyBinding<T?>): Cell<C>
 }
 
 fun <T, C : ComboBox<T>> Cell<C>.bindItem(property: GraphProperty<T>): Cell<C> {
-  component.selectedItem = property.get()
   return graphProperty(property)
     .applyToComponent { bind(property) }
 }

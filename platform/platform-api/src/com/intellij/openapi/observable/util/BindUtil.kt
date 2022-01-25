@@ -7,7 +7,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
-import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.emptyText
 import com.intellij.openapi.ui.getTreePath
@@ -43,6 +42,7 @@ inline fun AtomicBoolean.lockOrSkip(action: () -> Unit) {
  */
 fun <T> ObservableMutableProperty<T>.bind(property: ObservableMutableProperty<T>) {
   val mutex = AtomicBoolean()
+  set(property.get())
   property.afterChange {
     mutex.lockOrSkip {
       set(it)
@@ -97,6 +97,7 @@ fun <C : TextFieldWithBrowseButton> C.bindEmptyText(property: ObservableProperty
  * @see java.awt.event.ItemEvent.DESELECTED
  */
 fun <T, C : JComboBox<T>> C.bind(property: ObservableMutableProperty<T>): C = apply {
+  selectedItem = property.get()
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {
@@ -111,10 +112,11 @@ fun <T, C : JComboBox<T>> C.bind(property: ObservableMutableProperty<T>): C = ap
 }
 
 fun <T, C : DropDownLink<T>> C.bind(property: ObservableMutableProperty<T>): C = apply {
+  selectedItem = property.get()
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {
-      selectedItem = property.get()
+      selectedItem = it
     }
   }
   whenItemSelected {
@@ -125,6 +127,7 @@ fun <T, C : DropDownLink<T>> C.bind(property: ObservableMutableProperty<T>): C =
 }
 
 fun <T, C : JList<T>> C.bind(property: ObservableMutableProperty<T?>): C = apply {
+  setSelectedValue(property.get(), true)
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {
@@ -141,10 +144,11 @@ fun <T, C : JList<T>> C.bind(property: ObservableMutableProperty<T?>): C = apply
 }
 
 fun <T, C : JTree> C.bind(property: ObservableMutableProperty<T?>) = apply {
+  selectionPath = model.getTreePath(property.get())
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {
-      selectionPath = model.getTreePath(property.get())
+      selectionPath = model.getTreePath(it)
     }
   }
   addTreeSelectionListener {
@@ -157,18 +161,21 @@ fun <T, C : JTree> C.bind(property: ObservableMutableProperty<T?>) = apply {
 }
 
 fun <C : StatusText> C.bind(property: ObservableProperty<@NlsContexts.StatusText String>): C = apply {
+  text = property.get()
   property.afterChange {
     text = it
   }
 }
 
 fun <C : JLabel> C.bind(property: ObservableProperty<@NlsContexts.Label String>): C = apply {
+  text = property.get()
   property.afterChange {
     text = it
   }
 }
 
 fun <C : JCheckBox> C.bind(property: ObservableMutableProperty<Boolean>): C = apply {
+  isSelected = property.get()
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {
@@ -183,6 +190,7 @@ fun <C : JCheckBox> C.bind(property: ObservableMutableProperty<Boolean>): C = ap
 }
 
 fun <C : ThreeStateCheckBox> C.bind(property: ObservableMutableProperty<ThreeStateCheckBox.State>): C = apply {
+  state = property.get()
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {
@@ -201,6 +209,7 @@ fun <C : TextFieldWithBrowseButton> C.bind(property: ObservableMutableProperty<S
 }
 
 fun <C : JTextComponent> C.bind(property: ObservableMutableProperty<String>): C = apply {
+  text = property.get()
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {

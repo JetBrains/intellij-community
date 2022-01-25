@@ -17,13 +17,11 @@ fun <T : AbstractButton> Cell<T>.bindSelected(binding: PropertyBinding<Boolean>)
 }
 
 fun <T : JBCheckBox> Cell<T>.bindSelected(property: GraphProperty<Boolean>): Cell<T> {
-  component.isSelected = property.get()
   return graphProperty(property)
     .applyToComponent { bind(property) }
 }
 
 fun <T : ThreeStateCheckBox> Cell<T>.bindState(property: GraphProperty<ThreeStateCheckBox.State>): Cell<T> {
-  component.state = property.get()
   return graphProperty(property)
     .applyToComponent { bind(property) }
 }
