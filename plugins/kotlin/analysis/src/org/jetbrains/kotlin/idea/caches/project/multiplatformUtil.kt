@@ -73,7 +73,7 @@ val Module.implementingModules: List<Module>
         val moduleManager = ModuleManager.getInstance(project)
 
         if (isKpmModule) {
-            moduleManager.modules.filter { stableNameProvider.getStableModuleName(this) in it.refinesFragmentIds }
+            moduleManager.modules.filter { stableModuleName in it.refinesFragmentIds }
         } else when (facetSettings?.mppVersion) {
             null -> emptyList()
 
