@@ -6,13 +6,7 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i)
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
 UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> Decompiled_Class: Long
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
-UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:open class A(val str: String) {
-
-    constructor(i: Int) : this(i.toString())
-
-    open fun foo(a: Long) {}
-
-}: A
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Method: A
 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = param) -> Kotlin_Light_Value_Parameter: param
 UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:open class A(val str: String) {
 
@@ -39,37 +33,13 @@ UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identi
 }: A
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = foo) -> Kotlin_Light_Method: foo
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
-UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:open class A(val str: String) {
-
-    constructor(i: Int) : this(i.toString())
-
-    open fun foo(a: Long) {}
-
-}: A
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Method: A
 UField (name = anon) -> UObjectLiteralExpression -> Kotlin_Light_Method:
-UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:open class A(val str: String) {
-
-    constructor(i: Int) : this(i.toString())
-
-    open fun foo(a: Long) {}
-
-}: A
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Method: A
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = cons) -> Kotlin_Light_Method: cons
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> UObjectLiteralExpression -> Kotlin_Light_Method:
-    UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:open class A(val str: String) {
-
-    constructor(i: Int) : this(i.toString())
-
-    open fun foo(a: Long) {}
-
-}: A
-UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:open class A(val str: String) {
-
-    constructor(i: Int) : this(i.toString())
-
-    open fun foo(a: Long) {}
-
-}: A
+    UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Method: A
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Method: A
 UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:open class A(val str: String) {
 
     constructor(i: Int) : this(i.toString())
