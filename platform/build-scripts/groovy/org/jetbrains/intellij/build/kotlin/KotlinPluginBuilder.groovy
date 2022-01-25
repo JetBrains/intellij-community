@@ -110,7 +110,6 @@ class KotlinPluginBuilder {
     "kotlinc.kotlinx-serialization-compiler-plugin",
     "kotlinc.parcelize-compiler-plugin",
     "kotlin-script-runtime",
-    "kotlinc.kotlin-scripting-compiler",
     "kotlinc.kotlin-scripting-compiler-impl",
     "kotlinc.kotlin-scripting-common",
     "kotlinc.kotlin-scripting-jvm",
