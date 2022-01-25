@@ -33,6 +33,7 @@ interface NotebookIntervalPointerFactory {
 
     fun onRemoved(ordinal: Int)
 
+    /** [fromOrdinal] and [toOrdinal] are never equal */
     fun onMoved(fromOrdinal: Int, toOrdinal: Int)
   }
 

@@ -124,7 +124,9 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
               newPtr.interval = null
               pointers[hint.ordinalAfterChange] = oldPtr
               oldOrdinal?.let {
-                changeListeners.multicaster.onMoved(it, hint.ordinalAfterChange)
+                if (it != hint.ordinalAfterChange) {
+                  changeListeners.multicaster.onMoved(it, hint.ordinalAfterChange)
+                }
               }
             }
           }
