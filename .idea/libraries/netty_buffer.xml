@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="netty-buffer" type="repository">
-    <properties maven-id="io.netty:netty-buffer:4.1.72.Final" />
+    <properties maven-id="io.netty:netty-buffer:4.1.73.Final" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.72.Final/netty-buffer-4.1.72.Final.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.1.72.Final/netty-common-4.1.72.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.73.Final/netty-buffer-4.1.73.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.1.73.Final/netty-common-4.1.73.Final.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.72.Final/netty-buffer-4.1.72.Final-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.1.72.Final/netty-common-4.1.72.Final-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.73.Final/netty-buffer-4.1.73.Final-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.1.73.Final/netty-common-4.1.73.Final-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
