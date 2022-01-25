@@ -1753,6 +1753,46 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     return popupWindow;
   }
 
+  public final void setBounds(@NotNull Rectangle bounds) {
+    if (myPopup == null) {
+      if (!isBusy()) {
+        Dimension toSet = new Dimension(bounds.getSize());
+        toSet.height += getAdComponentHeight();
+        myForcedSize = toSet;
+      }
+      myForcedLocation = bounds.getLocation();
+      return;
+    }
+    if (isBusy()) {
+      return;
+    }
+    Window cw = getContentWindow(myContent);
+    if (cw == null) {
+      return;
+    }
+    cw.setCursor(Cursor.getDefaultCursor());
+
+    Rectangle result = new Rectangle(bounds);
+    result.height += getAdComponentHeight();
+    JBInsets.addTo(result, myContent.getInsets());
+
+    Insets insets = myContent.getInsets();
+    if (insets != null && (insets.top != 0 || insets.left != 0)) {
+      bounds.x -= insets.left;
+      bounds.y -= insets.top;
+    }
+
+    if (myLocateByContent) {
+      Dimension headerCorrectionSize = myHeaderPanel.getPreferredSize();
+      if (headerCorrectionSize != null) {
+        bounds.y -= headerCorrectionSize.height;
+      }
+    }
+
+    cw.setBounds(result);
+    updateMaskAndAlpha(cw);
+  }
+
   @Override
   public void setCaption(@NotNull @NlsContexts.PopupTitle String title) {
     if (myCaption instanceof TitlePanel) {
