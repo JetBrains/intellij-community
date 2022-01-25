@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints.codeVision
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
+import com.intellij.codeInsight.codeVision.ui.model.CodeVisionPredefinedActionEntry
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.TextRange
@@ -25,7 +26,9 @@ interface DaemonBoundCodeVisionProvider {
    */
   fun computeForEditor(editor: Editor): List<Pair<TextRange, CodeVisionEntry>>
 
-  fun handleClick(editor: Editor, textRange: TextRange)
+  fun handleClick(editor: Editor, textRange: TextRange, entry: CodeVisionEntry){
+    if (entry is CodeVisionPredefinedActionEntry) entry.onClick()
+  }
 
   /**
    * Name in settings.
@@ -43,6 +46,6 @@ interface DaemonBoundCodeVisionProvider {
   @get:NonNls
   val id: String
 
-  open val groupId: String
+  val groupId: String
     get() = id
 }

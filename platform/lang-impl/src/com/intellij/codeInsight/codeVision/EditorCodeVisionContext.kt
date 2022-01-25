@@ -14,9 +14,11 @@ import com.intellij.util.application
 import com.jetbrains.rd.util.first
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
 import com.jetbrains.rd.util.lifetime.onTermination
+import java.awt.event.MouseEvent
 
 val editorLensContextKey = Key<EditorCodeVisionContext>("EditorCodeLensContext")
 val codeVisionEntryOnHighlighterKey = Key.create<CodeVisionEntry>("CodeLensEntryOnHighlighter")
+val codeVisionEntryMouseEventKey = Key.create<MouseEvent>("CodeVisionEntryMouseEventKey")
 
 val Editor.lensContext: EditorCodeVisionContext
   get() = getOrCreateCodeVisionContext(this)

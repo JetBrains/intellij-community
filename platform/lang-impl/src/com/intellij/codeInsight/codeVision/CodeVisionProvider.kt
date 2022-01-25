@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.codeVision
 
 import com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
+import com.intellij.codeInsight.codeVision.ui.model.CodeVisionPredefinedActionEntry
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.TextRange
@@ -33,8 +34,11 @@ interface CodeVisionProvider<T> {
 
   /**
    * Handle click on a lens at given range
+   * [java.awt.event.MouseEvent] accessible with [codeVisionEntryMouseEventKey] data key from [CodeVisionEntry]
    */
-  fun handleClick(editor: Editor, textRange: TextRange)
+  fun handleClick(editor: Editor, textRange: TextRange, entry: CodeVisionEntry){
+    if (entry is CodeVisionPredefinedActionEntry) entry.onClick()
+  }
 
   /**
    * Handle click on an extra action on a lens at a given range

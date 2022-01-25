@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.codeVision
 
+import com.intellij.openapi.util.UserDataHolderBase
 import javax.swing.Icon
 
 /**
@@ -13,4 +14,4 @@ abstract class CodeVisionEntry(val providerId: String,
                                val icon: Icon?,
                                val longPresentation: String,
                                val tooltip: String,
-                               val extraActions: List<CodeVisionEntryExtraActionModel>)
+                               val extraActions: List<CodeVisionEntryExtraActionModel>) : UserDataHolderBase()

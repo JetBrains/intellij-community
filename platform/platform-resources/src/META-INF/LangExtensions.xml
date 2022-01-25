@@ -787,6 +787,7 @@
     <!-- Code Lens -->
     <codeVisionPainterProvider forClass="com.intellij.codeInsight.codeVision.ui.model.CounterCodeVisionEntry" implementationClass="com.intellij.codeInsight.codeVision.ui.renderers.providers.CounterCodeVisionEntryPainter"/>
     <codeVisionPainterProvider forClass="com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry" implementationClass="com.intellij.codeInsight.codeVision.ui.renderers.providers.TextCodeVisionEntryPainter"/>
+    <codeVisionPainterProvider forClass="com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry" implementationClass="com.intellij.codeInsight.codeVision.ui.renderers.providers.TextCodeVisionEntryPainter"/>
     <codeVisionPainterProvider forClass="com.intellij.codeInsight.codeVision.ui.model.AdditionalCodeVisionEntry" implementationClass="com.intellij.codeInsight.codeVision.ui.renderers.providers.AdditionalCodeVisionEntryPainter"/>
 
     <!-- Colors & Fonts-->

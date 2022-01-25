@@ -5,7 +5,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
 import com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
-import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
+import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
@@ -25,7 +25,13 @@ class JavaInheritorsCodeVisionProvider : JavaCodeVisionProviderBase() {
         val isInterface: Boolean = element.isInterface
         val hint = if (isInterface) JavaBundle.message("code.vision.implementations.hint", inheritors)
         else JavaBundle.message("code.vision.inheritors.hint", inheritors)
-        lenses.add(Pair(element.textRange, TextCodeVisionEntry(hint, id, null, hint, "", emptyList())))
+        lenses.add(
+          Pair(element.textRange, ClickableTextCodeVisionEntry(hint, id, onClick = { mouseEvent ->
+            val navigationHandler = MarkerType.SUBCLASSED_CLASS.navigationHandler
+            JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(element.getProject(),
+                                                                             JavaCodeVisionUsageCollector.CLASS_LOCATION)
+            navigationHandler.navigate(mouseEvent, element.nameIdentifier)
+          })))
       }
       if (element is PsiMethod) {
         val overrides = JavaTelescope.collectOverridingMethods(element)
@@ -34,16 +40,19 @@ class JavaInheritorsCodeVisionProvider : JavaCodeVisionProviderBase() {
           val hint = if (isAbstractMethod) JavaBundle.message("code.vision.implementations.hint", overrides)
           else JavaBundle.message("code.vision.overrides.hint", overrides)
 
-          lenses.add(Pair(element.textRange, TextCodeVisionEntry(hint, id, null, hint, "", emptyList())))
+          lenses.add(
+            Pair(element.textRange, ClickableTextCodeVisionEntry(hint, id, onClick = { mouseEvent ->
+              JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(element.getProject(),
+                                                                               JavaCodeVisionUsageCollector.METHOD_LOCATION)
+              val navigationHandler = MarkerType.OVERRIDDEN_METHOD.navigationHandler
+              navigationHandler.navigate(mouseEvent, element.nameIdentifier)
+            })))
         }
       }
     }
     return lenses
   }
 
-  override fun handleClick(editor: Editor, textRange: TextRange) {
-
-  }
 
   override val name: String
     get() = JavaBundle.message("settings.inlay.java.inheritors")

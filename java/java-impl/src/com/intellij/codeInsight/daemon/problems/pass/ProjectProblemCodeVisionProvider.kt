@@ -55,9 +55,6 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
     return lenses
   }
 
-  override fun handleClick(editor: Editor, textRange: TextRange) {
-    TODO("Not yet implemented")
-  }
 
   override val name: String
     get() = "Related problems"

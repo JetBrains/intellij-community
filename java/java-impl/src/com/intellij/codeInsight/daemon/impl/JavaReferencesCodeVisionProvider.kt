@@ -5,7 +5,8 @@ import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
 import com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
-import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
+import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
@@ -13,6 +14,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.SyntaxTraverser
+import com.intellij.ui.awt.RelativePoint
 
 class JavaReferencesCodeVisionProvider : JavaCodeVisionProviderBase() {
 
@@ -23,14 +25,14 @@ class JavaReferencesCodeVisionProvider : JavaCodeVisionProviderBase() {
       if (element !is PsiMember || element is PsiTypeParameter) continue
       val hint = JavaTelescope.usagesHint(element, psiFile)
       if (hint == null) continue
-      lenses.add(Pair(element.textRange, TextCodeVisionEntry(hint, id, null, hint, "", emptyList())))
+      lenses.add(Pair(element.textRange, ClickableTextCodeVisionEntry(hint, id, {
+        JavaCodeVisionUsageCollector.USAGES_CLICKED_EVENT_ID.log(element.project)
+        GotoDeclarationAction.startFindUsages(editor, element.project, element, if (it == null) null else RelativePoint(it))
+      })))
     }
     return lenses
   }
 
-  override fun handleClick(editor: Editor, textRange: TextRange) {
-
-  }
 
   override val name: String
     get() = JavaBundle.message("settings.inlay.java.usages")

@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.codeVision.ui.model
 
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
+import com.intellij.codeInsight.codeVision.codeVisionEntryMouseEventKey
 import com.intellij.codeInsight.codeVision.ui.*
 import com.intellij.codeInsight.codeVision.ui.renderers.ICodeVisionRenderer
 import com.intellij.codeInsight.codeVision.ui.renderers.painters.CodeVisionTheme
@@ -111,6 +112,7 @@ class CodeVisionSelectionController private constructor(val lifetime: Lifetime,
 
     val rangeLensesModel = hovered.value?.getUserData(CodeVisionListData.KEY)?.rangeCodeVisionModel ?: return
 
+    entry.putUserData(codeVisionEntryMouseEventKey, mouseEvent)
     if (SwingUtilities.isLeftMouseButton(mouseEvent)) {
       rangeLensesModel.handleLensClick(entry)
     }

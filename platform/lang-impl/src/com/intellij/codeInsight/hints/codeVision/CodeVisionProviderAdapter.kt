@@ -36,8 +36,8 @@ class CodeVisionProviderAdapter(private val delegate: DaemonBoundCodeVisionProvi
     return lenses
   }
 
-  override fun handleClick(editor: Editor, textRange: TextRange) {
-    delegate.handleClick(editor, textRange)
+  override fun handleClick(editor: Editor, textRange: TextRange, entry: CodeVisionEntry) {
+    delegate.handleClick(editor, textRange, entry)
   }
 
   override val name: String

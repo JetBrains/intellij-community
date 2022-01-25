@@ -124,7 +124,7 @@ open class CodeVisionHost(val project: Project) {
     }
     val frontendProvider = providers.firstOrNull { it.id == entry.providerId }
     if (frontendProvider != null) {
-      frontendProvider.handleClick(editor, range)
+      frontendProvider.handleClick(editor, range, entry)
       return
     }
 
@@ -138,7 +138,7 @@ open class CodeVisionHost(val project: Project) {
       return
     }
 
-    logger.trace { "No frontend or backend provider found with id ${entry.providerId}" }
+    logger.trace { "No provider found with id ${entry.providerId}" }
   }
 
   protected fun CodeVisionAnchorKind?.nullIfDefault(): CodeVisionAnchorKind? = if (this === CodeVisionAnchorKind.Default) null else this
