@@ -122,7 +122,7 @@ class XDebugTabLayoutSettings(
       onThreadsSettingsChanged()
     }
 
-    override fun getDisplayName(): String = XDebuggerBundle.message("debugger.session.tab.threads.title")
+    override fun getDisplayName(): String = XDebuggerBundle.message("xdebugger.threads.tab.layout.settings.title")
   }
 
   inner class XDebugVariablesLayoutSettings(
