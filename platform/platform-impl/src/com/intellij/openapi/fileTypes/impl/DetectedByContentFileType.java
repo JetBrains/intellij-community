@@ -53,8 +53,8 @@ public final class DetectedByContentFileType implements FileType {
   }
 
   static boolean isMyFileType(@NotNull VirtualFile file) {
-    return FileTypeDetectionService.isDetectable(file)
-           && !(file instanceof StubVirtualFile)
+    return !(file instanceof StubVirtualFile)
+           && FileTypeDetectionService.isDetectable(file)
            && file.getLength() == 0
            && FileTypeManager.getInstance().getFileTypeByFileName(file.getNameSequence()) == UnknownFileType.INSTANCE;
   }
