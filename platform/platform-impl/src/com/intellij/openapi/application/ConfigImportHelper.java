@@ -186,10 +186,6 @@ public final class ConfigImportHelper {
 
         ConfigImportOptions configImportOptions = new ConfigImportOptions(log);
         if (!guessedOldConfigDirs.fromSameProduct) {
-          // do not import plugins from other products even if configs are imported unless it's explicitly allowed
-          if (settings == null || !settings.shouldImportPluginsFromOtherIde()) {
-            configImportOptions.importPlugins = false;
-          }
           configImportOptions.importSettings = settings;
           importScenarioStatistics = IMPORTED_FROM_OTHER_PRODUCT;
         }
@@ -727,7 +723,6 @@ public final class ConfigImportHelper {
   static class ConfigImportOptions {
     final Logger log;
     boolean headless;
-    boolean importPlugins = true;
     @Nullable ConfigImportSettings importSettings;
     BuildNumber compatibleBuildNumber = null;
     MarketplacePluginDownloadService downloadService = null;
@@ -773,10 +768,7 @@ public final class ConfigImportHelper {
     List<ActionCommand> actionCommands = loadStartupActionScript(oldConfigDir, oldIdeHome, oldPluginsDir);
 
     // copying plugins, unless the target directory is not empty (the plugin manager will sort out incompatible ones)
-    if (!options.importPlugins) {
-      log.info("plugins are not imported.");
-    }
-    else if (!isEmptyDirectory(newPluginsDir)) {
+    if (!isEmptyDirectory(newPluginsDir)) {
       log.info("non-empty plugins directory: " + newPluginsDir);
     }
     else {

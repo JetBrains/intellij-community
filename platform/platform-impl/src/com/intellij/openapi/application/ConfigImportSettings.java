@@ -33,10 +33,6 @@ public interface ConfigImportSettings {
     return true;
   }
 
-  default boolean shouldImportPluginsFromOtherIde() {
-    return false;
-  }
-
   /**
    * Allows to edit lists of plugins that are about to be migrated or downloaded during import
    */
