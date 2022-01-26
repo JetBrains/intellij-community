@@ -11,7 +11,7 @@ data class JsonProjectIndexingHistoryTimes(
   val wasFullIndexing: Boolean = false,
   val totalUpdatingTime: JsonDuration = JsonDuration(),
   val indexingTime: JsonDuration = JsonDuration(),
-  val contentLoadingTime: JsonDuration = JsonDuration(),
+  val contentLoadingVisibleTime: JsonDuration = JsonDuration(),
   val creatingIteratorsTime: JsonDuration = JsonDuration(),
   val scanFilesTime: JsonDuration = JsonDuration(),
   val pushPropertiesTime: JsonDuration = JsonDuration(),

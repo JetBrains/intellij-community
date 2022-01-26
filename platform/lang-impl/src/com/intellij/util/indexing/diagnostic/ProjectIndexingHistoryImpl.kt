@@ -42,6 +42,8 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
 
   override val totalStatsPerIndexer = hashMapOf<String /* Index ID */, StatsPerIndexerImpl>()
 
+  override var visibleTimeToAllThreadsTimeRatio: Double = 0.0
+
   private val events = mutableListOf<Event>()
 
   fun addScanningStatistics(statistics: ScanningStatistics) {
@@ -50,7 +52,7 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
 
   fun addProviderStatistics(statistics: IndexingFileSetStatistics) {
     // Convert to Json to release memory occupied by statistic values.
-    providerStatistics += statistics.toJsonStatistics()
+    providerStatistics += statistics.toJsonStatistics(visibleTimeToAllThreadsTimeRatio)
 
     for ((fileType, fileTypeStats) in statistics.statsPerFileType) {
       val totalStats = totalStatsPerFileType.getOrPut(fileType) {
@@ -327,7 +329,7 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
     override var totalUpdatingTime: TimeNano,
     override var updatingEnd: ZonedDateTime = updatingStart,
     override var indexingDuration: Duration = Duration.ZERO,
-    override var contentLoadingDuration: Duration = Duration.ZERO,
+    override var contentLoadingVisibleDuration: Duration = Duration.ZERO,
     override var pushPropertiesDuration: Duration = Duration.ZERO,
     override var indexExtensionsDuration: Duration = Duration.ZERO,
     override var creatingIteratorsDuration: Duration = Duration.ZERO,

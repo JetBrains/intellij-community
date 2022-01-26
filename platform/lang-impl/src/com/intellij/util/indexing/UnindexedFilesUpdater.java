@@ -336,7 +336,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       try {
         IndexUpdateRunner.IndexingInterruptedException exception = null;
         try {
-          indexUpdateRunner.indexFiles(myProject, fileSets, subTaskIndicator);
+          indexUpdateRunner.indexFiles(myProject, fileSets, subTaskIndicator, projectIndexingHistory);
         }
         catch (IndexUpdateRunner.IndexingInterruptedException e) {
           exception = e;

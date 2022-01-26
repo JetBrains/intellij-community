@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics;
+import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
 import com.intellij.util.progress.SubTaskProgressIndicator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -102,7 +103,8 @@ public final class IndexUpdateRunner {
 
   public void indexFiles(@NotNull Project project,
                          @NotNull List<FileSet> fileSets,
-                         @NotNull ProgressIndicator indicator) throws IndexingInterruptedException {
+                         @NotNull ProgressIndicator indicator,
+                         @NotNull ProjectIndexingHistoryImpl projectIndexingHistory) throws IndexingInterruptedException {
     long startTime = System.nanoTime();
     try {
       doIndexFiles(project, fileSets, indicator);
@@ -112,12 +114,9 @@ public final class IndexUpdateRunner {
     }
     finally {
       long visibleIndexingTime = System.nanoTime() - startTime;
-      long totalProcessingTimeInAllThreads = fileSets.stream().mapToLong(b -> b.statistics.getProcessingTimeInAllThreads()).sum();
-      fileSets.forEach(b -> {
-        long weightedVisibleTime = totalProcessingTimeInAllThreads == 0
-                                   ? 0 : (long)(visibleIndexingTime * ((double) b.statistics.getProcessingTimeInAllThreads() / totalProcessingTimeInAllThreads));
-        b.statistics.setIndexingVisibleTime(weightedVisibleTime);
-      });
+      long totalProcessingTimeInAllThreads = fileSets.stream().mapToLong(b -> b.statistics.getIndexingTimeInAllThreads()).sum();
+      projectIndexingHistory.setVisibleTimeToAllThreadsTimeRatio(totalProcessingTimeInAllThreads == 0
+                                                                 ? 0 : ((double)visibleIndexingTime) / totalProcessingTimeInAllThreads);
     }
   }
 
