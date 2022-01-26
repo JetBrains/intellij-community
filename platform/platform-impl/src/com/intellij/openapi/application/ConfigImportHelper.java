@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.configurationStore.StoreUtilKt;
@@ -472,7 +472,7 @@ public final class ConfigImportHelper {
         for (Path path : stream) {
           if (!path.equals(newConfigDir) && Files.isDirectory(path)) {
             String name = path.getFileName().toString();
-            if (nameMatchesPrefix(name, prefix, dotted)) {
+            if (nameMatchesPrefixStrictly(name, prefix, dotted)) {
               if (settings != null &&
                   settings.shouldNotBeSeenAsImportCandidate(path, getPrefixFromSelector(getNameWithVersion(path)), productPrefixOtherIde)) {
                 continue;
@@ -480,7 +480,7 @@ public final class ConfigImportHelper {
               exactCandidates.add(path);
             }
             else if (exactCandidates.isEmpty() && productPrefixOtherIde != null) {
-              if (nameMatchesPrefix(name, productPrefixOtherIde, dotted)) {
+              if (nameMatchesPrefixStrictly(name, productPrefixOtherIde, dotted)) {
                 if (settings != null &&
                     settings.shouldNotBeSeenAsImportCandidate(path, getPrefixFromSelector(getNameWithVersion(path)), productPrefixOtherIde)) {
                   continue;
@@ -538,8 +538,9 @@ public final class ConfigImportHelper {
     return new ConfigDirsSearchResult(lastModified, exact);
   }
 
-  private static boolean nameMatchesPrefix(String name, String prefix, boolean dotted) {
-    return StringUtilRt.startsWithIgnoreCase(name, dotted ? '.' + prefix : prefix);
+  private static boolean nameMatchesPrefixStrictly(String name, String prefix, boolean dotted) {
+    String strictPrefix = dotted ? '.' + prefix : prefix;
+    return !name.equals(strictPrefix) && StringUtilRt.startsWithIgnoreCase(name, strictPrefix);
   }
 
   private static String getNameWithVersion(Path configDir) {
