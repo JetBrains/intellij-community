@@ -2,7 +2,6 @@ package com.intellij.settingsSync.plugins
 
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginStateListener
 import com.intellij.ide.plugins.PluginStateManager
 import com.intellij.openapi.Disposable
@@ -12,6 +11,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.settingsSync.SettingsSyncSettings
 import com.intellij.settingsSync.config.BUNDLED_PLUGINS_ID
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager.Companion.FILE_SPEC
+import org.jetbrains.annotations.TestOnly
 
 @State(name = "SettingsSyncPlugins", storages = [Storage(FILE_SPEC)])
 class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginManager.SyncPluginsState>, Disposable {
@@ -54,6 +54,11 @@ class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginMan
     this.state = state
   }
 
+  @TestOnly
+  fun clearState() {
+    state.plugins.clear()
+  }
+
   class SyncPluginsState : BaseState() {
     var plugins by map<String, PluginData>()
   }
@@ -66,7 +71,7 @@ class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginMan
 
   private fun updateStateFromIde() {
     if (noUpdateFromIde) return
-    PluginManagerCore.getPlugins().forEach {
+    PluginManagerProxy.getInstance().getPlugins().forEach {
       val idString = it.pluginId.idString
       if (shouldSaveState(it)) {
         var pluginData = state.plugins[idString]
@@ -92,17 +97,18 @@ class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginMan
   }
 
   fun pushChangesToIDE() {
-    val installer = SettingsSyncPluginInstaller()
+    val pluginManagerProxy = PluginManagerProxy.getInstance()
+    val installer = pluginManagerProxy.createInstaller()
     this.state.plugins.forEach { mapEntry ->
       val plugin = findPlugin(mapEntry.key)
       if (plugin != null) {
         if (isPluginSyncEnabled(plugin.pluginId.idString, plugin.isBundled, SettingsSyncPluginCategoryFinder.getPluginCategory(plugin))) {
           if (mapEntry.value.isEnabled != plugin.isEnabled) {
             if (mapEntry.value.isEnabled) {
-              PluginManagerCore.enablePlugin(plugin.pluginId)
+              pluginManagerProxy.enablePlugin(plugin.pluginId)
             }
             else {
-              PluginManagerCore.disablePlugin(plugin.pluginId)
+              pluginManagerProxy.disablePlugin(plugin.pluginId)
             }
           }
         }
@@ -116,11 +122,11 @@ class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginMan
         }
       }
     }
-    installer.installUnderProgress()
+    installer.startInstallation()
   }
 
   private fun findPlugin(idString: String): IdeaPluginDescriptor? {
-    return PluginId.findId(idString)?.let { PluginManagerCore.findPlugin(it) }
+    return PluginId.findId(idString)?.let { PluginManagerProxy.getInstance().findPlugin(it) }
   }
 
   private fun checkDependencies(pluginState: PluginData): Boolean {

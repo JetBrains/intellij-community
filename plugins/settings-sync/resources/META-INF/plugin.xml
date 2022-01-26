@@ -23,6 +23,8 @@
                              groupWeight="5"/>
     <applicationService serviceImplementation="com.intellij.settingsSync.auth.SettingsSyncAuthService"/>
     <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncFacade"/>
+    <applicationService serviceInterface="com.intellij.settingsSync.plugins.PluginManagerProxy"
+                        serviceImplementation="com.intellij.settingsSync.plugins.CorePluginManagerProxy"/>
     <notificationGroup displayType="STICKY_BALLOON" id="settingsSync.errors"
                        bundle="messages.SettingsSyncBundle" key="settingsSync.errors.notificationGroup"/>
 
