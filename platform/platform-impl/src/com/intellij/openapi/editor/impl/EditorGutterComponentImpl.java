@@ -7,6 +7,7 @@ import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.hint.TooltipRenderer;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
@@ -1522,7 +1523,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (ExperimentalUI.isNewEditorTabs()) {
       if (height > 0) {
         myAlphaContext.paintWithComposite(g, () -> {
-          Icon icon = scaleIcon(UIUtil.getTreeExpandedIcon());
+          Icon icon = scaleIcon(IconLoader.getIcon("expui/gutter/fold.svg", AllIcons.class));
           icon.paintIcon(this, g, (int)dxPoints[0], getFoldingIconY(visualLine, icon));
         });
       }
@@ -1559,7 +1560,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
                                                 EnumSet.of(LinePainter2D.Align.CENTER_X, LinePainter2D.Align.CENTER_Y),
                                                 centerX, centerY, width, width, StrokeType.CENTERED, sw);
     if (ExperimentalUI.isNewEditorTabs()) {
-      Icon icon = scaleIcon(UIUtil.getTreeCollapsedIcon());
+      Icon icon = scaleIcon(IconLoader.getIcon("/expui/gutter/unfold.svg", AllIcons.class));
       icon.paintIcon(this, g, (int)rect.getX(), getFoldingIconY(visualLine, icon));
       return;
     }
