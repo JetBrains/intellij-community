@@ -1,12 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl;
 
-import com.intellij.openapi.extensions.*
-import com.intellij.util.XmlElement
-import com.intellij.util.xmlb.XmlSerializer
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
-import java.util.*
+import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
+import com.intellij.openapi.extensions.LoadingOrder;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.util.XmlElement;
+import com.intellij.util.xmlb.XmlSerializer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 class XmlExtensionAdapter extends ExtensionComponentAdapter {
   private @Nullable XmlElement extensionElement;
@@ -96,9 +102,11 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
   static final class SimpleConstructorInjectionAdapter extends XmlExtensionAdapter {
     SimpleConstructorInjectionAdapter(@NotNull String implementationClassName,
                                       @NotNull PluginDescriptor pluginDescriptor,
-                                      @NotNull ExtensionDescriptor descriptor,
+                                      @Nullable String orderId,
+                                      @NotNull LoadingOrder order,
+                                      @Nullable XmlElement extensionElement,
                                       @NotNull ImplementationClassResolver implementationClassResolver) {
-      super(implementationClassName, pluginDescriptor, descriptor.orderId, descriptor.order, descriptor.element, implementationClassResolver);
+      super(implementationClassName, pluginDescriptor, orderId, order, extensionElement, implementationClassResolver);
     }
 
     @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("XmlReader")
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplacePutWithAssignment", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
@@ -352,8 +352,6 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
     var qualifiedExtensionPointName: String? = null
     var order = LoadingOrder.ANY
     var orderId: String? = null
-
-    var hasExtraAttributes = false
     for (i in 0 until reader.attributeCount) {
       when (reader.getAttributeLocalName(i)) {
         "implementation" -> implementation = reader.getAttributeValue(i)
@@ -365,7 +363,6 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
         "id" -> orderId = getNullifiedAttributeValue(reader, i)
         "order" -> order = readOrder(reader.getAttributeValue(i))
         "point" -> qualifiedExtensionPointName = getNullifiedAttributeValue(reader, i)
-        else -> hasExtraAttributes = true
       }
     }
 
@@ -397,7 +394,7 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
           descriptor.epNameToExtensions = map
         }
 
-        val extensionDescriptor = ExtensionDescriptor(implementation, os, orderId, order, element, hasExtraAttributes)
+        val extensionDescriptor = ExtensionDescriptor(implementation, os, orderId, order, element)
 
         val list = map.get(qualifiedExtensionPointName)
         if (list == null) {
