@@ -941,7 +941,7 @@ public final class IconUtil {
           Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(), image.getHeight());
           float s = JBUIScale.sysScale();
           newG.scale(1.0 / s, 1.0 / s);
-          newG.drawImage(image, (int)(x / s), (int)(y / s), null);
+          newG.drawImage(image, 0, 0, null);
           newG.scale(1.0, 1.0);
           newG.dispose();
         }
