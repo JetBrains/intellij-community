@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ift
 
 import com.intellij.openapi.diagnostic.logger
@@ -34,7 +34,7 @@ class GitLearningCourse : LearningCourse {
     override val sanitizedName: String = ""
 
     override fun preferredLearnWindowAnchor(project: Project): ToolWindowAnchor {
-      val toolWindowLayout = ToolWindowManagerEx.getInstanceEx(project).getLayout()
+      val toolWindowLayout = ToolWindowManagerEx.getInstanceEx(project).layout
       val commitWindowInfo = toolWindowLayout.getInfo(ToolWindowId.COMMIT)
       val vcsWindowInfo = toolWindowLayout.getInfo(ToolWindowId.VCS)
       return if (commitWindowInfo != null && vcsWindowInfo != null) {

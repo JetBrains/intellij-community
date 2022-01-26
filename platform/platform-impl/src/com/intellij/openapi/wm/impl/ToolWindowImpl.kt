@@ -265,7 +265,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   override fun hide(runnable: Runnable?) {
-    toolWindowManager.hideToolWindow(id, hideSide = false, moveFocus = true)
+    EDT.assertIsEdt()
+    toolWindowManager.hideToolWindow(id, false)
     callLater(runnable)
   }
 

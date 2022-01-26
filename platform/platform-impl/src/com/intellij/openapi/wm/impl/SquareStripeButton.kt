@@ -107,7 +107,7 @@ internal class SquareStripeButton(val project: Project, val button: StripeButton
 
   private fun showPopup(component: Component?, x: Int, y: Int) {
     val popupMenu = ActionManager.getInstance()
-      .createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, createPopupGroup(project, button.toolWindow.toolWindowManager.toolWindowPane!!, button.toolWindow))
+      .createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, createPopupGroup(project, button.pane, button.toolWindow))
     popupMenu.component.show(component, x, y)
   }
 }

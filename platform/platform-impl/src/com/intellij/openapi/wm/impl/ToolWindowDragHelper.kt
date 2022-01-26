@@ -32,7 +32,7 @@ import javax.swing.SwingUtilities
 
 fun Dimension.isNotEmpty():Boolean = width > 0 && height > 0
 
-internal fun Component.createDragImage(): BufferedImage? {
+fun Component.createDragImage(): BufferedImage? {
   val initialBounds = bounds
   return try {
     if (initialBounds.isEmpty) {
