@@ -10,7 +10,7 @@ import java.awt.Graphics
 import java.awt.Point
 import java.awt.Rectangle
 
-abstract class CodeVisionListRenderer(theme: CodeVisionTheme? = null) : ICodeVisionRenderer {
+abstract class CodeVisionListRenderer(theme: CodeVisionTheme? = null) : CodeVisionRenderer {
   protected val painter = CodeVisionListPainter(theme = theme)
 
   override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {

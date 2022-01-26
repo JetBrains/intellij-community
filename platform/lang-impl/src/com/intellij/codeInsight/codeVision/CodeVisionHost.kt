@@ -11,6 +11,7 @@ import com.intellij.codeInsight.codeVision.ui.CodeVisionView
 import com.intellij.codeInsight.hints.settings.InlaySettingsConfigurable
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -32,6 +33,7 @@ import com.jetbrains.rd.util.lifetime.SequentialLifetimes
 import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.reactive.whenTrue
 import com.jetbrains.rd.util.trace
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CompletableFuture
 
 open class CodeVisionHost(val project: Project) {
@@ -79,19 +81,23 @@ open class CodeVisionHost(val project: Project) {
 
       rearrangeProviders()
 
-      project.messageBus.connect(enableCodeVisionLifetime.createNestedDisposable()).subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener{
-        private fun recollectAndRearrangeProviders(){
-          providers = CodeVisionProviderFactory.createAllProviders(project)
-          rearrangeProviders()
-        }
-        override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-          recollectAndRearrangeProviders()
-        }
+      project.messageBus.connect(enableCodeVisionLifetime.createNestedDisposable()).subscribe(DynamicPluginListener.TOPIC,
+                                                                                              object : DynamicPluginListener {
+                                                                                                private fun recollectAndRearrangeProviders() {
+                                                                                                  providers = CodeVisionProviderFactory.createAllProviders(
+                                                                                                    project)
+                                                                                                  rearrangeProviders()
+                                                                                                }
 
-        override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-          recollectAndRearrangeProviders()
-        }
-      })
+                                                                                                override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+                                                                                                  recollectAndRearrangeProviders()
+                                                                                                }
+
+                                                                                                override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor,
+                                                                                                                            isUpdate: Boolean) {
+                                                                                                  recollectAndRearrangeProviders()
+                                                                                                }
+                                                                                              })
     }
   }
 
@@ -241,12 +247,13 @@ open class CodeVisionHost(val project: Project) {
   private fun calculateFrontendLenses(calcLifetime: Lifetime,
                                       editor: Editor,
                                       singleLensProvider: String? = null,
+                                      inTestSyncMode: Boolean = false,
                                       consumer: (List<Pair<TextRange, CodeVisionEntry>>) -> Unit) {
     val precalculatedUiThings = providers.associate {
       if (singleLensProvider != null && singleLensProvider != it.groupId) return@associate it.id to null
       it.groupId to it.precomputeOnUiThread(editor)
     }
-    executeOnPooledThread(calcLifetime) {
+    executeOnPooledThread(calcLifetime, inTestSyncMode) {
       ProgressManager.checkCanceled()
       val results = mutableListOf<Pair<TextRange, CodeVisionEntry>>()
       providers.forEach {
@@ -258,28 +265,46 @@ open class CodeVisionHost(val project: Project) {
         if (lifeSettingModel.disabledCodeVisionProviderIds.contains(it.groupId)) return@forEach
         val result = it.computeForEditor(editor, precalculatedUiThings[it.groupId])
         results.addAll(result)
-
       }
-      application.invokeLater {
-        calcLifetime.executeIfAlive { consumer(results) }
+
+      if (!inTestSyncMode) {
+        application.invokeLater {
+          calcLifetime.executeIfAlive { consumer(results) }
+        }
+      }
+      else {
+        consumer(results)
       }
     }
   }
 
-  private fun executeOnPooledThread(lifetime: Lifetime, runnable: () -> Unit): ProgressIndicator {
+  private fun executeOnPooledThread(lifetime: Lifetime, inTestSyncMode: Boolean, runnable: () -> Unit): ProgressIndicator {
     val indicator = EmptyProgressIndicator()
     indicator.start()
 
-    CompletableFuture.runAsync(
-      { ProgressManager.getInstance().runProcess(runnable, indicator) },
-      AppExecutorUtil.getAppExecutorService()
-    )
+    if (!inTestSyncMode) {
+      CompletableFuture.runAsync(
+        { ProgressManager.getInstance().runProcess(runnable, indicator) },
+        AppExecutorUtil.getAppExecutorService()
+      )
 
-    lifetime.onTermination {
-      if (indicator.isRunning) indicator.cancel()
+      lifetime.onTermination {
+        if (indicator.isRunning) indicator.cancel()
+      }
+    }
+    else {
+      runnable()
     }
 
     return indicator
+  }
+
+
+  @TestOnly
+  fun calculateCodeVisionSync(editor: Editor, testRootDisposable: Disposable) {
+    calculateFrontendLenses(testRootDisposable.createLifetime(), editor, singleLensProvider = null, inTestSyncMode = true) {
+      editor.lensContextOrThrow.setResults(it)
+    }
   }
 
 }

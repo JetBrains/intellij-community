@@ -6,7 +6,7 @@ import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.*
 import com.intellij.codeInsight.codeVision.ui.popup.CodeVisionPopup
 import com.intellij.codeInsight.codeVision.ui.renderers.BlockCodeVisionListRenderer
-import com.intellij.codeInsight.codeVision.ui.renderers.ICodeVisionRenderer
+import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionRenderer
 import com.intellij.codeInsight.codeVision.ui.renderers.InlineCodeVisionListRenderer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
@@ -166,7 +166,7 @@ class CodeVisionView(val project: Project) {
   }
 
   private fun addCodeLenses(
-    inlay: Inlay<out ICodeVisionRenderer>,
+    inlay: Inlay<out CodeVisionRenderer>,
     rangeCodeVisionModel: RangeCodeVisionModel,
     list: List<CodeVisionEntry>,
     anchor: CodeVisionAnchorKind,

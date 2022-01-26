@@ -4,7 +4,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
 import com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel
 import com.intellij.codeInsight.codeVision.ui.popup.layouter.*
-import com.intellij.codeInsight.codeVision.ui.renderers.ICodeVisionRenderer
+import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionRenderer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.project.Project
@@ -141,7 +141,7 @@ class CodeVisionPopup {
       val inlayXY = inlay.bounds ?: return null
       val editor = inlay.editor
 
-      val renderer = inlay.renderer as ICodeVisionRenderer
+      val renderer = inlay.renderer as CodeVisionRenderer
       val entryBounds = renderer.entryBounds(inlay, entry) ?: return null
 
       val offsetXY = editor.offsetToXY(inlay.offset)

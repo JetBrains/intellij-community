@@ -3,7 +3,7 @@ package com.intellij.codeInsight.codeVision.ui.model
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.codeVisionEntryMouseEventKey
 import com.intellij.codeInsight.codeVision.ui.*
-import com.intellij.codeInsight.codeVision.ui.renderers.ICodeVisionRenderer
+import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionRenderer
 import com.intellij.codeInsight.codeVision.ui.renderers.painters.CodeVisionTheme
 import com.intellij.ide.IdeTooltip
 import com.intellij.ide.IdeTooltipManager
@@ -141,7 +141,7 @@ class CodeVisionSelectionController private constructor(val lifetime: Lifetime,
     val inlay = hovered.value ?: return
     val inlayBounds = inlay.bounds ?: return
 
-    val renderer = inlay.renderer as ICodeVisionRenderer
+    val renderer = inlay.renderer as CodeVisionRenderer
     val entryBounds = renderer.entryBounds(inlay, entry) ?: return
 
     val x = inlayBounds.x + entryBounds.x + (entryBounds.width / 2)
@@ -172,7 +172,7 @@ class CodeVisionSelectionController private constructor(val lifetime: Lifetime,
   }
 
   private fun updateHovered(hoveredInlay: Inlay<EditorCustomElementRenderer>?, mouseOnInlay: Point?): CodeVisionEntry? {
-    if (mouseOnInlay == null || hoveredInlay == null || hoveredInlay.renderer !is ICodeVisionRenderer) {
+    if (mouseOnInlay == null || hoveredInlay == null || hoveredInlay.renderer !is CodeVisionRenderer) {
       clearHovered()
       return null
     }
@@ -183,7 +183,7 @@ class CodeVisionSelectionController private constructor(val lifetime: Lifetime,
     }
 
     if (CodeVisionTheme.yInInlayBounds(mouseOnInlay.y, bounds)) {
-      val renderer = hoveredInlay.renderer as ICodeVisionRenderer
+      val renderer = hoveredInlay.renderer as CodeVisionRenderer
       val entry = renderer.hoveredEntry(hoveredInlay, mouseOnInlay.x - bounds.x, mouseOnInlay.y - bounds.y)
 
       hovered.set(hoveredInlay)

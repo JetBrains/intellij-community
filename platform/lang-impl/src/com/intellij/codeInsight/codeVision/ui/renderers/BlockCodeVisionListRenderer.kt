@@ -8,8 +8,7 @@ import com.intellij.util.text.CharArrayUtil
 import java.awt.Point
 import java.awt.Rectangle
 
-class BlockCodeVisionListRenderer :
-  CodeVisionListRenderer() {
+class BlockCodeVisionListRenderer : CodeVisionListRenderer() {
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int {
     val userData = inlay.getUserData(CodeVisionListData.KEY)

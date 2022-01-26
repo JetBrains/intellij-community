@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import java.awt.Rectangle
 
-interface ICodeVisionRenderer : EditorCustomElementRenderer {
+interface CodeVisionRenderer : EditorCustomElementRenderer {
   fun hoveredEntry(inlay: Inlay<*>, x: Int, y: Int): CodeVisionEntry?
   fun entryBounds(inlay: Inlay<*>, element: CodeVisionEntry): Rectangle?
 }

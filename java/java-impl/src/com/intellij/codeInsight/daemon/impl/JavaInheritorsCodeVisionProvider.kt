@@ -14,6 +14,9 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
 
 class JavaInheritorsCodeVisionProvider : JavaCodeVisionProviderBase() {
+  companion object{
+    const val ID = "java.inheritors"
+  }
 
   override fun computeLenses(editor: Editor, psiFile: PsiFile): List<Pair<TextRange, CodeVisionEntry>> {
     val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
@@ -61,7 +64,7 @@ class JavaInheritorsCodeVisionProvider : JavaCodeVisionProviderBase() {
   override val defaultAnchor: CodeVisionAnchorKind
     get() = CodeVisionAnchorKind.Default
   override val id: String
-    get() = "java.inheritors"
+    get() = ID
   override val groupId: String
     get() = PlatformCodeVisionIds.INHERITORS.key
 

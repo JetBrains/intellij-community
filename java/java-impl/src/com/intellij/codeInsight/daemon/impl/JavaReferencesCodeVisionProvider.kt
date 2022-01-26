@@ -17,6 +17,9 @@ import com.intellij.psi.SyntaxTraverser
 import com.intellij.ui.awt.RelativePoint
 
 class JavaReferencesCodeVisionProvider : JavaCodeVisionProviderBase() {
+  companion object{
+    const val ID = "java.references"
+  }
 
   override fun computeLenses(editor: Editor, psiFile: PsiFile): List<Pair<TextRange, CodeVisionEntry>> {
     val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
@@ -37,11 +40,11 @@ class JavaReferencesCodeVisionProvider : JavaCodeVisionProviderBase() {
   override val name: String
     get() = JavaBundle.message("settings.inlay.java.usages")
   override val relativeOrderings: List<CodeVisionRelativeOrdering>
-    get() = emptyList()
+    get() = listOf(CodeVisionRelativeOrdering.CodeVisionRelativeOrderingBefore("java.inheritors"))
   override val defaultAnchor: CodeVisionAnchorKind
     get() = CodeVisionAnchorKind.Default
   override val id: String
-    get() = "java.references"
+    get() = ID
   override val groupId: String
     get() = PlatformCodeVisionIds.USAGES.key
 }
