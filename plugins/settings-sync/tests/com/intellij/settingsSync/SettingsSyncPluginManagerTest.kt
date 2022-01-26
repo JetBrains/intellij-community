@@ -87,7 +87,7 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
 
   fun `test install missing plugins`() {
     loadPluginManagerState(incomingPluginData)
-    SettingsSyncPluginManager.getInstance().pushChangesToIDE()
+    SettingsSyncPluginManager.getInstance().pushChangesToIde()
     val installedPluginIds = testPluginManager.installer.installedPluginIds
     // Make sure QuickJump is skipped because it is disabled
     TestCase.assertEquals(2, installedPluginIds.size)
@@ -100,7 +100,7 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.PLUGINS, false)
     try {
       loadPluginManagerState(incomingPluginData)
-      SettingsSyncPluginManager.getInstance().pushChangesToIDE()
+      SettingsSyncPluginManager.getInstance().pushChangesToIde()
       val installedPluginIds = testPluginManager.installer.installedPluginIds
       // IdeaLight is a UI plugin, it doesn't fall under PLUGINS category
       TestCase.assertEquals(1, installedPluginIds.size)
@@ -115,7 +115,7 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.UI, false)
     try {
       loadPluginManagerState(incomingPluginData)
-      SettingsSyncPluginManager.getInstance().pushChangesToIDE()
+      SettingsSyncPluginManager.getInstance().pushChangesToIde()
       val installedPluginIds = testPluginManager.installer.installedPluginIds
       // IdeaLight is a UI plugin, it doesn't fall under PLUGINS category
       TestCase.assertEquals(1, installedPluginIds.size)
@@ -135,7 +135,7 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     testPluginManager.addPluginDescriptor(descriptor)
     TestCase.assertTrue(descriptor.isEnabled)
     loadPluginManagerState(incomingPluginData)
-    SettingsSyncPluginManager.getInstance().pushChangesToIDE()
+    SettingsSyncPluginManager.getInstance().pushChangesToIde()
     TestCase.assertFalse(descriptor.isEnabled)
   }
 

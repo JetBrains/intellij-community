@@ -14,10 +14,10 @@ import com.intellij.settingsSync.plugins.SettingsSyncPluginManager.Companion.FIL
 import org.jetbrains.annotations.TestOnly
 
 @State(name = "SettingsSyncPlugins", storages = [Storage(FILE_SPEC)])
-class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginManager.SyncPluginsState>, Disposable {
+internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginManager.SyncPluginsState>, Disposable {
 
-  companion object {
-    fun getInstance() = ApplicationManager.getApplication().getService(SettingsSyncPluginManager::class.java)
+  internal companion object {
+    fun getInstance(): SettingsSyncPluginManager = ApplicationManager.getApplication().getService(SettingsSyncPluginManager::class.java)
 
     const val FILE_SPEC = "settingsSyncPlugins.xml"
   }
@@ -96,7 +96,7 @@ class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginMan
     }
   }
 
-  fun pushChangesToIDE() {
+  fun pushChangesToIde() {
     val pluginManagerProxy = PluginManagerProxy.getInstance()
     val installer = pluginManagerProxy.createInstaller()
     this.state.plugins.forEach { mapEntry ->

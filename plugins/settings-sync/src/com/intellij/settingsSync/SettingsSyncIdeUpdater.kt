@@ -48,7 +48,7 @@ internal class SettingsSyncIdeUpdater(private val componentStore: ComponentStore
       val pluginManager = SettingsSyncPluginManager.getInstance()
       pluginManager.doWithNoUpdateFromIde {
         updateSettings(listOf(pluginsFileState))
-        pluginManager.pushChangesToIDE()
+        pluginManager.pushChangesToIde()
       }
     }
 
