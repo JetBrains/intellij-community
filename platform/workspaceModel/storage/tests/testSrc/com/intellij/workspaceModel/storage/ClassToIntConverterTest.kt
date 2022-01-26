@@ -21,10 +21,12 @@ class ClassToIntConverterTest {
             val randomClass = classes.random(random)
             converter.getInt(randomClass.javaClass)
           }
+          // Make sure that every class was initialized
+          classes.forEach { converter.getInt(it.javaClass) }
         }
       }
       val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("Test executor", 4)
-      ConcurrencyUtil.invokeAll(threads, service).map { it.get() }
+      ConcurrencyUtil.invokeAll(threads, service)
 
       val res = classes.map { converter.getInt(it.javaClass) }.sorted()
       assertEquals(List(20) { it }, res)
