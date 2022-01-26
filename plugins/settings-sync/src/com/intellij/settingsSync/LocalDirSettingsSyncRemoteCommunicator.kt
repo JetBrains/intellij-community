@@ -62,7 +62,8 @@ internal fun prepareTempZipFile(snapshot: SettingsSnapshot): Path {
   Compressor.Zip(file)
     .use { zip ->
       for (fileState in snapshot.fileStates) {
-        zip.addFile(fileState.file, fileState.content)
+        val content = if (fileState is FileState.Modified) fileState.content else DELETED_FILE_MARKER.toByteArray()
+        zip.addFile(fileState.file, content)
       }
     }
   return file.toPath()
@@ -74,9 +75,7 @@ internal fun extractZipFile(zipFile: Path): SettingsSnapshot {
   val fileStates = mutableSetOf<FileState>()
   FileUtil.processFilesRecursively(tempDir, Processor {
     if (it.isFile) {
-      val name = FileUtil.getRelativePath(tempDir, it)!!
-      val content = it.readBytes()
-      fileStates.add(FileState(name, content, content.size))
+      fileStates.add(getFileStateFromFileWithDeletedMarker(it.toPath(), tempDir.toPath()))
     }
     true
   })

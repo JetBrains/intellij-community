@@ -4,7 +4,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.util.io.*
+import com.intellij.util.io.createFile
+import com.intellij.util.io.exists
+import com.intellij.util.io.isFile
+import com.intellij.util.io.write
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.MergeResult.MergeStatus.CONFLICTING
 import org.eclipse.jgit.api.MergeResult.MergeStatus.FAST_FORWARD
@@ -154,7 +157,11 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     val addCommand = git.add()
     val message = "Apply changes received from $refName"
     for (fileState in snapshot.fileStates) {
-      settingsSyncStorage.resolve(fileState.file).write(fileState.content, 0, fileState.size)
+      val file = settingsSyncStorage.resolve(fileState.file)
+      when (fileState) {
+        is FileState.Modified -> file.write(fileState.content, 0, fileState.size)
+        is FileState.Deleted -> file.write(DELETED_FILE_MARKER)
+      }
       addCommand.addFilepattern(fileState.file)
     }
     addCommand.call()
@@ -177,10 +184,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     val files = settingsSyncStorage.toFile().walkTopDown()
       .onEnter { it.name != ".git" }
       .filter { it.isFile && it.name != ".gitignore" }
-      .mapTo(HashSet()) {
-        val relative = it.toPath().relativeTo(settingsSyncStorage)
-        FileState(relative.systemIndependentPath, it.toPath().readBytes(), it.toPath().size().toInt())
-      }
+      .mapTo(HashSet()) { getFileStateFromFileWithDeletedMarker(it.toPath(), settingsSyncStorage) }
     return SettingsSnapshot(files)
   }
 

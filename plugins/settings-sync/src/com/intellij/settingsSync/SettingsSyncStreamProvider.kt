@@ -5,9 +5,11 @@ import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.*
 import java.io.InputStream
 import java.nio.file.Path
+import kotlin.io.path.pathString
 
 internal class SettingsSyncStreamProvider(private val application: Application,
                                           private val rootConfig: Path) : StreamProvider {
@@ -33,7 +35,7 @@ internal class SettingsSyncStreamProvider(private val application: Application,
       return
     }
 
-    val snapshot = SettingsSnapshot(setOf(FileState(file, content, size)))
+    val snapshot = SettingsSnapshot(setOf(FileState.Modified(file, content, size)))
     application.messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(SyncSettingsEvent.IdeChange(snapshot))
   }
 
@@ -58,9 +60,18 @@ internal class SettingsSyncStreamProvider(private val application: Application,
   }
 
   override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
-    rootConfig.resolve(getFileRelativeToRootConfig(fileSpec)).delete()
-    // todo shall we sent the message to the SETTINGS_CHANGED_TOPIC? which one?
-    return true
+    val adjustedSpec = getFileRelativeToRootConfig(fileSpec)
+    val file = rootConfig.resolve(adjustedSpec)
+    try {
+      file.delete()
+      val snapshot = SettingsSnapshot(setOf(FileState.Deleted(adjustedSpec)))
+      application.messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(SyncSettingsEvent.IdeChange(snapshot))
+      return true
+    }
+    catch (e: Exception) {
+      LOG.error("Couldn't delete ${file.pathString}", e)
+      return false
+    }
   }
 
   private fun getFileRelativeToRootConfig(fileSpecPassedToProvider: String): String {
@@ -72,5 +83,9 @@ internal class SettingsSyncStreamProvider(private val application: Application,
     else {
       fileSpecPassedToProvider
     }
+  }
+
+  private companion object {
+    val LOG = logger<SettingsSyncStreamProvider>()
   }
 }

@@ -160,6 +160,6 @@ internal class SettingsSyncBridge(application: Application,
   }
 
   companion object {
-    val LOG = logger<SettingsSyncBridge>()
+    private val LOG = logger<SettingsSyncBridge>()
   }
 }
