@@ -418,7 +418,11 @@ idea.fatal.error.notification=disabled
       span.recordException(e)
       span.setStatus(StatusCode.ERROR, e.message)
 
-      TracerManager.finish()
+      try {
+        TracerManager.finish()
+      }
+      catch (Throwable ignore) {
+      }
       throw e
     }
     finally {
