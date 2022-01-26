@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nls;
@@ -27,10 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.codeInsight.hints.InlayHintsUtilsKt.addCodeVisionElement;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -49,6 +47,7 @@ public class ProjectProblemHintProvider implements InlayHintsProvider<NoSettings
         PsiJavaFile file = tryCast(element.getContainingFile(), PsiJavaFile.class);
         if (file == null) return true;
         Project project = file.getProject();
+        reportPreviewProblem(editor, element, sink);
         FileState prevState = FileStateUpdater.getState(file);
         if (prevState == null) return false;
         Map<PsiMember, Set<Problem>> problems = ProjectProblemUtils.getReportedProblems(editor);
@@ -74,10 +73,7 @@ public class ProjectProblemHintProvider implements InlayHintsProvider<NoSettings
           if (namedElement == null) return;
           PsiElement identifier = namedElement.getNameIdentifier();
           if (identifier == null) return;
-          int offset = ProjectProblemUtils.getMemberOffset(psiMember);
-          InlayPresentation presentation = ProjectProblemUtils.getPresentation(project, editor, factory, psiMember, memberProblems);
-
-          addCodeVisionElement(sink, editor, offset, BlockInlayPriority.PROBLEMS, presentation);
+          addInlay(editor, sink, project, factory, psiMember, memberProblems);
           highlighters.add(ProjectProblemUtils.createHighlightInfo(editor, psiMember, identifier));
         });
 
@@ -131,6 +127,18 @@ public class ProjectProblemHintProvider implements InlayHintsProvider<NoSettings
         return false;
       }
     };
+  }
+
+  private static void addInlay(@NotNull Editor editor,
+                               @NotNull InlayHintsSink sink,
+                               Project project,
+                               PresentationFactory factory,
+                               PsiMember psiMember,
+                               Set<Problem> memberProblems) {
+    int offset = ProjectProblemUtils.getMemberOffset(psiMember);
+    InlayPresentation presentation = ProjectProblemUtils.getPresentation(project, editor, factory, psiMember, memberProblems);
+
+    addCodeVisionElement(sink, editor, offset, BlockInlayPriority.PROBLEMS, presentation);
   }
 
   @NotNull
@@ -197,6 +205,23 @@ public class ProjectProblemHintProvider implements InlayHintsProvider<NoSettings
   @Override
   public boolean isVisibleInSettings() {
     return true;
+  }
+
+  private static final Key<Set<Problem>> PREVIEW_PROBLEMS_KEY = Key.create("preview.problems.key");
+
+  @Override
+  public void preparePreview(@NotNull Editor editor, @NotNull PsiFile file) {
+    PsiMethod method = ((PsiJavaFile)file).getClasses()[0].getMethods()[0];
+    method.putUserData(PREVIEW_PROBLEMS_KEY, Collections.singleton(new Problem(method, method)));
+  }
+
+  private static void reportPreviewProblem(@NotNull Editor editor,
+                                           @NotNull PsiElement psiElement,
+                                           @NotNull InlayHintsSink sink) {
+    Set<Problem> problems = PREVIEW_PROBLEMS_KEY.get(psiElement);
+    if (problems != null) {
+      addInlay(editor, sink, psiElement.getProject(), new PresentationFactory((EditorImpl)editor), (PsiMember)psiElement, problems);
+    }
   }
 
   static @NotNull List<AnAction> getPopupActions() {
