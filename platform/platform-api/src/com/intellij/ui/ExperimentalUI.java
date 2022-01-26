@@ -116,10 +116,12 @@ public final class ExperimentalUI {
     paths.put("actions/previousOccurence.svg", "/expui/general/up.svg");
     paths.put("actions/nextOccurence.svg", "/expui/general/down.svg");
     paths.put("actions/refresh.svg", "/expui/general/refresh.svg");
+    paths.put("general/add.svg", "/expui/general/add.svg");
     paths.put("general/remove.svg", "/expui/general/remove.svg");
     paths.put("nodes/class.svg", "/expui/nodes/class.svg");
     paths.put("nodes/folder.svg", "/expui/nodes/folder.svg");
     paths.put("nodes/interface.svg", "/expui/nodes/interface.svg");
+    paths.put("nodes/Module.svg", "/expui/nodes/module.svg");
     paths.put("nodes/ppLib.svg", "/expui/nodes/library.svg");
     paths.put("modules/excludeRoot.svg", "/expui/nodes/excludeRoot.svg");
     paths.put("modules/sourceRoot.svg", "/expui/nodes/sourceRoot.svg");
