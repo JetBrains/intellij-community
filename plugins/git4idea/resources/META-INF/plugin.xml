@@ -405,6 +405,8 @@
       <reference id="Diff.ShowDiff"/>
       <reference ref="Diff.ShowStandaloneDiff"/>
       <reference id="Vcs.ShowDiffWithLocal"/>
+
+      <add-to-group group-id="Vcs.SavedPatches.ContextMenu"/>
     </group>
     <group id="Git.Stash.ChangesBrowser.ContextMenu">
       <reference ref="Vcs.ShowDiffWithLocal"/>
@@ -412,6 +414,8 @@
       <reference ref="Vcs.EditSource"/>
       <reference ref="Vcs.OpenRepositoryVersion"/>
       <reference ref="Vcs.ApplySelectedChanges"/>
+
+      <add-to-group group-id="Vcs.SavedPatches.ChangesBrowser.ContextMenu"/>
     </group>
 
     <group id="Git.Experimental.Branch.Popup.Actions">
@@ -674,10 +678,10 @@
     <projectService serviceImplementation="git4idea.stash.GitStashTracker"/>
     <projectService serviceImplementation="git4idea.stash.GitStashCache"/>
     <postStartupActivity implementation="git4idea.stash.ui.GitStashStartupActivity"/>
-    <diff.actions.ShowDiffAction.ExtensionProvider implementation="git4idea.stash.ui.GitShowDiffFromStashAction"/>
-    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="git4idea.stash.ui.GitShowDiffFromStashAction"/>
+    <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.savedPatches.ShowDiffForSavedPatchesAction"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.savedPatches.ShowDiffForSavedPatchesAction"/>
     <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider
-      implementation="git4idea.stash.ui.GitCompareWithLocalFromStashAction"/>
+      implementation="com.intellij.openapi.vcs.changes.savedPatches.CompareWithLocalForSavedPatchesAction"/>
 
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>

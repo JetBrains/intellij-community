@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.stash.ui
+package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
@@ -11,14 +11,13 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
-import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi.Companion.SAVED_PATCHES_UI_PLACE
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
 import com.intellij.util.Processor
 import com.intellij.util.ui.tree.TreeUtil
-import git4idea.i18n.GitBundle
-import git4idea.stash.ui.GitStashUi.Companion.GIT_STASH_UI_PLACE
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.Nls
 import java.awt.Component
@@ -27,22 +26,22 @@ import java.awt.Graphics2D
 import java.util.stream.Stream
 import javax.swing.JTree
 
-class GitStashTree(project: Project,
-                   private val savedPatchesProviders: List<SavedPatchesProvider<*>>,
-                   parentDisposable: Disposable) : ChangesTree(project, false, false) {
+class SavedPatchesTree(project: Project,
+                       private val savedPatchesProviders: List<SavedPatchesProvider<*>>,
+                       parentDisposable: Disposable) : ChangesTree(project, false, false) {
   init {
     val nodeRenderer = ChangesBrowserNodeRenderer(myProject, { isShowFlatten }, false)
     setCellRenderer(MyTreeRenderer(nodeRenderer))
 
     isKeepTreeState = true
     isScrollToSelection = false
-    setEmptyText(GitBundle.message("stash.empty.text"))
+    setEmptyText(VcsBundle.message("saved.patch.empty.text"))
 
     doubleClickHandler = Processor { e ->
       val diffAction = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON)
 
       val dataContext = DataManager.getInstance().getDataContext(this)
-      val event = AnActionEvent.createFromAnAction(diffAction, e, GIT_STASH_UI_PLACE, dataContext)
+      val event = AnActionEvent.createFromAnAction(diffAction, e, SAVED_PATCHES_UI_PLACE, dataContext)
       val isEnabled = ActionUtil.lastUpdateAndCheckDumb(diffAction, event, true)
       if (isEnabled) performActionDumbAwareWithCallbacks(diffAction, event)
 

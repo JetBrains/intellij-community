@@ -1,29 +1,24 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.stash.ui
+package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
-import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
-import com.intellij.openapi.vcs.changes.ui.ChangesTree
-import com.intellij.openapi.vcs.changes.ui.PresentableChange
-import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
-import com.intellij.vcs.log.runInEdtAsync
-import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
-import git4idea.stash.ui.GitStashUi.Companion.GIT_STASH_UI_PLACE
+import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi.Companion.SAVED_PATCHES_UI_PLACE
+import com.intellij.openapi.vcs.changes.ui.*
 import java.beans.PropertyChangeListener
 import java.util.stream.Stream
 import javax.swing.JTree
 
-class GitStashDiffPreview(project: Project,
-                          private val tree: ChangesTree,
-                          private val isInEditor: Boolean,
-                          parentDisposable: Disposable)
-  : ChangeViewDiffRequestProcessor(project, GIT_STASH_UI_PLACE) {
+class SavedPatchesDiffPreview(project: Project,
+                              private val tree: ChangesTree,
+                              private val isInEditor: Boolean,
+                              parentDisposable: Disposable)
+  : ChangeViewDiffRequestProcessor(project, SAVED_PATCHES_UI_PLACE) {
   private val disposableFlag = Disposer.newCheckedDisposable()
 
   init {
@@ -45,7 +40,9 @@ class GitStashDiffPreview(project: Project,
   }
 
   private fun updatePreviewLater(modelUpdateInProgress: Boolean) {
-    runInEdtAsync(disposableFlag) { updatePreview(component.isShowing, modelUpdateInProgress) }
+    ApplicationManager.getApplication().invokeLater({ updatePreview(component.isShowing, modelUpdateInProgress) }) {
+      disposableFlag.isDisposed
+    }
   }
 
   override fun getSelectedChanges(): Stream<Wrapper> {
@@ -57,7 +54,7 @@ class GitStashDiffPreview(project: Project,
   }
 
   override fun selectChange(change: Wrapper) {
-    VcsLogChangesBrowser.selectObjectWithTag(tree, change.userObject, change.tag)
+    ChangesBrowserBase.selectObjectWithTag(tree, change.userObject, change.tag)
   }
 
   private fun wrap(treeModelData: VcsTreeModelData): Stream<Wrapper> {

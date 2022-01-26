@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -31,7 +31,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.index.IndexedDetails;
@@ -49,7 +48,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
 import java.util.function.Consumer;
@@ -471,21 +469,6 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
       text += " " + StringUtil.shortenTextWithEllipsis(detail.getSubject(), 50, 0);
     }
     return text;
-  }
-
-  public static void selectObjectWithTag(@NotNull ChangesTree tree,
-                                         @NotNull Object userObject,
-                                         @Nullable ChangesBrowserNode.Tag tag) {
-    DefaultMutableTreeNode root = tree.getRoot();
-    if (tag != null) {
-      DefaultMutableTreeNode tagNode = TreeUtil.findNodeWithObject(root, tag);
-      if (tagNode != null) {
-        root = tagNode;
-      }
-    }
-    DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, userObject);
-    if (node == null) return;
-    TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(node), false);
   }
 
   public interface Listener extends EventListener {

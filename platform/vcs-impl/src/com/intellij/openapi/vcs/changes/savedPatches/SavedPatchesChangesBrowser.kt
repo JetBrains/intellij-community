@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.stash.ui
+package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -8,39 +8,38 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.vcs.changes.EditorTabPreview
-import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.ui.StatusText
-import git4idea.i18n.GitBundle
 import java.awt.Component
 import java.util.concurrent.CompletableFuture
 import java.util.stream.Stream
 import javax.swing.tree.DefaultTreeModel
 import kotlin.streams.toList
 
-class GitStashChangesBrowser(project: Project, private val focusMainUi: (Component?) -> Unit,
-                             parentDisposable: Disposable) : ChangesBrowserBase(project, false, false), Disposable {
+class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Component?) -> Unit,
+                                 parentDisposable: Disposable) : ChangesBrowserBase(project, false, false), Disposable {
   var changes: Collection<SavedPatchesProvider.ChangeObject> = emptyList()
     private set
 
   private var currentPatchObject: SavedPatchesProvider.PatchObject<*>? = null
   private var currentChangesFuture: CompletableFuture<SavedPatchesProvider.LoadingResult>? = null
 
-  var diffPreviewProcessor: GitStashDiffPreview? = null
+  var diffPreviewProcessor: SavedPatchesDiffPreview? = null
     private set
   var editorTabPreview: EditorTabPreview? = null
     private set
 
   init {
     init()
-    viewer.emptyText.text = GitBundle.message("stash.changes.empty")
+    viewer.emptyText.text = VcsBundle.message("saved.patch.changes.empty")
     hideViewerBorder()
 
     Disposer.register(parentDisposable, this)
@@ -53,11 +52,11 @@ class GitStashChangesBrowser(project: Project, private val focusMainUi: (Compone
     currentChangesFuture = null
 
     if (patchObject == null) {
-      setEmpty { statusText -> statusText.text = GitBundle.message("stash.changes.empty") }
+      setEmpty { statusText -> statusText.text = VcsBundle.message("saved.patch.changes.empty") }
       return
     }
 
-    setEmpty { statusText -> statusText.text = GitBundle.message("stash.changes.loading") }
+    setEmpty { statusText -> statusText.text = VcsBundle.message("saved.patch.changes.loading") }
 
     val futureChanges = patchObject.loadChanges() ?: return
     currentChangesFuture = futureChanges
@@ -77,7 +76,7 @@ class GitStashChangesBrowser(project: Project, private val focusMainUi: (Compone
   }
 
   override fun createPopupMenuActions(): List<AnAction> {
-    return super.createPopupMenuActions() + ActionManager.getInstance().getAction("Git.Stash.ChangesBrowser.ContextMenu")
+    return super.createPopupMenuActions() + ActionManager.getInstance().getAction("Vcs.SavedPatches.ChangesBrowser.ContextMenu")
   }
 
   override fun buildTreeModel(): DefaultTreeModel {
@@ -120,16 +119,16 @@ class GitStashChangesBrowser(project: Project, private val focusMainUi: (Compone
     return userObject.createDiffWithLocalRequestProducer(myProject, false)
   }
 
-  fun setDiffPreviewInEditor(isInEditor: Boolean): GitStashDiffPreview {
+  fun setDiffPreviewInEditor(isInEditor: Boolean): SavedPatchesDiffPreview {
     if (diffPreviewProcessor != null) Disposer.dispose(diffPreviewProcessor!!)
-    val newProcessor = GitStashDiffPreview(myProject, viewer, isInEditor, this)
+    val newProcessor = SavedPatchesDiffPreview(myProject, viewer, isInEditor, this)
     diffPreviewProcessor = newProcessor
 
     if (isInEditor) {
-      editorTabPreview = object : GitStashEditorDiffPreview(newProcessor, viewer, this@GitStashChangesBrowser, focusMainUi) {
+      editorTabPreview = object : SavedPatchesEditorDiffPreview(newProcessor, viewer, this@SavedPatchesChangesBrowser, focusMainUi) {
         override fun getCurrentName(): String {
-          return currentPatchObject?.getDiffPreviewTitle(changeViewProcessor.currentChangeName) ?: GitBundle.message(
-            "stash.editor.diff.preview.empty.title")
+          return currentPatchObject?.getDiffPreviewTitle(changeViewProcessor.currentChangeName) ?: VcsBundle.message(
+            "saved.patch.editor.diff.preview.empty.title")
         }
       }
     }

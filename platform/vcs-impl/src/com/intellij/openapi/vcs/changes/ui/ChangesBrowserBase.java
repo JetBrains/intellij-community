@@ -19,12 +19,14 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -322,6 +324,21 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     DiffRequestChain chain = new ChangeDiffRequestChain(producers.getList(), producers.getSelectedIndex());
     changesBrowser.updateDiffContext(chain);
     DiffManager.getInstance().showDiff(project, chain, new DiffDialogHints(null, changesBrowser));
+  }
+
+  public static void selectObjectWithTag(@NotNull ChangesTree tree,
+                                         @NotNull Object userObject,
+                                         @Nullable ChangesBrowserNode.Tag tag) {
+    DefaultMutableTreeNode root = tree.getRoot();
+    if (tag != null) {
+      DefaultMutableTreeNode tagNode = TreeUtil.findNodeWithObject(root, tag);
+      if (tagNode != null) {
+        root = tagNode;
+      }
+    }
+    DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, userObject);
+    if (node == null) return;
+    TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(node), false);
   }
 
   public static class ShowStandaloneDiff implements AnActionExtensionProvider {

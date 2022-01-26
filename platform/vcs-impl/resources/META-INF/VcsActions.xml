@@ -239,6 +239,9 @@
       <reference ref="CollapseAll"/>
     </group>
 
+    <group id="Vcs.SavedPatches.ContextMenu"/>
+    <group id="Vcs.SavedPatches.ChangesBrowser.ContextMenu"/>
+
     <!--a group for plugins to add their actions-->
     <group id="VcsHistoryActionsGroup"/>
     <group id="VcsHistoryActionsGroup.Toolbar"/>

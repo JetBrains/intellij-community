@@ -1,39 +1,38 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.stash.ui
+package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
-import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider
 import com.intellij.ui.*
 import com.intellij.util.containers.orNull
+import com.intellij.util.ui.ProportionKey
+import com.intellij.util.ui.TwoKeySplitter
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.commit.CommitActionsPanel
-import git4idea.i18n.GitBundle
-import git4idea.index.ui.ProportionKey
-import git4idea.index.ui.TwoKeySplitter
 import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.JPanel
 import javax.swing.JTree
 
-class GitStashUi(project: Project, isVertical: Boolean, isEditorDiffPreview: Boolean,
-                 focusMainUi: (Component?) -> Unit, disposable: Disposable) :
+class SavedPatchesUi(project: Project, private val providers: List<SavedPatchesProvider<*>>,
+                     isVertical: Boolean, isEditorDiffPreview: Boolean,
+                     focusMainUi: (Component?) -> Unit, disposable: Disposable) :
   JPanel(BorderLayout()), Disposable, DataProvider {
-  private val providers = listOf<SavedPatchesProvider<*>>(GitStashProvider(project))
 
-  private val tree: GitStashTree
-  internal val changesBrowser: GitStashChangesBrowser
+  private val tree: SavedPatchesTree
+  internal val changesBrowser: SavedPatchesChangesBrowser
   private val treeChangesSplitter: TwoKeySplitter
   private val treeDiffSplitter: OnePixelSplitter
 
   init {
-    tree = GitStashTree(project, providers, this)
-    PopupHandler.installPopupMenu(tree, "Git.Stash.ContextMenu", GIT_STASH_UI_PLACE)
+    tree = SavedPatchesTree(project, providers, this)
+    PopupHandler.installPopupMenu(tree, "Vcs.SavedPatches.ContextMenu", SAVED_PATCHES_UI_PLACE)
 
-    changesBrowser = GitStashChangesBrowser(project, focusMainUi, this)
+    changesBrowser = SavedPatchesChangesBrowser(project, focusMainUi, this)
     val bottomToolbar = buildBottomToolbar()
 
     tree.addSelectionListener {
@@ -46,15 +45,15 @@ class GitStashUi(project: Project, isVertical: Boolean, isEditorDiffPreview: Boo
     treePanel.add(ScrollPaneFactory.createScrollPane(tree, true), BorderLayout.CENTER)
 
     treeChangesSplitter = TwoKeySplitter(isVertical,
-                                         ProportionKey("git.stash.changes.splitter.vertical", 0.5f,
-                                                       "git.stash.changes.splitter.horizontal", 0.5f))
+                                         ProportionKey("vcs.saved.patches.changes.splitter.vertical", 0.5f,
+                                                       "vcs.saved.patches.changes.splitter.horizontal", 0.5f))
     treeChangesSplitter.firstComponent = treePanel
     treeChangesSplitter.secondComponent = BorderLayoutPanel().apply {
       addToCenter(changesBrowser)
       addToBottom(bottomToolbar.component.apply { border = IdeBorderFactory.createBorder(SideBorder.TOP) })
     }
 
-    treeDiffSplitter = OnePixelSplitter("git.stash.diff.splitter", 0.5f)
+    treeDiffSplitter = OnePixelSplitter("vcs.saved.patches.diff.splitter", 0.5f)
     treeDiffSplitter.firstComponent = treeChangesSplitter
 
     updateLayout(isVertical, isEditorDiffPreview, forceDiffPreview = true)
@@ -65,14 +64,14 @@ class GitStashUi(project: Project, isVertical: Boolean, isEditorDiffPreview: Boo
   }
 
   private fun buildBottomToolbar(): ActionToolbar {
-    val applyAction = object : JButtonActionWrapper(GitBundle.message("action.Git.Stash.Apply.text"), true) {
+    val applyAction = object : JButtonActionWrapper(VcsBundle.message("saved.patch.apply.action"), true) {
       override fun getDelegate(): AnAction {
         return selectedProvider().applyAction
       }
     }.apply {
-      registerCustomShortcutSet(CommitActionsPanel.DEFAULT_COMMIT_ACTION_SHORTCUT, this@GitStashUi, this@GitStashUi)
+      registerCustomShortcutSet(CommitActionsPanel.DEFAULT_COMMIT_ACTION_SHORTCUT, this@SavedPatchesUi, this@SavedPatchesUi)
     }
-    val popAction = object : JButtonActionWrapper(GitBundle.message("action.Git.Stash.Pop.text"), false) {
+    val popAction = object : JButtonActionWrapper(VcsBundle.message("saved.patch.pop.action"), false) {
       override fun getDelegate(): AnAction {
         return selectedProvider().popAction
       }
@@ -80,7 +79,7 @@ class GitStashUi(project: Project, isVertical: Boolean, isEditorDiffPreview: Boo
     val toolbarGroup = DefaultActionGroup()
     toolbarGroup.add(applyAction)
     toolbarGroup.add(popAction)
-    val toolbar = ActionManager.getInstance().createActionToolbar(GIT_STASH_UI_PLACE, toolbarGroup, true)
+    val toolbar = ActionManager.getInstance().createActionToolbar(SAVED_PATCHES_UI_PLACE, toolbarGroup, true)
     toolbar.targetComponent = tree
     return toolbar
   }
@@ -111,7 +110,7 @@ class GitStashUi(project: Project, isVertical: Boolean, isEditorDiffPreview: Boo
 
   override fun getData(dataId: String): Any? {
     if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.`is`(dataId)) return changesBrowser.editorTabPreview
-    if (GIT_STASH_UI.`is`(dataId)) return this
+    if (SAVED_PATCHES_UI.`is`(dataId)) return this
     return null
   }
 
@@ -123,7 +122,7 @@ class GitStashUi(project: Project, isVertical: Boolean, isEditorDiffPreview: Boo
   }
 
   companion object {
-    const val GIT_STASH_UI_PLACE = "GitStashUiPlace"
-    val GIT_STASH_UI = DataKey.create<GitStashUi>("GitStashUi")
+    const val SAVED_PATCHES_UI_PLACE = "SavedPatchesUiPlace"
+    val SAVED_PATCHES_UI = DataKey.create<SavedPatchesUi>("SavedPatchesUi")
   }
 }

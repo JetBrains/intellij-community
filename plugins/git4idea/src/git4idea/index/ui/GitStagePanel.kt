@@ -37,7 +37,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.util.ui.ProportionKey
 import com.intellij.util.ui.ThreeStateCheckBox
+import com.intellij.util.ui.TwoKeySplitter
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.CommitStatusPanel
 import com.intellij.vcs.commit.CommitWorkflowListener
@@ -236,7 +238,8 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
   override fun dispose() {
   }
 
-  private inner class MyChangesTree(project: Project) : GitStageTree(project, project.service<GitStageUiSettingsImpl>(), this@GitStagePanel) {
+  private inner class MyChangesTree(project: Project) : GitStageTree(project, project.service<GitStageUiSettingsImpl>(),
+                                                                     this@GitStagePanel) {
     override val state
       get() = this@GitStagePanel.state
     override val ignoredFilePaths
@@ -441,7 +444,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     }
   }
 
-  private inner class MyCommitWorkflowListener: CommitWorkflowListener {
+  private inner class MyCommitWorkflowListener : CommitWorkflowListener {
     override fun executionEnded() {
       if (hasPendingUpdates) {
         hasPendingUpdates = false
