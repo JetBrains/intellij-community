@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectAttachProcessor
+import com.intellij.util.SystemProperties
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -52,8 +53,12 @@ open class AttachProjectAction : AnAction(ActionsBundle.message("action.AttachPr
       project.putUserData(TO_SELECT_KEY, null) // reset the value
       LocalFileSystem.getInstance().findFileByNioFile(it)
     }
-    if (preselectedDirectory == null && StringUtil.isNotEmpty(GeneralSettings.getInstance().defaultProjectDirectory)) {
-      preselectedDirectory = VfsUtil.findFileByIoFile(File(GeneralSettings.getInstance().defaultProjectDirectory), true)
+    if (preselectedDirectory == null) {
+      preselectedDirectory =
+        if (StringUtil.isNotEmpty(GeneralSettings.getInstance().defaultProjectDirectory))
+          VfsUtil.findFileByIoFile(File(GeneralSettings.getInstance().defaultProjectDirectory), true)
+        else
+          VfsUtil.findFileByIoFile(File(SystemProperties.getUserHome()), true)
     }
 
     FileChooser.chooseFiles(descriptor, project, preselectedDirectory) {

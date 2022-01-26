@@ -671,7 +671,7 @@ public final class ProjectUtil extends ProjectUtilCore {
     return getUserHomeProjectDir();
   }
 
-  private static String getUserHomeProjectDir() {
+  public static String getUserHomeProjectDir() {
     String productName;
     if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || PlatformUtils.isDataGrip()) {
       productName = ApplicationNamesInfo.getInstance().getProductName();
