@@ -1,10 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash.ui
 
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
 import com.intellij.openapi.components.service
@@ -250,9 +253,5 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
         return listOf(GitRefManager.LOCAL_BRANCH.backgroundColor)
       }
     }
-  }
-
-  companion object {
-    val GIT_STASH_TREE_FLAG = DataKey.create<Boolean>("GitStashTreeFlag")
   }
 }
