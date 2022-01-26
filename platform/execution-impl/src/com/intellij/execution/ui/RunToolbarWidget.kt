@@ -111,6 +111,8 @@ internal class RunToolbarWidget(val project: Project) : JBPanel<RunToolbarWidget
 }
 
 internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), CustomComponentAction, DumbAware, UpdateInBackground {
+  private val spinningIcon = SpinningProgressIcon()
+
   override fun actionPerformed(e: AnActionEvent) {
     if (!e.presentation.isEnabled) return
     val conf = e.presentation.getClientProperty(CONF)
@@ -169,7 +171,7 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
       DefaultRunExecutor.EXECUTOR_ID -> IconManager.getInstance().getIcon("expui/run/widget/run.svg", AllIcons::class.java)
       ToolWindowId.DEBUG -> IconManager.getInstance().getIcon("expui/run/widget/debug.svg", AllIcons::class.java)
       "Coverage" -> AllIcons.General.RunWithCoverage
-      LOADING -> AnimatedIcon.Default.INSTANCE
+      LOADING -> spinningIcon
       RESTART -> IconManager.getInstance().getIcon("expui/run/widget/restart.svg", AllIcons::class.java)
       else -> AllIcons.Actions.Execute
     }
@@ -199,7 +201,11 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
   override fun updateCustomComponent(wrapper: JComponent, presentation: Presentation) {
     val component = (wrapper as Wrapper).targetComponent as RunDropDownButton
     component.text = presentation.text?.let(::shorten)
-    component.icon = presentation.icon
+    component.icon = presentation.icon.also { currentIcon ->
+      if (spinningIcon === currentIcon) {
+        spinningIcon.setIconColor(component.foreground)
+      }
+    }
     presentation.getClientProperty(COLOR)?.updateColors(component)
     if (presentation.getClientProperty(CONF) == null) {
       component.dropDownPopup = null
