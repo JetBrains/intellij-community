@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.validateAfterPropagation
 import com.intellij.util.ui.JBUI
 
 class NewProjectWizardStepPanel(val step: NewProjectWizardStep) {
@@ -31,7 +32,7 @@ class NewProjectWizardStepPanel(val step: NewProjectWizardStep) {
 
   val component by lazy {
     panel {
-      propertyGraph(step.propertyGraph)
+      validateAfterPropagation(step.propertyGraph)
       step.setupUI(this)
     }.apply {
       registerValidators(step.context.disposable)

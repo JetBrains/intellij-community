@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder.impl
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
@@ -41,6 +43,7 @@ internal class CellImpl<T : JComponent>(
   var widthGroup: String? = null
     private set
 
+  private var property: ObservableProperty<*>? = null
   private var applyIfEnabled = false
 
   private var visible = viewComponent.isVisible
@@ -169,11 +172,6 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  override fun graphProperty(property: GraphProperty<*>): CellImpl<T> {
-    validationRequestor(property::afterPropagation)
-    return this
-  }
-
   override fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): CellImpl<T> {
     val origin = component.origin
     dialogPanelConfig.componentValidationRequestors.getOrPut(origin) { SmartList() }
@@ -194,6 +192,16 @@ internal class CellImpl<T : JComponent>(
   override fun validationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
     val origin = component.origin
     dialogPanelConfig.componentValidateCallbacks[origin] = { callback(ValidationInfoBuilder(origin), component) }
+
+    property?.let { property ->
+      if (dialogPanelConfig.validationRequestors.isNotEmpty()) return this
+      if (component.origin in dialogPanelConfig.componentValidationRequestors) return this
+      logger<Cell<*>>().warn("Please, install Cell.validationRequestor or Panel.validationRequestor", Throwable())
+      if (property is GraphProperty) {
+        validationRequestor(property::afterPropagation)
+      }
+    }
+
     return this
   }
 
@@ -236,6 +244,14 @@ internal class CellImpl<T : JComponent>(
     viewComponent.isEnabled = isEnabled
     comment?.let { it.isEnabled = isEnabled }
     label?.let { it.isEnabled = isEnabled }
+  }
+
+  companion object {
+    internal fun Cell<*>.installValidationRequestor(property: ObservableProperty<*>) {
+      if (this is CellImpl) {
+        this.property = property
+      }
+    }
   }
 }
 

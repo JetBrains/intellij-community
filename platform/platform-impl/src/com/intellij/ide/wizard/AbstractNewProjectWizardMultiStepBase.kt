@@ -61,8 +61,8 @@ abstract class AbstractNewProjectWizardMultiStepBase(
   private fun getOrCreateStepPanel(): DialogPanel? {
     if (step !in stepsPanels) {
       val stepUi = steps[step] ?: return null
-      val panel = panel{
-        propertyGraph(stepUi.propertyGraph)
+      val panel = panel {
+        validateAfterPropagation(stepUi.propertyGraph)
         stepUi.setupUI(this)
       }
       panel.registerValidators(stepUi.context.disposable)

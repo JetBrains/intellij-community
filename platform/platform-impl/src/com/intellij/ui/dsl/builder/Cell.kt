@@ -120,10 +120,12 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): Cell<T>
 
   /**
-   * Binds [component] value changing to [property]. The property is updated when value is changed and is not related to [DialogPanel.apply].
-   * This method is rarely used directly, see [Cell] extension methods named like "bindXXX" for specific components
+   * Installs [property] as validation requestor.
+   * @deprecated use [validationRequestor] instead
    */
-  fun graphProperty(property: GraphProperty<*>): Cell<T>
+  @Deprecated("Use validationRequestor instead", ReplaceWith("validationRequestor(property::afterPropagation)"))
+  fun graphProperty(property: GraphProperty<*>): Cell<T> =
+    validationRequestor(property::afterPropagation)
 
   /**
    * Registers custom validation requestor for current [component].

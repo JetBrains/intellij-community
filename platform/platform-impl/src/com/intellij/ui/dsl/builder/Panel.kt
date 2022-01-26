@@ -170,12 +170,6 @@ interface Panel : CellBase<Panel> {
   fun customizeSpacingConfiguration(spacingConfiguration: SpacingConfiguration, init: Panel.() -> Unit)
 
   /**
-   * Installs [propertyGraph] as validation requestor.
-   * @see validationRequestor
-   */
-  fun propertyGraph(propertyGraph: PropertyGraph)
-
-  /**
    * Registers custom validation requestor for all components.
    * @param validationRequestor gets callback (component validator) that should be subscribed on custom event.
    */

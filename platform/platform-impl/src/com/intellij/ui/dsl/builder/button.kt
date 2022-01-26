@@ -2,8 +2,10 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.bind
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
 import com.intellij.ui.dsl.builder.impl.toBindingInternal
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.ThreeStateCheckBox
@@ -16,14 +18,20 @@ fun <T : AbstractButton> Cell<T>.bindSelected(binding: PropertyBinding<Boolean>)
   return bind(AbstractButton::isSelected, AbstractButton::setSelected, binding)
 }
 
-fun <T : JBCheckBox> Cell<T>.bindSelected(property: GraphProperty<Boolean>): Cell<T> {
-  return graphProperty(property)
-    .applyToComponent { bind(property) }
+@Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
+fun <T : JBCheckBox> Cell<T>.bindSelected(property: GraphProperty<Boolean>) = bindSelected(property)
+
+@Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
+fun <T : ThreeStateCheckBox> Cell<T>.bindState(property: GraphProperty<ThreeStateCheckBox.State>) = bindState(property)
+
+fun <T : JBCheckBox> Cell<T>.bindSelected(property: ObservableMutableProperty<Boolean>): Cell<T> {
+  installValidationRequestor(property)
+  return applyToComponent { bind(property) }
 }
 
-fun <T : ThreeStateCheckBox> Cell<T>.bindState(property: GraphProperty<ThreeStateCheckBox.State>): Cell<T> {
-  return graphProperty(property)
-    .applyToComponent { bind(property) }
+fun <T : ThreeStateCheckBox> Cell<T>.bindState(property: ObservableMutableProperty<ThreeStateCheckBox.State>): Cell<T> {
+  installValidationRequestor(property)
+  return applyToComponent { bind(property) }
 }
 
 fun <T : AbstractButton> Cell<T>.bindSelected(prop: KMutableProperty0<Boolean>): Cell<T> {

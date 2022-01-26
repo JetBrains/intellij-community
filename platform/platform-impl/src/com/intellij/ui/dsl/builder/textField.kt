@@ -3,7 +3,6 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.observable.util.whenTextChanged
 import com.intellij.ui.dsl.ValidationException
 import com.intellij.ui.dsl.catchValidationException
@@ -11,6 +10,8 @@ import com.intellij.ui.dsl.stringToInt
 import com.intellij.ui.dsl.validateIntInRange
 import com.intellij.ui.layout.*
 import com.intellij.openapi.observable.util.lockOrSkip
+import com.intellij.openapi.observable.util.transform
+import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
 import com.intellij.ui.dsl.builder.impl.toBindingInternal
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JTextField
@@ -38,9 +39,12 @@ fun <T : JTextComponent> Cell<T>.bindText(binding: PropertyBinding<String>): Cel
   return bind(JTextComponent::getText, JTextComponent::setText, binding)
 }
 
-fun <T : JTextComponent> Cell<T>.bindText(property: GraphProperty<String>): Cell<T> {
-  return graphProperty(property)
-    .applyToComponent { bind(property) }
+@Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
+fun <T : JTextComponent> Cell<T>.bindText(property: GraphProperty<String>) = bindText(property)
+
+fun <T : JTextComponent> Cell<T>.bindText(property: ObservableMutableProperty<String>): Cell<T> {
+  installValidationRequestor(property)
+  return applyToComponent { bind(property) }
 }
 
 fun <T : JTextComponent> Cell<T>.bindText(prop: KMutableProperty0<String>): Cell<T> {
@@ -56,12 +60,14 @@ fun <T : JTextComponent> Cell<T>.bindIntText(binding: PropertyBinding<Int>): Cel
                   { value -> catchValidationException { binding.set(component.getValidatedIntValue(value)) } })
 }
 
-fun <T : JTextComponent> Cell<T>.bindIntText(property: GraphProperty<Int>): Cell<T> {
-  component.text = property.get().toString()
-  return graphProperty(property)
-    .applyToComponent {
-      bind(property.transform({ it.toString() }, { component.getValidatedIntValue(it) }))
-    }
+@Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
+fun <T : JTextComponent> Cell<T>.bindIntText(property: GraphProperty<Int>): Cell<T> = bindIntText(property)
+
+fun <T : JTextComponent> Cell<T>.bindIntText(property: ObservableMutableProperty<Int>): Cell<T> {
+  installValidationRequestor(property)
+  return applyToComponent {
+    bind(property.transform({ it.toString() }, { component.getValidatedIntValue(it) }))
+  }
 }
 
 fun <T : JTextComponent> Cell<T>.bindIntText(prop: KMutableProperty0<Int>): Cell<T> {

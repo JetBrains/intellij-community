@@ -462,10 +462,6 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     }
   }
 
-  override fun propertyGraph(propertyGraph: PropertyGraph) {
-    validationRequestor(propertyGraph::afterPropagation)
-  }
-
   override fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): PanelImpl {
     dialogPanelConfig.validationRequestors.add(validationRequestor)
     return this

@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
-import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
@@ -138,7 +138,7 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
 
 @ApiStatus.Experimental
 internal class SegmentedButtonAction<T>(val option: T,
-                                        private val property: GraphProperty<T>,
+                                        private val property: ObservableMutableProperty<T>,
                                         @NlsActions.ActionText optionText: String,
                                         @NlsActions.ActionDescription optionDescription: String? = null)
   : ToggleAction(optionText, optionDescription, null), DumbAware {
