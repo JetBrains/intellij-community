@@ -82,24 +82,24 @@ public class ImportCollector {
   /**
    * Check whether the package-less name ClassName is shaded by variable in a context of
    * the decompiled class
-   * @param classToName - pkg.name.ClassName - class to find shortname for
+   * @param classToName - pkg.name.ClassName - class to find the nested name for
    * @return ClassName if the name is not shaded by local field, pkg.name.ClassName otherwise
    */
-  public String getShortNameInClassContext(String classToName) {
-    String shortName = getShortName(classToName);
-    if (setFieldNames.contains(shortName)) {
+  public String getNestedNameInClassContext(String classToName) {
+    String nestedName = getNestedName(classToName);
+    if (setFieldNames.contains(nestedName)) {
       return classToName;
     }
     else {
-      return shortName;
+      return nestedName;
     }
   }
 
-  public String getShortName(String fullName) {
-    return getShortName(fullName, true);
+  public String getNestedName(String fullName) {
+    return getNestedName(fullName, true);
   }
 
-  public String getShortName(String fullName, boolean imported) {
+  public String getNestedName(String fullName, boolean imported) {
     ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(fullName.replace('.', '/')); //todo[r.sh] anonymous classes?
 
     String result = null;

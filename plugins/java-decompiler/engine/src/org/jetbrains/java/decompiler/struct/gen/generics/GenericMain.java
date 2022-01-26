@@ -208,11 +208,11 @@ public final class GenericMain {
 
     if (enclosingClasses.isEmpty()) {
       String name = type.value.replace('/', '.');
-      sb.append(DecompilerContext.getImportCollector().getShortName(name));
+      sb.append(DecompilerContext.getImportCollector().getNestedName(name));
     }
     else {
       for (GenericType tp : enclosingClasses) {
-        String[] nestedClasses = DecompilerContext.getImportCollector().getShortName(tp.value.replace('/', '.')).split("\\.");
+        String[] nestedClasses = DecompilerContext.getImportCollector().getNestedName(tp.value.replace('/', '.')).split("\\.");
         for (int i = 0; i < nestedClasses.length; i++) {
           String nestedType = nestedClasses[i];
           if (i != 0) { // first annotation is written already

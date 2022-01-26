@@ -687,7 +687,7 @@ public class ExprProcessor implements CodeConstants {
     else if (tp == CodeConstants.TYPE_OBJECT) {
       String ret;
       if (getShort) {
-        ret = DecompilerContext.getImportCollector().getShortName(type.value);
+        ret = DecompilerContext.getImportCollector().getNestedName(type.value);
       } else {
         ret = buildJavaClassName(type.value);
       }

@@ -436,7 +436,7 @@ public class ClassWriter {
           if (i > 0) {
             buffer.append(", ");
           }
-          DecompilerContext.getImportCollector().getShortName(qualifiedName);
+          DecompilerContext.getImportCollector().getNestedName(qualifiedName);
           String simpleName = qualifiedName.substring(qualifiedName.lastIndexOf('/') + 1);
           buffer.append(simpleName);
         }
