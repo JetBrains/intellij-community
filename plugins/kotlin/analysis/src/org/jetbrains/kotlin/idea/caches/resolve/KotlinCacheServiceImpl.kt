@@ -96,7 +96,12 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         val files = getFilesForElements(elements)
 
         if (files.size == 1) return getResolutionFacade(files.single())
-        return getFacadeToAnalyzeFiles(files, TargetPlatformDetector.getPlatform(files.first()))
+        val platform = TargetPlatformDetector.getPlatform(files.first())
+
+        // it is quite suspicious that we take first().moduleInfo, while there might be multiple files of different kinds (e.g.
+        // some might be "special", see case chasing in [getFacadeToAnalyzeFiles] later
+        val settings = files.first().getModuleInfo().platformSettings(platform)
+        return getFacadeToAnalyzeFiles(files, settings)
     }
 
     // Implementation note: currently, it provides platform-specific view on common sources via plain creation of
@@ -108,20 +113,22 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     override fun getResolutionFacadeWithForcedPlatform(elements: List<KtElement>, platform: TargetPlatform): ResolutionFacade {
         val files = getFilesForElements(elements)
         val moduleInfo = files.first().getModuleInfo()
-
-        if (!project.useCompositeAnalysis) {
-            // No need to force platform, just get facade as usual
-            return getFacadeToAnalyzeFiles(files, platform)
-        }
+        val settings = PlatformAnalysisSettingsImpl(platform, moduleInfo.sdk, moduleInfo.supportsAdditionalBuiltInsMembers(project))
 
         if (!canGetFacadeWithForcedPlatform(elements, files, moduleInfo, platform)) {
             // Fallback to facade without forced platform
             return getResolutionFacade(elements)
         }
 
-        val settings = PlatformAnalysisSettingsImpl(platform, moduleInfo.sdk, moduleInfo.supportsAdditionalBuiltInsMembers(project))
-        val projectFacade = facadeForModules(settings)
-        return ModuleResolutionFacadeImpl(projectFacade, moduleInfo)
+        // Note that there's no need to switch on project.useCompositeAnalysis
+        // - For SEPARATE analysis, using 'PlatformAnalysisSettingsImpl' is totally OK, and actually that's what we'd create normally
+        //
+        // - For COMPOSITE analysis, we intentionally want to use 'PlatformAnalysisSettingsImpl' to re-analyze code in separate
+        //   platform-specific facade, even though normally we'd create CompositeAnalysisSettings.
+        //   Some branches in [getFacadeToAnalyzeFile] in such case will be effectively dead due to [canGetFacadeWithForcedPlatform]
+        //   (e.g. everything script-related), but, for example, special-files are still needed, so one can't just skip straight to
+        //   [getResolutionFacadeByModuleInfoAndSettings] instead
+        return getFacadeToAnalyzeFiles(files, settings)
     }
 
     private fun canGetFacadeWithForcedPlatform(
@@ -152,15 +159,13 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
                 false
             }
 
-            scripts.isNotEmpty() || specialFiles.isNotEmpty() -> {
-                val typeOfUnsupportedFiles = if (scripts.isNotEmpty()) "scripts" else "special files"
-                val unsupportedFiles = scripts.ifEmpty { specialFiles }
+            scripts.isNotEmpty() -> {
 
                 LOG.error(
-                    "Getting resolution facade with forced platform is not supported for $typeOfUnsupportedFiles\n" +
+                    "Getting resolution facade with forced platform is not supported for scripts\n" +
                             "Requested elements: $elements\n" +
                             "Files for requested elements: $files\n" +
-                            "Among them, following are $typeOfUnsupportedFiles: $unsupportedFiles"
+                            "Among them, following are scripts: $scripts"
                 )
                 false
             }
@@ -291,11 +296,17 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     private fun getOrBuildGlobalFacade(settings: PlatformAnalysisSettings) =
         globalFacadesPerPlatformAndSdk[settings]
 
-    private fun createFacadeForFilesWithSpecialModuleInfo(files: Set<KtFile>): ProjectResolutionFacade {
+    // explicitSettings allows to override the "innate" settings of the files' moduleInfo
+    // This can be useful, if the module is common, but we want to create a facade to
+    // analyze that module from the platform (e.g. JVM) point of view
+    private fun createFacadeForFilesWithSpecialModuleInfo(
+        files: Set<KtFile>,
+        explicitSettings: PlatformAnalysisSettings? = null
+    ): ProjectResolutionFacade {
         // we assume that all files come from the same module
         val targetPlatform = files.map { TargetPlatformDetector.getPlatform(it) }.toSet().single()
         val specialModuleInfo = files.map(KtFile::getModuleInfo).toSet().single()
-        val settings = specialModuleInfo.platformSettings(specialModuleInfo.platform ?: targetPlatform)
+        val settings = explicitSettings ?: specialModuleInfo.platformSettings(specialModuleInfo.platform)
 
         // Dummy files created e.g. by J2K do not receive events.
         val dependencyTrackerForSyntheticFileCache = if (files.all { it.originalFile != it }) {
@@ -458,22 +469,23 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         // NOTE: computations inside createFacadeForFilesWithSpecialModuleInfo depend on project root structure
         // so we additionally drop the whole slru cache on change
         CachedValueProvider.Result(
-            object : SLRUCache<Set<KtFile>, ProjectResolutionFacade>(2, 3) {
-                override fun createValue(files: Set<KtFile>) = createFacadeForFilesWithSpecialModuleInfo(files)
+            object : SLRUCache<Pair<Set<KtFile>, PlatformAnalysisSettings>, ProjectResolutionFacade>(2, 3) {
+                override fun createValue(filesAndSettings: Pair<Set<KtFile>, PlatformAnalysisSettings>) =
+                    createFacadeForFilesWithSpecialModuleInfo(filesAndSettings.first, filesAndSettings.second)
             },
             LibraryModificationTracker.getInstance(project),
             ProjectRootModificationTracker.getInstance(project)
         )
     }
 
-    private fun getFacadeForSpecialFiles(files: Set<KtFile>): ProjectResolutionFacade {
-        val cachedValue: SLRUCache<Set<KtFile>, ProjectResolutionFacade> =
+    private fun getFacadeForSpecialFiles(files: Set<KtFile>, settings: PlatformAnalysisSettings): ProjectResolutionFacade {
+        val cachedValue: SLRUCache<Pair<Set<KtFile>, PlatformAnalysisSettings>, ProjectResolutionFacade> =
             CachedValuesManager.getManager(project).getCachedValue(project, specialFilesCacheProvider)
 
         // In Upsource, we create multiple instances of KotlinCacheService, which all access the same CachedValue instance (UP-8046)
         // This is so because class name of provider is used as a key when fetching cached value, see CachedValueManager.getKeyForClass.
         // To avoid race conditions, we can't use any local lock to access the cached value contents.
-        return cachedValue.getOrCreateValue(files)
+        return cachedValue.getOrCreateValue(files to settings)
     }
 
     private val scriptsCacheProvider = CachedValueProvider {
@@ -510,41 +522,41 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
             }
         }
 
-    private fun getFacadeToAnalyzeFiles(files: Collection<KtFile>, platform: TargetPlatform): ResolutionFacade {
-        val file = files.first()
-        val moduleInfo = file.getModuleInfo()
+    private fun getFacadeToAnalyzeFiles(files: Collection<KtFile>, settings: PlatformAnalysisSettings): ResolutionFacade {
+        val moduleInfo = files.first().getModuleInfo()
         val specialFiles = files.filterNotInProjectSource(moduleInfo)
         val scripts = specialFiles.filterScripts()
         if (scripts.isNotEmpty()) {
             val projectFacade = getFacadeForScripts(scripts)
-            return ModuleResolutionFacadeImpl(projectFacade, moduleInfo).createdFor(scripts, moduleInfo)
+            return ModuleResolutionFacadeImpl(projectFacade, moduleInfo).createdFor(scripts, moduleInfo, settings)
         }
 
         if (specialFiles.isNotEmpty()) {
-            val projectFacade = getFacadeForSpecialFiles(specialFiles)
-            return ModuleResolutionFacadeImpl(projectFacade, moduleInfo).createdFor(specialFiles, moduleInfo)
+            val projectFacade = getFacadeForSpecialFiles(specialFiles, settings)
+            return ModuleResolutionFacadeImpl(projectFacade, moduleInfo).createdFor(specialFiles, moduleInfo, settings)
         }
 
-        return getResolutionFacadeByModuleInfo(moduleInfo, platform).createdFor(emptyList(), moduleInfo, platform)
+        return getResolutionFacadeByModuleInfoAndSettings(moduleInfo, settings).createdFor(emptyList(), moduleInfo, settings)
     }
 
     private fun getFacadeToAnalyzeFile(file: KtFile, platform: TargetPlatform): ResolutionFacade {
         val moduleInfo = file.getModuleInfo()
         val specialFile = file.filterNotInProjectSource(moduleInfo)
+        val settings = file.getModuleInfo().platformSettings(platform)
 
         specialFile?.filterScript()?.let { script ->
             val scripts = setOf(script)
             val projectFacade = getFacadeForScripts(scripts)
-            return ModuleResolutionFacadeImpl(projectFacade, moduleInfo).createdFor(scripts, moduleInfo)
+            return ModuleResolutionFacadeImpl(projectFacade, moduleInfo).createdFor(scripts, moduleInfo, settings)
         }
 
         if (specialFile != null) {
             val specialFiles = setOf(specialFile)
-            val projectFacade = getFacadeForSpecialFiles(specialFiles)
-            return ModuleResolutionFacadeImpl(projectFacade, moduleInfo).createdFor(specialFiles, moduleInfo)
+            val projectFacade = getFacadeForSpecialFiles(specialFiles, settings)
+            return ModuleResolutionFacadeImpl(projectFacade, moduleInfo).createdFor(specialFiles, moduleInfo, settings)
         }
 
-        return getResolutionFacadeByModuleInfo(moduleInfo, platform).createdFor(emptyList(), moduleInfo, platform)
+        return getResolutionFacadeByModuleInfo(moduleInfo, platform).createdFor(emptyList(), moduleInfo, settings)
     }
 
     override fun getResolutionFacadeByFile(file: PsiFile, platform: TargetPlatform): ResolutionFacade? {
