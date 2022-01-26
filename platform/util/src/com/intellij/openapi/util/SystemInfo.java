@@ -93,13 +93,10 @@ public final class SystemInfo {
     return isXWindow && ourHasXdgMime.getValue();
   }
 
-  /**
-   * @deprecated macOS 10.14 is the minimum version.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public static final boolean isMacOSYosemite = isMac && isOsVersionAtLeast("10.10");
-
+  public static final boolean isMacOSElCapitan = isMac && isOsVersionAtLeast("10.11");
+  public static final boolean isMacOSSierra = isMac && isOsVersionAtLeast("10.12");
+  public static final boolean isMacOSHighSierra = isMac && isOsVersionAtLeast("10.13");
   public static final boolean isMacOSMojave = isMac && isOsVersionAtLeast("10.14");
   public static final boolean isMacOSCatalina = isMac && isOsVersionAtLeast("10.15");
   public static final boolean isMacOSBigSur = isMac && isOsVersionAtLeast("10.16");
