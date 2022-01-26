@@ -184,8 +184,13 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
    * Make unmodifiable
    */
   @Override
-  public Set<VirtualFile> freeze() {
+  public void freeze() {
     frozen = true;
+  }
+
+  @Override
+  public Set<VirtualFile> freezed() {
+    freeze();
     return this;
   }
 

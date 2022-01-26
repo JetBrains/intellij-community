@@ -328,7 +328,7 @@ public abstract class StubIndexEx extends StubIndex {
                                                                          @NotNull Project project,
                                                                          @NotNull GlobalSearchScope scope) {
     IntSet result = getContainingIds(indexKey, dataKey, project, null, scope);
-    Set<VirtualFile> fileSet = new CompactVirtualFileSet(result == null ? ArrayUtil.EMPTY_INT_ARRAY : result.toIntArray()).freeze();
+    Set<VirtualFile> fileSet = new CompactVirtualFileSet(result == null ? ArrayUtil.EMPTY_INT_ARRAY : result.toIntArray()).freezed();
     return fileSet.stream().filter(scope::contains).iterator();
   }
 
