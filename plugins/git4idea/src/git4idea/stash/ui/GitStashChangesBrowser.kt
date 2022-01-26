@@ -28,10 +28,12 @@ import git4idea.stash.GitStashCache
 import git4idea.ui.StashInfo
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
 import org.jetbrains.annotations.Nls
+import java.awt.Component
 import java.util.concurrent.CompletableFuture
 import javax.swing.tree.DefaultTreeModel
 
-class GitStashChangesBrowser(project: Project, parentDisposable: Disposable) : ChangesBrowserBase(project, false, false), Disposable {
+class GitStashChangesBrowser(project: Project, private val focusMainUi: (Component?) -> Unit,
+                             parentDisposable: Disposable) : ChangesBrowserBase(project, false, false), Disposable {
   private val stashCache: GitStashCache get() = myProject.service()
 
   private var stashedChanges: Collection<Change> = emptyList()
@@ -150,7 +152,7 @@ class GitStashChangesBrowser(project: Project, parentDisposable: Disposable) : C
     diffPreviewProcessor = newProcessor
 
     if (isInEditor) {
-      editorTabPreview = object : GitStashEditorDiffPreview(newProcessor, viewer, this@GitStashChangesBrowser) {
+      editorTabPreview = object : GitStashEditorDiffPreview(newProcessor, viewer, this@GitStashChangesBrowser, focusMainUi) {
         override fun getCurrentName(): String {
           return changeViewProcessor.currentChangeName?.let { changeName ->
             val stashId = currentStash?.stash?.capitalize() ?: GitBundle.message("stash.editor.diff.preview.empty.title")

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash.ui
 
 import com.intellij.openapi.Disposable
@@ -16,10 +16,12 @@ import git4idea.index.ui.ProportionKey
 import git4idea.index.ui.TwoKeySplitter
 import git4idea.ui.StashInfo
 import java.awt.BorderLayout
+import java.awt.Component
 import javax.swing.JPanel
 import javax.swing.JTree
 
-class GitStashUi(project: Project, isVertical: Boolean, isEditorDiffPreview: Boolean, disposable: Disposable) :
+class GitStashUi(project: Project, isVertical: Boolean, isEditorDiffPreview: Boolean,
+                 focusMainUi: (Component?) -> Unit, disposable: Disposable) :
   JPanel(BorderLayout()), Disposable, DataProvider {
 
   private val tree: ChangesTree
@@ -31,7 +33,7 @@ class GitStashUi(project: Project, isVertical: Boolean, isEditorDiffPreview: Boo
     tree = GitStashTree(project, this)
     PopupHandler.installPopupMenu(tree, "Git.Stash.ContextMenu", GIT_STASH_UI_PLACE)
 
-    changesBrowser = GitStashChangesBrowser(project, this)
+    changesBrowser = GitStashChangesBrowser(project, focusMainUi, this)
     val bottomToolbar = buildBottomToolbar()
 
     tree.addSelectionListener {

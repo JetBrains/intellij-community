@@ -4,13 +4,13 @@ package git4idea.stash.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.SimpleTreeEditorDiffPreview
 import com.intellij.openapi.wm.IdeFocusManager
 import java.awt.Component
 import javax.swing.JComponent
 
-abstract class GitStashEditorDiffPreview(diffProcessor: GitStashDiffPreview, tree: ChangesTree, targetComponent: JComponent)
+abstract class GitStashEditorDiffPreview(diffProcessor: GitStashDiffPreview, tree: ChangesTree, targetComponent: JComponent,
+                                         private val focusMainComponent: (Component?) -> Unit)
   : SimpleTreeEditorDiffPreview(diffProcessor, tree, targetComponent, false) {
   private var lastFocusOwner: Component? = null
 
@@ -24,18 +24,8 @@ abstract class GitStashEditorDiffPreview(diffProcessor: GitStashDiffPreview, tre
   }
 
   override fun returnFocusToTree() {
-    val toolWindow = ChangesViewContentManager.getToolWindowFor(project, GitStashContentProvider.TAB_NAME) ?: return
-
     val focusOwner = lastFocusOwner
     lastFocusOwner = null
-
-    if (focusOwner == null) {
-      toolWindow.activate(null)
-      return
-    }
-
-    toolWindow.activate({
-                          IdeFocusManager.getInstance(project).requestFocus(focusOwner, true)
-                        }, false)
+    focusMainComponent(focusOwner)
   }
 }
