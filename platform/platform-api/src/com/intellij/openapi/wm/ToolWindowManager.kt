@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm
 
 import com.intellij.openapi.Disposable
@@ -34,6 +34,17 @@ abstract class ToolWindowManager {
   @Deprecated("Use ToolWindowFactory and toolWindow extension point")
   fun registerToolWindow(id: String, component: JComponent, anchor: ToolWindowAnchor): ToolWindow {
     return registerToolWindow(RegisterToolWindowTask(id = id, component = component, anchor = anchor, canCloseContent = false, canWorkInDumbMode = false))
+  }
+
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Use ToolWindowFactory and toolWindow extension point")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  fun registerToolWindow(id: String,
+                         component: JComponent,
+                         anchor: ToolWindowAnchor,
+                         @Suppress("UNUSED_PARAMETER") parentDisposable: Disposable,
+                         canWorkInDumbMode: Boolean): ToolWindow {
+    return registerToolWindow(RegisterToolWindowTask(id = id, component = component, anchor = anchor, canWorkInDumbMode = canWorkInDumbMode))
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
