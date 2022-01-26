@@ -1,35 +1,50 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.extensions.impl
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.extensions.impl;
 
-import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.extensions.ExtensionDescriptor
-import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.extensions.impl.XmlExtensionAdapter.SimpleConstructorInjectionAdapter
+import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.extensions.ExtensionDescriptor;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-internal class BeanExtensionPoint<T>(name: String,
-                                     className: String,
-                                     pluginDescriptor: PluginDescriptor,
-                                     componentManager: ComponentManager,
-                                     dynamic: Boolean) : ExtensionPointImpl<T>(name, className, pluginDescriptor, componentManager, null,
-                                                                               dynamic), ImplementationClassResolver {
-  override fun resolveImplementationClass(componentManager: ComponentManager, adapter: ExtensionComponentAdapter) = extensionClass
+import java.util.List;
 
-  override fun createAdapter(descriptor: ExtensionDescriptor,
-                             pluginDescriptor: PluginDescriptor,
-                             componentManager: ComponentManager): ExtensionComponentAdapter {
-    return if (componentManager.isInjectionForExtensionSupported) {
-      SimpleConstructorInjectionAdapter(className, pluginDescriptor, descriptor, this)
+@ApiStatus.Internal
+public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> implements ImplementationClassResolver {
+  public BeanExtensionPoint(@NotNull String name,
+                            @NotNull String className,
+                            @NotNull PluginDescriptor pluginDescriptor,
+                            @NotNull ComponentManager componentManager,
+                            boolean dynamic) {
+    super(name, className, pluginDescriptor, componentManager, null, dynamic);
+  }
+
+  @Override
+  public @NotNull Class<?> resolveImplementationClass(@NotNull ComponentManager componentManager, @NotNull ExtensionComponentAdapter adapter)
+    throws ClassNotFoundException {
+    return getExtensionClass();
+  }
+
+  @Override
+  @NotNull ExtensionComponentAdapter createAdapter(@NotNull ExtensionDescriptor descriptor,
+                                                   @NotNull PluginDescriptor pluginDescriptor,
+                                                   @NotNull ComponentManager componentManager) {
+    if (componentManager.isInjectionForExtensionSupported()) {
+      return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(getClassName(), pluginDescriptor, descriptor, this);
     }
     else {
-      XmlExtensionAdapter(className, pluginDescriptor, descriptor.orderId, descriptor.order, descriptor.element, this)
+      return new XmlExtensionAdapter(getClassName(), pluginDescriptor, descriptor.orderId, descriptor.order, descriptor.element, this);
     }
   }
 
-  override fun unregisterExtensions(componentManager: ComponentManager,
-                                    pluginDescriptor: PluginDescriptor,
-                                    elements: List<ExtensionDescriptor>,
-                                    priorityListenerCallbacks: List<Runnable>,
-                                    listenerCallbacks: List<Runnable>) {
-    unregisterExtensions(false, priorityListenerCallbacks, listenerCallbacks) { it.getPluginDescriptor() !== pluginDescriptor }
+  @Override
+  void unregisterExtensions(@NotNull ComponentManager componentManager,
+                            @NotNull PluginDescriptor pluginDescriptor,
+                            @NotNull List<ExtensionDescriptor> elements,
+                            @NotNull List<Runnable> priorityListenerCallbacks,
+                            @NotNull List<Runnable> listenerCallbacks) {
+    unregisterExtensions(adapter -> {
+      return adapter.getPluginDescriptor() != pluginDescriptor;
+    }, false, priorityListenerCallbacks, listenerCallbacks);
   }
 }

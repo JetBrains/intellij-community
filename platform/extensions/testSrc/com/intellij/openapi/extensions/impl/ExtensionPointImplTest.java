@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -334,8 +334,7 @@ public class ExtensionPointImplTest {
     private Runnable myFire;
 
     MyShootingComponentAdapter(@NotNull String implementationClass) {
-      super(implementationClass, new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY, null,
-            InterfaceExtensionImplementationClassResolver.INSTANCE);
+      super(implementationClass, new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY, null, InterfaceExtensionImplementationClassResolver.INSTANCE);
     }
 
     public synchronized void setFire(@Nullable Runnable fire) {
