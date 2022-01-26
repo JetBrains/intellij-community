@@ -3,13 +3,17 @@
 
 package com.intellij.openapi.wm.impl
 
+import com.intellij.BundleBase
+import com.intellij.DynamicBundle
 import com.intellij.diagnostic.LoadingState
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.UiActivity
 import com.intellij.ide.UiActivityMonitor
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.MaximizeActiveDialogAction
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector
 import com.intellij.notification.impl.NotificationsManagerImpl
 import com.intellij.openapi.Disposable
@@ -45,10 +49,7 @@ import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.ui.BalloonImpl
-import com.intellij.ui.ClientProperty
-import com.intellij.ui.ComponentUtil
-import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.BitUtil
 import com.intellij.util.EventDispatcher
@@ -56,10 +57,7 @@ import com.intellij.util.SingleAlarm
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.MessageBusConnection
-import com.intellij.util.ui.EDT
-import com.intellij.util.ui.PositionTracker
-import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import org.intellij.lang.annotations.JdkConstants
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -69,6 +67,7 @@ import java.awt.event.*
 import java.beans.PropertyChangeListener
 import java.util.*
 import java.util.concurrent.TimeUnit
+import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener

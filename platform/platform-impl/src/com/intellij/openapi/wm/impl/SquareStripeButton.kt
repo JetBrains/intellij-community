@@ -10,6 +10,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
@@ -64,7 +65,8 @@ internal class SquareStripeButton(val project: Project, val button: StripeButton
     myPresentation.isEnabledAndVisible = true
   }
 
-  fun syncIcon() {
+  fun updateIcon(toolWindow: ToolWindow) {
+    button.icon = toolWindow.icon
     myPresentation.icon = button.icon ?: AllIcons.Toolbar.Unknown
     scaleIcon(myPresentation)
   }

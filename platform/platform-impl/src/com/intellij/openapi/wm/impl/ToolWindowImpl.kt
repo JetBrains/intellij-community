@@ -360,7 +360,6 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
         toolWindowManager.hideToolWindow(id, hideSide = false)
         contentUi?.dropCaches()
       }
-      toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.AVAILABLE)
     }
   }
 

@@ -10,17 +10,6 @@ import java.awt.Point
 import javax.swing.JComponent
 
 internal interface ToolWindowButtonManager {
-  companion object {
-    fun updateStripeButton(toolWindow: ToolWindow, property: ToolWindowProperty, stripeButton: StripeButton) {
-      if (property == ToolWindowProperty.ICON) {
-        stripeButton.updateIcon(toolWindow.icon)
-      }
-      else {
-        stripeButton.updatePresentation()
-      }
-    }
-  }
-
   fun add(pane: JComponent)
 
   fun addToToolWindowPane(pane: JComponent) {
