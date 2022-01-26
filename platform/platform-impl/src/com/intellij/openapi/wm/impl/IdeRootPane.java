@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.Toolba
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar;
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarKt;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
+import com.intellij.toolWindow.ToolWindowButtonManager;
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager;
 import com.intellij.toolWindow.ToolWindowPaneOldButtonManager;
 import com.intellij.ui.*;

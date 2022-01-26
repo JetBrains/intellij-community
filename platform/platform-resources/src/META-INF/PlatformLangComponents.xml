@@ -87,7 +87,7 @@
 
     <projectService serviceInterface="com.intellij.openapi.wm.ToolWindowManager"
                     serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl"
-                    headlessImplementation="com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl" preload="notHeadless"/>
+                    headlessImplementation="com.intellij.toolWindow.ToolWindowHeadlessManagerImpl" preload="notHeadless"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler" preload="await"/>
 

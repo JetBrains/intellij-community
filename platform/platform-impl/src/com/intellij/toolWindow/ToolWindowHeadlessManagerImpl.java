@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl;
+package com.intellij.toolWindow;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -14,6 +14,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.impl.DesktopLayout;
+import com.intellij.openapi.wm.impl.IdeFocusManagerHeadless;
+import com.intellij.openapi.wm.impl.InternalDecorator;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.ArrayUtilRt;

@@ -8,7 +8,6 @@ import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
-import com.intellij.openapi.wm.impl.ToolWindowButtonManager
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import java.awt.Dimension
 import java.awt.Point
