@@ -161,6 +161,7 @@ final class KotlinPluginBuilder {
 
       if (isUltimate && kind == KotlinPluginKind.IJ) {
         withModule("kotlin-ultimate.common-native")
+        withModule("kotlin-ultimate.common-for-kotlin")
         //noinspection SpellCheckingInspection
         withModule("kotlin-ultimate.javascript.debugger")
         withModule("kotlin-ultimate.javascript.nodeJs")
