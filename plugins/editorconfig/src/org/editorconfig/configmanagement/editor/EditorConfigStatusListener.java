@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -38,11 +39,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class EditorConfigStatusListener implements CodeStyleSettingsListener, Disposable {
-  private       boolean     myEnabledStatus;
+public final class EditorConfigStatusListener implements CodeStyleSettingsListener, Disposable {
+  private boolean myEnabledStatus;
   private final VirtualFile myVirtualFile;
-  private final Project     myProject;
-  private       Set<String> myEncodings;
+  private final Project myProject;
+  private Set<String> myEncodings;
 
   private MyReloadTask myReloadTask;
 
@@ -55,7 +56,7 @@ public class EditorConfigStatusListener implements CodeStyleSettingsListener, Di
   }
 
   @Override
-  public final void codeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
+  public void codeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
     CodeStyleSettings settings = CodeStyle.getSettings(myProject);
     if (settings.getCustomSettingsIfCreated(EditorConfigSettings.class) == null) {
       // plugin is currently being unloaded, can't run any updates
@@ -78,14 +79,16 @@ public class EditorConfigStatusListener implements CodeStyleSettingsListener, Di
 
   private void onEditorConfigEnabled(boolean isEnabled) {
     if (!isEnabled) {
-      FileEditorManager.getInstance(myProject).closeFile(myVirtualFile);
-      FileEditorManager.getInstance(myProject).openFile(myVirtualFile, false);
+      FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+      fileEditorManager.closeFile(myVirtualFile);
+      fileEditorManager.openFile(myVirtualFile, false);
     }
     EditorNotifications.getInstance(myProject).updateNotifications(myVirtualFile);
-    ObjectUtils.consumeIfNotNull(
-      FileDocumentManager.getInstance().getDocument(myVirtualFile),
-      document -> ObjectUtils.consumeIfNotNull(PsiDocumentManager.getInstance(myProject).getPsiFile(document),
-                                               psiFile -> DaemonCodeAnalyzer.getInstance(myProject).restart(psiFile)));
+    Document document = FileDocumentManager.getInstance().getDocument(myVirtualFile);
+    PsiFile psiFile = document == null ? null : PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    if (psiFile != null) {
+      DaemonCodeAnalyzer.getInstance(myProject).restart(psiFile);
+    }
   }
 
   @Override
@@ -103,7 +106,7 @@ public class EditorConfigStatusListener implements CodeStyleSettingsListener, Di
   }
 
   private static boolean containsValidEncodings(@NotNull Set<String> encodings) {
-    return ContainerUtil.and(encodings, encoding->ConfigEncodingManager.toCharset(encoding) != null);
+    return ContainerUtil.and(encodings, encoding -> ConfigEncodingManager.toCharset(encoding) != null);
   }
 
   private class MyReloadTask extends Task.Backgroundable {
@@ -165,7 +168,8 @@ public class EditorConfigStatusListener implements CodeStyleSettingsListener, Di
           else if (element instanceof EditorConfigOption) {
             String keyName = ObjectUtils.doIfNotNull(((EditorConfigOption)element).getFlatOptionKey(), NavigationItem::getName);
             if (ConfigEncodingManager.charsetKey.equals(keyName)) {
-              String charsetStr = ObjectUtils.doIfNotNull(((EditorConfigOption)element).getOptionValueIdentifier(), NavigationItem::getName);
+              String charsetStr =
+                ObjectUtils.doIfNotNull(((EditorConfigOption)element).getOptionValueIdentifier(), NavigationItem::getName);
               if (charsetStr != null) {
                 charsets.add(charsetStr);
               }
