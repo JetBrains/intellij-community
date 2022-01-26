@@ -23,7 +23,7 @@ private const val END_POINT = "https://stgn.cloudconfig.jetbrains.com/cloudconfi
 
 private const val TIMEOUT = 10000
 
-  internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
+internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
 
   private val client get() = _client.value
   private val _client = lazy {

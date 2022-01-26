@@ -64,7 +64,7 @@ internal class SettingsSyncMain : Disposable {
   }
 
   fun enableSyncing() {
-    componentStore.storageManager.addStreamProvider(controls.streamProvider)
+    componentStore.storageManager.addStreamProvider(controls.streamProvider, true)
   }
 
   fun disableSyncing() {
@@ -96,7 +96,7 @@ internal class SettingsSyncMain : Disposable {
       val bridge = SettingsSyncBridge(application, parentDisposable, settingsLog, ideUpdater, remoteCommunicator, updateChecker)
 
       val streamProvider = SettingsSyncStreamProvider(application, appConfigPath)
-      componentStore.storageManager.addStreamProvider(streamProvider)
+      componentStore.storageManager.addStreamProvider(streamProvider, true)
 
       return SettingsSyncControls(streamProvider, updateChecker, bridge, remoteCommunicator)
     }
