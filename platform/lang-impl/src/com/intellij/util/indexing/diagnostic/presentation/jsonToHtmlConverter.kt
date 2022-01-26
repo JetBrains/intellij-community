@@ -385,6 +385,17 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               tr { td("Total time"); td(times.totalUpdatingTime.presentableDuration()) }
               tr { td("Indexing time"); td(times.indexingTime.presentableDuration()) }
               tr { td("Iterators creation time"); td(times.creatingIteratorsTime.presentableDuration()) }
+              if (IndexDiagnosticDumper.shouldProvideVisibleAndAllThreadsTimeInfo) {
+                tr {
+                  td("Indexing visible time");
+                  td(JsonDuration(
+                    projectIndexingHistory.fileProviderStatistics.sumOf { stat -> stat.totalIndexingVisibleTime.nano }).presentableDuration())
+                }
+                tr {
+                  td("All threads time to visible time ratio");
+                  td(String.format("%.2f", projectIndexingHistory.visibleTimeToAllThreadTimeRatio))
+                }
+              }
               tr { td("Scanning time"); td(times.scanFilesTime.presentableDuration()) }
               tr { td("Content loading time"); td(times.contentLoadingVisibleTime.presentableDuration()) }
               tr { td("Pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }
