@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.feedback
 
 import com.intellij.feedback.state.DontShowAgainFeedbackService
@@ -38,7 +38,7 @@ object FeedbackTypeResolver {
     }
 
   private fun showFeedbackNotification(project: Project?) {
-    if (isFeedbackNotificationDisabled || !Registry.`is`("platform.feedback", true)) {
+    if (!Registry.`is`("platform.feedback", true) || isFeedbackNotificationDisabled) {
       return
     }
     val suitableFeedbackTypes = FeedbackTypes.values().filter { it.isSuitable() }
