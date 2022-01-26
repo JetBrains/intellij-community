@@ -690,5 +690,7 @@ class QuickFixRegistrar : QuickFixContributor {
         JAVA_CLASS_ON_COMPANION.registerFactory(JavaClassOnCompanionFixes)
 
         ILLEGAL_ESCAPE.registerFactory(ConvertIllegalEscapeToUnicodeEscapeFix)
+
+        OVERRIDE_DEPRECATION.registerFactory(AddAnnotationWithArgumentsFix.CopyDeprecatedAnnotation)
     }
 }
