@@ -36,8 +36,15 @@ class ClassLoaderConfigurator(
   private class MainInfo(
     @JvmField val classPath: ClassPath,
     @JvmField val files: List<Path>,
-    @JvmField val libDirectories: MutableList<String>
-  )
+    @JvmField val libDirectories: MutableList<String>,
+  ) {
+
+    constructor(classLoader: PluginClassLoader) : this(
+      classLoader.classPath,
+      classLoader.files,
+      classLoader.libDirectories,
+    )
+  }
 
   init {
     resourceFileFactory = try {
@@ -55,22 +62,23 @@ class ClassLoaderConfigurator(
     }
   }
 
-  fun configureDependenciesIfNeeded(mainToModule: Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>) {
-    for ((mainDependent, modules) in mainToModule) {
-      val mainDependentClassLoader = mainDependent.pluginClassLoader as PluginClassLoader
-      mainToClassPath.put(mainDependent.pluginId, MainInfo(classPath = mainDependentClassLoader.classPath,
-                                                           files = mainDependentClassLoader.files,
-                                                           libDirectories = mainDependentClassLoader.libDirectories))
-      if (mainDependent.packagePrefix == null) {
-        for (module in modules) {
-          module.pluginClassLoader = mainDependentClassLoader
-        }
-      }
-      else {
-        for (module in modules) {
-          configureModule(module)
-        }
-      }
+  fun configureDependency(
+    mainDescriptor: IdeaPluginDescriptorImpl,
+    moduleDescriptor: IdeaPluginDescriptorImpl,
+  ) {
+    assert(mainDescriptor != moduleDescriptor)
+
+    val pluginId = mainDescriptor.pluginId
+    assert(pluginId == moduleDescriptor.pluginId)
+
+    val mainClassLoader = mainDescriptor.pluginClassLoader as PluginClassLoader
+    mainToClassPath[pluginId] = MainInfo(mainClassLoader)
+
+    if (mainDescriptor.packagePrefix == null) {
+      moduleDescriptor.pluginClassLoader = mainClassLoader
+    }
+    else {
+      configureModule(moduleDescriptor)
     }
   }
 
