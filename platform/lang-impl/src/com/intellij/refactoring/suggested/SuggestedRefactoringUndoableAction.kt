@@ -24,7 +24,7 @@ class SuggestedRefactoringUndoableAction private constructor(
     fun create(document: Document, state: SuggestedRefactoringState): SuggestedRefactoringUndoableAction {
       val signatureRange = state.refactoringSupport.signatureRange(state.anchor)!!
       return SuggestedRefactoringUndoableAction(
-        document, state.declaration.project, signatureRange, state.oldDeclarationText, state.oldImportsText,
+        document, state.anchor.project, signatureRange, state.oldDeclarationText, state.oldImportsText,
         state.oldSignature, state.newSignature, state.disappearedParameters, state.additionalData
       )
     }
@@ -44,9 +44,8 @@ class SuggestedRefactoringUndoableAction private constructor(
     val refactoringSupport = SuggestedRefactoringSupport.forLanguage(psiFile.language) ?: return
     val anchor = refactoringSupport.anchorByOffset(psiFile, signatureRange.startOffset)
                         ?.takeIf { refactoringSupport.signatureRange(it) == signatureRange } ?: return
-    val declaration = refactoringSupport.stateChanges.findDeclaration(null, anchor) ?: return
     val state = SuggestedRefactoringState(
-      anchor, declaration, refactoringSupport, SuggestedRefactoringState.ErrorLevel.NO_ERRORS,
+      anchor, refactoringSupport, SuggestedRefactoringState.ErrorLevel.NO_ERRORS,
       oldDeclarationText, oldImportsText, oldSignature, newSignature,
       refactoringSupport.stateChanges.parameterMarkers(anchor, newSignature), disappearedParameters, additionalData = additionalData
     )

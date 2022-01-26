@@ -101,23 +101,15 @@ data class JavaDeclarationAdditionalData(
   override val exceptionTypes: List<String>
 ) : JavaSignatureAdditionalData
 
-data class JavaCallAdditionalData(
-  val origArguments: List<String>,
-  val origMethod: PsiMethod
-) : JavaSignatureAdditionalData {
-  override val visibility: String?
-    get() = origMethod.visibility()
-  override val annotations: String
-    get() = origMethod.extractAnnotations()
-  override val exceptionTypes: List<String>
-    get() = origMethod.extractExceptions()
-}
+internal data class JavaCallAdditionalData(
+  val origArguments: List<String>
+) : SuggestedRefactoringSupport.SignatureAdditionalData
 
 internal val SuggestedRefactoringSupport.Parameter.annotations: String
   get() = (additionalData as JavaParameterAdditionalData?)?.annotations ?: ""
 
 internal val SuggestedRefactoringSupport.Signature.visibility: String?
-  get() = (additionalData as JavaSignatureAdditionalData?)?.visibility
+  get() = (additionalData as? JavaSignatureAdditionalData)?.visibility
 
 internal val SuggestedRefactoringSupport.Signature.annotations: String
   get() = (additionalData as JavaSignatureAdditionalData?)?.annotations ?: ""

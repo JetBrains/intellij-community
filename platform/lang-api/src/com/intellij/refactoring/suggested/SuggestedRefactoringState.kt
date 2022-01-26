@@ -16,7 +16,6 @@ private var nextFeatureUsageId = 0
  */
 class SuggestedRefactoringState(
   val anchor: PsiElement,
-  val declaration: PsiElement,
   val refactoringSupport: SuggestedRefactoringSupport,
   val errorLevel: ErrorLevel,
   val oldDeclarationText: String,
@@ -30,18 +29,16 @@ class SuggestedRefactoringState(
 ) {
   data class ParameterMarker(val rangeMarker: RangeMarker, val parameterId: Any)
 
+  /**
+   * Returns the declaration that should be refactored. May differ from anchor if refactoring is started from usage.
+   * Use with care, as this property may involve symbol resolution.
+   */
+  val declaration: PsiElement?
+    get() = refactoringSupport.stateChanges.findDeclaration(anchor)
+
   fun withAnchor(anchor: PsiElement): SuggestedRefactoringState {
     val state = SuggestedRefactoringState(
-      anchor, declaration, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
-      oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId, additionalData
-    )
-    copyRestoredDeclaration(state)
-    return state
-  }
-
-  fun withDeclaration(declaration: PsiElement): SuggestedRefactoringState {
-    val state = SuggestedRefactoringState(
-      anchor, declaration, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
+      anchor, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
       oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId, additionalData
     )
     copyRestoredDeclaration(state)
@@ -50,7 +47,7 @@ class SuggestedRefactoringState(
 
   fun withErrorLevel(errorLevel: ErrorLevel): SuggestedRefactoringState {
     val state = SuggestedRefactoringState(
-      anchor, declaration, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
+      anchor, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
       oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId, additionalData
     )
     copyRestoredDeclaration(state)
@@ -59,7 +56,7 @@ class SuggestedRefactoringState(
 
   fun withOldSignature(oldSignature: Signature): SuggestedRefactoringState {
     val state = SuggestedRefactoringState(
-      anchor, declaration, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
+      anchor, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
       oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId, additionalData
     )
     copyRestoredDeclaration(state)
@@ -68,7 +65,7 @@ class SuggestedRefactoringState(
 
   fun withNewSignature(newSignature: Signature): SuggestedRefactoringState {
     val state = SuggestedRefactoringState(
-      anchor, declaration, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
+      anchor, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
       oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId, additionalData
     )
     copyRestoredDeclaration(state)
@@ -77,7 +74,7 @@ class SuggestedRefactoringState(
 
   fun withParameterMarkers(parameterMarkers: List<ParameterMarker>): SuggestedRefactoringState {
     val state = SuggestedRefactoringState(
-      anchor, declaration, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
+      anchor, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
       oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId, additionalData
     )
     copyRestoredDeclaration(state)
@@ -86,7 +83,7 @@ class SuggestedRefactoringState(
 
   fun withDisappearedParameters(disappearedParameters: Map<String, Any>): SuggestedRefactoringState {
     val state = SuggestedRefactoringState(
-      anchor, declaration, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
+      anchor, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
       oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId, additionalData
     )
     copyRestoredDeclaration(state)
@@ -95,7 +92,7 @@ class SuggestedRefactoringState(
 
   fun <T : Any> withAdditionalData(key: Key<T>, value: T): SuggestedRefactoringState {
     val state = SuggestedRefactoringState(
-      anchor, declaration, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
+      anchor, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
       oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId,
       additionalData.withData(key, value)
     )
@@ -104,8 +101,8 @@ class SuggestedRefactoringState(
   }
 
   private fun copyRestoredDeclaration(toState: SuggestedRefactoringState) {
-    if (toState.declaration == this.declaration) {
-      // do not reset lazy calculated declaration copy for performance reasons
+    if (toState.anchor == this.anchor) {
+      // do not reset lazy calculated anchor copy for performance reasons
       toState.restoredDeclarationCopy = this.restoredDeclarationCopy
     }
   }
@@ -114,7 +111,8 @@ class SuggestedRefactoringState(
 
   fun restoredDeclarationCopy(): PsiElement {
     require(errorLevel != ErrorLevel.INCONSISTENT) { "restoredDeclarationCopy() should not be invoked for inconsistent state" }
-    if (declaration !== anchor) return declaration
+    val decl = declaration
+    if (decl !== anchor) return decl!!
     if (restoredDeclarationCopy == null) {
       restoredDeclarationCopy = createRestoredDeclarationCopy()
     }
@@ -245,7 +243,7 @@ data class SuggestedChangeSignatureData private constructor(
     fun create(state: SuggestedRefactoringState, @Nls nameOfStuffToUpdate: String): SuggestedChangeSignatureData {
       return SuggestedChangeSignatureData(
         state.anchor.createSmartPointer(),
-        state.declaration.createSmartPointer(),
+        state.declaration!!.createSmartPointer(),
         state.oldSignature,
         state.newSignature,
         nameOfStuffToUpdate,

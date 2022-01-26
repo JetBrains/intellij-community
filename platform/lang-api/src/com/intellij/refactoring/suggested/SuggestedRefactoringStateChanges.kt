@@ -42,16 +42,14 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
   abstract fun parameterMarkerRanges(anchor: PsiElement): List<TextRange?>
 
   open fun createInitialState(anchor: PsiElement): SuggestedRefactoringState? {
-    val declaration = findDeclaration(null, anchor) ?: return null
     val signature = signature(anchor, null) ?: return null
     val signatureRange = refactoringSupport.signatureRange(anchor) ?: return null
-    val psiDocumentManager = PsiDocumentManager.getInstance(declaration.project)
+    val psiDocumentManager = PsiDocumentManager.getInstance(anchor.project)
     val file = anchor.containingFile
     val document = psiDocumentManager.getDocument(file)!!
     require(psiDocumentManager.isCommitted(document))
     return SuggestedRefactoringState(
       anchor,
-      declaration,
       refactoringSupport,
       errorLevel = ErrorLevel.NO_ERRORS,
       oldDeclarationText = document.getText(signatureRange),
@@ -68,21 +66,15 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
    * Returns a declaration for a given anchor. Returns anchor itself if it's already a declaration,
    * or a declaration if anchor is a use-site.
    *
-   * @param state previous state, could be used to get previous declaration from.
-   * Null if there's no previous state.
    * @param anchor declaration or call-site in its current state.
    * Only PsiElement's that are classified as anchors by [SuggestedRefactoringSupport.isAnchor] may be passed to this parameter.
    * @return found declaration. Could be null if anchor is a call-site that does not properly resolve.
    */
-  open fun findDeclaration(state: SuggestedRefactoringState?, anchor: PsiElement): PsiElement? = anchor
+  open fun findDeclaration(anchor: PsiElement): PsiElement? = anchor
 
   open fun updateState(state: SuggestedRefactoringState, anchor: PsiElement): SuggestedRefactoringState {
-    val declaration = findDeclaration(state, anchor)
-    if (declaration == null) {
-      return state.withAnchor(anchor).withErrorLevel(ErrorLevel.INCONSISTENT)
-    }
     val newSignature = signature(anchor, state)
-                       ?: return state.withDeclaration(declaration).withErrorLevel(ErrorLevel.SYNTAX_ERROR)
+                       ?: return state.withErrorLevel(ErrorLevel.SYNTAX_ERROR)
 
     val idsPresent = newSignature.parameters.map { it.id }.toSet()
     val disappearedParameters = state.disappearedParameters.entries
@@ -109,7 +101,6 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
 
     return state
       .withAnchor(anchor)
-      .withDeclaration(declaration)
       .withNewSignature(newSignature)
       .withErrorLevel(if (syntaxError) ErrorLevel.SYNTAX_ERROR else ErrorLevel.NO_ERRORS)
       .withParameterMarkers(parameterMarkers)

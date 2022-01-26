@@ -1,23 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring.suggested
 
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
-import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.refactoring.suggested.SuggestedRefactoringState
 import com.intellij.refactoring.suggested.SuggestedRefactoringStateChanges
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
-import com.siyeh.ig.psiutils.VariableNameGenerator
 
 class JavaSuggestedRefactoringStateChanges(refactoringSupport: SuggestedRefactoringSupport) :
   SuggestedRefactoringStateChanges(refactoringSupport) {
   override fun createInitialState(anchor: PsiElement): SuggestedRefactoringState? {
     val state = super.createInitialState(anchor) ?: return null
-    val declaration = state.declaration
-    if (declaration is PsiMember && isDuplicate(declaration, state.oldSignature)) return null
+    if (anchor is PsiMember && isDuplicate(anchor, state.oldSignature)) return null
     return state
   }
 
@@ -52,16 +48,16 @@ class JavaSuggestedRefactoringStateChanges(refactoringSupport: SuggestedRefactor
     }
   }
 
-  override fun findDeclaration(state: SuggestedRefactoringState?, anchor: PsiElement): PsiElement? {
+  override fun findDeclaration(anchor: PsiElement): PsiElement? {
     return when (anchor) {
-      is PsiCallExpression -> state?.declaration ?: if (DumbService.isDumb(anchor.project)) null else anchor.resolveMethod()
+      is PsiCallExpression -> anchor.resolveMethod()
       else -> anchor
     }
   }
 
   override fun signature(anchor: PsiElement, prevState: SuggestedRefactoringState?): Signature? {
     if (anchor is PsiCallExpression) {
-      return signatureFromCall(anchor, prevState)
+      return signatureFromCall(anchor)
     }
     val declaration = anchor as PsiNameIdentifierOwner
     val name = declaration.name ?: return null
@@ -69,67 +65,46 @@ class JavaSuggestedRefactoringStateChanges(refactoringSupport: SuggestedRefactor
       return Signature.create(name, null, emptyList(), null)
     }
 
-    val visibility = declaration.visibility()
-    val parameters = declaration.parameterList.parameters.map { it.extractParameterData() ?: return null }
-    val annotations = declaration.extractAnnotations()
-    val exceptions = declaration.extractExceptions()
-    val signature = Signature.create(
-      name,
-      declaration.returnTypeElement?.text,
-      parameters,
-      JavaDeclarationAdditionalData(visibility, annotations, exceptions)
-    ) ?: return null
+    val signature = declaration.signature() ?: return null
 
     return if (prevState == null) signature else matchParametersWithPrevState(signature, declaration, prevState)
   }
 
-  private fun signatureFromCall(anchor: PsiCallExpression, prevState: SuggestedRefactoringState?): Signature? {
+  private fun signatureFromCall(anchor: PsiCallExpression): Signature? {
     val expressions = anchor.argumentList!!.expressions
     val args = expressions.map { ex -> ex.text }
-    if (prevState == null) {
-      val resolveResult = anchor.resolveMethodGenerics()
-      if (!resolveResult.isValidResult) return null
-      val method = resolveResult.element as? PsiMethod ?: return null
-      if (method is PsiCompiledElement) return null
-      // TODO: support vararg methods
-      if (method.isVarArgs) return null
-      val parameters = method.parameterList.parameters.map { it.extractParameterData() ?: return null }
-      if (parameters.size != args.size) return null
-      return Signature.create(method.name, method.returnTypeElement?.text, parameters,
-        JavaCallAdditionalData(args, method))
-    }
-    val oldSignature = prevState.oldSignature
-    val method = prevState.declaration as? PsiMethod ?: return null
-    val origArgs = ArrayList(oldSignature.origArguments ?: return null)
-    val newParams = args.mapIndexed { idx, argText ->
-      val origIdx = origArgs.indexOf(argText)
-      if (origIdx >= 0) {
-        origArgs[origIdx] = null
-        oldSignature.parameters[origIdx]
-      } else {
-        val newArg = expressions[idx]
-        val type = newArg.type
-        val name = VariableNameGenerator(method, VariableKind.PARAMETER).byExpression(newArg).byType(type).generate(true)
-        Parameter(Any(), name, type?.presentableText ?: "Object", JavaParameterAdditionalData("", newArg.text))
-      }
-    }
-    return Signature.create(oldSignature.name, oldSignature.type, newParams, oldSignature.additionalData)
+    val name = when (anchor) {
+                 is PsiNewExpression -> anchor.classReference?.referenceName
+                 is PsiMethodCallExpression -> anchor.methodExpression.referenceName
+                 else -> null
+               } ?: return null
+    return Signature.create(name, null, listOf(), JavaCallAdditionalData(args))
   }
 
   override fun parameterMarkerRanges(anchor: PsiElement): List<TextRange?> {
-    if (anchor is PsiCallExpression) {
-      return anchor.argumentList!!.expressions.map { null }
-    }
     if (anchor !is PsiMethod) return emptyList()
     return anchor.parameterList.parameters.map { it.typeElement?.textRange }
   }
+}
 
-  private fun PsiParameter.extractParameterData(): Parameter? {
-    return Parameter(
-      Any(),
-      name,
-      (typeElement ?: return null).text,
-      JavaParameterAdditionalData(extractAnnotations())
-    )
-  }
+private fun PsiParameter.extractParameterData(): Parameter? {
+  return Parameter(
+    Any(),
+    name,
+    (typeElement ?: return null).text,
+    JavaParameterAdditionalData(extractAnnotations())
+  )
+}
+
+internal fun PsiMethod.signature(): Signature? {
+  val visibility = this.visibility()
+  val parameters = this.parameterList.parameters.map { it.extractParameterData() ?: return null }
+  val annotations = this.extractAnnotations()
+  val exceptions = this.extractExceptions()
+  return Signature.create(
+    this.name,
+    this.returnTypeElement?.text,
+    parameters,
+    JavaDeclarationAdditionalData(visibility, annotations, exceptions)
+  )
 }

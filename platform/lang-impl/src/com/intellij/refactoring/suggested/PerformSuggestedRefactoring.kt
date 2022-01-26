@@ -64,7 +64,8 @@ internal fun performSuggestedRefactoring(
   if (state.errorLevel != ErrorLevel.NO_ERRORS || state.oldSignature == state.newSignature) return
   val refactoringSupport = state.refactoringSupport
 
-  val file = state.declaration.containingFile
+  val declaration = refactoringSupport.stateChanges.findDeclaration(state.anchor) ?: return
+  val file = declaration.containingFile
   val editor: Editor
   if (originalEditor.document == file.viewProvider.document) {
     editor = originalEditor
@@ -200,7 +201,7 @@ private fun doRefactor(
 ) {
   SuggestedRefactoringFeatureUsage.logEvent(SuggestedRefactoringFeatureUsage.PERFORMED, refactoringData, state, actionPlace)
 
-  val project = state.declaration.project
+  val project = state.anchor.project
   UndoManager.getInstance(project).undoableActionPerformed(SuggestedRefactoringUndoableAction.create(editor.document, state))
 
   performWithDumbEditor(editor, doRefactor)
