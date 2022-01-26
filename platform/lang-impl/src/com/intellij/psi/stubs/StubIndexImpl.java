@@ -433,10 +433,8 @@ public final class StubIndexImpl extends StubIndexEx {
   }
 
   @Override
-  public @NotNull <Key> Iterator<VirtualFile> getContainingFiles(@NotNull StubIndexKey<Key, ?> indexKey,
-                                                                 @NotNull Key dataKey,
-                                                                 @NotNull Project project,
-                                                                 @NotNull GlobalSearchScope scope) {
+  public @NotNull <Key> Iterator<VirtualFile> getContainingFilesIterator(
+      @NotNull StubIndexKey<Key, ?> indexKey, @NotNull Key dataKey, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     IntSet result = getContainingIds(indexKey, dataKey, project, null, scope);
     Set<VirtualFile> fileSet = new CompactVirtualFileSet(result == null ? ArrayUtil.EMPTY_INT_ARRAY : result.toIntArray()).freeze();
     return Iterators.filter(fileSet.iterator(), scope::contains);

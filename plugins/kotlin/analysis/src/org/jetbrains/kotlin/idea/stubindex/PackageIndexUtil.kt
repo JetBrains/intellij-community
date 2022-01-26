@@ -67,11 +67,8 @@ object PackageIndexUtil {
         searchScope: GlobalSearchScope,
         project: Project
     ): Boolean {
-        return StubIndex.getInstance().getContainingFiles(
-            KotlinExactPackagesIndex.getInstance().key,
-            packageFqName.asString(),
-            project,
-            searchScope
+        return StubIndex.getInstance().getContainingFilesIterator(
+            KotlinExactPackagesIndex.getInstance().key, packageFqName.asString(), project, searchScope
         ).hasNext()
     }
 }
