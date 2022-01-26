@@ -1,8 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl
 
+import com.intellij.psi.PsiPolyVariantReference
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiType
+import com.intellij.psi.impl.source.resolve.ResolveCache
 import com.intellij.psi.impl.source.resolve.ResolveCache.AbstractResolver
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -40,6 +42,16 @@ internal class PartialContext(private val types: Map<VariableDescriptor, DFAType
 
   override fun <T : PsiReference, R> resolveWithCaching(ref: T, resolver: AbstractResolver<T, Array<R>>, incomplete: Boolean): Array<R>? {
     return doGetCachedValue(Pair(ref, incomplete)) {
+      if (ref is PsiPolyVariantReference) {
+        val topLevelCachedValue = ResolveCache.getInstance(ref.element.project).getCachedResults(ref, ref.element.isPhysical, incomplete, false)
+        if (topLevelCachedValue != null) {
+          // if ResolveCache contains some result for this 'ref', then it means that 'resolveWithCaching' was
+          // called earlier in TopInferenceContext with this 'resolver'
+          // therefore, this unchecked cast is justified
+          @Suppress("UNCHECKED_CAST")
+          return@doGetCachedValue topLevelCachedValue as Array<R>
+        }
+      }
       resolver.resolve(ref, incomplete)
     }
   }
