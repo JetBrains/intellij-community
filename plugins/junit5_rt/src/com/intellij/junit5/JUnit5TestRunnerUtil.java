@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
 import org.junit.platform.commons.util.AnnotationUtils;
+import org.junit.platform.commons.util.ReflectionUtils;
 import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.FilterResult;
 import org.junit.platform.engine.TestDescriptor;
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class JUnit5TestRunnerUtil {
   private static final String[] DISABLED_ANNO = {"org.junit.jupiter.api.Disabled"};
@@ -81,7 +83,7 @@ public class JUnit5TestRunnerUtil {
             for (int i = 0; i < selectors.size(); i++) {
               DiscoverySelector selector = selectors.get(i);
               if (selector instanceof MethodSelector) {
-                selectors.set(i, DiscoverySelectors.selectClass(((MethodSelector)selector).getClassName()));
+                selectors.set(i, createClassSelector(((MethodSelector)selector).getClassName()));
               }
             }
           }
@@ -135,8 +137,13 @@ public class JUnit5TestRunnerUtil {
           ((MethodSelector)selector).getJavaMethod();
         }
         catch (Throwable e) {
-          builder.filters(createMethodFilter(Collections.singletonList(selector)));
-          selector = DiscoverySelectors.selectClass(((MethodSelector)selector).getClassName());
+          DiscoverySelector classSelector = createClassSelector(((MethodSelector)selector).getClassName());
+          DiscoverySelector methodSelector = classSelector instanceof NestedClassSelector
+                                ? DiscoverySelectors.selectMethod(((NestedClassSelector)classSelector).getNestedClassName(),
+                                                                  ((MethodSelector)selector).getMethodName())
+                                : selector;
+          builder.filters(createMethodFilter(Collections.singletonList(methodSelector)));
+          selector = classSelector;
         }
       }
       assert selector != null : "selector by class name is never null";
@@ -175,14 +182,15 @@ public class JUnit5TestRunnerUtil {
         if (source instanceof MethodSource) {
           for (DiscoverySelector selector : selectors) {
             if (selector instanceof MethodSelector &&
-                ((MethodSelector)selector).getClassName().equals(((MethodSource)source).getClassName()) &&
-                ((MethodSelector)selector).getMethodName().equals(((MethodSource)source).getMethodName())) {
+                ((MethodSelector)selector).getMethodName().equals(((MethodSource)source).getMethodName()) &&
+                (((MethodSelector)selector).getClassName().equals(((MethodSource)source).getClassName()) || 
+                 inNestedClass((MethodSource)source, createClassSelector(((MethodSelector)selector).getClassName())))) {
               return true;
             }
           }
           for (DiscoverySelector selector : selectors) {
-            if (selector instanceof ClassSelector && 
-                ((ClassSelector)selector).getClassName().equals(((MethodSource)source).getClassName())) {
+            if (selector instanceof ClassSelector && ((ClassSelector)selector).getClassName().equals(((MethodSource)source).getClassName()) ||
+                inNestedClass((MethodSource)source, selector)) {
               return true;
             }
           }
@@ -190,6 +198,11 @@ public class JUnit5TestRunnerUtil {
         }
 
         return true;
+      }
+
+      private boolean inNestedClass(MethodSource source, DiscoverySelector selector) {
+        return selector instanceof NestedClassSelector &&
+               ((NestedClassSelector)selector).getNestedClassName().equals(source.getClassName());
       }
     };
   }
@@ -297,7 +310,49 @@ public class JUnit5TestRunnerUtil {
       if (packageNameRef != null) {
         packageNameRef[0] = line;
       }
-      return DiscoverySelectors.selectClass(line);
+      
+      return createClassSelector(line);
     }
+  }
+
+  private static DiscoverySelector createClassSelector(String line) {
+    int nestedClassIdx = line.lastIndexOf("$");
+    if (nestedClassIdx > 0) {
+      AtomicReference<DiscoverySelector> nestedClassSelector = new AtomicReference<>();
+      ReflectionUtils.tryToLoadClass(line).ifFailure(__ -> {
+        nestedClassSelector.set(getNestedSelector(line, nestedClassIdx));
+      });
+      if (nestedClassSelector.get() != null) return nestedClassSelector.get();
+    }
+    
+    return DiscoverySelectors.selectClass(line);
+  }
+
+  private static NestedClassSelector getNestedSelector(String line,
+                                                       int nestedClassIdx) {
+    String enclosingClass = line.substring(0, nestedClassIdx);
+    String nestedClassName = line.substring(nestedClassIdx + 1);
+    DiscoverySelector enclosingClassSelector = createClassSelector(enclosingClass);
+    Class<?> klass = enclosingClassSelector instanceof NestedClassSelector
+                     ? ((NestedClassSelector)enclosingClassSelector).getNestedClass()
+                     : ((ClassSelector)enclosingClassSelector).getJavaClass();
+    Class<?> superclass = klass.getSuperclass();
+    while (superclass != null) {
+      for (Class<?> nested : superclass.getDeclaredClasses()) {
+        if (nested.getSimpleName().equals(nestedClassName)) {
+          List<Class<?>> enclosingClasses;
+          if (enclosingClassSelector instanceof NestedClassSelector) {
+            enclosingClasses = new ArrayList<>(((NestedClassSelector)enclosingClassSelector).getEnclosingClasses());
+            enclosingClasses.add(klass);
+          }
+          else {
+            enclosingClasses = Collections.singletonList(klass);
+          }
+          return DiscoverySelectors.selectNestedClass(enclosingClasses, nested);
+        }
+      }
+      superclass = superclass.getSuperclass();
+    }
+    return null;
   }
 }
