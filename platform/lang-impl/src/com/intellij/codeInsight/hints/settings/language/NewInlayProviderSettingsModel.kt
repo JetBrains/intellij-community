@@ -43,7 +43,7 @@ class NewInlayProviderSettingsModel<T : Any>(
   }
 
   override fun collectAndApply(editor: Editor, file: PsiFile) {
-    providerWithSettings.provider.preparePreview(editor, file)
+    providerWithSettings.provider.preparePreview(editor, file, providerWithSettings.settings)
     providerWithSettings.getCollectorWrapperFor(file, editor, providerWithSettings.language)?.let { collectorWrapperFor ->
       ReadAction.nonBlocking {
         collectorWrapperFor.collectTraversingAndApplyOnEdt(editor, file, isEnabled)

@@ -210,7 +210,7 @@ public class ProjectProblemHintProvider implements InlayHintsProvider<NoSettings
   private static final Key<Set<Problem>> PREVIEW_PROBLEMS_KEY = Key.create("preview.problems.key");
 
   @Override
-  public void preparePreview(@NotNull Editor editor, @NotNull PsiFile file) {
+  public void preparePreview(@NotNull Editor editor, @NotNull PsiFile file, @NotNull NoSettings settings) {
     PsiMethod method = ((PsiJavaFile)file).getClasses()[0].getMethods()[0];
     method.putUserData(PREVIEW_PROBLEMS_KEY, Collections.singleton(new Problem(method, method)));
   }

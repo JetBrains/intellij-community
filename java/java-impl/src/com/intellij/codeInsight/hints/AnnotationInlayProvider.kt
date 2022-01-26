@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
 import com.intellij.psi.*
 import com.intellij.ui.layout.*
@@ -49,6 +50,10 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
           }
           if (settings.showInferred) {
             annotations += InferredAnnotationsManager.getInstance(project).findInferredAnnotations(element)
+          }
+          val previewAnnotation = PREVIEW_ANNOTATION_KEY.get(element)
+          if (previewAnnotation != null) {
+            annotations += previewAnnotation
           }
 
           val shownAnnotations = mutableSetOf<String>()
@@ -168,6 +173,20 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
   }
 
   override val previewText: String? = null
+
+  private val PREVIEW_ANNOTATION_KEY = Key.create<PsiAnnotation>("preview.annotation.key")
+
+  override fun preparePreview(editor: Editor, file: PsiFile, settings: Settings) {
+    val psiMethod = (file as PsiJavaFile).classes[0].methods[0]
+    val factory = PsiElementFactory.getInstance(file.project)
+    if (psiMethod.parameterList.isEmpty) {
+      if (settings.showExternal) {
+        PREVIEW_ANNOTATION_KEY.set(psiMethod, factory.createAnnotationFromText("@Deprecated", psiMethod))
+      }
+    }
+    else if (settings.showInferred)
+      PREVIEW_ANNOTATION_KEY.set(psiMethod.parameterList.getParameter(0), factory.createAnnotationFromText("@NotNull", psiMethod))
+  }
 
   override fun createConfigurable(settings: Settings): ImmediateConfigurable {
     return object : ImmediateConfigurable {

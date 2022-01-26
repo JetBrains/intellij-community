@@ -104,7 +104,7 @@ abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> 
   override val previewText: String? get() = null
   override fun getProperty(key: String): String? = message(key)
 
-  override fun preparePreview(editor: Editor, file: PsiFile) {
+  override fun preparePreview(editor: Editor, file: PsiFile, settings: NoSettings) {
     addPreviewInfo(file)
   }
 
