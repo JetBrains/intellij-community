@@ -10,8 +10,7 @@ import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 
 abstract class AbstractShowDiffForSavedPatchesAction : AnActionExtensionProvider {
   override fun isActive(e: AnActionEvent): Boolean {
-    return e.getData(SavedPatchesUi.SAVED_PATCHES_UI) != null &&
-           e.getData(ChangesBrowserBase.DATA_KEY) == null
+    return e.getData(SavedPatchesUi.SAVED_PATCHES_UI) != null
   }
 
   override fun update(e: AnActionEvent) {
@@ -22,7 +21,13 @@ abstract class AbstractShowDiffForSavedPatchesAction : AnActionExtensionProvider
       return
     }
     e.presentation.isVisible = true
-    e.presentation.isEnabled = VcsTreeModelData.all(changesBrowser.viewer).userObjectsStream().anyMatch {
+    val selection = if (e.getData(ChangesBrowserBase.DATA_KEY) == null) {
+      VcsTreeModelData.all(changesBrowser.viewer)
+    }
+    else {
+      VcsTreeModelData.selected(changesBrowser.viewer)
+    }
+    e.presentation.isEnabled = selection.userObjectsStream().anyMatch {
       getDiffRequestProducer(changesBrowser, it) != null
     }
   }
@@ -30,7 +35,12 @@ abstract class AbstractShowDiffForSavedPatchesAction : AnActionExtensionProvider
   override fun actionPerformed(e: AnActionEvent) {
     val changesBrowser = e.getRequiredData(SavedPatchesUi.SAVED_PATCHES_UI).changesBrowser
 
-    val selection = ListSelection.createAt(VcsTreeModelData.all(changesBrowser.viewer).userObjects(), 0)
+    val selection = if (e.getData(ChangesBrowserBase.DATA_KEY) == null) {
+      ListSelection.createAt(VcsTreeModelData.all(changesBrowser.viewer).userObjects(), 0)
+    }
+    else {
+      VcsTreeModelData.getListSelectionOrAll(changesBrowser.viewer)
+    }
     ChangesBrowserBase.showStandaloneDiff(e.project!!, changesBrowser, selection) { change ->
       getDiffRequestProducer(changesBrowser, change)
     }
@@ -47,6 +57,6 @@ class ShowDiffForSavedPatchesAction : AbstractShowDiffForSavedPatchesAction() {
 
 class CompareWithLocalForSavedPatchesAction : AbstractShowDiffForSavedPatchesAction() {
   override fun getDiffRequestProducer(changesBrowser: SavedPatchesChangesBrowser, userObject: Any): ChangeDiffRequestChain.Producer? {
-    return changesBrowser.getDiffWithLocalRequestProducer(userObject)
+    return changesBrowser.getDiffWithLocalRequestProducer(userObject, false)
   }
 }
