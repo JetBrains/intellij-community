@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
@@ -27,7 +28,6 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import java.util.concurrent.ForkJoinPool
@@ -36,13 +36,6 @@ import java.util.concurrent.atomic.AtomicReference
 @Suppress("SSBasedInspection")
 private val LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowManagerImpl")
 
-private inline fun Logger.debug(project: Project, lazyMessage: (project: String) -> @NonNls String) {
-  if (isDebugEnabled) {
-    // project.name must be not used - only projectFilePath is side effect free
-    debug(lazyMessage(project.presentableUrl ?: ""))
-  }
-}
-
 internal class InitToolWindowSetActivity : StartupActivity {
   override fun runActivity(project: Project) {
     val app = ApplicationManager.getApplication()
@@ -50,10 +43,10 @@ internal class InitToolWindowSetActivity : StartupActivity {
       return
     }
 
-    LOG.debug(project) { "schedule init (project=$it)" }
+    LOG.debug("schedule init")
     app.invokeLater(
       {
-        LOG.debug(project) { "init (project=$it)" }
+        LOG.debug("init")
 
         // frame helper is set as part of `ProjectFrameAllocator.projectLoaded`
         // - project frame must be presented at the moment of start-up activity executing.
@@ -137,26 +130,26 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
       .thenAcceptAsync(
         { ref ->
           val tasks = ref.get()
-          LOG.debug(project) { "create and layout tool windows (project=$it, tasks=${tasks?.joinToString(separator = "\n")}" }
+          LOG.debug { "tool window register tasks: ${tasks?.joinToString(separator = "\n")}"  }
 
           ref.set(null)
           createAndLayoutToolWindows(manager, tasks ?: return@thenAcceptAsync, toolWindowPane)
 
           pendingTasks.forEach(Runnable::run)
         },
-        Executor { command ->
+        Executor {
           if (EDT.isCurrentThreadEdt()) {
-            LOG.debug(project) { project -> "initialization will be performed right in the current EDT task (project=$project)" }
-            command.run()
+            LOG.debug { "initialization will be performed right in the current EDT task"  }
+            it.run()
           }
           else {
-            LOG.debug(project) { project -> "initialization is scheduled in EDT (project=$project)" }
-            ApplicationManager.getApplication().invokeLater(command, project.disposed)
+            LOG.debug { "initialization is scheduled in EDT"  }
+            ApplicationManager.getApplication().invokeLater(it, project.disposed)
           }
         }
       )
       .whenComplete { _, error ->
-        LOG.debug(project) { "initialization completed (project=$it, error=${error?.message})" }
+        LOG.debug { "initialization completed (error=${error?.message})" }
         isInitialized = true
         error?.let {
           LOG.error(it)
