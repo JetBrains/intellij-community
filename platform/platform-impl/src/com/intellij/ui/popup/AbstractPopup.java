@@ -1753,38 +1753,54 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     return popupWindow;
   }
 
-  public final void setBounds(@NotNull Rectangle bounds) {
+  @Override
+  public void setBounds(@NotNull Rectangle bounds) {
+    // do not update the bounds programmatically if the user moves or resizes the popup
+    if (!isBusy()) setBounds(bounds.getLocation(), bounds.getSize());
+  }
+
+  /**
+   * Updates the popup location and size at once.
+   * Note that this internal implementation modifies input parameters.
+   *
+   * @param location a new popup location if needed
+   * @param size     a new popup size if needed
+   */
+  private void setBounds(@Nullable Point location, @Nullable Dimension size) {
+    if (size != null) size.height += getAdComponentHeight();
     if (myPopup == null) {
-      if (!isBusy()) {
-        Dimension toSet = new Dimension(bounds.getSize());
-        toSet.height += getAdComponentHeight();
-        myForcedSize = toSet;
+      // store bounds to show popup later
+      if (location != null) myForcedLocation = location;
+      if (size != null) myForcedSize = size;
+    }
+    else {
+      MyContentPanel content = myContent;
+      if (content == null) return;
+      Window window = getContentWindow(content);
+      if (window == null) return;
+      Insets insets = content.getInsets();
+      if (location == null) {
+        location = window.getLocation(); // use current window location
       }
-      myForcedLocation = bounds.getLocation();
-      return;
-    }
-    if (isBusy()) {
-      return;
-    }
-    Window cw = getContentWindow(myContent);
-    if (cw == null) {
-      return;
-    }
-    cw.setCursor(Cursor.getDefaultCursor());
-
-    Rectangle result = new Rectangle(bounds);
-    result.height += getAdComponentHeight();
-    JBInsets.addTo(result, myContent.getInsets());
-
-    if (myLocateByContent) {
-      Dimension headerCorrectionSize = myHeaderPanel.getPreferredSize();
-      if (headerCorrectionSize != null) {
-        result.y -= headerCorrectionSize.height;
+      else {
+        fixLocateByContent(location, false);
+        if (insets != null) {
+          location.x -= insets.left;
+          location.y -= insets.top;
+        }
       }
+      if (size == null) {
+        size = window.getSize(); // use current window size
+      }
+      else {
+        JBInsets.addTo(size, insets);
+        content.setPreferredSize(size);
+        size = window.getPreferredSize();
+      }
+      window.setBounds(location.x, location.y, size.width, size.height);
+      window.setCursor(Cursor.getDefaultCursor());
+      updateMaskAndAlpha(window);
     }
-
-    cw.setBounds(result);
-    updateMaskAndAlpha(cw);
   }
 
   @Override
