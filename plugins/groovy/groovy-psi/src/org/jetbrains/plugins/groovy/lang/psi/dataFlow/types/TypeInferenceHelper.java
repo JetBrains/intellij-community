@@ -145,7 +145,7 @@ public final class TypeInferenceHelper {
 
   public static Instruction[] getFlatControlFlow(@NotNull final GrControlFlowOwner scope) {
     if (isFlatDFAAllowed()) {
-      return CachedValuesManager.getCachedValue(scope, () -> Result.create(ControlFlowBuilder.buildFlatControlFlow(scope), scope));
+      return CachedValuesManager.getCachedValue(scope, () -> Result.create(ControlFlowBuilder.buildFlatControlFlow(scope), MODIFICATION_COUNT));
     } else {
       return scope.getControlFlow();
     }
