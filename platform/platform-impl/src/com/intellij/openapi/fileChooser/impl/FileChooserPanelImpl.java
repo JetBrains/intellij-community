@@ -294,8 +294,12 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
   @Override
   public @NotNull List<Path> selectedPaths() {
-    boolean listFocused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == myList;
-    return listFocused ? ContainerUtil.map(myList.getSelectedValuesList(), r -> requireNonNull(r.path)) : List.of();
+    return KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == myList
+           ? myList.getSelectedValuesList().stream()
+             .filter(r -> r.name != FsItem.UPLINK && r.path != null && r.path.getParent() != null)
+             .map(r -> r.path)
+             .collect(Collectors.toList())
+           : List.of();
   }
 
   @Override
