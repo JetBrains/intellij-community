@@ -34,7 +34,10 @@ class EditShortcutToIntentionAction(intention: IntentionAction)
   : AbstractEditIntentionShortcutAction(intention, "edit.intention.shortcut") {
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-    IntentionShortcutManager.getInstance().promptForIntentionShortcut(intention, project)
+    IntentionShortcutManager.getInstance().apply {
+      removeFirstIntentionShortcut(intention)
+      promptForIntentionShortcut(intention, project)
+    }
   }
 }
 
