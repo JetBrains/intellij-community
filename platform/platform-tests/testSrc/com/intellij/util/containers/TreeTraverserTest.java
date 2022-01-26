@@ -1026,4 +1026,10 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(it.toList(), t.forceDisregard(new F(false)).reset().toList());
   }
 
+  public void testSizeAndIterationOfSingletonAreCorrect() {
+    Object element = Arrays.asList(1, 2);
+    JBIterable<Object> iterable = JBIterable.of(element);
+    assertEquals(1, iterable.size());
+    assertEquals(element, iterable.first());
+  }
 }
