@@ -49,6 +49,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -490,19 +491,25 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     if (frame == null) {
       return;
     }
-
-    String fileTitle = null;
-    Path ioFile = null;
     VirtualFile file = getCurrentFile();
-    if (file != null) {
+    if (file == null) {
+      frame.setFileTitle(null, null);
+    }
+    else  {
+      Path ioFile = null;
       try {
         ioFile = file instanceof LightVirtualFileBase ? null : Paths.get(file.getPresentableUrl());
       }
       catch (InvalidPathException ignored) {
       }
-      fileTitle = FrameTitleBuilder.getInstance().getFileTitle(project, file);
+      Path finalIoFile = ioFile;
+      ReadAction.nonBlocking(() -> FrameTitleBuilder.getInstance().getFileTitle(project, file))
+        .expireWith(frame instanceof Disposable ? (Disposable)frame : project)
+        .finishOnUiThread(ModalityState.any(), (@NlsContexts.TabTitle String title) -> {
+          frame.setFileTitle(title, finalIoFile);
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
-    frame.setFileTitle(fileTitle, ioFile);
   }
 
   protected @Nullable IdeFrameEx getFrame(@NotNull Project project) {

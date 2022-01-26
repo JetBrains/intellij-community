@@ -8,9 +8,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionGuardImpl;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -42,7 +40,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
@@ -1059,14 +1057,15 @@ public final class EditorWindow {
 
   void updateFileName(@NotNull VirtualFile file) {
     int index = findFileEditorIndex(file);
-    if (index != -1) {
-      setTitleAt(index, SlowOperations.allowSlowOperations(
-        () -> EditorTabPresentationUtil.getEditorTabTitle(getManager().getProject(), file)
-      ));
-      setToolTipTextAt(index, UISettings.getInstance().getShowTabsTooltips()
-                              ? getManager().getFileTooltipText(file)
-                              : null);
-    }
+    if (index == -1) return;
+    ReadAction.nonBlocking(() -> EditorTabPresentationUtil.getEditorTabTitle(getManager().getProject(), file))
+      .expireWith(myOwner)
+      .finishOnUiThread(ModalityState.any(), (@NlsContexts.TabTitle String title) -> {
+        int index1 = findFileEditorIndex(file);
+        if (index1 != -1) setTitleAt(index1, title);
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
+    setToolTipTextAt(index, UISettings.getInstance().getShowTabsTooltips() ? getManager().getFileTooltipText(file) : null);
   }
 
   @Nullable
