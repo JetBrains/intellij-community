@@ -61,7 +61,7 @@ final class InferenceCache {
    * Instructions outside any cycle. The control flow graph does not have backward edges on these instructions, so it is safe
    * to assume that DFA visits them <b>only once<b/>.
    */
-  private final Lazy<Set<Integer>> simpleInstructions;
+  private final Lazy<BitSet> simpleInstructions;
 
   InferenceCache(@NotNull GrControlFlowOwner scope) {
     myScope = scope;
@@ -135,7 +135,7 @@ final class InferenceCache {
    * This method helps to reduce number of DFA re-invocations by caching known variable types when it is certain that they won't be changed.
    */
   void publishDescriptor(@NotNull TypeDfaState intermediateState, @NotNull Instruction instruction) {
-    if (simpleInstructions.getValue().contains(instruction.num()) && TypeInferenceHelper.getCurrentContext() == TypeInferenceHelper.getTopContext()) {
+    if (simpleInstructions.getValue().get(instruction.num()) && TypeInferenceHelper.getCurrentContext() == TypeInferenceHelper.getTopContext()) {
       myVarTypes[instruction.num()].getAndUpdate(oldState -> TypesSemilattice.mergeForCaching(oldState, intermediateState));
     }
   }
