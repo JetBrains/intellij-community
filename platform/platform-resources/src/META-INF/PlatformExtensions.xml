@@ -1295,7 +1295,8 @@
     <advancedSetting id="ide.max.recent.files" default="50" groupKey="group.advanced.settings.ide" service="com.intellij.ide.ui.UISettings" property="recentFilesLimit"/>
     <advancedSetting id="ide.max.recent.locations" default="25" groupKey="group.advanced.settings.ide" service="com.intellij.ide.ui.UISettings" property="recentLocationsLimit"/>
     <advancedSetting id="temporary.configurations.limit" default="5" groupKey="group.advanced.settings.ide"/>
-    <advancedSetting id="confirm.rerun.with.termination" default="true" groupKey="group.advanced.settings.ide"/>
+    <advancedSetting id="confirm.rerun.with.termination" default="true" groupKey="group.advanced.settings.run"/>
+    <advancedSetting id="start.run.configurations.pinned" default="false" groupKey="group.advanced.settings.run"/>
     <advancedSetting id="edit.source.on.enter.key.request.focus.in.editor" default="true" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="ide.tree.collapse.recursively" default="true" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="ide.open.readme.md.on.startup" default="true" groupKey="group.advanced.settings.startup"/>
