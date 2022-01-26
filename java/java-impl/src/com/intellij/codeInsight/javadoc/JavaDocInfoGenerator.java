@@ -1618,6 +1618,8 @@ public class JavaDocInfoGenerator {
         }
         else if (tagName.equals(SNIPPET_TAG)) {
           generateSnippetValue(buffer, tag);
+        } else {
+          generateUnknownTagValue(buffer, tag);
         }
       }
       else {
@@ -1630,6 +1632,19 @@ public class JavaDocInfoGenerator {
         }
         appendPlainText(buffer, text);
       }
+    }
+  }
+
+  private static void generateUnknownTagValue(StringBuilder buffer, PsiInlineDocTag tag) {
+    var children = tag.getChildren();
+    for (PsiElement child : children) {
+      if (child instanceof PsiDocToken) {
+        var tokenType = ((PsiDocToken)child).getTokenType();
+        if (tokenType == JavaDocTokenType.DOC_INLINE_TAG_END || tokenType == JavaDocTokenType.DOC_INLINE_TAG_START || tokenType == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
+          continue;
+        }
+      }
+      appendPlainText(buffer, child.getText());
     }
   }
 

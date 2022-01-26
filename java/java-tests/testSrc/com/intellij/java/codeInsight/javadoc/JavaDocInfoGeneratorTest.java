@@ -122,6 +122,8 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testEscapeAngleBracketsInCode() { doTestClass(); }
   public void testInlineTagSnippet() { doTestClass(); }
   public void testInlineTagSnippetWithoutBody() { doTestClass(); }
+  public void testUnknownInlineTag() { doTestClass(); }
+  public void testUnknownInlineMultilineTag() { doTestClass(); }
 
   public void testRepeatableAnnotations() {
     useJava8();
