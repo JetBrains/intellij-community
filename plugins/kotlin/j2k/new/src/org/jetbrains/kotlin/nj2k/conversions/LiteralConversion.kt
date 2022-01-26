@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
@@ -68,7 +68,7 @@ class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableCo
             if (leadingBackslashes.length % 2 == 0)
                 String.format("%s\\u%04x", leadingBackslashes, Integer.parseInt(matchResult.groupValues[2], 8))
             else matchResult.value
-        }.replace("""(?<!\\)\$([A-Za-z]+|\{)""".toRegex(), "\\\\$0")
+        }.replace("""\$([A-Za-z]+|\{)""".toRegex(), "\\\\$0")
             .replace( "\\f", "\\u000c")
 
 
