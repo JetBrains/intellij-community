@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.codeInsight.CodeSmellInfo;
@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.CodeSmellDetector;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -72,17 +73,19 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
 
       for (CodeSmellInfo smellInfo : smellList) {
         final VirtualFile file = fileManager.getFile(smellInfo.getDocument());
+        if (file == null) continue;
+        String presentableUrl = file.getPresentableUrl();
         final OpenFileDescriptor navigatable =
           new OpenFileDescriptor(myProject, file, smellInfo.getStartLine(), smellInfo.getStartColumn());
         final String exportPrefix = NewErrorTreeViewPanel.createExportPrefix(smellInfo.getStartLine() + 1);
         final String rendererPrefix =
           NewErrorTreeViewPanel.createRendererPrefix(smellInfo.getStartLine() + 1, smellInfo.getStartColumn() + 1);
         if (smellInfo.getSeverity() == HighlightSeverity.ERROR) {
-          errorTreeView.addMessage(MessageCategory.ERROR, new String[]{smellInfo.getDescription()}, file.getPresentableUrl(), navigatable,
+          errorTreeView.addMessage(MessageCategory.ERROR, new String[]{smellInfo.getDescription()}, FileUtil.getLocationRelativeToUserHome(presentableUrl), navigatable,
                                    exportPrefix, rendererPrefix, null);
         }
         else {//if (smellInfo.getSeverity() == HighlightSeverity.WARNING) {
-          errorTreeView.addMessage(MessageCategory.WARNING, new String[]{smellInfo.getDescription()}, file.getPresentableUrl(),
+          errorTreeView.addMessage(MessageCategory.WARNING, new String[]{smellInfo.getDescription()}, FileUtil.getLocationRelativeToUserHome(presentableUrl),
                                    navigatable, exportPrefix, rendererPrefix, null);
         }
 
