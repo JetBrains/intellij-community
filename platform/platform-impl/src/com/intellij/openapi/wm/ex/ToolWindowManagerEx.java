@@ -1,65 +1,84 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.ex
+package com.intellij.openapi.wm.ex;
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.openapi.wm.ToolWindowEP
-import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.impl.DesktopLayout
-import com.intellij.ui.AppUIUtil
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.impl.DesktopLayout;
+import com.intellij.ui.AppUIUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-abstract class ToolWindowManagerEx : ToolWindowManager() {
-  companion object {
-    @JvmStatic
-    fun getInstanceEx(project: Project): ToolWindowManagerEx = getInstance(project) as ToolWindowManagerEx
+import java.util.List;
 
-    fun hideToolWindowBalloon(id: String, project: Project) {
-      AppUIUtil.invokeLaterIfProjectAlive(project) {
-        val balloon = getInstance(project).getToolWindowBalloon(id)
-        balloon?.hide()
-      }
-    }
+public abstract class ToolWindowManagerEx extends ToolWindowManager {
+  /**
+   * @deprecated Use {{@link #registerToolWindow(RegisterToolWindowTask)}}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public abstract void initToolWindow(@NotNull ToolWindowEP bean);
+
+  public static @NotNull ToolWindowManagerEx getInstanceEx(@NotNull Project project) {
+    return (ToolWindowManagerEx)getInstance(project);
   }
 
+  /**
+   * @deprecated Use {@link ToolWindowManagerListener#TOPIC}
+   */
+  @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated("Use {{@link #registerToolWindow(RegisterToolWindowTask)}}")
-  abstract fun initToolWindow(bean: ToolWindowEP)
-
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}")
-  open fun addToolWindowManagerListener(listener: ToolWindowManagerListener) {
+  public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener listener) {
   }
 
+  /**
+   * @deprecated Use {@link ToolWindowManagerListener#TOPIC}
+   */
+  @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}")
-  open fun addToolWindowManagerListener(listener: ToolWindowManagerListener, parentDisposable: Disposable) {
+  public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener listener, @NotNull Disposable parentDisposable) {
   }
 
+  /**
+   * @deprecated Use {@link ToolWindowManagerListener#TOPIC}
+   */
+  @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}")
-  open fun removeToolWindowManagerListener(listener: ToolWindowManagerListener) {
+  public void removeToolWindowManagerListener(@NotNull ToolWindowManagerListener listener) {
   }
 
   /**
    * @return layout of tool windows.
    */
-  abstract fun getLayout(): DesktopLayout
+  public abstract @NotNull DesktopLayout getLayout();
 
-  abstract fun setLayout(newLayout: DesktopLayout)
+  public abstract void setLayoutToRestoreLater(@Nullable DesktopLayout layout);
+
+  public abstract @Nullable DesktopLayout getLayoutToRestoreLater();
 
   /**
-   * Copied `layout` into internal layout and rearranges tool windows.
+   * Copied {@code layout} into internal layout and rearranges tool windows.
    */
-  abstract var layoutToRestoreLater: DesktopLayout?
+  public abstract void setLayout(@NotNull DesktopLayout layout);
 
-  abstract fun clearSideStack()
+  public abstract void clearSideStack();
 
-  open fun shouldUpdateToolWindowContent(toolWindow: ToolWindow): Boolean = toolWindow.isVisible
+  public boolean shouldUpdateToolWindowContent(@NotNull ToolWindow toolWindow) {
+    return toolWindow.isVisible();
+  }
 
-  abstract fun hideToolWindow(id: String, hideSide: Boolean)
+  public abstract void hideToolWindow(@NotNull String id, boolean hideSide);
 
-  abstract fun getIdsOn(anchor: ToolWindowAnchor): List<String?>
+  public abstract @NotNull List<String> getIdsOn(@NotNull ToolWindowAnchor anchor);
+
+  public static void hideToolWindowBalloon(@NotNull String id, @NotNull Project project) {
+    AppUIUtil.invokeLaterIfProjectAlive(project, () -> {
+      Balloon balloon = ToolWindowManager.getInstance(project).getToolWindowBalloon(id);
+      if (balloon != null) {
+        balloon.hide();
+      }
+    });
+  }
 }
