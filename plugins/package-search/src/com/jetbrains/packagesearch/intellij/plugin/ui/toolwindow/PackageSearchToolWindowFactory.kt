@@ -21,8 +21,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 
-internal class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
+class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
+
     companion object {
+
         private val ToolWindowId = PackageSearchBundle.message("toolwindow.stripe.Dependencies")
 
         private fun getToolWindow(project: Project) = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId)
@@ -32,26 +34,29 @@ internal class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
         }
     }
 
-    override fun isApplicable(project: Project): Boolean {
-        if (PluginEnvironment.isTestEnvironment) {
-            return false
-        }
+    override fun isApplicable(project: Project) = when {
+        PluginEnvironment.isTestEnvironment -> false
+        else -> {
+            val isAvailable = project.packageSearchProjectService.projectModulesStateFlow.value.isNotEmpty()
 
-        val isAvailable = project.packageSearchProjectService.projectModulesStateFlow.value.isNotEmpty()
-        if (!isAvailable) {
-            project.packageSearchProjectService.projectModulesStateFlow.filter { it.isNotEmpty() }
-                .take(1)
-                .map {
-                    RegisterToolWindowTask.closable(
-                        ToolWindowId, PackageSearchBundle.messagePointer("toolwindow.stripe.Dependencies"), PackageSearchIcons.ArtifactSmall
-                    )
-                }
-                .map { toolWindowTask -> project.toolWindowManager.registerToolWindow(toolWindowTask) }
-                .onEach { toolWindow -> toolWindow.initialize(project) }
-                .flowOn(Dispatchers.EDT)
-                .launchIn(project.lifecycleScope)
+            if (!isAvailable) {
+                project.packageSearchProjectService.projectModulesStateFlow
+                    .filter { it.isNotEmpty() }
+                    .take(1)
+                    .map {
+                        RegisterToolWindowTask.closable(
+                            ToolWindowId,
+                            PackageSearchBundle.messagePointer("toolwindow.stripe.Dependencies"),
+                            PackageSearchIcons.ArtifactSmall
+                        )
+                    }
+                    .map { toolWindowTask -> project.toolWindowManager.registerToolWindow(toolWindowTask) }
+                    .onEach { toolWindow -> toolWindow.initialize(project) }
+                    .flowOn(Dispatchers.EDT)
+                    .launchIn(project.lifecycleScope)
+            }
+            isAvailable
         }
-        return isAvailable
     }
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) = toolWindow.initialize(project)

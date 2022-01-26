@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.ui;
 
 import com.intellij.diagnostic.DiagnosticBundle;
@@ -29,8 +29,10 @@ import java.util.stream.Stream;
 
 @ApiStatus.Experimental
 final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAware {
+
   @Override
-  public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
+  public void createToolWindowContent(@NotNull Project project,
+                                      @NotNull ToolWindow toolWindow) {
     TableProvidingListener listener = new TableProvidingListener();
 
     project.getMessageBus()
@@ -42,11 +44,13 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
     listener.createNamedPanels()
       .map(entry -> {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.add(entry.getValue(), BorderLayout.CENTER);
+        panel.add(entry.getValue(),
+                  BorderLayout.CENTER);
 
-        return contentFactory.createContent(panel, entry.getKey(), false);
-      })
-      .forEach(manager::addContent);
+        return contentFactory.createContent(panel,
+                                            entry.getKey(),
+                                            false);
+      }).forEach(manager::addContent);
   }
 
   @Override
@@ -59,7 +63,8 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
     return EventWatcher.isEnabled();
   }
 
-  private static final class TableProvidingListener implements RunnablesListener {
+  private static class TableProvidingListener implements RunnablesListener {
+
     private final @NotNull ListTableModel<InvocationsInfo> myInvocationsModel;
     private final @NotNull ListTableModel<InvocationDescription> myRunnablesModel;
     private final @NotNull ListTableModel<WrapperDescription> myWrappersModel;

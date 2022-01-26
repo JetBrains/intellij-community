@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification;
 
 import com.intellij.ide.IdeBundle;
@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public final class ActionCenter {
+public class ActionCenter {
   public static @NotNull List<Notification> getNotifications(@Nullable Project project, boolean createService) {
     if (isEnabled()) {
       return NotificationsToolWindowFactory.Companion.getNotifications(project);
@@ -55,6 +55,6 @@ public final class ActionCenter {
   }
 
   public static boolean isEnabled() {
-    return Registry.is("ide.notification.action.center", true);
+    return Registry.is("ide.notification.action.center", false);
   }
 }

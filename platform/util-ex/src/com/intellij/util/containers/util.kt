@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers
 
 import com.intellij.openapi.diagnostic.Logger
@@ -147,11 +147,11 @@ inline fun MutableList<Throwable>.catch(runnable: () -> Unit) {
 }
 
 fun <T> MutableList<T>.addIfNotNull(e: T?) {
-  e?.let(::add)
+  e?.let { add(it) }
 }
 
 fun <T> MutableList<T>.addAllIfNotNull(vararg elements: T?) {
-  elements.forEach { e -> e?.let(::add) }
+  elements.forEach { e -> e?.let { add(it) } }
 }
 
 inline fun <T, R> Array<out T>.mapSmart(transform: (T) -> R): List<R> {
