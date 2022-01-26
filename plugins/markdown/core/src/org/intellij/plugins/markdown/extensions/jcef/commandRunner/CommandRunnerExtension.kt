@@ -22,9 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
-import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownFileEditorUtils
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
@@ -215,7 +213,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
     private const val RUN_LINE_ICON = "run.png"
     private const val RUN_BLOCK_ICON = "runrun.png"
 
-    fun getRunnerByFile(file: VirtualFile?) : CommandRunnerExtension? {
+    fun getRunnerByFile(file: VirtualFile) : CommandRunnerExtension? {
       val provider = MarkdownExtensionsUtil.findBrowserExtensionProvider<Provider>()
       return provider?.extensions?.get(file)
     }
