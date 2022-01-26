@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.tabs.JBEditorTabsBase;
 import com.intellij.ui.tabs.JBTabsPresentation;
 import com.intellij.ui.tabs.impl.singleRow.CompressibleSingleRowLayout;
@@ -73,7 +74,7 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
 
   @Override
   public boolean useSmallLabels() {
-    return UISettings.getInstance().getUseSmallLabelsOnTabs();
+    return UISettings.getInstance().getUseSmallLabelsOnTabs() && !ExperimentalUI.isNewUI();
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -8,6 +8,7 @@ import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.util.NlsContexts.Label
 import com.intellij.openapi.util.text.Strings
+import com.intellij.ui.ExperimentalUI
 import java.util.function.Supplier
 
 const val APPEARANCE_ID = "appearance"
@@ -44,15 +45,18 @@ internal class AppearanceOptionsTopHitProvider : OptionsSearchTopHitProvider.App
   override fun getId() = APPEARANCE_ID
 
   override fun getOptions(): List<OptionDescription> {
-    return (getAppearanceOptionDescriptors() + sequenceOf(
-        cdShowMainToolbar,
-        cdShowStatusBar,
-        cdShowNavigationBar,
-        cdShowMembersInNavigationBar,
-        cdUseSmallTabLabels,
-        cdShowEditorPreview,
-        cdShowBalloons
-      ).map(CheckboxDescriptor::asUiOptionDescriptor)).toList()
+    var list = sequenceOf(
+      cdShowMainToolbar,
+      cdShowStatusBar,
+      cdShowNavigationBar,
+      cdShowMembersInNavigationBar)
+    if (!ExperimentalUI.isNewUI()) {
+      list += cdUseSmallTabLabels
+    }
+    list += cdShowEditorPreview
+    list += cdShowBalloons
+    val allOptions = getAppearanceOptionDescriptors() + list.map(CheckboxDescriptor::asUiOptionDescriptor)
+    return allOptions.toList()
   }
 
   companion object {
