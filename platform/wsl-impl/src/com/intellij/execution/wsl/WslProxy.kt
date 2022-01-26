@@ -11,7 +11,6 @@ import io.ktor.network.sockets.openWriteChannel
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.close
-import io.ktor.utils.io.core.ExperimentalIoApi
 import io.ktor.utils.io.jvm.javaio.toByteReadChannel
 import io.ktor.utils.io.readUTF8Line
 import kotlinx.coroutines.*
@@ -35,7 +34,6 @@ import kotlin.coroutines.coroutineContext
  * [dispose] this object to stop forwarding.
  *
  */
-@OptIn(ExperimentalIoApi::class)
 class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int) : Disposable {
   private companion object {
     suspend fun connectChannels(source: ByteReadChannel, dest: ByteWriteChannel) {

@@ -26,31 +26,8 @@
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="module-library">
-      <library name="io.ktor.network.jvm" type="repository">
-        <properties maven-id="io.ktor:ktor-network-jvm:1.6.0">
-          <exclude>
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-            <dependency maven-id="org.slf4j:slf4j-api" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
-          </exclude>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/1.6.0/ktor-network-jvm-1.6.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/1.6.0/ktor-utils-jvm-1.6.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/1.6.0/ktor-io-jvm-1.6.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/1.6.0/ktor-network-jvm-1.6.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/1.6.0/ktor-utils-jvm-1.6.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/1.6.0/ktor-io-jvm-1.6.0-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="fleet.ktor.network" />
   </component>
 </module>
