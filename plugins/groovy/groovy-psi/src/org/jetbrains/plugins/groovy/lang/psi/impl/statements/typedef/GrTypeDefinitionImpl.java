@@ -331,12 +331,12 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @Nullable
   @Override
-  public PsiMethod findMethodBySignature(PsiMethod patternMethod, boolean checkBases) {
+  public PsiMethod findMethodBySignature(@NotNull PsiMethod patternMethod, boolean checkBases) {
     return GrClassImplUtil.findMethodBySignature(this, patternMethod, checkBases);
   }
 
   @Override
-  public PsiMethod @NotNull [] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
+  public PsiMethod @NotNull [] findMethodsBySignature(@NotNull PsiMethod patternMethod, boolean checkBases) {
     return GrClassImplUtil.findMethodsBySignature(this, patternMethod, checkBases);
   }
 
@@ -357,7 +357,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @NotNull
   @Override
-  public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(String name, boolean checkBases) {
+  public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NotNull String name, boolean checkBases) {
     return GrClassImplUtil.findMethodsAndTheirSubstitutorsByName(this, name, checkBases);
   }
 
@@ -432,7 +432,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   }
 
   @Override
-  public boolean isInheritorDeep(PsiClass baseClass, @Nullable PsiClass classToByPass) {
+  public boolean isInheritorDeep(@NotNull PsiClass baseClass, @Nullable PsiClass classToByPass) {
     return InheritanceImplUtil.isInheritorDeep(this, baseClass, classToByPass);
   }
 

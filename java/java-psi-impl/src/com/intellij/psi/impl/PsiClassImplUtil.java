@@ -61,7 +61,7 @@ public final class PsiClassImplUtil {
   }
 
   @Nullable
-  public static PsiField findFieldByName(@NotNull PsiClass aClass, String name, boolean checkBases) {
+  public static PsiField findFieldByName(@NotNull PsiClass aClass, @NotNull String name, boolean checkBases) {
     List<PsiMember> byMap = findByMap(aClass, name, checkBases, MemberType.FIELD);
     return byMap.isEmpty() ? null : (PsiField)byMap.get(0);
   }
@@ -132,11 +132,8 @@ public final class PsiClassImplUtil {
         !processMembers(state, processor, getMap(psiClass).getAllMembers(MemberType.FIELD, name))) {
       return false;
     }
-    if ((classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) &&
-        !processMembers(state, processor, getMap(psiClass).getAllMembers(MemberType.CLASS, name))) {
-      return false;
-    }
-    return true;
+    return (classHint != null && !classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) ||
+           processMembers(state, processor, getMap(psiClass).getAllMembers(MemberType.CLASS, name));
   }
 
   private static boolean processMembers(ResolveState state, PsiScopeProcessor processor, PsiMember @NotNull[] members) {
@@ -257,7 +254,7 @@ public final class PsiClassImplUtil {
       return new LocalSearchScope(aClass);
     }
     if (aClass instanceof StubBasedPsiElement) {
-      final StubElement stubElement = ((StubBasedPsiElement<?>)aClass).getStub();
+      StubElement stubElement = ((StubBasedPsiElement<?>)aClass).getStub();
       if (stubElement instanceof PsiClassStub) {
         PsiClassStub<?> stub = (PsiClassStub<?>)stubElement;
         if (stub instanceof PsiClassStubImpl &&
@@ -270,7 +267,7 @@ public final class PsiClassImplUtil {
     else {
       PsiElement parent = aClass.getParent();
       if (parent instanceof PsiDeclarationStatement) {
-        final PsiElement grandParent = parent.getParent();
+        PsiElement grandParent = parent.getParent();
         if (grandParent instanceof PsiCodeBlock) {
           return new LocalSearchScope(grandParent);
           // Actually: The scope of a local class or interface declaration immediately enclosed by a block is the rest
@@ -346,7 +343,7 @@ public final class PsiClassImplUtil {
     private final @NotNull List<PsiClass> myAllSupers;
     private final ConcurrentMap<MemberType, PsiMember[]> myAllMembers;
 
-    MemberCache(PsiClass psiClass, GlobalSearchScope scope) {
+    MemberCache(@NotNull PsiClass psiClass, @NotNull GlobalSearchScope scope) {
       myAllSupers = JBTreeTraverser
         .from((PsiClass c) -> ContainerUtil.mapNotNull(c.getSupers(), s -> PsiSuperMethodUtil.correctClassByScope(s, scope)))
         .unique()
@@ -739,7 +736,7 @@ public final class PsiClassImplUtil {
   }
 
   @Nullable
-  private static PsiClass findSpecialSuperClass(@NotNull PsiClass psiClass, String className) {
+  private static PsiClass findSpecialSuperClass(@NotNull PsiClass psiClass, @NotNull String className) {
     return JavaPsiFacade.getInstance(psiClass.getProject()).findClass(className, psiClass.getResolveScope());
   }
 
@@ -916,7 +913,7 @@ public final class PsiClassImplUtil {
 
   @NotNull
   public static List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NotNull PsiClass psiClass,
-                                                                                            String name,
+                                                                                            @NotNull String name,
                                                                                             boolean checkBases) {
     if (!checkBases) {
       PsiMethod[] methodsByName = psiClass.findMethodsByName(name, false);
