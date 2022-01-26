@@ -25,14 +25,15 @@ final class KotlinBinaries {
     this.communityHome = communityHome
   }
 
-  @Lazy Path kotlinPluginHome = {
-    KotlinCompilerDependencyDownloader.downloadAndExtractKotlinPlugin(new BuildDependenciesCommunityRoot(Path.of(communityHome)))
+  @Lazy Path kotlinJpsPluginJar = {
+    KotlinCompilerDependencyDownloader.downloadKotlinJpsPlugin(new BuildDependenciesCommunityRoot(Path.of(communityHome)))
   }()
 
   @Lazy Path kotlinCompilerHome = {
-    Path compilerHome = kotlinPluginHome.resolve("Kotlin")
-    if (!Files.isDirectory(compilerHome)) {
-      throw new IllegalStateException("Kotlin compiler home in missing under Kotlin plugin: " + compilerHome)
+    Path compilerHome = KotlinCompilerDependencyDownloader.downloadAndExtractKotlinCompiler(new BuildDependenciesCommunityRoot(Path.of(communityHome)))
+    def kotlinc = compilerHome.resolve("bin/kotlinc")
+    if (!Files.exists(kotlinc)) {
+      throw new IllegalStateException("Kotlin compiler home is missing under the path: " + compilerHome)
     }
     compilerHome
   }()
@@ -40,23 +41,15 @@ final class KotlinBinaries {
   /**
    * we need to add Kotlin JPS plugin to classpath before loading the project to ensure that Kotlin settings will be properly loaded
    */
-  private void ensureKotlinJpsPluginIsAddedToClassPath(AntBuilder ant, Path kotlinPlugin) {
+  private void ensureKotlinJpsPluginIsAddedToClassPath(AntBuilder ant, Path kotlinJpsPluginJar, Path kotlinCompilerHome) {
     if (KotlinBinaries.class.getResource("/org/jetbrains/kotlin/jps/build/KotlinBuilder.class") != null) {
       return
     }
 
-    Path compilerHome = kotlinPlugin.resolve("Kotlin")
-
-    def kotlinPluginLibPath = "$compilerHome/lib"
-    def kotlincLibPath = "$compilerHome/kotlinc/lib"
-    if (new File(kotlinPluginLibPath).exists() && new File(kotlincLibPath).exists()) {
-      ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-reflect.jar", "kotlin-common.jar"].each {
-        def completePath = "$kotlinPluginLibPath/$it"
-        if (!new File(completePath).exists()) {
-          throw new IllegalStateException("KotlinBinaries: '$completePath' doesn't exist")
-        }
-        BuildUtils.addToJpsClassPath(completePath, ant)
-      }
+    def kotlincLibPath = "$kotlinCompilerHome/lib"
+    def kotlinJpsPluginJarFile = kotlinJpsPluginJar.toFile()
+    if (kotlinJpsPluginJarFile.exists() && new File(kotlincLibPath).exists()) {
+      BuildUtils.addToJpsClassPath(kotlinJpsPluginJarFile.absolutePath, ant)
       ["kotlin-stdlib.jar"].each {
         def completePath = "$kotlincLibPath/$it"
         if (!new File(completePath).exists()) {
@@ -66,7 +59,7 @@ final class KotlinBinaries {
       }
     }
     else {
-      messages.error("Could not find Kotlin JARs at $kotlinPluginLibPath and $kotlincLibPath")
+      messages.error("Could not find Kotlin JARs at $kotlinJpsPluginJar and $kotlinCompilerHome")
     }
   }
 
@@ -78,7 +71,7 @@ final class KotlinBinaries {
     if (!options.skipDependencySetup) {
       def isCompilerRequired = isCompilerRequired()
       if (isCompilerRequired) {
-        ensureKotlinJpsPluginIsAddedToClassPath(ant, kotlinPluginHome)
+        ensureKotlinJpsPluginIsAddedToClassPath(ant, kotlinJpsPluginJar, kotlinCompilerHome)
       }
     }
   }

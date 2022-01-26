@@ -208,7 +208,9 @@ final class CompilationContextImpl implements CompilationContext {
     def model = JpsElementFactory.instance.createModel()
     def pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
     if (kotlinBinaries.isCompilerRequired()) {
-      pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "$kotlinBinaries.kotlinCompilerHome/kotlinc")
+      def kotlinCompilerHome = kotlinBinaries.kotlinCompilerHome
+      System.setProperty("jps.kotlin.home", kotlinCompilerHome.toFile().absolutePath)
+      pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "${kotlinCompilerHome}")
     }
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtilRt.toSystemIndependentName(new File(SystemProperties.getUserHome(), ".m2/repository").absolutePath))
 
