@@ -235,6 +235,11 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   }
 
   @Override
+  public @NotNull JComponent getComponent() {
+    return this;
+  }
+
+  @Override
   public void load(@Nullable Path path) {
     if (path == null || path.isAbsolute()) {
       doLoad(path);
@@ -280,6 +285,12 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         }
       }
     }
+  }
+
+  @Override
+  public @NotNull List<Path> selectedPaths() {
+    boolean listFocused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == myList;
+    return listFocused ? ContainerUtil.map(myList.getSelectedValuesList(), r -> requireNonNull(r.path)) : List.of();
   }
 
   @Override
