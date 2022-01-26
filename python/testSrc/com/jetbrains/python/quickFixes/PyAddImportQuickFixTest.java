@@ -16,6 +16,7 @@
 package com.jetbrains.python.quickFixes;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -340,6 +341,10 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     GlobalSearchScope scope = GlobalSearchScope.allScope(myFixture.getProject());
     List<PyFile> djangoPackages = PyModuleNameIndex.findByQualifiedName(QualifiedName.fromComponents("django"),
                                                                        myFixture.getProject(), scope);
+    if (djangoPackages.size() != 1) {
+      dumpSdkRoots();
+      dumpDjangoModulesFromModuleIndex(scope);
+    }
     PyFile djangoPackage = assertOneElement(djangoPackages);
     assertTrue(PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(djangoPackage));
 
@@ -349,10 +354,19 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
   // PY-46361
   public void testClassesFromPythonSkeletonsNotSuggested() {
     PyClass djangoViewClass = PyClassNameIndex.findClass("django.views.generic.base.View", myFixture.getProject());
+    if (djangoViewClass == null) {
+      dumpSdkRoots();
+      dumpDjangoModulesFromModuleIndex(GlobalSearchScope.allScope(myFixture.getProject()));
+    }
     assertNotNull(djangoViewClass);
     assertTrue(PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(djangoViewClass.getContainingFile()));
 
     doMultiFileNegativeTest("Import");
+  }
+
+  private static void dumpDjangoModulesFromModuleIndex(@NotNull GlobalSearchScope scope) {
+    final List<PyFile> djangoModules = PyModuleNameIndex.findByShortName("django", scope.getProject(), scope);
+    System.out.println(StringUtil.join(djangoModules, m -> m.getVirtualFile().getPath(), "\n"));
   }
 
   // PY-46344

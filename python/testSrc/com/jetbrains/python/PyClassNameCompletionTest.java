@@ -189,6 +189,9 @@ public class PyClassNameCompletionTest extends PyTestCase {
     assertNull(ndarray);
 
     PyClass ndarrayUserSkeleton = PyClassNameIndex.findClass("numpy.core.multiarray.ndarray", myFixture.getProject());
+    if (ndarrayUserSkeleton == null) {
+      dumpSdkRoots();
+    }
     assertNotNull(ndarrayUserSkeleton);
     assertTrue(PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(ndarrayUserSkeleton.getContainingFile()));
   }
