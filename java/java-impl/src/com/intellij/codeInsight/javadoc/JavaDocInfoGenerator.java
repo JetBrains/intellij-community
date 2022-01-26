@@ -688,9 +688,7 @@ public class JavaDocInfoGenerator {
     PsiDocComment comment = getDocComment(aClass);
     if (comment != null) {
       generateCommonSection(buffer, comment);
-      if (isRendered()) {
-        generateAuthorAndVersionSections(buffer, comment);
-      }
+      generateAuthorAndVersionSections(buffer, comment);
       generateRecordParametersSection(buffer, aClass, comment);
       generateTypeParametersSection(buffer, aClass);
     }
@@ -897,9 +895,7 @@ public class JavaDocInfoGenerator {
     PsiDocComment comment = getDocComment(field);
     if (comment != null) {
       generateCommonSection(buffer, comment);
-      if (isRendered()) {
-        generateAuthorAndVersionSections(buffer, comment);
-      }
+      generateAuthorAndVersionSections(buffer, comment);
     }
     else {
       buffer.append(DocumentationMarkup.SECTIONS_START);
@@ -1377,9 +1373,7 @@ public class JavaDocInfoGenerator {
       generateApiSection(buffer, comment);
       generateSinceSection(buffer, comment);
       generateSeeAlsoSection(buffer, comment);
-      if (isRendered()) {
-        generateAuthorAndVersionSections(buffer, comment);
-      }
+      generateAuthorAndVersionSections(buffer, comment);
     }
 
     if (!isRendered()) {
@@ -1619,7 +1613,7 @@ public class JavaDocInfoGenerator {
         else if (tagName.equals(SNIPPET_TAG)) {
           generateSnippetValue(buffer, tag);
         } else {
-          generateUnknownTagValue(buffer, tag);
+          generateUnknownInlineTagValue(buffer, tag);
         }
       }
       else {
@@ -1635,7 +1629,7 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  private static void generateUnknownTagValue(StringBuilder buffer, PsiInlineDocTag tag) {
+  private static void generateUnknownInlineTagValue(StringBuilder buffer, PsiInlineDocTag tag) {
     var children = tag.getChildren();
     for (PsiElement child : children) {
       if (child instanceof PsiDocToken) {
