@@ -44,10 +44,6 @@ class MarkdownSettings(val project: Project): SimplePersistentStateComponent<Mar
     get() = state.isAutoScrollEnabled
     set(value) { state.isAutoScrollEnabled = value }
 
-  var isRunnerEnabled
-    get() = state.isRunnerEnabled
-    set(value) { state.isRunnerEnabled = value }
-
   var useCustomStylesheetPath
     get() = state.useCustomStylesheetPath
     set(value) { state.useCustomStylesheetPath = value }

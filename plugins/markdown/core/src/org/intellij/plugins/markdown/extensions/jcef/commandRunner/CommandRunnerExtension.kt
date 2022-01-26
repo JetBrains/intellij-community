@@ -26,7 +26,7 @@ import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownFileEditorUtils
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
-import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
@@ -180,7 +180,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
 
     override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension? {
       val virtualFile = panel.virtualFile ?: return null
-      if (panel.project?.let(MarkdownSettings::getInstance)?.isRunnerEnabled == false) {
+      if (!isExtensionEnabled()) {
         return null
       }
       return extensions.computeIfAbsent(virtualFile) { CommandRunnerExtension(panel, this) }
@@ -212,6 +212,12 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
     private const val LAYOUT_CHANGE_EVENT = "layoutChange"
     private const val RUN_LINE_ICON = "run.png"
     private const val RUN_BLOCK_ICON = "runrun.png"
+
+    const val extensionId = "MarkdownCommandRunnerExtension"
+
+    fun isExtensionEnabled(): Boolean {
+      return MarkdownExtensionsSettings.getInstance().extensionsEnabledState[extensionId] ?: true
+    }
 
     fun getRunnerByFile(file: VirtualFile) : CommandRunnerExtension? {
       val provider = MarkdownExtensionsUtil.findBrowserExtensionProvider<Provider>()

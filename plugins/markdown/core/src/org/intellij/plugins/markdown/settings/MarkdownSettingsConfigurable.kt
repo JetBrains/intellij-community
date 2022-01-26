@@ -34,6 +34,7 @@ import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithDownloadableFiles
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
 import org.intellij.plugins.markdown.settings.pandoc.PandocSettingsPanel
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
 import org.jetbrains.annotations.Nls
@@ -90,18 +91,25 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
           .bindSelected(settings::hideErrorsInCodeBlocks)
       }
       row {
-        checkBox(MarkdownBundle.message("markdown.settings.commandrunner.text"))
-          .bindSelected(settings::isRunnerEnabled)
+        checkBox(MarkdownBundle.message("markdown.settings.commandrunner.text")).apply {
+          bindSelected(
+            getter = { CommandRunnerExtension.isExtensionEnabled() },
+            setter = { MarkdownExtensionsSettings.getInstance().extensionsEnabledState[CommandRunnerExtension.extensionId] = it }
+          )
+          onApply { notifyExtensionsChanged() }
+        }
       }.bottomGap(BottomGap.SMALL)
       extensionsListRow().apply {
-        onApply {
-          val publisher = application.messageBus.syncPublisher(MarkdownExtensionsSettings.ChangeListener.TOPIC)
-          publisher.extensionsSettingsChanged(fromSettingsDialog = true)
-        }
+        onApply { notifyExtensionsChanged() }
       }
       customCssRow()
       pandocSettingsRow()
     }
+  }
+
+  private fun notifyExtensionsChanged() {
+    val publisher = application.messageBus.syncPublisher(MarkdownExtensionsSettings.ChangeListener.TOPIC)
+    publisher.extensionsSettingsChanged(fromSettingsDialog = true)
   }
 
   private fun Panel.htmlPanelProvidersRow(): Row {
