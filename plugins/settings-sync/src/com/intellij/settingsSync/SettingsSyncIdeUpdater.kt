@@ -11,7 +11,6 @@ import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings.Companion.instance
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.RoamingType
@@ -28,9 +27,7 @@ import com.intellij.util.io.write
 import com.intellij.util.ui.StartupUiUtil
 import java.nio.file.Path
 
-internal class SettingsSyncIdeUpdater(application: Application,
-                                      private val componentStore: ComponentStoreImpl,
-                                      private val rootConfig: Path) {
+internal class SettingsSyncIdeUpdater(private val componentStore: ComponentStoreImpl, private val rootConfig: Path) {
 
   companion object {
     val LOG = logger<SettingsSyncIdeUpdater>()
