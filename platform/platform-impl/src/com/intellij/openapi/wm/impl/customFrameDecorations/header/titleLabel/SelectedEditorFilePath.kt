@@ -8,18 +8,26 @@ import com.intellij.ide.ui.UISettings.Companion.instance
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.displayUrlRelativeToProject
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.wm.impl.FrameTitleBuilder
+import com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder
 import com.intellij.openapi.wm.impl.TitleInfoProvider.Companion.getProviders
 import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.util.Alarm
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
 import sun.swing.SwingUtilities2
@@ -252,14 +260,46 @@ internal open class SelectedEditorFilePath {
   }
 
   private fun updatePath() {
-    classTitle.updatePath(view)
-    update()
+    val project = project
+    if (project == null || project.isDisposed) {
+      return
+    }
+    val fileEditorManager = FileEditorManager.getInstance(project)
+    val file = (fileEditorManager as? FileEditorManagerEx)?.getSplittersFor(view)?.currentFile
+               ?: fileEditorManager?.selectedEditor?.file
+    if (file == null) {
+      classTitle.classPath = ""
+      classTitle.longText = ""
+      update()
+    }
+    else {
+      ReadAction.nonBlocking<Pair<String, String>> {
+        val titleBuilder = FrameTitleBuilder.getInstance()
+        val baseTitle = titleBuilder.getFileTitle(project, file)
+        Pair(
+          (titleBuilder as? PlatformFrameTitleBuilder)?.run {
+            val fileTitle = VfsPresentationUtil.getPresentableNameForUI(project, file)
+            if (!fileTitle.endsWith(file.presentableName) || file.parent == null) {
+              fileTitle
+            }
+            else {
+              displayUrlRelativeToProject(file, file.presentableUrl, project, true, false)
+            }
+          } ?: baseTitle, baseTitle)
+      }
+        .expireWith(project)
+        .finishOnUiThread(ModalityState.any()) {
+          classTitle.classPath = it.first
+          classTitle.longText = if (classTitle.fullPath) it.first else it.second
+          update()
+        }
+        .submit(AppExecutorUtil.getAppExecutorService())
+    }
   }
 
   private fun updateProject() {
     project?.let {
       projectTitle.project = it
-      classTitle.project = it
       update()
     }
   }
