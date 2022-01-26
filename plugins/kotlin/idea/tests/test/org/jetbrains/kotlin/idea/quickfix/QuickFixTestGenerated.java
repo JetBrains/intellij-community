@@ -9858,6 +9858,44 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/override/overrideDeprecation")
+        public static class OverrideDeprecation extends AbstractQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("copyDeprecation1.kt")
+            public void testCopyDeprecation1() throws Exception {
+                runTest("testData/quickfix/override/overrideDeprecation/copyDeprecation1.kt");
+            }
+
+            @TestMetadata("copyDeprecation2.kt")
+            public void testCopyDeprecation2() throws Exception {
+                runTest("testData/quickfix/override/overrideDeprecation/copyDeprecation2.kt");
+            }
+
+            @TestMetadata("copyDeprecation3.kt")
+            public void testCopyDeprecation3() throws Exception {
+                runTest("testData/quickfix/override/overrideDeprecation/copyDeprecation3.kt");
+            }
+
+            @TestMetadata("copyDeprecation4.kt")
+            public void testCopyDeprecation4() throws Exception {
+                runTest("testData/quickfix/override/overrideDeprecation/copyDeprecation4.kt");
+            }
+
+            @TestMetadata("copyDeprecationProperty.kt")
+            public void testCopyDeprecationProperty() throws Exception {
+                runTest("testData/quickfix/override/overrideDeprecation/copyDeprecationProperty.kt");
+            }
+
+            @TestMetadata("suppressWarning.kt")
+            public void testSuppressWarning() throws Exception {
+                runTest("testData/quickfix/override/overrideDeprecation/suppressWarning.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/override/typeMismatchOnOverride")
         public static class TypeMismatchOnOverride extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
