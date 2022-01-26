@@ -1647,27 +1647,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   @Override
   public void setLocation(@NotNull Point screenPoint) {
-    if (myPopup == null) {
-      myForcedLocation = screenPoint;
-    }
-    else if (!isBusy()) {
-      final Insets insets = myContent.getInsets();
-      if (insets != null && (insets.top != 0 || insets.left != 0)) {
-        screenPoint = new Point(screenPoint.x - insets.left, screenPoint.y - insets.top);
-      }
-      moveTo(myContent, screenPoint, myLocateByContent ? myHeaderPanel.getPreferredSize() : null);
-    }
-  }
-
-  private static void moveTo(@NotNull JComponent content, @NotNull Point screenPoint, @Nullable Dimension headerCorrectionSize) {
-    final Window wnd = getContentWindow(content);
-    if (wnd != null) {
-      wnd.setCursor(Cursor.getDefaultCursor());
-      if (headerCorrectionSize != null) {
-        screenPoint.y -= headerCorrectionSize.height;
-      }
-      wnd.setLocation(screenPoint);
-    }
+    // do not update the bounds programmatically if the user moves or resizes the popup
+    if (!isBusy()) setBounds(new Point(screenPoint), null);
   }
 
   private static Window getContentWindow(@NotNull Component content) {
@@ -1695,16 +1676,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   @Override
   public void setSize(final @NotNull Dimension size) {
-    if (isBusy()) return;
-
-    Dimension toSet = new Dimension(size);
-    toSet.height += getAdComponentHeight();
-    if (myPopup == null) {
-      myForcedSize = toSet;
-    }
-    else {
-      updateMaskAndAlpha(setSize(myContent, toSet));
-    }
+    // do not update the bounds programmatically if the user moves or resizes the popup
+    if (!isBusy()) setBounds(null, new Dimension(size));
   }
 
   public int getAdComponentHeight() {
@@ -1744,6 +1717,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     updateMaskAndAlpha(popupWindow);
   }
 
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public static Window setSize(@NotNull JComponent content, @NotNull Dimension size) {
     final Window popupWindow = getContentWindow(content);
     if (popupWindow == null) return null;
