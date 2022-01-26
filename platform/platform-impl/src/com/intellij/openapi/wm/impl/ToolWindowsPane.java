@@ -21,6 +21,8 @@ import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.WindowInfo;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.reference.SoftReference;
+import com.intellij.toolWindow.InternalDecoratorImpl;
+import com.intellij.toolWindow.ToolWindowDragHelper;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.paint.PaintUtil;
@@ -29,6 +31,7 @@ import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +81,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private boolean leftHorizontalSplit;
   private boolean rightHorizontalSplit;
 
-  final ToolWindowButtonManager buttonManager;
+  @ApiStatus.Internal
+  public final ToolWindowButtonManager buttonManager;
 
   ToolWindowsPane(@NotNull JFrame frame, @NotNull Disposable parentDisposable, @NotNull ToolWindowButtonManager buttonManager) {
     this.buttonManager = buttonManager;
@@ -294,16 +298,9 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     return getComponentAt(ToolWindowAnchor.BOTTOM) != null;
   }
 
-  @Nullable AbstractDroppableStripe getStripeFor(@NotNull Point screenPoint, @NotNull AbstractDroppableStripe preferred) {
+  @ApiStatus.Internal
+  public @Nullable AbstractDroppableStripe getStripeFor(@NotNull Point screenPoint, @NotNull AbstractDroppableStripe preferred) {
     return buttonManager.getStripeFor(screenPoint, preferred, this);
-  }
-
-  void startDrag() {
-    buttonManager.startDrag();
-  }
-
-  void stopDrag() {
-    buttonManager.stopDrag();
   }
 
   void stretchWidth(@NotNull ToolWindow window, int value) {

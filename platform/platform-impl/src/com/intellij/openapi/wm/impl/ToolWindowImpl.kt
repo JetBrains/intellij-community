@@ -23,6 +23,9 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.toolWindow.InternalDecoratorImpl
+import com.intellij.toolWindow.ToolWindowEventSource
+import com.intellij.toolWindow.ToolWindowProperty
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.LayeredIcon
@@ -52,7 +55,7 @@ import java.util.*
 import javax.swing.*
 import kotlin.math.abs
 
-internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
+class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
                               private val id: String,
                               private val canCloseContent: Boolean,
                               private val dumbAware: Boolean,
@@ -332,7 +335,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   override fun setTabActions(vararg actions: AnAction) {
     createContentIfNeeded()
-    decorator!!.setTabActions(actions)
+    decorator!!.setTabActions(actions.toList())
   }
 
   override fun setTabDoubleClickActions(actions: List<AnAction>) {
@@ -425,7 +428,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
         newIcon !is LayeredIcon &&
         !ExperimentalUI.isNewUI() &&
         (abs(newIcon.iconHeight - JBUIScale.scale(13f)) >= 1 || abs(newIcon.iconWidth - JBUIScale.scale(13f)) >= 1)) {
-      LOG.warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  $id) or icon $newIcon")
+      logger<ToolWindowImpl>().warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  $id) or icon $newIcon")
     }
     icon = ToolWindowIcon(newIcon, id)
   }
@@ -787,8 +790,6 @@ private class ToolWindowFocusWatcher(private val toolWindow: ToolWindowImpl, com
   }
 }
 
-private val LOG = logger<ToolWindowImpl>()
-
 private fun setBackgroundRecursively(component: Component, bg: Color) {
   UIUtil.forEachComponentInHierarchy(component, Consumer { c: Component ->
     if (c !is ActionButton) {
@@ -801,7 +802,7 @@ private fun addAdjustListener(decorator: InternalDecoratorImpl?, component: JCom
   UIUtil.findComponentOfType(component, JScrollPane::class.java)?.verticalScrollBar?.addAdjustmentListener { event ->
     decorator?.let {
       ClientProperty.put(it, SimpleToolWindowPanel.SCROLLED_STATE, event.adjustable?.value != 0)
-      it.header?.repaint()
+      it.header.repaint()
     }
   }
 }

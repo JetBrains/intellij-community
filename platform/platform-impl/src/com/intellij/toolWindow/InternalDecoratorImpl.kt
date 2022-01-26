@@ -10,7 +10,7 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.openapi.wm.ToolWindowAnchor
@@ -34,7 +34,6 @@ import com.intellij.ui.paint.LinePainter2D
 import com.intellij.util.MathUtil
 import com.intellij.util.ObjectUtils
 import com.intellij.util.animation.AlphaAnimated
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.intellij.lang.annotations.MagicConstant
@@ -44,29 +43,27 @@ import java.awt.*
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.util.*
 import java.util.function.Supplier
 import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.border.Border
 
+@ApiStatus.Internal
 class InternalDecoratorImpl internal constructor(
   val toolWindow: ToolWindowImpl,
   private val contentUi: ToolWindowContentUi,
   private val myDecoratorChild: JComponent
 ) : InternalDecorator(), Queryable, DataProvider, ComponentWithMnemonics {
   companion object {
-    @ApiStatus.Internal
     val SHARED_ACCESS_KEY = Key.create<Boolean>("sharedAccess")
 
-    @ApiStatus.Internal
-    val HIDE_COMMON_TOOLWINDOW_BUTTONS = Key.create<Boolean>("HideCommonToolWindowButtons")
-    val INACTIVE_LOOK = Key.create<Boolean>("InactiveLook")
+    internal val HIDE_COMMON_TOOLWINDOW_BUTTONS = Key.create<Boolean>("HideCommonToolWindowButtons")
+    internal val INACTIVE_LOOK = Key.create<Boolean>("InactiveLook")
 
     /**
      * Catches all event from tool window and modifies decorator's appearance.
      */
-    const val HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow"
+    internal const val HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow"
 
     private fun moveContent(content: Content, source: InternalDecoratorImpl, target: InternalDecoratorImpl) {
       val targetContentManager = target.contentManager
@@ -103,20 +100,22 @@ class InternalDecoratorImpl internal constructor(
       installDefaultFocusTraversalKeys(container, KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS)
     }
 
+    @JvmStatic
     fun findTopLevelDecorator(component: Component?): InternalDecoratorImpl? {
       var parent: Component? = component?.parent
       var candidate: InternalDecoratorImpl? = null
       while (parent != null) {
-        if (parent is InternalDecoratorImpl) candidate = parent
+        if (parent is InternalDecoratorImpl) {
+          candidate = parent
+        }
         parent = parent.parent
       }
       return candidate
     }
 
+    @JvmStatic
     fun findNearestDecorator(component: Component?): InternalDecoratorImpl? {
-      var component = component
-      if (component != null) component = component.parent
-      return ComponentUtil.findParentByCondition(component) { c: Component? -> c is InternalDecoratorImpl } as InternalDecoratorImpl?
+      return ComponentUtil.findParentByCondition(component?.parent) { it is InternalDecoratorImpl } as InternalDecoratorImpl?
     }
 
     private fun installDefaultFocusTraversalKeys(container: Container, id: Int) {
@@ -153,6 +152,40 @@ class InternalDecoratorImpl internal constructor(
   private var secondDecorator: InternalDecoratorImpl? = null
   private var splitter: Splitter? = null
 
+  init {
+    isFocusable = false
+    focusTraversalPolicy = LayoutFocusTraversalPolicy()
+    updateMode(Mode.SINGLE)
+    header = object : ToolWindowHeader(toolWindow, contentUi, Supplier { toolWindow.createPopupGroup(true) }) {
+      override val isActive: Boolean
+        get() {
+          return toolWindow.isActive && ClientProperty.get(this@InternalDecoratorImpl, INACTIVE_LOOK) != true && !ExperimentalUI.isNewUI()
+        }
+
+      override fun hideToolWindow() {
+        toolWindow.toolWindowManager.hideToolWindow(toolWindow.id, false, true, false, ToolWindowEventSource.HideButton)
+      }
+    }
+    enableEvents(AWTEvent.COMPONENT_EVENT_MASK)
+    installFocusTraversalPolicy(this, LayoutFocusTraversalPolicy())
+    dividerAndHeader.isOpaque = false
+    dividerAndHeader.add(JBUI.Panels.simplePanel(header).addToBottom(notificationHeader), BorderLayout.SOUTH)
+    if (SystemInfoRt.isMac) {
+      background = JBColor(Gray._200, Gray._90)
+    }
+    if (ExperimentalUI.isNewUI()) {
+      background = JBUI.CurrentTheme.ToolWindow.background()
+    }
+    contentManager.addContentManagerListener(object : ContentManagerListener {
+      override fun contentRemoved(event: ContentManagerEvent) {
+        val parentDecorator = findNearestDecorator(this@InternalDecoratorImpl) ?: return
+        if (!parentDecorator.isSplitUnsplitInProgress() && !isSplitUnsplitInProgress() && contentManager.isEmpty) {
+          parentDecorator.unsplit(null)
+        }
+      }
+    })
+  }
+
   fun updateMode(mode: Mode) {
     if (mode == this.mode) {
       return
@@ -168,11 +201,10 @@ class InternalDecoratorImpl internal constructor(
         add(myDecoratorChild, BorderLayout.CENTER)
         ApplicationManager.getApplication().invokeLater({ border = InnerPanelBorder(toolWindow) }, toolWindow.project.disposed)
         firstDecorator?.let {
-          Disposer.dispose(it.contentManager!!)
+          Disposer.dispose(it.contentManager)
         }
-        ObjectUtils.consumeIfNotNull(secondDecorator) { decorator: InternalDecoratorImpl ->
-          Disposer.dispose(
-            decorator.contentManager!!)
+        secondDecorator?.let {
+          Disposer.dispose(it.contentManager)
         }
         return
       }
@@ -192,15 +224,17 @@ class InternalDecoratorImpl internal constructor(
                          intValues = [SwingConstants.CENTER.toLong(), SwingConstants.TOP.toLong(), SwingConstants.LEFT.toLong(), SwingConstants.BOTTOM.toLong(), SwingConstants.RIGHT.toLong(), -1]) dropSide: Int,
                        dropIndex: Int) {
     if (dropSide == -1 || dropSide == SwingConstants.CENTER || dropIndex >= 0) {
-      contentManager!!.addContent(content, dropIndex)
+      contentManager.addContent(content, dropIndex)
       return
     }
     firstDecorator = toolWindow.createCellDecorator()
     attach(firstDecorator)
     secondDecorator = toolWindow.createCellDecorator()
     attach(secondDecorator)
-    val contents = ContainerUtil.newArrayList(*contentManager!!.contents)
-    if (!contents.contains(content)) contents.add(content)
+    val contents = contentManager.contents.toMutableList()
+    if (!contents.contains(content)) {
+      contents.add(content)
+    }
     for (c in contents) {
       moveContent(c, this,
                   (if ((c !== content) xor (dropSide == SwingConstants.LEFT || dropSide == SwingConstants.TOP)) firstDecorator else secondDecorator)!!)
@@ -238,8 +272,8 @@ class InternalDecoratorImpl internal constructor(
     finally {
       first.setSplitUnsplitInProgress(false)
       second.setSplitUnsplitInProgress(false)
-      Disposer.dispose(toRemove1.contentManager!!)
-      Disposer.dispose(toRemove2.contentManager!!)
+      Disposer.dispose(toRemove1.contentManager)
+      Disposer.dispose(toRemove2.contentManager)
     }
   }
 
@@ -255,7 +289,7 @@ class InternalDecoratorImpl internal constructor(
     val parentManager = contentManager
     val childManager = decorator!!.contentManager
     if (parentManager is ContentManagerImpl && childManager is ContentManagerImpl) {
-      parentManager.addNestedManager((childManager as ContentManagerImpl?)!!)
+      parentManager.addNestedManager(childManager)
     }
   }
 
@@ -292,10 +326,10 @@ class InternalDecoratorImpl internal constructor(
         raise(false)
         return
       }
-      for (c in firstDecorator!!.contentManager!!.contents) {
+      for (c in firstDecorator!!.contentManager.contents) {
         moveContent(c, firstDecorator!!, this)
       }
-      for (c in secondDecorator!!.contentManager!!.contents) {
+      for (c in secondDecorator!!.contentManager.contents) {
         moveContent(c, secondDecorator!!, this)
       }
       updateMode(if (findNearestDecorator(this) != null) Mode.CELL else Mode.SINGLE)
@@ -317,25 +351,23 @@ class InternalDecoratorImpl internal constructor(
 
   override fun isSplitUnsplitInProgress(): Boolean = isSplitUnsplitInProgress
 
-  override fun getContentManager(): ContentManager = contentUi.contentManager
+  override fun getContentManager() = contentUi.contentManager
 
-  override fun getHeaderToolbar(): ActionToolbar {
-    return header.getToolbar()!!
-  }
+  override fun getHeaderToolbar() = header.getToolbar()
 
-  val headerToolbarActions: ActionGroup?
+  val headerToolbarActions: ActionGroup
     get() = header.getToolbarActions()
-  val headerToolbarWestActions: ActionGroup?
+  val headerToolbarWestActions: ActionGroup
     get() = header.getToolbarWestActions()
 
   override fun toString(): String {
-    return toolWindow.id + ": " + StringUtil.trimMiddle(Arrays.toString(Arrays.stream(
-      contentManager!!.contents).map { content: Content -> content.displayName }.toArray()), 40) + " #" + System.identityHashCode(this)
+    return toolWindow.id + ": " + StringUtil.trimMiddle(contentManager.contents.joinToString { it.displayName }, 40) +
+           " #" + System.identityHashCode(this)
   }
 
   private fun initDivider(): JComponent {
-    if (divider != null) {
-      return divider
+    divider?.let {
+      return it
     }
     divider = object : JPanel() {
       override fun getCursor(): Cursor {
@@ -345,7 +377,7 @@ class InternalDecoratorImpl internal constructor(
         else Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR)
       }
     }
-    return divider
+    return divider!!
   }
 
   fun applyWindowInfo(info: WindowInfo) {
@@ -376,15 +408,12 @@ class InternalDecoratorImpl internal constructor(
     // push "apply" request forward
     if (info.type == ToolWindowType.FLOATING) {
       val floatingDecorator = SwingUtilities.getAncestorOfClass(FloatingDecorator::class.java, this) as FloatingDecorator
-      floatingDecorator?.apply(info)
+      floatingDecorator.apply(info)
     }
   }
 
   override fun getData(dataId: @NonNls String): Any? {
-    return if (PlatformDataKeys.TOOL_WINDOW.`is`(dataId)) {
-      toolWindow
-    }
-    else null
+    return if (PlatformDataKeys.TOOL_WINDOW.`is`(dataId)) toolWindow else null
   }
 
   public override fun processKeyBinding(ks: KeyStroke, e: KeyEvent, condition: Int, pressed: Boolean): Boolean {
@@ -398,11 +427,11 @@ class InternalDecoratorImpl internal constructor(
     return super.processKeyBinding(ks, e, condition, pressed)
   }
 
-  fun setTitleActions(actions: List<AnAction?>) {
+  fun setTitleActions(actions: List<AnAction>) {
     header.setAdditionalTitleActions(actions)
   }
 
-  fun setTabActions(actions: Array<AnAction?>) {
+  fun setTabActions(actions: List<AnAction>) {
     header.setTabActions(actions)
   }
 
@@ -667,46 +696,11 @@ class InternalDecoratorImpl internal constructor(
 
   private inner class AccessibleInternalDecorator : AccessibleJPanel() {
     override fun getAccessibleName(): String {
-      var name = super.getAccessibleName()
-      if (name == null) {
-        var title = StringUtil.defaultIfEmpty(toolWindow.title, toolWindow.stripeTitle)
-        title = StringUtil.defaultIfEmpty(title, toolWindow.id)
-        name = StringUtil.notNullize(title) + " " + IdeBundle.message("internal.decorator.accessible.postfix")
-      }
-      return name
+      return super.getAccessibleName()
+             ?: (
+               ((toolWindow.title?.takeIf(String::isNotEmpty) ?: toolWindow.stripeTitle).takeIf(String::isNotEmpty) ?: toolWindow.id ?: "")
+               + " " + IdeBundle.message("internal.decorator.accessible.postfix")
+                )
     }
-  }
-
-  init {
-    isFocusable = false
-    focusTraversalPolicy = LayoutFocusTraversalPolicy()
-    updateMode(Mode.SINGLE)
-    header = object : ToolWindowHeader(toolWindow, contentUi, Supplier { toolWindow.createPopupGroup(true) }) {
-      override val isActive: Boolean
-        protected get() = toolWindow.isActive && java.lang.Boolean.TRUE !== ClientProperty.get(this@InternalDecoratorImpl, INACTIVE_LOOK) &&
-                          !ExperimentalUI.isNewToolWindowsStripes()
-
-      override fun hideToolWindow() {
-        toolWindow.toolWindowManager.hideToolWindow(toolWindow.id, false, true, false, ToolWindowEventSource.HideButton)
-      }
-    }
-    enableEvents(AWTEvent.COMPONENT_EVENT_MASK)
-    installFocusTraversalPolicy(this, LayoutFocusTraversalPolicy())
-    dividerAndHeader.isOpaque = false
-    dividerAndHeader.add(JBUI.Panels.simplePanel(header).addToBottom(notificationHeader), BorderLayout.SOUTH)
-    if (SystemInfo.isMac) {
-      background = JBColor(Gray._200, Gray._90)
-    }
-    if (ExperimentalUI.isNewToolWindowsStripes()) {
-      background = JBUI.CurrentTheme.ToolWindow.background()
-    }
-    contentManager!!.addContentManagerListener(object : ContentManagerListener {
-      override fun contentRemoved(event: ContentManagerEvent) {
-        val parentDecorator = findNearestDecorator(this@InternalDecoratorImpl) ?: return
-        if (!parentDecorator.isSplitUnsplitInProgress() && !isSplitUnsplitInProgress() && contentManager!!.isEmpty) {
-          parentDecorator.unsplit(null)
-        }
-      }
-    })
   }
 }

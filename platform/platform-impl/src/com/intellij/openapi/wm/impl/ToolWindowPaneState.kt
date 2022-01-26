@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.WindowInfo
+import com.intellij.toolWindow.InternalDecoratorImpl
 import it.unimi.dsi.fastutil.objects.Object2FloatOpenHashMap
 
 internal class ToolWindowPaneState {

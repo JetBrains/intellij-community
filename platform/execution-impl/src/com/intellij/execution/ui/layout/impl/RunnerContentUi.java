@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ExecutionBundle;
@@ -28,10 +28,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
-import com.intellij.openapi.wm.impl.ToolWindowEventSource;
 import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import com.intellij.openapi.wm.impl.content.SelectContentStep;
+import com.intellij.toolWindow.InternalDecoratorImpl;
+import com.intellij.toolWindow.ToolWindowEventSource;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SideBorder;
@@ -351,7 +351,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
         @Override
         public void mousePressed(MouseEvent e) {
-          ObjectUtils.consumeIfNotNull(InternalDecoratorImpl.findTopLevelDecorator(myComponent),
+          ObjectUtils.consumeIfNotNull(InternalDecoratorImpl.Companion.findTopLevelDecorator(myComponent),
                                        decorator -> decorator.activate(ToolWindowEventSource.ToolWindowHeader));
           myPressPoint = e.getPoint();
         }
@@ -359,7 +359,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
         @Override
         public void mouseClicked(MouseEvent e) {
           if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
-            ObjectUtils.consumeIfNotNull(InternalDecoratorImpl.findTopLevelDecorator(myComponent),
+            ObjectUtils.consumeIfNotNull(InternalDecoratorImpl.Companion.findTopLevelDecorator(myComponent),
                                          decorator -> {
                                            if (decorator.isHeaderVisible()) return;
                                            String id = decorator.getToolWindowId();
@@ -372,7 +372,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
         @Override
         public void mouseDragged(MouseEvent e) {
-          InternalDecoratorImpl decorator = InternalDecoratorImpl.findTopLevelDecorator(myComponent);
+          InternalDecoratorImpl decorator = InternalDecoratorImpl.Companion.findTopLevelDecorator(myComponent);
           if (decorator == null || decorator.isHeaderVisible()) return;
           ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(decorator.getToolWindowId());
           ToolWindowAnchor anchor = window != null ? window.getAnchor() : null;
@@ -395,7 +395,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
         @Override
         public void mouseEntered(MouseEvent e) {
-          InternalDecoratorImpl decorator = InternalDecoratorImpl.findTopLevelDecorator(myComponent);
+          InternalDecoratorImpl decorator = InternalDecoratorImpl.Companion.findTopLevelDecorator(myComponent);
           if (decorator == null || decorator.isHeaderVisible()) {
             e.getComponent().setCursor(Cursor.getDefaultCursor());
             return;

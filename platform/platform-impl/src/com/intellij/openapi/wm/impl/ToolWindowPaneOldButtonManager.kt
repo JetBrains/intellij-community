@@ -7,6 +7,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
+import com.intellij.toolWindow.StripeButtonManager
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle

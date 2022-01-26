@@ -6,8 +6,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
-import com.intellij.openapi.wm.impl.ToolWindowEventSource
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.toolWindow.ToolWindowEventSource
 
 internal class HideSideWindowsAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {

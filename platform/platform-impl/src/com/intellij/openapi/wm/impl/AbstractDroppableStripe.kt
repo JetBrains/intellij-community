@@ -2,6 +2,8 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.toolWindow.StripeButtonManager
+import com.intellij.toolWindow.createDragImage
 import com.intellij.ui.paint.RectanglePainter
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.VisibleForTesting
@@ -34,6 +36,8 @@ internal class LayoutData(
 
 internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : JPanel(layoutManager) {
   companion object {
+    const val DROP_DISTANCE_SENSITIVITY = 200
+
     @VisibleForTesting
     fun createButtonLayoutComparator(isNewStripes: Boolean, anchor: ToolWindowAnchor): Comparator<StripeButtonManager> {
       return Comparator { o1, o2 ->
@@ -67,7 +71,7 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
 
   private val buttons: MutableList<StripeButtonManager> = mutableListOf()
 
-  protected abstract val isNewStripes: Boolean
+  abstract val isNewStripes: Boolean
   abstract val anchor: ToolWindowAnchor
 
   private val stripeButtonManagerComparator by lazy(LazyThreadSafetyMode.NONE) { createButtonLayoutComparator(isNewStripes, anchor) }

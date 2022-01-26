@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
+import com.intellij.toolWindow.StripeButtonManager
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.Point

@@ -19,7 +19,11 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.openapi.wm.impl.*;
+import com.intellij.openapi.wm.impl.ToolWindowImpl;
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
+import com.intellij.openapi.wm.impl.ToolWindowsPane;
+import com.intellij.toolWindow.InternalDecoratorImpl;
+import com.intellij.toolWindow.ToolWindowEventSource;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.MouseDragHelper;
@@ -459,7 +463,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       public void mouseDragged(MouseEvent e) {
         if (myLastPoint.isNull() || myPressPoint.isNull() || myDragTracker.isNull()) return;
         //"Dock" modes,
-        // for "Undock" mode processing see com.intellij.openapi.wm.impl.InternalDecoratorImpl.ResizeOrMoveDocketToolWindowMouseListener
+        // for "Undock" mode processing see com.intellij.toolWindow.InternalDecoratorImpl.ResizeOrMoveDocketToolWindowMouseListener
         PointerInfo info = MouseInfo.getPointerInfo();
         if (info == null) return;
         Point newMouseLocation = info.getLocation();

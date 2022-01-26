@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.toolWindow.StripeButtonManager;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
@@ -33,8 +34,6 @@ final class Stripe extends AbstractDroppableStripe implements UISettingsListener
   @MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT})
   private final int anchor;
 
-  static final int DROP_DISTANCE_SENSITIVITY = 200;
-
   Stripe(@MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT}) int anchor) {
     super(new GridBagLayout());
 
@@ -44,7 +43,7 @@ final class Stripe extends AbstractDroppableStripe implements UISettingsListener
   }
 
   @Override
-  protected boolean isNewStripes() {
+  public boolean isNewStripes() {
     return false;
   }
 

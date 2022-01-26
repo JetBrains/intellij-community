@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.toolWindow.StripeButtonManager
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout

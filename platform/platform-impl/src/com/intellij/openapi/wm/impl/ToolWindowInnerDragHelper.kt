@@ -3,11 +3,13 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.wm.IdeGlassPaneUtil
-import com.intellij.openapi.wm.impl.ToolWindowDragHelper.Companion.createDragImage
-import com.intellij.openapi.wm.impl.ToolWindowDragHelper.Companion.createHighlighterComponent
 import com.intellij.openapi.wm.impl.content.BaseLabel
 import com.intellij.openapi.wm.impl.content.ContentTabLabel
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.toolWindow.InternalDecoratorImpl
+import com.intellij.toolWindow.ToolWindowDragHelper
+import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createDragImage
+import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createHighlighterComponent
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.MouseDragHelper

@@ -43,7 +43,7 @@
   <extensionPoints>
     <!-- only bundled plugin can define extension -->
     <!--suppress PluginXmlDynamicPlugin -->
-    <extensionPoint name="registerToolWindowTaskProvider" interface="com.intellij.openapi.wm.impl.RegisterToolWindowTaskProvider"/>
+    <extensionPoint name="registerToolWindowTaskProvider" interface="com.intellij.toolWindow.RegisterToolWindowTaskProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

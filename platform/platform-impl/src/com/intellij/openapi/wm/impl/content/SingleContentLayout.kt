@@ -17,7 +17,7 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
-import com.intellij.openapi.wm.impl.InternalDecoratorImpl
+import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler

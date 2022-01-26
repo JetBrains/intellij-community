@@ -10,6 +10,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
+import com.intellij.toolWindow.ToolWindowEventSource
+import com.intellij.toolWindow.createDragImage
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.RelativeFont
@@ -177,7 +179,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
       dragPane!!.add(dragButtonImage, JLayeredPane.POPUP_LAYER)
       dragButtonImage.size = dragButtonImage.preferredSize
       isVisible = false
-      toolWindow.toolWindowManager.toolWindowPane!!.startDrag()
+      toolWindow.toolWindowManager.toolWindowPane!!.buttonManager.startDrag()
       dragKeyEventDispatcher = DragKeyEventDispatcher()
       KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(dragKeyEventDispatcher)
     }
@@ -300,7 +302,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
     }
     dragPane!!.remove(dragButtonImage)
     dragButtonImage = null
-    toolWindow.toolWindowManager.toolWindowPane!!.stopDrag()
+    toolWindow.toolWindowManager.toolWindowPane!!.buttonManager.stopDrag()
     dragPane!!.repaint()
     isVisible = true
     if (lastStripe != null) {

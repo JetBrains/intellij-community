@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.toolWindow.StripeButtonManager
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout

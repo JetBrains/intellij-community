@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl
+package com.intellij.toolWindow
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
@@ -16,6 +16,8 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.ToolWindowType
+import com.intellij.openapi.wm.impl.DockToolWindowAction
+import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.*
 import com.intellij.ui.ExperimentalUI.isNewUI
@@ -93,9 +95,11 @@ abstract class ToolWindowHeader internal constructor(
 
         override fun getChildren(e: AnActionEvent?): Array<AnAction> {
           val nearestDecorator = InternalDecoratorImpl.findNearestDecorator(e?.getData(PlatformDataKeys.CONTEXT_COMPONENT))
-          val b = UIUtil.getClientProperty(nearestDecorator, InternalDecoratorImpl.HIDE_COMMON_TOOLWINDOW_BUTTONS)
+          val b = if (nearestDecorator is Component) ClientProperty.get(nearestDecorator as Component?,
+                                                                        InternalDecoratorImpl.HIDE_COMMON_TOOLWINDOW_BUTTONS)
+          else null
           if (b == true) {
-            return (children.filter { it !is DockToolWindowAction && it !is ShowOptionsAction && it !is HideAction}).toTypedArray()
+            return (children.filter { it !is DockToolWindowAction && it !is ShowOptionsAction && it !is HideAction }).toTypedArray()
           }
           return children
         }
@@ -179,13 +183,16 @@ abstract class ToolWindowHeader internal constructor(
   }
 
   override fun propertyChange(evt: PropertyChangeEvent?) {
-    if (UIUtil.isClientPropertyTrue(toolWindow.component, ToolWindowContentUi.ALLOW_DND_FOR_TABS))
+    if (ClientProperty.isTrue(toolWindow.component as Component?, ToolWindowContentUi.ALLOW_DND_FOR_TABS)) {
       westPanel.add(contentUi.tabComponent, CC().grow().pushX())
-    else
+    }
+    else {
       westPanel.add(contentUi.tabComponent, CC().growY())
+    }
     val toolbar = toolbarWest
     if (toolbar != null) {
-      westPanel.add(toolbar.component, CC().pushX()) //It always should stay after tab component
+      // It always should stay after tab component
+      westPanel.add(toolbar.component, CC().pushX())
     }
   }
 
@@ -200,17 +207,11 @@ abstract class ToolWindowHeader internal constructor(
     super.removeNotify()
   }
 
-  fun getToolbar(): ActionToolbar? {
-    return toolbar
-  }
+  fun getToolbar() = toolbar
 
-  fun getToolbarActions(): ActionGroup? {
-    return actionGroup
-  }
+  fun getToolbarActions() = actionGroup
 
-  fun getToolbarWestActions(): ActionGroup? {
-    return actionGroupWest
-  }
+  fun getToolbarWestActions() = actionGroupWest
 
   override fun getData(dataId: String): Any? {
     if (MorePopupAware.KEY.`is`(dataId)) {
@@ -225,7 +226,7 @@ abstract class ToolWindowHeader internal constructor(
     clearCaches()
   }
 
-  fun setTabActions(actions: Array<AnAction>) {
+  fun setTabActions(actions: List<AnAction>) {
     if (toolbarWest == null) {
       toolbarWest = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLWINDOW_TITLE, DefaultActionGroup(actionGroupWest),
                                                                     true)
@@ -241,7 +242,7 @@ abstract class ToolWindowHeader internal constructor(
     }
     actionGroupWest.removeAll()
     actionGroupWest.addSeparator()
-    actionGroupWest.addAll(*actions)
+    actionGroupWest.addAll(actions)
     toolbarWest?.updateActionsImmediately()
   }
 
@@ -265,7 +266,7 @@ abstract class ToolWindowHeader internal constructor(
     val type = toolWindow.type
     val image: Image?
     val nearestDecorator = InternalDecoratorImpl.findNearestDecorator(this@ToolWindowHeader)
-    val drawTopLine = type != ToolWindowType.FLOATING && !UIUtil.isClientPropertyTrue(nearestDecorator, InternalDecoratorImpl.INACTIVE_LOOK)
+    val drawTopLine = type != ToolWindowType.FLOATING && !ClientProperty.isTrue(nearestDecorator, InternalDecoratorImpl.INACTIVE_LOOK)
     var drawBottomLine = true
 
     if (isNewUI()) {

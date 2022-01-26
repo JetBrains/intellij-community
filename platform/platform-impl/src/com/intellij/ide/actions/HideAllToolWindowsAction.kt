@@ -7,8 +7,8 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
-import com.intellij.openapi.wm.impl.ToolWindowEventSource
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.toolWindow.ToolWindowEventSource
 
 internal class HideAllToolWindowsAction : DumbAwareAction() {
   override fun actionPerformed(event: AnActionEvent) {

@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl
+package com.intellij.toolWindow
 
 import com.intellij.BundleBase
 import com.intellij.DynamicBundle
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.ToolWindowEP
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowType
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ui.EmptyIcon
 import kotlinx.serialization.Serializable

@@ -43,7 +43,7 @@ import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
-import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
+import com.intellij.toolWindow.*
 import com.intellij.ui.BalloonImpl
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil

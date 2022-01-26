@@ -21,6 +21,9 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.toolWindow.RegisterToolWindowTaskProvider
+import com.intellij.toolWindow.findIconFromBean
+import com.intellij.toolWindow.getStripeTitleSupplier
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
