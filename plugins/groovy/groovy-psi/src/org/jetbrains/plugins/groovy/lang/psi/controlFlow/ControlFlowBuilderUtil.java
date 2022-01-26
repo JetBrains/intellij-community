@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
 import com.intellij.openapi.util.Pair;
@@ -57,7 +57,7 @@ public final class ControlFlowBuilderUtil {
   public static ReadWriteVariableInstruction[] getReadsWithoutPriorWrites(Instruction[] flow, boolean onlyFirstRead) {
     ReadBeforeWriteState lastState = getLastReadBeforeWriteState(flow, onlyFirstRead).first;
     if (lastState == null) {
-      return null;
+      return ReadWriteVariableInstruction.EMPTY_ARRAY;
     }
     BitSet reads = lastState.getReads();
     ArrayList<ReadWriteVariableInstruction> result = new ArrayList<>();
