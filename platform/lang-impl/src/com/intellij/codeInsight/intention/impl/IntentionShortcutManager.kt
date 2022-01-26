@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -128,7 +129,7 @@ class IntentionShortcutManager : Disposable {
   /** Collect all intentions with assigned shortcuts in a keymap */
   private fun Keymap.wrappedIntentionActions(): Sequence<IntentionAction> {
     val intentionsById = IntentionManager.getInstance().intentionActions.associateBy { it.wrappedActionId }
-    return actionIds
+    return actionIdList
       .asSequence()
       .filter { it.startsWith(WRAPPER_PREFIX) }
       .mapNotNull { intentionsById[it] }
@@ -138,7 +139,9 @@ class IntentionShortcutManager : Disposable {
 
   class InitListener : ApplicationInitializedListener {
     override fun componentsInitialized() {
-      getInstance().registerIntentionsInActiveKeymap()
+      invokeLater {
+        getInstance().registerIntentionsInActiveKeymap()
+      }
     }
   }
 
