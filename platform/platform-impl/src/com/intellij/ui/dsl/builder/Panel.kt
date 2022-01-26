@@ -4,6 +4,7 @@ package com.intellij.ui.dsl.builder
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.dsl.builder.impl.toBindingInternal
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
@@ -196,7 +197,7 @@ inline fun <reified T : Any> Panel.buttonGroup(noinline getter: () -> T,
 inline fun <reified T : Any> Panel.buttonGroup(prop: KMutableProperty0<T>, title: @NlsContexts.BorderTitle String? = null,
                                                indent: Boolean = title != null,
                                                crossinline init: Panel.() -> Unit) {
-  buttonGroup(prop.toBinding(), title, indent, init)
+  buttonGroup(prop.toBindingInternal(), title, indent, init)
 }
 
 @Deprecated("Use buttonsGroup(...) instead")

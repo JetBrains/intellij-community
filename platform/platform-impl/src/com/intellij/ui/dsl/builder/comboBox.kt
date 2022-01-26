@@ -4,6 +4,7 @@ package com.intellij.ui.dsl.builder
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.ui.dsl.builder.impl.toBindingInternal
 import com.intellij.ui.layout.*
 import kotlin.reflect.KMutableProperty0
 
@@ -20,7 +21,7 @@ fun <T, C : ComboBox<T>> Cell<C>.bindItem(property: GraphProperty<T>): Cell<C> {
 }
 
 inline fun <reified T : Any, C : ComboBox<T>> Cell<C>.bindItem(prop: KMutableProperty0<T>): Cell<C> {
-  return bindItem(prop.toBinding().toNullable())
+  return bindItem(prop.toBindingInternal().toNullable())
 }
 
 fun <T, C : ComboBox<T>> Cell<C>.bindItem(getter: () -> T?, setter: (T?) -> Unit): Cell<C> {

@@ -4,6 +4,7 @@ package com.intellij.ui.dsl.builder
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.bind
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.impl.toBindingInternal
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.ThreeStateCheckBox
 import java.awt.event.ActionEvent
@@ -28,7 +29,7 @@ fun <T : ThreeStateCheckBox> Cell<T>.bindState(property: GraphProperty<ThreeStat
 }
 
 fun <T : AbstractButton> Cell<T>.bindSelected(prop: KMutableProperty0<Boolean>): Cell<T> {
-  return bindSelected(prop.toBinding())
+  return bindSelected(prop.toBindingInternal())
 }
 
 fun <T : AbstractButton> Cell<T>.bindSelected(getter: () -> Boolean, setter: (Boolean) -> Unit): Cell<T> {
