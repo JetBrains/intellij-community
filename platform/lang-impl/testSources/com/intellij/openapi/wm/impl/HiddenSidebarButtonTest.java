@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -29,7 +29,7 @@ public class HiddenSidebarButtonTest extends ToolWindowManagerTestCase {
       "<window_info id=\"Project\" active=\"false\" anchor=\"left\" auto_hide=\"false\" internal_type=\"DOCKED\" type=\"DOCKED\" visible=\"false\"" +
       " show_stripe_button=\"true\" weight=\"0.37235227\" sideWeight=\"0.6060991\" order=\"0\" side_tool=\"false\" content_ui=\"tabs\" x=\"116\"" +
       " y=\"80\" width=\"487\" height=\"787\"/>" +
-      "</layout>"), false, false);
+      "</layout>"), false);
 
     for (ToolWindowEP extension : ToolWindowEP.EP_NAME.getExtensionList()) {
       if (Arrays.asList(ToolWindowId.TODO_VIEW, ToolWindowId.FIND, ToolWindowId.PROJECT_VIEW).contains(extension.id)) {

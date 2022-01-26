@@ -8,13 +8,13 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.wm.ToolWindowFactoryEx
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import training.lang.LangManager
 import training.util.LEARNING_PANEL_OPENED_IN
 import training.util.findLanguageSupport
 
-internal class LearnToolWindowFactory : ToolWindowFactory, DumbAware {
+internal class LearnToolWindowFactory : ToolWindowFactoryEx, DumbAware {
   override fun init(toolWindow: ToolWindow) {
     super.init(toolWindow)
 

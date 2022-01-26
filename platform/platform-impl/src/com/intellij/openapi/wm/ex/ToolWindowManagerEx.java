@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.Disposable;
@@ -6,6 +6,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.DesktopLayout;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import com.intellij.ui.AppUIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +22,9 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void initToolWindow(@NotNull ToolWindowEP bean);
+
+  @ApiStatus.Internal
+  public abstract ToolWindowsPane init(ProjectFrameHelper frameHelper);
 
   public static @NotNull ToolWindowManagerEx getInstanceEx(@NotNull Project project) {
     return (ToolWindowManagerEx)getInstance(project);

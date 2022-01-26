@@ -33,7 +33,7 @@ internal class MoreSquareStripeButton(toolwindowSideBar: ToolwindowToolbar, val 
   }
 
   companion object {
-    private val largeStripeToolwindowPredicate: Predicate<ToolWindow> = Predicate { !it.isVisibleOnLargeStripe }
+    val largeStripeToolwindowPredicate: Predicate<ToolWindow> = Predicate { !it.isVisibleOnLargeStripe }
 
     fun createPresentation(): Presentation {
       return Presentation().apply {

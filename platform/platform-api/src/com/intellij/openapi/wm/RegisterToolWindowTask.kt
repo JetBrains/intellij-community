@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm
 
 import com.intellij.openapi.util.NlsContexts
@@ -22,68 +22,50 @@ data class RegisterToolWindowTask(
   companion object {
     @JvmStatic
     @JvmOverloads
-    fun notClosable(id: String, anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask {
-      return RegisterToolWindowTask(id, canCloseContent = false, anchor = anchor)
-    }
+    fun notClosable(id: String, anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask =
+      RegisterToolWindowTask(id, canCloseContent = false, anchor = anchor)
 
     @JvmStatic
     @JvmOverloads
-    fun notClosable(id: String, icon: Icon, anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask {
-      return RegisterToolWindowTask(id, canCloseContent = false, icon = icon, anchor = anchor)
-    }
+    fun notClosable(id: String, icon: Icon, anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask =
+      RegisterToolWindowTask(id, canCloseContent = false, icon = icon, anchor = anchor)
 
     @JvmStatic
     @JvmOverloads
-    fun closable(id: String, icon: Icon, anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask {
-      return RegisterToolWindowTask(id, icon = icon, anchor = anchor)
-    }
+    fun closable(id: String, icon: Icon, anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask =
+      RegisterToolWindowTask(id, icon = icon, anchor = anchor)
 
     @JvmStatic
     @JvmOverloads
     fun closable(id: String, 
                  stripeTitle: Supplier<@NlsContexts.TabTitle String>,
                  icon: Icon, 
-                 anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask {
-      return RegisterToolWindowTask(id, icon = icon, anchor = anchor, stripeTitle = stripeTitle)
-    }
+                 anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask =
+      RegisterToolWindowTask(id, icon = icon, anchor = anchor, stripeTitle = stripeTitle)
 
     @JvmStatic
     @JvmOverloads
     fun closableSecondary(id: String,
                           stripeTitle: Supplier<@NlsContexts.TabTitle String>,
                           icon: Icon,
-                          anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask {
-      return RegisterToolWindowTask(id, anchor = anchor, icon = icon, sideTool = true, stripeTitle = stripeTitle)
-    }
+                          anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask =
+      RegisterToolWindowTask(id, anchor = anchor, icon = icon, sideTool = true, stripeTitle = stripeTitle)
 
     @JvmStatic
     @JvmOverloads
     fun lazyAndClosable(id: String,
                         contentFactory: ToolWindowFactory,
                         icon: Icon,
-                        anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask {
-      return RegisterToolWindowTask(id, anchor = anchor, contentFactory = contentFactory, icon = icon)
-    }
+                        anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask =
+      RegisterToolWindowTask(id, anchor = anchor, contentFactory = contentFactory, icon = icon)
 
-    @JvmStatic
-    fun lazyAndClosableWithStripeTitle(id: String,
-                                       contentFactory: ToolWindowFactory,
-                                       icon: Icon,
-                                       stripeTitle: Supplier<@NlsContexts.TabTitle String>?): RegisterToolWindowTask {
-      return RegisterToolWindowTask(id = id,
-                                    anchor = ToolWindowAnchor.BOTTOM,
-                                    contentFactory = contentFactory,
-                                    icon = icon,
-                                    stripeTitle = stripeTitle)
-    }
 
     @JvmStatic
     @JvmOverloads
     fun lazyAndNotClosable(id: String,
                            contentFactory: ToolWindowFactory,
                            icon: Icon,
-                           anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask {
-      return RegisterToolWindowTask(id, canCloseContent = false, anchor = anchor, contentFactory = contentFactory, icon = icon)
-    }
+                           anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask =
+      RegisterToolWindowTask(id, canCloseContent = false, anchor = anchor, contentFactory = contentFactory, icon = icon)
   }
 }

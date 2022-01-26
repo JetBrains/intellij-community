@@ -60,9 +60,6 @@
     <applicationService serviceInterface="com.intellij.openapi.wm.WindowManager"
                         serviceImplementation="com.intellij.openapi.wm.impl.WindowManagerImpl"
                         headlessImplementation="com.intellij.openapi.wm.impl.TestWindowManager" preload="notHeadless"/>
-    <applicationService serviceInterface="com.intellij.openapi.wm.impl.DefaultToolWindowLayoutProvider"
-                        serviceImplementation="com.intellij.openapi.wm.impl.IntellijPlatformDefaultToolWindowLayoutProvider"/>
-
     <applicationService serviceInterface="com.intellij.openapi.wm.IdeFocusManager"
                         serviceImplementation="com.intellij.openapi.wm.impl.FocusManagerImpl"
                         headlessImplementation="com.intellij.openapi.wm.impl.IdeFocusManagerHeadless" preload="notHeadless"/>

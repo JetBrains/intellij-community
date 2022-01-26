@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.Disposable
@@ -222,54 +222,57 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
   }
 
   override fun processDragFinish(event: MouseEvent, willDragOutStart: Boolean) {
-    val toolWindow = getToolWindow() ?: return
-    if (willDragOutStart) {
-      setDragOut(true)
-      return
-    }
+    getToolWindow()?.let { toolWindow ->
+      if (willDragOutStart) {
+        setDragOut(true)
+        return
+      }
 
-    val screenPoint = event.locationOnScreen
-    val initialStripe = pane.getStripeFor(myInitialAnchor!!)
-    if (pane.getStripeFor(screenPoint, initialStripe) == null &&
-        toolWindow.getBoundsOnScreen(myInitialAnchor!!, screenPoint).contains(screenPoint)) {
-      cancelDragging()
-      return
-    }
+      val screenPoint = event.locationOnScreen
+      val initialStripe = pane.getStripeFor(myInitialAnchor!!)
+      if (pane.getStripeFor(screenPoint, initialStripe) == null &&
+          toolWindow.getBoundsOnScreen(myInitialAnchor!!, screenPoint).contains(screenPoint)) {
+        cancelDragging()
+        return
+      }
 
-    val stripe = myLastStripe
-    if (stripe != null) {
-      stripe.finishDrop(toolWindow.toolWindowManager)
-    }
-    else {
-      toolWindow.toolWindowManager.setToolWindowType(toolWindow.id, ToolWindowType.FLOATING)
-      toolWindow.toolWindowManager.activateToolWindow(toolWindow.id, Runnable {
-        val w = UIUtil.getWindow(toolWindow.component)
-        if (w is JDialog) {
-          val locationOnScreen = event.locationOnScreen
-          if (mySourceIsHeader) {
-            val decorator = InternalDecoratorImpl.findTopLevelDecorator(toolWindow.component)
-            if (decorator != null) {
-              val shift = SwingUtilities.convertPoint(decorator, decorator.location, w)
-              locationOnScreen.translate(-shift.x, -shift.y)
+      val stripe = myLastStripe
+      if (stripe != null) {
+        stripe.finishDrop(toolWindow.toolWindowManager)
+      }
+      else {
+        toolWindow.toolWindowManager.setToolWindowType(toolWindow.id, ToolWindowType.FLOATING)
+        toolWindow.toolWindowManager.activateToolWindow(toolWindow.id, Runnable {
+          val w = UIUtil.getWindow(toolWindow.component)
+          if (w is JDialog) {
+            val locationOnScreen = event.locationOnScreen
+            if (mySourceIsHeader) {
+              val decorator = InternalDecoratorImpl.findTopLevelDecorator(toolWindow.component)
+              if (decorator != null) {
+                val shift = SwingUtilities.convertPoint(decorator, decorator.location, w)
+                locationOnScreen.translate(-shift.x, -shift.y)
+              }
+              locationOnScreen.translate(-myInitialOffset.x, -myInitialOffset.y)
             }
-            locationOnScreen.translate(-myInitialOffset.x, -myInitialOffset.y)
+            w.location = locationOnScreen
+            val bounds = w.bounds
+            bounds.size = myInitialSize
+            ScreenUtil.fitToScreen(bounds)
+            w.bounds = bounds
           }
-          w.location = locationOnScreen
-          val bounds = w.bounds
-          bounds.size = myInitialSize
-          ScreenUtil.fitToScreen(bounds)
-          w.bounds = bounds
-        }
-      }, true, null)
+        }, true, null)
 
-      if (ExperimentalUI.isNewToolWindowsStripes()) {
-        val info = toolWindow.toolWindowManager.layout.getInfo(toolWindow.id)
-        toolWindow.toolWindowManager.setLargeStripeAnchor(toolWindow.id, initialStripe.getAnchor(), info?.orderOnLargeStripe ?: -1, true)
+        if (ExperimentalUI.isNewToolWindowsStripes()) {
+          val info = toolWindow.toolWindowManager.layout.getInfo(toolWindow.id)
+          toolWindow.toolWindowManager.setLargeStripeAnchor(toolWindow.id, initialStripe.getAnchor(), info?.orderOnLargeStripe ?: -1, true)
+        }
       }
     }
   }
 
-  private fun getToolWindow() = toolWindowRef?.get()
+  private fun getToolWindow(): ToolWindowImpl? {
+    return toolWindowRef?.get()
+  }
 
   override fun processDragOutFinish(event: MouseEvent) {
     processDragFinish(event, false)

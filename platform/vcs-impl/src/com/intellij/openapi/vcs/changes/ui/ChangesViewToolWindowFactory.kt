@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.ide.actions.ToolWindowEmptyStateAction.rebuildContentUi
@@ -28,9 +28,7 @@ private class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     super.createToolWindowContent(project, toolWindow)
 
-    if (toolWindow.contentManager.isEmpty) {
-      rebuildContentUi(toolWindow) // to show id label
-    }
+    if (toolWindow.contentManager.isEmpty) rebuildContentUi(toolWindow) // to show id label
   }
 
   override fun updateState(project: Project, toolWindow: ToolWindow) {
@@ -38,7 +36,9 @@ private class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
     toolWindow.stripeTitle = project.vcsManager.allActiveVcss.singleOrNull()?.displayName ?: ChangesViewContentManager.TOOLWINDOW_ID
   }
 
-  override fun shouldBeAvailable(project: Project) = project.isTrusted()
+  override fun shouldBeAvailable(project: Project): Boolean {
+    return project.isTrusted()
+  }
 }
 
 private class CommitToolWindowFactory : VcsToolWindowFactory() {

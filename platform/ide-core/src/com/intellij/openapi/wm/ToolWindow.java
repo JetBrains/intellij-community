@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
@@ -77,11 +77,21 @@ public interface ToolWindow extends BusyObject {
   /**
    * @throws IllegalStateException if tool window isn't installed.
    */
-  @NotNull ToolWindowAnchor getAnchor();
+  @NotNull
+  ToolWindowAnchor getAnchor();
 
   boolean isVisibleOnLargeStripe();
 
-  @NotNull ToolWindowAnchor getLargeStripeAnchor();
+  void setVisibleOnLargeStripe(boolean visible);
+
+  void setOrderOnLargeStripe(int order);
+
+  int getOrderOnLargeStripe();
+
+  @NotNull
+  ToolWindowAnchor getLargeStripeAnchor();
+
+  void setLargeStripeAnchor(@NotNull ToolWindowAnchor anchor, int order);
 
   /**
    * @throws IllegalStateException if tool window isn't installed.

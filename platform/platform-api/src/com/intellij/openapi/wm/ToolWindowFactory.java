@@ -1,12 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * Performs lazy initialization of a tool window registered in {@code plugin.xml}.
@@ -44,18 +40,5 @@ public interface ToolWindowFactory {
   @Deprecated
   default boolean isDoNotActivateOnStart() {
     return false;
-  }
-
-  /**
-   * Return custom anchor or null to use anchor defined in Tool Window Registration or customized by user.
-   */
-  @ApiStatus.Internal
-  default @Nullable ToolWindowAnchor getAnchor() {
-    return null;
-  }
-
-  @ApiStatus.Internal
-  default @Nullable Icon getIcon() {
-    return null;
   }
 }

@@ -31,6 +31,7 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.swing.FocusManager;
+import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -17,7 +17,7 @@ public class HideAllToolWindowsTest extends ToolWindowManagerTestCase {
     List<ToolWindowEP> extensions = ToolWindowEP.EP_NAME.getExtensionList();
 
     Map<String, ToolWindowType> types = new HashMap<>();
-    List<ToolWindowType> cycle = List.of(ToolWindowType.values());
+    List<ToolWindowType> cycle = new ArrayList<>(Arrays.asList(ToolWindowType.values()));
     for (int i = 0; i < extensions.size(); i++) {
       ToolWindowEP extension = extensions.get(i);
       String id = extension.id;

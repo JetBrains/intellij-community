@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
 import com.intellij.platform.ProjectSelfieUtil
@@ -57,8 +58,6 @@ internal open class ProjectFrameAllocator(private val options: OpenProjectTask) 
 
   /**
    * Project is loaded and is initialized, project services and components can be accessed.
-   * But start-up and post start-up activities are not yet executed.
-   * Executed under a modal progress dialog.
    */
   open fun projectLoaded(project: Project) {}
 
@@ -90,7 +89,6 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
       .createProgressWindowAsyncIfNeeded(getProgressTitle(), true, true, null, frameManager!!.getComponent(), null)
 
     val progressRunner = ProgressRunner<T?>(Function { indicator ->
-      // create project frame (not in this thread - all implementations uses invokeLater to perform UI tasks in EDT)
       frameManager!!.init(this@ProjectUiFrameAllocator)
       try {
         task(indicator)
@@ -165,17 +163,17 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
   }
 
   override fun projectLoaded(project: Project) {
-    ApplicationManager.getApplication().invokeLater(
-      {
-        val frameHelper = frameManager?.frameHelper ?: return@invokeLater
+    ApplicationManager.getApplication().invokeLater({
+      val frameHelper = frameManager?.frameHelper ?: return@invokeLater
 
-        val windowManager = WindowManager.getInstance() as WindowManagerImpl
-        runActivity("project frame assigning") {
-          windowManager.assignFrame(frameHelper, project)
-        }
-      },
-      project.disposed
-    )
+      val windowManager = WindowManager.getInstance() as WindowManagerImpl
+      runActivity("project frame assigning") {
+        windowManager.assignFrame(frameHelper, project)
+      }
+      runActivity("tool window pane creation") {
+        ToolWindowManagerEx.getInstanceEx(project).init(frameHelper)
+      }
+    }, project.disposed)
   }
 
   override fun projectNotLoaded(error: CannotConvertException?) {

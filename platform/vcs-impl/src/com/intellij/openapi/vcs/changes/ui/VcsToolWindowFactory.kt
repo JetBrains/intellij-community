@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.application.runInEdt
@@ -15,11 +15,11 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.I
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ex.ToolWindowEx
-import com.intellij.ui.ClientProperty
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
+import com.intellij.util.ui.UIUtil.getClientProperty
+import com.intellij.util.ui.UIUtil.putClientProperty
 import com.intellij.vcs.commit.CommitModeManager
-import java.awt.Component
 import javax.swing.JPanel
 
 private val Project.changesViewContentManager: ChangesViewContentI
@@ -61,7 +61,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     updateContent(project, toolWindow)
     project.changesViewContentManager.attachToolWindow(toolWindow)
 
-    toolWindow.component.putClientProperty(IS_CONTENT_CREATED, true)
+    putClientProperty(toolWindow.component, IS_CONTENT_CREATED, true)
   }
 
   protected open fun updateState(project: Project, toolWindow: ToolWindow) {
@@ -81,9 +81,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   private fun updateContentIfCreated(project: Project, toolWindow: ToolWindow) {
-    if (ClientProperty.get(toolWindow.component as Component?, IS_CONTENT_CREATED) != true) {
-      return
-    }
+    if (getClientProperty(toolWindow.component, IS_CONTENT_CREATED) != true) return
     updateContent(project, toolWindow)
   }
 

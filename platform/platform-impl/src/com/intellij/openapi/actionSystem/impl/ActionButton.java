@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
@@ -267,7 +267,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   public void update() {
     myManualUpdate = true;
     // the following code mirrors the ActionUpdater#updateActionReal code
-    boolean wasPopup = myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup();
+    boolean wasPopup = myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup(myPlace);
     myPresentation.setPopupGroup(myAction instanceof ActionGroup && (myPresentation.isPopupGroup() || wasPopup));
     AnActionEvent e = AnActionEvent.createFromInputEvent(null, myPlace, myPresentation, getDataContext(), false, true);
     ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), myAction, e, false);

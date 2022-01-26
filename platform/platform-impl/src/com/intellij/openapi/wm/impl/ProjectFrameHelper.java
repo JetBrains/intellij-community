@@ -35,6 +35,7 @@ import com.intellij.ui.*;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -168,9 +169,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     myBalloonLayout = ActionCenter.isEnabled()
                       ? new ActionCenterBalloonLayout(myRootPane, JBUI.insets(8))
                       : new BalloonLayoutImpl(myRootPane, JBUI.insets(8));
-    frame.setBackground(JBColor.PanelBackground);
-
-    myRootPane.prepareToolbar();
+    frame.setBackground(UIUtil.getPanelBackground());
   }
 
   protected @NotNull IdeRootPane createIdeRootPane() {

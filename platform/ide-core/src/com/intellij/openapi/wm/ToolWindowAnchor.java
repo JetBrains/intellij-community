@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
-import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.IdeCoreBundle;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +17,7 @@ public final class ToolWindowAnchor {
   public static final @NotNull ToolWindowAnchor LEFT = new ToolWindowAnchor("left", "action.text.anchor.left", "action.text.anchor.left.capitalized");
   public static final @NotNull ToolWindowAnchor BOTTOM = new ToolWindowAnchor("bottom", "action.text.anchor.bottom", "action.text.anchor.bottom.capitalized");
   public static final @NotNull ToolWindowAnchor RIGHT = new ToolWindowAnchor("right", "action.text.anchor.right", "action.text.anchor.right.capitalized");
+  public static final @NotNull ToolWindowAnchor NONE = new ToolWindowAnchor("none", "action.text.anchor.none", "action.text.anchor.none.capitalized");
 
   private final @NotNull String myText;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
 import com.intellij.execution.ExecutionBundle;
@@ -44,13 +44,13 @@ import com.intellij.openapi.wm.impl.InternalDecorator;
 import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.AutoScrollToSourceHandler;
-import com.intellij.ui.ClientProperty;
 import com.intellij.ui.content.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SmartHashSet;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -126,7 +126,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
           String toolWindowId = getToolWindowId(contributor.getClass());
           if (toolWindowId != null) {
             Boolean active = toolWindowIds.putIfAbsent(toolWindowId, activeContributors.contains(contributor));
-            if (active == Boolean.FALSE && activeContributors.contains(contributor)) {
+            if (Boolean.FALSE == active && activeContributors.contains(contributor)) {
               toolWindowIds.put(toolWindowId, Boolean.TRUE);
             }
           }
@@ -159,11 +159,10 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       return;
     }
 
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    toolWindowManager.invokeLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       if (!myActivationActionsRegistered) {
         myActivationActionsRegistered = true;
-        Collection<ServiceViewContributor<?>> contributors = myGroups.get(ToolWindowId.SERVICES);
+        Collection<ServiceViewContributor<?>> contributors = myGroups.get(getToolWindowId());
         if (contributors != null) {
           registerActivateByContributorActions(myProject, contributors);
         }
@@ -171,15 +170,12 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
 
       myRegisteringToolWindowAvailable = active;
       try {
-        ToolWindow toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.lazyAndClosableWithStripeTitle(
-          toolWindowId,
-          new ServiceViewToolWindowFactory(),
-          AllIcons.Toolwindows.ToolWindowServices,
-          toolWindowId == ToolWindowId.SERVICES ? null : () -> {
-            @NlsSafe String title = toolWindowId;
-            return title;
-          }
-        ));
+        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+        ToolWindow toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.lazyAndClosable(toolWindowId, new ServiceViewToolWindowFactory(), AllIcons.Toolwindows.ToolWindowServices));
+        if (toolWindowId != getToolWindowId()) {
+          @NlsSafe String title = toolWindowId;
+          toolWindow.setStripeTitle(title);
+        }
         if (active) {
           myActiveToolWindowIds.add(toolWindowId);
         }
@@ -190,7 +186,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       finally {
         myRegisteringToolWindowAvailable = false;
       }
-    });
+    }, ModalityState.NON_MODAL, myProject.getDisposed());
   }
 
   private void updateToolWindow(@NotNull String toolWindowId, boolean active, boolean show) {
@@ -623,7 +619,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       }
     }
     else if (!contributors.isEmpty()) {
-      String servicesToolWindowId = ToolWindowId.SERVICES;
+      String servicesToolWindowId = getToolWindowId();
       Collection<ServiceViewContributor<?>> servicesContributors =
         myGroups.computeIfAbsent(servicesToolWindowId, __ -> ContainerUtil.newConcurrentSet());
       servicesContributors.addAll(contributors);
@@ -705,6 +701,10 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   static final class State {
     public List<ServiceViewState> viewStates = new ArrayList<>();
     public boolean showServicesTree = true;
+  }
+
+  private static String getToolWindowId() {
+    return ToolWindowId.SERVICES;
   }
 
   static String getToolWindowContextHelpId() {
@@ -800,9 +800,8 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   }
 
   private boolean skipEvent(ServiceEvent e) {
-    if (e.type != ServiceEventListener.EventType.RESET || e.target != ServiceEventListener.POLLING_RESET_TARGET) {
-      return false;
-    }
+    if (e.type != ServiceEventListener.EventType.RESET ||
+        e.target != ServiceEventListener.POLLING_RESET_TARGET) return false;
 
     String toolWindowId = getToolWindowId(e.contributorClass);
     if (toolWindowId == null) return false;
@@ -812,7 +811,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
 
     toolWindow.getContentManager(); // ensure decorator is initialized
     InternalDecorator decorator = ((ToolWindowEx)toolWindow).getDecorator();
-    Boolean isShared = ClientProperty.get(decorator, InternalDecoratorImpl.SHARED_ACCESS_KEY);
+    Boolean isShared = UIUtil.getClientProperty(decorator, InternalDecoratorImpl.SHARED_ACCESS_KEY);
     return isShared == Boolean.TRUE;
   }
 
@@ -980,7 +979,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
         else {
           eventHandled(e);
         }
-        if (ToolWindowId.SERVICES.equals(toolWindowId)) {
+        if (getToolWindowId().equals(toolWindowId)) {
           AppUIExecutor.onUiThread().expireWith(myProject).submit(() -> registerActivateByContributorActions(myProject, contributors));
         }
       });

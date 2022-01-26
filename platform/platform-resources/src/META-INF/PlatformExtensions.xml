@@ -830,8 +830,8 @@
     <search.topHitProvider implementation="com.intellij.ide.ui.OptionsTopHitProvider$ProjectLevelProvidersAdapter"/>
     <applicationService serviceImplementation="com.intellij.ide.ui.TopHitCache"/>
 
-    <startupActivity id="openFilesActivity" implementation="com.intellij.openapi.fileEditor.impl.OpenFilesActivity"/>
-    <startupActivity implementation="com.intellij.openapi.wm.impl.InitToolWindowSetActivity" order="after openFilesActivity"/>
+    <startupActivity implementation="com.intellij.openapi.fileEditor.impl.OpenFilesActivity"/>
+    <startupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl$InitToolWindowsActivity"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.ide.util.TipsOrderUtil$RecommendationsStartupActivity"/>
     <postStartupActivity id="TipOfTheDayActivity" implementation="com.intellij.ide.TipOfTheDayStartupActivity"/>
@@ -1273,6 +1273,7 @@
     <readerModeMatcher implementation="com.intellij.diff.actions.DiffReaderModeMatcher"/>
     <backgroundPostStartupActivity implementation="com.intellij.ide.plugins.LanguagePluginDetectionStartupActivity"/>
     <notificationGroup id="Language Plugins Notifications" displayType="BALLOON"/>
+    <applicationService serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowToolbarProvider"/>
 
     <settingsEntryPointActionProvider implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsEntryPointActionProvider" order="first"/>
 
@@ -1378,6 +1379,10 @@
     <listener class="com.intellij.ide.FrameStateManagerAppListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
   </applicationListeners>
   <projectListeners>
+    <listener class="com.intellij.openapi.wm.impl.ToolwindowToolbarListener"
+              activeInHeadlessMode="false"
+              activeInTestMode="false"
+              topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
     <listener class="com.intellij.notification.impl.widget.NotificationWidgetListener"
               activeInHeadlessMode="false"
               activeInTestMode="false"

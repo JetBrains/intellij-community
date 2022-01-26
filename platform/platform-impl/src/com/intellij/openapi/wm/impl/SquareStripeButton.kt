@@ -30,7 +30,8 @@ import java.util.function.Supplier
 internal class SquareStripeButton(val project: Project, val button: StripeButton) :
   ActionButton(SquareAnActionButton(project, button), createPresentation(button), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, Dimension(40, 40)) {
   companion object {
-    fun createMoveGroup(project: Project, _toolWindowsPane: ToolWindowsPane? = null, toolWindow: ToolWindowImpl): DefaultActionGroup {
+    @JvmStatic
+    fun createMoveGroup(project: Project, _toolWindowsPane: ToolWindowsPane? = null, toolWindow: ToolWindow): DefaultActionGroup {
       var toolWindowsPane = _toolWindowsPane
       if (toolWindowsPane == null) {
         toolWindowsPane = (WindowManager.getInstance() as? WindowManagerImpl)?.getProjectFrameRootPane(project)?.toolWindowPane
@@ -59,16 +60,11 @@ internal class SquareStripeButton(val project: Project, val button: StripeButton
 
   override fun updateUI() {
     super.updateUI()
-
-    myPresentation.icon = button.icon ?: AllIcons.Toolbar.Unknown
-    scaleIcon(myPresentation)
-    myPresentation.isEnabledAndVisible = true
-  }
-
-  fun updateIcon(toolWindow: ToolWindow) {
-    button.icon = toolWindow.icon
-    myPresentation.icon = button.icon ?: AllIcons.Toolbar.Unknown
-    scaleIcon(myPresentation)
+    myPresentation.apply {
+      icon = button.icon ?: AllIcons.Toolbar.Unknown
+      scaleIcon()
+      isEnabledAndVisible = true
+    }
   }
 
   fun isHovered() = myRollover
@@ -95,7 +91,6 @@ internal class SquareStripeButton(val project: Project, val button: StripeButton
   }
 
   override fun updateToolTipText() {
-    @Suppress("DialogTitleCapitalization")
     HelpTooltip()
       .setTitle(button.toolWindow.stripeTitle)
       .setLocation(getAlignment(button.toolWindow.largeStripeAnchor))
@@ -125,18 +120,18 @@ private fun getAlignment(anchor: ToolWindowAnchor): HelpTooltip.Alignment {
 private fun createPresentation(button: StripeButton): Presentation {
   val presentation = Presentation(button.text)
   presentation.icon = button.icon ?: AllIcons.Toolbar.Unknown
-  scaleIcon(presentation)
+  presentation.scaleIcon()
   presentation.isEnabledAndVisible = true
   return presentation
 }
 
-private fun scaleIcon(presentation: Presentation) {
-  if (presentation.icon is ScalableIcon && presentation.icon.iconWidth != 20) {
-    presentation.icon = IconLoader.loadCustomVersionOrScale(presentation.icon as ScalableIcon, 20f)
+private fun Presentation.scaleIcon() {
+  if (icon is ScalableIcon && icon.iconWidth != 20) {
+    icon = IconLoader.loadCustomVersionOrScale(icon as ScalableIcon, 20f)
   }
 }
 
-private fun createPopupGroup(project: Project, toolWindowsPane: ToolWindowsPane, toolWindow: ToolWindowImpl): DefaultActionGroup {
+private fun createPopupGroup(project: Project, toolWindowsPane: ToolWindowsPane, toolWindow: ToolWindow): DefaultActionGroup {
   val group = DefaultActionGroup()
   group.add(HideAction(toolWindowsPane, toolWindow))
   group.addSeparator()
@@ -144,12 +139,11 @@ private fun createPopupGroup(project: Project, toolWindowsPane: ToolWindowsPane,
   return group
 }
 
-private class MoveToAction(private val toolWindowPane: ToolWindowsPane,
-                           private val toolWindow: ToolWindowImpl,
-                           private val anchor: ToolWindowAnchor) :
+private class MoveToAction(val toolWindowsPane: ToolWindowsPane, val toolWindow: ToolWindow, val anchor: ToolWindowAnchor) :
   AnAction(anchor.capitalizedDisplayName), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
-    toolWindowPane.buttonManager.onStripeButtonRemoved(toolWindow)
+    toolWindowsPane.onStripeButtonRemoved(toolWindow)
+    toolWindow.isVisibleOnLargeStripe = true
     toolWindow.setLargeStripeAnchor(anchor, if (anchor == ToolWindowAnchor.BOTTOM) 0 else -1)
   }
 
@@ -158,26 +152,24 @@ private class MoveToAction(private val toolWindowPane: ToolWindowsPane,
   }
 }
 
-private class HideAction(private val toolWindowPane: ToolWindowsPane, private val toolWindow: ToolWindowImpl) : AnAction(
+private class HideAction(val toolWindowsPane: ToolWindowsPane, val toolWindow: ToolWindow) : AnAction(
   UIBundle.message("tool.window.new.stripe.hide.action.name")), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
-    toolWindowPane.buttonManager.onStripeButtonRemoved(toolWindow)
-    toolWindow.toolWindowManager.setVisibleOnLargeStripe(toolWindow.id, false)
+    toolWindowsPane.onStripeButtonRemoved(toolWindow)
+    toolWindow.isVisibleOnLargeStripe = false
     (toolWindow as? ToolWindowImpl)?.toolWindowManager?.hideToolWindow(toolWindow.id, false, true, ToolWindowEventSource.SquareStripeButton)
   }
 }
 
-private class SquareAnActionButton(private val project: Project, private val button: StripeButton) : ToggleActionButton(button.text, null), DumbAware {
+private class SquareAnActionButton(val project: Project, val button: StripeButton) : ToggleActionButton(button.text, null), DumbAware {
   override fun isSelected(e: AnActionEvent): Boolean {
     e.presentation.icon = button.toolWindow.icon ?: AllIcons.Toolbar.Unknown
-    scaleIcon(e.presentation)
+    e.presentation.scaleIcon()
     return button.toolWindow.isVisible
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    if (e.project!!.isDisposed) {
-      return
-    }
+    if (e.project!!.isDisposed) return
 
     val manager = button.toolWindow.toolWindowManager
     if (!state) {

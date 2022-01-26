@@ -129,6 +129,11 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
+  public ToolWindowsPane init(@NotNull ProjectFrameHelper frameHelper) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public @NotNull DesktopLayout getLayout() {
     return new DesktopLayout();
   }
@@ -213,7 +218,19 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
+    public void setVisibleOnLargeStripe(boolean visible) { }
+
+    @Override
     public void setShowStripeButton(boolean show) {
+    }
+
+    @Override
+    public void setOrderOnLargeStripe(int order) {
+    }
+
+    @Override
+    public int getOrderOnLargeStripe() {
+      return -1;
     }
 
     @Override
@@ -243,6 +260,9 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public @NotNull ToolWindowAnchor getLargeStripeAnchor() {
       return ToolWindowAnchor.BOTTOM;
     }
+
+    @Override
+    public void setLargeStripeAnchor(@NotNull ToolWindowAnchor anchor, int order) { }
 
     @Override
     public void setAnchor(@NotNull ToolWindowAnchor anchor, @Nullable Runnable runnable) {

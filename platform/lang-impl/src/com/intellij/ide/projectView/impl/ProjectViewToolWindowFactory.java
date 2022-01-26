@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.util.RunOnceUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.GeneralModuleType;
@@ -18,11 +18,11 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Objects;
 
 public final class ProjectViewToolWindowFactory implements ToolWindowFactory, DumbAware {
   @Override
@@ -31,18 +31,9 @@ public final class ProjectViewToolWindowFactory implements ToolWindowFactory, Du
   }
 
   @Override
-  public @NotNull Icon getIcon() {
-    String path = ApplicationInfoEx.getInstanceEx().getToolWindowIconUrl();
-    if (path.equals("/toolwindows/toolWindowProject.svg") || path.equals("toolwindows/toolWindowProject.svg")) {
-      return AllIcons.Toolwindows.ToolWindowProject;
-    }
-    else {
-      return Objects.requireNonNull(IconLoader.findIcon(path, null, ProjectViewToolWindowFactory.class.getClassLoader(), null, false));
-    }
-  }
-
-  @Override
   public void init(@NotNull ToolWindow window) {
+    window.setIcon(IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getToolWindowIconUrl(), ProjectViewToolWindowFactory.class));
+    window.setStripeTitle(IdeUICustomization.getInstance().getProjectViewTitle());
     if (!(window instanceof ToolWindowEx) || !Registry.is("ide.open.project.view.on.startup", true)) {
       return;
     }
@@ -51,9 +42,8 @@ public final class ProjectViewToolWindowFactory implements ToolWindowFactory, Du
     if (Boolean.TRUE.equals(project.getUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START)) &&
         !ProjectUtil.isNotificationSilentMode(project)) {
       RunOnceUtil.runOnceForProject(project, "OpenProjectViewOnStart", () -> {
-        ToolWindowManager manager = ToolWindowManager.getInstance(project);
-        manager.invokeLater(() -> {
-          if (manager.getActiveToolWindowId() == null) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (ToolWindowManager.getInstance(project).getActiveToolWindowId() == null) {
             window.activate(() -> {
               Module[] modules = ModuleManager.getInstance(project).getModules();
               if (modules.length == 1 && GeneralModuleType.TYPE_ID.equals(modules[0].getModuleTypeName()))
@@ -67,7 +57,7 @@ public final class ProjectViewToolWindowFactory implements ToolWindowFactory, Du
               }
             });
           }
-        });
+        }, project.getDisposed());
       });
     }
   }

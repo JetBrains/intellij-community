@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.wm.impl
@@ -8,15 +8,16 @@ import com.intellij.configurationStore.serialize
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.createNewProjectFrame
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.openapi.wm.IdeFrame
-import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isMaximized
@@ -45,6 +46,7 @@ private const val FRAME_ELEMENT = "frame"
 
 @State(
   name = "WindowManager",
+  defaultStateAsResource = true,
   storages = [Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED)]
 )
 class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModificationTracker<Element> {
@@ -360,12 +362,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       projectToFrame.put(null, frameHelper)
     }
     else {
-      try {
-        Disposer.dispose(frameHelper)
-      }
-      catch (e: Exception) {
-        LOG.error(e)
-      }
+      Disposer.dispose(frameHelper)
     }
   }
 
@@ -395,7 +392,46 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   override fun getFocusedComponent(project: Project?) = windowWatcher.getFocusedComponent(project)
 
   override fun noStateLoaded() {
-    layout = DesktopLayout(service<DefaultToolWindowLayoutProvider>().createDefaultToolWindowLayout().associateByTo(HashMap()) { it.id!! })
+    var anchor = ToolWindowAnchor.LEFT
+    var order = 0
+    fun info(id: String, weight: Float = -1f, contentUiType: ToolWindowContentUiType? = null): WindowInfoImpl {
+      val result = WindowInfoImpl()
+      result.id = id
+      result.anchor = anchor
+      if (weight != -1f) {
+        result.weight = weight
+      }
+      contentUiType?.let {
+        result.contentUiType = it
+      }
+      result.order = order++
+      result.isFromPersistentSettings = false
+      result.resetModificationCount()
+      return result
+    }
+
+    val list = mutableListOf<WindowInfoImpl>()
+
+    // left stripe
+    list.add(info(id = "Project", weight = 0.25f, contentUiType = ToolWindowContentUiType.COMBO))
+
+    // right stripe
+    anchor = ToolWindowAnchor.RIGHT
+    order = 0
+    list.add(info(id = "Notifications", weight = 0.25f))
+
+    // bottom stripe
+    anchor = ToolWindowAnchor.BOTTOM
+    order = 0
+    list.add(info(id = "Version Control"))
+    list.add(info(id = "Find"))
+    list.add(info(id = "Run"))
+    list.add(info(id = "Debug", weight = 0.4f))
+    list.add(info(id = "Inspection", weight = 0.4f))
+
+    for (info in list) {
+      layout.addInfo(info.id!!, info)
+    }
   }
 
   override fun loadState(state: Element) {

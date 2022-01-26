@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.HelpTooltip;
@@ -35,7 +35,7 @@ import static com.intellij.openapi.wm.impl.ToolWindowDragHelperKt.createDragImag
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-public final class StripeButton extends AnchoredButton implements DataProvider {
+public class StripeButton extends AnchoredButton implements DataProvider {
   /**
    * This is analog of Swing mnemonic. We cannot use the standard ones
    * because it causes typing of "funny" characters into the editor.
@@ -44,6 +44,7 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
   private boolean myPressedWhenSelected;
 
   private JLayeredPane myDragPane;
+  @NotNull final ToolWindowsPane pane;
   final ToolWindowImpl toolWindow;
   private JLabel myDragButtonImage;
   private Point myPressedPoint;
@@ -51,7 +52,8 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
   private KeyEventDispatcher myDragKeyEventDispatcher;
   private boolean myDragCancelled = false;
 
-  StripeButton(@NotNull ToolWindowImpl toolWindow) {
+  StripeButton(@NotNull ToolWindowsPane pane, @NotNull ToolWindowImpl toolWindow) {
+    this.pane = pane;
     this.toolWindow = toolWindow;
 
     setFocusable(false);
@@ -90,15 +92,10 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
     updateHelpTooltip();
   }
 
-  ToolWindowsPane getPane() {
-    return toolWindow.getToolWindowManager().getToolWindowPane$intellij_platform_ide_impl();
-  }
-
   private void updateHelpTooltip() {
     HelpTooltip.dispose(this);
 
     HelpTooltip tooltip = new HelpTooltip();
-    //noinspection DialogTitleCapitalization
     tooltip.setTitle(toolWindow.getStripeTitle());
     String activateActionId = ActivateToolWindowAction.getActionIdForToolWindow(toolWindow.getId());
     tooltip.setShortcut(ActionManager.getInstance().getKeyboardShortcut(activateActionId));
@@ -127,7 +124,7 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
 
   /**
    * We are using the trick here: the method does all things that super method does
-   * except firing of the MNEMONIC_CHANGED_PROPERTY event. After that mnemonic
+   * excepting firing of the MNEMONIC_CHANGED_PROPERTY event. After that mnemonic
    * doesn't work via standard Swing rules (processing of Alt keystrokes).
    */
   @Override
@@ -224,7 +221,7 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
       myDragPane.add(myDragButtonImage, JLayeredPane.POPUP_LAYER);
       myDragButtonImage.setSize(myDragButtonImage.getPreferredSize());
       setVisible(false);
-      getPane().startDrag();
+      pane.startDrag();
       myDragKeyEventDispatcher = new DragKeyEventDispatcher();
       KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(myDragKeyEventDispatcher);
     }
@@ -242,7 +239,7 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
 
     SwingUtilities.convertPointToScreen(xy, myDragPane);
 
-    var stripe = getPane().getStripeFor(xy, (Stripe)getParent());
+    var stripe = pane.getStripeFor(xy, (Stripe)getParent());
     if (stripe == null) {
       if (myLastStripe != null) {
         myLastStripe.resetDrop();
@@ -377,7 +374,7 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
     }
     myDragPane.remove(myDragButtonImage);
     myDragButtonImage = null;
-    getPane().stopDrag();
+    pane.stopDrag();
     myDragPane.repaint();
     setVisible(true);
     if (myLastStripe != null) {

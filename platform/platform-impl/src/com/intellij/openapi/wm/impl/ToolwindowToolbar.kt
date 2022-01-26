@@ -1,16 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.actionSystem.ActionPlaces.TOOLWINDOW_TOOLBAR_BAR
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.ui.ComponentUtil
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.Point
 import java.awt.Rectangle
@@ -36,8 +35,8 @@ internal abstract class ToolwindowToolbar : JPanel() {
     remove(getStripeFor(anchor), toolWindow)
   }
 
-  fun addStripeButton(toolWindow: ToolWindowImpl) {
-    rebuildStripe(getStripeFor(toolWindow.windowInfo.largeStripeAnchor), toolWindow)
+  fun addStripeButton(project: Project, anchor: ToolWindowAnchor, toolWindow: ToolWindow) {
+    rebuildStripe(project, getStripeFor(anchor), toolWindow)
   }
 
   abstract fun reset()
@@ -49,10 +48,18 @@ internal abstract class ToolwindowToolbar : JPanel() {
 
   fun stopDrag() = startDrag()
 
-  private fun rebuildStripe(panel: AbstractDroppableStripe, toolWindow: ToolWindowImpl) {
+  fun rebuildStripe(project: Project, panel: AbstractDroppableStripe, toolWindow: ToolWindow) {
+    if (toolWindow !is ToolWindowImpl) {
+      return
+    }
+
+    if (toolWindow.orderOnLargeStripe == -1) {
+      toolWindow.orderOnLargeStripe = panel.components.filterIsInstance(SquareStripeButton::class.java).count()
+    }
+
     // temporary add new button
-    if (panel.buttons.asSequence().filterIsInstance(SquareStripeButton::class.java).find { it.button.id == toolWindow.id } == null) {
-      panel.add(SquareStripeButton(toolWindow.project, StripeButton(toolWindow).also(StripeButton::updatePresentation)))
+    if (panel.buttons.filterIsInstance(SquareStripeButton::class.java).find { it.button.id == toolWindow.id } == null) {
+      panel.add(SquareStripeButton(project, StripeButton(toolWindow).also(StripeButton::updatePresentation)))
     }
 
     val sortedSquareButtons = panel.components.asSequence()
@@ -63,7 +70,7 @@ internal abstract class ToolwindowToolbar : JPanel() {
     panel.removeAll()
     panel.buttons.clear()
     sortedSquareButtons.forEach {
-      val button = SquareStripeButton(toolWindow.project, StripeButton(it).also(StripeButton::updatePresentation))
+      val button = SquareStripeButton(project, StripeButton(it).also(StripeButton::updatePresentation))
       panel.add(button)
       panel.buttons.add(button)
     }
@@ -82,17 +89,26 @@ internal abstract class ToolwindowToolbar : JPanel() {
 
   companion object {
     fun updateButtons(panel: JComponent) {
-      ComponentUtil.findComponentsOfType(panel, SquareStripeButton::class.java).forEach { it.update() }
+      UIUtil.findComponentsOfType(panel, SquareStripeButton::class.java).forEach { it.update() }
       panel.revalidate()
       panel.repaint()
     }
 
     fun remove(panel: AbstractDroppableStripe, toolWindow: ToolWindow) {
-      val component = panel.components.firstOrNull { it is SquareStripeButton && it.button.id == toolWindow.id } ?: return
-      panel.remove(component)
-      panel.buttons.remove(component)
-      panel.revalidate()
-      panel.repaint()
+      val components = panel.components
+      val index = components.filterIsInstance(SquareStripeButton::class.java).indexOfFirst { it.button.id == toolWindow.id }
+      // shift all button indexes beneath
+      components.drop(index + 1)
+        .filterIsInstance(SquareStripeButton::class.java)
+        .map { it.button.toolWindow }
+        .forEach { it.orderOnLargeStripe-- }
+
+      components[index]?.let {
+        panel.remove(it)
+        panel.buttons.remove(it)
+        panel.revalidate()
+        panel.repaint()
+      }
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.wm.ToolWindowAnchor
@@ -29,6 +29,7 @@ fun JComponent.getAnchor() : ToolWindowAnchor? = when (this) {
 }
 
 abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : JPanel(layoutManager) {
+
   private var myDragButton: JComponent? = null
   protected var myDropRectangle: Rectangle = Rectangle(-1, -1)
   protected val myDrawRectangle = Rectangle()
@@ -37,7 +38,7 @@ abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : JPanel(la
   private var myLastLayoutData: LayoutData? = null
   protected var myPreferredSize: Dimension? = null
 
-  val buttons: MutableList<JComponent> = ArrayList()
+  val buttons: ArrayList<JComponent> = ArrayList()
 
   open fun reset() {
     myLastLayoutData = null
@@ -107,12 +108,8 @@ abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : JPanel(la
 
     myFinishingDrop = true
     getToolwindowID()?.let {
-      if (ExperimentalUI.isNewToolWindowsStripes()) {
-        manager.setLargeStripeAnchor(it, getAnchor(), myLastLayoutData!!.dragInsertPosition, true)
-      }
-      else {
-        manager.setSideToolAndAnchor(it, getAnchor(), myLastLayoutData!!.dragInsertPosition, myLastLayoutData!!.dragToSide)
-      }
+      if (ExperimentalUI.isNewToolWindowsStripes()) manager.setLargeStripeAnchor(it, getAnchor(), myLastLayoutData!!.dragInsertPosition, true)
+      else manager.setSideToolAndAnchor(it, getAnchor(), myLastLayoutData!!.dragInsertPosition, myLastLayoutData!!.dragToSide)
     }
     manager.invokeLater { resetDrop() }
   }
