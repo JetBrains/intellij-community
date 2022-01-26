@@ -30,6 +30,7 @@
           <element id="module-output" name="kotlin.compiler-plugins.allopen.common" />
           <element id="module-output" name="kotlin.compiler-plugins.allopen.gradle" />
           <element id="module-output" name="kotlin.compiler-plugins.allopen.maven" />
+          <element id="module-output" name="kotlin.compiler-plugins.android-extensions-stubs" />
         </element>
         <element id="archive" name="kotlin-compiler-plugins-annotation-based-compiler-support.jar">
           <element id="module-output" name="kotlin.compiler-plugins.annotation-based-compiler-support.common" />
