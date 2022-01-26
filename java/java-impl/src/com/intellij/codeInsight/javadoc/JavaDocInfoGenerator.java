@@ -103,6 +103,27 @@ public class JavaDocInfoGenerator {
   private static final String GT = "&gt;";
   private static final String NBSP = "&nbsp;";
 
+  /**
+   * Tags for which javadoc is known to be generated.
+   */
+  private static final Set<String> ourKnownTags = ContainerUtil.newHashSet(
+    "author",
+    "version",
+    "param",
+    "return",
+    "deprecated",
+    "since",
+    "throws",
+    "exception",
+    "see",
+    "serial",
+    "serialField",
+    "serialData",
+    "apiNote",
+    "implNote",
+    "implSpec"
+    );
+
   private static final Pattern ourWhitespaces = Pattern.compile("[ \\n\\r\\t]+");
   private static final Pattern ourRelativeHtmlLinks = Pattern.compile("<A.*?HREF=\"([^\":]*)\"", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
@@ -691,6 +712,7 @@ public class JavaDocInfoGenerator {
       generateAuthorAndVersionSections(buffer, comment);
       generateRecordParametersSection(buffer, aClass, comment);
       generateTypeParametersSection(buffer, aClass);
+      generateUnknownTagsSections(buffer, comment);
     }
     else {
       buffer.append(DocumentationMarkup.SECTIONS_START);
@@ -896,6 +918,7 @@ public class JavaDocInfoGenerator {
     if (comment != null) {
       generateCommonSection(buffer, comment);
       generateAuthorAndVersionSections(buffer, comment);
+      generateUnknownTagsSections(buffer, comment);
     }
     else {
       buffer.append(DocumentationMarkup.SECTIONS_START);
@@ -1374,6 +1397,7 @@ public class JavaDocInfoGenerator {
       generateSinceSection(buffer, comment);
       generateSeeAlsoSection(buffer, comment);
       generateAuthorAndVersionSections(buffer, comment);
+      generateUnknownTagsSections(buffer, comment);
     }
 
     if (!isRendered()) {
@@ -1381,6 +1405,16 @@ public class JavaDocInfoGenerator {
     }
 
     buffer.append(DocumentationMarkup.SECTIONS_END);
+  }
+
+  private void generateUnknownTagsSections(StringBuilder buffer, PsiDocComment comment) {
+    var tags = comment.getTags();
+    for (PsiDocTag tag : tags) {
+      var tagName = tag.getName();
+      if (!ourKnownTags.contains(tagName)) {
+        generateSingleTagSection(buffer, comment, tagName, () -> tagName);
+      }
+    }
   }
 
   private static StringBuilder startHeaderSection(StringBuilder buffer, String message) {
