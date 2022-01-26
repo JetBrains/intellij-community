@@ -159,4 +159,8 @@ final class BuildUtils {
       return null
     }
   }
+
+  static boolean isUnderJpsBootstrap() {
+    return System.getenv("JPS_BOOTSTRAP_COMMUNITY_HOME") != null
+  }
 }
