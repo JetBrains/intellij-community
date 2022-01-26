@@ -54,8 +54,9 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     return myEditPanel;
   }
 
+  @NotNull
   @Override
-  protected @NotNull IdeRootPane createIdeRootPane() {
+  protected IdeRootPane createIdeRootPane() {
     return new LightEditRootPane(requireNotNullFrame(), this, this);
   }
 
@@ -83,8 +84,9 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     return Collections.emptyList();
   }
 
+  @NotNull
   @Override
-  protected @NotNull CloseProjectWindowHelper createCloseProjectWindowHelper() {
+  protected CloseProjectWindowHelper createCloseProjectWindowHelper() {
     return new CloseProjectWindowHelper() {
       @Override
       public void windowClosing(@Nullable Project project) {
@@ -116,14 +118,16 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
       super(frame, frameHelper, parentDisposable);
     }
 
+    @NotNull
     @Override
-    protected @NotNull Component createCenterComponent(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
+    protected Component getCenterComponent(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
       myEditPanel = new LightEditPanel(LightEditUtil.requireProject());
       return myEditPanel;
     }
 
+    @NotNull
     @Override
-    public @NotNull ToolWindowsPane getToolWindowPane() {
+    public ToolWindowsPane getToolWindowPane() {
       throw new IllegalStateException("Tool windows are unavailable in LightEdit");
     }
 
@@ -132,8 +136,9 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
       return new LightEditMainMenuHelper().getMainMenuActionGroup();
     }
 
+    @NotNull
     @Override
-    protected @NotNull IdeStatusBarImpl createStatusBar(@NotNull IdeFrame frame) {
+    protected IdeStatusBarImpl createStatusBar(@NotNull IdeFrame frame) {
       return new IdeStatusBarImpl(frame, false) {
         @Override
         public void updateUI() {

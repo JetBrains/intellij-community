@@ -18,11 +18,13 @@ public interface ToolWindowManagerListener extends EventListener {
    * @deprecated Use {@link #toolWindowsRegistered}
    */
   @Deprecated
-  default void toolWindowRegistered(@SuppressWarnings("unused") @NotNull String id) {
+  default void toolWindowRegistered(@NotNull String id) {
   }
 
   default void toolWindowsRegistered(@NotNull List<String> ids, @NotNull ToolWindowManager toolWindowManager) {
-    ids.forEach(this::toolWindowRegistered);
+    for (String id : ids) {
+      toolWindowRegistered(id);
+    }
   }
 
   /**
@@ -50,7 +52,6 @@ public interface ToolWindowManagerListener extends EventListener {
   /**
    * @deprecated use {@link #toolWindowShown(ToolWindow)} instead
    */
-  @SuppressWarnings("unused")
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @Deprecated
   default void toolWindowShown(@NotNull String id, @NotNull ToolWindow toolWindow) {

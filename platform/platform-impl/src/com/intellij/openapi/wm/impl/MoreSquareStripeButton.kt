@@ -17,7 +17,7 @@ import java.awt.Dimension
 import java.awt.Point
 import java.util.function.Predicate
 
-internal class MoreSquareStripeButton(toolwindowSideBar: ToolwindowToolbar, val stripe: AbstractDroppableStripe) :
+class MoreSquareStripeButton(toolwindowSideBar: ToolwindowToolbar, val stripe: AbstractDroppableStripe) :
   ActionButton(createAction(toolwindowSideBar), createPresentation(), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, Dimension(40, 40)) {
 
   init {

@@ -163,8 +163,8 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
   }
 
   override fun projectLoaded(project: Project) {
-    ApplicationManager.getApplication().invokeLater({
-      val frameHelper = frameManager?.frameHelper ?: return@invokeLater
+    ApplicationManager.getApplication().invokeLater(Runnable {
+      val frameHelper = frameManager?.frameHelper ?: return@Runnable
 
       val windowManager = WindowManager.getInstance() as WindowManagerImpl
       runActivity("project frame assigning") {

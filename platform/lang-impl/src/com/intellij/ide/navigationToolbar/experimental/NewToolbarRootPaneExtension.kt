@@ -12,11 +12,10 @@ import com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -25,6 +24,7 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
@@ -37,7 +37,7 @@ import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Executor
+import java.util.function.Consumer
 import javax.swing.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -61,16 +61,15 @@ fun interface ExperimentalToolbarStateListener {
 }
 
 @Service
-internal class NewToolbarRootPaneManager(private val project: Project) : SimpleModificationTracker(), Disposable {
+class NewToolbarRootPaneManager(private val project: Project) : SimpleModificationTracker(), Disposable {
   companion object {
-    private val LOG = logger<NewToolbarRootPaneManager>()
-
+    private val logger = logger<NewToolbarRootPaneManager>()
     fun getInstance(project: Project): NewToolbarRootPaneManager = project.service()
   }
 
   init {
     RunWidgetAvailabilityManager.getInstance(project).addListener(this) {
-      LOG.info("New toolbar: run widget availability changed $it")
+      logger.info("New toolbar: run widget availability changed $it")
       IdeRootPaneNorthExtension.EP_NAME.findExtension(NewToolbarRootPaneExtension::class.java, project)?.let { extension ->
         startUpdateActionGroups(extension)
       }
@@ -86,10 +85,9 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
     val panel = extension.panel
     if (panel.isEnabled && panel.isVisible && ToolbarSettings.getInstance().isEnabled) {
       CompletableFuture.supplyAsync(::correctedToolbarActions, AppExecutorUtil.getAppExecutorService())
-        .thenAcceptAsync(
-          {
-            applyTo(it, panel, extension.layout)
-          it.forEach { it2 ->
+        .thenAcceptAsync(Consumer {
+          applyTo(it, panel, extension.layout)
+        it.forEach { it2 ->
             if (it2.key == null) {
               val comp = extension.layout.getLayoutComponent(it2.value)
               if (comp != null) {
@@ -98,11 +96,9 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
             }
           }
           },
-          Executor {
-            ApplicationManager.getApplication().invokeLater(it, project.disposed)
-          })
+          EdtExecutorService.getInstance())
         .exceptionally {
-          LOG.error(it)
+          thisLogger().error(it)
           null
         }
     }
@@ -281,6 +277,11 @@ internal class NewToolbarRootPaneExtension(private val project: Project) : IdeRo
   override fun copy() = NewToolbarRootPaneExtension(project)
 
   override fun revalidate() {
+    if (project.isDisposed) {
+      logger.warn("New toolbar: Project '$project' disposal has already been initiated.")
+      return
+    }
+
     NewToolbarRootPaneManager.getInstance(project).startUpdateActionGroups(this)
   }
 }

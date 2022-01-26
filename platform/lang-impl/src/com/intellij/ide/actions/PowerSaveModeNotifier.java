@@ -6,7 +6,7 @@ import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,7 +19,8 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class PowerSaveModeNotifier implements StartupActivity.DumbAware {
+public final class PowerSaveModeNotifier implements StartupActivity.DumbAware {
+  private static final NotificationGroup POWER_SAVE_MODE = NotificationGroup.balloonGroup("Power Save Mode");
   private static final String IGNORE_POWER_SAVE_MODE = "ignore.power.save.mode";
 
   @Override
@@ -34,11 +35,10 @@ final class PowerSaveModeNotifier implements StartupActivity.DumbAware {
       return;
     }
 
-    Notification notification = NotificationGroupManager.getInstance().getNotificationGroup("Power Save Mode").createNotification(
+    Notification notification = POWER_SAVE_MODE.createNotification(
       IdeBundle.message("power.save.mode.on.notification.title"),
       IdeBundle.message("power.save.mode.on.notification.content"),
-      NotificationType.WARNING
-    );
+      NotificationType.WARNING);
 
     notification.addAction(new NotificationAction(IdeBundle.message("action.Anonymous.text.do.not.show.again")) {
       @Override

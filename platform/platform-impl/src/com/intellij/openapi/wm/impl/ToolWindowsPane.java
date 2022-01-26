@@ -32,6 +32,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -465,25 +466,16 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     return null;
   }
 
-  @Nullable ToolwindowToolbar getSquareStripeFor(@NotNull ToolWindowAnchor anchor) {
-    if (ToolWindowAnchor.TOP == anchor || ToolWindowAnchor.RIGHT == anchor) {
-      return myRightToolbar;
-    }
-    else if (ToolWindowAnchor.BOTTOM == anchor || ToolWindowAnchor.LEFT == anchor) {
-      return myLeftToolbar;
-    }
-    else {
-      throw new IllegalArgumentException("Anchor=" + anchor);
-    }
+  @Nullable
+  ToolwindowToolbar getSquareStripeFor(@NotNull ToolWindowAnchor anchor) {
+    if (ToolWindowAnchor.TOP == anchor || ToolWindowAnchor.RIGHT == anchor) return myRightToolbar;
+    if (ToolWindowAnchor.BOTTOM == anchor || ToolWindowAnchor.LEFT == anchor) return myLeftToolbar;
+
+    throw new IllegalArgumentException("Anchor=" + anchor);
   }
 
   void startDrag() {
-    for (Stripe s : stripes) {
-      if (s.isVisible()) {
-        s.startDrag();
-      }
-    }
-
+    ContainerUtil.filter(stripes, s -> s.isVisible()).forEach(s -> s.startDrag());
 
     if (myRightToolbar != null && myRightToolbar.isVisible()) {
       myRightToolbar.startDrag();
@@ -495,11 +487,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   void stopDrag() {
-    for (Stripe s : stripes) {
-      if (s.isVisible()) {
-        s.stopDrag();
-      }
-    }
+    ContainerUtil.filter(stripes, s -> s.isVisible()).forEach(s -> s.stopDrag());
 
     if (myRightToolbar != null && myRightToolbar.isVisible()) {
       myRightToolbar.stopDrag();

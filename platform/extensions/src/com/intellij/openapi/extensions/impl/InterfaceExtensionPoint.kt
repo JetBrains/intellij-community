@@ -34,6 +34,6 @@ internal class InterfaceExtensionPoint<T>(name: String,
                                            elements: List<ExtensionDescriptor>,
                                            priorityListenerCallbacks: List<Runnable>,
                                            listenerCallbacks: List<Runnable>) {
-    unregisterExtensions(false, priorityListenerCallbacks, listenerCallbacks) { it.pluginDescriptor !== pluginDescriptor }
+    unregisterExtensions(false, priorityListenerCallbacks, listenerCallbacks) { it.getPluginDescriptor() !== pluginDescriptor }
   }
 }

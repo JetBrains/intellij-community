@@ -1,113 +1,127 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.extensions.impl
+package com.intellij.openapi.extensions.impl;
 
-import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.*
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.XmlElement
 import com.intellij.util.xmlb.XmlSerializer
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import java.util.*
 
-internal open class XmlExtensionAdapter(implementationClassName: String,
-                                        pluginDescriptor: PluginDescriptor,
-                                        orderId: String?,
-                                        order: LoadingOrder,
-                                        private var extensionElement: XmlElement?,
-                                        implementationClassResolver: ImplementationClassResolver) : ExtensionComponentAdapter(
-  implementationClassName, pluginDescriptor, orderId, order, implementationClassResolver) {
-  companion object {
-    private val NOT_APPLICABLE = Any()
+class XmlExtensionAdapter extends ExtensionComponentAdapter {
+  private @Nullable XmlElement extensionElement;
+
+  private static final Object NOT_APPLICABLE = new Object();
+
+  private volatile Object extensionInstance;
+  private boolean initializing;
+
+  XmlExtensionAdapter(@NotNull String implementationClassName,
+                      @NotNull PluginDescriptor pluginDescriptor,
+                      @Nullable String orderId,
+                      @NotNull LoadingOrder order,
+                      @Nullable XmlElement extensionElement,
+                      @NotNull ImplementationClassResolver implementationClassResolver) {
+    super(implementationClassName, pluginDescriptor, orderId, order, implementationClassResolver);
+
+    this.extensionElement = extensionElement;
   }
 
-  @Volatile
-  private var extensionInstance: Any? = null
-  private var initializing = false
-
-  override val isInstanceCreated: Boolean
-    get() = extensionInstance != null
-
-  override fun <T : Any> createInstance(componentManager: ComponentManager): T? {
-    @Suppress("UNCHECKED_CAST")
-    val instance = extensionInstance as T?
-    return if (instance == null) doCreateInstance(componentManager) else instance.takeIf { it !== NOT_APPLICABLE }
+  @Override
+  final synchronized boolean isInstanceCreated() {
+    return extensionInstance != null;
   }
 
-  @Synchronized
-  private fun <T : Any> doCreateInstance(componentManager: ComponentManager): T? {
-    @Suppress("UNCHECKED_CAST")
-    var instance = extensionInstance as T?
+  @Override
+  public @Nullable <T> T createInstance(@NotNull ComponentManager componentManager) {
+    @SuppressWarnings("unchecked")
+    T instance = (T)extensionInstance;
     if (instance != null) {
-      return instance.takeIf { it !== NOT_APPLICABLE }
+      return instance == NOT_APPLICABLE ? null : instance;
     }
 
-    if (initializing) {
-      throw componentManager.createError("Cyclic extension initialization: $this", pluginDescriptor.pluginId)
-    }
+    //noinspection SynchronizeOnThis
+    synchronized (this) {
+      //noinspection unchecked
+      instance = (T)extensionInstance;
+      if (instance != null) {
+        return instance == NOT_APPLICABLE ? null : instance;
+      }
 
-    try {
-      initializing = true
-      @Suppress("UNCHECKED_CAST")
-      val aClass = implementationClassResolver.resolveImplementationClass(componentManager, this) as Class<T>
-      instance = instantiateClass(aClass, componentManager)
-      if (instance is PluginAware) {
-        instance.setPluginDescriptor(pluginDescriptor)
+      if (initializing) {
+        throw componentManager.createError("Cyclic extension initialization: " + this, pluginDescriptor.getPluginId());
       }
-      val element = extensionElement
-      if (element != null) {
-        XmlSerializer.getBeanBinding(instance::class.java).deserializeInto(instance, element)
-        extensionElement = null
+
+      try {
+        initializing = true;
+
+        //noinspection unchecked
+        Class<T> aClass = (Class<T>)implementationClassResolver.resolveImplementationClass(componentManager, this);
+        instance = instantiateClass(aClass, componentManager);
+        if (instance instanceof PluginAware) {
+          ((PluginAware)instance).setPluginDescriptor(pluginDescriptor);
+        }
+
+        XmlElement element = extensionElement;
+        if (element != null) {
+          XmlSerializer.getBeanBinding(instance.getClass()).deserializeInto(instance, element);
+          extensionElement = null;
+        }
+
+        extensionInstance = instance;
       }
-      extensionInstance = instance
+      catch (ExtensionNotApplicableException e) {
+        extensionInstance = NOT_APPLICABLE;
+        extensionElement = null;
+        return null;
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        throw componentManager.createError("Cannot create extension (class=" + getAssignableToClassName() + ")", e,
+                                           pluginDescriptor.getPluginId(), null);
+      }
+      finally {
+        initializing = false;
+      }
     }
-    catch (e: ExtensionNotApplicableException) {
-      extensionInstance = NOT_APPLICABLE
-      extensionElement = null
-      return null
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      throw componentManager.createError("Cannot create extension (class=$assignableToClassName)", e, pluginDescriptor.pluginId, null)
-    }
-    finally {
-      initializing = false
-    }
-    return instance
+    return instance;
   }
 
-  protected open fun <T> instantiateClass(aClass: Class<T>, componentManager: ComponentManager): T {
-    return componentManager.instantiateClass(aClass, pluginDescriptor.pluginId)
+  protected @NotNull <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull ComponentManager componentManager) {
+    return componentManager.instantiateClass(aClass, pluginDescriptor.getPluginId());
   }
 
-  internal class SimpleConstructorInjectionAdapter(implementationClassName: String,
-                                                   pluginDescriptor: PluginDescriptor,
-                                                   descriptor: ExtensionDescriptor,
-                                                   implementationClassResolver: ImplementationClassResolver) : XmlExtensionAdapter(
-    implementationClassName, pluginDescriptor, descriptor.orderId, descriptor.order, descriptor.element, implementationClassResolver) {
-    override fun <T> instantiateClass(aClass: Class<T>, componentManager: ComponentManager): T {
-      if (aClass.name != "org.jetbrains.kotlin.asJava.finder.JavaElementFinder") {
+  static final class SimpleConstructorInjectionAdapter extends XmlExtensionAdapter {
+    SimpleConstructorInjectionAdapter(@NotNull String implementationClassName,
+                                      @NotNull PluginDescriptor pluginDescriptor,
+                                      @NotNull ExtensionDescriptor descriptor,
+                                      @NotNull ImplementationClassResolver implementationClassResolver) {
+      super(implementationClassName, pluginDescriptor, descriptor.orderId, descriptor.order, descriptor.element, implementationClassResolver);
+    }
+
+    @Override
+    protected @NotNull <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull ComponentManager componentManager) {
+      if (!aClass.getName().equals("org.jetbrains.kotlin.asJava.finder.JavaElementFinder")) {
         try {
-          return super.instantiateClass(aClass, componentManager)
+          return super.instantiateClass(aClass, componentManager);
         }
-        catch (e: ProcessCanceledException) {
-          throw e
+        catch (ProcessCanceledException | ExtensionNotApplicableException e) {
+          throw e;
         }
-        catch (e: ExtensionNotApplicableException) {
-          throw e
-        }
-        catch (e: RuntimeException) {
-          val cause = e.cause
-          if (!(cause is NoSuchMethodException || cause is IllegalArgumentException)) {
-            throw e
+        catch (RuntimeException e) {
+          Throwable cause = e.getCause();
+          if (!(cause instanceof NoSuchMethodException || cause instanceof IllegalArgumentException)) {
+            throw e;
           }
-          ExtensionPointImpl.LOG.error(
-            "Cannot create extension without pico container (class=" + aClass.name + ", constructors=" +
-            Arrays.toString(aClass.declaredConstructors) + ")," +
-            " please remove extra constructor parameters", e)
+
+          ExtensionPointImpl.LOG.error("Cannot create extension without pico container (class=" + aClass.getName() + ", constructors=" +
+                                       Arrays.toString(aClass.getDeclaredConstructors()) + ")," +
+                                       " please remove extra constructor parameters", e);
         }
       }
-      return componentManager.instantiateClassWithConstructorInjection(aClass, aClass, pluginDescriptor.pluginId)
+      return componentManager.instantiateClassWithConstructorInjection(aClass, aClass, pluginDescriptor.getPluginId());
     }
   }
 }

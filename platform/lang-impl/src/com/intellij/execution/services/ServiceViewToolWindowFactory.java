@@ -9,8 +9,8 @@ import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-// cannot be final - used externally
 public class ServiceViewToolWindowFactory implements ToolWindowFactory, DumbAware {
+
   @Override
   public boolean shouldBeAvailable(@NotNull Project project) {
     return ((ServiceViewManagerImpl)ServiceViewManager.getInstance(project)).shouldBeAvailable();
@@ -26,4 +26,5 @@ public class ServiceViewToolWindowFactory implements ToolWindowFactory, DumbAwar
     @Nls String title = UIBundle.message("tool.window.name.services");
     toolWindow.setStripeTitle(title);
   }
+
 }

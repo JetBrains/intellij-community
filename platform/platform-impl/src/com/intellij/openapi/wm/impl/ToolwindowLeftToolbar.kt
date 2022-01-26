@@ -11,13 +11,12 @@ import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal class ToolwindowLeftToolbar : ToolwindowToolbar() {
+class ToolwindowLeftToolbar : ToolwindowToolbar() {
   private val topPane = object : AbstractDroppableStripe(VerticalFlowLayout(0, 0)) {
     override fun getAnchor(): ToolWindowAnchor = ToolWindowAnchor.LEFT
     override fun getButtonFor(toolWindowId: String): JComponent? = this@ToolwindowLeftToolbar.getButtonFor(toolWindowId)
-    override fun tryDroppingOnGap(data: LayoutData, gap: Int, insertOrder: Int) {
+    override fun tryDroppingOnGap(data: LayoutData, gap: Int, insertOrder: Int) =
       tryDroppingOnGap(data, gap, myDropRectangle) { layoutDragButton(data, gap) }
-    }
   }
 
   private val bottomPane = object : AbstractDroppableStripe(VerticalFlowLayout(0, 0)) {
@@ -39,32 +38,21 @@ internal class ToolwindowLeftToolbar : ToolwindowToolbar() {
     add(bottomPane, BorderLayout.SOUTH)
   }
 
-  override fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe {
-    return when (anchor) {
-      ToolWindowAnchor.LEFT -> topPane
-      ToolWindowAnchor.BOTTOM -> bottomPane
-      else -> throw IllegalArgumentException("Wrong anchor $anchor")
-    }
+  override fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe = when (anchor) {
+    ToolWindowAnchor.LEFT -> topPane
+    ToolWindowAnchor.BOTTOM -> bottomPane
+    else -> throw IllegalArgumentException("Wrong anchor $anchor")
   }
 
-  override fun getStripeFor(screenPoint: Point): AbstractDroppableStripe? {
-    if (!isVisible || !moreButton.isVisible) {
-      return null
-    }
-
+  override fun getStripeFor(screenPoint: Point): AbstractDroppableStripe? = if (isVisible && moreButton.isVisible) {
     val moreButtonRect = Rectangle(moreButton.locationOnScreen, moreButton.size)
-    return if (Rectangle(topPane.locationOnScreen, topPane.size).contains(screenPoint) ||
-               topPane.buttons.isEmpty() && moreButtonRect.contains(screenPoint)) {
-      topPane
-    }
+    if (Rectangle(topPane.locationOnScreen, topPane.size).contains(screenPoint) ||
+        topPane.buttons.isEmpty() && moreButtonRect.contains(screenPoint)) topPane
     else if (!moreButtonRect.contains(screenPoint) &&
-             Rectangle(locationOnScreen, size).also { JBInsets.removeFrom(it, insets) }.contains(screenPoint)) {
-      bottomPane
-    }
-    else {
-      null
-    }
+             Rectangle(locationOnScreen, size).also{ JBInsets.removeFrom(it, insets)}.contains(screenPoint)) bottomPane
+    else null
   }
+  else null
 
   override fun reset() {
     topPane.removeAll()
@@ -73,10 +61,7 @@ internal class ToolwindowLeftToolbar : ToolwindowToolbar() {
     bottomPane.revalidate()
   }
 
-  override fun getButtonFor(toolWindowId: String): SquareStripeButton? {
-    return topPane.components.asSequence()
-             .filterIsInstance(SquareStripeButton::class.java)
-             .find { it.button.id == toolWindowId }
-           ?: bottomPane.components.asSequence().filterIsInstance(SquareStripeButton::class.java).find { it.button.id == toolWindowId }
-  }
+  override fun getButtonFor(toolWindowId: String): SquareStripeButton? =
+    topPane.components.filterIsInstance(SquareStripeButton::class.java).find {it.button.id == toolWindowId} ?:
+     bottomPane.components.filterIsInstance(SquareStripeButton::class.java).find {it.button.id == toolWindowId}
 }

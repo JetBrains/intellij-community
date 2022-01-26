@@ -16,7 +16,8 @@ import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal abstract class ToolwindowToolbar : JPanel() {
+abstract class ToolwindowToolbar : JPanel() {
+  lateinit var toolwindowPane: ToolWindowsPane
   lateinit var defaults: List<String>
 
   init {
@@ -49,28 +50,24 @@ internal abstract class ToolwindowToolbar : JPanel() {
   fun stopDrag() = startDrag()
 
   fun rebuildStripe(project: Project, panel: AbstractDroppableStripe, toolWindow: ToolWindow) {
-    if (toolWindow !is ToolWindowImpl) {
-      return
-    }
+    if (toolWindow !is ToolWindowImpl) return
 
     if (toolWindow.orderOnLargeStripe == -1) {
-      toolWindow.orderOnLargeStripe = panel.components.filterIsInstance(SquareStripeButton::class.java).count()
+        toolWindow.orderOnLargeStripe = panel.components.filterIsInstance(SquareStripeButton::class.java).count()
     }
 
-    // temporary add new button
+    //temporary add new button
     if (panel.buttons.filterIsInstance(SquareStripeButton::class.java).find { it.button.id == toolWindow.id } == null) {
-      panel.add(SquareStripeButton(project, StripeButton(toolWindow).also(StripeButton::updatePresentation)))
+      panel.add(SquareStripeButton(project, StripeButton(toolwindowPane, toolWindow).also { it.updatePresentation() }))
     }
 
-    val sortedSquareButtons = panel.components.asSequence()
-      .filterIsInstance(SquareStripeButton::class.java)
+    val sortedSquareButtons = panel.components.filterIsInstance(SquareStripeButton::class.java)
       .map { it.button.toolWindow }
       .sortedWith(Comparator.comparingInt<ToolWindow> { (it as? ToolWindowImpl)?.windowInfo?.orderOnLargeStripe ?: -1 })
-      .toList()
     panel.removeAll()
     panel.buttons.clear()
     sortedSquareButtons.forEach {
-      val button = SquareStripeButton(project, StripeButton(it).also(StripeButton::updatePresentation))
+      val button = SquareStripeButton(project, StripeButton(toolwindowPane, it).also { button -> button.updatePresentation() })
       panel.add(button)
       panel.buttons.add(button)
     }

@@ -28,7 +28,7 @@ import java.util.Comparator;
 /**
  * @author Eugene Belyaev
  */
-final class Stripe extends AbstractDroppableStripe implements UISettingsListener {
+class Stripe extends AbstractDroppableStripe implements UISettingsListener {
   static final Key<Rectangle> VIRTUAL_BOUNDS = Key.create("Virtual stripe bounds");
 
   @MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT})

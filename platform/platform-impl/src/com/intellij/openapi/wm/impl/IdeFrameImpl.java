@@ -51,6 +51,8 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
 
     void setTitle(@Nullable String title);
 
+    void updateView();
+
     @Nullable
     Project getProject();
 

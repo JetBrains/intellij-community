@@ -291,5 +291,5 @@ inline fun processOpenedProjects(processor: (Project) -> Unit) {
 }
 
 fun isNotificationSilentMode(project: Project?): Boolean {
-  return ApplicationManager.getApplication().isHeadlessEnvironment || NOTIFICATIONS_SILENT_MODE.get(project, false)
+  return ApplicationManager.getApplication().isHeadlessEnvironment || NOTIFICATIONS_SILENT_MODE[project, false]
 }

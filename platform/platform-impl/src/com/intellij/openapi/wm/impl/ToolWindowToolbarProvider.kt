@@ -12,14 +12,13 @@ open class ToolWindowToolbarProvider {
    *
    * Please ensure that registered toolwindow anchor matches [anchor].
    */
-  open fun defaultToolWindows(project: Project, anchor: ToolWindowAnchor): List<String> {
-    return when (anchor) {
+  open fun defaultToolWindows(project: Project, anchor: ToolWindowAnchor) =
+    when (anchor) {
       LEFT -> listOf("Project", "Commit", "Structure")
       BOTTOM -> listOf("Version Control", "Problems View", "Terminal", "Event Log")
       RIGHT -> listOf("Database", "Gradle", "Maven")
       else -> emptyList()
     }
-  }
 
   companion object {
     @JvmStatic

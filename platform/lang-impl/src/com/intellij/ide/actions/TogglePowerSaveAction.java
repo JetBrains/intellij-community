@@ -8,7 +8,8 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-final class TogglePowerSaveAction extends ToggleAction implements DumbAware {
+
+public class TogglePowerSaveAction extends ToggleAction implements DumbAware {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     return PowerSaveMode.isEnabled();

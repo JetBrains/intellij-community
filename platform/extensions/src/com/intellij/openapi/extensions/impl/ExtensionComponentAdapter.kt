@@ -1,48 +1,72 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.extensions.impl
+package com.intellij.openapi.extensions.impl;
 
-import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.extensions.LoadingOrder
-import com.intellij.openapi.extensions.PluginDescriptor
-import org.jetbrains.annotations.ApiStatus.Internal
+import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.extensions.LoadingOrder;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-@Internal
-abstract class ExtensionComponentAdapter internal constructor(implementationClassName: String,
-                                                              @JvmField val pluginDescriptor: PluginDescriptor,
-                                                              private val orderId: String?,
-                                                              private val order: LoadingOrder,
-                                                              @JvmField internal val implementationClassResolver: ImplementationClassResolver) : LoadingOrder.Orderable {
-  companion object {
-    @JvmField
-    val EMPTY_ARRAY = arrayOfNulls<ExtensionComponentAdapter>(0)
-  }
+public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderable {
+  public static final ExtensionComponentAdapter[] EMPTY_ARRAY = new ExtensionComponentAdapter[0];
+
+  protected final @NotNull PluginDescriptor pluginDescriptor;
 
   // Class or String
-  @JvmField
-  internal var implementationClassOrName: Any = implementationClassName
+  @NotNull Object implementationClassOrName;
+  protected final ImplementationClassResolver implementationClassResolver;
 
-  internal abstract val isInstanceCreated: Boolean
+  private final String orderId;
+  private final LoadingOrder order;
 
-  abstract fun <T : Any> createInstance(componentManager: ComponentManager): T?
+  ExtensionComponentAdapter(@NotNull String implementationClassName,
+                            @NotNull PluginDescriptor pluginDescriptor,
+                            @Nullable String orderId,
+                            @NotNull LoadingOrder order,
+                            @NotNull ImplementationClassResolver implementationClassResolver) {
+    implementationClassOrName = implementationClassName;
+    this.pluginDescriptor = pluginDescriptor;
 
-  override fun getOrder() = order
+    this.orderId = orderId;
+    this.order = order;
 
-  override fun getOrderId() = orderId
+    this.implementationClassResolver = implementationClassResolver;
+  }
 
-  @Throws(ClassNotFoundException::class)
-  fun <T> getImplementationClass(componentManager: ComponentManager): Class<T> {
-    @Suppress("UNCHECKED_CAST")
-    return implementationClassResolver.resolveImplementationClass(componentManager, this) as Class<T>
+  abstract boolean isInstanceCreated();
+
+  public abstract @Nullable("if not applicable") <T> T createInstance(@NotNull ComponentManager componentManager);
+
+  @Override
+  public final LoadingOrder getOrder() {
+    return order;
+  }
+
+  @Override
+  public final String getOrderId() {
+    return orderId;
+  }
+
+  public final @NotNull PluginDescriptor getPluginDescriptor() {
+    return pluginDescriptor;
+  }
+
+  public final @NotNull <T> Class<T> getImplementationClass(@NotNull ComponentManager componentManager) throws ClassNotFoundException {
+    //noinspection unchecked
+    return (Class<T>)implementationClassResolver.resolveImplementationClass(componentManager, this);
   }
 
   // used externally - cannot be package-local
-  val assignableToClassName: String
-    get() {
-      val implementationClassOrName = implementationClassOrName
-      return if (implementationClassOrName is String) implementationClassOrName else (implementationClassOrName as Class<*>).name
+  public final @NotNull String getAssignableToClassName() {
+    Object implementationClassOrName = this.implementationClassOrName;
+    if (implementationClassOrName instanceof String) {
+      return (String)implementationClassOrName;
     }
+    return ((Class<?>)implementationClassOrName).getName();
+  }
 
-  override fun toString(): String {
-    return javaClass.simpleName + "(implementation=" + assignableToClassName + ", plugin=" + pluginDescriptor + ")"
+  @Override
+  public final String toString() {
+    return getClass().getSimpleName() + "(implementation=" + getAssignableToClassName() + ", plugin=" + pluginDescriptor + ")";
   }
 }

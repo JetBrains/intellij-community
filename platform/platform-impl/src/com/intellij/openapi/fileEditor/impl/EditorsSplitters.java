@@ -37,7 +37,7 @@ import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.*;
 import com.intellij.testFramework.LightVirtualFileBase;
-import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
@@ -220,7 +220,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
     else if (comp instanceof JBTabs) {
       Element result = new Element("leaf");
-      Integer limit = ClientProperty.get(((JBTabs)comp).getComponent(), JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY);
+      Integer limit = ComponentUtil.getClientProperty(((JBTabs)comp).getComponent(), JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY);
       if (limit != null) {
         result.setAttribute(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString(), String.valueOf(limit));
       }
@@ -942,7 +942,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         if (editorWindow != null) {
           setCurrentWindow(editorWindow, false);
           if (tabSizeLimit != 1) {
-            editorWindow.getTabbedPane().getComponent().putClientProperty(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit);
+            ComponentUtil.putClientProperty(editorWindow.getTabbedPane().getComponent(), JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit);
           }
         }
       });

@@ -55,7 +55,7 @@ public final class ToolWindowCollector {
     return Holder.INSTANCE;
   }
 
-  private static final class Holder {
+  private static class Holder {
     private static final ToolWindowCollector INSTANCE = new ToolWindowCollector();
   }
 
@@ -142,7 +142,8 @@ public final class ToolWindowCollector {
     event.log(project, data.toArray(new EventPair[0]));
   }
 
-  private static @NotNull ToolWindowInfo getToolWindowInfo(@NotNull String toolWindowId) {
+  @NotNull
+  private static ToolWindowInfo getToolWindowInfo(@NotNull String toolWindowId) {
     if (ourToolwindowWhitelist.containsKey(toolWindowId)) {
       return ourToolwindowWhitelist.get(toolWindowId);
     }
@@ -157,7 +158,8 @@ public final class ToolWindowCollector {
     return info != null ? info : UNKNOWN;
   }
 
-  public static @Nullable ToolWindowInfo getToolWindowInfo(@NotNull String toolWindowId, ToolWindowEP @NotNull [] toolWindows) {
+  @Nullable
+  public static ToolWindowInfo getToolWindowInfo(@NotNull String toolWindowId, ToolWindowEP @NotNull [] toolWindows) {
     for (ToolWindowEP ep : toolWindows) {
       if (StringUtil.equals(toolWindowId, ep.id)) {
         PluginDescriptor pluginDescriptor = ep.getPluginDescriptor();
@@ -167,14 +169,16 @@ public final class ToolWindowCollector {
     return null;
   }
 
-  static final class ToolWindowUtilValidator extends CustomValidationRule {
+  public static class ToolWindowUtilValidator extends CustomValidationRule {
+
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
       return "toolwindow".equals(ruleId);
     }
 
+    @NotNull
     @Override
-    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if ("unknown".equals(data)) return ValidationResultType.ACCEPTED;
 
       if (hasPluginField(context)) {
@@ -185,7 +189,7 @@ public final class ToolWindowCollector {
     }
   }
 
-  private static final class ToolWindowInfo {
+  public static final class ToolWindowInfo {
     private final String myRecordedId;
     private final PluginInfo myPluginInfo;
 

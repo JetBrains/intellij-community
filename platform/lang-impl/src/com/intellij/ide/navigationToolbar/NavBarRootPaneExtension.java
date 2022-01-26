@@ -18,15 +18,14 @@ import com.intellij.openapi.wm.StatusBarCentralWidget;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Konstantin Bulenkov
@@ -106,18 +105,16 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
     return myWrapperPanel;
   }
 
-  private void toggleRunPanel(boolean show) {
-    CompletableFuture
-      .supplyAsync(() -> CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_TOOLBAR),
-                   AppExecutorUtil.getAppExecutorService())
-      .thenAcceptAsync(action -> {
+  private void toggleRunPanel(final boolean show) {
+    var promise = new AsyncPromise<AnAction>();
+    promise.onSuccess(action -> {
+      SwingUtilities.invokeLater(() -> {
         if (show && myRunPanel == null && runToolbarExists()) {
-          if (myWrapperPanel != null && myRunPanel != null) {
+          if(myWrapperPanel != null && myRunPanel != null) {
             myWrapperPanel.remove(myRunPanel);
             myRunPanel = null;
           }
-
-          ActionManager manager = ActionManager.getInstance();
+          final ActionManager manager = ActionManager.getInstance();
           if (action instanceof ActionGroup && myWrapperPanel != null) {
             ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, (ActionGroup)action, true);
             actionToolbar.setTargetComponent(null);
@@ -141,7 +138,12 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
           myWrapperPanel.remove(myRunPanel);
           myRunPanel = null;
         }
-      }, command -> ApplicationManager.getApplication().invokeLater(command, myProject.getDisposed()));
+      });
+    });
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      AnAction toolbarRunGroup = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_TOOLBAR);
+      promise.setResult(toolbarRunGroup);
+    });
   }
 
   private JComponent buildNavBarPanel() {
@@ -238,7 +240,8 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
   }
 
   @Override
-  public @NotNull JComponent getCentralStatusBarComponent() {
+  @NotNull
+  public JComponent getCentralStatusBarComponent() {
     return buildNavBarPanel();
   }
 
@@ -248,17 +251,16 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
   }
 
   @Override
-  public void install(@NotNull StatusBar statusBar) { }
+  public void install(@NotNull StatusBar statusBar) {}
 
   @Override
-  public void dispose() { }
+  public void dispose() {}
 
   private static boolean isShowToolPanel(@NotNull UISettings uiSettings) {
-    if (uiSettings.getShowNavigationBar() && !uiSettings.getShowMainToolbar() && !uiSettings.getPresentationMode()) {
-      ToolbarSettings toolbarSettings = ToolbarSettings.getInstance();
-      return !toolbarSettings.isVisible() || !toolbarSettings.isEnabled();
-    }
-    return false;
+    return uiSettings.getShowNavigationBar() &&
+           !uiSettings.getShowMainToolbar() &&
+           !uiSettings.getPresentationMode() &&
+           (!ToolbarSettings.getInstance().isVisible() || !ToolbarSettings.getInstance().isEnabled());
   }
 
   private static void alignVertically(Container container) {

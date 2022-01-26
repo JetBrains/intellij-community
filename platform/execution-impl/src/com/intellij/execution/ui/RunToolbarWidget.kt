@@ -71,17 +71,15 @@ import javax.swing.plaf.basic.BasicGraphicsUtils
 import kotlin.concurrent.withLock
 import kotlin.properties.Delegates
 
-private const val RUN_TOOLBAR_WIDGET_GROUP = "RunToolbarWidgetCustomizableActionGroup"
-
-internal class RunToolbarWidgetFactory : MainToolbarProjectWidgetFactory {
+object RunToolbarWidgetFactory : MainToolbarProjectWidgetFactory {
   override fun createWidget(project: Project): JComponent = RunToolbarWidget(project)
   override fun getPosition() = MainToolbarWidgetFactory.Position.Right
 }
 
-internal class RunToolbarWidgetCustomizableActionGroupProvider : CustomizableActionGroupProvider() {
+class RunToolbarWidgetCustomizableActionGroupProvider : CustomizableActionGroupProvider() {
   override fun registerGroups(registrar: CustomizableActionGroupRegistrar?) {
     if (ExperimentalUI.isNewToolbar()) {
-      registrar?.addCustomizableActionGroup(RUN_TOOLBAR_WIDGET_GROUP, ExecutionBundle.message("run.toolbar.widget.customizable.group.name"))
+      registrar?.addCustomizableActionGroup(RunToolbarWidget.RUN_TOOLBAR_WIDGET_GROUP, ExecutionBundle.message("run.toolbar.widget.customizable.group.name"))
     }
   }
 }
@@ -108,9 +106,14 @@ internal class RunToolbarWidget(val project: Project) : JBPanel<RunToolbarWidget
       layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     }
   }
+
+  companion object {
+    const val RUN_TOOLBAR_WIDGET_GROUP = "RunToolbarWidgetCustomizableActionGroup"
+  }
 }
 
-internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), CustomComponentAction, DumbAware, UpdateInBackground {
+class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), CustomComponentAction, DumbAware, UpdateInBackground {
+
   override fun actionPerformed(e: AnActionEvent) {
     if (!e.presentation.isEnabled) return
     val conf = e.presentation.getClientProperty(CONF)
@@ -183,9 +186,9 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
           ActionManager.getInstance().getAction("editRunConfigurations").actionPerformed(anActionEvent)
         }
         else if (it.modifiers  and ActionEvent.ALT_MASK != 0) {
-          CustomizeActionGroupPanel.showDialog(RUN_TOOLBAR_WIDGET_GROUP, listOf(IdeActions.GROUP_NAVBAR_TOOLBAR), ExecutionBundle.message("run.toolbar.widget.customizable.group.dialog.title"))
+          CustomizeActionGroupPanel.showDialog(RunToolbarWidget.RUN_TOOLBAR_WIDGET_GROUP, listOf(IdeActions.GROUP_NAVBAR_TOOLBAR), ExecutionBundle.message("run.toolbar.widget.customizable.group.dialog.title"))
             ?.let { result ->
-              CustomizationUtil.updateActionGroup(result, RUN_TOOLBAR_WIDGET_GROUP)
+              CustomizationUtil.updateActionGroup(result, RunToolbarWidget.RUN_TOOLBAR_WIDGET_GROUP)
               CustomActionsSchema.setCustomizationSchemaForCurrentProjects()
             }
         }
@@ -464,7 +467,7 @@ private enum class RunButtonColors {
 
   companion object {
     private fun getColor(propertyName: String, defaultColor: () -> Color): JBColor {
-      return JBColor.lazy {
+      return JBColor {
         UIManager.getColor(propertyName) ?: let {
           defaultColor().also {
             UIManager.put(propertyName, it)
@@ -679,6 +682,7 @@ private class RunDropDownButtonUI : BasicButtonUI() {
   }
 
   private inner class MyHoverListener(val button: RunDropDownButton) : BasicButtonListener(button) {
+
     private val popupState = PopupState.forPopup()
 
     override fun mouseEntered(e: MouseEvent) {

@@ -59,7 +59,7 @@ import java.util.Objects;
  * @author Vladimir Kondratyev
  */
 public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor, DataProvider, Disposable {
-  private static final Logger LOG = Logger.getInstance(ProjectFrameHelper.class);
+  private static final Logger LOG = Logger.getInstance(IdeFrameImpl.class);
 
   private boolean isUpdatingTitle;
 
@@ -141,6 +141,11 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
         }
 
         Disposer.dispose(ProjectFrameHelper.this);
+      }
+
+      @Override
+      public void updateView() {
+        ProjectFrameHelper.this.updateView();
       }
 
       @Override
@@ -318,10 +323,9 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   public void updateView() {
-    IdeRootPane rootPane = myRootPane;
-    rootPane.updateToolbar();
-    rootPane.updateMainMenuActions();
-    rootPane.updateNorthComponents();
+    myRootPane.updateToolbar();
+    myRootPane.updateMainMenuActions();
+    myRootPane.updateNorthComponents();
   }
 
   @Override
@@ -433,7 +437,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   private static boolean isTemporaryDisposed(@Nullable RootPaneContainer frame) {
-    return ClientProperty.isTrue(frame == null ? null : frame.getRootPane(), ScreenUtil.DISPOSE_TEMPORARY);
+    return UIUtil.isClientPropertyTrue(frame == null ? null : frame.getRootPane(), ScreenUtil.DISPOSE_TEMPORARY);
   }
 
   public @Nullable IdeFrameImpl getFrame() {
@@ -463,7 +467,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   @ApiStatus.Internal
-  public @Nullable IdeRootPane getRootPane() {
+  @Nullable IdeRootPane getRootPane() {
     return myRootPane;
   }
 

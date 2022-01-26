@@ -12,19 +12,21 @@ import java.util.concurrent.*;
  * delegates tasks to the EDT for execution.
  */
 public abstract class EdtExecutorService extends AbstractExecutorService {
-  public static @NotNull EdtExecutorService getInstance() {
+  @NotNull
+  public static EdtExecutorService getInstance() {
     return EdtExecutorServiceImpl.INSTANCE;
   }
 
-  public static @NotNull ScheduledExecutorService getScheduledExecutorInstance() {
+  @NotNull
+  public static ScheduledExecutorService getScheduledExecutorInstance() {
     return EdtScheduledExecutorService.getInstance();
   }
 
   public abstract void execute(@NotNull Runnable command, @NotNull ModalityState modalityState);
-
   public abstract void execute(@NotNull Runnable command, @NotNull ModalityState modalityState, @NotNull Condition<?> expired);
 
-  public abstract @NotNull Future<?> submit(@NotNull Runnable command, @NotNull ModalityState modalityState);
-
-  public abstract @NotNull <T> Future<T> submit(@NotNull Callable<T> task, @NotNull ModalityState modalityState);
+  @NotNull
+  public abstract Future<?> submit(@NotNull Runnable command, @NotNull ModalityState modalityState);
+  @NotNull
+  public abstract <T> Future<T> submit(@NotNull Callable<T> task, @NotNull ModalityState modalityState);
 }

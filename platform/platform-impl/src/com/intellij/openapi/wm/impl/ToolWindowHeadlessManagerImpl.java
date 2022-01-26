@@ -129,7 +129,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
-  public ToolWindowsPane init(@NotNull ProjectFrameHelper frameHelper) {
+  public ToolWindowsPane init(ProjectFrameHelper frameHelper) {
     throw new UnsupportedOperationException();
   }
 

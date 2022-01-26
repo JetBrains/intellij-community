@@ -11,9 +11,11 @@ public abstract class IdeRootPaneNorthExtension {
   public static final ProjectExtensionPointName<IdeRootPaneNorthExtension> EP_NAME =
     new ProjectExtensionPointName<>("com.intellij.ideRootPaneNorth");
 
-  public abstract @NotNull String getKey();
+  @NotNull
+  public abstract String getKey();
 
-  public abstract @NotNull JComponent getComponent();
+  @NotNull
+  public abstract JComponent getComponent();
 
   public abstract void uiSettingsChanged(UISettings settings);
 
