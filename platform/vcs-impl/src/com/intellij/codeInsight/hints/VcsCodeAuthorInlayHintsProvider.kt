@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.actions.VcsAnnotateUtil
 import com.intellij.openapi.vcs.annotate.AnnotationsPreloader
 import com.intellij.openapi.vcs.annotate.FileAnnotation
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect
+import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -65,11 +66,15 @@ abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> 
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector? {
     if (!isCodeAuthorEnabledForApplication()) return null
 
+    val authorAspect = getAspect(file, editor) ?: return null
+    return VcsCodeAuthorInlayHintsCollector(editor, authorAspect, this::isAccepted, this::getClickHandler)
+  }
+
+  fun getAspect(file: PsiFile, editor: Editor): LineAnnotationAspect? {
+    if (hasPreviewInfo(file)) return LineAnnotationAspectAdapter.NULL_ASPECT;
     val virtualFile = file.virtualFile ?: return null
     val annotation = getAnnotation(file.project, virtualFile, editor) ?: return null
-    val authorAspect = annotation.aspects.find { it.id == LineAnnotationAspect.AUTHOR } ?: return null
-
-    return VcsCodeAuthorInlayHintsCollector(editor, authorAspect, this::isAccepted, this::getClickHandler)
+    return annotation.aspects.find { it.id == LineAnnotationAspect.AUTHOR }
   }
 
   override fun getPlaceholdersCollectorFor(
@@ -98,6 +103,10 @@ abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> 
   override val key: SettingsKey<NoSettings> get() = KEY
   override val previewText: String? get() = null
   override fun getProperty(key: String): String? = message(key)
+
+  override fun preparePreview(editor: Editor, file: PsiFile) {
+    addPreviewInfo(file)
+  }
 
   override fun createConfigurable(settings: NoSettings): ImmediateConfigurable =
     object : ImmediateConfigurable {
