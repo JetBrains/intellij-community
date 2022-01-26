@@ -17,6 +17,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -186,7 +187,7 @@ internal class NewToolbarRootPaneExtension(private val project: Project) : IdeRo
     }
   }
 
-  inner class CustomizeToolbarAction : AnAction(ActionsBundle.message("action.CustomizeToolbarAction.text")) {
+  inner class CustomizeToolbarAction : DumbAwareAction(ActionsBundle.message("action.CustomizeToolbarAction.text")) {
     override fun actionPerformed(e: AnActionEvent) {
       object : DialogWrapper(project, true) {
         var customizeWidget = object : CustomizableActionsPanel() {
