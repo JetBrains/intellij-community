@@ -8,36 +8,33 @@ import com.sun.jdi.Location
 import com.sun.jdi.Method
 import org.jetbrains.kotlin.idea.debugger.*
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.getBorders
-import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT as INLINE_ARGUMENT_PREFIX
+import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION as INLINE_FUNCTION_PREFIX
 
 object InlineStackTraceCalculator {
     fun calculateInlineStackTrace(frameProxy: StackFrameProxyImpl): List<XStackFrame> {
         val location = frameProxy.safeLocation() ?: return emptyList()
         val method = location.safeMethod() ?: return emptyList()
-        val inlineStackFramesInfo = method.getInlineStackFramesInfo(location)
-        if (inlineStackFramesInfo.isEmpty()) {
-            return emptyList()
-        }
+        val framesInfo = method.getInlineStackFramesInfo(location)
+        if (framesInfo.isEmpty()) return emptyList()
 
         val allLocations = method.safeAllLineLocations()
-        if (allLocations.isEmpty()) {
-            return emptyList()
-        }
+        if (allLocations.isEmpty()) return emptyList()
 
-        inlineStackFramesInfo.fetchDepths()
-        val newFrameProxyLocation = inlineStackFramesInfo.fetchLocationsAndGetNewFrameProxyLocation(allLocations, location)
-        return createInlineStackFrames(inlineStackFramesInfo, frameProxy, newFrameProxyLocation)
+        fetchDepths(framesInfo)
+        val newFrameProxyLocation = fetchLocationsAndGetNewFrameProxyLocation(framesInfo, allLocations, location)
+        return createInlineStackFrames(framesInfo, frameProxy, newFrameProxyLocation)
     }
 
     private fun createInlineStackFrames(
-        inlineStackFramesInfo: List<InlineStackFrameInfo>,
+        framesInfo: List<InlineStackFrameInfo>,
         frameProxy: StackFrameProxyImpl,
         frameProxyLocation: Location
     ): MutableList<KotlinStackFrame> {
         val stackFrames = mutableListOf<KotlinStackFrame>()
         var variableHolder: InlineStackFrameVariableHolder? =
             InlineStackFrameVariableHolder.fromStackFrame(frameProxy)
-        for (info in inlineStackFramesInfo.asReversed()) {
+        for (info in framesInfo.asReversed()) {
             stackFrames.add(
                 info.toInlineStackFrame(
                     frameProxy,
@@ -56,25 +53,25 @@ object InlineStackTraceCalculator {
     }
 
     private fun Method.getInlineStackFramesInfo(location: Location) =
-        getInlineFunctionInfos()
+        getInlineFunctionsInfo()
             .filter { it.contains(location) }
             .sortedBy { it.borders.start }
             .map { InlineStackFrameInfo(it, location, 0) }
 
-    private fun Method.getInlineFunctionInfos(): List<AbstractInlineFunctionInfo> {
+    private fun Method.getInlineFunctionsInfo(): List<AbstractInlineFunctionInfo> {
         val localVariables = safeVariables() ?: return emptyList()
-        val inlineFunctionInfos = mutableListOf<AbstractInlineFunctionInfo>()
+        val functionsInfo = mutableListOf<AbstractInlineFunctionInfo>()
         for (variable in localVariables) {
             val borders = variable.getBorders() ?: continue
             val variableName = variable.name()
-            if (variableName.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)) {
-                inlineFunctionInfos.add(InlineFunctionInfo(variableName, borders))
-            } else if (variableName.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT)) {
-                inlineFunctionInfos.add(InlineLambdaInfo(variableName, borders))
+            if (variableName.startsWith(INLINE_FUNCTION_PREFIX)) {
+                functionsInfo.add(InlineFunctionInfo(variableName, borders))
+            } else if (variableName.startsWith(INLINE_ARGUMENT_PREFIX)) {
+                functionsInfo.add(InlineLambdaInfo(variableName, borders))
             }
         }
 
-        return inlineFunctionInfos
+        return functionsInfo
     }
 
     // Consider the following example:
@@ -91,67 +88,75 @@ object InlineStackTraceCalculator {
     //     $i$a$-bar-MainKt$foo$1$iv -> 1
     //     $i$a$-foo-MainKt$main$1   -> 0
     //     baz                       -> 1
-    private fun List<InlineStackFrameInfo>.fetchDepths() {
+    private fun fetchDepths(framesInfo: List<InlineStackFrameInfo>) {
         var currentDepth = 0
         val depths = mutableMapOf<String, Int>()
-        for (inlineStackFrameInfo in this) {
-            val inlineFunctionInfo = inlineStackFrameInfo.inlineFunctionInfo
+        for (frame in framesInfo) {
+            val info = frame.inlineFunctionInfo
             val calculatedDepth =
-                if (inlineFunctionInfo is InlineLambdaInfo) {
-                    inlineFunctionInfo.getDeclarationFunctionName()
+                if (info is InlineLambdaInfo) {
+                    info.getDeclarationFunctionName()
                         ?.let { depths[it] }
                         ?: 0 // The lambda was declared in the top frame
                 } else {
                     currentDepth + 1
                 }
-            depths[inlineFunctionInfo.name] = calculatedDepth
-            inlineStackFrameInfo.depth = calculatedDepth
+            depths[info.name] = calculatedDepth
+            frame.depth = calculatedDepth
             currentDepth = calculatedDepth
         }
     }
 
-    private fun List<InlineStackFrameInfo>.fetchLocationsAndGetNewFrameProxyLocation(
+    private fun fetchLocationsAndGetNewFrameProxyLocation(
+        framesInfo: List<InlineStackFrameInfo>,
         allLocations: List<Location>,
         originalLocation: Location
     ): Location {
-        val iterator = allLocations.iterator()
-        val newFrameProxyLocation =
-            iterator.getInlineFunctionCallLocation(first().inlineFunctionInfo)
-                ?: originalLocation
-        var inlineStackFrameIndex = 1
+        if (framesInfo.isEmpty()) {
+            return originalLocation
+        }
+
+        val firstInlineFunctionInfo = framesInfo.first().inlineFunctionInfo
+        val firstInlineCallLocationIndex = allLocations.indexOfFirst { firstInlineFunctionInfo.contains(it) }
+        if (firstInlineCallLocationIndex == -1) {
+            return originalLocation
+        }
+
+        var frameIndex = 1
         var prevLocation = originalLocation
-        for (location in iterator) {
-            if (inlineStackFrameIndex > lastIndex) {
-                break
+        for (locationIndex in firstInlineCallLocationIndex..allLocations.lastIndex) {
+            if (frameIndex > framesInfo.lastIndex) break
+
+            val location = allLocations[locationIndex]
+            val currentFrame = framesInfo[frameIndex]
+            val previousFrame = framesInfo[frameIndex - 1]
+
+            if (currentFrame.inlineFunctionInfo.contains(location)) {
+                previousFrame.location = prevLocation
+                frameIndex++
             }
-            if (this[inlineStackFrameIndex].inlineFunctionInfo.contains(location)) {
-                this[inlineStackFrameIndex - 1].location = prevLocation
-                inlineStackFrameIndex++
-            }
+
             prevLocation = location
         }
-        last().location = originalLocation
+        framesInfo.last().location = originalLocation
 
-        return newFrameProxyLocation
-    }
-
-    private fun Iterator<Location>.getInlineFunctionCallLocation(inlineFunctionInfo: AbstractInlineFunctionInfo): Location? {
-        var prevLocation: Location? = null
-        for (location in this) {
-            if (inlineFunctionInfo.contains(location)) {
-                return prevLocation
-            }
-            prevLocation = location
-        }
-
-        return null
+        val newFrameProxyLocationIndex =
+            if (firstInlineCallLocationIndex > 0)
+                firstInlineCallLocationIndex - 1
+            else
+                0
+        return allLocations[newFrameProxyLocationIndex]
     }
 
     private fun InlineStackFrameVariableHolder?.getVisibleVariables() =
         this?.visibleVariables.orEmpty()
 }
 
-private data class InlineStackFrameInfo(val inlineFunctionInfo: AbstractInlineFunctionInfo, var location: Location, var depth: Int) {
+private data class InlineStackFrameInfo(
+    val inlineFunctionInfo: AbstractInlineFunctionInfo,
+    var location: Location,
+    var depth: Int
+) {
     fun toInlineStackFrame(
         frameProxy: StackFrameProxyImpl,
         visibleVariables: List<LocalVariableProxyImpl>
@@ -175,17 +180,14 @@ private abstract class AbstractInlineFunctionInfo(val name: String, val borders:
 private class InlineFunctionInfo(
     name: String,
     borders: ClosedRange<Location>
-) : AbstractInlineFunctionInfo(
-        name.substringAfter(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION),
-        borders
-) {
+) : AbstractInlineFunctionInfo(name.substringAfter(INLINE_FUNCTION_PREFIX), borders) {
     override fun getDisplayName() = name
 }
 
 private class InlineLambdaNameWrapper(name: String) {
     companion object {
         private val inlineLambdaRegex =
-            "${JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT.replace("$", "\\$")}-(.+)-[^\$]+\\$([^\$]+)\\$.*"
+            "${INLINE_ARGUMENT_PREFIX.replace("$", "\\$")}-(.+)-[^\$]+\\$([^\$]+)\\$.*"
                 .toRegex()
     }
 
@@ -201,9 +203,9 @@ private class InlineLambdaInfo(name: String, borders: ClosedRange<Location>) : A
     private val nameWrapper = InlineLambdaNameWrapper(name)
 
     override fun getDisplayName(): String {
-        if (!nameWrapper.isValid()) {
+        if (!nameWrapper.isValid())
             return name
-        }
+        
         return "lambda '${nameWrapper.lambdaName}' in '${nameWrapper.declarationFunctionName}'"
     }
 
