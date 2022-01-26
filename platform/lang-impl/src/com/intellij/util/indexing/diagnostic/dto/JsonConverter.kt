@@ -43,7 +43,7 @@ fun ScanningStatistics.ScannedFile.toJson(): JsonScanningStatistics.JsonScannedF
   )
 
 @Suppress("DuplicatedCode")
-fun IndexingJobStatistics.toJsonStatistics(): JsonFileProviderIndexStatistics {
+fun IndexingFileSetStatistics.toJsonStatistics(): JsonFileProviderIndexStatistics {
   val jsonIndexedFiles = if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
     indexedFiles.map { it.toJson() }
   }
@@ -71,7 +71,7 @@ fun SlowIndexedFile.toJson() = JsonFileProviderIndexStatistics.JsonSlowIndexedFi
   contentLoadingTime = JsonDuration(contentLoadingTime)
 )
 
-fun IndexingJobStatistics.IndexedFile.toJson() = JsonFileProviderIndexStatistics.JsonIndexedFile(
+fun IndexingFileSetStatistics.IndexedFile.toJson() = JsonFileProviderIndexStatistics.JsonIndexedFile(
   path = portableFilePath,
   wasFullyIndexedByExtensions = wasFullyIndexedByExtensions
 )

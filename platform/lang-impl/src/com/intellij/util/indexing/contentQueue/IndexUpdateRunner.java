@@ -21,7 +21,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
-import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
+import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics;
 import com.intellij.util.progress.SubTaskProgressIndicator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -92,11 +92,11 @@ public final class IndexUpdateRunner {
   public static final class FileSet {
     public final String debugName;
     public final Collection<VirtualFile> files;
-    public final IndexingJobStatistics statistics;
+    public final IndexingFileSetStatistics statistics;
     public FileSet(@NotNull Project project, @NotNull String debugName, @NotNull Collection<VirtualFile> files) {
       this.debugName = debugName;
       this.files = files;
-      statistics = new IndexingJobStatistics(project, debugName);
+      statistics = new IndexingFileSetStatistics(project, debugName);
     }
   }
 
@@ -237,7 +237,7 @@ public final class IndexUpdateRunner {
     }
     catch (TooLargeContentException e) {
       indexingJob.oneMoreFileProcessed();
-      IndexingJobStatistics statistics = indexingJob.getStatistics(e.getFile());
+      IndexingFileSetStatistics statistics = indexingJob.getStatistics(e.getFile());
       //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (statistics) {
         statistics.addTooLargeForIndexingFile(e.getFile());
@@ -269,7 +269,7 @@ public final class IndexUpdateRunner {
           .wrapProgress(indexingJob.myIndicator)
           .executeSynchronously();
         long processingTime = System.nanoTime() - startTime;
-        IndexingJobStatistics statistics = indexingJob.getStatistics(file);
+        IndexingFileSetStatistics statistics = indexingJob.getStatistics(file);
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (statistics) {
           statistics.addFileStatistics(file,
@@ -480,7 +480,7 @@ public final class IndexUpdateRunner {
       myOriginalProgressSuspender = originalProgressSuspender;
     }
 
-    public @NotNull IndexingJobStatistics getStatistics(@NotNull VirtualFile file) {
+    public @NotNull IndexingFileSetStatistics getStatistics(@NotNull VirtualFile file) {
       return myFileToSet.get(file).statistics;
     }
 

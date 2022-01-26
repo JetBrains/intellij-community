@@ -11,7 +11,7 @@ import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths
  *
  * This class is not thread-safe. It must be synchronized by the clients.
  */
-class IndexingJobStatistics(private val project: Project, val fileSetName: String) {
+class IndexingFileSetStatistics(private val project: Project, val fileSetName: String) {
 
   companion object {
     const val SLOW_FILES_LIMIT = 10

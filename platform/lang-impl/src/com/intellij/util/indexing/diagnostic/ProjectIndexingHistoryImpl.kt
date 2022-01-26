@@ -48,7 +48,7 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
     scanningStatistics += statistics.toJsonStatistics()
   }
 
-  fun addProviderStatistics(statistics: IndexingJobStatistics) {
+  fun addProviderStatistics(statistics: IndexingFileSetStatistics) {
     // Convert to Json to release memory occupied by statistic values.
     providerStatistics += statistics.toJsonStatistics()
 
