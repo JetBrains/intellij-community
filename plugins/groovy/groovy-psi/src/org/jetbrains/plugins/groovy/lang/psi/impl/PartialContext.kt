@@ -38,7 +38,7 @@ internal class PartialContext(private val types: Map<VariableDescriptor, DFAType
     }
   }
 
-  override fun <T : PsiReference, R> resolveWithCaching(ref: T, resolver: AbstractResolver<T, R>, incomplete: Boolean): R? {
+  override fun <T : PsiReference, R> resolveWithCaching(ref: T, resolver: AbstractResolver<T, Array<R>>, incomplete: Boolean): Array<R>? {
     return doGetCachedValue(Pair(ref, incomplete)) {
       resolver.resolve(ref, incomplete)
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.psi.PsiPolyVariantReference;
@@ -7,6 +7,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.ResolveCache.AbstractResolver;
 import com.intellij.psi.impl.source.resolve.ResolveCache.PolyVariantResolver;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -33,7 +34,7 @@ public interface InferenceContext {
   T getCachedValue(E element, @NotNull Function<@NotNull ? super E, ? extends T> computation);
 
   <T extends PsiReference, R>
-  R resolveWithCaching(@NotNull T ref, @NotNull AbstractResolver<T, R> resolver, boolean incomplete);
+  R[] resolveWithCaching(@NotNull T ref, @NotNull AbstractResolver<T, R[]> resolver, boolean incomplete);
 
   default <T extends PsiPolyVariantReference>
   GroovyResolveResult @NotNull [] multiResolve(@NotNull T ref, boolean incomplete, @NotNull PolyVariantResolver<T> resolver) {
@@ -44,8 +45,8 @@ public interface InferenceContext {
   @NotNull
   default <T extends GroovyReference>
   Collection<? extends GroovyResolveResult> resolve(@NotNull T ref, boolean incomplete, @NotNull GroovyResolver<T> resolver) {
-    Collection<? extends GroovyResolveResult> results = resolveWithCaching(ref, resolver, incomplete);
-    return results == null ? Collections.emptyList() : results;
+    GroovyResolveResult[] results = resolveWithCaching(ref, resolver, incomplete);
+    return results == null ? Collections.emptyList() : new SmartList<>(results);
   }
 
   <T extends GroovyPsiElement>
