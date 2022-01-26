@@ -287,7 +287,7 @@ private fun findAppStarter(args: List<String>): ApplicationStarter {
 
   if (starter == null) {
     // `ApplicationStarter` is an extension, so to find a starter, extensions must be registered first
-    starter = point.find { it == null || it.commandName == first } ?: createDefaultAppStarter()
+    starter = point.firstOrNull { it == null || it.commandName == first } ?: createDefaultAppStarter()
   }
 
   if (Main.isHeadless() && !starter.isHeadless) {
