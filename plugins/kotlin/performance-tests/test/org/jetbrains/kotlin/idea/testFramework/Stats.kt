@@ -5,9 +5,12 @@ package org.jetbrains.kotlin.idea.testFramework
 import org.jetbrains.kotlin.idea.perf.profilers.ProfilerConfig
 import org.jetbrains.kotlin.idea.perf.util.*
 import org.jetbrains.kotlin.util.PerformanceCounter
+import java.io.BufferedReader
 import java.io.FileInputStream
+import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.TimeUnit
 import kotlin.math.*
 import kotlin.system.measureTimeMillis
 
@@ -215,6 +218,18 @@ class Stats(
             }
 
             buildBranch = buildBranch?.takeIf { it != "<default>" } ?: runGit("branch", "--show-current")
+            if (buildBranch == null || buildBranch == "<default>") {
+                val gitPath = System.getenv("TEAMCITY_GIT_PATH") ?: "git"
+                val processBuilder = ProcessBuilder(gitPath, "branch", "--show-current")
+                val process = processBuilder.start()
+                var line: String?
+                BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
+                    line = reader.readLine()
+                }
+                if (process.waitFor(10, TimeUnit.SECONDS) && process.exitValue() == 0) {
+                    buildBranch = line
+                }
+            }
             check(buildBranch != null && buildBranch != "<default>") { "buildBranch='$buildBranch' is expected to be set by TeamCity" }
             commit = commit ?: runGit("rev-parse", "HEAD")
 
