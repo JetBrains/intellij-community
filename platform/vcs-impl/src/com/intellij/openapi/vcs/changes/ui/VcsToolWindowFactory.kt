@@ -19,12 +19,10 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.ui.ClientProperty
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.StatusText
 import com.intellij.vcs.commit.CommitModeManager
-import java.awt.Component
 import javax.swing.JPanel
 
 private val Project.changesViewContentManager: ChangesViewContentI
@@ -37,11 +35,9 @@ private fun Content.getExtension(): ChangesViewContentEP? = getUserData(CHANGES_
 
 abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun init(window: ToolWindow) {
-    val project = (window as ToolWindowEx).project
+    val project = window.project
 
-    updateContentIfCreated(project, window)
-    updateEmptyState(project, window)
-
+    updateState(project, window)
     val connection = project.messageBus.connect(window.disposable)
     connection.subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
       runInEdt {
@@ -78,20 +74,20 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   protected open fun updateState(project: Project, toolWindow: ToolWindow) {
-    // force showing stripe button on adding initial mapping even if stripe button was manually removed by the user
-    if (!toolWindow.isAvailable && !ExperimentalUI.isNewUI()) {
-      toolWindow.isShowStripeButton = true
-    }
-
+    updateAvailability(project, toolWindow)
     updateContentIfCreated(project, toolWindow)
     updateEmptyState(project, toolWindow)
   }
 
+  private fun updateAvailability(project: Project, toolWindow: ToolWindow) {
+    // shouldBeAvailable not overridden in this class but may be overridden by inheritors
+    toolWindow.isAvailable = shouldBeAvailable(project)
+  }
+
   private fun updateContentIfCreated(project: Project, toolWindow: ToolWindow) {
-    if (ClientProperty.get(toolWindow.component as Component?, IS_CONTENT_CREATED) != true) {
-      return
+    if (ClientProperty.isTrue(toolWindow.component, IS_CONTENT_CREATED)) {
+      updateContent(project, toolWindow)
     }
-    updateContent(project, toolWindow)
   }
 
   private fun updateContent(project: Project, toolWindow: ToolWindow) {
@@ -146,9 +142,10 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     }
   }
 
-  private inner class ExtensionListener(private val toolWindow: ToolWindowEx) : ExtensionPointListener<ChangesViewContentEP> {
-    override fun extensionAdded(extension: ChangesViewContentEP, pluginDescriptor: PluginDescriptor) =
+  private inner class ExtensionListener(private val toolWindow: ToolWindow) : ExtensionPointListener<ChangesViewContentEP> {
+    override fun extensionAdded(extension: ChangesViewContentEP, pluginDescriptor: PluginDescriptor) {
       updateContentIfCreated(toolWindow.project, toolWindow)
+    }
 
     override fun extensionRemoved(extension: ChangesViewContentEP, pluginDescriptor: PluginDescriptor) {
       val contentManager = toolWindow.contentManagerIfCreated ?: return

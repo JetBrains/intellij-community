@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.impl.InternalDecorator;
@@ -23,8 +22,6 @@ public interface ToolWindowEx extends ToolWindow {
    */
   @NotNull ToolWindowType getInternalType();
 
-  @NotNull Project getProject();
-
   void stretchWidth(int value);
 
   void stretchHeight(int value);
@@ -34,8 +31,6 @@ public interface ToolWindowEx extends ToolWindow {
   }
 
   @NotNull InternalDecorator getDecorator();
-
-  void setAdditionalGearActions(@Nullable ActionGroup additionalGearActions);
 
   /**
    * @deprecated Use {@link #setTitleActions(List)}

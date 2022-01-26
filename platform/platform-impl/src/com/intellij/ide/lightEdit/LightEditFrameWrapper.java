@@ -148,7 +148,7 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     }
 
     @Override
-    protected void updateNorthComponents() {
+    public void updateNorthComponents() {
     }
 
     @Override

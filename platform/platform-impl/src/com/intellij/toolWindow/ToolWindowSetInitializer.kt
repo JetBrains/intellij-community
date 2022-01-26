@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UsePropertyAccessSyntax")
 
-package com.intellij.openapi.wm.impl
+package com.intellij.toolWindow
 
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.runActivity
@@ -21,9 +21,9 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.toolWindow.RegisterToolWindowTaskProvider
-import com.intellij.toolWindow.findIconFromBean
-import com.intellij.toolWindow.getStripeTitleSupplier
+import com.intellij.openapi.wm.impl.DesktopLayout
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.openapi.wm.impl.ToolWindowsPane
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
@@ -172,6 +172,7 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
   private fun createAndLayoutToolWindows(manager: ToolWindowManagerImpl,
                                          tasks: List<RegisterToolWindowTask>,
                                          toolWindowPane: ToolWindowsPane) {
+    @Suppress("TestOnlyProblems")
     manager.setLayoutOnInit(pendingLayout.getAndSet(null) ?: throw IllegalStateException("Expected some pending layout"))
 
     // FacetDependentToolWindowManager - strictly speaking, computeExtraToolWindowBeans should be executed not in EDT, but for now it is not safe because:

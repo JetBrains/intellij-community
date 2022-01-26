@@ -1818,6 +1818,18 @@ open class ToolWindowManagerImpl(val project: Project, private val isNewUi: Bool
     window.toFront()
   }
 
+  internal fun toolWindowAvailable(toolWindow: ToolWindowImpl) {
+    val entry = idToEntry.get(toolWindow.id) ?: return
+    val stripeButton = entry.stripeButton
+    if (stripeButton == null && entry.readOnlyWindowInfo.isShowStripeButton) {
+      entry.stripeButton = toolWindowPane!!.buttonManager.createStripeButton(entry.toolWindow, entry.readOnlyWindowInfo, task = null)!!
+    }
+    else if (!isNewUi) {
+      // force showing stripe button on adding initial mapping even if stripe button was manually removed by the user
+      toolWindow.isShowStripeButton = true
+    }
+  }
+
   /**
    * Spies on IdeToolWindow properties and applies them to the window state.
    */

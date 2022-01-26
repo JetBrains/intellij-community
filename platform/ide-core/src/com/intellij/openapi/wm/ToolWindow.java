@@ -2,7 +2,9 @@
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
@@ -216,4 +218,8 @@ public interface ToolWindow extends BusyObject {
   void remove();
 
   void setTitleActions(@NotNull List<? extends AnAction> actions);
+
+  void setAdditionalGearActions(@Nullable ActionGroup additionalGearActions);
+
+  @NotNull Project getProject();
 }

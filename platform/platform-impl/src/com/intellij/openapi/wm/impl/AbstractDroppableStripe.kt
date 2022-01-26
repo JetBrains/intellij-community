@@ -94,9 +94,12 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
   @JvmField
   protected var computedPreferredSize: Dimension? = null
 
-  open fun reset() {
+  fun reset() {
     lastLayoutData = null
     computedPreferredSize = null
+    buttons.clear()
+    removeAll()
+    revalidate()
   }
 
   fun resetDrop() {

@@ -77,10 +77,8 @@ internal class ToolwindowLeftToolbar : ToolwindowToolbar() {
   }
 
   override fun reset() {
-    topPane.removeAll()
-    topPane.revalidate()
-    bottomPane.removeAll()
-    bottomPane.revalidate()
+    topPane.reset()
+    bottomPane.reset()
   }
 
   override fun getButtonFor(toolWindowId: String): StripeButtonManager? {

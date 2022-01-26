@@ -350,11 +350,13 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     EDT.assertIsEdt()
 
     isAvailable = value
-    if (!value) {
+    if (value) {
+      toolWindowManager.toolWindowAvailable(this)
+    }
+    else {
       toolWindowManager.hideToolWindow(id, hideSide = false)
       contentUi?.dropCaches()
     }
-    toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.AVAILABLE)
   }
 
   override fun setAvailable(value: Boolean, runnable: Runnable?) {
@@ -435,17 +437,19 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   override fun setTitle(title: String) {
     EDT.assertIsEdt()
-    val selected = contentManager.value.selectedContent
-    if (selected != null) {
-      selected.displayName = title
-    }
+    contentManager.value.selectedContent?.displayName = title
     toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.TITLE)
   }
 
   override fun setStripeTitle(value: String) {
-    EDT.assertIsEdt()
-    if (value != stripeTitle) {
-      stripeTitle = value
+    if (value == stripeTitle) {
+      return
+    }
+
+    stripeTitle = value
+
+    if (windowInfoDuringInit == null) {
+      EDT.assertIsEdt()
       toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.STRIPE_TITLE)
     }
   }

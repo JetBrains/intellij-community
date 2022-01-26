@@ -242,13 +242,17 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     }
   }
 
-  final void initOrCreateToolbar(@NotNull Project project) {
+  public final void initOrCreateToolbar(@NotNull Project project) {
     if (getToolbarHolderDelegate() == null && ExperimentalUI.isNewToolbar()) {
-      ((MainToolbar)myToolbar).init(project);
+      JComponent toolbar = myToolbar;
+      // null if frame is reused (open project in an existing frame)
+      if (toolbar != null) {
+        ((MainToolbar)toolbar).init(project);
+        return;
+      }
     }
-    else {
-      updateToolbar();
-    }
+
+    updateToolbar();
   }
 
   final void updateToolbar() {
@@ -301,7 +305,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     }
   }
 
-  protected void updateNorthComponents() {
+
+  public void updateNorthComponents() {
     for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
       northComponent.revalidate();
     }

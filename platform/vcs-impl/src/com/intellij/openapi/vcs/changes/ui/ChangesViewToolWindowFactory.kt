@@ -18,7 +18,7 @@ private class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
   override fun init(window: ToolWindow) {
     super.init(window)
 
-    (window as ToolWindowEx).setAdditionalGearActions(ActionManager.getInstance().getAction("LocalChangesView.GearActions") as ActionGroup)
+    window.setAdditionalGearActions(ActionManager.getInstance().getAction("LocalChangesView.GearActions") as ActionGroup)
   }
 
   override fun setEmptyState(project: Project, state: StatusText) {

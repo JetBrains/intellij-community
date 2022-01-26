@@ -62,13 +62,6 @@ final class Stripe extends AbstractDroppableStripe implements UISettingsListener
   }
 
   @Override
-  public void reset() {
-    super.reset();
-    removeAll();
-    revalidate();
-  }
-
-  @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     updatePresentation();
   }

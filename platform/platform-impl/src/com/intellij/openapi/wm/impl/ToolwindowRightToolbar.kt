@@ -53,8 +53,7 @@ internal class ToolwindowRightToolbar : ToolwindowToolbar() {
   }
 
   override fun reset() {
-    topPane.removeAll()
-    topPane.revalidate()
+    topPane.reset()
   }
 
   override fun getButtonFor(toolWindowId: String): StripeButtonManager? = topPane.getButtons().find { it.id == toolWindowId }

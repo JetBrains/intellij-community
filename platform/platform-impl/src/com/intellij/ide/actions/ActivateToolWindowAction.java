@@ -96,7 +96,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
     if (EventLog.LOG_TOOL_WINDOW_ID.equals(myToolWindowId)) {
       icon = AllIcons.Ide.Notification.InfoEvents;
     }
-    if (ExperimentalUI.isNewUI() && icon instanceof ScalableIcon) {
+    if (icon instanceof ScalableIcon && ExperimentalUI.isNewUI()) {
       icon = ((ScalableIcon)icon).scale(16f / icon.getIconWidth());
       presentation.setIcon(icon);
       return;
