@@ -12,6 +12,7 @@ import com.intellij.ide.ui.PluginBooleanOptionDescriptor
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
@@ -151,7 +152,9 @@ open class PluginAdvertiserService {
             project,
           )
 
-          PluginBooleanOptionDescriptor.togglePluginState(disabledDescriptors, true)
+          ApplicationManager.getApplication().invokeLater {
+            PluginBooleanOptionDescriptor.togglePluginState(disabledDescriptors, true)
+          }
         }
       }
       else {
