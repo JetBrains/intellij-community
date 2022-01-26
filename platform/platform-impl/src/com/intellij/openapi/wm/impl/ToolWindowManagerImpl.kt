@@ -1222,7 +1222,7 @@ open class ToolWindowManagerImpl(val project: Project, private val isNewUi: Bool
       Disposer.dispose(existing)
     }
 
-    val stripe = toolWindowPane!!.buttonManager.getStripeFor(entry.readOnlyWindowInfo.anchor) as Stripe
+    val stripe = toolWindowPane!!.buttonManager.getStripeFor(entry.readOnlyWindowInfo.anchor)
     if (!entry.toolWindow.isAvailable) {
       entry.toolWindow.isPlaceholderMode = true
       stripe.updatePresentation()

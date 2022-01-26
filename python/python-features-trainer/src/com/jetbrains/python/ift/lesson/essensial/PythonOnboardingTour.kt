@@ -39,8 +39,8 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.openapi.wm.impl.IdeFrameImpl
-import com.intellij.openapi.wm.impl.StripeButton
 import com.intellij.openapi.wm.impl.status.TextPanel
+import com.intellij.toolWindow.StripeButton
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.fields.ExtendableTextField

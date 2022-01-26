@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl
+package com.intellij.toolWindow
 
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
@@ -10,8 +10,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
-import com.intellij.toolWindow.ToolWindowEventSource
-import com.intellij.toolWindow.createDragImage
+import com.intellij.openapi.wm.impl.AbstractDroppableStripe
+import com.intellij.openapi.wm.impl.AnchoredButton
+import com.intellij.openapi.wm.impl.StripeButtonUI
+import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.RelativeFont

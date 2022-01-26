@@ -1,13 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl
+package com.intellij.toolWindow
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.wm.IdeGlassPaneUtil
+import com.intellij.openapi.wm.impl.IdeRootPane
+import com.intellij.openapi.wm.impl.ToolWindowsPane
 import com.intellij.openapi.wm.impl.content.BaseLabel
 import com.intellij.openapi.wm.impl.content.ContentTabLabel
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-import com.intellij.toolWindow.InternalDecoratorImpl
-import com.intellij.toolWindow.ToolWindowDragHelper
 import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createDragImage
 import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createHighlighterComponent
 import com.intellij.ui.ClientProperty
@@ -19,7 +19,6 @@ import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.tabs.TabsUtil
 import com.intellij.util.IconUtil
 import org.jetbrains.annotations.NotNull
-import java.awt.Component
 import java.awt.Image
 import java.awt.Point
 import java.awt.Rectangle
@@ -52,7 +51,7 @@ internal class ToolWindowInnerDragHelper(parent: @NotNull Disposable, val pane: 
       val child = SwingUtilities.getDeepestComponentAt(pane, x, y)
       val decorator = InternalDecoratorImpl.findTopLevelDecorator(child)
       if (decorator != null &&
-          ClientProperty.isTrue(decorator.toolWindow.component as Component?, ToolWindowContentUi.ALLOW_DND_FOR_TABS) &&
+          ClientProperty.isTrue(decorator.toolWindow.component, ToolWindowContentUi.ALLOW_DND_FOR_TABS) &&
           child is ContentTabLabel && child.parent is ToolWindowContentUi.TabPanel) {
         return child
       }
@@ -94,13 +93,13 @@ internal class ToolWindowInnerDragHelper(parent: @NotNull Disposable, val pane: 
     }
     p = point.getPoint(tabPanel)
     var placeholderIndex = -1
-    for (i in 0..tabPanel.componentCount - 1) {
+    for (i in 0 until tabPanel.componentCount) {
       val child = tabPanel.components[i]
       if (child is JLabel && child !is BaseLabel) { //com.intellij.openapi.wm.impl.content.TabContentLayout.myDropOverPlaceholder
         placeholderIndex = i
       }
     }
-    for (i in 0..tabPanel.componentCount - 1) {
+    for (i in 0 until tabPanel.componentCount) {
       val child = tabPanel.components[i]
       if (child is BaseLabel && child !is ContentTabLabel) {
         continue//See com.intellij.openapi.wm.impl.content.ContentLayout.myIdLabel
@@ -135,7 +134,7 @@ internal class ToolWindowInnerDragHelper(parent: @NotNull Disposable, val pane: 
 
     val content = myDraggingTab!!.content
 
-    val contentManager = sourceDecorator!!.contentManager!!
+    val contentManager = sourceDecorator!!.contentManager
     if (sourceDecorator == myCurrentDecorator) {
       if (contentManager.contentCount > 0) {
         sourceDecorator!!.splitWithContent(content, currentDropSide, currentDropIndex - 1)
@@ -162,7 +161,7 @@ internal class ToolWindowInnerDragHelper(parent: @NotNull Disposable, val pane: 
   override fun cancelDragging(): Boolean {
     if (super.cancelDragging()) {
       with(myDraggingTab!!.content as ContentImpl) {
-        val contentManager = sourceDecorator!!.contentManager!!
+        val contentManager = sourceDecorator!!.contentManager
         contentManager.addContent(this, myInitialIndex.coerceAtMost(contentManager.contentCount))
         putUserData(TEMPORARY_REMOVED_KEY, null)
       }
@@ -189,7 +188,7 @@ internal class ToolWindowInnerDragHelper(parent: @NotNull Disposable, val pane: 
   fun stopDrag() {
     if (myDraggingTab == null) return
     (myDraggingTab!!.content as ContentImpl).putUserData(TEMPORARY_REMOVED_KEY, null)
-    sourceDecorator?.setSplitUnsplitInProgress(false)
+    sourceDecorator?.isSplitUnsplitInProgress = false
     sourceDecorator = null
     myDraggingTab = null
     myCurrentDecorator?.setDropInfoIndex(-1, 0)
@@ -216,11 +215,11 @@ internal class ToolWindowInnerDragHelper(parent: @NotNull Disposable, val pane: 
         val index = manager.getIndexOfContent(this) + 1
         SwingUtilities.invokeLater {
           try {
-            sourceDecorator!!.setSplitUnsplitInProgress(true)
+            sourceDecorator!!.isSplitUnsplitInProgress = true
             manager.removeContent(this, false)
             sourceDecorator!!.setDropInfoIndex(index, myDraggingTab!!.width)
           } finally {
-            sourceDecorator!!.setSplitUnsplitInProgress(false)
+            sourceDecorator!!.isSplitUnsplitInProgress = false
           }
         }
       }

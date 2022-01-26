@@ -406,4 +406,8 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
       }
     }
   }
+
+  fun updatePresentation() {
+    buttons.forEach(StripeButtonManager::updatePresentation)
+  }
 }

@@ -107,7 +107,7 @@ public final class IdeBackgroundUtil {
            component instanceof ActionToolbar ? "toolbar" :
            component instanceof StatusBar ? "statusbar" :
            component instanceof JMenuBar || component instanceof JMenu? "menubar" :
-           component instanceof Stripe ? "stripe" :
+           component.getClass().getSimpleName().endsWith(".Stripe") ? "stripe" :
            component instanceof EditorsSplitters ? "frame" :
            component instanceof EditorComponentImpl ? "editor" :
            component instanceof EditorGutterComponentEx ? "editor" :

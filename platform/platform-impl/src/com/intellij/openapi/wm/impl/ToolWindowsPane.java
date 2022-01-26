@@ -23,6 +23,8 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.reference.SoftReference;
 import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.toolWindow.ToolWindowDragHelper;
+import com.intellij.toolWindow.ToolWindowInnerDragHelper;
+import com.intellij.toolWindow.ToolWindowPaneState;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.paint.PaintUtil;

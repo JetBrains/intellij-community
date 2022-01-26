@@ -68,15 +68,12 @@ private class TestStripeButtonManager(override val id: String, override val wind
   }
 
   override fun updatePresentation() {
-    TODO("not implemented")
   }
 
   override fun updateIcon(icon: Icon?) {
-    TODO("not implemented")
   }
 
   override fun remove() {
-    TODO("not implemented")
   }
 
   override fun getComponent() = TODO("not implemented")
