@@ -701,5 +701,7 @@ class QuickFixRegistrar : QuickFixContributor {
         SUPER_CALL_FROM_PUBLIC_INLINE.registerFactory(CallFromPublicInlineFactory)
 
         IS_ENUM_ENTRY.registerFactory(IsEnumEntryFactory)
+
+        OVERRIDE_DEPRECATION.registerFactory(AddAnnotationWithArgumentsFix.CopyDeprecatedAnnotation)
     }
 }
