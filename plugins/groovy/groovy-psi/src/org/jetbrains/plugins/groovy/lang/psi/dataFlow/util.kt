@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow
 
 import com.intellij.openapi.util.Key
@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isExpressionStatement
 import org.jetbrains.plugins.groovy.util.findNodesOutsideCycles
 import org.jetbrains.plugins.groovy.util.mapGraph
+import java.util.*
 
 private typealias VariablesKey = Key<CachedValue<Object2IntMap<VariableDescriptor>>>
 
@@ -47,8 +48,10 @@ internal fun getReverseIndex(enumeration: Object2IntMap<VariableDescriptor>): Ar
   return reverseIndex
 }
 
-internal fun getSimpleInstructions(flow: Array<Instruction>): Set<Int> =
-  findNodesOutsideCycles(mapGraph(flow.associateWith { it.allSuccessors().toList() })).mapTo(HashSet(), Instruction::num)
+internal fun getSimpleInstructions(flow: Array<Instruction>): BitSet =
+  findNodesOutsideCycles(mapGraph(flow.associateWith { it.allSuccessors().toList() })).fold(BitSet()) { bitSet, instr ->
+    bitSet.set(instr.num()); bitSet
+  }
 
 private fun doGetVarIndexes(owner: GrControlFlowOwner, isLarge: Boolean): Object2IntMap<VariableDescriptor> {
   val result = Object2IntOpenHashMap<VariableDescriptor>()
