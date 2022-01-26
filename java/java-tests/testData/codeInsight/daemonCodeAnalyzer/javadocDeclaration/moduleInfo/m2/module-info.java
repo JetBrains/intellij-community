@@ -1,5 +1,4 @@
 /**
- * @uses
+ * <warning descr="Class reference expected">@uses</warning>
  */
-@Deprecated
 module M2 { }
