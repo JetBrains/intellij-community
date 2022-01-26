@@ -7,77 +7,77 @@ import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 
 private val logger = Logger.getInstance("#${PluginEnvironment.PLUGIN_ID}")
 
-fun logError(contextName: String? = null, messageProvider: () -> String) {
+internal fun logError(contextName: String? = null, messageProvider: () -> String) {
     logError(traceInfo = null, contextName = contextName, messageProvider = messageProvider)
 }
 
-fun logError(contextName: String? = null, throwable: Throwable? = null, messageProvider: () -> String) {
+internal fun logError(contextName: String? = null, throwable: Throwable? = null, messageProvider: () -> String) {
     logError(traceInfo = null, contextName = contextName, throwable = throwable, messageProvider = messageProvider)
 }
 
-fun logError(traceInfo: TraceInfo? = null, contextName: String? = null, throwable: Throwable? = null, messageProvider: () -> String) {
+internal fun logError(traceInfo: TraceInfo? = null, contextName: String? = null, throwable: Throwable? = null, messageProvider: () -> String) {
     logError(buildMessageFrom(traceInfo, contextName, messageProvider), throwable)
 }
 
-fun logError(message: String, throwable: Throwable? = null) {
+internal fun logError(message: String, throwable: Throwable? = null) {
     logger.error(message, throwable)
 }
 
-fun logWarn(contextName: String? = null, messageProvider: () -> String) {
+internal fun logWarn(contextName: String? = null, messageProvider: () -> String) {
     logWarn(traceInfo = null, contextName = contextName, messageProvider = messageProvider)
 }
 
-fun logWarn(contextName: String? = null, throwable: Throwable? = null, messageProvider: () -> String) {
+internal fun logWarn(contextName: String? = null, throwable: Throwable? = null, messageProvider: () -> String) {
     logWarn(traceInfo = null, contextName = contextName, throwable = throwable, messageProvider = messageProvider)
 }
 
-fun logWarn(traceInfo: TraceInfo? = null, contextName: String? = null, throwable: Throwable? = null, messageProvider: () -> String) {
+internal fun logWarn(traceInfo: TraceInfo? = null, contextName: String? = null, throwable: Throwable? = null, messageProvider: () -> String) {
     logWarn(buildMessageFrom(traceInfo, contextName, messageProvider), throwable)
 }
 
-fun logWarn(message: String, throwable: Throwable? = null) {
+internal fun logWarn(message: String, throwable: Throwable? = null) {
     logger.warn(message, throwable)
 }
 
-fun logInfo(contextName: String? = null, messageProvider: () -> String) {
+internal fun logInfo(contextName: String? = null, messageProvider: () -> String) {
     logInfo(traceInfo = null, contextName = contextName, messageProvider = messageProvider)
 }
 
-fun logInfo(contextName: String? = null, throwable: Throwable? = null, messageProvider: () -> String) {
+internal fun logInfo(contextName: String? = null, throwable: Throwable? = null, messageProvider: () -> String) {
     logInfo(traceInfo = null, contextName = contextName, throwable = throwable, messageProvider = messageProvider)
 }
 
-fun logInfo(traceInfo: TraceInfo? = null, contextName: String? = null, throwable: Throwable? = null, messageProvider: () -> String) {
+internal fun logInfo(traceInfo: TraceInfo? = null, contextName: String? = null, throwable: Throwable? = null, messageProvider: () -> String) {
     logInfo(buildMessageFrom(traceInfo, contextName, messageProvider), throwable)
 }
 
-fun logInfo(message: String, throwable: Throwable? = null) {
+internal fun logInfo(message: String, throwable: Throwable? = null) {
     logger.info(message, throwable)
 }
 
-fun logDebug(contextName: String? = null, messageProvider: () -> String) {
+internal fun logDebug(contextName: String? = null, messageProvider: () -> String) {
     logDebug(traceInfo = null, contextName = contextName, messageProvider = messageProvider)
 }
 
-fun logDebug(contextName: String? = null, throwable: Throwable? = null, messageProvider: () -> String) {
+internal fun logDebug(contextName: String? = null, throwable: Throwable? = null, messageProvider: () -> String) {
     logDebug(traceInfo = null, contextName = contextName, throwable = throwable, messageProvider = messageProvider)
 }
 
-fun logDebug(traceInfo: TraceInfo? = null, contextName: String? = null, throwable: Throwable? = null, messageProvider: () -> String) {
+internal fun logDebug(traceInfo: TraceInfo? = null, contextName: String? = null, throwable: Throwable? = null, messageProvider: () -> String) {
     logDebug(buildMessageFrom(traceInfo, contextName, messageProvider), throwable)
 }
 
-fun logDebug(message: String, throwable: Throwable? = null) {
+internal fun logDebug(message: String, throwable: Throwable? = null) {
     if (!FeatureFlags.useDebugLogging) return
     if (!logger.isDebugEnabled) warnNotLoggable()
     logger.debug(message, throwable)
 }
 
-fun logTrace(contextName: String? = null, messageProvider: () -> String) {
+internal fun logTrace(contextName: String? = null, messageProvider: () -> String) {
     logTrace(traceInfo = null, contextName = contextName, messageProvider = messageProvider)
 }
 
-fun logTrace(traceInfo: TraceInfo? = null, contextName: String? = null, messageProvider: () -> String) {
+internal fun logTrace(traceInfo: TraceInfo? = null, contextName: String? = null, messageProvider: () -> String) {
     logTrace(buildMessageFrom(traceInfo, contextName, messageProvider))
 }
 
@@ -88,14 +88,14 @@ private inline fun catchAndSuppress(action: () -> Unit) {
     }
 }
 
-fun logTrace(message: String) = catchAndSuppress {
+internal fun logTrace(message: String) = catchAndSuppress {
     if (!FeatureFlags.useDebugLogging) return
     if (!logger.isTraceEnabled) warnNotLoggable()
 
     logger.trace(message)
 }
 
-fun logTrace(throwable: Throwable) = catchAndSuppress {
+internal fun logTrace(throwable: Throwable) = catchAndSuppress {
     if (!FeatureFlags.useDebugLogging) return
     if (!logger.isTraceEnabled) warnNotLoggable()
 

@@ -2,7 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin.fus
 
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 
-object FUSGroupIds {
+internal object FUSGroupIds {
 
     const val GROUP_ID = "packagesearch"
 

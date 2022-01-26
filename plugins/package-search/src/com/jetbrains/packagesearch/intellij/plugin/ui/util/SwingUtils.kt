@@ -42,7 +42,7 @@ internal fun mouseListener(
     }
 }
 
-fun JTextField.addOnTextChangedListener(onTextChanged: (DocumentEvent) -> Unit) {
+internal fun JTextField.addOnTextChangedListener(onTextChanged: (DocumentEvent) -> Unit) {
     document.addDocumentListener(
         object : DocumentAdapter() {
             override fun textChanged(e: DocumentEvent) {

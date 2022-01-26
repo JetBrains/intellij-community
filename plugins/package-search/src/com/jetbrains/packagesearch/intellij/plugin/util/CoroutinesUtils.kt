@@ -62,7 +62,7 @@ internal fun <T> Flow<T>.replayOnSignals(vararg signals: Flow<Any>) = channelFlo
         .launchIn(this)
 }
 
-suspend fun <T, R> Iterable<T>.parallelMap(transform: suspend (T) -> R) = coroutineScope {
+internal suspend fun <T, R> Iterable<T>.parallelMap(transform: suspend (T) -> R) = coroutineScope {
     map { async { transform(it) } }.awaitAll()
 }
 

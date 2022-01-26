@@ -116,11 +116,7 @@ final class CommunityRepositoryModules {
       withModule("intellij.gradle.toolingProxy")
       withProjectLibrary("Gradle", ProjectLibraryData.PackMode.STANDALONE_SEPARATE)
     },
-    plugin("intellij.packageSearch") {
-      withModule("intellij.packageSearch.gradle")
-      withModule("intellij.packageSearch.maven")
-      withModule("intellij.packageSearch.kotlin")
-    },
+    plugin("intellij.packageSearch"),
     plugin("intellij.externalSystem.dependencyUpdater"),
     plugin("intellij.gradle.dependencyUpdater"),
     plugin("intellij.android.gradle.dsl"),

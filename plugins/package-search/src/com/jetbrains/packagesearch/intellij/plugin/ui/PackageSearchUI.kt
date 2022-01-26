@@ -37,7 +37,7 @@ import javax.swing.JTextField
 import javax.swing.KeyStroke
 import javax.swing.Scrollable
 
-object PackageSearchUI {
+internal object PackageSearchUI {
 
     private val MAIN_BG_COLOR: Color = JBColor.namedColor("Plugins.background", UIUtil.getListBackground())
 
@@ -101,7 +101,7 @@ object PackageSearchUI {
         override fun getBackground() = backgroundColor
     }
 
-    fun checkBox(@Nls title: String, init: JCheckBox.() -> Unit = {}) = object : JCheckBox(title) {
+    internal fun checkBox(@Nls title: String, init: JCheckBox.() -> Unit = {}) = object : JCheckBox(title) {
 
         init {
             init()
@@ -121,7 +121,7 @@ object PackageSearchUI {
         return JMenuItem(title).apply { addActionListener { handler() } }
     }
 
-    fun createLabel(@Nls text: String? = null, init: JLabel.() -> Unit = {}) = JLabel().apply {
+    internal fun createLabel(@Nls text: String? = null, init: JLabel.() -> Unit = {}) = JLabel().apply {
         font = StartupUiUtil.getLabelFont()
         if (text != null) this.text = text
         init()

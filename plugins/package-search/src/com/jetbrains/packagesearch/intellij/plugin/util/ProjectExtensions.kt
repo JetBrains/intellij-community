@@ -92,7 +92,7 @@ internal val Project.nativeModulesChangesFlow
         }
     }
 
-val Project.filesChangedEventFlow
+internal val Project.filesChangedEventFlow
     get() = messageBusFlow(VirtualFileManager.VFS_CHANGES) {
         object : BulkFileListener {
             override fun after(events: MutableList<out VFileEvent>) {

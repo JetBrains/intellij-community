@@ -18,7 +18,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 
 private const val FUS_ENABLED = true
 
-class PackageSearchEventsLogger : CounterUsagesCollector() {
+internal class PackageSearchEventsLogger : CounterUsagesCollector() {
 
     override fun getGroup() = GROUP
 
@@ -41,10 +41,10 @@ class PackageSearchEventsLogger : CounterUsagesCollector() {
         private val targetModulesField = EventFields.Enum<FUSGroupIds.TargetModulesType>(FUSGroupIds.TARGET_MODULES)
         private val targetModulesMixedBuildSystemsField = EventFields.Boolean(FUSGroupIds.TARGET_MODULES_MIXED_BUILD_SYSTEMS)
 
-        val preferencesGradleScopeCountField = EventFields.Int(FUSGroupIds.PREFERENCES_GRADLE_SCOPES_COUNT)
-        val preferencesUpdateScopesOnUsageField = EventFields.Boolean(FUSGroupIds.PREFERENCES_UPDATE_SCOPES_ON_USAGE)
-        val preferencesDefaultGradleScopeChangedField = EventFields.Boolean(FUSGroupIds.PREFERENCES_DEFAULT_GRADLE_SCOPE_CHANGED)
-        val preferencesDefaultMavenScopeChangedField = EventFields.Boolean(FUSGroupIds.PREFERENCES_DEFAULT_MAVEN_SCOPE_CHANGED)
+        internal val preferencesGradleScopeCountField = EventFields.Int(FUSGroupIds.PREFERENCES_GRADLE_SCOPES_COUNT)
+        internal val preferencesUpdateScopesOnUsageField = EventFields.Boolean(FUSGroupIds.PREFERENCES_UPDATE_SCOPES_ON_USAGE)
+        internal val preferencesDefaultGradleScopeChangedField = EventFields.Boolean(FUSGroupIds.PREFERENCES_DEFAULT_GRADLE_SCOPE_CHANGED)
+        internal val preferencesDefaultMavenScopeChangedField = EventFields.Boolean(FUSGroupIds.PREFERENCES_DEFAULT_MAVEN_SCOPE_CHANGED)
         internal val preferencesAutoAddRepositoriesField = EventFields.Boolean(FUSGroupIds.PREFERENCES_AUTO_ADD_REPOSITORIES)
 
         private val detailsLinkLabelField = EventFields.Enum<FUSGroupIds.DetailsLinkTypes>(FUSGroupIds.DETAILS_LINK_LABEL)
