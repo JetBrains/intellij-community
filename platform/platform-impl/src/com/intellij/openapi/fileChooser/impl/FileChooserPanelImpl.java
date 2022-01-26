@@ -652,6 +652,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     public Component getListCellRendererComponent(JList<? extends FsItem> list, FsItem value, int index, boolean selected, boolean focused) {
       setIcon(value.icon);
       setText(value.name);
+      setForeground(selected ? UIUtil.getListSelectionForeground(focused) : UIUtil.getListForeground());
       setEnabled(value.selectable);
       return this;
     }
