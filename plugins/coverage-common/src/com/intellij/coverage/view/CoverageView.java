@@ -48,6 +48,7 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -55,6 +56,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class CoverageView extends BorderLayoutPanel implements DataProvider, Disposable {
@@ -103,7 +105,10 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     setUpShowRootNode();
 
     addEmptyCoverageText(project, suitesBundle);
-    myTable.setRowSorter(new CoverageRowSorter(myTable, myModel));
+    final CoverageRowSorter rowSorter = new CoverageRowSorter(myTable, myModel);
+    myTable.setRowSorter(rowSorter);
+    final RowSorter.SortKey sortKey = stateBean.mySortKey == null ? new RowSorter.SortKey(0, SortOrder.ASCENDING) : stateBean.mySortKey;
+    rowSorter.setSortKeys(Collections.singletonList(sortKey));
     myTable.getTableHeader().setReorderingAllowed(false);
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     setWidth();
@@ -224,6 +229,16 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       widths.add(columnModel.getColumn(i).getWidth());
     }
     myStateBean.myColumnSize = widths;
+
+    final RowSorter<? extends TableModel> sorter = myTable.getRowSorter();
+    RowSorter.SortKey sortKey = null;
+    if (sorter != null) {
+      final List<? extends RowSorter.SortKey> keys = sorter.getSortKeys();
+      if (keys != null && !keys.isEmpty()) {
+        sortKey = keys.get(0);
+      }
+    }
+    myStateBean.mySortKey = sortKey;
   }
 
   private void setWidth() {

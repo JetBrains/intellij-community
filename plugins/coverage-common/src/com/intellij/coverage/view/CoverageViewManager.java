@@ -26,6 +26,7 @@ import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -139,5 +140,6 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
     public boolean myAutoScrollToSource = false;
     public boolean myAutoScrollFromSource = false;
     public List<Integer> myColumnSize;
+    public RowSorter.SortKey mySortKey;
   }
 }
