@@ -27,6 +27,6 @@
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
     <orderEntry type="library" scope="TEST" name="Log4J" level="project" />
-    <orderEntry type="module" module-name="intellij.java.impl.inspections" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.impl.inspections" />
   </component>
 </module>
