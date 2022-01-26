@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.execution.junit2.info.NestedClassLocation;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.target.TargetEnvironmentUtil;
@@ -45,9 +46,12 @@ import java.util.Set;
 public class TestPackage extends TestObject {
   protected static final Function<Location<?>, String> CLASS_NAME_FUNCTION = location -> {
     if (location instanceof MethodLocation) {
-      PsiClass containingClass = ((MethodLocation)location).getContainingClass();
+      return ((MethodLocation)location).getContainingClassJVMClassName() + "," + ((MethodLocation)location).getPsiElement().getName();
+    }
+    if (location instanceof NestedClassLocation) {
+      PsiClass containingClass = ((NestedClassLocation)location).getContainingClass();
       if (containingClass == null) return null;
-      return ClassUtil.getJVMClassName(containingClass) + "," + ((MethodLocation)location).getPsiElement().getName();
+      return ClassUtil.getJVMClassName(containingClass) + "$" + ((NestedClassLocation)location).getPsiElement().getName();
     }
     PsiElement psiElement = location.getPsiElement();
     return psiElement instanceof PsiClass ? ClassUtil.getJVMClassName((PsiClass)psiElement) : null;

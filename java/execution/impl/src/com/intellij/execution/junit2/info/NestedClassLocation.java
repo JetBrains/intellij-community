@@ -8,37 +8,37 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
-import java.util.Objects;
 
-// Author: dyoma
-
-public class MethodLocation extends Location<PsiMethod> {
-  private static final Logger LOG = Logger.getInstance(MethodLocation.class);
+public class NestedClassLocation extends Location<PsiClass> {
+  private static final Logger LOG = Logger.getInstance(NestedClassLocation.class);
   private final Project myProject;
-  @NotNull private final PsiMethod myMethod;
+  private final PsiClass myNestedClass;
   private final Location<? extends PsiClass> myClassLocation;
 
-  public MethodLocation(@NotNull final Project project, @NotNull final PsiMethod method, @NotNull final Location<? extends PsiClass> classLocation) {
+  public NestedClassLocation(@NotNull final Project project, @NotNull final PsiClass nestedClass, @NotNull final Location<? extends PsiClass> classLocation) {
     myProject = project;
-    myMethod = method;
+    myNestedClass = nestedClass;
     myClassLocation = classLocation;
   }
 
-  public static MethodLocation elementInClass(final PsiMethod psiElement, final PsiClass psiClass) {
+  public String getNestedInConcreteInheritor() {
+    return ClassUtil.getJVMClassName(myClassLocation.getPsiElement()) + "$" + myNestedClass.getName();
+  }
+
+  public static NestedClassLocation elementInClass(final PsiClass psiElement, final PsiClass psiClass) {
     final Location<PsiClass> classLocation = PsiLocation.fromPsiElement(psiClass);
-    return new MethodLocation(classLocation.getProject(), psiElement, classLocation);
+    return new NestedClassLocation(classLocation.getProject(), psiElement, classLocation);
   }
 
   @Override
   @NotNull
-  public PsiMethod getPsiElement() {
-    return myMethod;
+  public PsiClass getPsiElement() {
+    return myNestedClass;
   }
 
   @Override
@@ -53,26 +53,17 @@ public class MethodLocation extends Location<PsiMethod> {
     return myClassLocation.getModule();
   }
 
-  @NotNull
   public PsiClass getContainingClass() {
     return myClassLocation.getPsiElement();
   }
 
-  @NotNull
-  public String getContainingClassJVMClassName() {
-    if (myClassLocation instanceof NestedClassLocation) {
-      return ((NestedClassLocation)myClassLocation).getNestedInConcreteInheritor();
-    }
-    return Objects.requireNonNull(ClassUtil.getJVMClassName(myClassLocation.getPsiElement()));
-  }
-  
   @Override
   @NotNull
   public <T extends PsiElement> Iterator<Location<T>> getAncestors(final Class<T> ancestorClass, final boolean strict) {
     final Iterator<Location<T>> fromClass = myClassLocation.getAncestors(ancestorClass, false);
     if (strict) return fromClass;
     return new Iterator<>() {
-      private boolean myFirstStep = ancestorClass.isInstance(myMethod);
+      private boolean myFirstStep = ancestorClass.isInstance(myNestedClass);
 
       @Override
       public boolean hasNext() {
@@ -81,7 +72,7 @@ public class MethodLocation extends Location<PsiMethod> {
 
       @Override
       public Location<T> next() {
-        final Location<T> location = myFirstStep ? (Location<T>)MethodLocation.this : fromClass.next();
+        final Location<T> location = myFirstStep ? (Location<T>)NestedClassLocation.this : fromClass.next();
         myFirstStep = false;
         return location;
       }

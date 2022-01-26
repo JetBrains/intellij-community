@@ -80,6 +80,7 @@ public class JUnit5TestFrameworkSetupUtil {
     fixture.addClass("package org.junit.jupiter.api.extension;\n" +
                      "public interface Extension {\n" +
                      "}\n");
+    fixture.addClass("package org.junit.jupiter.api; public @interface Nested{}");
     return fixture;
   }
 }
