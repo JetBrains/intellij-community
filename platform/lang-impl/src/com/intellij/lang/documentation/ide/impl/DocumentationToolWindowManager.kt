@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.documentation.ToggleShowDocsOnHoverAction
@@ -30,13 +30,16 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
+import com.intellij.ui.content.ContentManager
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import javax.swing.JPanel
 
 @Service
 internal class DocumentationToolWindowManager(private val project: Project) : Disposable {
+
   companion object {
+
     const val TOOL_WINDOW_ID: String = "documentation.v2"
 
     fun instance(project: Project): DocumentationToolWindowManager = project.service()
@@ -53,21 +56,18 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
       }
   }
 
-  private val toolWindow: ToolWindowEx
+  private val toolWindow: ToolWindowEx = ToolWindowManager.getInstance(project).registerToolWindow(RegisterToolWindowTask.closableSecondary(
+    id = TOOL_WINDOW_ID,
+    stripeTitle = IdeBundle.messagePointer("toolwindow.stripe.documentation.v2"),
+    icon = AllIcons.Toolwindows.Documentation,
+    anchor = ToolWindowAnchor.RIGHT,
+  )) as ToolWindowEx
+  private val contentManager: ContentManager = toolWindow.contentManager
 
   private val cs = CoroutineScope(SupervisorJob())
   private var waitForFocusRequest: Boolean = false
 
   init {
-    toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(RegisterToolWindowTask(
-      id = TOOL_WINDOW_ID,
-      anchor = ToolWindowAnchor.RIGHT,
-      icon = AllIcons.Toolwindows.Documentation,
-      sideTool = true,
-      stripeTitle = IdeBundle.messagePointer("toolwindow.stripe.documentation.v2"),
-      shouldBeAvailable = false,
-    )) as ToolWindowEx
-
     toolWindow.setAdditionalGearActions(DefaultActionGroup(
       ActionManager.getInstance().getAction(TOGGLE_SHOW_IN_POPUP_ACTION_ID),
       ToggleShowDocsOnHoverAction(),
@@ -76,7 +76,7 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
       AdjustFontSizeAction(),
     ))
     toolWindow.setTitleActions(navigationActions())
-    toolWindow.installWatcher(toolWindow.contentManager)
+    toolWindow.installWatcher(contentManager)
     toolWindow.component.putClientProperty(ChooseByNameBase.TEMPORARILY_FOCUSABLE_COMPONENT_KEY, true)
     toolWindow.helpId = "reference.toolWindows.Documentation"
   }
@@ -118,7 +118,7 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
       waitForFocusRequest = false
     }
     val content = getVisibleReusableContent() ?: return false
-    toolWindow.contentManager.requestFocus(content, false)
+    contentManager.requestFocus(content, false)
     return true
   }
 
@@ -133,7 +133,7 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
     if (!toolWindow.isVisible) {
       return null
     }
-    return toolWindow.contentManager.selectedContent?.takeIf {
+    return contentManager.selectedContent?.takeIf {
       it.toolWindowUI.isReusable
     }
   }
@@ -182,13 +182,13 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
   }
 
   private fun makeVisible(content: Content) {
-    toolWindow.contentManager.setSelectedContent(content)
+    contentManager.setSelectedContent(content)
     toolWindow.show()
     waitForFocusRequest()
   }
 
   private fun getReusableContent(): Content? {
-    return toolWindow.contentManager.contents.firstOrNull {
+    return contentManager.contents.firstOrNull {
       it.isReusable
     }
   }
@@ -198,7 +198,7 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
       it.isCloseable = true
       it.putUserData(ToolWindow.SHOW_CONTENT_ICON, true)
     }
-    toolWindow.contentManager.addContent(content)
+    contentManager.addContent(content)
     return content
   }
 

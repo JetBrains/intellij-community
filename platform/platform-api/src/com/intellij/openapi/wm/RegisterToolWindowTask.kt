@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm
 
 import com.intellij.openapi.util.NlsContexts
-import org.jetbrains.annotations.ApiStatus.Experimental
 import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -21,35 +20,6 @@ data class RegisterToolWindowTask(
 ) {
   // for Java clients
   companion object {
-    class Builder internal constructor(private val id: String) {
-      @JvmField
-      var anchor = ToolWindowAnchor.BOTTOM
-      @JvmField
-      var stripeTitle: Supplier<@NlsContexts.TabTitle String>? = null
-      @JvmField
-      var icon: Icon? = null
-      @JvmField
-      var shouldBeAvailable: Boolean = true
-
-      internal fun build(): RegisterToolWindowTask {
-        return RegisterToolWindowTask(
-          id = id,
-          anchor = anchor,
-          stripeTitle = stripeTitle,
-          icon = icon,
-          shouldBeAvailable = shouldBeAvailable
-        )
-      }
-    }
-
-    @JvmStatic
-    @Experimental
-    fun build(id: String, builder: Builder.() -> Unit): RegisterToolWindowTask {
-      val b = Builder(id)
-      b.builder()
-      return b.build()
-    }
-
     @JvmStatic
     @JvmOverloads
     fun notClosable(id: String, anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask {

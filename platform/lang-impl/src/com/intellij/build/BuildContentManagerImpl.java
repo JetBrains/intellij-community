@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build;
 
 import com.intellij.build.process.BuildProcessHandler;
@@ -17,7 +17,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -28,7 +27,6 @@ import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.containers.MultiMap;
-import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,13 +73,8 @@ public final class BuildContentManagerImpl implements BuildContentManager, Dispo
       return toolWindow;
     }
 
-    toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.build(TOOL_WINDOW_ID, builder -> {
-      builder.stripeTitle = UIBundle.messagePointer("tool.window.name.build");
-      builder.icon = AllIcons.Toolwindows.ToolWindowBuild;
-      // content is not added yet
-      builder.shouldBeAvailable = false;
-      return Unit.INSTANCE;
-    }));
+    toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.closable(
+      TOOL_WINDOW_ID, UIBundle.messagePointer("tool.window.name.build"), AllIcons.Toolwindows.ToolWindowBuild));
     ContentManager contentManager = toolWindow.getContentManager();
     ContentManagerWatcher.watchContentManager(toolWindow, contentManager);
     return toolWindow;
@@ -101,7 +94,7 @@ public final class BuildContentManagerImpl implements BuildContentManager, Dispo
     invokeLaterIfNeeded(() -> {
       ContentManager contentManager = getOrCreateToolWindow().getContentManager();
       final String name = content.getTabName();
-      final String category = Strings.trimEnd(StringUtil.split(name, " ").get(0), ':');
+      final String category = StringUtil.trimEnd(StringUtil.split(name, " ").get(0), ':');
       int idx = -1;
       for (int i = 0; i < ourPresetOrder.size(); i++) {
         final String s = ourPresetOrder.get(i).get();
@@ -115,7 +108,7 @@ public final class BuildContentManagerImpl implements BuildContentManager, Dispo
         MultiMap<String, String> existingCategoriesNames = new MultiMap<>();
         for (Content existingContent : existingContents) {
           String tabName = existingContent.getTabName();
-          existingCategoriesNames.putValue(Strings.trimEnd(StringUtil.split(tabName, " ").get(0), ':'), tabName);
+          existingCategoriesNames.putValue(StringUtil.trimEnd(StringUtil.split(tabName, " ").get(0), ':'), tabName);
         }
 
         int place = 0;
