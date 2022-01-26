@@ -2,5 +2,5 @@
 // WITH_STDLIB
 
 fun foo(bar: String?) {
-    bar?.contains("foo")
+    bar?.contains("foo") == true
 }

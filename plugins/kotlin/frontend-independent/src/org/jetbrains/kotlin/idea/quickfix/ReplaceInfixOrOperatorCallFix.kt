@@ -83,8 +83,8 @@ class ReplaceInfixOrOperatorCallFix(
                 val isNotContainsOperator = element.operationToken == KtTokens.NOT_IN
                 val newExpression = when {
                     isContainsOperator || isNotContainsOperator -> {
-                        val negationSuffix = if (isNotContainsOperator) " == false" else ""
-                        psiFactory.createExpressionByPattern("$2?.$1($0)$negationSuffix", left, binaryOperatorName, right)
+                        val booleanSuffix = if (isNotContainsOperator) " != true" else " == true"
+                        psiFactory.createExpressionByPattern("$2?.$1($0)$booleanSuffix", left, binaryOperatorName, right)
                     }
                     isNormalAssignment -> {
                         psiFactory.createExpressionByPattern("$0 = $0?.$1($2)", left, binaryOperatorName, right)
