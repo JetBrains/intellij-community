@@ -12,16 +12,12 @@ import com.intellij.openapi.wm.WindowInfo
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 
-@Internal
 class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = HashMap()) {
   companion object {
     @NonNls internal const val TAG = "layout"
   }
-
-  constructor(descriptors: List<WindowInfoImpl>) : this(descriptors.associateByTo(HashMap()) { it.id!! })
 
   fun copy(): DesktopLayout {
     val map = HashMap<String, WindowInfoImpl>(idToInfo.size)
