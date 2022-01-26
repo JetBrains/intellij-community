@@ -10,6 +10,8 @@ import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
 import com.intellij.ide.plugins.StartupAbortedException;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -282,11 +284,10 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   public void addActivityListener(@NotNull Runnable runnable, @NotNull Disposable parentDisposable) {
-    myActivityListeners.add(runnable);
-    Disposer.register(parentDisposable, () -> myActivityListeners.remove(runnable));
+    ContainerUtil.add(runnable, myActivityListeners, parentDisposable);
   }
 
-  public void addDispatcher(@NotNull EventDispatcher dispatcher, @Nullable Disposable parent) {
+  public void addDispatcher(@NotNull EventDispatcher dispatcher, Disposable parent) {
     _addProcessor(dispatcher, parent, myDispatchers);
   }
 
@@ -307,7 +308,7 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private static void _addProcessor(@NotNull EventDispatcher dispatcher,
-                                    @Nullable Disposable parent,
+                                    Disposable parent,
                                     @NotNull Collection<? super EventDispatcher> set) {
     set.add(dispatcher);
     if (parent != null) {
