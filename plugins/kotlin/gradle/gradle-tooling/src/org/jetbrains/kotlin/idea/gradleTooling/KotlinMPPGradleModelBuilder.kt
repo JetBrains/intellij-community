@@ -48,7 +48,8 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
             val importingContext =
                 MultiplatformModelImportingContextImpl(project, detachableCompilerArgumentsCacheMapper, modelBuilderContext)
 
-            importingContext.initializeSourceSets(buildSourceSets(importingContext) ?: return null)
+            val sourceSets = buildSourceSets(importingContext) ?: return null
+            importingContext.initializeSourceSets(sourceSets)
 
             val targets = buildTargets(importingContext, projectTargets)
             importingContext.initializeTargets(targets)
@@ -106,7 +107,9 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
         val sourceSets =
             (getSourceSets(kotlinExt) as? NamedDomainObjectContainer<Named>)?.asMap?.values ?: emptyList<Named>()
         val androidDeps = buildAndroidDeps(importingContext, kotlinExt.javaClass.classLoader)
-        val sourceSetProtoBuilder = KotlinSourceSetProtoBuilder(androidDeps)
+
+        val sourceSetPlatforms = importingContext.project.computeSourceSetPlatforms()
+        val sourceSetProtoBuilder = KotlinSourceSetProtoBuilder(androidDeps, sourceSetPlatforms)
 
         val allSourceSetsProtosByNames = sourceSets.mapNotNull {
             sourceSetProtoBuilder.buildComponent(it, importingContext)
@@ -147,6 +150,22 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
         return projectTargets.mapNotNull {
             KotlinTargetBuilder.buildComponent(KotlinTargetReflection(it), importingContext)
         }
+    }
+
+    private fun Project.computeSourceSetPlatforms(): Map<Named, Set<KotlinPlatform>> {
+        val result = mutableMapOf<Named, MutableSet<KotlinPlatform>>()
+
+        for (target in getTargets() ?: emptyList()) {
+            for (compilation in target.compilations ?: emptyList()) {
+                val platformId = compilation.get("getPlatformType")?.get("getName") as? String
+                val platform = platformId?.let { KotlinPlatform.byId(it) } ?: continue
+                for (sourceSet in compilation.get("getAllKotlinSourceSets") as? Collection<Named> ?: emptyList()) {
+                    result.getOrPut(sourceSet) { mutableSetOf() }.add(platform)
+                }
+            }
+        }
+
+        return result
     }
 
     private fun computeSourceSetsDeferredInfo(importingContext: MultiplatformModelImportingContext) {
