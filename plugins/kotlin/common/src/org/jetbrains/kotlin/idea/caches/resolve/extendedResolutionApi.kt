@@ -7,6 +7,8 @@ import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
+import org.jetbrains.kotlin.idea.util.returnIfNoDescriptorForDeclarationException
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
@@ -127,3 +129,23 @@ fun KtDeclaration.analyzeWithContent(resolutionFacade: ResolutionFacade): Bindin
 inline fun <reified T> T.analyzeWithContent(resolutionFacade: ResolutionFacade): BindingContext where T : KtDeclarationContainer, T : KtElement =
     resolutionFacade.analyzeWithAllCompilerChecks(listOf(this)).bindingContext
 
+
+@JvmOverloads
+fun KtElement.safeAnalyzeNonSourceRootCode(
+    bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL
+): BindingContext = safeAnalyzeNonSourceRootCode(getResolutionFacade(), bodyResolveMode)
+
+fun KtElement.safeAnalyzeNonSourceRootCode(
+    resolutionFacade: ResolutionFacade,
+    bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL
+): BindingContext =
+    actionUnderSafeAnalyzeBlock({ analyze(resolutionFacade, bodyResolveMode) }, { BindingContext.EMPTY })
+
+@JvmOverloads
+fun KtDeclaration.safeAnalyzeWithContentNonSourceRootCode(): BindingContext =
+    safeAnalyzeWithContentNonSourceRootCode(getResolutionFacade())
+
+fun KtDeclaration.safeAnalyzeWithContentNonSourceRootCode(
+    resolutionFacade: ResolutionFacade,
+): BindingContext =
+    actionUnderSafeAnalyzeBlock({ analyzeWithContent(resolutionFacade) }, { BindingContext.EMPTY })

@@ -32,10 +32,9 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-cli" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" />
-    <orderEntry type="module" module-name="kotlin.common" scope = "TEST" />
-    <orderEntry type="module" module-name="kotlin.core" scope = "TEST"/>
+    <orderEntry type="module" module-name="kotlin.common" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.core" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" scope="TEST" />
-    <orderEntry type="module" module-name="fe10-analyze.safe-analyze-utils" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.uast" />
@@ -47,5 +46,6 @@
     <orderEntry type="module" module-name="kotlin.native" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" scope="RUNTIME" />
+    <orderEntry type="module" module-name="fe10-analyze.safe-analyze-utils" />
   </component>
 </module>

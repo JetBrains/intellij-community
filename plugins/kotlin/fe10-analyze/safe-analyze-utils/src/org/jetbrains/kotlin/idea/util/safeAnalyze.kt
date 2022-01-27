@@ -12,16 +12,8 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.config.ALL_KOTLIN_SOURCE_ROOT_TYPES
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
-import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.caches.resolve.returnIfNoDescriptorForDeclarationException
-import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.resolve.lazy.NoDescriptorForDeclarationException
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**
@@ -41,25 +33,18 @@ inline fun <T> PsiElement.actionUnderSafeAnalyzeBlock(
     }) { fallback() }
 }
 
-@JvmOverloads
-fun KtElement.safeAnalyzeNonSourceRootCode(
-    bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL
-): BindingContext = safeAnalyzeNonSourceRootCode(getResolutionFacade(), bodyResolveMode)
+val Exception.isItNoDescriptorForDeclarationException: Boolean
+    get() = this is NoDescriptorForDeclarationException || cause?.safeAs<Exception>()?.isItNoDescriptorForDeclarationException == true
 
-fun KtElement.safeAnalyzeNonSourceRootCode(
-    resolutionFacade: ResolutionFacade,
-    bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL
-): BindingContext =
-    actionUnderSafeAnalyzeBlock({ analyze(resolutionFacade, bodyResolveMode) }, { BindingContext.EMPTY })
-
-@JvmOverloads
-fun KtDeclaration.safeAnalyzeWithContentNonSourceRootCode(): BindingContext =
-    safeAnalyzeWithContentNonSourceRootCode(getResolutionFacade())
-
-fun KtDeclaration.safeAnalyzeWithContentNonSourceRootCode(
-    resolutionFacade: ResolutionFacade,
-): BindingContext =
-    actionUnderSafeAnalyzeBlock({ analyzeWithContent(resolutionFacade) }, { BindingContext.EMPTY })
+inline fun <T> Exception.returnIfNoDescriptorForDeclarationException(
+    crossinline condition: (Boolean) -> Boolean = { v -> v },
+    crossinline computable: () -> T
+): T =
+    if (condition(this.isItNoDescriptorForDeclarationException)) {
+        computable()
+    } else {
+        throw this
+    }
 
 val KOTLIN_AWARE_SOURCE_ROOT_TYPES: Set<JpsModuleSourceRootType<JavaSourceRootProperties>> =
     JavaModuleSourceRootTypes.SOURCES + ALL_KOTLIN_SOURCE_ROOT_TYPES
