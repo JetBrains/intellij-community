@@ -11,10 +11,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.formatter.adjustLineIndent
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf
 import org.jetbrains.kotlin.idea.refactoring.getLineNumber
-import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
