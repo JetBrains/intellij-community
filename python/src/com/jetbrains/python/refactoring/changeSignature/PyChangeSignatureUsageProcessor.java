@@ -196,7 +196,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
           // Imagine "def f(x, y=None): ..." -> "def f(x, foo=None, y=None): ..." and a call "f(1, 2)"
           keywordArgsRequired = true;
         }
-        else {
+        else if (!isKeywordVararg && !isPositionalVararg) {
           newArguments.add(formatArgument(paramName, paramDefault, keywordArgsRequired));
         }
       }
