@@ -210,7 +210,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   public void setEditorFontName(String fontName) {
     ModifiableFontPreferences currPreferences = ensureEditableFontPreferences();
     boolean useLigatures = currPreferences.useLigatures();
-    int editorFontSize = getEditorFontSize();
+    float editorFontSize = getEditorFontSize2D();
     currPreferences.clear();
     currPreferences.register(fontName, editorFontSize);
     currPreferences.setUseLigatures(useLigatures);
@@ -219,6 +219,11 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   @Override
   public void setEditorFontSize(int fontSize) {
+    setEditorFontSize((float)fontSize);
+  }
+
+  @Override
+  public void setEditorFontSize(float fontSize) {
     fontSize = EditorFontsConstants.checkAndFixEditorFontSize(fontSize);
     ensureEditableFontPreferences().register(myFontPreferences.getFontFamily(), fontSize);
     initFonts();
@@ -269,6 +274,11 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   @Override
   public int getEditorFontSize() {
     return myFontPreferences.getSize(myFontPreferences.getFontFamily());
+  }
+
+  @Override
+  public float getEditorFontSize2D() {
+    return myFontPreferences.getSize2D(myFontPreferences.getFontFamily());
   }
 
   @Override
@@ -441,7 +451,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
         break;
       }
       case EDITOR_FONT_SIZE: {
-        int value = readFontSize(childNode, isDefault, fontScale.get());
+        float value = readFontSize(childNode, isDefault, fontScale.get());
         if (value > 0) setEditorFontSize(value);
         break;
       }
@@ -456,7 +466,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
         break;
       }
       case CONSOLE_FONT_SIZE: {
-        int value = readFontSize(childNode, isDefault, fontScale.get());
+        float value = readFontSize(childNode, isDefault, fontScale.get());
         if (value > 0) setConsoleFontSize(value);
         break;
       }
@@ -480,15 +490,16 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     }
   }
 
-  private int readFontSize(Element element, boolean isDefault, Float fontScale) {
+  private float readFontSize(Element element, boolean isDefault, Float fontScale) {
     if (isDefault) {
       return UISettings.getDefFontSize();
     }
+    // Use integer size for compatibility
     Integer intSize = myValueReader.read(Integer.class, element);
     if (intSize == null) {
       return -1;
     }
-    return UISettings.restoreFontSize(intSize, fontScale);
+    return UISettings.restoreFontSize(intSize.floatValue(), fontScale);
   }
 
   private void readFontSettings(@NotNull ModifiableFontPreferences preferences,
@@ -499,7 +510,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     if (clearFonts) preferences.clearFonts();
     List children = element.getChildren(OPTION_ELEMENT);
     String fontFamily = null;
-    int size = -1;
+    float size = -1;
     for (Object child : children) {
       Element e = (Element)child;
       if (EDITOR_FONT_NAME.equals(e.getAttributeValue(NAME_ATTR))) {
@@ -563,6 +574,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
         JdomKt.addOptionTag(parentNode, CONSOLE_FONT_NAME, getConsoleFontName());
 
         if (getConsoleFontSize() != getEditorFontSize()) {
+          // Write font size as integer for compatibility
           JdomKt.addOptionTag(parentNode, CONSOLE_FONT_SIZE, Integer.toString(getConsoleFontSize()));
         }
       }
@@ -601,6 +613,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     for (String fontFamily : preferences.getRealFontFamilies()) {
       Element element = new Element(key);
       JdomKt.addOptionTag(element, EDITOR_FONT_NAME, fontFamily);
+      // Write font size as integer for compatibility
       JdomKt.addOptionTag(element, EDITOR_FONT_SIZE, String.valueOf(preferences.getSize(fontFamily)));
       parent.addContent(element);
     }
@@ -803,23 +816,33 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   @Override
   public void setConsoleFontName(String fontName) {
     ModifiableFontPreferences consolePreferences = ensureEditableConsoleFontPreferences();
-    int consoleFontSize = getConsoleFontSize();
+    float consoleFontSize = getConsoleFontSize2D();
     consolePreferences.clear();
     consolePreferences.register(fontName, consoleFontSize);
   }
 
   @Override
   public int getConsoleFontSize() {
+    return (int)(getConsoleFontSize2D() + 0.5);
+  }
+
+  @Override
+  public float getConsoleFontSize2D() {
     String font = getConsoleFontName();
     UISettings uiSettings = UISettings.getInstanceOrNull();
     if ((uiSettings == null || !uiSettings.getPresentationMode()) && getConsoleFontPreferences().hasSize(font)) {
-      return getConsoleFontPreferences().getSize(font);
+      return getConsoleFontPreferences().getSize2D(font);
     }
-    return getEditorFontSize();
+    return getEditorFontSize2D();
   }
 
   @Override
   public void setConsoleFontSize(int fontSize) {
+    setConsoleFontSize((float)fontSize);
+  }
+
+  @Override
+  public void setConsoleFontSize(float fontSize) {
     ModifiableFontPreferences consoleFontPreferences = ensureEditableConsoleFontPreferences();
     fontSize = EditorFontsConstants.checkAndFixEditorFontSize(fontSize);
     consoleFontPreferences.register(getConsoleFontName(), fontSize);

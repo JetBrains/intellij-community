@@ -29,7 +29,6 @@ import java.awt.Graphics2D
 import java.awt.RenderingHints
 import javax.swing.JComponent
 import javax.swing.SwingConstants
-import kotlin.math.roundToInt
 
 private val LOG = logger<UISettings>()
 
@@ -332,6 +331,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var fontSize: Int
+    get() = (notRoamableOptions.state.fontSize + 0.5).toInt()
+    set(value) {
+      notRoamableOptions.state.fontSize = value.toFloat()
+    }
+
+  var fontSize2D: Float
     get() = notRoamableOptions.state.fontSize
     set(value) {
       notRoamableOptions.state.fontSize = value
@@ -567,11 +572,11 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
      * @return the default scaled font size
      */
     @JvmStatic
-    val defFontSize: Int
+    val defFontSize: Float
       get() = UISettingsState.defFontSize
 
     @JvmStatic
-    fun restoreFontSize(readSize: Int, readScale: Float?): Int {
+    fun restoreFontSize(readSize: Float, readScale: Float?): Float {
       var size = readSize
       if (readScale == null || readScale <= 0) {
         if (JBUIScale.SCALE_VERBOSE) LOG.info("Reset font to default")
@@ -581,7 +586,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
         }
       }
       else if (readScale != defFontScale) {
-        size = ((readSize / readScale) * defFontScale).roundToInt()
+        size = (readSize / readScale) * defFontScale
       }
       if (JBUIScale.SCALE_VERBOSE) LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
       return size
@@ -689,7 +694,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   private fun migrateOldFontSettings(): Boolean {
     var migrated = false
     if (state.fontSize != 0) {
-      fontSize = restoreFontSize(state.fontSize, state.fontScale)
+      fontSize2D = restoreFontSize(state.fontSize.toFloat(), state.fontScale)
       state.fontSize = 0
       migrated = true
     }

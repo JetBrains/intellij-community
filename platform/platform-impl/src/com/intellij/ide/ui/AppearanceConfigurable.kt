@@ -401,8 +401,15 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 }
 
 internal fun Row.fontSizeComboBox(getter: () -> Int, setter: (Int) -> Unit, defaultValue: Int): Cell<ComboBox<String>> {
+  return fontSizeComboBox(PropertyBinding({ getter().toString() }, { setter(getIntValue(it, defaultValue)) }))
+}
+
+internal fun Row.fontSizeComboBox(getter: () -> Float, setter: (Float) -> Unit, defaultValue: Float): Cell<ComboBox<String>> {
+  return fontSizeComboBox(PropertyBinding({ getter().toString() }, { setter(getFloatValue(it, defaultValue)) }))
+}
+
+internal fun Row.fontSizeComboBox(modelBinding: PropertyBinding<String?>): Cell<ComboBox<String>> {
   val model = DefaultComboBoxModel(UIUtil.getStandardFontSizes())
-  val modelBinding: PropertyBinding<String?> = PropertyBinding({ getter().toString() }, { setter(getIntValue(it, defaultValue)) })
   return comboBox(model)
     .accessibleName(message("presentation.mode.fon.size"))
     .applyToComponent {
@@ -420,6 +427,14 @@ internal fun Row.fontSizeComboBox(getter: () -> Int, setter: (Int) -> Unit, defa
 private fun getIntValue(text: String?, defaultValue: Int): Int {
   if (text != null && text.isNotBlank()) {
     val value = text.toIntOrNull()
+    if (value != null && value > 0) return value
+  }
+  return defaultValue
+}
+
+private fun getFloatValue(text: String?, defaultValue: Float): Float {
+  if (text != null && text.isNotBlank()) {
+    val value = text.toFloatOrNull()
     if (value != null && value > 0) return value
   }
   return defaultValue

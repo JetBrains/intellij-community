@@ -2032,6 +2032,10 @@ public final class UIUtil {
     return StartupUiUtil.getFontWithFallback(familyName, style, size);
   }
 
+  public static @NotNull FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, float size) {
+    return StartupUiUtil.getFontWithFallback(familyName, style, size);
+  }
+
   //Escape error-prone HTML data (if any) when we use it in renderers, see IDEA-170768
   public static <T> T htmlInjectionGuard(T toRender) {
     if (toRender instanceof String && StringUtil.toLowerCase((String)toRender).startsWith("<html>")) {

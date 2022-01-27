@@ -57,7 +57,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
     myPluginsView = !showFullInfo;
 
     Font smallFont = UIUtil.getLabelFont(UIUtil.FontSize.MINI);
-    myName.setFont(StartupUiUtil.getLabelFont().deriveFont((float)UISettings.getInstance().getFontSize()));
+    myName.setFont(StartupUiUtil.getLabelFont().deriveFont(UISettings.getInstance().getFontSize2D()));
     myStatus.setFont(smallFont);
     myCategory.setFont(smallFont);
     myDownloads.setFont(smallFont);

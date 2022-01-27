@@ -52,6 +52,12 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   void setEditorFontName(String fontName);
 
   int getEditorFontSize();
+  /**
+   * Floating-point version of {@link #getEditorFontSize()}
+   */
+  default float getEditorFontSize2D() {
+    return getEditorFontSize();
+  }
 
   /**
    * Sets font size. Note, that this method checks that {@code fontSize} is within bounds and could change it if it is
@@ -60,6 +66,12 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
    * @see com.intellij.application.options.EditorFontsConstants
    */
   void setEditorFontSize(int fontSize);
+  /**
+   * Floating-point version of {@link #setEditorFontSize(int)}
+   */
+  default void setEditorFontSize(float fontSize) {
+    setEditorFontSize((int)(fontSize + 0.5));
+  }
 
   /**
    * @deprecated Quick documentation component's font size is stored in application level property, and can be obtained
@@ -121,7 +133,19 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   void setConsoleFontName(String fontName);
 
   int getConsoleFontSize();
+  /**
+   * Floating-point version of {@link #getConsoleFontSize()}
+   */
+  default float getConsoleFontSize2D() {
+    return getConsoleFontSize();
+  }
   void setConsoleFontSize(int fontSize);
+  /**
+   * Floating-point version of {@link #setConsoleFontSize(int)}
+   */
+  default void setConsoleFontSize(float fontSize) {
+    setConsoleFontSize((int)(fontSize + 0.5));
+  }
 
   float getConsoleLineSpacing();
   void setConsoleLineSpacing(float lineSpacing);
