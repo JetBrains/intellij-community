@@ -44,7 +44,7 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
       TextRange restrict = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
       if (restrict == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(project, editor.getDocument());
       ProperTextRange priority = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
-      return new ChameleonSyntaxHighlightingPass(project, file, editor.getDocument(), ProperTextRange.create(restrict),
+      return new ChameleonSyntaxHighlightingPass(file, editor.getDocument(), ProperTextRange.create(restrict),
                                                  priority, editor, new DefaultHighlightInfoProcessor());
     }
 
@@ -54,18 +54,17 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
                                                                  @NotNull Document document,
                                                                  @NotNull HighlightInfoProcessor highlightInfoProcessor) {
       ProperTextRange range = VisibleHighlightingPassFactory.calculateVisibleRange(document);
-      return new ChameleonSyntaxHighlightingPass(file.getProject(), file, document, range, range, null, highlightInfoProcessor);
+      return new ChameleonSyntaxHighlightingPass(file, document, range, range, null, highlightInfoProcessor);
     }
   }
 
-  private ChameleonSyntaxHighlightingPass(@NotNull Project project,
-                                          @NotNull PsiFile file,
+  private ChameleonSyntaxHighlightingPass(@NotNull PsiFile file,
                                           @NotNull Document document,
                                           @NotNull ProperTextRange restrictRange,
                                           @NotNull ProperTextRange priorityRange,
                                           @Nullable Editor editor,
                                           @NotNull HighlightInfoProcessor highlightInfoProcessor) {
-    super(project, file, document, restrictRange.getStartOffset(), restrictRange.getEndOffset(), true, priorityRange, editor,
+    super(file, document, restrictRange.getStartOffset(), restrictRange.getEndOffset(), true, priorityRange, editor,
           highlightInfoProcessor);
   }
 

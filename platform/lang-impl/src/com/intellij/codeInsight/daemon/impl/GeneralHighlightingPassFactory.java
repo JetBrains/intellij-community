@@ -26,7 +26,7 @@ final class GeneralHighlightingPassFactory implements MainHighlightingPassFactor
     TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
     if (textRange == null) return new EmptyPass(project, editor.getDocument());
     ProperTextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
-    return new GeneralHighlightingPass(project, file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), true, visibleRange, editor, new DefaultHighlightInfoProcessor());
+    return new GeneralHighlightingPass(file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), true, visibleRange, editor, new DefaultHighlightInfoProcessor());
   }
 
   @Override
@@ -35,7 +35,7 @@ final class GeneralHighlightingPassFactory implements MainHighlightingPassFactor
                                                                @NotNull HighlightInfoProcessor highlightInfoProcessor) {
     ProperTextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(document);
     // no applying to the editor - for read-only analysis only
-    return new GeneralHighlightingPass(file.getProject(), file, document, 0, file.getTextLength(),
+    return new GeneralHighlightingPass(file, document, 0, file.getTextLength(),
                                        true, visibleRange, null, highlightInfoProcessor);
   }
 }

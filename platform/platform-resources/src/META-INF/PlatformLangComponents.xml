@@ -26,7 +26,7 @@
     <component>
       <interface-class>com.intellij.problems.WolfTheProblemSolver</interface-class>
       <implementation-class>com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl</implementation-class>
-      <headless-implementation-class>com.intellij.codeInsight.problems.MockWolfTheProblemSolver</headless-implementation-class>
+      <headless-implementation-class>com.intellij.codeInsight.daemon.impl.MockWolfTheProblemSolver</headless-implementation-class>
     </component>
 
     <component>

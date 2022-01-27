@@ -1,9 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInsight.problems;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -127,7 +125,7 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
   public static MockWolfTheProblemSolver prepareWolf(@NotNull Project project, @NotNull Disposable parentDisposable) {
     MockWolfTheProblemSolver wolfTheProblemSolver = (MockWolfTheProblemSolver)WolfTheProblemSolver.getInstance(project);
 
-    WolfTheProblemSolverImpl theRealSolver = (WolfTheProblemSolverImpl)WolfTheProblemSolverImpl.createInstance(project);
+    WolfTheProblemSolverImpl theRealSolver = (WolfTheProblemSolverImpl)WolfTheProblemSolverImpl.createTestInstance(project);
     wolfTheProblemSolver.setDelegate(theRealSolver);
     Disposer.register(parentDisposable, theRealSolver);
     return wolfTheProblemSolver;
