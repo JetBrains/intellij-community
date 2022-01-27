@@ -93,6 +93,11 @@ public class PerformanceKeywordCompletionHandlerTestGenerated extends AbstractPe
         runTest("../completion/tests/testData/handlers/keywords/IfLParenth.kt");
     }
 
+    @TestMetadata("IfLParenth.fir.kt")
+    public void testIfLParenth_fir() throws Exception {
+        runTest("../completion/tests/testData/handlers/keywords/IfLParenth.fir.kt");
+    }
+
     @TestMetadata("IfParansOnNextLine.kt")
     public void testIfParansOnNextLine() throws Exception {
         runTest("../completion/tests/testData/handlers/keywords/IfParansOnNextLine.kt");
