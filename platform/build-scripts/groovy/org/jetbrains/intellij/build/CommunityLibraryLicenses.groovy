@@ -800,7 +800,7 @@ final class CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.symbol-light-classes"),
     jetbrainsLibrary("kotlinx-collections-immutable-jvm"),
     jetbrainsLibrary("ml-completion-prev-exprs-models"),
-    jetbrainsLibrary("org.jetbrains.kotlin:backend.native:mobile"),
+    jetbrainsLibrary("org.jetbrains.kotlin:backend.native.mobile"),
     jetbrainsLibrary("rd-core"),
     jetbrainsLibrary("rd-framework"),
     jetbrainsLibrary("rd-swing"),
