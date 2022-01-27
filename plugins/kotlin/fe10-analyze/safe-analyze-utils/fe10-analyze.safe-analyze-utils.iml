@@ -11,7 +11,6 @@
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
-    <orderEntry type="module" module-name="kotlin.common" />
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.java.impl" />
   </component>
