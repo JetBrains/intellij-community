@@ -1298,6 +1298,7 @@
     <advancedSetting id="temporary.configurations.limit" default="5" groupKey="group.advanced.settings.run"/>
     <advancedSetting id="confirm.rerun.with.termination" default="true" groupKey="group.advanced.settings.run"/>
     <advancedSetting id="start.run.configurations.pinned" default="false" groupKey="group.advanced.settings.run"/>
+    <advancedSetting id="se.enable.text.search" default="false" groupKey="group.advanced.settings.ide"/>
     <advancedSetting id="edit.source.on.enter.key.request.focus.in.editor" default="true" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="ide.tree.collapse.recursively" default="true" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="ide.open.readme.md.on.startup" default="true" groupKey="group.advanced.settings.startup"/>
@@ -1338,7 +1339,9 @@
                         serviceImplementation="com.intellij.openapi.progress.impl.PlatformTaskSupport"/>
     <registryKey key="new.project.wizard.modal.plugin.install" description="Enables modal lanungage plugins installing"
                  defaultValue="false"/>
-  </extensions>
+    <searchEverywhereContributor implementation="com.intellij.find.impl.SETextContributor$Companion$Factory"/>
+    <startupActivity implementation="com.intellij.find.impl.SETextContributor$Companion$SETextActivity"/>
+   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>

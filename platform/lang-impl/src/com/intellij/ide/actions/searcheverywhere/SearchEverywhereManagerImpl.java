@@ -179,9 +179,11 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
             SearchEverywhereTabDescriptor.IDE);
 
     for (SearchEverywhereContributorFactory<?> factory : SearchEverywhereContributor.EP_NAME.getExtensionList()) {
-      SearchEverywhereContributor<?> contributor = factory.createContributor(initEvent);
-      SearchEverywhereTabDescriptor tab = factory.getTab();
-      res.put(contributor, tab);
+      if (factory.isAvailable()) {
+        SearchEverywhereContributor<?> contributor = factory.createContributor(initEvent);
+        SearchEverywhereTabDescriptor tab = factory.getTab();
+        res.put(contributor, tab);
+      }
     }
 
     return res;
@@ -381,6 +383,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     addShortcut(res, "SymbolSearchEverywhereContributor", "GotoSymbol");
     addShortcut(res, "ActionSearchEverywhereContributor", "GotoAction");
     addShortcut(res, "DbSETablesContributor", "GotoDatabaseObject");
+    addShortcut(res, "SETextContributor", "SETextAction");
 
     return res;
   }

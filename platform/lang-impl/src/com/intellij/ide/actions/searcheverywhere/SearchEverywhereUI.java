@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.accessibility.TextFieldWithListAccessibleContext;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
+import com.intellij.find.impl.SETextRightActionAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -16,6 +17,7 @@ import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -232,6 +234,24 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     advertisementText = getAdvertisement(contributors);
     myHintHelper.setHint(advertisementText);
+
+    List<AnAction> actions = updateRightActions(contributors);
+    myHintHelper.removeRightExtensions();
+    if (!actions.isEmpty()) {
+      myHintHelper.setRightExtensions(actions);
+    }
+  }
+
+  @NotNull
+  private List<AnAction> updateRightActions(@NotNull List<SearchEverywhereContributor<?>> contributors) {
+    for (SearchEverywhereContributor<?> contributor : contributors) {
+      if (getSelectedTabID() != contributor.getSearchProviderId() || !(contributor instanceof SearchFieldActionsContributor)) continue;
+
+      return ((SearchFieldActionsContributor)contributor).createRightActions(() -> {
+        scheduleRebuildList(SearchRestartReason.TEXT_SEARCH_OPTION_CHANGED);
+      });
+    }
+    return ContainerUtil.emptyList();
   }
 
   @Nls
@@ -1329,6 +1349,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     private final ExtendableTextComponent.Extension myHintExtension = createExtension(myHintTextIcon);
     private final ExtendableTextComponent.Extension mySearchProcessExtension = createExtension(AnimatedIcon.Default.INSTANCE);
     private final ExtendableTextComponent.Extension myWarningExtension;
+    private final List<ExtendableTextComponent.Extension> myRightExtensions = new ArrayList<>();
 
     private HintHelper(ExtendableTextField field) {
       myTextField = field;
@@ -1377,6 +1398,50 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         @Override
         public Icon getIcon(boolean hovered) {
           return icon;
+        }
+      };
+    }
+
+    private void setRightExtensions(@NotNull List<AnAction> actions) {
+      myTextField.removeExtension(myHintExtension);
+      myTextField.removeExtension(myWarningExtension);
+      actions.stream().map(HintHelper::createRightActionExtension).forEach(it -> {
+        addExtensionAsLast(it);
+        myRightExtensions.add(it);
+      });
+    }
+
+    private void removeRightExtensions() {
+      myRightExtensions.forEach(myTextField::removeExtension);
+    }
+
+    @NotNull
+    private static ExtendableTextComponent.Extension createRightActionExtension(@NotNull AnAction action) {
+      return new ExtendableTextComponent.Extension() {
+        @Override
+        public Icon getIcon(boolean hovered) {
+          Presentation presentation = action.getTemplatePresentation();
+          if (!(action instanceof SETextRightActionAction)) return presentation.getIcon();
+
+          if (((SETextRightActionAction)action).isSelected()) {
+            return presentation.getSelectedIcon();
+          }
+          else if (hovered) {
+            return presentation.getHoveredIcon();
+          }
+          else {
+            return presentation.getIcon();
+          }
+        }
+
+        @Override
+        public Runnable getActionOnClick(@NotNull InputEvent inputEvent) {
+          return () -> {
+            AnActionEvent event =
+              AnActionEvent.createFromInputEvent(inputEvent, ActionPlaces.POPUP, action.getTemplatePresentation().clone(),
+                                                 DataContext.EMPTY_CONTEXT);
+            ActionUtil.performDumbAwareWithCallbacks(action, event, () -> action.actionPerformed(event));
+          };
         }
       };
     }
