@@ -72,6 +72,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -122,8 +123,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static ServerSocket createServerSocket() throws ExecutionException {
     final ServerSocket serverSocket;
     try {
-      //noinspection SocketOpenedButNotSafelyClosed
-      serverSocket = new ServerSocket(0);
+      serverSocket = new ServerSocket(0, 0, InetAddress.getLoopbackAddress());
     }
     catch (IOException e) {
       throw new ExecutionException(PyBundle.message("runcfg.error.message.failed.to.find.free.socket.port"), e);
