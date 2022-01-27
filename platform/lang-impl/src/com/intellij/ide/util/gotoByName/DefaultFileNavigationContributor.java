@@ -62,7 +62,7 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
     boolean withDirs = directoriesOnly || Registry.is("ide.goto.file.include.directories");
     PsiManager psiManager = PsiManager.getInstance(parameters.getProject());
     FilenameIndex.processFilesByNames(
-      name, false, parameters.getSearchScope(), parameters.getIdFilter(), file -> {
+      name, true, parameters.getSearchScope(), parameters.getIdFilter(), file -> {
         if (!file.isValid()) return true;
         boolean isDir = file.isDirectory();
         if (!withFiles && !isDir || !withDirs && isDir) return true;

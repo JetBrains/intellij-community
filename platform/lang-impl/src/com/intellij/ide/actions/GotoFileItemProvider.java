@@ -26,9 +26,11 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.FindSymbolParameters;
 import one.util.streamex.StreamEx;
@@ -231,7 +233,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   private JBIterable<FoundItemDescriptor<PsiFileSystemItem>> getFilesMatchingPath(@NotNull FindSymbolParameters parameters,
                                                                                   @NotNull List<MatchResult> fileNames,
                                                                                   @NotNull DirectoryPathMatcher dirMatcher,
-                                                                                  Object @NotNull [] indexResult) {
+                                                                                  @NotNull Map<String, Object> indexResult) {
     GlobalSearchScope scope = dirMatcher.narrowDown(parameters.getSearchScope());
 
     List<List<MatchResult>> sortedNames = sortAndGroup(fileNames, Comparator.comparing(mr -> StringUtil.toLowerCase(FileUtilRt.getNameWithoutExtension(mr.elementName))));
@@ -241,23 +243,23 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   @NotNull
   private Iterable<FoundItemDescriptor<PsiFileSystemItem>> getItemsForNames(@NotNull GlobalSearchScope scope,
                                                                             @NotNull List<? extends MatchResult> matchResults,
-                                                                            Object @NotNull [] indexResult) {
+                                                                            @NotNull Map<String, Object> indexResult) {
     List<PsiFileSystemItem> group = new ArrayList<>();
     Map<PsiFileSystemItem, Integer> nesting = new HashMap<>();
     Map<PsiFileSystemItem, Integer> matchDegrees = new HashMap<>();
-    for (Object o : indexResult) {
+    for (MatchResult matchResult : matchResults) {
+      Object val = indexResult.get(matchResult.elementName);
+      if (val == null) continue;
       ProgressManager.checkCanceled();
-      if (!(o instanceof PsiFileSystemItem)) continue;
-      PsiFileSystemItem psiItem = (PsiFileSystemItem)o;
-      String name = psiItem.getName();
-      MatchResult matchResult = ContainerUtil.find(matchResults, mr -> mr.elementName.equals(name));
-      if (matchResult == null) continue;
-      if (!scope.contains(psiItem.getVirtualFile())) continue;
-      String qualifier = getParentPath(psiItem);
-      if (qualifier != null) {
-        group.add(psiItem);
-        nesting.put(psiItem, StringUtil.countChars(qualifier, '/'));
-        matchDegrees.put(psiItem, matchResult.matchingDegree);
+      List<PsiFileSystemItem> items = val instanceof List ? (List<PsiFileSystemItem>)val : Collections.singletonList((PsiFileSystemItem)val);
+      for (PsiFileSystemItem psiItem : items) {
+        if (!scope.contains(psiItem.getVirtualFile())) continue;
+        String qualifier = getParentPath(psiItem);
+        if (qualifier != null) {
+          group.add(psiItem);
+          nesting.put(psiItem, StringUtil.countChars(qualifier, '/'));
+          matchDegrees.put(psiItem, matchResult.matchingDegree);
+        }
       }
     }
 
@@ -331,7 +333,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     @Nullable
     SuffixMatches nextGroup(@NotNull ChooseByNameViewModel base) {
       if (index >= namePattern.length()) return null;
-      
+
       SuffixMatches matches = new SuffixMatches(namePattern, index, indicator);
       for (String name : candidateNames.get(index)) {
         if (!matches.matchName(base, name) && index + 1 < namePattern.length()) {
@@ -397,8 +399,37 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         }
       }
       MinusculeMatcher qualifierMatcher = getQualifiedNameMatcher(parameters.getLocalPatternName());
-      Object[] indexResult = myModel.getElementsByNames(ContainerUtil.map2Set(matchingNames, o -> o.elementName), parameters, indicator);
       List<List<MatchResult>> groups = groupByMatchingDegree(matchingNames);
+
+      Map<String, List<MatchResult>> batchMap = new HashMap<>();
+      int batchSize = Math.max(matchingNames.size() / 10, 50);
+      List<MatchResult> curList = new ArrayList<>();
+      for (MatchResult mr : ContainerUtil.flatten(groups)) {
+        curList.add(mr);
+        batchMap.put(mr.elementName, curList);
+        if (curList.size() >= batchSize) {
+          curList = new ArrayList<>();
+        }
+      }
+      Map<String, Object> indexInnerMap = new HashMap<>();
+      Map<String, Object> indexResult = FactoryMap.createMap(key -> {
+        Set<String> names = ContainerUtil.map2Set(batchMap.get(key), o -> o.elementName);
+        Object[] items = myModel.getElementsByNames(names, parameters, indicator);
+        for (Object o : items) {
+          if (!(o instanceof PsiFileSystemItem)) continue;
+          String name = ((PsiFileSystemItem)o).getName();
+          Object val = indexInnerMap.get(name);
+          if (val == null) indexInnerMap.put(name, o);
+          else if (val instanceof List) ((List<Object>)val).add(o);
+          else indexInnerMap.put(name, ContainerUtil.newArrayList(val, o));
+          names.remove(name);
+        }
+        for (String name : names) {
+          indexInnerMap.put(name, ObjectUtils.NULL);
+        }
+        return ObjectUtils.nullizeIfDefaultValue(indexInnerMap.get(key), ObjectUtils.NULL);
+      }, () -> indexInnerMap);
+
       for (List<MatchResult> group : groups) {
         JBIterable<FoundItemDescriptor<PsiFileSystemItem>> filesMatchingPath = getFilesMatchingPath(
           parameters, group, dirMatcher, indexResult);
