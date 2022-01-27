@@ -5,7 +5,10 @@ import com.intellij.externalDependencies.DependencyOnPlugin;
 import com.intellij.externalDependencies.ExternalDependenciesManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,7 +26,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -153,18 +155,12 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
       });
     }
 
-    notification.notify(project);
+    notification.setSuggestionType(!notification.getActions().isEmpty()).notify(project);
   }
 
   private static boolean enablePlugins(@NotNull List<? extends IdeaPluginDescriptor> descriptors,
                                        @NotNull PluginEnabler pluginEnabler) {
     LOG.info("Required plugins to enable: [" + StringUtil.join(descriptors, d -> d.getPluginId().getIdString(), ", ") + "]");
     return pluginEnabler.enable(descriptors);
-  }
-
-  private static boolean isApplicable(@NotNull HyperlinkEvent event,
-                                      @NotNull @NonNls String description) {
-    return HyperlinkEvent.EventType.ACTIVATED == event.getEventType() &&
-           description.equals(event.getDescription());
   }
 }
