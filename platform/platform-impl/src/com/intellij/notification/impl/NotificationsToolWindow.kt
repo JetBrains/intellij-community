@@ -358,6 +358,10 @@ private class MySplitter : OnePixelSplitter(true, .5f) {
           setBounds(0, 0, 0, 0)
         }
       }
+
+      override fun setBackground(bg: Color?) {
+        super.setBackground(JBColor.border())
+      }
     }
   }
 }
