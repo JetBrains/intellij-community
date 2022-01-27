@@ -21,15 +21,18 @@ public final class MarkdownIcons {
     /** 16x16 */ public static final @NotNull Icon AddRowAbove = load("icons/editor_actions/addRowAbove.svg", -2120104671, 2);
     /** 16x16 */ public static final @NotNull Icon AddRowBelow = load("icons/editor_actions/addRowBelow.svg", -1467664565, 2);
     /** 16x16 */ public static final @NotNull Icon Bold = load("icons/editor_actions/Bold.svg", -47351287, 2);
+    /** 16x16 */ public static final @NotNull Icon BulletList = load("icons/editor_actions/bulletList.svg", 1503776432, 2);
     /** 16x16 */ public static final @NotNull Icon CenterAlign = load("icons/editor_actions/centerAlign.svg", -963179076, 2);
+    /** 16x16 */ public static final @NotNull Icon CheckmarkList = load("icons/editor_actions/checkmarkList.svg", 910825359, 2);
     /** 16x16 */ public static final @NotNull Icon Code_span = load("icons/editor_actions/Code_span.svg", -188020073, 2);
     /** 16x16 */ public static final @NotNull Icon Header_level_down = load("icons/editor_actions/Header_level_down.svg", -1134444599, 2);
     /** 16x16 */ public static final @NotNull Icon Header_level_up = load("icons/editor_actions/Header_level_up.svg", -1616308299, 2);
     /** 16x16 */ public static final @NotNull Icon Italic = load("icons/editor_actions/Italic.svg", -1970377828, 2);
     /** 16x16 */ public static final @NotNull Icon LeftAlign = load("icons/editor_actions/leftAlign.svg", 1642061724, 2);
     /** 16x16 */ public static final @NotNull Icon Link = load("icons/editor_actions/Link.svg", 1826972302, 2);
+    /** 16x16 */ public static final @NotNull Icon NumberedList = load("icons/editor_actions/numberedList.svg", 75311829, 2);
     /** 16x16 */ public static final @NotNull Icon RightAlign = load("icons/editor_actions/rightAlign.svg", 323313265, 2);
-    /** 16x16 */ public static final @NotNull Icon Strike_through = load("icons/editor_actions/Strike_through.svg", 1932553725, 2);
+    /** 16x16 */ public static final @NotNull Icon Strike_through = load("icons/editor_actions/Strike_through.svg", -52808943, 2);
     /** 16x16 */ public static final @NotNull Icon Table = load("icons/editor_actions/table.svg", 1804628688, 2);
   }
 
