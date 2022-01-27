@@ -80,10 +80,10 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
   object BuildSystem {
     // @formatter:off
-    private val buildSystemField = BoundedStringEventField("build.system", "intellij", "maven", "gradle")
-    private val buildSystemDslField = BoundedStringEventField("build.system.dsl", "groovy", "kotlin")
-    private val buildSystemSdkField = EventFields.Int("build.system.sdk.version")
-    private val buildSystemParentField = EventFields.Boolean("build.system.parent")
+    private val buildSystemField = BoundedStringEventField("build_system", "intellij", "maven", "gradle")
+    private val buildSystemDslField = BoundedStringEventField("build_system_dsl", "groovy", "kotlin")
+    private val buildSystemSdkField = EventFields.Int("build_system_sdk_version")
+    private val buildSystemParentField = EventFields.Boolean("build_system_parent")
 
     private val buildSystemEvent = GROUP.registerEvent("build.system", sessionIdField, languageField, buildSystemField)
     private val buildSystemFinishedEvent = GROUP.registerEvent("build.system.finished", sessionIdField, languageField, buildSystemField)
