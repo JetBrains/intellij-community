@@ -7,9 +7,9 @@ import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionF
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfoRenderer
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.observable.properties.AtomicLazyProperty
-import com.intellij.openapi.observable.properties.comap
+import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.util.bind
+import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.setEmptyState
@@ -23,7 +23,7 @@ class CommandLineField(
   private val commandLineInfo: CommandLineInfo
 ) : TextCompletionField<TextCompletionInfo>(project) {
 
-  private val commandLineProperty = AtomicLazyProperty { "" }
+  private val commandLineProperty = AtomicProperty("")
 
   var commandLine by commandLineProperty
 
@@ -32,7 +32,7 @@ class CommandLineField(
   }
 
   init {
-    bind(commandLineProperty.comap { it.trim() })
+    bind(commandLineProperty.trim())
   }
 
   init {

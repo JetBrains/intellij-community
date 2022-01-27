@@ -19,8 +19,7 @@ import com.intellij.openapi.externalSystem.service.ui.completion.DefaultTextComp
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer.Cell
 import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesTable
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.observable.properties.transform
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.*
@@ -76,10 +75,10 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
 
     private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("MavenArchetypeNewProjectWizard", 1)
 
-    val catalogItemProperty = propertyGraph.graphProperty<MavenCatalog>(MavenCatalog.System.Internal)
-    val archetypeItemProperty = propertyGraph.graphProperty(ArchetypeItem.NONE)
-    val archetypeVersionProperty = propertyGraph.graphProperty("")
-    val archetypeDescriptorProperty = propertyGraph.graphProperty(emptyMap<String, String>())
+    val catalogItemProperty = propertyGraph.property<MavenCatalog>(MavenCatalog.System.Internal)
+    val archetypeItemProperty = propertyGraph.property(ArchetypeItem.NONE)
+    val archetypeVersionProperty = propertyGraph.property("")
+    val archetypeDescriptorProperty = propertyGraph.property(emptyMap<String, String>())
 
     var catalogItem by catalogItemProperty
     var archetypeItem by archetypeItemProperty

@@ -1,13 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards
 
-import com.intellij.ide.wizard.getCanonicalPath
-import com.intellij.ide.wizard.getPresentablePath
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.observable.util.bindEmptyText
+import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
@@ -23,10 +20,10 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 class MavenEnvironmentSettingsDialog(private val project: Project, private val settings: MavenGeneralSettings) : DialogWrapper(project) {
 
   private val propertyGraph = PropertyGraph()
-  private val userSettingsProperty = propertyGraph.graphProperty { settings.userSettingsFile }
-  private val defaultUserSettingsProperty = propertyGraph.graphProperty(::resolveDefaultUserSettingsFile)
-  private val localRepositoryProperty = propertyGraph.graphProperty { settings.localRepository }
-  private val defaultLocalRepositoryProperty = propertyGraph.graphProperty(::resolveDefaultLocalRepository)
+  private val userSettingsProperty = propertyGraph.lazyProperty(settings::getUserSettingsFile)
+  private val defaultUserSettingsProperty = propertyGraph.lazyProperty(::resolveDefaultUserSettingsFile)
+  private val localRepositoryProperty = propertyGraph.lazyProperty(settings::getLocalRepository)
+  private val defaultLocalRepositoryProperty = propertyGraph.lazyProperty(::resolveDefaultLocalRepository)
 
   init {
     title = MavenConfigurableBundle.message("maven.settings.environment.settings.title")
@@ -55,7 +52,7 @@ class MavenEnvironmentSettingsDialog(private val project: Project, private val s
       val browseDialogTitle = MavenProjectBundle.message("maven.select.maven.settings.file")
       textFieldWithBrowseButton(browseDialogTitle, project, fileChooserDescriptor)
         .bindText(userSettingsProperty)
-        .applyToComponent { bindEmptyText(defaultUserSettingsProperty.transform(::getPresentablePath, ::getCanonicalPath)) }
+        .applyToComponent { bindEmptyText(defaultUserSettingsProperty.toUiPathProperty()) }
         .horizontalAlign(HorizontalAlign.FILL)
         .columns(COLUMNS_MEDIUM)
     }
@@ -64,7 +61,7 @@ class MavenEnvironmentSettingsDialog(private val project: Project, private val s
       val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
       textFieldWithBrowseButton(browseDialogTitle, project, fileChooserDescriptor)
         .bindText(localRepositoryProperty)
-        .applyToComponent { bindEmptyText(defaultLocalRepositoryProperty.transform(::getPresentablePath, ::getCanonicalPath)) }
+        .applyToComponent { bindEmptyText(defaultLocalRepositoryProperty.toUiPathProperty()) }
         .horizontalAlign(HorizontalAlign.FILL)
         .columns(COLUMNS_MEDIUM)
     }

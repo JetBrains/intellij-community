@@ -8,10 +8,9 @@ import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionF
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfoRenderer
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.observable.properties.map
 import com.intellij.openapi.observable.util.bind
+import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.observable.util.whenMousePressed
 import com.intellij.openapi.observable.util.whenTextChanged
 import com.intellij.openapi.project.Project
@@ -34,9 +33,9 @@ class WorkingDirectoryField(
 ) : TextCompletionField<TextCompletionInfo>(project) {
 
   private val propertyGraph = PropertyGraph(isBlockPropagation = false)
-  private val modeProperty = propertyGraph.graphProperty { Mode.NAME }
-  private val workingDirectoryProperty = propertyGraph.graphProperty { "" }
-  private val projectNameProperty = propertyGraph.graphProperty { "" }
+  private val modeProperty = propertyGraph.property(Mode.NAME)
+  private val workingDirectoryProperty = propertyGraph.property("")
+  private val projectNameProperty = propertyGraph.property("")
 
   var mode by modeProperty
   var workingDirectory by workingDirectoryProperty
@@ -73,8 +72,8 @@ class WorkingDirectoryField(
   }
 
   init {
-    val textProperty = propertyGraph.graphProperty { "" }
-    val text by textProperty.map { it.trim() }
+    val textProperty = propertyGraph.property("")
+    val text by textProperty.trim()
     workingDirectoryProperty.dependsOn(textProperty) {
       when (mode) {
         Mode.PATH -> getCanonicalPath(text)

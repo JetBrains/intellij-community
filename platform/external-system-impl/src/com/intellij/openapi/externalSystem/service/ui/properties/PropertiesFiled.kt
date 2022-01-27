@@ -5,10 +5,10 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesTable.Property
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.observable.properties.AtomicLazyProperty
-import com.intellij.openapi.observable.properties.comap
-import com.intellij.openapi.observable.properties.transform
+import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.util.bind
+import com.intellij.openapi.observable.util.transform
+import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.fields.ExtendableTextComponent
@@ -20,7 +20,7 @@ import javax.swing.KeyStroke
 
 class PropertiesFiled(project: Project, info: PropertiesInfo) : ExtendableTextField() {
 
-  private val commandLinePropertiesProperty = AtomicLazyProperty { "" }
+  private val commandLinePropertiesProperty = AtomicProperty("")
   private val propertiesProperty = commandLinePropertiesProperty
     .transform(map = ::parseProperties, comap = ::joinProperties)
 
@@ -48,7 +48,7 @@ class PropertiesFiled(project: Project, info: PropertiesInfo) : ExtendableTextFi
   }
 
   init {
-    bind(commandLinePropertiesProperty.comap { it.trim() })
+    bind(commandLinePropertiesProperty.trim())
   }
 
   init {

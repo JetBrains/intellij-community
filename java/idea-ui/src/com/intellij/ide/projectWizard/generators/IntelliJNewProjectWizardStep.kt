@@ -7,8 +7,7 @@ import com.intellij.ide.wizard.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.observable.properties.transform
+import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
@@ -46,11 +45,11 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
     }
   }
 
-  val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
-  val moduleNameProperty = propertyGraph.graphProperty { parent.name }
-  val contentRootProperty = propertyGraph.graphProperty(pathFromParent)
-  val moduleFileLocationProperty = propertyGraph.graphProperty(pathFromParent)
-  val addSampleCodeProperty = propertyGraph.graphProperty { false }
+  val sdkProperty = propertyGraph.property<Sdk?>(null)
+  val moduleNameProperty = propertyGraph.lazyProperty { parent.name }
+  val contentRootProperty = propertyGraph.lazyProperty(pathFromParent)
+  val moduleFileLocationProperty = propertyGraph.lazyProperty(pathFromParent)
+  val addSampleCodeProperty = propertyGraph.property(false)
 
   final override var sdk by sdkProperty
   final override var moduleName by moduleNameProperty
@@ -100,7 +99,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
           row(UIBundle.message("label.project.wizard.new.project.content.root")) {
             textFieldWithBrowseButton(UIBundle.message("label.project.wizard.new.project.content.root.title"), context.project,
               FileChooserDescriptorFactory.createSingleFolderDescriptor()) { file: VirtualFile -> getPresentablePath(file.path) }
-              .bindText(contentRootProperty.transform(::getPresentablePath, ::getCanonicalPath))
+              .bindText(contentRootProperty.toUiPathProperty())
               .horizontalAlign(HorizontalAlign.FILL)
               .validationOnApply { validateContentRoot() }
               .apply {
@@ -118,7 +117,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
         row(UIBundle.message("label.project.wizard.new.project.module.file.location")) {
           textFieldWithBrowseButton(UIBundle.message("label.project.wizard.new.project.module.file.location.title"), context.project,
             FileChooserDescriptorFactory.createSingleFolderDescriptor()) { file: VirtualFile -> getPresentablePath(file.path) }
-            .bindText(moduleFileLocationProperty.transform(::getPresentablePath, ::getCanonicalPath))
+            .bindText(moduleFileLocationProperty.toUiPathProperty())
             .horizontalAlign(HorizontalAlign.FILL)
             .validationOnApply { validateModuleFileLocation() }
             .apply {

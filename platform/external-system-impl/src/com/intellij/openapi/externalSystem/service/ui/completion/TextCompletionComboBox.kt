@@ -2,10 +2,10 @@
 package com.intellij.openapi.externalSystem.service.ui.completion
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.observable.properties.AtomicLazyProperty
+import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.observable.util.bind
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.observable.util.whenListChanged
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.addExtension
@@ -21,7 +21,7 @@ class TextCompletionComboBox<T>(
 
   val collectionModel = CollectionComboBoxModel<T>()
 
-  val selectedItemProperty = AtomicLazyProperty { converter.getItem("") }
+  val selectedItemProperty = AtomicProperty(converter.getItem(""))
   var selectedItem by selectedItemProperty
 
   override fun getCompletionVariants(): List<T> {

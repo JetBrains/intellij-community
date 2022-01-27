@@ -2,9 +2,8 @@
 package org.jetbrains.idea.maven.wizards.archetype
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.observable.properties.comap
+import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
@@ -22,8 +21,8 @@ abstract class AbstractMavenCatalogDialog(private val project: Project) : Dialog
   abstract fun onApply()
 
   private val propertyGraph = PropertyGraph()
-  private val locationProperty = propertyGraph.graphProperty { "" }
-  private val nameProperty = propertyGraph.graphProperty { "" }
+  private val locationProperty = propertyGraph.property("")
+  private val nameProperty = propertyGraph.property("")
 
   protected var location by locationProperty
   protected var name by nameProperty
@@ -47,7 +46,7 @@ abstract class AbstractMavenCatalogDialog(private val project: Project) : Dialog
       val title = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.title")
       val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
       textFieldWithBrowseButton(title, project, descriptor)
-        .bindText(locationProperty.comap { it.trim() })
+        .bindText(locationProperty.trim())
         .applyToComponent { emptyText.text = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.hint") }
         .columns(COLUMNS_MEDIUM)
         .validationOnInput { validateCatalogLocation(location) }
@@ -55,7 +54,7 @@ abstract class AbstractMavenCatalogDialog(private val project: Project) : Dialog
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.name.label")) {
       textField()
-        .bindText(nameProperty.comap { it.trim() })
+        .bindText(nameProperty.trim())
         .columns(COLUMNS_MEDIUM)
         .validationOnInput { validateName() }
         .validationOnApply { validateName() }

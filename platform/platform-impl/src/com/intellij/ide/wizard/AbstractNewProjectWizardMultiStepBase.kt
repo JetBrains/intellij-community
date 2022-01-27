@@ -2,7 +2,6 @@
 package com.intellij.ide.wizard
 
 import com.intellij.openapi.observable.properties.AtomicProperty
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.util.bindStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
@@ -21,7 +20,7 @@ abstract class AbstractNewProjectWizardMultiStepBase(
   val stepsProperty = AtomicProperty<Map<String, NewProjectWizardStep>>(emptyMap())
   var steps: Map<String, NewProjectWizardStep> by stepsProperty
 
-  val stepProperty = propertyGraph.graphProperty { "" }
+  val stepProperty = propertyGraph.property("")
     .bindStorage("${javaClass.name}.selectedStep")
   var step by stepProperty
 

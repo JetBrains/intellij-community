@@ -9,8 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.observable.properties.transform
+import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -25,8 +24,8 @@ import java.nio.file.Path
 
 
 class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent), NewProjectWizardBaseData {
-  override val nameProperty = propertyGraph.graphProperty { suggestName() }
-  override val pathProperty = propertyGraph.graphProperty { context.projectFileDirectory }
+  override val nameProperty = propertyGraph.lazyProperty { suggestName() }
+  override val pathProperty = propertyGraph.lazyProperty { context.projectFileDirectory }
 
   override var name by nameProperty
   override var path by pathProperty
@@ -61,7 +60,7 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
         val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter { it.isDirectory }
         val fileChosen = { file: VirtualFile -> getPresentablePath(file.path) }
         val title = IdeBundle.message("title.select.project.file.directory", context.presentationName)
-        val uiPathProperty = pathProperty.transform(::getPresentablePath, ::getCanonicalPath)
+        val uiPathProperty = pathProperty.toUiPathProperty()
         textFieldWithBrowseButton(title, context.project, fileChooserDescriptor, fileChosen)
           .bindText(uiPathProperty)
           .horizontalAlign(HorizontalAlign.FILL)

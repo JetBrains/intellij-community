@@ -6,7 +6,6 @@ import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency.Scope
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.bind
@@ -43,8 +42,8 @@ internal class SearchScopeSelector(property: ObservableMutableProperty<List<Scop
 private class SearchScopePopupContent(scopes: List<ScopeItem>) : JBList<ScopeProperty>() {
 
   private val propertyGraph = PropertyGraph(isBlockPropagation = false)
-  private val anyScopeProperty = propertyGraph.graphProperty(::suggestAnyScopeState)
-  private val scopeProperties = scopes.map { ScopeProperty.Just(it.scope, propertyGraph.graphProperty { it.isSelected }) }
+  private val anyScopeProperty = propertyGraph.lazyProperty(::suggestAnyScopeState)
+  private val scopeProperties = scopes.map { ScopeProperty.Just(it.scope, propertyGraph.lazyProperty { it.isSelected }) }
 
   private fun suggestAnyScopeState(): ThreeStateCheckBox.State {
     return when {
