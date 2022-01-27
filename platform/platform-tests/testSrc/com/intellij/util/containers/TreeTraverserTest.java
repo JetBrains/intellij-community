@@ -246,6 +246,40 @@ public class TreeTraverserTest extends TestCase {
     assertEquals("[42, 42, 48, 48, 49]", it.append("42").append(JBIterable.of("48").append("48")).append("49").toList().toString());
   }
 
+  public void testSingleElementWithList() {
+    Object element = Arrays.asList(1, 2);
+    JBIterable<Object> iterable = JBIterable.of(element);
+    assertEquals(1, iterable.size());
+    assertFalse(iterable.isEmpty());
+    assertEquals(element, iterable.first());
+    assertEquals(element, iterable.last());
+    assertEquals(element, iterable.get(0));
+    assertNull(iterable.get(1));
+    assertTrue(iterable.contains(element));
+    assertFalse(iterable.contains(1));
+    assertEquals("[[1, 2]]", iterable.toList().toString());
+    assertEquals("[[1, 2]]", iterable.toSet().toString());
+    assertEquals("[[1, 2]]", Arrays.asList(iterable.toArray(new Object[0])).toString());
+    assertEquals("[[1, 2]]", iterable.addAllTo(new ArrayListSet<>()).toString());
+  }
+
+  public void testSingleElementWithEmptyList() {
+    Object element = Collections.emptyList();
+    JBIterable<Object> iterable = JBIterable.of(element);
+    assertFalse(iterable.isEmpty());
+    assertEquals(1, iterable.size());
+    assertEquals(element, iterable.first());
+    assertEquals(element, iterable.last());
+    assertEquals(element, iterable.get(0));
+    assertNull(iterable.get(1));
+    assertTrue(iterable.contains(element));
+    assertFalse(iterable.contains(null));
+    assertEquals("[[]]", iterable.toList().toString());
+    assertEquals("[[]]", iterable.toSet().toString());
+    assertEquals("[[]]", Arrays.asList(iterable.toArray(new Object[0])).toString());
+    assertEquals("[[]]", iterable.addAllTo(new ArrayListSet<>()).toString());
+  }
+
   public void testFirstLastSingle() {
     assertNull(JBIterable.empty().first());
     assertNull(JBIterable.empty().last());
@@ -1024,12 +1058,5 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(Arrays.asList(1, 5, 6, 7, 3, 9, 10, 4, 12, 13), it.toList());
     assertEquals(Arrays.asList(1, 5, 6, 7, 3, 9, 10, 4, 12, 13), it.toList());
     assertEquals(it.toList(), t.forceDisregard(new F(false)).reset().toList());
-  }
-
-  public void testSizeAndIterationOfSingletonAreCorrect() {
-    Object element = Arrays.asList(1, 2);
-    JBIterable<Object> iterable = JBIterable.of(element);
-    assertEquals(1, iterable.size());
-    assertEquals(element, iterable.first());
   }
 }
