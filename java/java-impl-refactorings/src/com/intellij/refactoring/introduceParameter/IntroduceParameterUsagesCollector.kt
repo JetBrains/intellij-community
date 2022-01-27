@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameter
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -9,7 +9,7 @@ class IntroduceParameterUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("introduce.parameter.inplace", 1)
+    private val GROUP = EventLogGroup("introduce.parameter.inplace", 2)
 
     @JvmField
     val delegate = EventFields.Boolean("delegate")
@@ -19,9 +19,6 @@ class IntroduceParameterUsagesCollector : CounterUsagesCollector() {
 
     @JvmField
     val settingsOnPerform = GROUP.registerVarargEvent("settingsOnHide", delegate)
-
-    @JvmField
-    val settingsOnShow = GROUP.registerVarargEvent("settingsOnShow", EventFields.InputEvent)
 
     @JvmField
     val started = GROUP.registerVarargEvent("started", replaceAll)

@@ -1,20 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.hint.EditorCodePreview;
+import com.intellij.codeInsight.hints.presentation.InlayPresentation;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.DataManager;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
@@ -27,7 +30,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
-import com.intellij.refactoring.rename.inplace.SelectableInlayPresentation;
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.JBColor;
@@ -114,7 +116,15 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
 
   @Override
   protected void showDialogAdvertisement(@NonNls String actionId) {
-    initPopupOptionsAdvertisement();
+    final Shortcut shortcut = KeymapUtil.getPrimaryShortcut(actionId);
+    final Shortcut selectDelegateShortcut = KeymapUtil.getPrimaryShortcut("SelectVirtualTemplateElement");
+    if (shortcut != null && selectDelegateShortcut != null) {
+      setAdvertisementText(
+        JavaBundle.message("introduce.parameter.advertisement.text", KeymapUtil.getShortcutText(selectDelegateShortcut), KeymapUtil.getShortcutText(shortcut)));
+    }
+    else {
+      super.showDialogAdvertisement(actionId);
+    }
   }
 
   @Override
@@ -176,23 +186,14 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
     
     IntroduceParameterUsagesCollector.started.log(IntroduceParameterUsagesCollector.replaceAll.with(myReplaceChoice.isAll()));
 
-    SelectableInlayPresentation presentation = TemplateInlayUtil.createSettingsPresentation((EditorImpl)templateState.getEditor(), 
-                                                                                            IntroduceParameterHelperKt.logStatisticsOnShowCallback(myProject));
+    InlayPresentation presentation = IntroduceParameterHelperKt.
+      createDelegatePresentation(templateState,
+                                 JavaBundle.message("introduce.parameter.inlay.title.delegate"),
+                                 isSelected -> myPanel.myCbGenerateDelegate.setSelected(isSelected)
+      );
+    TemplateInlayUtil.createNavigatableButton(templateState, currentVariableRange.getEndOffset(), presentation);
 
-    TemplateInlayUtil.SelectableTemplateElement templateElement = new TemplateInlayUtil.SelectableTemplateElement(presentation) {
-      @Override
-      public void onSelect(@NotNull TemplateState templateState) {
-        super.onSelect(templateState);
-        IntroduceParameterHelperKt.logStatisticsOnShow(null, myProject);
-      }
-    };
-    TemplateInlayUtil.createNavigatableButtonWithPopup(templateState, 
-                                                       currentVariableRange.getEndOffset(),
-                                                       presentation, 
-                                                       myWholePanel, 
-                                                       templateElement, 
-                                                       IntroduceParameterHelperKt.logStatisticsOnHideCallback(myProject, myPanel::isGenerateDelegate));
-
+    
     PsiParameter parameter = getParameter();
     if (parameter == null) return;
     
@@ -259,6 +260,8 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
     }
 
     final IntList parametersToRemove = myPanel.getParametersToRemove();
+
+    IntroduceParameterUsagesCollector.settingsOnPerform.log(myProject, IntroduceParameterUsagesCollector.delegate.with(isGenerateDelegate()));
 
     final IntroduceParameterProcessor processor =
       new IntroduceParameterProcessor(myProject, myMethod,
