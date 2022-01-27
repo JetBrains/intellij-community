@@ -109,10 +109,10 @@ class SuggestedRefactoringState(
 
   private var restoredDeclarationCopy: PsiElement? = null
 
-  fun restoredDeclarationCopy(): PsiElement {
+  fun restoredDeclarationCopy(): PsiElement? {
     require(errorLevel != ErrorLevel.INCONSISTENT) { "restoredDeclarationCopy() should not be invoked for inconsistent state" }
     val decl = declaration
-    if (decl !== anchor) return decl!!
+    if (decl !== anchor) return decl
     if (restoredDeclarationCopy == null) {
       restoredDeclarationCopy = createRestoredDeclarationCopy()
     }

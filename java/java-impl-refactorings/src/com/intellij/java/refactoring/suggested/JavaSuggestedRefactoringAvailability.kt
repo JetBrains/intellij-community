@@ -22,7 +22,7 @@ class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactor
   // disable refactoring suggestion for method which overrides another method
   override fun shouldSuppressRefactoringForDeclaration(state: SuggestedRefactoringState): Boolean {
     if (state.anchor !is PsiMethod && state.anchor !is PsiCallExpression) return false
-    val restoredDeclarationCopy = state.refactoringSupport.stateChanges.findDeclaration(state.restoredDeclarationCopy())
+    val restoredDeclarationCopy = state.restoredDeclarationCopy()
     return restoredDeclarationCopy is PsiMethod && restoredDeclarationCopy.findSuperMethods().isNotEmpty()
   }
 
@@ -39,7 +39,7 @@ class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactor
 
       if (state.additionalData[HAS_USAGES] == null) {
         val declarationCopy = state.restoredDeclarationCopy()
-        val useScope = declarationCopy.useScope
+        val useScope = declarationCopy?.useScope
         if (useScope is LocalSearchScope) {
           val hasUsages = ReferencesSearch.search(declarationCopy, useScope).findFirst() != null
           yield(state.withAdditionalData(HAS_USAGES, hasUsages))

@@ -40,7 +40,7 @@ class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
     internal fun shouldSuppressRefactoringForDeclaration(state: SuggestedRefactoringState): Boolean {
       // don't merge with `shouldBeSuppressed` because `shouldBeSuppressed` could be invoked in EDT and resolve below could slow down it
       val element = state.restoredDeclarationCopy()
-      return PyiUtil.isOverload(element, TypeEvalContext.codeAnalysis(element.project, element.containingFile))
+      return element == null || PyiUtil.isOverload(element, TypeEvalContext.codeAnalysis(element.project, element.containingFile))
     }
 
     private fun shouldBeSuppressed(element: PsiElement): Boolean {
