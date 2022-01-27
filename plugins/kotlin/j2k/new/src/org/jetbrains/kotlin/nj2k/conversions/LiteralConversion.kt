@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.tree.*
@@ -55,7 +54,6 @@ class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableCo
             if (text.endsWith(".")) "${text}0" else text
         }
 
-
     private fun JKLiteralExpression.toFloatLiteral() =
         literal.cleanFloatAndDoubleLiterals().let { text ->
             if (!text.endsWith("f")) "${text}f"
@@ -69,14 +67,12 @@ class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableCo
                 String.format("%s\\u%04x", leadingBackslashes, Integer.parseInt(matchResult.groupValues[2], 8))
             else matchResult.value
         }.replace("""\$([A-Za-z]+|\{)""".toRegex(), "\\\\$0")
-            .replace( "\\f", "\\u000c")
-
+            .replace("\\f", "\\u000c")
 
     private fun JKLiteralExpression.convertCharLiteral() =
         literal.replace("""\\([0-3]?[0-7]{1,2})""".toRegex()) {
             String.format("\\u%04x", Integer.parseInt(it.groupValues[1], 8))
         }
-
 
     private fun JKLiteralExpression.toIntLiteral() =
         literal
@@ -84,7 +80,6 @@ class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableCo
             .convertHexLiteral(isLongLiteral = false)
             .convertBinaryLiteral(isLongLiteral = false)
             .convertOctalLiteral(isLongLiteral = false)
-
 
     private fun JKLiteralExpression.toLongLiteral() =
         literal
