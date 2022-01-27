@@ -18,8 +18,6 @@ import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHand
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
 import com.intellij.refactoring.introduceField.InplaceIntroduceFieldPopup;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
-import com.intellij.refactoring.introduceVariable.IntroduceEmptyVariableHandlerImpl;
-import com.intellij.refactoring.introduceVariable.JavaIntroduceEmptyVariableHandlerBase;
 import com.intellij.refactoring.makeStatic.MakeMethodStaticProcessor;
 import com.intellij.refactoring.makeStatic.Settings;
 import com.intellij.refactoring.memberPullUp.PullUpProcessor;
@@ -47,11 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactoringProvider {
-
-  @Override
-  public @NotNull JavaIntroduceEmptyVariableHandlerBase getEmptyVariableHandler() {
-    return new IntroduceEmptyVariableHandlerImpl();
-  }
 
   @Override
   public @NotNull ChangeSignatureProcessorBase getChangeSignatureProcessor(Project project, JavaChangeInfo changeInfo, Runnable beforeRefactoringCallback) {

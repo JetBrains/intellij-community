@@ -16,7 +16,6 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
-import com.intellij.refactoring.introduceVariable.JavaIntroduceEmptyVariableHandlerBase;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.DocCommentPolicy;
@@ -46,9 +45,6 @@ public interface JavaSpecialRefactoringProvider {
   static JavaSpecialRefactoringProvider getInstance() {
     return ApplicationManager.getApplication().getService(JavaSpecialRefactoringProvider.class);
   }
-
-  @NotNull
-  JavaIntroduceEmptyVariableHandlerBase getEmptyVariableHandler();
 
   @NotNull ChangeSignatureProcessorBase getChangeSignatureProcessor(Project project, JavaChangeInfo changeInfo, Runnable beforeRefactoringCallback);
 
