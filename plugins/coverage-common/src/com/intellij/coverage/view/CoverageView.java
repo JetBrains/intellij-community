@@ -107,7 +107,11 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     addEmptyCoverageText(project, suitesBundle);
     final CoverageRowSorter rowSorter = new CoverageRowSorter(myTable, myModel);
     myTable.setRowSorter(rowSorter);
-    final RowSorter.SortKey sortKey = stateBean.mySortKey == null ? new RowSorter.SortKey(0, SortOrder.ASCENDING) : stateBean.mySortKey;
+    if (stateBean.mySortingColumn < 0 || stateBean.mySortingColumn >= myModel.getColumnCount()) {
+      stateBean.myAscendingOrder = true;
+      stateBean.mySortingColumn = 0;
+    }
+    final RowSorter.SortKey sortKey = new RowSorter.SortKey(stateBean.mySortingColumn, stateBean.myAscendingOrder ? SortOrder.ASCENDING : SortOrder.DESCENDING);
     rowSorter.setSortKeys(Collections.singletonList(sortKey));
     myTable.getTableHeader().setReorderingAllowed(false);
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -238,7 +242,10 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         sortKey = keys.get(0);
       }
     }
-    myStateBean.mySortKey = sortKey;
+    if (sortKey != null && sortKey.getSortOrder() != SortOrder.UNSORTED) {
+      myStateBean.mySortingColumn = sortKey.getColumn();
+      myStateBean.myAscendingOrder = sortKey.getSortOrder() == SortOrder.ASCENDING;
+    }
   }
 
   private void setWidth() {

@@ -140,6 +140,7 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
     public boolean myAutoScrollToSource = false;
     public boolean myAutoScrollFromSource = false;
     public List<Integer> myColumnSize;
-    public RowSorter.SortKey mySortKey;
+    public boolean myAscendingOrder = true;
+    public int mySortingColumn = 0;
   }
 }
