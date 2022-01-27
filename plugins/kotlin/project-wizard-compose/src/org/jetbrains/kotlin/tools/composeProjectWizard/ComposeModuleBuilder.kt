@@ -27,7 +27,7 @@ class ComposeModuleBuilder : StarterModuleBuilder() {
 
     override fun getBuilderId(): String = "ComposeModuleBuilder"
     override fun getPresentableName(): String = ComposeProjectWizardBundle.message("module.presentation.name")
-    override fun getWeight(): Int = IJ_PLUGIN_WEIGHT
+    override fun getWeight(): Int = KOTLIN_WEIGHT-1
     override fun getNodeIcon(): Icon = KotlinIcons.Wizard.COMPOSE
     override fun getDescription(): String = ComposeProjectWizardBundle.message("module.description")
 
@@ -36,10 +36,7 @@ class ComposeModuleBuilder : StarterModuleBuilder() {
     override fun getMinJavaVersion(): JavaVersion = LanguageLevel.JDK_11.toJavaVersion()
 
     override fun isAvailable(): Boolean {
-        if (!Registry.`is`("compose.wizard.enabled", true)) {
-            return false;
-        }
-        return super.isAvailable()
+        return Registry.`is`("compose.wizard.enabled", false)
     }
 
     override fun getStarterPack(): StarterPack {
@@ -54,9 +51,7 @@ class ComposeModuleBuilder : StarterModuleBuilder() {
         )
     }
 
-    override fun createWizardSteps(context: WizardContext, modulesProvider: ModulesProvider): Array<ModuleWizardStep> {
-        return emptyArray()
-    }
+    override fun createWizardSteps(context: WizardContext, modulesProvider: ModulesProvider): Array<ModuleWizardStep> = emptyArray()
 
     override fun createOptionsStep(contextProvider: StarterContextProvider): StarterInitialStep {
         return ComposePWInitialStep(contextProvider)
@@ -146,12 +141,12 @@ class ComposeModuleBuilder : StarterModuleBuilder() {
                 throw IllegalStateException("Unsupported platform!")
             }
         } else if (configType == ComposePWInitialStep.ComposeConfigurationType.MULTI_PLATFORM) {
-            assets.addAll(getMppAssets(starter, ftManager, packagePath))
+            assets.addAll(getMppAssets(ftManager, packagePath))
         }
         return assets
     }
 
-    fun getMppAssets(starter : Starter, ftManager : FileTemplateManager, packagePath : String ): List<GeneratorAsset> {
+    private fun getMppAssets(ftManager : FileTemplateManager, packagePath : String ): List<GeneratorAsset> {
         val assets = mutableListOf<GeneratorAsset>()
 
         //root

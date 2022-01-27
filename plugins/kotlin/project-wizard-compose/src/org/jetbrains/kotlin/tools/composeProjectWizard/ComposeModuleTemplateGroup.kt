@@ -10,33 +10,36 @@ internal class ComposeModuleTemplateGroup : FileTemplateGroupDescriptorFactory {
     override fun getFileTemplatesDescriptor(): FileTemplateGroupDescriptor {
         val root = FileTemplateGroupDescriptor("COMPOSE", AllIcons.Nodes.Module)
 
-        root.addTemplate(COMPOSE_SETTINGS_GRADLE)
-        root.addTemplate(COMPOSE_GRADLE_PROPERTIES)
-        root.addTemplate(COMPOSE_GRADLE_WRAPPER_PROPERTIES)
-        root.addTemplate(COMPOSE_LOCAL_PROPERTIES)
+        with (root) {
+            addTemplate(COMPOSE_SETTINGS_GRADLE)
+            addTemplate(COMPOSE_GRADLE_PROPERTIES)
+            addTemplate(COMPOSE_GRADLE_WRAPPER_PROPERTIES)
+            addTemplate(COMPOSE_LOCAL_PROPERTIES)
 
-        root.addTemplate(COMPOSE_DESKTOP_BUILD_GRADLE)
-        root.addTemplate(COMPOSE_COMMON_BUILD_GRADLE)
-        root.addTemplate(COMPOSE_MPP_BUILD_GRADLE)
-        root.addTemplate(COMPOSE_ANDROID_BUILD_GRADLE)
-        root.addTemplate(COMPOSE_WEB_BUILD_GRADLE)
+            addTemplate(COMPOSE_DESKTOP_BUILD_GRADLE)
+            addTemplate(COMPOSE_COMMON_BUILD_GRADLE)
+            addTemplate(COMPOSE_MPP_BUILD_GRADLE)
+            addTemplate(COMPOSE_ANDROID_BUILD_GRADLE)
+            addTemplate(COMPOSE_WEB_BUILD_GRADLE)
 
-        root.addTemplate(COMPOSE_DESKTOP_MAINKT)
+            addTemplate(COMPOSE_DESKTOP_MAINKT)
 
-        root.addTemplate(COMPOSE_ANDROID_MAINACTIVITYKT)
-        root.addTemplate(COMPOSE_ANDROID_MANIFEST)
+            addTemplate(COMPOSE_ANDROID_MAINACTIVITYKT)
+            addTemplate(COMPOSE_ANDROID_MANIFEST)
 
-        root.addTemplate(COMPOSE_WEB_MAINKT)
-        root.addTemplate(COMPOSE_WEB_INDEX_HTML)
+            addTemplate(COMPOSE_WEB_MAINKT)
+            addTemplate(COMPOSE_WEB_INDEX_HTML)
 
-        root.addTemplate(COMPOSE_COMMON_ANDROID_PLATFORMKT)
-        root.addTemplate(COMPOSE_COMMON_ANDROID_MANIFEST)
+            addTemplate(COMPOSE_COMMON_ANDROID_PLATFORMKT)
+            addTemplate(COMPOSE_COMMON_ANDROID_MANIFEST)
 
-        root.addTemplate(COMPOSE_COMMON_COMMON_APPKT)
-        root.addTemplate(COMPOSE_COMMON_COMMON_PLATFORMKT)
+            addTemplate(COMPOSE_COMMON_COMMON_APPKT)
+            addTemplate(COMPOSE_COMMON_COMMON_PLATFORMKT)
 
-        root.addTemplate(COMPOSE_COMMON_DESKTOP_APPKT)
-        root.addTemplate(COMPOSE_COMMON_DESKTOP_PLATFORMKT)
+            addTemplate(COMPOSE_COMMON_DESKTOP_APPKT)
+            addTemplate(COMPOSE_COMMON_DESKTOP_PLATFORMKT)
+        }
+
 
         return root
     }
