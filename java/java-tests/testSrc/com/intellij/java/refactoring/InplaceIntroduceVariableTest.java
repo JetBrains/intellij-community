@@ -422,10 +422,5 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     public boolean invokeImpl(Project project, PsiLocalVariable localVariable, Editor editor) {
       return super.invokeImpl(project, localVariable, editor);
     }
-
-    @Override
-    protected boolean isInplaceAvailableInTestMode() {
-      return true;
-    }
   }
 }

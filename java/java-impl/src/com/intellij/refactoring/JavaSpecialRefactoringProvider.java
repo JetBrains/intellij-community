@@ -50,9 +50,6 @@ public interface JavaSpecialRefactoringProvider {
   }
 
   @NotNull
-  JavaIntroduceVariableHandlerBase getIntroduceVariableUnitTestAwareHandler();
-
-  @NotNull
   JavaIntroduceVariableHandlerBase getMockIntroduceVariableHandler();
 
   @NotNull

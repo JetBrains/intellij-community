@@ -396,14 +396,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       supportProvider != null &&
       editor.getSettings().isVariableInplaceRenameEnabled() &&
       supportProvider.isInplaceIntroduceAvailable(expr, nameSuggestionContext) &&
-      (!ApplicationManager.getApplication().isUnitTestMode() || isInplaceAvailableInTestMode()) &&
       !isInJspHolderMethod(expr);
 
     if (isInplaceAvailableOnDataContext) {
       final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
       checkInLoopCondition(expr, conflicts);
       if (!conflicts.isEmpty()) {
-        showErrorMessage(project, editor, StringUtil.join(conflicts.values(), "<br>"));
+        showErrorMessage(project, editor, StringUtil.join(new TreeSet<>(conflicts.values()), "<br>"));
         return false;
       }
     }
@@ -659,10 +658,6 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       return null;
     }
     return tempContainer;
-  }
-
-  protected boolean isInplaceAvailableInTestMode() {
-    return false;
   }
 
   private static ExpressionOccurrenceManager createOccurrenceManager(PsiExpression expr, PsiElement tempContainer) {

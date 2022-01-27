@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
@@ -25,6 +25,7 @@ import com.intellij.refactoring.introduceVariable.IntroduceFunctionalVariableHan
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.memberPullUp.JavaPullUpHandler;
 import com.intellij.refactoring.memberPushDown.JavaPushDownHandler;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,6 +121,12 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
   public boolean isInplaceIntroduceAvailable(@NotNull PsiElement element, PsiElement context) {
     if (!(element instanceof PsiExpression)) return false;
     if (context == null) return false;
+    try {
+      PsiElementFactory.getInstance(element.getProject()).createExpressionFromText(element.getText(), element);
+    }
+    catch (IncorrectOperationException e) {
+      return false;
+    }
     return true;
   }
 

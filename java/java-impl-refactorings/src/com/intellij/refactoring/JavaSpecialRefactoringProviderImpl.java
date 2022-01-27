@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -52,24 +51,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactoringProvider {
-  
-
-  @Override
-  public @NotNull JavaIntroduceVariableHandlerBase getIntroduceVariableUnitTestAwareHandler() {
-    return new IntroduceVariableHandler() {
-      @Override
-      public IntroduceVariableSettings getSettings(Project project, Editor editor, PsiExpression expr,
-                                                   PsiExpression[] occurrences, TypeSelectorManagerImpl typeSelectorManager,
-                                                   boolean declareFinalIfAll, boolean anyAssignmentLHS, InputValidator validator,
-                                                   PsiElement anchor, JavaReplaceChoice replaceChoice) {
-        if (replaceChoice == null && ApplicationManager.getApplication().isUnitTestMode()) {
-          replaceChoice = JavaReplaceChoice.ALL;
-        }
-        return super.getSettings(project, editor, expr, occurrences, typeSelectorManager,
-                                 declareFinalIfAll, anyAssignmentLHS, validator, anchor, replaceChoice);
-      }
-    };
-  }
 
   @Override
   public @NotNull JavaIntroduceVariableHandlerBase getMockIntroduceVariableHandler() {
@@ -111,11 +92,6 @@ public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactorin
             return true;
           }
         };
-      }
-
-      @Override
-      protected boolean isInplaceAvailableInTestMode() {
-        return true;
       }
     };
   }
