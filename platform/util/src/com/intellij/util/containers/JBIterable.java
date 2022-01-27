@@ -65,6 +65,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   JBIterable(@NotNull E content) {
     this.content = content;
   }
+
   JBIterable(@NotNull Iterable<? extends E> content) {
     this.content = content;
   }
@@ -240,12 +241,13 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * Returns the number of elements in this iterable.
    */
   public final int size() {
+    if (this == EMPTY) return 0;
+    E single = asElement();
+    if (single != null) return 1;
     Collection<E> col = asCollection();
     if (col != null) return col.size();
-    Iterable<E> itt = asIterable();
-    if (itt == null) return 1;
     int count = 0;
-    for (E ignored : itt) {
+    for (E ignored : this) {
       count++;
     }
     return count;
@@ -256,11 +258,12 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * {@code equals(element)} is true.
    */
   public final boolean contains(@Nullable Object element) {
+    if (this == EMPTY) return false;
+    E single = asElement();
+    if (single != null) return Comparing.equal(single, element);
     Collection<E> col = asCollection();
     if (col != null) return col.contains(element);
-    Iterable<E> itt = asIterable();
-    if (itt == null) return Comparing.equal(content, element);
-    for (E e : itt) {
+    for (E e : this) {
       if (Comparing.equal(e, element)) return true;
     }
     return false;
@@ -271,13 +274,12 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @Nullable
   public final E get(int index) {
+    if (this == EMPTY) return null;
+    E single = asElement();
+    if (single != null) return index == 0 ? single : null;
     List<E> list = asRandomAccess();
     if (list != null) {
       return index >= list.size() ? null : list.get(index);
-    }
-    Iterable<E> itt = asIterable();
-    if (itt == null) {
-      return index == 0 ? asElement() : null;
     }
     return skip(index).first();
   }
@@ -300,7 +302,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
 
   E asElement() {
     //noinspection unchecked
-    return (E)content;
+    return this instanceof Single ? (E)content : null;
   }
 
   @NotNull
@@ -534,15 +536,14 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @Nullable
   public final E first() {
+    if (this == EMPTY) return null;
+    E single = asElement();
+    if (single != null) return single;
     List<E> list = asRandomAccess();
     if (list != null) {
       return list.isEmpty() ? null : list.get(0);
     }
-    Iterable<E> itt = asIterable();
-    if (itt == null) {
-      return asElement();
-    }
-    Iterator<E> iterator = itt.iterator();
+    Iterator<E> iterator = iterator();
     return iterator.hasNext() ? iterator.next() : null;
   }
 
@@ -551,15 +552,14 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @Nullable
   public final E single() {
+    if (this == EMPTY) return null;
+    E single = asElement();
+    if (single != null) return single;
     List<E> list = asRandomAccess();
     if (list != null) {
       return list.size() != 1 ? null : list.get(0);
     }
-    Iterable<E> itt = asIterable();
-    if (itt == null) {
-      return asElement();
-    }
-    Iterator<E> iterator = itt.iterator();
+    Iterator<E> iterator = iterator();
     E first = iterator.hasNext() ? iterator.next() : null;
     return iterator.hasNext() ? null : first;
   }
@@ -569,16 +569,15 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @Nullable
   public final E last() {
+    if (this == EMPTY) return null;
+    E single = asElement();
+    if (single != null) return single;
     List<E> list = asRandomAccess();
     if (list != null) {
       return list.isEmpty() ? null : list.get(list.size() - 1);
     }
-    Iterable<E> itt = asIterable();
-    if (itt == null) {
-      return asElement();
-    }
     E cur = null;
-    for (E e : itt) {
+    for (E e : this) {
       cur = e;
     }
     return cur;
@@ -771,13 +770,13 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   public final boolean isEmpty() {
     if (this == EMPTY) return true;
+    E single = asElement();
+    if (single != null) return false;
     Collection<E> col = asCollection();
     if (col != null) {
       return col.isEmpty();
     }
-    Iterable<E> itt = asIterable();
-    if (itt == null) return false;
-    return !itt.iterator().hasNext();
+    return !iterator().hasNext();
   }
 
   /**
@@ -832,9 +831,9 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @NotNull
   public final List<E> toList() {
     if (this == EMPTY) return Collections.emptyList();
-    Iterable<E> itt = asIterable();
-    if (itt == null) return Collections.singletonList(asElement());
-    ArrayList<E> result = ContainerUtil.newArrayList(itt);
+    E single = asElement();
+    if (single != null) return Collections.singletonList(single);
+    ArrayList<E> result = ContainerUtil.newArrayList(this);
     return result.isEmpty() ? Collections.emptyList() : Collections.unmodifiableList(result);
   }
 
@@ -844,9 +843,9 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @NotNull
   public final Set<E> toSet() {
     if (this == EMPTY) return Collections.emptySet();
-    Iterable<E> itt = asIterable();
-    if (itt == null) return Collections.singleton(asElement());
-    LinkedHashSet<E> result = ContainerUtil.newLinkedHashSet(itt);
+    E single = asElement();
+    if (single != null) return Collections.singleton(single);
+    LinkedHashSet<E> result = ContainerUtil.newLinkedHashSet(this);
     return result.isEmpty() ? Collections.emptySet() : Collections.unmodifiableSet(result);
   }
 
@@ -856,9 +855,9 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   public final E @NotNull [] toArray(E @NotNull [] array) {
     if (this == EMPTY) return array;
-    Iterable<E> itt = asIterable();
-    if (itt == null) return Collections.singletonList(asElement()).toArray(array);
-    return ContainerUtil.newArrayList(itt).toArray(array);
+    E single = asElement();
+    if (single != null) return Collections.singletonList(single).toArray(array);
+    return ContainerUtil.newArrayList(this).toArray(array);
   }
 
   /**
@@ -898,19 +897,18 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @NotNull
   public final <C extends Collection<? super E>> C addAllTo(@NotNull C collection) {
     if (this == EMPTY) return collection;
+    E single = asElement();
+    if (single != null) {
+      collection.add(single);
+      return collection;
+    }
     Collection<E> col = asCollection();
     if (col != null) {
       collection.addAll(col);
     }
     else {
-      Iterable<E> itt = asIterable();
-      if (itt == null) {
-        collection.add(asElement());
-      }
-      else {
-        for (E item : itt) {
-          collection.add(item);
-        }
+      for (E item : this) {
+        collection.add(item);
       }
     }
     return collection;
