@@ -34,7 +34,7 @@ fun JComponent.addKeyboardAction(vararg keyStrokes: KeyStroke, action: (ActionEv
 @Deprecated("Use function from platform API", ReplaceWith("addKeyboardAction(keyStrokes, action)", "com.intellij.openapi.ui.addKeyboardAction"))
 fun JComponent.addKeyboardAction(keyStrokes: List<KeyStroke>, action: (ActionEvent) -> Unit) = addKeyboardActionImpl(keyStrokes, action)
 @Deprecated("Use function from platform API", ReplaceWith("whenItemSelected(listener)", "com.intellij.openapi.observable.util.whenItemSelected"))
-fun <E> ComboBox<E>.whenItemSelected(listener: (E) -> Unit) = whenItemSelectedImpl(listener)
+fun <E> ComboBox<E>.whenItemSelected(listener: (E) -> Unit) = whenItemSelectedImpl(listener = listener)
 @Deprecated("Use function from platform API", ReplaceWith("whenTextChanged { listener() }", "com.intellij.openapi.observable.util.whenTextChanged"))
 fun JTextComponent.whenTextModified(listener: () -> Unit) = whenTextModifiedImpl { listener() }
 @Deprecated("Use function from platform API", ReplaceWith("whenFocusGained { listener() }", "com.intellij.openapi.observable.util.whenFocusGained"))

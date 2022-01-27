@@ -42,7 +42,7 @@ internal class ExternalProjectSelector(
     return JBPopupFactory.getInstance()
       .createComponentPopupBuilder(content, null)
       .createPopup()
-      .apply { content.whenMousePressed(::closeOk) }
+      .apply { content.whenMousePressed(listener = ::closeOk) }
   }
 
   private inner class ExternalProjectPopupContent(externalProject: List<DependencyAnalyzerProject>) : JBList<DependencyAnalyzerProject>() {
