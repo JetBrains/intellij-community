@@ -1134,4 +1134,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull IntentionAction createSimplifyBooleanFix(@NotNull PsiExpression expression, boolean value) {
     return new SimplifyBooleanExpressionFix(expression, value);
   }
+
+  @Override
+  public @NotNull IntentionAction createSetVariableTypeFix(@NotNull PsiVariable variable, @NotNull PsiType type) {
+    return new SetVariableTypeFix(variable, type);
+  }
 }

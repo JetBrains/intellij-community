@@ -77,7 +77,7 @@ public final class HighlightFixUtil {
   static void registerAccessQuickFixAction(@NotNull PsiJvmMember refElement,
                                            @NotNull PsiJavaCodeReferenceElement place,
                                            @Nullable HighlightInfo errorResult,
-                                           PsiElement fileResolveScope, 
+                                           PsiElement fileResolveScope,
                                            TextRange parentFixRange) {
     if (errorResult == null) return;
     PsiClass accessObjectClass = null;
@@ -435,5 +435,34 @@ public final class HighlightFixUtil {
     PsiExpression copy = (PsiExpression)LambdaUtil.copyWithExpectedType(expression, returnType);
     PsiType copyType = copy.getType();
     return copyType != null && returnType.isAssignableFrom(copyType);
+  }
+
+  static void registerSpecifyVarTypeFix(@NotNull PsiLocalVariable variable, @NotNull HighlightInfo info) {
+    PsiElement block = PsiUtil.getVariableCodeBlock(variable, null);
+    if (block == null) return;
+    PsiTreeUtil.processElements(block, PsiReferenceExpression.class, ref -> {
+      if (ref.isReferenceTo(variable)) {
+        PsiAssignmentExpression assignment = ObjectUtils.tryCast(ref.getParent(), PsiAssignmentExpression.class);
+        if (assignment != null) {
+          if (assignment.getLExpression() == ref &&
+              assignment.getOperationTokenType() == JavaTokenType.EQ) {
+            PsiExpression rExpression = assignment.getRExpression();
+            if (rExpression != null) {
+              PsiType type = rExpression.getType();
+              if (type instanceof PsiPrimitiveType && variable.getInitializer() != null) {
+                type = ((PsiPrimitiveType)type).getBoxedType(variable);
+              }
+              if (type != null) {
+                type = GenericsUtil.getVariableTypeByExpressionType(type);
+                IntentionAction fix = QUICK_FIX_FACTORY.createSetVariableTypeFix(variable, type);
+                QuickFixAction.registerQuickFixAction(info, fix);
+                return false;
+              }
+            }
+          }
+        }
+      }
+      return true;
+    });
   }
 }

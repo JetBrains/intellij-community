@@ -483,7 +483,10 @@ public final class HighlightUtil {
       PsiExpression initializer = variable.getInitializer();
       if (initializer == null) {
         String message = JavaErrorBundle.message("lvti.no.initializer");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
+        HighlightInfo info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
+        HighlightFixUtil.registerSpecifyVarTypeFix((PsiLocalVariable)variable, info);
+        return info;
       }
       if (initializer instanceof PsiFunctionalExpression) {
         boolean lambda = initializer instanceof PsiLambdaExpression;
@@ -500,8 +503,11 @@ public final class HighlightUtil {
       if (PsiType.NULL.equals(lType) && SyntaxTraverser.psiTraverser(initializer)
                                           .filter(PsiLiteralExpression.class)
                                           .find(l -> PsiType.NULL.equals(l.getType())) != null) {
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(JavaErrorBundle.message("lvti.null"))
-          .range(typeElement).create();
+        HighlightInfo info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(JavaErrorBundle.message("lvti.null"))
+            .range(typeElement).create();
+        HighlightFixUtil.registerSpecifyVarTypeFix((PsiLocalVariable)variable, info);
+        return info;
       }
       if (PsiType.VOID.equals(lType)) {
         String message = JavaErrorBundle.message("lvti.void");
