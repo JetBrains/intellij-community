@@ -7,6 +7,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionProvider
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.util.PsiModificationTracker
 
 /**
  * Adapter between code [CodeVisionProvider] and [DaemonBoundCodeVisionProvider].
@@ -18,13 +19,23 @@ class CodeVisionProviderAdapter(private val delegate: DaemonBoundCodeVisionProvi
     // nothing
   }
 
+  override fun shouldRecomputeForEditor(editor: Editor, uiData: Unit): Boolean {
+    val project = editor.project ?: return super.shouldRecomputeForEditor(editor, uiData)
+    val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)
+    val modificationTracker = PsiModificationTracker.SERVICE.getInstance(editor.project)
+    val cached = cacheService.getVisionDataForEditor(editor, id) ?: return super.shouldRecomputeForEditor(editor, uiData)
+
+    return modificationTracker.modificationCount == cached.modificationStamp
+
+  }
+
   override fun computeForEditor(editor: Editor, uiData: Unit): List<Pair<TextRange, CodeVisionEntry>> {
     val project = editor.project ?: return emptyList()
     val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)
     val cached = cacheService.getVisionDataForEditor(editor, id) ?: return emptyList()
     val document = editor.document
     // ranges may be slightly outdated, so we have to unsure that they fit the document
-    val lenses = cached.map {
+    val lenses = cached.codeVisionEntries.map {
       val range = it.first
       if (document.textLength <= range.endOffset) {
         TextRange(range.startOffset, document.textLength) to it.second

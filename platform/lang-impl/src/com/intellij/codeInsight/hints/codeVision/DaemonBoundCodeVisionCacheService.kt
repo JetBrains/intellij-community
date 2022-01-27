@@ -27,13 +27,13 @@ internal class DaemonBoundCodeVisionCacheService {
    * @return computed (maybe not fresh) lens data for a given [editor] and for a [DaemonBoundCodeVisionProvider] with a given [providerId]
    */
   @RequiresReadLock
-  fun getVisionDataForEditor(editor: Editor, providerId: String): List<Pair<TextRange, CodeVisionEntry>>? {
+  fun getVisionDataForEditor(editor: Editor, providerId: String): CodeVisionWithStamp? {
     val cache = getFileCache(editor)
     return cache.get(providerId)
   }
 
   @RequiresWriteLock
-  fun storeVisionDataForEditor(editor: Editor, providerId: String, data: List<Pair<TextRange, CodeVisionEntry>>) {
+  fun storeVisionDataForEditor(editor: Editor, providerId: String, data: CodeVisionWithStamp) {
     val fileCache = getFileCache(editor)
     fileCache.update(providerId, data)
   }
@@ -46,14 +46,16 @@ internal class DaemonBoundCodeVisionCacheService {
 
   // methods are protected with application RW lock (update under W, get under R)
   private class FileCache {
-    private val providerIdToData: MutableMap<String, List<Pair<TextRange, CodeVisionEntry>>> = HashMap()
+    private val providerIdToData: MutableMap<String, CodeVisionWithStamp> = HashMap()
 
-    fun update(providerId: String, data: List<Pair<TextRange, CodeVisionEntry>>) {
+    fun update(providerId: String, data: CodeVisionWithStamp) {
       providerIdToData[providerId] = data
     }
 
-    fun get(providerId: String): List<Pair<TextRange, CodeVisionEntry>>? {
+    fun get(providerId: String): CodeVisionWithStamp? {
       return providerIdToData[providerId]
     }
   }
+
+  data class CodeVisionWithStamp(val codeVisionEntries: List<Pair<TextRange, CodeVisionEntry>>, val modificationStamp: Long)
 }

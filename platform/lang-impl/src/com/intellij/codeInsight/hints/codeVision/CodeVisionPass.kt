@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
-import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
 import com.intellij.concurrency.JobLauncher
@@ -10,8 +9,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.rd.createLifetime
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.Processor
 import com.jetbrains.rd.util.reactive.adviseOnce
 import java.util.concurrent.ConcurrentHashMap
@@ -27,14 +26,15 @@ class CodeVisionPass(
   rootElement: PsiElement,
   private val editor: Editor
 ) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true) {
-  private val providerIdToLenses: MutableMap<String, List<Pair<TextRange, CodeVisionEntry>>> = ConcurrentHashMap()
+  private val providerIdToLenses: MutableMap<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp> = ConcurrentHashMap()
   private val currentIndicator = ProgressManager.getGlobalProgressIndicator()
 
   override fun doCollectInformation(progress: ProgressIndicator) {
     val providers = DaemonBoundCodeVisionProvider.extensionPoint.extensionList
+    val modificationTracker = PsiModificationTracker.SERVICE.getInstance(editor.project)
     JobLauncher.getInstance().invokeConcurrentlyUnderProgress(providers, progress, Processor { provider ->
       val results = provider.computeForEditor(editor)
-      providerIdToLenses[provider.id] = results
+      providerIdToLenses[provider.id] = DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(results, modificationTracker.modificationCount)
       true
     })
   }

@@ -28,6 +28,13 @@ interface CodeVisionProvider<T> {
   fun precomputeOnUiThread(editor: Editor): T
 
   /**
+   *  Called during code vision update process
+   *  Return true if [computeForEditor] should be called
+   *  false otherwise
+   */
+  fun shouldRecomputeForEditor(editor: Editor, uiData: T) = true
+
+  /**
    * Should return text ranges and applicable hints for them, invoked on background thread
    */
   fun computeForEditor(editor: Editor, uiData: T): List<Pair<TextRange, CodeVisionEntry>>

@@ -14,12 +14,12 @@ class CodeVisionPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
   private val registry = Registry.get("editor.codeVision.new")
 
   override fun registerHighlightingPassFactory(registrar: TextEditorHighlightingPassRegistrar, project: Project) {
-    if (registry.asBoolean().not()) return
-
     registrar.registerTextEditorHighlightingPass(this, null, null, false, -1)
   }
 
-  override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass {
+  override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
+    if (registry.asBoolean().not()) return null
+
     return CodeVisionPass(file, editor)
   }
 }

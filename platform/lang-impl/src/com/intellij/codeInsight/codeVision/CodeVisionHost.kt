@@ -209,10 +209,11 @@ open class CodeVisionHost(val project: Project) {
 
     fun pokeEditor(providerId: String? = null) {
       editor.lensContextOrThrow.notifyPendingLenses()
+      val shouldRecalculateAll = mergingQueueFront.isEmpty.not()
       mergingQueueFront.cancelAllUpdates()
       mergingQueueFront.queue(object : Update("") {
         override fun run() {
-          recalculateLenses(providerId)
+          recalculateLenses(if (shouldRecalculateAll) null else providerId)
         }
       })
     }
@@ -250,22 +251,27 @@ open class CodeVisionHost(val project: Project) {
                                       inTestSyncMode: Boolean = false,
                                       consumer: (List<Pair<TextRange, CodeVisionEntry>>) -> Unit) {
     val precalculatedUiThings = providers.associate {
-      if (singleLensProvider != null && singleLensProvider != it.groupId) return@associate it.id to null
-      it.groupId to it.precomputeOnUiThread(editor)
+      if (singleLensProvider != null && singleLensProvider != it.id) return@associate it.id to null
+      it.id to it.precomputeOnUiThread(editor)
     }
     executeOnPooledThread(calcLifetime, inTestSyncMode) {
       ProgressManager.checkCanceled()
       val results = mutableListOf<Pair<TextRange, CodeVisionEntry>>()
+      var shouldResetCodeVision = true
       providers.forEach {
         @Suppress("UNCHECKED_CAST")
         it as CodeVisionProvider<Any?>
-        if (singleLensProvider != null && singleLensProvider != it.groupId) return@forEach
+        if (singleLensProvider != null && singleLensProvider != it.id) return@forEach
         ProgressManager.checkCanceled()
         if (project.isDisposed) return@executeOnPooledThread
         if (lifeSettingModel.disabledCodeVisionProviderIds.contains(it.groupId)) return@forEach
-        val result = it.computeForEditor(editor, precalculatedUiThings[it.groupId])
+        if(!it.shouldRecomputeForEditor(editor, precalculatedUiThings[it.id])) return@forEach
+        shouldResetCodeVision = false
+        val result = it.computeForEditor(editor, precalculatedUiThings[it.id])
         results.addAll(result)
       }
+
+      if(shouldResetCodeVision) return@executeOnPooledThread
 
       if (!inTestSyncMode) {
         application.invokeLater {
