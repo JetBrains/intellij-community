@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.annotate.AnnotatedLineModificationDetails.InnerC
 import com.intellij.openapi.vcs.annotate.AnnotatedLineModificationDetails.InnerChangeType;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
+import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +51,8 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
   @NotNull private final FileAnnotation myFileAnnotation;
   @NotNull private final TextAnnotationPresentation myTextPresentation;
   @NotNull private final FileAnnotation.LineModificationDetailsProvider myProvider;
+
+  @NotNull private final Alarm myAlarm = new Alarm();
 
   private int myCurrentLine = -1;
   @Nullable private ProgressIndicator myIndicator;
@@ -104,7 +107,7 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
     int annotationLine = myTextPresentation.getAnnotationLine(editorLine);
     if (annotationLine >= 0 && annotationLine < myFileAnnotation.getLineCount()) {
       myCurrentLine = editorLine;
-      myIndicator = updateDiff(editorLine, annotationLine);
+      scheduleUpdateDiff(editorLine, annotationLine);
     }
   }
 
@@ -115,6 +118,7 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
 
   @RequiresEdt
   private void removeDiff() {
+    myAlarm.cancelAllRequests();
     if (myIndicator != null) {
       myIndicator.cancel();
       myIndicator = null;
@@ -125,8 +129,17 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
   }
 
   @RequiresEdt
-  private @NotNull ProgressIndicator updateDiff(int editorLine, int annotationLine) {
-    return BackgroundTaskUtil.executeOnPooledThread(this, () -> {
+  private void scheduleUpdateDiff(int editorLine, int annotationLine) {
+    myAlarm.addRequest(() -> {
+      if (myCurrentLine == editorLine) {
+        updateDiff(editorLine, annotationLine);
+      }
+    }, 100);
+  }
+
+  @RequiresEdt
+  private void updateDiff(int editorLine, int annotationLine) {
+    myIndicator = BackgroundTaskUtil.executeOnPooledThread(this, () -> {
       try {
         AnnotatedLineModificationDetails details = myProvider.getDetails(annotationLine);
         if (details == null) return;
