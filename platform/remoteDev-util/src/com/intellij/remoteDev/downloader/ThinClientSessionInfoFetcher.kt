@@ -52,8 +52,6 @@ object ThinClientSessionInfoFetcher {
             get() = throw UnsupportedOperationException("hostFeaturesToEnable field should not be used")
           override val stunTurnServers: List<StunTurnServerInfo>
             get() = throw UnsupportedOperationException("stunTurnServers field should not be used")
-          override val turnAllocationServerInfo: StunTurnServerInfo
-            get() = throw UnsupportedOperationException("turnAllocationServerInfo field should not be used")
           override val downloadPgpPublicKeyUrl: String? = sessionInfo["downloadPgpPublicKeyUrl"]?.asText()
         }
       }
