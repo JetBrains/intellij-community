@@ -30,6 +30,7 @@ final class BuildDependenciesUtil {
           Files.createDirectories(entryPath);
         }
         else {
+          Files.createDirectories(entryPath.getParent());
           try (InputStream is = zipFile.getInputStream(entry)) {
             Files.copy(is, entryPath);
           }
