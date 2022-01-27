@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -28,6 +29,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
 class SubpackagesIndexService(private val project: Project): Disposable {
+
+    private val enableSubpackageCaching = Registry.`is`("kotlin.cache.top.level.subpackages", false)
 
     private val cachedValue = CachedValuesManager.getManager(project).createCachedValue(
         {
@@ -121,7 +124,7 @@ class SubpackagesIndexService(private val project: Project): Disposable {
         }
 
         private fun Collection<FqName>.isKnownNotContains(fqName: FqName, scope: GlobalSearchScope): Boolean {
-            return !fqName.isRoot && (isEmpty() ||
+            return enableSubpackageCaching && !fqName.isRoot && (isEmpty() ||
                     // fast check is reasonable when fqNames has more than 1 element
                     size > 1 && run {
                 val partialFqName = KotlinPartialPackageNamesIndex.toPartialFqName(fqName)
@@ -135,6 +138,7 @@ class SubpackagesIndexService(private val project: Project): Disposable {
         }
 
         private fun cachedPartialFqNames(scope: GlobalSearchScope): MutableMap<FqName, Boolean>? {
+            if (!enableSubpackageCaching) return null
             val module = scope.safeAs<ModuleSourceScope>()?.module ?: return null
             return module.cacheByProvider(*dependencies, provider = ::cachedPartialFqNamesProvider)
         }

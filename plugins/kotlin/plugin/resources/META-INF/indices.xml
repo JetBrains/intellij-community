@@ -60,5 +60,12 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.psi.stubs.elements.StubIndexService"
             serviceImplementation="org.jetbrains.kotlin.idea.stubindex.IdeStubIndexService"/>
+
+    <registryKey
+            key="kotlin.cache.top.level.subpackages"
+            description="Enables top level subpackages caching"
+            defaultValue="false"
+            restartRequired="true"/>
+
   </extensions>
 </idea-plugin>
