@@ -46,7 +46,9 @@ private const val FOCUSED_WINDOW_PROPERTY_NAME = "focusedWindow"
 @NonNls
 private const val FRAME_ELEMENT = "frame"
 
-@State(name = "WindowManager", storages = [Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED)])
+@State(name = "WindowManager", storages = [
+  Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED, usePathMacroManager = false)
+])
 class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModificationTracker<Element> {
   private var alphaModeSupported: Boolean? = null
   internal val windowWatcher = WindowWatcher()

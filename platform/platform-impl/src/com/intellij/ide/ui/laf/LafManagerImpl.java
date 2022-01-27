@@ -72,7 +72,12 @@ import java.util.List;
 import java.util.*;
 import java.util.function.BooleanSupplier;
 
-@State(name = "LafManager", storages = @Storage("laf.xml"), category = SettingsCategory.UI)
+@State(
+  name = "LafManager",
+  storages = @Storage(value = "laf.xml", usePathMacroManager = false),
+  category = SettingsCategory.UI,
+  reportStatistic = false
+)
 public final class LafManagerImpl extends LafManager implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(LafManagerImpl.class);
 

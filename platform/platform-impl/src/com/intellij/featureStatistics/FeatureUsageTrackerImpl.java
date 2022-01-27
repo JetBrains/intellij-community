@@ -12,7 +12,10 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
@@ -30,9 +33,8 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 @State(
   name = "FeatureUsageStatistics",
   storages = {
-    @Storage(value = FeatureUsageTrackerImpl.FEATURES_USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
-    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true),
-    @Storage(value = StoragePathMacros.CACHE_FILE, deprecated = true)
+    @Storage(value = FeatureUsageTrackerImpl.FEATURES_USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, usePathMacroManager = false),
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true)
   }
 )
 public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implements PersistentStateComponent<Element> {
