@@ -87,6 +87,8 @@ public class AllIcons {
     /** 12x12 */ public static final @NotNull Icon InlayRenameInCommentsActive = load("actions/inlayRenameInCommentsActive.svg", -23569655, 2);
     /** 12x12 */ public static final @NotNull Icon InlayRenameInNoCodeFiles = load("actions/inlayRenameInNoCodeFiles.svg", -1377142413, 0);
     /** 12x12 */ public static final @NotNull Icon InlayRenameInNoCodeFilesActive = load("actions/inlayRenameInNoCodeFilesActive.svg", -256406409, 2);
+    /** 12x12 */ public static final @NotNull Icon InlineDropFrame = load("actions/inlineDropFrame.svg", 464068832, 2);
+    /** 12x12 */ public static final @NotNull Icon InlineDropFrameSelected = load("actions/inlineDropFrameSelected.svg", -1147095696, 2);
     /** 16x16 */ public static final @NotNull Icon InSelection = load("actions/inSelection.svg", -497925107, 2);
     /** 16x16 */ public static final @NotNull Icon Install = load("actions/install.svg", 44445574, 2);
     /** 16x16 */ public static final @NotNull Icon IntentionBulb = load("actions/intentionBulb.svg", 1973202841, 2);
@@ -366,7 +368,7 @@ public class AllIcons {
     /** 12x12 */ public static final @NotNull Icon MagicResolve = load("diff/magicResolve.svg", -1655645925, 2);
     /** 16x16 */ public static final @NotNull Icon MagicResolveToolbar = load("diff/magicResolveToolbar.svg", 2060686274, 2);
     /** 12x12 */ public static final @NotNull Icon Remove = load("diff/remove.svg", -123302370, 2);
-    /** 12x12 */ public static final @NotNull Icon Revert = load("diff/revert.svg", -707207972, 2);
+    /** 12x12 */ public static final @NotNull Icon Revert = load("diff/revert.svg", -767640952, 2);
   }
 
   public static final class Duplicates {
