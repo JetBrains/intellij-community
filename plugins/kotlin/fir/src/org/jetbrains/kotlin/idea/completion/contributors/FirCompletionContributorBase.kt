@@ -132,32 +132,34 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
                     }
                 }
 
-            // Make the text gray and insert type cast if the receiver type does not match.
-            is CallableMetadataProvider.CallableKind.ReceiverCastRequired -> object : LookupElementDecorator<LookupElement>(this) {
-                override fun renderElement(presentation: LookupElementPresentation) {
-                    super.renderElement(presentation)
-                    presentation.itemTextForeground = LookupElementFactory.CAST_REQUIRED_COLOR
-                    // gray all tail fragments too:
-                    val fragments = presentation.tailFragments
-                    presentation.clearTail()
-                    for (fragment in fragments) {
-                        presentation.appendTailText(fragment.text, true)
-                    }
-                }
+            // TODO this code should be uncommented when KTIJ-20913 is fixed
+            //// Make the text gray and insert type cast if the receiver type does not match.
+            //is CallableMetadataProvider.CallableKind.ReceiverCastRequired -> object : LookupElementDecorator<LookupElement>(this) {
+            //    override fun renderElement(presentation: LookupElementPresentation) {
+            //        super.renderElement(presentation)
+            //        presentation.itemTextForeground = LookupElementFactory.CAST_REQUIRED_COLOR
+            //        // gray all tail fragments too:
+            //        val fragments = presentation.tailFragments
+            //        presentation.clearTail()
+            //        for (fragment in fragments) {
+            //            presentation.appendTailText(fragment.text, true)
+            //        }
+            //    }
+            //
+            //    override fun handleInsert(context: InsertionContext) {
+            //        super.handleInsert(context)
+            //        if (explicitReceiverRange == null || explicitReceiverText == null) return
+            //        val castType = explicitReceiverTypeHint ?: kind.fullyQualifiedCastType
+            //        val newReceiver = "(${explicitReceiverText} as $castType)"
+            //        context.document.replaceString(explicitReceiverRange.startOffset, explicitReceiverRange.endOffset, newReceiver)
+            //        context.commitDocument()
+            //        shortenReferencesInRange(
+            //            context.file as KtFile,
+            //            explicitReceiverRange.grown(newReceiver.length)
+            //        )
+            //    }
+            //}
 
-                override fun handleInsert(context: InsertionContext) {
-                    super.handleInsert(context)
-                    if (explicitReceiverRange == null || explicitReceiverText == null) return
-                    val castType = explicitReceiverTypeHint ?: kind.fullyQualifiedCastType
-                    val newReceiver = "(${explicitReceiverText} as $castType)"
-                    context.document.replaceString(explicitReceiverRange.startOffset, explicitReceiverRange.endOffset, newReceiver)
-                    context.commitDocument()
-                    shortenReferencesInRange(
-                        context.file as KtFile,
-                        explicitReceiverRange.grown(newReceiver.length)
-                    )
-                }
-            }
             else -> this
         }
     }
