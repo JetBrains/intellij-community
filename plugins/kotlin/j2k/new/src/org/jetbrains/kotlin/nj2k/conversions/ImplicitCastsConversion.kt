@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
+import com.intellij.psi.PsiNewExpression
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.conversions.PrimitiveTypeCastsConversion.Companion.castToAsPrimitiveTypes
 import org.jetbrains.kotlin.nj2k.isEquals
@@ -22,6 +23,7 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplic
         when (element) {
             is JKVariable -> convertVariable(element)
             is JKCallExpression -> convertMethodCallExpression(element)
+            is JKNewExpression -> convertNewExpression(element)
             is JKBinaryExpression -> return recurse(convertBinaryExpression(element))
             is JKKtAssignmentStatement -> convertAssignmentStatement(element)
         }
@@ -111,16 +113,26 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplic
         }
     }
 
+    private fun convertNewExpression(expression: JKNewExpression) {
+        val constructor = expression.psi.safeAs<PsiNewExpression>()?.resolveConstructor() ?: return
+        val methodSymbol = context.symbolProvider.provideDirectSymbol(constructor) as? JKMethodSymbol ?: return
+        convertArguments(methodSymbol, expression.arguments.arguments)
+    }
+
     private fun convertMethodCallExpression(expression: JKCallExpression) {
-        if (expression.identifier.isUnresolved) return
-        val parameterTypes = expression.identifier.parameterTypesWithLastArgumentUnfoldedAsVararg() ?: return
-        val newArguments = expression.arguments.arguments.mapIndexed { argumentIndex, argument ->
+        convertArguments(expression.identifier, expression.arguments.arguments)
+    }
+
+    private fun convertArguments(methodSymbol: JKMethodSymbol, arguments: List<JKArgument>) {
+        if (methodSymbol.isUnresolved) return
+        val parameterTypes = methodSymbol.parameterTypesWithLastArgumentUnfoldedAsVararg() ?: return
+        val newArguments = arguments.mapIndexed { argumentIndex, argument ->
             val toType = parameterTypes.getOrNull(argumentIndex) ?: parameterTypes.last()
             argument.value.castTo(toType)
         }
         val needUpdate = newArguments.any { it != null }
         if (needUpdate) {
-            for ((newArgument, oldArgument) in newArguments zip expression.arguments.arguments) {
+            for ((newArgument, oldArgument) in newArguments zip arguments) {
                 if (newArgument != null) {
                     oldArgument.value = newArgument.copyTreeAndDetach()
                 }

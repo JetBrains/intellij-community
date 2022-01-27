@@ -2698,6 +2698,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/implicitCasts/bitwise.java");
         }
 
+        @TestMetadata("inConstructorCall.java")
+        public void testInConstructorCall() throws Exception {
+            runTest("testData/newJ2k/implicitCasts/inConstructorCall.java");
+        }
+
         @TestMetadata("ktij-16665.java")
         public void testKtij_16665() throws Exception {
             runTest("testData/newJ2k/implicitCasts/ktij-16665.java");
