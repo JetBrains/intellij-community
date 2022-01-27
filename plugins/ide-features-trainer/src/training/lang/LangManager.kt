@@ -15,7 +15,7 @@ import training.util.*
   Storage(value = StoragePathMacros.NON_ROAMABLE_FILE),
   Storage(value = trainerPluginConfigName, deprecated = true)
 ])
-internal class LangManager : SimplePersistentStateComponent<LangManager.State>(State()) {
+class LangManager : SimplePersistentStateComponent<LangManager.State>(State()) {
   val supportedLanguagesExtensions: List<LanguageExtensionPoint<LangSupport>>
     get() {
       return ExtensionPointName<LanguageExtensionPoint<LangSupport>>(LangSupport.EP_NAME).extensionList
