@@ -79,7 +79,7 @@ private fun buildKeymapPlugin(keymaps: Array<String>, buildNumber: String, targe
 
   val resultFile = targetDir.resolve("${shortName}Keymap.zip")
   writeNewZip(resultFile, compress = true) {
-    it.uncompressedData("${shortName}Keymap.jar", buffer)
+    it.uncompressedData("${shortName}Keymap/lib/${shortName}Keymap.jar", buffer)
   }
   return Pair(resultFile, pluginXmlData)
 }
