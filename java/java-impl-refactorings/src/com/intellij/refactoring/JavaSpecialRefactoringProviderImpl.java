@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureProcessor;
 import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
 import com.intellij.refactoring.changeSignature.*;
@@ -18,8 +17,6 @@ import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
 import com.intellij.refactoring.introduceField.InplaceIntroduceFieldPopup;
-import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
-import com.intellij.refactoring.introduceField.JavaIntroduceFieldHandlerBase;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceEmptyVariableHandlerImpl;
 import com.intellij.refactoring.introduceVariable.JavaIntroduceEmptyVariableHandlerBase;
@@ -161,26 +158,6 @@ public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactorin
     rules.setBoundScope(boundScope);
 
     TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, root, migrationType);
-  }
-
-  @Override
-  public JavaIntroduceFieldHandlerBase getMockIntroduceFieldHandler(PsiElement expression) {
-
-    final PsiClass containingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
-    assert containingClass != null;
-
-    return new IntroduceFieldHandler() {
-      // mock default settings
-      @Override
-      protected Settings showRefactoringDialog(Project project, Editor editor, PsiClass parentClass,
-                                               PsiExpression expr, PsiType type, PsiExpression[] occurrences,
-                                               PsiElement anchorElement, PsiElement anchorElementIfAll) {
-        return new Settings(
-          "foo", (PsiExpression)expression, PsiExpression.EMPTY_ARRAY, false, false, false,
-          InitializationPlace.IN_CURRENT_METHOD, PsiModifier.PRIVATE, null,
-          null, false, containingClass, false, false);
-      }
-    };
   }
 
   @Override

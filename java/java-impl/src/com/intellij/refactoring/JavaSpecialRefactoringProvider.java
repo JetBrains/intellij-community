@@ -16,7 +16,6 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
-import com.intellij.refactoring.introduceField.JavaIntroduceFieldHandlerBase;
 import com.intellij.refactoring.introduceVariable.JavaIntroduceEmptyVariableHandlerBase;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.util.CanonicalTypes;
@@ -103,8 +102,6 @@ public interface JavaSpecialRefactoringProvider {
                                     final SearchScope boundScope,
                                     final PsiElement root,
                                     final PsiType migrationType);
-
-  JavaIntroduceFieldHandlerBase getMockIntroduceFieldHandler(PsiElement expression);
 
   void runPullUpProcessor(@NotNull PsiClass sourceClass, PsiClass targetSuperClass, MemberInfo[] membersToMove, DocCommentPolicy javaDocPolicy);
 
