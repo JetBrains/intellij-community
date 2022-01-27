@@ -8,11 +8,14 @@ import training.dsl.LessonContext
 import training.dsl.LessonSample
 import training.dsl.LessonUtil
 import training.dsl.TaskRuntimeContext
-import training.learn.LessonsBundle
+import training.learn.LessonsBundle.message
 import training.learn.course.KLesson
 
-class SingleLineCommentLesson(private val sample: LessonSample)
-  : KLesson("Comment line", LessonsBundle.message("comment.line.lesson.name")) {
+class CommentUncommentLesson(private val sample: LessonSample, private val blockCommentsAvailable: Boolean = false)
+  : KLesson("Comment line",
+            if(blockCommentsAvailable)
+              message("comment.block.lesson.name")
+            else message("comment.line.lesson.name")) {
 
   override val lessonContent: LessonContext.() -> Unit
     get() = {
@@ -22,17 +25,32 @@ class SingleLineCommentLesson(private val sample: LessonSample)
       prepareSample(sample)
 
       actionTask("CommentByLineComment") {
-        LessonsBundle.message("comment.line.comment.any.line", action(it))
+        message("comment.line.comment.any.line", action(it))
       }
       task("CommentByLineComment") {
-        text(LessonsBundle.message("comment.line.uncomment.that.line", action(it)))
+        text(message("comment.line.uncomment.that.line", action(it)))
         trigger(it, { countCommentedLines() }, { _, now -> now == 0 })
         test { actions("EditorUp", it) }
       }
       task("CommentByLineComment") {
-        text(LessonsBundle.message("comment.line.comment.several.lines", action(it)))
+        text(message("comment.line.comment.several.lines", action(it)))
         trigger(it, { countCommentedLines() }, { before, now -> now >= before + 2 })
         test { actions("EditorDownWithSelection", "EditorDownWithSelection", it) }
+      }
+      task("CommentByLineComment") {
+        text(message("comment.line.uncomment.several.lines", action(it)))
+        trigger(it, { countCommentedLines() }, { _, now -> now == 0 })
+        test { actions(it) }
+      }
+      if (blockCommentsAvailable) {
+        actionTask("CommentByBlockComment") {
+          message("comment.block.comment", code("/*...*/"), action(it))
+        }
+        task("CommentByBlockComment") {
+          text(message("comment.block.uncomment", action(it)))
+          trigger(it, { countCommentedLines() }, { _, now -> now == 0 })
+          test { actions(it) }
+        }
       }
     }
 
@@ -54,7 +72,7 @@ class SingleLineCommentLesson(private val sample: LessonSample)
   override val suitableTips = listOf("CommentCode")
 
   override val helpLinks: Map<String, String> get() = mapOf(
-    Pair(LessonsBundle.message("help.lines.of.code"),
+    Pair(message("help.lines.of.code"),
          LessonUtil.getHelpLink("working-with-source-code.html#editor_lines_code_blocks")),
   )
 }
