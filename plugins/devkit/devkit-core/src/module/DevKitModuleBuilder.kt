@@ -111,7 +111,7 @@ class DevKitModuleBuilder : StarterModuleBuilder() {
                                      javaClass.getResource("/assets/devkit-pluginIcon.svg")!!))
 
     assets.add(GeneratorResourceFile(".run/Run IDE with Plugin.run.xml",
-                                     javaClass.getResource("/assets/devkit-Run_IDE_with_Plugin.run.xml")!!))
+                                     javaClass.getResource("/assets/devkit-Run_IDE_with_Plugin_run.xml")!!))
 
     return assets
   }
