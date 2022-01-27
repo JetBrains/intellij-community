@@ -97,7 +97,13 @@ object DebuggerUtils {
         return extension in KotlinFileTypeFactoryUtils.KOTLIN_EXTENSIONS
     }
 
-    fun String.getMethodNameWithoutMangling() =
+    fun String.trimIfMangledInBytecode(isMangledInBytecode: Boolean): String =
+        if (isMangledInBytecode)
+            getMethodNameWithoutMangling()
+        else
+            this
+
+    private fun String.getMethodNameWithoutMangling() =
         substringBefore('-')
 
     fun isKotlinFakeLineNumber(location: Location): Boolean {

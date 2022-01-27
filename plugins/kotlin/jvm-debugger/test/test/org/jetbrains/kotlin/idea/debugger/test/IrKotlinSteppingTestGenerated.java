@@ -1120,6 +1120,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/filterChainedFunctionCalls.kt");
         }
 
+        @TestMetadata("filterChainedFunctionCallsWithLambdas.kt")
+        public void testFilterChainedFunctionCallsWithLambdas() throws Exception {
+            runTest("testData/stepping/custom/filterChainedFunctionCallsWithLambdas.kt");
+        }
+
         @TestMetadata("filterFunctionCallsFromClass.kt")
         public void testFilterFunctionCallsFromClass() throws Exception {
             runTest("testData/stepping/custom/filterFunctionCallsFromClass.kt");

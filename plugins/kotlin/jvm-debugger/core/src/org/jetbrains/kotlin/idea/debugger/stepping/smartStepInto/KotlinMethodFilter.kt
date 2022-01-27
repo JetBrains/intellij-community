@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.getMethodNameWithoutMangling
+import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.trimIfMangledInBytecode
 import org.jetbrains.kotlin.idea.debugger.getInlineFunctionNamesAndBorders
 import org.jetbrains.kotlin.idea.debugger.safeMethod
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -80,16 +80,17 @@ open class KotlinMethodFilter(
     private fun nameMatches(location: Location): Boolean {
         val method = location.safeMethod() ?: return false
         val targetMethodName = methodName
-        if (methodInfo.isNameMangledInBytecode) {
-            return method.name().getMethodNameWithoutMangling() == targetMethodName
-        }
+        val isNameMangledInBytecode = methodInfo.isNameMangledInBytecode
+        val actualMethodName = method.name().trimIfMangledInBytecode(isNameMangledInBytecode)
 
-        return method.name() == targetMethodName ||
-               method.name() == "$targetMethodName${JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX}" ||
+        return actualMethodName == targetMethodName ||
+               actualMethodName == "$targetMethodName${JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX}" ||
                // A correct way here is to memorize the original location (where smart step into was started)
                // and filter out ranges that contain that original location.
                // Otherwise, nested inline with the same method name will not work correctly.
-               method.getInlineFunctionNamesAndBorders().filter { location in it.value }.any { it.key.isInlinedFromFunction(targetMethodName) }
+               method.getInlineFunctionNamesAndBorders()
+                   .filter { location in it.value }
+                   .any { it.key.isInlinedFromFunction(targetMethodName, isNameMangledInBytecode) }
     }
 }
 
@@ -110,6 +111,8 @@ private fun getMethodDescriptorAndDeclaration(
     }
 }
 
-private fun LocalVariable.isInlinedFromFunction(methodName: String) =
-    name().startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) &&
-    name().substringAfter(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) == methodName
+private fun LocalVariable.isInlinedFromFunction(methodName: String, isNameMangledInBytecode: Boolean): Boolean {
+    val variableName = name().trimIfMangledInBytecode(isNameMangledInBytecode)
+    return variableName.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) &&
+           variableName.substringAfter(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) == methodName
+}
