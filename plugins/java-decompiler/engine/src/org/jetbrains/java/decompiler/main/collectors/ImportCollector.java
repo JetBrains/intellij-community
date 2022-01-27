@@ -102,13 +102,13 @@ public class ImportCollector {
   public String getNestedName(String fullName, boolean imported) {
     ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(fullName.replace('.', '/')); //todo[r.sh] anonymous classes?
 
-    String result = null;
+    String nestedName;
     if (node != null && node.classStruct.isOwn()) {
-      result = node.simpleName;
+      nestedName = node.simpleName;
 
       while (node.parent != null && node.type == ClassNode.CLASS_MEMBER) {
         //noinspection StringConcatenationInLoop
-        result = node.parent.simpleName + '.' + result;
+        nestedName = node.parent.simpleName + '.' + nestedName;
         node = node.parent;
       }
 
@@ -117,20 +117,24 @@ public class ImportCollector {
         fullName = fullName.replace('/', '.');
       }
       else {
-        return result;
+        return nestedName;
       }
     }
     else {
       fullName = fullName.replace('/', '.');
+      int lastDot = fullName.lastIndexOf('.');
+      if (lastDot != -1) {
+        nestedName = fullName.substring(lastDot + 1).replace("$", ".");
+      } else {
+        nestedName = fullName;
+      }
     }
 
     String outerShortName = fullName;
-    String nestedName = fullName;
     String packageName = "";
 
     int lastDot = fullName.lastIndexOf('.');
     if (lastDot >= 0) {
-      nestedName = fullName.substring(lastDot + 1).replace("$", ".");
       int firstNestedDot = nestedName.indexOf(".");
       if (firstNestedDot >= 0) {
         outerShortName = nestedName.substring(0, firstNestedDot);
@@ -152,8 +156,7 @@ public class ImportCollector {
       setInnerClassNames.contains(outerShortName); // inner class
 
     if (existsDefaultClass || (mapSimpleNames.containsKey(outerShortName) && !packageName.equals(mapSimpleNames.get(outerShortName)))) {
-      //  don't return full name because if the class is a inner class, full name refers to the parent full name, not the child full name
-      return result == null ? fullName.replace("$", ".") : (packageName + "." + result);
+      return packageName + "." + nestedName;
     }
     else if (!mapSimpleNames.containsKey(outerShortName)) {
       mapSimpleNames.put(outerShortName, packageName);
@@ -162,7 +165,7 @@ public class ImportCollector {
       }
     }
 
-    return result == null ? nestedName : result;
+    return nestedName;
   }
 
   public void writeImports(TextBuffer buffer, boolean addSeparator) {
