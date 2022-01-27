@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -23,7 +21,6 @@ import javax.swing.*;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.FontUIResource;
 import java.awt.*;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,16 +91,12 @@ public final class ExperimentalUI {
     }
   }
 
-  @SuppressWarnings("unused")
-  private static final class NewUiLafManagerListener implements LafManagerListener {
-    @Override
-    public void lookAndFeelChanged(@NotNull LafManager source) {
-      if (isNewUI()) {
-        if (isIconPatcherSet.compareAndSet(false, true)) {
-          IconLoader.installPathPatcher(iconPathPatcher);
-        }
-        patchUIDefaults(true);
+  public static void lookAndFeelChanged() {
+    if (isNewUI()) {
+      if (isIconPatcherSet.compareAndSet(false, true)) {
+        IconLoader.installPathPatcher(iconPathPatcher);
       }
+      patchUIDefaults(true);
     }
   }
 
@@ -200,8 +193,7 @@ public final class ExperimentalUI {
       }
 
       @Override
-      public @Nullable ClassLoader getContextClassLoader(@NotNull String path,
-                                                         @Nullable ClassLoader originalClassLoader) {
+      public @Nullable ClassLoader getContextClassLoader(@NotNull String path, @Nullable ClassLoader originalClassLoader) {
         return getClass().getClassLoader();
       }
     };
@@ -216,12 +208,14 @@ public final class ExperimentalUI {
     setUIProperty("EditorTabs.underlineArc", 4, defaults);
     setUIProperty("ToolWindow.Button.selectedBackground", new ColorUIResource(0x3573f0), defaults);
     setUIProperty("ToolWindow.Button.selectedForeground", new ColorUIResource(0xffffff), defaults);
-    EditorColorsScheme editorColorScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    Color tabsHover = ColorUtil.mix(JBColor.PanelBackground, editorColorScheme.getDefaultBackground(), 0.5);
-    setUIProperty("EditorTabs.hoverInactiveBackground", tabsHover, defaults);
+    // avoid getting EditorColorsManager too early
+    setUIProperty("EditorTabs.hoverInactiveBackground", (UIDefaults.LazyValue)__ -> {
+      EditorColorsScheme editorColorScheme = EditorColorsManager.getInstance().getGlobalScheme();
+      return ColorUtil.mix(JBColor.PanelBackground, editorColorScheme.getDefaultBackground(), 0.5);
+    }, defaults);
 
     if (SystemInfo.isJetBrainsJvm && EarlyAccessRegistryManager.INSTANCE.getBoolean("ide.experimental.ui.inter.font")) {
-      installInterFont();
+      installInterFont(defaults);
     }
   }
 
@@ -230,22 +224,20 @@ public final class ExperimentalUI {
     defaults.put(key, value);
   }
 
-  private static void installInterFont() {
-    UIDefaults defaults = UIManager.getDefaults();
-    List<String> keysToPatch = Arrays.asList("CheckBoxMenuItem.acceleratorFont",
-                                             "CheckBoxMenuItem.font",
-                                             "Menu.acceleratorFont",
-                                             "Menu.font",
-                                             //"MenuBar.font",
-                                             "MenuItem.acceleratorFont",
-                                             "MenuItem.font",
-                                             "PopupMenu.font",
-                                             "RadioButtonMenuItem.acceleratorFont",
-                                             "RadioButtonMenuItem.font");
+  private static void installInterFont(UIDefaults defaults) {
+    List<String> keysToPatch = List.of("CheckBoxMenuItem.acceleratorFont",
+                                       "CheckBoxMenuItem.font",
+                                       "Menu.acceleratorFont",
+                                       "Menu.font",
+                                       //"MenuBar.font",
+                                       "MenuItem.acceleratorFont",
+                                       "MenuItem.font",
+                                       "PopupMenu.font",
+                                       "RadioButtonMenuItem.acceleratorFont",
+                                       "RadioButtonMenuItem.font");
     for (String key : keysToPatch) {
-      Font font = UIManager.getFont(key);
-      Font inter = new FontUIResource("Inter", font.getStyle(), font.getSize());
-      defaults.put(key, inter);
+      Font font = defaults.getFont(key);
+      defaults.put(key, new FontUIResource("Inter", font.getStyle(), font.getSize()));
     }
 
     //if (JBColor.isBright()) {

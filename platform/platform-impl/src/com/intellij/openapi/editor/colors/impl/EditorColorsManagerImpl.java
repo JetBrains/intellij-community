@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.configurationStore.BundledSchemeEP;
@@ -14,6 +14,7 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo;
 import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo;
+import com.intellij.ide.ui.laf.UiThemeProviderListManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -99,7 +100,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     initEditableBundledSchemesCopies();
     resolveLinksToBundledSchemes();
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
         reloadKeepingActiveScheme();
@@ -267,13 +268,11 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       return;
     }
 
-    for (UIManager.LookAndFeelInfo laf : LafManager.getInstance().getInstalledLookAndFeels()) {
-      if (laf instanceof UIThemeBasedLookAndFeelInfo) {
-        UITheme theme = ((UIThemeBasedLookAndFeelInfo)laf).getTheme();
-        String path = theme.getEditorScheme();
-        if (path != null) {
-          mySchemeManager.loadBundledScheme(path, theme, null);
-        }
+    for (UIThemeBasedLookAndFeelInfo laf : UiThemeProviderListManager.getInstance().getLaFs()) {
+      UITheme theme = laf.getTheme();
+      String path = theme.getEditorScheme();
+      if (path != null) {
+        mySchemeManager.loadBundledScheme(path, theme, null);
       }
     }
   }

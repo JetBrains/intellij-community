@@ -14,6 +14,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.ide.plugins.StartupAbortedException
+import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.application.*
@@ -96,15 +97,6 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<Any>
           initAppActivity.runChild("base laf passing") {
             DarculaLaf.setPreInitializedBaseLaf(baseLaf as LookAndFeel)
           }
-
-          val patchingActivity = StartUpMeasurer.startActivity("html style patching")
-          // patch html styles
-          val uiDefaults = UIManager.getDefaults()
-          // create a separate copy for each case
-          uiDefaults.put("javax.swing.JLabel.userStyleSheet", GlobalStyleSheetHolder.getGlobalStyleSheet())
-          uiDefaults.put("HTMLEditorKit.jbStyleSheet", GlobalStyleSheetHolder.getGlobalStyleSheet())
-
-          patchingActivity.end()
         },
         ForkJoinPool.commonPool()
       )
@@ -140,16 +132,34 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<Any>
                                listenerCallbacks = null)
       }
 
-      val starter = initAppActivity.runChild("app starter creation") {
-        findAppStarter(args)
-      }
-
       // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed,
       // but it is OK, because registry is not and should not be used.
       initConfigurationStore(app)
 
-      // ensure that base laf is set before initialization of LafManagerImpl
-      setBaseLafFuture.join()
+      app.invokeLater({
+        // ensure that base laf is set before initialization of LafManagerImpl
+        runActivity("base laf waiting") {
+          setBaseLafFuture.join()
+        }
+
+        runActivity("laf initialization") {
+          val patchingActivity = StartUpMeasurer.startActivity("html style patching")
+          // patch html styles
+          val uiDefaults = UIManager.getDefaults()
+          // create a separate copy for each case
+          val globalStyleSheetHolder = GlobalStyleSheetHolder.getInstance()
+          uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheetHolder.getGlobalStyleSheet())
+          uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheetHolder.getGlobalStyleSheet())
+
+          patchingActivity.end()
+
+          LafManager.getInstance()
+        }
+      }, ModalityState.any())
+
+      val starter = initAppActivity.runChild("app starter creation") {
+        findAppStarter(args)
+      }
 
       val preloadSyncServiceFuture = preloadServices(pluginSet.getEnabledModules(), app, activityPrefix = "")
       prepareStart(app, initAppActivity, preloadSyncServiceFuture).thenApply {

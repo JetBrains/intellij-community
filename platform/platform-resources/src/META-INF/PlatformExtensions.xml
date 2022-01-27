@@ -56,7 +56,8 @@
 
     <applicationService serviceImplementation="com.intellij.util.net.ssl.CertificateManager" preload="await"/>
 
-    <applicationService serviceInterface="com.intellij.ide.plugins.PluginConflictReporter" serviceImplementation="com.intellij.diagnostic.GuiPluginConflictReporter"/>
+    <applicationService serviceInterface="com.intellij.ide.plugins.PluginConflictReporter"
+                        serviceImplementation="com.intellij.diagnostic.GuiPluginConflictReporter"/>
 
     <applicationService serviceInterface="com.intellij.openapi.vfs.newvfs.ManagingFS"
                         serviceImplementation="com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl" preload="true"/>
@@ -66,6 +67,9 @@
     <applicationService serviceInterface="com.intellij.openapi.vfs.pointers.VirtualFilePointerManager"
                         serviceImplementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl"/>
     <vfs.asyncListener implementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl$MyAsyncFileListener"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"
+                        serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl" preload="notHeadless"/>
 
     <applicationService serviceInterface="com.intellij.application.options.RegistryManager"
                         serviceImplementation="com.intellij.openapi.util.registry.RegistryManagerImpl" preload="true"/>
@@ -110,7 +114,7 @@
                         serviceImplementation="com.intellij.ide.plugins.PluginManagerConfigurableServiceImpl"/>
 
     <applicationService serviceInterface="com.intellij.codeWithMe.ClientIdService"
-                        serviceImplementation="com.intellij.codeWithMe.ClientIdServiceImpl" preload="notHeadless" />
+                        serviceImplementation="com.intellij.codeWithMe.ClientIdServiceImpl" />
 
     <projectService serviceImplementation="com.intellij.notification.EventLog$ProjectTracker" preload="notHeadless"/>
     <projectService serviceImplementation="com.intellij.notification.impl.NotificationsManagerImpl$ProjectNotificationsComponent" preload="notHeadless"/>
@@ -381,8 +385,6 @@
 
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.TextAttributesKey$TextAttributeKeyDefaultsProvider"
                         serviceImplementation="com.intellij.openapi.editor.colors.impl.TextAttributeKeyDefaultsProviderImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"
-                        serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl" preload="notHeadless"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorPaletteFactory"
                         serviceImplementation="com.intellij.openapi.options.colors.EditorColorPaletteFactoryImpl"/>
 
@@ -605,7 +607,7 @@
                         serviceImplementation="com.intellij.ui.ColorChooserServiceImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.AbbreviationManager"
-                        serviceImplementation="com.intellij.openapi.actionSystem.impl.AbbreviationManagerImpl" preload="notHeadless"/>
+                        serviceImplementation="com.intellij.openapi.actionSystem.impl.AbbreviationManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager"
                         serviceImplementation="com.intellij.ui.tabs.layout.TabsLayoutSettingsManagerImpl"/>
@@ -1377,7 +1379,6 @@
     <listener class="com.intellij.ide.ui.experimental.toolbar.ExperimentalToolbarSettings$ToolbarRegistryListener"
               topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
     <listener class="com.intellij.ui.ExperimentalUI$NewUiRegistryListener" topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
-    <listener class="com.intellij.ui.ExperimentalUI$NewUiLafManagerListener" topic="com.intellij.ide.ui.LafManagerListener"/>
 
     <listener class="com.intellij.ide.FrameStateManagerAppListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
   </applicationListeners>

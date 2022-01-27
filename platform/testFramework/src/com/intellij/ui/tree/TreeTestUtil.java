@@ -1,15 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import javax.swing.JTree;
+import javax.swing.*;
+import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -95,6 +95,6 @@ public final class TreeTestUtil {
 
 
   public static void assertTreeUI(@NotNull JTree tree) {
-    Assert.assertTrue(tree.getUI() instanceof DefaultTreeUI);
+    Assert.assertTrue(tree.getUI() instanceof BasicTreeUI);
   }
 }
