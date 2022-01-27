@@ -414,7 +414,10 @@ public final class IdeKeyEventDispatcher {
       return true;
     }
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372 (a.k.a. IDEA-35760)
-    boolean isCandidateForAltGr = myLeftCtrlPressed && myRightAltPressed && focusOwner != null && ( (e.getModifiers() & ~InputEvent.SHIFT_MASK) == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK) );
+    boolean isCandidateForAltGr = myLeftCtrlPressed &&
+                                  myRightAltPressed &&
+                                  focusOwner != null &&
+                                  ( (e.getModifiers() & ~InputEvent.SHIFT_MASK) == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK) );
     if (isCandidateForAltGr) {
       if (Registry.is("actionSystem.force.alt.gr", false)) {
         return false;
