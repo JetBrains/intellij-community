@@ -16,6 +16,7 @@
 package com.jetbrains.python.quickFixes;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -344,6 +345,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     List<PyFile> djangoPackages = PyModuleNameIndex.findByQualifiedName(QualifiedName.fromComponents("django"),
                                                                        myFixture.getProject(), scope);
     if (djangoPackages.size() != 1) {
+      System.out.println("Dumb mode: " + DumbService.isDumb(myFixture.getProject()));
       dumpSdkRoots();
       dumpDjangoModulesFromModuleIndex(scope);
     }
@@ -357,6 +359,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
 
     PyClass djangoViewClass = PyClassNameIndex.findClass("django.views.generic.base.View", myFixture.getProject());
     if (djangoViewClass == null) {
+      System.out.println("Dumb mode: " + DumbService.isDumb(myFixture.getProject()));
       dumpSdkRoots();
       dumpDjangoModulesFromModuleIndex(GlobalSearchScope.allScope(myFixture.getProject()));
     }

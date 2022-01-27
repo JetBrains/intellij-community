@@ -4,6 +4,7 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
@@ -190,6 +191,7 @@ public class PyClassNameCompletionTest extends PyTestCase {
 
     PyClass ndarrayUserSkeleton = PyClassNameIndex.findClass("numpy.core.multiarray.ndarray", myFixture.getProject());
     if (ndarrayUserSkeleton == null) {
+      System.out.println("Dumb mode: " + DumbService.isDumb(myFixture.getProject()));
       dumpSdkRoots();
     }
     assertNotNull(ndarrayUserSkeleton);
