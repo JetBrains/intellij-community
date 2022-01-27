@@ -385,17 +385,11 @@ class InternalDecoratorImpl internal constructor(
       val anchor = info.anchor
       val divider = initDivider()
       divider.invalidate()
-      if (anchor == ToolWindowAnchor.TOP) {
-        add(divider, BorderLayout.SOUTH)
-      }
-      else if (anchor == ToolWindowAnchor.LEFT) {
-        add(divider, BorderLayout.EAST)
-      }
-      else if (anchor == ToolWindowAnchor.BOTTOM) {
-        dividerAndHeader.add(divider, BorderLayout.NORTH)
-      }
-      else if (anchor == ToolWindowAnchor.RIGHT) {
-        add(divider, BorderLayout.WEST)
+      when (anchor) {
+        ToolWindowAnchor.TOP -> add(divider, BorderLayout.SOUTH)
+        ToolWindowAnchor.LEFT -> add(divider, BorderLayout.EAST)
+        ToolWindowAnchor.BOTTOM -> dividerAndHeader.add(divider, BorderLayout.NORTH)
+        ToolWindowAnchor.RIGHT -> add(divider, BorderLayout.WEST)
       }
       divider.preferredSize = Dimension(0, 0)
     }
@@ -407,8 +401,7 @@ class InternalDecoratorImpl internal constructor(
 
     // push "apply" request forward
     if (info.type == ToolWindowType.FLOATING) {
-      val floatingDecorator = SwingUtilities.getAncestorOfClass(FloatingDecorator::class.java, this) as FloatingDecorator
-      floatingDecorator.apply(info)
+      (SwingUtilities.getAncestorOfClass(FloatingDecorator::class.java, this) as FloatingDecorator?)?.apply(info)
     }
   }
 
@@ -698,7 +691,7 @@ class InternalDecoratorImpl internal constructor(
     override fun getAccessibleName(): String {
       return super.getAccessibleName()
              ?: (
-               ((toolWindow.title?.takeIf(String::isNotEmpty) ?: toolWindow.stripeTitle).takeIf(String::isNotEmpty) ?: toolWindow.id ?: "")
+               ((toolWindow.title?.takeIf(String::isNotEmpty) ?: toolWindow.stripeTitle).takeIf(String::isNotEmpty) ?: toolWindow.id)
                + " " + IdeBundle.message("internal.decorator.accessible.postfix")
                 )
     }
