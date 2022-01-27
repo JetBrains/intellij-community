@@ -1179,7 +1179,7 @@
 
     <notificationGroup id="JDK Update Error" displayType="STICKY_BALLOON" bundle="messages.LangBundle" key="notification.group.jdk.update.error"/>
     <notificationGroup id="ColorSchemeDrop" displayType="BALLOON" hideFromSettings="true"/>
-    <notificationGroup id="Services Tool Window" displayType="STICKY_BALLOON" isLogByDefault="false"
+    <notificationGroup id="Services Tool Window" displayType="STICKY_BALLOON" isLogByDefault="false" bundle="messages.ExecutionBundle" key="notification.group.services"
                        notificationIds="run.dashboard.multiple.run.configurations"/>
     <projectService serviceInterface="com.intellij.execution.services.ServiceViewManager" serviceImplementation="com.intellij.execution.services.ServiceViewManagerImpl"/>
     <postStartupActivity implementation="com.intellij.execution.services.ServiceViewStartupActivity"/>
@@ -1392,12 +1392,11 @@
                 factoryClass="com.intellij.analysis.problemsView.toolWindow.ProblemsView"/>
     <toolWindowExtractorMode id="Problems View" mode="per_client"/>
     <projectService serviceImplementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewStateManager"/>
-    <notificationGroup id="Automatic Module Unloading" displayType="BALLOON"/>
-    <notificationGroup id="Execution" displayType="NONE"/>
-    <notificationGroup id="Inspection Results" displayType="TOOL_WINDOW" toolWindowId="Inspection Results"/>
+    <notificationGroup id="Automatic Module Unloading" displayType="BALLOON" bundle="messages.ProjectBundle" key="notification.group.automatic.module.unloading"/>
+    <notificationGroup id="Execution" displayType="NONE" bundle="messages.ExecutionBundle" key="notification.group.execution"/>
+    <notificationGroup id="Inspection Results" displayType="TOOL_WINDOW" toolWindowId="Inspection Results" bundle="messages.InspectionsBundle" key="notification.group.inspection.results"/>
     <notificationGroup id="Find in Path" displayType="TOOL_WINDOW" toolWindowId="Find" isLogByDefault="false" bundle="messages.FindBundle" key="find.in.files.notification.group"/>
-    <notificationGroup id="Dependencies" displayType="TOOL_WINDOW" toolWindowId="Dependency Viewer"/>
-    <notificationGroup id="Suggest Run Dashboard" displayType="BALLOON"/>
+    <notificationGroup id="Dependencies" displayType="TOOL_WINDOW" toolWindowId="Dependency Viewer" bundle="messages.CodeInsightBundle" key="notification.group.dependencies"/>
     <notificationGroup id="Parameter Name Hints" displayType="BALLOON"/>
     <notificationGroup id="Print" displayType="BALLOON"/>
     <notificationGroup id="Project Template" displayType="BALLOON"/>

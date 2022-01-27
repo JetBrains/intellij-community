@@ -1255,11 +1255,10 @@
                        notificationIds="plugins.updated.without.restart;plugins.updated.after.restart;plugin.auto.switch;plugins.updated.restart.required;
                        plugins.updated.suggest.restart"/>
     <notificationGroup id="leftover.ide.directories" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.leftover.directories"/>
-    <notificationGroup id="Built-in Server" displayType="STICKY_BALLOON"/>
-    <notificationGroup id="Password Safe" displayType="STICKY_BALLOON"/>
-    <notificationGroup id="Tutorials" displayType="BALLOON"/>
-    <notificationGroup id="Test Results: Run" displayType="TOOL_WINDOW" toolWindowId="Run" isLogByDefault="false"/>
-    <notificationGroup id="Test Results: Debug" displayType="TOOL_WINDOW" toolWindowId="Debug" isLogByDefault="false"/>
+    <notificationGroup id="Built-in Server" displayType="STICKY_BALLOON" bundle="messages.IdeBundle" key="notification.group.built.in.server"/>
+    <notificationGroup id="Password Safe" displayType="STICKY_BALLOON" bundle="messages.IdeBundle" key="notification.group.password.safe"/>
+    <notificationGroup id="Test Results: Run" displayType="TOOL_WINDOW" toolWindowId="Run" isLogByDefault="false" hideFromSettings="true"/>
+    <notificationGroup id="Test Results: Debug" displayType="TOOL_WINDOW" toolWindowId="Debug" isLogByDefault="false" hideFromSettings="true"/>
     <notificationGroup id="feedback.form" displayType="BALLOON" bundle="messages.ApplicationBundle" key="feedback.form.notification.group"/>
     <notificationGroup id="PerformanceWatcher" displayType="STICKY_BALLOON" bundle="messages.DiagnosticBundle" key="notification.group.performance.watcher"/>
 
