@@ -1410,6 +1410,9 @@ public class JavaDocInfoGenerator {
   private void generateUnknownTagsSections(StringBuilder buffer, PsiDocComment comment) {
     var tags = comment.getTags();
     for (PsiDocTag tag : tags) {
+      if (tag instanceof PsiInlineDocTag) {
+        continue; // groovy provides inline tags here as well
+      }
       var tagName = tag.getName();
       if (!ourKnownTags.contains(tagName)) {
         generateSingleTagSection(buffer, comment, tagName, () -> tagName);
