@@ -20,7 +20,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Key
-import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -40,10 +39,7 @@ import org.jetbrains.kotlin.idea.gradle.configuration.*
 import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade.Companion.KOTLIN_CODE_STYLE_GRADLE_SETTING
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
-import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
-import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl.findKotlinPluginVersion
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getResolvedVersionByModuleData
-import org.jetbrains.kotlin.idea.gradleTooling.ArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.CompilerArgumentsBySourceSet
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheHolder
@@ -56,7 +52,6 @@ import org.jetbrains.kotlin.platform.impl.isCommon
 import org.jetbrains.kotlin.platform.impl.isJavaScript
 import org.jetbrains.kotlin.platform.impl.isJvm
 import org.jetbrains.kotlin.psi.UserDataProperty
-import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
@@ -267,18 +262,17 @@ fun configureFacetByGradleModule(
         return null
     }
 
-    val compilerVersion = sourceSetName?.let { moduleNode.kotlinTaskPropertiesBySourceSet.getValue(it).pluginVersion }
-        // required for GradleFacetImportTest.{testCommonImportByPlatformPlugin, testKotlinAndroidPluginDetection}
-        ?: moduleNode.findAll(BuildScriptClasspathData.KEY).firstOrNull()?.data?.let(::findKotlinPluginVersion)
-        ?: return null
     val platformKind = detectPlatformKindByPlugin(moduleNode) ?: detectPlatformByLibrary(moduleNode)
+    val kotlinGradleSourceSetDataNode = kotlinGradleProjectDataNode.findAll(KotlinGradleSourceSetData.KEY)
+        .firstOrNull { it.data.sourceSetName == sourceSetName }
+
+    val compilerVersion = kotlinGradleSourceSetDataNode?.data?.kotlinPluginVersion ?: return null
+
 
     // TODO there should be a way to figure out the correct platform version
     val platform = platformKind?.defaultPlatform
 
     val kotlinFacet = ideModule.getOrCreateFacet(modelsProvider, false, GradleConstants.SYSTEM_ID.id)
-    val kotlinGradleSourceSetDataNode = kotlinGradleProjectDataNode.findAll(KotlinGradleSourceSetData.KEY)
-        .firstOrNull { it.data.sourceSetName == sourceSetName }
     kotlinFacet.configureFacet(
         compilerVersion = compilerVersion,
         platform = platform,
@@ -349,16 +343,6 @@ fun configureFacetByCachedCompilerArguments(
         applyCompilerArgumentsToFacet(currentCompilerArguments, defaultCompilerArguments, kotlinFacet, modelsProvider)
         adjustClasspath(kotlinFacet, dependencyClasspath.toList())
     }
-}
-
-fun configureFacetByCompilerArguments(kotlinFacet: KotlinFacet, argsInfo: ArgsInfo, modelsProvider: IdeModifiableModelsProvider?) {
-    val currentCompilerArguments = argsInfo.currentArguments
-    val defaultCompilerArguments = argsInfo.defaultArguments
-    val dependencyClasspath = argsInfo.dependencyClasspath.map { PathUtil.toSystemIndependentName(it) }
-    if (currentCompilerArguments.isNotEmpty()) {
-        parseCompilerArgumentsToFacet(currentCompilerArguments, defaultCompilerArguments, kotlinFacet, modelsProvider)
-    }
-    adjustClasspath(kotlinFacet, dependencyClasspath)
 }
 
 private fun getAdditionalVisibleModuleNames(moduleNode: DataNode<ModuleData>, sourceSetName: String): Set<String> {

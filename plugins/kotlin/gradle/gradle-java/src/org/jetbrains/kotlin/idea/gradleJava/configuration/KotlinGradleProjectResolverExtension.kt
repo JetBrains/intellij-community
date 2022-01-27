@@ -13,7 +13,9 @@ import com.intellij.openapi.util.io.FileUtil
 import org.gradle.api.artifacts.Dependency
 import org.gradle.internal.impldep.org.apache.commons.lang.math.RandomUtils
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.idea.gradle.configuration.*
+import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleProjectData
+import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleSourceSetData
+import org.jetbrains.kotlin.idea.gradle.configuration.kotlinGradleSourceSetDataNodes
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getDependencyModules
 import org.jetbrains.kotlin.idea.gradleTooling.*
@@ -232,6 +234,7 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
             KotlinGradleSourceSetData(sourceSetName).apply {
                 cachedArgsInfo = cachedArgs
                 additionalVisibleSourceSets = kotlinModel.additionalVisibleSourceSets.getValue(sourceSetName)
+                kotlinPluginVersion = kotlinModel.kotlinTaskProperties.getValue(sourceSetName).pluginVersion
                 mainModuleNode.kotlinGradleProjectDataNodeOrFail.createChild(KotlinGradleSourceSetData.KEY, this)
             }
         }

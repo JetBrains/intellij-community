@@ -177,6 +177,11 @@ class ModuleInfo(val module: Module, val projectInfo: ProjectInfo) {
         checkReport("Additional arguments", arguments, actualArguments)
     }
 
+    fun kotlinFacetSettingCreated() {
+        val facet = KotlinFacet.get(module)?.configuration?.settings
+        if (facet == null) report("KotlinFacetSettings does not exist")
+    }
+
     fun noLibraryDependency(libraryNameRegex: Regex) {
         val libraryEntries = rootModel.orderEntries.filterIsInstance<LibraryOrderEntry>()
             .filter { it.libraryName?.matches(libraryNameRegex) == true }
