@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import org.apache.log4j.Level;
@@ -119,6 +119,7 @@ public class JulLogger extends Logger {
                                                 boolean showDateInConsole,
                                                 @Nullable Runnable onRotate) {
     RollingFileHandler fileHandler = new RollingFileHandler(logFilePath, 10_000_000, 12, appendToFile, onRotate);
+    fileHandler.setLevel(java.util.logging.Level.FINEST);
     IdeaLogRecordFormatter layout = new IdeaLogRecordFormatter();
     fileHandler.setFormatter(layout);
     java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
