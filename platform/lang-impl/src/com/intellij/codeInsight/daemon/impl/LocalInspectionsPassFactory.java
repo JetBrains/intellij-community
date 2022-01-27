@@ -42,8 +42,7 @@ public final class LocalInspectionsPassFactory implements MainHighlightingPassFa
                                                                @NotNull HighlightInfoProcessor highlightInfoProcessor) {
     final TextRange textRange = file.getTextRange();
     LOG.assertTrue(textRange != null, "textRange is null for " + file + " (" + PsiUtilCore.getVirtualFile(file) + ")");
-    TextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(document);
-    return new MyLocalInspectionsPass(file, document, textRange, visibleRange, highlightInfoProcessor);
+    return new MyLocalInspectionsPass(file, document, textRange, LocalInspectionsPass.EMPTY_PRIORITY_RANGE, highlightInfoProcessor);
   }
 
   private static final class MyLocalInspectionsPass extends LocalInspectionsPass {
