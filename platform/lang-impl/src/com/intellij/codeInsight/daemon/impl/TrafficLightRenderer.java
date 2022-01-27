@@ -280,7 +280,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         details = DaemonBundle.message("essential.analysis.completed.details");
       }
       else {
-        title = DaemonBundle.message("no.errors.or.warnings.found");
+        title = "";
         details = "";
       }
     }
@@ -337,7 +337,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         new AnalyzerStatus(inspectionsCompletedIcon, title, details, this::createUIController);
     }
 
-    return new AnalyzerStatus(AllIcons.General.InspectionsEye, title, details, this::createUIController).
+    return new AnalyzerStatus(AllIcons.General.InspectionsEye, DaemonBundle.message("no.errors.or.warnings.found"), details, this::createUIController).
       withTextStatus(DaemonBundle.message("iw.status.analyzing")).
       withAnalyzingType(AnalyzingType.EMPTY).
       withPasses(ContainerUtil.map(status.passes, p -> new PassWrapper(p.getPresentableName(), p.getProgress(), p.isFinished())));
