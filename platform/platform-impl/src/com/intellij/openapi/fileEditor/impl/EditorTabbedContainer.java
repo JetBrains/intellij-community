@@ -291,6 +291,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     tab.setTestableUi(new MyQueryable(tab));
     ReadAction.nonBlocking(() -> EditorTabPresentationUtil.getEditorTabTitle(myProject, file))
       .expireWith(parentDisposable)
+      .coalesceBy(this)
       .finishOnUiThread(ModalityState.any(), (@NlsContexts.TabTitle String title) -> tab.setText(title))
       .submit(AppExecutorUtil.getAppExecutorService());
 

@@ -288,6 +288,7 @@ internal open class SelectedEditorFilePath {
           } ?: baseTitle, baseTitle)
       }
         .expireWith(project)
+        .coalesceBy(this)
         .finishOnUiThread(ModalityState.any()) {
           classTitle.classPath = it.first
           classTitle.longText = if (classTitle.fullPath) it.first else it.second

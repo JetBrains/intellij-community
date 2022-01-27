@@ -1060,6 +1060,7 @@ public final class EditorWindow {
     if (index == -1) return;
     ReadAction.nonBlocking(() -> EditorTabPresentationUtil.getEditorTabTitle(getManager().getProject(), file))
       .expireWhen(this::isDisposed)
+      .coalesceBy(this)
       .finishOnUiThread(ModalityState.any(), (@NlsContexts.TabTitle String title) -> {
         int index1 = findFileEditorIndex(file);
         if (index1 != -1) setTitleAt(index1, title);

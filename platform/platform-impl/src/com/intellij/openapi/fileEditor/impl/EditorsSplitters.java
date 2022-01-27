@@ -505,6 +505,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       Path finalIoFile = ioFile;
       ReadAction.nonBlocking(() -> FrameTitleBuilder.getInstance().getFileTitle(project, file))
         .expireWith(this)
+        .coalesceBy(this)
         .finishOnUiThread(ModalityState.any(), (@NlsContexts.TabTitle String title) -> {
           frame.setFileTitle(title, finalIoFile);
         })
