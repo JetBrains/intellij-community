@@ -82,7 +82,7 @@ internal fun AnActionEvent.isActiveProcess(): Boolean {
   return this.environment() != null
 }
 
-internal fun RunToolbarData.startWaitingForAProcess(project: Project, settings: RunnerAndConfigurationSettings, executorId: String) {
+fun RunToolbarData.startWaitingForAProcess(project: Project, settings: RunnerAndConfigurationSettings, executorId: String) {
   RunToolbarSlotManager.getInstance(project).startWaitingForAProcess(this, settings, executorId)
 }
 
