@@ -4,7 +4,6 @@ package com.intellij.openapi.fileEditor.impl.text;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter;
-import com.intellij.codeInsight.daemon.impl.focusMode.FocusModePassFactory;
 import com.intellij.codeInsight.documentation.render.DocRenderManager;
 import com.intellij.codeInsight.documentation.render.DocRenderPassFactory;
 import com.intellij.codeInsight.folding.CodeFoldingManager;

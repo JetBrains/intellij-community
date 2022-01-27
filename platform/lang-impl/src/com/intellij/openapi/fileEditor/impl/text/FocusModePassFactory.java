@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInsight.daemon.impl.focusMode;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.*;
+import com.intellij.codeInsight.daemon.impl.focusMode.FocusModeProvider;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -28,7 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public final class FocusModePassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
+final class FocusModePassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
   private static final Key<Set<FocusRegion>> FOCUS_REGIONS_FROM_PASS = Key.create("editor.focus.mode.segmentsFromPass");
   private static final LanguageExtension<FocusModeProvider> EP_NAME = new LanguageExtension<>("com.intellij.focusModeProvider");
   private static final long MAX_ALLOWED_TIME = 100;
@@ -52,7 +53,7 @@ public final class FocusModePassFactory implements TextEditorHighlightingPassFac
   }
 
   @Nullable
-  public static List<? extends Segment> calcFocusZones(@Nullable PsiFile file) {
+  static List<? extends Segment> calcFocusZones(@Nullable PsiFile file) {
     if (file == null || !isEnabled()) return null;
     return CachedValuesManager.getCachedValue(file, () -> {
       FileViewProvider provider = file.getViewProvider();
@@ -82,7 +83,7 @@ public final class FocusModePassFactory implements TextEditorHighlightingPassFac
     return resultRef.get();
   }
 
-  public static void setToEditor(@NotNull List<? extends Segment> zones, Editor editor) {
+  static void setToEditor(@NotNull List<? extends Segment> zones, Editor editor) {
     mergeSegments(editor, zones);
   }
 
