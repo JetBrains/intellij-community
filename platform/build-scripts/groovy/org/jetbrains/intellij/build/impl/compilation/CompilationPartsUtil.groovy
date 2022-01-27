@@ -3,14 +3,11 @@ package org.jetbrains.intellij.build.impl.compilation
 
 import com.google.gson.Gson
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Trinity
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.io.Compressor
 import com.intellij.util.io.Decompressor
 import groovy.transform.CompileStatic
 import org.apache.http.HttpStatus
@@ -19,11 +16,11 @@ import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpHead
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.tools.ant.BuildException
-import org.apache.tools.ant.taskdefs.ExecTask
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.impl.CompilationContextImpl
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.logging.IntelliJBuildException
 
 import java.nio.charset.StandardCharsets
@@ -109,7 +106,7 @@ class CompilationPartsUtil {
     }
   }
 
-  static void packAndUploadToServer(CompilationContextImpl context, String zipsLocation) {
+  static void packAndUploadToServer(CompilationContext context, String zipsLocation) {
     BuildMessages messages = context.messages
 
     messages.progress("Packing classes and uploading them to the server")
@@ -176,7 +173,7 @@ class CompilationPartsUtil {
             def childMessages = messages.forkForParallelTask(ctx.name)
             executor.submit {
               withForkedMessages(childMessages) { BuildMessages msgs ->
-                pack(msgs, context.ant, ctx, incremental)
+                pack(msgs, context, ctx)
               }
             }
           }
@@ -265,7 +262,7 @@ class CompilationPartsUtil {
 
         executor.waitForAllComplete(messages)
 
-        StreamUtil.closeStream(uploader)
+        CloseStreamUtil.closeStream(uploader)
       }
 
       messages.info("Upload complete: reused ${reusedCount.get()} parts, uploaded ${uploadedCount.get()} parts")
@@ -509,7 +506,7 @@ class CompilationPartsUtil {
         }
         executor.waitForAllComplete(messages)
 
-        StreamUtil.closeStream(httpClient)
+        CloseStreamUtil.closeStream(httpClient)
 
         deinitLogging()
       }
@@ -602,26 +599,13 @@ class CompilationPartsUtil {
     }
   }
 
-  private static void pack(BuildMessages messages, AntBuilder ant, PackAndUploadContext ctx, boolean incremental) {
+  private static void pack(BuildMessages messages, CompilationContext compilationContext, PackAndUploadContext ctx) {
     messages.block("Packing $ctx.name") {
-      if (SystemInfo.isUnix) {
-        def task = new ExecTask()
-        task.project = ant.project
-        task.executable = "zip"
-        task.dir = new File(ctx.output.absolutePath)
-        task.createArg().line = "-1 -r -q"
-        if (incremental) {
-          task.createArg().line = "--filesync"
-        }
-        task.createArg().line = ctx.archive
-        task.createArg().value = '.'
-        task.execute()
+      def destination = new File(ctx.archive).toPath()
+      if (Files.exists(destination)) {
+        Files.delete(destination)
       }
-      else {
-        def zip = new Compressor.Zip(new File(ctx.archive)).withLevel(1)
-        zip.addDirectory(new File(ctx.output.absolutePath))
-        zip.close()
-      }
+      BuildHelper.zip(compilationContext, destination, ctx.output.absoluteFile.toPath(), true)
     }
   }
 
