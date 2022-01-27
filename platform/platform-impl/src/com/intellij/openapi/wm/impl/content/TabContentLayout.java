@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.MouseDragHelper;
@@ -66,7 +65,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
   public void init(@NotNull ContentManager contentManager) {
     reset();
 
-    idLabel = new BaseLabel(ui, Registry.is("ide.experimental.ui")) {
+    idLabel = new BaseLabel(ui, ExperimentalUI.isNewUI()) {
       @Override
       protected boolean allowEngravement() {
         return myUi.window.isActive();

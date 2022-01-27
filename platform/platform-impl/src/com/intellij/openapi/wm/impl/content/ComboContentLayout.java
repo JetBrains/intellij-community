@@ -4,7 +4,7 @@ package com.intellij.openapi.wm.impl.content;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.ContentManager;
@@ -24,7 +24,7 @@ final class ComboContentLayout extends ContentLayout {
   public void init(@NotNull ContentManager contentManager) {
     reset();
 
-    idLabel = new BaseLabel(ui, Registry.is("ide.experimental.ui"));
+    idLabel = new BaseLabel(ui, ExperimentalUI.isNewUI());
     MouseDragHelper.setComponentDraggable(idLabel, true);
     comboLabel = new ContentComboLabel(this);
   }
