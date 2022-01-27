@@ -739,8 +739,9 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
     @Override
     public VirtualFile[] getChildren() {
-      return myChildren == null ? VirtualFile.EMPTY_ARRAY
-                                : myChildren.values().stream().map(o -> o.orElse(null)).filter(Objects::nonNull).toArray(VirtualFile[]::new);
+      return myChildren == null
+             ? VirtualFile.EMPTY_ARRAY
+             : myChildren.values().stream().map(o -> o.orElse(null)).filter(Objects::nonNull).toArray(VirtualFile[]::new);
     }
   }
 }
