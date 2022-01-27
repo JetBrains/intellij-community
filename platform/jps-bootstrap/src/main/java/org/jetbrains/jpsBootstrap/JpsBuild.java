@@ -44,7 +44,7 @@ public class JpsBuild {
     System.setProperty("kotlin.incremental.compilation", "true");
     System.setProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "true");
 
-    if (underTeamCity) {
+    if (underTeamCity && System.getProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION) == null) {
       // Under TeamCity agents try to utilize all available cpu resources
       int cpuCount = Integer.parseInt(JpsBootstrapUtil.getTeamCityConfigPropertyOrThrow("teamcity.agent.hardware.cpuCount"));
       System.setProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, Integer.toString(cpuCount + 1));
