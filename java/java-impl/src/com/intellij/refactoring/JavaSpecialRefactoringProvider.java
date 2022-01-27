@@ -101,8 +101,6 @@ public interface JavaSpecialRefactoringProvider {
 
   void runPullUpProcessor(@NotNull PsiClass sourceClass, PsiClass targetSuperClass, MemberInfo[] membersToMove, DocCommentPolicy javaDocPolicy);
 
-  void runMakeMethodStaticProcessor(Project project, final PsiMethod method, boolean replaceQualifier);
-
 
   void moveClassesOrPackages(Project project,
                              PsiElement[] elements,

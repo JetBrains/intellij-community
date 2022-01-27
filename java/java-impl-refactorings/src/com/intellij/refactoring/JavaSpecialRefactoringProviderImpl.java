@@ -18,8 +18,6 @@ import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHand
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
 import com.intellij.refactoring.introduceField.InplaceIntroduceFieldPopup;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
-import com.intellij.refactoring.makeStatic.MakeMethodStaticProcessor;
-import com.intellij.refactoring.makeStatic.Settings;
 import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
@@ -159,11 +157,6 @@ public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactorin
                                  MemberInfo[] membersToMove,
                                  DocCommentPolicy javaDocPolicy) {
     new PullUpProcessor(sourceClass, targetSuperClass, membersToMove, javaDocPolicy).run();
-  }
-
-  @Override
-  public void runMakeMethodStaticProcessor(Project project, PsiMethod method, boolean replaceQualifier) {
-    new MakeMethodStaticProcessor(project, method, new Settings(replaceQualifier, null, null)).run();
   }
 
   @Override
