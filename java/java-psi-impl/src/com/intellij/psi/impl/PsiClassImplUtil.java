@@ -60,6 +60,14 @@ public final class PsiClassImplUtil {
     return classes.toArray(PsiClass.EMPTY_ARRAY);
   }
 
+  /**
+   * @return a list of all direct super classes of {@param aClass} concatenated with their super classes, recursively up to the top
+   */
+  @NotNull
+  public static Collection<PsiClass> getAllSuperClassesRecursively(@NotNull PsiClass aClass) {
+    return getMap(aClass).myAllSupers;
+  }
+
   @Nullable
   public static PsiField findFieldByName(@NotNull PsiClass aClass, String name, boolean checkBases) {
     List<PsiMember> byMap = findByMap(aClass, name, checkBases, MemberType.FIELD);
