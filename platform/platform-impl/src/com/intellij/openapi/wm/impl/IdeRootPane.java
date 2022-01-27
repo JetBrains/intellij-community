@@ -136,7 +136,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
     updateMainMenuVisibility();
 
-    if (ExperimentalUI.isNewToolWindowsStripes()) {
+    if (ExperimentalUI.isNewUI()) {
       toolWindowButtonManager = new ToolWindowPaneNewButtonManager();
       toolWindowButtonManager.add(myContentPane);
     }
@@ -355,7 +355,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   protected @NotNull IdeStatusBarImpl createStatusBar(@NotNull IdeFrame frame) {
-    boolean addToolWindowsWidget = !ExperimentalUI.isNewToolWindowsStripes()
+    boolean addToolWindowsWidget = !ExperimentalUI.isNewUI()
                                    && !AccessibilityUtils.isScreenReaderDetected();
     return new IdeStatusBarImpl(frame, addToolWindowsWidget);
   }

@@ -47,12 +47,12 @@ abstract class ContentLayout {
     String title = ui.window.getStripeTitle();
 
     String suffix = getTitleSuffix();
-    if (ExperimentalUI.isNewToolWindowsStripes()) suffix = null;
+    if (ExperimentalUI.isNewUI()) suffix = null;
     if (suffix != null) title += suffix;
 
     label.setText(title);
     label.setBorder(JBUI.Borders.empty(0, 2, 0, 7));
-    if (ExperimentalUI.isNewToolWindowsStripes()) {
+    if (ExperimentalUI.isNewUI()) {
       label.setBorder(shouldShowId()
                       ? JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets())
                       : JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets()));

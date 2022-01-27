@@ -113,7 +113,7 @@ final class ContentComboLabel extends ContentLabel {
       size.width += myComboIcon.getIconWidth();
     }
 
-    if (ExperimentalUI.isNewToolWindowsStripes()) {
+    if (ExperimentalUI.isNewUI()) {
       setBorder(myLayout.shouldShowId()
                 ? JBUI.Borders.empty(0, JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets().left, 0, ICONS_GAP)
                 : JBUI.Borders.empty(0, JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets().left, 0, ICONS_GAP));

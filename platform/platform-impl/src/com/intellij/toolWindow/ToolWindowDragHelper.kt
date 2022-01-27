@@ -8,7 +8,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor.*
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.impl.*
 import com.intellij.ui.ComponentUtil
-import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.ExperimentalUI.isNewUI
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.RelativePoint
@@ -59,7 +59,7 @@ internal fun Component.createDragImage(): BufferedImage? {
     if (areaSize.isNotEmpty()) {
       ImageUtil.createImage(graphicsConfiguration, areaSize.width, areaSize.height, BufferedImage.TYPE_INT_RGB).also { image ->
         val graphics = image.graphics
-        graphics.color = if (ExperimentalUI.isNewToolWindowsStripes()) {
+        graphics.color = if (isNewUI()) {
           JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_FLOATING_BACKGROUND
         }
         else {

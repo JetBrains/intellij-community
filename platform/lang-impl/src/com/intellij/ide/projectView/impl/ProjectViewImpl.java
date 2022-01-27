@@ -786,7 +786,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       content.putUserData(SUB_ID_KEY, subId);
       content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
       Icon icon = subId != null ? newPane.getPresentableSubIdIcon(subId) : newPane.getIcon();
-      if (!ExperimentalUI.isNewToolWindowsStripes()) {
+      if (!ExperimentalUI.isNewUI()) {
         content.setIcon(icon);
         content.setPopupIcon(icon);
       }

@@ -448,6 +448,6 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
   }
 
   public static int getTabLayoutStart(){
-    return ExperimentalUI.isNewToolWindowsStripes() ? 0 : TAB_LAYOUT_START;
+    return ExperimentalUI.isNewUI() ? 0 : TAB_LAYOUT_START;
   }
 }

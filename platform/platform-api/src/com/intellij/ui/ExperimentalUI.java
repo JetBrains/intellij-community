@@ -42,10 +42,6 @@ public final class ExperimentalUI {
     return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY);
   }
 
-  public static boolean isNewToolWindowsStripes() {
-    return isEnabled("ide.experimental.ui.toolwindow.stripes");
-  }
-
   public static boolean isNewEditorTabs() {
     return isEnabled("ide.experimental.ui.editor.tabs");
   }

@@ -725,7 +725,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     private TabPanel() {
       super(new MigLayout(MigLayoutUtilKt.createLayoutConstraints(0, 0).noVisualPadding().fillY()));
       setBorder(JBUI.Borders.emptyRight(2));
-      if (ExperimentalUI.isNewToolWindowsStripes()) {
+      if (ExperimentalUI.isNewUI()) {
         setBorder(JBUI.Borders.empty());
       }
     }

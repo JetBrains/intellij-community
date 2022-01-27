@@ -18,7 +18,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.toolWindow.InternalDecoratorImpl
-import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.ExperimentalUI.isNewUI
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.awt.RelativePoint
@@ -288,7 +288,7 @@ internal class SingleContentLayout(
 
   @NlsSafe
   private fun createProcessName(title: String, prefix: String? = null) = prefix?.let {
-    if (ExperimentalUI.isNewToolWindowsStripes()) it else "$it:"
+    if (isNewUI()) it else "$it:"
   } ?: title
 
   private inner class TabAdapter(

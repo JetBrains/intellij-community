@@ -28,6 +28,7 @@ import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.toolWindow.ToolWindowProperty
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.ExperimentalUI.isNewUI
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.UIBundle
 import com.intellij.ui.content.Content
@@ -106,7 +107,7 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   private val contentManager = lazy {
     val result = createContentManager()
-    if (ExperimentalUI.isNewToolWindowsStripes()) {
+    if (isNewUI()) {
       result.addContentManagerListener(UpdateBackgroundContentManager(decorator))
     }
     result
@@ -520,7 +521,7 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
     currentContentFactory.createToolWindowContent(toolWindowManager.project, this)
 
-    if (ExperimentalUI.isNewToolWindowsStripes()) {
+    if (isNewUI()) {
       setBackgroundRecursively(contentManager.value.component, JBUI.CurrentTheme.ToolWindow.background())
       addAdjustListener(decorator, contentManager.value.component)
     }
@@ -585,7 +586,7 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   private inner class GearActionGroup(toolWindow: ToolWindowImpl) : DefaultActionGroup(), DumbAware {
     init {
       templatePresentation.icon = AllIcons.General.GearPlain
-      if (ExperimentalUI.isNewToolWindowsStripes()) {
+      if (isNewUI()) {
         templatePresentation.icon = AllIcons.Actions.More
       }
       templatePresentation.text = IdeBundle.message("show.options.menu")
@@ -607,7 +608,7 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
       addAction(toggleToolbarGroup).setAsSecondary(true)
       add(ActionManager.getInstance().getAction("TW.ViewModeGroup"))
-      if (ExperimentalUI.isNewToolWindowsStripes()) {
+      if (isNewUI()) {
         add(SquareStripeButton.createMoveGroup(toolWindow))
       }
       else {
