@@ -103,10 +103,6 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     ContainerUtil.addAll(myMembersToMove, members);
 
     setCommandName(members);
-
-    final String targetClassName = dialog.getTargetClassName();
-    myTargetClass = JavaPsiFacade.getInstance(myProject).findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
-    LOG.assertTrue(myTargetClass != null, "target class: " + targetClassName);
     myNewVisibility = dialog.getMemberVisibility();
   }
 
@@ -122,6 +118,10 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected UsageInfo @NotNull [] findUsages() {
+    final String targetClassName = myOptions.getTargetClassName();
+    myTargetClass = JavaPsiFacade.getInstance(myProject).findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
+    LOG.assertTrue(myTargetClass != null, "target class: " + targetClassName);
+
     final List<UsageInfo> usagesList = new ArrayList<>();
     for (PsiMember member : myMembersToMove) {
       for (PsiReference psiReference : ReferencesSearch.search(member)) {
