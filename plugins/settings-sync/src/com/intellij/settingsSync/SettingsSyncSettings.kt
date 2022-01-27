@@ -4,9 +4,17 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.settingsSync.SettingsSyncSettings.Companion.FILE_SPEC
-import com.intellij.util.EventDispatcher
-import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.messages.Topic
 import java.util.*
+
+internal interface SettingsSyncEnabledStateListener {
+  fun enabledStateChanged(syncEnabled: Boolean)
+
+  companion object {
+    @Topic.AppLevel
+    internal val TOPIC = Topic("SettingsSyncEnabledState", SettingsSyncEnabledStateListener::class.java)
+  }
+}
 
 @State(name = "SettingsSyncSettings", storages = [Storage(FILE_SPEC)])
 internal class SettingsSyncSettings : SimplePersistentStateComponent<SettingsSyncSettings.SettingsSyncSettingsState>(
@@ -18,14 +26,16 @@ internal class SettingsSyncSettings : SimplePersistentStateComponent<SettingsSyn
     const val FILE_SPEC = "settingsSync.xml"
   }
 
-  private val evenDispatcher = EventDispatcher.create(Listener::class.java)
-
   var syncEnabled
     get() = state.syncEnabled
     set(value) {
       state.syncEnabled = value
-      evenDispatcher.multicaster.settingsChanged()
+      fireSettingsStateChanged(value)
     }
+
+  private fun fireSettingsStateChanged(syncEnabled: Boolean) {
+    ApplicationManager.getApplication().messageBus.syncPublisher(SettingsSyncEnabledStateListener.TOPIC).enabledStateChanged(syncEnabled)
+  }
 
   fun isCategoryEnabled(category: SettingsCategory) = !state.disabledCategories.contains(category)
 
@@ -78,12 +88,7 @@ internal class SettingsSyncSettings : SimplePersistentStateComponent<SettingsSyn
     var disabledSubcategories by map<SettingsCategory, ArrayList<String>>()
   }
 
-  interface Listener : EventListener {
-    @RequiresEdt
-    fun settingsChanged()
-  }
-
-  fun addListener(listener: Listener, disposable: Disposable) {
-    evenDispatcher.addListener(listener, disposable)
+  fun addListener(listener: SettingsSyncEnabledStateListener, disposable: Disposable) {
+    ApplicationManager.getApplication().messageBus.connect(disposable).subscribe(SettingsSyncEnabledStateListener.TOPIC, listener)
   }
 }

@@ -8,7 +8,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-internal class SettingsSyncFrameListener : FrameStateListener {
+internal class SettingsSyncFrameListener : FrameStateListener, SettingsSyncEnabledStateListener {
 
   private val executorService = AppExecutorUtil.createBoundedScheduledExecutorService("Settings Sync Update", 1)
   private val autoSyncDelay get() = Registry.intValue("settingsSync.autoSync.frequency.sec", 60).toLong()
@@ -40,23 +40,25 @@ internal class SettingsSyncFrameListener : FrameStateListener {
     stopSyncingByTimer()
   }
 
-  private fun initializeSyncing() : Runnable = Runnable {
+  private fun initializeSyncing(): Runnable = Runnable {
     SettingsSyncMain.getInstance().syncSettings()
-
-    SettingsSyncSettings.getInstance().addListener(SettingsSyncListener(), SettingsSyncMain.getInstance())
   }
 
-  private inner class SettingsSyncListener : SettingsSyncSettings.Listener {
-    @RequiresEdt
-    override fun settingsChanged() {
-      if (SettingsSyncSettings.getInstance().syncEnabled) {
+  override fun enabledStateChanged(syncEnabled: Boolean) {
+    if (syncEnabled) {
+      if (!SettingsSyncMain.isAvailable()) {
+        SettingsSyncMain.getInstance()
+        LOG.info("Initializing settings sync")
+        executorService.schedule(initializeSyncing(), 0, TimeUnit.SECONDS)
+      }
+      else {
         SettingsSyncMain.getInstance().enableSyncing()
         scheduleSyncing()
       }
-      else {
-        stopSyncingByTimer()
-        SettingsSyncMain.getInstance().disableSyncing()
-      }
+    }
+    else {
+      stopSyncingByTimer()
+      SettingsSyncMain.getInstance().disableSyncing()
     }
   }
 
