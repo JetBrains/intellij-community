@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.Topic
+import java.util.*
 import javax.swing.SwingUtilities
 
 class RunToolbarSlotManager(val project: Project) {
@@ -34,7 +35,7 @@ class RunToolbarSlotManager(val project: Project) {
 
   private val slotListeners = mutableListOf<SlotListener>()
 
-  internal var mainSlotData = SlotDate()
+  internal var mainSlotData = SlotDate(UUID.randomUUID().toString())
 
   val activeProcesses = ActiveProcesses()
   private val dataIds = mutableListOf<String>()
@@ -109,16 +110,18 @@ class RunToolbarSlotManager(val project: Project) {
         if (RunToolbarProcess.logNeeded) LOG.info(
           "SM settings: new on top ${runToolbarSettings.getMoveNewOnTop()}; update by selected ${getUpdateMainBySelected()} RunToolbar")
 
-        val runConfigurations = runToolbarSettings.getRunConfigurations()
-        runConfigurations.forEachIndexed { index, entry ->
+        val configurations = runToolbarSettings.getConfigurations()
+        configurations.keys.forEachIndexed { index, s ->
           if (index == 0) {
-            mainSlotData.configuration = entry
+            mainSlotData = SlotDate(s)
+            mainSlotData.configuration = configurations[s]
           }
           else {
-            addSlot().configuration = entry
+            addSlot(s).configuration = configurations[s]
           }
         }
-        if (RunToolbarProcess.logNeeded) LOG.info("SM restoreRunConfigurations: $runConfigurations RunToolbar")
+
+        if (RunToolbarProcess.logNeeded) LOG.info("SM restoreRunConfigurations: ${configurations.values} RunToolbar")
 
         val con = project.messageBus.connect()
         connection = con
@@ -374,8 +377,8 @@ class RunToolbarSlotManager(val project: Project) {
     return slot
   }
 
-  private fun addSlot(): SlotDate {
-    val slot = SlotDate()
+  private fun addSlot(id: String = UUID.randomUUID().toString()): SlotDate {
+    val slot = SlotDate(id)
     dataIds.add(slot.id)
     slotsData[slot.id] = slot
 
@@ -484,8 +487,8 @@ class RunToolbarSlotManager(val project: Project) {
 
     val configurations = getConfigurationMap()
     if (RunToolbarProcess.logNeeded) LOG.info("MANAGER saveSlotsConfiguration: ${configurations} RunToolbar")
-    runToolbarSettings.setRunConfigurations(configurations.values.filterNotNull())
 
+    runToolbarSettings.setConfigurations(configurations)
     publishConfigurations(configurations)
   }
 
@@ -545,7 +548,7 @@ class ActiveProcesses {
   }
 }
 
-internal open class SlotDate(override val id: String = "slt${index++}") : RunToolbarData {
+internal open class SlotDate(override val id: String) : RunToolbarData {
   companion object {
     var index = 0
   }
