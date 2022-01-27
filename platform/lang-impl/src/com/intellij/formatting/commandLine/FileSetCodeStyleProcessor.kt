@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.commandLine
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.formatting.service.CoreFormattingService
 import com.intellij.formatting.service.FormattingServiceUtil
-import com.intellij.ide.impl.OpenProjectTask.Companion.newProject
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.lang.LanguageFormatting
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
@@ -253,7 +253,7 @@ private fun createProjectDir(projectUID: String) = FileUtil
 
 private fun createProject(projectUID: String) =
   ProjectManagerEx.getInstanceEx()
-    .openProject(createProjectDir(projectUID), newProject())
+    .openProject(createProjectDir(projectUID), OpenProjectTask(isNewProject = true))
     ?.also {
       CodeStyle.setMainProjectSettings(it, CodeStyleSettingsManager.getInstance().createSettings())
     }
@@ -264,4 +264,3 @@ private fun PsiFile.isFormattingSupported(): Boolean {
   return (formattingService !is CoreFormattingService)
          || (LanguageFormatting.INSTANCE.forContext(this) != null)
 }
-

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.CommonBundle;
@@ -66,7 +66,9 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
                                   || BitUtil.isSet(modifiers, InputEvent.SHIFT_MASK)
                                   || e.getPlace() == ActionPlaces.WELCOME_SCREEN
                                   || LightEdit.owns(project);
-    RecentProjectsManagerBase.getInstanceEx().openProject(file, OpenProjectTask.withProjectToClose(project, forceOpenInNewFrame).withRunConfigurators());
+    OpenProjectTask options =
+      OpenProjectTask.build().withProjectToClose(project).withForceOpenInNewFrame(forceOpenInNewFrame).withRunConfigurators();
+    RecentProjectsManagerBase.getInstanceEx().openProject(file, options);
     for (ProjectDetector extension : ProjectDetector.EXTENSION_POINT_NAME.getExtensions()) {
       extension.logRecentProjectOpened(myProjectGroup);
     }

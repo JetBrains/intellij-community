@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
@@ -68,9 +68,9 @@ public final class CommandLineProcessor {
   // public for testing
   @ApiStatus.Internal
   public static @NotNull CommandLineProcessorResult doOpenFileOrProject(@NotNull Path file, boolean shouldWait) {
-    OpenProjectTask openProjectOptions = PlatformProjectOpenProcessor.createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, null);
-    // do not check for .ipr files in the specified directory (@develar: it is existing behaviour, I am not fully sure that it is correct)
-    openProjectOptions.checkDirectoryForFileBasedProjects = false;
+    OpenProjectTask openProjectOptions = PlatformProjectOpenProcessor.createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, null)
+      // do not check for .ipr files in the specified directory (@develar: it is existing behaviour, I am not fully sure that it is correct)
+      .doNotCheckDirectoryForFileBasedProjects();
     Project project = null;
     if (!LightEditUtil.isForceOpenInLightEditMode()) {
       OpenResult openResult = ProjectUtil.tryOpenOrImport(file, openProjectOptions);

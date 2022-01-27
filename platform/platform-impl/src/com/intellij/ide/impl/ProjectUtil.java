@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
 import com.intellij.CommonBundle;
@@ -49,7 +49,6 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.*;
@@ -72,7 +71,7 @@ public final class ProjectUtil extends ProjectUtilCore {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void updateLastProjectLocation(@NotNull String projectFilePath) {
-    updateLastProjectLocation(Paths.get(projectFilePath));
+    updateLastProjectLocation(Path.of(projectFilePath));
   }
 
   public static void updateLastProjectLocation(@NotNull Path lastProjectLocation) {
@@ -110,7 +109,7 @@ public final class ProjectUtil extends ProjectUtilCore {
   }
 
   public static Project openOrImport(@NotNull Path path, Project projectToClose, boolean forceOpenInNewFrame) {
-    return openOrImport(path, OpenProjectTask.withProjectToClose(projectToClose, forceOpenInNewFrame));
+    return openOrImport(path, OpenProjectTask.build().withProjectToClose(projectToClose).withForceOpenInNewFrame(forceOpenInNewFrame));
   }
 
   public static Project openOrImport(@NotNull Path path) {
@@ -126,7 +125,7 @@ public final class ProjectUtil extends ProjectUtilCore {
    * null otherwise
    */
   public static @Nullable Project openOrImport(@NotNull String path, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
-    return openOrImport(Paths.get(path), OpenProjectTask.withProjectToClose(projectToClose, forceOpenInNewFrame));
+    return openOrImport(Path.of(path), OpenProjectTask.build().withProjectToClose(projectToClose).withForceOpenInNewFrame(forceOpenInNewFrame));
   }
 
   public static @Nullable Project openOrImport(@NotNull Path file, @NotNull OpenProjectTask options) {
@@ -175,12 +174,12 @@ public final class ProjectUtil extends ProjectUtilCore {
       return openResult(project, OpenResult.failure());
     }
 
-    if (options.checkDirectoryForFileBasedProjects && Files.isDirectory(file)) {
+    if (options.getCheckDirectoryForFileBasedProjects() && Files.isDirectory(file)) {
       try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(file)) {
         for (Path child : directoryStream) {
           String childPath = child.toString();
           if (childPath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-            Project project = openProject(Paths.get(childPath), options);
+            Project project = openProject(Path.of(childPath), options);
             return openResult(project, OpenResult.failure());
           }
         }
@@ -195,7 +194,7 @@ public final class ProjectUtil extends ProjectUtilCore {
 
     Project project;
     if (processors.size() == 1 && processors.get(0) instanceof PlatformProjectOpenProcessor) {
-      project = ProjectManagerEx.getInstanceEx().openProject(file, options.asNewProjectAndRunConfigurators().withBeforeOpenCallback(p -> {
+      project = ProjectManagerEx.getInstanceEx().openProject(file, options.asNewProject().withRunConfigurators().withBeforeOpenCallback(p -> {
         p.putUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR, Boolean.TRUE);
         return true;
       }));
@@ -252,12 +251,12 @@ public final class ProjectUtil extends ProjectUtilCore {
       return ProjectManagerEx.getInstanceEx().openProjectAsync(file, options.withRunConfigurators());
     }
 
-    if (options.checkDirectoryForFileBasedProjects && Files.isDirectory(file)) {
+    if (options.getCheckDirectoryForFileBasedProjects() && Files.isDirectory(file)) {
       try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(file)) {
         for (Path child : directoryStream) {
           String childPath = child.toString();
           if (childPath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-            return CompletableFuture.completedFuture(openProject(Paths.get(childPath), options));
+            return CompletableFuture.completedFuture(openProject(Path.of(childPath), options));
           }
         }
       }
@@ -271,7 +270,7 @@ public final class ProjectUtil extends ProjectUtilCore {
 
     CompletableFuture<Project> projectFuture;
     if (processors.size() == 1 && processors.get(0) instanceof PlatformProjectOpenProcessor) {
-      projectFuture = ProjectManagerEx.getInstanceEx().openProjectAsync(file, options.asNewProjectAndRunConfigurators().withBeforeOpenCallback(p -> {
+      projectFuture = ProjectManagerEx.getInstanceEx().openProjectAsync(file, options.asNewProject().withRunConfigurators().withBeforeOpenCallback(p -> {
         p.putUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR, Boolean.TRUE);
         return true;
       }));
@@ -398,7 +397,7 @@ public final class ProjectUtil extends ProjectUtilCore {
   }
 
   public static @Nullable Project openProject(@NotNull String path, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
-    return openProject(Paths.get(path), OpenProjectTask.withProjectToClose(projectToClose, forceOpenInNewFrame));
+    return openProject(Path.of(path), OpenProjectTask.build().withProjectToClose(projectToClose).withForceOpenInNewFrame(forceOpenInNewFrame));
   }
 
   public static @Nullable Project openProject(@NotNull Path file, @NotNull OpenProjectTask options) {
@@ -415,12 +414,6 @@ public final class ProjectUtil extends ProjectUtilCore {
 
     if (isRemotePath(file.toString()) && !RecentProjectsManager.getInstance().hasPath(FileUtil.toSystemIndependentName(file.toString()))) {
       if (!confirmLoadingFromRemotePath(file.toString(), "warning.load.project.from.share", "title.load.project.from.share")) {
-        return null;
-      }
-    }
-
-    if (options.getUntrusted()) {
-      if (!confirmLoadingFromRemotePath(file.toString(), "warning.open.file.from.untrusted.source", "title.open.file.from.untrusted.source")) {
         return null;
       }
     }
@@ -576,7 +569,7 @@ public final class ProjectUtil extends ProjectUtilCore {
   /** @deprecated Use {@link #isSameProject(Path, Project)} */
   @Deprecated
   public static boolean isSameProject(@Nullable String projectFilePath, @NotNull Project project) {
-    return projectFilePath != null && isSameProject(Paths.get(projectFilePath), project);
+    return projectFilePath != null && isSameProject(Path.of(projectFilePath), project);
   }
 
   public static boolean isSameProject(@NotNull Path projectFile, @NotNull Project project) {
@@ -685,7 +678,8 @@ public final class ProjectUtil extends ProjectUtilCore {
   public static @Nullable Project tryOpenFiles(@Nullable Project project, @NotNull List<? extends Path> list, String location) {
     try {
       for (Path file : list) {
-        OpenResult openResult = tryOpenOrImport(file.toAbsolutePath(), OpenProjectTask.withProjectToClose(project, true));
+        OpenProjectTask options = OpenProjectTask.build().withProjectToClose(project).withForceOpenInNewFrame(true);
+        OpenResult openResult = tryOpenOrImport(file.toAbsolutePath(), options);
         if (openResult instanceof OpenResult.Success) {
           LOG.debug(location + ": load project from ", file);
           return ((OpenResult.Success)openResult).getProject();
@@ -755,7 +749,7 @@ public final class ProjectUtil extends ProjectUtilCore {
   }
 
   public static @NotNull Path getProjectPath(@NotNull String name) {
-    return Paths.get(getProjectsPath(), name);
+    return Path.of(getProjectsPath(), name);
   }
 
   public static @Nullable Path getProjectFile(@NotNull String name) {
@@ -810,7 +804,8 @@ public final class ProjectUtil extends ProjectUtilCore {
 
     Path projectFile = null;
     if (created) {
-      Project project = ProjectManagerEx.getInstanceEx().newProject(file, OpenProjectTask.newProject(true).withProjectName(name));
+      OpenProjectTask options = OpenProjectTask.build().asNewProject().withRunConfigurators().withProjectName(name);
+      Project project = ProjectManagerEx.getInstanceEx().newProject(file, options);
       if (project != null) {
         if (projectCreatedCallback != null) {
           projectCreatedCallback.projectCreated(project);
@@ -819,10 +814,10 @@ public final class ProjectUtil extends ProjectUtilCore {
         projectFile = getProjectFile(name);
       }
     }
-    if (projectFile == null) {
-      return null;
-    }
-    return ProjectManagerEx.getInstanceEx().openProject(projectFile, OpenProjectTask.fromWizardAndRunConfigurators());
+    if (projectFile == null) return null;
+
+    OpenProjectTask options = OpenProjectTask.build().withRunConfigurators().withCreatedByWizard().withoutVfsRefresh();
+    return ProjectManagerEx.getInstanceEx().openProject(projectFile, options);
   }
 
   private static void saveAndDisposeProject(@NotNull Project project) {
