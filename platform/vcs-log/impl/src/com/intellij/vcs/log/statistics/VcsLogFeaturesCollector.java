@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.statistics;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -23,10 +23,7 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addBoolIfDiffers;
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addIfDiffers;
@@ -105,7 +102,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
         for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensionList()) {
           if (factory.showMenuItem()) {
             addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(VcsLogHighlighterProperty.get(factory.getId())),
-                             HIGHLIGHTER, List.of(LOG_HIGHLIGHTER_ID_FIELD.with(getFactoryIdSafe(factory))));
+                             HIGHLIGHTER, new ArrayList<>(List.of(LOG_HIGHLIGHTER_ID_FIELD.with(getFactoryIdSafe(factory)))));
           }
         }
 
@@ -121,7 +118,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
         for (VcsLogDefaultColumn<?> column : getDefaultDynamicColumns()) {
           String columnName = column.getStableName();
           addBoolIfDiffers(metricEvents, currentColumns, defaultColumns, p -> p.contains(modelIndices.getModelIndex(column)),
-                           COLUMN, List.of(COLUMN_NAME.with(columnName)));
+                           COLUMN, new ArrayList<>(List.of(COLUMN_NAME.with(columnName))));
         }
 
         Collection<String> tabs = projectLog.getTabsManager().getTabs();
