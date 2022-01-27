@@ -10,4 +10,4 @@ class Testing {
 
 //INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">fun</span> <span style="color:#000000;">foo</span>(
 //INFO:     <span style="color:#000000;">bar</span><span style="">: </span><span style="color:#000000;">Int</span>
-//INFO: )<span style="">: </span><span style="color:#000000;">Unit</span></pre></div><div class='content'><p>KDoc foo</p></div><table class='sections'></table>
+//INFO: )<span style="">: </span><span style="color:#000000;">Unit</span></pre></div><div class='content'><p style='margin-top:0;padding-top:0;'>KDoc foo</p></div><table class='sections'></table>

@@ -27,7 +27,7 @@ fun test() {
     <caret>testMethod(1, "value")
 }
 
-//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">fun</span> <span style="color:#000000;">testMethod</span>()<span style="">: </span><span style="color:#000000;">Unit</span></pre></div><div class='content'><p>Some documentation. <strong>Bold</strong> <em>underline</em> <code style='font-size:96%;'><span style=""><span style="">code</span></span></code> foo: bar (baz) <span style="border:1px solid;border-color:#ff0000;">quux</span>  'apos'</p>
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">fun</span> <span style="color:#000000;">testMethod</span>()<span style="">: </span><span style="color:#000000;">Unit</span></pre></div><div class='content'><p style='margin-top:0;padding-top:0;'>Some documentation. <strong>Bold</strong> <em>underline</em> <code style='font-size:96%;'><span style=""><span style="">code</span></span></code> foo: bar (baz) <span style="border:1px solid;border-color:#ff0000;">quux</span>  'apos'</p>
 //INFO: <p><a href="https://www.kotlinlang.org">Kotlin</a> <a href="https://www.ibm.com">a<strong>b</strong><strong>d</strong> kas</a></p>
 //INFO: <p><a href="psi_element://C"><code style='font-size:96%;'><span style="color:#0000ff;">C</span></code></a></p>
 //INFO: <p><a href="psi_element://C"><code style='font-size:96%;'><span style="color:#0000ff;">See <strong>this</strong> class</span></code></a></p>
