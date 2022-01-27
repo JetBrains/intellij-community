@@ -20,7 +20,9 @@ interface ObservableMutableProperty<T> : ReadWriteProperty<Any?, T>, ObservableP
    * ```
    * See Also: https://kotlinlang.org/docs/delegated-properties.html
    */
+  @JvmDefault
   override fun getValue(thisRef: Any?, property: KProperty<*>): T = get()
 
+  @JvmDefault
   override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) = set(value)
 }

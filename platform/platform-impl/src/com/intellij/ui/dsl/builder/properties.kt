@@ -5,6 +5,20 @@ import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import javax.swing.JComponent
 
+fun <C : JComponent> Cell<C>.enableIf(property: ObservableProperty<Boolean>): Cell<C> = apply {
+  enabled(property.get())
+  property.afterChange {
+    enabled(it)
+  }
+}
+
+fun <C : JComponent> Cell<C>.visibleIf(property: ObservableProperty<Boolean>): Cell<C> = apply {
+  visible(property.get())
+  property.afterChange {
+    visible(it)
+  }
+}
+
 fun Panel.validateAfterPropagation(graph: PropertyGraph): Panel = apply {
   validationRequestor(graph::afterPropagation)
 }

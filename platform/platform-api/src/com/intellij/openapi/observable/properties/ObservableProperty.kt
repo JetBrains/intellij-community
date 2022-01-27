@@ -38,5 +38,6 @@ interface ObservableProperty<T> : ReadOnlyProperty<Any?, T> {
    *
    * See Also: https://kotlinlang.org/docs/delegated-properties.html
    */
+  @JvmDefault
   override fun getValue(thisRef: Any?, property: KProperty<*>): T = get()
 }
