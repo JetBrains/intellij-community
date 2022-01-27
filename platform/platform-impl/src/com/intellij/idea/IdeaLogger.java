@@ -145,18 +145,6 @@ public final class IdeaLogger extends JulLogger {
     }
   }
 
-  @Override
-  public void debug(@Nullable Throwable t) {
-    if (isTooFrequentException(t)) return;
-    super.debug(t);
-  }
-
-  @Override
-  public void debug(String message, @Nullable Throwable t) {
-    if (isTooFrequentException(t)) return;
-    super.debug(message, t);
-  }
-
   private void doLogError(String message, @Nullable Throwable t, String @NotNull ... details) {
     if (t instanceof ControlFlowException) {
       myLogger.log(Level.SEVERE, message, ensureNotControlFlow(t));
