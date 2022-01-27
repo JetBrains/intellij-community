@@ -30,8 +30,6 @@ import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
-import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
-import org.jetbrains.kotlin.idea.util.safeAnalyzeWithContentNonSourceRootCode
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
 import org.jetbrains.kotlin.platform.subplatformsOfType
