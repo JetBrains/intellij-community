@@ -338,6 +338,8 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
 
   // PY-46361
   public void testPackagesFromPythonSkeletonsNotSuggested() {
+    doMultiFileNegativeTest("Import");
+
     GlobalSearchScope scope = GlobalSearchScope.allScope(myFixture.getProject());
     List<PyFile> djangoPackages = PyModuleNameIndex.findByQualifiedName(QualifiedName.fromComponents("django"),
                                                                        myFixture.getProject(), scope);
@@ -347,12 +349,12 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     }
     PyFile djangoPackage = assertOneElement(djangoPackages);
     assertTrue(PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(djangoPackage));
-
-    doMultiFileNegativeTest("Import");
   }
 
   // PY-46361
   public void testClassesFromPythonSkeletonsNotSuggested() {
+    doMultiFileNegativeTest("Import");
+
     PyClass djangoViewClass = PyClassNameIndex.findClass("django.views.generic.base.View", myFixture.getProject());
     if (djangoViewClass == null) {
       dumpSdkRoots();
@@ -360,8 +362,6 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     }
     assertNotNull(djangoViewClass);
     assertTrue(PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(djangoViewClass.getContainingFile()));
-
-    doMultiFileNegativeTest("Import");
   }
 
   private static void dumpDjangoModulesFromModuleIndex(@NotNull GlobalSearchScope scope) {
