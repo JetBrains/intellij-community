@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
 private class KotlinAutoImportsFilterImpl(val isEnabled: Boolean) : KotlinAutoImportsFilter {
-    override fun forceAutoImportForElement(file: KtFile, suggestions: Collection<FqName>): Boolean = isEnabled
+    override fun forceAutoImportForFile(file: KtFile): Boolean = isEnabled
 
     override fun filterSuggestions(suggestions: Collection<FqName>): Collection<FqName> =
         suggestions.filter { it.asString() == "a.b.AmbiguousClazzForFilter" }.ifEmpty { suggestions }
