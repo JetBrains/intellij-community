@@ -30,7 +30,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ScalableIcon
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
@@ -661,19 +660,9 @@ private fun getToolWindowIdForRunner(executor: Executor, descriptor: RunContentD
 private fun createNewContent(descriptor: RunContentDescriptor, executor: Executor): Content {
   val content = ContentFactory.SERVICE.getInstance().createContent(descriptor.component, descriptor.displayName, true)
   content.putUserData(ToolWindow.SHOW_CONTENT_ICON, java.lang.Boolean.TRUE)
-  migrateFromRegistryToAdvancedSettings("start.run.configurations.pinned", "start.run.configurations.pinned", false)
   if (AdvancedSettings.getBoolean("start.run.configurations.pinned")) content.isPinned = true
   content.icon = descriptor.icon ?: executor.toolWindowIcon
   return content
-}
-
-private fun migrateFromRegistryToAdvancedSettings(registryKey: String, id: String, defaultValue: Boolean) {
-  val value = Registry.getInstance().getBundleValueOrNull(registryKey)
-  val registryState = Registry.`is`(registryKey, defaultValue)
-  if (registryState != defaultValue && value == null) {
-    AdvancedSettings.setBoolean(id, registryState)
-    Registry.get(registryKey).resetToDefault()
-  }
 }
 
 private fun getRunContentByDescriptor(contentManager: ContentManager, descriptor: RunContentDescriptor): Content? {
