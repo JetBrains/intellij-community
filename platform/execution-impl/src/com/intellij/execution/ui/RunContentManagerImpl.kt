@@ -411,8 +411,8 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
     getToolWindowManager().getToolWindow(id)?.apply {
       stripeTitle = executor.actionName
-      setIcon(executor.icon)
-      toolWindowIdToBaseIcon[id] = executor.icon
+      setIcon(executor.toolWindowIcon)
+      toolWindowIdToBaseIcon[id] = executor.toolWindowIcon
     }
   }
 
