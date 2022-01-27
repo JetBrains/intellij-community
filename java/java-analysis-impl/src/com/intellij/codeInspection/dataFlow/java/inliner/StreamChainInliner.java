@@ -342,7 +342,7 @@ public class StreamChainInliner implements CallInliner {
 
     @Override
     void iteration(CFGBuilder builder) {
-      builder.push(myResult).invokeFunction(2, myFunction)
+      builder.push(myResult).swap().invokeFunction(2, myFunction)
         .assignTo(myResult).pop();
     }
 
