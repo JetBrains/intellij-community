@@ -6,7 +6,6 @@ import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
@@ -102,7 +101,7 @@ internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
 }
 
 internal class NotificationContent(val project: Project,
-                                   private val toolWindow: ToolWindow) : Disposable, ToolWindowManagerListener, LafManagerListener {
+                                   private val toolWindow: ToolWindow) : Disposable, ToolWindowManagerListener {
   private val myMainPanel = JBPanelWithEmptyText(BorderLayout())
 
   private val myNotifications = ArrayList<Notification>()
@@ -148,7 +147,10 @@ internal class NotificationContent(val project: Project,
 
     project.messageBus.connect(toolWindow.disposable).subscribe(ToolWindowManagerListener.TOPIC, this)
 
-    ApplicationManager.getApplication().messageBus.connect(toolWindow.disposable).subscribe(LafManagerListener.TOPIC, this)
+    ApplicationManager.getApplication().messageBus.connect(toolWindow.disposable).subscribe(LafManagerListener.TOPIC, LafManagerListener {
+      suggestions.updateLaf()
+      timeline.updateLaf()
+    })
 
     val newNotifications = ArrayList<Notification>()
     NotificationsToolWindowFactory.myModel.registerAndGetInitNotifications(this, newNotifications)
@@ -313,13 +315,6 @@ internal class NotificationContent(val project: Project,
         myIconNotifications.clear()
         updateIcon()
       }
-    }
-  }
-
-  override fun lookAndFeelChanged(source: LafManager) {
-    ApplicationManager.getApplication().invokeLater {
-      suggestions.updateLaf()
-      timeline.updateLaf()
     }
   }
 

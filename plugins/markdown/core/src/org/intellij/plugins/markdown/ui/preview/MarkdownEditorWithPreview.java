@@ -24,7 +24,7 @@ import java.util.Objects;
 /**
  * @author Konstantin Bulenkov
  */
-public class MarkdownEditorWithPreview extends TextEditorWithPreview {
+public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
   public static final Key<MarkdownEditorWithPreview> PARENT_SPLIT_EDITOR_KEY = Key.create("parentSplit");
   private boolean myAutoScrollPreview;
   private final List<SplitLayoutListener> myLayoutListeners = new ArrayList<>();

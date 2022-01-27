@@ -37,7 +37,7 @@ import java.beans.PropertyChangeListener;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class MarkdownPreviewFileEditor extends UserDataHolderBase implements FileEditor {
+public final class MarkdownPreviewFileEditor extends UserDataHolderBase implements FileEditor {
   private static final long PARSING_CALL_TIMEOUT_MS = 50L;
   private static final long RENDERING_DELAY_MS = 20L;
   public static final Key<MarkdownHtmlPanel> PREVIEW_BROWSER = Key.create("PREVIEW_BROWSER");

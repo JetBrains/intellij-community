@@ -15,7 +15,7 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
 import org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider
 
 @State(name = "MarkdownSettings", storages = [(Storage("markdown.xml"))])
-class MarkdownSettings(val project: Project): SimplePersistentStateComponent<MarkdownSettingsState>(MarkdownSettingsState()) {
+class MarkdownSettings(internal val project: Project): SimplePersistentStateComponent<MarkdownSettingsState>(MarkdownSettingsState()) {
   var areInjectionsEnabled
     get() = state.areInjectionsEnabled
     set(value) { state.areInjectionsEnabled = value }
@@ -119,41 +119,40 @@ class MarkdownSettings(val project: Project): SimplePersistentStateComponent<Mar
   }
 
   interface ChangeListener {
-    fun beforeSettingsChanged(settings: MarkdownSettings) = Unit
+    fun beforeSettingsChanged(settings: MarkdownSettings) {
+    }
 
-    fun settingsChanged(settings: MarkdownSettings) = Unit
+    fun settingsChanged(settings: MarkdownSettings) {
+    }
 
     companion object {
       @Topic.ProjectLevel
       @JvmField
-      val TOPIC = Topic.create("MarkdownSettingsChanged", ChangeListener::class.java)
+      val TOPIC = Topic("MarkdownSettingsChanged", ChangeListener::class.java, Topic.BroadcastDirection.NONE)
     }
   }
 
   companion object {
     private val logger = logger<MarkdownSettings>()
 
-    @JvmStatic
     val defaultFontSize
       get() = JBCefApp.normalizeScaledSize(checkNotNull(AppEditorFontOptions.getInstance().state).FONT_SIZE)
 
-    @JvmStatic
     val defaultFontFamily
       get() = checkNotNull(AppEditorFontOptions.getInstance().state).FONT_FAMILY
 
     @JvmStatic
-    val defaultProviderInfo
-      get() = when {
-        JBCefApp.isSupported() -> JCEFHtmlPanelProvider().providerInfo
-        else -> MarkdownHtmlPanelProvider.ProviderInfo("Unavailable", "Unavailable")
+    val defaultProviderInfo: MarkdownHtmlPanelProvider.ProviderInfo
+      get() {
+        return when {
+          JBCefApp.isSupported() -> JCEFHtmlPanelProvider().providerInfo
+          else -> MarkdownHtmlPanelProvider.ProviderInfo("Unavailable", "Unavailable")
+        }
       }
 
     @JvmStatic
-    fun getInstance(project: Project): MarkdownSettings {
-      return project.service()
-    }
+    fun getInstance(project: Project): MarkdownSettings = project.service()
 
-    @JvmStatic
     fun getInstanceForDefaultProject(): MarkdownSettings {
       return ProjectManager.getInstance().defaultProject.service()
     }

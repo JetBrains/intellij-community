@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
@@ -367,7 +367,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
         }
         myHyperlink = detectHyperlink(text);
         if (mySourceHighlighter == null && myIsIPythonOutput && PyConsoleUtil.detectSourcePrinting(text)) {
-          mySourceHighlighter = new PyConsoleSourceHighlighter(this, myScheme, myPyHighlighter);
+          mySourceHighlighter = new PyConsoleSourceHighlighter(this, myPyHighlighter);
         }
       }
       else {
