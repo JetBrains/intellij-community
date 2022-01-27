@@ -16,7 +16,6 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
-import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
@@ -100,15 +99,6 @@ public interface JavaSpecialRefactoringProvider {
                                     final PsiType migrationType);
 
   void runPullUpProcessor(@NotNull PsiClass sourceClass, PsiClass targetSuperClass, MemberInfo[] membersToMove, DocCommentPolicy javaDocPolicy);
-
-
-  void moveClassesOrPackages(Project project,
-                             PsiElement[] elements,
-                             @NotNull final MoveDestination moveDestination,
-                             boolean searchInComments,
-                             boolean searchInNonJavaFiles,
-                             MoveCallback moveCallback);
-
 
 
   BaseRefactoringProcessor getChangeClassSignatureProcessor(Project project, PsiClass aClass, TypeParameterInfo[] newSignature);

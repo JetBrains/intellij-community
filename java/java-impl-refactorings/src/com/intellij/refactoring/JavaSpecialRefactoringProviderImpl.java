@@ -19,8 +19,6 @@ import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedDa
 import com.intellij.refactoring.introduceField.InplaceIntroduceFieldPopup;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.memberPullUp.PullUpProcessor;
-import com.intellij.refactoring.move.MoveCallback;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
@@ -190,16 +188,6 @@ public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactorin
                                             @NotNull MultiMap<PsiElement, String> conflicts,
                                             @Nullable String newVisibility) {
     RefactoringConflictsUtil.analyzeAccessibilityConflicts(membersToMove, targetClass, conflicts, newVisibility);
-  }
-
-  @Override
-  public void moveClassesOrPackages(Project project,
-                                    PsiElement[] elements,
-                                    @NotNull MoveDestination moveDestination,
-                                    boolean searchInComments,
-                                    boolean searchInNonJavaFiles,
-                                    MoveCallback moveCallback) {
-    new MoveClassesOrPackagesProcessor(project, elements, moveDestination, searchInComments, searchInNonJavaFiles, moveCallback).run();
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.openapi.project.Project;
@@ -32,7 +32,14 @@ public abstract class JavaRefactoringFactory extends RefactoringFactory {
    */
   public abstract MoveDestination createSourceRootMoveDestination(@NotNull String targetPackageQualifiedName, @NotNull VirtualFile sourceRoot);
 
-  public abstract MoveClassesOrPackagesRefactoring createMoveClassesOrPackages(PsiElement[] elements, MoveDestination moveDestination);
+  public MoveClassesOrPackagesRefactoring createMoveClassesOrPackages(PsiElement[] elements, MoveDestination moveDestination) {
+    return createMoveClassesOrPackages(elements, moveDestination, true, true);
+  }
+
+  public abstract MoveClassesOrPackagesRefactoring createMoveClassesOrPackages(PsiElement[] elements,
+                                                                               MoveDestination moveDestination,
+                                                                               boolean searchInComments, 
+                                                                               boolean searchInNonJavaFiles);
 
   public abstract MoveMembersRefactoring createMoveMembers(PsiMember[] elements,
                                                            String targetClassQualifiedName,

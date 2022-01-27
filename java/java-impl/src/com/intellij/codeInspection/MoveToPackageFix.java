@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.CommonBundle;
@@ -24,7 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
 import com.intellij.refactoring.util.CommonMoveClassesOrPackagesUtil;
@@ -92,13 +78,10 @@ public class MoveToPackageFix extends LocalQuickFixAndIntentionActionOnPsiElemen
         Messages.showMessageDialog(project, error, CommonBundle.getErrorTitle(), Messages.getErrorIcon());
         return;
       }
-      JavaSpecialRefactoringProvider.getInstance().moveClassesOrPackages(
-        project,
-        ((PsiJavaFile) myFile).getClasses(),
-        new SingleSourceRootMoveDestination(PackageWrapper.create(JavaDirectoryService.getInstance().getPackage(directory)), directory), false,
-        false,
-        null
-      );
+      SingleSourceRootMoveDestination moveDestination =
+        new SingleSourceRootMoveDestination(PackageWrapper.create(JavaDirectoryService.getInstance().getPackage(directory)), directory);
+      JavaRefactoringFactory.getInstance(project)
+        .createMoveClassesOrPackages(((PsiJavaFile) myFile).getClasses(), moveDestination, false, false).run();
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
