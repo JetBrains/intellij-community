@@ -86,7 +86,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
                                                   @Nullable final DialogWrapper dialog) {
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
-      if (PopFrameAction.evaluateFinallyBlocks(debugProcess.getProject(),
+      if (JvmDropFrameActionHandler.evaluateFinallyBlocks(debugProcess.getProject(),
                                                UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ForceEarlyReturn")),
                                                frame,
                                                new XDebuggerEvaluator.XEvaluationCallback() {
@@ -164,7 +164,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
   }
 
   private static void showError(Project project, @NlsContexts.DialogMessage String message) {
-    PopFrameAction.showError(project, message, UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ForceEarlyReturn")));
+    JvmDropFrameActionHandler.showError(project, message, UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ForceEarlyReturn")));
   }
 
   @Override
