@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.CodeInsightSettings
@@ -98,6 +98,12 @@ internal class DocumentationManager(private val project: Project) : Disposable {
   }
 
   private var popup: WeakReference<AbstractPopup>? = null
+
+  val isPopupVisible: Boolean
+    get() {
+      EDT.assertIsEdt()
+      return popup?.get()?.isVisible == true
+    }
 
   private fun getPopup(): AbstractPopup? {
     EDT.assertIsEdt()

@@ -61,7 +61,7 @@ internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, h
   }
 }
 
-private fun <X : Any> injectedThenHost(project: Project, hostEditor: Editor, hostOffset: Int, f: (Editor, PsiFile, Int) -> X?): X? {
+fun <X : Any> injectedThenHost(project: Project, hostEditor: Editor, hostOffset: Int, f: (Editor, PsiFile, Int) -> X?): X? {
   val hostFile = PsiUtilBase.getPsiFileInEditor(hostEditor, project)
                  ?: return null
   return tryInjected(project, hostFile, hostEditor, hostOffset, f)

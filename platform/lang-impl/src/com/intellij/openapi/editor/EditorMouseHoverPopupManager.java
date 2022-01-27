@@ -51,6 +51,7 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -400,7 +401,8 @@ public class EditorMouseHoverPopupManager implements Disposable {
     myContext = null;
   }
 
-  protected boolean isHintShown() {
+  @ApiStatus.Internal
+  public boolean isHintShown() {
     return getCurrentHint() != null;
   }
 

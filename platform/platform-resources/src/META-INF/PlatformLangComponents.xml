@@ -105,6 +105,7 @@
 
     <projectService serviceImplementation="com.intellij.codeInsight.daemon.impl.DaemonListeners" preload="await"/>
     <projectService serviceImplementation="com.intellij.codeInsight.navigation.CtrlMouseHandler" preload="await"/>
+    <postStartupActivity implementation="com.intellij.codeInsight.navigation.InitCtrlMouseHandlerActivity"/>
 
     <projectService serviceImplementation="com.intellij.facet.impl.pointers.FacetPointersManagerImpl"
                     serviceInterface="com.intellij.facet.pointers.FacetPointersManager"/>
