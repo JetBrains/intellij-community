@@ -14,4 +14,4 @@ fun test() {
 }
 //INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">constructor</span> <span style="color:#000000;">Foo</span>(
 //INFO:     <span style="color:#000000;">x</span><span style="">: </span><span style="color:#000000;">Int</span>
-//INFO: )</pre></div><div class='content'><p>Documentation is here.</p></div><table class='sections'></table>
+//INFO: )</pre></div><div class='content'><p style='margin-top:0;padding-top:0;'>Documentation is here.</p></div><table class='sections'></table>

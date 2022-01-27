@@ -72,7 +72,7 @@ object KDocRenderer {
         val exceptionTags = findTagsByName("exception").filter { it.getSubjectName() != null }
         appendThrows(throwTags, exceptionTags)
 
-        appendTag(findTagByName("author"), KotlinBundle.message("kdoc.section.title.author"))
+        appendAuthors(findTagsByName("author"))
         appendTag(findTagByName("since"), KotlinBundle.message("kdoc.section.title.since"))
         appendTag(findTagByName("suppress"), KotlinBundle.message("kdoc.section.title.suppress"))
 
@@ -210,6 +210,21 @@ object KDocRenderer {
         }
     }
 
+    private fun StringBuilder.appendAuthors(authorTags: Sequence<KDocTag>) {
+        if (!authorTags.any()) return
+
+        val iterator = authorTags.iterator()
+
+        appendSection(KotlinBundle.message("kdoc.section.title.author")) {
+            while (iterator.hasNext()) {
+                append(iterator.next().getContent())
+                if (iterator.hasNext()) {
+                    append(", ")
+                }
+            }
+        }
+    }
+
     private fun StringBuilder.appendThrows(throwsTags: Sequence<KDocTag>, exceptionsTags: Sequence<KDocTag>) {
         if (!throwsTags.any() && !exceptionsTags.any()) return
 
@@ -273,13 +288,20 @@ object KDocRenderer {
 
         // Avoid wrapping the entire converted contents in a <p> tag if it's just a single paragraph
         val maybeSingleParagraph = markdownNode.children.singleOrNull { it.type != MarkdownTokenTypes.EOL }
-        return if (maybeSingleParagraph != null && !allowSingleParagraph) {
-            maybeSingleParagraph.children.joinToString("") {
-                if (it.text == "\n") " " else it.toHtml()
-            }
-        } else {
-            markdownNode.toHtml()
+
+        val firstParagraphOmitted = when {
+          maybeSingleParagraph != null && !allowSingleParagraph -> {
+              maybeSingleParagraph.children.joinToString("") { if (it.text == "\n") " " else it.toHtml() }
+          }
+          else -> markdownNode.toHtml()
         }
+
+        val topMarginOmitted = when {
+            firstParagraphOmitted.startsWith("<p>") -> firstParagraphOmitted.replaceFirst("<p>", "<p style='margin-top:0;padding-top:0;'>")
+            else -> firstParagraphOmitted
+        }
+
+        return topMarginOmitted
     }
 
     class MarkdownNode(val node: ASTNode, val parent: MarkdownNode?, val comment: KDocTag) {
@@ -408,7 +430,8 @@ object KDocRenderer {
                 MarkdownTokenTypes.LBRACKET,
                 MarkdownTokenTypes.RBRACKET,
                 MarkdownTokenTypes.EXCLAMATION_MARK,
-                GFMTokenTypes.CHECK_BOX -> {
+                GFMTokenTypes.CHECK_BOX,
+                GFMTokenTypes.GFM_AUTOLINK -> {
                     sb.append(nodeText)
                 }
                 MarkdownTokenTypes.CODE_LINE,
