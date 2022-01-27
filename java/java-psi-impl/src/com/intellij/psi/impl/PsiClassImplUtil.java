@@ -61,7 +61,7 @@ public final class PsiClassImplUtil {
   }
 
   @Nullable
-  public static PsiField findFieldByName(@NotNull PsiClass aClass, @NotNull String name, boolean checkBases) {
+  public static PsiField findFieldByName(@NotNull PsiClass aClass, String name, boolean checkBases) {
     List<PsiMember> byMap = findByMap(aClass, name, checkBases, MemberType.FIELD);
     return byMap.isEmpty() ? null : (PsiField)byMap.get(0);
   }
