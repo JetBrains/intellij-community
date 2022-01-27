@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.jetbrains.python.PydevBundle;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
@@ -131,10 +133,10 @@ public class MultiProcessDebugger implements ProcessDebugger {
   private static ServerSocket createServerSocket() throws ExecutionException {
     final ServerSocket serverSocket;
     try {
-      serverSocket = new ServerSocket(0);
+      serverSocket = new ServerSocket(0, 0, InetAddress.getLoopbackAddress());
     }
     catch (IOException e) {
-      throw new ExecutionException("Failed to find free socket port", e); //NON-NLS
+      throw new ExecutionException(PydevBundle.message("pydev.error.message.failed.to.find.free.socket.port"), e);
     }
     return serverSocket;
   }
