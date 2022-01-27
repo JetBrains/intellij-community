@@ -442,10 +442,6 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   }
 
   @Override
-  public void removeAllSchemes() {
-  }
-
-  @Override
   public EditorColorsScheme @NotNull [] getAllSchemes() {
     EditorColorsScheme[] result = getAllVisibleSchemes(mySchemeManager.getAllSchemes());
     Arrays.sort(result, EditorColorSchemesComparator.INSTANCE);
@@ -476,8 +472,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, false);
   }
 
-  @NotNull
-  private EditorColorsScheme getDefaultScheme() {
+  private @NotNull EditorColorsScheme getDefaultScheme() {
     DefaultColorsScheme defaultScheme = DefaultColorSchemesManager.getInstance().getFirstScheme();
     String editableCopyName = defaultScheme.getEditableCopyName();
     EditorColorsScheme editableCopy = getScheme(editableCopyName);
@@ -485,17 +480,15 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     return editableCopy;
   }
 
-  @NotNull
   @Override
-  public EditorColorsScheme getGlobalScheme() {
+  public @NotNull EditorColorsScheme getGlobalScheme() {
     EditorColorsScheme scheme = mySchemeManager.getActiveScheme();
     EditorColorsScheme editableCopy = getEditableCopy(scheme);
     if (editableCopy != null) return editableCopy;
     return scheme == null ? getDefaultScheme() : scheme;
   }
 
-  @Nullable
-  private EditorColorsScheme getEditableCopy(EditorColorsScheme scheme) {
+  private @Nullable EditorColorsScheme getEditableCopy(EditorColorsScheme scheme) {
     if (isTempScheme(scheme)) return scheme;
     String editableCopyName = getEditableCopyName(scheme);
     if (editableCopyName != null) {
@@ -505,8 +498,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     return null;
   }
 
-  @Nullable
-  private static String getEditableCopyName(EditorColorsScheme scheme) {
+  private static @Nullable String getEditableCopyName(EditorColorsScheme scheme) {
     String editableCopyName = null;
     if (scheme instanceof DefaultColorsScheme && ((DefaultColorsScheme)scheme).hasEditableCopy()) {
       editableCopyName = ((DefaultColorsScheme)scheme).getEditableCopyName();
@@ -532,9 +524,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     return myState.USE_ONLY_MONOSPACED_FONTS;
   }
 
-  @Nullable
   @Override
-  public State getState() {
+  public @Nullable State getState() {
     String currentSchemeName = mySchemeManager.getCurrentSchemeName();
     if (currentSchemeName != null && !isTempScheme(mySchemeManager.getActiveScheme())) {
       myState.colorScheme = currentSchemeName;
@@ -560,9 +551,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     return scheme instanceof DefaultColorsScheme;
   }
 
-  @NotNull
   @Override
-  public EditorColorsScheme getSchemeForCurrentUITheme() {
+  public @NotNull EditorColorsScheme getSchemeForCurrentUITheme() {
     LookAndFeelInfo lookAndFeelInfo = LafManager.getInstance().getCurrentLookAndFeel();
     EditorColorsScheme scheme = null;
     if (lookAndFeelInfo instanceof TempUIThemeBasedLookAndFeelInfo) {
@@ -591,21 +581,19 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     return editableCopy != null ? editableCopy : scheme;
   }
 
-  @NotNull
-  public SchemeManager<EditorColorsScheme> getSchemeManager() {
+  public @NotNull SchemeManager<EditorColorsScheme> getSchemeManager() {
     return mySchemeManager;
   }
 
-  @NonNls private static final String TEMP_SCHEME_KEY = "TEMP_SCHEME_KEY";
-  @NonNls private static final String TEMP_SCHEME_FILE_KEY = "TEMP_SCHEME_FILE_KEY";
+  private static final @NonNls String TEMP_SCHEME_KEY = "TEMP_SCHEME_KEY";
+  private static final @NonNls String TEMP_SCHEME_FILE_KEY = "TEMP_SCHEME_FILE_KEY";
   public static boolean isTempScheme(EditorColorsScheme scheme) {
     if (scheme == null) return false;
 
     return StringUtil.equals(scheme.getMetaProperties().getProperty(TEMP_SCHEME_KEY), Boolean.TRUE.toString());
   }
 
-  @Nullable
-  public static Path getTempSchemeOriginalFilePath(EditorColorsScheme scheme) {
+  public static @Nullable Path getTempSchemeOriginalFilePath(EditorColorsScheme scheme) {
     if (isTempScheme(scheme)) {
       String path = scheme.getMetaProperties().getProperty(TEMP_SCHEME_FILE_KEY);
       if (path != null) {
