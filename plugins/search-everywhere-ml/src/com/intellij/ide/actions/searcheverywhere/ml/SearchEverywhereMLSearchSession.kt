@@ -7,6 +7,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.id.SearchEverywhereMlItemIdProvider
+import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereModelProvider
 import com.intellij.ide.actions.searcheverywhere.ml.performance.PerformanceTracker
 import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicReference
@@ -15,6 +16,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
   val itemIdProvider = SearchEverywhereMlItemIdProvider()
   private val sessionStartTime: Long = System.currentTimeMillis()
   private val providersCaches: Map<Class<out SearchEverywhereElementFeaturesProvider>, Any>
+  private val modelProviderWithCache: SearchEverywhereModelProvider = SearchEverywhereModelProvider()
 
   // context features are calculated once per Search Everywhere session
   val cachedContextInfo: SearchEverywhereMLContextInfo = SearchEverywhereMLContextInfo(project)
@@ -49,8 +51,10 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
       val nextSearchIndex = (prevState?.searchIndex ?: 0) + 1
       performanceTracker.start()
 
-      SearchEverywhereMlSearchState(sessionStartTime, startTime, nextSearchIndex, searchReason, tabId, keysTyped, backspacesTyped,
-        searchQuery, providersCaches)
+      SearchEverywhereMlSearchState(
+        sessionStartTime, startTime, nextSearchIndex, searchReason, tabId, keysTyped, backspacesTyped,
+        searchQuery, modelProviderWithCache, providersCaches
+      )
     }
 
     if (prevState != null && experimentStrategy.isLoggingEnabledForTab(prevState.tabId)) {
