@@ -1284,6 +1284,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 runTest("testData/formatter/SuperListIndent.after.kt");
             }
 
+            @TestMetadata("Throw.after.kt")
+            public void testThrow() throws Exception {
+                runTest("testData/formatter/Throw.after.kt");
+            }
+
             @TestMetadata("TryCatchLineBreak.after.kt")
             public void testTryCatchLineBreak() throws Exception {
                 runTest("testData/formatter/TryCatchLineBreak.after.kt");
