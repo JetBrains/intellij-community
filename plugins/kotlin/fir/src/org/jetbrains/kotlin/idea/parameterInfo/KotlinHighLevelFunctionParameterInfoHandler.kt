@@ -251,7 +251,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             }
 
             if (includeName) {
-                append(parameter.symbol.name)
+                append(parameter.name)
                 append(": ")
             }
 
