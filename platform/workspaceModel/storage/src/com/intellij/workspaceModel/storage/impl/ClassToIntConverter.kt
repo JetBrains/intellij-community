@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.storage.impl
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -46,11 +45,6 @@ internal class ClassToIntConverter {
       Array<Class<*>?>(map.values.maxOrNull() ?: 0) { null }.also { map.forEach { (clazz, index) -> it[index] = clazz } }
     )
     this.map.set(entry)
-  }
-
-  @TestOnly
-  fun clear() {
-    map.set(Entry(newMap(), emptyArray()))
   }
 
   private fun newMap(oldMap: Object2IntMap<Class<*>>? = null): Object2IntOpenHashMap<Class<*>> {
