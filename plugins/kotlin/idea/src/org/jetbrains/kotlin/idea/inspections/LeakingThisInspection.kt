@@ -12,8 +12,8 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.cfg.LeakingThisDescriptor.*
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeWithContentNonSourceRootCode
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFixFE10
-import org.jetbrains.kotlin.idea.util.safeAnalyzeWithContentNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
