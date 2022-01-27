@@ -1,15 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,9 +23,7 @@ public class IntroduceVariablePostfixTemplate extends PostfixTemplateWithExpress
   @Override
   protected void expandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
     // for advanced stuff use ((PsiJavaCodeReferenceElement)expression).advancedResolve(true).getElement();
-    JavaIntroduceVariableHandlerBase handler = ApplicationManager.getApplication().isUnitTestMode()
-                                          ? getMockHandler()
-                                          : (JavaIntroduceVariableHandlerBase)LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE)
+    JavaIntroduceVariableHandlerBase handler = (JavaIntroduceVariableHandlerBase)LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE)
                                             .getIntroduceVariableHandler();
     assert handler != null;
     handler.invoke(expression.getProject(), editor, (PsiExpression)expression);
@@ -39,10 +35,6 @@ public class IntroduceVariablePostfixTemplate extends PostfixTemplateWithExpress
     // Non-inplace mode would require a modal dialog, which is not allowed under postfix templates 
     return EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled() &&
            super.isApplicable(context, copyDocument, newOffset);
-  }
-
-  private static JavaIntroduceVariableHandlerBase getMockHandler() {
-    return JavaSpecialRefactoringProvider.getInstance().getMockIntroduceVariableHandler();
   }
 
   @Override

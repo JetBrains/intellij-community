@@ -18,7 +18,6 @@ import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
 import com.intellij.refactoring.introduceField.JavaIntroduceFieldHandlerBase;
 import com.intellij.refactoring.introduceVariable.JavaIntroduceEmptyVariableHandlerBase;
-import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.DocCommentPolicy;
@@ -48,9 +47,6 @@ public interface JavaSpecialRefactoringProvider {
   static JavaSpecialRefactoringProvider getInstance() {
     return ApplicationManager.getApplication().getService(JavaSpecialRefactoringProvider.class);
   }
-
-  @NotNull
-  JavaIntroduceVariableHandlerBase getMockIntroduceVariableHandler();
 
   @NotNull
   JavaIntroduceEmptyVariableHandlerBase getEmptyVariableHandler();

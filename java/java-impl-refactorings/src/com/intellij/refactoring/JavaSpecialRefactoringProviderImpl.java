@@ -5,7 +5,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -22,7 +21,8 @@ import com.intellij.refactoring.introduceField.InplaceIntroduceFieldPopup;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.refactoring.introduceField.JavaIntroduceFieldHandlerBase;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
-import com.intellij.refactoring.introduceVariable.*;
+import com.intellij.refactoring.introduceVariable.IntroduceEmptyVariableHandlerImpl;
+import com.intellij.refactoring.introduceVariable.JavaIntroduceEmptyVariableHandlerBase;
 import com.intellij.refactoring.makeStatic.MakeMethodStaticProcessor;
 import com.intellij.refactoring.makeStatic.Settings;
 import com.intellij.refactoring.memberPullUp.PullUpProcessor;
@@ -32,7 +32,6 @@ import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackages
 import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
-import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.InlineUtil;
@@ -51,50 +50,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactoringProvider {
-
-  @Override
-  public @NotNull JavaIntroduceVariableHandlerBase getMockIntroduceVariableHandler() {
-    return new IntroduceVariableHandler() {
-      // mock default settings
-      @Override
-      public IntroduceVariableSettings getSettings(Project project, Editor editor, final PsiExpression expr,
-                                                   PsiExpression[] occurrences, TypeSelectorManagerImpl typeSelectorManager,
-                                                   boolean declareFinalIfAll, boolean anyAssignmentLHS, InputValidator validator,
-                                                   PsiElement anchor, JavaReplaceChoice replaceChoice) {
-        return new IntroduceVariableSettings() {
-          @Override
-          public @NlsSafe String getEnteredName() {
-            return "foo";
-          }
-
-          @Override
-          public boolean isReplaceAllOccurrences() {
-            return false;
-          }
-
-          @Override
-          public boolean isDeclareFinal() {
-            return false;
-          }
-
-          @Override
-          public boolean isReplaceLValues() {
-            return false;
-          }
-
-          @Override
-          public PsiType getSelectedType() {
-            return expr.getType();
-          }
-
-          @Override
-          public boolean isOK() {
-            return true;
-          }
-        };
-      }
-    };
-  }
 
   @Override
   public @NotNull JavaIntroduceEmptyVariableHandlerBase getEmptyVariableHandler() {
