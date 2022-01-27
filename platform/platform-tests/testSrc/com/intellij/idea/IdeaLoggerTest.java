@@ -23,10 +23,7 @@ public class IdeaLoggerTest extends BareTestFixtureTestCase {
   }
 
   private static void log(Logger logger, Level priority, String message, Throwable t) {
-    if (priority == Level.FINE) {
-      logger.debug(message, t);
-    }
-    else if (priority == Level.WARNING) {
+    if (priority == Level.WARNING) {
       logger.warn(message, t);
     }
     else if (priority == Level.SEVERE) {
@@ -36,7 +33,7 @@ public class IdeaLoggerTest extends BareTestFixtureTestCase {
 
   @Test
   public void testExceptionDoesNotGetLoggedTwice() {
-    for (Level level : new Level[]{Level.SEVERE, Level.WARNING, Level.FINE}) {
+    for (Level level : new Level[]{Level.SEVERE, Level.WARNING}) {
       Map<Level, List<Pair<String, Throwable>>> diags = new ConcurrentHashMap<>();
       Throwable t = new Throwable(level.toString());
       Logger logger = getDelegate(diags);
