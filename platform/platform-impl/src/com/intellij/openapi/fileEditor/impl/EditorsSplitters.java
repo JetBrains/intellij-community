@@ -5,7 +5,6 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Activities;
-import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
@@ -99,7 +98,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private final MyFocusWatcher myFocusWatcher;
   private final Alarm myIconUpdaterAlarm;
   private final UIBuilder myUIBuilder = new UIBuilder();
-  private EditorColorsScheme colorScheme;
 
   EditorsSplitters(@NotNull FileEditorManagerImpl manager) {
     super(new BorderLayout());
@@ -133,11 +131,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         invalidate();
         repaint();
       }
-    });
-
-    colorScheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
-    busConnection.subscribe(LafManagerListener.TOPIC, laf -> {
-      colorScheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
     });
   }
 
@@ -435,6 +428,11 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   void updateFileColor(@NotNull VirtualFile file) {
     Collection<EditorWindow> windows = findWindows(file);
+    if (windows.isEmpty()) {
+      return;
+    }
+
+    EditorColorsScheme colorScheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
     for (EditorWindow window : windows) {
       EditorWithProviderComposite composite = window.findFileComposite(file);
       LOG.assertTrue(composite != null);
@@ -783,13 +781,13 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   private @NotNull List<EditorWindow> findWindows(@NotNull VirtualFile file) {
-    List<EditorWindow> res = new ArrayList<>();
+    List<EditorWindow> result = new ArrayList<>(myWindows.size());
     for (EditorWindow window : myWindows) {
       if (window.findFileComposite(file) != null) {
-        res.add(window);
+        result.add(window);
       }
     }
-    return res;
+    return result;
   }
 
   public EditorWindow @NotNull [] getWindows() {
