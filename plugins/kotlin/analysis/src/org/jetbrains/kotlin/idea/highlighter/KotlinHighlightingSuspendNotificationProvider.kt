@@ -21,9 +21,12 @@ class KotlinHighlightingSuspendNotificationProvider(private val project: Project
 
         if (!KotlinHighlightingSuspender.getInstance(project).isSuspended(file)) return null
 
-        val panel = EditorNotificationPanel(fileEditor)
-        panel.text = KotlinIdeaAnalysisBundle.message("highlighting.for.0.is.suspended", file.name)
-        return panel
+        return EditorNotificationPanel(fileEditor).apply {
+            text = KotlinIdeaAnalysisBundle.message("highlighting.for.0.is.suspended", file.name)
+            createActionLabel(KotlinIdeaAnalysisBundle.message("highlighting.action.text.ignore")) {
+                KotlinHighlightingSuspender.getInstance(project).unsuspend(file)
+            }
+        }
     }
 
     companion object {
