@@ -36,9 +36,9 @@ object Versions {
         val KOTLIN_REACT = wrapperVersion("17.0.2")
         val KOTLIN_REACT_DOM = KOTLIN_REACT
         val KOTLIN_REACT_CSS = KOTLIN_REACT
-        val KOTLIN_REACT_ROUTER_DOM = wrapperVersion("5.2.0")
-        val KOTLIN_REDUX = wrapperVersion("4.1.0")
-        val KOTLIN_REACT_REDUX = wrapperVersion("7.2.4")
+        val KOTLIN_REACT_ROUTER_DOM = wrapperVersion("6.2.1")
+        val KOTLIN_REDUX = wrapperVersion("4.1.2")
+        val KOTLIN_REACT_REDUX = wrapperVersion("7.2.6")
 
         private fun wrapperVersion(version: String): Version =
             version("$version-pre.290-kotlin-1.6.10")
