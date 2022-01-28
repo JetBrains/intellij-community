@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -60,10 +59,6 @@ public abstract class BaseToggleStateAction extends ToggleAction implements Dumb
     SelectionState lastState = null;
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
       final var elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(psiFile, caret);
-      if (elements == null) {
-        continue;
-      }
-
       final SelectionState state = getCommonState(elements.getFirst(), elements.getSecond());
       if (lastState == null) {
         lastState = state;
@@ -102,10 +97,6 @@ public abstract class BaseToggleStateAction extends ToggleAction implements Dumb
       for (Caret caret : ContainerUtil.reverse(editor.getCaretModel().getAllCarets())) {
         if (!state) {
           final var elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(psiFile, caret);
-          if (elements == null) {
-            continue;
-          }
-
           final PsiElement closestEmph = MarkdownActionUtil.getCommonParentOfType(elements.getFirst(),
                                                                                   elements.getSecond(),
                                                                                   getTargetNodeType());

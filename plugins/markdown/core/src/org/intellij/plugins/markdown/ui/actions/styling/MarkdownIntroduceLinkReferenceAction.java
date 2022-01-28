@@ -55,11 +55,6 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
     Caret caret = fileAndEditor.getSecond().getCaretModel().getCurrentCaret();
     final var elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(fileAndEditor.getFirst(), caret);
 
-    if (elements == null) {
-      e.getPresentation().setEnabled(false);
-      return;
-    }
-
     PsiElement parentLink =
       MarkdownActionUtil.getCommonParentOfTypes(elements.getFirst(), elements.getSecond(), MarkdownTokenTypeSets.LINKS);
 
@@ -83,7 +78,6 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
 
     Caret caret = editor.getCaretModel().getCurrentCaret();
     final var elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(file, caret);
-    assert elements != null;
 
     PsiElement link =
       MarkdownActionUtil.getCommonTopmostParentOfTypes(elements.getFirst(), elements.getSecond(), MarkdownTokenTypeSets.LINKS);

@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
+import com.intellij.util.DocumentUtil
 import org.intellij.plugins.markdown.MarkdownBundle.messagePointer
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
@@ -24,11 +25,13 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
 import org.intellij.plugins.markdown.util.hasType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 import javax.swing.Icon
 
-internal abstract class SetHeaderLevelImpl(
+@ApiStatus.Internal
+abstract class SetHeaderLevelImpl(
   val level: Int,
   text: Supplier<@Nls String>,
   val secondaryText: Supplier<@Nls String>? = null,
@@ -58,8 +61,8 @@ internal abstract class SetHeaderLevelImpl(
   override fun isSelected(event: AnActionEvent): Boolean {
     val file = event.getData(CommonDataKeys.PSI_FILE) ?: return false
     val caret = event.getData(CommonDataKeys.CARET) ?: return false
-    val element = findParent(file, caret) ?: return false
-    val header = element.parentOfType<MarkdownHeader>(withSelf = true)
+    val element = findParent(file, caret)
+    val header = element?.parentOfType<MarkdownHeader>(withSelf = true)
     return when {
       header == null && level == 0 -> true
       header != null -> header.level == level
@@ -74,7 +77,11 @@ internal abstract class SetHeaderLevelImpl(
     val file = event.getData(CommonDataKeys.PSI_FILE) ?: return
     val caret = event.getData(CommonDataKeys.CARET) ?: return
     val editor = event.getData(CommonDataKeys.EDITOR) ?: return
-    val element = findParent(file, caret) ?: return
+    val element = findParent(file, caret)
+    if (element == null) {
+      tryToCreateHeaderFromRawLine(editor, caret)
+      return
+    }
     val header = PsiTreeUtil.getParentOfType(element, MarkdownHeader::class.java, false)
     val project = file.project
     runWriteAction {
@@ -82,6 +89,34 @@ internal abstract class SetHeaderLevelImpl(
         when {
           header != null -> handleExistingHeader(header, editor)
           level != 0 -> element.replace(MarkdownPsiElementFactory.createHeader(project, level, element.text))
+        }
+      }
+    }
+  }
+
+  /**
+   * Simply adds `#` at the line start. If there are no empty lines around new header, new lines will be added them.
+   */
+  private fun tryToCreateHeaderFromRawLine(editor: Editor, caret: Caret) {
+    val document = editor.document
+    val selectionStart = caret.selectionStart
+    val selectionEnd = caret.selectionEnd
+    val line = document.getLineNumber(selectionStart)
+    if (line != document.getLineNumber(selectionEnd)) {
+      return
+    }
+    val lineStartOffset = document.getLineStartOffset(line)
+    runWriteAction {
+      executeCommand(editor.project) {
+        val nextLine = line + 1
+        if (nextLine < document.lineCount && !DocumentUtil.isLineEmpty(document, nextLine)) {
+          val lineEndOffset = document.getLineEndOffset(line)
+          document.insertString(lineEndOffset, "\n")
+        }
+        document.insertString(lineStartOffset, "${"#".repeat(level)} ")
+        val previousLine = line - 1
+        if (previousLine >= 0 && !DocumentUtil.isLineEmpty(document, previousLine)) {
+          document.insertString(lineStartOffset, "\n")
         }
       }
     }
@@ -102,7 +137,7 @@ internal abstract class SetHeaderLevelImpl(
 
     @JvmStatic
     internal fun findParent(psiFile: PsiFile, caret: Caret): PsiElement? {
-      val (left, right) = MarkdownActionUtil.getElementsUnderCaretOrSelection(psiFile, caret) ?: return null
+      val (left, right) = MarkdownActionUtil.getElementsUnderCaretOrSelection(psiFile, caret)
       val startElement = when {
         MarkdownPsiUtil.WhiteSpaces.isNewLine(left) -> PsiTreeUtil.nextVisibleLeaf(left)
         else -> left

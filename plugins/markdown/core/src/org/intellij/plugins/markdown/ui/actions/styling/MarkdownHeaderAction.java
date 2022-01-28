@@ -89,11 +89,6 @@ public abstract class MarkdownHeaderAction extends AnAction implements DumbAware
   @Nullable
   protected static PsiElement findParent(@NotNull PsiFile psiFile, @NotNull Caret caret) {
     final var elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(psiFile, caret);
-
-    if (elements == null) {
-      return null;
-    }
-
     PsiElement first = elements.getFirst();
     PsiElement second = elements.getSecond();
     if (MarkdownPsiUtil.WhiteSpaces.isNewLine(first)) {

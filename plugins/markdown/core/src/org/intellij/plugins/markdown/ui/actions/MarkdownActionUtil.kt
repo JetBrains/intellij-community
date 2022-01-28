@@ -3,7 +3,6 @@ package org.intellij.plugins.markdown.ui.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
@@ -13,10 +12,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
-import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
-import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.application
+import org.intellij.plugins.markdown.lang.MarkdownLanguage
+import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
 
 internal object MarkdownActionUtil {
   @JvmStatic
@@ -62,13 +63,13 @@ internal object MarkdownActionUtil {
   }
 
   @JvmStatic
-  fun getElementsUnderCaretOrSelection(file: PsiFile, caret: Caret): Pair<PsiElement, PsiElement>? {
+  fun getElementsUnderCaretOrSelection(file: PsiFile, caret: Caret): Pair<PsiElement, PsiElement> {
     if (caret.selectionStart == caret.selectionEnd) {
-      val element = file.findElementAt(caret.selectionStart) ?: return null
+      val element = PsiUtilBase.getElementAtOffset(file, caret.selectionStart)
       return element to element
     }
-    val startElement = file.findElementAt(caret.selectionStart) ?: return null
-    val endElement = file.findElementAt(caret.selectionEnd) ?: return null
+    val startElement = PsiUtilBase.getElementAtOffset(file, caret.selectionStart)
+    val endElement = PsiUtilBase.getElementAtOffset(file, caret.selectionEnd)
     return startElement to endElement
   }
 
