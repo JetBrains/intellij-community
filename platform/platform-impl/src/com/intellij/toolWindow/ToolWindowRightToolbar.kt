@@ -1,9 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl
+package com.intellij.toolWindow
 
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.toolWindow.StripeButtonManager
+import com.intellij.openapi.wm.impl.AbstractDroppableStripe
+import com.intellij.openapi.wm.impl.LayoutData
+import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.util.ui.JBUI
 import java.awt.Point
 import java.awt.Rectangle

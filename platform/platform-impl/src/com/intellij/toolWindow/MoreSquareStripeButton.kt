@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl
+package com.intellij.toolWindow
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
@@ -13,6 +13,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
+import com.intellij.openapi.wm.impl.SquareStripeButtonLook
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import java.awt.Dimension
