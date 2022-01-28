@@ -76,7 +76,8 @@ private val LOG = logger<ToolWindowManagerImpl>()
 
 @ApiStatus.Internal
 @State(name = "ToolWindowManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-open class ToolWindowManagerImpl(val project: Project, private val isNewUi: Boolean) : ToolWindowManagerEx(), PersistentStateComponent<Element?>, Disposable {
+open class ToolWindowManagerImpl(val project: Project,
+                                 @field:JvmField internal val isNewUi: Boolean) : ToolWindowManagerEx(), PersistentStateComponent<Element?>, Disposable {
   private val dispatcher = EventDispatcher.create(ToolWindowManagerListener::class.java)
 
   private var oldLayout: DesktopLayout? = null

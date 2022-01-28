@@ -23,12 +23,11 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.toolWindow.FocusTask
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.toolWindow.ToolWindowProperty
 import com.intellij.ui.ClientProperty
-import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.ExperimentalUI.isNewUI
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.UIBundle
 import com.intellij.ui.content.Content
@@ -107,7 +106,7 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   private val contentManager = lazy {
     val result = createContentManager()
-    if (isNewUI()) {
+    if (toolWindowManager.isNewUi) {
       result.addContentManagerListener(UpdateBackgroundContentManager(decorator))
     }
     result
@@ -429,7 +428,7 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     val oldIcon = icon
     if (EventLog.LOG_TOOL_WINDOW_ID != id && oldIcon !== newIcon &&
         newIcon !is LayeredIcon &&
-        !ExperimentalUI.isNewUI() &&
+        !toolWindowManager.isNewUi &&
         (abs(newIcon.iconHeight - JBUIScale.scale(13f)) >= 1 || abs(newIcon.iconWidth - JBUIScale.scale(13f)) >= 1)) {
       logger<ToolWindowImpl>().warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  $id) or icon $newIcon")
     }
@@ -521,7 +520,7 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
     currentContentFactory.createToolWindowContent(toolWindowManager.project, this)
 
-    if (isNewUI()) {
+    if (toolWindowManager.isNewUi) {
       setBackgroundRecursively(contentManager.value.component, JBUI.CurrentTheme.ToolWindow.background())
       addAdjustListener(decorator, contentManager.value.component)
     }
@@ -586,7 +585,7 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   private inner class GearActionGroup(toolWindow: ToolWindowImpl) : DefaultActionGroup(), DumbAware {
     init {
       templatePresentation.icon = AllIcons.General.GearPlain
-      if (isNewUI()) {
+      if (toolWindowManager.isNewUi) {
         templatePresentation.icon = AllIcons.Actions.More
       }
       templatePresentation.text = IdeBundle.message("show.options.menu")
@@ -608,7 +607,7 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
       addAction(toggleToolbarGroup).setAsSecondary(true)
       add(ActionManager.getInstance().getAction("TW.ViewModeGroup"))
-      if (isNewUI()) {
+      if (toolWindowManager.isNewUi) {
         add(SquareStripeButton.createMoveGroup(toolWindow))
       }
       else {

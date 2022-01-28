@@ -33,17 +33,17 @@ abstract class ToolWindowManagerEx : ToolWindowManager() {
   abstract fun initToolWindow(bean: ToolWindowEP)
 
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}")
+  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR)
   open fun addToolWindowManagerListener(listener: ToolWindowManagerListener) {
   }
 
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}")
+  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR)
   open fun addToolWindowManagerListener(listener: ToolWindowManagerListener, parentDisposable: Disposable) {
   }
 
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}")
+  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR)
   open fun removeToolWindowManagerListener(listener: ToolWindowManagerListener) {
   }
 
