@@ -6,9 +6,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.ui.FixedSizeButton
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.IconLoader
@@ -177,8 +175,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
       DataManager.getInstance().dataContextFromFocusAsync.blockingGet(200)?.let { context ->
         val mainMenu = ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup
         JBPopupFactory.getInstance()
-          .createActionGroupPopup(null, mainMenu, context, false, true,
-            false, null, 30, null)
+          .createActionGroupPopup(null, mainMenu, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, ActionPlaces.MAIN_MENU)
           .showUnderneathOf(button)
       }
     }
