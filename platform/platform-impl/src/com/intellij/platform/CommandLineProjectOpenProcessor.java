@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform;
 
 import com.intellij.openapi.project.Project;
@@ -9,8 +9,8 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 
 /**
- * Handles requests to open a non-project file from the command line. This interface needs to be implemented by extensions registered
- * in {@link ProjectOpenProcessor#EXTENSION_POINT_NAME} extension point.
+ * Handles requests to open a non-project file from the command line.
+ * This interface needs to be implemented by extensions registered in {@link ProjectOpenProcessor#EXTENSION_POINT_NAME} extension point.
  */
 public interface CommandLineProjectOpenProcessor {
   /**
@@ -19,8 +19,8 @@ public interface CommandLineProjectOpenProcessor {
    * @param file the file to open
    * @param line the line to navigate to, -1 if undefined
    * @param column the column to navigate to, -1 if undefined
-   * @param tempProject if true, always opens the file in a new temporary project. If false, searches the parent directories of the file
-   *                    for a .idea subdirectory, and if found, opens that directory.
+   * @param tempProject if {@code true}, always opens the file in a new temporary project, otherwise searches the parent directories
+   *                    for `.idea` subdirectory, and if found, opens that directory.
    */
   @Nullable Project openProjectAndFile(@NotNull Path file, int line, int column, boolean tempProject);
 

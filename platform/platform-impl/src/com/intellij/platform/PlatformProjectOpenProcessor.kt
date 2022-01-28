@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform
 
 import com.intellij.ide.impl.OpenProjectTask
@@ -27,7 +27,6 @@ import com.intellij.projectImport.ProjectOpenedCallback
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.*
 
 private val LOG = logger<PlatformProjectOpenProcessor>()
@@ -50,17 +49,14 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @JvmField
     val PROJECT_NEWLY_OPENED = Key.create<Boolean>("PROJECT_NEWLY_OPENED")
 
-    fun Project.isOpenedByPlatformProcessor(): Boolean {
-      return getUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR) == true
-    }
+    fun Project.isOpenedByPlatformProcessor(): Boolean =
+      getUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR) == true
 
-    fun Project.isConfiguredByPlatformProcessor(): Boolean {
-      return getUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR) == true
-    }
+    fun Project.isConfiguredByPlatformProcessor(): Boolean =
+      getUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR) == true
 
-    fun Project.isNewProject(): Boolean {
-      return getUserData(PROJECT_NEWLY_OPENED) == true
-    }
+    fun Project.isNewProject(): Boolean =
+      getUserData(PROJECT_NEWLY_OPENED) == true
 
     @JvmStatic
     fun getInstance() = getInstanceIfItExists()!!
@@ -83,12 +79,12 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
                       line: Int,
                       callback: ProjectOpenedCallback?,
                       options: EnumSet<Option>): Project? {
-      val openProjectOptions = OpenProjectTask(forceOpenInNewFrame = options.contains(Option.FORCE_NEW_FRAME),
+      val openProjectOptions = OpenProjectTask(forceOpenInNewFrame = Option.FORCE_NEW_FRAME in options,
                                                projectToClose = projectToClose,
                                                callback = callback,
                                                runConfigurators = callback != null,
                                                line = line)
-      return doOpenProject(Paths.get(virtualFile.path), openProjectOptions)
+      return doOpenProject(Path.of(virtualFile.path), openProjectOptions)
     }
 
     @ApiStatus.Internal
@@ -97,7 +93,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       val dummyProjectName = file.fileName.toString()
       val baseDir = FileUtilRt.createTempDirectory(dummyProjectName, null, true).toPath()
       val copy = options.copy(isNewProject = true, projectName = dummyProjectName, runConfigurators = true, preparedToOpen = { module ->
-        // add content root for chosen (single) file
+        // adding content root for chosen (single) file
         ModuleRootModificationUtil.updateModel(module) { model ->
           val entries = model.contentEntries
           // remove custom content entry created for temp directory
@@ -141,7 +137,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       if (baseDirCandidate == null) {
         LOG.info("No project directory found")
         if (LightEditService.getInstance() != null) {
-          if (LightEditService.getInstance().isLightEditEnabled() && !LightEditService.getInstance().isPreferProjectMode) {
+          if (LightEditService.getInstance().isLightEditEnabled && !LightEditService.getInstance().isPreferProjectMode) {
             val lightEditProject = LightEditService.getInstance().openFile(file, true)
             if (lightEditProject != null) {
               return lightEditProject
@@ -193,32 +189,26 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     }
 
     @JvmStatic
-    fun attachToProject(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean {
-      return ProjectAttachProcessor.EP_NAME.findFirstSafe { processor ->
-        processor.attachToProject(project, projectDir, callback)
-      } != null
-    }
+    fun attachToProject(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean =
+      ProjectAttachProcessor.EP_NAME.findFirstSafe { processor -> processor.attachToProject(project, projectDir, callback) } != null
 
     /**
-     * If project file in IDEA format (.idea directory or .ipr file) exists, open it and run configurators if no modules.
-     *
-     * If doesn't exists, create a new project using default project template and run configurators (something that creates module).
+     * If a project file in IDEA format (`.idea` directory or `.ipr` file) exists, opens it and runs configurators if no modules.
+     * Otherwise, creates a new project using the default project template and runs configurators (something that creates a module)
      * (at the moment of creation project file in IDEA format will be removed if any).
-     *
+     * <p>
      * This method must be not used in tests.
      *
-     * See OpenProjectTest.
+     * See `OpenProjectTest`.
      */
     @ApiStatus.Internal
     @JvmStatic
-    fun createOptionsToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?): OpenProjectTask {
-      // doesn't make sense to refresh
-      return OpenProjectTask(runConfigurators = true,
-                             isNewProject = !ProjectUtilCore.isValidProjectPath(projectDir),
-                             projectToClose = projectToClose,
-                             isRefreshVfsNeeded = !ApplicationManager.getApplication().isUnitTestMode,
-                             useDefaultProjectAsTemplate = true)
-    }
+    fun createOptionsToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?): OpenProjectTask =
+      OpenProjectTask(runConfigurators = true,
+                      isNewProject = !ProjectUtilCore.isValidProjectPath(projectDir),
+                      projectToClose = projectToClose,
+                      isRefreshVfsNeeded = !ApplicationManager.getApplication().isUnitTestMode,  // doesn't make sense to refresh
+                      useDefaultProjectAsTemplate = true)
   }
 
   override fun canOpenProject(file: VirtualFile) = file.isDirectory
@@ -232,15 +222,14 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     return doOpenProject(baseDir, createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose).copy(forceOpenInNewFrame = forceOpenInNewFrame))
   }
 
-  override fun openProjectAndFile(file: Path, line: Int, column: Int, tempProject: Boolean): Project? {
+  override fun openProjectAndFile(file: Path, line: Int, column: Int, tempProject: Boolean): Project? =
     // force open in a new frame if temp project
     if (tempProject) {
-      return createTempProjectAndOpenFile(file, OpenProjectTask(forceOpenInNewFrame = true, line = line, column = column))
+      createTempProjectAndOpenFile(file, OpenProjectTask(forceOpenInNewFrame = true, line = line, column = column))
     }
     else {
-      return doOpenProject(file, OpenProjectTask(line = line, column = column))
+      doOpenProject(file, OpenProjectTask(line = line, column = column))
     }
-  }
 
   @Suppress("HardCodedStringLiteral")
   override fun getName() = "text editor"
