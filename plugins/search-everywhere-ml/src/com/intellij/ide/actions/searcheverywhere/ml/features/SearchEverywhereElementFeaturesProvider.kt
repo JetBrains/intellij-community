@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere.ml.features
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.textMatching.PrefixMatchingUtil
 import kotlin.math.round
 
 abstract class SearchEverywhereElementFeaturesProvider(private val supportedContributorIds: List<String>) {
@@ -59,5 +60,25 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
     value?.let {
       this[key] = it
     }
+  }
+
+  protected fun getNameMatchingFeatures(nameOfFoundElement: String, searchQuery: String): Map<String, Any> {
+    fun changeToCamelCase(str: String): String {
+      val words = str.split('_')
+      val firstWord = words.first()
+      if (words.size == 1) {
+        return firstWord
+      } else {
+        return firstWord.plus(
+          words.subList(1, words.size)
+            .joinToString(separator = "") { s -> s.replaceFirstChar { it.uppercaseChar() } }
+        )
+      }
+    }
+
+    val features = mutableMapOf<String, Any>()
+    PrefixMatchingUtil.calculateFeatures(nameOfFoundElement, searchQuery, features)
+    return features.mapKeys { changeToCamelCase(it.key) }  // Change snake case to camel case for consistency with other feature names.
+      .mapValues { if (it.value is Double) roundDouble(it.value as Double) else it.value }
   }
 }

@@ -244,25 +244,5 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: 
     }
   }
 
-  protected fun getNameMatchingFeatures(nameOfFoundElement: String, searchQuery: String): Map<String, Any> {
-    fun changeToCamelCase(str: String): String {
-      val words = str.split('_')
-      val firstWord = words.first()
-      if (words.size == 1) {
-        return firstWord
-      } else {
-        return firstWord.plus(
-          words.subList(1, words.size)
-            .joinToString(separator = "") { s -> s.replaceFirstChar { it.uppercaseChar() } }
-        )
-      }
-    }
-
-    val features = mutableMapOf<String, Any>()
-    PrefixMatchingUtil.calculateFeatures(nameOfFoundElement, searchQuery, features)
-    return features.mapKeys { changeToCamelCase(it.key) }  // Change snake case to camel case for consistency with other feature names.
-      .mapValues { if (it.value is Double) roundDouble(it.value as Double) else it.value }
-  }
-
   protected data class Cache(val fileTypeStats: Map<String, FileTypeUsageSummary>, val openedFile: VirtualFile?)
 }
