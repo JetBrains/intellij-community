@@ -89,7 +89,6 @@ public final class DFAEngine<E> {
         }
       }
     }
-    // each of the elements of `info` has been visited at least once, therefore there are no Optional.empty() elements
     return ContainerUtil.map(info, e -> e.orElse(null));
   }
 

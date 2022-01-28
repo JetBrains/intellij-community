@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.control.finalVar;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -24,11 +24,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GrFieldControlFlowPolicy;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -141,7 +140,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
         appendFieldsInitializedInClassInitializer(initializers, null, false, fields, initializedFields);
         appendInitializationFromChainedConstructors(constructor, fields, initializedFields);
 
-        final Instruction[] flow = buildFlowForField(block);
+        final GroovyControlFlow flow = buildFlowForField(block);
         final Set<GrVariable> variables = buildVarSet(fields, false);
 
         highlightInvalidWriteAccess(flow, variables, initializedFields);
@@ -161,7 +160,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
         appendFieldInitializedInDeclaration(isStatic, fields, initializedFields);
         appendFieldsInitializedInClassInitializer(initializers, initializer, isStatic, fields, initializedFields);
 
-        final Instruction[] flow = buildFlowForField(initializer.getBlock());
+        final GroovyControlFlow flow = buildFlowForField(initializer.getBlock());
         final Set<GrVariable> variables = buildVarSet(fields, isStatic);
         highlightInvalidWriteAccess(flow, variables, initializedFields);
       }
@@ -181,12 +180,12 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
             }
           }
 
-          final Instruction[] flow = getFlow(scopeToProcess);
+          final GroovyControlFlow flow = getFlow(scopeToProcess);
           highlightInvalidWriteAccess(flow, variables, forInParameters);
         }
       }
 
-      private void highlightInvalidWriteAccess(Instruction @NotNull [] flow,
+      private void highlightInvalidWriteAccess(@NotNull GroovyControlFlow flow,
                                                @NotNull Set<GrVariable> variables,
                                                @NotNull Set<GrVariable> initializedVariables) {
         final List<ReadWriteVariableInstruction> result =
@@ -195,11 +194,11 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
         if (result == null) return;
 
         for (final ReadWriteVariableInstruction instruction : result) {
-          VariableDescriptor descriptor = instruction.getDescriptor();
+          int descriptor = instruction.getDescriptor();
 
-          if (!(descriptor instanceof ResolvedVariableDescriptor)) continue;
+          if (!(flow.getVarIndices()[descriptor] instanceof ResolvedVariableDescriptor)) continue;
           PsiElement element = instruction.getElement();
-          if (variables.contains(((ResolvedVariableDescriptor)descriptor).getVariable()) && element != null) {
+          if (variables.contains(((ResolvedVariableDescriptor)flow.getVarIndices()[descriptor]).getVariable()) && element != null) {
             registerError(element,
                           GroovyBundle.message("cannot.assign.a.value.to.final.field.0", descriptor),
                           LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
@@ -251,7 +250,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
       if (curInit == initializerToStop) break;
 
       final GrOpenBlock block = curInit.getBlock();
-      final Instruction[] flow = buildFlowForField(block);
+      final GroovyControlFlow flow = buildFlowForField(block);
 
       for (GrField field : fields) {
         if (field.hasModifierProperty(PsiModifier.STATIC) == isStatic &&
@@ -273,7 +272,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
       final GrOpenBlock block = method.getBlock();
       if (block == null) continue;
 
-      final Instruction[] flow = buildFlowForField(block);
+      final GroovyControlFlow flow = buildFlowForField(block);
 
       for (GrField field : fields) {
         if (!field.hasModifierProperty(PsiModifier.STATIC) &&
@@ -314,7 +313,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
       if (initializer.isStatic() != isStatic) continue;
 
       final GrOpenBlock block = initializer.getBlock();
-      final Instruction[] initializerFlow = buildFlowForField(block);
+      final GroovyControlFlow initializerFlow = buildFlowForField(block);
       if (VariableInitializationChecker.isVariableDefinitelyInitializedCached(field, block, initializerFlow)) {
         return true;
       }
@@ -403,7 +402,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
     }
   }
 
-  private static Instruction @NotNull [] buildFlowForField(@NotNull GrOpenBlock block) {
+  private static @NotNull GroovyControlFlow buildFlowForField(@NotNull GrOpenBlock block) {
     return ControlFlowBuilder.buildControlFlow(block, GrFieldControlFlowPolicy.getInstance());
   }
 
@@ -429,9 +428,9 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
     return scopes;
   }
 
-  private static Instruction @NotNull [] getFlow(@NotNull PsiElement element) {
+  private static @NotNull GroovyControlFlow getFlow(@NotNull PsiElement element) {
     return element instanceof GrControlFlowOwner
-           ? ((GrControlFlowOwner)element).getControlFlow()
+           ? ControlFlowUtils.getGroovyControlFlow((GrControlFlowOwner)element)
            : ControlFlowBuilder.buildControlFlow((GroovyPsiElement)element);
   }
 

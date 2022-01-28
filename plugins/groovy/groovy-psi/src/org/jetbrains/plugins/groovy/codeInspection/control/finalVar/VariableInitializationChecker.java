@@ -8,7 +8,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
@@ -23,17 +23,17 @@ import java.util.Map;
  */
 public final class VariableInitializationChecker {
 
-  private static boolean isVariableDefinitelyInitialized(@NotNull GrVariable var, Instruction @NotNull [] controlFlow) {
-    DFAEngine<Boolean> engine = new DFAEngine<>(controlFlow, new MyDfaInstance(VariableDescriptorFactory.createDescriptor(var)), new MySemilattice());
+  private static boolean isVariableDefinitelyInitialized(@NotNull GrVariable var, GroovyControlFlow controlFlow) {
+    DFAEngine<Boolean> engine = new DFAEngine<>(controlFlow.getFlow(), new MyDfaInstance(controlFlow.getIndex(VariableDescriptorFactory.createDescriptor(var))), new MySemilattice());
     final List<Boolean> result = engine.performDFAWithTimeout();
     if (result == null) return false;
-    Boolean last = result.get(controlFlow.length - 1);
+    Boolean last = result.get(controlFlow.getFlow().length - 1);
     return last == null ? false : last;
   }
 
   public static boolean isVariableDefinitelyInitializedCached(@NotNull GrVariable var,
                                                               @NotNull GroovyPsiElement context,
-                                                              Instruction @NotNull [] controlFlow) {
+                                                              @NotNull GroovyControlFlow controlFlow) {
     Map<GroovyPsiElement, Boolean> map = CachedValuesManager.getCachedValue(var, () -> Result.create(new HashMap<>(), var));
 
     final Boolean cached = map.get(context);
@@ -46,20 +46,20 @@ public final class VariableInitializationChecker {
   }
 
   private static class MyDfaInstance implements DfaInstance<Boolean> {
-    MyDfaInstance(VariableDescriptor var) {
+    MyDfaInstance(int var) {
       myVar = var;
     }
 
     @Override
     public Boolean fun(@NotNull Boolean e, @NotNull Instruction instruction) {
       if (instruction instanceof ReadWriteVariableInstruction &&
-          ((ReadWriteVariableInstruction)instruction).getDescriptor().equals(myVar)) {
+          ((ReadWriteVariableInstruction)instruction).getDescriptor() == myVar) {
         return true;
       }
       return e;
     }
 
-    private final VariableDescriptor myVar;
+    private final int myVar;
   }
 
   private static class MySemilattice implements Semilattice<Boolean> {

@@ -8,7 +8,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
@@ -101,15 +101,19 @@ public final class TypeInferenceHelper {
     final VariableDescriptor descriptor = createDescriptor(refExpr);
     if (descriptor == null) return null;
 
-    final ReadWriteVariableInstruction rwInstruction = ControlFlowUtils.findRWInstruction(refExpr, getFlatControlFlow(scope));
+    final ReadWriteVariableInstruction rwInstruction = ControlFlowUtils.findRWInstruction(refExpr, getFlatControlFlow(scope).getFlow());
     if (rwInstruction == null) return null;
 
     final InferenceCache cache = getInferenceCache(scope);
-    return cache.getInferredType(descriptor, rwInstruction, mixinOnly);
+
+    int descriptorIndex = cache.getGroovyFlow().getIndex(descriptor);
+    if (descriptorIndex == 0) return null;
+
+    return cache.getInferredType(descriptorIndex, rwInstruction, mixinOnly);
   }
 
   @Nullable
-  public static PsiType getInferredType(VariableDescriptor descriptor, Instruction instruction, GrControlFlowOwner scope) {
+  public static PsiType getInferredType(int descriptor, Instruction instruction, GrControlFlowOwner scope) {
     InferenceCache cache = getInferenceCache(scope);
     return cache.getInferredType(descriptor, instruction, false);
   }
@@ -127,7 +131,11 @@ public final class TypeInferenceHelper {
 
     final InferenceCache cache = getInferenceCache(scope);
     final VariableDescriptor descriptor = createDescriptor(variable);
-    final PsiType inferredType = cache.getInferredType(descriptor, nearest, mixinOnly);
+    int descriptorIndex = cache.getGroovyFlow().getIndex(descriptor);
+    if (descriptorIndex == 0) return null;
+
+
+    final PsiType inferredType = cache.getInferredType(descriptorIndex, nearest, mixinOnly);
     return inferredType != null ? inferredType : variable.getType();
   }
 
@@ -143,19 +151,19 @@ public final class TypeInferenceHelper {
     return CachedValuesManager.getCachedValue(scope, () -> Result.create(new InferenceCache(scope), MODIFICATION_COUNT));
   }
 
-  public static Instruction[] getFlatControlFlow(@NotNull final GrControlFlowOwner scope) {
+  public static GroovyControlFlow getFlatControlFlow(@NotNull final GrControlFlowOwner scope) {
     if (isFlatDFAAllowed()) {
       return CachedValuesManager.getCachedValue(scope, () -> Result.create(ControlFlowBuilder.buildFlatControlFlow(scope), MODIFICATION_COUNT));
     } else {
-      return scope.getControlFlow();
+      return ControlFlowUtils.getGroovyControlFlow(scope);
     }
   }
 
   @Nullable
-  static List<DefinitionMap> getDefUseMaps(Instruction @NotNull [] flow, @NotNull Object2IntMap<VariableDescriptor> varIndexes) {
-    final ReachingDefinitionsDfaInstance dfaInstance = new TypesReachingDefinitionsInstance(flow, varIndexes);
+  static List<DefinitionMap> getDefUseMaps(@NotNull GroovyControlFlow flow) {
+    final ReachingDefinitionsDfaInstance dfaInstance = new TypesReachingDefinitionsInstance();
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
-    final DFAEngine<DefinitionMap> engine = new DFAEngine<>(flow, dfaInstance, lattice);
+    final DFAEngine<DefinitionMap> engine = new DFAEngine<>(flow.getFlow(), dfaInstance, lattice);
     List<@Nullable DefinitionMap> maps = engine.performDFAWithTimeout();
     if (maps == null) {
       return null;

@@ -6,7 +6,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -26,13 +25,13 @@ import java.util.function.Supplier;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
-  private final Instruction[] myFlow;
+  private final GroovyControlFlow myFlow;
   private final DFAFlowInfo myFlowInfo;
   private final InferenceCache myCache;
   private final PsiManager myManager;
   private final InitialTypeProvider myInitialTypeProvider;
 
-  TypeDfaInstance(Instruction @NotNull [] flow,
+  TypeDfaInstance(@NotNull GroovyControlFlow flow,
                   @NotNull DFAFlowInfo flowInfo,
                   @NotNull InferenceCache cache,
                   @NotNull PsiManager manager,
@@ -77,11 +76,10 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
   private TypeDfaState handleStartInstruction() {
     TypeDfaState state = TypeDfaState.EMPTY_STATE;
-    for (VariableDescriptor descriptor : myFlowInfo.getInterestingDescriptors()) {
+    for (int descriptor : myFlowInfo.getInterestingDescriptors()) {
       PsiType initialType = myInitialTypeProvider.initialType(descriptor);
       if (initialType != null) {
-        int index = myFlowInfo.getVarIndexes().get(descriptor);
-        state = state.withNewType(index, DFAType.create(initialType));
+        state = state.withNewType(descriptor, DFAType.create(initialType));
       }
     }
     return state;
@@ -133,32 +131,33 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   }
 
   private TypeDfaState handleMixin(@NotNull final TypeDfaState state, @NotNull final MixinTypeInstruction instruction) {
-    final VariableDescriptor descriptor = instruction.getVariableDescriptor();
-    if (descriptor == null) return state;
+    final int descriptor = instruction.getVariableDescriptor();
+    if (descriptor == 0) return state;
 
     return updateVariableType(state, instruction, descriptor, () -> {
-      ReadWriteVariableInstruction originalInstr = instruction.getInstructionToMixin(myFlow);
+      ReadWriteVariableInstruction originalInstr = instruction.getInstructionToMixin(myFlow.getFlow());
       if (originalInstr != null) {
         assert !originalInstr.isWrite();
       }
 
-      return state.getNotNullDFAType(descriptor, myFlowInfo.getVarIndexes()).withNewMixin(instruction.inferMixinType(), instruction.getConditionInstruction());
+      return state.getNotNullDFAType(descriptor).withNewMixin(instruction.inferMixinType(), instruction.getConditionInstruction());
     });
   }
 
   private TypeDfaState handleReadWriteVariable(@NotNull TypeDfaState state, @NotNull ReadWriteVariableInstruction instruction) {
     final PsiElement element = instruction.getElement();
     if (element == null) return state;
-    VariableDescriptor descriptor = instruction.getDescriptor();
+    int descriptor = instruction.getDescriptor();
     if (instruction.isWrite()) {
       return updateVariableType(
         state, instruction, descriptor,
         () -> {
           PsiType initializerType = TypeInferenceHelper.getInitializerType(element);
+          VariableDescriptor actualDescriptor = myFlow.getVarIndices()[descriptor];
           if (initializerType == null &&
-              descriptor instanceof ResolvedVariableDescriptor &&
-              TypeInferenceHelper.isSimpleEnoughForAugmenting(myFlow)) {
-            GrVariable variable = ((ResolvedVariableDescriptor)descriptor).getVariable();
+              actualDescriptor instanceof ResolvedVariableDescriptor &&
+              TypeInferenceHelper.isSimpleEnoughForAugmenting(myFlow.getFlow())) {
+            GrVariable variable = ((ResolvedVariableDescriptor)actualDescriptor).getVariable();
             PsiType augmentedType = TypeAugmenter.Companion.inferAugmentedType(variable);
             return DFAType.create(augmentedType);
           }
@@ -175,17 +174,17 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
   private TypeDfaState handleArguments(TypeDfaState state, ArgumentsInstruction instruction) {
     TypeDfaState newState = state;
-    for (Map.Entry<VariableDescriptor, Collection<Argument>> entry : instruction.getArguments().entrySet()) {
-      final VariableDescriptor descriptor = entry.getKey();
+    for (Map.Entry<Integer, Collection<Argument>> entry : instruction.getArguments().entrySet()) {
+      final int descriptor = entry.getKey();
       final Collection<Argument> arguments = entry.getValue();
       newState = handleArgument(newState, instruction, descriptor, arguments);
     }
     return newState;
   }
 
-  private TypeDfaState handleArgument(TypeDfaState state, ArgumentsInstruction instruction, VariableDescriptor descriptor, Collection<Argument> arguments) {
-    return updateVariableType(state, instruction, descriptor, () -> {
-      DFAType result = state.getNotNullDFAType(descriptor, myFlowInfo.getVarIndexes());
+  private TypeDfaState handleArgument(TypeDfaState state, ArgumentsInstruction instruction, int descriptorId, Collection<Argument> arguments) {
+    return updateVariableType(state, instruction, descriptorId, () -> {
+      DFAType result = state.getNotNullDFAType(descriptorId);
       final GroovyResolveResult[] results = instruction.getElement().multiResolve(false);
       for (GroovyResolveResult variant : results) {
         if (!(variant instanceof GroovyMethodResult)) continue;
@@ -210,17 +209,16 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
   private TypeDfaState updateVariableType(@NotNull TypeDfaState state,
                                           @NotNull Instruction instruction,
-                                          @NotNull VariableDescriptor descriptor,
+                                          int descriptorId,
                                           @NotNull Supplier<DFAType> computation) {
-    int index = ((Object2IntMap<VariableDescriptor>)myFlowInfo.getVarIndexes()).getInt(descriptor);
-    if (index == 0) {
+    if (descriptorId == 0) {
       return state;
     }
     if (!myFlowInfo.getInterestingInstructions().contains(instruction)) {
-      return state.withRemovedBinding(index);
+      return state.withRemovedBinding(descriptorId);
     }
 
-    DFAType type = myCache.getCachedInferredType(descriptor, instruction);
+    DFAType type = myCache.getCachedInferredType(descriptorId, instruction);
     if (type == null) {
       if (myFlowInfo.getAcyclicInstructions().contains(instruction)) {
         type = computation.get();
@@ -230,7 +228,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       }
     }
 
-    return state.withNewType(index, type);
+    return state.withNewType(descriptorId, type);
   }
 
   private <T> T runWithoutCaching(@NotNull TypeDfaState state, Supplier<T> computation) {
@@ -243,7 +241,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     Map<VariableDescriptor, DFAType> unwrappedVariables = new HashMap<>();
     for (var entry : state.getRawVarTypes().int2ObjectEntrySet()) {
       if (!state.isProhibited(entry.getIntKey())) {
-        unwrappedVariables.put(myFlowInfo.getReverseVarIndexes()[entry.getIntKey()], entry.getValue());
+        unwrappedVariables.put(myFlow.getVarIndices()[entry.getIntKey()], entry.getValue());
       }
     }
     return unwrappedVariables;

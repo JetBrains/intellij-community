@@ -29,7 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryE
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsDfaInstance;
@@ -39,8 +38,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.IntConsumer;
-
-import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.getVarIndexes;
 
 /**
  & @author ven
@@ -59,7 +56,7 @@ public final class UnusedDefInspection extends GroovyLocalInspectionBase {
   @Override
   protected void check(@NotNull final GrControlFlowOwner owner, @NotNull final ProblemsHolder problemsHolder) {
     final Instruction[] flow = owner.getControlFlow();
-    final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow, getVarIndexes(owner, false));
+    final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance();
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
     final DFAEngine<DefinitionMap> engine = new DFAEngine<>(flow, dfaInstance, lattice);
     final List<DefinitionMap> dfaResult = engine.performDFAWithTimeout();
@@ -79,15 +76,15 @@ public final class UnusedDefInspection extends GroovyLocalInspectionBase {
       if (instruction instanceof ReadWriteVariableInstruction) {
         final ReadWriteVariableInstruction varInst = (ReadWriteVariableInstruction) instruction;
         if (!varInst.isWrite()) {
-          final VariableDescriptor descriptor = varInst.getDescriptor();
+          final int descriptor = varInst.getDescriptor();
           DefinitionMap e = dfaResult.get(i);
           if (e == null) {
             continue;
           }
           e.forEachValue(reaching -> {
             reaching.forEach((IntConsumer)defNum -> {
-              final VariableDescriptor defDescriptor = ((ReadWriteVariableInstruction) flow[defNum]).getDescriptor();
-              if (descriptor.equals(defDescriptor)) {
+              final int defDescriptor = ((ReadWriteVariableInstruction)flow[defNum]).getDescriptor();
+              if (descriptor == defDescriptor) {
                 unusedDefs.remove(defNum);
               }
             });

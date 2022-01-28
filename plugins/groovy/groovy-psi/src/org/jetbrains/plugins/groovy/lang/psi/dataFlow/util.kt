@@ -4,11 +4,8 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
-import com.intellij.psi.util.*
-import com.intellij.psi.util.CachedValueProvider.Result
-import it.unimi.dsi.fastutil.objects.Object2IntMap
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
@@ -20,52 +17,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ArgumentsInstruction
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isExpressionStatement
 import org.jetbrains.plugins.groovy.util.findNodesOutsideCycles
 import org.jetbrains.plugins.groovy.util.mapGraph
 import java.util.*
 
-private typealias VariablesKey = Key<CachedValue<Object2IntMap<VariableDescriptor>>>
-
-private val smallFlowKey: VariablesKey = Key.create("groovy.dfa.small.flow.var.indexes")
-private val largeFlowKey: VariablesKey = Key.create("groovy.dfa.large.flow.var.indexes")
-
-
-internal fun GrControlFlowOwner.getVarIndexes(large: Boolean): Object2IntMap<VariableDescriptor> {
-  return CachedValuesManager.getCachedValue(this, if (large) largeFlowKey else smallFlowKey) {
-    Result.create(doGetVarIndexes(this, large), PsiModificationTracker.MODIFICATION_COUNT)
-  }
-}
-
-internal fun getReverseIndex(enumeration: Object2IntMap<VariableDescriptor>): Array<VariableDescriptor?> {
-  val reverseIndex = arrayOfNulls<VariableDescriptor>(enumeration.size + 1)
-  for (descriptor in enumeration.keys) {
-    reverseIndex[enumeration.getInt(descriptor)] = descriptor
-  }
-  return reverseIndex
-}
-
 internal fun getSimpleInstructions(flow: Array<Instruction>): BitSet =
   findNodesOutsideCycles(mapGraph(flow.associateWith { it.allSuccessors().toList() })).fold(BitSet()) { bitSet, instr ->
     bitSet.set(instr.num()); bitSet
   }
-
-private fun doGetVarIndexes(owner: GrControlFlowOwner, isLarge: Boolean): Object2IntMap<VariableDescriptor> {
-  val result = Object2IntOpenHashMap<VariableDescriptor>()
-  var num = 1
-  val flow = if (isLarge) TypeInferenceHelper.getFlatControlFlow(owner) else owner.controlFlow
-  for (instruction in flow) {
-    if (instruction !is ReadWriteVariableInstruction) continue
-    val descriptor = instruction.descriptor
-    if (!result.containsKey(descriptor)) {
-      result.put(descriptor, num++)
-    }
-  }
-  return result
-}
 
 private typealias InstructionsByElement = (PsiElement) -> Collection<Instruction>
 private typealias ReadInstructions = Collection<ReadWriteVariableInstruction>

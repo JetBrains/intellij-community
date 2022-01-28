@@ -10,11 +10,9 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 
 import java.util.BitSet;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -160,9 +158,8 @@ class TypeDfaState {
   }
 
   @Nullable
-  DFAType getVariableType(VariableDescriptor descriptor, Map<VariableDescriptor, Integer> varIndexes) {
-    int index = varIndexes.getOrDefault(descriptor, 0);
-    return index != 0 && !myProhibitedCachingVars.get(index) ? myVarTypes.get(index) : null;
+  DFAType getVariableType(int descriptor) {
+    return descriptor != 0 && !myProhibitedCachingVars.get(descriptor) ? myVarTypes.get(descriptor) : null;
   }
 
   public BitSet getRemovedBindings() {
@@ -175,8 +172,8 @@ class TypeDfaState {
 
   @Contract(pure = true)
   @NotNull
-  DFAType getNotNullDFAType(VariableDescriptor descriptor, Map<VariableDescriptor, Integer> varIndexes) {
-    DFAType result = getVariableType(descriptor, varIndexes);
+  DFAType getNotNullDFAType(int descriptor) {
+    DFAType result = getVariableType(descriptor);
     return result == null ? DFAType.NULL_DFA_TYPE : result;
   }
 

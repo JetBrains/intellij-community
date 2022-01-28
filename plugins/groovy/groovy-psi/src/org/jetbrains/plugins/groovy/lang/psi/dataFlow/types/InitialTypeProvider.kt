@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types
 
 import com.intellij.psi.PsiType
@@ -10,24 +10,23 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDe
 import org.jetbrains.plugins.groovy.lang.psi.util.isCompileStatic
 
 
-internal class InitialTypeProvider(private val start: GrControlFlowOwner) {
+internal class InitialTypeProvider(private val start: GrControlFlowOwner, private val reverseMapping : Array<VariableDescriptor>) {
   private val TYPE_INFERENCE_FAILED = Any()
-  private val cache: MutableMap<VariableDescriptor, Any> = mutableMapOf()
+  private val cache: MutableMap<Int, Any> = mutableMapOf()
 
-  fun initialType(descriptor: VariableDescriptor): PsiType? {
-    if (!cache.containsKey(descriptor)) {
+  fun initialType(descriptorId: Int): PsiType? {
+    if (!cache.containsKey(descriptorId)) {
       try {
         if (isCompileStatic(start)) return null
-        val resolvedDescriptor = descriptor as? ResolvedVariableDescriptor ?: return null
-        val field = resolvedDescriptor.variable as? GrField ?: return null
+        val field = reverseMapping[descriptorId].castSafelyTo<ResolvedVariableDescriptor>()?.variable?.castSafelyTo<GrField>() ?: return null
         val fieldType = field.typeGroovy
         if (fieldType != null) {
-          cache[descriptor] = fieldType
+          cache[descriptorId] = fieldType
         }
       } finally {
-        cache.putIfAbsent(descriptor, TYPE_INFERENCE_FAILED)
+        cache.putIfAbsent(descriptorId, TYPE_INFERENCE_FAILED)
       }
     }
-    return cache[descriptor]?.castSafelyTo<PsiType>()
+    return cache[descriptorId]?.castSafelyTo<PsiType>()
   }
 }
