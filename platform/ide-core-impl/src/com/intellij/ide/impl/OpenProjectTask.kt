@@ -3,10 +3,12 @@ package com.intellij.ide.impl
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.projectImport.ProjectOpenProcessor
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.projectImport.ProjectOpenedCallback
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
 import java.util.function.Predicate
 
@@ -35,16 +37,14 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
                            val beforeInit: ((Project) -> Unit)? = null,
                            /** Ignored if project is explicitly set. */
                            val beforeOpen: ((Project) -> Boolean)? = null,
-                           val preparedToOpen: ((Module) -> Unit)? = null) {
+                           val preparedToOpen: ((Module) -> Unit)? = null) : UserDataHolder {
 
-  private var _checkDirectoryForFileBasedProjects = true
-  private var _openProcessorChooser: ((List<ProjectOpenProcessor>) -> ProjectOpenProcessor)? = null
+  private val userData = ConcurrentHashMap<Key<*>, Any>()
 
-  @get:ApiStatus.Internal
-  val checkDirectoryForFileBasedProjects: Boolean by ::_checkDirectoryForFileBasedProjects
+  @Suppress("UNCHECKED_CAST")
+  override fun <T : Any?> getUserData(key: Key<T>): T? = userData[key] as T?
 
-  @get:ApiStatus.Internal
-  val openProcessorChooser: ((List<ProjectOpenProcessor>) -> ProjectOpenProcessor)? by ::_openProcessorChooser
+  override fun <T : Any?> putUserData(key: Key<T>, value: T?) { userData[key] = value as Any }
 
   fun withForceOpenInNewFrame(forceOpenInNewFrame: Boolean) = copy(forceOpenInNewFrame = forceOpenInNewFrame)
   fun withProjectToClose(projectToClose: Project?) = copy(projectToClose = projectToClose)
@@ -60,13 +60,6 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
 
   @ApiStatus.Internal
   fun withPreparedToOpenCallback(callback: Consumer<Module>) = copy(preparedToOpen = { callback.accept(it) })
-
-  @ApiStatus.Internal
-  fun doNotCheckDirectoryForFileBasedProjects() = copy().also { it._checkDirectoryForFileBasedProjects = false }
-
-  @ApiStatus.Internal
-  fun withOpenProcessorChooser(openProcessorChooser: (List<ProjectOpenProcessor>) -> ProjectOpenProcessor): OpenProjectTask =
-    copy().also { it._openProcessorChooser = openProcessorChooser }
 
   companion object {
     @JvmStatic

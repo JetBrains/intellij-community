@@ -22,10 +22,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,6 +50,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
@@ -62,6 +60,13 @@ public final class ProjectUtil extends ProjectUtilCore {
   public static final String DEFAULT_PROJECT_NAME = "default";
   public static final String PROJECTS_DIR = "projects";
   public static final String PROPERTY_PROJECT_PATH = "%s.project.path";
+
+  @ApiStatus.Internal
+  public static final Key<Boolean> FORCE_CHECK_DIRECTORY_KEY = Key.create("project.util.processor.chooser");
+
+  @ApiStatus.Internal
+  public static final Key<Function<List<? extends ProjectOpenProcessor>, ProjectOpenProcessor>> PROCESSOR_CHOOSER_KEY =
+    Key.create("project.util.processor.chooser");
 
   private static String ourProjectsPath;
 
@@ -174,7 +179,7 @@ public final class ProjectUtil extends ProjectUtilCore {
       return openResult(project, OpenResult.failure());
     }
 
-    if (options.getCheckDirectoryForFileBasedProjects() && Files.isDirectory(file)) {
+    if (FORCE_CHECK_DIRECTORY_KEY.get(options) == Boolean.TRUE && Files.isDirectory(file)) {
       try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(file)) {
         for (Path child : directoryStream) {
           String childPath = child.toString();
@@ -251,7 +256,7 @@ public final class ProjectUtil extends ProjectUtilCore {
       return ProjectManagerEx.getInstanceEx().openProjectAsync(file, options.withRunConfigurators());
     }
 
-    if (options.getCheckDirectoryForFileBasedProjects() && Files.isDirectory(file)) {
+    if (FORCE_CHECK_DIRECTORY_KEY.get(options) == Boolean.TRUE && Files.isDirectory(file)) {
       try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(file)) {
         for (Path child : directoryStream) {
           String childPath = child.toString();
@@ -330,12 +335,13 @@ public final class ProjectUtil extends ProjectUtilCore {
     }
     else {
       processors.removeIf(it -> it instanceof PlatformProjectOpenProcessor);
+      Function<List<? extends ProjectOpenProcessor>, ProjectOpenProcessor> chooser;
       if (processors.size() == 1) {
         processor = processors.get(0);
       }
-      else if (options.getOpenProcessorChooser() != null) {
+      else if ((chooser = PROCESSOR_CHOOSER_KEY.get(options)) != null) {
         LOG.info("options.openProcessorChooser will handle the open processor dilemma");
-        processor = options.getOpenProcessorChooser().invoke(processors);
+        processor = chooser.apply(processors);
       }
       else {
         Ref<ProjectOpenProcessor> ref = new Ref<>();
@@ -365,12 +371,13 @@ public final class ProjectUtil extends ProjectUtilCore {
     }
     else {
       processors.removeIf(it -> it instanceof PlatformProjectOpenProcessor);
+      Function<List<? extends ProjectOpenProcessor>, ProjectOpenProcessor> chooser;
       if (processors.size() == 1) {
         processorFuture = CompletableFuture.completedFuture(processors.get(0));
       }
-      else if (options.getOpenProcessorChooser() != null) {
+      else if ((chooser = PROCESSOR_CHOOSER_KEY.get(options)) != null) {
         LOG.info("options.openProcessorChooser will handle the open processor dilemma");
-        processorFuture = CompletableFuture.completedFuture(options.getOpenProcessorChooser().invoke(processors));
+        processorFuture = CompletableFuture.completedFuture(chooser.apply(processors));
       }
       else {
         processorFuture = CompletableFuture.supplyAsync(() -> {

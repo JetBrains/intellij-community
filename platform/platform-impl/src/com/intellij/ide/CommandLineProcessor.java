@@ -68,12 +68,12 @@ public final class CommandLineProcessor {
   // public for testing
   @ApiStatus.Internal
   public static @NotNull CommandLineProcessorResult doOpenFileOrProject(@NotNull Path file, boolean shouldWait) {
-    OpenProjectTask openProjectOptions = PlatformProjectOpenProcessor.createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, null)
-      // do not check for .ipr files in the specified directory (@develar: it is existing behaviour, I am not fully sure that it is correct)
-      .doNotCheckDirectoryForFileBasedProjects();
     Project project = null;
     if (!LightEditUtil.isForceOpenInLightEditMode()) {
-      OpenResult openResult = ProjectUtil.tryOpenOrImport(file, openProjectOptions);
+      OpenProjectTask options = PlatformProjectOpenProcessor.createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, null);
+      // do not check for .ipr files in the specified directory (@develar: it is existing behaviour, I am not fully sure that it is correct)
+      ProjectUtil.FORCE_CHECK_DIRECTORY_KEY.set(options, Boolean.TRUE);
+      OpenResult openResult = ProjectUtil.tryOpenOrImport(file, options);
       if (openResult instanceof OpenResult.Success) {
         project = ((OpenResult.Success)openResult).getProject();
       }
