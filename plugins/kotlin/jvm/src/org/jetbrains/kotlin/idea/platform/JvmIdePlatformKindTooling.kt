@@ -5,24 +5,20 @@ package org.jetbrains.kotlin.idea.core.platform.impl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import com.intellij.testIntegration.TestFramework
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.framework.JavaRuntimeDetectionUtil
 import org.jetbrains.kotlin.idea.framework.JavaRuntimeLibraryDescription
 import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor.Companion.getTestStateIcon
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
-import org.jetbrains.kotlin.idea.platform.isKotlinTestDeclaration
+import org.jetbrains.kotlin.idea.platform.getGenericTestIcon
 import org.jetbrains.kotlin.idea.platform.testintegration.LightTestFramework
 import org.jetbrains.kotlin.idea.platform.testintegration.NoLightTestFrameworkResult
 import org.jetbrains.kotlin.idea.platform.testintegration.ResolvedLightTestFrameworkResult
 import org.jetbrains.kotlin.idea.platform.testintegration.UnsureLightTestFrameworkResult
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.PathUtil
 import javax.swing.Icon
 
@@ -49,37 +45,30 @@ class JvmIdePlatformKindTooling : IdePlatformKindTooling() {
         return JavaRuntimeDetectionUtil::getJavaRuntimeVersion
     }
 
-    private fun calculateUrlsToFramework(declaration: KtNamedDeclaration): Pair<List<String>, TestFramework>? {
+    private fun calculateUrls(declaration: KtNamedDeclaration): List<String>? {
         for (lightTestFramework in LightTestFramework.EXTENSION_NAME.extensionList) {
-            val framework = when (val result = lightTestFramework.detectFramework(declaration)) {
-                is ResolvedLightTestFrameworkResult -> result.testFramework
+            when (lightTestFramework.detectFramework(declaration)) {
                 is UnsureLightTestFrameworkResult -> continue
                 is NoLightTestFrameworkResult -> return null
+                is ResolvedLightTestFrameworkResult -> Unit
             }
+
             val qualifiedName = lightTestFramework.qualifiedName(declaration) ?: return null
-            return when(declaration) {
-                is KtClassOrObject -> listOf("java:suite://$qualifiedName") to framework
+            return when (declaration) {
+                is KtClassOrObject -> listOf("java:suite://$qualifiedName")
                 is KtNamedFunction -> listOf(
                     "java:test://$qualifiedName/${declaration.name}",
                     "java:test://$qualifiedName.${declaration.name}"
-                ) to framework
+                )
                 else -> null
             }
         }
         return null
     }
 
-    override fun getTestIcon(declaration: KtNamedDeclaration, descriptorProvider: () -> DeclarationDescriptor?): Icon? {
-        val (urls, framework) = calculateUrlsToFramework(declaration) ?: return null
-
-        framework?.let {
-            return getTestStateIcon(urls, declaration)
-        }
-
-        descriptorProvider()?.takeIf { it.isKotlinTestDeclaration() } ?: return null
-
-        return getTestStateIcon(urls, declaration)
-    }
+    override fun getTestIcon(declaration: KtNamedDeclaration, descriptorProvider: () -> DeclarationDescriptor?): Icon? =
+        calculateUrls(declaration)?.let { getTestStateIcon(it, declaration) }
+            ?: getGenericTestIcon(declaration, descriptorProvider) { emptyList() }
 
     override fun acceptsAsEntryPoint(function: KtFunction) = true
 }
