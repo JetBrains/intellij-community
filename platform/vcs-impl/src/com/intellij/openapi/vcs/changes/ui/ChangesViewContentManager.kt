@@ -253,15 +253,14 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
       return TOOLWINDOW_ID
     }
 
-    @JvmStatic
     internal fun getToolWindowId(project: Project, contentEp: ChangesViewContentEP): String {
-      if (contentEp.isInCommitToolWindow && isCommitToolWindowShown(project)) return COMMIT_TOOLWINDOW_ID
-      return TOOLWINDOW_ID
+      return if (contentEp.isInCommitToolWindow && isCommitToolWindowShown(project)) COMMIT_TOOLWINDOW_ID else TOOLWINDOW_ID
     }
 
     @JvmStatic
-    fun getToolWindowFor(project: Project, tabName: String): ToolWindow? =
-      ToolWindowManager.getInstance(project).getToolWindow(getToolWindowIdFor(project, tabName))
+    fun getToolWindowFor(project: Project, tabName: String): ToolWindow? {
+      return ToolWindowManager.getInstance(project).getToolWindow(getToolWindowIdFor(project, tabName))
+    }
 
     /**
      * Specified tab order in toolwindow.
@@ -278,7 +277,6 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     const val BRANCHES: @NonNls String = "Branches"
   }
 }
-
 
 private fun getContentWeight(content: Content): Int {
   val userData = content.getUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY)

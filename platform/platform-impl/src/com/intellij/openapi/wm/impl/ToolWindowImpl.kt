@@ -191,7 +191,7 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     return contentManager
   }
 
-  internal fun applyWindowInfoOnOrderChange(info: WindowInfo) {
+  internal fun setWindowInfoSilently(info: WindowInfo) {
     windowInfo = info
   }
 
@@ -264,7 +264,7 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   override fun hide(runnable: Runnable?) {
-    toolWindowManager.hideToolWindow(id, hideSide = false, moveFocus = true)
+    toolWindowManager.hideToolWindow(id)
     callLater(runnable)
   }
 
@@ -347,6 +347,11 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       return
     }
 
+    if (windowInfoDuringInit != null) {
+      throw IllegalStateException("Do not use toolWindow.setAvailable() as part of ToolWindowFactory.init().\n" +
+                                  "Use ToolWindowFactory.shouldBeAvailable() instead.")
+    }
+
     EDT.assertIsEdt()
 
     isAvailable = value
@@ -354,7 +359,7 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       toolWindowManager.toolWindowAvailable(this)
     }
     else {
-      toolWindowManager.hideToolWindow(id, hideSide = false)
+      toolWindowManager.hideToolWindow(id)
       contentUi?.dropCaches()
     }
   }
@@ -450,7 +455,7 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
     if (windowInfoDuringInit == null) {
       EDT.assertIsEdt()
-      toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.STRIPE_TITLE)
+      toolWindowManager.toolWindowPropertyChanged(toolWindow = this, property = ToolWindowProperty.STRIPE_TITLE)
     }
   }
 
@@ -459,11 +464,11 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   fun fireHidden(source: ToolWindowEventSource?) {
-    toolWindowManager.hideToolWindow(id = id, hideSide = false, moveFocus = true, source = source)
+    toolWindowManager.hideToolWindow(id = id, source = source)
   }
 
   fun fireHiddenSide(source: ToolWindowEventSource?) {
-    toolWindowManager.hideToolWindow(id = id, hideSide = true, moveFocus = true, source = source)
+    toolWindowManager.hideToolWindow(id = id, hideSide = true, source = source)
   }
 
   override fun setDefaultState(anchor: ToolWindowAnchor?, type: ToolWindowType?, floatingBounds: Rectangle?) {
@@ -656,15 +661,15 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   private inner class RemoveStripeButtonAction :
-    AnAction(ActionsBundle.message("action.RemoveStripeButton.text"),
-             ActionsBundle.message("action.RemoveStripeButton.description"),
+    AnAction(ActionsBundle.messagePointer("action.RemoveStripeButton.text"),
+             ActionsBundle.messagePointer("action.RemoveStripeButton.description"),
              null), DumbAware, FusAwareAction {
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = isShowStripeButton
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      toolWindowManager.removeFromSideBar(id, ToolWindowEventSource.RemoveStripeButtonAction)
+      toolWindowManager.hideToolWindow(id, removeFromStripe = true, source = ToolWindowEventSource.RemoveStripeButtonAction)
     }
 
     override fun getAdditionalUsageData(event: AnActionEvent): List<EventPair<*>> {

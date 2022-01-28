@@ -3,6 +3,7 @@
 
 package com.intellij.toolWindow
 
+import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.plugins.PluginManagerCore
@@ -188,13 +189,13 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
         catch (e: ProcessCanceledException) {
           throw e
         }
-        catch (t: Throwable) {
-          LOG.error("Cannot init toolwindow ${task.contentFactory}", t)
+        catch (e: Throwable) {
+          LOG.error(PluginException("Cannot init toolwindow ${task.contentFactory}", e, task.pluginDescriptor?.pluginId))
         }
       }
 
       project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(entries, manager)
-      toolWindowPane.revalidateNotEmptyStripes()
+      toolWindowPane.buttonManager.revalidateNotEmptyStripes()
     }
     toolWindowPane.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, manager.createNotInHierarchyIterable())
     service<ToolWindowManagerImpl.ToolWindowManagerAppLevelHelper>()
@@ -250,7 +251,7 @@ private fun beanToTask(project: Project,
                        bean: ToolWindowEP,
                        plugin: PluginDescriptor,
                        factory: ToolWindowFactory): RegisterToolWindowTask {
-  return RegisterToolWindowTask(
+  val task = RegisterToolWindowTask(
     id = bean.id,
     icon = findIconFromBean(bean, factory, plugin),
     anchor = getToolWindowAnchor(factory, bean),
@@ -261,6 +262,8 @@ private fun beanToTask(project: Project,
     contentFactory = factory,
     stripeTitle = getStripeTitleSupplier(bean.id, plugin),
   )
+  task.pluginDescriptor = bean.pluginDescriptor
+  return task
 }
 
 @VisibleForTesting

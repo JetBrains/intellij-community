@@ -153,10 +153,9 @@ internal class ToolWindowPaneOldButtonManager : ToolWindowButtonManager {
 
   override fun createStripeButton(toolWindow: ToolWindowImpl, info: WindowInfo, task: RegisterToolWindowTask?): StripeButtonManager {
     val button = StripeButton(toolWindow)
-
     button.isSelected = info.isVisible
     button.updatePresentation()
-
+    val stripe = getStripeFor(info.anchor)
     val manager = object : StripeButtonManager {
       override val id: String
         get() = toolWindow.id
@@ -180,10 +179,10 @@ internal class ToolWindowPaneOldButtonManager : ToolWindowButtonManager {
       }
 
       override fun remove() {
-        (button.parent as? Stripe)?.removeButton(this)
+        stripe.removeButton(this)
       }
     }
-    getStripeFor(info.anchor).addButton(manager)
+    stripe.addButton(manager)
     return manager
   }
 }

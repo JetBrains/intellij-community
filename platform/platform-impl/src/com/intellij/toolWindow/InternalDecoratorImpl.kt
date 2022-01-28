@@ -43,7 +43,6 @@ import java.awt.*
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.util.function.Supplier
 import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.border.Border
@@ -156,14 +155,15 @@ class InternalDecoratorImpl internal constructor(
     isFocusable = false
     focusTraversalPolicy = LayoutFocusTraversalPolicy()
     updateMode(Mode.SINGLE)
-    header = object : ToolWindowHeader(toolWindow, contentUi, Supplier { toolWindow.createPopupGroup(true) }) {
+    header = object : ToolWindowHeader(toolWindow, contentUi, gearProducer = { toolWindow.createPopupGroup(true) }) {
       override val isActive: Boolean
         get() {
-          return toolWindow.isActive && ClientProperty.get(this@InternalDecoratorImpl, INACTIVE_LOOK) != true && !ExperimentalUI.isNewUI()
+          return toolWindow.isActive && !toolWindow.toolWindowManager.isNewUi &&
+                 ClientProperty.get(this@InternalDecoratorImpl, INACTIVE_LOOK) != true
         }
 
       override fun hideToolWindow() {
-        toolWindow.toolWindowManager.hideToolWindow(toolWindow.id, false, true, false, ToolWindowEventSource.HideButton)
+        toolWindow.toolWindowManager.hideToolWindow(id = toolWindow.id, source = ToolWindowEventSource.HideButton)
       }
     }
     enableEvents(AWTEvent.COMPONENT_EVENT_MASK)
@@ -635,7 +635,7 @@ class InternalDecoratorImpl internal constructor(
       }
       SwingUtilities.convertPointFromScreen(point, divider)
       return Math.abs(
-        if (decorator.toolWindow.windowInfo.anchor.isHorizontal) point.y else point.x) <= ToolWindowsPane.getHeaderResizeArea()
+        if (decorator.toolWindow.windowInfo.anchor.isHorizontal) point.y else point.x) <= ToolWindowsPane.headerResizeArea
     }
 
     private fun updateCursor(event: MouseEvent, isInDragZone: Boolean) {

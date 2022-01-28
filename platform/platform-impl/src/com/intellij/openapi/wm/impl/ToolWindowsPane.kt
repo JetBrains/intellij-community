@@ -62,7 +62,7 @@ class ToolWindowsPane internal constructor(frame: JFrame,
     const val TEMPORARY_ADDED = "TEMPORARY_ADDED"
 
     //The size of topmost 'resize' area when toolwindow caption is used for both resize and drag
-    val headerResizeArea: Int
+    internal val headerResizeArea: Int
       get() = JBUI.scale(Registry.intValue("ide.new.tool.window.resize.area.height", 14, 1, 26))
 
     private fun normalizeWeight(weight: Float): Float {
@@ -219,10 +219,6 @@ class ToolWindowsPane internal constructor(frame: JFrame,
     layeredPane.validate()
     layeredPane.repaint()
     buttonManager.validateAndRepaint()
-  }
-
-  fun revalidateNotEmptyStripes() {
-    buttonManager.revalidateNotEmptyStripes()
   }
 
   private fun setComponent(component: JComponent?, anchor: ToolWindowAnchor, weight: Float) {
@@ -401,7 +397,7 @@ class ToolWindowsPane internal constructor(frame: JFrame,
     doLayout()
   }
 
-  fun reset() {
+  internal fun reset() {
     buttonManager.reset()
     state = ToolWindowPaneState()
     revalidate()
@@ -739,7 +735,7 @@ class ToolWindowsPane internal constructor(frame: JFrame,
       }
     }
 
-    fun setBoundsInPaletteLayer(component: Component, anchor: ToolWindowAnchor, w: Float) {
+    internal fun setBoundsInPaletteLayer(component: Component, anchor: ToolWindowAnchor, w: Float) {
       var weight = w
       if (weight < .0f) {
         weight = WindowInfoImpl.DEFAULT_WEIGHT
@@ -771,8 +767,8 @@ class ToolWindowsPane internal constructor(frame: JFrame,
     }
   }
 
-  fun setStripesOverlayed(value: Boolean) {
+  internal fun setStripesOverlaid(value: Boolean) {
     state.isStripesOverlaid = value
     updateToolStripesVisibility(instance)
   }
- }
+}

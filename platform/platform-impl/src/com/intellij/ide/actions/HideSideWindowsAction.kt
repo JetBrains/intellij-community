@@ -16,11 +16,7 @@ internal class HideSideWindowsAction : AnAction(), DumbAware {
     val id = toolWindowManager.activeToolWindowId ?: toolWindowManager.lastActiveToolWindowId ?: return
     val window = toolWindowManager.getToolWindow(id) ?: return
     if (HideToolWindowAction.shouldBeHiddenByShortCut(window)) {
-      toolWindowManager.hideToolWindow(id = id,
-                                       hideSide = true,
-                                       moveFocus = true,
-                                       removeFromStripe = false,
-                                       source = ToolWindowEventSource.HideSideWindowsAction)
+      toolWindowManager.hideToolWindow(id = id, hideSide = true, source = ToolWindowEventSource.HideSideWindowsAction)
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.dsl
 
 import com.intellij.codeInsight.documentation.DocumentationComponent
@@ -30,6 +30,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.ui.ScreenUtil
@@ -77,10 +78,10 @@ object LessonUtil {
   }
 
   fun hideStandardToolwindows(project: Project) {
-    val windowManager = ToolWindowManager.getInstance(project)
-    for (id in windowManager.toolWindowIds) {
-      if (id != LearnToolWindowFactory.LEARN_TOOL_WINDOW) {
-        windowManager.getToolWindow(id)?.hide()
+    val windowManager = ToolWindowManagerEx.getInstanceEx(project)
+    for (window in windowManager.toolWindows) {
+      if (window.id != LearnToolWindowFactory.LEARN_TOOL_WINDOW) {
+        window.hide()
       }
     }
   }

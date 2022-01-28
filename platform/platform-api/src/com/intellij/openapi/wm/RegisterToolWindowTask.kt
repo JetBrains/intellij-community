@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm
 
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Supplier
@@ -23,6 +24,8 @@ data class RegisterToolWindowTask(
   // cannot be in constructor due to backward compatibility
   @Internal var hideOnEmptyContent: Boolean = false
     internal set
+
+  @Internal var pluginDescriptor: PluginDescriptor? = null
 
   // for Java clients
   companion object {

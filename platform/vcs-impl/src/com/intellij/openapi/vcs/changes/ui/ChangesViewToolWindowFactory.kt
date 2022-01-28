@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.COMMIT_TOOLWINDOW_ID
 import com.intellij.openapi.wm.ToolWindow
@@ -34,9 +35,11 @@ private class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
     }
   }
 
-  override fun updateState(project: Project, toolWindow: ToolWindow) {
-    super.updateState(project, toolWindow)
-    toolWindow.stripeTitle = project.vcsManager.allActiveVcss.singleOrNull()?.displayName ?: ChangesViewContentManager.TOOLWINDOW_ID
+  override fun updateState(project: Project, toolWindow: ToolWindow, duringInit: Boolean) {
+    super.updateState(project, toolWindow, duringInit = duringInit)
+
+    toolWindow.stripeTitle = ProjectLevelVcsManager.getInstance(project).allActiveVcss.singleOrNull()?.displayName
+                             ?: ChangesViewContentManager.TOOLWINDOW_ID
   }
 
   override fun shouldBeAvailable(project: Project) = project.isTrusted()
@@ -46,9 +49,7 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
   override fun init(window: ToolWindow) {
     super.init(window)
 
-    window as ToolWindowEx
     window.setAdditionalGearActions(ActionManager.getInstance().getAction("CommitView.GearActions") as ActionGroup)
-
     window.hideIdLabelIfNotEmptyState()
   }
 
@@ -57,7 +58,9 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
   }
 
   override fun shouldBeAvailable(project: Project): Boolean {
-    return project.vcsManager.hasAnyMappings() && project.isCommitToolWindowShown && project.isTrusted()
+    return ChangesViewContentManager.isCommitToolWindowShown(project) &&
+           ProjectLevelVcsManager.getInstance(project).hasAnyMappings() &&
+           project.isTrusted()
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {

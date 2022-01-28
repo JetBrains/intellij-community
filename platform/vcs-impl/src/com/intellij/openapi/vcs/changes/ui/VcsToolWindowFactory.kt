@@ -8,7 +8,6 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.CONTENT_PROVIDER_SUPPLIER_KEY
@@ -25,9 +24,6 @@ import com.intellij.util.ui.StatusText
 import com.intellij.vcs.commit.CommitModeManager
 import javax.swing.JPanel
 
-private val Project.changesViewContentManager: ChangesViewContentI
-  get() = ChangesViewContentManager.getInstance(this)
-
 private val IS_CONTENT_CREATED = Key.create<Boolean>("ToolWindow.IsContentCreated")
 private val CHANGES_VIEW_EXTENSION = Key.create<ChangesViewContentEP>("Content.ChangesViewExtension")
 
@@ -37,7 +33,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun init(window: ToolWindow) {
     val project = window.project
 
-    updateState(project, window)
+    updateState(project, window, duringInit = true)
     val connection = project.messageBus.connect(window.disposable)
     connection.subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
       runInEdt {
@@ -68,13 +64,15 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     updateContent(project, toolWindow)
-    project.changesViewContentManager.attachToolWindow(toolWindow)
-
+    ChangesViewContentManager.getInstance(project).attachToolWindow(toolWindow)
     toolWindow.component.putClientProperty(IS_CONTENT_CREATED, true)
   }
 
-  protected open fun updateState(project: Project, toolWindow: ToolWindow) {
-    updateAvailability(project, toolWindow)
+  protected open fun updateState(project: Project, toolWindow: ToolWindow, duringInit: Boolean = false) {
+    // already taken in account (shouldBeAvailable is called automatically on init)
+    if (!duringInit) {
+      updateAvailability(project, toolWindow)
+    }
     updateContentIfCreated(project, toolWindow)
     updateEmptyState(project, toolWindow)
   }
@@ -91,7 +89,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   private fun updateContent(project: Project, toolWindow: ToolWindow) {
-    val changesViewContentManager = project.changesViewContentManager
+    val changesViewContentManager = ChangesViewContentManager.getInstance(project)
 
     val wasEmpty = toolWindow.contentManager.contentCount == 0
     getExtensions(project, toolWindow).forEach { extension ->
@@ -120,12 +118,15 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     }
   }
 
-  protected open fun setEmptyState(project: Project, state: StatusText) = Unit
+  protected open fun setEmptyState(project: Project, state: StatusText) {
+  }
 
-  private fun getExtensions(project: Project, toolWindow: ToolWindow): Collection<ChangesViewContentEP> {
-    return ChangesViewContentEP.EP_NAME.getExtensions(project).filter {
-      ChangesViewContentManager.getToolWindowId(project, it) == toolWindow.id
-    }
+  private fun getExtensions(project: Project, toolWindow: ToolWindow): Sequence<ChangesViewContentEP> {
+    return ChangesViewContentEP.EP_NAME.getExtensions(project)
+      .asSequence()
+      .filter {
+        toolWindow.id == ChangesViewContentManager.getToolWindowId(project, it)
+      }
   }
 
   private fun createExtensionContent(project: Project, extension: ChangesViewContentEP): Content {
@@ -150,13 +151,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     override fun extensionRemoved(extension: ChangesViewContentEP, pluginDescriptor: PluginDescriptor) {
       val contentManager = toolWindow.contentManagerIfCreated ?: return
       val content = contentManager.contents.firstOrNull { it.getExtension() === extension } ?: return
-
-      toolWindow.project.changesViewContentManager.removeContent(content)
+      ChangesViewContentManager.getInstance(toolWindow.project).removeContent(content)
     }
-  }
-
-  companion object {
-    internal val Project.vcsManager: ProjectLevelVcsManager
-      get() = ProjectLevelVcsManager.getInstance(this)
   }
 }

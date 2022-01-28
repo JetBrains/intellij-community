@@ -3,7 +3,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.toolWindow.StripeButtonManager
-import com.intellij.toolWindow.createDragImage
+import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createDragImage
 import com.intellij.ui.paint.RectanglePainter
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.VisibleForTesting
@@ -39,13 +39,13 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
     const val DROP_DISTANCE_SENSITIVITY = 200
 
     @VisibleForTesting
-    fun createButtonLayoutComparator(isNewStripes: Boolean, anchor: ToolWindowAnchor): Comparator<StripeButtonManager> {
+    fun createButtonLayoutComparator(isNewUi: Boolean, anchor: ToolWindowAnchor): Comparator<StripeButtonManager> {
       return Comparator { o1, o2 ->
         // side buttons in the end
         if (o1.windowDescriptor.isSplit != o2.windowDescriptor.isSplit) {
           if (o1.windowDescriptor.isSplit) 1 else -1
         }
-        else if (isNewStripes && anchor == ToolWindowAnchor.BOTTOM) {
+        else if (isNewUi && anchor == ToolWindowAnchor.BOTTOM) {
           // left bottom for new ui has a reverse order because user checks buttons in this location from bottom to top,
           // also because new buttons without a predefined order should not change the existing button location
           getOrderForComparator(o2) - getOrderForComparator(o1)
@@ -115,7 +115,7 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
 
   fun processDropButton(button: JComponent, buttonImage: JComponent, screenPoint: Point) {
     if (!isDroppingButton()) {
-      button.createDragImage()?.let { buttonImage.paint(it.graphics) }
+      buttonImage.paint(createDragImage(button).graphics)
 
       dragButton = button
       dragButtonImage = buttonImage

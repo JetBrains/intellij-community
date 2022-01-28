@@ -20,21 +20,16 @@ internal class HideAllToolWindowsAction : DumbAwareAction() {
     }
 
     if (idsToHide.none()) {
-      val restoredLayout = toolWindowManager.layoutToRestoreLater
-      if (restoredLayout != null) {
+      toolWindowManager.layoutToRestoreLater?.let {
         toolWindowManager.layoutToRestoreLater = null
-        toolWindowManager.setLayout(restoredLayout)
+        toolWindowManager.setLayout(it)
       }
     }
     else {
       val layout = toolWindowManager.getLayout().copy()
       toolWindowManager.clearSideStack()
       for (id in idsToHide) {
-        toolWindowManager.hideToolWindow(id = id,
-                          hideSide = false,
-                          moveFocus = true,
-                          removeFromStripe = false,
-                          source = ToolWindowEventSource.HideAllWindowsAction)
+        toolWindowManager.hideToolWindow(id = id, source = ToolWindowEventSource.HideAllWindowsAction)
       }
       toolWindowManager.layoutToRestoreLater = layout
       toolWindowManager.activateEditorComponent()

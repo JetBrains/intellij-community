@@ -53,7 +53,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
       val id = toolWindow.id
       val manager = toolWindow.toolWindowManager
       if (pressedWhenSelected) {
-        manager.hideToolWindow(id = id, hideSide = false, moveFocus = true, source = ToolWindowEventSource.StripeButton)
+        manager.hideToolWindow(id = id, source = ToolWindowEventSource.StripeButton)
       }
       else {
         manager.activated(toolWindow, ToolWindowEventSource.StripeButton)
@@ -162,7 +162,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
       if (dragPane == null) {
         return
       }
-      val image = this.createDragImage() ?: return
+      val image = ToolWindowDragHelper.createDragImage(this) ?: return
       val dragButtonImage = object : JLabel(IconUtil.createImageIcon((image as Image))) {
         override fun toString(): String {
           return "Image for: " + this@StripeButton

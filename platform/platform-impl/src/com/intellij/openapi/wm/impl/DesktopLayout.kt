@@ -22,6 +22,14 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
 
   constructor(descriptors: List<WindowInfoImpl>) : this(descriptors.associateByTo(HashMap()) { it.id!! })
 
+  /**
+   * @param anchor anchor of the stripe.
+   * @return maximum ordinal number in the specified stripe. Returns `-1` if there is no tool window with the specified anchor.
+   */
+  internal fun getMaxOrder(anchor: ToolWindowAnchor): Int {
+    return idToInfo.values.asSequence().filter { anchor == it.anchor }.maxOfOrNull { it.order } ?: -1
+  }
+
   fun copy(): DesktopLayout {
     val map = HashMap<String, WindowInfoImpl>(idToInfo.size)
     for (entry in idToInfo) {
@@ -34,9 +42,6 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
     val info = WindowInfoImpl()
     info.id = task.id
     info.isFromPersistentSettings = false
-    // we must allocate order - otherwise, on drag-n-drop, we cannot move some tool windows to the end
-    // because sibling's order is equal to -1, so, always in the end
-    info.order = getMaxOrder(idToInfo.values, task.anchor)
     if (isNewUi) {
       info.isShowStripeButton = false
     }
@@ -49,15 +54,7 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
     task.contentFactory?.anchor?.let {
       info.anchor = it
     }
-
-    val oldInfo = idToInfo.put(task.id, info)
-    assert(oldInfo == null)
     return info
-  }
-
-  internal fun remove(info: WindowInfoImpl) {
-    val removed = idToInfo.remove(info.id, info)
-    assert(removed)
   }
 
   fun getInfo(id: String) = idToInfo.get(id)
@@ -79,7 +76,7 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
 
     // if order isn't defined then the window will be the last in the stripe
     if (newOrder == -1) {
-      newOrder = getMaxOrder(idToInfo.values, newAnchor) + 1
+      newOrder = getMaxOrder(newAnchor) + 1
     }
     else {
       // shift order to the right in the target stripe
@@ -191,12 +188,4 @@ private fun normalizeOrder(list: MutableList<WindowInfoImpl>) {
 
     info.order = order++
   }
-}
-
-/**
- * @param anchor anchor of the stripe.
- * @return maximum ordinal number in the specified stripe. Returns `-1` if there is no tool window with the specified anchor.
- */
-private fun getMaxOrder(list: Collection<WindowInfoImpl>, anchor: ToolWindowAnchor): Int {
-  return list.asSequence().filter { anchor == it.anchor }.maxOfOrNull { it.order } ?: -1
 }

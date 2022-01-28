@@ -4,6 +4,7 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.PluginException
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.UiActivity
@@ -391,7 +392,7 @@ open class ToolWindowManagerImpl(val project: Project,
   }
 
   private fun processHoldState() {
-    toolWindowPane?.setStripesOverlayed(currentState == KeyState.HOLD)
+    toolWindowPane?.setStripesOverlaid(currentState == KeyState.HOLD)
   }
 
   fun init(frameHelper: ProjectFrameHelper) {
@@ -676,15 +677,17 @@ open class ToolWindowManagerImpl(val project: Project,
 
   override fun getIdsOn(anchor: ToolWindowAnchor) = getVisibleToolWindowsOn(anchor).map { it.id }.toList()
 
-  fun getToolWindowsOn(anchor: ToolWindowAnchor, excludedId: String): List<ToolWindowEx> {
+  internal fun getToolWindowsOn(anchor: ToolWindowAnchor, excludedId: String): MutableList<ToolWindowEx> {
     return getVisibleToolWindowsOn(anchor)
       .filter { it.id != excludedId }
       .map { it.toolWindow }
-      .toList()
+      .toMutableList()
   }
 
-  fun getDockedInfoAt(anchor: ToolWindowAnchor?, side: Boolean): WindowInfo? {
-    return idToEntry.values.map { it.readOnlyWindowInfo }.find { it.isVisible && it.isDocked && it.anchor == anchor && it.isSplit == side }
+  internal fun getDockedInfoAt(anchor: ToolWindowAnchor?, side: Boolean): WindowInfo? {
+    return idToEntry.values.asSequence()
+      .map { it.readOnlyWindowInfo }
+      .find { it.isVisible && it.isDocked && it.anchor == anchor && it.isSplit == side }
   }
 
   override fun getLocationIcon(id: String, fallbackIcon: Icon): Icon {
@@ -708,7 +711,7 @@ open class ToolWindowManagerImpl(val project: Project,
   private fun getVisibleToolWindowsOn(anchor: ToolWindowAnchor): Sequence<ToolWindowEntry> {
     return idToEntry.values
       .asSequence()
-      .filter { it.readOnlyWindowInfo.anchor == anchor && it.toolWindow.isAvailable }
+      .filter { it.toolWindow.isAvailable && it.readOnlyWindowInfo.anchor == anchor }
   }
 
   // cannot be ToolWindowEx because of backward compatibility
@@ -732,30 +735,13 @@ open class ToolWindowManagerImpl(val project: Project,
     }
   }
 
-  internal fun removeFromSideBar(id: String, source: ToolWindowEventSource?) {
-    val info = getRegisteredMutableInfoOrLogError(id)
-    if (!info.isShowStripeButton) {
-      return
-    }
-
-    val entry = idToEntry.get(info.id!!)!!
-
-    info.isShowStripeButton = false
-    entry.removeStripeButton()
-    setHiddenState(info, entry, source)
-    updateStateAndRemoveDecorator(info, entry, dirtyMode = false)
-    entry.applyWindowInfo(info.copy())
-
-    fireStateChanged()
-  }
-
   override fun hideToolWindow(id: String, hideSide: Boolean) {
-    hideToolWindow(id, hideSide, moveFocus = true)
+    hideToolWindow(id = id, hideSide = hideSide, source = null)
   }
 
   open fun hideToolWindow(id: String,
-                          hideSide: Boolean,
-                          moveFocus: Boolean,
+                          hideSide: Boolean = false,
+                          moveFocus: Boolean = true,
                           removeFromStripe: Boolean = false,
                           source: ToolWindowEventSource? = null) {
     EDT.assertIsEdt()
@@ -904,7 +890,7 @@ open class ToolWindowManagerImpl(val project: Project,
     }
 
     if (entry.stripeButton == null) {
-      entry.stripeButton = toolWindowPane!!.buttonManager.createStripeButton(entry.toolWindow, info, task = null)!!
+      entry.stripeButton = toolWindowPane!!.buttonManager.createStripeButton(entry.toolWindow, info, task = null)
     }
 
     entry.toolWindow.scheduleContentInitializationIfNeeded()
@@ -934,9 +920,16 @@ open class ToolWindowManagerImpl(val project: Project,
     }
 
     var info = layout.getInfo(task.id)
-    val layoutIsNew = info == null
+    val isButtonNeeded = task.shouldBeAvailable && (info?.isShowStripeButton ?: !isNewUi)
+    // do not create layout for New UI - button is not created for toolwindow by default
     if (info == null) {
       info = layout.create(task, isNewUi = isNewUi)
+      if (isButtonNeeded) {
+        // we must allocate order - otherwise, on drag-n-drop, we cannot move some tool windows to the end
+        // because sibling's order is equal to -1, so, always in the end
+        info.order = layout.getMaxOrder(task.anchor)
+        layout.addInfo(task.id, info)
+      }
     }
 
     val disposable = Disposer.newDisposable(task.id)
@@ -969,6 +962,9 @@ open class ToolWindowManagerImpl(val project: Project,
     try {
       factory?.init(toolWindow)
     }
+    catch (e: IllegalStateException) {
+      LOG.error(PluginException(e, task.pluginDescriptor?.pluginId))
+    }
     finally {
       toolWindow.windowInfoDuringInit = null
     }
@@ -982,13 +978,19 @@ open class ToolWindowManagerImpl(val project: Project,
 
     ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow, ActionManager.getInstance())
 
-    val stripeButton = buttonManager.createStripeButton(toolWindow, infoSnapshot, task)
+    val stripeButton = if (isButtonNeeded) {
+      buttonManager.createStripeButton(toolWindow, infoSnapshot, task)
+    }
+    else {
+      LOG.debug {
+        "Button is not created for `${task.id}`" +
+        "(isShowStripeButton: ${info.isShowStripeButton}, isAvailable: ${task.shouldBeAvailable})"
+      }
+      null
+    }
+
     val entry = ToolWindowEntry(stripeButton, toolWindow, disposable)
     idToEntry.put(task.id, entry)
-
-    if (stripeButton == null && layoutIsNew) {
-      layout.remove(info)
-    }
 
     // If preloaded info is visible or active then we have to show/activate the installed
     // tool window. This step has sense only for windows which are not in the auto hide
@@ -1157,7 +1159,7 @@ open class ToolWindowManagerImpl(val project: Project,
         val wasVisible = item.old.isVisible
         // we should hide the window and show it in a 'new place' to automatically hide possible window that is already located in a 'new place'
         if (wasVisible) {
-          hideToolWindow(item.entry.id, hideSide = false, moveFocus = true)
+          hideToolWindow(item.entry.id)
         }
 
         if (wasVisible) {
@@ -1181,7 +1183,7 @@ open class ToolWindowManagerImpl(val project: Project,
       }
     }
 
-    toolWindowPane.revalidateNotEmptyStripes()
+    toolWindowPane.buttonManager.revalidateNotEmptyStripes()
     toolWindowPane.validate()
     toolWindowPane.repaint()
 
@@ -1453,11 +1455,11 @@ open class ToolWindowManagerImpl(val project: Project,
   private fun doSetAnchor(entry: ToolWindowEntry, info: WindowInfoImpl, anchor: ToolWindowAnchor, order: Int) {
     entry.removeStripeButton()
     for (otherInfo in layout.setAnchor(info, anchor, order)) {
-      idToEntry.get(otherInfo.id ?: continue)?.toolWindow?.applyWindowInfoOnOrderChange(otherInfo.copy())
+      idToEntry.get(otherInfo.id ?: continue)?.toolWindow?.setWindowInfoSilently(otherInfo.copy())
     }
 
     entry.toolWindow.applyWindowInfo(info.copy())
-    entry.stripeButton = toolWindowPane!!.buttonManager.createStripeButton(entry.toolWindow, info, task = null)!!
+    entry.stripeButton = toolWindowPane!!.buttonManager.createStripeButton(entry.toolWindow, info, task = null)
   }
 
   internal fun setSideTool(id: String, isSplit: Boolean) {
@@ -1820,14 +1822,18 @@ open class ToolWindowManagerImpl(val project: Project,
   }
 
   internal fun toolWindowAvailable(toolWindow: ToolWindowImpl) {
-    val entry = idToEntry.get(toolWindow.id) ?: return
-    val stripeButton = entry.stripeButton
-    if (stripeButton == null && entry.readOnlyWindowInfo.isShowStripeButton) {
-      entry.stripeButton = toolWindowPane!!.buttonManager.createStripeButton(entry.toolWindow, entry.readOnlyWindowInfo, task = null)!!
-    }
-    else if (!isNewUi) {
+    if (!isNewUi && !toolWindow.isShowStripeButton) {
       // force showing stripe button on adding initial mapping even if stripe button was manually removed by the user
-      toolWindow.isShowStripeButton = true
+      val info = layout.getInfo(toolWindow.id)
+      if (info != null) {
+        info.isShowStripeButton = true
+        toolWindow.setWindowInfoSilently(info.copy())
+      }
+    }
+
+    val entry = idToEntry.get(toolWindow.id) ?: return
+    if (entry.stripeButton == null && toolWindow.isShowStripeButton) {
+      entry.stripeButton = toolWindowPane!!.buttonManager.createStripeButton(entry.toolWindow, entry.readOnlyWindowInfo, task = null)
     }
   }
 

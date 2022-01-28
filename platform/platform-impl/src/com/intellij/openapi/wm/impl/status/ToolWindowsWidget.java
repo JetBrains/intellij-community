@@ -46,8 +46,8 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusBarWidget, Disposable,
-                                                  UISettingsListener, PropertyChangeListener {
+final class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusBarWidget, Disposable,
+                                                        UISettingsListener, PropertyChangeListener {
 
   private final Alarm myAlarm;
   private StatusBar myStatusBar;
@@ -132,11 +132,10 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
         UIEventLogger.ToolWindowsWidgetPopupShown.log(project);
 
         List<ToolWindow> toolWindows = new ArrayList<>();
-        final ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
-        for (String id : toolWindowManager.getToolWindowIds()) {
-          final ToolWindow tw = toolWindowManager.getToolWindow(id);
-          if (tw.isAvailable() && tw.isShowStripeButton()) {
-            toolWindows.add(tw);
+        ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
+        for (ToolWindow toolWindow : toolWindowManager.getToolWindows()) {
+          if (toolWindow.isAvailable() && toolWindow.isShowStripeButton()) {
+            toolWindows.add(toolWindow);
           }
         }
         toolWindows.sort((o1, o2) -> StringUtil.naturalCompare(o1.getStripeTitle(), o2.getStripeTitle()));

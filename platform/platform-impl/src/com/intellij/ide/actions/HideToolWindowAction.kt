@@ -22,7 +22,7 @@ internal class HideToolWindowAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     val toolWindowManager = ToolWindowManager.getInstance(e.project ?: return) as ToolWindowManagerImpl
     val id = toolWindowManager.activeToolWindowId ?: toolWindowManager.lastActiveToolWindowId ?: return
-    toolWindowManager.hideToolWindow(id = id, hideSide = false, moveFocus = true, source = ToolWindowEventSource.HideToolWindowAction)
+    toolWindowManager.hideToolWindow(id = id, source = ToolWindowEventSource.HideToolWindowAction)
   }
 
   override fun update(event: AnActionEvent) {

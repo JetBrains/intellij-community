@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
@@ -14,9 +12,6 @@ import java.awt.Dimension
 import java.awt.Point
 import javax.swing.Icon
 import javax.swing.JComponent
-
-@Suppress("SSBasedInspection")
-private val LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowManagerImpl")
 
 internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
   private val left = ToolWindowLeftToolbar()
@@ -98,15 +93,8 @@ internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
   }
 
   private fun findToolbar(anchor: ToolWindowAnchor): ToolWindowToolbar = if (anchor == ToolWindowAnchor.RIGHT) right else left
-  override fun createStripeButton(toolWindow: ToolWindowImpl, info: WindowInfo, task: RegisterToolWindowTask?): StripeButtonManager? {
-    if (!info.isShowStripeButton || (task != null && !task.shouldBeAvailable)) {
-      LOG.debug {
-        "`${info.id}` is not added as a large stripe button " +
-        "(isShowStripeButton: ${info.isShowStripeButton}, isAvailable: ${task?.shouldBeAvailable})"
-      }
-      return null
-    }
 
+  override fun createStripeButton(toolWindow: ToolWindowImpl, info: WindowInfo, task: RegisterToolWindowTask?): StripeButtonManager {
     val squareStripeButton = SquareStripeButton(toolWindow)
     val manager = object : StripeButtonManager {
       override val id: String
