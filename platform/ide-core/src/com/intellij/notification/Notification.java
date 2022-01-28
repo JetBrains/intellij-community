@@ -243,6 +243,10 @@ public class Notification {
     return myListener;
   }
 
+  /**
+   * @deprecated Please use {@link #addAction(AnAction)} instead.
+   */
+  @Deprecated
   public @NotNull Notification setListener(@NotNull NotificationListener listener) {
     myListener = listener;
     return this;
