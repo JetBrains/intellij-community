@@ -445,9 +445,9 @@ Includes the following features:</p>
       <keyboard-shortcut first-keystroke="control shift U" keymap="$default"/>
     </action>
 
-    <group id="Markdown.Toolbar.Floating" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
-      <group id="Markdown.Styling.SetHeaderLevel"
-             class="org.intellij.plugins.markdown.ui.actions.styling.SetHeaderLevelAction"/>
+    <group id="Markdown.Toolbar.Floating">
+      <action id="Markdown.Styling.SetHeaderLevel"
+              class="org.intellij.plugins.markdown.ui.actions.styling.SetHeaderLevelAction"/>
       <separator/>
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"

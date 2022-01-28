@@ -18,21 +18,14 @@ import java.awt.event.MouseEvent
 import javax.accessibility.AccessibleContext
 import javax.swing.*
 
-internal class SetHeaderLevelAction: DefaultActionGroup(
-  SetHeaderLevelImpl.Normal(),
-  Separator(),
-  SetHeaderLevelImpl.Title(),
-  SetHeaderLevelImpl.Subtitle(),
-  SetHeaderLevelImpl.Heading(level = 3),
-  SetHeaderLevelImpl.Heading(level = 4),
-  Separator(),
-  SetHeaderLevelImpl.Heading(level = 5),
-  SetHeaderLevelImpl.Heading(level = 6)
-), CustomComponentAction {
-  override fun isPopup() = true
+internal class SetHeaderLevelAction: AnAction(), CustomComponentAction {
+  private val group = SetHeaderLevelGroup()
+
+  override fun actionPerformed(event: AnActionEvent) = Unit
 
   override fun update(event: AnActionEvent) {
-    val children = getChildren(event).asSequence().filterIsInstance<SetHeaderLevelImpl>()
+    event.presentation.isPopupGroup = true
+    val children = group.getChildren(event).asSequence().filterIsInstance<SetHeaderLevelImpl>()
     val child = children.find { it.isSelected(event) }
     if (child == null) {
       val default = children.firstOrNull() ?: return
@@ -45,7 +38,23 @@ internal class SetHeaderLevelAction: DefaultActionGroup(
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    return MyActionButton(this, presentation, place)
+    return MyActionButton(group, presentation, place)
+  }
+
+  private class SetHeaderLevelGroup: DefaultActionGroup(
+    SetHeaderLevelImpl.Normal(),
+    Separator(),
+    SetHeaderLevelImpl.Title(),
+    SetHeaderLevelImpl.Subtitle(),
+    SetHeaderLevelImpl.Heading(level = 3),
+    SetHeaderLevelImpl.Heading(level = 4),
+    Separator(),
+    SetHeaderLevelImpl.Heading(level = 5),
+    SetHeaderLevelImpl.Heading(level = 6)
+  ) {
+    override fun isPopup() = true
+
+    override fun displayTextInToolbar() = true
   }
 
   private class MyActionButton(group: ActionGroup, presentation: Presentation, place: String): ActionButtonWithText(group, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
