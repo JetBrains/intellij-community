@@ -1485,8 +1485,6 @@
   <projectListeners>
     <listener class="com.intellij.openapi.fileEditor.impl.FileEditorVirtualFileAppearanceListener"
               topic="com.intellij.ide.ui.VirtualFileAppearanceListener"/>
-    <listener class="com.intellij.psi.codeStyle.CodeStyleSettingsMigrationNotifier"
-              topic="com.intellij.psi.codeStyle.CodeStyleSettingsMigrationListener"/>
     <listener class="com.intellij.codeInsight.daemon.impl.EssentialHighlightingRestarter"
               topic="com.intellij.ide.SaveAndSyncHandlerListener" />
   </projectListeners>
