@@ -33,7 +33,6 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun init(window: ToolWindow) {
     val project = window.project
 
-    updateState(project, window, duringInit = true)
     val connection = project.messageBus.connect(window.disposable)
     connection.subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
       runInEdt {
@@ -68,19 +67,19 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     toolWindow.component.putClientProperty(IS_CONTENT_CREATED, true)
   }
 
-  protected open fun updateState(project: Project, toolWindow: ToolWindow, duringInit: Boolean = false) {
-    // already taken in account (shouldBeAvailable is called automatically on init)
-    if (!duringInit) {
-      updateAvailability(project, toolWindow)
-    }
+  protected open fun updateState(project: Project, toolWindow: ToolWindow) {
+    toolWindow.isAvailable = isAvailable(project)
     updateContentIfCreated(project, toolWindow)
     updateEmptyState(project, toolWindow)
   }
 
-  private fun updateAvailability(project: Project, toolWindow: ToolWindow) {
-    // shouldBeAvailable not overridden in this class but may be overridden by inheritors
-    toolWindow.isAvailable = shouldBeAvailable(project)
-  }
+  // shouldBeAvailable cannot be used -
+  // for example, ProjectLevelVcsManager.getInstance(project).hasAnyMappings() maybe called only after project is loaded
+  // (updated later on event)
+  abstract fun isAvailable(project: Project): Boolean
+
+  // final override to make sure that it is not overridden by mistake
+  final override fun shouldBeAvailable(project: Project) = false
 
   private fun updateContentIfCreated(project: Project, toolWindow: ToolWindow) {
     if (ClientProperty.isTrue(toolWindow.component, IS_CONTENT_CREATED)) {

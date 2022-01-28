@@ -35,14 +35,14 @@ private class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
     }
   }
 
-  override fun updateState(project: Project, toolWindow: ToolWindow, duringInit: Boolean) {
-    super.updateState(project, toolWindow, duringInit = duringInit)
+  override fun updateState(project: Project, toolWindow: ToolWindow) {
+    super.updateState(project, toolWindow)
 
     toolWindow.stripeTitle = ProjectLevelVcsManager.getInstance(project).allActiveVcss.singleOrNull()?.displayName
                              ?: ChangesViewContentManager.TOOLWINDOW_ID
   }
 
-  override fun shouldBeAvailable(project: Project) = project.isTrusted()
+  override fun isAvailable(project: Project) = project.isTrusted()
 }
 
 private class CommitToolWindowFactory : VcsToolWindowFactory() {
@@ -57,7 +57,7 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
     state.setCommitViewEmptyState(project)
   }
 
-  override fun shouldBeAvailable(project: Project): Boolean {
+  override fun isAvailable(project: Project): Boolean {
     return ChangesViewContentManager.isCommitToolWindowShown(project) &&
            ProjectLevelVcsManager.getInstance(project).hasAnyMappings() &&
            project.isTrusted()

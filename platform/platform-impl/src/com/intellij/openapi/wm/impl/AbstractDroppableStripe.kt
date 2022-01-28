@@ -82,6 +82,7 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
     computedPreferredSize = null
     buttons.add(button)
     add(button.getComponent())
+    revalidate()
   }
 
   fun removeButton(button: StripeButtonManager) {
