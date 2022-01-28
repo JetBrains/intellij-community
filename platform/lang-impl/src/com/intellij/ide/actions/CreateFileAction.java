@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
@@ -77,7 +76,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     }
     else {
       if (Experiments.getInstance().isFeatureEnabled("show.create.new.element.in.popup")) {
-        createLightWeightPopup(validator, directory, elementsConsumer).showCenteredInCurrentWindow(project);
+        createLightWeightPopup(validator, elementsConsumer).showCenteredInCurrentWindow(project);
       }
       else {
         Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.file.name"),
@@ -88,9 +87,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   }
 
   private @NotNull JBPopup createLightWeightPopup(@NotNull MyInputValidator validator,
-                                                  @NotNull PsiDirectory directory,
                                                   @NotNull Consumer<? super PsiElement[]> consumer) {
-    Project project = directory.getProject();
     NewItemSimplePopupPanel contentPanel = new NewItemSimplePopupPanel();
     JTextField nameField = contentPanel.getTextField();
     JBPopup popup = NewItemPopupUtil.createNewItemPopup(IdeBundle.message("title.new.file"), contentPanel, nameField);
@@ -99,9 +96,6 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
       if (validator.checkInput(name) && validator.canClose(name)) {
         popup.closeOk(event);
         consumer.accept(validator.getCreatedElements());
-        if (StringUtil.isNotEmpty(name)) {
-          FileTypeChooser.getKnownFileTypeOrAssociate(directory.getVirtualFile(), getFileName(name), project);
-        }
       }
       else {
         String errorMessage = validator instanceof InputValidatorEx
