@@ -20,7 +20,7 @@ abstract class ToolbarComboWidget: JComponent() {
   var text: String? by Delegates.observable("", this::fireUpdateEvents)
   var leftIcons: List<Icon> by Delegates.observable(emptyList(), this::fireUpdateEvents)
   var rightIcons: List<Icon> by Delegates.observable(emptyList(), this::fireUpdateEvents)
-  var hoverBackground: Color by Delegates.observable(UIManager.getColor("ToolbarComboWidget.hoverBackground"), this::fireUpdateEvents)
+  var hoverBackground: Color by Delegates.observable(UIManager.getColor("MainToolbar.Dropdown.hoverBackground"), this::fireUpdateEvents)
 
   init {
     updateUI() //set UI for component
