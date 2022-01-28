@@ -17,7 +17,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.CollectConsumer;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Pair;
@@ -184,8 +183,8 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
           }
         });
       }
-      catch (Throwable throwable) {
-        ExceptionUtil.rethrow(throwable);
+      catch (Throwable e) {
+        throw new RuntimeException("Cannot search (fileNameFilter=" + fileNameFilter + ", plugin=" + plugin + ")", e);
       }
     }
   }

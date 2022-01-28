@@ -700,7 +700,13 @@ public class PluginDetailsPageComponent extends MultiPanel {
     if (productCode == null) {
       if (myUpdateDescriptor != null && myUpdateDescriptor.getProductCode() != null &&
           !LicensePanel.isEA2Product(myUpdateDescriptor.getProductCode())) {
-        myLicensePanel.setText(IdeBundle.message("label.next.plugin.version.is.paid.use.the.trial.for.up.to.30.days.or"), true, false);
+        String message;
+        if (myUpdateDescriptor instanceof PluginNode && ((PluginNode)myUpdateDescriptor).getTags().contains(Tags.Freemium.name())) {
+          message = IdeBundle.message("label.next.plugin.version.is.freemium");
+        } else {
+          message = IdeBundle.message("label.next.plugin.version.is.paid.use.the.trial.for.up.to.30.days.or");
+        }
+        myLicensePanel.setText(message, true, false);
         myLicensePanel.showBuyPlugin(() -> myUpdateDescriptor);
         myLicensePanel.setVisible(true);
       }
@@ -709,7 +715,13 @@ public class PluginDetailsPageComponent extends MultiPanel {
       }
     }
     else if (myMarketplace) {
-      myLicensePanel.setText(IdeBundle.message("label.use.the.trial.for.up.to.30.days.or"), false, false);
+      String message;
+      if (myPlugin instanceof PluginNode && ((PluginNode)myPlugin).getTags().contains(Tags.Freemium.name())) {
+        message = IdeBundle.message("label.install.a.limited.functionality.for.free");
+      } else {
+        message = IdeBundle.message("label.use.the.trial.for.up.to.30.days.or");
+      }
+      myLicensePanel.setText(message, false, false);
       myLicensePanel.showBuyPlugin(() -> myPlugin);
       myLicensePanel.setVisible(true);
     }

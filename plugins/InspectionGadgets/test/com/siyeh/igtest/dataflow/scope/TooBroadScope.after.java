@@ -286,6 +286,19 @@ class T {
     private void reinitArray() {
         array = new String[5];
     }
+
+  enum Border {
+    HAIR, THIN, MEDIUM
+  }
+  String x(Border border) {
+    final String color = "#000000";
+
+    return switch (border) {
+      case HAIR -> "0.05pt solid " + color;
+      case THIN -> "0.5pt solid " + color;
+      case MEDIUM -> "1pt solid " + color;
+    };
+  }
 }
 
 class TryWithResources {

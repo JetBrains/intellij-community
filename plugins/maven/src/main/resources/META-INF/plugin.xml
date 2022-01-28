@@ -73,6 +73,7 @@
     <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenWrapperMapping"/>
 
     <projectService serviceImplementation="org.jetbrains.idea.maven.server.MavenDistributionsCache"/>
+    <applicationService serviceImplementation="org.jetbrains.idea.maven.utils.MavenWslCache"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManager" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenProjectIndicesManager" preload="true"/>
@@ -308,6 +309,8 @@
     <starter.moduleImporter implementation="org.jetbrains.idea.maven.starters.MavenStarterModuleImporter"/>
 
     <dependencyCollector kind="java" implementation="org.jetbrains.idea.maven.project.MavenDependencyCollector"/>
+    <dependencyCollector kind="maven-packaging" implementation="org.jetbrains.idea.maven.project.MavenPackagingDependencyCollector"/>
+
     <newProjectWizard.java.buildSystem implementation="org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizard"/>
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.idea.maven.MavenCommandLineInspectionProjectConfigurator"/>
   </extensions>
@@ -315,7 +318,6 @@
   <extensions defaultExtensionNs="com.intellij.properties">
     <implicitPropertyUsageProvider implementation="org.jetbrains.idea.maven.utils.MavenWrapperImplicitPropertyUsageProvider"/>
   </extensions>
-
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
     <pluginDescriptor mavenId="org.apache.maven.plugins:maven-surefire-plugin">

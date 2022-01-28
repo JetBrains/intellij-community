@@ -171,11 +171,9 @@ class LearningItems(private val project: Project) : JPanel() {
 }
 
 private class LearningItemPanel(clickAction: () -> Unit) : JPanel() {
-  private var onInstall = true
-  private var mouseInside = false
-
   init {
     isOpaque = false
+    cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
     addMouseListener(object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent) {
         if (!visibleRect.contains(e.point)) return
@@ -183,29 +181,18 @@ private class LearningItemPanel(clickAction: () -> Unit) : JPanel() {
       }
 
       override fun mouseEntered(e: MouseEvent) {
-        cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-        mouseInside = true
-        revalidate()
         repaint()
       }
 
       override fun mouseExited(e: MouseEvent) {
-        cursor = Cursor.getDefaultCursor()
-        mouseInside = false
-        revalidate()
         repaint()
       }
     })
   }
 
   override fun paint(g: Graphics) {
-    if (onInstall && mouseAlreadyInside(this)) {
-      cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-      mouseInside = true
-      onInstall = false
-    }
-    val g2 = g.create() as Graphics2D
-    if (mouseInside) {
+    if (mousePosition != null) {
+      val g2 = g.create() as Graphics2D
       g2.color = HOVER_COLOR
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
@@ -213,11 +200,4 @@ private class LearningItemPanel(clickAction: () -> Unit) : JPanel() {
     }
     super.paint(g)
   }
-}
-
-private fun mouseAlreadyInside(c: Component): Boolean {
-  val mousePos: Point = MouseInfo.getPointerInfo()?.location ?: return false
-  val bounds: Rectangle = c.bounds
-  bounds.location = c.locationOnScreen
-  return bounds.contains(mousePos)
 }

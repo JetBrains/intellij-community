@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.container.get
 import org.jetbrains.kotlin.context.GlobalContext
 import org.jetbrains.kotlin.context.withModule
 import org.jetbrains.kotlin.context.withProject
+import org.jetbrains.kotlin.descriptors.InvalidModuleException
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.diagnostics.*
 import org.jetbrains.kotlin.diagnostics.PositioningStrategies.DECLARATION_WITH_BODY
@@ -124,7 +125,14 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
             } else null
 
             // step 3: perform analyze of analyzableParent as nothing has been cached yet
-            val result = analyze(analyzableParent, null, localCallback)
+            val result = try {
+              analyze(analyzableParent, null, localCallback)
+            } catch (e: Throwable) {
+                e.throwAsInvalidModuleException {
+                    ProcessCanceledException(it)
+                }
+                throw e
+            }
 
             // some diagnostics could be not handled with a callback - send out the rest
             callback?.let { c ->
@@ -183,9 +191,12 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
                     analysisResult
                 }
             } catch (e: Throwable) {
+                e.throwAsInvalidModuleException {
+                    clearFileResultCache()
+                    ProcessCanceledException(it)
+                }
                 if (e !is ControlFlowException) {
-                    file.clearInBlockModifications()
-                    fileResult = null
+                    clearFileResultCache()
                 }
                 throw e
             }
@@ -278,11 +289,36 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
         } catch (e: IndexNotReadyException) {
             throw e
         } catch (e: Throwable) {
+            e.throwAsInvalidModuleException()
+
             DiagnosticUtils.throwIfRunningOnServer(e)
-            LOG.error(e)
+            LOG.warn(e)
 
             return AnalysisResult.internalError(BindingContext.EMPTY, e)
         }
+    }
+
+    private fun clearFileResultCache() {
+        file.clearInBlockModifications()
+        fileResult = null
+    }
+}
+
+private fun Throwable.asInvalidModuleException(): InvalidModuleException? {
+    return when (this) {
+        is InvalidModuleException -> this
+        is AssertionError ->
+            // temporary workaround till 1.6.0 / KT-48977
+            if (message?.contains("contained in his own dependencies, this is probably a misconfiguration") == true)
+                InvalidModuleException(message!!)
+            else null
+        else -> cause?.takeIf { it != this }?.asInvalidModuleException()
+    }
+}
+
+private inline fun Throwable.throwAsInvalidModuleException(crossinline action: (InvalidModuleException) -> Throwable = { it }) {
+    asInvalidModuleException()?.let {
+        throw action(it)
     }
 }
 
@@ -519,8 +555,10 @@ private object KotlinResolveDataProvider {
         } catch (e: IndexNotReadyException) {
             throw e
         } catch (e: Throwable) {
+            e.throwAsInvalidModuleException()
+
             DiagnosticUtils.throwIfRunningOnServer(e)
-            LOG.error(e)
+            LOG.warn(e)
 
             return AnalysisResult.internalError(BindingContext.EMPTY, e)
         }

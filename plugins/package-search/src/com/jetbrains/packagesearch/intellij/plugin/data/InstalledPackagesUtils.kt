@@ -5,6 +5,7 @@ import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.DigestUtil
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
@@ -16,10 +17,12 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageV
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
+import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -38,8 +41,8 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.encoding.decodeStructure
 import kotlinx.serialization.encoding.encodeStructure
 import kotlinx.serialization.json.Json
+import java.io.File
 import java.nio.file.Path
-import java.nio.file.Paths
 import kotlin.io.path.absolutePathString
 
 internal suspend fun installedPackages(
@@ -103,19 +106,27 @@ internal suspend fun fetchProjectDependencies(
 internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, json: Json): List<UnifiedDependency> = coroutineScope {
     val fileHashCode = buildFile.hashCode()
 
-    val cacheFile = Paths.get(cacheDirectory.absolutePathString(), "$fileHashCode.json").toFile()
+    val cacheFile = File(cacheDirectory.absolutePathString(), "$fileHashCode.json")
 
     if (!cacheFile.exists()) withContext(Dispatchers.IO) {
         cacheFile.apply { parentFile.mkdirs() }.createNewFile()
     }
 
-    val sha256Deferred: Deferred<String> = async(Dispatchers.IO) {
+    val sha256Deferred: Deferred<String> = async(AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
         StringUtil.toHexString(DigestUtil.sha256().digest(buildFile.contentsToByteArray()))
     }
 
-    val cache = withContext(Dispatchers.IO) {
-        runCatching { json.decodeFromString<InstalledDependenciesCache>(cacheFile.readText()) }
+    val cachedContents = withContext(Dispatchers.IO) { kotlin.runCatching { cacheFile.readText() } }
+        .onFailure { logDebug("installedDependencies", it) { "Someone messed with our cache file UGH ${cacheFile.absolutePath}" } }
+        .getOrNull()?.takeIf { it.isNotBlank() }
+
+    val cache = if (cachedContents != null) {
+        // TODO: consider invalidating when ancillary files change (e.g., gradle.properties)
+        runCatching { json.decodeFromString<InstalledDependenciesCache>(cachedContents) }
+            .onFailure { logDebug("installedDependencies", it) { "Dependency JSON cache file read failed for ${buildFile.path}" } }
             .getOrNull()
+    } else {
+        null
     }
 
     val sha256 = sha256Deferred.await()
@@ -128,19 +139,23 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
             runCatching {
                 ProjectModuleOperationProvider.forProjectModuleType(moduleType)?.listDependenciesInModule(this@installedDependencies)
             }
-        }.getOrNull()?.toList() ?: emptyList()
+        }
+            .onFailure { logDebug("installedDependencies", it) { "Unable to list dependencies in module $name" } }
+            .getOrNull()?.toList() ?: emptyList()
 
     nativeModule.project.lifecycleScope.launch {
-        cacheFile.writeText(
-            text = json.encodeToString(
-                value = InstalledDependenciesCache(
-                    fileHashCode = fileHashCode,
-                    sha256 = sha256,
-                    projectName = name,
-                    dependencies = dependencies
-                )
+        val jsonText = json.encodeToString(
+            value = InstalledDependenciesCache(
+                fileHashCode = fileHashCode,
+                sha256 = sha256,
+                projectName = name,
+                dependencies = dependencies
             )
         )
+
+        withContext(Dispatchers.IO) {
+            cacheFile.writeText(jsonText)
+        }
     }
 
     dependencies

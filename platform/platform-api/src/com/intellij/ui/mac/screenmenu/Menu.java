@@ -21,12 +21,14 @@ import java.util.List;
 @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
 public class Menu extends MenuItem {
   private static final boolean USE_STUB = Boolean.getBoolean("jbScreenMenuBar.useStubItem"); // just for tests/experiments
+  private static final int CLOSE_DELAY = Integer.getInteger("jbScreenMenuBar.closeDelay", 500); // in milliseconds
   private static Boolean IS_ENABLED = null;
   private final List<MenuItem> myItems = new ArrayList<>();
   private final List<MenuItem> myBuffer = new ArrayList<>();
   private Runnable myOnOpen;
   private Runnable myOnClose; // we assume that can run it only on EDT (to change swing components)
   private Component myComponent;
+  private boolean myIsOpened = false;
 
   long[] myCachedPeers;
 
@@ -136,6 +138,7 @@ public class Menu extends MenuItem {
 
   public void invokeOpenLater() {
     // Called on AppKit when menu opening
+    myIsOpened = true;
     if (myOnOpen != null) {
       if (USE_STUB) {
         // NOTE: must add stub item when menu opens (otherwise AppKit considers it as empty and we can't fill it later)
@@ -159,11 +162,23 @@ public class Menu extends MenuItem {
 
   public void invokeMenuClosing() {
     // Called on AppKit when menu closed
+    myIsOpened = false;
 
-    // When user selects item of system menu (under macOS) AppKit generates such sequence: CloseParentMenu -> PerformItemAction
+    // When user selects item of system menu (under macOS) AppKit sometimes generates such sequence: CloseParentMenu -> PerformItemAction
     // So we can destroy menu-item before item's action performed, and because of that action will not be executed.
     // Defer clearing to avoid this problem.
-    disposeChildren(1000);
+    disposeChildren(CLOSE_DELAY);
+
+    // NOTE: we can't perform native cleaning immediately, because items from 'Help' menu stop work.
+    SimpleTimer.getInstance().setUp(() -> {
+      if (myIsOpened)
+        return;
+
+      synchronized (this) {
+        // clean native NSMenu item
+        if (nativePeer != 0) nativeRefill(nativePeer, null, true);
+      }
+    }, CLOSE_DELAY);
     if (myOnClose != null) invokeWithLWCToolkit(myOnClose, null, myComponent);
   }
 

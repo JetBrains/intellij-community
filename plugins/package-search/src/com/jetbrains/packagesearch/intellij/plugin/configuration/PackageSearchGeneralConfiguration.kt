@@ -31,6 +31,9 @@ class PackageSearchGeneralConfiguration : BaseState(), PersistentStateComponent<
     @get:OptionTag("AUTO_SCROLL_TO_SOURCE")
     var autoScrollToSource by property(true)
 
+    @get:OptionTag("AUTOMATICALLY_ADD_REPOSITORIES")
+    var autoAddMissingRepositories by property(true)
+
     @get:OptionTag("PACKAGE_DETAILS_VISIBLE")
     var packageDetailsVisible by property(true)
 

@@ -4,6 +4,7 @@ package org.jetbrains.uast.kotlin.declarations
 
 import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.elements.*
+import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -41,7 +42,7 @@ open class KotlinUMethod(
     override fun getNameIdentifier() = UastLightIdentifier(psi, kotlinOrigin as? KtDeclaration)
 
     override val uAnnotations: List<UAnnotation> by lz {
-        psi.annotations
+        psi.actionUnderSafeAnalyzeBlock({ psi.annotations }, { emptyArray<PsiAnnotation>() })
             .mapNotNull { (it as? KtLightElement<*, *>)?.kotlinOrigin as? KtAnnotationEntry }
             .map { KotlinUAnnotation(it, this) }
     }

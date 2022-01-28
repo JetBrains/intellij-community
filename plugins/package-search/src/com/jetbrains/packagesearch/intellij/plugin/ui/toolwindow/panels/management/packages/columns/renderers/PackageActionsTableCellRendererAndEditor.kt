@@ -10,7 +10,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.colors
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.setUnderlined
 import java.util.EventObject
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -67,10 +66,6 @@ internal class PackageActionsTableCellRendererAndEditor(
             isOpaque = true
             horizontalAlignment = SwingConstants.RIGHT
             border = scaledEmptyBorder(right = 10)
-
-            if (viewModel.isHover) {
-                setUnderlined()
-            }
 
             foreground = if (isSelected) {
                 table.colors.selectionForeground

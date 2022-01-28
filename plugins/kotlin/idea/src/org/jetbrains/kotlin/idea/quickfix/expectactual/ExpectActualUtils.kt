@@ -439,9 +439,9 @@ fun TypeAccessibilityChecker.Companion.typesToString(types: Collection<FqName?>,
     }
 }
 
-fun TypeAccessibilityChecker.findAndApplyExistingClasses(elements: Collection<KtNamedDeclaration>): HashSet<String> {
+fun TypeAccessibilityChecker.findAndApplyExistingClasses(elements: Collection<KtNamedDeclaration>): Set<String> {
     var classes = elements.filterIsInstance<KtClassOrObject>()
-    while (true) {
+    while (classes.isNotEmpty()) {
         val existingNames = classes.mapNotNull { it.fqName?.asString() }.toHashSet()
         existingTypeNames = existingNames
 
@@ -450,4 +450,6 @@ fun TypeAccessibilityChecker.findAndApplyExistingClasses(elements: Collection<Kt
 
         classes = newExistingClasses
     }
+
+    return existingTypeNames
 }

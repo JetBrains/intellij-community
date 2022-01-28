@@ -81,6 +81,7 @@ public final class ThreadTracker {
       "External compiler",
       "Finalizer",
       FlushingDaemon.NAME,
+      "HttpClient-", // any usage of HttpClient (from JDK) may leave a thread pool. It's ok since it's not supposed to be disposed to reuse connections
       "IDEA Test Case Thread",
       "Image Fetcher ",
       "InnocuousThreadGroup",

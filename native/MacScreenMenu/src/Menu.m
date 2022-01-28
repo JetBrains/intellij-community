@@ -168,18 +168,24 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeRefill
     JNI_COCOA_ENTER();
 
     // 1. create copy of array
-    jsize length = (*env)->GetArrayLength(env, newItems);
-    size_t lengthInBytes = length*sizeof(long);
-    long * newItemsPtrs = (long *)malloc(lengthInBytes);
-    jlong * ptrs = (*env)->GetLongArrayElements(env, newItems, NULL);
-    memcpy(newItemsPtrs, ptrs, lengthInBytes);
-    (*env)->ReleaseLongArrayElements(env, newItems, ptrs, 0);
+    jsize length = 0;
+    long * newItemsPtrs = NULL;
+    if (newItems != NULL) {
+        length = (*env)->GetArrayLength(env, newItems);
+        if (length > 0) {
+            size_t lengthInBytes = length * sizeof(long);
+            newItemsPtrs = (long *) malloc(lengthInBytes);
+            jlong *ptrs = (*env)->GetLongArrayElements(env, newItems, NULL);
+            memcpy(newItemsPtrs, ptrs, lengthInBytes);
+            (*env)->ReleaseLongArrayElements(env, newItems, ptrs, 0);
 
-    // 2. retain new items
-    for (int i = 0; i < length; i++) {
-        id newItem = (id)(newItemsPtrs[i]);
-        if (newItem != NULL) {
-            [newItem retain];
+            // 2. retain new items
+            for (int i = 0; i < length; i++) {
+                id newItem = (id) (newItemsPtrs[i]);
+                if (newItem != NULL) {
+                    [newItem retain];
+                }
+            }
         }
     }
 
@@ -213,30 +219,32 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeRefill
         //
         // add new items
         //
-        for (int i = 0; i < length; i++) {
-            MenuItem * child = (MenuItem *)newItemsPtrs[i];
-            if (child == NULL) {
-                // add separator
-                if (menu != nil)
-                    [menu->nsMenu addItem:[NSMenuItem separatorItem]];
-                else
-                    [mainMenu addItem:[NSMenuItem separatorItem]];
-            } else {
-                // add menu item
-                if (menu != nil)
-                    [menu addItem:child];
-                else {
-                    if ([child isKindOfClass:[Menu class]]) {
-                        // "validate", just for insurance
-                        Menu * menuModified = (Menu *)child;
-                        [menuModified->nsMenuItem setSubmenu:menuModified->nsMenu];
+        if (newItemsPtrs != NULL) {
+            for (int i = 0; i < length; i++) {
+                MenuItem *child = (MenuItem *) newItemsPtrs[i];
+                if (child == NULL) {
+                    // add separator
+                    if (menu != nil)
+                        [menu->nsMenu addItem:[NSMenuItem separatorItem]];
+                    else
+                        [mainMenu addItem:[NSMenuItem separatorItem]];
+                } else {
+                    // add menu item
+                    if (menu != nil)
+                        [menu addItem:child];
+                    else {
+                        if ([child isKindOfClass:[Menu class]]) {
+                            // "validate", just for insurance
+                            Menu *menuModified = (Menu *) child;
+                            [menuModified->nsMenuItem setSubmenu:menuModified->nsMenu];
+                        }
+                        [mainMenu addItem:child->nsMenuItem];
                     }
-                    [mainMenu addItem:child->nsMenuItem];
+                    [child release];
                 }
-                [child release];
             }
+            free(newItemsPtrs);
         }
-        free(newItemsPtrs);
 
         // remove first item (that wasn't removed before adding)
         if (countBefore > 0) {

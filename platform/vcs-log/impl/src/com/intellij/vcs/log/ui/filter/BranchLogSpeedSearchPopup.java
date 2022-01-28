@@ -28,7 +28,7 @@ import java.util.List;
 
 public class BranchLogSpeedSearchPopup extends FlatSpeedSearchPopup {
   public BranchLogSpeedSearchPopup(@NotNull ActionGroup actionGroup, @NotNull DataContext dataContext) {
-    super(null, new DefaultActionGroup(actionGroup, createSpeedSearchActionGroup(actionGroup)), dataContext, null, false);
+    super(null, ActionGroupUtil.forceRecursiveUpdateInBackground(new DefaultActionGroup(actionGroup, createSpeedSearchActionGroup(actionGroup))), dataContext, null, false);
     setMinimumSize(new JBDimension(250, 0));
   }
 

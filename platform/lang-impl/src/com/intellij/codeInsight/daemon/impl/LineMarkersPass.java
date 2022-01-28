@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -71,6 +72,10 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
+    if (!EditorSettingsExternalizable.getInstance().areGutterIconsShown()) {
+      // optimization: do not even try to query expensive providers if icons they are going to produce are not to be displayed
+      return;
+    }
     final List<LineMarkerInfo<?>> lineMarkers = new ArrayList<>();
     FileViewProvider viewProvider = myFile.getViewProvider();
     for (Language language : viewProvider.getLanguages()) {

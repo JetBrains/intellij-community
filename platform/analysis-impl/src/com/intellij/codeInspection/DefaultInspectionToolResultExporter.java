@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -34,7 +34,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jdom.Verifier;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +48,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static com.intellij.codeInspection.ProblemDescriptorUtil.sanitizeIllegalXmlChars;
 
 public class DefaultInspectionToolResultExporter implements InspectionToolResultExporter {
   protected static final Logger LOG = Logger.getInstance(DefaultInspectionToolResultExporter.class);
@@ -276,12 +277,6 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       }
       LOG.error(message, e);
     }
-  }
-
-  private static String sanitizeIllegalXmlChars(String text) {
-    if (Verifier.checkCharacterData(text) == null) return text;
-    return text.codePoints().map(cp -> Verifier.isXMLCharacter(cp) ? cp : '?')
-      .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
   }
 
   protected String getSeverityDelegateName() {

@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="layoutinspector-proto">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../../bazel-bin/tools/base/dynamic-layout-inspector/proto/layout_inspector_java_proto.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

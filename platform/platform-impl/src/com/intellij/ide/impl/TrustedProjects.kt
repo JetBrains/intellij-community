@@ -5,6 +5,7 @@
 package com.intellij.ide.impl
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -125,7 +126,7 @@ enum class OpenUntrustedProjectChoice {
   CANCEL;
 }
 
-fun Project.isTrusted() = getTrustedState() == ThreeState.YES
+fun Project.isTrusted() = LightEdit.owns(this) || getTrustedState () == ThreeState.YES
 
 @ApiStatus.Internal
 fun Project.getTrustedState(): ThreeState {

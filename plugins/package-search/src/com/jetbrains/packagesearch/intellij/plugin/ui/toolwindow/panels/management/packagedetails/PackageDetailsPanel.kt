@@ -1,6 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packagedetails
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
@@ -22,6 +23,7 @@ import javax.swing.JViewport
 import javax.swing.SwingConstants
 
 internal class PackageDetailsPanel(
+    project: Project,
     operationExecutor: OperationExecutor
 ) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.selectedPackage")) {
 
@@ -31,7 +33,7 @@ internal class PackageDetailsPanel(
         border = emptyBorder()
     }
 
-    private val headerPanel = PackageDetailsHeaderPanel(operationExecutor)
+    private val headerPanel = PackageDetailsHeaderPanel(project, operationExecutor)
 
     private val infoPanel = PackageDetailsInfoPanel()
 

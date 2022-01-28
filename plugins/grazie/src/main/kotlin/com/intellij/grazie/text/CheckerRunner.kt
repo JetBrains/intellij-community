@@ -68,7 +68,7 @@ internal class CheckerRunner(val text: TextContent) {
       return false
     }
 
-    if (filtered.none { it.highlightRange.intersects(problem.highlightRange) }) {
+    if (filtered.none { it.highlightRanges.any { r1 -> problem.highlightRanges.any { r2 -> r1.intersects(r2) } } }) {
       filtered.add(problem)
       return true
     }
@@ -114,8 +114,8 @@ internal class CheckerRunner(val text: TextContent) {
     for (root in text.findPsiElementAt(0).parents(withSelf = true)) {
       for (strategy in LanguageGrammarChecking.allForLanguage(root.language)) {
         if (strategy.isMyContextRoot(root)) {
-          val errorRange = text.textRangeToFile(descriptor.highlightRange).shiftLeft(root.startOffset)
-          val patternRange = text.textRangeToFile(descriptor.patternRange ?: descriptor.highlightRange).shiftLeft(root.startOffset)
+          val errorRange = text.textRangeToFile(highlightSpan(descriptor)).shiftLeft(root.startOffset)
+          val patternRange = text.textRangeToFile(descriptor.patternRange ?: highlightSpan(descriptor)).shiftLeft(root.startOffset)
           val typoRange = errorRange.startOffset until errorRange.endOffset
           val ruleRange = patternRange.startOffset until patternRange.endOffset
           if (!strategy.isTypoAccepted(text.commonParent, strategy.getRootsChain(root), typoRange, ruleRange) ||
@@ -134,9 +134,10 @@ internal class CheckerRunner(val text: TextContent) {
   }
 
   private fun ignoredRules(descriptor: TextProblem): RuleGroup {
-    val psiRange = text.textRangeToFile(descriptor.highlightRange)
-    val textRange = text.fileRangeToText(psiRange) ?: return RuleGroup.EMPTY
-    val leaves = (textRange.startOffset until textRange.endOffset).map { text.findPsiElementAt(it) }.toLinkedSet()
+    val leaves = descriptor.highlightRanges.asSequence()
+      .flatMap { it.startOffset until it.endOffset }
+      .map { text.findPsiElementAt(it) }
+      .toLinkedSet()
     val ignored = LinkedHashSet<String>()
     for (leaf in leaves) {
       for (root in leaf.parents(withSelf = true)) {
@@ -159,12 +160,12 @@ internal class CheckerRunner(val text: TextContent) {
     }
 
     val patternRange = problem.patternRange
-    val errorText = problem.highlightRange.subSequence(text)
+    val errorText = highlightSpan(problem).subSequence(text)
     return patternRange != null && sentence != null && SuppressionPattern(errorText, sentence).isSuppressed()
   }
 
   private fun findSentence(problem: TextProblem) =
-    sentences.find { problem.highlightRange.intersects(it.range.first, it.range.last + 1) }?.token
+    sentences.find { problem.highlightRanges.any { range -> range.intersects(it.range.first, it.range.last + 1) } }?.token
 
   fun toFixes(problem: TextProblem, descriptor: ProblemDescriptor): Array<LocalQuickFix> {
     val file = text.containingFile
@@ -191,8 +192,12 @@ internal class CheckerRunner(val text: TextContent) {
   }
 
   private fun fileHighlightRanges(problem: TextProblem): List<TextRange> {
-    val range = text.textRangeToFile(problem.highlightRange)
-    return text.rangesInFile.asSequence().mapNotNull { it.intersection(range) }.filterNot { it.isEmpty }.toList()
+    val contentRangesInFile = text.rangesInFile
+    return problem.highlightRanges.asSequence()
+      .map { text.textRangeToFile(it) }
+      .flatMap { range -> contentRangesInFile.asSequence().mapNotNull { it.intersection(range) } }
+      .filterNot { it.isEmpty }
+      .toList()
   }
 
   private fun defaultSuppressionPattern(problem: TextProblem, sentenceText: String?): SuppressionPattern {
@@ -201,8 +206,11 @@ internal class CheckerRunner(val text: TextContent) {
     if (patternRange != null) {
       return SuppressionPattern(patternRange.subSequence(text), null)
     }
-    return SuppressionPattern(problem.highlightRange.subSequence(text), sentenceText)
+    return SuppressionPattern(highlightSpan(problem).subSequence(text), sentenceText)
   }
+
+  private fun highlightSpan(problem: TextProblem) =
+    TextRange(problem.highlightRanges[0].startOffset, problem.highlightRanges.last().endOffset)
 }
 
 private val filterEp = LanguageExtension<ProblemFilter>("com.intellij.grazie.problemFilter")

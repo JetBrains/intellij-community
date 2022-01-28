@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -1956,22 +1956,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     String title = getTitle(element);
     if (externalUrl == null) {
       List<String> urls = provider.getUrlFor(element, originalElement);
-      if (urls != null) {
-        boolean hasBadUrl = false;
-        var result = new HtmlBuilder();
-        for (String url : urls) {
-          HtmlChunk link = getLink(title, url);
-          if (link == null) {
-            hasBadUrl = true;
-            break;
-          }
-          if (!result.isEmpty()) result.append(HtmlChunk.p());
-          result.append(link);
-        }
-        if (!hasBadUrl) return result.toFragment();
-      }
-      else {
+      if (urls == null) {
         return null;
+      }
+      HtmlChunk links = getExternalLinks(title, urls);
+      if (links != null) {
+        return links;
       }
     }
     else {
@@ -1979,6 +1969,26 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       if (link != null) return link;
     }
 
+    return getGenericExternalDocumentationLink(title);
+  }
+
+  public static @Nullable HtmlChunk getExternalLinks(@Nls String title, @NotNull List<String> urls) {
+    List<HtmlChunk> result = new SmartList<>();
+    for (String url : urls) {
+      HtmlChunk link = getLink(title, url);
+      if (link == null) {
+        return null;
+      }
+      else {
+        result.add(link);
+      }
+    }
+    HtmlBuilder builder = new HtmlBuilder();
+    builder.appendWithSeparators(HtmlChunk.p(), result);
+    return builder.toFragment();
+  }
+
+  public static @NotNull HtmlChunk getGenericExternalDocumentationLink(@Nullable String title) {
     String linkText = CodeInsightBundle.message("html.external.documentation.component.header", title, title == null ? 0 : 1);
     return HtmlChunk.link("external_doc", linkText).child(EXTERNAL_LINK_ICON);
   }

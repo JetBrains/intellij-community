@@ -472,8 +472,13 @@ public class ListPluginComponent extends JPanel {
           }
         }
 
-        myUpdateLicensePanel
-          .setText(IdeBundle.message("label.next.plugin.version.is.paid.use.the.trial.for.up.to.30.days.or"), true, false);
+        String message;
+        if (myUpdateDescriptor instanceof PluginNode && ((PluginNode)myUpdateDescriptor).getTags().contains(Tags.Freemium.name())) {
+          message = IdeBundle.message("label.next.plugin.version.is.freemium");
+        } else {
+          message = IdeBundle.message("label.next.plugin.version.is.paid.use.the.trial.for.up.to.30.days.or");
+        }
+        myUpdateLicensePanel.setText(message, true, false);
         myUpdateLicensePanel.showBuyPlugin(() -> myUpdateDescriptor);
         myUpdateLicensePanel.setVisible(true);
       }

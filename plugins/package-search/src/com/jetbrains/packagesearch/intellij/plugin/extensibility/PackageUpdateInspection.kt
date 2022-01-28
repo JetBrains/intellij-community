@@ -126,6 +126,7 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
                 val allKnownRepositories = service.allInstalledKnownRepositoriesFlow.value
 
                 val packageOperations = project.lifecycleScope.computeActionsAsync(
+                    project = project,
                     packageModel = packageUpdateInfo.packageModel,
                     targetModules = targetModules,
                     knownRepositoriesInTargetModules = allKnownRepositories.filterOnlyThoseUsedIn(targetModules),

@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
@@ -26,10 +27,6 @@ import java.util.Objects;
  * depending on vcs repo availability
  */
 public class VcsQuickActionsToolbarPopup extends IconWithTextAction implements CustomComponentAction, DumbAware {
-
-  public VcsQuickActionsToolbarPopup() {
-    getTemplatePresentation().setText(VcsBundle.messagePointer("vcs.quicklist.popup.title"));
-  }
 
   @NotNull
   @Override
@@ -63,6 +60,13 @@ public class VcsQuickActionsToolbarPopup extends IconWithTextAction implements C
 
     var component = e.getInputEvent().getComponent();
     popup.showUnderneathOf(component);
+  }
 
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    if (e.getPlace() != ActionPlaces.MAIN_TOOLBAR) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
   }
 }

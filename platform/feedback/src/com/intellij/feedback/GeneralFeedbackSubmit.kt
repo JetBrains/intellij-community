@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.HyperlinkLabel
+import com.intellij.util.PlatformUtils
 import com.intellij.util.readXmlAsModel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -61,6 +62,7 @@ fun submitGeneralFeedback(project: Project?,
       title,
       description,
       mapOf(
+        "product_tag" to getProductTag(),
         "feedback_type" to feedbackType,
         "collected_data" to collectedData),
       onDone,
@@ -114,4 +116,26 @@ private fun createLineOfConsent(prefixTest: String = "",
   UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, label)
 
   return label
+}
+
+/**
+ * @return product tag.
+ * @see <a href="https://youtrack.jetbrains.com/issue/ZEN-1460#focus=Comments-27-5692479.0-0">ZEN-1460</a> for more information
+ */
+private fun getProductTag(): String {
+  return when {
+    PlatformUtils.isIntelliJ() -> "ij_idea"
+    PlatformUtils.isPhpStorm() -> "ij_phpstorm"
+    PlatformUtils.isWebStorm() -> "ij_webstorm"
+    PlatformUtils.isPyCharm() -> "ij_pycharm"
+    PlatformUtils.isRubyMine() -> "ij_rubymine"
+    PlatformUtils.isAppCode() -> "ij_appcode"
+    PlatformUtils.isCLion() -> "ij_clion"
+    PlatformUtils.isDataGrip() -> "ij_datagrip"
+    PlatformUtils.isPyCharmEducational() -> "ij_pycharm_edu"
+    PlatformUtils.isGoIde() -> "ij_goland"
+    PlatformUtils.isJetBrainsClient() -> "ij_code_with_me"
+    PlatformUtils.isDataSpell() -> "ij_dataspell"
+    else -> "undefined"
+  }
 }

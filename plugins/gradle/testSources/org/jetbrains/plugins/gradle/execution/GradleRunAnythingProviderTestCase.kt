@@ -48,8 +48,8 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
 
   fun getCommonTasks(prefix: String = "") =
     listOf(
-      "components", "projects", "dependentComponents", "buildEnvironment", "dependencyInsight",
-      "dependencies", "prepareKotlinBuildScriptModel", "help", "model", "properties", "tasks"
+      "components", "projects", "buildEnvironment", "dependencyInsight",
+      "dependencies", "help", "model", "properties", "tasks"
     ).map { prefix + it }
 
   fun getGradleOptions(prefix: String = ""): List<String> {

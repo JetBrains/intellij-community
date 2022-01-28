@@ -7,6 +7,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.Packages
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.upgradeCandidateVersionOrNull
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageVersionNormalizer
+import com.jetbrains.packagesearch.intellij.plugin.util.logError
 import com.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
 
 internal suspend fun computePackageUpgrades(
@@ -23,7 +24,10 @@ internal suspend fun computePackageUpgrades(
             val currentVersion = usageInfo.version
             if (currentVersion !is PackageVersion.Named) continue
 
-            val normalizedPackageVersion = NormalizedPackageVersion.parseFrom(currentVersion, normalizer)
+            val normalizedPackageVersion = runCatching { NormalizedPackageVersion.parseFrom(currentVersion, normalizer) }
+                .onFailure { logError(throwable = it) { "Unable to normalize version: $currentVersion" } }
+                .getOrNull() ?: continue
+
             val upgradeVersion = PackageVersionUtils.upgradeCandidateVersionOrNull(normalizedPackageVersion, availableVersions)
             if (upgradeVersion != null && upgradeVersion.originalVersion is PackageVersion.Named) {
                 @Suppress("UNCHECKED_CAST") // The if guards us against cast errors
@@ -39,4 +43,3 @@ internal suspend fun computePackageUpgrades(
 
     return PackagesToUpgrade(updatesByModule)
 }
-

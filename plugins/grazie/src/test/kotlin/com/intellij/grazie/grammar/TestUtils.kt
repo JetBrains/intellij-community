@@ -10,7 +10,7 @@ fun assertIsEmpty(collection: Collection<*>) {
 }
 
 internal fun TextProblem.assertTypoIs(range: IntRange, fixes: List<String> = emptyList()) {
-  assertEquals(range, highlightRange.startOffset until highlightRange.endOffset)
+  assertEquals(range, highlightRanges[0].startOffset until highlightRanges.last().endOffset)
   assertTrue { corrections.containsAll(fixes) }
 }
 

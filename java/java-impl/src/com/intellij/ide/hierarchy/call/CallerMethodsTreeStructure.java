@@ -105,8 +105,7 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
 
           if (receiverClass != null
               && expectedQualifierClass != null
-              && !InheritanceUtil.isInheritorOrSelf(expectedQualifierClass, receiverClass, true)
-              && !InheritanceUtil.isInheritorOrSelf(receiverClass, expectedQualifierClass, true)
+              && !areClassesRelated(expectedQualifierClass, receiverClass)
           ) {
             // ignore impossible candidates. E.g. when A < B,A < C and we invoked call hierarchy for method in C we should filter out methods in B because B and C are assignment-incompatible
             return true;
@@ -128,6 +127,22 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
       .map(PsiReference::getElement)
       .distinct()
       .map(e -> new CallHierarchyNodeDescriptor(myProject, nodeDescriptor, e, false, false)).toArray();
+  }
+
+  private static boolean areClassesRelated(@NotNull PsiClass expectedQualifierClass, @NotNull PsiClass receiverClass) {
+    if (InheritanceUtil.isInheritorOrSelf(expectedQualifierClass, receiverClass, true)
+        || InheritanceUtil.isInheritorOrSelf(receiverClass, expectedQualifierClass, true)) {
+      return true;
+    }
+    if (receiverClass instanceof PsiTypeParameter) {
+      // in case of "T extends S", it should be related to SImpl, even though T is not superclass of SImpl
+      for (PsiClass receiverExtends : receiverClass.getSupers()) {
+        if (areClassesRelated(expectedQualifierClass, receiverExtends)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private static boolean isLocalOrAnonymousClass(PsiMember enclosingElement) {

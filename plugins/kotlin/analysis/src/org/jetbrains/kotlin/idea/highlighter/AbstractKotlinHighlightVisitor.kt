@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.quickfix.QuickFixes
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
@@ -114,10 +115,18 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
                 )
             } else {
                 file.analyzeWithAllCompilerChecks()
-            }.also { it.throwIfError() }
+            }
         // resolve is done!
 
-        val bindingContext = analysisResult.bindingContext
+        val bindingContext =
+            file.actionUnderSafeAnalyzeBlock(
+                {
+                    analysisResult.throwIfError()
+                    analysisResult.bindingContext
+                },
+                { BindingContext.EMPTY }
+            )
+
 
         afterAnalysisVisitor = getAfterAnalysisVisitor(holder, bindingContext)
 

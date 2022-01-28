@@ -54,9 +54,9 @@ class KotlinFileStubForIde(
             isScript = false
         )
 
-        fun forMultifileClassStub(facadeFqName: FqName, partNames: List<String>?): KotlinFileStubImpl = KotlinFileStubForIde(
+        fun forMultifileClassStub(packageFqName: FqName, facadeFqName: FqName, partNames: List<String>?): KotlinFileStubImpl = KotlinFileStubForIde(
             ktFile = null,
-            packageName = facadeFqName.parent().stringRef(),
+            packageName = packageFqName.stringRef(),
             facadeFqNameRef = facadeFqName.stringRef(),
             partSimpleName = null,
             facadePartSimpleNames = partNames?.map { StringRef.fromString(it) },

@@ -8,7 +8,8 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.TerminalUiSettingsManager
 import org.jetbrains.annotations.Nls
 
-@State(name = "TerminalOptionsProvider", storages = [(Storage("terminal.xml", roamingType = RoamingType.DISABLED))])
+@State(name = "TerminalOptionsProvider", presentableName = TerminalOptionsProvider.PresentableNameGetter::class,
+       storages = [(Storage("terminal.xml", roamingType = RoamingType.DEFAULT))])
 class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider.State> {
   private var myState = State()
 
@@ -138,5 +139,9 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     val instance: TerminalOptionsProvider
       @JvmStatic
       get() = ApplicationManager.getApplication().getService(TerminalOptionsProvider::class.java)
+  }
+
+  class PresentableNameGetter: com.intellij.openapi.components.State.NameGetter() {
+    override fun get(): String = TerminalBundle.message("toolwindow.stripe.Terminal")
   }
 }

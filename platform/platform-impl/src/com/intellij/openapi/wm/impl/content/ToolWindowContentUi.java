@@ -405,8 +405,10 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       @Override
       public void mouseClicked(MouseEvent e) {
         if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
-          ToolWindowManagerEx manager = ui.window.getToolWindowManager();
-          manager.setMaximized(ui.window, !manager.isMaximized(ui.window));
+          if (ui.tabsLayout.myDoubleClickActions.isEmpty() || !(e.getComponent() instanceof ContentTabLabel)) {
+            ToolWindowManagerEx manager = ui.window.getToolWindowManager();
+            manager.setMaximized(ui.window, !manager.isMaximized(ui.window));
+          }
         }
       }
 

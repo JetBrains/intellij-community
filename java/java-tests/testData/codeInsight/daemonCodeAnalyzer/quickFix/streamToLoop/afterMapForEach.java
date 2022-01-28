@@ -42,4 +42,13 @@ public class Main {
       }
     }
   }
+
+  void convert(Map<Integer, ? extends List<? extends Appendable>> map) {
+      for (Map.Entry<Integer, ? extends List<? extends Appendable>> entry : map.entrySet()) {
+          Integer integer = entry.getKey();
+          List<? extends Appendable> appendables = entry.getValue();
+          System.out.println(integer);
+          System.out.println(appendables);
+      }
+  }
 }

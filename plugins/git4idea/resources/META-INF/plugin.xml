@@ -223,7 +223,7 @@
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="first"/>
     </action>
 
-    <action id="Vcs.ShowMoreActions" class="git4idea.actions.GitQuickActionsToolbarPopup" icon="AllIcons.Actions.More">
+    <action id="Vcs.Toolbar.ShowMoreActions" class="git4idea.actions.GitQuickActionsToolbarPopup">
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="last"/>
     </action>
 
@@ -508,6 +508,7 @@
     <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitToggleAnnotationOptionsActionProvider" />
     <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitShowCommitInLogAnnotationGutterActionProvider" />
     <statistics.projectUsagesCollector implementation="git4idea.GitStatisticsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="git4idea.GitBranchesUsageCollector"/>
     <statistics.notificationIdsHolder implementation="git4idea.GitNotificationIdsHolder"/>
     <vcsRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializer"/>
     <gitRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializerImpl"/>

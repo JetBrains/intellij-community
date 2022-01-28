@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.function.Predicate;
 
 public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(LambdaCanBeMethodReferenceInspection.class);
@@ -411,7 +412,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     else if (element instanceof PsiInstanceOfExpression) {
       if(isSoleParameter(parameters, ((PsiInstanceOfExpression)element).getOperand())) {
         PsiTypeElement type = ((PsiInstanceOfExpression)element).getCheckType();
-        if(type != null) {
+        if(type != null && !PsiUtilCore.hasErrorElementChild(type)) {
           return type.getText() + ".class::isInstance";
         }
       }

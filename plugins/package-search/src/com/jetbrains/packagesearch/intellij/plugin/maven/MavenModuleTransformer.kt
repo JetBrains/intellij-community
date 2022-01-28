@@ -7,6 +7,7 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.maven.configuration.PackageSearchMavenConfiguration
+import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
 import org.jetbrains.idea.maven.navigator.MavenNavigationUtil
 import org.jetbrains.idea.maven.project.MavenProject
@@ -17,7 +18,12 @@ internal class MavenModuleTransformer : CoroutineModuleTransformer {
     override suspend fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule> =
         nativeModules.parallelMap { nativeModule ->
             runCatching { readAction { MavenProjectsManager.getInstance(project).findProject(nativeModule) } }
-                .getOrNull()?.let { createMavenProjectModule(project, nativeModule, it) }
+                .onFailure {
+                    logDebug(contextName = "MavenModuleTransformer", it) { "Error finding Maven module ${nativeModule.name}" }
+                }
+                .getOrNull()?.let {
+                    createMavenProjectModule(project, nativeModule, it)
+                }
         }.filterNotNull()
 
     private fun createMavenProjectModule(

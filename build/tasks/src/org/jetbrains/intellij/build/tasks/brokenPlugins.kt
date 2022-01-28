@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.tasks
 
 import kotlinx.serialization.Serializable
@@ -46,7 +46,7 @@ fun buildBrokenPlugins(targetFile: Path, currentBuildString: String, isInDevelop
       result.computeIfAbsent(plugin.id) { TreeSet<String>() }.add(plugin.version)
     }
   }
-  storeBrokenPlugin(result, targetFile)
+  storeBrokenPlugin(result, currentBuildString, targetFile)
   logger.debug { "Broken plugin list was generated (count=${result.size}, file=$targetFile)" }
 }
 
@@ -57,10 +57,11 @@ private fun downloadFileFromMarketplace(logger: Logger): List<MarketplaceBrokenP
   return jsonFormat.decodeFromString(ListSerializer(MarketplaceBrokenPlugin.serializer()), content)
 }
 
-private fun storeBrokenPlugin(brokenPlugin: Map<String, Set<String>>, targetFile: Path) {
+private fun storeBrokenPlugin(brokenPlugin: Map<String, Set<String>>, build: String, targetFile: Path) {
   Files.createDirectories(targetFile.parent)
   DataOutputStream(BufferedOutputStream(Files.newOutputStream(targetFile), 32_000)).use { out ->
-    out.write(1)
+    out.write(2)
+    out.writeUTF(build)
     out.writeInt(brokenPlugin.size)
     for (entry in brokenPlugin.entries) {
       out.writeUTF(entry.key)

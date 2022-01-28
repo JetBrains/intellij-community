@@ -968,6 +968,7 @@ public final class IncProjectBuilder {
         task.mySelfScore = chunk.getTargets().size();
       }
 
+      Tracer.Span collectTaskDependantsSpan = Tracer.start("IncProjectBuilder.collectTaskDependants");
       int taskCounter = 0;
       for (BuildChunkTask task : myTasks) {
         task.myIndex = taskCounter;
@@ -981,9 +982,6 @@ public final class IncProjectBuilder {
           }
         }
       }
-
-      Tracer.Span collectTaskDependantsSpan = Tracer.start("IncProjectBuilder.collectTaskDependants");
-      Map<BuildChunkTask, ? extends Queue<BuildChunkTask>> taskToDependants = collectTaskToDependants(context, targetIndex, targetToTask);
       collectTaskDependantsSpan.complete();
 
 
@@ -991,8 +989,8 @@ public final class IncProjectBuilder {
       // bitset stores indexes of transitively dependant tasks
       HashMap<BuildChunkTask, BitSet> chunkToTransitive = new HashMap<>();
       for (BuildChunkTask task : Lists.reverse(myTasks)) {
-        Queue<BuildChunkTask> dependantTasks = taskToDependants.get(task);
-        Set<BuildChunkTask> directDependants = new HashSet<>(dependantTasks != null ? dependantTasks : Collections.emptyList());
+        List<BuildChunkTask> dependantTasks = task.myTasksDependsOnThis;
+        Set<BuildChunkTask> directDependants = new HashSet<>(dependantTasks);
         BitSet transitiveDependants = new BitSet();
         for (BuildChunkTask directDependant : directDependants) {
           BitSet dependantChunkTransitiveDependants = chunkToTransitive.get(directDependant);
@@ -1006,26 +1004,6 @@ public final class IncProjectBuilder {
 
       myTasksCountDown = new CountDownLatch(myTasks.size());
       span.complete();
-    }
-
-    @NotNull
-    private Map<BuildChunkTask, ? extends Queue<BuildChunkTask>> collectTaskToDependants(CompileContext context,
-                                                                                         BuildTargetIndex targetIndex,
-                                                                                         Map<BuildTarget<?>, BuildChunkTask> targetToTask) {
-      ConcurrentHashMap<BuildChunkTask, ConcurrentLinkedQueue<BuildChunkTask>> taskToDependants = new ConcurrentHashMap<>(myTasks.size());
-      myTasks.parallelStream().forEach(task -> {
-        BuildTargetChunk chunk = task.getChunk();
-        for (BuildTarget<?> target : chunk.getTargets()) {
-          Collection<BuildTarget<?>> dependencies = targetIndex.getDependencies(target, context);
-          for (BuildTarget<?> dependency : dependencies) {
-            BuildChunkTask dependencyTask = targetToTask.get(dependency);
-            if (dependencyTask != task) {
-              taskToDependants.computeIfAbsent(dependencyTask, __ -> new ConcurrentLinkedQueue<>()).add(task);
-            }
-          }
-        }
-      });
-      return taskToDependants;
     }
 
     public void buildInParallel() throws IOException, ProjectBuildException {

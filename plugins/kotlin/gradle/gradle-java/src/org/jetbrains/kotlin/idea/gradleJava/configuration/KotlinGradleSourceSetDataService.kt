@@ -42,11 +42,11 @@ import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNa
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
 import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getResolvedVersionByModuleData
-import org.jetbrains.kotlin.idea.gradleTooling.ArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.CompilerArgumentsBySourceSet
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheHolder
 import org.jetbrains.kotlin.idea.platform.tooling
+import org.jetbrains.kotlin.idea.projectModel.ArgsInfo
 import org.jetbrains.kotlin.idea.roots.findAll
 import org.jetbrains.kotlin.idea.roots.migrateNonJvmSourceFolders
 import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION
@@ -55,6 +55,7 @@ import org.jetbrains.kotlin.platform.impl.isCommon
 import org.jetbrains.kotlin.platform.impl.isJavaScript
 import org.jetbrains.kotlin.platform.impl.isJvm
 import org.jetbrains.kotlin.psi.UserDataProperty
+import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
@@ -265,15 +266,19 @@ fun configureFacetByGradleModule(
         return null
     }
 
-    val compilerVersion = KotlinGradleFacadeImpl.findKotlinPluginVersion(moduleNode) ?: return null
     val platformKind = detectPlatformKindByPlugin(moduleNode) ?: detectPlatformByLibrary(moduleNode)
+    val kotlinGradleSourceSetDataNode = kotlinGradleProjectDataNode.findAll(KotlinGradleSourceSetData.KEY)
+        .firstOrNull { it.data.sourceSetName == sourceSetName }
+
+    val compilerVersion = kotlinGradleSourceSetDataNode?.data?.kotlinPluginVersion
+    // required for GradleFacetImportTest.{testCommonImportByPlatformPlugin, testKotlinAndroidPluginDetection}
+        ?: KotlinGradleFacadeImpl.findKotlinPluginVersion(moduleNode)
+        ?: return null
 
     // TODO there should be a way to figure out the correct platform version
     val platform = platformKind?.defaultPlatform
 
     val kotlinFacet = ideModule.getOrCreateFacet(modelsProvider, false, GradleConstants.SYSTEM_ID.id)
-    val kotlinGradleSourceSetDataNode = kotlinGradleProjectDataNode.findAll(KotlinGradleSourceSetData.KEY)
-        .firstOrNull { it.data.sourceSetName == sourceSetName }
     kotlinFacet.configureFacet(
         compilerVersion = compilerVersion,
         platform = platform,
@@ -344,16 +349,6 @@ fun configureFacetByCachedCompilerArguments(
         applyCompilerArgumentsToFacet(currentCompilerArguments, defaultCompilerArguments, kotlinFacet, modelsProvider)
         adjustClasspath(kotlinFacet, dependencyClasspath.toList())
     }
-}
-
-fun configureFacetByCompilerArguments(kotlinFacet: KotlinFacet, argsInfo: ArgsInfo, modelsProvider: IdeModifiableModelsProvider?) {
-    val currentCompilerArguments = argsInfo.currentArguments
-    val defaultCompilerArguments = argsInfo.defaultArguments
-    val dependencyClasspath = argsInfo.dependencyClasspath.map { PathUtil.toSystemIndependentName(it) }
-    if (currentCompilerArguments.isNotEmpty()) {
-        parseCompilerArgumentsToFacet(currentCompilerArguments, defaultCompilerArguments, kotlinFacet, modelsProvider)
-    }
-    adjustClasspath(kotlinFacet, dependencyClasspath)
 }
 
 private fun getAdditionalVisibleModuleNames(moduleNode: DataNode<ModuleData>, sourceSetName: String): Set<String> {

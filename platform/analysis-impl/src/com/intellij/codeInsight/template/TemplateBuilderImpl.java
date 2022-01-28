@@ -5,6 +5,7 @@ package com.intellij.codeInsight.template;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInsight.template.impl.NonInteractiveTemplateUtil;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,11 +25,9 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 public class TemplateBuilderImpl implements TemplateBuilder {
   private final RangeMarker myContainerElement;
@@ -43,6 +42,8 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   private RangeMarker mySelection;
   private final Document myDocument;
   private final PsiFile myFile;
+  private Comparator<? super Variable> myVariableComparator;
+
   private static final Logger LOG = Logger.getInstance(TemplateBuilderImpl.class);
 
   public TemplateBuilderImpl(@NotNull PsiElement element) {
@@ -175,6 +176,10 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     myElements.add(mySelection);
   }
 
+  public void setVariableOrdering(@Nullable Comparator<? super Variable> comparator) {
+    myVariableComparator = comparator;
+  }
+
   public Template buildInlineTemplate() {
     return initInlineTemplate(buildTemplate());
   }
@@ -267,8 +272,27 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     template.setToIndent(false);
     template.setToReformat(false);
 
+    orderTemplateVariables(template);
+
     return template;
   }
+
+  private void orderTemplateVariables(Template template) {
+    if (myVariableComparator == null || !(template instanceof TemplateImpl)) {
+      return;
+    }
+
+    TemplateImpl templateImpl = ((TemplateImpl)template);
+    List<Variable> variables = new ArrayList<>(templateImpl.getVariables());
+    variables.sort(myVariableComparator);
+    for (int i = variables.size() - 1; i >= 0; i--) {
+      templateImpl.removeVariable(i);
+    }
+    for (Variable variable : variables) {
+      templateImpl.addVariable(variable);
+    }
+  }
+
   private String getDocumentTextFragment(final int startOffset, final int endOffset) {
     return myDocument.getCharsSequence().subSequence(startOffset, endOffset).toString();
   }

@@ -22,6 +22,8 @@
     <typedHandler implementation="org.jetbrains.yaml.formatter.YAMLHyphenTypedHandler"/>
     <quoteHandler fileType="YAML" className="org.jetbrains.yaml.smart.YamlQuoteHandler"/>
     <copyPastePreProcessor implementation="org.jetbrains.yaml.smart.YAMLCopyPasteProcessor"/>
+    <statementUpDownMover implementation="org.jetbrains.yaml.smart.YAMLStatementMover" id="yamlStatementMover"
+                          order="before line"/>
     <lang.parserDefinition language="yaml" implementationClass="org.jetbrains.yaml.YAMLParserDefinition"/>
     <lang.commenter language="yaml" implementationClass="org.jetbrains.yaml.YAMLCommenter"/>
     <lang.syntaxHighlighterFactory language="yaml" implementationClass="org.jetbrains.yaml.YAMLSyntaxHighlighterFactory"/>

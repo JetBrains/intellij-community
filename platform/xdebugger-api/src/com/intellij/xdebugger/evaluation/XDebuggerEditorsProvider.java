@@ -54,4 +54,11 @@ public abstract class XDebuggerEditorsProvider {
   public InlineDebuggerHelper getInlineDebuggerHelper() {
     return InlineDebuggerHelper.DEFAULT;
   }
+
+  /**
+   * Return false to disable evaluate expression field in the debugger tree.
+   */
+  public boolean isEvaluateExpressionFieldEnabled() {
+    return true;
+  }
 }

@@ -29,6 +29,7 @@ import javax.swing.JLabel
 import javax.swing.JMenuItem
 import javax.swing.JPanel
 import javax.swing.JScrollPane
+import javax.swing.JTextField
 import javax.swing.KeyStroke
 import javax.swing.Scrollable
 
@@ -51,41 +52,50 @@ internal object PackageSearchUI {
     internal fun headerPanel(init: BorderLayoutPanel.() -> Unit) = object : BorderLayoutPanel() {
         init {
             border = JBEmptyBorder(2, 0, 2, 12)
+            init()
         }
 
         override fun getBackground() = HeaderBackgroundColor
-    }.apply(init)
+    }
 
     internal fun cardPanel(cards: List<JPanel> = emptyList(), backgroundColor: Color = UsualBackgroundColor, init: JPanel.() -> Unit) =
         object : JPanel() {
             init {
                 layout = CardLayout()
                 cards.forEach { add(it) }
+                init()
             }
 
             override fun getBackground() = backgroundColor
-        }.apply(init)
+        }
 
     internal fun borderPanel(backgroundColor: Color = UsualBackgroundColor, init: BorderLayoutPanel.() -> Unit) = object : BorderLayoutPanel() {
+
+        init {
+            init()
+        }
+
         override fun getBackground() = backgroundColor
-    }.apply(init)
+    }
 
     internal fun boxPanel(axis: Int = BoxLayout.Y_AXIS, backgroundColor: Color = UsualBackgroundColor, init: JPanel.() -> Unit) =
         object : JPanel() {
             init {
                 layout = BoxLayout(this, axis)
+                init()
             }
 
             override fun getBackground() = backgroundColor
-        }.apply(init)
+        }
 
     internal fun flowPanel(backgroundColor: Color = UsualBackgroundColor, init: JPanel.() -> Unit) = object : JPanel() {
         init {
             layout = FlowLayout(FlowLayout.LEFT)
+            init()
         }
 
         override fun getBackground() = backgroundColor
-    }.apply(init)
+    }
 
     internal fun checkBox(@Nls title: String, init: JCheckBox.() -> Unit = {}) = object : JCheckBox(title) {
 
@@ -96,6 +106,10 @@ internal object PackageSearchUI {
         override fun getBackground() = UsualBackgroundColor
     }
 
+    fun textField(init: JTextField.() -> Unit): JTextField = JTextField().apply {
+        init()
+    }
+
     internal fun menuItem(@Nls title: String, icon: Icon?, handler: () -> Unit): JMenuItem {
         if (icon != null) {
             return JMenuItem(title, icon).apply { addActionListener { handler() } }
@@ -103,8 +117,9 @@ internal object PackageSearchUI {
         return JMenuItem(title).apply { addActionListener { handler() } }
     }
 
-    internal fun createLabel(init: JLabel.() -> Unit = {}) = JLabel().apply {
+    internal fun createLabel(@Nls text: String? = null, init: JLabel.() -> Unit = {}) = JLabel().apply {
         font = UIUtil.getLabelFont()
+        if (text != null) this.text = text
         init()
     }
 

@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
 import org.jetbrains.kotlin.fir.builder.toUnaryName
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.intentions.callExpression
@@ -34,6 +33,7 @@ import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchReques
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.structuralsearch.*
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocImpl
@@ -314,7 +314,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         val exprHandler = getHandler(expression)
         if (other is KtReferenceExpression && exprHandler is SubstitutionHandler) {
             val ref = other.mainReference
-            val bindingContext = ref.element.analyze(BodyResolveMode.PARTIAL)
+            val bindingContext = ref.element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
             val referenced = ref.resolveToDescriptors(bindingContext).firstOrNull()?.let {
                 if (it is ConstructorDescriptor) it.constructedClass else it
             }
@@ -814,12 +814,13 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
 
     override fun visitClass(klass: KtClass) {
         val other = getTreeElementDepar<KtClass>() ?: return
+        val otherDescriptor = other.descriptor ?: return
 
         val identifier = klass.nameIdentifier
         val otherIdentifier = other.nameIdentifier
         var matchNameIdentifiers = matchTextOrVariable(identifier, otherIdentifier)
                 || identifier != null && otherIdentifier != null && matchTypeAgainstElement(
-                    (other.descriptor as LazyClassDescriptor).defaultType.fqName.toString(), identifier, otherIdentifier
+            (otherDescriptor as LazyClassDescriptor).defaultType.fqName.toString(), identifier, otherIdentifier
                 )
 
         // Possible match if "within hierarchy" is set
@@ -829,7 +830,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
 
             if (checkHierarchyDown) {
                 // Check hierarchy down (down of pattern element = supertypes of code element)
-                matchNameIdentifiers = (other.descriptor as ClassDescriptor).toSimpleType().supertypes().any { type ->
+                matchNameIdentifiers = (otherDescriptor as ClassDescriptor).toSimpleType().supertypes().any { type ->
                     type.renderNames().any { renderedType ->
                         matchTypeAgainstElement(renderedType, identifier, otherIdentifier)
                     }

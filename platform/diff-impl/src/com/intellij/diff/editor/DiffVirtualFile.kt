@@ -32,6 +32,9 @@ abstract class DiffVirtualFile(name: String) :
     fun VirtualFile.useDiffWindowDimensionKey() = putUserData(DockManagerImpl.WINDOW_DIMENSION_KEY, DiffWindowBase.DEFAULT_DIALOG_GROUP_KEY)
     fun VirtualFile.turnOffReopeningWindow() = putUserData(DockManagerImpl.REOPEN_WINDOW, false)
 
+    /**
+     * @see [DiffEditorEscapeAction]
+     */
     @JvmField
     val ESCAPE_HANDLER = Key<AnAction?>("ESCAPE_HANDLER")
   }

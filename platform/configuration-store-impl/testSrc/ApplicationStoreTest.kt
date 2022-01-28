@@ -416,6 +416,31 @@ internal class ApplicationStoreTest {
   }
 
   @Test
+  fun `survive on error`() {
+    @State(name = "Bad", storages = [Storage(value = "foo.xml")])
+    class MyComponent : PersistentStateComponent<Foo> {
+      override fun loadState(state: Foo) {
+        throw RuntimeException("error")
+      }
+
+      override fun getState(): Foo {
+        throw RuntimeException("error")
+      }
+
+      override fun noStateLoaded() {
+        throw RuntimeException("error")
+      }
+    }
+
+    val component = MyComponent()
+    assertThatThrownBy {
+      componentStore.initComponent(component, null, null)
+    }.hasMessage("Cannot init component state (componentName=Bad, componentClass=MyComponent)")
+
+    assertThat(componentStore.getComponents()).doesNotContainKey("Bad")
+  }
+
+  @Test
   fun `test per-os components are stored in subfolder`() = runBlocking {
     val component = PerOsComponent()
     componentStore.initComponent(component, null, null)

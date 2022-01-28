@@ -156,7 +156,13 @@ public class WSLDistribution {
     if (processHandlerConsumer != null) {
       processHandlerConsumer.consume(processHandler);
     }
-    return processHandler.runProcess(timeout);
+    ProcessOutput output = processHandler.runProcess(timeout);
+    if (output.getExitCode() != 0 || output.isTimeout() || output.isCancelled()) {
+      LOG.info("command on wsl: " + commandLine.getCommandLineString() + " was failed:" +
+               "ec=" + output.getExitCode() + ",timeout=" + output.isTimeout() + ",cancelled=" + output.isCancelled()
+               + ",stderr=" + output.getStderr() + ",stdout=" + output.getStdout());
+    }
+    return output;
   }
 
   private @NotNull ProcessOutput executeOnWsl(@NotNull GeneralCommandLine commandLine,
@@ -457,7 +463,7 @@ public class WSLDistribution {
   /**
    * @return environment map of the default user in wsl
    */
-  public @NotNull Map<String, String> getEnvironment() {
+  public @Nullable Map<String, String> getEnvironment() {
     try {
       ProcessOutput processOutput =
         executeOnWsl(Collections.singletonList("env"),
@@ -467,23 +473,24 @@ public class WSLDistribution {
                        .setExecuteCommandInInteractiveShell(true),
                      5000,
                      null);
-      Map<String, String> result = new HashMap<>();
-      for (String string : processOutput.getStdoutLines()) {
-        int assignIndex = string.indexOf('=');
-        if (assignIndex == -1) {
-          result.put(string, "");
+      if (processOutput.getExitCode() == 0){
+        Map<String, String> result = new HashMap<>();
+        for (String string : processOutput.getStdoutLines()) {
+          int assignIndex = string.indexOf('=');
+          if (assignIndex == -1) {
+            result.put(string, "");
+          }
+          else {
+            result.put(string.substring(0, assignIndex), string.substring(assignIndex + 1));
+          }
         }
-        else {
-          result.put(string.substring(0, assignIndex), string.substring(assignIndex + 1));
-        }
+        return result;
       }
-      return result;
     }
     catch (ExecutionException e) {
       LOG.warn(e);
     }
-
-    return Collections.emptyMap();
+    return null;
   }
 
   /**

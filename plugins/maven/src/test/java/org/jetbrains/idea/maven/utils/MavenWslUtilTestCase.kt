@@ -31,7 +31,11 @@ class MavenWslUtilTestCase : MavenTestCase() {
     Assume.assumeFalse("WSL should be installed", WslDistributionManager.getInstance().installedDistributions.isEmpty())
     myDistribution = WslDistributionManager.getInstance().installedDistributions[0]
 
-    myUserHome = File("\\\\wsl$\\${myDistribution.msId}\\home\\${myDistribution.environment["USER"]}")
+    val user = myDistribution.environment?.get("USER")
+    if (user == null){
+      fail("Cannot retrieve env variables from WSL")
+    }
+    myUserHome = File("\\\\wsl$\\${myDistribution.msId}\\home\\${user}")
     ensureWslTempDirCreated()
   }
 

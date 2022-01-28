@@ -8,12 +8,14 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.normalizeWhitespace
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
@@ -58,6 +60,7 @@ import javax.swing.text.html.parser.ParserDelegator
 private val minPopupMenuWidth = 175.scaled()
 
 internal class PackageDetailsHeaderPanel(
+    private val project: Project,
     private val operationExecutor: OperationExecutor
 ) : JPanel() {
 
@@ -185,16 +188,23 @@ internal class PackageDetailsHeaderPanel(
     }
 
     private fun updateRepoWarningBanner(repoToInstall: RepositoryModel?) {
-        if (repoToInstall == null) {
-            repoWarningBanner.isVisible = false
-        } else {
-            repoWarningBanner.text = PackageSearchBundle.message(
-                "packagesearch.repository.willBeAddedOnInstall",
-                repoToInstall.displayName
-            )
-            repoWarningBanner.isVisible = true
+        when {
+            repoToInstall == null -> {
+                repoWarningBanner.isVisible = false
+            }
+            willAutomaticallyAddRepo() -> {
+                repoWarningBanner.text = PackageSearchBundle.message(
+                    "packagesearch.repository.willBeAddedOnInstall",
+                    repoToInstall.displayName
+                )
+                repoWarningBanner.isVisible = true
+            }
         }
     }
+
+    private fun willAutomaticallyAddRepo() =
+        PackageSearchGeneralConfiguration.getInstance(project)
+            .autoAddMissingRepositories
 
     private fun updateActions(packageOperations: PackageOperations) {
         overflowButton.isVisible = true
@@ -321,7 +331,7 @@ private class HeaderLayout : AbstractLayoutManager2() {
             )
 
             val nameLabel = componentByRole[Role.NAME] ?: error("Name label missing")
-            val nameLabelHeight = nameLabel.preferredSize.height
+            val nameLabelHeight = nameLabel.preferredSize.height.coerceAtLeast(nameLabel.font.size)
             val nameLabelButtonGap = if (primaryActionButton.isVisible || overflowButton.isVisible) gapBetweenNameAndButtons else 0
             val nameLabelWidth = primaryActionButton.left - bounds.left - nameLabelButtonGap
 
@@ -337,13 +347,14 @@ private class HeaderLayout : AbstractLayoutManager2() {
             }
 
             val identifierLabel = componentByRole[Role.IDENTIFIER] ?: error("Identifier label missing")
+            val identifierLabelHeight = identifierLabel.preferredSize.height.coerceAtLeast(identifierLabel.font.size)
             val labelsY = maxOf(nameLabel.bottom + vGapBetweenNameAndIdentifier, primaryActionButton.bottom + vGapBetweenNameAndIdentifier)
             if (identifierLabel.isVisible) {
                 identifierLabel.setBounds(
                     bounds.left,
                     labelsY,
                     bounds.width,
-                    if (identifierLabel.isVisible) identifierLabel.preferredSize.height else 0
+                    if (identifierLabel.isVisible) identifierLabelHeight else 0
                 )
             } else {
                 identifierLabel.setBounds(0, nameLabel.bottom, bounds.width, 0)

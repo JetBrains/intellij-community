@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisScope;
@@ -113,6 +113,11 @@ public abstract class RefManager {
 
   @Nullable
   public Element export(@NotNull RefEntity entity, final int actualLine) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Nullable
+  public Element export(@NotNull RefEntity entity) {
     throw new UnsupportedOperationException();
   }
 

@@ -115,7 +115,7 @@ object GitStashOperations {
       ChangelistData(changes, null)
     }
 
-    ChangeListViewerDialog.show(project, GitBundle.message("unstash.view.dialog.title", stash.stash), panel)
+    ChangeListViewerDialog.show(project, GitBundle.message("unstash.view.dialog.title", stash.stash), panel, null, false)
   }
 
   @RequiresBackgroundThread

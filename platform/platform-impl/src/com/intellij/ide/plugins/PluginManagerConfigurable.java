@@ -1245,10 +1245,6 @@ public final class PluginManagerConfigurable
         else if (tags == null) {
           return List.of(Tags.Paid.name());
         }
-        else if (!tags.contains(Tags.Paid.name())) {
-          tags = new ArrayList<>(tags);
-          tags.add(Tags.Paid.name());
-        }
       }
     }
     else if (productCode != null && !plugin.isBundled() && !LicensePanel.isEA2Product(productCode)) {
@@ -1259,7 +1255,7 @@ public final class PluginManagerConfigurable
           return List.of(stamp.startsWith("eval:") ? Tags.Trial.name() : Tags.Purchased.name());
         }
       }
-      return List.of(Tags.Paid.name());
+      return plugin.isLicenseOptional() ? List.of(Tags.Freemium.name()) : List.of(Tags.Paid.name());
     }
     if (ContainerUtil.isEmpty(tags)) {
       return List.of();
@@ -1272,6 +1268,9 @@ public final class PluginManagerConfigurable
       }
       if (tags.remove(Tags.Paid.name())) {
         tags.add(0, Tags.Paid.name());
+      }
+      if (tags.remove(Tags.Freemium.name())) {
+        tags.add(0, Tags.Freemium.name());
       }
     }
 
