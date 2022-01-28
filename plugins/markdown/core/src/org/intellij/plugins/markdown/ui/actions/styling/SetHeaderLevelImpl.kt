@@ -54,7 +54,7 @@ abstract class SetHeaderLevelImpl(
 
   class Heading(level: Int): SetHeaderLevelImpl(
     level,
-    messagePointer("markdown.header.level.popup.heading.action.text", level),
+    messagePointer("markdown.header.level.popup.heading.action.text", level - 2),
     messagePointer("markdown.header.level.popup.heading.action.secondary.text", level)
   )
 
