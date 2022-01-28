@@ -28,8 +28,6 @@ import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.refactoring.util.duplicates.Match;
-import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
@@ -38,7 +36,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactoringProvider {
 
@@ -230,18 +231,6 @@ public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactorin
                              PsiElement[] elements,
                              Set<? super PsiField> usedFields) {
     return ExtractMethodProcessor.canBeStatic(targetClass, place, elements, usedFields);
-  }
-
-  @Override
-  public void replaceDuplicate(Project project,
-                               Map<PsiMember, List<Match>> duplicates,
-                               Set<? extends PsiMember> methods) {
-    MethodDuplicatesHandler.replaceDuplicate(project, duplicates, methods);
-  }
-
-  @Override
-  public List<Match> hasDuplicates(PsiElement file, PsiMember member) {
-    return MethodDuplicatesHandler.hasDuplicates(file, member);
   }
 
   @Override

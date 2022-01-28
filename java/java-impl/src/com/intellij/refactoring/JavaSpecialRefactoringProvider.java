@@ -19,7 +19,6 @@ import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedDa
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -134,10 +132,6 @@ public interface JavaSpecialRefactoringProvider {
                               final MultiMap<PsiElement, String> conflicts);
 
   boolean canBeStatic(final PsiClass targetClass, final PsiElement place, final PsiElement[] elements, Set<? super PsiField> usedFields);
-
-  void replaceDuplicate(final Project project, final Map<PsiMember, List<Match>> duplicates, final Set<? extends PsiMember> methods);
-
-  List<Match> hasDuplicates(final PsiElement file, final PsiMember member);
 
   PsiExpression inlineVariable(PsiVariable variable,
                                PsiExpression initializer,

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.functional;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -17,12 +15,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.extractMethod.ControlFlowWrapper;
+import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
 import com.intellij.refactoring.util.duplicates.Match;
+import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.UniqueNameGenerator;
@@ -96,8 +95,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
       PsiElement[] elements = body.getStatements();
 
       HashSet<PsiField> usedFields = new HashSet<>();
-      var provider = JavaSpecialRefactoringProvider.getInstance();
-      boolean canBeStatic = provider.canBeStatic(targetClass, lambdaExpression, elements, usedFields) && usedFields.isEmpty();
+      boolean canBeStatic = ExtractMethodProcessor.canBeStatic(targetClass, lambdaExpression, elements, usedFields) && usedFields.isEmpty();
       PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(targetClass.getProject());
       PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
 
@@ -181,7 +179,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
       PsiClass containingClass = method.getContainingClass();
       if (containingClass != null) {
 
-        final List<Match> duplicates = JavaSpecialRefactoringProvider.getInstance().hasDuplicates(containingClass, method);
+        final List<Match> duplicates = MethodDuplicatesHandler.hasDuplicates(containingClass, method);
         for (Iterator<Match> iterator = duplicates.iterator(); iterator.hasNext(); ) {
           Match match = iterator.next();
           final PsiElement matchStart = match.getMatchStart();
@@ -191,8 +189,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
           }
         }
         if (!duplicates.isEmpty()) {
-          var provider = JavaSpecialRefactoringProvider.getInstance();
-          provider.replaceDuplicate(project, Collections.singletonMap(method, duplicates), Collections.singleton(method));
+          MethodDuplicatesHandler.replaceDuplicate(project, Collections.singletonMap(method, duplicates), Collections.singleton(method));
         }
       }
     };
