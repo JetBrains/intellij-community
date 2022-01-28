@@ -45,7 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
@@ -69,7 +68,6 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   private final CoverageViewManager.StateBean myStateBean;
   private final CoverageViewExtension myViewExtension;
   private final CoverageViewTreeStructure myTreeStructure;
-  private final int[] myMaxWidth;
 
 
   public CoverageView(final Project project, final CoverageDataManager dataManager, CoverageViewManager.StateBean stateBean) {
@@ -81,27 +79,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     myModel = new CoverageTableModel(suitesBundle, stateBean, project, myTreeStructure);
     Disposer.register(this, myModel);
-
-    myMaxWidth = new int[myModel.getColumnCount()];
-    for (int column = 0; column < myModel.getColumnCount(); column++) {
-      myMaxWidth[column] = getStringWidth(myModel.getColumnName(column));
-    }
-    myTable = new TreeTable(myModel) {
-      @Override
-      public @NotNull Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
-        final Component component = super.prepareRenderer(renderer, row, column);
-        int preferredWidth = component.getPreferredSize().width;
-        if (preferredWidth > myMaxWidth[column]) {
-          final TableColumn tableColumn = columnModel.getColumn(column);
-          preferredWidth = Math.max(preferredWidth, tableColumn.getPreferredWidth());
-          myMaxWidth[column] = preferredWidth;
-          if (column != 0) {
-            tableColumn.setMaxWidth(preferredWidth);
-          }
-        }
-        return component;
-      }
-    };
+    myTable = new TreeTable(myModel);
     setUpShowRootNode();
 
     addEmptyCoverageText(project, suitesBundle);
@@ -259,11 +237,11 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     }
     else {
       for (int column = 1; column < columns; column++) {
-        final int width = Math.max(myMaxWidth[column], getColumnWidth(column));
+        final int width = Math.max(getStringWidth(myModel.getColumnName(column)), getColumnWidth(column));
         columnModel.getColumn(column).setPreferredWidth(width);
       }
       final TableColumn nameColumn = myTable.getColumnModel().getColumn(0);
-      nameColumn.setPreferredWidth(Math.max(myMaxWidth[0], JBUIScale.scale(150)));
+      nameColumn.setPreferredWidth(Math.max(getStringWidth(myModel.getColumnName(0)), JBUIScale.scale(150)));
     }
   }
 
