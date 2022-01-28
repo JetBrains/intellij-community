@@ -24,7 +24,23 @@ object KotlinPathsProvider {
         KotlinPathsFromHomeDir(File(PathManager.getSystemPath(), KOTLIN_DIST_ARTIFACT_ID).resolve(version))
 
     fun getKotlinPaths(project: Project) =
-        getKotlinPaths(KotlinJpsPluginSettings.getInstance(project).settings.version)
+        KotlinJpsPluginSettings.getInstance(project)?.settings?.version?.let { getKotlinPaths(it) }
+            ?: KotlinPathsFromHomeDir(KotlinPluginLayout.getInstance().kotlinc)
+
+    fun lazyUnpackKotlincDist(packedDist: File, version: String): File {
+        val destination = getKotlinPaths(version).homePath
+
+        val unpackedDistTimestamp = destination.lastModified()
+        val packedDistTimestamp = packedDist.lastModified()
+        if (unpackedDistTimestamp != 0L && packedDistTimestamp != 0L && unpackedDistTimestamp >= packedDistTimestamp) {
+            return destination
+        }
+        destination.deleteRecursively()
+
+        Decompressor.Zip(packedDist).extract(destination)
+        check(destination.isDirectory)
+        return destination
+    }
 
     fun lazyDownloadAndUnpackKotlincDist(
         project: Project,
@@ -32,23 +48,8 @@ object KotlinPathsProvider {
         indicator: ProgressIndicator,
         beforeDownload: () -> Unit,
         onError: (String) -> Unit,
-    ): File? {
-        val destination = getKotlinPaths(version).homePath
-
-        val unpackedDistTimestamp = destination.lastModified()
-        val packedDistTimestamp = getExpectedMavenArtifactJarPath(KOTLIN_DIST_ARTIFACT_ID, version).lastModified()
-        if (unpackedDistTimestamp != 0L && packedDistTimestamp != 0L && unpackedDistTimestamp >= packedDistTimestamp) {
-            return destination
-        }
-        destination.deleteRecursively()
-
-        val jar = lazyDownloadMavenArtifact(project, KOTLIN_DIST_ARTIFACT_ID, version, indicator, beforeDownload, onError)
-        if (jar == null) return null
-
-        Decompressor.Zip(jar).extract(destination)
-        check(destination.isDirectory)
-        return destination
-    }
+    ): File? = lazyDownloadMavenArtifact(project, KOTLIN_DIST_ARTIFACT_ID, version, indicator, beforeDownload, onError)
+        ?.let { lazyUnpackKotlincDist(it, version) }
 
     fun lazyDownloadMavenArtifact(
         project: Project,

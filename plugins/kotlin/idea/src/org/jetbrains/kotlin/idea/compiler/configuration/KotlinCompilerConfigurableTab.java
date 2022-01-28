@@ -128,9 +128,10 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         this.commonCompilerArguments = commonCompilerArguments;
         this.k2jsCompilerArguments = k2jsCompilerArguments;
         this.compilerSettings = compilerSettings;
-        this.jpsPluginSettings = isProjectSettings
-                                 ? FreezableKt.unfrozen(KotlinJpsPluginSettings.Companion.getInstance(project).getSettings())
-                                 : null;
+        this.jpsPluginSettings = Optional.ofNullable(isProjectSettings ? KotlinJpsPluginSettings.Companion.getInstance(project) : null)
+                .map(KotlinJpsPluginSettings::getSettings)
+                .map(FreezableKt::unfrozen)
+                .orElse(null);
         this.compilerWorkspaceSettings = compilerWorkspaceSettings;
         this.k2jvmCompilerArguments = k2jvmCompilerArguments;
         this.isProjectSettings = isProjectSettings;
@@ -390,7 +391,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
                     }
                     JarRepositoryManager.getAvailableVersions(project, RepositoryLibraryDescription.findDescription(
                                     KotlinPathsProvider.KOTLIN_MAVEN_GROUP_ID,
-                                    SetupKotlinJpsPluginBeforeCompileTask.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID))
+                                    KotlinPluginLayout.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID))
                             .onProcessed(jpsClassPathVersions -> {
                                 if (jpsClassPathVersions == null) {
                                     onFinish.accept(null);
@@ -412,7 +413,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         languageVersionComboBox.addItem(VersionView.LatestStable.INSTANCE);
         apiVersionComboBox.addItem(VersionView.LatestStable.INSTANCE);
 
-        if (isProjectSettings) {
+        if (isProjectSettings && KotlinJpsPluginSettings.Companion.isUnbundledJpsExperimentalFeatureEnabled(project)) {
             ComboBoxTextItem loadingItem = new ComboBoxTextItem(KotlinBundle.message("loading.available.versions.from.maven"), false);
             kotlinJpsPluginVersionComboBox.addItem(loadingItem);
             fetchAvailableJpsCompilersAsync(
