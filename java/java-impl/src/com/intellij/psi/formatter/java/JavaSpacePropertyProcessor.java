@@ -1916,6 +1916,9 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
     // A workaround for IDEA-197644. The lexer below generates GT,EQ instead of GE.
     if (type1 == JavaTokenType.GE || type2 == JavaTokenType.GE) return true;
+    // for >> lexer generates > and >, we need to handle it separately (IDEA-287538)
+    if (type1 == JavaTokenType.GTGT && type2 != JavaTokenType.GT && type2 != JavaTokenType.EQ) return true;
+    if (type1 != JavaTokenType.GT && type2 == JavaTokenType.GTGT) return true;
 
     Pair<IElementType, IElementType> key = pair(type1, type2);
     Boolean result = ourTokenStickingMatrix.get(key);
