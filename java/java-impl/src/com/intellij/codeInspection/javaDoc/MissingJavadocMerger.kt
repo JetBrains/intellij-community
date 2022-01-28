@@ -11,14 +11,14 @@ class MissingJavadocMerger: InspectionElementsMergerBase() {
     val oldInspection = JavaDocLocalInspection()
     oldInspection.readSettings(sourceElement)
     val newInspection = MissingJavadocInspection()
-    newInspection.ignoreAccessors = oldInspection.isIgnoreSimpleAccessors
-    newInspection.ignoreDeprecated = oldInspection.IGNORE_DEPRECATED
-    newInspection.packageOptions = transformOptions(oldInspection.PACKAGE_OPTIONS)
-    newInspection.moduleOptions = transformOptions(oldInspection.MODULE_OPTIONS)
-    newInspection.topLevelClassOptions = transformOptions(oldInspection.TOP_LEVEL_CLASS_OPTIONS)
-    newInspection.innerClassOptions = transformOptions(oldInspection.INNER_CLASS_OPTIONS)
-    newInspection.fieldOptions = transformOptions(oldInspection.FIELD_OPTIONS)
-    newInspection.methodOptions = transformOptions(oldInspection.METHOD_OPTIONS)
+    newInspection.IGNORE_ACCESSORS = oldInspection.isIgnoreSimpleAccessors
+    newInspection.IGNORE_DEPRECATED_ELEMENTS = oldInspection.IGNORE_DEPRECATED
+    newInspection.PACKAGE_SETTINGS = transformOptions(oldInspection.PACKAGE_OPTIONS)
+    newInspection.MODULE_SETTINGS = transformOptions(oldInspection.MODULE_OPTIONS)
+    newInspection.TOP_LEVEL_CLASS_SETTINGS = transformOptions(oldInspection.TOP_LEVEL_CLASS_OPTIONS)
+    newInspection.INNER_CLASS_SETTINGS = transformOptions(oldInspection.INNER_CLASS_OPTIONS)
+    newInspection.FIELD_SETTINGS = transformOptions(oldInspection.FIELD_OPTIONS)
+    newInspection.METHOD_SETTINGS = transformOptions(oldInspection.METHOD_OPTIONS)
     newInspection.writeSettings(toolElement)
     return toolElement
   }
@@ -38,15 +38,15 @@ class MissingJavadocMerger: InspectionElementsMergerBase() {
 
   private fun transformOptions(oldOption: JavaDocLocalInspection.Options): MissingJavadocInspection.Options {
     val newOption = MissingJavadocInspection.Options()
-    newOption.isEnabled = oldOption.ACCESS_JAVADOC_REQUIRED_FOR != JavaDocLocalInspection.NONE
+    newOption.ENABLED = oldOption.ACCESS_JAVADOC_REQUIRED_FOR != JavaDocLocalInspection.NONE
     if (oldOption.ACCESS_JAVADOC_REQUIRED_FOR.equals(JavaDocLocalInspection.NONE)) {
-      newOption.minimalVisibility = JavaDocLocalInspection.PUBLIC
+      newOption.MINIMAL_VISIBILITY = JavaDocLocalInspection.PUBLIC
     }
     else {
-      newOption.minimalVisibility = oldOption.ACCESS_JAVADOC_REQUIRED_FOR
+      newOption.MINIMAL_VISIBILITY = oldOption.ACCESS_JAVADOC_REQUIRED_FOR
     }
-    newOption.minimalVisibility = oldOption.ACCESS_JAVADOC_REQUIRED_FOR
-    newOption.requiredTags = oldOption.REQUIRED_TAGS
+    newOption.MINIMAL_VISIBILITY = oldOption.ACCESS_JAVADOC_REQUIRED_FOR
+    newOption.REQUIRED_TAGS = oldOption.REQUIRED_TAGS
     return newOption
   }
 }

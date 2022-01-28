@@ -28,64 +28,64 @@ public class MissingJavadocHighlightingTest extends LightJavaCodeInsightFixtureT
   }
 
   @Test void testMethodEnabled(){
-    myInspection.methodOptions.isEnabled = true;
+    myInspection.METHOD_SETTINGS.ENABLED = true;
     doTest();
   }
 
   @Test void testPrivateMethodEnabled(){
-    myInspection.methodOptions.isEnabled = true;
-    myInspection.methodOptions.minimalVisibility = "private";
+    myInspection.METHOD_SETTINGS.ENABLED = true;
+    myInspection.METHOD_SETTINGS.MINIMAL_VISIBILITY = "private";
     doTest();
   }
 
   @Test void testMethodIgnored(){
-    myInspection.methodOptions.isEnabled = true;
-    myInspection.methodOptions.minimalVisibility = "private";
-    myInspection.ignoreDeprecated = true;
-    myInspection.ignoreAccessors = true;
+    myInspection.METHOD_SETTINGS.ENABLED = true;
+    myInspection.METHOD_SETTINGS.MINIMAL_VISIBILITY = "private";
+    myInspection.IGNORE_DEPRECATED_ELEMENTS = true;
+    myInspection.IGNORE_ACCESSORS = true;
     doTest();
   }
 
   @Test void testPublicMemberInPrivateClass(){
-    myInspection.methodOptions.isEnabled = true;
-    myInspection.methodOptions.minimalVisibility = "public";
-    myInspection.fieldOptions.isEnabled = true;
-    myInspection.fieldOptions.minimalVisibility = "public";
+    myInspection.METHOD_SETTINGS.ENABLED = true;
+    myInspection.METHOD_SETTINGS.MINIMAL_VISIBILITY = "public";
+    myInspection.FIELD_SETTINGS.ENABLED = true;
+    myInspection.FIELD_SETTINGS.MINIMAL_VISIBILITY = "public";
     doTest();
   }
 
   @Test void testClassEnabled(){
-    myInspection.topLevelClassOptions.isEnabled = true;
+    myInspection.TOP_LEVEL_CLASS_SETTINGS.ENABLED = true;
     doTest();
   }
 
   @Test void testFieldEnabled(){
-    myInspection.fieldOptions.isEnabled = true;
+    myInspection.FIELD_SETTINGS.ENABLED = true;
     doTest();
   }
 
   @Test void testPrivateFieldEnabled(){
-    myInspection.fieldOptions.isEnabled = true;
-    myInspection.fieldOptions.minimalVisibility = "private";
+    myInspection.FIELD_SETTINGS.ENABLED = true;
+    myInspection.FIELD_SETTINGS.MINIMAL_VISIBILITY = "private";
     doTest();
   }
 
   @Test void testInnerClassEnabled(){
-    myInspection.innerClassOptions.isEnabled = true;
+    myInspection.INNER_CLASS_SETTINGS.ENABLED = true;
     doTest();
   }
 
   @Test void testProtectedInnerClassEnabled(){
-    myInspection.innerClassOptions.isEnabled = true;
-    myInspection.innerClassOptions.minimalVisibility = "protected";
+    myInspection.INNER_CLASS_SETTINGS.ENABLED = true;
+    myInspection.INNER_CLASS_SETTINGS.MINIMAL_VISIBILITY = "protected";
     doTest();
   }
 
   @Test void testRequiredTags(){
-    myInspection.topLevelClassOptions.isEnabled = true;
-    myInspection.topLevelClassOptions.setTagRequired("author", true);
-    myInspection.topLevelClassOptions.setTagRequired("param", true);
-    myInspection.methodOptions.isEnabled = true;
+    myInspection.TOP_LEVEL_CLASS_SETTINGS.ENABLED = true;
+    myInspection.TOP_LEVEL_CLASS_SETTINGS.setTagRequired("author", true);
+    myInspection.TOP_LEVEL_CLASS_SETTINGS.setTagRequired("param", true);
+    myInspection.METHOD_SETTINGS.ENABLED = true;
     doTest();
   }
 
@@ -94,13 +94,13 @@ public class MissingJavadocHighlightingTest extends LightJavaCodeInsightFixtureT
   }
 
   @Test void testPackageEnabled(){
-    myInspection.packageOptions.isEnabled = true;
+    myInspection.PACKAGE_SETTINGS.ENABLED = true;
     getFixture().testHighlighting("/packageInfo/enabled/package-info.java");
   }
 
   @Test void testPackageRequiredTags(){
-    myInspection.packageOptions.isEnabled = true;
-    myInspection.packageOptions.setTagRequired("author", true);
+    myInspection.PACKAGE_SETTINGS.ENABLED = true;
+    myInspection.PACKAGE_SETTINGS.setTagRequired("author", true);
     getFixture().testHighlighting("/packageInfo/requiredTags/package-info.java");
   }
 
@@ -109,13 +109,13 @@ public class MissingJavadocHighlightingTest extends LightJavaCodeInsightFixtureT
   }
 
   @Test void testModuleEnabled(){
-    myInspection.moduleOptions.isEnabled = true;
+    myInspection.MODULE_SETTINGS.ENABLED = true;
     getFixture().testHighlighting("/moduleInfo/enabled/module-info.java");
   }
 
   @Test void testModuleRequiredTags(){
-    myInspection.moduleOptions.isEnabled = true;
-    myInspection.moduleOptions.setTagRequired("author", true);
+    myInspection.MODULE_SETTINGS.ENABLED = true;
+    myInspection.MODULE_SETTINGS.setTagRequired("author", true);
     getFixture().testHighlighting("/moduleInfo/requiredTags/module-info.java");
   }
 

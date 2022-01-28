@@ -87,25 +87,25 @@ object JavadocUIUtil {
         .label(JavaBundle.message("inspection.javadoc.label.text"), LabelPosition.TOP)
         .horizontalAlign(HorizontalAlign.FILL)
         .applyToComponent {
-          text = settings.additionalJavadocTags
+          text = settings.ADDITIONAL_TAGS
           document.addDocumentListener(object: DocumentAdapter() {
             override fun textChanged(e: DocumentEvent) {
-              settings.additionalJavadocTags = text.trim()
+              settings.ADDITIONAL_TAGS = text.trim()
             }
           })
         }
     }
     row {
       checkBox(JavaBundle.message("inspection.javadoc.option.ignore.throws"))
-        .bindCheckbox(settings::ignoreDuplicatedThrows)
+        .bindCheckbox(settings::IGNORE_THROWS_DUPLICATE)
     }
     row {
       checkBox(JavaBundle.message("inspection.javadoc.option.ignore.period"))
-        .bindCheckbox(settings::ignoreJavaDocPeriod)
+        .bindCheckbox(settings::IGNORE_PERIOD_PROBLEM)
     }
     row {
       checkBox(JavaBundle.message("inspection.javadoc.option.ignore.self.ref"))
-        .bindCheckbox(settings::ignorePointToItself)
+        .bindCheckbox(settings::IGNORE_SELF_REFS)
     }
   }
 
@@ -113,47 +113,47 @@ object JavadocUIUtil {
     return panel {
       row {
         checkBox(JavaBundle.message("inspection.javadoc.option.ignore.deprecated"))
-          .bindCheckbox(settings::ignoreDeprecated)
+          .bindCheckbox(settings::IGNORE_DEPRECATED_ELEMENTS)
       }
       row {
         checkBox(JavaBundle.message("inspection.javadoc.option.ignore.simple"))
-          .bindCheckbox(settings::ignoreAccessors)
+          .bindCheckbox(settings::IGNORE_ACCESSORS)
       }
       row {
         topGap(TopGap.SMALL)
         cell(createMasterDetails(listOf(
           item(
             JavaBundle.message("inspection.javadoc.option.tab.title.package"),
-            settings.packageOptions::isEnabled,
+            settings.PACKAGE_SETTINGS::ENABLED,
             createOptions(
-              settings.packageOptions,
+              settings.PACKAGE_SETTINGS,
               emptyList(),
               listOf("@author", "@version", "@since")
             )
           ),
           item(
             JavaBundle.message("inspection.javadoc.option.tab.title.module"),
-            settings.moduleOptions::isEnabled,
+            settings.MODULE_SETTINGS::ENABLED,
             createOptions(
-              settings.moduleOptions,
+              settings.MODULE_SETTINGS,
               emptyList(),
               listOf("@author", "@version", "@since")
             )
           ),
           item(
             JavaBundle.message("inspection.javadoc.option.tab.title"),
-            settings.topLevelClassOptions::isEnabled,
+            settings.TOP_LEVEL_CLASS_SETTINGS::ENABLED,
             createOptions(
-              settings.topLevelClassOptions,
+              settings.TOP_LEVEL_CLASS_SETTINGS,
               listOf(JavaDocLocalInspection.PUBLIC, JavaDocLocalInspection.PACKAGE_LOCAL),
               listOf("@author", "@version", "@since", "@param")
             )
           ),
           item(
             JavaBundle.message("inspection.javadoc.option.tab.title.method"),
-            settings.methodOptions::isEnabled,
+            settings.METHOD_SETTINGS::ENABLED,
             createOptions(
-              settings.methodOptions,
+              settings.METHOD_SETTINGS,
               listOf(JavaDocLocalInspection.PUBLIC, JavaDocLocalInspection.PROTECTED,
                      JavaDocLocalInspection.PACKAGE_LOCAL, JavaDocLocalInspection.PRIVATE),
               listOf("@return", "@param", JavaBundle.message("inspection.javadoc.throws.or.exception.option"))
@@ -161,9 +161,9 @@ object JavadocUIUtil {
           ),
           item(
             JavaBundle.message("inspection.javadoc.option.tab.title.field"),
-            settings.fieldOptions::isEnabled,
+            settings.FIELD_SETTINGS::ENABLED,
             createOptions(
-              settings.fieldOptions,
+              settings.FIELD_SETTINGS,
               listOf(JavaDocLocalInspection.PUBLIC, JavaDocLocalInspection.PROTECTED,
                      JavaDocLocalInspection.PACKAGE_LOCAL, JavaDocLocalInspection.PRIVATE),
               emptyList()
@@ -171,9 +171,9 @@ object JavadocUIUtil {
           ),
           item(
             JavaBundle.message("inspection.javadoc.option.tab.title.inner.class"),
-            settings.innerClassOptions::isEnabled,
+            settings.INNER_CLASS_SETTINGS::ENABLED,
             createOptions(
-              settings.innerClassOptions,
+              settings.INNER_CLASS_SETTINGS,
               listOf(JavaDocLocalInspection.PUBLIC, JavaDocLocalInspection.PROTECTED,
                      JavaDocLocalInspection.PACKAGE_LOCAL, JavaDocLocalInspection.PRIVATE),
               emptyList()
@@ -189,7 +189,7 @@ object JavadocUIUtil {
       if (visibility.isNotEmpty()) {
         row {
           comboBox(visibility)
-            .bindItem(options::minimalVisibility)
+            .bindItem(options::MINIMAL_VISIBILITY)
             .label(JavaBundle.message("inspection.missingJavadoc.label.minimalVisibility"), LabelPosition.TOP)
           bottomGap(BottomGap.SMALL)
         }

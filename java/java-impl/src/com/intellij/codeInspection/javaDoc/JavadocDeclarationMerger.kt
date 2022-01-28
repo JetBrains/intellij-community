@@ -13,10 +13,10 @@ class JavadocDeclarationMerger: InspectionElementsMergerBase() {
     val oldInspection = JavaDocLocalInspection()
     oldInspection.readSettings(sourceElement)
     val newInspection = JavadocDeclarationInspection()
-    newInspection.ignoreDuplicatedThrows = oldInspection.isIgnoreDuplicatedThrows
-    newInspection.ignoreJavaDocPeriod = oldInspection.IGNORE_JAVADOC_PERIOD
-    newInspection.ignorePointToItself = oldInspection.IGNORE_POINT_TO_ITSELF
-    newInspection.additionalJavadocTags = oldInspection.myAdditionalJavadocTags
+    newInspection.IGNORE_THROWS_DUPLICATE = oldInspection.isIgnoreDuplicatedThrows
+    newInspection.IGNORE_PERIOD_PROBLEM = oldInspection.IGNORE_JAVADOC_PERIOD
+    newInspection.IGNORE_SELF_REFS = oldInspection.IGNORE_POINT_TO_ITSELF
+    newInspection.ADDITIONAL_TAGS = oldInspection.myAdditionalJavadocTags
     newInspection.writeSettings(toolElement)
     return toolElement
   }

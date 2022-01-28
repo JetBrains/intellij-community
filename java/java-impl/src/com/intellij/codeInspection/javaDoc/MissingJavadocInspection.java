@@ -1,13 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaDoc;
 
-import com.intellij.codeInsight.intention.impl.AddJavadocIntention;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefJavaUtil;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
@@ -34,14 +30,14 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public class MissingJavadocInspection extends LocalInspectionTool {
 
-  public boolean ignoreDeprecated = false;
-  public boolean ignoreAccessors = false;
-  public Options packageOptions = new Options();
-  public Options moduleOptions = new Options();
-  public Options topLevelClassOptions = new Options();
-  public Options innerClassOptions = new Options();
-  public Options methodOptions = new Options("@return@param@throws or @exception");
-  public Options fieldOptions = new Options();
+  public boolean IGNORE_DEPRECATED_ELEMENTS = false;
+  public boolean IGNORE_ACCESSORS = false;
+  public Options PACKAGE_SETTINGS = new Options();
+  public Options MODULE_SETTINGS = new Options();
+  public Options TOP_LEVEL_CLASS_SETTINGS = new Options();
+  public Options INNER_CLASS_SETTINGS = new Options();
+  public Options METHOD_SETTINGS = new Options("@return@param@throws or @exception");
+  public Options FIELD_SETTINGS = new Options();
 
   @Override
   public @Nullable JComponent createOptionsPanel() {
@@ -49,25 +45,25 @@ public class MissingJavadocInspection extends LocalInspectionTool {
   }
 
   public static class Options {
-    public String minimalVisibility = "public";
-    public String requiredTags = "";
-    public boolean isEnabled = false;
+    public String MINIMAL_VISIBILITY = "public";
+    public String REQUIRED_TAGS = "";
+    public boolean ENABLED = false;
 
     public Options() {}
 
     public Options(String tags){
-      requiredTags = tags;
+      REQUIRED_TAGS = tags;
     }
 
     public boolean isTagRequired(String tag) {
-      return requiredTags.contains(tag);
+      return REQUIRED_TAGS.contains(tag);
     }
 
     public void setTagRequired(String tag, boolean value) {
       if (value) {
-        if (!isTagRequired(tag)) requiredTags += tag;
+        if (!isTagRequired(tag)) REQUIRED_TAGS += tag;
       } else {
-        requiredTags = requiredTags.replaceAll(tag, "");
+        REQUIRED_TAGS = REQUIRED_TAGS.replaceAll(tag, "");
       }
     }
   }
@@ -110,13 +106,13 @@ public class MissingJavadocInspection extends LocalInspectionTool {
     if (pkg == null) return;
 
     PsiDocComment docComment = PsiTreeUtil.getChildOfType(file, PsiDocComment.class);
-    if (ignoreDeprecated && isDeprecated(pkg, docComment)) {
+    if (IGNORE_DEPRECATED_ELEMENTS && isDeprecated(pkg, docComment)) {
       return;
     }
-    if (!isJavadocRequired(packageOptions, pkg)) return;
+    if (!isJavadocRequired(PACKAGE_SETTINGS, pkg)) return;
 
     if (docComment != null) {
-      checkRequiredTags(docComment.getTags(), packageOptions, docComment.getFirstChild(), delegate);
+      checkRequiredTags(docComment.getTags(), PACKAGE_SETTINGS, docComment.getFirstChild(), delegate);
     }
     else {
       PsiElement toHighlight = notNull(file.getPackageStatement(), file);
@@ -126,13 +122,13 @@ public class MissingJavadocInspection extends LocalInspectionTool {
 
   private void checkModule(PsiJavaModule module, ProblemsHolder delegate, boolean isOnTheFly) {
     PsiDocComment docComment = module.getDocComment();
-    if (ignoreDeprecated && isDeprecated(module, docComment)) {
+    if (IGNORE_DEPRECATED_ELEMENTS && isDeprecated(module, docComment)) {
       return;
     }
-    if (!isJavadocRequired(moduleOptions, module)) return;
+    if (!isJavadocRequired(MODULE_SETTINGS, module)) return;
 
     if (docComment != null) {
-      checkRequiredTags(docComment.getTags(), moduleOptions, docComment.getFirstChild(), delegate);
+      checkRequiredTags(docComment.getTags(), MODULE_SETTINGS, docComment.getFirstChild(), delegate);
     }
     else {
       reportMissingJavadoc(module.getNameIdentifier(), delegate, isOnTheFly);
@@ -143,10 +139,10 @@ public class MissingJavadocInspection extends LocalInspectionTool {
     if (aClass instanceof PsiAnonymousClass || aClass instanceof PsiSyntheticClass || aClass instanceof PsiTypeParameter) {
       return;
     }
-    if (ignoreDeprecated && aClass.isDeprecated()) {
+    if (IGNORE_DEPRECATED_ELEMENTS && aClass.isDeprecated()) {
       return;
     }
-    Options options = ClassUtil.isTopLevelClass(aClass) ? topLevelClassOptions : innerClassOptions;
+    Options options = ClassUtil.isTopLevelClass(aClass) ? TOP_LEVEL_CLASS_SETTINGS : INNER_CLASS_SETTINGS;
     if (!isJavadocRequired(options, aClass)) return;
 
     PsiDocComment docComment = aClass.getDocComment();
@@ -166,14 +162,14 @@ public class MissingJavadocInspection extends LocalInspectionTool {
   }
 
   private void checkField(PsiField field, ProblemsHolder delegate, boolean isOnTheFly) {
-    if (ignoreDeprecated && isDeprecated(field)) {
+    if (IGNORE_DEPRECATED_ELEMENTS && isDeprecated(field)) {
       return;
     }
-    if (!isJavadocRequired(fieldOptions, field)) return;
+    if (!isJavadocRequired(FIELD_SETTINGS, field)) return;
 
     PsiDocComment docComment = field.getDocComment();
     if (docComment != null) {
-      checkRequiredTags(docComment.getTags(), fieldOptions, docComment.getFirstChild(), delegate);
+      checkRequiredTags(docComment.getTags(), FIELD_SETTINGS, docComment.getFirstChild(), delegate);
     }
     else {
       reportMissingJavadoc(field.getNameIdentifier(), delegate, isOnTheFly);
@@ -184,27 +180,27 @@ public class MissingJavadocInspection extends LocalInspectionTool {
     if (method instanceof SyntheticElement) {
       return;
     }
-    if (ignoreDeprecated && isDeprecated(method)) {
+    if (IGNORE_DEPRECATED_ELEMENTS && isDeprecated(method)) {
       return;
     }
-    if (ignoreAccessors && PropertyUtilBase.isSimplePropertyAccessor(method)) {
+    if (IGNORE_ACCESSORS && PropertyUtilBase.isSimplePropertyAccessor(method)) {
       return;
     }
-    if (!isJavadocRequired(methodOptions, method) || method.findSuperMethods().length > 0) return;
+    if (!isJavadocRequired(METHOD_SETTINGS, method) || method.findSuperMethods().length > 0) return;
 
     PsiDocComment docComment = method.getDocComment();
     if (docComment != null) {
       if (!isInherited(docComment, method)) {
         PsiDocTag[] tags = docComment.getTags();
 
-        if (methodOptions.isTagRequired("return")) {
+        if (METHOD_SETTINGS.isTagRequired("return")) {
           checkMissingReturnTag(tags, method, docComment.getFirstChild(), delegate);
         }
-        if (methodOptions.isTagRequired("param")) {
+        if (METHOD_SETTINGS.isTagRequired("param")) {
           checkMissingParamTags(tags, method, docComment.getFirstChild(), delegate);
           checkMissingTypeParamTags(method, tags, docComment.getFirstChild(), delegate);
         }
-        if (methodOptions.isTagRequired("throws")) {
+        if (METHOD_SETTINGS.isTagRequired("throws")) {
           checkMissingThrowsTags(tags, method, docComment.getFirstChild(), delegate);
         }
       }
@@ -244,7 +240,7 @@ public class MissingJavadocInspection extends LocalInspectionTool {
   }
 
   private static boolean isJavadocRequired(@NotNull Options options, @NotNull PsiModifierListOwner element) {
-    if (!options.isEnabled) return false;
+    if (!options.ENABLED) return false;
     if (element instanceof PsiPackage) {
       return true;
     }
@@ -256,7 +252,7 @@ public class MissingJavadocInspection extends LocalInspectionTool {
     int actualAccess = getAccessNumber(RefJavaUtil.getInstance().getAccessModifier(element));
 
     if (element instanceof PsiClass) {
-      return actualAccess <= getAccessNumber(options.minimalVisibility);
+      return actualAccess <= getAccessNumber(options.MINIMAL_VISIBILITY);
     }
 
     if (element instanceof PsiMember) {
@@ -266,7 +262,7 @@ public class MissingJavadocInspection extends LocalInspectionTool {
         element = PsiTreeUtil.getParentOfType(element, PsiClass.class);
       }
 
-      return actualAccess <= getAccessNumber(options.minimalVisibility);
+      return actualAccess <= getAccessNumber(options.MINIMAL_VISIBILITY);
     }
 
     return false;

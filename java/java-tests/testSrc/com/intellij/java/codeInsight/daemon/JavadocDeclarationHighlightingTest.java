@@ -30,7 +30,7 @@ public class JavadocDeclarationHighlightingTest extends LightDaemonAnalyzerTestC
   protected void setUp() throws Exception {
     super.setUp();
     myInspection = new JavadocDeclarationInspection();
-    myInspection.ignoreDuplicatedThrows = false;
+    myInspection.IGNORE_THROWS_DUPLICATE = false;
     enableInspectionTools(myInspection, new JavaDocReferenceInspection());
   }
 
@@ -45,9 +45,9 @@ public class JavadocDeclarationHighlightingTest extends LightDaemonAnalyzerTestC
     return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/javadocDeclaration/";
   }
 
-  public void testJavadocPeriod() { myInspection.ignoreJavaDocPeriod = false; doTest(); }
-  public void testJavadocPeriod1() { myInspection.ignoreJavaDocPeriod = false; doTest(); }
-  public void testJavadocPeriod2() { myInspection.ignoreJavaDocPeriod = false; doTest(); }
+  public void testJavadocPeriod() { myInspection.IGNORE_PERIOD_PROBLEM = false; doTest(); }
+  public void testJavadocPeriod1() { myInspection.IGNORE_PERIOD_PROBLEM = false; doTest(); }
+  public void testJavadocPeriod2() { myInspection.IGNORE_PERIOD_PROBLEM = false; doTest(); }
   public void testInlineTagAsDescription() { doTest(); }
   public void testParam0() { doTest(); }
   public void testParam1() { doTest(); }
@@ -111,7 +111,7 @@ public class JavadocDeclarationHighlightingTest extends LightDaemonAnalyzerTestC
   public void testMisplacedThrowsTag() { doTest(); }
   public void testGenericsParams() { doTest(); }
   public void testEnumConstructor() { doTest(); }
-  public void testIgnoreDuplicateThrows() { myInspection.ignoreDuplicatedThrows = true; doTest(); }
+  public void testIgnoreDuplicateThrows() { myInspection.IGNORE_THROWS_DUPLICATE = true; doTest(); }
   public void testIgnoreAccessors() { doTest(); }
   public void testAuthoredMethod() { doTest(); }
   public void testThrowsInheritDoc() { doTest(); }

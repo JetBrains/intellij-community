@@ -31,20 +31,20 @@ import java.util.stream.Stream;
 
 public class JavadocDeclarationInspection extends LocalInspectionTool {
 
-  public String additionalJavadocTags = "";
-  public boolean ignoreDuplicatedThrows = true;
-  public boolean ignoreJavaDocPeriod = true;
-  public boolean ignorePointToItself = false;
+  public String ADDITIONAL_TAGS = "";
+  public boolean IGNORE_THROWS_DUPLICATE = true;
+  public boolean IGNORE_PERIOD_PROBLEM = true;
+  public boolean IGNORE_SELF_REFS = false;
 
   private static final String[] TAGS_TO_CHECK = {"author", "version", "since"};
   private static final Set<String> UNIQUE_TAGS = ContainerUtil.newHashSet("return", "deprecated", "serial", "serialData");
 
   public void registerAdditionalTag(@NotNull String tag) {
-    if (!additionalJavadocTags.isEmpty()) {
-      additionalJavadocTags += "," + tag;
+    if (!ADDITIONAL_TAGS.isEmpty()) {
+      ADDITIONAL_TAGS += "," + tag;
     }
     else {
-      additionalJavadocTags = tag;
+      ADDITIONAL_TAGS = tag;
     }
   }
 
@@ -152,7 +152,7 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
 
     checkTagValues(tags, context, holder);
 
-    if (!ignoreJavaDocPeriod) {
+    if (!IGNORE_PERIOD_PROBLEM) {
       checkForPeriod(docComment, context, holder);
     }
 
@@ -242,7 +242,7 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
           }
         }
       }
-      else if (!ignoreDuplicatedThrows && ("throws".equals(tag.getName()) || "exception".equals(tag.getName()))) {
+      else if (!IGNORE_THROWS_DUPLICATE && ("throws".equals(tag.getName()) || "exception".equals(tag.getName()))) {
         PsiDocTagValue value = tag.getValueElement();
         if (value != null) {
           PsiElement firstChild = value.getFirstChild();
@@ -352,7 +352,7 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
   }
 
   private boolean checkTagInfo(PsiDocTag tag, String tagName, JavadocTagInfo tagInfo, ProblemsHolder holder) {
-    StringTokenizer tokenizer = new StringTokenizer(additionalJavadocTags, ", ");
+    StringTokenizer tokenizer = new StringTokenizer(ADDITIONAL_TAGS, ", ");
     while (tokenizer.hasMoreTokens()) {
       if (Comparing.strEqual(tagName, tokenizer.nextToken())) return true;
     }
@@ -376,7 +376,7 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
   }
 
   private void checkPointToSelf(@NotNull ProblemsHolder holder, PsiInlineDocTag tag) {
-    if (ignorePointToItself) {
+    if (IGNORE_SELF_REFS) {
       return;
     }
     PsiDocTagValue value = tag.getValueElement();
