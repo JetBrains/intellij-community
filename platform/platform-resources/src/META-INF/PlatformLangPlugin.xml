@@ -112,11 +112,6 @@
     <projectService serviceInterface="com.intellij.refactoring.suggested.SuggestedRefactoringProvider"
                     serviceImplementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl"/>
     <postStartupActivity implementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl$Startup"/>
-    <notificationGroup id="Show control flow group" displayType="BALLOON"/>
-    <notificationGroup id="Power Save Mode" displayType="BALLOON"/>
-    <notificationGroup id="IDE Caches" displayType="BALLOON"/>
-    <notificationGroup id="Cache Recovery" displayType="STICKY_BALLOON"/>
-    <notificationGroup id="Framework Detection" displayType="BALLOON"/>
     <notificationGroup id="Code style settings migration" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Find Problems" displayType="STICKY_BALLOON" isLogByDefault="false"/>
     <notificationGroup id="Missing SDKs" displayType="BALLOON"/>
