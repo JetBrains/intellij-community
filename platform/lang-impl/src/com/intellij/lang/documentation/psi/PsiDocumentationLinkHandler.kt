@@ -9,7 +9,7 @@ import com.intellij.openapi.util.component2
 
 internal class PsiDocumentationLinkHandler : DocumentationLinkHandler {
 
-  override fun resolveLink(target: DocumentationTarget, url: String): LinkResult? {
+  override fun resolveLink(target: DocumentationTarget, url: String): LinkResolveResult? {
     if (target !is PsiElementDocumentationTarget) {
       return null
     }
@@ -17,8 +17,8 @@ internal class PsiDocumentationLinkHandler : DocumentationLinkHandler {
     if (url.startsWith(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL)) {
       val project = element.project
       val (resolved, anchor) = DocumentationManager.targetAndRef(project, url, element)
-                            ?: return null
-      return LinkResult.resolvedTarget(PsiElementDocumentationTarget(project, resolved, sourceElement = null, anchor))
+                               ?: return null
+      return LinkResolveResult.resolvedTarget(PsiElementDocumentationTarget(project, resolved, sourceElement = null, anchor))
     }
     val provider = DocumentationManager.getProviderFromElement(element)
     if (provider is CompositeDocumentationProvider) {
@@ -27,7 +27,7 @@ internal class PsiDocumentationLinkHandler : DocumentationLinkHandler {
           continue
         }
         if (p.canFetchDocumentationLink(url)) {
-          return LinkResult.resolvedTarget(PsiExternalDocumentationHandlerTarget(p, url, element))
+          return LinkResolveResult.resolvedTarget(PsiExternalDocumentationHandlerTarget(p, url, element))
         }
       }
     }

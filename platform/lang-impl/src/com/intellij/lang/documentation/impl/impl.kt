@@ -35,26 +35,41 @@ fun CoroutineScope.computeDocumentationAsync(targetPointer: Pointer<out Document
 }
 
 @ApiStatus.Internal
-suspend fun resolveLink(targetPointer: Pointer<out DocumentationTarget>, url: String): InternalLinkResult {
+suspend fun handleLink(targetPointer: Pointer<out DocumentationTarget>, url: String): InternalLinkResult {
   return withContext(Dispatchers.Default) {
     readAction {
-      doResolveLink(targetPointer, url)
+      doHandleLink(targetPointer, url)
     }
   }
 }
 
-private fun doResolveLink(targetPointer: Pointer<out DocumentationTarget>, url: String): InternalLinkResult {
-  val target = targetPointer.dereference() ?: return InternalLinkResult.InvalidTarget
-  val result = resolveLink(target, url) ?: return InternalLinkResult.CannotResolve
+private fun doHandleLink(targetPointer: Pointer<out DocumentationTarget>, url: String): InternalLinkResult {
+  val target = targetPointer.dereference()
+               ?: return InternalLinkResult.InvalidTarget
+  return tryResolveLink(target, url)
+         ?: tryContentUpdater(target, url)
+         ?: InternalLinkResult.CannotResolve
+}
+
+private fun tryResolveLink(target: DocumentationTarget, url: String): InternalLinkResult? {
+  val result = resolveLink(target, url) ?: return null
   @Suppress("REDUNDANT_ELSE_IN_WHEN")
   return when (result) {
     is ResolvedTarget -> InternalLinkResult.Request(result.target.documentationRequest())
-    is UpdateContent -> InternalLinkResult.Updater(result.updater)
     else -> error("Unexpected result: $result") // this fixes Kotlin incremental compilation
   }
 }
 
-internal fun resolveLink(target: DocumentationTarget, url: String): LinkResult? {
+private fun tryContentUpdater(target: DocumentationTarget, url: String): InternalLinkResult? {
+  for (handler in DocumentationLinkHandler.EP_NAME.extensionList) {
+    ProgressManager.checkCanceled()
+    val updater = handler.contentUpdater(target, url) ?: continue
+    return InternalLinkResult.Updater(updater)
+  }
+  return null
+}
+
+internal fun resolveLink(target: DocumentationTarget, url: String): LinkResolveResult? {
   for (handler in DocumentationLinkHandler.EP_NAME.extensionList) {
     ProgressManager.checkCanceled()
     return handler.resolveLink(target, url) ?: continue

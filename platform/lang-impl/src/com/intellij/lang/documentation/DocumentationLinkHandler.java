@@ -16,9 +16,26 @@ public interface DocumentationLinkHandler {
   ExtensionPointName<DocumentationLinkHandler> EP_NAME = ExtensionPointName.create("com.intellij.lang.documentationLinkHandler");
 
   /**
-   * Resolves a URL in the documentation to another target.
+   * @return result of resolving the given {@code url} to another {@link DocumentationTarget},
+   * or {@code null} if this handler is not applicable, or the target cannot be resolved
    */
   @RequiresReadLock
   @RequiresBackgroundThread
-  @Nullable LinkResult resolveLink(@NotNull DocumentationTarget target, @NotNull String url);
+  default @Nullable LinkResolveResult resolveLink(@NotNull DocumentationTarget target, @NotNull String url) {
+    return null;
+  }
+
+  /**
+   * Implement this method to load some additional data when a link is activated,
+   * and then to update the documentation browser content with the loaded data.
+   *
+   * @return a stream of updates, which should be applied to the existing content,
+   * or {@code null} if this handler is not applicable
+   */
+  @Internal
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  default @Nullable ContentUpdater contentUpdater(@NotNull DocumentationTarget target, @NotNull String url) {
+    return null;
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation
 
 import com.intellij.openapi.progress.withJob
@@ -24,11 +24,7 @@ internal class AsyncDocumentation(
 
 internal class ResolvedTarget(
   val target: DocumentationTarget,
-) : LinkResult
-
-internal class UpdateContent(
-  val updater: LinkResult.ContentUpdater,
-) : LinkResult
+) : LinkResolveResult
 
 internal fun <X> Supplier<X>.asAsyncSupplier(): AsyncSupplier<X> = {
   withContext(Dispatchers.IO) {
