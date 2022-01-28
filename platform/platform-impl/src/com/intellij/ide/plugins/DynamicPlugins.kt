@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
@@ -434,10 +434,6 @@ object DynamicPlugins {
     fun withCheckImplementationDetailDependencies(checkImplementationDetailDependencies: Boolean) = also {
       this.checkImplementationDetailDependencies = checkImplementationDetailDependencies
     }
-  }
-
-  fun unloadAndUninstallPlugin(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {
-    return unloadPlugin(pluginDescriptor, UnloadPluginOptions(disable = false))
   }
 
   @JvmOverloads

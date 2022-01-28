@@ -91,7 +91,7 @@ class DynamicPluginsTest {
     app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
     assertThat(receivedNotifications).hasSize(1)
 
-    DynamicPlugins.unloadAndUninstallPlugin(descriptor)
+    unloadAndUninstallPlugin(descriptor)
     app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
     assertThat(receivedNotifications).hasSize(1)
   }
@@ -104,9 +104,12 @@ class DynamicPluginsTest {
     assertThat(descriptor).isNotNull
 
     DynamicPlugins.loadPlugin(descriptor)
-
-    DisabledPluginsState.saveDisabledPlugins(PathManager.getConfigDir(), builder.id)
-    DynamicPlugins.unloadAndUninstallPlugin(descriptor)
+    try {
+      DisabledPluginsState.saveDisabledPlugins(PathManager.getConfigDir(), builder.id)
+    }
+    finally {
+      unloadAndUninstallPlugin(descriptor)
+    }
     assertThat(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader).isNull()
 
     DisabledPluginsState.saveDisabledPlugins(PathManager.getConfigDir())
@@ -117,7 +120,7 @@ class DynamicPluginsTest {
       assertThat(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader).isNotNull()
     }
     finally {
-      DynamicPlugins.unloadAndUninstallPlugin(newDescriptor)
+      unloadAndUninstallPlugin(newDescriptor)
     }
   }
 
