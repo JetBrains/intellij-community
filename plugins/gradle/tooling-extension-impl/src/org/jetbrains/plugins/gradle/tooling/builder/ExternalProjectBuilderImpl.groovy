@@ -44,6 +44,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   private static final GradleVersion gradleBaseVersion = GradleVersion.current().baseVersion
   public static final boolean is4OrBetter = gradleBaseVersion >= GradleVersion.version("4.0")
   public static final boolean is51OrBetter = is4OrBetter && gradleBaseVersion >= GradleVersion.version("5.1")
+  public static final boolean is74OrBetter = gradleBaseVersion >= GradleVersion.version("7.4")
 
   static final DataProvider<Map<Project, ExternalProject>> PROJECTS_PROVIDER = new DataProvider<Map<Project, ExternalProject>>() {
     @NotNull
@@ -204,13 +205,23 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def downloadJavadoc = false
     def downloadSources = true
 
+    def testSourceSets = []
+    if (is74OrBetter && project.hasProperty("testing")) {
+      testSourceSets = project.testing.suites.collect { it.getSources() }
+    }
+
     if (ideaPluginModule) {
       generatedSourceDirs =
         ideaPluginModule.hasProperty("generatedSourceDirs") ? new LinkedHashSet<>(ideaPluginModule.generatedSourceDirs) : null
       ideaSourceDirs = new LinkedHashSet<>(ideaPluginModule.sourceDirs)
       ideaResourceDirs = ideaPluginModule.hasProperty("resourceDirs") ? new LinkedHashSet<>(ideaPluginModule.resourceDirs) : []
-      ideaTestSourceDirs = new LinkedHashSet<>(ideaPluginModule.testSourceDirs)
-      ideaTestResourceDirs = ideaPluginModule.hasProperty("testResourceDirs") ? new LinkedHashSet<>(ideaPluginModule.testResourceDirs) : []
+      if (is74OrBetter) {
+        ideaTestSourceDirs = new LinkedHashSet<>(ideaPluginModule.testSources.files)
+        ideaTestResourceDirs = new LinkedHashSet<>(ideaPluginModule.testResources.files)
+      } else {
+        ideaTestSourceDirs = new LinkedHashSet<>(ideaPluginModule.testSourceDirs)
+        ideaTestResourceDirs = ideaPluginModule.hasProperty("testResourceDirs") ? new LinkedHashSet<>(ideaPluginModule.testResourceDirs) : []
+      }
       downloadJavadoc = ideaPluginModule.downloadJavadoc
       downloadSources = ideaPluginModule.downloadSources
     }
@@ -359,8 +370,10 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       }
       else {
         boolean isTestSourceSet = false
+        boolean explicitlyMarkedAsTests = ideaTestSourceDirs && (ideaTestSourceDirs as Collection).containsAll(javaDirectorySet.srcDirs)
+        boolean knownTestingSourceSet = testSourceSets.contains(sourceSet)
         if (!inheritOutputDirs && resolveSourceSetDependencies && SourceSet.MAIN_SOURCE_SET_NAME != sourceSet.name
-          && ideaTestSourceDirs && (ideaTestSourceDirs as Collection).containsAll(javaDirectorySet.srcDirs)) {
+          && (explicitlyMarkedAsTests || knownTestingSourceSet)) {
           javaDirectorySet.outputDir = ideaPluginTestOutDir ?: new File(project.projectDir, "out/test/classes")
           resourcesDirectorySet.outputDir = ideaPluginTestOutDir ?: new File(project.projectDir, "out/test/resources")
           sources.put(ExternalSystemSourceType.TEST, javaDirectorySet)
