@@ -6,7 +6,6 @@ import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.TrustedPaths
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
@@ -176,14 +175,12 @@ object ProjectUtils {
       NOTIFICATIONS_SILENT_MODE.set(it, true)
     })
     invokeLater {
-      val nioPath = projectDirectoryVirtualFile.toNioPath()
       val confirmOpenNewProject = GeneralSettings.getInstance().confirmOpenNewProject
       if (confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
         GeneralSettings.getInstance().confirmOpenNewProject = GeneralSettings.OPEN_PROJECT_SAME_WINDOW
       }
       val project = try {
-        ProjectUtil.openOrImport(nioPath, task)
-                      ?: error("Cannot create project for ${langSupport.primaryLanguage} at $nioPath")
+        langSupport.openOrImportLearningProject(projectDirectoryVirtualFile, task)
       }
       finally {
         if (confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {

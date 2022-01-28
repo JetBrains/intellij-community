@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.lang
 
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
@@ -49,6 +50,8 @@ interface LangSupport {
   }
 
   fun installAndOpenLearningProject(contentRoot: Path, projectToClose: Project?, postInitCallback: (learnProject: Project) -> Unit)
+
+  fun openOrImportLearningProject(projectRootDirectory: VirtualFile, openProjectTask: OpenProjectTask): Project
 
   fun copyLearningProjectFiles(projectDirectory: File, destinationFilter: FileFilter? = null): Boolean
 
