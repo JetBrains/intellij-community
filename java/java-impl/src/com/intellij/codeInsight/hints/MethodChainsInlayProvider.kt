@@ -15,7 +15,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils
 class MethodChainsInlayProvider : AbstractCallChainHintsProvider<PsiMethodCallExpression, PsiType, Unit>() {
 
   override val group: InlayGroup
-    get() = InlayGroup.METHOD_CHAINS_GROUP
+    get() = InlayGroup.TYPES_GROUP
 
   override fun getProperty(key: String): String {
     return JavaBundle.message(key)
