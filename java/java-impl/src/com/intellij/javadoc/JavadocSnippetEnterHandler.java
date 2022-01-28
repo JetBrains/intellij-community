@@ -3,49 +3,91 @@ package com.intellij.javadoc;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtilEx;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.impl.source.javadoc.PsiSnippetDocTagImpl;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.javadoc.PsiSnippetDocTag;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class JavadocSnippetEnterHandler extends EnterHandlerDelegateAdapter {
+
+  @Override
+  public Result preprocessEnter(@NotNull PsiFile file,
+                                @NotNull Editor editor,
+                                @NotNull Ref<Integer> caretOffset,
+                                @NotNull Ref<Integer> caretAdvance,
+                                @NotNull DataContext dataContext,
+                                EditorActionHandler originalHandler) {
+    if (!(file instanceof PsiJavaFile) || !file.isValid()) return Result.Continue;
+
+    final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(file.getProject());
+    final PsiSnippetDocTag host = ObjectUtils.tryCast(injectedLanguageManager.getInjectionHost(file), PsiSnippetDocTag.class);
+
+    return host == null ? Result.Continue : Result.Default;
+  }
 
   @Override
   public Result postProcessEnter(@NotNull PsiFile file,
                                  @NotNull Editor editor,
                                  @NotNull DataContext dataContext) {
-    if (!(file instanceof PsiJavaFile) || !file.isValid()) return Result.Continue;
+    final PsiSnippetDocTag host = getHost(file, editor);
+    if (host == null) return Result.Continue;
+
+    final Editor hostEditor = ((EditorWindow)editor).getDelegate();
+    final Document hostDocument = hostEditor.getDocument();
+
+    final CaretModel caretModelHost = hostEditor.getCaretModel();
+    int caretOffsetHost = caretModelHost.getOffset();
+
+    final int lineStartOffset = DocumentUtil.getLineStartOffset(caretOffsetHost, hostDocument);
+    int firstNonWsLineOffset = CharArrayUtil.shiftForward(hostDocument.getText(), lineStartOffset, " \t");
+
+    if (hostDocument.getText().charAt(firstNonWsLineOffset) != '*') {
+      final String prefix = calcPrefix(host);
+      hostDocument.insertString(lineStartOffset, prefix);
+      caretModelHost.moveToOffset(caretOffsetHost + prefix.length());
+      EditorModificationUtilEx.scrollToCaret(editor);
+    }
+
+    return Result.Default;
+  }
+
+  private static @Nullable PsiSnippetDocTag getHost(@NotNull PsiFile file, @NotNull Editor editor) {
+    if (!(file instanceof PsiJavaFile) || !file.isValid()) return null;
+
+    if (!(editor instanceof EditorWindow)) {
+      return null;
+    }
 
     final CaretModel caretModel = editor.getCaretModel();
     int caretOffset = caretModel.getOffset();
 
     final PsiElement current = file.findElementAt(caretOffset);
-    if (current == null) return Result.Continue;
+    if (current == null) return null;
 
-    final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(file.getProject());
-    final PsiSnippetDocTag host = ObjectUtils.tryCast(injectedLanguageManager.getInjectionHost(current), PsiSnippetDocTag.class);
-    if (host == null) return Result.Continue;
+    final SmartPsiElementPointer<?> data = file.getUserData(FileContextUtil.INJECTED_IN_ELEMENT);
+    if (data == null) return null;
 
-    final Document document = editor.getDocument();
-    final String prefix = calcPrefix(host);
-
-    final int lineStartOffset = DocumentUtil.getLineStartOffset(caretOffset, document);
-    document.insertString(lineStartOffset, prefix);
-
-    caretModel.moveToOffset(caretOffset + prefix.length());
-    EditorModificationUtilEx.scrollToCaret(editor);
-
-    return Result.Continue;
+    final PsiSnippetDocTagImpl host = ObjectUtils.tryCast(data.getElement(), PsiSnippetDocTagImpl.class);
+    if (host == null) return null;
+    return host;
   }
 
   private static String calcPrefix(PsiSnippetDocTag host) {
@@ -59,11 +101,11 @@ public class JavadocSnippetEnterHandler extends EnterHandlerDelegateAdapter {
       offset --;
     }
 
-    final String prefix = text.substring(offset + 1, asteriskOffset);
+    final String whitespacesPrefix = text.substring(offset + 1, asteriskOffset);
 
     final JavaCodeStyleSettings settings = CodeStyle.getCustomSettings(file, JavaCodeStyleSettings.class);
 
-    return settings.JD_LEADING_ASTERISKS_ARE_ENABLED ? prefix + "*" : prefix;
+    return settings.JD_LEADING_ASTERISKS_ARE_ENABLED ? whitespacesPrefix + "*" : whitespacesPrefix;
   }
 
 }

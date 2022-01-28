@@ -97,18 +97,21 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
         int off = 0;
         int len = subText.length();
 
-        boolean afterNewline = false;
+        boolean lookingForLeadingAsterisk = true;
         while (off < len) {
           final char aChar = subText.charAt(off++);
-          if (afterNewline && Character.isWhitespace(aChar) ) {
+          if (aChar != '*' && !Character.isWhitespace(aChar)) {
+            lookingForLeadingAsterisk = false;
+          }
+          else if (lookingForLeadingAsterisk && aChar == '*') {
+            while (off < len && subText.charAt(off) == '*') {
+              off++;
+            }
+            lookingForLeadingAsterisk = false;
             continue;
           }
-          if (afterNewline && aChar == '*') {
-            afterNewline = false;
-            continue;
-          }
-          if (aChar == '\n') {
-            afterNewline = true;
+          else if (aChar == '\n') {
+            lookingForLeadingAsterisk = true;
           }
           outChars.append(aChar);
           outSourceOffsets[outChars.length() - outOffset] = off;
@@ -116,7 +119,6 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
 
         return true;
       }
-
 
       @Override
       public int getOffsetInHost(int offsetInDecoded, @NotNull TextRange rangeInsideHost) {

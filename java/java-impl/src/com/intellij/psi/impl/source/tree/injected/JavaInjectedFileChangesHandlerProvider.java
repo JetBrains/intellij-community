@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringHash;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.injected.changesHandler.BaseInjectedFileChangesHandler;
+import com.intellij.psi.javadoc.PsiSnippetDocTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -34,12 +35,19 @@ public class JavaInjectedFileChangesHandlerProvider implements InjectedFileChang
                                                              Editor hostEditor,
                                                              Document newDocument,
                                                              PsiFile injectedFile) {
-    if (Registry.is("injections.java.fragment.editor.new") && !hasBlockLiterals(shreds)) {
+    if (Registry.is("injections.java.fragment.editor.new") && !hasBlockLiterals(shreds) && !hasSnippet(shreds)) {
       return new JavaInjectedFileChangesHandler(shreds, hostEditor, newDocument, injectedFile);
     }
     else {
       return new OldJavaInjectedFileChangesHandler(shreds, hostEditor, newDocument, injectedFile);
     }
+  }
+
+  private static boolean hasSnippet(List<PsiLanguageInjectionHost.Shred> shreds) {
+    for (PsiLanguageInjectionHost.Shred shred : shreds) {
+      if (shred.getHost() instanceof PsiSnippetDocTag) return true;
+    }
+    return false;
   }
 
   private static boolean hasBlockLiterals(List<PsiLanguageInjectionHost.Shred> shreds) {
