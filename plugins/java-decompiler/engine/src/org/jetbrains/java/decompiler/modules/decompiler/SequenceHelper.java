@@ -9,6 +9,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -24,7 +25,7 @@ public final class SequenceHelper {
 
   private static void condenseSequencesRec(Statement stat) {
 
-    if (stat.type == Statement.TYPE_SEQUENCE) {
+    if (stat.type == StatementType.SEQUENCE) {
 
       List<Statement> lst = new ArrayList<>(stat.getStats());
 
@@ -33,7 +34,7 @@ public final class SequenceHelper {
       // unfold blocks
       for (int i = 0; i < lst.size(); i++) {
         Statement st = lst.get(i);
-        if (st.type == Statement.TYPE_SEQUENCE) {
+        if (st.type == StatementType.SEQUENCE) {
 
           removeEmptyStatements((SequenceStatement)st);
 
@@ -96,7 +97,7 @@ public final class SequenceHelper {
     }
 
     // sequence consisting of one statement -> disband
-    if (stat.type == Statement.TYPE_SEQUENCE) {
+    if (stat.type == StatementType.SEQUENCE) {
 
       removeEmptyStatements((SequenceStatement)stat);
 
@@ -130,7 +131,7 @@ public final class SequenceHelper {
     outer:
     while (true) {
       for (Statement st : stat.getStats()) {
-        if ((st.getStats().isEmpty() || st.getExprents() != null) && st.type != Statement.TYPE_BASIC_BLOCK) {
+        if ((st.getStats().isEmpty() || st.getExprents() != null) && st.type != StatementType.BASIC_BLOCK) {
           destroyAndFlattenStatement(st);
           continue outer;
         }
@@ -270,10 +271,10 @@ public final class SequenceHelper {
     }
 
     switch (stat.type) {
-      case Statement.TYPE_IF:
-      case Statement.TYPE_SEQUENCE:
-      case Statement.TYPE_SWITCH:
-      case Statement.TYPE_SYNCHRONIZED:
+      case IF:
+      case SEQUENCE:
+      case SWITCH:
+      case SYNCHRONIZED:
         return getFirstExprentlist(stat.getFirst());
     }
 

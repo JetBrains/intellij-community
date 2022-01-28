@@ -8,6 +8,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopTy
 import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,7 +53,7 @@ public final class LoopExtractHelper {
       }
     }
 
-    if (stat.type == Statement.TYPE_DO) {
+    if (stat.type == StatementType.DO) {
       if (extractLoop((DoStatement)stat)) {
         return 2;
       }
@@ -67,7 +68,7 @@ public final class LoopExtractHelper {
     }
 
     for (StatEdge edge : stat.getLabelEdges()) {
-      if (edge.getType() != EdgeType.CONTINUE && edge.getDestination().type != Statement.TYPE_DUMMY_EXIT) {
+      if (edge.getType() != EdgeType.CONTINUE && edge.getDestination().type != StatementType.DUMMY_EXIT) {
         return false;
       }
     }
@@ -79,11 +80,11 @@ public final class LoopExtractHelper {
 
     // search for an if condition at the end of the loop
     Statement last = stat.getFirst();
-    while (last.type == Statement.TYPE_SEQUENCE) {
+    while (last.type == StatementType.SEQUENCE) {
       last = last.getStats().getLast();
     }
 
-    if (last.type == Statement.TYPE_IF) {
+    if (last.type == StatementType.IF) {
       IfStatement lastif = (IfStatement)last;
       if (lastif.iftype == IfStatement.IFTYPE_IF && lastif.getIfstat() != null) {
         Statement ifstat = lastif.getIfstat();
@@ -110,12 +111,12 @@ public final class LoopExtractHelper {
 
     // search for an if condition at the entrance of the loop
     Statement first = stat.getFirst();
-    while (first.type == Statement.TYPE_SEQUENCE) {
+    while (first.type == StatementType.SEQUENCE) {
       first = first.getFirst();
     }
 
     // found an if statement
-    if (first.type == Statement.TYPE_IF) {
+    if (first.type == StatementType.IF) {
       IfStatement firstif = (IfStatement)first;
 
       if (firstif.getFirst().getExprents().isEmpty()) {

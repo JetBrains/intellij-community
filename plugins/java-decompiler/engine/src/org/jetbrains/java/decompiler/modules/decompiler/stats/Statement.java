@@ -25,21 +25,7 @@ import org.jetbrains.java.decompiler.util.VBStyleCollection;
 import java.util.*;
 import java.util.Map.Entry;
 
-public class Statement implements IMatchable {
-  public static final int TYPE_GENERAL = 0;
-  public static final int TYPE_IF = 2;
-  public static final int TYPE_DO = 5;
-  public static final int TYPE_SWITCH = 6;
-  public static final int TYPE_TRY_CATCH = 7;
-  public static final int TYPE_BASIC_BLOCK = 8;
-  //public static final int TYPE_FINALLY = 9;
-  public static final int TYPE_SYNCHRONIZED = 10;
-  public static final int TYPE_PLACEHOLDER = 11;
-  public static final int TYPE_CATCH_ALL = 12;
-  public static final int TYPE_ROOT = 13;
-  public static final int TYPE_DUMMY_EXIT = 14;
-  public static final int TYPE_SEQUENCE = 15;
-
+public abstract class Statement implements IMatchable {
   public static final int LASTBASICTYPE_IF = 0;
   public static final int LASTBASICTYPE_SWITCH = 1;
   public static final int LASTBASICTYPE_GENERAL = 2;
@@ -49,7 +35,7 @@ public class Statement implements IMatchable {
   // public fields
   // *****************************************************************************
 
-  public int type;
+  public StatementType type;
 
   public Integer id;
 
@@ -101,7 +87,7 @@ public class Statement implements IMatchable {
     id = DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER);
   }
 
-  Statement(int type) {
+  Statement(@NotNull StatementType type) {
     this.type = type;
   }
 
@@ -220,7 +206,7 @@ public class Statement implements IMatchable {
     // monitorenter and monitorexit
     stat.buildMonitorFlags();
 
-    if (stat.type == TYPE_SWITCH) {
+    if (stat.type == StatementType.SWITCH) {
       // special case switch, sorting leaf nodes
       ((SwitchStatement)stat).sortEdgesAndNodes();
     }
@@ -366,7 +352,7 @@ public class Statement implements IMatchable {
       continueSet.add(edge.getDestination().getBasichead());
     }
 
-    if (type == TYPE_DO) {
+    if (type == StatementType.DO) {
       continueSet.remove(first.getBasichead());
     }
 
@@ -380,7 +366,7 @@ public class Statement implements IMatchable {
     }
 
     switch (type) {
-      case TYPE_BASIC_BLOCK:
+      case BASIC_BLOCK:
         BasicBlockStatement bblock = (BasicBlockStatement)this;
         InstructionSequence seq = bblock.getBlock().getSeq();
 
@@ -394,17 +380,17 @@ public class Statement implements IMatchable {
           isMonitorEnter = (seq.getLastInstr().opcode == CodeConstants.opc_monitorenter);
         }
         break;
-      case TYPE_SEQUENCE:
-      case TYPE_IF:
+      case SEQUENCE:
+      case IF:
         containsMonitorExit = false;
         for (Statement st : stats) {
           containsMonitorExit |= st.isContainsMonitorExit();
         }
 
         break;
-      case TYPE_SYNCHRONIZED:
-      case TYPE_ROOT:
-      case TYPE_GENERAL:
+      case SYNCHRONIZED:
+      case ROOT:
+      case GENERAL:
         break;
       default:
         containsMonitorExit = false;
@@ -767,7 +753,7 @@ public class Statement implements IMatchable {
   }
 
   public BasicBlockStatement getBasichead() {
-    if (type == TYPE_BASIC_BLOCK) {
+    if (type == StatementType.BASIC_BLOCK) {
       return (BasicBlockStatement)this;
     }
     else {
@@ -789,9 +775,9 @@ public class Statement implements IMatchable {
 
     // FIXME: default switch
 
-    return type == TYPE_BASIC_BLOCK || (type == TYPE_IF &&
+    return type == StatementType.BASIC_BLOCK || (type == StatementType.IF &&
                                                         ((IfStatement)this).iftype == IfStatement.IFTYPE_IF) ||
-           (type == TYPE_DO && ((DoStatement)this).getLoopType() != LoopType.DO);
+           (type == StatementType.DO && ((DoStatement)this).getLoopType() != LoopType.DO);
   }
 
 
@@ -875,7 +861,7 @@ public class Statement implements IMatchable {
     for (Entry<MatchProperties, RuleValue> rule : matchNode.getRules().entrySet()) {
       switch (rule.getKey()) {
         case STATEMENT_TYPE:
-          if (this.type != (Integer)rule.getValue().value) {
+          if (this.type != rule.getValue().value) {
             return false;
           }
           break;
@@ -906,5 +892,21 @@ public class Statement implements IMatchable {
     }
 
     return true;
+  }
+
+  public enum StatementType {
+    GENERAL,
+    IF,
+    DO,
+    SWITCH,
+    TRY_CATCH,
+    BASIC_BLOCK,
+    // FINALLY,
+    SYNCHRONIZED,
+    PLACEHOLDER,
+    CATCH_ALL,
+    ROOT,
+    DUMMY_EXIT,
+    SEQUENCE
   }
 }

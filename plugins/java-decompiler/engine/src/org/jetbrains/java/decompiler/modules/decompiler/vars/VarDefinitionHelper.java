@@ -12,6 +12,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
@@ -86,10 +87,10 @@ public class VarDefinitionHelper {
       Statement st = stack.removeFirst();
 
       List<VarExprent> lstVars = null;
-      if (st.type == Statement.TYPE_CATCH_ALL) {
+      if (st.type == StatementType.CATCH_ALL) {
         lstVars = ((CatchAllStatement)st).getVars();
       }
-      else if (st.type == Statement.TYPE_TRY_CATCH) {
+      else if (st.type == StatementType.TRY_CATCH) {
         lstVars = ((CatchStatement)st).getVars();
       }
 
@@ -123,7 +124,7 @@ public class VarDefinitionHelper {
       varproc.setVarName(new VarVersionPair(index.intValue(), 0), vc.getFreeName(index));
 
       // special case for
-      if (stat.type == Statement.TYPE_DO) {
+      if (stat.type == StatementType.DO) {
         DoStatement dstat = (DoStatement)stat;
         if (dstat.getLoopType() == LoopType.FOR) {
 
@@ -216,13 +217,13 @@ public class VarDefinitionHelper {
           stack.clear();
 
           switch (st.type) {
-            case Statement.TYPE_SEQUENCE:
+            case SEQUENCE:
               stack.addAll(0, st.getStats());
               break;
-            case Statement.TYPE_IF:
-            case Statement.TYPE_ROOT:
-            case Statement.TYPE_SWITCH:
-            case Statement.TYPE_SYNCHRONIZED:
+            case IF:
+            case ROOT:
+            case SWITCH:
+            case SYNCHRONIZED:
               stack.add(st.getFirst());
               break;
             default:
@@ -252,14 +253,14 @@ public class VarDefinitionHelper {
           Statement st = (Statement)obj;
           childVars.addAll(initStatement(st));
 
-          if (st.type == Statement.TYPE_DO) {
+          if (st.type == StatementType.DO) {
             DoStatement dost = (DoStatement)st;
             if (dost.getLoopType() != LoopType.FOR &&
                 dost.getLoopType() != LoopType.DO) {
               currVars.add(dost.getConditionExprent());
             }
           }
-          else if (st.type == Statement.TYPE_CATCH_ALL) {
+          else if (st.type == StatementType.CATCH_ALL) {
             CatchAllStatement fin = (CatchAllStatement)st;
             if (fin.isFinally() && fin.getMonitor() != null) {
               currVars.add(fin.getMonitor());

@@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.SSAConstructorSparseEx;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -636,7 +637,7 @@ public class SimplifyExprentsHelper {
   }
 
   private static boolean buildIff(Statement stat, SSAConstructorSparseEx ssa) {
-    if (stat.type == Statement.TYPE_IF && stat.getExprents() == null) {
+    if (stat.type == StatementType.IF && stat.getExprents() == null) {
       IfStatement statement = (IfStatement)stat;
       Exprent ifHeadExpr = statement.getHeadexprent();
       Set<Integer> ifHeadExprBytecode = (ifHeadExpr == null ? null : ifHeadExpr.bytecode);

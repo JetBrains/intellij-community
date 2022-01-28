@@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
@@ -441,11 +442,11 @@ public class SSAConstructorSparseEx {
     SFormsFastMapDirect map;
 
     switch (stat.type) {
-      case Statement.TYPE_CATCH_ALL:
-      case Statement.TYPE_TRY_CATCH:
+      case CATCH_ALL:
+      case TRY_CATCH:
 
         List<VarExprent> lstVars;
-        if (stat.type == Statement.TYPE_CATCH_ALL) {
+        if (stat.type == StatementType.CATCH_ALL) {
           lstVars = ((CatchAllStatement)stat).getVars();
         }
         else {

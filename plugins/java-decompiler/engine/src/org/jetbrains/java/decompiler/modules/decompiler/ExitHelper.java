@@ -10,6 +10,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,7 +39,7 @@ public final class ExitHelper {
 
         cleanUpUnreachableBlocks(st);
 
-        if (st.type == Statement.TYPE_SEQUENCE && st.getStats().size() > 1) {
+        if (st.type == StatementType.SEQUENCE && st.getStats().size() > 1) {
 
           Statement last = st.getStats().getLast();
           Statement secondlast = st.getStats().get(st.getStats().size() - 2);
@@ -83,7 +84,7 @@ public final class ExitHelper {
         }
       }
 
-      if (stat.type == Statement.TYPE_IF) {
+      if (stat.type == StatementType.IF) {
         IfStatement ifst = (IfStatement)stat;
         if (ifst.getIfstat() == null) {
           StatEdge ifedge = ifst.getIfEdge();
@@ -116,8 +117,8 @@ public final class ExitHelper {
         stat.getAllSuccessorEdges().get(0).getType() == EdgeType.BREAK &&
         stat.getLabelEdges().isEmpty()) {
       Statement parent = stat.getParent();
-      if (stat != parent.getFirst() || (parent.type != Statement.TYPE_IF &&
-                                        parent.type != Statement.TYPE_SWITCH)) {
+      if (stat != parent.getFirst() || (parent.type != StatementType.IF &&
+                                        parent.type != StatementType.SWITCH)) {
 
         StatEdge destedge = stat.getAllSuccessorEdges().get(0);
         dest = isExitEdge(destedge);
@@ -174,7 +175,7 @@ public final class ExitHelper {
   private static Statement isExitEdge(StatEdge edge) {
     Statement dest = edge.getDestination();
 
-    if (edge.getType() == EdgeType.BREAK && dest.type == Statement.TYPE_BASIC_BLOCK && edge.explicit && (edge.labeled || isOnlyEdge(edge))) {
+    if (edge.getType() == EdgeType.BREAK && dest.type == StatementType.BASIC_BLOCK && edge.explicit && (edge.labeled || isOnlyEdge(edge))) {
       List<Exprent> data = dest.getExprents();
 
       if (data != null && data.size() == 1) {
@@ -195,9 +196,9 @@ public final class ExitHelper {
         if (ed.getType() == EdgeType.REGULAR) {
           Statement source = ed.getSource();
 
-          if (source.type == Statement.TYPE_BASIC_BLOCK || (source.type == Statement.TYPE_IF &&
+          if (source.type == StatementType.BASIC_BLOCK || (source.type == StatementType.IF &&
                                                            ((IfStatement)source).iftype == IfStatement.IFTYPE_IF) ||
-              (source.type == Statement.TYPE_DO && ((DoStatement)source).getLoopType() != LoopType.DO)) {
+              (source.type == StatementType.DO && ((DoStatement)source).getLoopType() != LoopType.DO)) {
             return false;
           }
         }

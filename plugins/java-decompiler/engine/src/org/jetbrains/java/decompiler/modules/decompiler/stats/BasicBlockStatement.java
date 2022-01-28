@@ -15,7 +15,7 @@ public class BasicBlockStatement extends Statement {
   private final BasicBlock block;
 
   public BasicBlockStatement(BasicBlock block) {
-    super(Statement.TYPE_BASIC_BLOCK);
+    super(StatementType.BASIC_BLOCK);
     id = block.id;
     this.block = block;
 

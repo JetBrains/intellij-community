@@ -6,6 +6,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -48,14 +49,14 @@ public final class LabelHelper {
       }
       else if (EdgeType.BREAK.equals(edge.getType())) {
         Statement dest = edge.getDestination();
-        if (dest.type != Statement.TYPE_DUMMY_EXIT) {
+        if (dest.type != StatementType.DUMMY_EXIT) {
           Statement parent = dest.getParent();
 
           List<Statement> lst = new ArrayList<>();
-          if (parent.type == Statement.TYPE_SEQUENCE) {
+          if (parent.type == StatementType.SEQUENCE) {
             lst.addAll(parent.getStats());
           }
-          else if (parent.type == Statement.TYPE_SWITCH) {
+          else if (parent.type == StatementType.SWITCH) {
             lst.addAll(((SwitchStatement)parent).getCaseStatements());
           }
 
@@ -89,7 +90,7 @@ public final class LabelHelper {
 
   public static void lowContinueLabels(Statement stat, HashSet<StatEdge> edges) {
 
-    boolean ok = (stat.type != Statement.TYPE_DO);
+    boolean ok = (stat.type != StatementType.DO);
     if (!ok) {
       DoStatement dostat = (DoStatement)stat;
       ok = dostat.getLoopType() == LoopType.DO ||
@@ -101,7 +102,7 @@ public final class LabelHelper {
       edges.addAll(stat.getPredecessorEdges(EdgeType.CONTINUE));
     }
 
-    if (ok && stat.type == Statement.TYPE_DO) {
+    if (ok && stat.type == StatementType.DO) {
       for (StatEdge edge : edges) {
         if (stat.containsStatementStrict(edge.getSource())) {
 
@@ -177,14 +178,14 @@ public final class LabelHelper {
 
 
     switch (stat.type) {
-      case Statement.TYPE_TRY_CATCH:
-      case Statement.TYPE_CATCH_ALL:
+      case TRY_CATCH:
+      case CATCH_ALL:
 
         for (Statement st : stat.getStats()) {
           HashMap<Statement, List<StatEdge>> mapEdges1 = setExplicitEdges(st);
           processEdgesWithNext(st, mapEdges1, null);
 
-          if (stat.type == Statement.TYPE_TRY_CATCH || st == stat.getFirst()) { // edges leaving a finally catch block are always explicit
+          if (stat.type == StatementType.TRY_CATCH || st == stat.getFirst()) { // edges leaving a finally catch block are always explicit
             // merge the maps
             if (mapEdges1 != null) {
               for (Entry<Statement, List<StatEdge>> entr : mapEdges1.entrySet()) {
@@ -200,11 +201,11 @@ public final class LabelHelper {
         }
 
         break;
-      case Statement.TYPE_DO:
+      case DO:
         mapEdges = setExplicitEdges(stat.getFirst());
         processEdgesWithNext(stat.getFirst(), mapEdges, stat);
         break;
-      case Statement.TYPE_IF:
+      case IF:
         IfStatement ifstat = (IfStatement)stat;
         // head statement is a basic block
         if (ifstat.getIfstat() == null) { // empty if
@@ -233,11 +234,11 @@ public final class LabelHelper {
           }
         }
         break;
-      case Statement.TYPE_ROOT:
+      case ROOT:
         mapEdges = setExplicitEdges(stat.getFirst());
         processEdgesWithNext(stat.getFirst(), mapEdges, ((RootStatement)stat).getDummyExit());
         break;
-      case Statement.TYPE_SEQUENCE:
+      case SEQUENCE:
         int index = 0;
         while (index < stat.getStats().size() - 1) {
           Statement st = stat.getStats().get(index);
@@ -249,7 +250,7 @@ public final class LabelHelper {
         mapEdges = setExplicitEdges(st);
         processEdgesWithNext(st, mapEdges, null);
         break;
-      case Statement.TYPE_SWITCH:
+      case SWITCH:
         SwitchStatement swst = (SwitchStatement)stat;
 
         for (int i = 0; i < swst.getCaseStatements().size() - 1; i++) {
@@ -276,7 +277,7 @@ public final class LabelHelper {
         }
 
         break;
-      case Statement.TYPE_SYNCHRONIZED:
+      case SYNCHRONIZED:
         SynchronizedStatement synstat = (SynchronizedStatement)stat;
 
         processEdgesWithNext(synstat.getFirst(), setExplicitEdges(stat.getFirst()), synstat.getBody()); // FIXME: basic block?
@@ -306,14 +307,14 @@ public final class LabelHelper {
     }
 
     // no next for a do statement
-    if (stat.type == Statement.TYPE_DO && ((DoStatement)stat).getLoopType() == LoopType.DO) {
+    if (stat.type == StatementType.DO && ((DoStatement)stat).getLoopType() == LoopType.DO) {
       next = null;
     }
 
     if (next == null) {
       if (mapEdges.size() == 1) {
         List<StatEdge> lstEdges = mapEdges.values().iterator().next();
-        if (lstEdges.size() > 1 && mapEdges.keySet().iterator().next().type != Statement.TYPE_DUMMY_EXIT) {
+        if (lstEdges.size() > 1 && mapEdges.keySet().iterator().next().type != StatementType.DUMMY_EXIT) {
           StatEdge edge_example = lstEdges.get(0);
 
           Statement closure = stat.getParent();
@@ -349,7 +350,7 @@ public final class LabelHelper {
       if (stat.getAllSuccessorEdges().isEmpty() && !implfound) {
         List<StatEdge> lstEdges = null;
         for (Entry<Statement, List<StatEdge>> entr : mapEdges.entrySet()) {
-          if (entr.getKey().type != Statement.TYPE_DUMMY_EXIT &&
+          if (entr.getKey().type != StatementType.DUMMY_EXIT &&
               (lstEdges == null || entr.getValue().size() > lstEdges.size())) {
             lstEdges = entr.getValue();
           }
@@ -382,7 +383,7 @@ public final class LabelHelper {
 
   private static void hideDefaultSwitchEdges(Statement stat) {
 
-    if (stat.type == Statement.TYPE_SWITCH) {
+    if (stat.type == StatementType.SWITCH) {
       SwitchStatement swst = (SwitchStatement)stat;
 
       int last = swst.getCaseStatements().size() - 1;
@@ -423,7 +424,7 @@ public final class LabelHelper {
         sets.continues.addAll(nested.continues);
       }
 
-      boolean shieldType = (stat.type == Statement.TYPE_DO || stat.type == Statement.TYPE_SWITCH);
+      boolean shieldType = (stat.type == StatementType.DO || stat.type == StatementType.SWITCH);
       if (shieldType) {
         for (StatEdge edge : stat.getLabelEdges()) {
           if (edge.explicit && ((edge.getType() == EdgeType.BREAK && sets.breaks.contains(edge.getSource())) ||
@@ -434,9 +435,9 @@ public final class LabelHelper {
       }
 
       switch (stat.type) {
-        case Statement.TYPE_DO:
+        case DO:
           sets.continues.clear();
-        case Statement.TYPE_SWITCH:
+        case SWITCH:
           sets.breaks.clear();
       }
     }
@@ -449,7 +450,7 @@ public final class LabelHelper {
 
   public static void replaceContinueWithBreak(Statement stat) {
 
-    if (stat.type == Statement.TYPE_DO) {
+    if (stat.type == StatementType.DO) {
 
       List<StatEdge> lst = stat.getPredecessorEdges(EdgeType.CONTINUE);
 

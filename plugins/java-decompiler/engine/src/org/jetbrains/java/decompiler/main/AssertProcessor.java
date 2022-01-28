@@ -13,6 +13,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -128,7 +129,7 @@ public final class AssertProcessor {
       replaced = false;
 
       for (Statement st : statement.getStats()) {
-        if (st.type == Statement.TYPE_IF) {
+        if (st.type == StatementType.IF) {
           if (replaceAssertion(statement, (IfStatement)st, classname, key)) {
             replaced = true;
             break;

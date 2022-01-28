@@ -22,7 +22,7 @@ public final class DoStatement extends Statement {
   private @NotNull LoopType loopType;
 
   private DoStatement() {
-    super(Statement.TYPE_DO);
+    super(StatementType.DO);
     initExprent.add(null);
     conditionExprent.add(null);
     incExprent.add(null);
@@ -49,7 +49,7 @@ public final class DoStatement extends Statement {
         return new DoStatement(head);
       }
       // continues
-      if (head.type != TYPE_DO && (edge == null || edge.getType() != EdgeType.REGULAR) &&
+      if (head.type != StatementType.DO && (edge == null || edge.getType() != EdgeType.REGULAR) &&
           head.getContinueSet().contains(head.getBasichead())) {
         return new DoStatement(head);
       }

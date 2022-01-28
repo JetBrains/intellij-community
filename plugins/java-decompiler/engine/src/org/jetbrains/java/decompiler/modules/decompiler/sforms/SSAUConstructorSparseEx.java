@@ -5,6 +5,7 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper.FinallyPathWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionNode;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
@@ -702,11 +703,11 @@ public class SSAUConstructorSparseEx {
     SFormsFastMapDirect map;
 
     switch (stat.type) {
-      case Statement.TYPE_CATCH_ALL:
-      case Statement.TYPE_TRY_CATCH:
+      case CATCH_ALL:
+      case TRY_CATCH:
 
         List<VarExprent> lstVars;
-        if (stat.type == Statement.TYPE_CATCH_ALL) {
+        if (stat.type == StatementType.CATCH_ALL) {
           lstVars = ((CatchAllStatement)stat).getVars();
         }
         else {
@@ -773,13 +774,13 @@ public class SSAUConstructorSparseEx {
         break;
       }
 
-      if (parent.type == Statement.TYPE_CATCH_ALL ||
-          parent.type == Statement.TYPE_TRY_CATCH) {
+      if (parent.type == StatementType.CATCH_ALL ||
+          parent.type == StatementType.TRY_CATCH) {
         if (parent.getFirst() == stat) {
           return parent.id;
         }
       }
-      else if (parent.type == Statement.TYPE_SYNCHRONIZED) {
+      else if (parent.type == StatementType.SYNCHRONIZED) {
         if (((SynchronizedStatement)parent).getBody() == stat) {
           return parent.id;
         }

@@ -10,6 +10,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 
 import java.util.*;
 
@@ -51,7 +52,7 @@ public final class IfHelper {
   }
 
   public static boolean mergeIfs(Statement statement, Set<? super Integer> setReorderedIfs) {
-    if (statement.type != Statement.TYPE_IF && statement.type != Statement.TYPE_SEQUENCE) {
+    if (statement.type != StatementType.IF && statement.type != StatementType.SEQUENCE) {
       return false;
     }
 
@@ -61,7 +62,7 @@ public final class IfHelper {
       boolean updated = false;
 
       List<Statement> lst = new ArrayList<>();
-      if (statement.type == Statement.TYPE_IF) {
+      if (statement.type == StatementType.IF) {
         lst.add(statement);
       }
       else {
@@ -71,7 +72,7 @@ public final class IfHelper {
       boolean stsingle = (lst.size() == 1);
 
       for (Statement stat : lst) {
-        if (stat.type == Statement.TYPE_IF) {
+        if (stat.type == StatementType.IF) {
           IfNode rtnode = buildGraph((IfStatement)stat, stsingle);
 
           if (rtnode == null) {
@@ -352,7 +353,7 @@ public final class IfHelper {
     else {
       IfNode ifnode = new IfNode(ifchild);
       res.addChild(ifnode, 0);
-      if (ifchild.type == Statement.TYPE_IF && ((IfStatement)ifchild).iftype == IfStatement.IFTYPE_IF) {
+      if (ifchild.type == StatementType.IF && ((IfStatement)ifchild).iftype == IfStatement.IFTYPE_IF) {
         IfStatement stat2 = (IfStatement)ifchild;
         Statement ifchild2 = stat2.getIfstat();
         if (ifchild2 == null) {
@@ -379,7 +380,7 @@ public final class IfHelper {
     }
     else {
       res.addChild(elsenode, 0);
-      if (elsechild.type == Statement.TYPE_IF && ((IfStatement)elsechild).iftype == IfStatement.IFTYPE_IF) {
+      if (elsechild.type == StatementType.IF && ((IfStatement)elsechild).iftype == IfStatement.IFTYPE_IF) {
         IfStatement stat2 = (IfStatement)elsechild;
         Statement ifchild2 = stat2.getIfstat();
         if (ifchild2 == null) {
@@ -409,7 +410,7 @@ public final class IfHelper {
     boolean ifdirectpath = false, elsedirectpath = false;
 
     Statement parent = ifstat.getParent();
-    Statement from = parent.type == Statement.TYPE_SEQUENCE ? parent : ifstat;
+    Statement from = parent.type == StatementType.SEQUENCE ? parent : ifstat;
 
     Statement next = getNextStatement(from);
 
@@ -425,7 +426,7 @@ public final class IfHelper {
                  hasDirectEndEdge(ifstat.getIfstat(), from);
     }
 
-    Statement last = parent.type == Statement.TYPE_SEQUENCE ? parent.getStats().getLast() : ifstat;
+    Statement last = parent.type == StatementType.SEQUENCE ? parent.getStats().getLast() : ifstat;
     noelsestat = (last == ifstat);
 
     elsedirect = !last.getAllSuccessorEdges().isEmpty() && last.getAllSuccessorEdges().get(0).getType() == EdgeType.FINALLY_EXIT ||
@@ -617,26 +618,26 @@ public final class IfHelper {
 
     if (stat.getExprents() == null) {
       switch (stat.type) {
-        case Statement.TYPE_SEQUENCE:
+        case SEQUENCE:
           return hasDirectEndEdge(stat.getStats().getLast(), from);
-        case Statement.TYPE_CATCH_ALL:
-        case Statement.TYPE_TRY_CATCH:
+        case CATCH_ALL:
+        case TRY_CATCH:
           for (Statement st : stat.getStats()) {
             if (hasDirectEndEdge(st, from)) {
               return true;
             }
           }
           break;
-        case Statement.TYPE_IF:
+        case IF:
           IfStatement ifstat = (IfStatement)stat;
           if (ifstat.iftype == IfStatement.IFTYPE_IFELSE) {
             return hasDirectEndEdge(ifstat.getIfstat(), from) ||
                    hasDirectEndEdge(ifstat.getElsestat(), from);
           }
           break;
-        case Statement.TYPE_SYNCHRONIZED:
+        case SYNCHRONIZED:
           return hasDirectEndEdge(stat.getStats().get(1), from);
-        case Statement.TYPE_SWITCH:
+        case SWITCH:
           for (Statement st : stat.getStats()) {
             if (hasDirectEndEdge(st, from)) {
               return true;
@@ -651,11 +652,11 @@ public final class IfHelper {
   private static Statement getNextStatement(Statement stat) {
     Statement parent = stat.getParent();
     switch (parent.type) {
-      case Statement.TYPE_ROOT:
+      case ROOT:
         return ((RootStatement)parent).getDummyExit();
-      case Statement.TYPE_DO:
+      case DO:
         return parent;
-      case Statement.TYPE_SEQUENCE:
+      case SEQUENCE:
         SequenceStatement sequence = (SequenceStatement)parent;
         if (sequence.getStats().getLast() != stat) {
           for (int i = sequence.getStats().size() - 1; i >= 0; i--) {

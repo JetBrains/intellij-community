@@ -25,6 +25,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatemen
 import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
@@ -58,7 +59,7 @@ public class FinallyProcessor {
       Statement stat = stack.removeLast();
 
       Statement parent = stat.getParent();
-      if (parent != null && parent.type == Statement.TYPE_CATCH_ALL &&
+      if (parent != null && parent.type == StatementType.CATCH_ALL &&
           stat == parent.getFirst() && !parent.isCopied()) {
 
         CatchAllStatement fin = (CatchAllStatement)parent;
@@ -266,7 +267,7 @@ public class FinallyProcessor {
     }
 
     // empty finally block?
-    if (fstat.getHandler().type == Statement.TYPE_BASIC_BLOCK) {
+    if (fstat.getHandler().type == StatementType.BASIC_BLOCK) {
 
       boolean isEmpty = false;
       boolean isFirstLast = mapLast.containsKey(firstBasicBlock);
@@ -421,7 +422,7 @@ public class FinallyProcessor {
     do {
       Statement st = lst.get(index);
 
-      if (st.type == Statement.TYPE_BASIC_BLOCK) {
+      if (st.type == StatementType.BASIC_BLOCK) {
         index++;
       }
       else {

@@ -9,6 +9,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.IfExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +32,7 @@ public final class MergeHelper {
       }
     }
 
-    if (stat.type == Statement.TYPE_DO) {
+    if (stat.type == StatementType.DO) {
       res |= enhanceLoop((DoStatement)stat);
     }
 
@@ -65,11 +66,11 @@ public final class MergeHelper {
   private static void matchDoWhile(DoStatement stat) {
     // search for an if condition at the end of the loop
     Statement last = stat.getFirst();
-    while (last.type == Statement.TYPE_SEQUENCE) {
+    while (last.type == StatementType.SEQUENCE) {
       last = last.getStats().getLast();
     }
 
-    if (last.type == Statement.TYPE_IF) {
+    if (last.type == StatementType.IF) {
       IfStatement lastif = (IfStatement)last;
       if (lastif.iftype == IfStatement.IFTYPE_IF && lastif.getIfstat() == null) {
         StatEdge ifedge = lastif.getIfEdge();
@@ -127,12 +128,12 @@ public final class MergeHelper {
 
     // search for an if condition at the entrance of the loop
     Statement first = stat.getFirst();
-    while (first.type == Statement.TYPE_SEQUENCE) {
+    while (first.type == StatementType.SEQUENCE) {
       first = first.getFirst();
     }
 
     // found an if statement
-    if (first.type == Statement.TYPE_IF) {
+    if (first.type == StatementType.IF) {
       IfStatement firstif = (IfStatement)first;
 
       if (firstif.getFirst().getExprents().isEmpty()) {
@@ -244,11 +245,11 @@ public final class MergeHelper {
       }
       else {
         switch (parent.type) {
-          case Statement.TYPE_ROOT:
-            return endstat.type == Statement.TYPE_DUMMY_EXIT;
-          case Statement.TYPE_DO:
+          case ROOT:
+            return endstat.type == StatementType.DUMMY_EXIT;
+          case DO:
             return (endstat == parent);
-          case Statement.TYPE_SWITCH:
+          case SWITCH:
             SwitchStatement swst = (SwitchStatement)parent;
             for (int i = 0; i < swst.getCaseStatements().size() - 1; i++) {
               Statement stt = swst.getCaseStatements().get(i);
@@ -306,7 +307,7 @@ public final class MergeHelper {
         break;
       }
 
-      if (parent.type == Statement.TYPE_SEQUENCE) {
+      if (parent.type == StatementType.SEQUENCE) {
         if (current == parent.getFirst()) {
           current = parent;
         }
@@ -380,7 +381,7 @@ public final class MergeHelper {
       return stat;
     }
 
-    if (stat.type == Statement.TYPE_SEQUENCE) {
+    if (stat.type == StatementType.SEQUENCE) {
       for (int i = stat.getStats().size() - 1; i >= 0; i--) {
         Statement tmp = getLastDirectData(stat.getStats().get(i));
         if (tmp == null || !tmp.getExprents().isEmpty()) {

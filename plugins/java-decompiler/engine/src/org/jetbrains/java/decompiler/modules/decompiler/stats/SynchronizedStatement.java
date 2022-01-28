@@ -26,7 +26,7 @@ public class SynchronizedStatement extends Statement {
   // *****************************************************************************
 
   public SynchronizedStatement() {
-    super(TYPE_SYNCHRONIZED);
+    super(StatementType.SYNCHRONIZED);
 
     headexprent.add(null);
   }

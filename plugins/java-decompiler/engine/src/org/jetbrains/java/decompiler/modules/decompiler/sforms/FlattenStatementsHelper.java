@@ -7,6 +7,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode.DirectNodeType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -95,7 +96,7 @@ public class FlattenStatementsHelper {
       if (statEntry.succEdges == null) {
 
         switch (stat.type) {
-          case Statement.TYPE_BASIC_BLOCK:
+          case BASIC_BLOCK:
             node = new DirectNode(DirectNodeType.DIRECT, stat, (BasicBlockStatement)stat);
             if (stat.getExprents() != null) {
               node.exprents = stat.getExprents();
@@ -125,8 +126,8 @@ public class FlattenStatementsHelper {
             }
 
             break;
-          case Statement.TYPE_CATCH_ALL:
-          case Statement.TYPE_TRY_CATCH:
+          case CATCH_ALL:
+          case TRY_CATCH:
             DirectNode firstnd = new DirectNode(DirectNodeType.TRY, stat, stat.id + "_try");
 
             mapDestinationNodes.put(stat.id, new String[]{firstnd.id, null});
@@ -138,7 +139,7 @@ public class FlattenStatementsHelper {
               listEdges.add(new Edge(firstnd.id, st.id, EdgeType.REGULAR));
 
               LinkedList<StackEntry> stack = stackFinally;
-              if (stat.type == Statement.TYPE_CATCH_ALL && ((CatchAllStatement)stat).isFinally()) {
+              if (stat.type == StatementType.CATCH_ALL && ((CatchAllStatement)stat).isFinally()) {
                 stack = new LinkedList<>(stackFinally);
 
                 if (st == stat.getFirst()) { // catch head
@@ -154,7 +155,7 @@ public class FlattenStatementsHelper {
 
             lstStackStatements.addAll(0, lst);
             break;
-          case Statement.TYPE_DO:
+          case DO:
             if (statementBreakIndex == 0) {
               statEntry.statementIndex = 1;
               lstStackStatements.addFirst(statEntry);
@@ -239,13 +240,13 @@ public class FlattenStatementsHelper {
                 sourcenode = nodecond;
             }
             break;
-          case Statement.TYPE_SYNCHRONIZED:
-          case Statement.TYPE_SWITCH:
-          case Statement.TYPE_IF:
-          case Statement.TYPE_SEQUENCE:
-          case Statement.TYPE_ROOT:
+          case SYNCHRONIZED:
+          case SWITCH:
+          case IF:
+          case SEQUENCE:
+          case ROOT:
             int statsize = stat.getStats().size();
-            if (stat.type == Statement.TYPE_SYNCHRONIZED) {
+            if (stat.type == StatementType.SYNCHRONIZED) {
               statsize = 2;  // exclude the handler if synchronized
             }
 
@@ -253,13 +254,13 @@ public class FlattenStatementsHelper {
               List<Exprent> tailexprlst = null;
 
               switch (stat.type) {
-                case Statement.TYPE_SYNCHRONIZED:
+                case SYNCHRONIZED:
                   tailexprlst = ((SynchronizedStatement)stat).getHeadexprentList();
                   break;
-                case Statement.TYPE_SWITCH:
+                case SWITCH:
                   tailexprlst = ((SwitchStatement)stat).getHeadExprentList();
                   break;
-                case Statement.TYPE_IF:
+                case IF:
                   tailexprlst = ((IfStatement)stat).getHeadexprentList();
               }
 
@@ -276,7 +277,7 @@ public class FlattenStatementsHelper {
               node = graph.nodes.getWithKey(mapDestinationNodes.get(stat.getFirst().id)[0]);
               mapDestinationNodes.put(stat.id, new String[]{node.id, null});
 
-              if (stat.type == Statement.TYPE_IF && ((IfStatement)stat).iftype == IfStatement.IFTYPE_IF) {
+              if (stat.type == StatementType.IF && ((IfStatement)stat).iftype == IfStatement.IFTYPE_IF) {
                 lstSuccEdges.add(stat.getSuccessorEdges(EdgeType.DIRECT_ALL).get(0));  // exactly one edge
                 sourcenode = tailexprlst.get(0) == null ? node : graph.nodes.getWithKey(node.id + "_tail");
               }

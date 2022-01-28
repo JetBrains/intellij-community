@@ -14,6 +14,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarTypeProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
@@ -780,13 +781,13 @@ public class NestedClassProcessor {
         stack.clear();
 
         switch (st.type) {
-          case Statement.TYPE_SEQUENCE:
+          case SEQUENCE:
             stack.addAll(0, st.getStats());
             break;
-          case Statement.TYPE_IF:
-          case Statement.TYPE_ROOT:
-          case Statement.TYPE_SWITCH:
-          case Statement.TYPE_SYNCHRONIZED:
+          case IF:
+          case ROOT:
+          case SWITCH:
+          case SYNCHRONIZED:
             stack.add(st.getFirst());
             break;
           default:
@@ -820,7 +821,7 @@ public class NestedClassProcessor {
             counter++;
           }
 
-          if (st.type == Statement.TYPE_DO) {
+          if (st.type == StatementType.DO) {
             DoStatement dost = (DoStatement)st;
 
             lst.addAll(dost.getInitExprentList());

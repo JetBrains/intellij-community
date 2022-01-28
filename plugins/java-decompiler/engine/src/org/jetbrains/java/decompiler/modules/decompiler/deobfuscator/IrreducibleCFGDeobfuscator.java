@@ -6,6 +6,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -162,7 +163,7 @@ public final class IrreducibleCFGDeobfuscator {
 
     int res;
 
-    if (statement.type == Statement.TYPE_BASIC_BLOCK) {
+    if (statement.type == StatementType.BASIC_BLOCK) {
       res = ((BasicBlockStatement)statement).getBlock().getSeq().length();
     }
     else {

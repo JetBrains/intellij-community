@@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.FastExtendedPostdominanceHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.deobfuscator.IrreducibleCFGDeobfuscator;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory.FastFixedSet;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
@@ -220,7 +221,7 @@ public final class DomHelper {
       removeSynchronizedHandler(st);
     }
 
-    if (stat.type == Statement.TYPE_SYNCHRONIZED) {
+    if (stat.type == StatementType.SYNCHRONIZED) {
       ((SynchronizedStatement)stat).removeExc();
     }
   }
@@ -232,7 +233,7 @@ public final class DomHelper {
       buildSynchronized(st);
     }
 
-    if (stat.type == Statement.TYPE_SEQUENCE) {
+    if (stat.type == StatementType.SEQUENCE) {
 
       while (true) {
 
@@ -247,11 +248,11 @@ public final class DomHelper {
             Statement next = lst.get(i + 1);
             Statement nextDirect = next;
 
-            while (next.type == Statement.TYPE_SEQUENCE) {
+            while (next.type == StatementType.SEQUENCE) {
               next = next.getFirst();
             }
 
-            if (next.type == Statement.TYPE_CATCH_ALL) {
+            if (next.type == StatementType.CATCH_ALL) {
 
               CatchAllStatement ca = (CatchAllStatement)next;
 
@@ -296,9 +297,9 @@ public final class DomHelper {
 
   private static boolean processStatement(Statement general, HashMap<Integer, Set<Integer>> mapExtPost) {
 
-    if (general.type == Statement.TYPE_ROOT) {
+    if (general.type == StatementType.ROOT) {
       Statement stat = general.getFirst();
-      if (stat.type != Statement.TYPE_GENERAL) {
+      if (stat.type != StatementType.GENERAL) {
         return true;
       }
       else {
@@ -357,7 +358,7 @@ public final class DomHelper {
               reducibility = 0;
             }
 
-            if (general.type == Statement.TYPE_PLACEHOLDER) {
+            if (general.type == StatementType.PLACEHOLDER) {
               return true;
             }
 
@@ -591,10 +592,10 @@ public final class DomHelper {
 
         if (result != null) {
 
-          if (stat.type == Statement.TYPE_GENERAL && result.getFirst() == stat.getFirst() &&
+          if (stat.type == StatementType.GENERAL && result.getFirst() == stat.getFirst() &&
               stat.getStats().size() == result.getStats().size()) {
             // mark general statement
-            stat.type = Statement.TYPE_PLACEHOLDER;
+            stat.type = StatementType.PLACEHOLDER;
           }
 
           stat.collapseNodesToStatement(result);

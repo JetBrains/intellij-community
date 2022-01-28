@@ -44,7 +44,7 @@ public final class IfStatement extends Statement {
   // *****************************************************************************
 
   private IfStatement() {
-    super(TYPE_IF);
+    super(StatementType.IF);
 
     headexprent.add(null);
   }
@@ -159,7 +159,7 @@ public final class IfStatement extends Statement {
 
   public static Statement isHead(Statement head) {
 
-    if (head.type == TYPE_BASIC_BLOCK && head.getLastBasicType() == LASTBASICTYPE_IF) {
+    if (head.type == StatementType.BASIC_BLOCK && head.getLastBasicType() == LASTBASICTYPE_IF) {
       int regsize = head.getSuccessorEdges(EdgeType.REGULAR).size();
 
       Statement p = null;
@@ -232,7 +232,7 @@ public final class IfStatement extends Statement {
     boolean elseif = false;
 
     if (elsestat != null) {
-      if (elsestat.type == Statement.TYPE_IF
+      if (elsestat.type == StatementType.IF
           && elsestat.varDefinitions.isEmpty() && elsestat.getFirst().getExprents().isEmpty() &&
           !elsestat.isLabeled() &&
           (elsestat.getSuccessorEdges(EdgeType.DIRECT_ALL).isEmpty()
