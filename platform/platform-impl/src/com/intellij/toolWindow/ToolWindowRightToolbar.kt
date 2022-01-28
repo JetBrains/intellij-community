@@ -11,7 +11,7 @@ import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JComponent
 
-internal class ToolwindowRightToolbar : ToolwindowToolbar() {
+internal class ToolWindowRightToolbar : ToolWindowToolbar() {
   val topPane = object : AbstractDroppableStripe(VerticalFlowLayout(0, 0)) {
     override val isNewStripes: Boolean
       get() = true
@@ -24,7 +24,7 @@ internal class ToolwindowRightToolbar : ToolwindowToolbar() {
       tryDroppingOnGap(data, gap, dropRectangle) { layoutDragButton(data, gap) }
     }
 
-    override fun getButtonFor(toolWindowId: String) = this@ToolwindowRightToolbar.getButtonFor(toolWindowId)
+    override fun getButtonFor(toolWindowId: String) = this@ToolWindowRightToolbar.getButtonFor(toolWindowId)
   }
 
   init {

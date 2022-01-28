@@ -1,8 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl
+package com.intellij.toolWindow
 
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.impl.AnchoredButton
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
@@ -13,7 +14,7 @@ import javax.swing.SwingUtilities
 import javax.swing.plaf.basic.BasicGraphicsUtils
 import javax.swing.plaf.metal.MetalToggleButtonUI
 
-class StripeButtonUI : MetalToggleButtonUI() {
+class StripeButtonUi : MetalToggleButtonUI() {
   companion object {
     val BACKGROUND_COLOR: Color = JBColor.namedColor("ToolWindow.Button.hoverBackground",
                                                      JBColor(Gray.x55.withAlpha(40), Gray.x0F.withAlpha(40)))

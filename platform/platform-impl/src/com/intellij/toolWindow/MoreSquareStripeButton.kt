@@ -20,7 +20,7 @@ import java.awt.Dimension
 import java.awt.Point
 import java.util.function.Predicate
 
-internal class MoreSquareStripeButton(toolWindowToolbar: ToolwindowLeftToolbar) :
+internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowLeftToolbar) :
   ActionButton(createAction(toolWindowToolbar), createPresentation(), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, Dimension(40, 40)) {
 
   init {
@@ -45,7 +45,7 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolwindowLeftToolbar) 
       return presentation
     }
 
-    private fun createAction(toolWindowToolbar: ToolwindowLeftToolbar): DumbAwareAction {
+    private fun createAction(toolWindowToolbar: ToolWindowLeftToolbar): DumbAwareAction {
       return object : DumbAwareAction() {
         override fun actionPerformed(e: AnActionEvent) {
           val moreSquareStripeButton = toolWindowToolbar.moreButton

@@ -1303,7 +1303,7 @@ open class ToolWindowManagerImpl(val project: Project, private val isNewUi: Bool
     val buttonManager = toolWindowPane!!.buttonManager as ToolWindowPaneNewButtonManager
     var button = buttonManager.getSquareStripeFor(entry.readOnlyWindowInfo.anchor).getButtonFor(options.toolWindowId)?.getComponent()
     if (button == null || !button.isShowing) {
-      button = (buttonManager.getSquareStripeFor(ToolWindowAnchor.LEFT) as? ToolwindowLeftToolbar)?.moreButton!!
+      button = (buttonManager.getSquareStripeFor(ToolWindowAnchor.LEFT) as? ToolWindowLeftToolbar)?.moreButton!!
       position.set(Balloon.Position.atLeft)
     }
     val show = Runnable {

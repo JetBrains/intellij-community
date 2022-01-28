@@ -14,8 +14,8 @@ import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal class ToolwindowLeftToolbar : ToolwindowToolbar() {
-  private class StripeV2(private val toolBar: ToolwindowLeftToolbar,
+internal class ToolWindowLeftToolbar : ToolWindowToolbar() {
+  private class StripeV2(private val toolBar: ToolWindowLeftToolbar,
                          override val anchor: ToolWindowAnchor) : AbstractDroppableStripe(VerticalFlowLayout(0, 0)) {
     override val isNewStripes: Boolean
       get() = true

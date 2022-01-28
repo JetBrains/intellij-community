@@ -19,7 +19,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.AnchoredButton;
-import com.intellij.openapi.wm.impl.StripeButtonUI;
+import com.intellij.toolWindow.StripeButtonUi;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.TabsUtil;
@@ -141,7 +141,7 @@ public final class LightToolWindow extends JPanel {
     myMinimizeButton = new AnchoredButton(title, icon) {
       @Override
       public void updateUI() {
-        setUI(new StripeButtonUI());
+        setUI(new StripeButtonUi());
         setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
       }
 

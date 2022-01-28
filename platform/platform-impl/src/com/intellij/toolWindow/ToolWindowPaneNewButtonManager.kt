@@ -6,7 +6,9 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
-import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.AbstractDroppableStripe
+import com.intellij.openapi.wm.impl.SquareStripeButton
+import com.intellij.openapi.wm.impl.ToolWindowImpl
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.Point
@@ -17,8 +19,8 @@ import javax.swing.JComponent
 private val LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowManagerImpl")
 
 internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
-  private val left = ToolwindowLeftToolbar()
-  private val right = ToolwindowRightToolbar()
+  private val left = ToolWindowLeftToolbar()
+  private val right = ToolWindowRightToolbar()
 
   override val isNewUi: Boolean
     get() = true
@@ -64,7 +66,7 @@ internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
     }
   }
 
-  fun getSquareStripeFor(anchor: ToolWindowAnchor): ToolwindowToolbar {
+  fun getSquareStripeFor(anchor: ToolWindowAnchor): ToolWindowToolbar {
     return when (anchor) {
       ToolWindowAnchor.TOP, ToolWindowAnchor.RIGHT -> right
       ToolWindowAnchor.BOTTOM, ToolWindowAnchor.LEFT -> left
@@ -95,7 +97,7 @@ internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
     right.reset()
   }
 
-  private fun findToolbar(anchor: ToolWindowAnchor): ToolwindowToolbar = if (anchor == ToolWindowAnchor.RIGHT) right else left
+  private fun findToolbar(anchor: ToolWindowAnchor): ToolWindowToolbar = if (anchor == ToolWindowAnchor.RIGHT) right else left
   override fun createStripeButton(toolWindow: ToolWindowImpl, info: WindowInfo, task: RegisterToolWindowTask?): StripeButtonManager? {
     if (!info.isShowStripeButton || (task != null && !task.shouldBeAvailable)) {
       LOG.debug {

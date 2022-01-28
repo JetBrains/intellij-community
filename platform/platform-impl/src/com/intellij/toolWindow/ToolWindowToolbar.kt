@@ -20,7 +20,7 @@ import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal abstract class ToolwindowToolbar : JPanel() {
+internal abstract class ToolWindowToolbar : JPanel() {
   lateinit var defaults: List<String>
 
   init {

@@ -12,7 +12,6 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.openapi.wm.impl.AnchoredButton
-import com.intellij.openapi.wm.impl.StripeButtonUI
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
@@ -256,7 +255,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
   }
 
   override fun updateUI() {
-    setUI(StripeButtonUI())
+    setUI(StripeButtonUi())
     val font = StartupUiUtil.getLabelFont()
     val relativeFont = RelativeFont.NORMAL.fromResource("StripeButton.fontSizeOffset", -2, JBUIScale.scale(11f))
     setFont(relativeFont.derive(font))
