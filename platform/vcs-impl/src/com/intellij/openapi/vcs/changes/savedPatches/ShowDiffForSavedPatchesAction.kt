@@ -60,3 +60,9 @@ class CompareWithLocalForSavedPatchesAction : AbstractShowDiffForSavedPatchesAct
     return changesBrowser.getDiffWithLocalRequestProducer(userObject, false)
   }
 }
+
+class CompareBeforeWithLocalForSavedPatchesAction : AbstractShowDiffForSavedPatchesAction() {
+  override fun getDiffRequestProducer(changesBrowser: SavedPatchesChangesBrowser, userObject: Any): ChangeDiffRequestChain.Producer? {
+    return changesBrowser.getDiffWithLocalRequestProducer(userObject, true)
+  }
+}

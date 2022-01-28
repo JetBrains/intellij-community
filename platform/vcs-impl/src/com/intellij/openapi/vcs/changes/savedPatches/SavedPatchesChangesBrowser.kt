@@ -114,9 +114,9 @@ class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Com
     return userObject.createDiffRequestProducer(myProject)
   }
 
-  fun getDiffWithLocalRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
+  fun getDiffWithLocalRequestProducer(userObject: Any, useBeforeVersion: Boolean): ChangeDiffRequestChain.Producer? {
     if (userObject !is SavedPatchesProvider.ChangeObject) return null
-    return userObject.createDiffWithLocalRequestProducer(myProject, false)
+    return userObject.createDiffWithLocalRequestProducer(myProject, useBeforeVersion)
   }
 
   fun setDiffPreviewInEditor(isInEditor: Boolean): SavedPatchesDiffPreview {
