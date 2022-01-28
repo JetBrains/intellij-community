@@ -38,6 +38,9 @@ import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolv
  */
 @CompileStatic
 class SourceSetCachedFinder {
+  private static final GradleVersion gradleBaseVersion = GradleVersion.current().baseVersion
+  private static final boolean is51OrBetter = gradleBaseVersion >= GradleVersion.version("5.1")
+
   private static final DataProvider<ArtifactsMap> ARTIFACTS_PROVIDER = new DataProvider<ArtifactsMap>() {
     @NotNull
     @Override
@@ -146,7 +149,11 @@ class SourceSetCachedFinder {
       def unwrapped = maybeUnwrapIncludedBuildInternal(includedBuild)
       if (unwrapped instanceof DefaultIncludedBuild) {
         def build = unwrapped as DefaultIncludedBuild
-        projects += build.configuredBuild.rootProject.allprojects
+        if (is51OrBetter) {
+          projects += build.withState { it.rootProject.allprojects  }
+        } else {
+          projects += build.configuredBuild.rootProject.allprojects
+        }
       }
     }
     return projects
