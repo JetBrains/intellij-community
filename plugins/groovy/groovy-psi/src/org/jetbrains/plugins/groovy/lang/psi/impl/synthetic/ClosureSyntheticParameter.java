@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.NavigationItem;
@@ -15,6 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer;
 
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -94,5 +95,19 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
       throw new IncorrectOperationException("Pointer is invalidated");
     }
     return closure;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof ClosureSyntheticParameter)) return false;
+    if (!super.equals(o)) return false;
+    ClosureSyntheticParameter parameter = (ClosureSyntheticParameter)o;
+    return Objects.equals(myClosure, parameter.myClosure);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), myClosure);
   }
 }
