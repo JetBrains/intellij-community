@@ -226,6 +226,7 @@ Includes the following features:</p>
                          implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemUnindentHandler"/>
 
     <actionPromoter implementation="org.intellij.plugins.markdown.ui.actions.MarkdownActionPromoter"/>
+    <customizableActionGroupProvider implementation="org.intellij.plugins.markdown.ui.floating.FloatingToolbarCustomizableGroupProvider"/>
 
     <!--Formatting-->
     <langCodeStyleSettingsProvider implementation="org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCodeStyleSettingsProvider"/>
