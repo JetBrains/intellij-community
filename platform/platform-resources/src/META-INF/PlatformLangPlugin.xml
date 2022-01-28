@@ -112,9 +112,6 @@
     <projectService serviceInterface="com.intellij.refactoring.suggested.SuggestedRefactoringProvider"
                     serviceImplementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl"/>
     <postStartupActivity implementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl$Startup"/>
-    <notificationGroup id="Find Problems" displayType="STICKY_BALLOON" isLogByDefault="false"/>
-    <notificationGroup id="Missing SDKs" displayType="BALLOON"/>
-    <notificationGroup id="Automatic indent detection" displayType="STICKY_BALLOON"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.impl.PushedFilePropertiesRetriever"
                         serviceImplementation="com.intellij.openapi.roots.impl.PushedFilePropertiesRetrieverImpl"/>

@@ -1408,6 +1408,9 @@
     <notificationGroup id="IDE Caches" displayType="BALLOON" bundle="messages.IndexingBundle" key="notification.group.ide.caches"/>
     <notificationGroup id="Cache Recovery" displayType="STICKY_BALLOON" bundle="messages.IdeBundle" key="notification.group.cache.recovery"/>
     <notificationGroup id="Framework Detection" displayType="BALLOON" bundle="messages.ProjectBundle" key="notification.group.framework.detection"/>
+    <notificationGroup id="Find Problems" displayType="STICKY_BALLOON" isLogByDefault="false" hideFromSettings="true"/>
+    <notificationGroup id="Missing SDKs" displayType="BALLOON" bundle="messages.ProjectBundle" key="notification.group.missing.sdks"/>
+    <notificationGroup id="Automatic indent detection" displayType="STICKY_BALLOON" bundle="messages.ApplicationBundle" key="notification.group.automatic.indent.detection"/>
 
     <codeInsight.lineMarkerProvider implementationClass="com.intellij.codeInsight.documentation.render.DocRenderDummyLineMarkerProvider"/>
 

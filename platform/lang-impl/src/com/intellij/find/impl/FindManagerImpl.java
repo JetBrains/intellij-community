@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -17,8 +17,8 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.LayeredLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -85,7 +85,7 @@ public final class FindManagerImpl extends FindManager {
   private static final Key<Boolean> HIGHLIGHTER_WAS_NOT_FOUND_KEY = Key.create("com.intellij.find.impl.FindManagerImpl.HighlighterNotFoundKey");
 
   private FindUIHelper myHelper;
-  private static final NotificationGroup GROUP = new NotificationGroup("Find Problems", NotificationDisplayType.STICKY_BALLOON, false);
+  private static final NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Find Problems");
 
   public FindManagerImpl(@NotNull Project project) {
     myProject = project;
