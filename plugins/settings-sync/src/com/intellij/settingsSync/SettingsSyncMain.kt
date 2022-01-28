@@ -54,12 +54,14 @@ internal class SettingsSyncMain : Disposable {
   @RequiresBackgroundThread
   internal fun syncSettings() {
     if (controls.updateChecker.isUpdateNeeded()) {
-      LOG.info("Syncing settings...")
+      LOG.info("Updating settings...")
       controls.updateChecker.scheduleUpdateFromServer()
-      schedulePushingSettingsToServer()
+      // the push will happen automatically after updating and merging (if there is anything to merge)
     }
     else {
-      LOG.info("Syncing settings... is not needed.")
+      LOG.info("Updating settings is not needed, scheduling a push")
+      // todo detect if the push is really needed
+      schedulePushingSettingsToServer()
     }
   }
 
