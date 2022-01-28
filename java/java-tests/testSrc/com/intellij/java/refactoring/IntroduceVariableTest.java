@@ -43,49 +43,41 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testSimpleExpression() { doTest("i", false, false, true, "int"); }
   public void testInsideFor() { doTest("temp", false, false, true, "int"); }
   public void testReplaceAll() {
-    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
-    doTest("s", true, true, true, JAVA_LANG_STRING); 
+    doTestReplaceAll("s", true, true, true, JAVA_LANG_STRING);
   }
-  public void testIDEADEV3678() { 
-    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
-    doTest("component", true, true, true, CommonClassNames.JAVA_LANG_OBJECT); 
+
+  public void testIDEADEV3678() {
+    doTestReplaceAll("component", true, true, true, CommonClassNames.JAVA_LANG_OBJECT);
   }
   public void testIDEADEV13369() { doTest("ints", true, true, true, "int[]"); }
-  public void testAnonymousClass() { 
-    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
-    doTest("temp", true, false, true, "int"); 
+  public void testAnonymousClass() {
+    doTestReplaceAll("temp", true, false, true, "int");
   }
   public void testAnonymousClass1() { doTest("runnable", false, false, false, CommonClassNames.JAVA_LANG_RUNNABLE); }
-  public void testAnonymousClass2() { 
-    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
-    doTest("j", true, false, false, "int"); 
+  public void testAnonymousClass2() {
+    doTestReplaceAll("j", true, false, false, "int");
   }
-  public void testAnonymousClass3() { 
-    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
-    doTest("j", true, false, false, "Foo"); 
+  public void testAnonymousClass3() {
+    doTestReplaceAll("j", true, false, false, "Foo");
   }
   public void testAnonymousClass4() { doTest("j", true, false, false, "int"); }
   public void testAnonymousClass5() { doTest("j", true, false, false, "int"); }
-  public void testAnonymousClass6() { 
-    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
-    doTest("str", true, false, false, JAVA_LANG_STRING); 
+  public void testAnonymousClass6() {
+    doTestReplaceAll("str", true, false, false, JAVA_LANG_STRING);
   }
   public void testAnonymousClass7() { doTest("str", true, false, false, JAVA_LANG_STRING); }
   public void testLambda() { doTest("j", true, false, false, "int"); }
   public void testParenthesized() { doTest("temp", true, false, false, "int"); }
   public void testExpectedType8Inference() { doTest("temp", true, false, false, "java.util.Map<java.lang.String,java.util.List<java.lang.String>>"); }
-  public void testMethodCall() { 
-    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
-    doTest("temp", true, true, true, CommonClassNames.JAVA_LANG_OBJECT); 
+  public void testMethodCall() {
+    doTestReplaceAll("temp", true, true, true, CommonClassNames.JAVA_LANG_OBJECT);
   }
-  public void testMethodCallInSwitch() { 
-    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
-    doTest("i", true, true, true, "int"); 
+  public void testMethodCallInSwitch() {
+    doTestReplaceAll("i", true, true, true, "int");
   }
   public void testFunctionalExpressionInSwitch() { doTest("p", true, true, true, "java.util.function.Predicate<java.lang.String>"); }
-  public void testParenthesizedOccurrence1() { 
-    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
-    doTest("empty", true, true, true, "boolean"); 
+  public void testParenthesizedOccurrence1() {
+    doTestReplaceAll("empty", true, true, true, "boolean");
   }
   public void testParenthesizedOccurrence2() { doTest("s", true, true, true, JAVA_LANG_STRING); }
   public void testAfterSemicolon() {
@@ -104,9 +96,8 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testSCR18295a() { doTest("it", false, false, false, JAVA_LANG_STRING); }
   public void testFromInjected() { doTest("regexp", false, false, false, JAVA_LANG_STRING); }
   public void testSCR10412() { doTest("newVar", false, false, false, "java.lang.String[]"); }
-  public void testSCR22718() { 
-    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
-    doTest("object", true, true, false, CommonClassNames.JAVA_LANG_OBJECT); 
+  public void testSCR22718() {
+    doTestReplaceAll("object", true, true, false, CommonClassNames.JAVA_LANG_OBJECT);
   }
   public void testSCR26075() { doTest("ok", false, false, false, JAVA_LANG_STRING); }
 
@@ -132,13 +123,11 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testInsideWhile() { doTest("temp", false, false, false, "int"); }
 
   public void testWhileCondition() {
-    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
-    doTest("temp", true, false, false, "Node");
+    doTestReplaceAll("temp", true, false, false, "Node");
   }
 
   public void testWhileCondition2() {
-    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
-    doTest("temp", true, false, false, "Node");
+    doTestReplaceAll("temp", true, false, false, "Node");
   }
 
   public void testWhileConditionIncomplete() { doTest("temp", true, false, false, "boolean"); }
@@ -146,30 +135,25 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testWhileConditionNoBrace() { doTest("temp", true, false, false, "int"); }
 
   public void testWhileConditionPlusNormal() {
-    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
-    doTest("temp", true, false, false, "int");
+    doTestReplaceAll("temp", true, false, false, "int");
   }
 
   public void testWhileConditionPlusNormal2() {
-    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
-    doTest("temp", true, false, false, "int");
+    doTestReplaceAll("temp", true, false, false, "int");
   }
 
   public void testWhileConditionAndOr() { doTest("temp", true, false, false, "boolean"); }
 
   public void testField() {
-    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
-    doTest("temp", false, false, false, JAVA_LANG_STRING);
+    doTestReplaceAll("temp", false, false, false, JAVA_LANG_STRING);
   }
 
   public void testFieldAll() {
-    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
-    doTest("temp", true, false, false, JAVA_LANG_STRING);
+    doTestReplaceAll("temp", true, false, false, JAVA_LANG_STRING);
   }
 
   public void testCaseLabel() {
-    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
-    doTest("temp", true, false, false, "int");
+    doTestReplaceAll("temp", true, false, false, "int");
   }
   public void testCaseLabelSingle() { doTest(new IntroduceVariableHandler()); }
   public void testCaseLabelRuleSingle() { doTest(new IntroduceVariableHandler()); }
@@ -210,11 +194,11 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     doTestWithVarType(new MockIntroduceVariableHandler("temp", true, false, false, JAVA_LANG_STRING));
   }
   public void testPatternVariableDeclarationUsedInLocalJava16() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
-  public void testPatternVariableDeclarationAfterIfJava16() { UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));doTest("temp", true, false, false, JAVA_LANG_STRING);}
-  public void testNonPatternVariableDeclarationTwoBlocksJava16() { UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));doTest("temp", true, false, false, JAVA_LANG_STRING);}
+  public void testPatternVariableDeclarationAfterIfJava16() { doTestReplaceAll("temp", true, false, false, JAVA_LANG_STRING); }
+  public void testNonPatternVariableDeclarationTwoBlocksJava16() { doTestReplaceAll("temp", true, false, false, JAVA_LANG_STRING); }
   public void testNonPatternDeclarationJava16() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
 
-  public void testTernaryBothBranches() { UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));doTest("temp", true, false, false, "int"); }
+  public void testTernaryBothBranches() { doTestReplaceAll("temp", true, false, false, "int"); }
   public void testIfConditionAndChain() { UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15, () -> doTest("temp", true, false, false, JAVA_LANG_STRING)); }
   public void testReturnAndChain() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15, () -> doTest("temp", true, false, false, JAVA_LANG_STRING)); }
   public void testReturnOrChain() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
@@ -246,12 +230,12 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testDeclareTernary() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testLambdaAndChain() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testSCR40281() { doTest("temp", false, false, false, "Set<? extends Map<?,java.lang.String>.Entry<?,java.lang.String>>"); }
-  public void testWithIfBranches() { UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));doTest("temp", true, false, false, "int"); }
+  public void testWithIfBranches() { doTestReplaceAll("temp", true, false, false, "int"); }
   public void testInsideTryWithResources() { doTest("temp", true, false, false, "java.io.FileInputStream"); }
-  public void testInsideForLoop() { UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));doTest("temp", true, false, false, "int"); }
-  public void testInsideForLoopIndependentFromLoopVariable() { UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));doTest("temp", true, false, false, "int"); }
+  public void testInsideForLoop() { doTestReplaceAll("temp", true, false, false, "int"); }
+  public void testInsideForLoopIndependentFromLoopVariable() { doTestReplaceAll("temp", true, false, false, "int"); }
   public void testDistinguishLambdaParams() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
-  public void testDuplicateGenericExpressions() { UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));doTest("temp", true, false, false, "Foo2<? extends java.lang.Runnable>"); }
+  public void testDuplicateGenericExpressions() { doTestReplaceAll("temp", true, false, false, "Foo2<? extends java.lang.Runnable>"); }
   public void testStaticImport() { doTest("i", true, true, false, "int"); }
   public void testGenericTypeMismatch() { doTest("i", true, true, false, CommonClassNames.JAVA_LANG_OBJECT); }
   public void testGenericTypeMismatch1() { doTest("i", true, true, false, "java.util.List<java.lang.String>"); }
@@ -302,20 +286,17 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testSubexpressionWithSpacesInSelection() { doTest("ab", true, true, false, "boolean"); }
   public void testSubexpressionWithSpacesInSelectionAndTailingComment() { doTest("ab", true, true, false, JAVA_LANG_STRING); }
   public void testDuplicatesAnonymousClassCreationWithSimilarParameters () {
-    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
-    doTest("foo1", true, true, false, "Foo"); 
+    doTestReplaceAll("foo1", true, true, false, "Foo");
   }
   public void testDifferentForeachParameters() { doTest("toStr", true, true, false, JAVA_LANG_STRING); }
   public void testCollapsedToDiamond() { doTest("a", true, true, true, "java.util.ArrayList<java.lang.String>"); }
   public void testCantCollapsedToDiamond() { doTest("a", true, true, true, "Foo<java.lang.Number>"); }
   public void testFromForInitializer() {
-    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
-    doTest("list", true, true, true, "java.util.List"); 
+    doTestReplaceAll("list", true, true, true, "java.util.List");
   }
   public void testInvalidPostfixExpr() { doTest("a1", true, false, true, "int[]"); }
   public void testPolyadic() {
-    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
-    doTest("b1", true, true, true, "boolean"); 
+    doTestReplaceAll("b1", true, true, true, "boolean");
   }
   public void testAssignmentToUnresolvedReference() { doTest("collection", true, true, true, "java.util.List<? extends java.util.Collection<?>>"); }
   public void testSubstringInSwitch() { doTest("ba", false, false, false, JAVA_LANG_STRING);}
@@ -420,8 +401,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testPutInLambdaBodyMultipleOccurrences() {
-    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
-    doTest("c", true, false, false, "java.lang.Class<?>");
+    doTestReplaceAll("c", true, false, false, "java.lang.Class<?>");
   }
 
   public void testPutInLambdaBodyVoidValueConflict() {
@@ -440,8 +420,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testPutOuterLambda() {
-    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
-    doTest("s", true, false, false, "java.lang.String");
+    doTestReplaceAll("s", true, false, false, "java.lang.String");
   }
 
   public void testNormalizeDeclarations() { doTest("i3", false, false, false, "int"); }
@@ -509,6 +488,11 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     finally {
       JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE = asVarType;
     }
+  }
+
+  private void doTestReplaceAll(String newName, boolean replaceAll, boolean declareFinal, boolean replaceLValues, String typeText) {
+    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
+    doTest(newName, replaceAll, declareFinal, replaceLValues, typeText);
   }
 
   private void doTest(String name, boolean replaceAll, boolean declareFinal, boolean replaceLValues, String expectedTypeText) {
