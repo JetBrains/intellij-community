@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -10,10 +10,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @Experimental
-public interface DocumentationLinkResolver {
+public interface DocumentationLinkHandler {
 
   @Internal
-  ExtensionPointName<DocumentationLinkResolver> EP_NAME = ExtensionPointName.create("com.intellij.lang.documentationLinkResolver");
+  ExtensionPointName<DocumentationLinkHandler> EP_NAME = ExtensionPointName.create("com.intellij.lang.documentationLinkHandler");
 
   /**
    * Resolves a URL in the documentation to another target.

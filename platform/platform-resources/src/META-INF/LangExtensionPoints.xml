@@ -610,8 +610,8 @@
     <extensionPoint name="lang.symbolTypeProvider" dynamic="true" interface="com.intellij.codeInsight.navigation.SymbolTypeProvider"/>
     <extensionPoint name="readerModeProvider" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeProvider"/>
     <extensionPoint name="readerModeMatcher" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeMatcher"/>
-    <extensionPoint name="lang.documentationLinkResolver" dynamic="true"
-                    interface="com.intellij.lang.documentation.DocumentationLinkResolver"/>
+    <extensionPoint name="lang.documentationLinkHandler" dynamic="true"
+                    interface="com.intellij.lang.documentation.DocumentationLinkHandler"/>
     <extensionPoint name="lang.symbolDocumentation" dynamic="true"
                     interface="com.intellij.lang.documentation.symbol.SymbolDocumentationTargetFactory"/>
     <extensionPoint name="lang.psiDocumentation" dynamic="true"

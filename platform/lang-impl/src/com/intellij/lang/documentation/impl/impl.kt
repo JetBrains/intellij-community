@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("TestOnlyProblems")
 
 package com.intellij.lang.documentation.impl
@@ -55,7 +55,7 @@ private fun doResolveLink(targetPointer: Pointer<out DocumentationTarget>, url: 
 }
 
 internal fun resolveLink(target: DocumentationTarget, url: String): LinkResult? {
-  for (handler in DocumentationLinkResolver.EP_NAME.extensionList) {
+  for (handler in DocumentationLinkHandler.EP_NAME.extensionList) {
     ProgressManager.checkCanceled()
     return handler.resolveLink(target, url) ?: continue
   }

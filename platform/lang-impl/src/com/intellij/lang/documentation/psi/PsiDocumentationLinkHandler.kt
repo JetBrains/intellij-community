@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.psi
 
 import com.intellij.codeInsight.documentation.DocumentationManager
@@ -7,7 +7,7 @@ import com.intellij.lang.documentation.*
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 
-internal class PsiDocumentationLinkResolver : DocumentationLinkResolver {
+internal class PsiDocumentationLinkHandler : DocumentationLinkHandler {
 
   override fun resolveLink(target: DocumentationTarget, url: String): LinkResult? {
     if (target !is PsiElementDocumentationTarget) {
