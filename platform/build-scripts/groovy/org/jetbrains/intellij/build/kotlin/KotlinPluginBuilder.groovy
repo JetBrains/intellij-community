@@ -247,6 +247,24 @@ class KotlinPluginBuilder {
       withProjectLibrary("kotlinx-coroutines-jdk8")
       withProjectLibrary("completion-ranking-kotlin")
 
+      // in kt-213-master withProjectLibrary("kotlinc.kotlin-jps-plugin-classpath", "jps/kotlin-jps-plugin.jar") copying
+      // library to the jps/kotlin-jps-plugin.jar/kotlin-jps-plugin-classpath-dev-11.jar. This is a workaround
+      withGeneratedResources(new ResourcesGenerator() {
+        @Override
+        File generateResources(BuildContext context) {
+          def jpsPluginLib = "kotlinc.kotlin-jps-plugin-classpath"
+          JpsLibrary library = context.project.libraryCollection.findLibrary(jpsPluginLib)
+          List<File> jars = library.getFiles(JpsOrderRootType.COMPILED)
+          if (jars.size() != 1) {
+            throw new IllegalStateException("$jpsPluginLib is expected to have only one jar")
+          }
+          def result = context.paths.tempDir.resolve("kotlin-jps-plugin.jar")
+
+          Files.copy(jars[0].toPath(), result.toAbsolutePath())
+          result.toFile()
+        }
+      }, "lib/jps")
+
       withGeneratedResources(new ResourcesGenerator() {
         @Override
         File generateResources(BuildContext context) {
