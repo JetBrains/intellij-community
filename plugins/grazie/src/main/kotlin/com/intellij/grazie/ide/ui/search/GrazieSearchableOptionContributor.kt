@@ -14,7 +14,7 @@ private class GrazieSearchableOptionContributor : SearchableOptionContributor() 
   private val proofreadName = OptionsBundle.message("configurable.group.proofread.settings.display.name")
 
   private val grammarId = "reference.settingsdialog.project.grazie"
-  private val grammarName = GraziePlugin.name
+  private val grammarName = GraziePlugin.settingsPageName
 
   private fun SearchableOptionProcessor.addProofreadOptions(text: String, path: String? = null, hit: String? = text) {
     addOptions(text, path, hit, proofreadId, proofreadName, false)
