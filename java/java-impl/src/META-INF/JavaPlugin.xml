@@ -1731,9 +1731,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="JavadocReference" bundle="messages.JavaBundle" key="inspection.javadoc.ref.display.name"
                      groupKey="group.names.javadoc.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="JavaDoc" bundle="messages.JavaBundle" key="inspection.javadoc.display.name"
-                     groupKey="group.names.javadoc.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.javaDoc.JavaDocLocalInspection" alternativeId="javadoc"/>
+    <!--<localInspection groupPath="Java" language="JAVA" shortName="JavaDoc" bundle="messages.JavaBundle" key="inspection.javadoc.display.name"-->
+    <!--                 groupKey="group.names.javadoc.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"-->
+    <!--                 implementationClass="com.intellij.codeInspection.javaDoc.JavaDocLocalInspection" alternativeId="javadoc"/>-->
     <localInspection groupPath="Java" language="JAVA" shortName="MissingJavadoc" bundle="messages.JavaBundle" key="inspection.missingJavadoc.display.name"
                      groupKey="group.names.javadoc.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.javaDoc.MissingJavadocInspection"/>
