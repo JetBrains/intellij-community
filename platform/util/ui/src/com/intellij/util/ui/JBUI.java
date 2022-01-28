@@ -806,6 +806,17 @@ public final class JBUI {
                : JBColor.namedColor("Popup.Header.inactiveBackground", 0xededed);
       }
 
+      public static Color headerForeground(boolean active) {
+        return active
+               ? JBColor.namedColor("Popup.Header.activeForeground", UIUtil.getLabelForeground())
+               : JBColor.namedColor("Popup.Header.inactiveForeground", UIUtil.getLabelDisabledForeground());
+      }
+
+      @NotNull
+      public static Border headerInsets() {
+        return new JBEmptyBorder(insets("Popup.Header.insets", insets(12, 10, 10, 10)));
+      }
+
       public static int headerHeight(boolean hasControls) {
         return hasControls ? JBUIScale.scale(28) : JBUIScale.scale(24);
       }

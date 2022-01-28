@@ -272,8 +272,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     if (caption != null) {
       if (!caption.isEmpty()) {
-        myCaption = new TitlePanel(actualIcon.getRegular(), actualIcon.getInactive());
-        ((TitlePanel)myCaption).setText(caption);
+        TitlePanel titlePanel = new TitlePanel(actualIcon.getRegular(), actualIcon.getInactive());
+        titlePanel.setText(caption);
+        titlePanel.setPopupTitle(ExperimentalUI.isNewUI());
+        myCaption = titlePanel;
       }
       else {
         myCaption = new CaptionPanel();

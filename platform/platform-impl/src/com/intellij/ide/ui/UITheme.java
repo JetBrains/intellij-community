@@ -513,7 +513,7 @@ public final class UITheme {
       }
     }
 
-    if (key.endsWith("Insets") || key.endsWith("padding")) {
+    if (key.endsWith("Insets") || key.endsWith(".insets") || key.endsWith("padding")) {
       return parseInsets(value);
     }
     else if (key.endsWith("Border") || key.endsWith("border")) {

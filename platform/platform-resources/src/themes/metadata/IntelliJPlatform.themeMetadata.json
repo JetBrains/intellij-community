@@ -779,6 +779,21 @@
       "key": "Popup.Advertiser.foreground"
     },
     {
+      "key": "Popup.Header.activeForeground",
+      "description": "Text color in popup header when focused",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.Header.inactiveForeground",
+      "description": "Text color in popup header when not focused",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.Header.insets",
+      "description": "Header insets (experimental UI only), default value is \"12,10,10,10\"",
+      "since": "2022.1"
+    },
+    {
       "key": "Popup.innerBorderColor"
     },
     {
