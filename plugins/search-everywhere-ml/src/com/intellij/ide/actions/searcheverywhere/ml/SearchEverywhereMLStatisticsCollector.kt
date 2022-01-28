@@ -29,12 +29,13 @@ internal class SearchEverywhereMLStatisticsCollector {
     val experimentFromRegistry = Registry.intValue("search.everywhere.ml.experiment.group") >= 0
     val data = arrayListOf<Pair<String, Any>>(
       CLOSE_POPUP_KEY to closePopup,
-      FORCE_EXPERIMENT_GROUP to experimentFromRegistry,
-      EXPERIMENT_GROUP to experimentGroup,
-      ORDER_BY_ML_GROUP to orderByMl
+      FORCE_EXPERIMENT_GROUP to experimentFromRegistry
     )
-    reportElements(project, SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, timeToFirstResult, data,
-                   selectedIndices, selectedItems, elementsProvider)
+    reportElements(
+      project, SESSION_FINISHED, seSessionId, searchIndex, experimentGroup, orderByMl,
+      elementIdProvider, context, cache, timeToFirstResult, data,
+      selectedIndices, selectedItems, elementsProvider
+    )
   }
 
   fun onSearchFinished(project: Project?, seSessionId: Int, searchIndex: Int,
@@ -47,26 +48,32 @@ internal class SearchEverywhereMLStatisticsCollector {
     val experimentFromRegistry = Registry.intValue("search.everywhere.ml.experiment.group") >= 0
     val additional = listOf(
       CLOSE_POPUP_KEY to true,
-      FORCE_EXPERIMENT_GROUP to experimentFromRegistry,
-      EXPERIMENT_GROUP to experimentGroup,
-      ORDER_BY_ML_GROUP to orderByMl
+      FORCE_EXPERIMENT_GROUP to experimentFromRegistry
     )
-    reportElements(project, SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, timeToFirstResult, additional,
-                   EMPTY_ARRAY, emptyList(), elementsProvider)
+    reportElements(
+      project, SESSION_FINISHED, seSessionId, searchIndex, experimentGroup, orderByMl,
+      elementIdProvider, context, cache, timeToFirstResult, additional,
+      EMPTY_ARRAY, emptyList(), elementsProvider
+    )
   }
 
   fun onSearchRestarted(project: Project?, seSessionId: Int, searchIndex: Int,
+                        experimentGroup: Int, orderByMl: Boolean,
                         elementIdProvider: SearchEverywhereMlItemIdProvider,
                         context: SearchEverywhereMLContextInfo,
                         cache: SearchEverywhereMlSearchState,
                         timeToFirstResult: Int,
                         elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    reportElements(project, SEARCH_RESTARTED, seSessionId, searchIndex, elementIdProvider, context, cache, timeToFirstResult, emptyList(),
-                   EMPTY_ARRAY, emptyList(), elementsProvider)
+    reportElements(
+      project, SEARCH_RESTARTED, seSessionId, searchIndex, experimentGroup, orderByMl,
+      elementIdProvider, context, cache, timeToFirstResult, emptyList(),
+      EMPTY_ARRAY, emptyList(), elementsProvider
+    )
   }
 
   private fun reportElements(project: Project?, eventId: String,
                              seSessionId: Int, searchIndex: Int,
+                             experimentGroup: Int, orderByMl: Boolean,
                              elementIdProvider: SearchEverywhereMlItemIdProvider,
                              context: SearchEverywhereMLContextInfo,
                              state: SearchEverywhereMlSearchState,
@@ -83,6 +90,8 @@ internal class SearchEverywhereMLStatisticsCollector {
       data[SEARCH_INDEX_DATA_KEY] = searchIndex
       data[TOTAL_NUMBER_OF_ITEMS_DATA_KEY] = elements.size
       data[SE_TAB_ID_KEY] = state.tabId
+      data[EXPERIMENT_GROUP] = experimentGroup
+      data[ORDER_BY_ML_GROUP] = orderByMl
       data[SEARCH_START_TIME_KEY] = state.searchStartTime
 
       if (timeToFirstResult > -1) {

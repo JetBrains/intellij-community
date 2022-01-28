@@ -58,8 +58,13 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
     }
 
     if (prevState != null && experimentStrategy.isLoggingEnabledForTab(prevState.tabId)) {
-      logger.onSearchRestarted(project, sessionId, prevState.searchIndex, itemIdProvider, cachedContextInfo, prevState,
-        prevTimeToResult, previousElementsProvider)
+      val orderByMl = orderedByMl(prevState.tabId)
+      val experimentGroup = experimentStrategy.experimentGroup
+      logger.onSearchRestarted(
+        project, sessionId, prevState.searchIndex, experimentGroup, orderByMl,
+        itemIdProvider, cachedContextInfo, prevState,
+        prevTimeToResult, previousElementsProvider
+      )
     }
   }
 
