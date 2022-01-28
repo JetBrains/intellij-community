@@ -61,7 +61,7 @@ public final class CatchStatement extends Statement {
   // *****************************************************************************
 
   public static Statement isHead(Statement head) {
-    if (head.getLastBasicType() != LASTBASICTYPE_GENERAL) {
+    if (head.getLastBasicType() != StatementType.GENERAL) {
       return null;
     }
 
@@ -82,7 +82,7 @@ public final class CatchStatement extends Statement {
         boolean handlerok = true;
 
         if (edge.getExceptions() != null && setHandlers.contains(stat)) {
-          if (stat.getLastBasicType() != LASTBASICTYPE_GENERAL) {
+          if (stat.getLastBasicType() != StatementType.GENERAL) {
             handlerok = false;
           }
           else {

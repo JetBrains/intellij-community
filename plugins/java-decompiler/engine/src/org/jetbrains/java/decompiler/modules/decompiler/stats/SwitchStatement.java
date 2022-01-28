@@ -53,7 +53,7 @@ public final class SwitchStatement extends Statement {
 
   @Nullable
   public static Statement isHead(@NotNull Statement head) {
-    if (head.type == StatementType.BASIC_BLOCK && head.getLastBasicType() == Statement.LASTBASICTYPE_SWITCH) {
+    if (head.type == StatementType.BASIC_BLOCK && head.getLastBasicType() == StatementType.SWITCH) {
       List<Statement> statements = new ArrayList<>();
       if (DecHelper.isChoiceStatement(head, statements)) {
         Statement post = statements.remove(0);

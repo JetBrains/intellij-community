@@ -65,7 +65,7 @@ public final class CatchAllStatement extends Statement {
   // *****************************************************************************
 
   public static Statement isHead(Statement head) {
-    if (head.getLastBasicType() != Statement.LASTBASICTYPE_GENERAL) {
+    if (head.getLastBasicType() != StatementType.GENERAL) {
       return null;
     }
 
@@ -77,7 +77,7 @@ public final class CatchAllStatement extends Statement {
     for (StatEdge edge : head.getSuccessorEdges(EdgeType.EXCEPTION)) {
       Statement exc = edge.getDestination();
 
-      if (edge.getExceptions() == null && exc.getLastBasicType() == LASTBASICTYPE_GENERAL && setHandlers.contains(exc)) {
+      if (edge.getExceptions() == null && exc.getLastBasicType() == StatementType.GENERAL && setHandlers.contains(exc)) {
         List<StatEdge> lstSuccs = exc.getSuccessorEdges(EdgeType.DIRECT_ALL);
         if (lstSuccs.isEmpty() || lstSuccs.get(0).getType() != EdgeType.REGULAR) {
 

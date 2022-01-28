@@ -121,7 +121,7 @@ public class FlattenStatementsHelper {
             }
 
             // 'if' statement: record positive branch
-            if (stat.getLastBasicType() == Statement.LASTBASICTYPE_IF) {
+            if (stat.getLastBasicType() == StatementType.IF) {
               mapPosIfBranch.put(sourcenode.id, lstSuccEdges.get(0).getDestination().id);
             }
 

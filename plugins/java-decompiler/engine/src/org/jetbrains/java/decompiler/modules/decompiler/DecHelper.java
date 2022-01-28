@@ -5,6 +5,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -76,7 +77,7 @@ public final class DecHelper {
       setDest.remove(post);
 
       for (Statement stat : setDest) {
-        if (stat.getLastBasicType() != Statement.LASTBASICTYPE_GENERAL) {
+        if (stat.getLastBasicType() != StatementType.GENERAL) {
           if (post == null) {
             post = stat;
             repeat = true;

@@ -26,11 +26,6 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public abstract class Statement implements IMatchable {
-  public static final int LASTBASICTYPE_IF = 0;
-  public static final int LASTBASICTYPE_SWITCH = 1;
-  public static final int LASTBASICTYPE_GENERAL = 2;
-
-
   // *****************************************************************************
   // public fields
   // *****************************************************************************
@@ -70,7 +65,7 @@ public abstract class Statement implements IMatchable {
 
   protected Statement post;
 
-  protected int lastBasicType = LASTBASICTYPE_GENERAL;
+  protected StatementType lastBasicType = StatementType.GENERAL;
 
   protected boolean isMonitorEnter;
 
@@ -736,7 +731,7 @@ public abstract class Statement implements IMatchable {
     return stats;
   }
 
-  public int getLastBasicType() {
+  public StatementType getLastBasicType() {
     return lastBasicType;
   }
 

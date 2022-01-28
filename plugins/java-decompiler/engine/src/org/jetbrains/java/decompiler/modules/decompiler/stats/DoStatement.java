@@ -37,7 +37,7 @@ public final class DoStatement extends Statement {
   }
 
   public static @Nullable Statement isHead(Statement head) {
-    if (head.getLastBasicType() == LASTBASICTYPE_GENERAL && !head.isMonitorEnter()) {
+    if (head.getLastBasicType() == StatementType.GENERAL && !head.isMonitorEnter()) {
       // at most one outgoing edge
       StatEdge edge = null;
       List<StatEdge> successorEdges = head.getSuccessorEdges(EdgeType.DIRECT_ALL);

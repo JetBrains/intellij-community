@@ -159,7 +159,7 @@ public final class IfStatement extends Statement {
 
   public static Statement isHead(Statement head) {
 
-    if (head.type == StatementType.BASIC_BLOCK && head.getLastBasicType() == LASTBASICTYPE_IF) {
+    if (head.type == StatementType.BASIC_BLOCK && head.getLastBasicType() == StatementType.IF) {
       int regsize = head.getSuccessorEdges(EdgeType.REGULAR).size();
 
       Statement p = null;
