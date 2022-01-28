@@ -2,15 +2,21 @@
 package com.intellij.codeInsight
 
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
+import com.intellij.codeInsight.navigation.CtrlMouseHandler2
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.impl.AbstractEditorTest
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.progress.timeoutRunBlocking
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.TestTimeOut
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.LockSupport
 import java.util.stream.Collectors
@@ -19,11 +25,31 @@ import java.util.stream.Stream
 class CtrlMouseHandlerTest : AbstractEditorTest() {
 
   fun testHighlighterDisappearsOnMouseMovingAway() {
+    if (Registry.`is`("documentation.v2.ctrl.mouse")) {
+      return
+    }
     init("class A {}", JavaFileType.INSTANCE)
     val mouse = mouse()
     mouse.ctrl().moveTo(0, 6)
+    waitForHighlighting()
     assertHighlighted(6, 7)
     mouse.moveTo(0, 0)
+    waitForHighlighting()
+    assertHighlighted()
+  }
+
+  fun `test highlighter disappears on mouse moving away`() {
+    if (!Registry.`is`("documentation.v2.ctrl.mouse")) {
+      return
+    }
+    init("class A {}", JavaFileType.INSTANCE)
+    val mouse = mouse()
+    val handler = project.service<CtrlMouseHandler2>()
+    mouse.ctrl().moveTo(0, 6)
+    handler.handlerJob().joinPumping()
+    assertHighlighted(6, 7)
+    mouse.moveTo(0, 0)
+    handler.handlerJob().joinPumping()
     assertHighlighted()
   }
 
@@ -32,7 +58,6 @@ class CtrlMouseHandlerTest : AbstractEditorTest() {
   private fun assertHighlighted(vararg offsets: Int) {
     assert(offsets.size % 2 == 0)
     val highlighterCount = offsets.size / 2
-    waitForHighlighting()
     val highlighters = getCurrentHighlighters()
     assertEquals("Unexpected number of highlighters", highlighterCount, highlighters.size)
     for (i in 0 until highlighterCount) {
@@ -60,6 +85,18 @@ class CtrlMouseHandlerTest : AbstractEditorTest() {
       if (t.timedOut()) throw RuntimeException("Timed out waiting for CtrlMouseHandler")
       LockSupport.parkNanos(10_000_000)
       UIUtil.dispatchAllInvocationEvents()
+    }
+  }
+
+  private fun Job.joinPumping() {
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    UIUtil.dispatchAllInvocationEvents()
+    timeoutRunBlocking {
+      val job = this@joinPumping
+      while (job.isActive) {
+        delay(10)
+        UIUtil.dispatchAllInvocationEvents()
+      }
     }
   }
 }

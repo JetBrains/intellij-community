@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.resetThreadContext
@@ -22,7 +22,7 @@ import kotlinx.coroutines.sync.Semaphore as KSemaphore
 
 const val TEST_TIMEOUT_MS: Long = 1000
 
-internal fun timeoutRunBlocking(action: suspend CoroutineScope.() -> Unit) {
+fun timeoutRunBlocking(action: suspend CoroutineScope.() -> Unit) {
   runBlocking {
     withTimeout(TEST_TIMEOUT_MS, action)
   }

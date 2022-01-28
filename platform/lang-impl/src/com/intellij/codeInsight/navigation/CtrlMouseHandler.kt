@@ -15,9 +15,12 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.MouseShortcut
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.constrainedReadAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -49,6 +52,8 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.*
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -65,11 +70,13 @@ internal class InitCtrlMouseHandlerActivity : StartupActivity {
     if (!Registry.`is`("documentation.v2.ctrl.mouse")) {
       return
     }
-    Disposer.register(project, CtrlMouseHandler2(project))
+    project.service<CtrlMouseHandler2>()
   }
 }
 
-private class CtrlMouseHandler2(
+@VisibleForTesting
+@Service
+class CtrlMouseHandler2(
   private val project: Project,
 ) : EditorMouseMotionListener,
     EditorMouseListener,
@@ -167,6 +174,11 @@ private class CtrlMouseHandler2(
       EDT.assertIsEdt()
       field = value
     }
+
+  @TestOnly
+  fun handlerJob(): Job {
+    return cs.coroutineContext.job.children.single()
+  }
 
   override fun dispose() {
     cs.cancel("CtrlMouseHandler disposal")
@@ -286,7 +298,8 @@ private class CtrlMouseHandler2(
 
   private fun showHint(editor: EditorEx, hostOffset: Int, docInfo: CtrlMouseDocInfo): LightweightHint? {
     val skipHint = EditorMouseHoverPopupManager.getInstance().isHintShown ||
-                   DocumentationManager.instance(project).isPopupVisible
+                   DocumentationManager.instance(project).isPopupVisible ||
+                   ApplicationManager.getApplication().isUnitTestMode
     if (skipHint) {
       return null
     }
