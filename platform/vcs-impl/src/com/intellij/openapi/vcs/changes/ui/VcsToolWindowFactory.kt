@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.ide.actions.ToolWindowEmptyStateAction
-import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.DumbAware
@@ -35,14 +35,12 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
 
     val connection = project.messageBus.connect(window.disposable)
     connection.subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
-      runInEdt {
-        if (project.isDisposed) return@runInEdt
+      AppUIExecutor.onUiThread().expireWith(project).execute {
         updateState(project, window)
       }
     })
     connection.subscribe(ProjectLevelVcsManagerEx.VCS_ACTIVATED, VcsActivationListener {
-      runInEdt {
-        if (project.isDisposed) return@runInEdt
+      AppUIExecutor.onUiThread().expireWith(project).execute {
         updateState(project, window)
       }
     })
