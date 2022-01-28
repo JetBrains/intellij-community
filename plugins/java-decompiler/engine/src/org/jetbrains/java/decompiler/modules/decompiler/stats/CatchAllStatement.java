@@ -105,7 +105,7 @@ public final class CatchAllStatement extends Statement {
 
     boolean labeled = isLabeled();
     if (labeled) {
-      buf.appendIndent(indent).append("label").append(this.id.toString()).append(":").appendLineSeparator();
+      buf.appendIndent(indent).append("label").append(Integer.toString(id)).append(":").appendLineSeparator();
       tracer.incrementCurrentSourceLine();
     }
 

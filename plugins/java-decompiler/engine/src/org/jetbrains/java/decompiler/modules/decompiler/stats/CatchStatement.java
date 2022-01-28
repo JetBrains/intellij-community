@@ -139,7 +139,7 @@ public final class CatchStatement extends Statement {
     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
 
     if (isLabeled()) {
-      buf.appendIndent(indent).append("label").append(this.id.toString()).append(":").appendLineSeparator();
+      buf.appendIndent(indent).append("label").append(Integer.toString(id)).append(":").appendLineSeparator();
       tracer.incrementCurrentSourceLine();
     }
 

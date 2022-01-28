@@ -44,7 +44,7 @@ public class FlattenStatementsHelper {
 
     // dummy exit node
     Statement dummyexit = root.getDummyExit();
-    DirectNode node = new DirectNode(DirectNodeType.DIRECT, dummyexit, dummyexit.id.toString());
+    DirectNode node = new DirectNode(DirectNodeType.DIRECT, dummyexit, Integer.toString(dummyexit.id));
     node.exprents = new ArrayList<>();
     graph.nodes.addWithKey(node, node.id);
     mapDestinationNodes.put(dummyexit.id, new String[]{node.id, null});
@@ -406,15 +406,15 @@ public class FlattenStatementsHelper {
 
       mapShortRangeFinallyPathIds.computeIfAbsent(sourcenode.id, k -> new ArrayList<>()).add(new String[]{
         finallyShortRangeSource.id,
-        destination.id.toString(),
-        finallyShortRangeEntry.id.toString(),
+        Integer.toString(destination.id),
+        Integer.toString(finallyShortRangeEntry.id),
         isFinallyMonitorExceptionPath ? "1" : null,
         isContinueEdge ? "1" : null});
 
       mapLongRangeFinallyPathIds.computeIfAbsent(sourcenode.id, k -> new ArrayList<>()).add(new String[]{
         finallyLongRangeSource.id,
-        destination.id.toString(),
-        finallyLongRangeEntry.id.toString(),
+        Integer.toString(destination.id),
+        Integer.toString(finallyLongRangeEntry.id),
         isContinueEdge ? "1" : null});
     }
   }

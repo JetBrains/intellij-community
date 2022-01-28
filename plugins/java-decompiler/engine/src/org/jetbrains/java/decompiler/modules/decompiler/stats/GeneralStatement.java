@@ -44,7 +44,7 @@ public class GeneralStatement extends Statement {
     TextBuffer buf = new TextBuffer();
 
     if (isLabeled()) {
-      buf.appendIndent(indent).append("label").append(this.id.toString()).append(":").appendLineSeparator();
+      buf.appendIndent(indent).append("label").append(Integer.toString(id)).append(":").appendLineSeparator();
     }
 
     buf.appendIndent(indent).append("abstract statement {").appendLineSeparator();

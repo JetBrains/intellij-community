@@ -26,17 +26,8 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public abstract class Statement implements IMatchable {
-  // *****************************************************************************
-  // public fields
-  // *****************************************************************************
-
   public StatementType type;
-
-  public Integer id;
-
-  // *****************************************************************************
-  // private fields
-  // *****************************************************************************
+  public int id;
 
   private final Map<EdgeType, List<StatEdge>> mapSuccEdges = new HashMap<>();
   private final Map<EdgeType, List<StatEdge>> mapPredEdges = new HashMap<>();
@@ -44,46 +35,34 @@ public abstract class Statement implements IMatchable {
   private final Map<EdgeType, List<Statement>> mapSuccStates = new HashMap<>();
   private final Map<EdgeType, List<Statement>> mapPredStates = new HashMap<>();
 
-  // statement as graph
-  protected final VBStyleCollection<Statement, Integer> stats = new VBStyleCollection<>();
-
-  protected Statement parent;
-
-  protected Statement first;
-
-  protected List<Exprent> exprents;
-
-  protected final HashSet<StatEdge> labelEdges = new HashSet<>();
-
-  protected final List<Exprent> varDefinitions = new ArrayList<>();
-
+  private final HashSet<StatEdge> labelEdges = new HashSet<>();
   // copied statement, s. deobfuscating of irreducible CFGs
   private boolean copied = false;
-
+  // statement as graph
+  protected final VBStyleCollection<Statement, Integer> stats = new VBStyleCollection<>();
+  protected Statement parent;
+  protected Statement first;
+  protected List<Exprent> exprents;
+  protected final List<Exprent> varDefinitions = new ArrayList<>();
   // relevant for the first stage of processing only
   // set to null after initializing of the statement structure
-
   protected Statement post;
-
   protected StatementType lastBasicType = StatementType.GENERAL;
-
   protected boolean isMonitorEnter;
-
   protected boolean containsMonitorExit;
-
   protected HashSet<Statement> continueSet = new HashSet<>();
 
-  // *****************************************************************************
-  // initializers
-  // *****************************************************************************
-
   {
-    // set statement id
     id = DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER);
   }
 
   Statement(@NotNull StatementType type) {
     this.type = type;
+  }
+
+  Statement(@NotNull StatementType type, int id) {
+    this.type = type;
+    this.id = id;
   }
 
   // *****************************************************************************
@@ -810,7 +789,7 @@ public abstract class Statement implements IMatchable {
 
   // helper methods
   public String toString() {
-    return id.toString();
+    return Integer.toString(id);
   }
 
   // *****************************************************************************

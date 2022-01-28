@@ -196,7 +196,7 @@ public final class IfStatement extends Statement {
     buf.append(first.toJava(indent, tracer));
 
     if (isLabeled()) {
-      buf.appendIndent(indent).append("label").append(this.id.toString()).append(":").appendLineSeparator();
+      buf.appendIndent(indent).append("label").append(Integer.toString(id)).append(":").appendLineSeparator();
       tracer.incrementCurrentSourceLine();
     }
 
@@ -217,7 +217,7 @@ public final class IfStatement extends Statement {
         }
 
         if (ifedge.labeled) {
-          buf.append(" label").append(ifedge.closure.id.toString());
+          buf.append(" label").append(Integer.toString(ifedge.closure.id));
         }
       }
       if(semicolon) {

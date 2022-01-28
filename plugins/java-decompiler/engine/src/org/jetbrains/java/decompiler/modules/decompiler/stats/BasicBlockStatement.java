@@ -15,8 +15,7 @@ public class BasicBlockStatement extends Statement {
   private final BasicBlock block;
 
   public BasicBlockStatement(BasicBlock block) {
-    super(StatementType.BASIC_BLOCK);
-    id = block.id;
+    super(StatementType.BASIC_BLOCK, block.id);
     this.block = block;
 
     CounterContainer container = DecompilerContext.getCounterContainer();

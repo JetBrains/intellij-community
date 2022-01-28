@@ -78,7 +78,7 @@ public final class SwitchStatement extends Statement {
     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
     buf.append(first.toJava(indent, tracer));
     if (isLabeled()) {
-      buf.appendIndent(indent).append("label").append(this.id.toString()).append(":").appendLineSeparator();
+      buf.appendIndent(indent).append("label").append(Integer.toString(id)).append(":").appendLineSeparator();
       tracer.incrementCurrentSourceLine();
     }
     buf.appendIndent(indent).append(headExprent.toJava(indent, tracer)).append(" {").appendLineSeparator();
