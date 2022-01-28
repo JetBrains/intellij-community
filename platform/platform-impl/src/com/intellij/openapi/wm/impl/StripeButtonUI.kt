@@ -1,171 +1,142 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.wm.impl
 
-import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.JBInsets;
+import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
+import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.ui.Gray
+import com.intellij.ui.JBColor
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBInsets
+import java.awt.*
+import javax.swing.JComponent
+import javax.swing.SwingUtilities
+import javax.swing.plaf.basic.BasicGraphicsUtils
+import javax.swing.plaf.metal.MetalToggleButtonUI
 
-import javax.swing.*;
-import javax.swing.plaf.ComponentUI;
-import javax.swing.plaf.basic.BasicGraphicsUtils;
-import javax.swing.plaf.metal.MetalToggleButtonUI;
-import java.awt.*;
-
-/**
- * @author Vladimir Kondratyev
- */
-public class StripeButtonUI extends MetalToggleButtonUI {
-  private final Rectangle myIconRect = new Rectangle();
-  private final Rectangle myTextRect = new Rectangle();
-  private final Rectangle myViewRect = new Rectangle();
-  private Insets ourViewInsets = JBInsets.emptyInsets();
-
-  static final Color BACKGROUND_COLOR = JBColor.namedColor("ToolWindow.Button.hoverBackground",
-                               new JBColor(Gray.x55.withAlpha(40), Gray.x0F.withAlpha(40)));
-
-  static final Color SELECTED_BACKGROUND_COLOR = JBColor.namedColor("ToolWindow.Button.selectedBackground",
-                               new JBColor(Gray.x55.withAlpha(85), Gray.x0F.withAlpha(85)));
-
-  static final Color SELECTED_FOREGROUND_COLOR = JBColor.namedColor("ToolWindow.Button.selectedForeground", new JBColor(Gray.x00, Gray.xFF));
-
-  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
-  public static ComponentUI createUI(JComponent c) {
-    return new StripeButtonUI();
+class StripeButtonUI : MetalToggleButtonUI() {
+  companion object {
+    val BACKGROUND_COLOR: Color = JBColor.namedColor("ToolWindow.Button.hoverBackground",
+                                                     JBColor(Gray.x55.withAlpha(40), Gray.x0F.withAlpha(40)))
+    val SELECTED_BACKGROUND_COLOR: Color = JBColor.namedColor("ToolWindow.Button.selectedBackground",
+                                                              JBColor(Gray.x55.withAlpha(85), Gray.x0F.withAlpha(85)))
+    val SELECTED_FOREGROUND_COLOR: Color = JBColor.namedColor("ToolWindow.Button.selectedForeground", JBColor(Gray.x00, Gray.xFF))
   }
 
-  @Override
-  public Dimension getPreferredSize(JComponent c) {
-    AnchoredButton button = (AnchoredButton)c;
-    Dimension dim = super.getPreferredSize(button);
+  private val iconRect = Rectangle()
+  private val textRect = Rectangle()
+  private val viewRect = Rectangle()
+  private var ourViewInsets: Insets = JBInsets.emptyInsets()
 
-    dim.width = (int)(JBUIScale.scale(4) + dim.width * 1.1f);
-    dim.height += JBUIScale.scale(2);
-
-    ToolWindowAnchor anchor = button.getAnchor();
-    if (ToolWindowAnchor.LEFT == anchor || ToolWindowAnchor.RIGHT == anchor) {
-      //noinspection SuspiciousNameCombination
-      return new Dimension(dim.height, dim.width);
+  override fun getPreferredSize(c: JComponent): Dimension {
+    val button = c as AnchoredButton
+    val dimension = super.getPreferredSize(button)
+    dimension.width = (JBUIScale.scale(4) + dimension.width * 1.1f).toInt()
+    dimension.height += JBUIScale.scale(2)
+    val anchor = button.anchor
+    return if (ToolWindowAnchor.LEFT == anchor || ToolWindowAnchor.RIGHT == anchor) {
+      Dimension(dimension.height, dimension.width)
     }
     else {
-      return dim;
+      dimension
     }
   }
 
-  @Override
-  public void update(Graphics g, JComponent c) {
-    AnchoredButton button = (AnchoredButton)c;
-
-    String text = button.getText();
-    Icon icon = (button.isEnabled()) ? button.getIcon() : button.getDisabledIcon();
-
-    if ((icon == null) && (text == null)) {
-      return;
+  override fun update(g: Graphics, c: JComponent) {
+    val button = c as AnchoredButton
+    val text = button.text
+    val icon = (if (button.isEnabled) button.icon else button.disabledIcon)
+    if (text == null && icon == null) {
+      return
     }
 
-    FontMetrics fm = button.getFontMetrics(button.getFont());
-    ourViewInsets = c.getInsets(ourViewInsets);
+    val fm = button.getFontMetrics(button.font)
+    ourViewInsets = c.getInsets(ourViewInsets)
+    viewRect.x = ourViewInsets.left
+    viewRect.y = ourViewInsets.top
 
-    myViewRect.x = ourViewInsets.left;
-    myViewRect.y = ourViewInsets.top;
-
-    ToolWindowAnchor anchor = button.getAnchor();
-
-    // Use inverted height & width
+    val anchor = button.anchor
+    // se inverted height & width
     if (ToolWindowAnchor.RIGHT == anchor || ToolWindowAnchor.LEFT == anchor) {
-      myViewRect.height = c.getWidth() - (ourViewInsets.left + ourViewInsets.right);
-      myViewRect.width = c.getHeight() - (ourViewInsets.top + ourViewInsets.bottom);
+      viewRect.height = c.getWidth() - (ourViewInsets.left + ourViewInsets.right)
+      viewRect.width = c.getHeight() - (ourViewInsets.top + ourViewInsets.bottom)
     }
     else {
-      myViewRect.height = c.getHeight() - (ourViewInsets.left + ourViewInsets.right);
-      myViewRect.width = c.getWidth() - (ourViewInsets.top + ourViewInsets.bottom);
+      viewRect.height = c.getHeight() - (ourViewInsets.left + ourViewInsets.right)
+      viewRect.width = c.getWidth() - (ourViewInsets.top + ourViewInsets.bottom)
     }
-
-    myIconRect.x = myIconRect.y = myIconRect.width = myIconRect.height = 0;
-    myTextRect.x = myTextRect.y = myTextRect.width = myTextRect.height = 0;
-
-    String clippedText = SwingUtilities.layoutCompoundLabel(
+    iconRect.height = 0
+    iconRect.width = iconRect.height
+    iconRect.y = iconRect.width
+    iconRect.x = iconRect.y
+    textRect.height = 0
+    textRect.width = textRect.height
+    textRect.y = textRect.width
+    textRect.x = textRect.y
+    val clippedText = SwingUtilities.layoutCompoundLabel(
       c, fm, text, icon,
-      button.getVerticalAlignment(), button.getHorizontalAlignment(),
-      button.getVerticalTextPosition(), button.getHorizontalTextPosition(),
-      myViewRect, myIconRect, myTextRect,
-      button.getText() == null ? 0 : button.getIconTextGap()
-    );
+      button.verticalAlignment, button.horizontalAlignment,
+      button.verticalTextPosition, button.horizontalTextPosition,
+      viewRect, iconRect, textRect,
+      if (button.text == null) 0 else button.iconTextGap
+    )
 
     // Paint button's background
-    Graphics2D g2 = (Graphics2D)g.create();
+    val g2 = g.create() as Graphics2D
     try {
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-
-      ButtonModel model = button.getModel();
-      int off = JBUIScale.scale(1);
-
-      myIconRect.x -= JBUIScale.scale(2);
-      myTextRect.x -= JBUIScale.scale(2);
-      if (model.isArmed() && model.isPressed() || model.isSelected() || model.isRollover()) {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+      g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+      val model = button.model
+      val off = JBUIScale.scale(1)
+      iconRect.x -= JBUIScale.scale(2)
+      textRect.x -= JBUIScale.scale(2)
+      if (model.isArmed && model.isPressed || model.isSelected || model.isRollover) {
         if (anchor == ToolWindowAnchor.LEFT) {
-          g2.translate(-off, 0);
+          g2.translate(-off, 0)
         }
-
-        if (anchor.isHorizontal()) {
-          g2.translate(0, -off);
+        if (anchor.isHorizontal) {
+          g2.translate(0, -off)
         }
-
-        g2.setColor(model.isSelected() ? SELECTED_BACKGROUND_COLOR : BACKGROUND_COLOR);
-        g2.fillRect(0, 0, button.getWidth(), button.getHeight());
-
+        g2.color = if (model.isSelected) SELECTED_BACKGROUND_COLOR else BACKGROUND_COLOR
+        g2.fillRect(0, 0, button.width, button.height)
         if (anchor == ToolWindowAnchor.LEFT) {
-          g2.translate(off, 0);
+          g2.translate(off, 0)
         }
-
-        if (anchor.isHorizontal()) {
-          g2.translate(0, off);
+        if (anchor.isHorizontal) {
+          g2.translate(0, off)
         }
       }
-
       if (ToolWindowAnchor.RIGHT == anchor || ToolWindowAnchor.LEFT == anchor) {
         if (ToolWindowAnchor.RIGHT == anchor) {
-          if (icon != null) { // do not rotate icon
-            //noinspection SuspiciousNameCombination
-            icon.paintIcon(c, g2, myIconRect.y, myIconRect.x);
-          }
-          g2.rotate(Math.PI / 2);
-          g2.translate(0, -c.getWidth());
+          icon?.paintIcon(c, g2, iconRect.y, iconRect.x)
+          g2.rotate(Math.PI / 2)
+          g2.translate(0, -c.getWidth())
         }
         else {
-          if (icon != null) { // do not rotate icon
-            //noinspection SuspiciousNameCombination
-            icon.paintIcon(c, g2, myIconRect.y, c.getHeight() - myIconRect.x - icon.getIconHeight());
-          }
-          g2.rotate(-Math.PI / 2);
-          g2.translate(-c.getHeight(), 0);
+          icon?.paintIcon(c, g2, iconRect.y, c.getHeight() - iconRect.x - icon.iconHeight)
+          g2.rotate(-Math.PI / 2)
+          g2.translate(-c.getHeight(), 0)
         }
       }
       else {
-        if (icon != null) {
-          icon.paintIcon(c, g2, myIconRect.x, myIconRect.y);
-        }
+        icon?.paintIcon(c, g2, iconRect.x, iconRect.y)
       }
 
       // paint text
-      UISettings.setupAntialiasing(g2);
+      setupAntialiasing(g2)
       if (text != null) {
-        if (model.isEnabled()) {
+        if (model.isEnabled) {
           /* paint the text normally */
-          g2.setColor(model.isSelected() ? SELECTED_FOREGROUND_COLOR : c.getForeground());
+          g2.color = if (model.isSelected) SELECTED_FOREGROUND_COLOR else c.getForeground()
         }
         else {
-          /* paint the text disabled ***/
-          g2.setColor(getDisabledTextColor());
+          // paint the text disabled
+          g2.color = getDisabledTextColor()
         }
-        BasicGraphicsUtils.drawString(g2, clippedText, button.getMnemonic2(), myTextRect.x, myTextRect.y + fm.getAscent());
+        BasicGraphicsUtils.drawString(g2, clippedText, button.mnemonic2, textRect.x, textRect.y + fm.ascent)
       }
     }
     finally {
-      g2.dispose();
+      g2.dispose()
     }
   }
 }
