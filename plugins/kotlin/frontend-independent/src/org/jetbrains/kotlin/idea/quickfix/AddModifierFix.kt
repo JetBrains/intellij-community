@@ -52,7 +52,7 @@ open class AddModifierFix(
     //  FIR version of [org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringUtilKt#canRefactor]
     override fun isAvailableImpl(project: Project, editor: Editor?, file: PsiFile): Boolean = element != null
 
-    interface Factory<T> {
+    interface Factory<T: AddModifierFix> {
         fun createFactory(modifier: KtModifierKeywordToken): QuickFixesPsiBasedFactory<PsiElement> {
             return createFactory(modifier, KtModifierListOwner::class.java)
         }
@@ -68,7 +68,7 @@ open class AddModifierFix(
             }
         }
 
-        fun createIfApplicable(modifierListOwner: KtModifierListOwner, modifier: KtModifierKeywordToken): AddModifierFix? {
+        fun createIfApplicable(modifierListOwner: KtModifierListOwner, modifier: KtModifierKeywordToken): T? {
             when (modifier) {
                 KtTokens.ABSTRACT_KEYWORD, KtTokens.OPEN_KEYWORD -> {
                     if (modifierListOwner is KtObjectDeclaration) return null
@@ -95,7 +95,7 @@ open class AddModifierFix(
                     }
                 }
             }
-            return AddModifierFix(modifierListOwner, modifier)
+            return createModifierFix(modifierListOwner, modifier)
         }
 
         fun createModifierFix(element: KtModifierListOwner, modifier: KtModifierKeywordToken): T
