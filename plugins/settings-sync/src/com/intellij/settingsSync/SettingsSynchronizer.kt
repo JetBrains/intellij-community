@@ -22,7 +22,6 @@ internal class SettingsSynchronizer : FrameStateListener, SettingsSyncEnabledSta
     }
 
     if (!SettingsSyncMain.isAvailable()) {
-      LOG.info("Initializing settings sync")
       executorService.schedule(initializeSyncing(), 0, TimeUnit.SECONDS)
       return
     }
@@ -32,7 +31,7 @@ internal class SettingsSynchronizer : FrameStateListener, SettingsSyncEnabledSta
     }
 
     if (Registry.`is`("settingsSync.autoSync.on.focus", true)) {
-      scheduleSyncing()
+      scheduleSyncing("Syncing settings on app focus")
     }
   }
 
@@ -41,6 +40,7 @@ internal class SettingsSynchronizer : FrameStateListener, SettingsSyncEnabledSta
   }
 
   private fun initializeSyncing(): Runnable = Runnable {
+    LOG.info("Initializing settings sync")
     SettingsSyncMain.getInstance().syncSettings()
   }
 
@@ -53,7 +53,7 @@ internal class SettingsSynchronizer : FrameStateListener, SettingsSyncEnabledSta
       }
       else {
         SettingsSyncMain.getInstance().enableSyncing()
-        scheduleSyncing()
+        scheduleSyncing("Syncing settings after enabling")
       }
     }
     else {
@@ -62,8 +62,9 @@ internal class SettingsSynchronizer : FrameStateListener, SettingsSyncEnabledSta
     }
   }
 
-  private fun scheduleSyncing() {
+  private fun scheduleSyncing(logMessage: String) {
     executorService.schedule(Runnable {
+      LOG.info(logMessage)
       SettingsSyncMain.getInstance().syncSettings()
     }, 0, TimeUnit.SECONDS)
   }
@@ -72,6 +73,7 @@ internal class SettingsSynchronizer : FrameStateListener, SettingsSyncEnabledSta
   private fun setupSyncingByTimer(): ScheduledFuture<*> {
     val delay = autoSyncDelay
     return executorService.scheduleWithFixedDelay(Runnable {
+      LOG.info("Syncing settings by timer")
       SettingsSyncMain.getInstance().syncSettings()
     }, delay, delay, TimeUnit.SECONDS)
   }
