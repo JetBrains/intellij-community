@@ -11,6 +11,7 @@ import com.intellij.ide.plugins.org.PluginManagerFilters
 import com.intellij.ide.ui.PluginBooleanOptionDescriptor
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
+import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -23,8 +24,13 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.ApiStatus
+import java.util.function.Consumer
 
 open class PluginAdvertiserService {
+
+  private val notificationManager: SingletonNotificationManager =
+    SingletonNotificationManager(notificationGroup.displayId, NotificationType.INFORMATION)
+
   companion object {
     @JvmStatic
     fun getInstance(): PluginAdvertiserService = service()
@@ -197,10 +203,11 @@ open class PluginAdvertiserService {
     }
 
     ProgressManager.checkCanceled()
-    notificationGroup.createNotification(notificationMessage, NotificationType.INFORMATION)
-      .setSuggestionType(true)
-      .addActions(notificationActions as Collection<AnAction>)
-      .notify(project)
+
+    notificationManager.notify("", notificationMessage, project, Consumer {
+      it.setSuggestionType(true)
+        .addActions(notificationActions as Collection<AnAction>)
+    })
   }
 
   private fun createIgnoreUnknownFeaturesAction(project: Project,

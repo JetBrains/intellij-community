@@ -341,8 +341,14 @@ public class Notification {
     if (myWhenExpired == null) {
       myWhenExpired = new ArrayList<>();
     }
-    myWhenExpired.add(whenExpired);
+    if (whenExpired != null) {
+      myWhenExpired.add(whenExpired);
+    }
     return this;
+  }
+
+  public void resetAllExpiredListeners() {
+    myWhenExpired = null;
   }
 
   public void hideBalloon() {

@@ -64,7 +64,7 @@ class SingletonNotificationManager(groupId: String, private val type: Notificati
   }
 
   private fun expire(notification: Notification) {
-    notification.whenExpired(null)
+    notification.resetAllExpiredListeners()
     notification.expire()
   }
 
