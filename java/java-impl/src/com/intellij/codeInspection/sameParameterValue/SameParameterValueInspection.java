@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sameParameterValue;
 
 import com.intellij.analysis.AnalysisScope;
@@ -32,6 +32,7 @@ import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.ui.components.fields.valueEditors.ValueEditor;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
@@ -232,7 +233,6 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     if (usedForWriting) return false;
     PsiParameter javaParameter = ObjectUtils.tryCast(parameter.getSourcePsi(), PsiParameter.class);
     if (javaParameter == null) return null;
-    if (javaParameter.isVarArgs()) return false;
     if (value instanceof PsiField && !PsiUtil.isMemberAccessibleAt((PsiMember)value, javaParameter)) {
       return false;
     }
@@ -343,7 +343,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
             }
 
             for (final PsiExpression expr : exprs) {
-              if (expr != null) JavaSpecialRefactoringProvider.getInstance().tryToInlineArrayCreationForVarargs(expr);
+              if (expr != null) CommonJavaRefactoringUtil.tryToInlineArrayCreationForVarargs(expr);
             }
           }
           catch (IncorrectOperationException e) {

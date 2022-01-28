@@ -138,8 +138,6 @@ public interface JavaSpecialRefactoringProvider {
                                PsiJavaCodeReferenceElement ref,
                                PsiExpression thisAccessExpr) throws IncorrectOperationException;
 
-  void tryToInlineArrayCreationForVarargs(final PsiExpression expr);
-
   void searchForHierarchyConflicts(PsiMethod method, MultiMap<PsiElement, @Nls String> conflicts, final String modifier);
 
   void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination) throws IncorrectOperationException;

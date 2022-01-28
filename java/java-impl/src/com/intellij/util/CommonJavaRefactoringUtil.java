@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
@@ -24,13 +25,11 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScopes;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Contract;
@@ -954,6 +953,144 @@ public class CommonJavaRefactoringUtil {
     if (type1 == type2) return true;
     if (type1 == null || !type1.equals(type2)) return false;
     return Objects.equals(type1.getCanonicalText(true), type2.getCanonicalText(true));
+  }
+
+  /**
+   * @return array of array initializers of the last argument of {@code expression} call,
+   *         {@code null} if call has no potential to be a vararg call or last parameter isn't an array creation
+   */
+  public static PsiExpression @Nullable[] getArrayInitializersToFlattenInVarargs(PsiCall expression) {
+    final JavaResolveResult resolveResult = expression.resolveMethodGenerics();
+    PsiElement element = resolveResult.getElement();
+    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+    if (!(element instanceof PsiMethod)) {
+      return null;
+    }
+    PsiMethod method = (PsiMethod)element;
+    if (!method.isVarArgs() ||
+        AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0)) {
+      return null;
+    }
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    PsiExpressionList argumentList = expression.getArgumentList();
+    if (argumentList == null) {
+      return null;
+    }
+    PsiExpression[] args = argumentList.getExpressions();
+    if (parameters.length != args.length) {
+      return null;
+    }
+    PsiExpression lastArg = PsiUtil.skipParenthesizedExprDown(args[args.length - 1]);
+    PsiParameter lastParameter = parameters[args.length - 1];
+    if (!lastParameter.isVarArgs()) {
+      return null;
+    }
+    PsiType lastParamType = lastParameter.getType();
+    LOG.assertTrue(lastParamType instanceof PsiEllipsisType, lastParamType);
+    if (!(lastArg instanceof PsiNewExpression)) {
+      return null;
+    }
+    final PsiType substitutedLastParamType = substitutor.substitute(((PsiEllipsisType)lastParamType).toArrayType());
+    final PsiType lastArgType = lastArg.getType();
+    if (lastArgType == null || !lastArgType.equals(substitutedLastParamType) &&
+                               !lastArgType.equals(TypeConversionUtil.erasure(substitutedLastParamType))) {
+      return null;
+    }
+    PsiExpression[] initializers = getInitializers((PsiNewExpression)lastArg);
+    if (initializers == null) {
+      return null;
+    }
+    if (ContainerUtil.exists(initializers, expr -> expr instanceof PsiArrayInitializerExpression)) {
+      return null;
+    }
+    return initializers;
+  }
+
+  /**
+   * Should be called with {@code arrayElements} = {@link #getArrayInitializersToFlattenInVarargs(PsiCall)}.
+   * 
+   * @return {@code true} iff {@code callExpression} would resolve to the same method after replacement of last argument with {@code arrayElements}
+   */
+  public static boolean isSafeToFlattenToVarargsCall(@NotNull final PsiCall callExpression,
+                                                     @NotNull final PsiExpression @NotNull [] arrayElements) {
+    @NotNull final PsiMethod oldRefMethod = Objects.requireNonNull(callExpression.resolveMethod());
+    if (arrayElements.length == 1) {
+      PsiType type = arrayElements[0].getType();
+      // change foo(new Object[]{array}) to foo(array) is not safe
+      if (PsiType.NULL.equals(type) || type instanceof PsiArrayType) return false;
+    }
+    PsiCall copy = (PsiCall)callExpression.copy();
+    PsiExpressionList copyArgumentList = copy.getArgumentList();
+    LOG.assertTrue(copyArgumentList != null);
+    PsiExpression[] args = copyArgumentList.getExpressions();
+    try {
+      args[args.length - 1].delete();
+      if (arrayElements.length > 0) {
+        copyArgumentList.addRange(arrayElements[0], arrayElements[arrayElements.length - 1]);
+      }
+      final Project project = callExpression.getProject();
+      final JavaResolveResult resolveResult;
+      if (callExpression instanceof PsiEnumConstant) {
+        final PsiEnumConstant enumConstant = (PsiEnumConstant)callExpression;
+        final PsiClass containingClass = enumConstant.getContainingClass();
+        if (containingClass == null) return false;
+        final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+        final PsiClassType classType = facade.getElementFactory().createType(containingClass);
+        resolveResult = facade.getResolveHelper().resolveConstructor(classType, copyArgumentList, enumConstant);
+        return resolveResult.isValidResult() && resolveResult.getElement() == oldRefMethod;
+      }
+      else {
+        resolveResult = copy.resolveMethodGenerics();
+        if (!resolveResult.isValidResult() || resolveResult.getElement() != oldRefMethod) {
+          return false;
+        }
+        if (callExpression.getParent() instanceof PsiExpressionStatement) return true;
+        final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes((PsiCallExpression)callExpression, false);
+        if (expectedTypes.length == 0) return false;
+        final PsiType expressionType = ((PsiCallExpression)copy).getType();
+        if (expressionType == null) return false;
+        for (ExpectedTypeInfo expectedType : expectedTypes) {
+          if (expectedType.getType().isAssignableFrom(expressionType)) {
+            return true;
+          }
+        }
+        return false;
+      }
+    }
+    catch (IncorrectOperationException e) {
+      return false;
+    }
+  }
+
+  private static PsiExpression @Nullable [] getInitializers(@NotNull final PsiNewExpression newExpression) {
+    PsiArrayInitializerExpression initializer = newExpression.getArrayInitializer();
+    if (initializer != null) {
+      return initializer.getInitializers();
+    }
+    PsiExpression[] dims = newExpression.getArrayDimensions();
+    if (dims.length > 0) {
+      PsiExpression firstDimension = dims[0];
+      Object value =
+        JavaPsiFacade.getInstance(newExpression.getProject()).getConstantEvaluationHelper().computeConstantExpression(firstDimension);
+      if (value instanceof Integer && ((Integer)value).intValue() == 0) return PsiExpression.EMPTY_ARRAY;
+    }
+
+    return null;
+  }
+
+  public static void tryToInlineArrayCreationForVarargs(final PsiExpression expr) {
+    if (expr instanceof PsiNewExpression && ((PsiNewExpression)expr).getArrayInitializer() != null) {
+      if (expr.getParent() instanceof PsiExpressionList) {
+        final PsiExpressionList exprList = (PsiExpressionList)expr.getParent();
+        PsiElement parent = exprList.getParent();
+        if (parent instanceof PsiCall) {
+          PsiExpression[] initializers = getArrayInitializersToFlattenInVarargs((PsiCall)parent);
+          if (initializers != null && isSafeToFlattenToVarargsCall((PsiCall)parent, initializers)) {
+            inlineArrayCreationForVarargs((PsiNewExpression)expr);
+          }
+        }
+      }
+    }
   }
 
   public interface SuperTypeVisitor {

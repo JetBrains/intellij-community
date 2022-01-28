@@ -167,11 +167,6 @@ public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactorin
   }
 
   @Override
-  public void tryToInlineArrayCreationForVarargs(PsiExpression expr) {
-    InlineUtil.tryToInlineArrayCreationForVarargs(expr);
-  }
-
-  @Override
   public void searchForHierarchyConflicts(PsiMethod method,
                                           MultiMap<PsiElement, @Nls String> conflicts,
                                           String modifier) {

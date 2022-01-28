@@ -191,71 +191,6 @@ public final class InlineUtil {
     return thisAccessExpr;
   }
 
-  public static void tryToInlineArrayCreationForVarargs(final PsiExpression expr) {
-    if (expr instanceof PsiNewExpression && ((PsiNewExpression)expr).getArrayInitializer() != null) {
-      if (expr.getParent() instanceof PsiExpressionList) {
-        final PsiExpressionList exprList = (PsiExpressionList)expr.getParent();
-        if (exprList.getParent() instanceof PsiCall) {
-          if (isSafeToInlineVarargsArgument((PsiCall)exprList.getParent())) {
-            CommonJavaRefactoringUtil.inlineArrayCreationForVarargs((PsiNewExpression)expr);
-          }
-        }
-      }
-    }
-  }
-
-  private static boolean isSafeToInlineVarargsArgument(PsiCall expression) {
-    final JavaResolveResult resolveResult = expression.resolveMethodGenerics();
-    PsiElement element = resolveResult.getElement();
-    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-    if (element instanceof PsiMethod && ((PsiMethod)element).isVarArgs()) {
-      PsiMethod method = (PsiMethod)element;
-      PsiParameter[] parameters = method.getParameterList().getParameters();
-      PsiExpressionList argumentList = expression.getArgumentList();
-      if (argumentList != null) {
-        PsiExpression[] args = argumentList.getExpressions();
-        if (parameters.length == args.length) {
-          PsiExpression lastArg = args[args.length - 1];
-          PsiParameter lastParameter = parameters[args.length - 1];
-          PsiType lastParamType = lastParameter.getType();
-          LOG.assertTrue(lastParamType instanceof PsiEllipsisType);
-          if (lastArg instanceof PsiNewExpression) {
-            final PsiType lastArgType = lastArg.getType();
-            if (lastArgType != null && substitutor.substitute(((PsiEllipsisType)lastParamType).toArrayType()).isAssignableFrom(lastArgType)) {
-              PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)lastArg).getArrayInitializer();
-              PsiExpression[] initializers = arrayInitializer != null ? arrayInitializer.getInitializers() : PsiExpression.EMPTY_ARRAY;
-              return isSafeToFlatten(expression, method, initializers);
-            }
-          }
-        }
-      }
-    }
-
-    return false;
-  }
-
-  private static boolean isSafeToFlatten(PsiCall callExpression, PsiMethod oldRefMethod, PsiExpression[] arrayElements) {
-    for (PsiExpression arrayElement : arrayElements) {
-      if (arrayElement instanceof PsiArrayInitializerExpression) {
-        return false;
-      }
-    }
-    PsiCall copy = (PsiCall)callExpression.copy();
-    PsiExpressionList copyArgumentList = copy.getArgumentList();
-    LOG.assertTrue(copyArgumentList != null);
-    PsiExpression[] args = copyArgumentList.getExpressions();
-    try {
-      args[args.length - 1].delete();
-      if (arrayElements.length > 0) {
-        copyArgumentList.addRange(arrayElements[0], arrayElements[arrayElements.length - 1]);
-      }
-      return copy.resolveMethod() == oldRefMethod;
-    }
-    catch (IncorrectOperationException e) {
-      return false;
-    }
-  }
-
   public static boolean allUsagesAreTailCalls(final PsiMethod method) {
     final List<PsiReference> nonTailCallUsages = Collections.synchronizedList(new ArrayList<>());
     boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(
@@ -502,7 +437,7 @@ public final class InlineUtil {
 
     PsiExpression expr = inlineVariable(variable, initializer, ref);
 
-    tryToInlineArrayCreationForVarargs(expr);
+    CommonJavaRefactoringUtil.tryToInlineArrayCreationForVarargs(expr);
 
     //Q: move the following code to some util? (addition to inline?)
     if (expr instanceof PsiThisExpression) {
