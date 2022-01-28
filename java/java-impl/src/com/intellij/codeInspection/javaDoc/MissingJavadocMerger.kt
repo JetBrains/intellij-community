@@ -23,19 +23,6 @@ class MissingJavadocMerger: InspectionElementsMergerBase() {
     return toolElement
   }
 
-  override fun isEnabledByDefault(sourceToolName: String): Boolean {
-    return false
-  }
-
-  override fun writeMergedContent(toolElement: Element): Boolean {
-    val oldInspection = JavaDocLocalInspection()
-    oldInspection.readSettings(toolElement)
-    val options = with (oldInspection) {
-      sequenceOf(PACKAGE_OPTIONS, FIELD_OPTIONS, METHOD_OPTIONS, MODULE_OPTIONS, INNER_CLASS_OPTIONS, TOP_LEVEL_CLASS_OPTIONS)
-    }
-    return options.any { it.ACCESS_JAVADOC_REQUIRED_FOR != JavaDocLocalInspection.NONE }
-  }
-
   private fun transformOptions(oldOption: JavaDocLocalInspection.Options): MissingJavadocInspection.Options {
     val newOption = MissingJavadocInspection.Options()
     newOption.ENABLED = oldOption.ACCESS_JAVADOC_REQUIRED_FOR != JavaDocLocalInspection.NONE
@@ -45,7 +32,6 @@ class MissingJavadocMerger: InspectionElementsMergerBase() {
     else {
       newOption.MINIMAL_VISIBILITY = oldOption.ACCESS_JAVADOC_REQUIRED_FOR
     }
-    newOption.MINIMAL_VISIBILITY = oldOption.ACCESS_JAVADOC_REQUIRED_FOR
     newOption.REQUIRED_TAGS = oldOption.REQUIRED_TAGS
     return newOption
   }
