@@ -471,13 +471,20 @@ public final class ConfigImportHelper {
       try (DirectoryStream<Path> stream = Files.newDirectoryStream(home)) {
         for (Path path : stream) {
           if (!path.equals(newConfigDir) && Files.isDirectory(path)) {
-            if (settings != null && settings.shouldNotBeSeenAsImportCandidate(path, productPrefixOtherIde)) continue;
             String name = path.getFileName().toString();
             if (nameMatchesPrefix(name, prefix, dotted)) {
+              if (settings != null &&
+                  settings.shouldNotBeSeenAsImportCandidate(path, getPrefixFromSelector(getNameWithVersion(path)), productPrefixOtherIde)) {
+                continue;
+              }
               exactCandidates.add(path);
             }
             else if (exactCandidates.isEmpty() && productPrefixOtherIde != null) {
               if (nameMatchesPrefix(name, productPrefixOtherIde, dotted)) {
+                if (settings != null &&
+                    settings.shouldNotBeSeenAsImportCandidate(path, getPrefixFromSelector(getNameWithVersion(path)), productPrefixOtherIde)) {
+                  continue;
+                }
                 otherPreferredCandidates.add(path);
               }
             }
@@ -531,7 +538,7 @@ public final class ConfigImportHelper {
     return new ConfigDirsSearchResult(lastModified, exact);
   }
 
-  public static boolean nameMatchesPrefix(String name, String prefix, boolean dotted) {
+  private static boolean nameMatchesPrefix(String name, String prefix, boolean dotted) {
     return StringUtilRt.startsWithIgnoreCase(name, dotted ? '.' + prefix : prefix);
   }
 

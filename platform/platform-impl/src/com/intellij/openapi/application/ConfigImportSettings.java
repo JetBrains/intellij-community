@@ -42,9 +42,10 @@ public interface ConfigImportSettings {
                                        @NotNull List<IdeaPluginDescriptor> pluginsToDownload) { }
 
   /**
+   * @param prefix is a platform prefix of {@code configDirectory}
    * @return true if configDirectory should not be seen as import candidate while finding configuration directories
    */
-  default boolean shouldNotBeSeenAsImportCandidate(Path configDirectory, @Nullable String productPrefixOtherIde) {
+  default boolean shouldNotBeSeenAsImportCandidate(Path configDirectory, @Nullable String prefix, @Nullable String productPrefixOtherIde) {
     return false;
   }
 }
