@@ -158,7 +158,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
 
     assertTrue(systemOutput.contains("-junit5"));
 
-    assertEquals("The FirstConcreteTest was run!\n", StringUtil.join(processOutput.out, ""));
+    assertEquals("The FirstConcreteTest was run!", StringUtil.join(processOutput.out, ""));
     assertEmpty(processOutput.err);
     assertEquals(systemOutput, 1, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance).size());
   }
@@ -175,7 +175,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
 
     assertTrue(systemOutput.contains("-junit5"));
 
-    assertEquals("The FirstConcreteTest was run!\nMethod myTest1 of FirstConcreteTest\n", StringUtil.join(processOutput.out, ""));
+    assertEquals("The FirstConcreteTest was run!Method myTest1 of FirstConcreteTest was run!", StringUtil.join(processOutput.out, ""));
     assertEmpty(processOutput.err);
     assertEquals(systemOutput, 2, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance).size());
   }
@@ -195,7 +195,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
 
     assertTrue(systemOutput.contains("-junit5"));
 
-    assertEquals("The FirstConcreteTest was run!\nThe SecondConcreteTest was run!\n", StringUtil.join(processOutput.out, ""));
+    assertEquals("The FirstConcreteTest was run!The SecondConcreteTest was run!", StringUtil.join(processOutput.out, ""));
     assertEmpty(processOutput.err);
     assertEquals(systemOutput, 2, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance).size());
   }
@@ -215,10 +215,10 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
 
     assertTrue(systemOutput.contains("-junit5"));
 
-    assertEquals("The FirstConcreteTest was run!\n" +
-                 "Method myTest1 of FirstConcreteTest\n" +
-                 "The SecondConcreteTest was run!\n" +
-                 "Method myTest1 of SecondConcreteTest\n", StringUtil.join(processOutput.out, ""));
+    assertEquals("The FirstConcreteTest was run!" +
+                 "Method myTest1 of FirstConcreteTest was run!" +
+                 "The SecondConcreteTest was run!" +
+                 "Method myTest1 of SecondConcreteTest was run!", StringUtil.join(processOutput.out, ""));
     assertEmpty(processOutput.err);
     assertEquals(systemOutput, 4, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance).size());
   }

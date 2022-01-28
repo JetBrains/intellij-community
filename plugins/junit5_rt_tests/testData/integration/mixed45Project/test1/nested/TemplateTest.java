@@ -27,12 +27,12 @@ abstract class NestedTemplate
 
     @Test
     void myTest() {
-        System.out.println( "The " + specificTestClass.getSimpleName() + " was run!" );
+        System.out.print( "The " + specificTestClass.getSimpleName() + " was run!" );
     }
 
     @Test
     void myTest1() {
-        System.out.println( "Method myTest1 of " + specificTestClass.getSimpleName() );
+        System.out.print( "Method myTest1 of " + specificTestClass.getSimpleName() + " was run!");
     }
 
 }
