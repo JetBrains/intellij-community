@@ -450,12 +450,21 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       }
 
       private boolean isToolWindowDrag(MouseEvent e) {
-        if (!Registry.is("ide.new.tool.window.dnd")) return false;
+        if (!Registry.is("ide.new.tool.window.dnd")) {
+          return false;
+        }
+
         Component realMouseTarget = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
         Component decorator = InternalDecoratorImpl.findTopLevelDecorator(realMouseTarget);
-        if (decorator == null || ui.window.getType() == ToolWindowType.FLOATING || ui.window.getType() == ToolWindowType.WINDOWED) return false;
-        if (ui.window.getAnchor() != ToolWindowAnchor.BOTTOM) return true;
-        if (SwingUtilities.convertMouseEvent(e.getComponent(), e, decorator).getY() > ToolWindowsPane.Companion.getHeaderResizeArea()) return true;//it's drag, not resize!
+        if (decorator == null || ui.window.getType() == ToolWindowType.FLOATING || ui.window.getType() == ToolWindowType.WINDOWED) {
+          return false;
+        }
+        if (ui.window.getAnchor() != ToolWindowAnchor.BOTTOM ||
+            SwingUtilities.convertMouseEvent(e.getComponent(), e, decorator).getY() >
+            ToolWindowsPane.Companion.getHeaderResizeArea$intellij_platform_ide_impl()) {
+          return true;
+        }
+        //it's drag, not resize!
         return false;
       }
 
