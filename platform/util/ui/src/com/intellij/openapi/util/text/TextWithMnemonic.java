@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import com.intellij.util.ui.UIUtil;
@@ -107,7 +107,9 @@ public final class TextWithMnemonic {
    * @return TextWithMnemonic object which text is the concatenation of this object text and supplied text.
    */
   public TextWithMnemonic append(@NotNull @Nls String textToAppend) {
-    return new TextWithMnemonic(myText + textToAppend, myMnemonicIndex, myMnemonicSuffix);
+    return new TextWithMnemonic(myText + textToAppend,
+                                myMnemonicIndex < myText.length() ? myMnemonicIndex : myMnemonicIndex + textToAppend.length(),
+                                myMnemonicSuffix);
   }
 
   /**

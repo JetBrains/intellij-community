@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.TextWithMnemonic;
@@ -83,7 +83,19 @@ public class TextWithMnemonicTest {
   @Test
   public void append() {
     assertEquals("H_ello world!", TextWithMnemonic.parse("H&ello").append(" world!").toString());
-    assertEquals("Hello _world!(H)", TextWithMnemonic.parse("Hello(&H)").append(" world!").toString());
+  }
+
+  @Test
+  public void appendWithSuffix() {
+    assertEquals("Hello world!(_H)", TextWithMnemonic.parse("Hello(&H)").append(" world!").toString());
+    assertEquals("Hello world! (_H)", TextWithMnemonic.parse("Hello (&H)").append(" world!").toString());
+    assertEquals("Hello world!  (_H)", TextWithMnemonic.parse("Hello  (&H)").append(" world!").toString());
+  }
+
+  @Test
+  public void appendWithSuffixAndEllipsis() {
+    assertEquals("Hello world!(_H)...", TextWithMnemonic.parse("Hello(&H)...").append(" world!").toString());
+    assertEquals("Hello world!  (_H)…", TextWithMnemonic.parse("Hello  (&H)…").append(" world!").toString());
   }
   
   @Test
