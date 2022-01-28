@@ -8,7 +8,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-internal class SettingsSyncFrameListener : FrameStateListener, SettingsSyncEnabledStateListener {
+internal class SettingsSynchronizer : FrameStateListener, SettingsSyncEnabledStateListener {
 
   private val executorService = AppExecutorUtil.createBoundedScheduledExecutorService("Settings Sync Update", 1)
   private val autoSyncDelay get() = Registry.intValue("settingsSync.autoSync.frequency.sec", 60).toLong()
@@ -85,6 +85,6 @@ internal class SettingsSyncFrameListener : FrameStateListener, SettingsSyncEnabl
   }
 
   companion object {
-    val LOG = logger<SettingsSyncFrameListener>()
+    val LOG = logger<SettingsSynchronizer>()
   }
 }

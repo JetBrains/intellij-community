@@ -33,9 +33,9 @@
   </extensions>
 
   <applicationListeners>
-    <listener class="com.intellij.settingsSync.SettingsSyncFrameListener" topic="com.intellij.ide.FrameStateListener"
+    <listener class="com.intellij.settingsSync.SettingsSynchronizer" topic="com.intellij.ide.FrameStateListener"
               activeInTestMode="false" activeInHeadlessMode="false"/>
-    <listener class="com.intellij.settingsSync.SettingsSyncFrameListener" topic="com.intellij.settingsSync.SettingsSyncEnabledStateListener"
+    <listener class="com.intellij.settingsSync.SettingsSynchronizer" topic="com.intellij.settingsSync.SettingsSyncEnabledStateListener"
               activeInTestMode="false" activeInHeadlessMode="false" />
   </applicationListeners>
 
