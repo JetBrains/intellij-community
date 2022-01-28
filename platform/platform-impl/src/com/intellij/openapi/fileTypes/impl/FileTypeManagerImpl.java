@@ -736,6 +736,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   // null means all conventional detect methods returned UnknownFileType.INSTANCE, have to detect from content
+  @SuppressWarnings("DanglingJavadoc")
   @Override
   public @Nullable FileType getByFile(@NotNull VirtualFile file) {
     Pair<VirtualFile, FileType> fixedType = FILE_TYPE_FIXED_TEMPORARILY.get();
@@ -763,7 +764,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
 
-    /*
+    /**
       {@link DetectedByContentFileType} is a special SpecialFileType (and not actual {@link FileTypeIdentifiableByVirtualFile} at that):
       Its {@link DetectedByContentFileType#isMyFileType(VirtualFile)} has to be called after all other {@link FileTypeIdentifiableByVirtualFile#isMyFileType(VirtualFile)}
       to avoid (mis)detecting some empty special file as DetectedByContentFileType
