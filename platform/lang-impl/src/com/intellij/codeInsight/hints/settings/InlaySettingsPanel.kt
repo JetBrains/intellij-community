@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings
 
-import com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingModel
-import com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider
 import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.settings.language.createEditor
 import com.intellij.lang.IdeLanguageCustomization
@@ -51,21 +49,13 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     groups = models.groupBy { it.group }.toSortedMap()
     val globalSettings = groups.keys.associateWith { InlayGroupSettingProvider.EP.findForGroup(it) }
 
-    val codeVisionGroupModels = CodeVisionGroupSettingProvider.EP.findGroupModels() + CodeVisionGroupSettingProvider.EP.findSingleModels(project)
-
     val root = CheckedTreeNode()
     val lastSelected = InlayHintsSettings.instance().getLastViewedProviderId()
     var nodeToSelect: CheckedTreeNode? = null
 
     // filling code vision settings
-    if (Registry.`is`("editor.codeVision.new") && codeVisionGroupModels.isNotEmpty()) {
+    if (Registry.`is`("editor.codeVision.new")) {
       groups.remove(InlayGroup.CODE_VISION_GROUP)
-      val codeVisionNode = CheckedTreeNode(
-        InlayGroupSettingProvider.EP.findForGroup(InlayGroup.CODE_VISION_GROUP_NEW)
-        ?: InlayGroup.CODE_VISION_GROUP_NEW)
-      root.add(codeVisionNode)
-
-      fillCodeVisionSettings(codeVisionNode, codeVisionGroupModels)
     }
 
     for (group in groups) {
@@ -88,7 +78,11 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
           langNode = groupNode.firstChild as CheckedTreeNode
           startFrom = 1
         }
-        else {
+        else if(lang.key == Language.ANY){
+          langNode = groupNode
+          startFrom = 0
+        }
+        else{
           langNode = CheckedTreeNode(lang.key)
           groupNode.add(langNode)
           startFrom = 0
@@ -135,24 +129,10 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     add(splitter, BorderLayout.CENTER)
   }
 
-  private fun fillCodeVisionSettings(parent: CheckedTreeNode, codeLensModels: List<CodeVisionGroupSettingProvider>) {
-    codeLensModels.forEach {
-      val model = it.createModel(project)
-      val node = object : CheckedTreeNode(model) {
-        override fun setChecked(checked: Boolean) {
-          super.setChecked(checked)
-          model.isEnabled = checked
-        }
-      }
-      parent.add(node)
-    }
-  }
-
   @Nls
   private fun getName(node: DefaultMutableTreeNode?, parent: DefaultMutableTreeNode?): String {
     when (val item = node?.userObject) {
       is InlayGroupSettingProvider -> return item.group.toString()
-      is CodeVisionGroupSettingModel -> return item.name
       is InlayGroup -> return item.toString()
       is Language -> return item.displayName
       is InlayProviderSettingsModel -> return if (parent?.userObject is InlayGroup) item.language.displayName else item.name
@@ -201,14 +181,6 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     when (val item = treeNode?.userObject) {
       is InlayGroupSettingProvider -> {
         rightPanel.add(item.component)
-      }
-      is CodeVisionGroupSettingModel -> {
-        addDescription(item.description)
-
-        val component = item.component
-        if (component != null) {
-          rightPanel.add(component)
-        }
       }
       is InlayProviderSettingsModel -> {
         if (treeNode.isLeaf) {
@@ -297,10 +269,6 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         item.reset()
         node.isChecked = item.isEnabled
       }
-      is CodeVisionGroupSettingModel -> {
-        item.reset()
-        resetNode(node, item.isEnabled)
-      }
       is InlayProviderSettingsModel -> {
         item.reset()
         resetNode(node, isModelEnabled(item, settings))
@@ -352,10 +320,6 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         item.isEnabled = node.isChecked
         item.apply()
       }
-      is CodeVisionGroupSettingModel -> {
-        item.isEnabled = node.isChecked
-        item.apply()
-      }
       is InlayProviderSettingsModel -> {
         item.isEnabled = node.isChecked
         item.apply()
@@ -388,10 +352,6 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   private fun isModified(node: CheckedTreeNode, settings: InlayHintsSettings): Boolean {
     when (val item = node.userObject) {
       is InlayGroupSettingProvider -> {
-        if(item.isModified())
-          return true
-      }
-      is CodeVisionGroupSettingModel -> {
         if(item.isModified())
           return true
       }

@@ -9,10 +9,10 @@ import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
 
 open class CodeVisionGroupDefaultSettingModel(override val name: String,
-                                              private val groupId: String,
+                                              groupId: String,
                                               override val description: String?,
-                                              override var isEnabled: Boolean,
-                                              val providers: List<CodeVisionProvider<*>>) : CodeVisionGroupSettingModel {
+                                              isEnabled: Boolean,
+                                              val providers: List<CodeVisionProvider<*>>) : CodeVisionGroupSettingModel(isEnabled, id = groupId) {
 
   private val settings = CodeVisionSettings.instance()
   private lateinit var positionComboBox: ComboBox<CodeVisionAnchorKind>
@@ -26,17 +26,17 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
   }
 
   override fun isModified(): Boolean {
-    return (isEnabled != (settings.isProviderEnabled(groupId) && settings.codeVisionEnabled)
+    return (isEnabled != (settings.isProviderEnabled(id) && settings.codeVisionEnabled)
             || positionComboBox.item != (settings.getPositionForGroup(name) ?: settings.defaultPosition))
   }
 
   override fun apply() {
-    settings.setProviderEnabled(groupId, isEnabled)
+    settings.setProviderEnabled(id, isEnabled)
     settings.setPositionForGroup(name, positionComboBox.item)
   }
 
   override fun reset() {
-    isEnabled = settings.isProviderEnabled(groupId) && settings.codeVisionEnabled
+    isEnabled = settings.isProviderEnabled(id) && settings.codeVisionEnabled
     positionComboBox.item = settings.getPositionForGroup(name) ?: CodeVisionAnchorKind.Default
   }
 }

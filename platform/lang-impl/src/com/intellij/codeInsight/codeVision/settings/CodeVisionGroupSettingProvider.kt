@@ -30,7 +30,7 @@ interface CodeVisionGroupSettingProvider {
     return createSettingsModel(isEnabled, providers)
   }
 
-  open fun createSettingsModel(isEnabled: Boolean, providers: List<CodeVisionProvider<*>>): CodeVisionGroupSettingModel {
+  fun createSettingsModel(isEnabled: Boolean, providers: List<CodeVisionProvider<*>>): CodeVisionGroupSettingModel {
     return CodeVisionGroupDefaultSettingModel(groupName, groupId, description, isEnabled, providers)
   }
 

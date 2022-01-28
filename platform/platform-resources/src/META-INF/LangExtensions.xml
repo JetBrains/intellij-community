@@ -403,6 +403,8 @@
     <projectService serviceImplementation="com.intellij.codeInsight.codeVision.CodeVisionHost" preload="true" />
     <projectService serviceImplementation="com.intellij.codeInsight.codeVision.CodeVisionContextProvider" />
 
+    <config.inlaySettingsProvider implementation="com.intellij.codeInsight.codeVision.settings.CodeVisionInlaySettingProvider" />
+
     <projectService serviceImplementation="com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionCacheService" />
     <highlightingPassFactory implementation="com.intellij.codeInsight.hints.codeVision.CodeVisionPassFactory"/>
 
