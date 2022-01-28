@@ -14,7 +14,7 @@ import com.intellij.openapi.extensions.PluginId
 
 class PluginsUsagesCollector : ApplicationUsagesCollector(), AllowedDuringStartupCollector {
   companion object {
-    private val GROUP = EventLogGroup("plugins", 6)
+    private val GROUP = EventLogGroup("plugins", 7)
     private val DISABLED_PLUGIN = GROUP.registerEvent("disabled.plugin", EventFields.PluginInfo)
     private val ENABLED_NOT_BUNDLED_PLUGIN = GROUP.registerEvent("enabled.not.bundled.plugin", EventFields.PluginInfo)
     private val PER_PROJECT_ENABLED = GROUP.registerEvent("per.project.enabled", EventFields.Count)
@@ -41,7 +41,7 @@ class PluginsUsagesCollector : ApplicationUsagesCollector(), AllowedDuringStartu
 
   private fun getEnabledNonBundledPlugins() = PluginManagerCore
     .getLoadedPlugins()
-    .filter { it.isEnabled && !it.isBundled }
+    .filter { it.isEnabled && !it.isBundled && !PluginManagerCore.isUpdatedBundledPlugin(it) }
     .map { getPluginInfoByDescriptor(it) }
     .map(ENABLED_NOT_BUNDLED_PLUGIN::metric)
     .toSet()
