@@ -8,8 +8,8 @@ import com.intellij.ui.awt.RelativePoint
 import java.awt.Point
 import java.awt.event.MouseEvent
 
-internal class CreateListPopupAction: AnAction(), Toggleable {
-  private val actualGroup = CreateListActionGroup()
+internal class CreateOrChangeListPopupAction: AnAction(), Toggleable {
+  private val actualGroup = CreateOrChangeListActionGroup()
 
   override fun actionPerformed(event: AnActionEvent) {
     val editor = event.getRequiredData(CommonDataKeys.EDITOR)

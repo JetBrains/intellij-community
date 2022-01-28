@@ -471,8 +471,8 @@ Includes the following features:</p>
       </action>
       <reference id="Markdown.Styling.CreateLink"/>
       <separator/>
-      <action class="org.intellij.plugins.markdown.ui.actions.styling.CreateListPopupAction"
-              id="Markdown.Styling.CreateListPopup"
+      <action class="org.intellij.plugins.markdown.ui.actions.styling.CreateOrChangeListPopupAction"
+              id="Markdown.Styling.CreateOrChangeList"
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.BulletList"/>
     </group>
 

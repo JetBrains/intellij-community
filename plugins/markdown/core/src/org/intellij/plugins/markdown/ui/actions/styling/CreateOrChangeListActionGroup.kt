@@ -30,16 +30,16 @@ import javax.swing.Icon
 
 /**
  * Not expected to be used directly.
- * Check [CreateListPopupAction].
+ * Check [CreateOrChangeListPopupAction].
  */
-internal class CreateListActionGroup: DefaultActionGroup(
-  CreateUnorderedList(),
-  CreateOrderedList(),
-  CreateCheckmarkList()
+internal class CreateOrChangeListActionGroup: DefaultActionGroup(
+  UnorderedList(),
+  OrderedList(),
+  CheckmarkList()
 ) {
   override fun isPopup(): Boolean = true
 
-  class CreateOrderedList: CreateListImpl(
+  class OrderedList: CreateListImpl(
     text = messagePointer("markdown.create.list.popup.ordered.action.text"),
     icon = MarkdownIcons.EditorActions.NumberedList
   ) {
@@ -52,7 +52,7 @@ internal class CreateListActionGroup: DefaultActionGroup(
     }
   }
 
-  class CreateUnorderedList: CreateListImpl(
+  class UnorderedList: CreateListImpl(
     text = messagePointer("markdown.create.list.popup.unordered.action.text"),
     icon = MarkdownIcons.EditorActions.BulletList
   ) {
@@ -65,7 +65,7 @@ internal class CreateListActionGroup: DefaultActionGroup(
     }
   }
 
-  class CreateCheckmarkList: CreateListImpl(
+  class CheckmarkList: CreateListImpl(
     text = messagePointer("markdown.create.list.popup.checkmark.action.text"),
     icon = MarkdownIcons.EditorActions.CheckmarkList
   ) {
