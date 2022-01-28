@@ -21,7 +21,6 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -34,75 +33,72 @@ import javax.swing.SwingUtilities
 
 private fun Dimension.isNotEmpty(): Boolean = width > 0 && height > 0
 
-internal fun Component.createDragImage(): BufferedImage? {
-  val initialBounds = bounds
-  return try {
-    if (initialBounds.isEmpty) {
-      size = preferredSize
-    }
+internal class ToolWindowDragHelper(parent: Disposable, val pane: ToolWindowsPane) : MouseDragHelper<ToolWindowsPane>(parent, pane) {
+  private var toolWindowRef: WeakReference<ToolWindowImpl?>? = null
+  private var initialAnchor: ToolWindowAnchor? = null
+  private var initialButton: Component? = null
+  private var initialSize = Dimension()
+  private var lastStripe: AbstractDroppableStripe? = null
 
-    val areaSize = when (this) {
-      is StripeButton -> size.also {
-        val delta = JBUIScale.scale(1)
-        it.width -= delta
-        it.height -= delta
-      }
-
-      is SquareStripeButton -> size.also {
-        JBInsets.removeFrom(it, insets)
-        JBInsets.removeFrom(it, SquareStripeButtonLook.ICON_PADDING)
-      }
-
-      else -> JBUI.emptySize()
-    }
-
-    if (areaSize.isNotEmpty()) {
-      ImageUtil.createImage(graphicsConfiguration, areaSize.width, areaSize.height, BufferedImage.TYPE_INT_RGB).also { image ->
-        val graphics = image.graphics
-        graphics.color = if (isNewUI()) {
-          JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_FLOATING_BACKGROUND
-        }
-        else {
-          UIUtil.getBgFillColor(parent)
-        }
-
-        graphics.fillRect(0, 0, areaSize.width, areaSize.height)
-
-        when (this) {
-          is StripeButton -> paint(graphics)
-          is SquareStripeButton -> paintDraggingButton(graphics)
-        }
-
-        graphics.dispose()
-      }
-    }
-    else {
-      null
-    }
-  }
-  finally {
-    bounds = initialBounds
-  }
-}
-
-internal class ToolWindowDragHelper(parent: @NotNull Disposable,
-                                    val pane: @NotNull ToolWindowsPane) : MouseDragHelper<ToolWindowsPane>(parent, pane) {
-  private var toolWindowRef : WeakReference<ToolWindowImpl?>? = null
-  private var initialAnchor : ToolWindowAnchor? = null
-  private var initialButton : Component? = null
-  private var myInitialSize = Dimension()
-  private var lastStripe : AbstractDroppableStripe? = null
-
-  private var myDialog : MyDialog? = null
-  private val myHighlighter = createHighlighterComponent()
-  private val myInitialOffset = Point()
-  private var mySourceIsHeader = false
+  private var dialog: MyDialog? = null
+  private val highlighter = createHighlighterComponent()
+  private val initialOffset = Point()
+  private var sourceIsHeader = false
 
   companion object {
     const val THUMB_SIZE = 220
     const val THUMB_OPACITY = .85f
 
-    @Nullable
+    internal fun createDragImage(component: Component): BufferedImage? {
+      val initialBounds = component.bounds
+      try {
+        if (initialBounds.isEmpty) {
+          component.size = component.preferredSize
+        }
+
+        val areaSize = when (component) {
+          is StripeButton -> component.size.also {
+            val delta = JBUIScale.scale(1)
+            it.width -= delta
+            it.height -= delta
+          }
+
+          is SquareStripeButton -> component.size.also {
+            JBInsets.removeFrom(it, component.insets)
+            JBInsets.removeFrom(it, SquareStripeButtonLook.ICON_PADDING)
+          }
+
+          else -> JBUI.emptySize()
+        }
+
+        if (!areaSize.isNotEmpty()) {
+          return null
+        }
+
+        val image = ImageUtil.createImage(component.graphicsConfiguration, areaSize.width, areaSize.height, BufferedImage.TYPE_INT_RGB)
+        val graphics = image.graphics
+        graphics.color = if (isNewUI()) {
+          JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_FLOATING_BACKGROUND
+        }
+        else {
+          UIUtil.getBgFillColor(component.parent)
+        }
+
+        graphics.fillRect(0, 0, areaSize.width, areaSize.height)
+
+        when (component) {
+          is StripeButton -> component.paint(graphics)
+          is SquareStripeButton -> component.paintDraggingButton(graphics)
+        }
+
+        graphics.dispose()
+        return image
+      }
+      finally {
+        component.bounds = initialBounds
+      }
+    }
+
     fun createDragImage(component: JComponent, thumbSize: Int = JBUI.scale(THUMB_SIZE)): BufferedImage {
       val image = UIUtil.createImage(component, component.width, component.height, BufferedImage.TYPE_INT_RGB)
       val graphics = image.graphics
@@ -122,17 +118,17 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
       return ImageUtil.scaleImage(image, (width * ratio).toInt(), (height * ratio).toInt()) as BufferedImage
     }
 
-    fun createHighlighterComponent() = object: NonOpaquePanel() {
-      override fun paint(g: Graphics) {
-        g.color = JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND
-        g.fillRect(0, 0, width, height)
+    fun createHighlighterComponent(): NonOpaquePanel {
+      return object: NonOpaquePanel() {
+        override fun paint(g: Graphics) {
+          g.color = JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND
+          g.fillRect(0, 0, width, height)
+        }
       }
     }
   }
 
-  override fun isDragOut(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point): Boolean {
-    return isDragOut(dragToScreenPoint)
-  }
+  override fun isDragOut(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point) = isDragOut(dragToScreenPoint)
 
   private fun isDragOut(dragToScreenPoint: Point): Boolean {
     if (pane.buttonManager.isNewUi) {
@@ -161,7 +157,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
       val decorator = InternalDecoratorImpl.findNearestDecorator(clickedComponent)
       if (decorator != null &&
           (decorator.toolWindow.anchor != BOTTOM ||
-           decorator.locationOnScreen.y < startScreenPoint.screenPoint.y - ToolWindowsPane.getHeaderResizeArea()))
+           decorator.locationOnScreen.y < startScreenPoint.screenPoint.y - ToolWindowsPane.headerResizeArea))
         return decorator.toolWindow
     }
 
@@ -188,7 +184,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
         val parent = c.parent
         if (c.isShowing && parent is AbstractDroppableStripe) {
           initialButton = c
-          myInitialSize = toolWindow.windowInfo.floatingBounds?.size ?: JBUI.size(500, 400)
+          initialSize = toolWindow.windowInfo.floatingBounds?.size ?: JBUI.size(500, 400)
           parent
         }
         else null
@@ -200,22 +196,22 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
         initialButton = if (!it.isNewStripes && it.isShowing) it.getButtonFor(toolWindow.id)?.getComponent() else component
       }
 
-      myInitialSize = toolWindow.getBoundsOnScreen(toolWindow.anchor, relativePoint.screenPoint).size
+      initialSize = toolWindow.getBoundsOnScreen(toolWindow.anchor, relativePoint.screenPoint).size
     }
 
     val dragOutImage = if (decorator != null && !decorator.bounds.isEmpty) createDragImage(decorator) else null
-    val dragImage = initialButton?.createDragImage() ?: dragOutImage
-    mySourceIsHeader = true
+    val dragImage = createDragImage(initialButton!!) ?: dragOutImage
+    sourceIsHeader = true
 
     if (component is StripeButton || component is SquareStripeButton) {
-      myInitialOffset.location = relativePoint.getPoint(component)
-      mySourceIsHeader = false
+      initialOffset.location = relativePoint.getPoint(component)
+      sourceIsHeader = false
     }
     else if (dragImage != null) {
-      myInitialOffset.location = Point(dragImage.getWidth(pane) / 4, dragImage.getHeight(pane) / 4)
+      initialOffset.location = Point(dragImage.getWidth(pane) / 4, dragImage.getHeight(pane) / 4)
     }
     if (dragImage != null) {
-      myDialog = MyDialog(pane, this, dragImage, dragOutImage)
+      dialog = MyDialog(pane, this, dragImage, dragOutImage)
     }
   }
 
@@ -256,17 +252,17 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
         val w = ComponentUtil.getWindow(toolWindow.component)
         if (w is JDialog) {
           val locationOnScreen = event.locationOnScreen
-          if (mySourceIsHeader) {
+          if (sourceIsHeader) {
             val decorator = InternalDecoratorImpl.findTopLevelDecorator(toolWindow.component)
             if (decorator != null) {
               val shift = SwingUtilities.convertPoint(decorator, decorator.location, w)
               locationOnScreen.translate(-shift.x, -shift.y)
             }
-            locationOnScreen.translate(-myInitialOffset.x, -myInitialOffset.y)
+            locationOnScreen.translate(-initialOffset.x, -initialOffset.y)
           }
           w.location = locationOnScreen
           val bounds = w.bounds
-          bounds.size = myInitialSize
+          bounds.size = initialSize
           ScreenUtil.fitToScreen(bounds)
           w.bounds = bounds
         }
@@ -306,14 +302,14 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
     getStripeButton(window)?.isVisible = true
     pane.buttonManager.stopDrag()
     with(pane.rootPane.glassPane as JComponent) {
-      remove(myHighlighter)
+      remove(highlighter)
       revalidate()
       repaint()
     }
 
     @Suppress("SSBasedInspection")
-    myDialog?.dispose()
-    myDialog = null
+    dialog?.dispose()
+    dialog = null
     toolWindowRef = null
     initialAnchor = null
     if (lastStripe != null) {
@@ -344,9 +340,9 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
   private fun startDrag(event: MouseEvent) {
     relocate(event)
     initialButton?.isVisible = false
-    myDialog?.isVisible = true
+    dialog?.isVisible = true
     with(pane.rootPane.glassPane as JComponent) {
-      add(myHighlighter)
+      add(highlighter)
       revalidate()
       repaint()
     }
@@ -405,18 +401,18 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
 
   private fun relocate(event: MouseEvent) {
     val screenPoint = event.locationOnScreen
-    val dialog = myDialog
+    val dialog = dialog
     val toolWindow = getToolWindow()
     if (dialog == null || toolWindow == null) return
 
     val dragOut = isDragOut(screenPoint)
-    dialog.setLocation(screenPoint.x - myInitialOffset.x, screenPoint.y - myInitialOffset.y)
+    dialog.setLocation(screenPoint.x - initialOffset.x, screenPoint.y - initialOffset.y)
     setDragOut(dragOut)
 
     val stripe = getStripe(screenPoint)
     lastStripe?.let { if (it != stripe) it.resetDrop() }
 
-    myHighlighter.isVisible = stripe != null
+    highlighter.isVisible = stripe != null
     if (stripe != null && initialButton != null) {
       //if (myLastStripe != stripe) {//attempt to rotate thumb image on fly to show actual button view if user drops it right here
       //  val button = object : StripeButton(pane, toolWindow) {
@@ -458,7 +454,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
               }
             }
           }
-          myHighlighter.bounds = bounds
+          highlighter.bounds = bounds
         })
       }
     }
@@ -475,8 +471,8 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
   }
 
   private fun setDragOut(dragOut: Boolean) {
-    myDialog?.setDragOut(dragOut)
-    myHighlighter.isVisible = !dragOut
+    dialog?.setDragOut(dragOut)
+    highlighter.isVisible = !dragOut
   }
 
   class MyDialog(owner: JComponent,
