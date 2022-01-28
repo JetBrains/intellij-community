@@ -6,6 +6,7 @@ import org.jetbrains.java.decompiler.code.cfg.ControlFlowGraph;
 import org.jetbrains.java.decompiler.code.cfg.ExceptionRangeCFG;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.FastExtendedPostdominanceHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.deobfuscator.IrreducibleCFGDeobfuscator;
@@ -131,7 +132,7 @@ public final class DomHelper {
         FastFixedSet<Statement> doms = lists.get(stat);
         FastFixedSet<Statement> domsSuccs = factory.spawnEmptySet();
 
-        List<Statement> lstSuccs = stat.getNeighbours(EdgeType.REGULAR, Statement.DIRECTION_FORWARD);
+        List<Statement> lstSuccs = stat.getNeighbours(EdgeType.REGULAR, EdgeDirection.FORWARD);
         for (int j = 0; j < lstSuccs.size(); j++) {
           Statement succ = lstSuccs.get(j);
           FastFixedSet<Statement> succlst = lists.get(succ);
@@ -152,7 +153,7 @@ public final class DomHelper {
 
           lists.put(stat, domsSuccs);
 
-          List<Statement> lstPreds = stat.getNeighbours(EdgeType.REGULAR, Statement.DIRECTION_BACKWARD);
+          List<Statement> lstPreds = stat.getNeighbours(EdgeType.REGULAR, EdgeDirection.BACKWARD);
           for (Statement pred : lstPreds) {
             setFlagNodes.add(pred);
           }
@@ -261,7 +262,7 @@ public final class DomHelper {
 
                 for (StatEdge edge : current.getPredecessorEdges(EdgeType.DIRECT_ALL)) {
                   current.removePredecessor(edge);
-                  edge.getSource().changeEdgeNode(Statement.DIRECTION_FORWARD, edge, nextDirect);
+                  edge.getSource().changeEdgeNode(EdgeDirection.FORWARD, edge, nextDirect);
                   nextDirect.addPredecessor(edge);
                 }
 
@@ -481,7 +482,7 @@ public final class DomHelper {
 
             boolean addhd = (setNodes.size() == 0); // first handler == head
             if (!addhd) {
-              List<Statement> hdsupp = handler.getNeighbours(EdgeType.EXCEPTION, Statement.DIRECTION_BACKWARD);
+              List<Statement> hdsupp = handler.getNeighbours(EdgeType.EXCEPTION, EdgeDirection.BACKWARD);
               addhd = (setNodes.containsAll(hdsupp) && (setNodes.size() > hdsupp.size()
                                                         || setNodes.size() == 1)); // strict subset
             }
@@ -497,14 +498,14 @@ public final class DomHelper {
                   setNodes.add(st);
                   if (st != head) {
                     // record predeccessors except for the head
-                    setPreds.addAll(st.getNeighbours(EdgeType.REGULAR, Statement.DIRECTION_BACKWARD));
+                    setPreds.addAll(st.getNeighbours(EdgeType.REGULAR, EdgeDirection.BACKWARD));
                   }
 
                   // put successors on the stack
-                  lstStack.addAll(st.getNeighbours(EdgeType.REGULAR, Statement.DIRECTION_FORWARD));
+                  lstStack.addAll(st.getNeighbours(EdgeType.REGULAR, EdgeDirection.FORWARD));
 
                   // exception edges
-                  setHandlers.addAll(st.getNeighbours(EdgeType.EXCEPTION, Statement.DIRECTION_FORWARD));
+                  setHandlers.addAll(st.getNeighbours(EdgeType.EXCEPTION, EdgeDirection.FORWARD));
                 }
               }
 
@@ -522,13 +523,13 @@ public final class DomHelper {
         // check exception handlers
         setHandlers.clear();
         for (Statement st : setNodes) {
-          setHandlers.addAll(st.getNeighbours(EdgeType.EXCEPTION, Statement.DIRECTION_FORWARD));
+          setHandlers.addAll(st.getNeighbours(EdgeType.EXCEPTION, EdgeDirection.FORWARD));
         }
         setHandlers.removeAll(setNodes);
 
         boolean excok = true;
         for (Statement handler : setHandlers) {
-          if (!handler.getNeighbours(EdgeType.EXCEPTION, Statement.DIRECTION_BACKWARD).containsAll(setNodes)) {
+          if (!handler.getNeighbours(EdgeType.EXCEPTION, EdgeDirection.BACKWARD).containsAll(setNodes)) {
             excok = false;
             break;
           }
@@ -541,7 +542,7 @@ public final class DomHelper {
           setPreds.removeAll(setNodes);
           if (setPreds.size() == 0) {
             if ((setNodes.size() > 1 ||
-                 head.getNeighbours(EdgeType.REGULAR, Statement.DIRECTION_BACKWARD).contains(head))
+                 head.getNeighbours(EdgeType.REGULAR, EdgeDirection.BACKWARD).contains(head))
                 && setNodes.size() < stats.size()) {
               if (checkSynchronizedCompleteness(setNodes)) {
                 res = new GeneralStatement(head, setNodes, same ? null : post);

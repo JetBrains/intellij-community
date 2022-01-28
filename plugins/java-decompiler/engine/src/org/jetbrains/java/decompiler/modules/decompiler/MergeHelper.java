@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
+
 public final class MergeHelper {
   public static void enhanceLoops(Statement root) {
     while (enhanceLoopsRec(root)) /**/;
@@ -78,7 +80,7 @@ public final class MergeHelper {
             (ifedge.getType() == EdgeType.CONTINUE && elseedge.getType() == EdgeType.BREAK && ifedge.closure == stat
              && isDirectPath(stat, elseedge.getDestination()))) {
 
-          Set<Statement> set = stat.getNeighboursSet(EdgeType.CONTINUE, Statement.DIRECTION_BACKWARD);
+          Set<Statement> set = stat.getNeighboursSet(EdgeType.CONTINUE, EdgeDirection.BACKWARD);
           set.remove(last);
 
           if (!set.isEmpty()) {
@@ -234,7 +236,7 @@ public final class MergeHelper {
 
   public static boolean isDirectPath(Statement stat, Statement endstat) {
 
-    Set<Statement> setStat = stat.getNeighboursSet(EdgeType.DIRECT_ALL, Statement.DIRECTION_FORWARD);
+    Set<Statement> setStat = stat.getNeighboursSet(EdgeType.DIRECT_ALL, EdgeDirection.FORWARD);
     if (setStat.isEmpty()) {
       Statement parent = stat.getParent();
       if (parent == null) {
@@ -309,7 +311,7 @@ public final class MergeHelper {
           current = parent;
         }
         else {
-          preData = current.getNeighbours(EdgeType.REGULAR, Statement.DIRECTION_BACKWARD).get(0);
+          preData = current.getNeighbours(EdgeType.REGULAR, EdgeDirection.BACKWARD).get(0);
           preData = getLastDirectData(preData);
           if (preData != null && !preData.getExprents().isEmpty()) {
             initDoExprent = preData.getExprents().get(preData.getExprents().size() - 1);
@@ -326,7 +328,7 @@ public final class MergeHelper {
     }
 
     if (hasinit || issingle) {  // FIXME: issingle sufficient?
-      Set<Statement> set = stat.getNeighboursSet(EdgeType.CONTINUE, Statement.DIRECTION_BACKWARD);
+      Set<Statement> set = stat.getNeighboursSet(EdgeType.CONTINUE, EdgeDirection.BACKWARD);
       set.remove(lastData);
 
       if (!set.isEmpty()) {
@@ -359,10 +361,10 @@ public final class MergeHelper {
     }
     else {
       for (StatEdge edge : stat.getAllPredecessorEdges()) {
-        edge.getSource().changeEdgeType(Statement.DIRECTION_FORWARD, edge, EdgeType.CONTINUE);
+        edge.getSource().changeEdgeType(EdgeDirection.FORWARD, edge, EdgeType.CONTINUE);
 
         stat.removePredecessor(edge);
-        edge.getSource().changeEdgeNode(Statement.DIRECTION_FORWARD, edge, dostat);
+        edge.getSource().changeEdgeNode(EdgeDirection.FORWARD, edge, dostat);
         dostat.addPredecessor(edge);
 
         dostat.addLabeledEdge(edge);

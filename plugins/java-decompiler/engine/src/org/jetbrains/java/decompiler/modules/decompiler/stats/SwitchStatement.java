@@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.SwitchHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
@@ -38,7 +39,7 @@ public final class SwitchStatement extends Statement {
     first = head;
     stats.addWithKey(head, head.id);
     // find post node
-    Set<Statement> regularSuccessors = new HashSet<>(head.getNeighbours(EdgeType.REGULAR, DIRECTION_FORWARD));
+    Set<Statement> regularSuccessors = new HashSet<>(head.getNeighbours(EdgeType.REGULAR, EdgeDirection.FORWARD));
     // cluster nodes
     if (postStatement != null) {
       post = postStatement;
@@ -253,7 +254,7 @@ public final class SwitchStatement extends Statement {
     for (int index = 0; index < nodes.size(); index++) {
       Statement node = nodes.get(index);
       if (node == null) continue;
-      HashSet<Statement> nodePredecessors = new HashSet<>(node.getNeighbours(EdgeType.REGULAR, DIRECTION_BACKWARD));
+      HashSet<Statement> nodePredecessors = new HashSet<>(node.getNeighbours(EdgeType.REGULAR, EdgeDirection.BACKWARD));
       nodePredecessors.remove(first);
       if (nodePredecessors.isEmpty()) continue;
       // assumption: at most one predecessor node besides the head. May not hold true for obfuscated code.
@@ -285,10 +286,10 @@ public final class SwitchStatement extends Statement {
         StatEdge sampleEdge = edges.get(i).get(0);
         basicBlock.addSuccessor(new StatEdge(sampleEdge.getType(), basicBlock, sampleEdge.getDestination(), sampleEdge.closure));
         for (StatEdge edge : edges.get(i)) {
-          edge.getSource().changeEdgeType(DIRECTION_FORWARD, edge, EdgeType.REGULAR);
+          edge.getSource().changeEdgeType(EdgeDirection.FORWARD, edge, EdgeType.REGULAR);
           edge.closure.getLabelEdges().remove(edge);
           edge.getDestination().removePredecessor(edge);
-          edge.getSource().changeEdgeNode(DIRECTION_FORWARD, edge, basicBlock);
+          edge.getSource().changeEdgeNode(EdgeDirection.FORWARD, edge, basicBlock);
           basicBlock.addPredecessor(edge);
         }
         statements.set(i, basicBlock);

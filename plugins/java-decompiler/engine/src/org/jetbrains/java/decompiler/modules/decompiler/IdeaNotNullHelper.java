@@ -2,6 +2,7 @@
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
@@ -282,7 +283,7 @@ public final class IdeaNotNullHelper {
                     for (StatEdge edge : ifstat.getAllPredecessorEdges()) {
 
                       ifstat.removePredecessor(edge);
-                      edge.getSource().changeEdgeNode(Statement.DIRECTION_FORWARD, edge, stat);
+                      edge.getSource().changeEdgeNode(EdgeDirection.FORWARD, edge, stat);
                       stat.addPredecessor(edge);
                     }
 

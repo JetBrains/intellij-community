@@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.modules.decompiler;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
@@ -41,7 +42,7 @@ public final class SequenceHelper {
             Statement first = st.getFirst();
             for (StatEdge edge : st.getAllPredecessorEdges()) {
               st.removePredecessor(edge);
-              edge.getSource().changeEdgeNode(Statement.DIRECTION_FORWARD, edge, first);
+              edge.getSource().changeEdgeNode(EdgeDirection.FORWARD, edge, first);
               first.addPredecessor(edge);
             }
 
@@ -58,7 +59,7 @@ public final class SequenceHelper {
                   }
                 }
                 else {
-                  edge.getSource().changeEdgeType(Statement.DIRECTION_FORWARD, edge, EdgeType.REGULAR);
+                  edge.getSource().changeEdgeType(EdgeDirection.FORWARD, edge, EdgeType.REGULAR);
                   edge.closure.getLabelEdges().remove(edge);
                   edge.closure = null;
                 }
@@ -195,11 +196,11 @@ public final class SequenceHelper {
 
               for (StatEdge edge : st.getAllPredecessorEdges()) {
                 if (sucedge.getType() != EdgeType.REGULAR) {
-                  edge.getSource().changeEdgeType(Statement.DIRECTION_FORWARD, edge, sucedge.getType());
+                  edge.getSource().changeEdgeType(EdgeDirection.FORWARD, edge, sucedge.getType());
                 }
 
                 st.removePredecessor(edge);
-                edge.getSource().changeEdgeNode(Statement.DIRECTION_FORWARD, edge, sucedge.getDestination());
+                edge.getSource().changeEdgeNode(EdgeDirection.FORWARD, edge, sucedge.getDestination());
                 sucedge.getDestination().addPredecessor(edge);
 
                 if (sucedge.closure != null) {

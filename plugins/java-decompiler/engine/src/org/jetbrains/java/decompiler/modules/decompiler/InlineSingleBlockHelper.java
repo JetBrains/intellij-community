@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 
@@ -88,7 +89,7 @@ public final class InlineSingleBlockHelper {
       for (StatEdge prededge : block.getPredecessorEdges(EdgeType.CONTINUE)) {
 
         block.removePredecessor(prededge);
-        prededge.getSource().changeEdgeNode(Statement.DIRECTION_FORWARD, prededge, source);
+        prededge.getSource().changeEdgeNode(EdgeDirection.FORWARD, prededge, source);
         source.addPredecessor(prededge);
 
         source.addLabeledEdge(prededge);

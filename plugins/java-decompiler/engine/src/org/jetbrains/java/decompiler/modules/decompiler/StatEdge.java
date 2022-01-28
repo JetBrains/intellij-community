@@ -185,4 +185,13 @@ public class StatEdge {
       return new EdgeType[] {REGULAR, EXCEPTION, BREAK, CONTINUE, FINALLY_EXIT};
     }
   }
+
+  /**
+   * Represents a direction of edge.
+   * Backward for input edges, forward for output edges.
+   */
+  public enum EdgeDirection {
+    BACKWARD,
+    FORWARD
+  }
 }

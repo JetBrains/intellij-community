@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
@@ -105,7 +106,7 @@ public final class LabelHelper {
         if (stat.containsStatementStrict(edge.getSource())) {
 
           edge.getDestination().removePredecessor(edge);
-          edge.getSource().changeEdgeNode(Statement.DIRECTION_FORWARD, edge, stat);
+          edge.getSource().changeEdgeNode(EdgeDirection.FORWARD, edge, stat);
           stat.addPredecessor(edge);
 
           stat.addLabeledEdge(edge);
@@ -459,7 +460,7 @@ public final class LabelHelper {
 
           if (minclosure != edge.closure &&
               !InlineSingleBlockHelper.isBreakEdgeLabeled(edge.getSource(), minclosure)) {
-            edge.getSource().changeEdgeType(Statement.DIRECTION_FORWARD, edge, EdgeType.BREAK);
+            edge.getSource().changeEdgeType(EdgeDirection.FORWARD, edge, EdgeType.BREAK);
             edge.labeled = false;
             minclosure.addLabeledEdge(edge);
           }
