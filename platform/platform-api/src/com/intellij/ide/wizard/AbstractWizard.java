@@ -483,7 +483,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     final Step step = mySteps.get(myCurrentStep);
     LOG.assertTrue(step != null);
     step._init();
-    myCurrentStepComponent = step.getComponent();
+    var myCurrentStepComponent = step.getComponent();
     LOG.assertTrue(myCurrentStepComponent != null);
     showStepComponent(myCurrentStepComponent);
 
@@ -495,7 +495,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
     updateButtons();
 
-    requestFocusToPreferredFocusedComponent();
+    UiNotifyConnector.doWhenFirstShown(myCurrentStepComponent, () -> {
+      requestFocusTo(getPreferredFocusedComponent());
+    });
   }
 
   @Override
@@ -505,18 +507,13 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return ObjectUtils.chooseNotNull(component, myNextButton);
   }
 
-  private void requestFocusToPreferredFocusedComponent() {
-    requestFocusTo(this::getPreferredFocusedComponent);
-  }
-
-  private void requestFocusTo(@NotNull Supplier<? extends @Nullable JComponent> supplier) {
-    UiNotifyConnector.doWhenFirstShown(myContentPanel, () -> {
-      var component = supplier.get();
-      if (component != null) {
+  private static void requestFocusTo(@Nullable JComponent component) {
+    if (component != null) {
+      UiNotifyConnector.doWhenFirstShown(component, () -> {
         var focusManager = IdeFocusManager.findInstanceByComponent(component);
         focusManager.requestFocus(component, false);
-      }
-    });
+      });
+    }
   }
 
   protected boolean canGoNext() {
