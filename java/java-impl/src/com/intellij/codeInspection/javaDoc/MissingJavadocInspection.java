@@ -47,7 +47,7 @@ public class MissingJavadocInspection extends LocalInspectionTool {
   public static class Options {
     public String MINIMAL_VISIBILITY = "public";
     public String REQUIRED_TAGS = "";
-    public boolean ENABLED = false;
+    public boolean ENABLED = true;
 
     public Options() {}
 

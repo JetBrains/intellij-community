@@ -14,6 +14,12 @@ public class MissingJavadocHighlightingTest extends LightJavaCodeInsightFixtureT
   @BeforeEach
   void setUp() {
     MissingJavadocInspection inspection = new MissingJavadocInspection();
+    inspection.METHOD_SETTINGS.ENABLED = false;
+    inspection.MODULE_SETTINGS.ENABLED = false;
+    inspection.FIELD_SETTINGS.ENABLED = false;
+    inspection.PACKAGE_SETTINGS.ENABLED = false;
+    inspection.INNER_CLASS_SETTINGS.ENABLED = false;
+    inspection.TOP_LEVEL_CLASS_SETTINGS.ENABLED = false;
     getFixture().enableInspections(inspection);
     myInspection = inspection;
   }
