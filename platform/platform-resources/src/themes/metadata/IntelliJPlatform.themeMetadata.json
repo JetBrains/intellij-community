@@ -779,6 +779,21 @@
       "key": "Popup.Advertiser.foreground"
     },
     {
+      "key": "Popup.Body.bottomInsetNoAd",
+      "description": "Popup body bottom inset if there is no advertiser (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.Body.bottomInsetBeforeAd",
+      "description": "Popup body bottom inset before advertiser (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.Body.topInsetNoHeader",
+      "description": "Popup body top inset if there is no header (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
       "key": "Popup.Header.activeForeground",
       "description": "Text color in popup header when focused",
       "since": "2022.1"
@@ -791,6 +806,11 @@
     {
       "key": "Popup.Header.insets",
       "description": "Header insets (experimental UI only), default value is \"12,10,10,10\"",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.borderWidth",
+      "description": "Popup border width",
       "since": "2022.1"
     },
     {

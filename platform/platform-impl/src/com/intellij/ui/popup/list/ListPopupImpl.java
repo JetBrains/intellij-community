@@ -20,10 +20,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.ui.ListActions;
-import com.intellij.ui.MouseMovementTracker;
-import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.SeparatorWithText;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.ClosableByLeftArrow;
@@ -33,6 +30,7 @@ import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,7 +92,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   public void showUnderneathOfLabel(@NotNull JLabel label) {
-    int offset = -UIUtil.getListCellHPadding() - UIUtil.getListViewportPadding(isAdVisible()).left;
+    int offset = -UIUtil.getListCellHPadding() - getListInsets().left;
     if (label.getIcon() != null) {
       offset += label.getIcon().getIconWidth() + label.getIconTextGap();
     }
@@ -258,7 +256,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     myList.setSelectionModel(new MyListSelectionModel());
 
     selectFirstSelectableItem();
-    myList.setBorder(new EmptyBorder(UIUtil.getListViewportPadding(isAdVisible())));
+    myList.setBorder(new EmptyBorder(getListInsets()));
 
     ScrollingUtil.installActions(myList);
 
@@ -851,5 +849,16 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       if (isSelectable(value)) return true;
     }
     return false;
+  }
+
+  private Insets getListInsets() {
+    if (!ExperimentalUI.isNewUI()) {
+      return UIUtil.getListViewportPadding(isAdVisible());
+    }
+
+    boolean isTitleAvailable = getStep().getTitle() != null;
+    int topInset = isTitleAvailable ? 0 : JBUI.CurrentTheme.Popup.bodyTopInsetNoHeader();
+    int bottomInset = isAdVisible() ? JBUI.CurrentTheme.Popup.bodyBottomInsetBeforeAd() : JBUI.CurrentTheme.Popup.bodyBottomInsetNoAd();
+    return new JBInsets(topInset, 0, bottomInset, 0);
   }
 }

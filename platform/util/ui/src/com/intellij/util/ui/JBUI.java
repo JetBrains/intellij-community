@@ -800,6 +800,18 @@ public final class JBUI {
     }
 
     public static final class Popup {
+      public static int bodyBottomInsetNoAd() {
+        return getInt("Popup.Body.bottomInsetNoAd", 8);
+      }
+
+      public static int bodyBottomInsetBeforeAd() {
+        return getInt("Popup.Body.bottomInsetBeforeAd", 8);
+      }
+
+      public static int bodyTopInsetNoHeader() {
+        return getInt("Popup.Body.topInsetNoHeader", 8);
+      }
+
       public static Color headerBackground(boolean active) {
         return active
                ? JBColor.namedColor("Popup.Header.activeBackground", 0xe6e6e6)
@@ -825,6 +837,10 @@ public final class JBUI {
         return active
                ? JBColor.namedColor("Popup.borderColor", JBColor.namedColor("Popup.Border.color", 0x808080))
                : JBColor.namedColor("Popup.inactiveBorderColor", JBColor.namedColor("Popup.inactiveBorderColor", 0xaaaaaa));
+      }
+
+      public static float borderWidth() {
+        return getFloat("Popup.borderWidth", 1);
       }
 
       public static Color toolbarPanelColor() {

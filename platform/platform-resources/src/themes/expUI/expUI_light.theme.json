@@ -237,6 +237,7 @@
         "activeBackground": "Grey12",
         "inactiveBackground": "Grey11"
       },
+      "borderWidth": 0.5,
       "Advertiser.foreground": "Grey7"
     },
 

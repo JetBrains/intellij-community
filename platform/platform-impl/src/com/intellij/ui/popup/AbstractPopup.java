@@ -245,6 +245,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     myPopupBorder = showBorder ? borderColor != null ? PopupBorder.Factory.createColored(borderColor) :
                                  PopupBorder.Factory.create(true, showShadow) :
                                  PopupBorder.Factory.createEmpty();
+    myPopupBorder.setPopupUsed();
     myShadowed = showShadow;
     myContent = createContentPanel(resizable, myPopupBorder, false);
     myMayBeParent = mayBeParent;
