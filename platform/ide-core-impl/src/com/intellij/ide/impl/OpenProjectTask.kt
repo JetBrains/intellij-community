@@ -48,11 +48,11 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
 
   fun withForceOpenInNewFrame(forceOpenInNewFrame: Boolean) = copy(forceOpenInNewFrame = forceOpenInNewFrame)
   fun withProjectToClose(projectToClose: Project?) = copy(projectToClose = projectToClose)
-  fun asNewProject() = copy(isNewProject = true)
+  fun asNewProject() = copy(isNewProject = true, useDefaultProjectAsTemplate = true)
   fun withProject(project: Project?) = copy(project = project)
   fun withProjectName(projectName: String?) = copy(projectName = projectName)
   fun withRunConfigurators() = copy(runConfigurators = true)
-  fun withoutVfsRefresh() = copy(isProjectCreatedWithWizard = true)
+  fun withoutVfsRefresh() = copy(isRefreshVfsNeeded = false)
   fun withCreatedByWizard() = copy(isProjectCreatedWithWizard = true)
 
   @ApiStatus.Internal
