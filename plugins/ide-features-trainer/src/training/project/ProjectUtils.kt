@@ -11,7 +11,6 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.*
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
@@ -21,13 +20,9 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.NOTIFICATIONS_SILENT_MODE
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.*
 import com.intellij.util.Consumer
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
@@ -52,7 +47,6 @@ import kotlin.io.path.name
 object ProjectUtils {
   private const val LEARNING_PROJECT_MODIFICATION = "LEARNING_PROJECT_MODIFICATION"
   private const val FEATURE_TRAINER_VERSION = "feature-trainer-version.txt"
-  private val LOG = logger<ProjectUtils>()
 
   val learningProjectsPath: Path
     get() = Paths.get(PathManager.getSystemPath(), "demo")
@@ -135,15 +129,17 @@ object ProjectUtils {
     return true
   }
 
-  fun getProjectRoot(project: Project): VirtualFile {
-    val roots = ProjectRootManager.getInstance(project).contentRoots
-    if (roots.isNotEmpty()) {
-      if (roots.size > 1) LOG.warn("Multiple content roots in project ${project.name}: ${roots.toList()}")
-      return roots[0]
-    }
-    LOG.error("Not found content roots in project ${project.name}. " +
-              "Base path: ${project.basePath}, project file path: ${project.projectFilePath}")
-    throw error("Not found content roots for project")
+  fun getCurrentLearningProjectRoot(): VirtualFile {
+    val languageSupport = LangManager.getInstance().getLangSupport() ?: error("No current language support")
+    return getProjectRoot(languageSupport)
+  }
+
+  fun getProjectRoot(languageSupport: LangSupport): VirtualFile {
+    val learningInstallationContentRoot = getLearningInstallationContentRoot(languageSupport)
+                                          ?: error("No path for learning project for $languageSupport")
+    val projectPath = languageSupport.getLearningProjectPath(learningInstallationContentRoot)
+    return VirtualFileManager.getInstance().findFileByNioPath(projectPath)
+           ?: error("Cannot to convert $projectPath to virtual file")
   }
 
   fun simpleInstallAndOpenLearningProject(contentRoot: Path,
@@ -311,7 +307,7 @@ object ProjectUtils {
         val needReplace = mutableListOf<Path>()
         val validContent = mutableListOf<Path>()
         val directories = mutableListOf<Path>()
-        val root = getProjectRoot(project)
+        val root = getProjectRoot(languageSupport)
         val contentRootPath = languageSupport.getContentRootPath(root.toNioPath())
 
         for (path in Files.walk(contentRootPath)) {

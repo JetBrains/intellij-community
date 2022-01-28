@@ -129,7 +129,7 @@ class PythonOnboardingTour :
       useDelay = true
       configurations().forEach { runManager().removeConfiguration(it) }
 
-      val root = ProjectUtils.getProjectRoot(project)
+      val root = ProjectUtils.getCurrentLearningProjectRoot()
       if (root.findChild(demoFileName) == null) invokeLater {
         runWriteAction {
           root.createChildData(this, demoFileName)

@@ -320,7 +320,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
 
   private fun TaskRuntimeContext.modifyFiles() = invokeLater {
     DocumentUtil.writeInRunUndoTransparentAction {
-      val projectRoot = ProjectUtils.getProjectRoot(project)
+      val projectRoot = ProjectUtils.getCurrentLearningProjectRoot()
       appendToFile(projectRoot, firstFileName, firstFileAddition)
       appendToFile(projectRoot, secondFileName, secondFileAddition)
       PsiDocumentManager.getInstance(project).commitAllDocuments()

@@ -193,7 +193,7 @@ internal object OpenLessonActivities {
     }
     else {
       LOG.debug("${project.name}: 4. LearnProject is the current project")
-      getFileInLearnProject(lesson)
+      getFileInLearnProject(langSupport, lesson)
     }
 
     if (lesson.lessonType != LessonType.SCRATCH) {
@@ -308,7 +308,7 @@ internal object OpenLessonActivities {
   }
 
   private fun openReadme(project: Project) {
-    val root = ProjectUtils.getProjectRoot(project)
+    val root = ProjectUtils.getCurrentLearningProjectRoot()
     val readme = root.findFileByRelativePath("README.md") ?: return
     TextEditorWithPreview.openPreviewForFile(project, readme)
   }
@@ -431,8 +431,7 @@ internal object OpenLessonActivities {
                              LearnBundle.message("dialog.askToSwitchToLearnProject.title"))
   }
 
-  @Throws(IOException::class)
-  private fun getFileInLearnProject(lesson: Lesson): VirtualFile? {
+  private fun getFileInLearnProject(langSupport: LangSupport, lesson: Lesson): VirtualFile? {
     if (!lesson.properties.openFileAtStart) {
       LOG.debug("${lesson.name} does not open any file at the start")
       return null
@@ -444,7 +443,7 @@ internal object OpenLessonActivities {
         val existedFile = lesson.existedFile ?: lesson.module.primaryLanguage?.projectSandboxRelativePath
         val manager = ProjectRootManager.getInstance(learnProject)
         if (existedFile != null) {
-          val root = ProjectUtils.getProjectRoot(learnProject)
+          val root = ProjectUtils.getProjectRoot(langSupport)
           val findFileByRelativePath = root.findFileByRelativePath(existedFile)
           if (findFileByRelativePath != null) return findFileByRelativePath
         }
