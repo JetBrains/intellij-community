@@ -131,10 +131,10 @@
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.externalSystem.statistics.ExternalSystemSettingsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector"/>
-    <notificationGroup id="Build sync orphan modules" displayType="TOOL_WINDOW" toolWindowId="Build"/>
-    <notificationGroup id="Content root duplicates" displayType="BALLOON"/>
-    <notificationGroup id="Unindexed maven repositories gradle detection" displayType="BALLOON"/>
-    <notificationGroup id="Gradle Import" displayType="BALLOON"/>
+    <notificationGroup id="Build sync orphan modules" displayType="TOOL_WINDOW" toolWindowId="Build" bundle="messages.ExternalSystemBundle" key="notification.group.orphan.modules"/>
+    <notificationGroup id="Content root duplicates" displayType="BALLOON" bundle="messages.ExternalSystemBundle" key="notification.group.duplicate.content.roots"/>
+    <notificationGroup id="Unindexed maven repositories gradle detection" displayType="BALLOON" bundle="messages.ExternalSystemBundle" key="notification.group.unindexed.repositories"/>
+    <notificationGroup id="Gradle Wrapper Update" displayType="BALLOON" bundle="messages.ExternalSystemBundle" key="notification.group.gradle.wrapper.update"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.openapi.externalSystem.autoimport.ProjectRefreshFloatingProvider$Listener"

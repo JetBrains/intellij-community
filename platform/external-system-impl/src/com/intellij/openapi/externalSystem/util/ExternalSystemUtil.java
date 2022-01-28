@@ -715,8 +715,7 @@ public final class ExternalSystemUtil {
               ((ExternalProjectsViewImpl)externalProjectsView).getNotificationGroup() : null;
     }
     else {
-      final NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationData.getBalloonGroup());
-      group = registeredGroup != null ? registeredGroup : NotificationGroup.balloonGroup(notificationData.getBalloonGroup());
+      group = notificationData.getBalloonGroup();
     }
     int line = notificationData.getLine() - 1;
     int column = notificationData.getColumn() - 1;
