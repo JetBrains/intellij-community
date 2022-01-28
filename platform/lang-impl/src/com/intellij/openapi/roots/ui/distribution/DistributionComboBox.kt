@@ -25,7 +25,10 @@ import javax.swing.text.DefaultEditorKit
 import javax.swing.text.JTextComponent
 
 
-class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<Item>(CollectionComboBoxModel()) {
+class DistributionComboBox(
+  private val project: Project?,
+  private val info: FileChooserInfo
+) : ComboBox<Item>(CollectionComboBoxModel()) {
 
   var sdkListLoadingText: String = ProjectBundle.message("sdk.loading.item")
   var noDistributionText: String = ProjectBundle.message("sdk.missing.item")
@@ -43,10 +46,13 @@ class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<
     }
 
   override fun setSelectedItem(anObject: Any?) {
+    if (anObject is Item.SpecifyDistributionAction) {
+      showBrowseDistributionDialog()
+      return
+    }
     val item = when (anObject) {
       is Item.ListLoading -> Item.ListLoading
       is Item.NoDistribution, null -> Item.NoDistribution
-      is Item.SpecifyDistributionAction -> addDistributionIfNotExists(LocalDistributionInfo(defaultDistributionLocation))
       is Item.Distribution -> addDistributionIfNotExists(anObject.info)
       is DistributionInfo -> addDistributionIfNotExists(anObject)
       else -> throw IllegalArgumentException("Unsupported combobox item: ${anObject.javaClass.name}")
@@ -82,6 +88,32 @@ class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<
       }
     }
     return foundItem ?: item
+  }
+
+  private fun showBrowseDistributionDialog() {
+    val fileBrowserAccessor = object : TextComponentAccessor<DistributionComboBox> {
+      override fun getText(component: DistributionComboBox): String {
+        val distribution = component.selectedDistribution
+        if (distribution is LocalDistributionInfo) {
+          return distribution.path
+        } else {
+          return defaultDistributionLocation
+        }
+      }
+
+      override fun setText(component: DistributionComboBox, text: String) {
+        component.selectedDistribution = LocalDistributionInfo(text)
+      }
+    }
+    val selectFolderAction = BrowseFolderRunnable<DistributionComboBox>(
+      info.fileChooserTitle,
+      info.fileChooserDescription,
+      project,
+      info.fileChooserDescriptor,
+      this,
+      fileBrowserAccessor
+    )
+    selectFolderAction.run()
   }
 
   init {
@@ -164,21 +196,7 @@ class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<
     component: DistributionComboBox
   ) : ExtendableTextField() {
     init {
-      val fileBrowserAccessor = object : TextComponentAccessor<DistributionComboBox> {
-        override fun getText(component: DistributionComboBox) = component.selectedDistribution?.name ?: ""
-        override fun setText(component: DistributionComboBox, text: String) {
-          component.selectedDistribution = LocalDistributionInfo(text)
-        }
-      }
-      val selectFolderAction = BrowseFolderRunnable<DistributionComboBox>(
-        info.fileChooserTitle,
-        info.fileChooserDescription,
-        project,
-        info.fileChooserDescriptor,
-        component,
-        fileBrowserAccessor
-      )
-      addBrowseExtension(selectFolderAction, null)
+      addBrowseExtension(component::showBrowseDistributionDialog, null)
     }
 
     init {
