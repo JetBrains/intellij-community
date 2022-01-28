@@ -10,6 +10,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInf
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
+import org.jetbrains.kotlin.asJava.elements.FakeFileForLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtElement
@@ -86,7 +87,10 @@ private fun getGroupLeader(element: PsiElement): KtFile? {
     if (element is KtLightClassForFacade &&
         element.facadeClassFqName.shortName().asString().removeSuffix("Kt") == element.containingFile.virtualFile.nameWithoutExtension
     ) {
-        return element.containingFile as? KtFile
+        return when (val containingFile = element.containingFile) {
+            is FakeFileForLightClass -> containingFile.ktFile
+            else -> containingFile as? KtFile
+        }
     }
 
     if (element is KtClass && element.isTopLevel()) {
