@@ -63,9 +63,9 @@ public class EditorGutterLayout {
         case ANNOTATIONS_AREA: mouseEventAreaType = EditorMouseEventArea.ANNOTATIONS_AREA; break;
 
         case LEFT_FREE_PAINTERS_AREA:
+        case RIGHT_FREE_PAINTERS_AREA:
         case ICONS_AREA: mouseEventAreaType = EditorMouseEventArea.LINE_MARKERS_AREA; break;
 
-        case RIGHT_FREE_PAINTERS_AREA:
         case GAP_AFTER_ICONS_AREA:
         case FOLDING_AREA:
         case VERTICAL_LINE_AREA: mouseEventAreaType = EditorMouseEventArea.FOLDING_OUTLINE_AREA; break;
