@@ -139,9 +139,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
 
   public void removeHandler(@NotNull Function<? super String, ? extends Response> function) {
     CefMessageRouterHandler cefHandler;
-    synchronized (myHandlerMap) {
-      cefHandler = myHandlerMap.remove(function);
-    }
+    cefHandler = myHandlerMap.remove(function);
     if (cefHandler != null) {
       myFunc.myRouter.removeHandler(cefHandler);
     }
@@ -149,6 +147,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
 
   public void clearHandlers() {
     List<Function<? super String, ? extends Response>> functions = new ArrayList<>(myHandlerMap.size());
+    // Collection.synchronizedMap object is the internal mutex for the collection.
     synchronized (myHandlerMap) {
       myHandlerMap.forEach((func, handler) -> functions.add(func));
     }
