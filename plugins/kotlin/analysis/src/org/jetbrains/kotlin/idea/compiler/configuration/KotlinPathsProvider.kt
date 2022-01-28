@@ -100,10 +100,13 @@ object KotlinPathsProvider {
             .toVirtualFileUrl(VirtualFileUrlManager.getInstance(project)).presentableUrl.let { File(it) }
     }
 
-    fun getExpectedMavenArtifactJarPath(artifactId: String, version: String) =
-        JarRepositoryManager.getLocalRepositoryPath()
-            .resolve(KOTLIN_MAVEN_GROUP_ID.replace(".", "/"))
+    fun resolveMavenArtifactInMavenRepo(mavenRepo: File, artifactId: String, version: String) =
+        mavenRepo.resolve(KOTLIN_MAVEN_GROUP_ID.replace(".", "/"))
             .resolve(artifactId)
             .resolve(version)
             .resolve("$artifactId-$version.jar")
+
+    fun getExpectedMavenArtifactJarPath(artifactId: String, version: String) =
+        resolveMavenArtifactInMavenRepo(JarRepositoryManager.getLocalRepositoryPath(), artifactId, version)
+
 }

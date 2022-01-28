@@ -41,13 +41,22 @@ private class KotlinPluginLayoutWhenRunInProduction(private val root: File) : Ko
 private object KotlinPluginLayoutWhenRunFromSources : KotlinPluginLayout {
     override val kotlinc: File
         get() {
-            val packedDist = KotlinPathsProvider.getExpectedMavenArtifactJarPath(KotlinPathsProvider.KOTLIN_DIST_ARTIFACT_ID, KotlinCompilerVersion.VERSION)
-                .also {
-                    check(it.exists()) {
-                        "Can't find kotlinc-dist in local maven. But IDEA should have downloaded it because 'kotlinc.kotlin-dist' " +
-                                "library is specified as dependency for 'kotlin.util.compiler-dependencies' module"
-                    }
+            val anyJarInMavenLocal = PathManager.getJarPathForClass(KotlinVersion::class.java)?.let { File(it) }
+                ?: error("Can't find kotlin-stdlib.jar in maven local")
+            // We can't use getExpectedMavenArtifactJarPath because it will cause cyclic "Path macros" service initialization
+            val packedDist = generateSequence(anyJarInMavenLocal) { it.parentFile }
+                .map {
+                    KotlinPathsProvider.resolveMavenArtifactInMavenRepo(
+                        it,
+                        KotlinPathsProvider.KOTLIN_DIST_ARTIFACT_ID,
+                        KotlinCompilerVersion.VERSION
+                    )
                 }
+                .firstOrNull { it.exists() }
+                ?: error(
+                    "Can't find kotlinc-dist in local maven. But IDEA should have downloaded it because 'kotlinc.kotlin-dist' " +
+                            "library is specified as dependency for 'kotlin.util.compiler-dependencies' module"
+                )
 
             return KotlinPathsProvider.lazyUnpackKotlincDist(packedDist, KotlinCompilerVersion.VERSION)
         }
