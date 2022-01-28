@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Objects;
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
@@ -28,7 +29,7 @@ public interface FileStringPropertyPusher<T> extends FilePropertyPusher<T> {
     try (AttributeInputStream stream = getAttribute().readFileAttribute(fileOrDir)) {
       if (stream != null) {
         String storedValue = stream.readEnumeratedString();
-        if (storedValue == asString(actualValue)) return;
+        if (Objects.equals(storedValue, asString(actualValue))) return;
       }
     }
 
