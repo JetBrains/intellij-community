@@ -147,7 +147,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
     }
   }
 
-  private fun handleRemoteError(e: Throwable) : String {
+  private fun handleRemoteError(e: Throwable): String {
     val defaultMessage = "Error during communication with server"
     if (e is IOException) {
       LOG.warn(e)
@@ -159,35 +159,35 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
     }
   }
 
-    fun downloadSnapshot(): File? {
-      val stream = receiveSnapshotFile()
-      if (stream == null) {
-        LOG.info("$SETTINGS_SYNC_SNAPSHOT_ZIP not found on the server")
-        return null
-      }
-
-      try {
-        val currentDate = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US).format(Date())
-        val tempFile = FileUtil.createTempFile("settings.sync.snapshot.$currentDate.zip", null)
-        FileUtil.writeToFile(tempFile, stream.readAllBytes())
-        return tempFile
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-        return null
-      }
+  fun downloadSnapshot(): File? {
+    val stream = receiveSnapshotFile()
+    if (stream == null) {
+      LOG.info("$SETTINGS_SYNC_SNAPSHOT_ZIP not found on the server")
+      return null
     }
 
-    private inner class VersionContext : HeaderStorage {
-      private val contextVersionMap = mutableMapOf<String, String>()
-      private val lock = ReentrantLock()
+    try {
+      val currentDate = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US).format(Date())
+      val tempFile = FileUtil.createTempFile("settings.sync.snapshot.$currentDate.zip", null)
+      FileUtil.writeToFile(tempFile, stream.readAllBytes())
+      return tempFile
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
+      return null
+    }
+  }
 
-      override fun get(path: String): String? {
-        return contextVersionMap[path]
-      }
+  private inner class VersionContext : HeaderStorage {
+    private val contextVersionMap = mutableMapOf<String, String>()
+    private val lock = ReentrantLock()
 
-      override fun store(path: String, value: String) {
-      contextVersionMap[path] = path
+    override fun get(path: String): String? {
+      return contextVersionMap[path]
+    }
+
+    override fun store(path: String, value: String) {
+      contextVersionMap[path] = value
     }
 
     fun <T> doWithVersion(path: String, version: String, function: () -> T): T {
