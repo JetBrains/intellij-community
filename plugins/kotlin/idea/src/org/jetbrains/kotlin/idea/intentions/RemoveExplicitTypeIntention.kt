@@ -6,9 +6,11 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.isAnnotatedDeep
@@ -20,8 +22,12 @@ import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.checkers.ExplicitApiDeclarationChecker
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.isUnit
+import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 
 class RemoveExplicitTypeIntention : SelfTargetingRangeIntention<KtCallableDeclaration>(
     KtCallableDeclaration::class.java,
@@ -38,8 +44,33 @@ class RemoveExplicitTypeIntention : SelfTargetingRangeIntention<KtCallableDeclar
         fun removeExplicitType(element: KtCallableDeclaration) {
             val initializer = (element as? KtDeclarationWithInitializer)?.initializer
             val typeArgumentList = initializer?.let { getQualifiedTypeArgumentList(it) }
+            if (initializer != null && element is KtProperty) initializer.convertTypeIfNeeded(element)
             element.typeReference = null
             if (typeArgumentList != null) addTypeArgumentsIfNeeded(initializer, typeArgumentList)
+        }
+
+        private fun KtExpression.convertTypeIfNeeded(property: KtProperty) {
+            if (text.endsWith("L") || text.endsWith("toShort()") || text.endsWith("toByte()")) return
+            val isNullConstant = node.elementType == KtNodeTypes.NULL
+            val isIntegerConstant = node.elementType == KtNodeTypes.INTEGER_CONSTANT
+            if (!isNullConstant && !isIntegerConstant) return
+
+            val context = property.analyze(BodyResolveMode.PARTIAL)
+            val typeReference = property.typeReference ?: return
+            val type = context[BindingContext.TYPE, typeReference] ?: return
+            val psiFactory = KtPsiFactory(property)
+            val newExpression = if (isNullConstant && type.isNullable()) {
+                if (type.isNullable()) psiFactory.createExpression("$text as ${typeReference.text}") else null
+            } else {
+                val notNullType = type.makeNotNullable()
+                when {
+                    KotlinBuiltIns.isLong(notNullType) || KotlinBuiltIns.isULong(notNullType) -> psiFactory.createExpression("${text}L")
+                    KotlinBuiltIns.isShort(notNullType) -> psiFactory.createExpression("${text}.toShort()")
+                    KotlinBuiltIns.isByte(notNullType) -> psiFactory.createExpression("${text}.toByte()")
+                    else -> null
+                }
+            } ?: return
+            replace(newExpression)
         }
 
         fun isApplicableTo(element: KtCallableDeclaration): Boolean {
