@@ -41,8 +41,12 @@ class KotlinConfigurationCheckerService(val project: Project) {
                 val modules = runReadAction {
                     project.allModules()
                 }
+                // pick up modules with kotlin faces those use custom (non project) settings
                 val modulesWithKotlinFacets =
-                    modules.filter { KotlinFacet.get(it) != null }.takeUnless(List<Module>::isEmpty) ?: return
+                    modules.filter {
+                        KotlinFacet.get(it)?.configuration?.settings?.useProjectSettings == false
+                    }.takeUnless(List<Module>::isEmpty) ?: return
+
                 val ktModules = getModulesWithKotlinFiles(project, *modulesWithKotlinFacets.toTypedArray())
                 indicator.isIndeterminate = false
                 for ((idx, module) in ktModules.withIndex()) {
