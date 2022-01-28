@@ -3,6 +3,7 @@ package com.intellij;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
@@ -26,15 +27,17 @@ public interface FileStringPropertyPusher<T> extends FilePropertyPusher<T> {
 
   @Override
   default void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull T actualValue) throws IOException {
+    String actualStr = StringUtil.nullize(asString(actualValue));
     try (AttributeInputStream stream = getAttribute().readFileAttribute(fileOrDir)) {
-      if (stream != null) {
-        String storedValue = stream.readEnumeratedString();
-        if (Objects.equals(storedValue, asString(actualValue))) return;
-      }
+      String storedValue = stream != null && stream.available() > 0 ? stream.readEnumeratedString() : null;
+      /* actually it's always backed by baos */
+      if (Objects.equals(storedValue, actualStr)) return;
     }
 
     try (AttributeOutputStream stream = getAttribute().writeFileAttribute(fileOrDir)) {
-      stream.writeEnumeratedString(asString(actualValue));
+      if (actualStr != null) {
+        stream.writeEnumeratedString(actualStr);
+      }
     }
 
     propertyChanged(project, fileOrDir, actualValue);
