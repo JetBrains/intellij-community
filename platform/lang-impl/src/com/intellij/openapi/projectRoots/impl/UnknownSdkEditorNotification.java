@@ -53,12 +53,14 @@ final class UnknownSdkEditorNotificationsProvider implements EditorNotificationP
                                                                                                                 @NotNull VirtualFile file) {
     return editor -> {
       final var sdkService = project.getService(UnknownSdkEditorNotification.class);
+      boolean relevantNotifications = false;
       final var panel = new JPanel(new VerticalFlowLayout(0, 0));
       for (UnknownSdkFix info : sdkService.getNotifications()) {
         if (!info.isRelevantFor(project, file)) continue;
+        relevantNotifications = true;
         panel.add(new UnknownSdkEditorPanel(project, editor, info));
       }
-      return panel;
+      return relevantNotifications ? panel : null;
     };
   }
 }
