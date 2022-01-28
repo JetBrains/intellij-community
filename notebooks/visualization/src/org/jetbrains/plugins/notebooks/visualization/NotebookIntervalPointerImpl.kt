@@ -71,7 +71,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
         newIntervals.firstOrNull()?.also { firstNew ->
           pointers.addAll(firstNew.ordinal, newIntervals.map { NotebookIntervalPointerImpl(it) })
         }
-        for(newInterval in newIntervals) {
+        for (newInterval in newIntervals) {
           changeListeners.multicaster.onInserted(newInterval.ordinal)
         }
         onEdited(eventAffectedIntervals, excluded = newIntervals)
@@ -92,9 +92,9 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     if (intervals.isEmpty()) return
 
     val overLast = intervals.last().ordinal + 1
-    val excludedRange = (excluded.firstOrNull()?.ordinal ?: overLast) ..(excluded.lastOrNull()?.ordinal ?: overLast)
+    val excludedRange = (excluded.firstOrNull()?.ordinal ?: overLast)..(excluded.lastOrNull()?.ordinal ?: overLast)
 
-    for(interval in intervals) {
+    for (interval in intervals) {
       if (interval.ordinal !in excludedRange) {
         changeListeners.multicaster.onEdited(interval.ordinal)
       }
@@ -123,10 +123,8 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
               oldPtr.interval = newPtr.interval
               newPtr.interval = null
               pointers[hint.ordinalAfterChange] = oldPtr
-              oldOrdinal?.let {
-                if (it != hint.ordinalAfterChange) {
-                  changeListeners.multicaster.onMoved(it, hint.ordinalAfterChange)
-                }
+              if (oldOrdinal != null && oldOrdinal != hint.ordinalAfterChange) {
+                changeListeners.multicaster.onMoved(oldOrdinal, hint.ordinalAfterChange)
               }
             }
           }
