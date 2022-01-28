@@ -610,6 +610,9 @@ final class FileTypeDetectionService implements Disposable {
   private ByteArraySequence getFirstBytes(@NotNull VirtualFile file, byte @Nullable [] content) throws IOException {
     int bufferLength = getDetectFileBufferSize(file);
     if (content == null) {
+      if (bufferLength == 0) {
+        return ByteArraySequence.EMPTY;
+      }
       try {
         return ProgressManager.getInstance().isInNonCancelableSection() || ApplicationManager.getApplication().isWriteThread()
                ? readFirstBytesFromFile(file, bufferLength)
@@ -685,7 +688,7 @@ final class FileTypeDetectionService implements Disposable {
         FileTypeRegistry.FileTypeDetector detector = detectors.get(i);
         bufferLength = Math.max(bufferLength, detector.getDesiredContentPrefixLength());
       }
-      if (bufferLength <= 0) {
+      if (bufferLength < 0) {
         bufferLength = FileUtilRt.getUserContentLoadLimit();
       }
       cachedDetectFileBufferSize = bufferLength;

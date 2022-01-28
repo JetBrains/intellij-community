@@ -16,7 +16,7 @@ import javax.swing.*;
  * <p/>
  * FileType corresponding to any language that supported via TextMate bundle.
  */
-public final class TextMateFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile, PlainTextLikeFileType {
+public final class TextMateFileType extends LanguageFileType implements PlainTextLikeFileType {
   public static final TextMateFileType INSTANCE = new TextMateFileType();
 
   private TextMateFileType() {
@@ -52,17 +52,6 @@ public final class TextMateFileType extends LanguageFileType implements FileType
            || registeredType == PlainTextFileType.INSTANCE;
   }
 
-  @Override
-  public boolean isMyFileType(@NotNull VirtualFile file) {
-    if (file.isDirectory()) {
-      return false;
-    }
-    CharSequence fileName = file.getNameSequence();
-    FileType originalFileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
-    return isTypeShouldBeReplacedByTextMateType(originalFileType) &&
-           TextMateService.getInstance().getLanguageDescriptorByFileName(fileName) != null;
-  }
-
   private static class TextMateFileDetector implements FileTypeRegistry.FileTypeDetector {
     @Override
     public @Nullable FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
@@ -88,6 +77,11 @@ public final class TextMateFileType extends LanguageFileType implements FileType
         return null;
       }
       return INSTANCE;
+    }
+
+    @Override
+    public int getDesiredContentPrefixLength() {
+      return 0;
     }
   }
 }
