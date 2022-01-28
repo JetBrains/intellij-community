@@ -27,6 +27,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -121,10 +123,17 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         enterSelected(true);
       }
     });
-
-    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("CoverageView", createToolbarActions(), false);
+    final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(CoverageViewManager.TOOLWINDOW_ID);
+    final boolean isHorizontalView = toolWindow != null && toolWindow.getAnchor().isHorizontal();
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("CoverageView", createToolbarActions(), !isHorizontalView);
     actionToolbar.setTargetComponent(myTable);
-    addToLeft(actionToolbar.getComponent());
+    final JComponent toolbarComponent = actionToolbar.getComponent();
+    if (isHorizontalView) {
+      addToLeft(toolbarComponent);
+    }
+    else {
+      addToTop(toolbarComponent);
+    }
   }
 
   private void setUpShowRootNode() {
