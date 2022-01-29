@@ -132,7 +132,14 @@ public final class TypeInferenceHelper {
     final InferenceCache cache = getInferenceCache(scope);
     final VariableDescriptor descriptor = createDescriptor(variable);
     int descriptorIndex = cache.getGroovyFlow().getIndex(descriptor);
-    if (descriptorIndex == 0) return null;
+    if (descriptorIndex == 0) {
+      if (variable instanceof GrField) {
+        // variable is not used anywhere in the scope, therefore it is enough to return its declared type
+        return variable.getDeclaredType();
+      } else {
+        return null;
+      }
+    }
 
 
     final PsiType inferredType = cache.getInferredType(descriptorIndex, nearest, mixinOnly);
