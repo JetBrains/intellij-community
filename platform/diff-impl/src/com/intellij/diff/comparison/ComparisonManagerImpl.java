@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.comparison;
 
+import com.intellij.diff.comparison.ByWordRt.InlineChunk;
+import com.intellij.diff.comparison.ByWordRt.LineBlock;
 import com.intellij.diff.comparison.iterables.DiffIterable;
 import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
@@ -68,7 +70,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
     List<CharSequence> lineTexts1 = getLineContents(range.start1, range.end1, text1, lineOffsets1);
     List<CharSequence> lineTexts2 = getLineContents(range.start2, range.end2, text2, lineOffsets2);
 
-    FairDiffIterable iterable = ByLine.compare(lineTexts1, lineTexts2, policy, new IndicatorCancellationChecker(indicator));
+    FairDiffIterable iterable = ByLine.compare(lineTexts1, lineTexts2, policy, indicator);
     return convertIntoLineFragments(range, lineOffsets1, lineOffsets2, iterable);
   }
 
@@ -83,8 +85,8 @@ public final class ComparisonManagerImpl extends ComparisonManager {
     List<CharSequence> lineTexts2 = getLineContents(text2);
     List<CharSequence> lineTexts3 = getLineContents(text3);
 
-    List<MergeRange> ranges = ByLine.compare(lineTexts1, lineTexts2, lineTexts3, policy, new IndicatorCancellationChecker(indicator));
-    return ByLine.convertIntoMergeLineFragments(ranges);
+    List<MergeRange> ranges = ByLine.compare(lineTexts1, lineTexts2, lineTexts3, policy, indicator);
+    return ByLineRt.convertIntoMergeLineFragments(ranges);
   }
 
   @NotNull
@@ -98,8 +100,8 @@ public final class ComparisonManagerImpl extends ComparisonManager {
     List<CharSequence> lineTexts2 = getLineContents(text2);
     List<CharSequence> lineTexts3 = getLineContents(text3);
 
-    List<MergeRange> ranges = ByLine.merge(lineTexts1, lineTexts2, lineTexts3, policy, new IndicatorCancellationChecker(indicator));
-    return ByLine.convertIntoMergeLineFragments(ranges);
+    List<MergeRange> ranges = ByLine.merge(lineTexts1, lineTexts2, lineTexts3, policy, indicator);
+    return ByLineRt.convertIntoMergeLineFragments(ranges);
   }
 
   @NotNull
@@ -230,8 +232,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
                                                              @NotNull CharSequence subSequence2,
                                                              @NotNull ComparisonPolicy policy,
                                                              @NotNull ProgressIndicator indicator) throws DiffTooBigException {
-    List<ByWord.LineBlock> lineBlocks = ByWord.compareAndSplit(subSequence1, subSequence2, policy,
-                                                               new IndicatorCancellationChecker(indicator));
+    List<LineBlock> lineBlocks = ByWord.compareAndSplit(subSequence1, subSequence2, policy, indicator);
     assert lineBlocks.size() != 0;
 
     int startOffset1 = fragment.getStartOffset1();
@@ -242,7 +243,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
 
     List<LineFragment> chunks = new ArrayList<>();
     for (int i = 0; i < lineBlocks.size(); i++) {
-      ByWord.LineBlock block = lineBlocks.get(i);
+      LineBlock block = lineBlocks.get(i);
       Range offsets = block.offsets;
 
       // special case for last line to void problem with empty last line
@@ -277,16 +278,16 @@ public final class ComparisonManagerImpl extends ComparisonManager {
                                                    @NotNull ProgressIndicator indicator) {
     DiffIterable iterable;
     if (policy == ComparisonPolicy.DEFAULT) {
-      iterable = ByChar.compareTwoStep(text1, text2, new IndicatorCancellationChecker(indicator));
+      iterable = ByCharRt.compareTwoStep(text1, text2, new IndicatorCancellationChecker(indicator));
     }
     else if (policy == ComparisonPolicy.TRIM_WHITESPACES) {
-      iterable = ByChar.compareTrimWhitespaces(text1, text2, new IndicatorCancellationChecker(indicator));
+      iterable = ByCharRt.compareTrimWhitespaces(text1, text2, new IndicatorCancellationChecker(indicator));
     }
     else {
-      iterable = ByChar.compareIgnoreWhitespaces(text1, text2, new IndicatorCancellationChecker(indicator));
+      iterable = ByCharRt.compareIgnoreWhitespaces(text1, text2, new IndicatorCancellationChecker(indicator));
     }
 
-    return ByWord.convertIntoDiffFragments(iterable);
+    return ByWordRt.convertIntoDiffFragments(iterable);
   }
 
   @NotNull
@@ -295,7 +296,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
                                          @NotNull CharSequence text2,
                                          @NotNull ComparisonPolicy policy,
                                          @NotNull ProgressIndicator indicator) throws DiffTooBigException {
-    return ByWord.compare(text1, text2, policy, new IndicatorCancellationChecker(indicator));
+    return ByWord.compare(text1, text2, policy, indicator);
   }
 
   @NotNull
@@ -576,8 +577,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
     List<CharSequence> lineTexts1 = getNotIgnoredLineContents(range.start1, range.end1, text1, lineOffsets1, ignored1);
     List<CharSequence> lineTexts2 = getNotIgnoredLineContents(range.start2, range.end2, text2, lineOffsets2, ignored2);
 
-    FairDiffIterable iterable = ByLine.compare(lineTexts1, lineTexts2, ComparisonPolicy.DEFAULT,
-                                               new IndicatorCancellationChecker(indicator));
+    FairDiffIterable iterable = ByLine.compare(lineTexts1, lineTexts2, ComparisonPolicy.DEFAULT, indicator);
 
     FairDiffIterable correctedIterable = correctIgnoredRangesSecondStep(range, iterable, text1, text2, lineOffsets1, lineOffsets2,
                                                                         ignored1, ignored2);
@@ -618,7 +618,8 @@ public final class ComparisonManagerImpl extends ComparisonManager {
       for (int i = 0; i < count; i++) {
         int index1 = ch.start1 + i;
         int index2 = ch.start2 + i;
-        if (areIgnoredEqualLines(range.start1 + index1, range.start2 + index2, text1, text2, lineOffsets1, lineOffsets2, ignored1, ignored2)) {
+        if (areIgnoredEqualLines(range.start1 + index1, range.start2 + index2, text1, text2, lineOffsets1, lineOffsets2, ignored1,
+                                 ignored2)) {
           builder.markEqual(index1, index2);
         }
       }
@@ -640,7 +641,8 @@ public final class ComparisonManagerImpl extends ComparisonManager {
     for (Range ch : iterable.iterateChanges()) {
       Range trimmedRange = TrimUtil.trimExpandRange(ch.start1, ch.start2,
                                                     ch.end1, ch.end2,
-                                                    (index1, index2) -> areIgnoredEqualLines(range.start1 + index1, range.start2 + index2, text1, text2,
+                                                    (index1, index2) -> areIgnoredEqualLines(range.start1 + index1, range.start2 + index2,
+                                                                                             text1, text2,
                                                                                              lineOffsets1, lineOffsets2,
                                                                                              ignored1, ignored2),
                                                     index -> isIgnoredLine(range.start1 + index, lineOffsets1, ignored1),
@@ -691,8 +693,8 @@ public final class ComparisonManagerImpl extends ComparisonManager {
                                           ignored1, ignored2);
     if (!range.isEmpty()) return false;
 
-    List<ByWord.InlineChunk> words1 = getNonIgnoredWords(index1, text1, lineOffsets1, ignored1);
-    List<ByWord.InlineChunk> words2 = getNonIgnoredWords(index2, text2, lineOffsets2, ignored2);
+    List<InlineChunk> words1 = getNonIgnoredWords(index1, text1, lineOffsets1, ignored1);
+    List<InlineChunk> words2 = getNonIgnoredWords(index2, text2, lineOffsets2, ignored2);
     if (words1.size() != words2.size()) return false;
 
     for (int i = 0; i < words1.size(); i++) {
@@ -705,13 +707,13 @@ public final class ComparisonManagerImpl extends ComparisonManager {
   }
 
   @NotNull
-  private static List<ByWord.InlineChunk> getNonIgnoredWords(int index,
-                                                             @NotNull CharSequence text,
-                                                             @NotNull LineOffsets lineOffsets,
-                                                             @NotNull BitSet ignored) {
+  private static List<InlineChunk> getNonIgnoredWords(int index,
+                                                      @NotNull CharSequence text,
+                                                      @NotNull LineOffsets lineOffsets,
+                                                      @NotNull BitSet ignored) {
     int offset = lineOffsets.getLineStart(index);
-    List<ByWord.InlineChunk> innerChunks = ByWord.getInlineChunks(getLineContent(index, text, lineOffsets));
-    return ContainerUtil.filter(innerChunks, it -> ByWord.isWordChunk(it) &&
+    List<InlineChunk> innerChunks = ByWordRt.getInlineChunks(getLineContent(index, text, lineOffsets));
+    return ContainerUtil.filter(innerChunks, it -> ByWordRt.isWordChunk(it) &&
                                                    !isIgnoredRange(ignored, offset + it.getOffset1(), offset + it.getOffset2()));
   }
 
@@ -719,7 +721,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
   private static CharSequence getWordContent(int index,
                                              @NotNull CharSequence text,
                                              @NotNull LineOffsets lineOffsets,
-                                             @NotNull ByWord.InlineChunk word) {
+                                             @NotNull InlineChunk word) {
     return getLineContent(index, text, lineOffsets).subSequence(word.getOffset1(), word.getOffset2());
   }
 

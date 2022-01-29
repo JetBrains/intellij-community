@@ -6,7 +6,6 @@ import com.intellij.diff.DiffContentFactory
 import com.intellij.diff.DiffManager
 import com.intellij.diff.comparison.ByWord
 import com.intellij.diff.comparison.ComparisonPolicy
-import com.intellij.diff.comparison.IndicatorCancellationChecker
 import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.fragments.DiffFragment
 import com.intellij.diff.requests.SimpleDiffRequest
@@ -530,9 +529,8 @@ class GitStageLineStatusTracker(
       val vcsContent = DiffUtil.getLinesContent(myTracker.vcsDocument, range.vcsLine1, range.vcsLine2)
       val (stagedWordDiff, vcsWordDiff) = BackgroundTaskUtil.tryComputeFast(
         { indicator ->
-          val cancellationChecker = IndicatorCancellationChecker(indicator)
-          Pair(if (range.hasStagedLines()) ByWord.compare(stagedContent, currentContent, ComparisonPolicy.DEFAULT, cancellationChecker) else null,
-               if (range.hasVcsLines()) ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, cancellationChecker) else null)
+          Pair(if (range.hasStagedLines()) ByWord.compare(stagedContent, currentContent, ComparisonPolicy.DEFAULT, indicator) else null,
+               if (range.hasVcsLines()) ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator) else null)
         }, 200) ?: return
 
       if (stagedWordDiff != null) {

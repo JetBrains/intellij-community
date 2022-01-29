@@ -16,7 +16,7 @@ import static com.intellij.diff.comparison.TrimUtil.isPunctuation;
 import static com.intellij.diff.comparison.TrimUtil.isWhiteSpaceCodePoint;
 import static com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
 
-public final class ByChar {
+public final class ByCharRt {
   @NotNull
   public static FairDiffIterable compare(@NotNull CharSequence text1,
                                          @NotNull CharSequence text2,
@@ -69,7 +69,7 @@ public final class ByChar {
                                                     @NotNull CharSequence text2,
                                                     @NotNull CancellationChecker indicator) {
     FairDiffIterable iterable = compareTwoStep(text1, text2, indicator);
-    return new ByWord.TrimSpacesCorrector(iterable, text1, text2, indicator).build();
+    return new ByWordRt.TrimSpacesCorrector(iterable, text1, text2, indicator).build();
   }
 
   @NotNull

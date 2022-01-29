@@ -8,7 +8,6 @@ import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.comparison.ByWord;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.ComparisonUtil;
-import com.intellij.diff.comparison.IndicatorCancellationChecker;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
@@ -175,7 +174,9 @@ public final class DiffUtil {
       return highlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme());
     }
     if (file != null && file.isValid()) {
-      if ((type == null || type == PlainTextFileType.INSTANCE) || FileTypeRegistry.getInstance().isFileOfType(file, type) || file instanceof LightVirtualFile) {
+      if ((type == null || type == PlainTextFileType.INSTANCE) ||
+          FileTypeRegistry.getInstance().isFileOfType(file, type) ||
+          file instanceof LightVirtualFile) {
         return highlighterFactory.createEditorHighlighter(project, file);
       }
     }
@@ -194,7 +195,7 @@ public final class DiffUtil {
     EditorHighlighter highlighter = createEditorHighlighter(project, content);
     if (highlighter != null) editor.setHighlighter(highlighter);
     if (project != null) {
-      new DiffEditorHighlighterUpdater(project, ((EditorImpl) editor).getDisposable(), editor, content);
+      new DiffEditorHighlighterUpdater(project, ((EditorImpl)editor).getDisposable(), editor, content);
     }
   }
 
@@ -243,7 +244,8 @@ public final class DiffUtil {
 
     if (enableFolding) {
       setFoldingModelSupport(editor);
-    } else {
+    }
+    else {
       editor.getSettings().setFoldingOutlineShown(false);
       editor.getFoldingModel().setFoldingEnabled(false);
     }
@@ -766,7 +768,7 @@ public final class DiffUtil {
 
   public static void runPreservingFocus(@NotNull FocusableContext context, @NotNull Runnable task) {
     boolean hadFocus = context.isFocusedInWindow();
-//    if (hadFocus) KeyboardFocusManager.getCurrentKeyboardFocusManager().clearFocusOwner();
+    // if (hadFocus) KeyboardFocusManager.getCurrentKeyboardFocusManager().clearFocusOwner();
     task.run();
     if (hadFocus) context.requestFocusInWindow();
   }
@@ -810,7 +812,6 @@ public final class DiffUtil {
                                                             @NotNull ComparisonPolicy comparisonPolicy,
                                                             @NotNull ProgressIndicator indicator) {
     if (chunks.get(0) == null && chunks.get(1) == null && chunks.get(2) == null) return null; // ---
-    IndicatorCancellationChecker cancellationChecker = new IndicatorCancellationChecker(indicator);
 
     if (comparisonPolicy == ComparisonPolicy.IGNORE_WHITESPACES) {
       if (isChunksEquals(chunks.get(0), chunks.get(1), comparisonPolicy) &&
@@ -827,8 +828,8 @@ public final class DiffUtil {
     }
 
     if (chunks.get(0) != null && chunks.get(1) != null && chunks.get(2) != null) { // ===
-      List<DiffFragment> fragments1 = ByWord.compare(chunks.get(1), chunks.get(0), comparisonPolicy, cancellationChecker);
-      List<DiffFragment> fragments2 = ByWord.compare(chunks.get(1), chunks.get(2), comparisonPolicy, cancellationChecker);
+      List<DiffFragment> fragments1 = ByWord.compare(chunks.get(1), chunks.get(0), comparisonPolicy, indicator);
+      List<DiffFragment> fragments2 = ByWord.compare(chunks.get(1), chunks.get(2), comparisonPolicy, indicator);
 
       List<TextRange> left = new ArrayList<>();
       List<TextRange> base = new ArrayList<>();
@@ -853,7 +854,7 @@ public final class DiffUtil {
     CharSequence chunk1 = side1.select(chunks);
     CharSequence chunk2 = side2.select(chunks);
 
-    List<DiffFragment> wordConflicts = ByWord.compare(chunk1, chunk2, comparisonPolicy, cancellationChecker);
+    List<DiffFragment> wordConflicts = ByWord.compare(chunk1, chunk2, comparisonPolicy, indicator);
 
     List<List<TextRange>> textRanges = ThreeSide.map(side -> {
       if (side == side1) {

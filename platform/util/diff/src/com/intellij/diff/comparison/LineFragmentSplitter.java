@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.comparison;
 
-import com.intellij.diff.comparison.ByWord.InlineChunk;
-import com.intellij.diff.comparison.ByWord.NewlineChunk;
+import com.intellij.diff.comparison.ByWordRt.InlineChunk;
+import com.intellij.diff.comparison.ByWordRt.NewlineChunk;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
 import org.jetbrains.annotations.NotNull;

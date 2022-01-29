@@ -22,7 +22,7 @@ import static com.intellij.diff.comparison.TrimUtil.*;
 import static com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
 import static com.intellij.openapi.util.text.Strings.isWhiteSpace;
 
-public final class ByWord {
+public final class ByWordRt {
   @NotNull
   public static List<DiffFragment> compare(@NotNull CharSequence text1,
                                            @NotNull CharSequence text2,
@@ -376,7 +376,7 @@ public final class ByWord {
       CharSequence sequence1 = myText1.subSequence(start1, end1);
       CharSequence sequence2 = myText2.subSequence(start2, end2);
 
-      DiffIterable changes = ByChar.comparePunctuation(sequence1, sequence2, myIndicator);
+      DiffIterable changes = ByCharRt.comparePunctuation(sequence1, sequence2, myIndicator);
 
       for (Range ch : changes.iterateUnchanged()) {
         myBuilder.markEqual(start1 + ch.start1, start2 + ch.start2, start1 + ch.end1, start2 + ch.end2);
@@ -454,7 +454,7 @@ public final class ByWord {
                                                                   @NotNull CharSequence text22,
                                                                   @NotNull CancellationChecker indicator) {
     CharSequence text2 = new MergingCharSequence(text21, text22);
-    FairDiffIterable changes = ByChar.comparePunctuation(text1, text2, indicator);
+    FairDiffIterable changes = ByCharRt.comparePunctuation(text1, text2, indicator);
 
     Couple<List<Range>> ranges = splitIterable2Side(changes, text21.length());
 

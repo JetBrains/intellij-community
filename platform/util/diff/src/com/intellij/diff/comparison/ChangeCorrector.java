@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.comparison;
 
-import com.intellij.diff.comparison.ByLine.Line;
+import com.intellij.diff.comparison.ByLineRt.Line;
 import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
@@ -83,13 +83,13 @@ abstract class ChangeCorrector {
   //
 
   public static class DefaultCharChangeCorrector extends ChangeCorrector {
-    @NotNull private final ByChar.CodePointsOffsets myCodePoints1;
-    @NotNull private final ByChar.CodePointsOffsets myCodePoints2;
+    @NotNull private final ByCharRt.CodePointsOffsets myCodePoints1;
+    @NotNull private final ByCharRt.CodePointsOffsets myCodePoints2;
     @NotNull private final CharSequence myText1;
     @NotNull private final CharSequence myText2;
 
-    public DefaultCharChangeCorrector(@NotNull ByChar.CodePointsOffsets codePoints1,
-                                      @NotNull ByChar.CodePointsOffsets codePoints2,
+    public DefaultCharChangeCorrector(@NotNull ByCharRt.CodePointsOffsets codePoints1,
+                                      @NotNull ByCharRt.CodePointsOffsets codePoints2,
                                       @NotNull CharSequence text1,
                                       @NotNull CharSequence text2,
                                       @NotNull FairDiffIterable changes,
@@ -105,7 +105,7 @@ abstract class ChangeCorrector {
     protected void matchGap(int start1, int end1, int start2, int end2) {
       CharSequence inner1 = myText1.subSequence(start1, end1);
       CharSequence inner2 = myText2.subSequence(start2, end2);
-      FairDiffIterable innerChanges = ByChar.compare(inner1, inner2, myIndicator);
+      FairDiffIterable innerChanges = ByCharRt.compare(inner1, inner2, myIndicator);
 
       for (Range chunk : innerChanges.iterateUnchanged()) {
         myBuilder.markEqual(start1 + chunk.start1, start2 + chunk.start2, chunk.end1 - chunk.start1);

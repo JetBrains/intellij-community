@@ -2,11 +2,11 @@
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.diff.comparison.ByLine;
-import com.intellij.diff.comparison.CancellationChecker;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
+import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -266,7 +266,7 @@ public final class TextPatchBuilder {
   @NotNull
   private static List<Range> doCompareLines(@NotNull List<String> beforeLines, @NotNull List<String> afterLines) {
     try {
-      FairDiffIterable iterable = ByLine.compare(beforeLines, afterLines, ComparisonPolicy.DEFAULT, CancellationChecker.EMPTY);
+      FairDiffIterable iterable = ByLine.compare(beforeLines, afterLines, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
       return ContainerUtil.newArrayList(iterable.iterateChanges());
     }
     catch (DiffTooBigException e) {

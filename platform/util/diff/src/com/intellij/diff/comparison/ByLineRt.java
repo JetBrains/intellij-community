@@ -20,7 +20,7 @@ import static com.intellij.diff.comparison.ComparisonPolicy.IGNORE_WHITESPACES;
 import static com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
 import static com.intellij.openapi.util.text.Strings.isWhiteSpace;
 
-public final class ByLine {
+public final class ByLineRt {
   @NotNull
   public static FairDiffIterable compare(@NotNull List<? extends CharSequence> lines1,
                                          @NotNull List<? extends CharSequence> lines2,
