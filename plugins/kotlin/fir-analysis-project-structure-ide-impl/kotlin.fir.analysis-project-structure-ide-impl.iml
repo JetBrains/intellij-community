@@ -28,5 +28,6 @@
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="kotlin.common" />
+    <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
   </component>
 </module>
