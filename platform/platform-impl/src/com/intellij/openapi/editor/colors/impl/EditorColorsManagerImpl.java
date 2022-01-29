@@ -5,7 +5,9 @@ import com.intellij.configurationStore.BundledSchemeEP;
 import com.intellij.configurationStore.LazySchemeProcessor;
 import com.intellij.configurationStore.SchemeDataHolder;
 import com.intellij.configurationStore.SchemeExtensionProvider;
+import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -230,7 +232,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   }
 
   // initScheme has to execute only after the LaF has been set in LafManagerImpl.initializeComponent
-  public void initScheme(@NotNull UIManager.LookAndFeelInfo currentLaf) {
+  private void initScheme(@NotNull UIManager.LookAndFeelInfo currentLaf) {
     EditorColorsScheme scheme = null;
     String wizardEditorScheme = WelcomeWizardUtil.getWizardEditorScheme();
     if (wizardEditorScheme != null) {
@@ -544,6 +546,18 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     themeIsCustomized = true;
     myState = state;
     setGlobalSchemeInner(myState.colorScheme == null ? getDefaultScheme() : mySchemeManager.findSchemeByName(myState.colorScheme));
+  }
+
+  @Override
+  public void initializeComponent() {
+    Activity activity = StartUpMeasurer.startActivity("editor color scheme initialization");
+    // LafManager is initialized in EDT, so, that's ok to call it here
+    LookAndFeelInfo laf = LafManager.getInstance().getCurrentLookAndFeel();
+    // null in a headless mode
+    if (laf != null) {
+      initScheme(laf);
+    }
+    activity.end();
   }
 
   @Override

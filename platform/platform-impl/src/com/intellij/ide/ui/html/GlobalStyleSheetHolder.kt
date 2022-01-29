@@ -2,6 +2,8 @@
 package com.intellij.ide.ui.html
 
 import com.intellij.diagnostic.runActivity
+import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsListener
@@ -67,7 +69,11 @@ class GlobalStyleSheetHolder {
     }
   }
 
-  internal class UpdateListener : EditorColorsListener {
+  internal class UpdateListener : EditorColorsListener, LafManagerListener {
+    override fun lookAndFeelChanged(source: LafManager) {
+      getInstance().updateGlobalStyleSheet()
+    }
+
     override fun globalSchemeChange(scheme: EditorColorsScheme?) {
       getInstance().updateGlobalStyleSheet()
     }

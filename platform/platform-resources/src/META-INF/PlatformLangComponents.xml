@@ -162,6 +162,8 @@
               topic="com.intellij.notification.Notifications"/>
 
     <listener class="com.intellij.ide.ui.html.GlobalStyleSheetHolder$UpdateListener"
+              topic="com.intellij.ide.ui.LafManagerListener"/>
+    <listener class="com.intellij.ide.ui.html.GlobalStyleSheetHolder$UpdateListener"
               topic="com.intellij.openapi.editor.colors.EditorColorsListener"/>
 
     <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector$MyAnActionListener"
