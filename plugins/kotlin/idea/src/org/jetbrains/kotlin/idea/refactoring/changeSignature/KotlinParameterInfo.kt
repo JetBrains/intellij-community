@@ -106,7 +106,7 @@ class KotlinParameterInfo(
     }
 
     fun getInheritedName(inheritedCallable: KotlinCallableDefinitionUsage<*>): String {
-        val name = Name.identifier(name).render()
+        val name = this.name.quoteIfNeeded()
         if (!inheritedCallable.isInherited) return name
 
         val baseFunction = inheritedCallable.baseFunction
@@ -156,7 +156,7 @@ class KotlinParameterInfo(
             buffer.append(valOrVar).append(' ')
         }
 
-        buffer.append(getInheritedName(inheritedCallable).quoteIfNeeded())
+        buffer.append(getInheritedName(inheritedCallable))
 
         if (requiresExplicitType(inheritedCallable)) {
             buffer.append(": ").append(renderType(parameterIndex, inheritedCallable))
