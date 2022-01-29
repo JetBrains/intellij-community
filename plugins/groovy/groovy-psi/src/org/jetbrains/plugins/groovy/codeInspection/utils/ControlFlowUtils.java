@@ -745,31 +745,31 @@ public final class ControlFlowUtils {
 
   /**
    * searches for next or previous write access to local variable
-   * @param local variable (its index in control flow) to analyze
+   * @param local variable to analyze
    * @param place place to start searching
    * @param ahead if true search for next write. if false searches for previous write
    * @return all write instructions leading to (or preceding) the place
    */
-  public static List<ReadWriteVariableInstruction> findAccess(int local, final PsiElement place, boolean ahead, boolean writeAccessOnly) {
-    if (local == 0) {
-      return Collections.emptyList();
-    }
+  public static List<ReadWriteVariableInstruction> findAccess(GrVariable local, final PsiElement place, boolean ahead, boolean writeAccessOnly) {
+    LOG.assertTrue(!(local instanceof GrField), local.getClass());
 
     final GrControlFlowOwner owner = findControlFlowOwner(place);
     assert owner != null;
 
-    GroovyControlFlow groovyFlow = getGroovyControlFlow(owner);
-
-    final Instruction cur = findInstruction(place, groovyFlow.getFlow());
+    GroovyControlFlow flow = getGroovyControlFlow(owner);
+    final Instruction cur = findInstruction(place, flow.getFlow());
 
     if (cur == null) {
       throw new IllegalArgumentException("place is not in the flow");
     }
 
-    return findAccess(local, ahead, writeAccessOnly, cur);
+    return findAccess(flow.getIndex(createDescriptor(local)), ahead, writeAccessOnly, cur);
   }
 
   public static List<ReadWriteVariableInstruction> findAccess(int variableIndex, boolean ahead, boolean writeAccessOnly, Instruction cur) {
+    if (variableIndex == 0) {
+      return Collections.emptyList();
+    }
     final ArrayList<ReadWriteVariableInstruction> result = new ArrayList<>();
     final HashSet<Instruction> visited = new HashSet<>();
 
