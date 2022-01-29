@@ -107,6 +107,7 @@ fun <T> runUnderIndicator(job: Job, progressSink: ProgressSink?, action: () -> T
       // Register handler inside runProcess to avoid cancelling the indicator before even starting the progress.
       // If the Job was canceled while runProcess was preparing,
       // then CompletionHandler is invoked right away and cancels the indicator.
+      @OptIn(InternalCoroutinesApi::class)
       val completionHandle = job.invokeOnCompletion(onCancelling = true) {
         if (it is CancellationException) {
           indicator.cancel()
@@ -131,6 +132,7 @@ fun <T> runUnderIndicator(job: Job, progressSink: ProgressSink?, action: () -> T
     // => CompletionHandler was actually invoked
     // => current Job is canceled
     check(job.isCancelled)
+    @OptIn(InternalCoroutinesApi::class)
     throw job.getCancellationException()
   }
 }

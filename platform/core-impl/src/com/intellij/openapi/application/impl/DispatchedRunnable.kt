@@ -4,6 +4,7 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
 import java.util.concurrent.atomic.AtomicReference
 
@@ -12,7 +13,7 @@ internal class DispatchedRunnable(job: Job, runnable: Runnable) : Runnable {
   private val runnableRef: AtomicReference<Runnable> = AtomicReference(runnable)
 
   init {
-    @Suppress("EXPERIMENTAL_API_USAGE_ERROR")
+    @OptIn(InternalCoroutinesApi::class)
     job.invokeOnCompletion(onCancelling = true) { cause ->
       if (cause is CancellationException) {
         handleCancellation()
