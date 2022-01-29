@@ -36,7 +36,7 @@ interface StagingAreaOperation {
   @Throws(VcsException::class)
   fun processPaths(project: Project, root: VirtualFile, nodes: List<GitFileStatusNode>)
 
-  fun reportResult(project: Project, successfulRoots: Collection<VirtualFile>, exceptionsByRoot: MultiMap<VirtualFile, VcsException>) {
+  fun reportResult(project: Project, nodes: List<GitFileStatusNode>, successfulRoots: Collection<VirtualFile>, exceptionsByRoot: MultiMap<VirtualFile, VcsException>) {
     if (!exceptionsByRoot.isEmpty) {
       showErrorMessage(project, errorMessage, exceptionsByRoot.values())
     }

@@ -311,7 +311,7 @@ object GitStashOperations {
     return GitBundle.message("stash.files.in.roots.success", rootsText)
   }
 
-  private fun getRootsText(project: Project, roots: Collection<VirtualFile>): String {
+  internal fun getRootsText(project: Project, roots: Collection<VirtualFile>): String {
     val rootsText = roots.joinToString(", ") { "'${VcsImplUtil.getShortVcsRootName(project, it)}'" }
     return StringUtil.shortenTextWithEllipsis(rootsText, 100, 0)
   }

@@ -87,6 +87,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       STASH_SUCCESSFUL,
       STASH_FAILED,
       STASH_LOCAL_CHANGES_DETECTED,
+      STASH_NON_EMPTY_INDEX_DETECTED,
       TAG_CREATED,
       TAG_NOT_CREATED,
       TAG_DELETED,
@@ -196,6 +197,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val STASH_SUCCESSFUL = "git.stash.successful"
     const val STASH_FAILED = "git.stash.failed"
     const val STASH_LOCAL_CHANGES_DETECTED = "git.stash.local.changes.detected"
+    const val STASH_NON_EMPTY_INDEX_DETECTED = "git.stash.non.empty.index.detected"
     const val TAG_CREATED = "git.tag.created"
     const val TAG_NOT_CREATED = "git.tag.not.created"
     const val TAG_DELETED = "git.tag.deleted"

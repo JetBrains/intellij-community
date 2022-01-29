@@ -220,13 +220,21 @@ public class VcsNotifier {
   public Notification notifyMinorWarning(@NonNls @Nullable String displayId,
                                          @NotificationTitle @NotNull String title,
                                          @NotificationContent @NotNull String message) {
-    return notifyMinorWarning(displayId, title, message, null);
+    return notifyMinorWarning(displayId, title, message, (NotificationListener)null);
   }
 
   @NotNull
   public Notification notifyMinorWarning(@NonNls @Nullable String displayId,
                                          @NotificationContent @NotNull String message) {
     return notify(STANDARD_NOTIFICATION, displayId, "", message, NotificationType.WARNING, (NotificationListener)null);
+  }
+
+  @NotNull
+  public Notification notifyMinorWarning(@NonNls @Nullable String displayId,
+                                         @NotificationTitle @NotNull String title,
+                                         @NotificationContent @NotNull String message,
+                                         NotificationAction... actions) {
+    return notify(STANDARD_NOTIFICATION, displayId, title, message, NotificationType.WARNING, actions);
   }
 
   @NotNull

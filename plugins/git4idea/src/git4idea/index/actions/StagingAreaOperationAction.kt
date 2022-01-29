@@ -78,7 +78,7 @@ fun performStageOperation(project: Project, nodes: List<GitFileStatusNode>, oper
       }
     }
 
-    operation.reportResult(project, successfulRoots, exceptions)
+    operation.reportResult(project, nodes, successfulRoots, exceptions)
     stagingAreaActionInvoked()
   }
 }
