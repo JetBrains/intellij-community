@@ -57,10 +57,10 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
   }
 
   public static void setPresentationMode(@Nullable Project project, boolean inPresentation) {
-    final UISettings settings = UISettings.getInstance();
+    UISettings settings = UISettings.getInstance();
     settings.setPresentationMode(inPresentation);
 
-    final boolean layoutStored = storeToolWindows(project);
+    boolean layoutStored = project != null && storeToolWindows(project);
 
     tweakUIDefaults(settings, inPresentation);
 
@@ -68,7 +68,9 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
     callback.onProcessed(o -> {
       tweakEditorAndFireUpdateUI(settings, inPresentation);
 
-      restoreToolWindows(project, layoutStored, inPresentation);
+      if (layoutStored) {
+        restoreToolWindows(project, inPresentation);
+      }
     });
   }
 
@@ -158,20 +160,18 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
     boolean hasVisible = false;
     for (ToolWindow toolWindow : manager.getToolWindows()) {
       if (toolWindow.isVisible()) {
-        toolWindow.hide(null);
+        toolWindow.hide();
         hasVisible = true;
       }
     }
     return hasVisible;
   }
 
-  static boolean storeToolWindows(@Nullable Project project) {
-    if (project == null) return false;
+  static boolean storeToolWindows(@NotNull Project project) {
     ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
 
     DesktopLayout layout = manager.getLayout().copy();
     boolean hasVisible = hideAllToolWindows(manager);
-
     if (hasVisible) {
       manager.setLayoutToRestoreLater(layout);
       manager.activateEditorComponent();
@@ -179,11 +179,7 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
     return hasVisible;
   }
 
-  static void restoreToolWindows(Project project, boolean needsRestore, boolean inPresentation) {
-    if (project == null || !needsRestore) {
-      return;
-    }
-
+  static void restoreToolWindows(@NotNull Project project, boolean inPresentation) {
     ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
     DesktopLayout restoreLayout = manager.getLayoutToRestoreLater();
     if (!inPresentation && restoreLayout != null) {
