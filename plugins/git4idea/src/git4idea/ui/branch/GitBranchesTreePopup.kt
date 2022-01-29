@@ -1,10 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.NodeRenderer
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.TreePopup
@@ -15,6 +17,7 @@ import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.ui.tree.ui.DefaultTreeUI
@@ -26,6 +29,11 @@ import com.intellij.util.ui.tree.TreeUtil
 import git4idea.GitBranch
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
 import java.awt.Component
 import java.awt.Cursor
 import java.awt.Point
@@ -63,16 +71,42 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
       Disposer.register(this, it)
     }
 
-    val treeModel = StructureTreeModel(treeStep.structure,
+    val treeModel = StructureTreeModel(treeStep.treeStructure,
                                        null,
                                        Invoker.forEventDispatchThread(treeDisposable),
                                        treeDisposable)
-    tree = Tree(treeModel).also {
+    val filteringTreeModel = FilteringTreeModel(treeModel)
+
+    tree = Tree(filteringTreeModel).also {
       configureTreePresentation(it)
       overrideTreeActions(it)
       addTreeMouseControlsListeners(it)
     }
+    speedSearch.installSupplyTo(tree, false)
+
+    @OptIn(FlowPreview::class)
+    with(uiScope(treeDisposable)) {
+      val filterStateFlow = MutableStateFlow(Any())
+      launch {
+        filterStateFlow.drop(1).debounce(100).collect {
+          updateFilter(speedSearch, filteringTreeModel)
+          TreeUtil.promiseSelectFirstLeaf(tree)
+        }
+      }
+
+      speedSearch.addChangeListener {
+        launch { filterStateFlow.emit(Any()) }
+      }
+    }
     return tree
+  }
+
+  private fun updateFilter(speedSearch: SpeedSearch, filteringTreeModel: FilteringTreeModel) {
+    if (speedSearch.isHoldingFilter)
+      filteringTreeModel.filterer = ::shouldBeShowing
+    else {
+      filteringTreeModel.filterer = null
+    }
   }
 
   private fun configureTreePresentation(tree: JTree) = with(tree) {
@@ -281,5 +315,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
     fun show(project: Project, repository: GitRepository) {
       GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, repository)).showCenteredInCurrentWindow(project)
     }
+
+    private fun uiScope(parent: Disposable) =
+      CoroutineScope(SupervisorJob() + AppUIExecutor.onUiThread().coroutineDispatchingContext()).also {
+        Disposer.register(parent) { it.cancel() }
+      }
   }
 }
