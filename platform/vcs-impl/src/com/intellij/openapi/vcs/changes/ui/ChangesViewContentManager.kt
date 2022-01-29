@@ -26,9 +26,6 @@ import kotlin.properties.Delegates.observable
 
 private const val COMMIT_TOOL_WINDOW = "vcs.commit.tool.window"
 
-private val isCommitToolWindowEnabled
-  get() = AdvancedSettings.getBoolean(COMMIT_TOOL_WINDOW)
-
 internal val Project.isCommitToolWindowShown: Boolean
   get() = ChangesViewContentManager.isCommitToolWindowShown(this)
 
@@ -57,13 +54,12 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     return toolWindow?.contentManager
   }
 
-  private var isCommitToolWindowShown: Boolean
-    by observable(shouldUseCommitToolWindow()) { _, oldValue, newValue ->
-      if (oldValue == newValue) return@observable
+  private var isCommitToolWindowShown: Boolean by observable(shouldUseCommitToolWindow()) { _, oldValue, newValue ->
+    if (oldValue == newValue) return@observable
 
-      remapContents()
-      project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-    }
+    remapContents()
+    project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
+  }
 
   init {
     ApplicationManager.getApplication().messageBus.connect(project)
@@ -84,8 +80,10 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     isCommitToolWindowShown = shouldUseCommitToolWindow()
   }
 
-  private fun shouldUseCommitToolWindow() = CommitModeManager.getInstance(project).getCurrentCommitMode().useCommitToolWindow() &&
-                                            isCommitToolWindowEnabled
+  private fun shouldUseCommitToolWindow(): Boolean {
+    return AdvancedSettings.getBoolean(COMMIT_TOOL_WINDOW) &&
+           CommitModeManager.getInstance(project).getCurrentCommitMode().useCommitToolWindow()
+  }
 
   private fun remapContents() {
     val remapped = findContents { it.resolveContentManager() != it.manager }

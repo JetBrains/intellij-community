@@ -58,8 +58,8 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
   }
 
   override fun isAvailable(project: Project): Boolean {
-    return ChangesViewContentManager.isCommitToolWindowShown(project) &&
-           ProjectLevelVcsManager.getInstance(project).hasAnyMappings() &&
+    return ProjectLevelVcsManager.getInstance(project).hasAnyMappings() &&
+           ChangesViewContentManager.isCommitToolWindowShown(project) &&
            project.isTrusted()
   }
 

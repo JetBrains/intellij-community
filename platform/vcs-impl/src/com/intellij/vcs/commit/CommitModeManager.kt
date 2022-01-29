@@ -101,9 +101,7 @@ class CommitModeManager(private val project: Project) : Disposable {
     return CommitMode.ModalCommitMode
   }
 
-  fun getCurrentCommitMode(): CommitMode {
-    return commitMode
-  }
+  fun getCurrentCommitMode() = commitMode
 
   internal fun canSetNonModal(): Boolean {
     if (isForceNonModalCommit.asBoolean()) return true
