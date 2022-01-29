@@ -27,4 +27,10 @@ class ToolWindowManagerTest {
   fun `button layout`(anchor: String) {
     testButtonLayout(isNewUi = true, anchor = ToolWindowAnchor.fromText(anchor))
   }
+
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun `remove button on setting an available property to false`(isNewUi: Boolean) {
+    testMutation(isNewUi = isNewUi, project = projectRule.project)
+  }
 }

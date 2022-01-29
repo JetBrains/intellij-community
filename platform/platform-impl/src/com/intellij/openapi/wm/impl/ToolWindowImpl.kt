@@ -239,7 +239,7 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   override fun isActive(): Boolean {
-    EDT.assertIsEdt()
+    toolWindowManager.assertIsEdt()
     return windowInfo.isVisible && decorator != null && toolWindowManager.activeToolWindowId == id
   }
 
@@ -352,14 +352,14 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
                                   "Use ToolWindowFactory.shouldBeAvailable() instead.")
     }
 
-    EDT.assertIsEdt()
+    toolWindowManager.assertIsEdt()
 
     isAvailable = value
     if (value) {
       toolWindowManager.toolWindowAvailable(this)
     }
     else {
-      toolWindowManager.hideToolWindow(id)
+      toolWindowManager.toolWindowUnavailable(this)
       contentUi?.dropCaches()
     }
   }

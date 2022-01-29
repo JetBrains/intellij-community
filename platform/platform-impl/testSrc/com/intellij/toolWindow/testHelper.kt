@@ -19,8 +19,28 @@ fun testStripeButton(id: String, manager: ToolWindowManagerImpl, shouldBeVisible
    assertThat(button!!.getComponent().isVisible).isEqualTo(shouldBeVisible)
 }
 
+fun testMutation(isNewUi: Boolean, project: Project) {
+  val manager = ToolWindowManagerImpl(project, isNewUi = isNewUi, isEdtRequired = false)
+
+  val toolWindowLayoutManager = ToolWindowDefaultLayoutManager(isNewUi = isNewUi)
+  toolWindowLayoutManager.noStateLoaded()
+
+  manager.setLayoutOnInit(toolWindowLayoutManager.getLayoutCopy())
+
+  val tasks = computeToolWindowBeans(project)
+  for (task in tasks) {
+    manager.registerToolWindow(task, if (isNewUi) ToolWindowPaneNewButtonManager() else ToolWindowPaneOldButtonManager())
+  }
+
+  val toolWindow = manager.getToolWindow("Project")!!
+  assertThat(manager.getEntry(toolWindow.id)!!.stripeButton).isNotNull()
+  toolWindow.isAvailable = false
+  assertThat(manager.getEntry(toolWindow.id)!!.stripeButton).isNull()
+}
+
+
 fun testDefaultLayout(isNewUi: Boolean, project: Project) {
-  val manager = ToolWindowManagerImpl(project, isNewUi = isNewUi)
+  val manager = ToolWindowManagerImpl(project, isNewUi = isNewUi, isEdtRequired = false)
 
   val toolWindowLayoutManager = ToolWindowDefaultLayoutManager(isNewUi = isNewUi)
   toolWindowLayoutManager.noStateLoaded()

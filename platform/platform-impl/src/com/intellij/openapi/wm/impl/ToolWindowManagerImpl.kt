@@ -44,6 +44,7 @@ import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.serviceContainer.NonInjectable
 import com.intellij.toolWindow.*
 import com.intellij.ui.BalloonImpl
 import com.intellij.ui.ClientProperty
@@ -75,10 +76,14 @@ import javax.swing.event.HyperlinkListener
 
 private val LOG = logger<ToolWindowManagerImpl>()
 
+private typealias Mutation = ((WindowInfoImpl) -> Unit)
+
 @ApiStatus.Internal
 @State(name = "ToolWindowManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-open class ToolWindowManagerImpl(val project: Project,
-                                 @field:JvmField internal val isNewUi: Boolean) : ToolWindowManagerEx(), PersistentStateComponent<Element?>, Disposable {
+open class ToolWindowManagerImpl @NonInjectable constructor(val project: Project,
+                                                            @field:JvmField internal val isNewUi: Boolean,
+                                                            private val isEdtRequired: Boolean)
+  : ToolWindowManagerEx(), PersistentStateComponent<Element?>, Disposable {
   private val dispatcher = EventDispatcher.create(ToolWindowManagerListener::class.java)
 
   private var oldLayout: DesktopLayout? = null
@@ -101,7 +106,7 @@ open class ToolWindowManagerImpl(val project: Project,
   @Suppress("LeakingThis")
   private val toolWindowSetInitializer = ToolWindowSetInitializer(project, this)
 
-  constructor(project: Project) : this(project, ExperimentalUI.isNewUI())
+  constructor(project: Project) : this(project, isNewUi = ExperimentalUI.isNewUI(), isEdtRequired = true)
 
   init {
     if (project.isDefault) {
@@ -149,6 +154,12 @@ open class ToolWindowManagerImpl(val project: Project,
   fun isToolWindowRegistered(id: String) = idToEntry.containsKey(id)
 
   internal fun getEntry(id: String) = idToEntry.get(id)
+
+  internal fun assertIsEdt() {
+    if (isEdtRequired) {
+      EDT.assertIsEdt()
+    }
+  }
 
   override fun dispose() {
   }
@@ -597,15 +608,12 @@ open class ToolWindowManagerImpl(val project: Project,
   private fun deactivateToolWindow(info: WindowInfoImpl,
                                    entry: ToolWindowEntry,
                                    dirtyMode: Boolean = false,
-                                   removeFromStripe: Boolean = false,
+                                   mutation: Mutation? = null,
                                    source: ToolWindowEventSource? = null) {
     LOG.debug { "deactivateToolWindow(${info.id})" }
 
     setHiddenState(info, entry, source)
-    if (removeFromStripe) {
-      info.isShowStripeButton = false
-      entry.removeStripeButton()
-    }
+    mutation?.invoke(info)
     updateStateAndRemoveDecorator(info, entry, dirtyMode = dirtyMode)
 
     entry.applyWindowInfo(info.copy())
@@ -749,29 +757,34 @@ open class ToolWindowManagerImpl(val project: Project,
     val entry = idToEntry.get(id)!!
     var moveFocusAfter = moveFocus && entry.toolWindow.isActive
     if (!entry.readOnlyWindowInfo.isVisible) {
-      if (!removeFromStripe || entry.stripeButton == null) {
-        return
-      }
-
       moveFocusAfter = false
     }
 
     val info = getRegisteredMutableInfoOrLogError(id)
-    doHide(entry, info, dirtyMode = false, hideSide = hideSide, removeFromStripe = removeFromStripe, source = source)
+    val mutation: Mutation? = if (removeFromStripe) {
+      {
+        info.isShowStripeButton = false
+        entry.removeStripeButton()
+      }
+    }
+    else {
+      null
+    }
+    executeHide(entry, info, dirtyMode = false, hideSide = hideSide, mutation = mutation, source = source)
     fireStateChanged()
     if (moveFocusAfter) {
       activateEditorComponent()
     }
   }
 
-  private fun doHide(entry: ToolWindowEntry,
-                     info: WindowInfoImpl,
-                     dirtyMode: Boolean,
-                     hideSide: Boolean = false,
-                     removeFromStripe: Boolean = false,
-                     source: ToolWindowEventSource? = null) {
+  private fun executeHide(entry: ToolWindowEntry,
+                          info: WindowInfoImpl,
+                          dirtyMode: Boolean,
+                          hideSide: Boolean = false,
+                          mutation: Mutation? = null,
+                          source: ToolWindowEventSource? = null) {
     // hide and deactivate
-    deactivateToolWindow(info, entry, dirtyMode = dirtyMode, removeFromStripe = removeFromStripe, source = source)
+    deactivateToolWindow(info, entry, dirtyMode = dirtyMode, mutation = mutation, source = source)
 
     if (hideSide && info.type != ToolWindowType.FLOATING && info.type != ToolWindowType.WINDOWED) {
       for (each in getVisibleToolWindowsOn(info.anchor)) {
@@ -1519,7 +1532,7 @@ open class ToolWindowManagerImpl(val project: Project,
     val wasVisible = entry.readOnlyWindowInfo.isVisible
     val wasFocused = entry.toolWindow.isActive
     if (wasVisible) {
-      doHide(entry, info, dirtyMode = true)
+      executeHide(entry, info, dirtyMode = true)
     }
 
     task()
@@ -1834,6 +1847,19 @@ open class ToolWindowManagerImpl(val project: Project,
     val entry = idToEntry.get(toolWindow.id) ?: return
     if (entry.stripeButton == null && toolWindow.isShowStripeButton) {
       entry.stripeButton = toolWindowPane!!.buttonManager.createStripeButton(entry.toolWindow, entry.readOnlyWindowInfo, task = null)
+    }
+  }
+
+  internal fun toolWindowUnavailable(toolWindow: ToolWindowImpl) {
+    val entry = idToEntry.get(toolWindow.id)!!
+    val moveFocusAfter = toolWindow.isActive && toolWindow.isVisible
+    val info = getRegisteredMutableInfoOrLogError(toolWindow.id)
+    executeHide(entry, info, dirtyMode = false, mutation = {
+      entry.removeStripeButton()
+    })
+    fireStateChanged()
+    if (moveFocusAfter) {
+      activateEditorComponent()
     }
   }
 
