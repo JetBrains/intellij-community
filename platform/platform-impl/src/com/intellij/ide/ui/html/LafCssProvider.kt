@@ -41,11 +41,11 @@ internal class LafCssProvider {
    * Get custom editor styles
    */
   fun getCssForCurrentEditorScheme(): String {
-    val editorColorsScheme = EditorColorsManager.getInstance().globalScheme
+    val editorColorScheme = EditorColorsManager.getInstance().globalScheme
     return editorCss
-      .replace(EDITOR_FONT_FAMILY_STUB, editorColorsScheme.getFont(EditorFontType.PLAIN).family)
-      .replace(EDITOR_FOREGROUND_STUB, ColorUtil.toHtmlColor(editorColorsScheme.defaultForeground))
-      .replace(EDITOR_BACKGROUND_STUB, ColorUtil.toHtmlColor(editorColorsScheme.defaultBackground))
+      .replace(EDITOR_FONT_FAMILY_STUB, editorColorScheme.getFont(EditorFontType.PLAIN).family)
+      .replace(EDITOR_FOREGROUND_STUB, ColorUtil.toHtmlColor(editorColorScheme.defaultForeground))
+      .replace(EDITOR_BACKGROUND_STUB, ColorUtil.toHtmlColor(editorColorScheme.defaultBackground))
   }
 }
 
