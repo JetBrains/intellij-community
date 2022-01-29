@@ -35,8 +35,6 @@ class PlantUMLCodeGeneratingProvider(
     return "<img src=\"${key.toURI()}\"/>"
   }
 
-  override fun onLAFChanged() {}
-
   override val displayName: String
     get() = MarkdownBundle.message("markdown.extensions.plantuml.display.name")
 

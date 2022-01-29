@@ -72,7 +72,7 @@ internal class MarkdownCodeFencePreviewHighlighter : CodeFenceGeneratingProvider
     return text
   }
 
-  override fun onLAFChanged() {
+  override fun onLaFChanged() {
     values.clear()
   }
 
