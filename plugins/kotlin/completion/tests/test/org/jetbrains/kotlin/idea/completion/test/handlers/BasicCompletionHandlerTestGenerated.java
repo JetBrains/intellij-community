@@ -522,26 +522,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("testData/handlers/basic/parameterNameAndType/TypeParameter.kt");
         }
 
-        @TestMetadata("UnstableSmartCast.kt")
-        public void testUnstableSmartCast() throws Exception {
-            runTest("testData/handlers/basic/UnstableSmartCast.kt");
-        }
-
-        @TestMetadata("UnstableSmartCast_notDenotable.kt")
-        public void testUnstableSmartCast_notDenotable() throws Exception {
-            runTest("testData/handlers/basic/UnstableSmartCast_notDenotable.kt");
-        }
-
-        @TestMetadata("UnstableSmartCast_typeAlias.kt")
-        public void testUnstableSmartCast_typeAlias() throws Exception {
-            runTest("testData/handlers/basic/UnstableSmartCast_typeAlias.kt");
-        }
-
-        @TestMetadata("UnstableSmartCast_typeParams.kt")
-        public void testUnstableSmartCast_typeParams() throws Exception {
-            runTest("testData/handlers/basic/UnstableSmartCast_typeParams.kt");
-        }
-
         @TestMetadata("UserPrefix.kt")
         public void testUserPrefix() throws Exception {
             runTest("testData/handlers/basic/parameterNameAndType/UserPrefix.kt");
@@ -1193,6 +1173,26 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("TypeParameter.kt")
         public void testTypeParameter() throws Exception {
             runTest("testData/handlers/basic/TypeParameter.kt");
+        }
+
+        @TestMetadata("UnstableSmartCast.kt")
+        public void testUnstableSmartCast() throws Exception {
+            runTest("testData/handlers/basic/UnstableSmartCast.kt");
+        }
+
+        @TestMetadata("UnstableSmartCast_notDenotable.kt")
+        public void testUnstableSmartCast_notDenotable() throws Exception {
+            runTest("testData/handlers/basic/UnstableSmartCast_notDenotable.kt");
+        }
+
+        @TestMetadata("UnstableSmartCast_typeAlias.kt")
+        public void testUnstableSmartCast_typeAlias() throws Exception {
+            runTest("testData/handlers/basic/UnstableSmartCast_typeAlias.kt");
+        }
+
+        @TestMetadata("UnstableSmartCast_typeParams.kt")
+        public void testUnstableSmartCast_typeParams() throws Exception {
+            runTest("testData/handlers/basic/UnstableSmartCast_typeParams.kt");
         }
     }
 }

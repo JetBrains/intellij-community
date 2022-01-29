@@ -1288,6 +1288,11 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                 runTest("testData/evaluation/singleBreakpoint/unsafeCall.kt");
             }
 
+            @TestMetadata("unusedTransitiveDependencies.kt")
+            public void testUnusedTransitiveDependencies() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/unusedTransitiveDependencies.kt");
+            }
+
             @TestMetadata("valueParameterName.kt")
             public void testValueParameterName() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/valueParameterName.kt");
