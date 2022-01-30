@@ -14,7 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Used in org.jetbrains.intellij.build.impl.JpsCompilationData via jps-build-script-dependencies-bootstrap
+ * Used in {@link org.jetbrains.intellij.build.impl.JpsCompilationRunner} via jps-build-script-dependencies-bootstrap
  */
 @SuppressWarnings("unused")
 public class Log4jFileLoggerFactory implements com.intellij.openapi.diagnostic.Logger.Factory {
@@ -31,7 +31,9 @@ public class Log4jFileLoggerFactory implements com.intellij.openapi.diagnostic.L
   @Override
   public com.intellij.openapi.diagnostic.Logger getLoggerInstance(@NotNull String category) {
     final Logger logger = Logger.getLogger(category);
+    JulLogger.clearHandlers(logger);
     logger.addHandler(myAppender);
+    logger.setUseParentHandlers(false);
     logger.setLevel(isDebugLevel(category) ? Level.FINE : Level.INFO);
     return new JulLogger(logger);
   }
