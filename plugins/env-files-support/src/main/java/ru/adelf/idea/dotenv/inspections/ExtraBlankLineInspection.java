@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.adelf.idea.dotenv.DotEnvFactory;
 import ru.adelf.idea.dotenv.psi.DotEnvFile;
+import ru.adelf.idea.dotenv.psi.DotEnvTypes;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -55,8 +56,8 @@ public class ExtraBlankLineInspection extends LocalInspectionTool {
 
             if (count > 2) {
                 problemsHolder.registerProblem(whiteSpace,
-                        "Only one extra line allowed between properties",
-                        new RemoveExtraBlankLineQuickFix());
+                    "Only one extra line allowed between properties",
+                    new RemoveExtraBlankLineQuickFix());
             }
         });
 
@@ -75,7 +76,7 @@ public class ExtraBlankLineInspection extends LocalInspectionTool {
             try {
                 PsiElement psiElement = descriptor.getPsiElement();
 
-                PsiElement newPsiElement = DotEnvFactory.createFromText(project, ElementType.WHITE_SPACE, "\n\n");
+                PsiElement newPsiElement = DotEnvFactory.createFromText(project, TokenType.WHITE_SPACE, "\n\n");
 
                 psiElement.replace(newPsiElement);
             } catch (IncorrectOperationException e) {

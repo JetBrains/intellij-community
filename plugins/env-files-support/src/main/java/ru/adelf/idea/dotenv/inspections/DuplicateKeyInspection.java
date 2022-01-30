@@ -20,7 +20,7 @@ public class DuplicateKeyInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getDisplayName() {
-        return "Duplicate Key";
+        return "Duplicate key";
     }
 
     @Override

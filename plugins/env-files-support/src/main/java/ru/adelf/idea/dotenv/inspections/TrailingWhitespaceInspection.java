@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -44,22 +44,22 @@ public class TrailingWhitespaceInspection extends LocalInspectionTool {
         PsiTreeUtil.findChildrenOfType(file, DotEnvValue.class).forEach(dotEnvValue -> {
             if (dotEnvValue.getText().matches(".*[ \\t]+")) {
                 problemsHolder.registerProblem(dotEnvValue,
-                        new TextRange(dotEnvValue.getText().stripTrailing().length(), dotEnvValue.getText().length()),
-                        "Line has trailing whitespace.",
-                        new TrailingWhitespaceInspection.RemoveTrailingWhitespaceQuickFix()
+                    new TextRange(dotEnvValue.getText().stripTrailing().length(), dotEnvValue.getText().length()),
+                    "Line has trailing whitespace.",
+                    new TrailingWhitespaceInspection.RemoveTrailingWhitespaceQuickFix()
                 );
             }
         });
 
         PsiTreeUtil.findChildrenOfType(file, PsiWhiteSpaceImpl.class).forEach(whiteSpace -> {
-           if (whiteSpace.getText().matches("\\s*[ \\t]\\n\\s*")) {
-               problemsHolder.registerProblem(whiteSpace,
-                       "Line has trailing whitespace.",
-                       new TrailingWhitespaceInspection.RemoveTrailingWhitespaceQuickFix()
-               );
-           }
+            if (whiteSpace.getText().matches("\\s*[ \\t]\\n\\s*")) {
+                problemsHolder.registerProblem(whiteSpace,
+                    "Line has trailing whitespace.",
+                    new TrailingWhitespaceInspection.RemoveTrailingWhitespaceQuickFix()
+                );
+            }
         });
-        
+
         return problemsHolder;
     }
 
@@ -77,11 +77,11 @@ public class TrailingWhitespaceInspection extends LocalInspectionTool {
 
                 if (psiElement instanceof DotEnvValueImpl) {
                     PsiElement newPsiElement = DotEnvFactory.createFromText(project, DotEnvTypes.VALUE,
-                            "DUMMY_KEY=" + psiElement.getText().stripTrailing());
+                        "DUMMY_KEY=" + psiElement.getText().stripTrailing());
                     psiElement.replace(newPsiElement);
                 } else if (psiElement instanceof PsiWhiteSpaceImpl) {
-                    PsiElement newPsiElement = DotEnvFactory.createFromText(project, ElementType.WHITE_SPACE,
-                            "DUMMY_KEY='VALUE'" + psiElement.getText().replaceAll("[ \\t]*\\n", "\n"));
+                    PsiElement newPsiElement = DotEnvFactory.createFromText(project, TokenType.WHITE_SPACE,
+                        "DUMMY_KEY='VALUE'" + psiElement.getText().replaceAll("[ \\t]*\\n", "\n"));
                     psiElement.replace(newPsiElement);
                 }
             } catch (IncorrectOperationException e) {
