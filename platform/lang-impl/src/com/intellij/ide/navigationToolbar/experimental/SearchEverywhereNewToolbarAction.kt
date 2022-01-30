@@ -111,10 +111,12 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
 
       override fun addNotify() {
         FocusManager.getCurrentManager().addPropertyChangeListener(listener)
+        super.addNotify()
       }
 
       override fun removeNotify() {
         FocusManager.getCurrentManager().removePropertyChangeListener(listener)
+        super.removeNotify()
       }
 
       override fun getPreferredSize(): Dimension {
