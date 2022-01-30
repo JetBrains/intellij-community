@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi.Companion.SAVED_PATCHES_UI_PLACE
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.FontUtil
 import com.intellij.util.Processor
 import com.intellij.util.containers.isEmpty
@@ -39,6 +40,8 @@ class SavedPatchesTree(project: Project,
     setEmptyText(VcsBundle.message("saved.patch.empty.text"))
 
     doubleClickHandler = Processor { e ->
+      if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return@Processor false
+
       val diffAction = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON)
 
       val dataContext = DataManager.getInstance().getDataContext(this)
@@ -87,6 +90,8 @@ class SavedPatchesTree(project: Project,
   internal fun selectedPatchObjects(): Stream<SavedPatchesProvider.PatchObject<*>> {
     return VcsTreeModelData.selected(this).userObjectsStream(SavedPatchesProvider.PatchObject::class.java)
   }
+
+  override fun getToggleClickCount(): Int = 2
 
   class TagWithCounterChangesBrowserNode(text: @Nls String, private val sortWeight: Int? = null) :
     TagChangesBrowserNode(TagImpl(text), SimpleTextAttributes.REGULAR_ATTRIBUTES, true) {
