@@ -256,7 +256,8 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
 
   @Override
   public boolean hasSubstep(final PopupFactoryImpl.ActionItem selectedValue) {
-    return selectedValue != null && selectedValue.isEnabled() && selectedValue.getAction() instanceof ActionGroup;
+    return selectedValue != null && selectedValue.isEnabled() &&
+           selectedValue.getAction() instanceof ActionGroup && !selectedValue.isSubstepSuppressed();
   }
 
   @Override

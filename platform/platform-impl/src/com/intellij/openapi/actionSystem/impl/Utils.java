@@ -366,8 +366,7 @@ public final class Utils {
           if (nativePeer != null) nativePeer.add(null);
         }
       }
-      else if (action instanceof ActionGroup &&
-               !Boolean.TRUE.equals(presentation.getClientProperty(ActionUpdater.SUPPRESS_SUBMENU_IMPL))) {
+      else if (action instanceof ActionGroup && !isSubmenuSuppressed(presentation)) {
         ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, useDarkIcons);
         component.add(menu);
         children.add(menu);
@@ -413,6 +412,10 @@ public final class Utils {
         }
       }
     }
+  }
+
+  public static boolean isSubmenuSuppressed(@NotNull Presentation presentation) {
+    return Boolean.TRUE.equals(presentation.getClientProperty(ActionUpdater.SUPPRESS_SUBMENU_IMPL));
   }
 
   private static @NotNull JPopupMenu.Separator createSeparator(@NlsContexts.Separator String text) {
