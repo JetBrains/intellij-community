@@ -1,8 +1,6 @@
 <idea-plugin>
-    <idea-version since-build="193"/>
     <id>ru.adelf.idea.dotenv</id>
     <name>.env files support</name>
-    <version>2020.2</version>
     <vendor email="adel.faiz@gmail.com" url="https://adelf.tech">Adel F</vendor>
 
     <description><![CDATA[
@@ -34,24 +32,16 @@
     ]]></description>
 
     <change-notes><![CDATA[
+      2022.1
+      <ul>
+        <li>IDE 2022.1 releases support</li>
+        <li>Additional inspections and quickfixes</li>
+      </ul>
       2021.2
       <ul>
         <li>Kotlin and Java support</li>
         <li>.env syntax improvements</li>
         <li>Configurable completion and values storing</li>
-      </ul>
-      2021.1
-      <ul>
-        <li>Single quotes for environment variable values support</li>
-        <li>Completions for $_ENV[] and $_SERVER[] PHP variables</li>
-        <li>PHP file type for `.env.local.php` files</li>
-        <li>Case insensitive completions</li>
-        <li>Optimizations</li>
-      </ul>
-      2020.3
-      <ul>
-        <li>phpunit.xml environment variables completion</li>
-        <li>Fix incorrect syntax with slashes in quoted .env values</li>
       </ul>
   ]]></change-notes>
 
