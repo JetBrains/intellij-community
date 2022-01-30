@@ -14,7 +14,7 @@ import javax.swing.*;
 /**
  * @author Vladimir Kondratyev
  */
-public class TodoAttributes implements Cloneable {
+public final class TodoAttributes implements Cloneable {
   private Icon myIcon;
   private TextAttributes myTextAttributes;
   private boolean myShouldUseCustomColors;

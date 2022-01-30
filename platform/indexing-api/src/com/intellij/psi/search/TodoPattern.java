@@ -19,8 +19,8 @@ public final class TodoPattern implements Cloneable {
 
   private TodoAttributes attributes;
 
-  @NonNls private static final String CASE_SENS_ATT = "case-sensitive";
-  @NonNls private static final String PATTERN_ATT = "pattern";
+  private static final @NonNls String CASE_SENS_ATT = "case-sensitive";
+  private static final @NonNls String PATTERN_ATT = "pattern";
 
   public TodoPattern(@NotNull TodoAttributes attributes) {
     this("", attributes, false);
@@ -53,9 +53,7 @@ public final class TodoPattern implements Cloneable {
     }
   }
 
-  @NotNull
-  @NlsSafe
-  public String getPatternString() {
+  public @NotNull @NlsSafe String getPatternString() {
     return indexPattern.getPatternString();
   }
 
@@ -63,8 +61,7 @@ public final class TodoPattern implements Cloneable {
     indexPattern.setPatternString(patternString);
   }
 
-  @NotNull
-  public TodoAttributes getAttributes() {
+  public @NotNull TodoAttributes getAttributes() {
     return attributes;
   }
 
@@ -80,8 +77,7 @@ public final class TodoPattern implements Cloneable {
     indexPattern.setCaseSensitive(caseSensitive);
   }
 
-  @Nullable
-  public Pattern getPattern() {
+  public @Nullable Pattern getPattern() {
     return indexPattern.getPattern();
   }
 
