@@ -6,3 +6,6 @@
 /src/main/gen/ru/adelf/idea/dotenv/grammars/_DotEnvLexer.java~
 /build/
 /.gradle/
+/*.iml
+/*.ipr
+/*.iws
