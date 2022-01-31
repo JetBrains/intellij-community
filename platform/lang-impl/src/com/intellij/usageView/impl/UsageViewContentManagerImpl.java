@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.*;
@@ -97,7 +96,7 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
 
     DefaultActionGroup gearActions = DefaultActionGroup.createPopupGroup(IdeBundle.messagePointer("group.view.options"));
     gearActions.addAll(toggleAutoscrollAction, toggleSortAction, toggleNewTabAction);
-    ((ToolWindowEx)toolWindow).setAdditionalGearActions(gearActions);
+    toolWindow.setAdditionalGearActions(gearActions);
 
     myFindContentManager = toolWindow.getContentManager();
     myFindContentManager.addContentManagerListener(new ContentManagerListener() {
