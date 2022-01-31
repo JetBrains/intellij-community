@@ -7,18 +7,22 @@ import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinLanguageSettingsReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinDependencyId
-import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.plugins.gradle.DefaultExternalDependencyId
 import org.jetbrains.plugins.gradle.model.DefaultExternalLibraryDependency
 import org.jetbrains.plugins.gradle.model.DefaultFileCollectionDependency
 import java.io.File
 
 class KotlinSourceSetProtoBuilder(
-    val androidDeps: Map<String, List<Any>>?,
-    val sourceSetPlatforms: Map<Named, Set<KotlinPlatform>>
-) :
-    KotlinMultiplatformComponentBuilderBase<KotlinSourceSetProto> {
-    override fun buildComponent(origin: Any, importingContext: MultiplatformModelImportingContext): KotlinSourceSetProto? {
+    val androidDeps: Map<String, List<Any>>?
+) : KotlinMultiplatformComponentBuilderBase<KotlinSourceSetProto> {
+    override fun buildComponent(origin: Any, importingContext: MultiplatformModelImportingContext) =
+        buildComponent(origin, importingContext, true)
+
+    fun buildComponent(
+        origin: Any,
+        importingContext: MultiplatformModelImportingContext,
+        buildDependenciesMetadata: Boolean
+    ): KotlinSourceSetProto? {
         val gradleSourceSet = origin as Named
 
         val languageSettings = gradleSourceSet["getLanguageSettings"]
@@ -37,7 +41,7 @@ class KotlinSourceSetProtoBuilder(
 
             val dependencies = when {
                 androidDependenciesForSourceSet.isNotEmpty() -> androidDependenciesForSourceSet
-                shouldNotBuildSourceSetMetadataDependencies(gradleSourceSet) -> emptyList()
+                !buildDependenciesMetadata -> emptyList()
                 else -> buildSourceSetMetadataDependencies(gradleSourceSet, importingContext)
             }
 
@@ -65,15 +69,6 @@ class KotlinSourceSetProtoBuilder(
             additionalVisibleSourceSets = getAdditionalVisibleSourceSets(importingContext.project, gradleSourceSet)
         )
     }
-
-    /**
-     * Resolving Metadata Dependencies configurations of Android-specific sourcests
-     * may fail if they include dependencies with multiple variants (eg. release, debug)
-     * @see KTIJ-20097
-     */
-    private fun shouldNotBuildSourceSetMetadataDependencies(
-        gradleSourceSet: Named,
-    ): Boolean = sourceSetPlatforms[gradleSourceSet]?.singleOrNull() == KotlinPlatform.ANDROID
 
     companion object {
         private val logger = Logging.getLogger(KotlinSourceSetProtoBuilder::class.java)

@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.gradleTooling
 import org.gradle.api.Named
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
-import org.gradle.api.Task
 import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.*
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel.Companion.NO_KOTLIN_NATIVE_HOME
@@ -108,11 +107,15 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
             (getSourceSets(kotlinExt) as? NamedDomainObjectContainer<Named>)?.asMap?.values ?: emptyList<Named>()
         val androidDeps = buildAndroidDeps(importingContext, kotlinExt.javaClass.classLoader)
 
-        val sourceSetPlatforms = importingContext.project.computeSourceSetPlatforms()
-        val sourceSetProtoBuilder = KotlinSourceSetProtoBuilder(androidDeps, sourceSetPlatforms)
+        val androidOnlySourceSets = importingContext.project.androidOnlySourceSets()
+        val sourceSetProtoBuilder = KotlinSourceSetProtoBuilder(androidDeps)
 
         val allSourceSetsProtosByNames = sourceSets.mapNotNull {
-            sourceSetProtoBuilder.buildComponent(it, importingContext)
+            sourceSetProtoBuilder.buildComponent(
+                origin = it,
+                importingContext = importingContext,
+                buildDependenciesMetadata = it !in androidOnlySourceSets
+            )
         }.associateBy { it.name }
 
         // Some performance optimisation: do not build metadata dependencies if source set is not common
@@ -152,22 +155,6 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
         }
     }
 
-    private fun Project.computeSourceSetPlatforms(): Map<Named, Set<KotlinPlatform>> {
-        val result = mutableMapOf<Named, MutableSet<KotlinPlatform>>()
-
-        for (target in getTargets() ?: emptyList()) {
-            for (compilation in target.compilations ?: emptyList()) {
-                val platformId = compilation.get("getPlatformType")?.get("getName") as? String
-                val platform = platformId?.let { KotlinPlatform.byId(it) } ?: continue
-                for (sourceSet in compilation.get("getAllKotlinSourceSets") as? Collection<Named> ?: emptyList()) {
-                    result.getOrPut(sourceSet) { mutableSetOf() }.add(platform)
-                }
-            }
-        }
-
-        return result
-    }
-
     private fun computeSourceSetsDeferredInfo(importingContext: MultiplatformModelImportingContext) {
         for (sourceSet in importingContext.sourceSets) {
             if (!importingContext.getProperty(IS_HMPP_ENABLED)) {
@@ -186,6 +173,42 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
 
             importingContext.computeSourceSetPlatforms(sourceSet)
         }
+    }
+
+    /**
+     * Returns a set of Kotlin Source Set that will definitely compile for Android only
+     *
+     * This function can be called *before* MultiplatformModelImportingContext is completely initialised
+     * But it still must be compatible with the implementation in [MultiplatformModelImportingContext.computeSourceSetPlatforms]
+     * which works after complete initialization of MultiplatformModelImportingContext
+     *
+     * Specs that make it compatible with current version of [MultiplatformModelImportingContext.computeSourceSetPlatforms]:
+     * 0) this method works in HMPP context only
+     * 1) android-only source set participates only in Android Compilations
+     * 2) source sets that don't participate in any compilation can't be considered as android-only
+     * 3) android only source sets can't be coerced to Common
+     * 4) [KotlinSourceSetContainer.resolveAllDependsOnSourceSets] should be compatible with [KotlinCompilationReflection.allSourceSets]
+     */
+    private fun Project.androidOnlySourceSets(): Set<Named> {
+
+        val isHMPPEnabled = getProperty(IS_HMPP_ENABLED)
+        if (!isHMPPEnabled) return emptySet()
+
+        val sourceSetPlatforms = mutableMapOf<Named, MutableSet<KotlinPlatform>>()
+        val targets = getTargets().orEmpty().map(::KotlinTargetReflection)
+
+        for (target in targets) {
+            val platform = target.platformType?.let { KotlinPlatform.byId(it) } ?: continue
+            for (compilation in target.compilations.orEmpty()) {
+                for (sourceSet in compilation.allSourceSets.orEmpty()) {
+                    sourceSetPlatforms.getOrPut(sourceSet) { mutableSetOf() }.add(platform)
+                }
+            }
+        }
+
+        return sourceSetPlatforms
+            .filterValues { it.singleOrNull() == KotlinPlatform.ANDROID }
+            .keys
     }
 
     private fun MultiplatformModelImportingContext.computeSourceSetPlatforms(sourceSet: KotlinSourceSetImpl) {
