@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -35,6 +35,13 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
 
   public PsiAwareTextEditorImpl(@NotNull Project project, @NotNull VirtualFile file, @NotNull TextEditorProvider provider) {
     super(project, file, provider);
+  }
+
+  public PsiAwareTextEditorImpl(@NotNull Project project,
+                                @NotNull VirtualFile file,
+                                @NotNull TextEditorProvider provider,
+                                @NotNull EditorImpl editor) {
+    super(project, file, provider, editor);
   }
 
   @NotNull
@@ -88,8 +95,8 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
 
   @NotNull
   @Override
-  protected TextEditorComponent createEditorComponent(@NotNull Project project, @NotNull VirtualFile file) {
-    return new PsiAwareTextEditorComponent(project, file, this);
+  protected TextEditorComponent createEditorComponent(@NotNull Project project, @NotNull VirtualFile file, @NotNull EditorImpl editor) {
+    return new PsiAwareTextEditorComponent(project, file, this, editor);
   }
 
   @Override
@@ -110,8 +117,9 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
 
     private PsiAwareTextEditorComponent(@NotNull Project project,
                                         @NotNull VirtualFile file,
-                                        @NotNull TextEditorImpl textEditor) {
-      super(project, file, textEditor);
+                                        @NotNull TextEditorImpl textEditor,
+                                        @NotNull EditorImpl editor) {
+      super(project, file, textEditor, editor);
       myProject = project;
       myFile = file;
     }
