@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore
 
 import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
@@ -7,21 +7,22 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.*
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
-import org.jetbrains.annotations.Nls
 import java.awt.Component
 import javax.swing.JPasswordField
 
 internal val NOTIFICATION_MANAGER by lazy { SingletonNotificationManager("Password Safe", NotificationType.ERROR) }
 
 class CredentialStoreUiServiceImpl : CredentialStoreUiService {
-  override fun notify(@NlsContexts.NotificationTitle title: String, @NlsContexts.NotificationContent content: String, project: Project?, action: NotificationAction?) {
+  override fun notify(@NotificationTitle title: String, @NotificationContent content: String, project: Project?, action: NotificationAction?) {
     NOTIFICATION_MANAGER.notify(title, content, project) {
       if (action != null) {
         it.addAction(action)
@@ -30,15 +31,17 @@ class CredentialStoreUiServiceImpl : CredentialStoreUiService {
   }
 
   override fun showChangeMasterPasswordDialog(contextComponent: Component?,
-                                              setNewMasterPassword: (current: CharArray, new: CharArray) -> Boolean): Boolean {
-    return doShowChangeMasterPasswordDialog(contextComponent, setNewMasterPassword)
-  }
+                                              setNewMasterPassword: (current: CharArray, new: CharArray) -> Boolean): Boolean =
+    doShowChangeMasterPasswordDialog(contextComponent, setNewMasterPassword)
 
-  override fun showRequestMasterPasswordDialog(@NlsContexts.DialogTitle title: String,
-                                               @Nls(capitalization = Nls.Capitalization.Sentence) topNote: String?,
+  override fun showRequestMasterPasswordDialog(@DialogTitle title: String,
+                                               @DialogMessage topNote: String?,
                                                contextComponent: Component?,
-                                               @NlsContexts.DialogMessage ok: (value: ByteArray) -> String?): Boolean {
-    return doShowRequestMasterPasswordDialog(title, topNote, contextComponent, ok)
+                                               @DialogMessage ok: (value: ByteArray) -> String?): Boolean =
+    doShowRequestMasterPasswordDialog(title, topNote, contextComponent, ok)
+
+  override fun showErrorMessage(parent: Component?, title: String, message: String) {
+    Messages.showErrorDialog(parent, message, title)
   }
 
   override fun openSettings(project: Project?) {
@@ -46,10 +49,10 @@ class CredentialStoreUiServiceImpl : CredentialStoreUiService {
   }
 }
 
-internal fun doShowRequestMasterPasswordDialog(@NlsContexts.DialogTitle title: String,
-                                               @Nls(capitalization = Nls.Capitalization.Sentence) topNote: String? = null,
+internal fun doShowRequestMasterPasswordDialog(@DialogTitle title: String,
+                                               @DialogMessage topNote: String? = null,
                                                contextComponent: Component? = null,
-                                               @NlsContexts.DialogMessage ok: (value: ByteArray) -> String?): Boolean {
+                                               @DialogMessage ok: (value: ByteArray) -> String?): Boolean {
   val passwordField = JPasswordField()
   val panel = panel {
     topNote?.let {
