@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.list;
 
 import com.intellij.ide.DataManager;
@@ -731,15 +731,15 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     int size = myListModel.getSize();
     if (index < 0 || size <= index) return -1;
 
+    // iterate through the first part of the available items
     int found = findSelectableIndexInModel(index, index < lead ? -1 : size);
     if (found >= 0) return found;
 
+    // iterate through the second part of the available items
     UISettings settings = UISettings.getInstanceOrNull();
-    if (settings != null && settings.getCycleScrolling() && 1 == Math.abs(index - lead)) {
-      found = findSelectableIndexInModel(index < lead ? size - 1 : 0, index);
-      if (found >= 0) return found;
-    }
-    return findSelectableIndexInModel(index, lead);
+    return settings != null && settings.getCycleScrolling() && 1 == Math.abs(index - lead)
+           ? findSelectableIndexInModel(index < lead ? size - 1 : 0, index)
+           : findSelectableIndexInModel(index, index < lead ? size : -1);
   }
 
   private int findSelectableIndexInModel(int index, int stop) {
