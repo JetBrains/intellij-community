@@ -863,6 +863,10 @@ public final class JBUI {
         return insets("Popup.separatorInsets", insets(4, 12, 4, 12));
       }
 
+      public static Insets separatorLabelInsets() {
+        return insets("Popup.separatorLabelInsets", insets(2, 20, 2, 20));
+      }
+
       public static Color separatorTextColor() {
         return JBColor.namedColor("Popup.separatorForeground", Color.gray);
       }

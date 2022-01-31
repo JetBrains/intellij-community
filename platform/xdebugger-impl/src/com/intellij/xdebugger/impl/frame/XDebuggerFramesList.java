@@ -240,6 +240,9 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       if (myDescriptor.hasSeparatorAboveOf(value)) {
         Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (hasSeparator(value, index)) {
+          setSeparatorFont(list.getFont());
+        }
         ((XDebuggerFrameListRenderer)myComponent).getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         return component;
       }
