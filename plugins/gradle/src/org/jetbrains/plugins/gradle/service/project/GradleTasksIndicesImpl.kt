@@ -2,8 +2,11 @@
 package org.jetbrains.plugins.gradle.service.project
 
 import com.intellij.openapi.externalSystem.model.project.ModuleData
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.ThreeState
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant
@@ -16,11 +19,19 @@ import kotlin.Comparator
 
 class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices {
 
-  private fun getModuleContext(modulePath: String) =
-    ModuleResolutionContext(project, modulePath)
+  private fun getModuleContext(modulePath: String): ModuleResolutionContext {
+    return CachedValuesManager.getManager(project).getCachedValue(project) {
+      val dataStorage = ExternalProjectsDataStorage.getInstance(project)
+      val context = ModuleResolutionContext(project, modulePath)
+      CachedValueProvider.Result.create(context, dataStorage)
+    }
+  }
 
-  private fun getTaskContext(modulePath: String, task: GradleTaskData) =
-    TaskResolutionContext(getModuleContext(modulePath), task)
+  private fun getTaskContext(modulePath: String, task: GradleTaskData): TaskResolutionContext {
+    val context = getModuleContext(modulePath)
+    return context.tasks.find { it.task == task }
+           ?: TaskResolutionContext(context, task)
+  }
 
   override fun findTasks(modulePath: String): List<GradleTaskData> {
     return getModuleContext(modulePath).tasks.map { it.task }
