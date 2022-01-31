@@ -573,6 +573,7 @@ public final class EditorWindow {
   public void setComposite(@NotNull EditorComposite composite, @NotNull FileEditorOpenOptions options) {
     boolean isNewEditor = findCompositeIndex(composite) == -1;
     boolean isPreviewMode = (isNewEditor || composite.isPreview()) && shouldReservePreview(composite.getFile(), options);
+    boolean wasPinned = composite.isPinned();
     composite.setPreview(isPreviewMode);
 
     if (isNewEditor) {
@@ -599,6 +600,9 @@ public final class EditorWindow {
         Boolean initialPinned = file.getUserData(DRAG_START_PINNED_KEY);
         if (initialPinned != null) {
           composite.setPinned(initialPinned);
+        }
+        else if (wasPinned) {
+          composite.setPinned(true);
         }
       }
       file.putUserData(DRAG_START_LOCATION_HASH_KEY, null);
