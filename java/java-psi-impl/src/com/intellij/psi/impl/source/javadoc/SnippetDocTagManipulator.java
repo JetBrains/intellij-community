@@ -3,12 +3,9 @@ package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.AbstractElementManipulator;
-import com.intellij.psi.JavaDocTokenType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiSnippetDocTag;
 import com.intellij.psi.javadoc.PsiSnippetDocTagBody;
@@ -88,7 +85,7 @@ public final class SnippetDocTagManipulator extends AbstractElementManipulator<P
 
   private static @NotNull PsiElement getColonElement(PsiElement@NotNull [] children) {
     final ASTNode node = children[0].getNode();
-    if (node == JavaDocTokenType.DOC_TAG_VALUE_COLON) {
+    if (node.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_COLON) {
       return children[0];
     }
 
