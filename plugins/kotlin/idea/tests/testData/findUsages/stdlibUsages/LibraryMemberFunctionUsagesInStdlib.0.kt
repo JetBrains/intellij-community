@@ -8,3 +8,4 @@ package usages
 fun test() {
     val f = mapOf(Pair("1","2")).keys.<caret>single( { true } )
 }
+// FIR_COMPARISON
