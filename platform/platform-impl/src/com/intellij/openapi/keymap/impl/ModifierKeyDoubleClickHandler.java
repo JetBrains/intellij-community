@@ -29,7 +29,7 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 /**
  * Support for keyboard shortcuts like Control-double-click or Control-double-click+A
- *
+ * <p>
  * Timings that are used in the implementation to detect double click were tuned for SearchEverywhere
  * functionality (invoked on double Shift), so if you need to change them, please make sure
  * SearchEverywhere behaviour remains intact.
@@ -39,7 +39,7 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
  */
 public final class ModifierKeyDoubleClickHandler {
   private static final Logger LOG = Logger.getInstance(ModifierKeyDoubleClickHandler.class);
-  private static final Int2IntMap KEY_CODE_TO_MODIFIER_MAP=new Int2IntOpenHashMap();
+  private static final Int2IntMap KEY_CODE_TO_MODIFIER_MAP = new Int2IntOpenHashMap();
 
   static {
     KEY_CODE_TO_MODIFIER_MAP.put(KeyEvent.VK_ALT, InputEvent.ALT_MASK);
@@ -98,9 +98,9 @@ public final class ModifierKeyDoubleClickHandler {
   }
 
   /**
-   * @param actionId Id of action to be triggered on modifier+modifier[+actionKey]
-   * @param modifierKeyCode keyCode for modifier, e.g. KeyEvent.VK_SHIFT
-   * @param actionKeyCode keyCode for actionKey, or -1 if action should be triggered on bare modifier double click
+   * @param actionId                Id of action to be triggered on modifier+modifier[+actionKey]
+   * @param modifierKeyCode         keyCode for modifier, e.g. KeyEvent.VK_SHIFT
+   * @param actionKeyCode           keyCode for actionKey, or -1 if action should be triggered on bare modifier double click
    * @param skipIfActionHasShortcut do not invoke action if a shortcut is already bound to it in keymap
    */
   public void registerAction(@NotNull String actionId,
