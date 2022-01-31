@@ -1,4 +1,3 @@
-// IGNORE_FIR
 fun test() {
     foo(mapOf(<caret>))
 }
