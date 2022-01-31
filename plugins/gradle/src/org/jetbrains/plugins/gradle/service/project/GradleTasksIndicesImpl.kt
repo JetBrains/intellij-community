@@ -14,16 +14,22 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleTaskData
 import org.jetbrains.plugins.gradle.util.getGradleTasks
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.Comparator
 
 
 class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices {
 
   private fun getModuleContext(modulePath: String): ModuleResolutionContext {
-    return CachedValuesManager.getManager(project).getCachedValue(project) {
+    val reference = CachedValuesManager.getManager(project).getCachedValue(project) {
       val dataStorage = ExternalProjectsDataStorage.getInstance(project)
-      val context = ModuleResolutionContext(project, modulePath)
-      CachedValueProvider.Result.create(context, dataStorage)
+      CachedValueProvider.Result.create(AtomicReference<ModuleResolutionContext>(), dataStorage)
+    }
+    return reference.updateAndGet {
+      if (it != null && it.path == modulePath) {
+        return@updateAndGet it
+      }
+      ModuleResolutionContext(project, modulePath)
     }
   }
 
