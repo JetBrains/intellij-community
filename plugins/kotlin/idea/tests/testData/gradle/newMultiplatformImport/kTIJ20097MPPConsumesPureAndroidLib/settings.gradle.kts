@@ -18,4 +18,4 @@ pluginManagement {
 
 rootProject.name = "root"
 
-include(":hmpp-lib", ":android-lib")
+include(":mpp-lib", ":android-lib")
