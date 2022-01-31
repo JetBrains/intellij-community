@@ -3,6 +3,7 @@
 package org.jetbrains.jpsBootstrap;
 
 import com.intellij.execution.CommandLineWrapperUtil;
+import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import org.apache.commons.cli.*;
@@ -17,6 +18,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.*;
@@ -67,6 +70,8 @@ public class JpsBootstrapMain {
   private final Properties additionalSystemProperties;
 
   public JpsBootstrapMain(String[] args) throws IOException {
+    initLogging();
+
     CommandLine cmdline;
     try {
       cmdline = (new DefaultParser()).parse(createCliOptions(), args, true);
@@ -252,5 +257,18 @@ public class JpsBootstrapMain {
     formatter.setWidth(1000);
     formatter.printHelp("./jps-bootstrap.sh [jps-bootstrap options] MODULE_NAME CLASS_NAME [arguments_passed_to_CLASS_NAME's_main]", createCliOptions());
     System.exit(1);
+  }
+
+  private static void initLogging() {
+    java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
+
+    for (Handler handler : rootLogger.getHandlers()) {
+      rootLogger.removeHandler(handler);
+    }
+    IdeaLogRecordFormatter layout = new IdeaLogRecordFormatter();
+    ConsoleHandler consoleHandler = new ConsoleHandler();
+    consoleHandler.setFormatter(new IdeaLogRecordFormatter(layout, false));
+    consoleHandler.setLevel(java.util.logging.Level.WARNING);
+    rootLogger.addHandler(consoleHandler);
   }
 }
