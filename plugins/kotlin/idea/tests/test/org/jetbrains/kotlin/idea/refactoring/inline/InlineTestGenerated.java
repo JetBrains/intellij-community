@@ -1771,6 +1771,16 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/returnAtEnd/returnNull.kt");
             }
 
+            @TestMetadata("returnNullOfGenericTypeParametrizedWithTypeAlias.kt")
+            public void testReturnNullOfGenericTypeParametrizedWithTypeAlias() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/returnAtEnd/returnNullOfGenericTypeParametrizedWithTypeAlias.kt");
+            }
+
+            @TestMetadata("returnNullOfTypeAliasedType.kt")
+            public void testReturnNullOfTypeAliasedType() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/returnAtEnd/returnNullOfTypeAliasedType.kt");
+            }
+
             @TestMetadata("SafeCall.kt")
             public void testSafeCall() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/returnAtEnd/SafeCall.kt");
