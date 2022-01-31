@@ -51,7 +51,7 @@ class KotlinHighLevelFunctionTypeArgumentInfoHandler : KotlinHighLevelTypeArgume
         // will NOT return a KtCall because there is no FirFunctionCall there. We find the symbols using the callee name instead.
         val reference = callElement.calleeExpression?.references?.singleOrNull() as? KtSimpleNameReference ?: return null
         val parent = callElement.parent
-        val receiver = if (parent is KtDotQualifiedExpression && parent.selectorExpression == callElement) {
+        val receiver = if (parent is KtQualifiedExpression && parent.selectorExpression == callElement) {
             parent.receiverExpression
         } else null
         val fileSymbol = callElement.containingKtFile.getFileSymbol()
