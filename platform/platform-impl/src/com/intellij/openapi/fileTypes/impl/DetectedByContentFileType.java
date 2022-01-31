@@ -43,7 +43,7 @@ public final class DetectedByContentFileType implements FileType {
   }
 
   @Override
-  public @NotNull Icon getIcon() {
+  public Icon getIcon() {
     return AllIcons.FileTypes.Text;
   }
 

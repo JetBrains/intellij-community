@@ -41,7 +41,6 @@ public final class TextMateFileType extends LanguageFileType implements FileType
     return "";
   }
 
-  @NotNull
   @Override
   public Icon getIcon() {
     return AllIcons.FileTypes.Text;

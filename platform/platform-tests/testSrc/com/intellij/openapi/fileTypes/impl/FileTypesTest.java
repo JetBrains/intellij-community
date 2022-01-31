@@ -1063,7 +1063,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       }
 
       @Override
-      public @Nullable Icon getIcon() {
+      public Icon getIcon() {
         return null;
       }
 
@@ -1145,7 +1145,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     @Override public @NotNull String getDisplayName() { return getClass().getName(); }
     @Override public @NotNull String getDescription() { return getDisplayName(); }
     @Override public @NotNull String getDefaultExtension() { return "hs"; }
-    @Override public @Nullable Icon getIcon() { return null; }
+    @Override public Icon getIcon() { return null; }
     @Override  public boolean isBinary() { return false; }
   }
 
@@ -1250,7 +1250,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     @Override public @NotNull String getName() { return NAME; }
     @Override public @NotNull String getDescription() { return ""; }
     @Override public @NotNull String getDefaultExtension() { return EXTENSION; }
-    @Override public @Nullable Icon getIcon() { return null; }
+    @Override public Icon getIcon() { return null; }
     @Override public boolean isBinary() { return false; }
   }
 
@@ -1262,7 +1262,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     @Override public @NotNull String getName() { return NAME; }
     @Override public @NotNull String getDescription() { return ""; }
     @Override public @NotNull String getDefaultExtension() { return "hs"; }
-    @Override public @Nullable Icon getIcon() { return null; }
+    @Override public Icon getIcon() { return null; }
     @Override public boolean isBinary() { return false; }
   }
 
