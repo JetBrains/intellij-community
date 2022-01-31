@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.scope.RangeBasedLocalSearchScope
 import com.intellij.util.text.CharArrayUtil
+import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.Nls
 import java.util.*
 
@@ -41,8 +42,8 @@ class VcsChangesLocalSearchScope(private val myProject: Project,
       val result = HashMap<VirtualFile, List<TextRange>>()
       for (file in psiFiles) {
         val info = vcsFacade.getChangedRangesInfo(file)
+        val document = file.viewProvider.document
         if (info != null) {
-          val document = file.viewProvider.document
           val ranges = ArrayList<TextRange>()
           if (logger.isTraceEnabled)
             logger.trace("Changed ranges for a file $file: ${info.allChangedRanges.joinToString()}")
@@ -64,6 +65,12 @@ class VcsChangesLocalSearchScope(private val myProject: Project,
         else {
           if (logger.isTraceEnabled)
             logger.trace("No changes for file $file")
+
+          val virtualFile = file.virtualFile
+          if (changeListManager.isUnversioned(virtualFile) && !changeListManager.isIgnoredFile(virtualFile)) {
+            // Must be a new file, not yet added to VCS
+            result[file.virtualFile] = listOf(TextRange(0, document.textLength))
+          }
         }
       }
       result
