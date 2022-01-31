@@ -2,12 +2,12 @@
     <head/>
     <body>
         <arm>
-<warning descr="Incorrect whitespace">             </warning><hand/>
+<weak_warning descr="Incorrect whitespace">             </weak_warning><hand/>
         </arm>
         <arm/>
         <leg/>
         <leg>
             <foot/>
-<warning descr="Incorrect whitespace">         </warning></leg>
+<weak_warning descr="Incorrect whitespace">         </weak_warning></leg>
     </body>
 </root>

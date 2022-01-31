@@ -5,10 +5,10 @@
             <hand/>
         </arm>
         <arm/>
-<warning descr="Incorrect whitespace">
+<weak_warning descr="Incorrect whitespace">
 
 
-        </warning><leg/>
+        </weak_warning><leg/>
         <leg>
             <foot/>
         </leg>

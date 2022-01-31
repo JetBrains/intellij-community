@@ -91,7 +91,7 @@ class IncorrectFormattingInspection(
       .flatMap { (lineNumber, changes) ->
         val commonFix = ReplaceQuickFix(changes.map { it.range to it.replacement })
         changes.map {
-          manager.createProblemDescriptor(file, it.range, it.message(), ProblemHighlightType.WARNING, isOnTheFly, commonFix,
+          manager.createProblemDescriptor(file, it.range, it.message(), ProblemHighlightType.WEAK_WARNING, isOnTheFly, commonFix,
                                           ReformatQuickFix, HideDetailedReportIntention)
         }
       }
@@ -111,7 +111,7 @@ class IncorrectFormattingInspection(
   }
 
   override fun runForWholeFile() = true
-  override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.WARNING
+  override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.WEAK_WARNING
   override fun isEnabledByDefault() = false
 
 }
@@ -122,7 +122,7 @@ private fun ArrayList<ReplaceChange>.createIndentProblemDescriptors(file: PsiFil
                                                           isOnTheFly: Boolean): List<ProblemDescriptor> {
   val blockFix = ReplaceQuickFix(map { it.range to it.replacement })
   return map {
-    manager.createProblemDescriptor(file, it.range.excludeLeadingLinefeed(document), it.message(), ProblemHighlightType.WARNING, isOnTheFly,
+    manager.createProblemDescriptor(file, it.range.excludeLeadingLinefeed(document), it.message(), ProblemHighlightType.WEAK_WARNING, isOnTheFly,
                                     blockFix, ReformatQuickFix, HideDetailedReportIntention)
   }
 }
@@ -132,7 +132,7 @@ private fun createGlobalWarning(manager: InspectionManager, file: PsiFile, isOnT
     file,
     LangBundle.message("inspection.incorrect.formatting.global.problem.descriptor", file.name),
     arrayOf(ReformatQuickFix, ShowDetailedReportIntention),
-    ProblemHighlightType.WARNING,
+    ProblemHighlightType.WEAK_WARNING,
     isOnTheFly,
     false
   )

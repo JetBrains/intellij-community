@@ -972,7 +972,7 @@
                      implementationClass="com.intellij.codeInspection.ProblematicWhitespaceInspection"/>
     <localInspection shortName="IncorrectFormatting" bundle="messages.LangBundle" key="inspection.incorrect.formatting.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspection" runForWholeFile="true"/>
+                     level="WEAK WARNING" implementationClass="com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspection" runForWholeFile="true"/>
     <localInspection shortName="TodoComment" bundle="messages.LangBundle" key="todo.comment.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="false"
                      level="WARNING" implementationClass="com.intellij.codeInspection.TodoCommentInspection"/>
