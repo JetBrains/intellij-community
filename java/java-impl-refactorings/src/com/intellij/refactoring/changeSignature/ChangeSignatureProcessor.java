@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -198,9 +198,6 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
         }
       }
 
-      // to be able to do filtering
-      preprocessCovariantOverriders(covariantOverriderInfos);
-
       if (!covariantOverriderInfos.isEmpty()) {
         if (ApplicationManager.getApplication().isUnitTestMode() || !isProcessCovariantOverriders()) {
           for (UsageInfo usageInfo : covariantOverriderInfos) {
@@ -209,9 +206,6 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
         }
       }
     }
-  }
-
-  protected void preprocessCovariantOverriders(final List<UsageInfo> covariantOverriderInfos) {
   }
 
   protected boolean isProcessCovariantOverriders() {

@@ -126,17 +126,6 @@ public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactorin
     };
   }
 
-  @Override
-  public @NotNull ChangeSignatureProcessorBase getUsagesAwareChangeSignatureProcessor(Project project,
-                                                                                      PsiMethod method,
-                                                                                      boolean generateDelegate,
-                                                                                      String newVisibility,
-                                                                                      String newName,
-                                                                                      PsiType newType,
-                                                                                      ParameterInfoImpl @NotNull [] parameterInfo,
-                                                                                      UsageVisitor usageVisitor) {
-    return new UsagesAwareChangeSignatureProcessor(project, method, generateDelegate, newVisibility, newName, newType, parameterInfo, usageVisitor);
-  }
 
   @Override
   public void runHighlightingTypeMigration(Project project,
@@ -245,30 +234,5 @@ public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactorin
   @Override
   public PsiMethod chooseEnclosingMethod(@NotNull PsiMethod method) {
     return IntroduceParameterHandler.chooseEnclosingMethod(method);
-  }
-
-  private static final class UsagesAwareChangeSignatureProcessor extends ChangeSignatureProcessor {
-    private final JavaSpecialRefactoringProvider.UsageVisitor myUsageVisitor;
-
-    private UsagesAwareChangeSignatureProcessor(final Project project, final PsiMethod method, final boolean generateDelegate,
-                                                @PsiModifier.ModifierConstant final String newVisibility, final String newName, final PsiType newType,
-                                                final ParameterInfoImpl @NotNull [] parameterInfo, final JavaSpecialRefactoringProvider.UsageVisitor usageVisitor) {
-      super(project, method, generateDelegate, newVisibility, newName, newType, parameterInfo);
-      myUsageVisitor = usageVisitor;
-    }
-
-    @Override
-    protected void preprocessCovariantOverriders(final List<UsageInfo> covariantOverriderInfos) {
-      myUsageVisitor.preprocessCovariantOverriders(covariantOverriderInfos);
-    }
-
-    @Override
-    protected void performRefactoring(final UsageInfo @NotNull [] usages) {
-      super.performRefactoring(usages);
-
-      for (UsageInfo usage : usages) {
-        myUsageVisitor.visit(usage);
-      }
-    }
   }
 }

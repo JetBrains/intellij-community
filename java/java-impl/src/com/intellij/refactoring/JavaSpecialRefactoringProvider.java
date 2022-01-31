@@ -80,16 +80,6 @@ public interface JavaSpecialRefactoringProvider {
                                                                        Set<PsiMethod> propagateExceptionsMethods,
                                                                        Runnable callback);
 
-  @NotNull
-  ChangeSignatureProcessorBase getUsagesAwareChangeSignatureProcessor(final Project project,
-                                                                      final PsiMethod method,
-                                                                      final boolean generateDelegate,
-                                                                      @PsiModifier.ModifierConstant final String newVisibility,
-                                                                      final String newName,
-                                                                      final PsiType newType,
-                                                                      final ParameterInfoImpl @NotNull [] parameterInfo,
-                                                                      final UsageVisitor usageVisitor);
-
   void runHighlightingTypeMigration(final Project project,
                                     final Editor editor,
                                     final SearchScope boundScope,

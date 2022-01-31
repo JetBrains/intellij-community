@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -12,6 +12,7 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -20,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -29,6 +31,7 @@ import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.InheritanceUtil;
@@ -325,19 +328,28 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
       }
     }
 
+    Project project = method.getProject();
     final MethodSignatureChangeVisitor methodSignatureChangeVisitor = new MethodSignatureChangeVisitor();
     for (PsiMethod targetMethod : methods) {
       methodSignatureChangeVisitor.addBase(targetMethod);
       var provider = JavaSpecialRefactoringProvider.getInstance();
-      var processor = provider.getUsagesAwareChangeSignatureProcessor(method.getProject(), targetMethod,
-                                                                      false, null,
-                                                                      myName,
-                                                                      returnType,
-                                                                      ParameterInfoImpl.fromMethod(targetMethod),
-                                                                      methodSignatureChangeVisitor);
+      var processor = provider.getChangeSignatureProcessor(project, targetMethod,
+                                                           false, null,
+                                                           myName,
+                                                           returnType,
+                                                           ParameterInfoImpl.fromMethod(targetMethod),
+                                                           null);
       processor.run();
     }
 
+    PsiMethod[] hierarchyMethods = methods;
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      for (PsiMethod psiMethod : hierarchyMethods) {
+        OverridingMethodsSearch.search(psiMethod).forEach(methodSignatureChangeVisitor::addBase);
+      }
+    }, JavaBundle.message("progress.title.collect.method.overriders"), true, project)) {
+      return Collections.emptyList();
+    }
     return methodSignatureChangeVisitor.getAffectedMethods();
   }
 
