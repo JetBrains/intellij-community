@@ -63,9 +63,9 @@ public @interface MoreAnnotations {
 
    char charValue() default '0';
 
-   MoreAnnotations.TestEnum enumValue() default MoreAnnotations.TestEnum.FirstValue;
+   TestEnum enumValue() default MoreAnnotations.TestEnum.FirstValue;
 
-   MoreAnnotations.NestedAnnotation annotationValue() default @MoreAnnotations.NestedAnnotation;
+   NestedAnnotation annotationValue() default @MoreAnnotations.NestedAnnotation;
 
    String stringValue() default "default";
 
@@ -87,9 +87,9 @@ public @interface MoreAnnotations {
 
    char[] charArray() default {'\u0001', '\u0000', '\uffff', '\u0000'};
 
-   MoreAnnotations.TestEnum[] enumArray() default {MoreAnnotations.TestEnum.FirstValue};
+   TestEnum[] enumArray() default {MoreAnnotations.TestEnum.FirstValue};
 
-   MoreAnnotations.NestedAnnotation[] annotationArray() default {@MoreAnnotations.NestedAnnotation};
+   NestedAnnotation[] annotationArray() default {@MoreAnnotations.NestedAnnotation};
 
    String[] stringArray() default {"first", "second", ""};
 

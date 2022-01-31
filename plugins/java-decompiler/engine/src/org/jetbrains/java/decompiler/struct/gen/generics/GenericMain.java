@@ -178,7 +178,7 @@ public final class GenericMain {
     return sb.toString();
   }
 
-  private static String getTypeName(GenericType type, List<TypeAnnotationWriteHelper> typePathWriteStack) {
+  private static String getTypeName(GenericType type, List<TypeAnnotationWriteHelper> typePathWriteHelper) {
     int tp = type.type;
     if (tp <= CodeConstants.TYPE_BOOLEAN) {
       return typeNames[tp];
@@ -188,49 +188,37 @@ public final class GenericMain {
     }
     else if (tp == CodeConstants.TYPE_GENVAR) {
       StringBuilder sb = new StringBuilder();
-      appendTypeAnnotationBeforeType(type, sb, typePathWriteStack);
+      appendTypeAnnotationBeforeType(type, sb, typePathWriteHelper);
       sb.append(type.value);
       return sb.toString();
     }
     else if (tp == CodeConstants.TYPE_OBJECT) {
       StringBuilder sb = new StringBuilder();
-      appendClassName(type, sb, typePathWriteStack);
+      appendClassName(type, sb, typePathWriteHelper);
       return sb.toString();
     }
 
     throw new RuntimeException("Invalid type: " + type);
   }
 
-  private static void appendClassName(GenericType type, StringBuilder sb, List<TypeAnnotationWriteHelper> typePathWriteStack) {
-    List<GenericType> enclosingClasses = type.getEnclosingClasses();
-
-    appendTypeAnnotationBeforeType(type, sb, typePathWriteStack);
-
-    if (enclosingClasses.isEmpty()) {
-      String name = type.value.replace('/', '.');
-      sb.append(DecompilerContext.getImportCollector().getNestedName(name));
+  private static void appendClassName(GenericType type, StringBuilder sb, List<TypeAnnotationWriteHelper> typePathWriteHelper) {
+    List<GenericType> enclosingTypes = type.getEnclosingClasses();
+    appendTypeAnnotationBeforeType(type, sb, typePathWriteHelper);
+    if (enclosingTypes.isEmpty()) {
+      String[] nestedClasses = DecompilerContext.getImportCollector().getNestedName(type.value.replace('/', '.')).split("\\.");
+      ExprProcessor.writeNestedClass(sb, nestedClasses, typePathWriteHelper);
     }
     else {
-      for (GenericType tp : enclosingClasses) {
+      for (GenericType tp : enclosingTypes) {
         String[] nestedClasses = DecompilerContext.getImportCollector().getNestedName(tp.value.replace('/', '.')).split("\\.");
-        for (int i = 0; i < nestedClasses.length; i++) {
-          String nestedType = nestedClasses[i];
-          if (i != 0) { // first annotation is written already
-            ExprProcessor.checkNestedTypeAnnotation(sb, typePathWriteStack);
-          }
-
-          sb.append(nestedType);
-          if (i != nestedClasses.length - 1) sb.append(".");
-        }
-        appendTypeArguments(tp, sb, typePathWriteStack);
+        ExprProcessor.writeNestedClass(sb, nestedClasses, typePathWriteHelper);
+        appendTypeArguments(tp, sb, typePathWriteHelper);
         sb.append('.');
-        ExprProcessor.checkNestedTypeAnnotation(sb, typePathWriteStack);
+        ExprProcessor.checkNestedTypeAnnotation(sb, typePathWriteHelper);
       }
-
       sb.append(type.value);
     }
-
-    appendTypeArguments(type, sb, typePathWriteStack);
+    appendTypeArguments(type, sb, typePathWriteHelper);
   }
 
   private static void appendTypeAnnotationBeforeType(GenericType type, StringBuilder sb, List<TypeAnnotationWriteHelper> typePathWriteStack) {
