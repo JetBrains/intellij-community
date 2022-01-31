@@ -200,7 +200,7 @@ internal class ToolWindowDragHelper(parent: Disposable, val pane: ToolWindowsPan
     }
 
     val dragOutImage = if (decorator != null && !decorator.bounds.isEmpty) createDragImage(decorator) else null
-    val dragImage = createDragImage(initialButton!!) ?: dragOutImage
+    val dragImage = initialButton?.let(::createDragImage) ?: dragOutImage
     sourceIsHeader = true
 
     if (component is StripeButton || component is SquareStripeButton) {
