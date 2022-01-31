@@ -137,7 +137,8 @@ public class EditorGutterLayout {
 
   private List<GutterArea> createExperimentalLayout() {
     return List.of(
-      area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationExtraSize),
+      area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationExtraSize)
+        .as(EditorMouseEventArea.LINE_MARKERS_AREA),
       areaGap()
         .as(EditorMouseEventArea.ANNOTATIONS_AREA)
         .showIf(() -> myEditorGutter.isShowGapAfterAnnotations()),
