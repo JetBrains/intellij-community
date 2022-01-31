@@ -12,6 +12,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
+import org.jetbrains.intellij.build.impl.logging.BuildMessagesHandler
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.jps.model.JpsElementFactory
@@ -90,6 +91,11 @@ final class CompilationContextImpl implements CompilationContext {
     // (see createCopyForProduct)
     JaegerJsonSpanExporter.setOutput(context.paths.logDir.resolve("trace.json"))
     messages.debugLogPath = context.paths.logDir.resolve("debug.log")
+
+    // This is not a proper place to initialize logging
+    // but this is the only place which is called in most build scripts
+    BuildMessagesHandler.initLogging(messages)
+
     return context
   }
 

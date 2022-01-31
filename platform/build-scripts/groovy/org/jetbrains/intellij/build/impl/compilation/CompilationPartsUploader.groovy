@@ -30,7 +30,6 @@ class CompilationPartsUploader implements Closeable {
   CompilationPartsUploader(@NotNull String serverUrl, @NotNull BuildMessages messages) {
     myServerUrl = fixServerUrl(serverUrl)
     myMessages = messages
-    CompilationPartsUtil.initLogging(messages)
     def timeout = TimeUnit.MINUTES.toMillis(1).toInteger()
     def config = RequestConfig.custom()
       .setConnectTimeout(timeout)
@@ -48,7 +47,6 @@ class CompilationPartsUploader implements Closeable {
   @Override
   void close() throws IOException {
     CloseStreamUtil.closeStream(myHttpClient)
-    CompilationPartsUtil.deinitLogging()
   }
 
   @SuppressWarnings("unused")

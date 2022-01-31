@@ -37,74 +37,10 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
 import java.util.function.Predicate
-import java.util.logging.Handler
-import java.util.logging.Level
-import java.util.logging.LogRecord
-import java.util.logging.Logger
 import java.util.zip.GZIPOutputStream
 
 @CompileStatic
 class CompilationPartsUtil {
-
-  static void initLogging(BuildMessages messages) {
-    def logger = Logger.getLogger("")
-    logger.setLevel(Level.INFO)
-    def handlers = logger.handlers
-    if (handlers.length > 0) {
-      messages.warning("Will override existing java.util.logging appenders: ${handlers.collect { it -> it.toString() }.join(",")}")
-      for (Handler handler : handlers) {
-        logger.removeHandler(handler)
-      }
-    }
-    logger.addHandler(new Handler() {
-      @Override
-      void publish(LogRecord record) {
-        def level = record.getLevel()
-        String message = "[${record.loggerName}] ${record.message}"
-        if (level.intValue() >= Level.SEVERE.intValue()) {
-          def throwable = record.thrown
-          if (throwable != null) {
-            messages.error(message, throwable)
-          }
-          else {
-            messages.error(message)
-          }
-          return
-        }
-        if (level.intValue() >= Level.WARNING.intValue()) {
-          messages.warning(message)
-          return
-        }
-        if (level.intValue() >= Level.INFO.intValue()) {
-          messages.info(message)
-          return
-        }
-        if (level.intValue() >= Level.FINE.intValue()) {
-          messages.debug(message)
-          return
-        }
-        messages.warning("Unsupported log4j level: $level")
-        messages.info(message)
-      }
-
-      @Override
-      void flush() {
-      }
-
-      @Override
-      void close(){
-      }
-    })
-  }
-
-  static void deinitLogging() {
-    def logger = Logger.getLogger("")
-    logger.setLevel(Level.FINE)
-    def handlers = logger.handlers
-    for (Handler handler : handlers) {
-      logger.removeHandler(handler)
-    }
-  }
 
   static void packAndUploadToServer(CompilationContext context, String zipsLocation) {
     BuildMessages messages = context.messages
@@ -455,8 +391,6 @@ class CompilationPartsUtil {
       Set<Pair<FetchAndUnpackContext, Integer>> failed = ContainerUtil.newConcurrentSet()
 
       if (!toDownload.isEmpty()) {
-        initLogging(messages)
-
         def httpClient = HttpClientBuilder.create()
           .setUserAgent('Parts Downloader')
           .setMaxConnTotal(20)
@@ -507,8 +441,6 @@ class CompilationPartsUtil {
         executor.waitForAllComplete(messages)
 
         CloseStreamUtil.closeStream(httpClient)
-
-        deinitLogging()
       }
 
       messages.reportStatisticValue('compile-parts:download:time',
