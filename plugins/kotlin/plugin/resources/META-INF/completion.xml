@@ -12,6 +12,10 @@
             serviceInterface="org.jetbrains.kotlin.idea.completion.CompletionDummyIdentifierProviderService"
             serviceImplementation="org.jetbrains.kotlin.idea.completion.FE10CompletionDummyIdentifierProviderService"/>
 
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.completion.handlers.SmartCompletionTailOffsetProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.completion.handlers.SmartCompletionTailOffsetProviderFE10Impl"/>
+
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.completion.LookupCancelService"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.completion.CompletionBindingContextProvider"/>
 

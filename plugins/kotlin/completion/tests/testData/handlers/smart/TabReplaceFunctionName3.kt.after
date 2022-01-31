@@ -3,7 +3,7 @@ fun foo(s: String, i: Int){ }
 fun takeString(p: Int): String = ""
 
 fun bar() {
-    foo(takeString, (<caret>1))
+    foo(takeString(<caret>1), )
 }
 
 //ELEMENT: takeString
