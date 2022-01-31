@@ -739,7 +739,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     UISettings settings = UISettings.getInstanceOrNull();
     return settings != null && settings.getCycleScrolling() && 1 == Math.abs(index - lead)
            ? findSelectableIndexInModel(index < lead ? size - 1 : 0, index)
-           : findSelectableIndexInModel(index, index < lead ? size : -1);
+           : findSelectableIndexInModel(index, lead < -1 ? -1 : Math.min(lead, size));
   }
 
   private int findSelectableIndexInModel(int index, int stop) {
