@@ -1860,6 +1860,11 @@
                      groupKey="group.names.performance.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.IOStreamConstructorInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="BulkFileAttributesRead"
+                     key="inspection.bulk.file.attributes.read.description" bundle="messages.JavaBundle"
+                     groupKey="group.names.performance.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.BulkFileAttributesReadInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"
                       key="inspection.empty.method.display.name" bundle="messages.JavaBundle"/>
