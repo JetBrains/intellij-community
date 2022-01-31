@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiJavaFile
@@ -972,6 +973,7 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
   }
 
   fun testFromUsageSimple() {
+    Registry.get("ide.java.refactoring.suggested.call.site").setValue(true, testRootDisposable)
     doTestChangeSignature(
       """
         class X {
@@ -1041,6 +1043,7 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
   }
 
   fun testFromUsageHasOtherUsages() {
+    Registry.get("ide.java.refactoring.suggested.call.site").setValue(true, testRootDisposable)
     _suggestedChangeSignatureNewParameterValuesForTests = null
     doTestChangeSignature(
       """

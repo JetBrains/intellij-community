@@ -3,6 +3,7 @@ package com.intellij.java.refactoring.suggested
 
 import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.ChildRole
 import com.intellij.psi.impl.source.tree.java.MethodElement
@@ -14,7 +15,7 @@ import com.siyeh.ig.psiutils.TypeUtils
 
 class JavaSuggestedRefactoringSupport : SuggestedRefactoringSupport {
   override fun isAnchor(psiElement: PsiElement): Boolean {
-    if (psiElement is PsiCallExpression) {
+    if (psiElement is PsiCallExpression && Registry.`is`("ide.java.refactoring.suggested.call.site")) {
       return psiElement.argumentList != null
     }
     if (psiElement !is PsiNameIdentifierOwner) return false
