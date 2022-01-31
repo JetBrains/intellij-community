@@ -71,6 +71,7 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
   override fun setUp() {
     super.setUp()
     SettingsSyncSettings.getInstance().syncEnabled = true
+    SettingsSyncPluginManager.getInstance().clearState()
     testPluginManager = TestPluginManager()
     ApplicationManager.getApplication().replaceService(PluginManagerProxy::class.java, testPluginManager, testRootDisposable)
   }
