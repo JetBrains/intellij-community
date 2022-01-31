@@ -628,7 +628,7 @@ class PyDB(object):
                     'Error in debugger: Found PyDBDaemonThread not marked with is_pydev_daemon_thread=True.\n')
 
             if is_thread_alive(t):
-                if not t.isDaemon() or hasattr(t, "__pydevd_main_thread"):
+                if not t.daemon or hasattr(t, "__pydevd_main_thread"):
                     return True
 
         return False
