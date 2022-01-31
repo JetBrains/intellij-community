@@ -2,8 +2,6 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -12,6 +10,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.TabGroupId;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -53,11 +52,15 @@ public final class VcsLogTabsManager {
           return;
         }
 
-        ApplicationManager.getApplication().invokeLater(() -> {
+        ToolWindowManager.getInstance(myProject).invokeLater(() -> {
+          if (manager != VcsProjectLog.getInstance(project).getLogManager()) {
+            return;
+          }
+
           if (LOG.assertTrue(!manager.isDisposed(), "Attempting to open tabs on disposed VcsLogManager")) {
             reopenLogTabs(manager, savedTabs);
           }
-        }, ModalityState.NON_MODAL, o -> project.isDisposed() || manager != VcsProjectLog.getInstance(project).getLogManager());
+        });
       }
 
       @Override
