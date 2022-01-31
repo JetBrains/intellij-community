@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compiler.configuration
 
 import com.intellij.openapi.components.State
@@ -31,7 +31,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                     if (it.settings.version.isEmpty()) {
                         // Encourage user to specify desired Kotlin compiler version in project settings for sake of reproducible builds
                         it.settings = it.settings.unfrozen().apply {
-                            // Use bundled by default because this will work even without internet connection
+                        // Use bundled by default because this will work even without internet connection
                             version = KotlinCompilerVersion.VERSION
                         }
                     }

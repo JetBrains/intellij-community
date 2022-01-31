@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.extensionResources;
 
 import com.intellij.ide.plugins.*;
@@ -27,7 +27,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.util.*;
 import java.util.function.Predicate;
@@ -78,8 +77,7 @@ public final class ExtensionsRootType extends RootType {
     return file == null ? null : PluginId.findId(file.getName());
   }
 
-  @Nullable
-  public File findResource(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
+  public @Nullable Path findResource(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
     extractBundledExtensionsIfNeeded(pluginId);
     return findExtensionImpl(pluginId, path);
   }
@@ -109,9 +107,8 @@ public final class ExtensionsRootType extends RootType {
     }
   }
 
-  @Nullable
   @Override
-  public String substituteName(@NotNull Project project, @NotNull VirtualFile file) {
+  public @Nullable String substituteName(@NotNull Project project, @NotNull VirtualFile file) {
     VirtualFile resourcesDir = getPluginResourcesDirectoryFor(file);
     if (file.equals(resourcesDir)) {
       String name = getPluginResourcesRootName(resourcesDir);
@@ -128,23 +125,20 @@ public final class ExtensionsRootType extends RootType {
     return pluginResourcesDir != null && pluginId != null ? VfsUtilCore.getRelativePath(resource, pluginResourcesDir) : null;
   }
 
-  private @Nullable File findExtensionImpl(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
-    Path dir = findExtensionsDirectoryImpl(pluginId, "", false);
-    Path file = dir.resolve(path);
-    return Files.isRegularFile(file) ? file.toFile() : null;
+  private @Nullable Path findExtensionImpl(@NotNull PluginId pluginId, @NotNull String path) {
+    Path file = Path.of(getPath(pluginId, "")).resolve(path);
+    return Files.isRegularFile(file) ? file : null;
   }
 
   private @NotNull Path findExtensionsDirectoryImpl(@NotNull PluginId pluginId, @NotNull String path, boolean createIfMissing) throws IOException {
-    String fullPath = getPath(pluginId, path);
-    Path dir = Paths.get(fullPath);
+    Path dir = Path.of(getPath(pluginId, path));
     if (createIfMissing) {
       Files.createDirectories(dir);
     }
     return dir;
   }
 
-  @Nullable
-  private String getPluginResourcesRootName(VirtualFile resourcesDir) {
+  private @Nullable String getPluginResourcesRootName(VirtualFile resourcesDir) {
     PluginId ownerPluginId = getOwner(resourcesDir);
     if (ownerPluginId == null) return null;
 
@@ -219,9 +213,8 @@ public final class ExtensionsRootType extends RootType {
 
   private static void extractResources(@NotNull VirtualFile from, @NotNull Path to) throws IOException {
     VfsUtilCore.visitChildrenRecursively(from, new VirtualFileVisitor<Void>(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
-      @NotNull
       @Override
-      public Result visitFileEx(@NotNull VirtualFile file) {
+      public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
         try {
           return visitImpl(file);
         }
@@ -259,8 +252,7 @@ public final class ExtensionsRootType extends RootType {
     }, IOException.class);
   }
 
-  @NotNull
-  private static String hash(@NotNull String s) {
+  private static @NotNull String hash(@NotNull String s) {
     MessageDigest md5 = DigestUtil.md5();
     StringBuilder sb = new StringBuilder();
     byte[] digest = md5.digest(s.getBytes(StandardCharsets.UTF_8));

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -21,18 +21,18 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 @ApiStatus.Experimental
 public class IdeUiService {
 
-  public void revealFile(File file) {
+  public void revealFile(Path file) {
   }
 
   public UnlockOption askForUnlock(@NotNull Project project, List<? extends VirtualFile> files) {
