@@ -13,7 +13,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.components.fields.ExtendableTextField
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.swing.*
 import javax.swing.text.BadLocationException
 
 abstract class TextCompletionField<T>(private val project: Project?) : ExtendableTextField() {
@@ -80,14 +79,11 @@ abstract class TextCompletionField<T>(private val project: Project?) : Extendabl
     return maxOf(0, minOf(text.length, caretPosition))
   }
 
-  private fun isFocusedParent(): Boolean {
+  private fun isFocused(): Boolean {
     val focusManager = IdeFocusManager.getInstance(project)
-    val focusOwner = focusManager.focusOwner
-    return SwingUtilities.isDescendingFrom(focusOwner, this)
-  }
-
-  private fun isValidParent(): Boolean {
-    return height > 0 && width > 0
+    val frame = focusManager.lastFocusedIdeWindow
+    val focusOwner = focusManager.getLastFocusedFor(frame)
+    return focusOwner == this
   }
 
   private fun rebuildCompletionVariantsList(isFilterDisabled: Boolean) {
@@ -99,7 +95,7 @@ abstract class TextCompletionField<T>(private val project: Project?) : Extendabl
   }
 
   fun updatePopup(type: UpdatePopupType) {
-    if (isValidParent() && isFocusedParent()) {
+    if (isShowing && isFocused()) {
       rebuildCompletionVariantsList(
         type == UpdatePopupType.SHOW_ALL_VARIANCES
       )
