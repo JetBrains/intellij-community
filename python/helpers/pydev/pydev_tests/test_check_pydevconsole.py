@@ -57,7 +57,7 @@ class Test(unittest.TestCase):
         client_thread = ClientThread(client_port)
         client_thread.requested_input = False
         client_thread.notified_finished = 0
-        client_thread.setDaemon(True)
+        client_thread.daemon = True
         client_thread.start()
         return client_thread
 
@@ -84,7 +84,7 @@ class Test(unittest.TestCase):
                 print('Starting server with:', pydev_localhost.get_localhost(), self.server_port, self.client_port)
                 pydevconsole.start_server(pydev_localhost.get_localhost(), self.server_port, self.client_port)
         server_thread = ServerThread(client_port, server_port)
-        server_thread.setDaemon(True)
+        server_thread.daemon = True
         server_thread.start()
 
         client_thread = self.start_client_thread(client_port) #@UnusedVariable
