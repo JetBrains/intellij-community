@@ -254,10 +254,7 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
     }
 
     myFileEditorManager.notifyPublisher(() -> {
-      final FileEditorManagerEvent event =
-        new FileEditorManagerEvent(myFileEditorManager,
-                                   myFile, oldEditorWithProvider.getFileEditor(), oldEditorWithProvider.getProvider(),
-                                   myFile, newEditorWithProvider.getFileEditor(), newEditorWithProvider.getProvider());
+      final FileEditorManagerEvent event = new FileEditorManagerEvent(myFileEditorManager, oldEditorWithProvider, newEditorWithProvider);
       final FileEditorManagerListener publisher =
         myProject.getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
       publisher.selectionChanged(event);

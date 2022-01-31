@@ -1591,23 +1591,23 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     ApplicationManager.getApplication().assertReadAccessAllowed();
   }
 
+  @ApiStatus.Internal
   public void fireSelectionChanged(@Nullable EditorComposite newSelectedComposite) {
-    Trinity<VirtualFile, FileEditor, FileEditorProvider> oldData = extract(SoftReference.dereference(myLastSelectedComposite));
-    Trinity<VirtualFile, FileEditor, FileEditorProvider> newData = extract(newSelectedComposite);
+    @Nullable EditorComposite composite = SoftReference.dereference(myLastSelectedComposite);
+    FileEditorWithProvider oldEditorWithProvider = composite == null ? null : composite.getSelectedWithProvider();
+    FileEditorWithProvider newEditorWithProvider = newSelectedComposite == null ? null : newSelectedComposite.getSelectedWithProvider();
     myLastSelectedComposite = newSelectedComposite == null ? null : new WeakReference<>(newSelectedComposite);
-    boolean filesEqual = Objects.equals(oldData.first, newData.first);
-    boolean editorsEqual = Objects.equals(oldData.second, newData.second);
-    if (!filesEqual || !editorsEqual) {
-      FileEditorManagerEvent event =
-        new FileEditorManagerEvent(this, oldData.first, oldData.second, oldData.third, newData.first, newData.second, newData.third);
+    if (!Objects.equals(oldEditorWithProvider, newEditorWithProvider)) {
+      FileEditorManagerEvent event = new FileEditorManagerEvent(this, oldEditorWithProvider, newEditorWithProvider);
       FileEditorManagerListener publisher = getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
-      if (newData.first != null) {
-        JComponent component = newData.second.getComponent();
+      if (newEditorWithProvider != null) {
+        JComponent component =  newEditorWithProvider.getFileEditor().getComponent();
         EditorWindowHolder holder =
           ComponentUtil.getParentOfType((Class<? extends EditorWindowHolder>)EditorWindowHolder.class, (Component)component);
-        if (holder != null) {
-          addSelectionRecord(newData.first, holder.getEditorWindow());
+        VirtualFile file = newEditorWithProvider.getFileEditor().getFile();
+        if (holder != null && file != null) {
+          addSelectionRecord(file, holder.getEditorWindow());
         }
       }
       notifyPublisher(() -> publisher.selectionChanged(event));
@@ -1620,24 +1620,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       file = ((VirtualFileWindow)file).getDelegate();
     }
     return BackedVirtualFile.getOriginFileIfBacked(file);
-  }
-
-  private static @NotNull Trinity<VirtualFile, FileEditor, FileEditorProvider> extract(@Nullable EditorComposite composite) {
-    VirtualFile file;
-    FileEditor editor;
-    FileEditorProvider provider;
-    if (composite == null) {
-      file = null;
-      editor = null;
-      provider = null;
-    }
-    else {
-      file = composite.getFile();
-      FileEditorWithProvider pair = composite.getSelectedWithProvider();
-      editor = pair.getFileEditor();
-      provider = pair.getProvider();
-    }
-    return new Trinity<>(file, editor, provider);
   }
 
   @Override
