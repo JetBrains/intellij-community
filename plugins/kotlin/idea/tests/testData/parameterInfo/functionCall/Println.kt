@@ -1,4 +1,3 @@
-// IGNORE_FIR
 open class A(x: Int) {
     fun xprintln(x: String) {}
     fun xprintln() {}

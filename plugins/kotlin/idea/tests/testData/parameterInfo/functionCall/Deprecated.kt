@@ -1,4 +1,3 @@
-// IGNORE_FIR
 @Deprecated("") fun f(x: Int) = 2
 fun f(x: Int, y: Boolean) = 3
 
