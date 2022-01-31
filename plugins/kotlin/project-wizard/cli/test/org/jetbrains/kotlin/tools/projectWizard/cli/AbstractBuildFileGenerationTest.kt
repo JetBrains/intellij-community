@@ -60,6 +60,7 @@ abstract class AbstractBuildFileGenerationTest : UsefulTestCase() {
                 listOf(Repositories.JETBRAINS_KOTLIN_DEV.url),
                 KOTLIN_REPO_PLACEHOLDER
             ).replace("gradle-${Versions.GRADLE.text}-bin.zip", "gradle-GRADLE_VERSION-bin.zip")
+                .replace("gradle-${Versions.GRADLE_VERSION_FOR_COMPOSE.text}-bin.zip", "gradle-GRADLE_VERSION_FOR_COMPOSE-bin.zip")
         }
     }
 
