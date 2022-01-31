@@ -83,8 +83,6 @@ object FileSystem {
     unpack(archive, targetDir)
   }
 
-  fun unpack(archive: File, targetDir: File) = unpack(archive.toPath(), targetDir.toPath())
-
   fun unpack(archive: Path, targetDir: Path) {
     logOutput("Extracting $archive to $targetDir")
     //project archive may be empty
@@ -92,7 +90,7 @@ object FileSystem {
     val name = archive.fileName.toString()
     try {
       when {
-        name.endsWith(".zip") -> unpackZip(archive, targetDir)
+        name.endsWith(".zip") || name.endsWith(".ijx") -> unpackZip(archive, targetDir)
         name.endsWith(".tar.gz") -> unpackTarGz(archive, targetDir)
         else -> error("Archive $name is not supported")
       }
