@@ -4,12 +4,10 @@
 package com.intellij.toolWindow
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
-import com.intellij.openapi.wm.impl.AbstractDroppableStripe
-import com.intellij.openapi.wm.impl.ToolWindowImpl
-import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
-import com.intellij.openapi.wm.impl.WindowInfoImpl
+import com.intellij.openapi.wm.impl.*
 import org.assertj.core.api.Assertions.assertThat
 import javax.swing.Icon
 
@@ -19,28 +17,62 @@ fun testStripeButton(id: String, manager: ToolWindowManagerImpl, shouldBeVisible
    assertThat(button!!.getComponent().isVisible).isEqualTo(shouldBeVisible)
 }
 
-fun testMutation(isNewUi: Boolean, project: Project) {
-  val manager = ToolWindowManagerImpl(project, isNewUi = isNewUi, isEdtRequired = false)
+private fun init(project: Project,
+                 isNewUi: Boolean,
+                 taskProducer: ((Project) -> List<RegisterToolWindowTask>) = ::computeToolWindowBeans,
+                 layoutCustomizer: ((DesktopLayout) -> Unit) = {}): ToolWindowManagerImpl {
+  val buttonManager = if (isNewUi) ToolWindowPaneNewButtonManager() else ToolWindowPaneOldButtonManager()
+  val manager = ToolWindowManagerImpl(project, isNewUi = isNewUi, explicitButtonManager = buttonManager, isEdtRequired = false)
 
   val toolWindowLayoutManager = ToolWindowDefaultLayoutManager(isNewUi = isNewUi)
   toolWindowLayoutManager.noStateLoaded()
 
-  manager.setLayoutOnInit(toolWindowLayoutManager.getLayoutCopy())
+  manager.setLayoutOnInit(toolWindowLayoutManager.getLayoutCopy().also(layoutCustomizer))
 
-  val tasks = computeToolWindowBeans(project)
+  val tasks = taskProducer(project)
   for (task in tasks) {
-    manager.registerToolWindow(task, if (isNewUi) ToolWindowPaneNewButtonManager() else ToolWindowPaneOldButtonManager())
+    manager.registerToolWindow(task, buttonManager)
   }
-
-  val toolWindow = manager.getToolWindow("Project")!!
-  assertThat(manager.getEntry(toolWindow.id)!!.stripeButton).isNotNull()
-  toolWindow.isAvailable = false
-  assertThat(manager.getEntry(toolWindow.id)!!.stripeButton).isNull()
+  return manager
 }
 
+object ToolWindowManagerTestHelper {
+  fun available(isNewUi: Boolean, project: Project) {
+    val manager = init(project, isNewUi)
+
+    val toolWindow = manager.getToolWindow("Project")!!
+    assertThat(manager.getEntry(toolWindow.id)!!.stripeButton).isNotNull()
+    toolWindow.isAvailable = false
+    assertThat(manager.getEntry(toolWindow.id)!!.stripeButton).isNull()
+  }
+
+  fun showOnAvailable(isNewUi: Boolean, project: Project) {
+    val id = "Notifications"
+    val manager = init(
+      project = project,
+      isNewUi = isNewUi,
+      taskProducer = {
+        computeToolWindowBeans(project).map {
+          if (it.id == id) it.copy(shouldBeAvailable = false, contentFactory = { _, _ -> /* empty to avoid any UI tasks */ }) else it
+        }
+      },
+      layoutCustomizer = {
+        it.getInfo(id)!!.isVisible = true
+      }
+    )
+
+    val entry = manager.getEntry(id)!!
+    val toolWindow = entry.toolWindow
+    assertThat(entry.stripeButton).isNull()
+    toolWindow.isAvailable = true
+    assertThat(entry.stripeButton).isNotNull()
+    assertThat(entry.toolWindow.windowInfo.isVisible).isTrue()
+  }
+}
 
 fun testDefaultLayout(isNewUi: Boolean, project: Project) {
-  val manager = ToolWindowManagerImpl(project, isNewUi = isNewUi, isEdtRequired = false)
+  val buttonManager = if (isNewUi) ToolWindowPaneNewButtonManager() else ToolWindowPaneOldButtonManager()
+  val manager = ToolWindowManagerImpl(project, isNewUi = isNewUi, explicitButtonManager = buttonManager, isEdtRequired = false)
 
   val toolWindowLayoutManager = ToolWindowDefaultLayoutManager(isNewUi = isNewUi)
   toolWindowLayoutManager.noStateLoaded()
@@ -57,7 +89,7 @@ fun testDefaultLayout(isNewUi: Boolean, project: Project) {
 
   val tasks = computeToolWindowBeans(project)
   for (task in tasks) {
-    manager.registerToolWindow(task, if (isNewUi) ToolWindowPaneNewButtonManager() else ToolWindowPaneOldButtonManager())
+    manager.registerToolWindow(task, buttonManager)
   }
 
   val todoInfo = manager.getEntry("TODO")!!.readOnlyWindowInfo

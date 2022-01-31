@@ -31,6 +31,12 @@ class ToolWindowManagerTest {
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun `remove button on setting an available property to false`(isNewUi: Boolean) {
-    testMutation(isNewUi = isNewUi, project = projectRule.project)
+    ToolWindowManagerTestHelper.available(isNewUi = isNewUi, project = projectRule.project)
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun `show tool window if it was visible last session but became available only after initial registration`(isNewUi: Boolean) {
+    ToolWindowManagerTestHelper.showOnAvailable(isNewUi = isNewUi, project = projectRule.project)
   }
 }
