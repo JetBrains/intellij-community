@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.ide.caches.CachesInvalidator;
@@ -33,7 +33,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.vcs.log.VcsLogBundle;
@@ -67,7 +66,6 @@ public final class VcsProjectLog implements Disposable {
                                                                                       true);
   private static final int RECREATE_LOG_TRIES = 5;
   @NotNull private final Project myProject;
-  @NotNull private final MessageBus myMessageBus;
   @NotNull private final VcsLogTabsProperties myUiProperties;
   @NotNull private final VcsLogTabsManager myTabsManager;
 
@@ -79,14 +77,13 @@ public final class VcsProjectLog implements Disposable {
 
   public VcsProjectLog(@NotNull Project project) {
     myProject = project;
-    myMessageBus = myProject.getMessageBus();
 
     VcsLogProjectTabsProperties uiProperties = myProject.getService(VcsLogProjectTabsProperties.class);
     myUiProperties = uiProperties;
-    myTabsManager = new VcsLogTabsManager(project, myMessageBus, uiProperties, this);
+    myTabsManager = new VcsLogTabsManager(project, uiProperties, this);
 
     myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Vcs Log Initialization/Dispose", 1);
-    myMessageBus.connect(myDisposable).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    myProject.getMessageBus().connect(myDisposable).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
         if (myProject == project) {
@@ -113,14 +110,15 @@ public final class VcsProjectLog implements Disposable {
         ProgressManager.getInstance().runProcessWithProgressSynchronously(awaitDisposal,
                                                                           VcsLogBundle.message("vcs.log.closing.process"),
                                                                           false, myProject);
-      } else {
+      }
+      else {
         awaitDisposal.run();
       }
     }
   }
 
   private void subscribeToMappingsAndPluginsChanges() {
-    MessageBusConnection connection = myMessageBus.connect(myDisposable);
+    MessageBusConnection connection = myProject.getMessageBus().connect(myDisposable);
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> disposeLog(true));
     connection.subscribe(DynamicPluginListener.TOPIC, new MyDynamicPluginUnloader());
   }
@@ -359,7 +357,7 @@ public final class VcsProjectLog implements Disposable {
                                                 VcsProjectLog.this::recreateOnError);
         myValue = value;
         ApplicationManager.getApplication().invokeAndWait(() -> {
-          myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(value);
+          myProject.getMessageBus().syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(value);
         }, getModality());
       }
       return requireNonNull(myValue);
@@ -374,7 +372,7 @@ public final class VcsProjectLog implements Disposable {
         myValue = null;
 
         LOG.debug("Disposing Vcs Log for " + VcsLogUtil.getProvidersMapText(requireNonNull(oldValue).getDataManager().getLogProviders()));
-        myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(oldValue);
+        myProject.getMessageBus().syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(oldValue);
 
         return oldValue;
       }

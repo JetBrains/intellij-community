@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
@@ -16,7 +16,6 @@ import com.intellij.ui.content.TabGroupId;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogUi;
@@ -31,36 +30,39 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class VcsLogTabsManager {
+public final class VcsLogTabsManager {
   private static final Logger LOG = Logger.getInstance(VcsLogTabsManager.class);
   private static final TabGroupId TAB_GROUP_ID = new TabGroupId(VcsLogContentProvider.TAB_NAME,
                                                                 () -> VcsLogBundle.message("vcs.log.tab.name"), true);
   @NotNull private final Project myProject;
-  @NotNull private final VcsLogProjectTabsProperties myUiProperties;
-  private boolean myIsLogDisposing = false;
+  @NotNull private final VcsLogProjectTabsProperties uiProperties;
+  private boolean isLogDisposing = false;
 
   VcsLogTabsManager(@NotNull Project project,
-                    @NotNull MessageBus messageBus,
                     @NotNull VcsLogProjectTabsProperties uiProperties,
                     @NotNull Disposable parent) {
     myProject = project;
-    myUiProperties = uiProperties;
+    this.uiProperties = uiProperties;
 
-    messageBus.connect(parent).subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, new VcsProjectLog.ProjectLogListener() {
+    project.getMessageBus().connect(parent).subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, new VcsProjectLog.ProjectLogListener() {
       @Override
       public void logCreated(@NotNull VcsLogManager manager) {
-        myIsLogDisposing = false;
-        Map<String, VcsLogTabLocation> savedTabs = myUiProperties.getTabs();
+        isLogDisposing = false;
+        Map<String, VcsLogTabLocation> savedTabs = VcsLogTabsManager.this.uiProperties.getTabs();
+        if (savedTabs.isEmpty()) {
+          return;
+        }
+
         ApplicationManager.getApplication().invokeLater(() -> {
           if (LOG.assertTrue(!manager.isDisposed(), "Attempting to open tabs on disposed VcsLogManager")) {
             reopenLogTabs(manager, savedTabs);
           }
-        }, ModalityState.NON_MODAL, o -> manager != VcsProjectLog.getInstance(project).getLogManager());
+        }, ModalityState.NON_MODAL, o -> project.isDisposed() || manager != VcsProjectLog.getInstance(project).getLogManager());
       }
 
       @Override
       public void logDisposed(@NotNull VcsLogManager manager) {
-        myIsLogDisposing = true;
+        isLogDisposing = true;
       }
     });
   }
@@ -83,14 +85,14 @@ public class VcsLogTabsManager {
   // for statistics
   @NotNull
   public Collection<String> getTabs() {
-    return myUiProperties.getTabs().keySet();
+    return uiProperties.getTabs().keySet();
   }
 
   @NotNull
   MainVcsLogUi openAnotherLogTab(@NotNull VcsLogManager manager, @NotNull VcsLogFilterCollection filters,
                                  @NotNull VcsLogTabLocation location) {
     String tabId = generateTabId(manager);
-    myUiProperties.resetState(tabId);
+    uiProperties.resetState(tabId);
     if (location == VcsLogTabLocation.EDITOR) {
       FileEditor[] editors = openEditorLogTab(tabId, true, filters);
       return Objects.requireNonNull(VcsLogEditorUtil.findVcsLogUi(editors, MainVcsLogUi.class));
@@ -175,11 +177,11 @@ public class VcsLogTabsManager {
     @Override
     public MainVcsLogUi createLogUi(@NotNull Project project, @NotNull VcsLogData logData) {
       MainVcsLogUi ui = myFactory.createLogUi(project, logData);
-      myUiProperties.addTab(ui.getId(), myLogTabLocation);
+      uiProperties.addTab(ui.getId(), myLogTabLocation);
       Disposer.register(ui, () -> {
-        if (myProject.isDisposed() || myIsLogDisposing) return; // need to restore the tab after project/log is recreated
+        if (myProject.isDisposed() || isLogDisposing) return; // need to restore the tab after project/log is recreated
 
-        myUiProperties.removeTab(ui.getId()); // tab is closed by a user
+        uiProperties.removeTab(ui.getId()); // tab is closed by a user
       });
       return ui;
     }
