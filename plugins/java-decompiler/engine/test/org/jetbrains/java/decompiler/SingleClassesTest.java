@@ -186,7 +186,7 @@ public class SingleClassesTest {
   @Test public void testGenericArrayTypeAnnotations() {doTest("typeAnnotations/GenericArrayTypeAnnotations",
       "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E", "typeAnnotations/F");
   }
-  @Test public void TypeAnnotations() {doTest("typeAnnotations/NestedTypeAnnotations",
+  @Test public void testNestedTypeAnnotations() {doTest("typeAnnotations/NestedTypeAnnotations",
     "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E",
     "typeAnnotations/F", "typeAnnotations/Z");
   }
