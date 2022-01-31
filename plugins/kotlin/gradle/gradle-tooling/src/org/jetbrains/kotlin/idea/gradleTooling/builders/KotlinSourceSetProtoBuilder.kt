@@ -21,7 +21,7 @@ class KotlinSourceSetProtoBuilder(
     fun buildComponent(
         origin: Any,
         importingContext: MultiplatformModelImportingContext,
-        buildDependenciesMetadata: Boolean
+        shouldBuildMetadataDependencies: Boolean
     ): KotlinSourceSetProto? {
         val gradleSourceSet = origin as Named
 
@@ -41,8 +41,8 @@ class KotlinSourceSetProtoBuilder(
 
             val dependencies = when {
                 androidDependenciesForSourceSet.isNotEmpty() -> androidDependenciesForSourceSet
-                !buildDependenciesMetadata -> emptyList()
-                else -> buildSourceSetMetadataDependencies(gradleSourceSet, importingContext)
+                !shouldBuildMetadataDependencies -> emptyList()
+                else -> buildMetadataDependencies(gradleSourceSet, importingContext)
             }
 
             dependencies
@@ -98,7 +98,7 @@ class KotlinSourceSetProtoBuilder(
             override val scope: String = "COMPILE"
         }
 
-        private fun buildSourceSetMetadataDependencies(
+        private fun buildMetadataDependencies(
             gradleSourceSet: Named,
             importingContext: MultiplatformModelImportingContext
         ): List<KotlinDependency> {

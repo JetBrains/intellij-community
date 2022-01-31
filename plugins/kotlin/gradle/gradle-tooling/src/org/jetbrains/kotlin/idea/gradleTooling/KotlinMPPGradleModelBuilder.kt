@@ -110,11 +110,11 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
         val androidOnlySourceSets = importingContext.project.androidOnlySourceSets()
         val sourceSetProtoBuilder = KotlinSourceSetProtoBuilder(androidDeps)
 
-        val allSourceSetsProtosByNames = sourceSets.mapNotNull {
+        val allSourceSetsProtosByNames = sourceSets.mapNotNull { sourceSet ->
             sourceSetProtoBuilder.buildComponent(
-                origin = it,
+                origin = sourceSet,
                 importingContext = importingContext,
-                buildDependenciesMetadata = it !in androidOnlySourceSets
+                shouldBuildMetadataDependencies = sourceSet !in androidOnlySourceSets
             )
         }.associateBy { it.name }
 
