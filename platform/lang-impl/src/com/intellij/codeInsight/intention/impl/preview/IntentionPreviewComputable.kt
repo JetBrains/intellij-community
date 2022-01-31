@@ -71,6 +71,7 @@ internal class IntentionPreviewComputable(private val project: Project,
   }
 
   fun generatePreview(): IntentionPreviewInfo? {
+    if (project.isDisposed) return null
     val origPair = ShowIntentionActionsHandler.chooseFileForAction(originalFile, originalEditor, action) ?: return null
     val origFile: PsiFile
     val caretOffset: Int
