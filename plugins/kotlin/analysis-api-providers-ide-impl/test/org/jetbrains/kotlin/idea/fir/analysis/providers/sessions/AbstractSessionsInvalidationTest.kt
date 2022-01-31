@@ -8,9 +8,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PsiTestUtil
 import junit.framework.Assert
-import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.FirIdeModuleSession
-import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.FirIdeSession
-import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.FirIdeSessionProviderStorage
+import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirModuleSession
+import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
+import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionProviderStorage
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.idea.fir.analysis.project.structure.getMainKtSourceModule
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectModule
@@ -51,7 +51,7 @@ abstract class AbstractSessionsInvalidationTest : AbstractMultiModuleTest() {
 
         val rootModuleSourceInfo = rootModule.getMainKtSourceModule()!!
 
-        val storage = FirIdeSessionProviderStorage(project)
+        val storage = LLFirSessionProviderStorage(project)
 
         val initialSessions = storage.getFirSessions(rootModuleSourceInfo)
         modulesToMakeOOBM.forEach { it.incModificationTracker() }
@@ -60,7 +60,7 @@ abstract class AbstractSessionsInvalidationTest : AbstractMultiModuleTest() {
         val changedSessions = Sets.symmetricDifference(initialSessions, sessionsAfterOOBM)
         val changedSessionsModulesNamesSorted = changedSessions
             .map { session ->
-                val moduleSession = session as FirIdeModuleSession
+                val moduleSession = session as LLFirModuleSession
                 val module = moduleSession.module as KtSourceModule
                 module.moduleName
             }
@@ -70,9 +70,9 @@ abstract class AbstractSessionsInvalidationTest : AbstractMultiModuleTest() {
         Assert.assertEquals(testStructure.expectedInvalidatedModules, changedSessionsModulesNamesSorted)
     }
 
-    private fun FirIdeSessionProviderStorage.getFirSessions(module: KtSourceModule): Set<FirIdeSession> {
+    private fun LLFirSessionProviderStorage.getFirSessions(module: KtSourceModule): Set<LLFirSession> {
         val sessionProvider = getSessionProvider(module)
-        return sessionProvider.sessions.values.toSet()
+        return sessionProvider.allSessions.toSet()
     }
 
     private fun createEmptyModule(name: String): Module {
