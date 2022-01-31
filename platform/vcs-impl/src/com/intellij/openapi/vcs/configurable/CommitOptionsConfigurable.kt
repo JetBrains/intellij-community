@@ -7,13 +7,11 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBPanel
 import com.intellij.util.containers.mapNotNullLoggingErrors
-import com.intellij.util.ui.UIUtil.removeMnemonic
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitHandlers
 import com.intellij.vcs.commit.CommitOptionsPanel.Companion.verticalPanel
 import com.intellij.vcs.commit.CommitWorkflowHandler
@@ -32,8 +30,7 @@ class CommitOptionsConfigurable(val project: Project) : JBPanel<CommitOptionsCon
   private val beforeSettings = checkinHandlers.mapNotNullLoggingErrors(LOG) { it.beforeCheckinSettings }
 
   init {
-    val actionName = removeMnemonic(checkinPanel.commitActionName)
-    add(verticalPanel(message("border.standard.checkin.options.group", actionName)).apply {
+    add(verticalPanel().apply {
       beforeSettings.mapNotNull { it.createComponent() }.forEach { add(it) }
     })
   }
