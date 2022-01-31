@@ -829,6 +829,10 @@
       "description": "Text over the separator line in lists"
     },
     {
+      "key": "Popup.separatorInsets",
+      "description": "Insets around separator line (experimental UI only)"
+    },
+    {
       "key": "ProgressBar.failedColor",
       "description": "Use the \"Test Progress Indicators\" action in internal mode to preview progress bars"
     },

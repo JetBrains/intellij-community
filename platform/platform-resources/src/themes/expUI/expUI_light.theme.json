@@ -233,12 +233,19 @@
     },
 
     "Popup": {
+      "Advertiser": {
+        "borderInsets": "6,20,6,20",
+        "foreground": "Grey7",
+        "fontSizeOffset": {
+          "os.default": -1,
+          "os.windows": 0
+        }
+      },
       "Header": {
         "activeBackground": "Grey12",
         "inactiveBackground": "Grey11"
       },
-      "borderWidth": 0.5,
-      "Advertiser.foreground": "Grey7"
+      "borderWidth": 0.5
     },
 
     "CompletionPopup": {
