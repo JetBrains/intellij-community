@@ -2546,6 +2546,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/function/referenceToConstructor.java");
         }
 
+        @TestMetadata("referenceToProperty.java")
+        public void testReferenceToProperty() throws Exception {
+            runTest("testData/newJ2k/function/referenceToProperty.java");
+        }
+
         @TestMetadata("synchronizedMethod.java")
         public void testSynchronizedMethod() throws Exception {
             runTest("testData/newJ2k/function/synchronizedMethod.java");
