@@ -2,7 +2,6 @@
 package com.intellij.util
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 
 class SingleAlarm @JvmOverloads constructor(
@@ -18,7 +17,7 @@ class SingleAlarm @JvmOverloads constructor(
   constructor(task: Runnable, delay: Int, threadToUse: ThreadToUse, parentDisposable: Disposable)
     : this(task, delay = delay, parentDisposable = parentDisposable, threadToUse = threadToUse, modalityState = computeDefaultModality(threadToUse))
 
-  constructor(task: Runnable, delay: Int) : this(task, delay, ThreadToUse.SWING_THREAD, ApplicationManager.getApplication())
+  constructor(task: Runnable, delay: Int) : this(task, delay, null)
 
   init {
     if (threadToUse == ThreadToUse.SWING_THREAD && modalityState == null) {
