@@ -9,10 +9,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class SimpleDiffModel {
   @NotNull private final SimpleDiffViewer myViewer;
@@ -37,7 +35,7 @@ public class SimpleDiffModel {
 
   @NotNull
   public List<SimpleDiffChange> getChanges() {
-    return myValidChanges;
+    return Collections.unmodifiableList(myValidChanges);
   }
 
   @NotNull

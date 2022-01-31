@@ -240,7 +240,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   @NotNull
   @Override
   public List<SimpleThreesideDiffChange> getChanges() {
-    return myDiffChanges;
+    return Collections.unmodifiableList(myDiffChanges);
   }
 
   @NotNull
