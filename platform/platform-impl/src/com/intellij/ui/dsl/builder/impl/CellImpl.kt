@@ -198,7 +198,9 @@ internal class CellImpl<T : JComponent>(
       if (component.origin in dialogPanelConfig.componentValidationRequestors) return this
       logger<Cell<*>>().warn("Please, install Cell.validationRequestor or Panel.validationRequestor", Throwable())
       if (property is GraphProperty) {
-        validationRequestor(property::afterPropagation)
+        validateAfterPropagation(property)
+      } else {
+        validateAfterChange(property)
       }
     }
 
