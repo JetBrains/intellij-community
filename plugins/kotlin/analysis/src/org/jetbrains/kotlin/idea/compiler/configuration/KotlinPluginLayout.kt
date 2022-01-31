@@ -14,7 +14,7 @@ sealed interface KotlinPluginLayout {
         const val KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID = "kotlin-jps-plugin-classpath"
 
         fun getInstance(): KotlinPluginLayout {
-            if (PluginManagerCore.isRunningFromSources()) {
+            if (PluginManagerCore.isRunningFromSources() && !System.getProperty("idea.use.dev.build.server", "false").toBoolean()) {
                 return KotlinPluginLayoutWhenRunFromSources
             } else {
                 val jarInsideLib = PathManager.getJarPathForClass(KotlinPluginLayout::class.java)
