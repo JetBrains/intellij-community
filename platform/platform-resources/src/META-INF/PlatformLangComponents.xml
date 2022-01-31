@@ -89,7 +89,7 @@
                     serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl"
                     headlessImplementation="com.intellij.toolWindow.ToolWindowHeadlessManagerImpl" preload="notHeadless"/>
 
-    <applicationService serviceImplementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler" preload="await"/>
+    <ideEventQueueDispatcher implementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$MyEventDispatcher"/>
 
     <applicationService serviceInterface="com.intellij.openapi.client.ClientSessionsManager"
                         serviceImplementation="com.intellij.openapi.client.ClientAppSessionsManager"/>
@@ -193,6 +193,9 @@
 
     <listener class="com.intellij.ide.IdeTooltipManager$MyRegistryListener"
               topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+
+    <listener class="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$MyAnActionListener"
+              topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.openapi.command.impl.UndoManagerImpl$MyCommandListener"

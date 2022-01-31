@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.InvocationUtil;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
@@ -62,6 +63,9 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public final class IdeEventQueue extends EventQueue {
+  private static final ExtensionPointName<EventDispatcher> DISPATCHERS_EP =
+    new ExtensionPointName<>("com.intellij.ideEventQueueDispatcher");
+
   private static final boolean ourDefaultEventWithWrite = true;
 
   private static final boolean ourSkipMetaPressOnLinux = Boolean.getBoolean("keymap.skip.meta.press.on.linux");
@@ -840,6 +844,13 @@ public final class IdeEventQueue extends EventQueue {
         return true;
       }
     }
+
+    for (EventDispatcher eachDispatcher : DISPATCHERS_EP.getExtensionList()) {
+      if (eachDispatcher.dispatch(e)) {
+        return true;
+      }
+    }
+
     return false;
   }
 

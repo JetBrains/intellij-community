@@ -3,12 +3,12 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -37,6 +37,7 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
  * @author Dmitry Batrak
  * @author Konstantin Bulenkov
  */
+@Service(Service.Level.APP)
 public final class ModifierKeyDoubleClickHandler {
   private static final Logger LOG = Logger.getInstance(ModifierKeyDoubleClickHandler.class);
   private static final Int2IntMap KEY_CODE_TO_MODIFIER_MAP = new Int2IntOpenHashMap();
@@ -60,33 +61,41 @@ public final class ModifierKeyDoubleClickHandler {
     registerAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION, modifierKeyCode, KeyEvent.VK_RIGHT);
     registerAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START_WITH_SELECTION, modifierKeyCode, KeyEvent.VK_HOME);
     registerAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END_WITH_SELECTION, modifierKeyCode, KeyEvent.VK_END);
+  }
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AnActionListener.TOPIC, new AnActionListener() {
-      @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
-        if (myIsRunningAction) {
-          return;
-        }
-
-        for (MyDispatcher dispatcher : myDispatchers.values()) {
-          dispatcher.resetState();
-        }
+  public static class MyAnActionListener implements AnActionListener {
+    @Override
+    public void beforeActionPerformed(@NotNull AnAction action,
+                                      @NotNull AnActionEvent event) {
+      ModifierKeyDoubleClickHandler doubleClickHandler = getInstance();
+      if (doubleClickHandler.myIsRunningAction) {
+        return;
       }
-    });
-    IdeEventQueue.getInstance().addDispatcher(event -> {
+
+      for (MyDispatcher dispatcher : doubleClickHandler.myDispatchers.values()) {
+        dispatcher.resetState();
+      }
+    }
+  }
+
+  public static class MyEventDispatcher implements IdeEventQueue.EventDispatcher {
+    @Override
+    public boolean dispatch(@NotNull AWTEvent event) {
       if (!(event instanceof KeyEvent)) {
         return false;
       }
 
+      ModifierKeyDoubleClickHandler doubleClickHandler = getInstance();
+
       boolean result = false;
       KeyEvent keyEvent = (KeyEvent)event;
-      for (MyDispatcher dispatcher : myDispatchers.values()) {
+      for (MyDispatcher dispatcher : doubleClickHandler.myDispatchers.values()) {
         if (dispatcher.dispatch(keyEvent)) {
           result = true;
         }
       }
       return result;
-    }, ApplicationManager.getApplication());
+    }
   }
 
   public static ModifierKeyDoubleClickHandler getInstance() {
