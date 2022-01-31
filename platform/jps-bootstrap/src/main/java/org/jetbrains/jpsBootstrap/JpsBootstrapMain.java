@@ -151,17 +151,22 @@ public class JpsBootstrapMain {
   }
 
   private void writeJavaArgfile(List<File> moduleRuntimeClasspath) throws IOException {
+    Properties systemProperties = new Properties();
+
+    systemProperties.putAll(getTeamCitySystemProperties());
+    systemProperties.putAll(additionalSystemProperties);
+
+    systemProperties.putIfAbsent("file.encoding", "UTF-8"); // just in case
+    systemProperties.putIfAbsent("java.awt.headless", "true");
+
+    // This is required only for accommodating KotlinBinaries.ensureKotlinJpsPluginIsAddedToClassPath
+    systemProperties.put("java.system.class.loader", "org.jetbrains.intellij.build.impl.BuildScriptsSystemClassLoader");
+
     List<String> args = new ArrayList<>();
     args.add("-ea");
     args.add("-Xmx" + buildTargetXmx);
-    args.add("-Dfile.encoding=UTF-8"); // just in case
-    args.add("-Djava.awt.headless=true");
 
-    // This is required only for accommodating KotlinBinaries.ensureKotlinJpsPluginIsAddedToClassPath
-    args.add("-Djava.system.class.loader=org.jetbrains.intellij.build.impl.BuildScriptsSystemClassLoader");
-
-    args.addAll(systemPropertiesArgsFromTeamCityBuild());
-    args.addAll(convertPropertiesToCommandLineArgs(additionalSystemProperties));
+    args.addAll(convertPropertiesToCommandLineArgs(systemProperties));
 
     args.add("-classpath");
     args.add(StringUtil.join(moduleRuntimeClasspath, File.pathSeparator));
