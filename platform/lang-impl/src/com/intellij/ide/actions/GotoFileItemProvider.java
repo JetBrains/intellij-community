@@ -28,17 +28,17 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FList;
-import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.*;
 import com.intellij.util.indexing.FindSymbolParameters;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.*;
+import java.util.function.Function;
 
 /**
 * @author peter
@@ -228,27 +228,15 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }).append(dirs);
   }
 
-  // returns a lazy iterable, where the next element is calculated only when it's needed
-  @NotNull
-  private JBIterable<FoundItemDescriptor<PsiFileSystemItem>> getFilesMatchingPath(@NotNull FindSymbolParameters parameters,
-                                                                                  @NotNull List<MatchResult> fileNames,
-                                                                                  @NotNull DirectoryPathMatcher dirMatcher,
-                                                                                  @NotNull Map<String, Object> indexResult) {
-    GlobalSearchScope scope = dirMatcher.narrowDown(parameters.getSearchScope());
-
-    List<List<MatchResult>> sortedNames = sortAndGroup(fileNames, Comparator.comparing(mr -> StringUtil.toLowerCase(FileUtilRt.getNameWithoutExtension(mr.elementName))));
-    return JBIterable.from(sortedNames).flatMap(nameGroup -> getItemsForNames(scope, nameGroup, indexResult));
-  }
-
   @NotNull
   private Iterable<FoundItemDescriptor<PsiFileSystemItem>> getItemsForNames(@NotNull GlobalSearchScope scope,
                                                                             @NotNull List<? extends MatchResult> matchResults,
-                                                                            @NotNull Map<String, Object> indexResult) {
+                                                                            @NotNull Function<String, Object> indexResult) {
     List<PsiFileSystemItem> group = new ArrayList<>();
     Map<PsiFileSystemItem, Integer> nesting = new HashMap<>();
     Map<PsiFileSystemItem, Integer> matchDegrees = new HashMap<>();
     for (MatchResult matchResult : matchResults) {
-      Object val = indexResult.get(matchResult.elementName);
+      Object val = indexResult.apply(matchResult.elementName);
       if (val == null) continue;
       ProgressManager.checkCanceled();
       List<PsiFileSystemItem> items = val instanceof List ? (List<PsiFileSystemItem>)val : Collections.singletonList((PsiFileSystemItem)val);
@@ -399,40 +387,75 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         }
       }
       MinusculeMatcher qualifierMatcher = getQualifiedNameMatcher(parameters.getLocalPatternName());
-      List<List<MatchResult>> groups = groupByMatchingDegree(matchingNames);
+      Comparator<MatchResult> comparator1 = matchingDegreeComparator();
+      Comparator<MatchResult> comparator2 = Comparator.comparing(
+        mr -> StringUtil.toLowerCase(FileUtilRt.getNameWithoutExtension(mr.elementName)));
+      matchingNames.sort(comparator1);
+      // comparator1.thenComparing(comparator2) is too slow, let's lazily apply comparator2 as needed below
+      Function<List<MatchResult>, List<MatchResult>> sortGroup = new Function<>() {
+        final Set<Object> sortedGroups = CollectionFactory.createCustomHashingStrategySet(HashingStrategy.identity());
+        @Override
+        public List<MatchResult> apply(List<MatchResult> results) {
+          if (sortedGroups.add(results)) {
+            results.sort(comparator2);
+          }
+          return results;
+        }
+      };
 
-      Map<String, List<MatchResult>> batchMap = new HashMap<>();
-      int batchSize = Math.max(matchingNames.size() / 10, 50);
-      List<MatchResult> curList = new ArrayList<>();
-      for (MatchResult mr : ContainerUtil.flatten(groups)) {
-        curList.add(mr);
-        batchMap.put(mr.elementName, curList);
-        if (curList.size() >= batchSize) {
-          curList = new ArrayList<>();
+      GlobalSearchScope scope = dirMatcher.narrowDown(parameters.getSearchScope());
+      FindSymbolParameters parametersAdjusted = parameters.withScope(scope);
+
+      List<List<MatchResult>> groups = group(matchingNames, comparator1);
+      // 10 index calls max, batch size is doubled each time
+      int batchSizeInitial = Math.max(matchingNames.size() / 511 + 1, 50);
+      Function<String, Object> indexResult = new Function<>() {
+        int batchSize = batchSizeInitial;
+        int groupIndex, groupSubIndex;
+        final Map<String, Object> indexInnerMap = new HashMap<>();
+
+        @Override
+        public Object apply(String key) {
+          Object result = indexInnerMap.get(key);
+          if (result == ObjectUtils.NULL) return null;
+          if (result != null) return result;
+          Set<String> names = new HashSet<>(batchSize);
+          while (groupIndex < groups.size()) {
+            List<MatchResult> group = sortGroup.apply(groups.get(groupIndex));
+            int lastIndex = Math.min(group.size(), groupSubIndex + batchSize - names.size());
+            for (MatchResult mr : group.subList(groupSubIndex, lastIndex)) {
+              names.add(mr.elementName);
+            }
+            boolean nextGroup = lastIndex == group.size();
+            groupSubIndex = nextGroup ? 0 : lastIndex;
+            groupIndex = nextGroup ? groupIndex + 1 : groupIndex;
+            if (names.size() >= batchSize) break;
+          }
+          batchSize *= 2;
+
+          indexInnerMap.clear(); // clear the prev batch result
+          LOG.assertTrue(names.contains(key), "'" + key + "' is not in the current batch");
+          Object[] items = myModel.getElementsByNames(names, parametersAdjusted, indicator);
+          for (Object o : items) {
+            if (!(o instanceof PsiFileSystemItem)) continue;
+            String name = ((PsiFileSystemItem)o).getName();
+            Object val = indexInnerMap.get(name);
+            if (val == null) indexInnerMap.put(name, o);
+            else if (val instanceof List) ((List<Object>)val).add(o);
+            else indexInnerMap.put(name, ContainerUtil.newArrayList(val, o));
+            names.remove(name);
+          }
+          for (String name : names) {
+            indexInnerMap.put(name, ObjectUtils.NULL);
+          }
+          return ObjectUtils.nullizeIfDefaultValue(indexInnerMap.get(key), ObjectUtils.NULL);
         }
-      }
-      Map<String, Object> indexInnerMap = new HashMap<>();
-      Map<String, Object> indexResult = FactoryMap.createMap(key -> {
-        Set<String> names = ContainerUtil.map2Set(batchMap.get(key), o -> o.elementName);
-        Object[] items = myModel.getElementsByNames(names, parameters, indicator);
-        for (Object o : items) {
-          if (!(o instanceof PsiFileSystemItem)) continue;
-          String name = ((PsiFileSystemItem)o).getName();
-          Object val = indexInnerMap.get(name);
-          if (val == null) indexInnerMap.put(name, o);
-          else if (val instanceof List) ((List<Object>)val).add(o);
-          else indexInnerMap.put(name, ContainerUtil.newArrayList(val, o));
-          names.remove(name);
-        }
-        for (String name : names) {
-          indexInnerMap.put(name, ObjectUtils.NULL);
-        }
-        return ObjectUtils.nullizeIfDefaultValue(indexInnerMap.get(key), ObjectUtils.NULL);
-      }, () -> indexInnerMap);
+      };
 
       for (List<MatchResult> group : groups) {
-        JBIterable<FoundItemDescriptor<PsiFileSystemItem>> filesMatchingPath = getFilesMatchingPath(
-          parameters, group, dirMatcher, indexResult);
+        List<List<MatchResult>> sortedNames = group(sortGroup.apply(group), comparator2);
+        JBIterable<FoundItemDescriptor<PsiFileSystemItem>> filesMatchingPath = JBIterable.from(sortedNames)
+          .flatMap(nameGroup -> getItemsForNames(scope, nameGroup, indexResult));
         Iterable<FoundItemDescriptor<PsiFileSystemItem>> matchedFiles =
           parameters.getLocalPatternName().isEmpty()
           ? filesMatchingPath
@@ -472,21 +495,18 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       return false;
     }
 
-    private @NotNull List<List<MatchResult>> groupByMatchingDegree(@NotNull List<MatchResult> matchingNames) {
-      Comparator<MatchResult> comparator = (mr1, mr2) -> {
+    private @NotNull Comparator<MatchResult> matchingDegreeComparator() {
+      return (mr1, mr2) -> {
         boolean exactPrefix1 = StringUtil.startsWith(mr1.elementName, patternSuffix);
         boolean exactPrefix2 = StringUtil.startsWith(mr2.elementName, patternSuffix);
         if (exactPrefix1 && exactPrefix2) return 0;
         if (exactPrefix1 != exactPrefix2) return exactPrefix1 ? -1 : 1;
         return mr1.compareDegrees(mr2);
       };
-
-      return sortAndGroup(matchingNames, comparator);
     }
   }
 
-  @NotNull
-  private static <T> List<List<T>> sortAndGroup(@NotNull List<T> items, @NotNull Comparator<? super T> comparator) {
-    return StreamEx.of(items).sorted(comparator).groupRuns((n1, n2) -> comparator.compare(n1, n2) == 0).toList();
+  private static @NotNull <T> List<List<T>> group(@NotNull List<T> items, @NotNull Comparator<? super T> comparator) {
+    return StreamEx.of(items).groupRuns((n1, n2) -> comparator.compare(n1, n2) == 0).toList();
   }
 }
