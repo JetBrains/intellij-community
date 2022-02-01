@@ -9755,6 +9755,54 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/redundantOptionalArgument")
+    public static class RedundantOptionalArgument extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("constant.kt")
+        public void testConstant() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOptionalArgument/constant.kt");
+        }
+
+        @TestMetadata("constructorCall.kt")
+        public void testConstructorCall() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOptionalArgument/constructorCall.kt");
+        }
+
+        @TestMetadata("namedArgument.kt")
+        public void testNamedArgument() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOptionalArgument/namedArgument.kt");
+        }
+
+        @TestMetadata("notEqual.kt")
+        public void testNotEqual() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOptionalArgument/notEqual.kt");
+        }
+
+        @TestMetadata("notLastArgument.kt")
+        public void testNotLastArgument() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOptionalArgument/notLastArgument.kt");
+        }
+
+        @TestMetadata("notLastNamedArgument.kt")
+        public void testNotLastNamedArgument() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOptionalArgument/notLastNamedArgument.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOptionalArgument/simple.kt");
+        }
+
+        @TestMetadata("variable.kt")
+        public void testVariable() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOptionalArgument/variable.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantOverride")
     public static class RedundantOverride extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

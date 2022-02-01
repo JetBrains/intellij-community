@@ -2873,6 +2873,14 @@
                      language="kotlin"
                      key="inspection.replace.with.string.builder.append.range.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RedundantOptionalArgumentInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="false"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.redundant.optional.argument.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.NonExternalClassifierExtendingStateOrPropsInspection"
                      groupPath="Kotlin,React"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
