@@ -2,7 +2,7 @@
 package com.intellij.ui.content.impl
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.wm.ToolWindow
@@ -14,22 +14,22 @@ import com.intellij.ui.content.MessageView
 
 internal class MessageViewImpl(project: Project) : MessageView {
   private var toolWindow: ToolWindow? = null
-  private val postponedRunnables: MutableList<Runnable> = ArrayList()
+  private val postponedRunnables = ArrayList<Runnable>()
 
   init {
     StartupManager.getInstance(project).runAfterOpened {
-      ApplicationManager.getApplication().invokeLater(
-        {
-          toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(ToolWindowId.MESSAGES_WINDOW) {
-            icon = AllIcons.Toolwindows.ToolWindowMessages
-            stripeTitle = UIBundle.messagePointer("tool.window.name.messages")
-          }
-          for (postponedRunnable in postponedRunnables) {
-            postponedRunnable.run()
-          }
-          postponedRunnables.clear()
-        }, project.disposed
-      )
+      // in a unit test mode this code maybe executed in EDT, so, don't use here invokeLater
+      // also, MessageView service maybe called directly from EDT
+      AppUIExecutor.onUiThread().expireWith(project).execute {
+        toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(ToolWindowId.MESSAGES_WINDOW) {
+          icon = AllIcons.Toolwindows.ToolWindowMessages
+          stripeTitle = UIBundle.messagePointer("tool.window.name.messages")
+        }
+        for (postponedRunnable in postponedRunnables) {
+          postponedRunnable.run()
+        }
+        postponedRunnables.clear()
+      }
     }
   }
 
