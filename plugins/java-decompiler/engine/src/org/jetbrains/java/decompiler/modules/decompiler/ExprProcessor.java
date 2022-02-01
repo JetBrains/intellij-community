@@ -736,7 +736,7 @@ public class ExprProcessor implements CodeConstants {
       enclosingClassList.add(0, enclosingClass);
     }
     return enclosingClassList.stream()
-      .filter(classNode -> classNode.type != ClassesProcessor.ClassNode.CLASS_ANONYMOUS ||
+      .filter(classNode -> classNode.type != ClassesProcessor.ClassNode.CLASS_ANONYMOUS &&
                            classNode.type != ClassesProcessor.ClassNode.CLASS_LAMBDA
       ).collect(Collectors.toList());
   }
