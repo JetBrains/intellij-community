@@ -17,6 +17,7 @@ import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
@@ -91,13 +92,17 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy {
     final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(project, rootSchema, position).resolve();
     if (schemas.isEmpty()) return false;
 
-    return schemas.stream().anyMatch(s -> s.getProperties().containsKey(value)
-      || s.getMatchingPatternPropertySchema(value) != null);
+    return schemas.stream().anyMatch(s -> {
+      if (s.getProperties().containsKey(value) || s.getMatchingPatternPropertySchema(value) != null) {
+        return true;
+      }
+      return ContainerUtil.notNullize(s.getEnum()).stream().anyMatch(e -> e instanceof String && StringUtil.unquoteString((String)e).equals(value));
+    });
   }
 
   @NotNull
   @Override
-  public Tokenizer getTokenizer(PsiElement element) {
+  public Tokenizer<?> getTokenizer(PsiElement element) {
     if (element instanceof JsonStringLiteral) {
       return matchesNameFromSchema((JsonStringLiteral)element)
         ? EMPTY_TOKENIZER
