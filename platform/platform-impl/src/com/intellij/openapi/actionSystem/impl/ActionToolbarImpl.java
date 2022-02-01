@@ -391,7 +391,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   protected void addImpl(Component comp, Object constraints, int index) {
     super.addImpl(comp, constraints, index);
     if (myPopupHandler != null && !ContainerUtil.exists(comp.getMouseListeners(), listener -> listener instanceof PopupHandler)) {
-      comp.addMouseListener(myPopupHandler);
+      UIUtil.uiTraverser(comp).traverse().forEach(component -> component.addMouseListener(myPopupHandler));
     }
   }
 
