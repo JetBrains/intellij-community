@@ -253,10 +253,6 @@ class GitMergeDialog(private val project: Project,
       branchToSelect = branches.find { branch -> branch == currentRemoteBranch } ?: branches.getOrElse(0) { "" }
     }
 
-    if (branchToSelect.isEmpty()) {
-      startTrackingValidation()
-    }
-
     branchField.item = branchToSelect
     branchField.selectAll()
   }
