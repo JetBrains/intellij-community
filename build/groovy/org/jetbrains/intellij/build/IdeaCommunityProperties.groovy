@@ -47,6 +47,9 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
       "intellij.platform.externalSystem.testFramework",
       "intellij.maven.testFramework",
       "intellij.ide.starter",
+      "intellij.performanceTesting.commands",
+      "intellij.performanceTesting.maven.commands",
+      "intellij.performanceTesting.gradle.commands",
     ]
 
     versionCheckerConfig = CE_CLASS_VERSIONS
