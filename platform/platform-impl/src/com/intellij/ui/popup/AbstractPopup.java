@@ -33,6 +33,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
@@ -45,6 +46,8 @@ import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import javax.swing.plaf.basic.BasicHTML;
 import java.awt.*;
 import java.awt.event.*;
@@ -1268,8 +1271,22 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     mySpeedSearchPatternField.getTextEditor().setFocusable(mySpeedSearchAlwaysShown);
     if (mySpeedSearchAlwaysShown) {
       setHeaderComponent(mySpeedSearchPatternField);
-      mySpeedSearchPatternField.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 1, 0));
-      mySpeedSearchPatternField.getTextEditor().setBorder(JBUI.Borders.empty());
+    }
+
+    JBTextField textField = mySpeedSearchPatternField.getTextEditor();
+    if (ExperimentalUI.isNewUI()) {
+      mySpeedSearchPatternField.setOpaque(false);
+      textField.setOpaque(false);
+      JBEmptyBorder outsideBorder = new JBEmptyBorder(JBUI.CurrentTheme.Popup.searchFieldBorderInsets());
+      JBEmptyBorder insideBorder = new JBEmptyBorder(JBUI.CurrentTheme.Popup.searchFieldInputInsets());
+      Border lineBorder = JBUI.Borders.customLine(JBUI.CurrentTheme.Popup.separatorColor(), 0, 0, 1, 0);
+      mySpeedSearchPatternField.setBorder(new CompoundBorder(outsideBorder, new CompoundBorder(lineBorder, insideBorder)));
+      textField.setBorder(JBUI.Borders.empty());
+    } else {
+      if (mySpeedSearchAlwaysShown) {
+        mySpeedSearchPatternField.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 1, 0));
+        textField.setBorder(JBUI.Borders.empty());
+      }
     }
     if (SystemInfo.isMac) {
       RelativeFont.TINY.install(mySpeedSearchPatternField);

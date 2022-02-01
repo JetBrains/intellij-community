@@ -843,6 +843,14 @@ public final class JBUI {
         return getFloat("Popup.borderWidth", 1);
       }
 
+      public static Insets searchFieldBorderInsets() {
+        return insets("Popup.SearchField.borderInsets", insets(4, 12, 4, 12));
+      }
+
+      public static Insets searchFieldInputInsets() {
+        return insets("Popup.SearchField.inputInsets", insets(4, 8, 8, 2));
+      }
+
       public static Color toolbarPanelColor() {
         return JBColor.namedColor("Popup.Toolbar.background", 0xf7f7f7);
       }
