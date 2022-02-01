@@ -9,13 +9,13 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.configuration.getModulesWithKotlinFiles
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.project.getAndCacheLanguageLevelByDependencies
+import org.jetbrains.kotlin.idea.project.isKotlinLanguageVersionConfigured
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import java.util.concurrent.atomic.AtomicInteger
@@ -41,13 +41,20 @@ class KotlinConfigurationCheckerService(val project: Project) {
                 val modules = runReadAction {
                     project.allModules()
                 }
+
+                val kotlinLanguageVersionConfigured = project.isKotlinLanguageVersionConfigured()
+
                 // pick up modules with kotlin faces those use custom (non project) settings
                 val modulesWithKotlinFacets =
                     modules.filter {
                         KotlinFacet.get(it)?.configuration?.settings?.useProjectSettings == false
-                    }.takeUnless(List<Module>::isEmpty) ?: return
+                    }.takeUnless(List<Module>::isEmpty)
 
-                val ktModules = getModulesWithKotlinFiles(project, *modulesWithKotlinFacets.toTypedArray())
+                val ktModules = if (kotlinLanguageVersionConfigured && modulesWithKotlinFacets != null) {
+                    getModulesWithKotlinFiles(project, *modulesWithKotlinFacets.toTypedArray())
+                } else {
+                    getModulesWithKotlinFiles(project)
+                }
                 indicator.isIndeterminate = false
                 for ((idx, module) in ktModules.withIndex()) {
                     indicator.checkCanceled()

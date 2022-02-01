@@ -44,6 +44,11 @@ val KtElement.builtIns: KotlinBuiltIns
 
 var KtFile.forcedTargetPlatform: TargetPlatform? by UserDataProperty(Key.create("FORCED_TARGET_PLATFORM"))
 
+fun Project.isKotlinLanguageVersionConfigured(): Boolean =
+    KotlinCommonCompilerArgumentsHolder.getInstance(this).settings.run {
+        this.languageVersion != null && apiVersion != null
+    }
+
 fun Module.getAndCacheLanguageLevelByDependencies(): LanguageVersion {
     val facetSettings = KotlinFacetSettingsProvider.getInstance(project)?.getInitializedSettings(this)
     val languageLevel = getLibraryLanguageLevel(this, null, facetSettings?.targetPlatform?.idePlatformKind)
