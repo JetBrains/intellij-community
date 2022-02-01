@@ -2,27 +2,45 @@
 package org.jetbrains.kotlin.idea.gradleTooling.builders
 
 import org.gradle.api.Named
+import org.gradle.api.Project
 import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinLanguageSettingsReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinTargetReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinDependencyId
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.plugins.gradle.DefaultExternalDependencyId
 import org.jetbrains.plugins.gradle.model.DefaultExternalLibraryDependency
 import org.jetbrains.plugins.gradle.model.DefaultFileCollectionDependency
 import java.io.File
 
 class KotlinSourceSetProtoBuilder(
-    val androidDeps: Map<String, List<Any>>?
+    val androidDeps: Map<String, List<Any>>?,
+    val project: Project
 ) : KotlinMultiplatformComponentBuilderBase<KotlinSourceSetProto> {
-    override fun buildComponent(origin: Any, importingContext: MultiplatformModelImportingContext) =
-        buildComponent(origin, importingContext, true)
+    private val sourceSetsWithoutNeedOfBuildingDependenciesMetadata: Set<Named> by lazy {
+        val isHMPPEnabled = project.getProperty(GradleImportProperties.IS_HMPP_ENABLED)
+        if (!isHMPPEnabled) return@lazy emptySet()
 
-    fun buildComponent(
-        origin: Any,
-        importingContext: MultiplatformModelImportingContext,
-        shouldBuildMetadataDependencies: Boolean
-    ): KotlinSourceSetProto? {
+        val sourceSetPlatforms = mutableMapOf<Named, MutableSet<KotlinPlatform>>()
+        val targets = project.getTargets().orEmpty().map(::KotlinTargetReflection)
+
+        for (target in targets) {
+            val platform = target.platformType?.let { KotlinPlatform.byId(it) } ?: continue
+            for (compilation in target.compilations.orEmpty()) {
+                for (sourceSet in compilation.allSourceSets.orEmpty()) {
+                    sourceSetPlatforms.getOrPut(sourceSet) { mutableSetOf() }.add(platform)
+                }
+            }
+        }
+
+        sourceSetPlatforms
+            .filterValues { it.singleOrNull() == KotlinPlatform.ANDROID }
+            .keys
+    }
+
+    override fun buildComponent(origin: Any, importingContext: MultiplatformModelImportingContext): KotlinSourceSetProto? {
         val gradleSourceSet = origin as Named
 
         val languageSettings = gradleSourceSet["getLanguageSettings"]
@@ -41,7 +59,7 @@ class KotlinSourceSetProtoBuilder(
 
             val dependencies = when {
                 androidDependenciesForSourceSet.isNotEmpty() -> androidDependenciesForSourceSet
-                !shouldBuildMetadataDependencies -> emptyList()
+                gradleSourceSet in sourceSetsWithoutNeedOfBuildingDependenciesMetadata -> emptyList()
                 else -> buildMetadataDependencies(gradleSourceSet, importingContext)
             }
 

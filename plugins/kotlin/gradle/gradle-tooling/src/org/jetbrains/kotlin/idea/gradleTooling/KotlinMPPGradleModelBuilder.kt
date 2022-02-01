@@ -107,14 +107,12 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
             (getSourceSets(kotlinExt) as? NamedDomainObjectContainer<Named>)?.asMap?.values ?: emptyList<Named>()
         val androidDeps = buildAndroidDeps(importingContext, kotlinExt.javaClass.classLoader)
 
-        val androidOnlySourceSets = importingContext.project.androidOnlySourceSets()
-        val sourceSetProtoBuilder = KotlinSourceSetProtoBuilder(androidDeps)
+        val sourceSetProtoBuilder = KotlinSourceSetProtoBuilder(androidDeps, importingContext.project)
 
         val allSourceSetsProtosByNames = sourceSets.mapNotNull { sourceSet ->
             sourceSetProtoBuilder.buildComponent(
                 origin = sourceSet,
-                importingContext = importingContext,
-                shouldBuildMetadataDependencies = sourceSet !in androidOnlySourceSets
+                importingContext = importingContext
             )
         }.associateBy { it.name }
 
@@ -173,42 +171,6 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
 
             importingContext.computeSourceSetPlatforms(sourceSet)
         }
-    }
-
-    /**
-     * Returns a set of Kotlin Source Set that will definitely compile for Android only
-     *
-     * This function can be called *before* MultiplatformModelImportingContext is completely initialised
-     * But it still must be compatible with the implementation in [MultiplatformModelImportingContext.computeSourceSetPlatforms]
-     * which works after complete initialization of MultiplatformModelImportingContext
-     *
-     * Specs that make it compatible with current version of [MultiplatformModelImportingContext.computeSourceSetPlatforms]:
-     * 0) this method works in HMPP context only
-     * 1) android-only source set participates only in Android Compilations
-     * 2) source sets that don't participate in any compilation can't be considered as android-only
-     * 3) android only source sets can't be coerced to Common
-     * 4) [KotlinSourceSetContainer.resolveAllDependsOnSourceSets] should be compatible with [KotlinCompilationReflection.allSourceSets]
-     */
-    private fun Project.androidOnlySourceSets(): Set<Named> {
-
-        val isHMPPEnabled = getProperty(IS_HMPP_ENABLED)
-        if (!isHMPPEnabled) return emptySet()
-
-        val sourceSetPlatforms = mutableMapOf<Named, MutableSet<KotlinPlatform>>()
-        val targets = getTargets().orEmpty().map(::KotlinTargetReflection)
-
-        for (target in targets) {
-            val platform = target.platformType?.let { KotlinPlatform.byId(it) } ?: continue
-            for (compilation in target.compilations.orEmpty()) {
-                for (sourceSet in compilation.allSourceSets.orEmpty()) {
-                    sourceSetPlatforms.getOrPut(sourceSet) { mutableSetOf() }.add(platform)
-                }
-            }
-        }
-
-        return sourceSetPlatforms
-            .filterValues { it.singleOrNull() == KotlinPlatform.ANDROID }
-            .keys
     }
 
     private fun MultiplatformModelImportingContext.computeSourceSetPlatforms(sourceSet: KotlinSourceSetImpl) {
