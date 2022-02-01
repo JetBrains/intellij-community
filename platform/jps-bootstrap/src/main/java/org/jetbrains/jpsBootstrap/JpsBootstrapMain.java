@@ -153,7 +153,9 @@ public class JpsBootstrapMain {
   private void writeJavaArgfile(List<File> moduleRuntimeClasspath) throws IOException {
     Properties systemProperties = new Properties();
 
-    systemProperties.putAll(getTeamCitySystemProperties());
+    if (underTeamCity) {
+      systemProperties.putAll(getTeamCitySystemProperties());
+    }
     systemProperties.putAll(additionalSystemProperties);
 
     systemProperties.putIfAbsent("file.encoding", "UTF-8"); // just in case
