@@ -126,6 +126,7 @@ class MavenImportingManager(val project: Project) {
         currentContext?.indicator?.checkCanceled()
         flow.runPostImportTasks(importContext)
         flow.updateProjectManager(readMavenFiles)
+        flow.configureMavenProject(importContext)
         return@doTask MavenImportFinishedContext(importContext)
       }
     }.also { it.context?.let(flow::runImportExtensions) }

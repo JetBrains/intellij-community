@@ -4,7 +4,10 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IntellijInternalApi;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.importing.configurers.MavenModuleConfigurer;
 import org.jetbrains.idea.maven.model.MavenArtifact;
@@ -77,28 +80,38 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     return false;
   }
 
-  protected void configureMavenProjects(@NotNull Collection<MavenProject> projects,
-                                        @NotNull Map<MavenProject, Module> mavenProjectToModule,
-                                        @NotNull Project project) {
-    List<MavenModuleConfigurer> configurers = MavenModuleConfigurer.getConfigurers();
+  protected static void configureMavenProjectsInBackground(@NotNull Collection<MavenProject> projects,
+                                                           @NotNull Map<MavenProject, Module> mavenProjectToModule,
+                                                           @NotNull Project project) {
+    if (Registry.is("maven.new.import")) return;
 
     MavenUtil.runInBackground(project, MavenProjectBundle.message("command.name.configuring.projects"), false, indicator -> {
-      float count = 0;
-      long startTime = System.currentTimeMillis();
-      LOG.info("[maven import] applying " + configurers.size() + " configurers to " + projects.size() + " Maven projects");
-      for (MavenProject mavenProject : projects) {
-        Module module = mavenProjectToModule.get(mavenProject);
-        if (module == null) {
-          continue;
-        }
-        indicator.setFraction(count++ / projects.size());
-        indicator.setText2(MavenProjectBundle.message("progress.details.configuring.module", module.getName()));
-        for (MavenModuleConfigurer configurer : configurers) {
-          configurer.configure(mavenProject, project, module);
-        }
-      }
-      LOG.info("[maven import] configuring projects took " + (System.currentTimeMillis() - startTime) + "ms");
+      configureMavenProjects(projects, mavenProjectToModule, project, indicator);
     });
+  }
+
+  @IntellijInternalApi
+  @ApiStatus.Internal
+  public static void configureMavenProjects(@NotNull Collection<MavenProject> projects,
+                                            @NotNull Map<MavenProject, Module> mavenProjectToModule,
+                                            @NotNull Project project,
+                                            MavenProgressIndicator indicator) {
+    List<MavenModuleConfigurer> configurers = MavenModuleConfigurer.getConfigurers();
+    float count = 0;
+    long startTime = System.currentTimeMillis();
+    LOG.info("[maven import] applying " + configurers.size() + " configurers to " + projects.size() + " Maven projects");
+    for (MavenProject mavenProject : projects) {
+      Module module = mavenProjectToModule.get(mavenProject);
+      if (module == null) {
+        continue;
+      }
+      indicator.setFraction(count++ / projects.size());
+      indicator.setText2(MavenProjectBundle.message("progress.details.configuring.module", module.getName()));
+      for (MavenModuleConfigurer configurer : configurers) {
+        configurer.configure(mavenProject, project, module);
+      }
+    }
+    LOG.info("[maven import] configuring projects took " + (System.currentTimeMillis() - startTime) + "ms");
   }
 
   protected static void doRefreshFiles(Set<File> files) {

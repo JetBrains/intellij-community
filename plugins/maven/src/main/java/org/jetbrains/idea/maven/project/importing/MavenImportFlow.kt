@@ -15,6 +15,7 @@ import com.intellij.util.io.exists
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.execution.BTWMavenConsole
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
+import org.jetbrains.idea.maven.importing.MavenProjectImporterBase
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.*
@@ -231,14 +232,24 @@ class MavenImportFlow {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     val projectManager = MavenProjectsManager.getInstance(context.project)
     val projectImporter = MavenProjectImporter.createImporter(context.project, context.readContext.projectsTree,
-                                                              projectManager.getFileToModuleMapping(MavenDefaultModelsProvider(context.project)),
+                                                              projectManager.getFileToModuleMapping(
+                                                                MavenDefaultModelsProvider(context.project)),
                                                               context.projectsToImport.map {
                                                                 it to MavenProjectChanges.ALL
                                                               }.toMap(), false, modelsProvider,
                                                               context.initialContext.importingSettings, null)
     val postImportTasks = projectImporter.importProject();
     val modulesCreated = projectImporter.createdModules
-    return MavenImportedContext(context.project, modulesCreated, postImportTasks, context.initialContext);
+    return MavenImportedContext(context.project, modulesCreated, postImportTasks, context.readContext);
+  }
+
+  fun configureMavenProject(context: MavenImportedContext) {
+    val projectsManager = MavenProjectsManager.getInstance(context.project)
+    val projects = context.readContext.projectsTree.projects
+    val moduleMap = projects.map { it to projectsManager.findModule(it) }.toMap();
+    MavenProjectImporterBase.configureMavenProjects(context.readContext.projectsTree.projects, moduleMap, context.project,
+                                                    context.readContext.indicator)
+
   }
 
   fun updateProjectManager(context: MavenReadContext) {
@@ -257,10 +268,10 @@ class MavenImportFlow {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     val projectManager = MavenProjectsManager.getInstance(context.project)
     val embeddersManager = projectManager.embeddersManager
-    val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
-                                             context.initialContext.generalSettings.isPrintErrorStackTraces)
+    val consoleToBeRemoved = BTWMavenConsole(context.project, context.readContext.initialContext.generalSettings.outputLevel,
+                                             context.readContext.initialContext.generalSettings.isPrintErrorStackTraces)
     context.postImportTasks?.forEach {
-      it.perform(context.project, embeddersManager, consoleToBeRemoved, context.initialContext.indicator)
+      it.perform(context.project, embeddersManager, consoleToBeRemoved, context.readContext.indicator)
     }
   }
 

@@ -176,7 +176,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterBase {
         }
       }
 
-      configureMavenProjects(myAllProjects, myMavenProjectToModule, myProject);
+      configureMavenProjectsInBackground(myAllProjects, myMavenProjectToModule, myProject);
     }
     else {
       MavenUtil.invokeAndWaitWriteAction(myProject, () -> setMavenizedModules(obsoleteModules, false));

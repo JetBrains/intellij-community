@@ -487,6 +487,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     myImportedContext = flow.commitToWorkspaceModel(myResolvedContext);
     myProjectsTree = myReadContext.getProjectsTree();
     flow.updateProjectManager(myReadContext);
+    flow.configureMavenProject(myImportedContext);
     DependencySearchService depService = myProject.getServiceIfCreated(DependencySearchService.class);
     if (depService != null) {
       depService.updateProviders();
