@@ -434,6 +434,7 @@
     <extensionPoint qualifiedName="Pythonid.pyTestFixtureExtension" interface="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureExtension" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyTestConfigurationSelector"  interface="com.jetbrains.python.testing.PyTestConfigurationSelector" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pythonCommandLineEnvironmentProvider" interface="com.jetbrains.python.run.PythonCommandLineEnvironmentProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.pythonCommandLineTargetEnvironmentProvider" interface="com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvider" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.magicLiteral"
                     interface="com.jetbrains.python.magicLiteral.PyMagicLiteralExtensionPoint"
                     dynamic="true"/>

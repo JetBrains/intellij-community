@@ -61,6 +61,7 @@ import com.jetbrains.python.library.PythonLibraryType;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.run.target.PySdkTargetPaths;
+import com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvider;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
@@ -335,7 +336,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareTargetRequest.getTargetEnvironmentRequest();
     PythonExecution pythonExecution = buildPythonExecution(helpersAwareTargetRequest);
     pythonExecution.setWorkingDir(getPythonExecutionWorkingDir(targetEnvironmentRequest));
-    initEnvironment(myConfig.getProject(), pythonExecution, myConfig, createRemotePathMapper(), isDebug(), targetEnvironmentRequest);
+    initEnvironment(myConfig.getProject(), pythonExecution, myConfig, createRemotePathMapper(), isDebug(), helpersAwareTargetRequest);
     customizePythonExecutionEnvironmentVars(targetEnvironmentRequest, pythonExecution.getEnvs(), myConfig.isPassParentEnvs());
     PythonScripts.ensureProjectDirIsOnTarget(targetEnvironmentRequest, myConfig.getProject());
     return pythonExecution;
@@ -589,9 +590,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static void initEnvironment(@NotNull Project project,
                                      @NotNull PythonExecution commandLine,
                                      @NotNull PythonRunParams runParams,
-                                     @NotNull TargetEnvironmentRequest targetEnvironmentRequest,
+                                     @NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest,
                                      @Nullable PyRemotePathMapper pathMapper) {
-    initEnvironment(project, commandLine, runParams, pathMapper, false, targetEnvironmentRequest);
+    initEnvironment(project, commandLine, runParams, pathMapper, false, helpersAwareTargetRequest);
   }
 
   /**
@@ -603,7 +604,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                       @NotNull PythonRunParams runParams,
                                       @Nullable PyRemotePathMapper pathMapper,
                                       boolean isDebug,
-                                      @NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
+                                      @NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest) {
     Map<String, String> env = Maps.newHashMap();
 
     if (runParams.getEnvs() != null) {
@@ -616,6 +617,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     // Carefully patch environment variables
     Map<String, Function<TargetEnvironment, String>> map =
       ContainerUtil.map2Map(env.entrySet(), e -> Pair.create(e.getKey(), TargetEnvironmentFunctions.constant(e.getValue())));
+    TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareTargetRequest.getTargetEnvironmentRequest();
     PythonScripts.extendEnvs(commandLine, map, targetEnvironmentRequest.getTargetPlatform());
 
     Charset charset = commandLine.getCharset();
@@ -625,7 +627,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     buildPythonPath(project, commandLine, runParams, pathMapper, isDebug, targetEnvironmentRequest);
 
-    // TODO [Targets API] [major] `PythonCommandLineEnvironmentProvider` is not applied and `PySciEnvironmentProvider` functionality is lost
+    for (PythonCommandLineTargetEnvironmentProvider envProvider : PythonCommandLineTargetEnvironmentProvider.EP_NAME.getExtensionList()) {
+      envProvider.extendTargetEnvironment(project, helpersAwareTargetRequest, commandLine, runParams);
+    }
   }
 
   private static void setupVirtualEnvVariables(PythonRunParams myConfig, Map<String, String> env, String sdkHome) {
