@@ -483,7 +483,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     final Step step = mySteps.get(myCurrentStep);
     LOG.assertTrue(step != null);
     step._init();
-    var myCurrentStepComponent = step.getComponent();
+    myCurrentStepComponent = step.getComponent();
     LOG.assertTrue(myCurrentStepComponent != null);
     showStepComponent(myCurrentStepComponent);
 
