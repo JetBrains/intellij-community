@@ -3,16 +3,16 @@ package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.KotlinVersionVerbose
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.psi.UserDataProperty
 
 var Module.externalCompilerVersion: String? by UserDataProperty(Key.create("EXTERNAL_COMPILER_VERSION"))
 
 fun Module.findExternalKotlinCompilerVersion(): KotlinVersionVerbose? {
     val externalCompilerVersion = (if (getBuildSystemType() == BuildSystemType.JPS) {
-        KotlinJpsPluginSettings.getInstance(project)?.settings?.version ?: KotlinCompilerVersion.VERSION
+        KotlinJpsPluginSettings.getInstance(project)?.settings?.version ?: KotlinPluginLayout.getInstance().bundledKotlincVersion
     } else {
         this.externalCompilerVersion
     }) ?: return null

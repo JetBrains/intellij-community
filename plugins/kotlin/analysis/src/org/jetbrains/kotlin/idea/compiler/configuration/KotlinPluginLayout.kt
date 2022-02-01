@@ -4,11 +4,14 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.PathManager
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
+import org.jetbrains.kotlin.idea.artifacts.KOTLINC_DIST_JPS_LIB_XML_NAME
 import java.io.File
 
 sealed interface KotlinPluginLayout {
     val kotlinc: File
     val jpsPluginJar: File
+
+    val bundledKotlincVersion get() = kotlinc.resolve("build.txt").readText().trim()
 
     companion object {
         const val KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID = "kotlin-jps-plugin-classpath"
@@ -44,31 +47,31 @@ private class KotlinPluginLayoutWhenRunInProduction(private val root: File) : Ko
 }
 
 private object KotlinPluginLayoutWhenRunFromSources : KotlinPluginLayout {
+    private val bundledJpsVersion
+        get() = Regex("""/kotlin-dist-for-ide/(.*?)/""")
+            .find(File(PathManager.getHomePath(), ".idea/libraries").resolve(KOTLINC_DIST_JPS_LIB_XML_NAME).readText())
+            .let { it ?: error("Can't parse $KOTLINC_DIST_JPS_LIB_XML_NAME") }
+            .groupValues[1]
+
     override val kotlinc: File
         get() {
             val anyJarInMavenLocal = PathManager.getJarPathForClass(KotlinVersion::class.java)?.let { File(it) }
                 ?: error("Can't find kotlin-stdlib.jar in maven local")
             // We can't use getExpectedMavenArtifactJarPath because it will cause cyclic "Path macros" service initialization
             val packedDist = generateSequence(anyJarInMavenLocal) { it.parentFile }
-                .map {
-                    KotlinPathsProvider.resolveMavenArtifactInMavenRepo(
-                        it,
-                        KotlinPathsProvider.KOTLIN_DIST_ARTIFACT_ID,
-                        KotlinCompilerVersion.VERSION
-                    )
-                }
+                .map { KotlinPathsProvider.resolveMavenArtifactInMavenRepo(it, KotlinPathsProvider.KOTLIN_DIST_ARTIFACT_ID, bundledJpsVersion) }
                 .firstOrNull { it.exists() }
                 ?: error(
                     "Can't find kotlinc-dist in local maven. But IDEA should have downloaded it because 'kotlinc.kotlin-dist' " +
                             "library is specified as dependency for 'kotlin.util.compiler-dependencies' module"
                 )
 
-            return KotlinPathsProvider.lazyUnpackKotlincDist(packedDist, KotlinCompilerVersion.VERSION)
+            return KotlinPathsProvider.lazyUnpackKotlincDist(packedDist, bundledJpsVersion)
         }
 
     override val jpsPluginJar: File
         get() = KotlinPathsProvider.getExpectedMavenArtifactJarPath(
             KotlinPluginLayout.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
-            KotlinCompilerVersion.VERSION
+            bundledJpsVersion
         )
 }
