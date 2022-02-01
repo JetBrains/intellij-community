@@ -7,10 +7,7 @@ import com.intellij.openapi.util.registry.Registry;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpRequestDecoder;
-import io.netty.handler.codec.http.HttpResponseEncoder;
+import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.cors.CorsConfigBuilder;
 import io.netty.handler.codec.http.cors.CorsHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
@@ -21,6 +18,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.ConnectException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.concurrent.TimeUnit;
 
 public final class NettyUtil {
@@ -103,6 +102,15 @@ public final class NettyUtil {
                                                       .allowedRequestMethods(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.HEAD, HttpMethod.PATCH)
                                                       .allowedRequestHeaders("origin", "accept", "authorization", "content-type", "x-ijt", "x-requested-with") //NON-NLS
                                                       .build()));
+  }
+
+  public static void ensureRequestUriIsRelative(@NotNull FullHttpRequest httpRequest) {
+    try {
+      URI uri = new URI(httpRequest.uri());
+      httpRequest.setUri(uri.getPath());
+    }
+    catch (URISyntaxException ignored) {
+    }
   }
 
   @TestOnly
