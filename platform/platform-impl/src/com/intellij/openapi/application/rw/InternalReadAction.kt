@@ -10,7 +10,7 @@ import kotlinx.coroutines.*
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
 
-internal class ReadAction<T>(
+internal class InternalReadAction<T>(
   private val constraints: List<ReadConstraint>,
   private val blocking: Boolean,
   private val action: () -> T
