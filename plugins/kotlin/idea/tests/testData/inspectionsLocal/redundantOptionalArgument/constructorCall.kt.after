@@ -1,0 +1,5 @@
+class A(val a: Int = 5) {}
+
+fun main() {
+    val a = A()
+}
