@@ -38,7 +38,7 @@ final class ProjectFilesCondition implements Condition<VirtualFile> {
     if (file instanceof DeletedVirtualFileStub) {
       return true;
     }
-    if (FileBasedIndexImpl.belongsToScope(file, myRestrictedTo, myFilter)) return true;
+    if (FileBasedIndexEx.belongsToScope(file, myRestrictedTo, myFilter)) return true;
 
     if (myFilesFromOtherProjects < MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT) {
       ++myFilesFromOtherProjects;

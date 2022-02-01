@@ -367,15 +367,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType);
   }
 
-  static boolean belongsToScope(@Nullable VirtualFile file, @Nullable VirtualFile restrictedTo, @Nullable GlobalSearchScope filter) {
-    if (!(file instanceof VirtualFileWithId) || !file.isValid()) {
-      return false;
-    }
-
-    return (restrictedTo == null || Comparing.equal(file, restrictedTo)) &&
-           (filter == null || restrictedTo != null || filter.accept(file));
-  }
-
   @Override
   public void requestReindex(@NotNull VirtualFile file) {
     requestReindex(file, true);

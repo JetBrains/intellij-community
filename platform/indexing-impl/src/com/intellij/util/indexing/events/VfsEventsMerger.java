@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.events;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.JulLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RollingFileHandler;
@@ -12,14 +13,13 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexEx;
-import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.logging.Level;
@@ -93,7 +93,7 @@ public final class VfsEventsMerger {
           if (!eventProcessor.process(info)) return false;
         }
         catch (ProcessCanceledException pce) { // todo remove
-          FileBasedIndexImpl.LOG.error(pce);
+          ((FileBasedIndexEx)FileBasedIndex.getInstance()).getLogger().error(pce);
           assert false;
         }
       }
@@ -215,7 +215,7 @@ public final class VfsEventsMerger {
         }
       }
       catch (IOException e) {
-        FileBasedIndexImpl.LOG.error(e);
+        ((FileBasedIndexEx)FileBasedIndex.getInstance()).getLogger().error(e);
       }
       ourFactory = factory;
     }
@@ -224,7 +224,8 @@ public final class VfsEventsMerger {
     private final RollingFileHandler myAppender;
 
     MyLoggerFactory() throws IOException {
-      Path logPath = IndexDiagnosticDumper.Companion.getIndexingDiagnosticDir().resolve("index-vfs-events.log");
+      Path indexingDiagnosticDir = Paths.get(PathManager.getLogPath()).resolve("indexing-diagnostic");
+      Path logPath = indexingDiagnosticDir.resolve("index-vfs-events.log");
       myAppender = new RollingFileHandler(logPath, 20000000, 50, false);
     }
 

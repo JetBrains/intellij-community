@@ -767,4 +767,14 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public static <T,E extends Throwable> T disableUpToDateCheckIn(@NotNull ThrowableComputable<T, E> runnable) throws E {
     return IndexUpToDateCheckIn.disableUpToDateCheckIn(runnable);
   }
+
+  @ApiStatus.Internal
+  static boolean belongsToScope(@Nullable VirtualFile file, @Nullable VirtualFile restrictedTo, @Nullable GlobalSearchScope filter) {
+    if (!(file instanceof VirtualFileWithId) || !file.isValid()) {
+      return false;
+    }
+
+    return (restrictedTo == null || Comparing.equal(file, restrictedTo)) &&
+           (filter == null || restrictedTo != null || filter.accept(file));
+  }
 }
