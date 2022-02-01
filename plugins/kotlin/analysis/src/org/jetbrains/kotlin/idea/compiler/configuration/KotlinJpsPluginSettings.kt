@@ -18,24 +18,22 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
     override fun createSettings() = JpsPluginSettings()
 
     companion object {
-        fun getInstance(project: Project) =
-            project.getServiceSafe<KotlinJpsPluginSettings>()
-                .also {
-                    if (!isUnbundledJpsExperimentalFeatureEnabled(project)) {
-                        // Delete compiler version in kotlinc.xml when feature flag is off
-                        it.settings = it.settings.unfrozen().apply { version = "" }
-                    }
+        fun getInstance(project: Project): KotlinJpsPluginSettings? {
+            val jpsPluginSettings = project.getServiceSafe<KotlinJpsPluginSettings>()
+            if (!isUnbundledJpsExperimentalFeatureEnabled(project)) {
+                // Delete compiler version in kotlinc.xml when feature flag is off
+                jpsPluginSettings.settings = jpsPluginSettings.settings.unfrozen().apply { version = "" }
+                return null
+            }
+            if (jpsPluginSettings.settings.version.isEmpty()) {
+                // Encourage user to specify desired Kotlin compiler version in project settings for sake of reproducible builds
+                jpsPluginSettings.settings = jpsPluginSettings.settings.unfrozen().apply {
+                    // Use bundled by default because this will work even without internet connection
+                    version = KotlinCompilerVersion.VERSION
                 }
-                .takeIf { isUnbundledJpsExperimentalFeatureEnabled(project) }
-                ?.also {
-                    if (it.settings.version.isEmpty()) {
-                        // Encourage user to specify desired Kotlin compiler version in project settings for sake of reproducible builds
-                        it.settings = it.settings.unfrozen().apply {
-                        // Use bundled by default because this will work even without internet connection
-                            version = KotlinCompilerVersion.VERSION
-                        }
-                    }
-                }
+            }
+            return jpsPluginSettings
+        }
 
         fun isUnbundledJpsExperimentalFeatureEnabled(project: Project): Boolean =
             !project.isDefault && project.stateStore.directoryStorePath?.resolve("kotlin-unbundled-jps-experimental-feature-flag")?.exists() == true

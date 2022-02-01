@@ -14,14 +14,19 @@ sealed interface KotlinPluginLayout {
         const val KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID = "kotlin-jps-plugin-classpath"
 
         fun getInstance(): KotlinPluginLayout {
-            if (PluginManagerCore.isRunningFromSources() && !System.getProperty("idea.use.dev.build.server", "false").toBoolean()) {
-                return KotlinPluginLayoutWhenRunFromSources
+            return if (PluginManagerCore.isRunningFromSources() && !System.getProperty("idea.use.dev.build.server", "false").toBoolean()) {
+                KotlinPluginLayoutWhenRunFromSources
             } else {
                 val jarInsideLib = PathManager.getJarPathForClass(KotlinPluginLayout::class.java)
                     ?.let { File(it) }
                     ?: error("Can't find jar file for ${KotlinPluginLayout::class.simpleName}")
                 check(jarInsideLib.extension == "jar") { "$jarInsideLib should be jar file" }
-                return KotlinPluginLayoutWhenRunInProduction(jarInsideLib.parentFile.also { check(it.name == "lib") { "$it should be lib directory" } }.parentFile)
+                KotlinPluginLayoutWhenRunInProduction(
+                    jarInsideLib
+                        .parentFile
+                        .also { check(it.name == "lib") { "$it should be lib directory" } }
+                        .parentFile
+                )
             }
         }
     }
