@@ -239,6 +239,12 @@ class EchoTeamCityMessages(object):
                 if self.swap_diff:
                     left, right = right, left
                 diff_error = diff_tools.EqualsAssertionError(expected=right, actual=left)
+            else:
+                if m := re.search("AssertionError: Expected <(.*)> to .* <(.*)>, but was .*", err_message):
+                    left, right = m.group(1), m.group(2)
+                    if self.swap_diff:
+                        left, right = right, left
+                    diff_error = diff_tools.EqualsAssertionError(expected=right, actual=left)
         except Exception:
             pass
 
