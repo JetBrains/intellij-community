@@ -80,6 +80,7 @@ object KotlinNameSuggester : AbstractNameSuggester() {
         result.addNamesByExpression(expression, bindingContext, validator)
 
         if (result.isEmpty()) {
+            @Suppress("SuspiciousPackagePrivateAccess")
             result.addName(defaultName, validator)
         }
 
@@ -102,6 +103,7 @@ object KotlinNameSuggester : AbstractNameSuggester() {
         result.addNamesByType(elementType, validator)
 
         if (result.isEmpty()) {
+            @Suppress("SuspiciousPackagePrivateAccess")
             result.addName(defaultName, validator)
         }
 
