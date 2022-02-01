@@ -3,11 +3,18 @@ package org.jetbrains.java.decompiler.modules.decompiler.typeann;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+import org.jetbrains.java.decompiler.struct.StructMember;
 import org.jetbrains.java.decompiler.struct.StructTypePathEntry;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructTypeAnnotationAttribute;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Deque;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Wrapper around {@link TypeAnnotation} to maintain the state of the {@link StructTypePathEntry} list while writing.
@@ -53,5 +60,19 @@ public class TypeAnnotationWriteHelper {
   @Override
   public String toString() {
     return annotation.getAnnotationExpr().toJava(0, BytecodeMappingTracer.DUMMY).toString();
+  }
+
+  public static List<TypeAnnotationWriteHelper> listFrom(StructMember md) {
+    return Arrays.stream(StructGeneralAttribute.TYPE_ANNOTATION_ATTRIBUTES)
+      .flatMap(attrKey -> {
+        StructTypeAnnotationAttribute attribute = (StructTypeAnnotationAttribute)md.getAttribute(attrKey);
+        if (attribute == null) {
+          return Stream.empty();
+        } else {
+          return attribute.getAnnotations().stream();
+        }
+      })
+      .map(TypeAnnotationWriteHelper::new)
+      .collect(Collectors.toList());
   }
 }
