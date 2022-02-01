@@ -38,6 +38,6 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                 }
 
         fun isUnbundledJpsExperimentalFeatureEnabled(project: Project): Boolean =
-            project.stateStore.directoryStorePath?.resolve("kotlin-unbundled-jps-experimental-feature-flag")?.exists() == true
+            !project.isDefault && project.stateStore.directoryStorePath?.resolve("kotlin-unbundled-jps-experimental-feature-flag")?.exists() == true
     }
 }
