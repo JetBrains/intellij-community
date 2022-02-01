@@ -141,7 +141,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     @Override
     public void update() {
-      mySpeedSearchPatternField.getTextEditor().setBackground(UIUtil.getTextFieldBackground());
+      updateColors(false);
       onSpeedSearchPatternChanged();
       mySpeedSearchPatternField.setText(getFilter());
       if (!mySpeedSearchAlwaysShown) {
@@ -158,7 +158,17 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     @Override
     public void noHits() {
-      mySpeedSearchPatternField.getTextEditor().setBackground(LightColors.RED);
+      updateColors(true);
+    }
+
+    private void updateColors(boolean error) {
+      JBTextField textEditor = mySpeedSearchPatternField.getTextEditor();
+      if (ExperimentalUI.isNewUI()) {
+        textEditor.setForeground(error ? UIUtil.getErrorForeground() : UIUtil.getLabelForeground());
+      }
+      else {
+        textEditor.setBackground(error ? LightColors.RED : UIUtil.getTextFieldBackground());
+      }
     }
   };
 
@@ -1278,10 +1288,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       mySpeedSearchPatternField.setOpaque(false);
       textField.setOpaque(false);
       JBEmptyBorder outsideBorder = new JBEmptyBorder(JBUI.CurrentTheme.Popup.searchFieldBorderInsets());
-      JBEmptyBorder insideBorder = new JBEmptyBorder(JBUI.CurrentTheme.Popup.searchFieldInputInsets());
       Border lineBorder = JBUI.Borders.customLine(JBUI.CurrentTheme.Popup.separatorColor(), 0, 0, 1, 0);
-      mySpeedSearchPatternField.setBorder(new CompoundBorder(outsideBorder, new CompoundBorder(lineBorder, insideBorder)));
+      mySpeedSearchPatternField.setBorder(new CompoundBorder(outsideBorder, lineBorder));
       textField.setBorder(JBUI.Borders.empty());
+      textField.setMargin(JBUI.CurrentTheme.Popup.searchFieldInputInsets());
     } else {
       if (mySpeedSearchAlwaysShown) {
         mySpeedSearchPatternField.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 1, 0));

@@ -867,7 +867,7 @@ public final class JBUI {
         return JBColor.namedColor("Popup.separatorColor", new JBColor(Color.gray.brighter(), Gray.x51));
       }
 
-      public static Insets separatorInsets() {
+      public static JBInsets separatorInsets() {
         return insets("Popup.separatorInsets", insets(4, 12, 4, 12));
       }
 

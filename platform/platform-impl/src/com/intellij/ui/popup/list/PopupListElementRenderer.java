@@ -82,12 +82,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   protected SeparatorWithText createSeparator() {
     Insets labelInsets = ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.separatorLabelInsets() :
                          getDefaultItemComponentBorder().getBorderInsets(new JLabel());
-    GroupHeaderSeparator result = new GroupHeaderSeparator(labelInsets);
-    if (ExperimentalUI.isNewUI()) {
-      result.setBorder(new JBEmptyBorder(JBUI.CurrentTheme.Popup.separatorInsets()));
-      result.setFont(JBFont.small().deriveFont(Font.BOLD));
-    }
-    return result;
+    return new GroupHeaderSeparator(labelInsets);
   }
 
   @Override
