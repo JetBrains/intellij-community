@@ -156,9 +156,9 @@ fun getModulesWithKotlinFiles(project: Project, vararg modulesWithKotlinFacets: 
             }
         } else {
             modulesWithKotlinFacets.filterTo(mutableSetOf()) { module ->
-                val moduleRootManager = ModuleRootManager.getInstance(module)
-                val fileIndex = moduleRootManager.fileIndex
-                kotlinFiles.any { fileIndex.isInSourceContent(it) }
+                if (module.isDisposed) return@filterTo false
+                val moduleFileIndex = module.rootManager.fileIndex
+                kotlinFiles.any { moduleFileIndex.isInSourceContent(it) }
             }
         }
     return modules
