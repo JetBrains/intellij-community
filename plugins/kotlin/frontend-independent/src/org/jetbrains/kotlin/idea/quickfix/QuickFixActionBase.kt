@@ -22,7 +22,7 @@ abstract class QuickFixActionBase<out T : PsiElement>(element: T) : IntentionAct
     @SafeFieldForPreview // not actually safe but will be properly patched in getFileModifierForPreview
     private val elementPointer = element.createSmartPointer()
 
-    protected val element: T?
+    val element: T?
         get() = elementPointer.element
 
     open val isCrossLanguageFix: Boolean = false
