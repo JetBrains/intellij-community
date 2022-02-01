@@ -540,6 +540,7 @@ public final class CustomizationUtil {
         {
           getTemplatePresentation().setPopupGroup(true);
           getTemplatePresentation().setIcon(AllIcons.Actions.Rollback);
+          getTemplatePresentation().setText(IdeBundle.message("group.customizations.restore.action.group"));
         }
       };
     }
