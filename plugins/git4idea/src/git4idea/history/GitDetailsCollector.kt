@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
 import com.intellij.openapi.diagnostic.Logger
@@ -12,15 +12,12 @@ import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.util.StopWatch
 import git4idea.GitCommit
-import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.commands.GitLineHandler
 
 internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetadata>(protected val project: Project,
                                                                                      protected val root: VirtualFile,
                                                                                      private val recordBuilder: GitLogRecordBuilder<R>) {
-  private val vcs = GitVcs.getInstance(project)
-
   @Throws(VcsException::class)
   fun readFullDetails(commitConsumer: Consumer<in C>,
                       requirements: GitCommitRequirements,
@@ -40,7 +37,7 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
     val handler = GitLogUtil.createGitHandler(project, root, requirements.configParameters(), lowPriorityProcess)
     GitLogUtil.sendHashesToStdin(hashes, handler)
 
-    readFullDetailsFromHandler(commitConsumer, handler, requirements, GitLogUtil.getNoWalkParameter(vcs), GitLogUtil.STDIN)
+    readFullDetailsFromHandler(commitConsumer, handler, requirements, GitLogUtil.getNoWalkParameter(project), GitLogUtil.STDIN)
   }
 
   @Throws(VcsException::class)

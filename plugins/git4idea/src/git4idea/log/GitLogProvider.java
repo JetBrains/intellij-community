@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log;
 
 import com.intellij.openapi.Disposable;
@@ -343,7 +343,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   @Override
   public void readMetadata(@NotNull VirtualFile root, @NotNull List<String> hashes, @NotNull Consumer<? super VcsCommitMetadata> consumer)
     throws VcsException {
-    GitLogUtil.collectMetadata(myProject, myVcs, root, hashes, consumer);
+    GitLogUtil.collectMetadata(myProject, root, hashes, consumer);
   }
 
   @NotNull
@@ -501,7 +501,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
       Collection<String> names = ContainerUtil.map(userFilter.getUsers(root), VcsUserUtil::toExactString);
       if (regexp) {
         List<String> authors = ContainerUtil.map(names, UserNameRegex.EXTENDED_INSTANCE);
-        if (GitVersionSpecialty.LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR.existsIn(myVcs)) {
+        if (GitVersionSpecialty.LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR.existsIn(myProject)) {
           filterParameters.add(prepareParameter("author", StringUtil.join(authors, "|")));
         }
         else {
