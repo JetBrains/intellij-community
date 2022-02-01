@@ -114,7 +114,8 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
     final Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
 
     if (handler == null) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol.to.refactor"));
+      String message =
+        RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol.to.refactor"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.getCannotRefactorMessage(null), null);
       return;
     }
@@ -132,7 +133,9 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
         Runnable command = () -> ((LookupImpl)lookup).finishLookup(Lookup.NORMAL_SELECT_CHAR);
         Document doc = editor.getDocument();
         DocCommandGroupId group = DocCommandGroupId.noneGroupId(doc);
-        CommandProcessor.getInstance().executeCommand(editor.getProject(), command, ApplicationBundle.message("title.code.completion"), group, UndoConfirmationPolicy.DEFAULT, doc);
+        CommandProcessor.getInstance()
+          .executeCommand(editor.getProject(), command, ApplicationBundle.message("title.code.completion"), group,
+                          UndoConfirmationPolicy.DEFAULT, doc);
       }
     }
 
@@ -265,27 +268,7 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
   }
 
   public static PsiElement getElementAtCaret(@NotNull final Editor editor, final PsiFile file) {
-    final int offset = fixCaretOffset(editor);
-    PsiElement element = file.findElementAt(offset);
-    if (element == null && offset == file.getTextLength()) {
-      element = file.findElementAt(offset - 1);
-    }
-
-    if (element instanceof PsiWhiteSpace) {
-      element = file.findElementAt(element.getTextRange().getStartOffset() - 1);
-    }
-    return element;
-  }
-
-  private static int fixCaretOffset(@NotNull final Editor editor) {
-    final int caret = editor.getCaretModel().getOffset();
-    if (editor.getSelectionModel().hasSelection()) {
-      if (caret == editor.getSelectionModel().getSelectionEnd()) {
-        return Math.max(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd() - 1);
-      }
-    }
-
-    return caret;
+    return CommonRefactoringUtil.getElementAtCaret(editor, file);
   }
 
   private static void disableAction(@NotNull AnActionEvent e) {
@@ -301,14 +284,6 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
   }
 
   public static PsiElement @NotNull [] getPsiElementArray(@NotNull DataContext dataContext) {
-    PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
-    if (psiElements == null || psiElements.length == 0) {
-      PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-      if (element != null) {
-        psiElements = new PsiElement[]{element};
-      }
-    }
-
-    return psiElements != null ? psiElements : PsiElement.EMPTY_ARRAY;
+    return CommonRefactoringUtil.getPsiElementArray(dataContext);
   }
 }

@@ -4,7 +4,7 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.find.findUsages.FindUsagesHelper;
-import com.intellij.ide.actions.CopyReferenceAction;
+import com.intellij.ide.actions.FqnUtil;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageNamesValidation;
@@ -35,6 +35,7 @@ import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.refactoring.util.TextOccurrencesUtilBase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageInfoFactory;
+import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.CollectionFactory;
@@ -70,7 +71,7 @@ public final class RenameUtil {
                                                  Map<? extends PsiElement, String> allRenames) {
     List<UsageInfo> result = Collections.synchronizedList(new ArrayList<>());
 
-    RenamePsiElementProcessor elementProcessor = RenamePsiElementProcessor.forElement(element);
+    RenamePsiElementProcessorBase elementProcessor = RenamePsiElementProcessorBase.forPsiElement(element);
 
     processUsages(element, elementProcessor, newName, searchScope, true, searchInStringsAndComments, searchForTextOccurrences, info -> {
                     result.add(info);
@@ -88,14 +89,14 @@ public final class RenameUtil {
                                          @NotNull SearchScope searchScope,
                                          boolean searchInStringsAndComments,
                                          boolean searchForTextOccurrences) {
-    RenamePsiElementProcessor elementProcessor = RenamePsiElementProcessor.forElement(element);
+    RenamePsiElementProcessorBase elementProcessor = RenamePsiElementProcessorBase.forPsiElement(element);
     return !processUsages(element, elementProcessor, newName, searchScope, false, searchInStringsAndComments, searchForTextOccurrences, info -> false
     );
   }
 
   private static boolean processUsages(
     @NotNull PsiElement element,
-    @NotNull RenamePsiElementProcessor elementProcessor,
+    @NotNull RenamePsiElementProcessorBase elementProcessor,
     String newName,
     @NotNull SearchScope searchScope,
     boolean searchInCode,
@@ -184,7 +185,7 @@ public final class RenameUtil {
     }
   }
 
-  private static String getStringToReplace(PsiElement element, String newName, boolean nonJava, final RenamePsiElementProcessor theProcessor) {
+  private static String getStringToReplace(PsiElement element, String newName, boolean nonJava, final RenamePsiElementProcessorBase theProcessor) {
     if (element instanceof PsiMetaOwner) {
       final PsiMetaOwner psiMetaOwner = (PsiMetaOwner)element;
       final PsiMetaData metaData = psiMetaOwner.getMetaData();
@@ -216,7 +217,7 @@ public final class RenameUtil {
   }
 
   static void registerUndoableRename(PsiElement element, @Nullable RefactoringElementListener listener) {
-    final String fqn = element instanceof PsiFile ? ((PsiFile)element).getVirtualFile().getPath() : CopyReferenceAction.elementToFqn(element);
+    final String fqn = element instanceof PsiFile ? ((PsiFile)element).getVirtualFile().getPath() : FqnUtil.elementToFqn(element, null);
     if (fqn != null) {
       UndoableAction action = new BasicUndoableAction() {
         @Override
@@ -237,7 +238,7 @@ public final class RenameUtil {
   public static void doRename(final PsiElement element, String newName, UsageInfo[] usages, final Project project,
                               @Nullable final RefactoringElementListener listener) throws IncorrectOperationException{
     registerUndoableRename(element, listener);
-    RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
+    RenamePsiElementProcessorBase processor = RenamePsiElementProcessorBase.forPsiElement(element);
     processor.renameElement(element, newName, usages, listener);
   }
 
@@ -249,7 +250,7 @@ public final class RenameUtil {
       //return;
     }
     ApplicationManager.getApplication().invokeLater(() -> {
-      final String helpID = RenamePsiElementProcessor.forElement(element).getHelpID(element);
+      final String helpID = RenamePsiElementProcessorBase.forPsiElement(element).getHelpID(element);
       String message = e.getMessage();
       if (StringUtil.isEmpty(message)) {
         message = RefactoringBundle.message("rename.not.supported");
@@ -380,6 +381,10 @@ public final class RenameUtil {
     return LanguageNamesValidation.isIdentifier(language, newName.trim(), project);
   }
 
+  public static void assertNonCompileElement(PsiElement element) {
+    LOG.assertTrue(!(element instanceof PsiCompiledElement), element);
+  }
+
   private static class UsageOffset implements Comparable<UsageOffset> {
     final int startOffset;
     final int endOffset;
@@ -411,5 +416,10 @@ public final class RenameUtil {
     public int hashCode() {
       return Objects.hash(startOffset, endOffset, newText);
     }
+  }
+
+  @NotNull
+  public static String getUsageViewType(@NotNull PsiElement element) {
+    return ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE);
   }
 }

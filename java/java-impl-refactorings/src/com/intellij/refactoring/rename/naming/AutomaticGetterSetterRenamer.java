@@ -5,13 +5,13 @@ import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.refactoring.rename.RenameUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -165,7 +165,7 @@ public class AutomaticGetterSetterRenamer extends AutomaticRenamer {
     for (PsiMethod method : methods) {
       addGetterOrSetterWithParameter(method, newName, newPropertyName, oldParameterName, manager, allRenames);
       OverridingMethodsSearch.search(method).forEach(psiMethod -> {
-        RenameProcessor.assertNonCompileElement(psiMethod);
+        RenameUtil.assertNonCompileElement(psiMethod);
         addGetterOrSetterWithParameter(psiMethod, newName, newPropertyName, oldParameterName, manager, allRenames);
         return true;
       });

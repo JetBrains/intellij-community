@@ -9,7 +9,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,8 +29,9 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragment;
@@ -41,6 +42,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.refactoring.PyRefactoringUiService;
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +62,7 @@ public final class PyExtractMethodUtil {
                                            @NotNull final PsiElement statement2) {
     if (!fragment.getOutputVariables().isEmpty() && fragment.isReturnInstructionInside()) {
       CommonRefactoringUtil.showErrorHint(project, editor,
-                                          PyBundle.message("refactoring.extract.method.error.local.variable.modifications.and.returns"),
+                                          PyPsiBundle.message("refactoring.extract.method.error.local.variable.modifications.and.returns"),
                                           RefactoringBundle.message("error.title"), "refactoring.extractMethod");
       return;
     }
@@ -74,7 +76,7 @@ public final class PyExtractMethodUtil {
     final List<PsiElement> elementsRange = PsiTreeUtil.getElementsOfRange(statement1, statement2);
     if (elementsRange.isEmpty()) {
       CommonRefactoringUtil.showErrorHint(project, editor,
-                                          PyBundle.message("refactoring.extract.method.error.empty.fragment"),
+                                          PyPsiBundle.message("refactoring.extract.method.error.empty.fragment"),
                                           RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
       return;
     }
@@ -171,7 +173,7 @@ public final class PyExtractMethodUtil {
       afterData.addElement(insertedMethod);
       project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
         .refactoringDone(getRefactoringId(), afterData);
-    }, PyBundle.message("refactoring.extract.method"), null);
+    }, PyPsiBundle.message("refactoring.extract.method"), null);
   }
 
   @NotNull
@@ -264,14 +266,14 @@ public final class PyExtractMethodUtil {
                                            @NotNull final PsiElement expression) {
     if (!fragment.getOutputVariables().isEmpty()) {
       CommonRefactoringUtil.showErrorHint(project, editor,
-                                          PyBundle.message("refactoring.extract.method.error.local.variable.modifications"),
+                                          PyPsiBundle.message("refactoring.extract.method.error.local.variable.modifications"),
                                           RefactoringBundle.message("error.title"), "refactoring.extractMethod");
       return;
     }
 
     if (fragment.isReturnInstructionInside()) {
       CommonRefactoringUtil.showErrorHint(project, editor,
-                                          PyBundle.message("refactoring.extract.method.error.returns"),
+                                          PyPsiBundle.message("refactoring.extract.method.error.returns"),
                                           RefactoringBundle.message("error.title"), "refactoring.extractMethod");
       return;
     }
@@ -349,7 +351,7 @@ public final class PyExtractMethodUtil {
         }
         setSelectionAndCaret(editor, insertedCallElement);
         // Set editor
-      }, PyBundle.message("refactoring.extract.method"), null);
+      }, PyPsiBundle.message("refactoring.extract.method"), null);
     }
   }
 
@@ -585,8 +587,8 @@ public final class PyExtractMethodUtil {
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           throw new CommonRefactoringUtil.RefactoringErrorHintException(error);
         }
-        if (Messages.showOkCancelDialog(error + ". " + RefactoringBundle.message("do.you.wish.to.continue"),
-                                        RefactoringBundle.message("warning.title"), Messages.getWarningIcon()) != Messages.OK) {
+        if (!MessageDialogBuilder.okCancel(RefactoringBundle.message("warning.title"), error + ". " + RefactoringBundle.message("do.you.wish.to.continue")).
+          icon(UIUtil.getWarningIcon()).ask(project)) {
           throw new CommonRefactoringUtil.RefactoringErrorHintException(error);
         }
       }
@@ -629,22 +631,16 @@ public final class PyExtractMethodUtil {
       }
     };
 
-    final AbstractExtractMethodDialog<?> dialog = new AbstractExtractMethodDialog<>(project, "method_name", fragment,
-                                                                                    ArrayUtilRt.EMPTY_OBJECT_ARRAY, validator,
-                                                                                    decorator, PythonFileType.INSTANCE) {
-      @Override
-      protected String getHelpId() {
-        return "python.reference.extractMethod";
-      }
-    };
-    dialog.show();
-
+    ExtractMethodSettings<?> extractMethodSettings = PyRefactoringUiService.getInstance().showExtractMethodDialog(project, "method_name", fragment,
+                                                                                                                  ArrayUtilRt.EMPTY_OBJECT_ARRAY, validator,
+                                                                                                                  decorator, PythonFileType.INSTANCE,
+                                                                                                                  "python.reference.extractMethod");
     //return if don`t want to extract method
-    if (!dialog.isOK()) {
+    if (extractMethodSettings == null) {
       return Pair.empty();
     }
 
-    return Pair.create(dialog.getMethodName(), dialog.getAbstractVariableData());
+    return Pair.create(extractMethodSettings.getMethodName(), extractMethodSettings.getAbstractVariableData());
   }
 
   @NotNull
@@ -683,7 +679,7 @@ public final class PyExtractMethodUtil {
     @Nullable
     public String check(final String name) {
       if (myFunction != null && !myFunction.fun(name)) {
-        return PyBundle.message("refactoring.extract.method.error.name.clash");
+        return PyPsiBundle.message("refactoring.extract.method.error.name.clash");
       }
       return null;
     }
@@ -694,4 +690,3 @@ public final class PyExtractMethodUtil {
     }
   }
 }
-

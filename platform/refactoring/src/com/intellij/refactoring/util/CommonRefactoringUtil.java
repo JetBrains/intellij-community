@@ -2,6 +2,9 @@
 package com.intellij.refactoring.util;
 
 import com.intellij.ide.ui.IdeUiService;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
@@ -14,10 +17,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDirectoryContainer;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
@@ -258,5 +258,41 @@ public final class CommonRefactoringUtil {
       if (PsiTreeUtil.isAncestor(scope, resolved, false)) return true;
     }
     return false;
+  }
+
+  private static int fixCaretOffset(@NotNull final Editor editor) {
+    final int caret = editor.getCaretModel().getOffset();
+    if (editor.getSelectionModel().hasSelection()) {
+      if (caret == editor.getSelectionModel().getSelectionEnd()) {
+        return Math.max(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd() - 1);
+      }
+    }
+
+    return caret;
+  }
+
+  public static PsiElement getElementAtCaret(@NotNull final Editor editor, final PsiFile file) {
+    final int offset = fixCaretOffset(editor);
+    PsiElement element = file.findElementAt(offset);
+    if (element == null && offset == file.getTextLength()) {
+      element = file.findElementAt(offset - 1);
+    }
+
+    if (element instanceof PsiWhiteSpace) {
+      element = file.findElementAt(element.getTextRange().getStartOffset() - 1);
+    }
+    return element;
+  }
+
+  public static PsiElement @NotNull [] getPsiElementArray(@NotNull DataContext dataContext) {
+    PsiElement[] psiElements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    if (psiElements == null || psiElements.length == 0) {
+      PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+      if (element != null) {
+        psiElements = new PsiElement[]{element};
+      }
+    }
+
+    return psiElements != null ? psiElements : PsiElement.EMPTY_ARRAY;
   }
 }

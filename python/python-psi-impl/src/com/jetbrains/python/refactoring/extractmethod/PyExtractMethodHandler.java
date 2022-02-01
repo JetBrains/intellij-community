@@ -13,7 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragment;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -62,12 +62,12 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
     element2 = PyPsiUtils.getPrevSignificantLeaf(element2, false);
     if (element1 == null || element2 == null) {
       CommonRefactoringUtil.showErrorHint(project, editor,
-                                          PyBundle.message("refactoring.extract.method.error.bad.selection"),
+                                          PyPsiBundle.message("refactoring.extract.method.error.bad.selection"),
                                           RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
       return;
     }
     if (rangeBelongsToSameClassBody(element1, element2)) {
-      CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message("refactoring.extract.method.error.class.level"),
+      CommonRefactoringUtil.showErrorHint(project, editor, PyPsiBundle.message("refactoring.extract.method.error.class.level"),
                                           RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
       return;
     }
@@ -111,7 +111,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
     }
 
     CommonRefactoringUtil.showErrorHint(project, editor,
-                                        PyBundle.message("refactoring.extract.method.error.bad.selection"),
+                                        PyPsiBundle.message("refactoring.extract.method.error.bad.selection"),
                                         RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
   }
 

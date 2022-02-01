@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +23,6 @@ public interface QualifiedNameProvider {
   PsiElement qualifiedNameToElement(final String fqn, final Project project);
 
   default void insertQualifiedName(final String fqn, final PsiElement element, final Editor editor, final Project project) {
-    EditorModificationUtil.insertStringAtCaret(editor, fqn);
+    EditorModificationUtilEx.insertStringAtCaret(editor, fqn);
   }
 }

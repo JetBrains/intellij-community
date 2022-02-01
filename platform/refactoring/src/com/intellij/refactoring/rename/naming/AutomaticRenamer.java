@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,7 +6,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.SyntheticElement;
-import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.usageView.UsageInfo;
@@ -52,7 +51,7 @@ public abstract class AutomaticRenamer {
                          Map<PsiElement, String> allRenames) {
     for (Iterator<PsiNamedElement> iterator = myElements.iterator(); iterator.hasNext();) {
       final PsiNamedElement variable = iterator.next();
-      RenameProcessor.assertNonCompileElement(variable);
+      RenameUtil.assertNonCompileElement(variable);
       final boolean success = findUsagesForElement(variable, result, searchInStringsAndComments, searchInNonJavaFiles, unresolvedUsages, allRenames);
       if (!success) {
         iterator.remove();

@@ -295,7 +295,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
         final String baseName = sibling.getName();
         final String newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newName);
         if (newOverriderName != null) {
-          RenameProcessor.assertNonCompileElement(overrider);
+          RenameUtil.assertNonCompileElement(overrider);
           allRenames.put(overrider, newOverriderName);
         }
         return true;

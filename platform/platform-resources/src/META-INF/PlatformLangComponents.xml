@@ -119,6 +119,8 @@
 
     <!-- as last - to preload after all others preloaded services -->
     <applicationService serviceImplementation="com.intellij.ide.IdeTooltipManager" preload="notHeadless"/>
+
+    <applicationService serviceInterface="com.intellij.refactoring.RefactoringUiService" serviceImplementation="com.intellij.refactoring.RefactoringUiServiceImpl"/>
   </extensions>
 
   <!--suppress PluginXmlDynamicPlugin -->

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -17,13 +17,14 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.ui.ReplacePromptDialog;
+import com.intellij.refactoring.RefactoringUiService;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -106,11 +107,12 @@ public final class ExtractMethodHelper {
       final boolean isUnittest = ApplicationManager.getApplication().isUnitTestMode();
       boolean isPerformanceScript = System.getProperty("testscript.filename") != null;
       final Project project = callElement.getProject();
-      final int exitCode = !isUnittest && !isPerformanceScript ? Messages.showYesNoDialog(project, message,
-                                                                  RefactoringBundle.message("refactoring.extract.method.dialog.title"),
-                                                                  Messages.getInformationIcon()) :
-                           Messages.YES;
-      if (exitCode == Messages.YES) {
+      final boolean exitCode = isUnittest || isPerformanceScript ||
+                               MessageDialogBuilder.yesNo(message,
+                                                          RefactoringBundle.message(
+                                                            "refactoring.extract.method.dialog.title"),
+                                                          UIUtil.getInformationIcon()).ask(project);
+      if (exitCode) {
         boolean replaceAll = false;
         final Map<SimpleMatch, RangeHighlighter> highlighterMap = new HashMap<>();
         for (SimpleMatch match : duplicates) {
@@ -121,10 +123,7 @@ public final class ExtractMethodHelper {
 
             int promptResult = FindManager.PromptResult.ALL;
             if (!isUnittest && !isPerformanceScript) {
-              ReplacePromptDialog promptDialog =
-                new ReplacePromptDialog(false, RefactoringBundle.message("replace.fragment"), project);
-              promptDialog.show();
-              promptResult = promptDialog.getExitCode();
+              promptResult = RefactoringUiService.getInstance().showReplacePromptDialog(false, RefactoringBundle.message("replace.fragment"), project);
             }
             if (promptResult == FindManager.PromptResult.SKIP) {
               final HighlightManager highlightManager = HighlightManager.getInstance(project);
@@ -152,13 +151,14 @@ public final class ExtractMethodHelper {
 
   private static void replaceDuplicate(final Project project, final Consumer<? super Pair<SimpleMatch, PsiElement>> replacer,
                                        final Pair<SimpleMatch, PsiElement> replacement) {
-    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> replacer.consume(replacement)),
-                                                  RefactoringBundle.message("extract.method.replace.duplicate.command.name"), null);
+    CommandProcessor.getInstance()
+      .executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> replacer.consume(replacement)),
+                      RefactoringBundle.message("extract.method.replace.duplicate.command.name"), null);
   }
 
 
   private static void highlightInEditor(@NotNull final Project project, @NotNull final SimpleMatch match,
-                                 @NotNull final Editor editor, Map<SimpleMatch, RangeHighlighter> highlighterMap) {
+                                        @NotNull final Editor editor, Map<SimpleMatch, RangeHighlighter> highlighterMap) {
     final List<RangeHighlighter> highlighters = new ArrayList<>();
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
     final int startOffset = match.getStartElement().getTextRange().getStartOffset();

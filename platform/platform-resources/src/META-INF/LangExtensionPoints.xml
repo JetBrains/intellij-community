@@ -1,6 +1,7 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <xi:include href="/META-INF/CompletionExtensionPoints.xml"/>
   <xi:include href="/META-INF/RefactoringExtensionPoints.xml"/>
+  <xi:include href="/META-INF/RefactoringLangExtensionPoints.xml"/>
   <xi:include href="/META-INF/FormatterExtensionPoints.xml"/>
   <xi:include href="/META-INF/EditorExtensionPoints.xml"/>
 
@@ -378,7 +379,7 @@
     <extensionPoint name="modelScopeItemPresenter" interface="com.intellij.analysis.dialog.ModelScopeItemPresenter" />
 
     <extensionPoint name="qualifiedNameProvider" interface="com.intellij.ide.actions.QualifiedNameProvider" dynamic="true"/>
-    <extensionPoint name="virtualFileQualifiedNameProvider" interface="com.intellij.ide.actions.CopyReferenceAction$VirtualFileQualifiedNameProvider" dynamic="true"/>
+    <extensionPoint name="virtualFileQualifiedNameProvider" interface="com.intellij.ide.actions.VirtualFileQualifiedNameProvider" dynamic="true"/>
 
     <extensionPoint name="usageFilteringRuleProvider" interface="com.intellij.usages.rules.UsageFilteringRuleProvider" dynamic="true"/>
     <extensionPoint name="importFilteringRule" interface="com.intellij.usages.rules.ImportFilteringRule" dynamic="true"/>
@@ -618,4 +619,3 @@
                     interface="com.intellij.lang.documentation.psi.PsiDocumentationTargetFactory"/>
   </extensionPoints>
 </idea-plugin>
-

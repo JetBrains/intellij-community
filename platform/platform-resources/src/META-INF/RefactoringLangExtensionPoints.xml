@@ -1,15 +1,7 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint name="lang.refactoringSupport" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.lang.refactoring.RefactoringSupportProvider"/>
-    </extensionPoint>
-
     <extensionPoint name="lang.refactoringSupport.classMembersRefactoringSupport" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.refactoring.classMembers.ClassMembersRefactoringSupport"/>
-    </extensionPoint>
-
-    <extensionPoint name="lang.namesValidator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.lang.refactoring.NamesValidator"/>
     </extensionPoint>
 
     <extensionPoint name="refactoring.copyHandler" interface="com.intellij.refactoring.copy.CopyHandlerDelegate" dynamic="true"/>
@@ -34,25 +26,12 @@
 
     <extensionPoint name="refactoring.changeSignatureUsageProcessor" interface="com.intellij.refactoring.changeSignature.ChangeSignatureUsageProcessor" dynamic="true"/>
 
-    <extensionPoint name="renameHandler" interface="com.intellij.refactoring.rename.RenameHandler" dynamic="true"/>
-    <extensionPoint name="renamePsiElementProcessor" interface="com.intellij.refactoring.rename.RenamePsiElementProcessor" dynamic="true"/>
-    <extensionPoint name="updateAddedFileProcessor" interface="com.intellij.psi.impl.file.UpdateAddedFileProcessor" dynamic="true"/>
     <extensionPoint name="moveFileHandler" interface="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler" dynamic="true"/>
-    <extensionPoint name="automaticRenamerFactory" interface="com.intellij.refactoring.rename.naming.AutomaticRenamerFactory" dynamic="true"/>
-    <extensionPoint name="nameSuggestionProvider" interface="com.intellij.refactoring.rename.NameSuggestionProvider" dynamic="true"/>
-    <extensionPoint name="vetoRenameCondition" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
-    <extensionPoint name="renamerFactory" dynamic="true" interface="com.intellij.refactoring.rename.RenamerFactory"/>
     <extensionPoint name="rename.symbolRenameTargetFactory" dynamic="true"
                     interface="com.intellij.refactoring.rename.symbol.SymbolRenameTargetFactory"/>
 
-    <extensionPoint name="rename.inplace.resolveSnapshotProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.refactoring.rename.ResolveSnapshotProvider"/>
-    </extensionPoint>
-
-    <extensionPoint name="renameInputValidator" interface="com.intellij.refactoring.rename.RenameInputValidator" dynamic="true"/>
     <extensionPoint name="renameFileActionProvider" interface="com.intellij.refactoring.actions.RenameFileActionProvider" dynamic="true"/>
 
-    <extensionPoint name="refactoring.elementListenerProvider" interface="com.intellij.refactoring.listeners.RefactoringElementListenerProvider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="inlineActionHandler" interface="com.intellij.lang.refactoring.InlineActionHandler" dynamic="true"/>
 
     <extensionPoint name="changeSignatureDetector" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
