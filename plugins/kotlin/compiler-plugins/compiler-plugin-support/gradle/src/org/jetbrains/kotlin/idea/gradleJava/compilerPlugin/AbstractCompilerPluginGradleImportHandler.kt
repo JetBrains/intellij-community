@@ -57,7 +57,7 @@ abstract class AbstractCompilerPluginGradleImportHandler<T> : GradleProjectImpor
     protected open fun getOptions(model: T): List<PluginOption> = emptyList()
 
     private fun getPluginSetupByModule(moduleNode: DataNode<ModuleData>): CompilerPluginSetup? {
-        val model = moduleNode.getCopyableUserData(modelKey).takeIf { isEnabled(it) } ?: return null
+        val model = moduleNode.getCopyableUserData(modelKey)?.takeIf { isEnabled(it) } ?: return null
         val options = getOptions(model)
 
         // For now we can't use plugins from Gradle cause they're shaded and may have an incompatible version.
