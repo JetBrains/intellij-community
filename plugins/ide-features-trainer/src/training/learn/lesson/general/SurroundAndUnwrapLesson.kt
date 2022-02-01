@@ -15,6 +15,7 @@ abstract class SurroundAndUnwrapLesson
 
   protected abstract val surroundItems: Array<String>
   protected abstract val lineShiftBeforeUnwrap: Int
+  protected abstract val unwrapTryText: String
 
   protected open val surroundItemName: String
     get() = surroundItems.joinToString(separator = "/")
@@ -60,9 +61,7 @@ abstract class SurroundAndUnwrapLesson
           editor.caretModel.currentCaret.logicalPosition.line != previous.position.line
         }
         text(LessonsBundle.message("surround.and.unwrap.invoke.unwrap", action(it)))
-        triggerByListItemAndHighlight { item ->
-          wordIsPresent(item.toNullableString(), surroundItems[0])
-        }
+        triggerByListItemAndHighlight { item -> item.toNullableString() == unwrapTryText }
         test { actions(it) }
       }
       task {
