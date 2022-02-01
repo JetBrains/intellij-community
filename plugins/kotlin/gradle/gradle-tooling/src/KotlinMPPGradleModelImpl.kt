@@ -75,6 +75,8 @@ class KotlinSourceSetImpl(
     override var isTestComponent: Boolean = defaultIsTestComponent
         internal set
 
+    override fun toString() = name
+
     init {
         @Suppress("DEPRECATION")
         require(allDependsOnSourceSets.containsAll(declaredDependsOnSourceSets)) {
