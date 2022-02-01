@@ -78,21 +78,6 @@ class KtSimpleNameReferenceDescriptorsImpl(
         return super<KtDescriptorsBasedReference>.isReferenceTo(element)
     }
 
-    override fun getRangeInElement(): TextRange {
-        val element = element.getReferencedNameElement()
-        val startOffset = getElement().startOffset
-        return element.textRange.shiftRight(-startOffset)
-    }
-
-    override fun canRename(): Boolean {
-        if (expression.getParentOfTypeAndBranch<KtWhenConditionInRange>(strict = true) { operationReference } != null) return false
-
-        val elementType = expression.getReferencedNameElementType()
-        if (elementType == KtTokens.PLUSPLUS || elementType == KtTokens.MINUSMINUS) return false
-
-        return true
-    }
-
     override fun handleElementRename(newElementName: String): PsiElement {
         if (!canRename()) throw IncorrectOperationException()
 
@@ -144,11 +129,6 @@ class KtSimpleNameReferenceDescriptorsImpl(
         }
         return expression
     }
-
-
-    // By default reference binding is delayed
-    override fun bindToElement(element: PsiElement): PsiElement =
-        bindToElement(element, ShorteningMode.DELAYED_SHORTENING)
 
     override fun bindToElement(element: PsiElement, shorteningMode: ShorteningMode): PsiElement =
         element.getKotlinFqName()?.let { fqName -> bindToFqName(fqName, shorteningMode, element) } ?: expression
@@ -261,31 +241,6 @@ class KtSimpleNameReferenceDescriptorsImpl(
             ?: error("No selector for $newElement")
         return selector as KtNameReferenceExpression
     }
-
-    override fun getCanonicalText(): String = expression.text
-
-    override val resolvesByNames: Collection<Name>
-        get() {
-            val element = element
-
-            if (element is KtOperationReferenceExpression) {
-                val tokenType = element.operationSignTokenType
-                if (tokenType != null) {
-                    val name = OperatorConventions.getNameForOperationSymbol(
-                        tokenType, element.parent is KtUnaryExpression, element.parent is KtBinaryExpression
-                    ) ?: return emptyList()
-                    val counterpart = OperatorConventions.ASSIGNMENT_OPERATION_COUNTERPARTS[tokenType]
-                    return if (counterpart != null) {
-                        val counterpartName = OperatorConventions.getNameForOperationSymbol(counterpart, false, true)!!
-                        listOf(name, counterpartName)
-                    } else {
-                        listOf(name)
-                    }
-                }
-            }
-
-            return listOf(element.getReferencedNameAsName())
-        }
 
     override fun getImportAlias(): KtImportAlias? {
         fun DeclarationDescriptor.unwrap() = if (this is ImportedFromObjectCallableDescriptor<*>) callableFromObject else this
