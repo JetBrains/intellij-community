@@ -73,6 +73,8 @@
       <override-text place="GoToAction" use-text-of-place="MainMenu"/>
     </action>
 
+    <action id="ChangesView.SingleClickPreview" class="com.intellij.openapi.vcs.changes.ToggleDetailsAction"/>
+
     <!-- Main menu | Version Control -->
     <group id="VcsGroups" class="com.intellij.openapi.vcs.actions.VcsGroupsActionGroup" popup="true">
       <group id="Vcs.MainMenu" class="com.intellij.openapi.vcs.actions.VcsMainMenuActionGroup">

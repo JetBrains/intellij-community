@@ -685,7 +685,7 @@ public class ChangesViewManager implements ChangesViewEx,
       actions.add(CommonActionsManager.getInstance().createExpandAllHeaderAction(treeExpander, myView));
       actions.add(CommonActionsManager.getInstance().createCollapseAllAction(treeExpander, myView));
       actions.add(Separator.getInstance());
-      actions.add(new ToggleDetailsAction());
+      actions.add(ActionManager.getInstance().getAction("ChangesView.SingleClickPreview"));
 
       return actions;
     }
@@ -875,26 +875,22 @@ public class ChangesViewManager implements ChangesViewEx,
       }
     }
 
-    private class ToggleDetailsAction extends ShowDiffPreviewAction {
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        super.update(e);
-        e.getPresentation().setEnabledAndVisible(mySplitterDiffPreview != null || isOpenEditorDiffPreviewWithSingleClick.asBoolean());
-      }
-
-      @Override
-      public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state;
-        ObjectUtils.chooseNotNull(mySplitterDiffPreview, myEditorDiffPreview).setPreviewVisible(state, false);
-        setCommitSplitOrientation();
-      }
-
-      @Override
-      public boolean isSelected(@NotNull AnActionEvent e) {
-        return myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
-      }
-    }
   }
+
+
+  public Boolean isDiffPreviewAvailable() {
+    if (myToolWindowPanel == null) return false;
+
+    return myToolWindowPanel.mySplitterDiffPreview != null || ChangesViewToolWindowPanel.isOpenEditorDiffPreviewWithSingleClick.asBoolean();
+  }
+
+  public void diffPreviewChanged(Boolean state) {
+    if (myToolWindowPanel == null) return;
+    ObjectUtils.chooseNotNull(myToolWindowPanel.mySplitterDiffPreview, myToolWindowPanel.myEditorDiffPreview)
+      .setPreviewVisible(state, false);
+    myToolWindowPanel.setCommitSplitOrientation();
+  }
+
 
   private static final class MyContentDnDTarget extends VcsToolwindowDnDTarget {
     private MyContentDnDTarget(@NotNull Project project, @NotNull Content content) {
