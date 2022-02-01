@@ -3,6 +3,7 @@ package com.jetbrains.packagesearch.intellij.plugin.data
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
@@ -12,7 +13,10 @@ import com.jetbrains.packagesearch.intellij.plugin.api.ServerURLs
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageOperations
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackagesToUpgrade
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
 import com.jetbrains.packagesearch.intellij.plugin.util.BackgroundLoadingBarController
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.batchAtIntervals
@@ -79,6 +83,7 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
     private val installedPackagesStep2LoadingFlow = MutableStateFlow(false)
     private val installedPackagesDifferenceLoadingFlow = MutableStateFlow(false)
     private val packageUpgradesLoadingFlow = MutableStateFlow(false)
+    private val availableUpgradesLoadingFlow = MutableStateFlow(false)
 
     private val operationExecutedChannel = Channel<List<ProjectModule>>()
 
@@ -250,6 +255,34 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
             retryChannel = retryFromErrorChannel
         )
         .stateIn(this, SharingStarted.Eagerly, PackageUpgradeCandidates.EMPTY)
+
+    internal data class AvailableUpdatesMap(val stable: Map<Module, List<OperationData>>, val all: Map<Module, List<OperationData>>) {
+        data class OperationData(
+            val packageUpgradeInfo: PackagesToUpgrade.PackageUpgradeInfo,
+            val packageOperations: PackageOperations,
+            val precomputedPrimaryOperations: List<PackageSearchOperation<*>>
+        )
+
+        fun getUpgradeMap(onlyStable: Boolean) = if (onlyStable) stable else all
+    }
+
+    val availableUpdatesStateFlow = combine(
+        packageUpgradesStateFlow,
+        moduleModelsStateFlow,
+        allInstalledKnownRepositoriesFlow
+    ) { (stable, all), moduleModels, repos ->
+        val (result, time) = availableUpgradesLoadingFlow.whileLoading {
+            coroutineScope {
+                val stableUpgrades =
+                    async { generateOperationData(moduleModels, stable, repos, true, project) }
+                val allUpgrades =
+                    async { generateOperationData(moduleModels, all, repos, false, project) }
+                AvailableUpdatesMap(stableUpgrades.await(), allUpgrades.await())
+            }
+        }
+        logTrace("availableUpdatesStateFlow") { "Took ${time} to elaborate upgrades operations." }
+        result
+    }.stateIn(this, SharingStarted.Eagerly, AvailableUpdatesMap(emptyMap(), emptyMap()))
 
     init {
         // allows rerunning PKGS inspections on already opened files
