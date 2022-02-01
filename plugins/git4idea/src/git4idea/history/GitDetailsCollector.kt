@@ -47,7 +47,7 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
                                          vararg parameters: String) {
     val factory = GitLogUtil.getObjectsFactoryWithDisposeCheck(project) ?: return
 
-    val commandParameters = ArrayUtil.mergeArrays(ArrayUtil.toStringArray(requirements.commandParameters()), *parameters)
+    val commandParameters = ArrayUtil.mergeArrays(ArrayUtil.toStringArray(requirements.commandParameters(project)), *parameters)
     if (requirements.diffInMergeCommits == GitCommitRequirements.DiffInMergeCommits.DIFF_TO_PARENTS) {
       val consumer = { records: List<R> ->
         val firstRecord = records.first()
