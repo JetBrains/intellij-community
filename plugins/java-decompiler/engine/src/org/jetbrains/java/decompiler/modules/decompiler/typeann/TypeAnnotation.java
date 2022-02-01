@@ -49,7 +49,7 @@ public class TypeAnnotation {
     this.annotation = annotation;
   }
 
-  @MagicConstant(flagsFromClass = TypeAnnotation.class)
+  @MagicConstant(valuesFromClass = TypeAnnotation.class)
   public int getTargetType() {
     return targetType;
   }
