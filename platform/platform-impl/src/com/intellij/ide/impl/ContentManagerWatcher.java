@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.content.ContentManager;
@@ -29,8 +30,10 @@ public final class ContentManagerWatcher {
 
       @Override
       public void contentRemoved(@NotNull ContentManagerEvent e) {
-        if ((!(toolWindow instanceof ToolWindowEx) || !((ToolWindowEx)toolWindow).getDecorator().isSplitUnsplitInProgress()) &&
-            contentManager.isEmpty()) {
+        if ((!(toolWindow instanceof ToolWindowEx)
+             || ApplicationManager.getApplication().isHeadlessEnvironment()
+             || !((ToolWindowEx)toolWindow).getDecorator().isSplitUnsplitInProgress())
+            && contentManager.isEmpty()) {
           toolWindow.setAvailable(false);
         }
       }
