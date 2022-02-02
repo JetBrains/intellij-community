@@ -12,6 +12,7 @@ import com.jetbrains.cloudconfig.HeaderStorage
 import com.jetbrains.cloudconfig.auth.JbaTokenAuthProvider
 import com.jetbrains.cloudconfig.exception.InvalidVersionIdException
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 import java.text.SimpleDateFormat
@@ -19,16 +20,28 @@ import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-private const val END_POINT = "https://stgn.cloudconfig.jetbrains.com/cloudconfig" // todo choose between production and staging via a system property
+private const val DEFAULT_URL = "https://cloudconfig.jetbrains.com/cloudconfig"
+private const val URL_PROPERTY = "idea.settings.sync.cloud.url"
 
 private const val TIMEOUT = 10000
+
 
 internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
 
   private val client get() = _client.value
   private val _client = lazy {
     val conf = createConfiguration()
-    CloudConfigFileClientV2(END_POINT, conf, DUMMY_ETAG_STORAGE, clientVersionContext)
+    CloudConfigFileClientV2(url.value, conf, DUMMY_ETAG_STORAGE, clientVersionContext)
+  }
+  private val url = lazy {
+    val explicitUrl = System.getProperty(URL_PROPERTY)
+    if (explicitUrl != null) {
+      LOG.info("Using URL from properties: $explicitUrl")
+      explicitUrl
+    }
+    else {
+      DEFAULT_URL
+    }
   }
 
   private val currentVersionOfFiles = mutableMapOf<String, String>() // todo persist this information
@@ -67,23 +80,38 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
 
   private fun getCurrentVersion(): String? {
     val rememberedVersion = currentVersionOfFiles[SETTINGS_SYNC_SNAPSHOT_ZIP]
-    if (rememberedVersion != null) return rememberedVersion
-
-    // todo in this case we should update first and not just overwrite
-    val serverVersion = client.getLatestVersion(SETTINGS_SYNC_SNAPSHOT_ZIP)?.versionId
-    if (serverVersion != null) {
-      LOG.warn("Current version is null, using the version from the server: $serverVersion")
-      return serverVersion
+    if (rememberedVersion != null) {
+      return rememberedVersion
     }
 
-    LOG.info("No settings file on the server")
-    return null
+    // todo in this case we should update first and not just overwrite
+    val serverVersion = try {
+      client.getLatestVersion(SETTINGS_SYNC_SNAPSHOT_ZIP)?.versionId
+    }
+    catch (e: FileNotFoundException) {
+      LOG.info("File not found on server")
+      null
+    }
+
+    return if (serverVersion != null) {
+      LOG.warn("Current version is null, using the version from the server: $serverVersion")
+      serverVersion
+    }
+    else {
+      LOG.info("No settings file on the server")
+      null
+    }
+
   }
 
   override fun isUpdateNeeded(): Boolean {
     try {
-      val version = client.getLatestVersion(SETTINGS_SYNC_SNAPSHOT_ZIP).versionId
+      val version = client.getLatestVersion(SETTINGS_SYNC_SNAPSHOT_ZIP)?.versionId
       return version != currentVersionOfFiles[SETTINGS_SYNC_SNAPSHOT_ZIP]
+    }
+    catch (e: FileNotFoundException) {
+      LOG.info("File not found on server, update is not needed")
+      return false
     }
     catch (e: Throwable) {
       handleRemoteError(e)
