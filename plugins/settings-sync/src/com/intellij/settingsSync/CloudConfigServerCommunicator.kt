@@ -34,9 +34,11 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   private val currentVersionOfFiles = mutableMapOf<String, String>() // todo persist this information
   private val clientVersionContext = VersionContext()
 
-  // todo should be nullable, or null should be handled elsewhere (otherwise CloudConfigFileClientV2() fails)
-  private fun createConfiguration(): Configuration? {
-    val userId: String = SettingsSyncAuthService.getInstance().getUserData()?.id ?: return null
+  private fun createConfiguration(): Configuration {
+    val userId = SettingsSyncAuthService.getInstance().getUserData()?.id
+    if (userId == null) {
+      throw SettingsSyncAuthException("Authentication required")
+    }
     return Configuration().connectTimeout(TIMEOUT).readTimeout(TIMEOUT).auth(JbaTokenAuthProvider(userId))
   }
 
