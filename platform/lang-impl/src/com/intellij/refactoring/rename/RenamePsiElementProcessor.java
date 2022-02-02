@@ -53,7 +53,7 @@ public abstract class RenamePsiElementProcessor extends RenamePsiElementProcesso
     public boolean canProcessElement(@NotNull final PsiElement element) {
       return true;
     }
-  };
+  }
 
   public static final RenamePsiElementProcessor DEFAULT = new MyRenamePsiElementProcessor();
 }
