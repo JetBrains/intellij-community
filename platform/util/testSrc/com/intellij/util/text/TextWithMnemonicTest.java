@@ -4,6 +4,8 @@ package com.intellij.util.text;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import org.junit.Test;
 
+import java.awt.event.KeyEvent;
+
 import static org.junit.Assert.assertEquals;
 
 public class TextWithMnemonicTest {
@@ -12,7 +14,8 @@ public class TextWithMnemonicTest {
     TextWithMnemonic hello = TextWithMnemonic.fromPlainText("hello");
     assertEquals("hello", hello.getText());
     assertEquals("hello", hello.toString());
-    assertEquals(0, hello.getMnemonic());
+    assertEquals(0, hello.getMnemonicChar());
+    assertEquals(KeyEvent.VK_UNDEFINED, hello.getMnemonicCode());
     assertEquals(-1, hello.getMnemonicIndex());
   }
 
@@ -21,7 +24,8 @@ public class TextWithMnemonicTest {
     TextWithMnemonic hello = TextWithMnemonic.fromPlainText("hello", 'e');
     assertEquals("hello", hello.getText());
     assertEquals("h_ello", hello.toString());
-    assertEquals('E', hello.getMnemonic());
+    assertEquals('e', hello.getMnemonicChar());
+    assertEquals(KeyEvent.VK_E, hello.getMnemonicCode());
     assertEquals(1, hello.getMnemonicIndex());
     assertEquals("hello", TextWithMnemonic.fromPlainText("hello", '\0').toString());
   }
@@ -31,7 +35,8 @@ public class TextWithMnemonicTest {
     TextWithMnemonic hello = TextWithMnemonic.parse("h&ello");
     assertEquals("hello", hello.getText());
     assertEquals("h_ello", hello.toString());
-    assertEquals('E', hello.getMnemonic());
+    assertEquals('e', hello.getMnemonicChar());
+    assertEquals(KeyEvent.VK_E, hello.getMnemonicCode());
     assertEquals(1, hello.getMnemonicIndex());
   }
 
@@ -40,7 +45,8 @@ public class TextWithMnemonicTest {
     TextWithMnemonic hello = TextWithMnemonic.parse("h_ello");
     assertEquals("hello", hello.getText());
     assertEquals("h_ello", hello.toString());
-    assertEquals('E', hello.getMnemonic());
+    assertEquals('e', hello.getMnemonicChar());
+    assertEquals(KeyEvent.VK_E, hello.getMnemonicCode());
     assertEquals(1, hello.getMnemonicIndex());
   }
 
@@ -49,13 +55,15 @@ public class TextWithMnemonicTest {
     TextWithMnemonic hello = TextWithMnemonic.parse("hello(&H)");
     assertEquals("hello", hello.getText());
     assertEquals("hello(_H)", hello.toString());
-    assertEquals('H', hello.getMnemonic());
+    assertEquals('H', hello.getMnemonicChar());
+    assertEquals(KeyEvent.VK_H, hello.getMnemonicCode());
     assertEquals(6, hello.getMnemonicIndex());
 
     TextWithMnemonic hello2 = TextWithMnemonic.parse("hello (&H)");
     assertEquals("hello", hello2.getText());
     assertEquals("hello (_H)", hello2.toString());
-    assertEquals('H', hello2.getMnemonic());
+    assertEquals('H', hello2.getMnemonicChar());
+    assertEquals(KeyEvent.VK_H, hello2.getMnemonicCode());
     assertEquals(7, hello2.getMnemonicIndex());
   }
 
@@ -64,19 +72,22 @@ public class TextWithMnemonicTest {
     TextWithMnemonic hello = TextWithMnemonic.parse("hello(&H)...");
     assertEquals("hello...", hello.getText());
     assertEquals("hello(_H)...", hello.toString());
-    assertEquals('H', hello.getMnemonic());
+    assertEquals('H', hello.getMnemonicChar());
+    assertEquals(KeyEvent.VK_H, hello.getMnemonicCode());
     assertEquals(6, hello.getMnemonicIndex());
 
     TextWithMnemonic hello2 = TextWithMnemonic.parse("hello (&H)…");
     assertEquals("hello…", hello2.getText());
     assertEquals("hello (_H)…", hello2.toString());
-    assertEquals('H', hello2.getMnemonic());
+    assertEquals('H', hello2.getMnemonicChar());
+    assertEquals(KeyEvent.VK_H, hello2.getMnemonicCode());
     assertEquals(7, hello2.getMnemonicIndex());
 
     TextWithMnemonic fromPlain = TextWithMnemonic.fromPlainText("hello...", 'x');
     assertEquals("hello...", fromPlain.getText());
     assertEquals("hello(_X)...", fromPlain.toString());
-    assertEquals('X', fromPlain.getMnemonic());
+    assertEquals('X', fromPlain.getMnemonicChar());
+    assertEquals(KeyEvent.VK_X, fromPlain.getMnemonicCode());
     assertEquals(6, fromPlain.getMnemonicIndex());
   }
   
