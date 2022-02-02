@@ -23,6 +23,7 @@ public abstract class ActionPlaces {
   public static final String MOUSE_SHORTCUT = "mouse shortcut";
   public static final String FORCE_TOUCH = "force touch";
   public static final String MAIN_MENU = "MainMenu";
+  public static final String MAIN_MENU_IN_POPUP = "MainMenuInPopup";
 
   public static final String MAIN_TOOLBAR = "MainToolbar";
   public static final String EDITOR_POPUP = "EditorPopup";
@@ -54,6 +55,7 @@ public abstract class ActionPlaces {
 
   public static final String SCOPE_VIEW_POPUP = "ScopeViewPopup";
   public static final String ACTION_SEARCH = "GoToAction";
+  public static final String ACTION_SEARCH_INDUCED_POPUP = "GoToActionInducedPopup";
 
   public static final String TESTTREE_VIEW_POPUP = "TestTreeViewPopup";
   public static final String TESTTREE_VIEW_TOOLBAR = "TestTreeViewToolbar";
@@ -184,7 +186,8 @@ public abstract class ActionPlaces {
   public static final String RIDER_UNIT_TESTS_QUICKLIST = "UnitTests.QuickList";
 
   public static boolean isMainMenuOrActionSearch(String place) {
-    return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place) || isShortcutPlace(place);
+    return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place) || isShortcutPlace(place) ||
+           ACTION_SEARCH_INDUCED_POPUP.equals(place) || MAIN_MENU_IN_POPUP.equals(place);
   }
 
   public static boolean isShortcutPlace(String place) {
@@ -224,7 +227,7 @@ public abstract class ActionPlaces {
     EDITOR_ANNOTATIONS_AREA_POPUP,
     RUN_ANYTHING_POPUP, RUN_TOOLBAR_LEFT_SIDE,
     VCS_LOG_TABLE_PLACE, VCS_HISTORY_PLACE, VCS_LOG_TOOLBAR_POPUP_PLACE,
-    MAIN_MENU
+    ACTION_SEARCH_INDUCED_POPUP, MAIN_MENU_IN_POPUP
   );
 
   private static final String POPUP_PREFIX = "popup@";
