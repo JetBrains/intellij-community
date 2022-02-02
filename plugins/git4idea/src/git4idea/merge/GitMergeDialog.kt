@@ -23,7 +23,6 @@ import com.intellij.ui.components.JBTextArea
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil.invokeLaterIfNeeded
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBranchUtil.equalBranches
 import git4idea.commands.Git
@@ -186,12 +185,6 @@ class GitMergeDialog(private val project: Project,
           sortedRoots.forEach { root ->
             loadUnmergedBranches(root)?.let { branches ->
               unmergedBranches[getRepository(root)] = branches
-
-              invokeLaterIfNeeded {
-                if (getSelectedRoot() == root) {
-                  updateBranchesField()
-                }
-              }
             }
           }
         }
