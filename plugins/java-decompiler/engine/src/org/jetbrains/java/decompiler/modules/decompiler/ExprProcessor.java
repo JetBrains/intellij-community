@@ -717,7 +717,7 @@ public class ExprProcessor implements CodeConstants {
       if (i == 0) { // first annotation can be written already
         if (!sb.toString().isEmpty()) shouldWrite= true; // write if annotation exists
       } else {
-        shouldWrite |= checkNestedTypeAnnotation(sb, typeAnnWriteHelper); // if writing annotation, also write nested type
+        shouldWrite |= writeNestedTypeAnnotations(sb, typeAnnWriteHelper); // if writing annotation, also write nested type
       }
       if (shouldWrite) {
         sb.append(nestedType);
@@ -741,7 +741,10 @@ public class ExprProcessor implements CodeConstants {
       ).collect(Collectors.toList());
   }
 
-  public static boolean checkNestedTypeAnnotation(StringBuilder sb, List<TypeAnnotationWriteHelper> typePathWriteHelper) {
+  /**
+   * @return Whether a nested type annotation was written.
+   */
+  public static boolean writeNestedTypeAnnotations(StringBuilder sb, List<TypeAnnotationWriteHelper> typePathWriteHelper) {
     var wroteAnnotation = new Object() { boolean value = false; };
     typePathWriteHelper.removeIf(typeAnnotationWriteHelper -> {
       StructTypePathEntry path = typeAnnotationWriteHelper.getPaths().peek();

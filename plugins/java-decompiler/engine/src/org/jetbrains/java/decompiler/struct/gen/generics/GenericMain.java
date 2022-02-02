@@ -214,7 +214,7 @@ public final class GenericMain {
         ExprProcessor.writeNestedClass(sb, nestedClasses, typePathWriteHelper);
         appendTypeArguments(tp, sb, typePathWriteHelper);
         sb.append('.');
-        ExprProcessor.checkNestedTypeAnnotation(sb, typePathWriteHelper);
+        ExprProcessor.writeNestedTypeAnnotations(sb, typePathWriteHelper);
       }
       sb.append(type.value);
     }
