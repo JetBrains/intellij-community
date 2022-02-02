@@ -46,7 +46,8 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
 
             val importingContext = MultiplatformModelImportingContextImpl(project, argsMapper, modelBuilderContext)
 
-            importingContext.initializeSourceSets(buildSourceSets(importingContext) ?: return null)
+            val sourceSets = buildSourceSets(importingContext) ?: return null
+            importingContext.initializeSourceSets(sourceSets)
 
             val targets = buildTargets(importingContext, projectTargets)
             importingContext.initializeTargets(targets)
@@ -104,7 +105,7 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
         val sourceSets =
             (getSourceSets(kotlinExt) as? NamedDomainObjectContainer<Named>)?.asMap?.values ?: emptyList<Named>()
         val androidDeps = buildAndroidDeps(importingContext, kotlinExt.javaClass.classLoader)
-        val sourceSetProtoBuilder = KotlinSourceSetProtoBuilder(androidDeps)
+        val sourceSetProtoBuilder = KotlinSourceSetProtoBuilder(androidDeps, importingContext.project)
 
         val allSourceSetsProtosByNames = sourceSets.mapNotNull {
             sourceSetProtoBuilder.buildComponent(it, importingContext)
