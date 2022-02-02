@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -18,7 +19,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,40 +42,17 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
         IOStreamConstructorModel constructorModel = IOStreamConstructorModel.create(newExpression);
         if (constructorModel == null) return;
         StreamType streamType = constructorModel.myStreamType;
-        if (!canSubstituteBaseIOStream(newExpression, streamType)) return;
+        PsiType expectedType = ExpectedTypeUtils.findExpectedType(newExpression, false);
+        if (expectedType == null) return;
+        boolean canUseBaseType = TypeConversionUtil.isAssignable(expectedType, streamType.baseType(newExpression));
+        if (!canUseBaseType) return;
+        boolean isInfoLevel = PsiUtil.isLanguageLevel10OrHigher(holder.getFile());
+        if (isInfoLevel && !isOnTheFly) return;
+        ProblemHighlightType highlightType = isInfoLevel ? ProblemHighlightType.INFORMATION : ProblemHighlightType.WARNING;
         ReplaceWithNioCallFix fix = new ReplaceWithNioCallFix(streamType.myReplacement, isOnTheFly);
-        holder.registerProblem(newExpression, JavaBundle.message(streamType.myErrorText), fix);
+        holder.registerProblem(newExpression, JavaBundle.message(streamType.myErrorText), highlightType, fix);
       }
     };
-  }
-
-  private static boolean canSubstituteBaseIOStream(@NotNull PsiNewExpression newExpression, StreamType streamType) {
-    PsiExpression lastExpression = newExpression;
-    while (lastExpression.getParent() instanceof PsiParenthesizedExpression) {
-      lastExpression = (PsiExpression)lastExpression.getParent();
-    }
-    PsiParameter parameter = MethodCallUtils.getParameterForArgument(lastExpression);
-    if (parameter != null) {
-      return TypeConversionUtil.isAssignable(parameter.getType(), streamType.baseType(newExpression));
-    }
-    PsiElement parent = lastExpression.getParent();
-    PsiAssignmentExpression assignment = ObjectUtils.tryCast(parent, PsiAssignmentExpression.class);
-    if (assignment != null) {
-      PsiExpression rhs = assignment.getRExpression();
-      if (rhs == null || !PsiTreeUtil.isAncestor(rhs, lastExpression, false)) return false;
-      PsiType lType = assignment.getLExpression().getType();
-      return lType != null && TypeConversionUtil.isAssignable(lType, streamType.baseType(newExpression));
-    }
-    PsiConditionalExpression conditional = ObjectUtils.tryCast(parent, PsiConditionalExpression.class);
-    if (conditional != null) {
-      PsiType conditionalType = conditional.getType();
-      return conditionalType != null && TypeConversionUtil.isAssignable(conditionalType, streamType.baseType(newExpression));
-    }
-    PsiVariable variable = ObjectUtils.tryCast(parent, PsiVariable.class);
-    if (variable != null) {
-      return TypeConversionUtil.isAssignable(variable.getType(), streamType.baseType(newExpression));
-    }
-    return false;
   }
 
   private static @Nullable PsiExpression getOnlyArgument(@NotNull PsiCallExpression expression) {
@@ -114,75 +93,58 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
 
     String createReplacement();
 
-    boolean isEffectivelyFinal(@NotNull PsiElement context);
+    PsiExpression getExpression();
 
     private static @Nullable ArgumentModel create(@NotNull PsiExpression argument) {
       PsiType argType = argument.getType();
       if (argType == null) return null;
       if (argType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        PsiReferenceExpression stringRef = ObjectUtils.tryCast(argument, PsiReferenceExpression.class);
-        if (stringRef != null) {
-          return isLocalVarRef(stringRef) ? new StringExpr(stringRef) : null;
-        }
-        PsiLiteralExpression literal = ObjectUtils.tryCast(argument, PsiLiteralExpression.class);
-        return literal == null ? null : new StringExpr(literal);
+        return new StringExpr(argument);
       }
       if (argType.equalsToText(CommonClassNames.JAVA_IO_FILE)) {
-        PsiReferenceExpression fileRef = ObjectUtils.tryCast(argument, PsiReferenceExpression.class);
-        if (fileRef != null) {
-          return isLocalVarRef(fileRef) ? new FileRef(fileRef) : null; 
-        }
+        return new FileExpr(argument);
       }
       return null;
     }
-    
-    private static boolean isLocalVarRef(@NotNull PsiReferenceExpression ref) {
-      PsiVariable variable = ObjectUtils.tryCast(ref.resolve(), PsiVariable.class);
-      return variable != null && !(variable instanceof PsiField); 
-    }
 
-    class FileRef implements ArgumentModel {
+    class FileExpr implements ArgumentModel {
 
-      private final PsiReferenceExpression myFileRef;
+      private final PsiExpression myFileExpr;
 
-      public FileRef(@NotNull PsiReferenceExpression fileRef) {
-        myFileRef = fileRef;
+      private FileExpr(@NotNull PsiExpression fileExpr) {
+        myFileExpr = fileExpr;
       }
 
       @Override
       public String createReplacement() {
-        return myFileRef.getText() + ".toPath()";
+        boolean needsParenthesis = PsiPrecedenceUtil.getPrecedence(myFileExpr) > PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE;
+        if (needsParenthesis) return "(" + myFileExpr.getText() + ").toPath()";
+        return myFileExpr.getText() + ".toPath()";
       }
 
       @Override
-      public boolean isEffectivelyFinal(@NotNull PsiElement context) {
-        PsiVariable psiVariable = ObjectUtils.tryCast(myFileRef.resolve(), PsiVariable.class);
-        if (psiVariable == null) return false;
-        return HighlightControlFlowUtil.isEffectivelyFinal(psiVariable, context, null);
+      public PsiExpression getExpression() {
+        return myFileExpr;
       }
     }
 
     class StringExpr implements ArgumentModel {
       private final PsiExpression myStringExpr;
 
-      public StringExpr(@NotNull PsiExpression stringExpr) {
+      private StringExpr(@NotNull PsiExpression stringExpr) {
         myStringExpr = stringExpr;
       }
 
       @Override
       public String createReplacement() {
-        return "java.nio.file.Path.of(" + myStringExpr.getText() + ")";
+        return PsiUtil.isLanguageLevel11OrHigher(myStringExpr)
+               ? "java.nio.file.Path.of(" + myStringExpr.getText() + ")"
+               : "java.nio.file.Paths.get(" + myStringExpr.getText() + ")";
       }
 
       @Override
-      public boolean isEffectivelyFinal(@NotNull PsiElement context) {
-        PsiLiteralExpression literal = ObjectUtils.tryCast(myStringExpr, PsiLiteralExpression.class);
-        if (literal != null) return true;
-        PsiReferenceExpression stringRef = ObjectUtils.tryCast(myStringExpr, PsiReferenceExpression.class);
-        if (stringRef == null) return false;
-        PsiVariable psiVariable = ObjectUtils.tryCast(stringRef.resolve(), PsiVariable.class);
-        if (psiVariable == null) return false;
-        return HighlightControlFlowUtil.isEffectivelyFinal(psiVariable, context, null);
+      public PsiExpression getExpression() {
+        return myStringExpr;
       }
     }
   }
@@ -233,8 +195,8 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
       if (constructorModel == null) return;
       PsiMethod containingMethod = PsiTreeUtil.getParentOfType(newExpression, PsiMethod.class);
       if (containingMethod == null) return;
-      boolean isEffectivelyFinal = constructorModel.myArgument.isEffectivelyFinal(containingMethod);
-      String filesCallText = "java.nio.file." + constructorModel.myStreamType.myReplacement + 
+      boolean isEffectivelyFinal = isEffectivelyFinal(newExpression, constructorModel.myArgument.getExpression());
+      String filesCallText = "java.nio.file." + constructorModel.myStreamType.myReplacement +
                              "(" + constructorModel.myArgument.createReplacement() + ")";
       PsiElement result = PsiReplacementUtil.replaceExpressionAndShorten(newExpression, filesCallText, new CommentTracker());
       if (!isEffectivelyFinal) return;
@@ -245,10 +207,8 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
       PsiExpression[] occurrences = CodeInsightUtil.findExpressionOccurrences(containingMethod, toPathConversion);
       if (occurrences.length < 2) return;
       // maybe we can reuse already created file.toPath() / Path.of(...) variable
-      List<PsiLocalVariable> pathVars = Arrays.stream(occurrences)
-        .map(o -> ObjectUtils.tryCast(o.getParent(), PsiLocalVariable.class))
-        .filter(var -> var != null && HighlightControlFlowUtil.isEffectivelyFinal(var, containingMethod, null))
-        .filter(var -> var.getParent() instanceof PsiDeclarationStatement)
+      List<PsiVariable> pathVars = Arrays.stream(occurrences).map(o -> findVariableAssignedTo(o))
+        .filter(var -> var != null && HighlightControlFlowUtil.isEffectivelyFinal(var, toPathConversion, null))
         .collect(Collectors.toList());
       if (!pathVars.isEmpty()) {
         PsiCodeBlock body = containingMethod.getBody();
@@ -258,9 +218,11 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
         int conversionOffset = flow.getStartOffset(toPathConversion);
         if (conversionOffset == -1) return;
         Collection<PsiVariable> writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, conversionOffset, true);
-        PsiLocalVariable pathVar = ContainerUtil.find(pathVars, var -> writtenVariables.contains(var));
+        PsiVariable pathVar = ContainerUtil.find(pathVars, var -> writtenVariables.contains(var));
         if (pathVar != null) {
-          PsiReplacementUtil.replaceExpressionAndShorten(toPathConversion, pathVar.getName(), new CommentTracker());
+          String varName = pathVar.getName();
+          if (varName == null) return;
+          PsiReplacementUtil.replaceExpressionAndShorten(toPathConversion, varName, new CommentTracker());
           return;
         }
       }
@@ -270,6 +232,37 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
       JavaRefactoringActionHandlerFactory factory = JavaRefactoringActionHandlerFactory.getInstance();
       IntroduceVariableHandler handler = ObjectUtils.tryCast(factory.createIntroduceVariableHandler(), IntroduceVariableHandler.class);
       if (handler != null) handler.invoke(project, editor, toPathConversion);
+    }
+
+    private static @Nullable PsiVariable findVariableAssignedTo(@NotNull PsiExpression occurrence) {
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(occurrence);
+      PsiElement context = PsiTreeUtil.getParentOfType(parent, PsiVariable.class, PsiAssignmentExpression.class);
+      PsiVariable variable = ObjectUtils.tryCast(context, PsiVariable.class);
+      if (variable != null) {
+        if (variable.getInitializer() != parent) return null;
+        return variable;
+      }
+      if (context == null) return null;
+      PsiAssignmentExpression assignment = (PsiAssignmentExpression)context;
+      if (assignment.getRExpression() != parent) return null;
+      PsiReferenceExpression ref = ObjectUtils.tryCast(assignment.getLExpression(), PsiReferenceExpression.class);
+      if (ref == null) return null;
+      PsiVariable target = ObjectUtils.tryCast(ref.resolve(), PsiVariable.class);
+      if (!PsiUtil.isJvmLocalVariable(target)) return null;
+      return target;
+    }
+
+    private static boolean isEffectivelyFinal(PsiElement context, PsiExpression expression) {
+      return ExpressionUtils.nonStructuralChildren(expression).allMatch(c -> isEffectivelyFinal(context, expression, c));
+    }
+
+    private static boolean isEffectivelyFinal(PsiElement context, PsiExpression parent, PsiExpression child) {
+      if (child != parent) return isEffectivelyFinal(context, child);
+      if (child instanceof PsiLiteralExpression) return true;
+      if (!(child instanceof PsiReferenceExpression)) return false;
+      PsiVariable target = ObjectUtils.tryCast(((PsiReferenceExpression)child).resolve(), PsiVariable.class);
+      if (!PsiUtil.isJvmLocalVariable(target)) return false;
+      return HighlightControlFlowUtil.isEffectivelyFinal(target, context, null);
     }
 
     @Nullable

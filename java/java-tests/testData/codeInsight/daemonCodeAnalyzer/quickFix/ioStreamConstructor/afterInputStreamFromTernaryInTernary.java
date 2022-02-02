@@ -4,8 +4,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 class Foo {
-  void test(File file) {
-    try (InputStream is = Files.newInputStream(Paths.get("foo"))) {
+  void test(String path, boolean b, boolean b1) {
+    Path name = Paths.get(b ? b1 ? "foo" : "bar" : "baz");
+    path = "bar";
+    try (InputStream is = Files.newInputStream(name)) {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

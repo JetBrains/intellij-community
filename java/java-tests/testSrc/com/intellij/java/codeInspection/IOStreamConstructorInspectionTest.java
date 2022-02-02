@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.codeInspection.IOStreamConstructorInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,7 +18,12 @@ public class IOStreamConstructorInspectionTest extends LightQuickFixParameterize
 
   @Override
   protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk11();
+    return IdeaTestUtil.getMockJdk9();
+  }
+
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_9;
   }
 
   @Override

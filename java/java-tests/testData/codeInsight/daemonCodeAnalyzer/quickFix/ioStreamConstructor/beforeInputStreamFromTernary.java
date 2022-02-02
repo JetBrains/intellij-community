@@ -1,11 +1,9 @@
 // "Replace with 'Files.newInputStream'" "true"
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 class Foo {
-  void test(File file) {
-    try (InputStream is = Files.newInputStream(Paths.get("foo"))) {
+  void test(File file, boolean b) {
+    try (InputStream is = new FileInpu<caret>tStream(b ? new File("foo") : new File("bar"))) {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

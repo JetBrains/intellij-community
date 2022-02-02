@@ -1,4 +1,4 @@
-// "Replace with 'Files.newInputStream'" "false"
+// "Replace with 'Files.newInputStream'" "true"
 import java.io.*;
 
 class Foo {

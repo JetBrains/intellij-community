@@ -1,4 +1,4 @@
-// "Fix all '`InputStream' and 'OutputStream' can be constructed using 'Files' methods' problems in file" "true"
+// "Fix all ''InputStream' and 'OutputStream' can be constructed using 'Files' methods' problems in file" "true"
 import java.io.*;
 import java.nio.*;
 
@@ -15,7 +15,7 @@ class Foo {
       throw new RuntimeException(e);
     }
 
-    Path strPath = Path.of(str);
+    Path strPath = Paths.get(str);
     try (InputStream is = new FileInp<caret>utStream(str)) {
     } catch (IOException e) {
       throw new RuntimeException(e);
