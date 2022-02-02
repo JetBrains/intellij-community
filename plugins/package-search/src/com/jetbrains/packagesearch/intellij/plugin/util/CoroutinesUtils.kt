@@ -72,7 +72,7 @@ internal suspend fun <T> Iterable<T>.parallelFilterNot(transform: suspend (T) ->
 internal suspend fun <T, R> Iterable<T>.parallelMapNotNull(transform: suspend (T) -> R?) =
     channelFlow { parallelForEach { transform(it)?.let { send(it) } } }.toList()
 
-internal suspend fun <T> Iterable<T>.parallelForEach(action: suspend (T) -> Unit) = coroutineScope {
+internal suspend fun <T> Iterable<T>.parallelForEach(action: suspend CoroutineScope.(T) -> Unit) = coroutineScope {
     forEach { launch { action(it) } }
 }
 
@@ -168,7 +168,7 @@ internal fun <T, R> Flow<T>.mapLatestTimedWithLoading(
             result
         }
     }.map {
-        logTrace(loggingContext) { "Took ${it.duration.absoluteValue} to elaborate" }
+        logTrace(loggingContext) { "Took ${it.duration.absoluteValue} to process" }
         it.value
     }
 
