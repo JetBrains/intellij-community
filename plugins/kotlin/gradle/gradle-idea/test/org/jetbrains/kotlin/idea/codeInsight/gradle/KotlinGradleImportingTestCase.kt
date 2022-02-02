@@ -58,11 +58,13 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
 
     protected fun configureKotlinVersionAndProperties(text: String, properties: Map<String, String>? = null): String {
         var result = text
-        (properties ?: mapOf("kotlin_plugin_version" to LATEST_STABLE_GRADLE_PLUGIN_VERSION)).forEach { (key, value) ->
+        (properties ?: defaultProperties).forEach { (key, value) ->
             result = result.replace(Regex("""\{\s*\{\s*${key}\s*}\s*}"""), value)
         }
         return result
     }
+
+    protected open val defaultProperties: Map<String, String> = mapOf("kotlin_plugin_version" to LATEST_STABLE_GRADLE_PLUGIN_VERSION)
 
     protected open fun configureByFiles(properties: Map<String, String>? = null): List<VirtualFile> {
         val rootDir = testDataDirectory()
@@ -73,10 +75,10 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
                 it.isDirectory -> null
 
                 !it.name.endsWith(AFTER_SUFFIX) -> {
-                    var text = clearTextFromMarkup(FileUtil.loadFile(it, /* convertLineSeparators = */ true))
-                    (properties ?: mapOf("kotlin_plugin_version" to LATEST_STABLE_GRADLE_PLUGIN_VERSION)).forEach { (key, value) ->
-                        text = text.replace(Regex("""\{\s*\{\s*${key}\s*}\s*}"""), value)
-                    }
+                    val text = configureKotlinVersionAndProperties(
+                        clearTextFromMarkup(FileUtil.loadFile(it, /* convertLineSeparators = */ true)),
+                        properties
+                    )
                     val virtualFile = createProjectSubFile(it.path.substringAfter(rootDir.path + File.separator), text)
 
                     // Real file with expected testdata allows to throw nicer exceptions in
