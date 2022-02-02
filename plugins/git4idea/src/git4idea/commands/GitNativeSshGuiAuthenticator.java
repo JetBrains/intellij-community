@@ -68,7 +68,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
   private String askKeyPassphraseInput(@NotNull String description) {
     Matcher matcher = SSHUtil.PASSPHRASE_PROMPT.matcher(description);
     if (!matcher.matches()) throw new IllegalStateException(description);
-    String keyPath = matcher.group(1);
+    String keyPath = SSHUtil.extractKeyPath(matcher);
 
     boolean resetPassword = keyPath.equals(myLastAskedKeyPath);
     myLastAskedKeyPath = keyPath;
@@ -92,7 +92,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
   private String askSshPasswordInput(@NotNull String description) {
     Matcher matcher = SSHUtil.PASSWORD_PROMPT.matcher(description);
     if (!matcher.matches()) throw new IllegalStateException(description);
-    String username = matcher.group(1);
+    String username = SSHUtil.extractUsername(matcher);
 
     boolean resetPassword = username.equals(myLastAskedUserName);
     myLastAskedUserName = username;
