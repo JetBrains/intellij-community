@@ -3,6 +3,7 @@ package com.jetbrains.python.target
 
 import com.intellij.execution.target.LanguageRuntimeType
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionStage
 
 class PythonLanguageIntrospectable(val config: PythonLanguageRuntimeConfiguration) : LanguageRuntimeType.Introspector<PythonLanguageRuntimeConfiguration> {
   override fun introspect(subject: LanguageRuntimeType.Introspectable): CompletableFuture<PythonLanguageRuntimeConfiguration> {
@@ -15,24 +16,30 @@ class PythonLanguageIntrospectable(val config: PythonLanguageRuntimeConfiguratio
           if (iterator.hasNext()) config.pythonInterpreterPath = iterator.next()
         }
       }
-    val pwdExecutableFuture = pythonExecutablePathFuture.thenCompose {
+    val userHomeFuture = pythonExecutablePathFuture.thenCompose {
       subject
-        .promiseExecuteScript("pwd")
-        .thenApply { result ->
-          result?.useFirstOutputLine { firstLine ->
-            config.userHome = firstLine
-          }
+        .promiseEnvironmentVariable("HOME")
+        .thenComposeIf(String?::isNullOrBlank) {
+          subject
+            .promiseExecuteScript("pwd")
+            .thenApply { it?.firstOutputLine() }
+        }
+        .thenApply { value ->
+          if (value != null) config.userHome = value
         }
     }
-    return pwdExecutableFuture.thenApply { config }
+    return userHomeFuture.thenApply { config }
   }
 
   companion object {
     private const val WHICH_BINARY = "/usr/bin/which"
 
-    private fun <R> String.useFirstOutputLine(block: (String) -> R): R? = trim().let { trimmedOutput ->
+    private fun String.firstOutputLine(): String? = trim().let { trimmedOutput ->
       val iterator = trimmedOutput.lineSequence().iterator()
-      return@let if (iterator.hasNext()) block(iterator.next()) else null
+      if (iterator.hasNext()) iterator.next() else null
     }
+
+    private fun <T> CompletableFuture<T>.thenComposeIf(predicate: (T) -> Boolean, fn: () -> CompletionStage<T>): CompletableFuture<T> =
+      thenCompose { if (predicate(it)) fn() else this }
   }
 }
