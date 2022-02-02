@@ -186,7 +186,7 @@ public class CompoundPositionManager implements PositionManagerWithConditionEval
           return Collections.singletonList(xStackFrame);
         }
       }
-      return Collections.emptyList();
+      throw NoDataException.INSTANCE;
     }, Collections.emptyList(), null, false);
   }
 
