@@ -1,9 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jpsBootstrap;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.GlobalOptions;
@@ -17,29 +15,32 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import static org.jetbrains.jpsBootstrap.BuildDependenciesDownloader.debug;
 import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.*;
 
 public class JpsBuild {
   public static final String CLASSES_FROM_JPS_BUILD_ENV_NAME = "JPS_BOOTSTRAP_CLASSES_FROM_JPS_BUILD";
+  private static final String KOTLIN_IDE_MAVEN_REPOSITORY_URL = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies";
+
   private final JpsModel myModel;
   private final Set<String> myModuleNames;
   private final File myDataStorageRoot;
 
-  public JpsBuild(Path ideaHomePath, JpsModel model, Path jpsBootstrapWorkDir) throws Exception {
+  public JpsBuild(Path communityRoot, JpsModel model, Path jpsBootstrapWorkDir) throws Exception {
     myModel = model;
     myModuleNames = myModel.getProject().getModules().stream().map(JpsNamedElement::getName).collect(Collectors.toUnmodifiableSet());
     myDataStorageRoot = jpsBootstrapWorkDir.resolve("jps-build-data").toFile();
 
-    // Workaround for KTIJ-19065
-    System.setProperty(PathManager.PROPERTY_HOME_PATH, ideaHomePath.toString());
+    Path kotlinc = downloadAndExtractKotlinCompiler(communityRoot);
+    System.setProperty("jps.kotlin.home", kotlinc.toString());
 
     System.setProperty("kotlin.incremental.compilation", "true");
     System.setProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "true");
@@ -62,10 +63,6 @@ public class JpsBuild {
   }
 
   public void buildModules(Set<JpsModule> modules) throws Exception {
-    // kotlin.util.compiler-dependencies downloads all dependencies required for running Kotlin JPS compiler
-    // see org.jetbrains.kotlin.idea.artifacts.KotlinArtifactsFromSources
-    runBuild(ContainerUtil.set("kotlin.util.compiler-dependencies"));
-
     runBuild(modules.stream().map(JpsNamedElement::getName).collect(Collectors.toSet()));
   }
 
@@ -117,6 +114,26 @@ public class JpsBuild {
     System.out.println("Finished building '" + String.join(" ", modules) + "' in " + (System.currentTimeMillis() - buildStart) + " ms");
 
     messageHandler.assertNoErrors();
+  }
+
+  private Path downloadAndExtractKotlinCompiler(Path communityRoot) throws Exception {
+    // We already have kotlin JPS in the classpath, fetch version from it
+    String kotlincVersion;
+    try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("META-INF/compiler.version")) {
+      kotlincVersion = new String(Objects.requireNonNull(inputStream).readAllBytes(), StandardCharsets.UTF_8);
+    }
+
+    info("Kotlin compiler version is " + kotlincVersion);
+
+    URI kotlincUrl = BuildDependenciesDownloader.getUriForMavenArtifact(
+      KOTLIN_IDE_MAVEN_REPOSITORY_URL,
+      "org.jetbrains.kotlin", "kotlin-dist-for-ide", kotlincVersion, "jar");
+    Path kotlincDist = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, kotlincUrl);
+    Path kotlinc = BuildDependenciesDownloader.extractFileToCacheLocation(communityRoot, kotlincDist);
+
+    debug("Kotlin compiler is at " + kotlinc);
+
+    return kotlinc;
   }
 
   private class JpsMessageHandler implements MessageHandler {

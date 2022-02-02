@@ -64,7 +64,6 @@ public class JpsBootstrapMain {
   private final String classNameToRun;
   private final String buildTargetXmx;
   private final Path jpsBootstrapWorkDir;
-  private final Path ideaHomePath;
   private final Path javaArgsFileTarget;
   private final List<String> mainArgsToRun;
   private final Properties additionalSystemProperties;
@@ -116,16 +115,13 @@ public class JpsBootstrapMain {
 
     if (Files.exists(riderCheckFile)) {
       projectHome = riderHome;
-      ideaHomePath = ultimateHome;
     }
     else if (Files.exists(ultimateCheckFile)) {
       projectHome = ultimateHome;
-      ideaHomePath = ultimateHome;
     }
     else {
       warn("Ultimate repository is not detected by checking '" + ultimateCheckFile + "', using only community project");
       projectHome = communityHome;
-      ideaHomePath = communityHome;
     }
 
     jpsBootstrapWorkDir = communityHome.resolve("out").resolve("jps-bootstrap");
@@ -213,7 +209,7 @@ public class JpsBootstrapMain {
 
     Set<JpsModule> modulesSubset = JpsProjectUtils.getRuntimeModulesClasspath(module);
 
-    JpsBuild jpsBuild = new JpsBuild(ideaHomePath, model, jpsBootstrapWorkDir);
+    JpsBuild jpsBuild = new JpsBuild(communityHome, model, jpsBootstrapWorkDir);
     if (manifestJsonUrl != null) {
       jpsBuild.resolveProjectDependencies();
       info("Downloading project classes from " + manifestJsonUrl);
@@ -241,11 +237,6 @@ public class JpsBootstrapMain {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
-  }
-
-  private static List<String> systemPropertiesArgsFromTeamCityBuild() throws IOException {
-    if (!underTeamCity) return Collections.emptyList();
-    return convertPropertiesToCommandLineArgs(getTeamCitySystemProperties());
   }
 
   private static List<String> convertPropertiesToCommandLineArgs(Properties properties) {

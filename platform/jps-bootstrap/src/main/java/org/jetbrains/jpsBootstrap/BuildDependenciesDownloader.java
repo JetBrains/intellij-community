@@ -238,4 +238,21 @@ final class BuildDependenciesDownloader {
       Files.deleteIfExists(tempFile);
     }
   }
+
+  public static URI getUriForMavenArtifact(String mavenRepository, String groupId, String artifactId, String version, String packaging) {
+    return getUriForMavenArtifact(mavenRepository, groupId, artifactId, version, null, packaging);
+  }
+
+  public static URI getUriForMavenArtifact(String mavenRepository, String groupId, String artifactId, String version, String classifier, String packaging) {
+    String result = mavenRepository;
+    if (!result.endsWith("/")) {
+      result += "/";
+    }
+
+    result += groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/" + artifactId + "-" + version +
+      (classifier != null ? "-$classifier" : "") +
+      "." + packaging;
+
+    return URI.create(result);
+  }
 }

@@ -16,43 +16,16 @@
 
   <xmlproperty file="${jps.bootstrap.dir}/pom.xml" prefix="jps.bootstrap.pom.xml"/>
 
+  <xslt style="kotlinc.xml.xslt" in="${community.home}/.idea/kotlinc.xml" out="${build.dir}/kotlinc.version.txt" />
+  <loadfile property="kotlinc.version" srcfile="${build.dir}/kotlinc.version.txt">
+    <filterchain>
+      <striplinebreaks />
+      <striplinebreaks linebreaks=" "/>
+    </filterchain>
+  </loadfile>
+  <echo message="kotlinc.version=${kotlinc.version}" />
+
   <available file="${maven.resolver.ant.tasks.file.path}" property="maven.resolver.ant.tasks.file.exists"/>
-
-  <loadresource property="kotlin.channel">
-    <string value="${dependencies.kotlinCompilerBuild}"/>
-    <filterchain>
-      <tokenfilter>
-        <replaceregex pattern="^.*:([a-zA-Z\-0-9.]+)$" replace="\1"/>
-      </tokenfilter>
-    </filterchain>
-  </loadresource>
-  <loadresource property="kotlin.version">
-    <string value="${dependencies.kotlinCompilerBuild}"/>
-    <filterchain>
-      <tokenfilter>
-        <replaceregex pattern="^([a-zA-Z\-0-9.]+):.*$" replace="\1"/>
-      </tokenfilter>
-    </filterchain>
-  </loadresource>
-
-  <property name="kotlin.home" value="${build.dir}/kotlin" />
-  <property name="kotlin.url" value="https://cache-redirector.jetbrains.com/plugins.jetbrains.com/maven/${kotlin.channel}/com/jetbrains/plugins/org.jetbrains.kotlin/${kotlin.version}/org.jetbrains.kotlin-${kotlin.version}.zip" />
-
-  <condition property="kotlin.home.ok">
-    <resourcecontains resource="${kotlin.home}/.flag" substring="${kotlin.url}"/>
-  </condition>
-
-  <target name="download.and.extract.kotlin" unless="kotlin.home.ok">
-    <echo message="Downloading Kotlin ${kotlin.version} channel ${kotlin.channel} to ${kotlin.home}" />
-
-    <delete dir="${kotlin.home}" />
-    <mkdir dir="${kotlin.home}" />
-    <get src="${kotlin.url}" dest="${kotlin.home}/kotlin.zip" />
-    <unzip src="${kotlin.home}/kotlin.zip" dest="${kotlin.home}" />
-    <delete file="${kotlin.home}/kotlin.zip" />
-
-    <echo file="${kotlin.home}/.flag" message="${kotlin.url}" />
-  </target>
 
   <target name="download.resolver" unless="maven.resolver.ant.tasks.file.exists">
     <get
@@ -65,7 +38,7 @@
       overwrite="true"/>
   </target>
 
-  <target name="jps-bootstrap-classpath" depends="download.resolver,download.and.extract.kotlin">
+  <target name="jps-bootstrap-classpath" depends="download.resolver">
     <taskdef uri="antlib:org.apache.maven.resolver.ant" resource="org/apache/maven/resolver/ant/antlib.xml"
              classpath="${maven.resolver.ant.tasks.file.path}"/>
 
@@ -80,7 +53,9 @@
 
     <resolver:resolve failOnMissingAttachments="true">
       <resolver:remoterepos refid="remoterepos.buildscript"/>
-      <resolver:dependencies pomRef="jps.bootstrap.pom" />
+      <resolver:dependencies pomRef="jps.bootstrap.pom">
+        <resolver:dependency groupId="org.jetbrains.kotlin" artifactId="kotlin-jps-plugin-classpath" version="${kotlinc.version}" />
+      </resolver:dependencies>
       <resolver:path refid="classpath.buildscripts" classpath="runtime"/>
     </resolver:resolve>
 
@@ -96,12 +71,6 @@
       classpathref="classpath.buildscripts"
     />
 
-    <!-- Used later in JpsBootstrapMain to compare Kotlin versions -->
-    <echo message="${kotlin.url}" file="${classes.dir}/kotlin.zip.url" />
-
-    <!-- Used later in JpsBootstrapMain to compare bootstrap intellij versions -->
-    <echo message="${jps.bootstrap.pom.xml.project.properties.bootstrap.intellij.version}" file="${classes.dir}/intellij.version" />
-
     <delete file="${classes.dir}.jar" />
     <zip destfile="${classes.dir}.jar">
       <fileset dir="${classes.dir}" />
@@ -114,14 +83,7 @@
 
         <resources>
           <path refid="classpath.buildscripts" />
-
           <file file="${classes.dir}.jar" />
-
-          <file file="${kotlin.home}/Kotlin/lib/jps/kotlin-jps-plugin.jar" />
-          <file file="${kotlin.home}/Kotlin/lib/kotlin-jps-common.jar" />
-          <file file="${kotlin.home}/Kotlin/lib/kotlin-plugin.jar" />
-          <file file="${kotlin.home}/Kotlin/lib/kotlin-common.jar" />
-          <file file="${kotlin.home}/Kotlin/lib/kotlin-reflect.jar" />
         </resources>
       </mappedresources>
     </sync>
