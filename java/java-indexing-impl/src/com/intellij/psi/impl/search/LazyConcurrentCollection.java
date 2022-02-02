@@ -44,6 +44,9 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
   @NotNull private final Predicate<? super V> myApplicableForGenerationFilter;
   private final Semaphore currentlyProcessingClasses = new Semaphore();
 
+  /**
+   * iterator for {@link #subClasses} queue. Points to the next unprocessed element (i.e the element for which the {@link #myGenerator} wasn't called yet)
+   */
   private final HashSetQueue.PositionalIterator<T> candidatesToFindSubclassesIterator; // guarded by lock
   // classes for which DirectClassInheritorsSearch is running
   private final Set<T> classesBeingProcessed = new HashSet<>(); // guarded by lock
