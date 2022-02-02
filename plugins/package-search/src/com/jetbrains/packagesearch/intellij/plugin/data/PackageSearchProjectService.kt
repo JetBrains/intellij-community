@@ -206,7 +206,7 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
                 installed.parallelUpdatedKeys(changedModules) { it.installedDependencies(cacheDirectory, json) }
             }
             logTrace("installedPackagesStep1LoadingFlow") {
-                "Took ${time} to elaborate diffs for ${changedModules.size} module" + if (changedModules.size > 1) "s" else ""
+                "Took ${time} to process diffs for ${changedModules.size} module" + if (changedModules.size > 1) "s" else ""
             }
             result
         }
@@ -277,7 +277,7 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
                 AvailableUpdatesMap(stableUpgrades.await(), allUpgrades.await())
             }
         }
-        logTrace("availableUpdatesStateFlow") { "Took ${time} to elaborate upgrades operations." }
+        logTrace("availableUpdatesStateFlow") { "Took ${time} to process upgrades operations." }
         result
     }.stateIn(this, SharingStarted.Eagerly, AvailableUpdatesMap(emptyMap(), emptyMap()))
 
