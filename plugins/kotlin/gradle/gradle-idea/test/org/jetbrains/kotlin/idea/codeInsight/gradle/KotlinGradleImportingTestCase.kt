@@ -48,12 +48,33 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         return File(baseDir, getTestName(true).substringBefore("_").substringBefore(" "))
     }
 
+    protected val importStatusCollector = ImportStatusCollector()
+
     override fun setUp() {
         Assume.assumeFalse(AndroidStudioTestUtils.skipIncompatibleTestAgainstAndroidStudio())
         super.setUp()
         GradleSystemSettings.getInstance().gradleVmOptions =
             "-XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${System.getProperty("user.dir")}"
         GradleProcessOutputInterceptor.install(testRootDisposable)
+
+        setUpImportStatusCollector()
+    }
+
+    override fun tearDown() {
+        tearDownImportStatusCollector()
+        super.tearDown()
+    }
+
+    protected open fun setUpImportStatusCollector() {
+        ExternalSystemProgressNotificationManager
+            .getInstance()
+            .addNotificationListener(importStatusCollector)
+    }
+
+    protected open fun tearDownImportStatusCollector() {
+        ExternalSystemProgressNotificationManager
+            .getInstance()
+            .removeNotificationListener(importStatusCollector)
     }
 
     protected fun configureKotlinVersionAndProperties(text: String, properties: Map<String, String>? = null): String {
@@ -164,6 +185,10 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
             append("Gradle process output (END)")
         }
         fail(failureMessage)
+    }
+
+    protected open fun assertNoBuildErrorEventsReported() {
+        assertEmpty("No error events was expected to be reported", importStatusCollector.buildErrors)
     }
 
     protected open fun assertNoModuleDepForModule(moduleName: String, depName: String) {
