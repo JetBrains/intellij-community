@@ -3,9 +3,19 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.util.SystemProperties
+import com.intellij.util.io.URLUtil
+import com.intellij.util.io.isDirectory
+import com.intellij.util.io.isFile
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
-import org.jetbrains.kotlin.idea.artifacts.KOTLINC_DIST_JPS_LIB_XML_NAME
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider.KOTLIN_DIST_ARTIFACT_ID
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider.KOTLIN_MAVEN_GROUP_ID
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider.resolveMavenArtifactInMavenRepo
 import java.io.File
+import java.nio.file.Paths
+import kotlin.io.path.nameWithoutExtension
 
 sealed interface KotlinPluginLayout {
     val kotlinc: File
@@ -47,27 +57,52 @@ private class KotlinPluginLayoutWhenRunInProduction(private val root: File) : Ko
 }
 
 private object KotlinPluginLayoutWhenRunFromSources : KotlinPluginLayout {
-    private val bundledJpsVersion
-        get() = Regex("""/kotlin-dist-for-ide/(.*?)/""")
-            .find(File(PathManager.getHomePath(), ".idea/libraries").resolve(KOTLINC_DIST_JPS_LIB_XML_NAME).readText())
-            .let { it ?: error("Can't parse $KOTLINC_DIST_JPS_LIB_XML_NAME") }
-            .groupValues[1]
+    private val bundledJpsVersion by lazy {
+        val ideaDirectory = Paths.get(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER)
+        require(ideaDirectory.isDirectory()) { "Can't find IDEA home directory" }
 
-    override val kotlinc: File
-        get() {
-            val anyJarInMavenLocal = PathManager.getJarPathForClass(KotlinVersion::class.java)?.let { File(it) }
-                ?: error("Can't find kotlin-stdlib.jar in maven local")
-            // We can't use getExpectedMavenArtifactJarPath because it will cause cyclic "Path macros" service initialization
-            val packedDist = generateSequence(anyJarInMavenLocal) { it.parentFile }
-                .map { KotlinPathsProvider.resolveMavenArtifactInMavenRepo(it, KotlinPathsProvider.KOTLIN_DIST_ARTIFACT_ID, bundledJpsVersion) }
-                .firstOrNull { it.exists() }
-                ?: error(
-                    "Can't find kotlinc-dist in local maven. But IDEA should have downloaded it because 'kotlinc.kotlin-dist' " +
-                            "library is specified as dependency for 'kotlin.util.compiler-dependencies' module"
-                )
+        val distLibraryFile = ideaDirectory.resolve("libraries/kotlinc_kotlin_dist.xml")
+        require(distLibraryFile.isFile()) { "${distLibraryFile.nameWithoutExtension} library is not found in $ideaDirectory" }
 
-            return KotlinPathsProvider.lazyUnpackKotlincDist(packedDist, bundledJpsVersion)
+        val distLibraryElement = JDOMUtil.load(distLibraryFile).getChild("library")
+            ?: error("Can't find the 'library' element in ${distLibraryFile}")
+
+        val propertiesElement = distLibraryElement.getChild("properties")
+        if (propertiesElement != null) {
+            propertiesElement.getAttributeValue("maven-id")
+                ?.split(':')
+                ?.takeIf { it.size == 3 }
+                ?.last()
+                ?: error("${distLibraryFile} is not a valid Maven library")
+        } else {
+            // In cooperative mode, Kotlin compiler artifacts are not Maven libraries
+            val rootUrl = distLibraryElement.getChild("CLASSES")?.getChild("root")
+                ?.getAttributeValue("url")
+                ?: error("Can't find a valid 'CLASSES' root in ${distLibraryFile}")
+
+            val rootPath = URLUtil.splitJarUrl(rootUrl)?.first ?: error("Root URL (${rootUrl}) is not a valid JAR URL")
+            val rootPathChunks = rootPath.split('/').asReversed()
+            check(rootPathChunks.size > 3 && rootPathChunks[0].startsWith(rootPathChunks[2] + "-" + rootPathChunks[1])) {
+                "Unsupported root path, expected a path inside a Maven repository: $rootPathChunks"
+            }
+
+            rootPathChunks[1] // artifact version
         }
+    }
+
+    override val kotlinc: File by lazy {
+        val mavenLocalDirectory = File(SystemProperties.getUserHome(), ".m2/repository")
+            .takeIf { it.exists() }
+            ?: error("Can't find Maven Local directory")
+
+        // IDEA should have downloaded the library as a part of dependency resolution in the 'kotlin.util.compiler-dependencies' module
+
+        val packedDist = resolveMavenArtifactInMavenRepo(mavenLocalDirectory, KOTLIN_DIST_ARTIFACT_ID, bundledJpsVersion)
+            .takeIf { it.exists() }
+            ?: error("Can't find artifact $KOTLIN_MAVEN_GROUP_ID:$KOTLIN_DIST_ARTIFACT_ID:$bundledJpsVersion artifact in Maven Local")
+
+        KotlinPathsProvider.lazyUnpackKotlincDist(packedDist, KotlinCompilerVersion.VERSION)
+    }
 
     override val jpsPluginJar: File
         get() = KotlinPathsProvider.getExpectedMavenArtifactJarPath(
