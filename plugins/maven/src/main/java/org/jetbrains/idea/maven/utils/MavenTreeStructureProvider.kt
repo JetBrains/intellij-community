@@ -4,16 +4,21 @@ package org.jetbrains.idea.maven.utils
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.TreeStructureProvider
 import com.intellij.ide.projectView.ViewSettings
+import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager.Companion.getInstance
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiFile
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.SmartList
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.isImportToTreeStructureEnabled
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class MavenTreeStructureProvider : TreeStructureProvider, DumbAware {
@@ -38,11 +43,43 @@ class MavenTreeStructureProvider : TreeStructureProvider, DumbAware {
 
           }
         }
+        if (isImportToTreeStructureEnabled() && child is PsiDirectoryNode && parent is PsiDirectoryNode) {
+          childToAdd = getMavenModuleNode(project, child, settings) ?: child
+        }
         modifiedChildren.add(childToAdd)
       }
       return modifiedChildren
     }
     return children
+  }
+
+  private fun getMavenModuleNode(project: Project,
+                                  directoryNode: PsiDirectoryNode,
+                                  settings: ViewSettings): MavenModuleDirectoryNode? {
+    val psiDirectory = directoryNode.value ?: return null
+    val virtualFile = psiDirectory.virtualFile
+    if (!ProjectRootsUtil.isModuleContentRoot(virtualFile, project)) return null
+    val fileIndex = ProjectRootManager.getInstance(project).fileIndex
+    val module = fileIndex.getModuleForFile(virtualFile)
+    if (!isMavenModule(module)) return null
+    val moduleShortName: String = getModuleShortName(module) ?: return null
+    return MavenModuleDirectoryNode(project, psiDirectory, settings, moduleShortName, directoryNode.filter)
+  }
+
+  private fun isMavenModule(module: Module?): Boolean {
+    return if (module != null && !module.isDisposed) getInstance(module).isMavenized() else false
+  }
+
+  private fun getModuleShortName(module: Module?): String? {
+    if (module != null) {
+      if (module.name.endsWith(".test")) {
+        return "test";
+      }
+      if (module.name.endsWith(".main")) {
+        return "main";
+      }
+    }
+    return null;
   }
 
   private inner class MavenPomFileNode(project: Project?,

@@ -152,7 +152,7 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
     myDelegate.setLanguageLevel(level);
   }
 
-  static boolean isChangedByUser(Library library) {
+  public static boolean isChangedByUser(Library library) {
     String[] classRoots = library.getUrls(
       OrderRootType.CLASSES);
     if (classRoots.length != 1) return true;
@@ -165,14 +165,10 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
     if (dotPos == -1) return true;
     String pathToJar = classes.substring(0, dotPos);
 
-    if (MavenRootModelAdapter
-      .hasUserPaths(OrderRootType.SOURCES, library, pathToJar)) {
+    if (hasUserPaths(OrderRootType.SOURCES, library, pathToJar)) {
       return true;
     }
-    if (MavenRootModelAdapter
-      .hasUserPaths(
-        JavadocOrderRootType
-          .getInstance(), library, pathToJar)) {
+    if (hasUserPaths(JavadocOrderRootType.getInstance(), library, pathToJar)) {
       return true;
     }
 
