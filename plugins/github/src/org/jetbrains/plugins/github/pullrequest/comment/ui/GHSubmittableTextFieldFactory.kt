@@ -30,7 +30,6 @@ class GHSubmittableTextFieldFactory(private val model: SubmittableTextFieldModel
     onCancel: (() -> Unit)? = null
   ): SubmittableTextFieldComponent {
     val submittableTextFieldConfig = Config(
-      shouldScrollOnChange = true,
       submitConfig = SubmitActionConfig(ActionButtonConfig(actionName)),
       cancelConfig = onCancel?.let { CancelActionConfig(ActionButtonConfig(Messages.getCancelButton()), action = it) }
     )

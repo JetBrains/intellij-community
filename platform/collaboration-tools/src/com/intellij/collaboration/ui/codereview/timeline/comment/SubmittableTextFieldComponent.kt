@@ -55,9 +55,7 @@ class SubmittableTextFieldComponent(val submittableTextField: SubmittableTextFie
     val cancelButton = createCancelButton(config.cancelConfig)
     installCancelAction(config.cancelConfig)
 
-    if (config.shouldScrollOnChange) {
-      installScrollIfChangedController()
-    }
+    installScrollIfChangedController()
 
     isOpaque = false
     layout = MigLayout(
@@ -74,8 +72,22 @@ class SubmittableTextFieldComponent(val submittableTextField: SubmittableTextFie
   }
 
   private fun installScrollIfChangedController() {
+    val policy = config.scrollOnChange
+    if (policy == ScrollOnChangePolicy.DontScroll) {
+      return
+    }
     fun scroll() {
-      scrollRectToVisible(Rectangle(0, 0, width, height))
+      when (policy) {
+        ScrollOnChangePolicy.DontScroll -> {
+        }
+        is ScrollOnChangePolicy.ScrollToComponent -> {
+          val componentToScroll = policy.component
+          scrollRectToVisible(Rectangle(0, 0, componentToScroll.width, componentToScroll.height))
+        }
+        ScrollOnChangePolicy.ScrollToField -> {
+          scrollRectToVisible(Rectangle(0, 0, width, height))
+        }
+      }
     }
 
     model.document.addDocumentListener(object : DocumentListener {
@@ -171,7 +183,7 @@ class SubmittableTextFieldComponent(val submittableTextField: SubmittableTextFie
   }
 
   data class Config(
-    val shouldScrollOnChange: Boolean,
+    val scrollOnChange: ScrollOnChangePolicy = ScrollOnChangePolicy.ScrollToField,
     val submitConfig: SubmitActionConfig,
     val cancelConfig: CancelActionConfig?
   )
@@ -186,6 +198,12 @@ class SubmittableTextFieldComponent(val submittableTextField: SubmittableTextFie
     val shortcut: ShortcutSet = defaultCancelShortcut,
     val action: () -> Unit
   )
+
+  sealed class ScrollOnChangePolicy {
+    object DontScroll: ScrollOnChangePolicy()
+    object ScrollToField: ScrollOnChangePolicy()
+    class ScrollToComponent(val component: JComponent): ScrollOnChangePolicy()
+  }
 
   data class ActionButtonConfig(val name: @NlsContexts.Tooltip String)
 
