@@ -70,7 +70,7 @@ public class TypeAnnotation {
     StructTypePathEntry pathEntry = getPaths().stream().findFirst().orElse(null);
     if (pathEntry == null && arrayDim == 0) return true;
     if (pathEntry != null
-        && pathEntry.getTypePathEntryKind() == StructTypePathEntry.Kind.ARRAY.getOpcode()
+        && pathEntry.getTypePathEntryKind() == StructTypePathEntry.Kind.ARRAY.getId()
         && getPaths().size() == arrayDim
     ) return true;
     return false;

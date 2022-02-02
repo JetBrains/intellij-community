@@ -662,7 +662,7 @@ public class ExprProcessor implements CodeConstants {
         typeAnnotationWriteHelper.writeTo(sb);
         return true;
       }
-      if (path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.ARRAY.getOpcode() &&
+      if (path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.ARRAY.getId() &&
         typeAnnotationWriteHelper.getPaths().size() == type.arrayDim
       ) {
         typeAnnotationWriteHelper.writeTo(sb);
@@ -745,7 +745,7 @@ public class ExprProcessor implements CodeConstants {
     var wroteAnnotation = new Object() { boolean value = false; };
     typePathWriteHelper.removeIf(typeAnnotationWriteHelper -> {
       StructTypePathEntry path = typeAnnotationWriteHelper.getPaths().peek();
-      if (path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.NESTED.getOpcode()) {
+      if (path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.NESTED.getId()) {
         typeAnnotationWriteHelper.getPaths().pop();
         if (typeAnnotationWriteHelper.getPaths().isEmpty()) {
           typeAnnotationWriteHelper.writeTo(sb);

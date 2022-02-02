@@ -228,7 +228,7 @@ public final class GenericMain {
         writeHelper.writeTo(sb);
         return true;
       }
-      if (path.getTypePathEntryKind() == StructTypePathEntry.Kind.ARRAY.getOpcode() && type.arrayDim == writeHelper.getPaths().size()) {
+      if (path.getTypePathEntryKind() == StructTypePathEntry.Kind.ARRAY.getId() && type.arrayDim == writeHelper.getPaths().size()) {
         writeHelper.writeTo(sb);
         return true;
       }
@@ -252,7 +252,7 @@ public final class GenericMain {
         // only take type paths that are in the generic
         List<TypeAnnotationWriteHelper> locTypePathWriteStack = typePathWriteStack.stream().filter(writeHelper -> {
           StructTypePathEntry path = writeHelper.getPaths().peek();
-          boolean inGeneric = path != null && path.getTypeArgumentIndex() == it && path.getTypePathEntryKind() == StructTypePathEntry.Kind.TYPE.getOpcode();
+          boolean inGeneric = path != null && path.getTypeArgumentIndex() == it && path.getTypePathEntryKind() == StructTypePathEntry.Kind.TYPE.getId();
           if (inGeneric) {
             writeHelper.getPaths().pop();
           }
@@ -265,7 +265,7 @@ public final class GenericMain {
             writeHelper.writeTo(sb);
             return true;
           }
-          if (path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.TYPE.getOpcode() && path.getTypeArgumentIndex() == it &&
+          if (path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.TYPE.getId() && path.getTypeArgumentIndex() == it &&
             genPar.arrayDim != 0 && genPar.arrayDim == writeHelper.getPaths().size()
           ) {
             writeHelper.writeTo(sb);
@@ -289,13 +289,13 @@ public final class GenericMain {
 
         typePathWriteStack.forEach(writeHelper -> { // remove all wild card entries
           StructTypePathEntry path = writeHelper.getPaths().peek();
-          boolean isWildCard = path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.TYPE_WILDCARD.getOpcode();
+          boolean isWildCard = path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.TYPE_WILDCARD.getId();
           if (isWildCard && path.getTypeArgumentIndex() == it) writeHelper.getPaths().pop();
         });
         locTypePathWriteStack.removeIf(writeHelper -> {
           StructTypePathEntry path = writeHelper.getPaths().peek();
           if (path != null && path.getTypeArgumentIndex() == it &&
-              path.getTypePathEntryKind() == StructTypePathEntry.Kind.TYPE_WILDCARD.getOpcode() &&
+              path.getTypePathEntryKind() == StructTypePathEntry.Kind.TYPE_WILDCARD.getId() &&
             writeHelper.getPaths().size() - 1 == genPar.arrayDim
           ) {
             writeHelper.writeTo(sb);
