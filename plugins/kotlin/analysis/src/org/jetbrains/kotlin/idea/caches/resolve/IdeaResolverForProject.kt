@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.idea.project.IdeaEnvironment
 import org.jetbrains.kotlin.idea.compiler.IdeSealedClassInheritorsProvider
 import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptSearchScope
 import org.jetbrains.kotlin.idea.project.findAnalyzerServices
-import org.jetbrains.kotlin.idea.project.useCompositeAnalysis
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.load.java.structure.JavaClass
 import org.jetbrains.kotlin.load.java.structure.impl.JavaClassImpl
@@ -81,7 +80,7 @@ class IdeaResolverForProject(
 
     @OptIn(TypeRefinement::class)
     private fun getRefinerCapability(): Pair<ModuleCapability<Ref<TypeRefinementSupport>>, Ref<TypeRefinementSupport>> {
-        val isCompositeAnalysisEnabled = projectContext.project.useCompositeAnalysis
+        val isCompositeAnalysisEnabled = settings is CompositeAnalysisSettings
         val typeRefinementSupport = if (isCompositeAnalysisEnabled) {
             /*
             * Will be properly initialized with a type refiner created by DI container of ResolverForModule.
