@@ -315,6 +315,7 @@ public final class EnvironmentUtil {
      * @param scriptEnvironmentProcessor the block which accepts the environment
      *                                   of the new process, allowing to add and
      *                                   remove environment variables.
+     * @return Debugging output of the script, and the map of environment variables.
      * @throws IOException if the process fails to start, exits with a non-zero
      *   code or produces no output
      * @see #runProcessAndReadOutputAndEnvs(List, Path)
@@ -343,13 +344,14 @@ public final class EnvironmentUtil {
       stderrGobbler.stop();
 
       final String output = stdoutGobbler.getText().trim();
+      final String stderr = stderrGobbler.getText();
       if (exitCode != 0 || output.isEmpty()) {
         EnvironmentReaderException ex = new EnvironmentReaderException("command " + command + "\n\texit code: " + exitCode + "\n\tOS: " + SystemInfoRt.OS_NAME,
-                                                                       output, stderrGobbler.getText().trim());
+                                                                       output, stderr.trim());
         LOG.error(ex);
         throw ex;
       }
-      return new AbstractMap.SimpleImmutableEntry<>(stdoutGobbler.getText(), parseEnv(output));
+      return new AbstractMap.SimpleImmutableEntry<>(stderr, parseEnv(output));
     }
 
     protected @NotNull List<String> getShellProcessCommand() {

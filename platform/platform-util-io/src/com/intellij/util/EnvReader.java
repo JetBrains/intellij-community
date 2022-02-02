@@ -75,6 +75,9 @@ public class EnvReader extends EnvironmentUtil.ShellEnvReader {
       if (args != null) {
         callArgs.addAll(args);
       }
+      // Scripts like `vcvarsall.bat` may write debugging logs to stdout.
+      // They would interfere with environment variables, if there was no stream redirection.
+      callArgs.add("1>&2");
       callArgs.add("&&");
     }
 
