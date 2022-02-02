@@ -78,7 +78,7 @@ final class WholeFileLocalInspectionsPassFactory implements TextEditorHighlighti
 
   @Override
   @Nullable
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
+  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
     long actualCount = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
     synchronized (myPsiModificationCount) {
       if (myPsiModificationCount.get(file) == (int)actualCount) {
@@ -100,7 +100,7 @@ final class WholeFileLocalInspectionsPassFactory implements TextEditorHighlighti
 
   @NotNull
   private LocalInspectionsPass createPass(@NotNull PsiFile file,
-                                          TextRange visibleRange, @NotNull final Document document) {
+                                          TextRange visibleRange, @NotNull Document document) {
     return new LocalInspectionsPass(file, document, 0, file.getTextLength(), visibleRange, true,
                                     new DefaultHighlightInfoProcessor(), false) {
       @Override

@@ -47,7 +47,7 @@ public class ShowErrorDescriptionAction extends BaseCodeInsightAction implements
   }
 
   @Override
-  public void beforeActionPerformedUpdate(@NotNull final AnActionEvent e) {
+  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
     super.beforeActionPerformedUpdate(e);
     // The tooltip gets the focus if using a screen reader and invocation through a keyboard shortcut.
     myRequestFocus = ScreenReader.isActive() && (e.getInputEvent() instanceof KeyEvent);

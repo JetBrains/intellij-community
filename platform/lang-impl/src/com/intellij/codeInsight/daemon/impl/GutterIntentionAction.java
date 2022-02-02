@@ -39,7 +39,7 @@ public class GutterIntentionAction extends AbstractIntentionAction implements Co
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
+    RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
     AnActionEvent event = AnActionEvent.createFromInputEvent(
       relativePoint.toMouseEvent(), ActionPlaces.INTENTION_MENU, null, EditorUtil.getEditorDataContext(editor));
     if (!ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) return;

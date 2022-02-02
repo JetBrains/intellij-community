@@ -75,7 +75,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
     refresh(null);
 
-    final MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     model.addMarkupModelListener(this, new MarkupModelListener() {
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
@@ -194,7 +194,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         status.reasonWhyDisabled = DaemonBundle.message("process.title.file.is.decompiled");
         return status;
       }
-      final FileType fileType = psiFile.getFileType();
+      FileType fileType = psiFile.getFileType();
       if (fileType.isBinary()) {
         status.reasonWhyDisabled = DaemonBundle.message("process.title.file.is.binary");
         return status;
