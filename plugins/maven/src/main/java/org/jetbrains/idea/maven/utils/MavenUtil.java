@@ -281,15 +281,17 @@ public class MavenUtil {
   }
 
   public static void runWhenInitialized(@NotNull Project project, @NotNull Runnable runnable) {
-    startTestRunnable(runnable);
+
     if (project.isDisposed()) return;
 
     if (isNoBackgroundMode()) {
+      startTestRunnable(runnable);
       runAndFinishTestRunnable(runnable);
       return;
     }
 
     if (!project.isInitialized()) {
+      startTestRunnable(runnable);
       StartupManager.getInstance(project).runAfterOpened(() -> runAndFinishTestRunnable(runnable));
       return;
     }

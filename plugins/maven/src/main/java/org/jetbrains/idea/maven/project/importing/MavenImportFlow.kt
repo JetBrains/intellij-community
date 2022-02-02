@@ -16,6 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.execution.BTWMavenConsole
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
 import org.jetbrains.idea.maven.importing.MavenProjectImporterBase
+import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.*
@@ -185,6 +186,7 @@ class MavenImportFlow {
   }
 
   fun downloadArtifacts(context: MavenResolvedContext, sources: Boolean, javadocs: Boolean): MavenArtifactDownloader.DownloadResult {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
     if (!(sources || javadocs)) return MavenArtifactDownloader.DownloadResult()
     val projectManager = MavenProjectsManager.getInstance(context.project)
     val embeddersManager = projectManager.embeddersManager
@@ -193,6 +195,25 @@ class MavenImportFlow {
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
     return resolver.downloadSourcesAndJavadocs(context.project, context.projectsToImport, null, sources, javadocs, embeddersManager,
                                                consoleToBeRemoved, context.initialContext.indicator)
+
+  }
+
+  fun downloadSpecificArtifacts(project: Project,
+                                mavenProjects: Collection<MavenProject>,
+                                mavenArtifacts: Collection<MavenArtifact>?,
+                                sources: Boolean,
+                                javadocs: Boolean,
+                                indicator: MavenProgressIndicator): MavenArtifactDownloader.DownloadResult {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    if (!(sources || javadocs)) return MavenArtifactDownloader.DownloadResult()
+    val projectManager = MavenProjectsManager.getInstance(project)
+    val embeddersManager = projectManager.embeddersManager
+    val resolver = MavenProjectResolver(projectManager.projectsTree)
+    val settings = MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings()
+    val consoleToBeRemoved = BTWMavenConsole(project, settings.outputLevel,
+                                             settings.isPrintErrorStackTraces)
+    return resolver.downloadSourcesAndJavadocs(project, mavenProjects, mavenArtifacts, sources, javadocs, embeddersManager,
+                                               consoleToBeRemoved, indicator)
 
   }
 

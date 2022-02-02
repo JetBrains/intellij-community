@@ -26,7 +26,10 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.CodeStyleSettingsTracker;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.RunAll;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +44,7 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.project.importing.*;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
@@ -484,6 +488,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     myResolvedContext = flow.resolveDependencies(myReadContext);
     mySourcesGeneratedContext = flow.resolveFolders(myResolvedContext);
+    flow.resolvePlugins(myResolvedContext);
     myImportedContext = flow.commitToWorkspaceModel(myResolvedContext);
     myProjectsTree = myReadContext.getProjectsTree();
     flow.updateProjectManager(myReadContext);
@@ -609,11 +614,20 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void downloadArtifacts() {
-    downloadArtifacts(myProjectsManager.getProjects(), null);
+    if (isNewImportingProcess) {
+      new MavenImportFlow().downloadArtifacts(myResolvedContext, true, true);
+    }
+    else {
+      downloadArtifacts(myProjectsManager.getProjects(), null);
+    }
   }
 
   protected MavenArtifactDownloader.DownloadResult downloadArtifacts(Collection<MavenProject> projects,
                                                                      List<MavenArtifact> artifacts) {
+    if (isNewImportingProcess) {
+      return new MavenImportFlow().downloadSpecificArtifacts(myProject, projects, artifacts, true, true,
+                                                             new MavenProgressIndicator(myProject, null));
+    }
     final MavenArtifactDownloader.DownloadResult[] unresolved = new MavenArtifactDownloader.DownloadResult[1];
 
     AsyncPromise<MavenArtifactDownloader.DownloadResult> result = new AsyncPromise<>();
@@ -621,7 +635,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     myProjectsManager.scheduleArtifactsDownloading(projects, artifacts, true, true, result);
     myProjectsManager.waitForArtifactsDownloadingCompletion();
-
     return unresolved[0];
   }
 
