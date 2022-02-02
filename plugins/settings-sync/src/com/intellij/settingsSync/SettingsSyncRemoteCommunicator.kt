@@ -11,7 +11,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 internal interface SettingsSyncRemoteCommunicator {
 
   @RequiresBackgroundThread
-  fun isUpdateNeeded() : Boolean
+  fun checkServerState() : ServerState
 
   @RequiresBackgroundThread
   fun receiveUpdates(): UpdateResult
@@ -19,6 +19,13 @@ internal interface SettingsSyncRemoteCommunicator {
   @RequiresBackgroundThread
   fun push(snapshot: SettingsSnapshot): SettingsSyncPushResult
 
+}
+
+internal sealed class ServerState {
+  object UpdateNeeded: ServerState()
+  object UpToDate: ServerState()
+  object FileNotExists: ServerState()
+  class Error(@NlsSafe val message: String): ServerState()
 }
 
 internal sealed class UpdateResult {

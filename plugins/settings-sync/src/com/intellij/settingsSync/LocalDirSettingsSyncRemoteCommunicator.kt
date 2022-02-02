@@ -36,8 +36,8 @@ internal class LocalDirSettingsSyncRemoteCommunicator(private val settingsSyncSt
 
   private val zipFile get() = serverDir.resolve(SETTINGS_SYNC_SNAPSHOT_ZIP)
 
-  override fun isUpdateNeeded(): Boolean {
-    return zipFile.exists()
+  override fun checkServerState(): ServerState {
+    return if (zipFile.exists()) ServerState.UpToDate else ServerState.UpdateNeeded
   }
 
   override fun receiveUpdates(): UpdateResult {

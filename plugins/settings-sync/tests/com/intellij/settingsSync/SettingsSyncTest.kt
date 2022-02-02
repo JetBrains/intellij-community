@@ -281,14 +281,13 @@ internal class SettingsSyncTest {
 
   internal class TestRemoteCommunicator : SettingsSyncRemoteCommunicator {
     var offline: Boolean = false
-    var updateNeeded: Boolean = false
     var updateResult: UpdateResult? = null
     var pushed: SettingsSnapshot? = null
     var startPushLatch: CountDownLatch? = null
     lateinit var pushedLatch: CountDownLatch
 
-    override fun isUpdateNeeded(): Boolean {
-      return updateNeeded
+    override fun checkServerState(): ServerState {
+      return ServerState.UpdateNeeded
     }
 
     override fun receiveUpdates(): UpdateResult {

@@ -49,15 +49,24 @@ internal class SettingsSyncMain : Disposable {
 
   @RequiresBackgroundThread
   internal fun syncSettings() {
-    if (controls.updateChecker.isUpdateNeeded()) {
-      LOG.info("Updating settings...")
-      controls.updateChecker.scheduleUpdateFromServer()
-      // the push will happen automatically after updating and merging (if there is anything to merge)
-    }
-    else {
-      LOG.info("Updating settings is not needed, scheduling a push")
-      ApplicationManager.getApplication().messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC)
-        .settingChanged(SyncSettingsEvent.PushIfNeededRequest)
+    val publisher = ApplicationManager.getApplication().messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC)
+    when (controls.remoteCommunicator.checkServerState()) {
+      is ServerState.UpdateNeeded -> {
+        LOG.info("Updating from server")
+        controls.updateChecker.scheduleUpdateFromServer()
+        // the push will happen automatically after updating and merging (if there is anything to merge)
+      }
+      ServerState.FileNotExists -> {
+        LOG.info("No file on server, we must push")
+        publisher.settingChanged(SyncSettingsEvent.MustPushRequest)
+      }
+      ServerState.UpToDate -> {
+        LOG.info("Updating settings is not needed, will check if push is needed")
+        publisher.settingChanged(SyncSettingsEvent.PushIfNeededRequest)
+      }
+      is ServerState.Error -> {
+        // error already logged in checkServerState, we schedule update
+      }
     }
   }
 
