@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerContext;
@@ -88,7 +88,7 @@ public abstract class DebuggerUtils {
         final ObjectReference objRef = (ObjectReference)value;
         final DebugProcess debugProcess = evaluationContext.getDebugProcess();
         Method toStringMethod = debugProcess.getUserData(TO_STRING_METHOD_KEY);
-        if (toStringMethod == null) {
+        if (toStringMethod == null || !toStringMethod.virtualMachine().equals(objRef.virtualMachine())) {
           try {
             ReferenceType refType = getObjectClassType(objRef.virtualMachine());
             toStringMethod = findMethod(refType, "toString", "()Ljava/lang/String;");
