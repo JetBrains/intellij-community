@@ -8,6 +8,6 @@ package com.intellij.externalProcessAuthHelper;
  * SILENT: the IDE will look for passwords in the common password storages. if no password is found, no authentication will be performed;
  * FULL: the IDE will look for passwords in the common password storages. If no password is found, an authentication dialog will be displayed.
  */
-public enum GitAuthenticationMode {
+public enum AuthenticationMode {
   NONE, SILENT, FULL
 }

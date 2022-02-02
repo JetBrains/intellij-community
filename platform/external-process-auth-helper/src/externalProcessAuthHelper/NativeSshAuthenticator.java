@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Handles interactive input requests from ssh, such as a passphrase request, an unknown server key confirmation, etc.
  */
-public interface GitNativeSshAuthenticator {
+public interface NativeSshAuthenticator {
   @Nullable
   String handleInput(@NotNull String description);
 }

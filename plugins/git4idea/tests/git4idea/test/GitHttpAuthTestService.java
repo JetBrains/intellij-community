@@ -15,9 +15,9 @@
  */
 package git4idea.test;
 
+import com.intellij.externalProcessAuthHelper.AuthenticationGate;
 import com.intellij.openapi.project.Project;
-import com.intellij.externalProcessAuthHelper.GitAuthenticationGate;
-import com.intellij.externalProcessAuthHelper.GitAuthenticationMode;
+import com.intellij.externalProcessAuthHelper.AuthenticationMode;
 import git4idea.commands.GitHttpAuthService;
 import git4idea.commands.GitHttpAuthenticator;
 import org.jetbrains.annotations.NotNull;
@@ -34,8 +34,8 @@ public class GitHttpAuthTestService extends GitHttpAuthService {
   public GitHttpAuthenticator createAuthenticator(@NotNull Project project,
                                                   @NotNull Collection<String> urls,
                                                   @NotNull File workingDirectory,
-                                                  @NotNull GitAuthenticationGate authenticationGate,
-                                                  @NotNull GitAuthenticationMode authenticationMode) {
+                                                  @NotNull AuthenticationGate authenticationGate,
+                                                  @NotNull AuthenticationMode authenticationMode) {
     return myAuthenticator;
   }
 

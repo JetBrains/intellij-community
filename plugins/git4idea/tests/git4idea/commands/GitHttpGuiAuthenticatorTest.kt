@@ -3,8 +3,8 @@ package git4idea.commands
 
 import com.intellij.credentialStore.Credentials
 import com.intellij.dvcs.DvcsRememberedInputs
-import com.intellij.externalProcessAuthHelper.GitAuthenticationMode
-import com.intellij.externalProcessAuthHelper.GitPassthroughAuthenticationGate
+import com.intellij.externalProcessAuthHelper.AuthenticationMode
+import com.intellij.externalProcessAuthHelper.PassthroughAuthenticationGate
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.DialogWrapper
@@ -93,8 +93,8 @@ class GitHttpGuiAuthenticatorTest : GitPlatformTest() {
     registerDialogHandler(true)
 
     val authenticator = GitHttpGuiAuthenticator(project, listOf(TEST_URL), File(""),
-                                                GitPassthroughAuthenticationGate.instance,
-                                                GitAuthenticationMode.FULL)
+                                                PassthroughAuthenticationGate.instance,
+                                                AuthenticationMode.FULL)
     authenticator.askUsername(TEST_URL)
     assertTrue(dialogShown)
 
@@ -116,8 +116,8 @@ class GitHttpGuiAuthenticatorTest : GitPlatformTest() {
 
   private fun runAuthenticator(assumeCorrect: Boolean): GitHttpGuiAuthenticator {
     val authenticator = GitHttpGuiAuthenticator(project, listOf(TEST_URL), File(""),
-                                                GitPassthroughAuthenticationGate.instance,
-                                                GitAuthenticationMode.FULL)
+                                                PassthroughAuthenticationGate.instance,
+                                                AuthenticationMode.FULL)
     val username = authenticator.askUsername(TEST_URL)
     val password = authenticator.askPassword(TEST_URL)
     if (assumeCorrect) {

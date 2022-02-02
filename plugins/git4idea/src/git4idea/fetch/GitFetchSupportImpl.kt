@@ -3,7 +3,7 @@ package git4idea.fetch
 
 import com.intellij.dvcs.MultiMessage
 import com.intellij.dvcs.MultiRootMessage
-import com.intellij.externalProcessAuthHelper.GitAuthenticationGate
+import com.intellij.externalProcessAuthHelper.AuthenticationGate
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -26,7 +26,7 @@ import git4idea.GitUtil.mention
 import git4idea.commands.Git
 import git4idea.commands.GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS
 import git4idea.commands.GitImpl
-import com.intellij.externalProcessAuthHelper.GitRestrictingAuthenticationGate
+import com.intellij.externalProcessAuthHelper.RestrictingAuthenticationGate
 import git4idea.config.GitConfigUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRemote
@@ -143,7 +143,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     LOG.debug("Fetching $remotes using $maxThreads threads")
     val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("GitFetch pool", maxThreads)
     val commonIndicator = progressManager.progressIndicator ?: EmptyProgressIndicator()
-    val authenticationGate = GitRestrictingAuthenticationGate()
+    val authenticationGate = RestrictingAuthenticationGate()
     for ((repository, remote, refspec) in remotes) {
       LOG.debug("Fetching $remote in $repository")
       val future: Future<SingleRemoteResult> = executor.submit<SingleRemoteResult> {
@@ -217,7 +217,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     }
   }
 
-  private fun doFetch(repository: GitRepository, remote: GitRemote, refspec: String?, authenticationGate: GitAuthenticationGate? = null)
+  private fun doFetch(repository: GitRepository, remote: GitRemote, refspec: String?, authenticationGate: AuthenticationGate? = null)
     : SingleRemoteResult {
 
     val recurseSubmodules = "--recurse-submodules=no"

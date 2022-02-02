@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.UUID;
 
 @Service
-public final class GitXmlRpcNativeSshService extends GitXmlRpcHandlerService<GitNativeSshAuthenticator> {
-  private GitXmlRpcNativeSshService() {
+public final class XmlRpcNativeSshService extends XmlRpcHandlerService<NativeSshAuthenticator> {
+  private XmlRpcNativeSshService() {
     super("intellij-ssh-askpass", NativeSshAskPassXmlRpcHandler.HANDLER_NAME, NativeSshAskPassApp.class);
   }
 
@@ -30,7 +30,7 @@ public final class GitXmlRpcNativeSshService extends GitXmlRpcHandlerService<Git
     @NotNull
     @Override
     public String handleInput(@NotNull @NonNls String handlerNo, @NotNull @NlsSafe String description) {
-      GitNativeSshAuthenticator g = getHandler(UUID.fromString(handlerNo));
+      NativeSshAuthenticator g = getHandler(UUID.fromString(handlerNo));
       String answer = g.handleInput(description);
       return ExternalAppUtil.adjustNullTo(answer);
     }

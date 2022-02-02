@@ -2,7 +2,7 @@
 package git4idea.branch;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.externalProcessAuthHelper.GitAuthenticationMode;
+import com.intellij.externalProcessAuthHelper.AuthenticationMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
@@ -51,8 +51,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static com.intellij.externalProcessAuthHelper.GitAuthenticationMode.SILENT;
-import static com.intellij.externalProcessAuthHelper.GitAuthenticationMode.NONE;
+import static com.intellij.externalProcessAuthHelper.AuthenticationMode.SILENT;
+import static com.intellij.externalProcessAuthHelper.AuthenticationMode.NONE;
 import static git4idea.config.GitIncomingCheckStrategy.Auto;
 import static git4idea.config.GitIncomingCheckStrategy.Never;
 import static git4idea.repo.GitRefUtil.addRefsHeadsPrefixIfNeeded;
@@ -265,7 +265,7 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
   private @NotNull Map<GitLocalBranch, Hash> calcBranchesToFetchForRemote(@NotNull GitRepository repository,
                                                                           @NotNull GitRemote gitRemote,
                                                                           @NotNull Collection<? extends GitBranchTrackInfo> trackInfoList,
-                                                                          GitAuthenticationMode mode) {
+                                                                          AuthenticationMode mode) {
     Map<GitLocalBranch, Hash> result = new HashMap<>();
     GitBranchesCollection branchesCollection = repository.getBranches();
     final Map<String, Hash> remoteNameWithHash =
@@ -313,8 +313,8 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
     return result;
   }
 
-  private @NotNull GitAuthenticationMode getAuthenticationMode(@NotNull GitRepository repository,
-                                                               @NotNull GitRemote remote) {
+  private @NotNull AuthenticationMode getAuthenticationMode(@NotNull GitRepository repository,
+                                                            @NotNull GitRemote remote) {
     return (myAuthSuccessMap.get(repository).contains(remote)) ? SILENT : NONE;
   }
 
@@ -329,7 +329,7 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
   private @NotNull Map<String, Hash> lsRemote(@NotNull GitRepository repository,
                                               @NotNull GitRemote remote,
                                               @NotNull List<String> branchRefNames,
-                                              @NotNull GitAuthenticationMode authenticationMode) {
+                                              @NotNull AuthenticationMode authenticationMode) {
     Map<String, Hash> result = new HashMap<>();
 
     if (!supportsIncomingOutgoing()) return result;
@@ -358,7 +358,7 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
 
   private @NotNull GitLineHandler createLsRemoteHandler(@NotNull GitRepository repository,
                                                         @NotNull GitRemote remote,
-                                                        @NotNull List<String> params, @NotNull GitAuthenticationMode authenticationMode) {
+                                                        @NotNull List<String> params, @NotNull AuthenticationMode authenticationMode) {
     GitLineHandler h = new GitLineHandler(myProject, repository.getRoot(), GitCommand.LS_REMOTE);
     h.setIgnoreAuthenticationMode(authenticationMode);
     h.addParameters(params);

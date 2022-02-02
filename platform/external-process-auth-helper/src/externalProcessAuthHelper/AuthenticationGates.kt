@@ -7,9 +7,9 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Semaphore
 import java.util.function.Supplier
 
-private val LOG = logger<GitRestrictingAuthenticationGate>()
+private val LOG = logger<RestrictingAuthenticationGate>()
 
-class GitRestrictingAuthenticationGate : GitAuthenticationGate {
+class RestrictingAuthenticationGate : AuthenticationGate {
   private val semaphore = Semaphore(1)
   @Volatile private var cancelled = false
   private val inputData = ConcurrentHashMap<String, String>()
@@ -47,7 +47,7 @@ class GitRestrictingAuthenticationGate : GitAuthenticationGate {
   }
 }
 
-class GitPassthroughAuthenticationGate : GitAuthenticationGate {
+class PassthroughAuthenticationGate : AuthenticationGate {
   override fun <T> waitAndCompute(operation: Supplier<T>): T {
     return operation.get()
   }
@@ -63,6 +63,6 @@ class GitPassthroughAuthenticationGate : GitAuthenticationGate {
   }
 
   companion object {
-    @JvmStatic val instance = GitPassthroughAuthenticationGate()
+    @JvmStatic val instance = PassthroughAuthenticationGate()
   }
 }

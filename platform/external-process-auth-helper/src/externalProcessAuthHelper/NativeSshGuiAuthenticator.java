@@ -23,22 +23,22 @@ import org.jetbrains.annotations.Nullable;
 import java.util.regex.Matcher;
 
 import static com.intellij.credentialStore.CredentialAttributesKt.generateServiceName;
-import static com.intellij.externalProcessAuthHelper.GitAuthenticationMode.FULL;
+import static com.intellij.externalProcessAuthHelper.AuthenticationMode.FULL;
 
-public class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
+public class NativeSshGuiAuthenticator implements NativeSshAuthenticator {
   @NotNull private final Project myProject;
-  @NotNull private final GitAuthenticationGate myAuthenticationGate;
-  @NotNull private final GitAuthenticationMode myAuthenticationMode;
+  @NotNull private final AuthenticationGate myAuthenticationGate;
+  @NotNull private final AuthenticationMode myAuthenticationMode;
   private final boolean myDoNotRememberPasswords;
 
   @Nullable private String myLastAskedKeyPath = null;
   @Nullable private String myLastAskedUserName = null;
   @Nullable private String myLastAskedConfirmationInput = null;
 
-  public GitNativeSshGuiAuthenticator(@NotNull Project project,
-                                      @NotNull GitAuthenticationGate authenticationGate,
-                                      @NotNull GitAuthenticationMode authenticationMode,
-                                      boolean doNotRememberPasswords) {
+  public NativeSshGuiAuthenticator(@NotNull Project project,
+                                   @NotNull AuthenticationGate authenticationGate,
+                                   @NotNull AuthenticationMode authenticationMode,
+                                   boolean doNotRememberPasswords) {
     myProject = project;
     myAuthenticationGate = authenticationGate;
     myAuthenticationMode = authenticationMode;
@@ -48,7 +48,7 @@ public class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
   @Nullable
   @Override
   public String handleInput(@NotNull @NlsSafe String description) {
-    if(myAuthenticationMode == GitAuthenticationMode.NONE) return null;
+    if(myAuthenticationMode == AuthenticationMode.NONE) return null;
     return myAuthenticationGate.waitAndCompute(() -> {
       if (isKeyPassphrase(description)) return askKeyPassphraseInput(description);
       if (isSshPassword(description)) return askSshPasswordInput(description);
@@ -159,15 +159,15 @@ public class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
   private static String askPassphrase(@Nullable Project project,
                                       @NotNull @NlsSafe String keyPath,
                                       boolean resetPassword,
-                                      @NotNull GitAuthenticationMode authenticationMode) {
-    if (authenticationMode == GitAuthenticationMode.NONE) return null;
+                                      @NotNull AuthenticationMode authenticationMode) {
+    if (authenticationMode == AuthenticationMode.NONE) return null;
     CredentialAttributes newAttributes = passphraseCredentialAttributes(keyPath);
     Credentials credentials = PasswordSafe.getInstance().get(newAttributes);
     if (credentials != null && !resetPassword) {
       String password = credentials.getPasswordAsString();
       if (password != null && !password.isEmpty()) return password;
     }
-    if (authenticationMode == GitAuthenticationMode.SILENT) return null;
+    if (authenticationMode == AuthenticationMode.SILENT) return null;
     return CredentialPromptDialog.askPassword(project,
                                               ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.title"),
                                               ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.message", PathUtil.getFileName(keyPath)),
@@ -179,15 +179,15 @@ public class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
   private static String askPassword(@Nullable Project project,
                                     @NotNull @NlsSafe String username,
                                     boolean resetPassword,
-                                    @NotNull GitAuthenticationMode authenticationMode) {
-    if (authenticationMode == GitAuthenticationMode.NONE) return null;
+                                    @NotNull AuthenticationMode authenticationMode) {
+    if (authenticationMode == AuthenticationMode.NONE) return null;
     CredentialAttributes newAttributes = passwordCredentialAttributes(username);
     Credentials credentials = PasswordSafe.getInstance().get(newAttributes);
     if (credentials != null && !resetPassword) {
       String password = credentials.getPasswordAsString();
       if (password != null) return password;
     }
-    if (authenticationMode == GitAuthenticationMode.SILENT) return null;
+    if (authenticationMode == AuthenticationMode.SILENT) return null;
     return CredentialPromptDialog.askPassword(project,
                                               ExternalProcessAuthHelperBundle.message("ssh.password.title"),
                                               ExternalProcessAuthHelperBundle.message("ssh.password.message", username),

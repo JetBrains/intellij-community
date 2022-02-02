@@ -6,8 +6,8 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.externalProcessAuthHelper.GitAuthenticationGate;
-import com.intellij.externalProcessAuthHelper.GitAuthenticationMode;
+import com.intellij.externalProcessAuthHelper.AuthenticationGate;
+import com.intellij.externalProcessAuthHelper.AuthenticationMode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
@@ -41,8 +41,8 @@ public class GitLineHandler extends GitTextHandler {
    * Remote url which require authentication
    */
   @NotNull private Collection<String> myUrls = Collections.emptyList();
-  @NotNull private GitAuthenticationMode myIgnoreAuthenticationRequest = GitAuthenticationMode.FULL;
-  @Nullable private GitAuthenticationGate myAuthenticationGate;
+  @NotNull private AuthenticationMode myIgnoreAuthenticationRequest = AuthenticationMode.FULL;
+  @Nullable private AuthenticationGate myAuthenticationGate;
 
   public GitLineHandler(@Nullable Project project,
                         @NotNull File directory,
@@ -89,20 +89,20 @@ public class GitLineHandler extends GitTextHandler {
   }
 
   @NotNull
-  public GitAuthenticationMode getIgnoreAuthenticationMode() {
+  public AuthenticationMode getIgnoreAuthenticationMode() {
     return myIgnoreAuthenticationRequest;
   }
 
-  public void setIgnoreAuthenticationMode(@NotNull GitAuthenticationMode authenticationMode) {
+  public void setIgnoreAuthenticationMode(@NotNull AuthenticationMode authenticationMode) {
     myIgnoreAuthenticationRequest = authenticationMode;
   }
 
   @Nullable
-  public GitAuthenticationGate getAuthenticationGate() {
+  public AuthenticationGate getAuthenticationGate() {
     return myAuthenticationGate;
   }
 
-  public void setAuthenticationGate(@NotNull GitAuthenticationGate authenticationGate) {
+  public void setAuthenticationGate(@NotNull AuthenticationGate authenticationGate) {
     myAuthenticationGate = authenticationGate;
   }
 

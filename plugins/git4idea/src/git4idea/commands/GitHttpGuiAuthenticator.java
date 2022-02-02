@@ -5,8 +5,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.dvcs.DvcsRememberedInputs;
-import com.intellij.externalProcessAuthHelper.GitAuthenticationGate;
-import com.intellij.externalProcessAuthHelper.GitAuthenticationMode;
+import com.intellij.externalProcessAuthHelper.AuthenticationGate;
+import com.intellij.externalProcessAuthHelper.AuthenticationMode;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -58,8 +58,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @NotNull private final Project myProject;
   @Nullable private final String myPresetUrl; //taken from GitHandler, used if git does not provide url
   @NotNull private final File myWorkingDirectory;
-  @NotNull private final GitAuthenticationGate myAuthenticationGate;
-  @NotNull private final GitAuthenticationMode myAuthenticationMode;
+  @NotNull private final AuthenticationGate myAuthenticationGate;
+  @NotNull private final AuthenticationMode myAuthenticationMode;
 
   @Nullable private volatile ProviderAndData myProviderAndData = null;
   private volatile boolean myCredentialHelperShouldBeUsed = false;
@@ -67,8 +67,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   GitHttpGuiAuthenticator(@NotNull Project project,
                           @NotNull Collection<String> urls,
                           @NotNull File workingDirectory,
-                          @NotNull GitAuthenticationGate authenticationGate,
-                          @NotNull GitAuthenticationMode authenticationMode) {
+                          @NotNull AuthenticationGate authenticationGate,
+                          @NotNull AuthenticationMode authenticationMode) {
     myProject = project;
     myPresetUrl = findFirstHttpUrl(urls);
     myWorkingDirectory = workingDirectory;
@@ -173,17 +173,17 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     DialogProvider dialogProvider = new DialogProvider(unifiedUrl, myProject, passwordSafeProvider, showActionForGitHelper);
 
-    if (myAuthenticationMode != GitAuthenticationMode.NONE) {
+    if (myAuthenticationMode != AuthenticationMode.NONE) {
       delegates.add(passwordSafeProvider);
     }
     List<ExtensionAdapterProvider> extensionAdapterProviders = ContainerUtil.map(GitHttpAuthDataProvider.EP_NAME.getExtensions(),
                                                                                  (provider) -> new ExtensionAdapterProvider(unifiedUrl,
                                                                                                                             myProject,
                                                                                                                             provider));
-    if (myAuthenticationMode == GitAuthenticationMode.SILENT) {
+    if (myAuthenticationMode == AuthenticationMode.SILENT) {
       delegates.addAll(ContainerUtil.filter(extensionAdapterProviders, p -> p.myDelegate.isSilent()));
     }
-    else if (myAuthenticationMode == GitAuthenticationMode.FULL) {
+    else if (myAuthenticationMode == AuthenticationMode.FULL) {
       delegates.addAll(extensionAdapterProviders);
       delegates.add(dialogProvider);
     }

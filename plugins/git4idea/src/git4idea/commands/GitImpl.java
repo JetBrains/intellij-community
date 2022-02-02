@@ -8,7 +8,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.externalProcessAuthHelper.GitAuthenticationGate;
+import com.intellij.externalProcessAuthHelper.AuthenticationGate;
 import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -607,7 +607,7 @@ public class GitImpl extends GitImplBase {
   public GitCommandResult fetch(@NotNull final GitRepository repository,
                                 @NotNull final GitRemote remote,
                                 @NotNull final List<? extends GitLineHandlerListener> listeners,
-                                @Nullable GitAuthenticationGate authenticationGate,
+                                @Nullable AuthenticationGate authenticationGate,
                                 final String... params) {
     return runCommand(() -> {
       GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.FETCH);

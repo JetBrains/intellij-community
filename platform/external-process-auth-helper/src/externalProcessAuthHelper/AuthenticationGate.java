@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
-public interface GitAuthenticationGate {
+public interface AuthenticationGate {
   <T> T waitAndCompute(@NotNull Supplier<T> operation);
   void cancel();
 

@@ -82,7 +82,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
   private void prepareHttpAuth() throws IOException {
     GitHttpAuthService service = ApplicationManager.getApplication().getService(GitHttpAuthService.class);
     addHandlerPathToEnvironment(GitCommand.GIT_ASK_PASS_ENV, service);
-    GitAuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), GitPassthroughAuthenticationGate.getInstance());
+    AuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), PassthroughAuthenticationGate.getInstance());
     GitHttpAuthenticator httpAuthenticator = service.createAuthenticator(myProject,
                                                                          myHandler.getUrls(),
                                                                          myHandler.getWorkingDirectory(),
@@ -154,12 +154,12 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
   }
 
   private void prepareNativeSshAuth() throws IOException {
-    GitXmlRpcNativeSshService service = ApplicationManager.getApplication().getService(GitXmlRpcNativeSshService.class);
+    XmlRpcNativeSshService service = ApplicationManager.getApplication().getService(XmlRpcNativeSshService.class);
 
     boolean doNotRememberPasswords = myHandler.getUrls().size() > 1;
-    GitAuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), GitPassthroughAuthenticationGate.getInstance());
-    GitNativeSshGuiAuthenticator authenticator =
-      new GitNativeSshGuiAuthenticator(myProject, authenticationGate, myHandler.getIgnoreAuthenticationMode(), doNotRememberPasswords);
+    AuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), PassthroughAuthenticationGate.getInstance());
+    NativeSshGuiAuthenticator authenticator =
+      new NativeSshGuiAuthenticator(myProject, authenticationGate, myHandler.getIgnoreAuthenticationMode(), doNotRememberPasswords);
 
     myNativeSshHandler = service.registerHandler(authenticator);
     int port = service.getXmlRcpPort();
@@ -178,7 +178,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
   }
 
   private void addHandlerPathToEnvironment(@NotNull String env,
-                                           @NotNull GitXmlRpcHandlerService service) throws IOException {
+                                           @NotNull XmlRpcHandlerService service) throws IOException {
     GitExecutable executable = myHandler.getExecutable();
     boolean useBatchFile = SystemInfo.isWindows &&
                            executable.isLocal() &&
@@ -191,7 +191,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
 
   private void cleanupNativeSshAuth() {
     if (myNativeSshHandler != null) {
-      ApplicationManager.getApplication().getService(GitXmlRpcNativeSshService.class).unregisterHandler(myNativeSshHandler);
+      ApplicationManager.getApplication().getService(XmlRpcNativeSshService.class).unregisterHandler(myNativeSshHandler);
       myNativeSshHandler = null;
     }
   }
