@@ -1,14 +1,18 @@
 package com.intellij.ide.starter.ide
 
 import com.intellij.ide.starter.ci.CIServer
+import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.ide.command.MarshallableCommand
 import com.intellij.ide.starter.models.*
 import com.intellij.ide.starter.path.IDEDataPaths
+import com.intellij.ide.starter.plugins.PluginConfigurator
 import com.intellij.ide.starter.profiler.ProfilerType
 import com.intellij.ide.starter.runner.IDECommandLine
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.system.SystemInfo
 import com.intellij.ide.starter.utils.logOutput
+import org.kodein.di.factory
+import org.kodein.di.newInstance
 import org.w3c.dom.Element
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
@@ -26,7 +30,7 @@ import kotlin.time.Duration
 data class IDETestContext(
   val paths: IDEDataPaths,
   val ide: InstalledIDE,
-  val test: StartUpPerformanceCase,
+  val testCase: TestCase,
   val testName: String,
   private val _resolvedProjectHome: Path?,
   val patchVMOptions: VMOptions.() -> VMOptions,
@@ -45,6 +49,8 @@ data class IDETestContext(
 
   val localGradleRepo: Path
     get() = paths.tempDir.resolve("gradle")
+
+  val pluginConfigurator: PluginConfigurator by di.newInstance { factory<IDETestContext, PluginConfigurator>().invoke(this@IDETestContext) }
 
   fun addVMOptionsPatch(patchVMOptions: VMOptions.() -> VMOptions) = copy(
     patchVMOptions = this.patchVMOptions.andThen(patchVMOptions)
@@ -363,7 +369,7 @@ data class IDETestContext(
         val warmupReports = IDEStartupReports(paths.reportsDir / "warmUp")
         enableStartupPerformanceLog(warmupReports).enableClassLoadingReport(paths.logsDir / "class-report.txt").patchVMOptions()
       },
-      commands = test.commands.plus(commands),
+      commands = testCase.commands.plus(commands),
       runTimeout = runTimeout,
       launchName = "warmUp",
       withProfiling = false

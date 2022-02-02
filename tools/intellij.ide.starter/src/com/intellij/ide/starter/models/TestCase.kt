@@ -4,22 +4,22 @@ import com.intellij.ide.starter.ide.command.MarshallableCommand
 import com.intellij.ide.starter.project.ProjectInfo
 import com.intellij.ide.starter.project.ProjectInfoSpec
 
-data class StartUpPerformanceCase(
+data class TestCase(
   val ideInfo: IdeInfo,
   val projectInfo: ProjectInfoSpec? = null,
   val commands: Iterable<MarshallableCommand> = listOf(),
   val vmOptionsFix: VMOptions.() -> VMOptions = { this },
   val useInMemoryFileSystem: Boolean = false
 ) {
-  fun withProject(projectInfo: ProjectInfoSpec): StartUpPerformanceCase = copy(projectInfo = projectInfo)
+  fun withProject(projectInfo: ProjectInfoSpec): TestCase = copy(projectInfo = projectInfo)
 
-  fun withCommands(commands: Iterable<MarshallableCommand> = this.commands): StartUpPerformanceCase = copy(commands = commands.toList())
+  fun withCommands(commands: Iterable<MarshallableCommand> = this.commands): TestCase = copy(commands = commands.toList())
 
-  fun markNotReusable(): StartUpPerformanceCase = markReusable(false)
+  fun markNotReusable(): TestCase = markReusable(false)
 
   fun markReusable(isReusable: Boolean = true) = copy(projectInfo = (projectInfo as ProjectInfo).copy(isReusable = isReusable))
 
-  fun makeEap(product: String = "Idea"): StartUpPerformanceCase {
+  fun makeEap(product: String = "Idea"): TestCase {
     return copy(
       ideInfo = IdeInfo.new(
         this.ideInfo.productCode,
@@ -31,7 +31,7 @@ data class StartUpPerformanceCase(
     )
   }
 
-  fun makeSpecificBuild(buildNumber: String): StartUpPerformanceCase {
+  fun makeSpecificBuild(buildNumber: String): TestCase {
     return copy(
       ideInfo = IdeInfo.new(
         productCode = this.ideInfo.productCode,
@@ -44,7 +44,7 @@ data class StartUpPerformanceCase(
   }
 
   @Suppress("unused")
-  fun makeRelease(branch: String, product: String = "Idea"): StartUpPerformanceCase {
+  fun makeRelease(branch: String, product: String = "Idea"): TestCase {
     return copy(
       ideInfo = IdeInfo.new(
         this.ideInfo.productCode,

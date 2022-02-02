@@ -6,7 +6,7 @@ import com.intellij.ide.starter.downloadAndroidStudio
 import com.intellij.ide.starter.ide.*
 import com.intellij.ide.starter.models.IdeInfo
 import com.intellij.ide.starter.models.IdeProduct
-import com.intellij.ide.starter.models.StartUpPerformanceCase
+import com.intellij.ide.starter.models.TestCase
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.path.IDEDataPaths
 import com.intellij.ide.starter.system.SystemInfo
@@ -85,7 +85,7 @@ interface TestContainer<T> : Closeable {
   }
 
   /** Starting point to run your test */
-  fun initializeTestRunner(testName: String, testCase: StartUpPerformanceCase): IDETestContext {
+  fun initializeTestRunner(testName: String, testCase: TestCase): IDETestContext {
     check(allContexts.none { it.testName == testName }) { "Test $testName is already initialized. Use another name." }
     logOutput("Resolving IDE build for $testName...")
 
