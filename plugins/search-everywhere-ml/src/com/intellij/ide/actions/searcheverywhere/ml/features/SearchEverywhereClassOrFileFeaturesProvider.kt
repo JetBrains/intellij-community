@@ -185,9 +185,10 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: 
 
     val (openedFilePackage, foundFilePackage) = ReadAction.compute<Pair<String?, String?>, Nothing> {
       val fileIndex = ProjectRootManager.getInstance(project).fileIndex
+      val openedFileDirectory = openedFile.parent.takeIf { it.isDirectory }  // Parents of some files may still not be directories
       val foundFileDirectory = if (file.isDirectory) file else file.parent
 
-      val openedFilePackageName = openedFile.parent?.let { fileIndex.getPackageNameByDirectory(it) }
+      val openedFilePackageName = openedFileDirectory?.let { fileIndex.getPackageNameByDirectory(it) }
       val foundFilePackageName = foundFileDirectory?.let { fileIndex.getPackageNameByDirectory(it) }
 
       Pair(openedFilePackageName, foundFilePackageName)
