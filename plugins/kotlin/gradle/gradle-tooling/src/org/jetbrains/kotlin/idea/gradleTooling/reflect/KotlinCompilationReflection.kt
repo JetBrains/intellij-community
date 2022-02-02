@@ -10,7 +10,8 @@ fun KotlinCompilationReflection(kotlinCompilation: Any): KotlinCompilationReflec
 interface KotlinCompilationReflection {
     val compilationName: String
     val gradleCompilation: Named
-    val sourceSets: Collection<Named>?
+    val sourceSets: Collection<Named>? // Source Sets that directly added to compilation
+    val allSourceSets: Collection<Named>? // this.sourceSets + their transitive closure through dependsOn relation
     val compilationOutput: KotlinCompilationOutputReflection?
     val konanTargetName: String?
     val compileKotlinTaskName: String?
@@ -26,6 +27,11 @@ private class KotlinCompilationReflectionImpl(private val instance: Any) : Kotli
     override val sourceSets: Collection<Named>? by lazy {
         instance.callReflectiveGetter("getKotlinSourceSets", logger)
     }
+
+    override val allSourceSets: Collection<Named>? by lazy {
+        instance.callReflectiveGetter("getAllKotlinSourceSets", logger)
+    }
+
     override val compilationOutput: KotlinCompilationOutputReflection? by lazy {
         instance.callReflectiveAnyGetter("getOutput", logger)?.let { gradleOutput -> KotlinCompilationOutputReflection(gradleOutput) }
     }
