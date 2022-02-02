@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
+import com.intellij.externalProcessAuthHelper.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -9,15 +10,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import externalApp.nativessh.NativeSshAskPassXmlRpcHandler;
 import git4idea.GitUtil;
 import git4idea.config.GitExecutable;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersion;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.http.GitAskPassXmlRpcHandler;
-import git4idea.nativessh.GitNativeSshAskPassXmlRpcHandler;
-import git4idea.ssh.GitXmlRpcHandlerService;
-import git4idea.ssh.GitXmlRpcNativeSshService;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -166,8 +165,8 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
     int port = service.getXmlRcpPort();
 
     addHandlerPathToEnvironment(GitCommand.GIT_SSH_ASK_PASS_ENV, service);
-    myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_HANDLER_ENV, myNativeSshHandler.toString());
-    myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_PORT_ENV, Integer.toString(port));
+    myHandler.addCustomEnvironmentVariable(NativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_HANDLER_ENV, myNativeSshHandler.toString());
+    myHandler.addCustomEnvironmentVariable(NativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_PORT_ENV, Integer.toString(port));
 
     // SSH_ASKPASS is ignored if DISPLAY variable is not set
     String displayEnv = StringUtil.nullize(System.getenv(GitCommand.DISPLAY_ENV));
@@ -185,7 +184,8 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
                            executable.isLocal() &&
                            (!Registry.is("git.use.shell.script.on.windows") ||
                             !GitVersionSpecialty.CAN_USE_SHELL_HELPER_SCRIPT_ON_WINDOWS.existsIn(myVersion));
-    File scriptFile = service.getScriptPath(executable, useBatchFile);
+    File scriptFile = service.getScriptPath(executable.getId(), useBatchFile, executable instanceof ScriptGenerator.CustomScriptCommandLineBuilder
+                                                                              ? (ScriptGenerator.CustomScriptCommandLineBuilder)executable : null);
     myHandler.addCustomEnvironmentVariable(env, scriptFile);
   }
 

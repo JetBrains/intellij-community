@@ -3,6 +3,8 @@ package git4idea.commands
 
 import com.intellij.credentialStore.Credentials
 import com.intellij.dvcs.DvcsRememberedInputs
+import com.intellij.externalProcessAuthHelper.GitAuthenticationMode
+import com.intellij.externalProcessAuthHelper.GitPassthroughAuthenticationGate
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.DialogWrapper

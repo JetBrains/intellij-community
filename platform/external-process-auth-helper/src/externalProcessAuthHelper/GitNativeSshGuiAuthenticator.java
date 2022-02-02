@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.commands;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.externalProcessAuthHelper;
 
 import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.CredentialPromptDialog;
@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ssh.SSHUtil;
 import com.intellij.util.PathUtil;
-import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,9 +23,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.regex.Matcher;
 
 import static com.intellij.credentialStore.CredentialAttributesKt.generateServiceName;
-import static git4idea.commands.GitAuthenticationMode.FULL;
+import static com.intellij.externalProcessAuthHelper.GitAuthenticationMode.FULL;
 
-class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
+public class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
   @NotNull private final Project myProject;
   @NotNull private final GitAuthenticationGate myAuthenticationGate;
   @NotNull private final GitAuthenticationMode myAuthenticationMode;
@@ -36,10 +35,10 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
   @Nullable private String myLastAskedUserName = null;
   @Nullable private String myLastAskedConfirmationInput = null;
 
-  GitNativeSshGuiAuthenticator(@NotNull Project project,
-                               @NotNull GitAuthenticationGate authenticationGate,
-                               @NotNull GitAuthenticationMode authenticationMode,
-                               boolean doNotRememberPasswords) {
+  public GitNativeSshGuiAuthenticator(@NotNull Project project,
+                                      @NotNull GitAuthenticationGate authenticationGate,
+                                      @NotNull GitAuthenticationMode authenticationMode,
+                                      boolean doNotRememberPasswords) {
     myProject = project;
     myAuthenticationGate = authenticationGate;
     myAuthenticationMode = authenticationMode;
@@ -75,8 +74,8 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
 
     if (myDoNotRememberPasswords) {
       return askUser(() -> {
-        String message = GitBundle.message("ssh.ask.passphrase.message", PathUtil.getFileName(keyPath));
-        return Messages.showPasswordDialog(myProject, message, GitBundle.message("ssh.ask.passphrase.title"), null);
+        String message = ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.message", PathUtil.getFileName(keyPath));
+        return Messages.showPasswordDialog(myProject, message, ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.title"), null);
       });
     }
     else {
@@ -99,8 +98,8 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
 
     if (myDoNotRememberPasswords) {
       return askUser(() -> {
-        String message = GitBundle.message("ssh.password.message", username);
-        return Messages.showPasswordDialog(myProject, message, GitBundle.message("ssh.password.title"), null);
+        String message = ExternalProcessAuthHelperBundle.message("ssh.password.message", username);
+        return Messages.showPasswordDialog(myProject, message, ExternalProcessAuthHelperBundle.message("ssh.password.title"), null);
       });
     }
     else {
@@ -125,7 +124,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
         return knownAnswer;
       }
 
-      int answer = Messages.showYesNoDialog(myProject, message, GitBundle.message("title.ssh.confirmation"), null);
+      int answer = Messages.showYesNoDialog(myProject, message, ExternalProcessAuthHelperBundle.message("title.ssh.confirmation"), null);
       String textAnswer;
       if (answer == Messages.YES) {
         textAnswer = "yes";
@@ -143,7 +142,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
 
   @Nullable
   private String askGenericInput(@NotNull @Nls String description) {
-    return askUser(() -> Messages.showPasswordDialog(myProject, description, GitBundle.message("ssh.keyboard.interactive.title"), null));
+    return askUser(() -> Messages.showPasswordDialog(myProject, description, ExternalProcessAuthHelperBundle.message("ssh.keyboard.interactive.title"), null));
   }
 
   @Nullable
@@ -170,8 +169,8 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
     }
     if (authenticationMode == GitAuthenticationMode.SILENT) return null;
     return CredentialPromptDialog.askPassword(project,
-                                              GitBundle.message("ssh.ask.passphrase.title"),
-                                              GitBundle.message("ssh.ask.passphrase.message", PathUtil.getFileName(keyPath)),
+                                              ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.title"),
+                                              ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.message", PathUtil.getFileName(keyPath)),
                                               newAttributes, true);
   }
 
@@ -190,18 +189,18 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
     }
     if (authenticationMode == GitAuthenticationMode.SILENT) return null;
     return CredentialPromptDialog.askPassword(project,
-                                              GitBundle.message("ssh.password.title"),
-                                              GitBundle.message("ssh.password.message", username),
+                                              ExternalProcessAuthHelperBundle.message("ssh.password.title"),
+                                              ExternalProcessAuthHelperBundle.message("ssh.password.message", username),
                                               newAttributes, true);
   }
 
   @NotNull
   private static CredentialAttributes passphraseCredentialAttributes(@NotNull @Nls String key) {
-    return new CredentialAttributes(generateServiceName(GitBundle.message("label.credential.store.key.ssh.passphrase"), key), key);
+    return new CredentialAttributes(generateServiceName(ExternalProcessAuthHelperBundle.message("label.credential.store.key.ssh.passphrase"), key), key);
   }
 
   @NotNull
   private static CredentialAttributes passwordCredentialAttributes(@NotNull @Nls String key) {
-    return new CredentialAttributes(generateServiceName(GitBundle.message("label.credential.store.key.ssh.password"), key), key);
+    return new CredentialAttributes(generateServiceName(ExternalProcessAuthHelperBundle.message("label.credential.store.key.ssh.password"), key), key);
   }
 }

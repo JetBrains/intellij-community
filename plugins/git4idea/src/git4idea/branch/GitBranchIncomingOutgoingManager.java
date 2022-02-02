@@ -2,6 +2,7 @@
 package git4idea.branch;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.externalProcessAuthHelper.GitAuthenticationMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
@@ -50,8 +51,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static git4idea.commands.GitAuthenticationMode.NONE;
-import static git4idea.commands.GitAuthenticationMode.SILENT;
+import static com.intellij.externalProcessAuthHelper.GitAuthenticationMode.SILENT;
+import static com.intellij.externalProcessAuthHelper.GitAuthenticationMode.NONE;
 import static git4idea.config.GitIncomingCheckStrategy.Auto;
 import static git4idea.config.GitIncomingCheckStrategy.Never;
 import static git4idea.repo.GitRefUtil.addRefsHeadsPrefixIfNeeded;

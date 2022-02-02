@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea;
+package externalApp;
 
 import org.apache.xmlrpc.XmlRpcClientLite;
 import org.apache.xmlrpc.XmlRpcException;
@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Vector;
 
-public final class GitAppUtil {
+public final class ExternalAppUtil {
   @SuppressWarnings("UseOfObsoleteCollectionType")
   public static <T> T sendXmlRequest(@NotNull String methodName, int port, @NotNull Object @NotNull ... parameters) {
     try {

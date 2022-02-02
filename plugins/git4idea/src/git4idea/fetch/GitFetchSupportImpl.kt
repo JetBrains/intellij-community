@@ -3,6 +3,7 @@ package git4idea.fetch
 
 import com.intellij.dvcs.MultiMessage
 import com.intellij.dvcs.MultiRootMessage
+import com.intellij.externalProcessAuthHelper.GitAuthenticationGate
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -23,10 +24,9 @@ import git4idea.GitNotificationIdsHolder
 import git4idea.GitUtil.findRemoteByName
 import git4idea.GitUtil.mention
 import git4idea.commands.Git
-import git4idea.commands.GitAuthenticationGate
 import git4idea.commands.GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS
 import git4idea.commands.GitImpl
-import git4idea.commands.GitRestrictingAuthenticationGate
+import com.intellij.externalProcessAuthHelper.GitRestrictingAuthenticationGate
 import git4idea.config.GitConfigUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRemote

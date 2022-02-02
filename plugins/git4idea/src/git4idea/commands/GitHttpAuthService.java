@@ -15,6 +15,9 @@
  */
 package git4idea.commands;
 
+import com.intellij.externalProcessAuthHelper.GitAuthenticationGate;
+import com.intellij.externalProcessAuthHelper.GitAuthenticationMode;
+import com.intellij.externalProcessAuthHelper.GitXmlRpcHandlerService;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -22,7 +25,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import git4idea.http.GitAskPassApp;
 import git4idea.http.GitAskPassXmlRpcHandler;
-import git4idea.ssh.GitXmlRpcHandlerService;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;

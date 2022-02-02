@@ -15,6 +15,8 @@
  */
 package git4idea.commands;
 
+import com.intellij.externalProcessAuthHelper.GitAuthenticationGate;
+import com.intellij.externalProcessAuthHelper.GitAuthenticationMode;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 

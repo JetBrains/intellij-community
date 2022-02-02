@@ -5,6 +5,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.dvcs.DvcsRememberedInputs;
+import com.intellij.externalProcessAuthHelper.GitAuthenticationGate;
+import com.intellij.externalProcessAuthHelper.GitAuthenticationMode;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;

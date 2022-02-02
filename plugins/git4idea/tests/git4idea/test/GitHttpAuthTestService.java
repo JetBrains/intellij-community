@@ -16,8 +16,8 @@
 package git4idea.test;
 
 import com.intellij.openapi.project.Project;
-import git4idea.commands.GitAuthenticationGate;
-import git4idea.commands.GitAuthenticationMode;
+import com.intellij.externalProcessAuthHelper.GitAuthenticationGate;
+import com.intellij.externalProcessAuthHelper.GitAuthenticationMode;
 import git4idea.commands.GitHttpAuthService;
 import git4idea.commands.GitHttpAuthenticator;
 import org.jetbrains.annotations.NotNull;

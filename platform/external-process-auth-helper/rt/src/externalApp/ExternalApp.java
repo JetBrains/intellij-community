@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea;
+package externalApp;
 
 /**
- * Marker interface for external Java applications which are started by the Git process, when it needs to communicate with user.
+ * Marker interface for external Java applications which are started by the external process (e.g. Git or SSH), when it needs to communicate with user.
  *
  * @author Kirill Likhodedov
  */
-public interface GitExternalApp {
+public interface ExternalApp {
 }

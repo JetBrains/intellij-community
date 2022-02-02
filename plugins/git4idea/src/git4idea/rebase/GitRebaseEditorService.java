@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
+import com.intellij.externalProcessAuthHelper.ScriptGenerator;
 import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,7 +11,6 @@ import git4idea.commands.GitHandler;
 import git4idea.config.GitExecutable;
 import git4idea.editor.GitRebaseEditorApp;
 import git4idea.editor.GitRebaseEditorXmlRpcHandler;
-import git4idea.util.ScriptGenerator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.BuiltInServerManager;
@@ -79,7 +79,8 @@ public final class GitRebaseEditorService implements Disposable {
     synchronized (myScriptLock) {
       ScriptGenerator generator = new ScriptGenerator(GIT_REBASE_EDITOR_PREFIX, GitRebaseEditorApp.class);
       generator.addInternal(Integer.toString(BuiltInServerManager.getInstance().waitForStart().getPort()));
-      return generator.commandLine(executable);
+      return generator.commandLine(executable instanceof ScriptGenerator.CustomScriptCommandLineBuilder
+                                   ? (ScriptGenerator.CustomScriptCommandLineBuilder)executable : null);
     }
   }
 

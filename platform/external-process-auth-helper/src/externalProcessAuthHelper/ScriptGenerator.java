@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.util;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.externalProcessAuthHelper;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
@@ -7,19 +7,16 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.config.GitExecutable;
-import git4idea.editor.GitRebaseEditorXmlRpcHandler;
-import git4idea.http.GitAskPassXmlRpcHandler;
-import git4idea.nativessh.GitNativeSshAskPassXmlRpcHandler;
+import externalApp.ExternalApp;
 import org.apache.commons.codec.DecoderException;
 import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Script generator utility class. It uses to generate a temporary scripts that
@@ -53,6 +50,7 @@ public class ScriptGenerator {
     myPrefix = prefix;
     myMainClass = mainClass;
     addClasses(myMainClass);
+    addClasses(ExternalApp.class);
     addClasses(XmlRpcClientLite.class, DecoderException.class);
   }
 
@@ -107,34 +105,21 @@ public class ScriptGenerator {
   }
 
   @NotNull
-  public File generate(@NotNull GitExecutable executable, boolean useBatchFile) throws IOException {
-    String commandLine = commandLine(executable);
+  public File generate(boolean useBatchFile, @Nullable CustomScriptCommandLineBuilder customBuilder) throws IOException {
+    String commandLine = commandLine(customBuilder);
     return useBatchFile ? generateBatch(myPrefix, commandLine)
                         : generateShell(myPrefix, commandLine);
   }
 
   /**
-   * @return a command line for the executable program
+   * @return a command line for the customCmdBuilder program
    */
   @NonNls
-  public String commandLine(@NotNull GitExecutable executable) {
+  public String commandLine(@Nullable CustomScriptCommandLineBuilder customCmdBuilder) {
     @NonNls StringBuilder cmd = new StringBuilder();
 
-    if (executable instanceof GitExecutable.Wsl) {
-      List<String> envs = ContainerUtil.newArrayList(
-        GitNativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_HANDLER_ENV,
-        GitNativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_PORT_ENV,
-        GitAskPassXmlRpcHandler.IJ_ASK_PASS_HANDLER_ENV,
-        GitAskPassXmlRpcHandler.IJ_ASK_PASS_PORT_ENV,
-        GitRebaseEditorXmlRpcHandler.IJ_EDITOR_HANDLER_ENV);
-      cmd.append("export WSLENV=");
-      cmd.append(StringUtil.join(envs, it -> it + "/w", ":"));
-      cmd.append("\n");
-
-      cmd.append('"');
-      File javaExecutable = new File(String.format("%s\\bin\\java.exe", System.getProperty("java.home")));
-      cmd.append(executable.convertFilePath(javaExecutable));
-      cmd.append('"');
+    if (customCmdBuilder != null) {
+      customCmdBuilder.buildJavaCmd(cmd);
     }
     else {
       cmd.append('"');
@@ -161,5 +146,9 @@ public class ScriptGenerator {
       line = line.replace('\\', '/');
     }
     return line;
+  }
+
+  public interface CustomScriptCommandLineBuilder {
+    void buildJavaCmd(StringBuilder cmd);
   }
 }

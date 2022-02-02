@@ -559,7 +559,6 @@
     <projectService serviceImplementation="git4idea.actions.GitQuickActionsToolbarService"/>
 
     <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
-    <applicationService serviceImplementation="git4idea.ssh.GitXmlRpcNativeSshService"/>
     <applicationService serviceInterface="git4idea.commands.GitHttpAuthService"
                         serviceImplementation="git4idea.commands.GitHttpAuthServiceImpl"/>
     <applicationService serviceImplementation="git4idea.config.SSHConnectionSettings"/>

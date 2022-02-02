@@ -1,15 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.ssh;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.externalProcessAuthHelper;
 
 import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import git4idea.GitExternalApp;
-import git4idea.config.GitExecutable;
-import git4idea.util.ScriptGenerator;
+import externalApp.ExternalApp;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.BuiltInServerManager;
 
 import java.io.File;
@@ -40,7 +39,7 @@ public abstract class GitXmlRpcHandlerService<T> implements Disposable {
 
   @NotNull private final @NonNls String myScriptTempFilePrefix;
   @NotNull private final @NonNls String myHandlerName;
-  @NotNull private final Class<? extends GitExternalApp> myScriptMainClass;
+  @NotNull private final Class<? extends ExternalApp> myScriptMainClass;
 
   @NotNull private final Map<@NonNls String, File> myScriptPaths = new HashMap<>();
   @NotNull private final Object SCRIPT_FILE_LOCK = new Object();
@@ -55,7 +54,7 @@ public abstract class GitXmlRpcHandlerService<T> implements Disposable {
    */
   protected GitXmlRpcHandlerService(@NotNull @NonNls String prefix,
                                     @NotNull @NonNls String handlerName,
-                                    @NotNull Class<? extends GitExternalApp> aClass) {
+                                    @NotNull Class<? extends ExternalApp> aClass) {
     myScriptTempFilePrefix = prefix;
     myHandlerName = handlerName;
     myScriptMainClass = aClass;
@@ -75,13 +74,13 @@ public abstract class GitXmlRpcHandlerService<T> implements Disposable {
    * @throws IOException if script cannot be generated
    */
   @NotNull
-  public File getScriptPath(@NotNull GitExecutable executable, boolean useBatchFile) throws IOException {
+  public File getScriptPath(@NotNull String scriptId, boolean useBatchFile, @Nullable ScriptGenerator.CustomScriptCommandLineBuilder customCmdBuilder) throws IOException {
     synchronized (SCRIPT_FILE_LOCK) {
-      String id = executable.getId() + (useBatchFile ? "-bat" : ""); //NON-NLS
+      String id = scriptId + (useBatchFile ? "-bat" : ""); //NON-NLS
       File scriptPath = myScriptPaths.get(id);
       if (scriptPath == null || !scriptPath.exists()) {
-        ScriptGenerator generator = new ScriptGenerator(myScriptTempFilePrefix + "-" + executable.getId(), myScriptMainClass);
-        scriptPath = generator.generate(executable, useBatchFile);
+        ScriptGenerator generator = new ScriptGenerator(myScriptTempFilePrefix + "-" + scriptId, myScriptMainClass);
+        scriptPath = generator.generate(useBatchFile, customCmdBuilder);
         myScriptPaths.put(id, scriptPath);
       }
       return scriptPath;
