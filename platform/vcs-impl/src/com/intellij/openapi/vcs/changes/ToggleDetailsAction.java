@@ -39,9 +39,9 @@ public class ToggleDetailsAction extends ShowDiffPreviewAction {
   }
 
   @Nullable
-  private static ChangesViewManager getChangesViewManager(@NotNull Project project){
-    ChangesViewI changesViewI = project.getServiceIfCreated(ChangesViewI.class);
-    if(changesViewI instanceof ChangesViewManager) return (ChangesViewManager)changesViewI;
+  private static ChangesViewManager getChangesViewManager(@NotNull Project project) {
+    ChangesViewI changesView = ChangesViewManager.getInstance(project);
+    if (changesView instanceof ChangesViewManager) return (ChangesViewManager)changesView;
     return null;
   }
 }

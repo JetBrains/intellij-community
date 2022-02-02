@@ -878,13 +878,13 @@ public class ChangesViewManager implements ChangesViewEx,
   }
 
 
-  public Boolean isDiffPreviewAvailable() {
+  public boolean isDiffPreviewAvailable() {
     if (myToolWindowPanel == null) return false;
 
     return myToolWindowPanel.mySplitterDiffPreview != null || ChangesViewToolWindowPanel.isOpenEditorDiffPreviewWithSingleClick.asBoolean();
   }
 
-  public void diffPreviewChanged(Boolean state) {
+  public void diffPreviewChanged(boolean state) {
     if (myToolWindowPanel == null) return;
     ObjectUtils.chooseNotNull(myToolWindowPanel.mySplitterDiffPreview, myToolWindowPanel.myEditorDiffPreview)
       .setPreviewVisible(state, false);
