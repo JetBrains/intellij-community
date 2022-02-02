@@ -127,6 +127,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       envs.putAll(System.getenv());
       EnvironmentRestorer.restoreOverriddenVars(envs);
     }
+    else {
+      LOG.info("No parent environment passed");
+    }
 
     if (!SystemInfo.isWindows) {
       envs.put("TERM", "xterm-256color");
@@ -173,6 +176,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     String workingDir = getWorkingDirectory(options.getWorkingDirectory());
     TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command);
     try {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Starting " + Arrays.toString(command) + " in " + workingDir +
+                  " (" + (workingDir != null && new File(workingDir).isDirectory() ? "exists" : "does not exist") + ")" +
+                  " [" + options.getInitialColumns() + "," + options.getInitialRows() + "], envs=" + envs);
+      }
       long startNano = System.nanoTime();
       PtyProcessBuilder builder = new PtyProcessBuilder(command)
         .setEnvironment(envs)
