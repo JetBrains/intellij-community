@@ -68,7 +68,6 @@ public class EnvReader extends EnvironmentUtil.ShellEnvReader {
       throw new NoSuchFileException(batchFile.toString());
     }
 
-    final Path envFile = Files.createTempFile("intellij-cmd-env.", ".tmp"); // NON-NLS
     final List<String> callArgs = new ArrayList<>();
     if (batchFile != null) {
       callArgs.add("call");
@@ -84,7 +83,7 @@ public class EnvReader extends EnvironmentUtil.ShellEnvReader {
     callArgs.add(PathManager.getJarPathForClass(ReadEnv.class));
     callArgs.add(ReadEnv.class.getCanonicalName());
 
-    callArgs.add(envFile.toString());
+    callArgs.add("");
     callArgs.add("||");
     callArgs.add("exit"); // NON-NLS
     callArgs.add("/B"); // NON-NLS

@@ -11,7 +11,7 @@ public final class ReadEnv {
   public static void main(String[] args) throws Exception {
     if (args.length != 1) throw new Exception("Exactly one argument expected");
 
-    Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(args[0]), "UTF-8"));
+    Writer out = new BufferedWriter(new OutputStreamWriter(System.out, "UTF-8"));
     try {
       for (Map.Entry<String, String> each : System.getenv().entrySet()) {
         // on Windows Java getenv() includes variables that start from '='.
