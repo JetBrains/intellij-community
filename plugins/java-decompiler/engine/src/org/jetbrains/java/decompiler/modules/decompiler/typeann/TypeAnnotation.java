@@ -65,4 +65,14 @@ public class TypeAnnotation {
   public @NotNull List<StructTypePathEntry> getPaths() {
     return paths;
   }
+
+  public boolean isForDeepestArrayComponent(int arrayDim) {
+    StructTypePathEntry pathEntry = getPaths().stream().findFirst().orElse(null);
+    if (pathEntry == null && arrayDim == 0) return true;
+    if (pathEntry != null
+        && pathEntry.getTypePathEntryKind() == StructTypePathEntry.Kind.ARRAY.getOpcode()
+        && getPaths().size() == arrayDim
+    ) return true;
+    return false;
+  }
 }

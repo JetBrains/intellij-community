@@ -31,7 +31,6 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class ClassWriter {
   private final PoolInterceptor interceptor;
@@ -313,7 +312,7 @@ public class ClassWriter {
       appendComment(buffer, "synthetic class", indent);
     }
 
-    appendAnnotations(buffer, 0, indent, cl);
+    appendAnnotations(buffer, indent, cl);
 
     buffer.appendIndent(indent);
 
@@ -457,7 +456,7 @@ public class ClassWriter {
     Map.Entry<VarType, GenericFieldDescriptor> fieldTypeData = getFieldTypeData(fd);
     VarType fieldType = fieldTypeData.getKey();
 
-    appendAnnotations(buffer, fieldType.arrayDim, indent, fd);
+    appendAnnotations(buffer, indent, fd);
 
     buffer.appendIndent(indent);
 
@@ -668,9 +667,7 @@ public class ClassWriter {
           }
         }
       }
-      int arrayDim = 0;
-      if (descriptor != null) arrayDim = descriptor.returnType.arrayDim;
-      appendAnnotations(buffer, arrayDim, indent, mt);
+      appendAnnotations(buffer, indent, mt);
 
       buffer.appendIndent(indent);
 
@@ -890,7 +887,7 @@ public class ClassWriter {
   }
 
   public static void packageInfoToJava(StructClass cl, TextBuffer buffer) {
-    appendAnnotations(buffer, 0, 0, cl);
+    appendAnnotations(buffer, 0, cl);
 
     int index = cl.qualifiedName.lastIndexOf('/');
     String packageName = cl.qualifiedName.substring(0, index).replace('/', '.');
@@ -898,7 +895,7 @@ public class ClassWriter {
   }
 
   public static void moduleInfoToJava(StructClass cl, TextBuffer buffer) {
-    appendAnnotations(buffer, 0, 0, cl);
+    appendAnnotations(buffer, 0, cl);
 
     StructModuleAttribute moduleAttribute = cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_MODULE);
 
@@ -1029,7 +1026,7 @@ public class ClassWriter {
     VarType fieldType = fieldTypeData.getKey();
     GenericFieldDescriptor descriptor = fieldTypeData.getValue();
 
-    appendAnnotations(buffer, fieldType.arrayDim, -1, cd);
+    appendAnnotations(buffer, -1, cd);
 
     final List<TypeAnnotationWriteHelper> typeAnnwriteHelper = TypeAnnotationWriteHelper.listFrom(cd);
 
@@ -1151,32 +1148,12 @@ public class ClassWriter {
     buffer.appendIndent(indent).append("// $FF: ").append(comment).appendLineSeparator();
   }
 
-  private static void appendAnnotations(TextBuffer buffer, int arrayDim, int indent, StructMember mb) {
-    // Check whether annotation will already be written as a type annotation to avoid duplication
-    final var firstTypeAnnotation = Arrays.stream(StructGeneralAttribute.TYPE_ANNOTATION_ATTRIBUTES)
-      .flatMap(attrKey -> {
-        StructTypeAnnotationAttribute attribute = (StructTypeAnnotationAttribute)mb.getAttribute(attrKey);
-        if (attribute == null) {
-          return Stream.empty();
-        } else {
-          return attribute.getAnnotations().stream();
-        }
-      }).filter(typeAnnotation -> {
-        StructTypePathEntry pathEntry = typeAnnotation.getPaths().stream().findFirst().orElse(null);
-        if (pathEntry == null && arrayDim == 0) return true;
-        if (pathEntry != null && pathEntry.getTypePathEntryKind() == StructTypePathEntry.Kind.ARRAY.getOpcode() &&
-            typeAnnotation.getPaths().size() == arrayDim
-        ) return true;
-        return false;
-      }).findFirst();
-
+  private static void appendAnnotations(TextBuffer buffer, int indent, StructMember mb) {
     for (StructGeneralAttribute.Key<?> key : StructGeneralAttribute.ANNOTATION_ATTRIBUTES) {
       StructAnnotationAttribute attribute = (StructAnnotationAttribute)mb.getAttribute(key);
       if (attribute != null) {
         for (AnnotationExprent annotation : attribute.getAnnotations()) {
-          if (firstTypeAnnotation.isPresent() &&
-              firstTypeAnnotation.get().getAnnotationExpr().getClassName().equals(annotation.getClassName())
-          ) continue;
+          if (mb.willCollideWithMemberAnnotation(annotation)) continue;
           String text = annotation.toJava(indent, BytecodeMappingTracer.DUMMY).toString();
           buffer.append(text);
           if (indent < 0) {

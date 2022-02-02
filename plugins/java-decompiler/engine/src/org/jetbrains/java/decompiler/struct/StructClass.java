@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -235,5 +235,10 @@ public class StructClass extends StructMember {
   @Override
   public String toString() {
     return qualifiedName;
+  }
+
+  @Override
+  protected int getArrayDimensions() {
+    return 0;
   }
 }
