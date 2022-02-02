@@ -176,7 +176,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
 
   private void updateTooltipText(VirtualFile initialSourceRoot) {
     JComboBox<?> comboBox = getComboBox();
-    if (comboBox.getSelectedItem() == NULL_WRAPPER) {
+    if (initialSourceRoot != null && comboBox.getSelectedItem() == NULL_WRAPPER) {
       comboBox.setToolTipText(ProjectUtil.calcRelativeToProjectPath(initialSourceRoot, myProject, true, false, true));
     }
     else {
