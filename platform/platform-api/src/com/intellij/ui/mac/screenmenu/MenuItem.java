@@ -24,6 +24,16 @@ public class MenuItem implements Disposable, PropertyChangeListener {
   boolean isInHierarchy = false;
   Presentation presentation;
 
+  public MenuItem() {}
+
+  MenuItem(long nsMenuItem) {
+    if (nsMenuItem != 0) {
+      // NOTE: nsMenuItem must be retained
+      nativePeer = nativeAttach(nsMenuItem);
+      isInHierarchy = true;
+    }
+  }
+
   public void setActionDelegate(Runnable actionDelegate) {
     this.actionDelegate = actionDelegate;
   }
@@ -139,10 +149,15 @@ public class MenuItem implements Disposable, PropertyChangeListener {
   // Native methods
   //
 
-  // Creates native peer (wrapper for NSMenuItem).
+  // Creates native peer (wrapper for NSMenuItem) with new NSMenuItem
   // User must dealloc it via nativeDispose after usage.
   // Can be invoked from any thread.
   private native long nativeCreate(boolean isSeparator);
+
+  // Creates native peer (wrapper for NSMenuItem) with existing NSMenuItem (must be already retained)
+  // User must dealloc it via nativeDispose after usage.
+  // Can be invoked from any thread.
+  private native long nativeAttach(long nsMenuItem);
 
   // Dealloc native peer (performs on AppKit).
   native void nativeDispose(long nativePeer);

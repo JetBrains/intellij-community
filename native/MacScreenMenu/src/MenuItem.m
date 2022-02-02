@@ -77,6 +77,14 @@ NSString* JavaStringToNSString(JNIEnv *env, jstring jstr) {
     return self;
 }
 
+- (id) initWithNSObject:(NSMenuItem *)menuItem javaPeer:(jobject)peer{
+    self = [super initWithPeer:peer];
+    if (self) {
+        nsMenuItem = menuItem; // must be already retained (when found by title)
+    }
+    return self;
+}
+
 // Called from AppKit thread
 - (void) handleAction:(NSMenuItem *)sender {
     JNI_COCOA_ENTER();
@@ -262,16 +270,7 @@ NSUInteger JavaModifiersToNsKeyModifiers(jint javaModifiers, BOOL isExtMods)
 
 @end
 
-
-/*
- * Class:     com_intellij_ui_mac_screenmenu_MenuItem
- * Method:    nativeCreate
- * Signature: (Z)J
- */
-JNIEXPORT jlong JNICALL
-Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeCreate
-(JNIEnv *env, jobject peer, jboolean isSeparator)
-{
+static void initGlobals(JNIEnv *env, jobject peer) {
     initGlobalVMPtr(env);
 
     if (sjc_MenuItem == NULL) {
@@ -284,6 +283,18 @@ Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeCreate
             sjc_MenuItem = (*env)->NewGlobalRef(env, sjc_MenuItem);
         }
     }
+}
+
+/*
+ * Class:     com_intellij_ui_mac_screenmenu_MenuItem
+ * Method:    nativeCreate
+ * Signature: (Z)J
+ */
+JNIEXPORT jlong JNICALL
+Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeCreate
+(JNIEnv *env, jobject peer, jboolean isSeparator)
+{
+    initGlobals(env, peer);
 
     JNI_COCOA_ENTER();
     jobject javaPeer = (*env)->NewGlobalRef(env, peer);
@@ -299,10 +310,30 @@ Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeCreate
 
 /*
  * Class:     com_intellij_ui_mac_screenmenu_MenuItem
+ * Method:    nativeAttach
+ * Signature: (J)J
+ */
+JNIEXPORT jlong JNICALL
+Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeAttach
+(JNIEnv *env, jobject peer, jlong nsMenuItem/*must be retained*/)
+{
+    initGlobals(env, peer);
+
+    JNI_COCOA_ENTER();
+    jobject javaPeer = (*env)->NewGlobalRef(env, peer);
+    // NOTE: returns retained MenuItem
+    // Java owner must release it manually via nativeDispose (see MenuItem.dispose())
+    MenuItem * menuItem = [[MenuItem alloc] initWithNSObject:(NSMenuItem*)nsMenuItem javaPeer:javaPeer];
+    return (jlong)menuItem;
+    JNI_COCOA_EXIT();
+}
+
+/*
+ * Class:     com_intellij_ui_mac_screenmenu_MenuItem
  * Method:    nativeDispose
  * Signature: (J)V
  */
-JNIEXPORT jlong JNICALL
+JNIEXPORT void JNICALL
 Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeDispose
 (JNIEnv *env, jobject peer, jlong menuItemObj)
 {
