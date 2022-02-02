@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch
 
 import com.intellij.dvcs.DvcsUtil
@@ -22,6 +21,7 @@ import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.PlatformIcons
 import com.intellij.util.containers.tail
+import com.intellij.util.ui.tree.TreeUtil
 import git4idea.GitBranch
 import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.branch.GitBranchType
@@ -35,7 +35,7 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
 
   private var finalRunnable: Runnable? = null
 
-  val structure: AbstractTreeStructureBase = BranchesTreeStructure(project, repository)
+  val treeStructure: AbstractTreeStructureBase = BranchesTreeStructure(project, repository)
 
   override fun getFinalRunnable() = finalRunnable
 
@@ -102,7 +102,12 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
 
   override fun isSpeedSearchEnabled() = true
 
-  override fun getSpeedSearchFilter() = SpeedSearchFilter<Any> { value -> value.toString() }
+  override fun getSpeedSearchFilter() = SpeedSearchFilter<Any> { node ->
+    when (val obj = TreeUtil.getUserObject(node)) {
+      is BranchesTreeStructure.Branch -> obj.value.name
+      else -> obj?.toString()?: ""
+    }
+  }
 
   override fun isAutoSelectionEnabled() = false
 
