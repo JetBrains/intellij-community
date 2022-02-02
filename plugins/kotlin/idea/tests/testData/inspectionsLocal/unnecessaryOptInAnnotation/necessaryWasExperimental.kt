@@ -1,5 +1,5 @@
 // LANGUAGE_VERSION: 1.5
-// WITH_RUNTIME
+// WITH_STDLIB
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
 // PROBLEM: none
 

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // PARAM_DESCRIPTOR: val z: kotlin.Int defined in baz
 // PARAM_TYPES: kotlin.Int
 @RequiresOptIn

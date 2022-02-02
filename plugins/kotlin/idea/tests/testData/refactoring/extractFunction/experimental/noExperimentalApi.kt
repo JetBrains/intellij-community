@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // PARAM_DESCRIPTOR: val y: kotlin.Int defined in bar
 // PARAM_TYPES: kotlin.Int
 

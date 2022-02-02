@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // LANGUAGE_VERSION 1.6
 @Experimental
 annotation class Marker
