@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.breakpoints;
 
@@ -69,7 +69,6 @@ import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
@@ -191,18 +190,8 @@ public class KotlinFunctionBreakpoint extends BreakpointWithHighlighter<JavaMeth
             request.enable();
         }
 
-        AtomicReference<ProgressWindow> indicatorRef = new AtomicReference<>();
-        ApplicationManager.getApplication().invokeAndWait(
-                () -> {
-                    ProgressWindow progress =
-                            new ProgressWindow(
-                                    true, false, debugProcess.getProject(),
-                                    KotlinDebuggerCoreBundle.message("function.breakpoint.cancel.emulation")
-                            );
-                    progress.setDelayInMillis(2000);
-                    indicatorRef.set(progress);
-                });
-        ProgressWindow indicator = indicatorRef.get();
+        ProgressWindow indicator = new ProgressWindow(true, false, debugProcess.getProject(), KotlinDebuggerCoreBundle.message("function.breakpoint.cancel.emulation"));
+        indicator.setDelayInMillis(2000);
 
         AtomicBoolean changed = new AtomicBoolean();
         XBreakpointListener<XBreakpoint<?>> listener = new XBreakpointListener<XBreakpoint<?>>() {
