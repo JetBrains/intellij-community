@@ -9,6 +9,18 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 
+/**
+ * This is a base test case for test cases that highlight all the use of API
+ * that were introduced in later language levels comparing to the current language level
+ *
+ * In order to add a new test case:
+ * <ol>
+ * <li>Go to "community/jvm/jvm-analysis-java-tests/testData/codeInspection/apiUsage"</li>
+ * <li>Add a new file(s) to "./src" that contains new API. It's better to define the new API as native methods.</li>
+ * <li>Set <code>JAVA_HOME</code> to jdk 1.8. In this case it's possible to redefine JDK's own classes like <code>String</code> or <code>Class</code></li>
+ * <li>Invoke "./compile.sh". The new class(es) will appear in "./classes"</li>
+ * </ol>
+ */
 class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
   override fun getBasePath(): String = JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH
 

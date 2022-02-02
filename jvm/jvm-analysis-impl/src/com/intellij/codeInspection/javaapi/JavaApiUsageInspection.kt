@@ -36,13 +36,14 @@ import javax.swing.*
 /**
  * In order to add the support for new API in the most recent JDK execute:
  * <ol>
- *   <li>Generate apiXXX.txt by uncommenting the body of [com.intellij.codeInspection.tests.JavaApiUsageInspectionTestBase#testCollectSinceApiUsages] and run it;</li>
- *   <li>Put the generated text file under community/java/java-analysis-api/resources/javaApi</li>
- *   <li>Add two new entries to the {@link LanguageLevelUtils#ourPresentableShortMessage}:
+ *   <li>Generate apiXXX.txt by running [com.intellij.codeInspection.tests.JavaApiUsageInspectionTestBase#testCollectSinceApiUsages]</li>
+ *   <li>Put the generated text file under community/java/java-analysis-api/src/com/intellij/openapi/module</li>
+ *   <li>Add two new entries to the {@link com.intellij.openapi.module.LanguageLevelUtil.ourPresentableShortMessage}:
  *    <ul>
  *      <li>The First entry: The key is the most recent language level, the value is the second to the most recent language level.</li>
  *      <li>The Second entry: The key is the most recent preview language level, the value is the second to the most recent language level.</li>
  *    </ul>
+ *   </li>
  * </ol>
  */
 class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
