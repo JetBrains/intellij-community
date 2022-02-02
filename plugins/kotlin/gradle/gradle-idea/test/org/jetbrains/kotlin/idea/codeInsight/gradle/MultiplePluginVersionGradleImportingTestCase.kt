@@ -105,6 +105,12 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         }
     }
 
+    fun androidProperties(): Map<String, String> = mapOf(
+        "android_gradle_plugin_version" to "4.0.2",
+        "compile_sdk_version" to "30",
+        "build_tools_version" to "28.0.3",
+    )
+
     val isHmppEnabledByDefault get() = kotlinPluginVersion.isHmppEnabledByDefault
 
     fun hmppProperties(): Map<String, String> =
@@ -145,17 +151,15 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         return repositories.joinToString("\n")
     }
 
-    override fun configureByFiles(properties: Map<String, String>?): List<VirtualFile> {
-        val unitedProperties = HashMap(properties ?: emptyMap())
-        unitedProperties["kotlin_plugin_version"] = kotlinPluginVersionString
+    override val defaultProperties: Map<String, String>
+        get() = super.defaultProperties.toMutableMap().apply {
+            put("kotlin_plugin_version", kotlinPluginVersionString)
+            put("kotlin_plugin_repositories", repositories(false))
+            put("kts_kotlin_plugin_repositories", repositories(true))
 
-        unitedProperties["kotlin_plugin_repositories"] = repositories(false)
-        unitedProperties["kts_kotlin_plugin_repositories"] = repositories(true)
-
-        unitedProperties.putAll(hmppProperties())
-        return super.configureByFiles(unitedProperties)
-    }
-
+            putAll(androidProperties())
+            putAll(hmppProperties())
+        }
 
     protected open fun checkProjectStructure(
         exhaustiveModuleList: Boolean = true,
