@@ -136,9 +136,4 @@ public interface JavaSpecialRefactoringProvider {
                                      @NotNull PsiClass targetClass,
                                      @NotNull MultiMap<PsiElement, String> conflicts,
                                      @Nullable String newVisibility);
-
-  interface UsageVisitor {
-    void visit(final UsageInfo usage);
-    void preprocessCovariantOverriders(final List<UsageInfo> covariantOverriderInfos);
-  }
 }

@@ -39,10 +39,8 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.JavaSpecialRefactoringProvider;
-import com.intellij.refactoring.changeSignature.OverriderUsageInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -329,9 +327,9 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     }
 
     Project project = method.getProject();
-    final MethodSignatureChangeVisitor methodSignatureChangeVisitor = new MethodSignatureChangeVisitor();
+    final List<PsiMethod> affectedMethods = new ArrayList<>();
     for (PsiMethod targetMethod : methods) {
-      methodSignatureChangeVisitor.addBase(targetMethod);
+      affectedMethods.add(targetMethod);
       var provider = JavaSpecialRefactoringProvider.getInstance();
       var processor = provider.getChangeSignatureProcessor(project, targetMethod,
                                                            false, null,
@@ -345,48 +343,14 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     PsiMethod[] hierarchyMethods = methods;
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       for (PsiMethod psiMethod : hierarchyMethods) {
-        OverridingMethodsSearch.search(psiMethod).forEach(methodSignatureChangeVisitor::addBase);
+        OverridingMethodsSearch.search(psiMethod).forEach(m -> {
+          affectedMethods.add(m);
+        });
       }
     }, JavaBundle.message("progress.title.collect.method.overriders"), true, project)) {
       return Collections.emptyList();
     }
-    return methodSignatureChangeVisitor.getAffectedMethods();
-  }
-
-  private static final class MethodSignatureChangeVisitor implements JavaSpecialRefactoringProvider.UsageVisitor {
-    private final List<PsiMethod> myAffectedMethods;
-
-    private MethodSignatureChangeVisitor() {
-      myAffectedMethods = new ArrayList<>();
-    }
-
-    public void addBase(final PsiMethod baseMethod) {
-      myAffectedMethods.add(baseMethod);
-    }
-
-    @Override
-    public void visit(final UsageInfo usage) {
-      if (usage instanceof OverriderUsageInfo) {
-        myAffectedMethods.add(((OverriderUsageInfo) usage).getOverridingMethod());
-      }
-    }
-
-    public List<PsiMethod> getAffectedMethods() {
-      return myAffectedMethods;
-    }
-
-    @Override
-    public void preprocessCovariantOverriders(final List<UsageInfo> covariantOverriderInfos) {
-      for (Iterator<UsageInfo> usageInfoIterator = covariantOverriderInfos.iterator(); usageInfoIterator.hasNext();) {
-        final UsageInfo info = usageInfoIterator.next();
-        if (info instanceof OverriderUsageInfo) {
-          final OverriderUsageInfo overrideUsage = (OverriderUsageInfo) info;
-          if (myAffectedMethods.contains(overrideUsage.getOverridingMethod())) {
-            usageInfoIterator.remove();
-          }
-        }
-      }
-    }
+    return affectedMethods;
   }
 
   static void selectInEditor(@Nullable PsiElement element, Editor editor) {
