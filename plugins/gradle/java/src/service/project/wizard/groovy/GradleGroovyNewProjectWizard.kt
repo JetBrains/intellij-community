@@ -9,6 +9,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logP
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
@@ -56,10 +57,12 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       ExternalProjectsManagerImpl.setupCreatedProject(project)
       builder.commit(project)
       if (addSampleCode) {
-        val groovySourcesDirectory = builder.contentEntryPath + "/src/main/groovy"
-        val directory = VfsUtil.createDirectoryIfMissing(groovySourcesDirectory)
-        if (directory != null) {
-          builder.createSampleGroovyCodeFile(project, directory)
+        runWriteAction {
+          val groovySourcesDirectory = builder.contentEntryPath + "/src/main/groovy"
+          val directory = VfsUtil.createDirectoryIfMissing(groovySourcesDirectory)
+          if (directory != null) {
+            builder.createSampleGroovyCodeFile(project, directory)
+          }
         }
       }
 
