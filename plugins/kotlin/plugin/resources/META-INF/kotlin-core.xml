@@ -644,9 +644,6 @@
                 id="StoredExceptionsThrowToggleAction"
                 class="org.jetbrains.kotlin.idea.actions.internal.StoredExceptionsThrowToggleAction"/>
         <action
-                id="MultiplatformCompositeAnalysisToggleAction"
-                class="org.jetbrains.kotlin.idea.actions.internal.MultiplatformCompositeAnalysisToggleAction"/>
-        <action
                 id="LibraryToSourceDependencySupportToggleAction"
                 class="org.jetbrains.kotlin.idea.actions.internal.LibraryToSourceDependencySupportToggleAction"/>
         <action
