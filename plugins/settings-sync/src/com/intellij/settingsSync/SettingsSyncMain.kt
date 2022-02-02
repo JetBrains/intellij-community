@@ -45,10 +45,6 @@ internal class SettingsSyncMain : Disposable {
   override fun dispose() {
   }
 
-  internal fun schedulePushingSettingsToServer() {
-    ApplicationManager.getApplication().messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(SyncSettingsEvent.PushRequest)
-  }
-
   internal fun getRemoteCommunicator(): SettingsSyncRemoteCommunicator = controls.remoteCommunicator
 
   @RequiresBackgroundThread
@@ -60,8 +56,8 @@ internal class SettingsSyncMain : Disposable {
     }
     else {
       LOG.info("Updating settings is not needed, scheduling a push")
-      // todo detect if the push is really needed
-      schedulePushingSettingsToServer()
+      ApplicationManager.getApplication().messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC)
+        .settingChanged(SyncSettingsEvent.PushIfNeededRequest)
     }
   }
 

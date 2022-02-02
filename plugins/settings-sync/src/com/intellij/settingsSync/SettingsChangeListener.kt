@@ -9,7 +9,8 @@ internal interface SettingsChangeListener {
 internal sealed class SyncSettingsEvent {
   class IdeChange(val snapshot: SettingsSnapshot) : SyncSettingsEvent()
   class CloudChange(val snapshot: SettingsSnapshot) : SyncSettingsEvent()
-  object PushRequest : SyncSettingsEvent()
+  object PushIfNeededRequest : SyncSettingsEvent()
+  object MustPushRequest: SyncSettingsEvent()
 }
 
 internal data class SettingsSnapshot(val fileStates: Set<FileState>) {

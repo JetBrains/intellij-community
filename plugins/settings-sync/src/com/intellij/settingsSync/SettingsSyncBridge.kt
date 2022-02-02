@@ -65,7 +65,8 @@ internal class SettingsSyncBridge(application: Application,
     val previousIdePosition = settingsLog.getIdePosition()
     val previousCloudPosition = settingsLog.getCloudPosition()
 
-    var pushToCloudRequired = false
+    var pushToCloudRequested = false
+    var mustPushToCloud = false
     while (pendingEvents.isNotEmpty()) {
       val event = pendingEvents.removeAt(0)
       if (event is SyncSettingsEvent.IdeChange) {
@@ -74,8 +75,11 @@ internal class SettingsSyncBridge(application: Application,
       else if (event is SyncSettingsEvent.CloudChange) {
         settingsLog.applyCloudState(event.snapshot)
       }
-      else if (event is SyncSettingsEvent.PushRequest) {
-        pushToCloudRequired = true
+      else if (event is SyncSettingsEvent.PushIfNeededRequest) {
+        pushToCloudRequested = true
+      }
+      else if (event is SyncSettingsEvent.MustPushRequest) {
+        mustPushToCloud = true
       }
     }
 
@@ -111,7 +115,7 @@ internal class SettingsSyncBridge(application: Application,
       }
     }
 
-    if (pushToCloudRequired || newCloudPosition != masterPosition) {
+    if (newCloudPosition != masterPosition || mustPushToCloud) {
       val pushResult: SettingsSyncPushResult = pushToCloud(settingsLog.collectCurrentSnapshot())
       LOG.info("Result of pushing settings to the cloud: $pushResult")
       when (pushResult) {
@@ -132,6 +136,9 @@ internal class SettingsSyncBridge(application: Application,
           }
         }
       }
+    }
+    else if (pushToCloudRequested) {
+      LOG.info("Requested to push if needed, but there was nothing to push")
     }
   }
 
