@@ -55,6 +55,7 @@ public class JpsBootstrapMain {
     }
     catch (Throwable t) {
       fatal(ExceptionUtil.getThrowableText(t));
+      System.exit(1);
     }
   }
 
