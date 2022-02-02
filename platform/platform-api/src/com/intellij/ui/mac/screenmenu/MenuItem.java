@@ -80,7 +80,13 @@ public class MenuItem implements Disposable, PropertyChangeListener {
       keyChar = 0;
     }
 
-    nativeSetLabel(nativePeer, label, keyChar, keyCode, modifiers, isInHierarchy);
+    nativeSetTitleAndAccelerator(nativePeer, label, keyChar, keyCode, modifiers, isInHierarchy);
+  }
+
+  public void setLabel(String label) {
+    ensureNativePeer();
+    if (label == null) label = "";
+    nativeSetTitle(nativePeer, label, isInHierarchy);
   }
 
   public void setIcon(Icon icon) {
@@ -163,7 +169,8 @@ public class MenuItem implements Disposable, PropertyChangeListener {
   native void nativeDispose(long nativePeer);
 
   // If item was created but wasn't added into any parent menu then all setters can be invoked from any thread.
-  private native void nativeSetLabel(long nativePeer, String label, char keyChar, int keyCode, int modifiers, boolean onAppKit);
+  private native void nativeSetTitleAndAccelerator(long nativePeer, String label, char keyChar, int keyCode, int modifiers, boolean onAppKit);
+  private native void nativeSetTitle(long nativePeer, String title, boolean onAppKit);
   private native void nativeSetImage(long nativePeer, int[] buffer, int pointsWidth, int pointsHeight, int pixelsWidth, int pixelsHeight, boolean onAppKit);
   private native void nativeSetEnabled(long nativePeer, boolean isEnabled, boolean onAppKit);
   private native void nativeSetAcceleratorText(long nativePeer, String acceleratorText, boolean onAppKit);

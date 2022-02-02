@@ -39,6 +39,7 @@ public class Menu extends MenuItem {
 
   private Menu() {}
 
+  // AppMenu is the first menu item (with title = application name) which is filled by OS
   public static Menu getAppMenu() {
     if (ourAppMenu == null) {
       ourAppMenu = new Menu();

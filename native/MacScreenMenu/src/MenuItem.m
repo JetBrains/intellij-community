@@ -431,11 +431,11 @@ static unichar AWTKeyToMacShortcut(jint awtKey, BOOL doShift) {
 
 /*
  * Class:     com_intellij_ui_mac_screenmenu_MenuItem
- * Method:    nativeSetLabel
+ * Method:    nativeSetTitleAndAccelerator
  * Signature: (JLjava/lang/String;CIIZ)V
  */
 JNIEXPORT void JNICALL
-Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeSetLabel
+Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeSetTitleAndAccelerator
 (JNIEnv *env, jobject peer, jlong menuItemObj, jstring label, jchar shortcutKey, jint shortcutKeyCode, jint mods, jboolean onAppKit)
 {
     JNI_COCOA_ENTER();
@@ -457,6 +457,32 @@ Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeSetLabel
     __strong MenuItem * item = (MenuItem *)menuItemObj;
     dispatch_block_t block = ^{
         [item setLabel:theLabel shortcut:theKeyEquivalent modifierMask:mods];
+    };
+    if (!onAppKit || [NSThread isMainThread]) {
+        block();
+    } else {
+        dispatch_async(dispatch_get_main_queue(), block);
+    }
+    JNI_COCOA_EXIT();
+}
+
+/*
+ * Class:     com_intellij_ui_mac_screenmenu_MenuItem
+ * Method:    nativeSetTitle
+ * Signature: (JLjava/lang/String;Z)V
+ */
+JNIEXPORT void JNICALL
+Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeSetTitle
+(JNIEnv *env, jobject peer, jlong menuItemObj, jstring title, jboolean onAppKit)
+{
+    JNI_COCOA_ENTER();
+    NSString *theLabel = JavaStringToNSString(env, title);
+    __strong MenuItem * item = (MenuItem *)menuItemObj;
+    dispatch_block_t block = ^{
+        [item->nsMenuItem setTitle:theLabel];
+        if ([item->nsMenuItem.view isKindOfClass:CustomMenuItemView.class]) {
+            [(CustomMenuItemView *)(item->nsMenuItem.view) recalcSizes];
+        }
     };
     if (!onAppKit || [NSThread isMainThread]) {
         block();
