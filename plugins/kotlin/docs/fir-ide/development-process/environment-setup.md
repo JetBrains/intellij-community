@@ -8,7 +8,7 @@
 ## Setup
 
 1. Clone [kotlin](https://github.com/JetBrains/kotlin) repository. Kotlin repository contains Analysis API and Kotlin compiler
-2. Set up kotlin repository. See [kotlin/readme](https://github.com/JetBrains/kotlin/blob/master/ReadMe.md) for more info. But generally, it should be enough to this line to the `local.properties` file inside `kotlin` repository
+2. Set up kotlin repository. See [kotlin/readme](https://github.com/JetBrains/kotlin/blob/master/ReadMe.md) for more info. But generally, it should be enough to this line to the `<KOTLIN_REPO>/local.properties` file inside `kotlin` repository  (create `<KOTLIN_REPO>/local.properties` file if missing)
 ```
 kotlin.build.isObsoleteJdkOverrideEnabled=true
 ```
