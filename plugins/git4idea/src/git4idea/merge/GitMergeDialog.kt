@@ -183,7 +183,7 @@ class GitMergeDialog(private val project: Project,
           }
 
           sortedRoots.forEach { root ->
-            loadUnmergedBranches(root)?.let { branches ->
+            loadUnmergedBranchesForRoot(root)?.let { branches ->
               unmergedBranches[getRepository(root)] = branches
             }
           }
@@ -204,7 +204,7 @@ class GitMergeDialog(private val project: Project,
    * ```
    */
   @RequiresBackgroundThread
-  private fun loadUnmergedBranches(root: VirtualFile): List<@NlsSafe String>? {
+  private fun loadUnmergedBranchesForRoot(root: VirtualFile): List<@NlsSafe String>? {
     var result: List<String>? = null
 
     val handler = GitLineHandler(project, root, GitCommand.BRANCH).apply {
