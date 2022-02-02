@@ -18,6 +18,12 @@ public class MavenProjectTreeImporterTest extends MavenMultiVersionImportingTest
     Registry.get("maven.import.tree.structure").setValue(true);
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    super.tearDown();
+    Registry.get("maven.import.tree.structure").setValue(false);
+  }
+
   @Test
   public void testSimpleImport() {
     createModulePom("m1",
