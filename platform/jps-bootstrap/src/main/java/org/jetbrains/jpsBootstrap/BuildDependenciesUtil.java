@@ -63,8 +63,6 @@ final class BuildDependenciesUtil {
         TarArchiveEntry entry = (TarArchiveEntry) archive.getNextEntry();
         if (Objects.isNull(entry)) break;
 
-        System.out.println("ENTRY " + entry.getName() + ": " + entry.isDirectory());
-
         Path entryPath = converter.getOutputPath(entry.getName(), entry.isDirectory());
         if (entryPath == null) continue;
 
