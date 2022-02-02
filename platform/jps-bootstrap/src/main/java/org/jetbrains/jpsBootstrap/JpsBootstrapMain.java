@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 
 import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.*;
 
-@SuppressWarnings({"UseOfSystemOutOrSystemErr", "SameParameterValue"})
+@SuppressWarnings({"SameParameterValue"})
 public class JpsBootstrapMain {
 
   private static final String COMMUNITY_HOME_ENV = "JPS_BOOTSTRAP_COMMUNITY_HOME";
@@ -135,7 +135,9 @@ public class JpsBootstrapMain {
   }
 
   private void main() throws Throwable {
-    JpsModel model = JpsProjectUtils.loadJpsProject(projectHome);
+    Path jdkHome = JpsBootstrapJdk.getJdkHome(communityHome);
+
+    JpsModel model = JpsProjectUtils.loadJpsProject(projectHome, jdkHome);
     JpsModule module = JpsProjectUtils.getModuleByName(model, moduleNameToRun);
 
     loadClasses(module, model);

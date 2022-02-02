@@ -31,7 +31,7 @@ import static org.jetbrains.jpsBootstrap.BuildDependenciesDownloader.info;
 
 @SuppressWarnings("SameParameterValue")
 public class JpsProjectUtils {
-  public static JpsModel loadJpsProject(Path projectHome) throws Exception {
+  public static JpsModel loadJpsProject(Path projectHome, Path jdkHome) throws Exception {
     long startTime = System.currentTimeMillis();
 
     Path m2LocalRepository = Path.of(System.getProperty("user.home"), ".m2", "repository");
@@ -49,8 +49,8 @@ public class JpsProjectUtils {
         model.getProject().getLibraryCollection().getLibraries().size() + " libraries in " +
         (System.currentTimeMillis() - startTime) + " ms");
 
-    String sdkName = "current-java-home-sdk";
-    addSdk(model, sdkName, System.getProperty("java.home"));
+    String sdkName = "jdk-home";
+    addSdk(model, sdkName, jdkHome);
     JpsSdkTableSerializer.setSdkReference(model.getProject().getSdkReferencesTable(), sdkName, JpsJavaSdkType.INSTANCE);
 
     return model;
@@ -93,16 +93,16 @@ public class JpsProjectUtils {
     return enumerator.getModules();
   }
 
-  private static void addSdk(JpsModel model, String sdkName, String sdkHome) throws IOException {
+  private static void addSdk(JpsModel model, String sdkName, Path sdkHome) throws IOException {
     info("Adding SDK '" + sdkName + "' at " + sdkHome);
 
-    JpsJavaExtensionService.getInstance().addJavaSdk(model.getGlobal(), sdkName, sdkHome);
+    JpsJavaExtensionService.getInstance().addJavaSdk(model.getGlobal(), sdkName, sdkHome.toString());
     JpsLibrary additionalSdk = model.getGlobal().getLibraryCollection().findLibrary(sdkName);
     if (additionalSdk == null) {
       throw new IllegalStateException("SDK " + sdkHome + " was not found");
     }
 
-    for (String moduleUrl : readModulesFromReleaseFile(Path.of(sdkHome))) {
+    for (String moduleUrl : readModulesFromReleaseFile(sdkHome)) {
       additionalSdk.addRoot(moduleUrl, JpsOrderRootType.COMPILED);
     }
   }

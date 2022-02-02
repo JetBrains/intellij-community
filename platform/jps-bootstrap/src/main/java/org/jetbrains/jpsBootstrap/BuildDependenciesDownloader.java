@@ -93,19 +93,20 @@ final class BuildDependenciesDownloader {
     return targetFile;
   }
 
-  static Path extractFileToCacheLocation(Path communityRoot, Path archiveFile) {
+  static Path extractFileToCacheLocation(Path communityRoot, Path archiveFile, BuildDependenciesExtractOptions... options) {
     try {
       Path cachePath = getDownloadCachePath(communityRoot);
 
-      String toHash = JPS_BOOTSTRAP_SALT + archiveFile.toString();
+      String toHash = JPS_BOOTSTRAP_SALT + archiveFile.toString() +
+        Arrays.stream(options).map(Enum::toString).sorted().collect(Collectors.joining("\n"));
       String directoryName = archiveFile.getFileName().toString() + "." + DigestUtils.sha256Hex(toHash).substring(0, 6) + ".d";
       Path targetDirectory = cachePath.resolve(directoryName);
       Path flagFile = cachePath.resolve(directoryName + ".flag");
-      extractFileWithFlagFileLocation(archiveFile, targetDirectory, flagFile);
+      extractFileWithFlagFileLocation(archiveFile, targetDirectory, flagFile, options);
 
       return targetDirectory;
     }
-    catch (IOException e) {
+    catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
@@ -134,7 +135,7 @@ final class BuildDependenciesDownloader {
   }
 
   // assumes file at `archiveFile` is immutable
-  private static void extractFileWithFlagFileLocation(Path archiveFile, Path targetDirectory, Path flagFile) throws IOException {
+  private static void extractFileWithFlagFileLocation(Path archiveFile, Path targetDirectory, Path flagFile, BuildDependenciesExtractOptions... options) throws Exception {
     if (checkFlagFile(archiveFile, flagFile, targetDirectory)) {
       debug("Skipping extract to " + targetDirectory + " since flag file " + flagFile + " is correct");
 
@@ -158,7 +159,24 @@ final class BuildDependenciesDownloader {
     verbose(" * Extracting " + archiveFile + " to " + targetDirectory);
 
     Files.createDirectories(targetDirectory);
-    BuildDependenciesUtil.extractZip(archiveFile, targetDirectory);
+
+    byte[] start;
+    try (InputStream inputStream = Files.newInputStream(archiveFile)) {
+      start = inputStream.readNBytes(2);
+    }
+    if (start.length < 2) {
+      throw new IllegalStateException("File $archiveFile is smaller than 2 bytes, could not be extracted");
+    }
+
+    boolean stripRoot = Arrays.stream(options).anyMatch(opt -> opt == BuildDependenciesExtractOptions.STRIP_ROOT);
+
+    if (start[0] == (byte)0x50 && start[1] == (byte)0x4B) {
+      BuildDependenciesUtil.extractZip(archiveFile, targetDirectory, stripRoot);
+    } else if (start[0] == (byte)0x1F && start[1] == (byte)0x8B) {
+      BuildDependenciesUtil.extractTarGz(archiveFile, targetDirectory, stripRoot);
+    } else {
+      throw new IllegalStateException("Unknown archive format at $archiveFile. Currently only .tar.gz or .zip are supported");
+    }
 
     Files.write(flagFile, getExpectedFlagFileContent(archiveFile, targetDirectory));
     if (!checkFlagFile(archiveFile, flagFile, targetDirectory)) {
