@@ -67,13 +67,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   private fun sendSnapshotFile(inputStream: InputStream) {
     val currentVersion = getCurrentVersion()
     LOG.info("Sending $SETTINGS_SYNC_SNAPSHOT_ZIP, current version: $currentVersion")
-    if (currentVersion != null) {
-      clientVersionContext.doWithVersion(SETTINGS_SYNC_SNAPSHOT_ZIP, currentVersion) {
-        client.write(SETTINGS_SYNC_SNAPSHOT_ZIP, inputStream)
-      }
-    }
-    else {
-      // no version neither locally nor on the server => this is a fresh push => simply send the push
+    clientVersionContext.doWithVersion(SETTINGS_SYNC_SNAPSHOT_ZIP, currentVersion) {
       client.write(SETTINGS_SYNC_SNAPSHOT_ZIP, inputStream)
     }
   }
@@ -220,14 +214,17 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
       contextVersionMap[path] = value
     }
 
-    fun <T> doWithVersion(path: String, version: String, function: () -> T): T {
+    fun <T> doWithVersion(path: String, version: String?, function: () -> T): T {
       return lock.withLock {
-        contextVersionMap[path] = version
+        if (version != null) {
+          contextVersionMap[path] = version
+        }
+
         val result = function()
 
         val actualVersion: String? = contextVersionMap[path]
         if (actualVersion == null) {
-          LOG.error("Version not found for $path")
+          LOG.warn("Version not found for $path")
         }
         else {
           currentVersionOfFiles[path] = actualVersion
