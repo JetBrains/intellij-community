@@ -132,6 +132,10 @@ public final class PopupPositionManager {
   }
 
   public static class PositionAdjuster {
+    /**
+     * Default gap between popups
+     */
+    public static final int DEFAULT_GAP = 5;
     protected final int myGap;
 
     protected final Component myRelativeTo;
@@ -146,7 +150,7 @@ public final class PopupPositionManager {
     }
 
     public PositionAdjuster(final Component relativeTo) {
-      this(relativeTo, 5);
+      this(relativeTo, DEFAULT_GAP);
     }
 
     protected Rectangle positionRight(final Dimension d) {
