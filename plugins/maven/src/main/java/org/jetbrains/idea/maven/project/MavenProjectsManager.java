@@ -18,6 +18,7 @@ import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSy
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -49,8 +50,10 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.CacheForCompilerErrorMessages;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
+import org.jetbrains.idea.maven.importing.MavenModelUtil;
 import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
+import org.jetbrains.idea.maven.importing.tree.MavenProjectTreeImporter;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
@@ -688,6 +691,16 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Nullable
   public MavenProject findProject(@NotNull Module module) {
+    MavenProject mavenProject = getMavenProject(module);
+    String moduleName = module.getName();
+    if (mavenProject == null && MavenModelUtil.isMainOrTestSubmodule(moduleName)) {
+      Module parentModule = ModuleManager.getInstance(myProject).findModuleByName(moduleName.substring(0, moduleName.length() - 5));
+      mavenProject = parentModule != null ? getMavenProject(parentModule) : null;
+    }
+    return mavenProject;
+  }
+
+  private MavenProject getMavenProject(@NotNull Module module) {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
       VirtualFile f = findPomFile(module, new MavenModelsProvider() {
         @Override
@@ -1255,7 +1268,13 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     final Ref<List<MavenProjectsProcessorTask>> postTasks = new Ref<>();
 
     final Runnable r = () -> {
-      MavenProjectImporter projectImporter = MavenProjectImporter.createImporter(myProject,
+      MavenProjectImporter projectImporter = null;
+      if (MavenProjectImporter.isImportToTreeStructureEnabled()) {
+        projectImporter = new MavenProjectTreeImporter(
+          myProject, myProjectsTree, projectsToImportWithChanges, modelsProvider, getImportingSettings()
+        );
+      } else
+      projectImporter = MavenProjectImporter.createImporter(myProject,
                                                                                  myProjectsTree,
                                                                                  getFileToModuleMapping(new MavenModelsProvider() {
                                                                                    @Override

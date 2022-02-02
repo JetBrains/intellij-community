@@ -308,6 +308,10 @@
     <registryKey key="maven.consumer.pom.support" defaultValue="false"
                  description="Enable Maven consumer pom support"/>
 
+    <registryKey key="maven.import.tree.structure" defaultValue="false"
+                 description="Enable experimental implementation of Maven import module tree structure with split main and test modules. See IDEA-85478 for details."/>
+
+
     <intentionAction>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>
     </intentionAction>
