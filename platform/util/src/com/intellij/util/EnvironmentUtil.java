@@ -22,10 +22,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -340,8 +337,18 @@ public final class EnvironmentUtil {
       final StreamGobbler stdoutGobbler = new StreamGobbler(process.getInputStream(), Charset.defaultCharset());
       final StreamGobbler stderrGobbler = new StreamGobbler(process.getErrorStream(), Charset.defaultCharset());
       final int exitCode = waitAndTerminateAfter(process, myTimeoutMillis);
-      stdoutGobbler.stop();
-      stderrGobbler.stop();
+      try {
+        stdoutGobbler.waitFor(1000L, TimeUnit.MILLISECONDS);
+        stdoutGobbler.waitFor(1000L, TimeUnit.MILLISECONDS);
+        stdoutGobbler.stop();
+        stderrGobbler.stop();
+      }
+      catch (TimeoutException te) {
+        LOG.warn("output reader process is timed out");
+      }
+      catch (InterruptedException ie) {
+        LOG.warn("Interrupted while waiting for output reader process", ie);
+      }
 
       final String output = stdoutGobbler.getText().trim();
       final String stderr = stderrGobbler.getText();
