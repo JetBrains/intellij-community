@@ -670,10 +670,14 @@ public final class FileSystemUtil {
         if (!cf.CFURLCopyResourcePropertyForKey(url, CoreFoundation.kCFURLVolumeSupportsCaseSensitiveNamesKey, resultPtr, errorPtr)) {
           Pointer error = errorPtr.getValue();
           String description = error != null ? cf.CFErrorGetDomain(error).stringValue() + '/' + cf.CFErrorGetCode(error) : "error";
-          LOG.warn("CFURLCopyResourcePropertyForKey(" + path + "): " + description);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("CFURLCopyResourcePropertyForKey(" + path + "): " + description);
+          }
         }
         else if ((result = resultPtr.getValue()) == null) {
-          LOG.info("CFURLCopyResourcePropertyForKey(" + path + "): property not available");
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("CFURLCopyResourcePropertyForKey(" + path + "): property not available");
+          }
         }
         else {
           boolean value = new CoreFoundation.CFBooleanRef(result).booleanValue();
