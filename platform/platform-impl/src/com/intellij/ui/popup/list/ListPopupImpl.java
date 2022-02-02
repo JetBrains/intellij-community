@@ -285,6 +285,9 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
     });
 
+    if (ExperimentalUI.isNewUI()) {
+      myList.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+    }
 
     myList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     return myList;

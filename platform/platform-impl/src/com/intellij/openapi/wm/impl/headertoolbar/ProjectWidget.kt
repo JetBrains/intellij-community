@@ -250,7 +250,7 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
       val panel = JPanel(BorderLayout())
       panel.border = JBUI.Borders.empty()
       panel.isOpaque = true
-      panel.background = UIUtil.getListBackground()
+      panel.background = JBUI.CurrentTheme.Popup.BACKGROUND
       panel.add(res)
 
       return panel

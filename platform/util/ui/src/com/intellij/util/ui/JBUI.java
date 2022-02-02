@@ -833,6 +833,8 @@ public final class JBUI {
         return hasControls ? JBUIScale.scale(28) : JBUIScale.scale(24);
       }
 
+      public static final Color BACKGROUND = JBColor.namedColor("Popup.background", List.BACKGROUND);
+
       public static Color borderColor(boolean active) {
         return active
                ? JBColor.namedColor("Popup.borderColor", JBColor.namedColor("Popup.Border.color", 0x808080))

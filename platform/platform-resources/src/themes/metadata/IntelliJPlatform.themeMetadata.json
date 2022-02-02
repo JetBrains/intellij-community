@@ -819,6 +819,11 @@
       "since": "2022.1"
     },
     {
+      "key": "Popup.background",
+      "description": "Popup background (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
       "key": "Popup.borderWidth",
       "description": "Popup border width",
       "since": "2022.1"
