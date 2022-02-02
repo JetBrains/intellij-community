@@ -63,7 +63,7 @@ public class MethodMayBeStaticInspection extends BaseInspection {
       public void doFix(Project project, ProblemDescriptor descriptor) {
         final PsiMethod element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
         if (element != null) {
-          JavaRefactoringFactory.getInstance(project).createMakeMethodStatic(element, m_replaceQualifier, null, null, null).run();
+          JavaRefactoringFactory.getInstance(project).createMakeMethodStatic(element, m_replaceQualifier, null, PsiField.EMPTY_ARRAY, null).run();
         }
       }
 

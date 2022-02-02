@@ -53,7 +53,7 @@ public abstract class JavaRefactoringFactory extends RefactoringFactory {
   public abstract MakeStaticRefactoring<PsiMethod> createMakeMethodStatic(PsiMethod method,
                                                                           boolean replaceUsages,
                                                                           String classParameterName,
-                                                                          PsiField[] fields,
+                                                                          @NotNull PsiField[] fields,
                                                                           String[] names);
 
   public abstract MakeStaticRefactoring<PsiClass> createMakeClassStatic(PsiClass aClass,

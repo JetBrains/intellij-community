@@ -93,7 +93,7 @@ public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
   public MakeStaticRefactoring<PsiMethod> createMakeMethodStatic(PsiMethod method,
                                                                  boolean replaceUsages,
                                                                  String classParameterName,
-                                                                 PsiField[] fields,
+                                                                 @NotNull PsiField @NotNull [] fields,
                                                                  String[] names) {
     return new MakeMethodStaticRefactoringImpl(myProject, method, replaceUsages, classParameterName, fields, names);
   }
