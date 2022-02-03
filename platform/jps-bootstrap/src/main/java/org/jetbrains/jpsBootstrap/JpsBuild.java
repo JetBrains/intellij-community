@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jpsBootstrap;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtilRt;
 import jetbrains.buildServer.messages.serviceMessages.PublishArtifacts;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
@@ -43,6 +44,10 @@ public class JpsBuild {
 
     Path kotlinc = downloadAndExtractKotlinCompiler(communityRoot);
     System.setProperty("jps.kotlin.home", kotlinc.toString());
+
+    // Set IDEA home path to something or JPS can't instantiate ClasspathBoostrap.java for Groovy JPS
+    // which calls PathManager.getLibPath() (it should not)
+    System.setProperty(PathManager.PROPERTY_HOME_PATH, communityRoot.toString());
 
     System.setProperty("kotlin.incremental.compilation", "true");
     System.setProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "true");
