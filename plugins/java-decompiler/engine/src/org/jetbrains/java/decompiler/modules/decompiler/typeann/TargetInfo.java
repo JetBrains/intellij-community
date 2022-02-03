@@ -33,11 +33,11 @@ public interface TargetInfo {
    */
   class EmptyTarget implements TargetInfo {
     /**
-     * @return All empty target type annotations from a {@link TypeAnnotationWriteHelper} list.
+     * @return All empty target type annotations from a {@link TypeAnnotation} list.
      */
-    public static List<TypeAnnotationWriteHelper> extract(List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
-      return typeAnnWriteHelpers.stream()
-        .filter(typeAnnWriteHelper -> typeAnnWriteHelper.getAnnotation().getTargetInfo() instanceof EmptyTarget)
+    public static List<TypeAnnotation> extract(List<TypeAnnotation> typeAnnotations) {
+      return typeAnnotations.stream()
+        .filter(typeAnnotation -> typeAnnotation.getTargetInfo() instanceof EmptyTarget)
         .collect(Collectors.toList());
     }
   }
@@ -61,12 +61,12 @@ public interface TargetInfo {
     }
 
     /**
-     * @return All formal parameter target annotations from a {@link TypeAnnotationWriteHelper} list at a specified index.
+     * @return All formal parameter target annotations from a {@link TypeAnnotation} list at a specified index.
      */
-    public static List<TypeAnnotationWriteHelper> extract(List<TypeAnnotationWriteHelper> typeAnnWriteHelpers, int formalParameterIndex) {
-      return typeAnnWriteHelpers.stream()
-        .filter(typeAnnWriteHelper -> {
-          TargetInfo targetInfo = typeAnnWriteHelper.getAnnotation().getTargetInfo();
+    public static List<TypeAnnotation> extract(List<TypeAnnotation> typeAnnotations, int formalParameterIndex) {
+      return typeAnnotations.stream()
+        .filter(typeAnnotation -> {
+          TargetInfo targetInfo = typeAnnotation.getTargetInfo();
           return targetInfo instanceof FormalParameterTarget
                  && ((FormalParameterTarget)targetInfo).getFormalParameterIndex() == formalParameterIndex;
         }).collect(Collectors.toList());
@@ -178,23 +178,23 @@ public interface TargetInfo {
     }
 
     /**
-     * @return All super types annotations from a {@link TypeAnnotationWriteHelper} list at a specified super type index.
+     * @return All super types annotations from a {@link TypeAnnotation} list at a specified super type index.
      */
-    public static List<TypeAnnotationWriteHelper> extract(List<TypeAnnotationWriteHelper> typeAnnWriteHelpers, int superTypeIndex) {
-      return typeAnnWriteHelpers.stream()
-        .filter(typeAnnWriteHelper -> {
-          TargetInfo targetInfo = typeAnnWriteHelper.getAnnotation().getTargetInfo();
+    public static List<TypeAnnotation> extract(List<TypeAnnotation> typeAnnotations, int superTypeIndex) {
+      return typeAnnotations.stream()
+        .filter(typeAnnotation -> {
+          TargetInfo targetInfo = typeAnnotation.getTargetInfo();
           return targetInfo instanceof SupertypeTarget && ((SupertypeTarget)targetInfo).getSupertypeIndex() == superTypeIndex;
         }).collect(Collectors.toList());
     }
 
     /**
-     * @return The extended type annotations from a {@link TypeAnnotationWriteHelper} list.
+     * @return The extended type annotations from a {@link TypeAnnotation} list.
      */
-    public static List<TypeAnnotationWriteHelper> extractExtends(List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
-      return typeAnnWriteHelpers.stream()
-        .filter(typeAnnWriteHelper -> {
-          TargetInfo targetInfo = typeAnnWriteHelper.getAnnotation().getTargetInfo();
+    public static List<TypeAnnotation> extractExtends(List<TypeAnnotation> typeAnnotations) {
+      return typeAnnotations.stream()
+        .filter(typeAnnotation -> {
+          TargetInfo targetInfo = typeAnnotation.getTargetInfo();
           return targetInfo instanceof SupertypeTarget && ((SupertypeTarget)targetInfo).inExtendsClause();
         }).collect(Collectors.toList());
     }
@@ -218,12 +218,12 @@ public interface TargetInfo {
     }
 
     /**
-     * @return All throws clause type annotations from a {@link TypeAnnotationWriteHelper} list at a specified throws type index.
+     * @return All throws clause type annotations from a {@link TypeAnnotation} list at a specified throws type index.
      */
-    public static List<TypeAnnotationWriteHelper> extract(List<TypeAnnotationWriteHelper> typeAnnWriteHelpers, int throwsTypeIndex) {
-      return typeAnnWriteHelpers.stream()
-        .filter(typeAnnWriteHelper -> {
-          TargetInfo targetInfo = typeAnnWriteHelper.getAnnotation().getTargetInfo();
+    public static List<TypeAnnotation> extract(List<TypeAnnotation> typeAnnotations, int throwsTypeIndex) {
+      return typeAnnotations.stream()
+        .filter(typeAnnotation -> {
+          TargetInfo targetInfo = typeAnnotation.getTargetInfo();
           return targetInfo instanceof ThrowsTarget && ((ThrowsTarget)targetInfo).getThrowsTypeIndex() == throwsTypeIndex;
         }).collect(Collectors.toList());
     }
@@ -248,12 +248,12 @@ public interface TargetInfo {
     }
 
     /**
-     * @return All type parameter type annotations from a {@link TypeAnnotationWriteHelper} list at a specified parameter index.
+     * @return All type parameter type annotations from a {@link TypeAnnotation} list at a specified parameter index.
      */
-    public static List<TypeAnnotationWriteHelper> extract(List<TypeAnnotationWriteHelper> typeAnnWriteHelpers, int typeParameterIndex) {
-      return typeAnnWriteHelpers.stream()
-        .filter(typeAnnWriteHelper -> {
-          TargetInfo targetInfo = typeAnnWriteHelper.getAnnotation().getTargetInfo();
+    public static List<TypeAnnotation> extract(List<TypeAnnotation> typeAnnotations, int typeParameterIndex) {
+      return typeAnnotations.stream()
+        .filter(typeAnnotation -> {
+          TargetInfo targetInfo = typeAnnotation.getTargetInfo();
           return targetInfo instanceof TypeParameterTarget
                  && ((TypeParameterTarget)targetInfo).getTypeParameterIndex() == typeParameterIndex;
         }).collect(Collectors.toList());
@@ -289,16 +289,16 @@ public interface TargetInfo {
     }
 
     /**
-     * @return All type parameter type annotations from a {@link TypeAnnotationWriteHelper} list at a specified parameter and bound index.
+     * @return All type parameter type annotations from a {@link TypeAnnotation} list at a specified parameter and bound index.
      */
-    public static List<TypeAnnotationWriteHelper> extract(
-      List<TypeAnnotationWriteHelper> typeAnnWriteHelpers,
+    public static List<TypeAnnotation> extract(
+      List<TypeAnnotation> typeAnnotations,
       int typeParameterIndex,
       int boundIndex
     ) {
-      return typeAnnWriteHelpers.stream()
-        .filter(typeAnnWriteHelper -> {
-          TargetInfo targetInfo = typeAnnWriteHelper.getAnnotation().getTargetInfo();
+      return typeAnnotations.stream()
+        .filter(typeAnnotation -> {
+          TargetInfo targetInfo = typeAnnotation.getTargetInfo();
           return targetInfo instanceof TypeParameterBoundTarget
                  && ((TypeParameterBoundTarget)targetInfo).getTypeParameterIndex() == typeParameterIndex
                  && ((TypeParameterBoundTarget)targetInfo).getBoundIndex() == boundIndex;
