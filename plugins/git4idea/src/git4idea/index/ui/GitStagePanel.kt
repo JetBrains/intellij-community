@@ -65,6 +65,7 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.status.GitRefreshListener
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
+import java.awt.event.InputEvent
 import java.beans.PropertyChangeListener
 import java.util.*
 import java.util.stream.Collectors
@@ -277,19 +278,26 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
       doubleClickHandler = Processor { e ->
         if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return@Processor false
-
-        val dataContext = DataManager.getInstance().getDataContext(this)
-
-        val mergeAction = ActionManager.getInstance().getAction("Git.Stage.Merge")
-        val event = AnActionEvent.createFromAnAction(mergeAction, e, ActionPlaces.UNKNOWN, dataContext)
-        if (ActionUtil.lastUpdateAndCheckDumb(mergeAction, event, true)) {
-          performActionDumbAwareWithCallbacks(mergeAction, event)
-        }
-        else {
-          OpenSourceUtil.openSourcesFrom(dataContext, true)
-        }
+        processDoubleClickOrEnter(e)
         true
       }
+      enterKeyHandler = Processor { e ->
+        processDoubleClickOrEnter(e)
+        true
+      }
+    }
+
+    private fun processDoubleClickOrEnter(e: InputEvent?) {
+      val dataContext = DataManager.getInstance().getDataContext(tree)
+
+      val mergeAction = ActionManager.getInstance().getAction("Git.Stage.Merge")
+      val event = AnActionEvent.createFromAnAction(mergeAction, e, ActionPlaces.UNKNOWN, dataContext)
+      if (ActionUtil.lastUpdateAndCheckDumb(mergeAction, event, true)) {
+        performActionDumbAwareWithCallbacks(mergeAction, event)
+        return
+      }
+
+      OpenSourceUtil.openSourcesFrom(dataContext, true)
     }
 
     fun editedCommitChanged() {
