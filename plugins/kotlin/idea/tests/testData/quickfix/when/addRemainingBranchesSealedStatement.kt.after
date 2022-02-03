@@ -17,4 +17,3 @@ fun test(v: Variant?) {
         null -> TODO()
     }
 }
-/* IGNORE_FIR */
