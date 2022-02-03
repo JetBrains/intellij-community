@@ -24,16 +24,20 @@ public final class JBAnimatorHelper {
   private final @NotNull WinMM lib;
 
   public static void requestHighPrecisionTimer(@NotNull JBAnimator requestor) {
-    var helper = JBAnimatorHelperHolder.INSTANCE;
-    if (helper.requestors.add(requestor) && isAvailable()) {
-      helper.lib.timeBeginPeriod(PERIOD);
+    if (isAvailable()) {
+      var helper = JBAnimatorHelperHolder.INSTANCE;
+      if (helper.requestors.add(requestor)) {
+        helper.lib.timeBeginPeriod(PERIOD);
+      }
     }
   }
 
   public static void cancelHighPrecisionTimer(@NotNull JBAnimator requestor) {
-    var helper = JBAnimatorHelperHolder.INSTANCE;
-    if (helper.requestors.remove(requestor) && isAvailable()) {
-      helper.lib.timeEndPeriod(PERIOD);
+    if (isAvailable()) {
+      var helper = JBAnimatorHelperHolder.INSTANCE;
+      if (helper.requestors.remove(requestor)) {
+        helper.lib.timeEndPeriod(PERIOD);
+      }
     }
   }
 
@@ -70,8 +74,10 @@ public final class JBAnimatorHelper {
     WinMM library = null;
     if (SystemInfoRt.isWindows) try {
       library = Native.load("winmm", WinMM.class);
+    } catch (UnsatisfiedLinkError e) {
+      Logger.getInstance(getClass()).error(new RuntimeException("Cannot load 'winmm.dll' library"));
     } catch (Throwable t) {
-      Logger.getInstance(getClass()).error("Cannot load 'winmm.dll' library", t);
+      Logger.getInstance(getClass()).error(t);
     }
     lib = library != null ? library : new WinMM() {
       @Override
