@@ -87,7 +87,7 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
         text = when {
           projectBasePath.isNullOrEmpty() -> config.userHome
           // TODO [run.targets] ideally we want to use '/' or '\' file separators based on the target's OS (which is not available yet)
-          else -> joinTargetPaths(config.userHome, PathUtil.getFileName(projectBasePath), fileSeparator = '/')
+          else -> joinTargetPaths(config.userHome, DEFAULT_VIRTUALENVS_DIR, PathUtil.getFileName(projectBasePath), fileSeparator = '/')
         }
       }
       addBrowseFolderListener(PySdkBundle.message("python.venv.location.chooser"), project, targetEnvironmentConfiguration,
@@ -253,5 +253,15 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
 
   private fun applyOptionalProjectSyncConfiguration(targetConfiguration: TargetEnvironmentConfiguration?) {
     if (targetConfiguration != null) projectSync?.apply(targetConfiguration)
+  }
+
+  companion object {
+    /**
+     * We assume this is the default name of the directory that is located in user home and which contains user virtualenv Python
+     * environments.
+     *
+     * @see com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor.getDefaultLocation
+     */
+    private const val DEFAULT_VIRTUALENVS_DIR = ".virtualenvs"
   }
 }

@@ -44,7 +44,7 @@ private fun findPathVariants(mappings: Iterable<PathMapping>,
     if (FileUtil.isAncestor(sourceBase, sourcePath, false)) {
       val destBase = destPathFun(mapping)
       FileUtil.getRelativePath(sourceBase, sourcePath, sourceFileSeparator)?.let { relativeSourcePath ->
-        joinTargetPaths(destBase, relativeSourcePath, destFileSeparator)
+        joinTargetPaths(destBase, relativeSourcePath, fileSeparator = destFileSeparator)
       }
     }
     else {
@@ -53,21 +53,28 @@ private fun findPathVariants(mappings: Iterable<PathMapping>,
   }
 }
 
-fun joinTargetPaths(basePath: String, relativePath: String, fileSeparator: Char): String {
-  val normalizedBasePathForJoining = basePath
+fun joinTargetPaths(vararg paths: String, fileSeparator: Char): String {
+  val iterator = paths.iterator()
+  var path = iterator.next()
     .normalizeFileSeparatorCharacter(fileSeparator)
     .removeRepetitiveFileSeparators(fileSeparator)
-    .ensureEndsWithFileSeparator(fileSeparator)
-  val normalizedRelativePath = relativePath
-    .normalizeFileSeparatorCharacter(fileSeparator)
-    .removeRepetitiveFileSeparators(fileSeparator)
-    .normalizeRelativePath(fileSeparator)
-  return "$normalizedBasePathForJoining$normalizedRelativePath"
+  while (iterator.hasNext()) {
+    val basePath = path
+      .ensureEndsWithFileSeparator(fileSeparator)
+    val normalizedRelativePath = iterator.next()
+      .normalizeFileSeparatorCharacter(fileSeparator)
+      .removeRepetitiveFileSeparators(fileSeparator)
+      .normalizeRelativePath(fileSeparator)
+    path = "$basePath$normalizedRelativePath"
+  }
+  return path
 }
 
-private fun String.normalizeFileSeparatorCharacter(fileSeparator: Char): String = if (fileSeparator == '\\') replace('/', fileSeparator) else this
+private fun String.normalizeFileSeparatorCharacter(fileSeparator: Char): String =
+  if (fileSeparator == '\\') replace('/', fileSeparator) else this
 
-private fun String.removeRepetitiveFileSeparators(fileSeparator: Char): String = replace("$fileSeparator$fileSeparator", fileSeparator.toString())
+private fun String.removeRepetitiveFileSeparators(fileSeparator: Char): String =
+  replace("$fileSeparator$fileSeparator", fileSeparator.toString())
 
 private fun String.normalizeRelativePath(fileSeparator: Char): String =
   when {
