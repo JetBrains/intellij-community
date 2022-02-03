@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.function.Supplier
 
@@ -75,24 +76,28 @@ class PsiElementDocumentationTarget private constructor(
 
   @RequiresReadLock
   private fun localDoc(provider: DocumentationProvider): DocumentationResultData? {
+    val html = localDocHtml(provider)
+               ?: return null
+    return DocumentationResultData(
+      html,
+      pointer.anchor,
+      null,
+      emptyList(),
+      pointer.imageResolver
+    )
+  }
+
+  @RequiresReadLock
+  private fun localDocHtml(provider: DocumentationProvider): @Nls String? {
     val originalPsi = targetElement.getUserData(DocumentationManager.ORIGINAL_ELEMENT_KEY)?.element
     val doc = provider.generateDoc(targetElement, originalPsi)
     if (targetElement is PsiFile) {
       val fileDoc = DocumentationManager.generateFileDoc(targetElement, doc == null)
       if (fileDoc != null) {
-        return DocumentationResultData(
-          if (doc == null) fileDoc else doc + fileDoc,
-          pointer.anchor,
-          null,
-          emptyList(),
-          pointer.imageResolver
-        )
+        return if (doc == null) fileDoc else doc + fileDoc
       }
     }
-    if (doc != null) {
-      return DocumentationResultData(doc, pointer.anchor, null, emptyList(), pointer.imageResolver)
-    }
-    return null
+    return doc
   }
 
   private class PsiElementDocumentationTargetPointer(
