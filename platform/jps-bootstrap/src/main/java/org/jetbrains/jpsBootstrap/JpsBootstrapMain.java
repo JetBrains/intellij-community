@@ -54,7 +54,7 @@ public class JpsBootstrapMain {
       System.exit(0);
     }
     catch (Throwable t) {
-      fatal(ExceptionUtil.getThrowableText(t));
+      error(ExceptionUtil.getThrowableText(t));
       System.exit(1);
     }
   }
@@ -91,7 +91,7 @@ public class JpsBootstrapMain {
     classNameToRun = freeArgs.get(1);
 
     if (!classNameToRun.endsWith("BuildTarget")) {
-      fatal("Class name must end with 'BuildTarget': " + classNameToRun +
+      throw new IllegalStateException("Class name must end with 'BuildTarget': " + classNameToRun +
         "\nThis is just a convention helping to find build targets in the monorepo");
     }
 
@@ -101,12 +101,16 @@ public class JpsBootstrapMain {
     JpsBootstrapUtil.setVerboseEnabled(cmdline.hasOption(OPT_VERBOSE) || (verboseEnv != null && toBooleanChecked(verboseEnv)));
 
     String communityHomeString = System.getenv(COMMUNITY_HOME_ENV);
-    if (communityHomeString == null) fatal("Please set " + COMMUNITY_HOME_ENV + " environment variable");
+    if (communityHomeString == null) {
+      throw new IllegalStateException("Please set " + COMMUNITY_HOME_ENV + " environment variable");
+    }
 
     communityHome = Path.of(communityHomeString);
 
     Path communityCheckFile = communityHome.resolve("intellij.idea.community.main.iml");
-    if (!Files.exists(communityCheckFile)) fatal(COMMUNITY_HOME_ENV + " is incorrect: " + communityCheckFile + " is missing");
+    if (!Files.exists(communityCheckFile)) {
+      throw new IllegalStateException(COMMUNITY_HOME_ENV + " is incorrect: " + communityCheckFile + " is missing");
+    }
 
     Path riderHome = communityHome.getParent().getParent().resolve("Frontend");
     Path riderCheckFile = riderHome.resolve("Rider.iml");

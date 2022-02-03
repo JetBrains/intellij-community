@@ -4,7 +4,6 @@ package org.jetbrains.jpsBootstrap;
 import jetbrains.buildServer.messages.serviceMessages.Message;
 import jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
-import org.jetbrains.annotations.Contract;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -56,19 +55,6 @@ public class JpsBootstrapUtil {
       System.out.println(new Message(message, "ERROR", null).asString());
     } else {
       System.out.println("ERROR: " + message);
-    }
-  }
-
-  @Contract("_->fail")
-  public static void fatal(String message) {
-    if (underTeamCity) {
-      System.out.println(new Message(message, "FAILURE", null).asString());
-      // Under TeamCity non-zero exit code will be displayed as a separate build error
-      // so logging FAILURE message is enough
-      System.exit(0);
-    } else {
-      System.err.println("\nFATAL: " + message);
-      System.exit(1);
     }
   }
 

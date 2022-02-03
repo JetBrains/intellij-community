@@ -186,7 +186,7 @@ public class JpsBuild {
       String firstErrorText = myFirstError.get();
       if (firstErrorText != null) {
         System.out.println(new PublishArtifacts(myJpsLogDir + "=>jps-bootstrap-jps-logs.zip").asString());
-        fatal("Build finished with errors. See TC artifacts for build log. First error:\n" + firstErrorText);
+        throw new IllegalStateException("Build finished with errors. See TC artifacts for build log. First error:\n" + firstErrorText);
       }
     }
   }
