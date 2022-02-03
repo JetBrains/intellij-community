@@ -7,15 +7,13 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.psi.Call
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtImportAlias
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getCall
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
 
 class KtInvokeFunctionReferenceDescriptorsImpl(expression: KtCallExpression) : KtInvokeFunctionReference(expression), KtDescriptorsBasedReference {
-    override fun isReferenceTo(element: PsiElement): Boolean =
-        super<KtDescriptorsBasedReference>.isReferenceTo(element)
-
 
     override fun getTargetDescriptors(context: BindingContext): Collection<DeclarationDescriptor> {
         val call = element.getCall(context)
@@ -32,4 +30,8 @@ class KtInvokeFunctionReferenceDescriptorsImpl(expression: KtCallExpression) : K
 
     override fun doRenameImplicitConventionalCall(newName: String?): KtExpression =
         renameImplicitConventionalCall(newName)
+
+    override fun isReferenceToImportAlias(alias: KtImportAlias): Boolean {
+        return super<KtDescriptorsBasedReference>.isReferenceToImportAlias(alias)
+    }
 }
