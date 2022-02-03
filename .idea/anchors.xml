@@ -5,6 +5,7 @@
       <map>
         <entry key="kotlin-script-runtime" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.allopen-compiler-plugin" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.analysis-api-providers" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.android-extensions-compiler-plugin" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.high-level-api" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.high-level-api-fir" value="kotlin.util.compiler-classpath" />
@@ -13,13 +14,14 @@
         <entry key="kotlinc.kotlin-gradle-statistics" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-jps-common" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-script-util" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.kotlin-scripting-common" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-scripting-compiler" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.kotlin-scripting-compiler-impl" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.kotlin-scripting-jvm" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlinx-serialization-compiler-plugin" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.low-level-api-fir" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.noarg-compiler-plugin" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.sam-with-receiver-compiler-plugin" value="kotlin.util.compiler-classpath" />
-        <entry key="kotlinc.kotlin-jps-common" value="kotlin.util.compiler-classpath" />
-        <entry key="kotlinc.low-level-api-fir" value="kotlin.util.compiler-classpath" />
-        <entry key="kotlinc.analysis-api-providers" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.symbol-light-classes" value="kotlin.util.compiler-classpath" />
       </map>
     </option>
