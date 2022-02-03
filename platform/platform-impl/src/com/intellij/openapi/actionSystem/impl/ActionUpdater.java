@@ -195,14 +195,15 @@ final class ActionUpdater {
     }
 
     ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
-    return computeOnEdt(() -> {
+    ConcurrentList<String> warns = ContainerUtil.createConcurrentList();
+    Supplier<? extends T> supplier = () -> {
       {
         long curNanos = System.nanoTime();
         myEDTCallsCount++;
         myEDTWaitNanos += curNanos - start0;
         long elapsed = TimeUnit.NANOSECONDS.toMillis(curNanos - start0);
         if (elapsed > 200) {
-          LOG.warn(elapsed + " ms to grab EDT for " + operationName);
+          warns.add(elapsed + " ms to grab EDT for " + operationName);
         }
       }
       long start = System.nanoTime();
@@ -218,10 +219,18 @@ final class ActionUpdater {
         myInEDTActionOperation = null;
         long elapsed = TimeoutUtil.getDurationMillis(start);
         if (elapsed > 100) {
-          LOG.warn(elapsed + " ms to call on EDT " + operationName + " - speed it up and/or implement UpdateInBackground.");
+          warns.add(elapsed + " ms to call on EDT " + operationName + " - speed it up and/or implement UpdateInBackground.");
         }
       }
-    });
+    };
+    try {
+      return computeOnEdt(supplier);
+    }
+    finally {
+      for (String warn : warns) {
+        LOG.warn(warn);
+      }
+    }
   }
 
   /**
