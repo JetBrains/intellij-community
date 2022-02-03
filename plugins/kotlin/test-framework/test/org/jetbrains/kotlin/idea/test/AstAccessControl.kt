@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.test
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -12,8 +11,8 @@ import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
-import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.*
+import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.psi.KtFile
 import kotlin.test.fail
 
@@ -55,7 +54,7 @@ object AstAccessControl {
         project: Project, disposable: Disposable, testBody: () -> Unit
     ) {
         val filter = wrapWithDirectiveAllow { file ->
-          !FileTypeRegistry.getInstance().isFileOfType(file, KotlinFileType.INSTANCE) || file in allowedFiles
+          !file.isKotlinFileType() || file in allowedFiles
         }
 
         execute(shouldFail, project, disposable, filter, testBody)

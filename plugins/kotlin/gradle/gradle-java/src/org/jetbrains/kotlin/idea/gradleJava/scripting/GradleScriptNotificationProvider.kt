@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectImportProvider
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
+import com.intellij.ui.EditorNotificationProvider.CONST_NULL
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsLoca
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsLocator.NotificationKind.*
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.Imported
+import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import java.io.File
 import java.util.function.Function
 import javax.swing.JComponent
@@ -34,15 +36,13 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
         project: Project,
         file: VirtualFile,
     ): Function<in FileEditor, out JComponent?> {
-        if (!isGradleKotlinScript(file)
-            || !FileTypeRegistry.getInstance().isFileOfType(file, KotlinFileType.INSTANCE)
-        ) {
-            return EditorNotificationProvider.CONST_NULL
+        if (!isGradleKotlinScript(file) || !file.isKotlinFileType()) {
+            return CONST_NULL
         }
 
         val standaloneScriptActions = GradleStandaloneScriptActionsManager.getInstance(project)
         val rootsManager = GradleBuildRootsManager.getInstance(project)
-        val scriptUnderRoot = rootsManager?.findScriptBuildRoot(file) ?: return EditorNotificationProvider.CONST_NULL
+        val scriptUnderRoot = rootsManager?.findScriptBuildRoot(file) ?: return CONST_NULL
 
         // todo: this actions will be usefull only when gradle fix https://github.com/gradle/gradle/issues/12640
         fun EditorNotificationPanel.showActionsToFixNotEvaluated() {

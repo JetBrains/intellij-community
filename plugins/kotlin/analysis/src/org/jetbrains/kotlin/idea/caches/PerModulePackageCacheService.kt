@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.caches
 import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
@@ -26,7 +25,6 @@ import com.intellij.psi.impl.PsiTreeChangePreprocessor
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService.Companion.DEBUG_LOG_ENABLE_PerModulePackageCache
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService.Companion.FULL_DROP_THRESHOLD
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
@@ -37,6 +35,7 @@ import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getSourceRoot
+import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
@@ -86,7 +85,7 @@ class KotlinPackageContentModificationListener : StartupActivity {
                         }
                         .filter {
                             val vFile = it.file!!
-                            vFile.isDirectory || FileTypeRegistry.getInstance().isFileOfType(vFile, KotlinFileType.INSTANCE)
+                            vFile.isDirectory || vFile.isKotlinFileType()
                         }
                         .filter {
                             // It expected that content change events will be duplicated with more precise PSI events and processed
@@ -188,7 +187,7 @@ class ImplicitPackagePrefixCache(private val project: Project) {
 
     private fun analyzeImplicitPackagePrefixes(sourceRoot: VirtualFile): MutableMap<FqName, MutableList<VirtualFile>> {
         val result = mutableMapOf<FqName, MutableList<VirtualFile>>()
-        val ktFiles = sourceRoot.children.filter { FileTypeRegistry.getInstance().isFileOfType(it, KotlinFileType.INSTANCE) }
+        val ktFiles = sourceRoot.children.filter(VirtualFile::isKotlinFileType)
         for (ktFile in ktFiles) {
             result.addFile(ktFile)
         }

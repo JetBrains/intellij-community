@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.script.configuration
 
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
@@ -19,10 +18,10 @@ import com.intellij.ui.EditorNotifications
 import com.intellij.ui.HyperlinkLabel
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.StandardIdeScriptDefinition
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
+import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -35,7 +34,7 @@ import javax.swing.JComponent
 class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
 
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
-        if (!FileTypeRegistry.getInstance().isFileOfType(file, KotlinFileType.INSTANCE)) return CONST_NULL
+        if (!file.isKotlinFileType()) return CONST_NULL
 
         val ktFile = PsiManager.getInstance(project).findFile(file).safeAs<KtFile>()?.takeIf(KtFile::isScript) ?: return CONST_NULL
 
