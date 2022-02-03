@@ -2,12 +2,9 @@
 
 package com.intellij.psi.impl.cache.impl.todo;
 
-import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.util.indexing.*;
@@ -140,15 +137,10 @@ public final class TodoIndex extends SingleEntryFileBasedIndexExtension<Map<Todo
       @Override
       public boolean acceptInput(@NotNull IndexedFile file) {
         if (!TodoIndexers.needsTodoIndex(file)) return false;
+        FileType fileType = file.getFileType();
 
-        final FileType fileType = file.getFileType();
-
-        if (fileType instanceof LanguageFileType) {
-          return LanguageParserDefinitions.INSTANCE.forLanguage(((LanguageFileType)fileType).getLanguage()) != null;
-        }
-
-        return PlatformIdTableBuilding.isTodoIndexerRegistered(fileType) ||
-               fileType instanceof CustomSyntaxTableFileType;
+        DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = PlatformIdTableBuilding.getTodoIndexer(fileType);
+        return indexer != null;
       }
     };
   }

@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.Key;
@@ -42,6 +41,7 @@ import static com.intellij.psi.impl.cache.impl.BaseFilterLexer.createTodoScannin
 public final class PlatformIdTableBuilding {
   public static final Key<EditorHighlighter> EDITOR_HIGHLIGHTER = new Key<>("Editor");
   private static final TokenSet ABSTRACT_FILE_COMMENT_TOKENS = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
+  private static final TokenSetTodoIndexer GENERAL_TODO_LISTENER = new TokenSetTodoIndexer(ABSTRACT_FILE_COMMENT_TOKENS);
 
   private PlatformIdTableBuilding() {}
 
@@ -61,25 +61,17 @@ public final class PlatformIdTableBuilding {
       }
     }
 
-    if (fileType instanceof CustomSyntaxTableFileType) {
-      return new TokenSetTodoIndexer(ABSTRACT_FILE_COMMENT_TOKENS);
-    }
-
-    return null;
+    return fileType instanceof CustomSyntaxTableFileType ? GENERAL_TODO_LISTENER : null;
   }
 
   public static boolean checkCanUseCachedEditorHighlighter(final CharSequence chars, final EditorHighlighter editorHighlighter) {
     assert editorHighlighter instanceof LexerEditorHighlighter;
     final boolean b = ((LexerEditorHighlighter)editorHighlighter).checkContentIsEqualTo(chars);
     if (!b) {
-      final Logger logger = Logger.getInstance(IdTableBuilding.class.getName());
+      final Logger logger = Logger.getInstance(PlatformIdTableBuilding.class);
       logger.warn("Unexpected mismatch of editor highlighter content with indexing content");
     }
     return b;
-  }
-
-  public static boolean isTodoIndexerRegistered(@NotNull FileType fileType) {
-    return TodoIndexers.INSTANCE.forFileType(fileType) != null || fileType instanceof InternalFileType;
   }
 
   private static class TokenSetTodoIndexer extends VersionedTodoIndexer {
