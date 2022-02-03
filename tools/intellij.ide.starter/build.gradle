@@ -94,3 +94,9 @@ compileTestKotlin {
     ]
   }
 }
+
+test {
+  filter {
+    includeTestsMatching "com.intellij.ide.starter.tests.unit.*"
+  }
+}
