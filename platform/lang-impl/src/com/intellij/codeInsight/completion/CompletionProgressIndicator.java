@@ -815,7 +815,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private LightweightHint showErrorHint(Project project, Editor editor, @HintText String text) {
     LightweightHint[] result = {null};
-    EditorHintListener listener = (project1, hint, flags) -> result[0] = hint;
+    EditorHintListener listener = new EditorHintListener() {
+      @Override
+      public void hintShown(Project project, @NotNull LightweightHint hint, int flags) {
+        result[0] = hint;
+      }
+    };
     SimpleMessageBusConnection connection = project.getMessageBus().simpleConnect();
     try {
       connection.subscribe(EditorHintListener.TOPIC, listener);

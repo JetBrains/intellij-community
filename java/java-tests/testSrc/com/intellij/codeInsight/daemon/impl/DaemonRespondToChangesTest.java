@@ -96,6 +96,7 @@ import com.intellij.refactoring.inline.InlineRefactoringActionHandler;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.*;
@@ -1217,9 +1218,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
 
     Set<LightweightHint> shown = new ReferenceOpenHashSet<>();
-    getProject().getMessageBus().connect().subscribe(EditorHintListener.TOPIC, (project, hint, flags) -> {
-      shown.add(hint);
-      hint.addHintListener(event -> shown.remove(hint));
+    getProject().getMessageBus().connect().subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
+      @Override
+      public void hintShown(@NotNull Project project, @NotNull LightweightHint hint, int flags) {
+        shown.add(hint);
+        hint.addHintListener(event -> shown.remove(hint));
+      }
     });
 
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
@@ -1249,10 +1253,17 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
 
     Set<LightweightHint> shown = new ReferenceOpenHashSet<>();
-    getProject().getMessageBus().connect().subscribe(EditorHintListener.TOPIC, (project, hint, flags) -> {
-      shown.add(hint);
-      hint.addHintListener(event -> shown.remove(hint));
-    });
+    getProject().getMessageBus().connect().subscribe(EditorHintListener.TOPIC,
+                                                     new EditorHintListener() {
+                                                       @Override
+                                                       public void hintShown(@NotNull Editor editor,
+                                                                             @NotNull LightweightHint hint,
+                                                                             int flags,
+                                                                             @NotNull HintHint hintInfo) {
+                                                         shown.add(hint);
+                                                         hint.addHintListener(event -> shown.remove(hint));
+                                                       }
+                                                     });
 
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     highlightErrors();
@@ -2149,7 +2160,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     Set<LightweightHint> visibleHints = new ReferenceOpenHashSet<>();
     getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
       @Override
-      public void hintShown(Project project, @NotNull LightweightHint hint, int flags) {
+      public void hintShown(Project project,
+                            @NotNull LightweightHint hint,
+                            int flags) {
         visibleHints.add(hint);
         hint.addHintListener(new HintListener() {
           @Override
