@@ -17,6 +17,9 @@ class MethodChainsInlayProvider : AbstractCallChainHintsProvider<PsiMethodCallEx
   override val group: InlayGroup
     get() = InlayGroup.TYPES_GROUP
 
+  override val description: String
+    get() = JavaBundle.message("inlay.MethodChainsInlayProvider.description")
+
   override fun getProperty(key: String): String {
     return JavaBundle.message(key)
   }
