@@ -15,12 +15,18 @@
  */
 package org.jetbrains.yaml;
 
+import com.intellij.json.JsonSchemaSpellcheckerClient;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLScalar;
 
 public class YAMLSpellcheckerStrategy extends SpellcheckingStrategy {
   @NotNull
@@ -36,9 +42,46 @@ public class YAMLSpellcheckerStrategy extends SpellcheckingStrategy {
           type == YAMLTokenTypes.SCALAR_STRING ||
           type == YAMLTokenTypes.SCALAR_DSTRING ||
           type == YAMLTokenTypes.COMMENT) {
-        return TEXT_TOKENIZER;
+        if (new JsonSchemaSpellcheckerClientForYaml(element).matchesNameFromSchema()) {
+          return EMPTY_TOKENIZER;
+        }
+        else {
+          return TEXT_TOKENIZER;
+        }
       }
     }
     return super.getTokenizer(element);
+  }
+
+  private static class JsonSchemaSpellcheckerClientForYaml extends JsonSchemaSpellcheckerClient {
+    @NotNull private final PsiElement element;
+
+    protected JsonSchemaSpellcheckerClientForYaml(@NotNull PsiElement element) {
+      this.element = element;
+    }
+
+    @Override
+    protected @NotNull PsiElement getElement() {
+      return element;
+    }
+
+    @Override
+    protected @Nullable String getValue() {
+      PsiElement parent = element.getParent();
+      if (element.getNode().getElementType() == YAMLTokenTypes.SCALAR_KEY) {
+        return ((YAMLKeyValue)parent).getKeyText();
+      }
+      else if (parent instanceof YAMLScalar) {
+        return ((YAMLScalar)parent).getTextValue();
+      }
+      else {
+        return null;
+      }
+    }
+
+    @Override
+    protected boolean isXIntellijInjection(@NotNull JsonSchemaService service, @NotNull JsonSchemaObject rootSchema) {
+      return false;
+    }
   }
 }
