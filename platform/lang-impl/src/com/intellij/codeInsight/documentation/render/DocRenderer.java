@@ -379,12 +379,12 @@ final class DocRenderer implements CustomFoldRegionRenderer {
     }
     if (isGotoDeclarationEvent()) {
       instance(project).navigateInlineLink(
-        url, myItem::getInlineDocumentation
+        url, myItem::getInlineDocumentationTarget
       );
     }
     else {
       instance(project).activateInlineLink(
-        url, myItem::getInlineDocumentation,
+        url, myItem::getInlineDocumentationTarget,
         editor, popupPosition(location)
       );
     }

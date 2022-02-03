@@ -92,7 +92,7 @@ private fun <X> resolveLinkInReadAction(
   }
 }
 
-internal fun resolveLink(target: DocumentationTarget, url: String): LinkResolveResult? {
+private fun resolveLink(target: DocumentationTarget, url: String): LinkResolveResult? {
   for (handler in DocumentationLinkHandler.EP_NAME.extensionList) {
     ProgressManager.checkCanceled()
     return handler.resolveLink(target, url) ?: continue

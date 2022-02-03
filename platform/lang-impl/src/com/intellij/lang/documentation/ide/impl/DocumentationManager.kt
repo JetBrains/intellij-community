@@ -7,12 +7,10 @@ import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.propComponentProperty
 import com.intellij.lang.documentation.DocumentationTarget
-import com.intellij.lang.documentation.InlineDocumentation
-import com.intellij.lang.documentation.LinkResolveResult
-import com.intellij.lang.documentation.ResolvedTarget
 import com.intellij.lang.documentation.ide.actions.documentationTargets
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.lang.documentation.impl.DocumentationRequest
+import com.intellij.lang.documentation.impl.InternalResolveLinkResult
 import com.intellij.lang.documentation.impl.documentationRequest
 import com.intellij.lang.documentation.impl.resolveLink
 import com.intellij.openapi.Disposable
@@ -21,7 +19,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -212,14 +209,15 @@ internal class DocumentationManager(private val project: Project) : Disposable {
 
   fun navigateInlineLink(
     url: String,
-    documentation: () -> InlineDocumentation?
+    targetSupplier: () -> DocumentationTarget?
   ) {
     EDT.assertIsEdt()
-    cs.launch(ModalityState.current().asContextElement()) {
-      val navigatable = readAction {
-        resolveInlineLink(documentation, url)?.navigatable
+    cs.launch(Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
+      val result = withContext(Dispatchers.IO) {
+        resolveLink(targetSupplier, url, DocumentationTarget::navigatable)
       }
-      withContext(Dispatchers.EDT) { // will use context modality state
+      if (result is InternalResolveLinkResult.Value) {
+        val navigatable = result.value
         if (navigatable != null && navigatable.canNavigate()) {
           navigatable.navigate(true)
         }
@@ -229,40 +227,27 @@ internal class DocumentationManager(private val project: Project) : Disposable {
 
   fun activateInlineLink(
     url: String,
-    documentation: () -> InlineDocumentation?,
+    targetSupplier: () -> DocumentationTarget?,
     editor: Editor,
     popupPosition: Point
   ) {
     EDT.assertIsEdt()
-    cs.launch(Dispatchers.EDT + ModalityState.current().asContextElement()) {
+    cs.launch(Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
       val pauseAutoUpdateHandle = toolWindowManager.getVisibleAutoUpdatingContent()?.toolWindowUI?.pauseAutoUpdate()
       try {
-        val request = withContext(Dispatchers.Default) {
-          readAction {
-            resolveInlineLink(documentation, url)?.documentationRequest()
-          }
+        val result = withContext(Dispatchers.Default) {
+          resolveLink(targetSupplier, url)
         }
-        if (request == null) {
+        if (result !is InternalResolveLinkResult.Value) {
           BrowserUtil.browseAbsolute(url)
-          return@launch
         }
-        showDocumentation(request, InlinePopupContext(project, editor, popupPosition))
+        else {
+          showDocumentation(result.value, InlinePopupContext(project, editor, popupPosition))
+        }
       }
       finally {
         pauseAutoUpdateHandle?.let(Disposer::dispose)
       }
-    }
-  }
-
-  private fun resolveInlineLink(documentation: () -> InlineDocumentation?, url: String): DocumentationTarget? {
-    val ownerTarget = documentation()?.ownerTarget
-                      ?: return null
-    val linkResolveResult: LinkResolveResult = resolveLink(ownerTarget, url)
-                                               ?: return null
-    @Suppress("REDUNDANT_ELSE_IN_WHEN")
-    return when (linkResolveResult) {
-      is ResolvedTarget -> linkResolveResult.target
-      else -> error("Unexpected result: $linkResolveResult") // this fixes Kotlin incremental compilation
     }
   }
 }

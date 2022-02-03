@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.documentation.DocFontSizePopup;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.lang.documentation.DocumentationTarget;
 import com.intellij.lang.documentation.InlineDocumentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -329,6 +330,11 @@ public final class DocRenderItem {
       }
     }
     return null;
+  }
+
+  @Nullable DocumentationTarget getInlineDocumentationTarget() {
+    InlineDocumentation documentation = getInlineDocumentation();
+    return documentation == null ? null : documentation.getOwnerTarget();
   }
 
   private static void updateRenderers(@NotNull Collection<DocRenderItem> items, boolean recreateContent) {
