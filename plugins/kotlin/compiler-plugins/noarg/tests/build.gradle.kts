@@ -35,7 +35,6 @@ dependencies {
     jpsLikeJarDependency("junit:junit:4.12", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.common", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.core", JpsDepScope.COMPILE)
-    jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.annotation-based-compiler-support.common", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.noarg.common", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.test-framework", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.gradle.gradle-idea", JpsDepScope.RUNTIME)

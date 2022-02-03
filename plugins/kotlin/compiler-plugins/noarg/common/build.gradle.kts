@@ -33,7 +33,6 @@ dependencies {
     jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:noarg-compiler-plugin-for-ide"), JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.common", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.core", JpsDepScope.COMPILE)
-    jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.annotation-based-compiler-support.common", JpsDepScope.COMPILE)
     jpsLikeJarDependency(intellijCoreDep(), JpsDepScope.COMPILE) // 'intellij.platform.core.impl' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("intellij-core-analysis-deprecated") }) // 'intellij.platform.core.impl' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("platform-api") }) // 'intellij.platform.core.impl' dependency

@@ -34,8 +34,6 @@ dependencies {
     jpsLikeModuleDependency(":kotlin-ide.kotlin.common", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.gradle.gradle-tooling", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.gradle.gradle-idea", JpsDepScope.COMPILE)
-    jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.annotation-based-compiler-support.common", JpsDepScope.COMPILE)
-    jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.annotation-based-compiler-support.gradle", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.base-compiler-plugins-ide-support", JpsDepScope.COMPILE)
     jpsLikeJarDependency(intellijPluginDep("gradle", forIde = true), JpsDepScope.COMPILE) // 'intellij.gradle.common' dependency
     jpsLikeJarDependency("org.jetbrains.intellij.deps:gradle-api:7.1", JpsDepScope.COMPILE) // 'intellij.gradle.common' dependency
