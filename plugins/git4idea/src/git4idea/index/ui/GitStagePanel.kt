@@ -16,8 +16,11 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ChangeListListener
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangesViewManager.createTextStatusFactory
+import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
+import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
 import com.intellij.openapi.vcs.checkin.CheckinHandler
@@ -91,7 +94,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
   private val changesStatusPanel: Wrapper
 
   private var diffPreviewProcessor: GitStageDiffPreview? = null
-  private var editorTabPreview: EditorTabPreview? = null
+  private var editorTabPreview: GitStageEditorDiffPreview? = null
 
   private val state: GitStageTracker.State
     get() = tracker.state
@@ -240,7 +243,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
       activate()
     }
 
-    installListeners(tree, false)
+    installSelectionHandler(tree, false)
     installNextDiffActionOn(this@GitStagePanel)
     UIUtil.putClientProperty(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
   }
@@ -278,16 +281,16 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
       doubleClickHandler = Processor { e ->
         if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return@Processor false
-        processDoubleClickOrEnter(e)
+        processDoubleClickOrEnter(e, true)
         true
       }
       enterKeyHandler = Processor { e ->
-        processDoubleClickOrEnter(e)
+        processDoubleClickOrEnter(e, false)
         true
       }
     }
 
-    private fun processDoubleClickOrEnter(e: InputEvent?) {
+    private fun processDoubleClickOrEnter(e: InputEvent?, isDoubleClick: Boolean) {
       val dataContext = DataManager.getInstance().getDataContext(tree)
 
       val mergeAction = ActionManager.getInstance().getAction("Git.Stage.Merge")
@@ -296,6 +299,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
         performActionDumbAwareWithCallbacks(mergeAction, event)
         return
       }
+      if (editorTabPreview?.processDoubleClickOrEnter(isDoubleClick) == true) return
 
       OpenSourceUtil.openSourcesFrom(dataContext, true)
     }

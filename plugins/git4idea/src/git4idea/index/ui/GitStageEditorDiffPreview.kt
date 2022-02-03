@@ -30,6 +30,11 @@ class GitStageEditorDiffPreview(diffProcessor: GitStageDiffPreview, private val 
     return super.skipPreviewUpdate() || tree != IdeFocusManager.getInstance(project).focusOwner
   }
 
+  internal fun processDoubleClickOrEnter(isDoubleClick: Boolean): Boolean {
+    val isPreviewAllowed = if (isDoubleClick) isPreviewOnDoubleClickAllowed() else isPreviewOnEnterAllowed()
+    return isPreviewAllowed && openPreview(isDoubleClick)
+  }
+
   override fun isPreviewOnDoubleClickAllowed(): Boolean = VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK
   override fun isPreviewOnEnterAllowed(): Boolean = VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK
 }
