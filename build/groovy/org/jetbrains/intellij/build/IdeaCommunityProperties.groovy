@@ -50,6 +50,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
       "intellij.performanceTesting.commands",
       "intellij.performanceTesting.maven.commands",
       "intellij.performanceTesting.gradle.commands",
+      "intellij.dynamicPlugins.performanceTesting.commands",
     ]
 
     versionCheckerConfig = CE_CLASS_VERSIONS
