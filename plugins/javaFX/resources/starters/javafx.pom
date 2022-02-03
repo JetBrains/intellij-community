@@ -6,7 +6,7 @@
 
   <properties>
     <gradle.version>7.3.3</gradle.version>
-    <junit.version>5.8.1</junit.version>
+    <junit.version>5.8.2</junit.version>
     <kotlin.version>1.6.10</kotlin.version>
 
     <!-- OpenJFX release trains -->
@@ -19,6 +19,9 @@
     <fx16.version>16</fx16.version>
     <fx17.version>17.0.1</fx17.version>
     <fx18.version>18-ea+6</fx18.version>
+
+    <fxgl11.version>11.17</fxgl11.version>
+    <fxgl17.version>17</fxgl17.version>
   </properties>
 
   <dependencyManagement>
@@ -36,7 +39,7 @@
       <dependency>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
+        <version>3.9.0</version>
       </dependency>
       <dependency>
         <groupId>org.beryx</groupId>
@@ -47,7 +50,7 @@
       <dependency>
         <groupId>org.controlsfx</groupId>
         <artifactId>controlsfx</artifactId>
-        <version>11.1.0</version>
+        <version>11.1.1</version>
       </dependency>
       <dependency>
         <groupId>com.dlsc.formsfx</groupId>
@@ -57,12 +60,12 @@
       <dependency>
         <groupId>net.synedra</groupId>
         <artifactId>validatorfx</artifactId>
-        <version>0.1.13</version>
+        <version>0.2.1</version>
       </dependency>
       <dependency>
         <groupId>org.kordamp.ikonli</groupId>
         <artifactId>ikonli-javafx</artifactId>
-        <version>12.2.0</version>
+        <version>12.3.0</version>
       </dependency>
       <dependency>
         <groupId>org.kordamp.bootstrapfx</groupId>
@@ -73,6 +76,11 @@
         <groupId>eu.hansolo</groupId>
         <artifactId>tilesfx</artifactId>
         <version>11.48</version>
+      </dependency>
+      <dependency>
+        <groupId>com.github.almasb</groupId>
+        <artifactId>fxgl</artifactId>
+        <version>${fxgl17.version}</version>
       </dependency>
 
       <dependency>
@@ -88,7 +96,7 @@
       <dependency>
         <groupId>org.testng</groupId>
         <artifactId>testng</artifactId>
-        <version>7.4.0</version>
+        <version>7.5</version>
       </dependency>
       <dependency>
         <groupId>org.jetbrains.kotlin</groupId>
@@ -108,7 +116,7 @@
       <dependency>
         <groupId>org.codehaus.gmavenplus</groupId>
         <artifactId>gmavenplus-plugin</artifactId>
-        <version>1.13.0</version>
+        <version>1.13.1</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
