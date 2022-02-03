@@ -764,6 +764,16 @@
       "key": "Plugins.tagForeground"
     },
     {
+      "key": "ComplexPopup.Header.background",
+      "description": "Complex popup (like Find in Files) header background (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
+      "key": "ComplexPopup.Header.insets",
+      "description": "Complex popup header insets (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
       "key": "Popup.Advertiser.background",
       "description": "The hint text area at the bottom of a popup"
     },

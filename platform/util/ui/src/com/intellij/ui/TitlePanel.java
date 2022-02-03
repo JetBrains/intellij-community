@@ -99,7 +99,7 @@ public class TitlePanel extends CaptionPanel {
     if (isExperimentalUI) {
       myLabel.setFont(myLabel.getFont().deriveFont(Font.BOLD));
       useHeaderInsets = true;
-      myLabel.setBorder(JBUI.CurrentTheme.Popup.headerInsets());
+      myLabel.setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.Popup.headerInsets()));
     }
   }
 }

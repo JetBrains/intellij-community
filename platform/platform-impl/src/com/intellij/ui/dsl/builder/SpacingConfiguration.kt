@@ -7,6 +7,7 @@ import com.intellij.util.ui.JBUI
 interface SpacingConfiguration {
 
   companion object {
+    @JvmField
     val EMPTY = object : SpacingConfiguration {
       override val horizontalSmallGap = 0
       override val horizontalDefaultGap = 0
@@ -22,6 +23,7 @@ interface SpacingConfiguration {
       override val dialogGap = Gaps.EMPTY
     }
 
+    @JvmStatic
     fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
       return object : SpacingConfiguration {
 

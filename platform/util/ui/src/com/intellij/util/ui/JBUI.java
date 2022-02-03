@@ -799,6 +799,15 @@ public final class JBUI {
       }
     }
 
+    public static final class ComplexPopup {
+
+      public static final Color HEADER_BACKGROUND = JBColor.namedColor("ComplexPopup.Header.background", 0xe6e6e6);
+
+      public static Insets headerInsets() {
+        return insets("ComplexPopup.Header.insets", insets(12, 10, 10, 10));
+      }
+    }
+
     public static final class Popup {
       public static int bodyBottomInsetNoAd() {
         return getInt("Popup.Body.bottomInsetNoAd", 8);
@@ -825,8 +834,8 @@ public final class JBUI {
       }
 
       @NotNull
-      public static Border headerInsets() {
-        return new JBEmptyBorder(insets("Popup.Header.insets", insets(12, 10, 10, 10)));
+      public static Insets headerInsets() {
+        return insets("Popup.Header.insets", insets(12, 10, 10, 10));
       }
 
       public static int headerHeight(boolean hasControls) {

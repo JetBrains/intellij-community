@@ -58,6 +58,7 @@ import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.*;
+import com.intellij.ui.dsl.builder.SpacingConfiguration;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.popup.PopupState;
@@ -133,16 +134,13 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   private Alarm mySearchRescheduleOnCancellationsAlarm;
   private volatile ProgressIndicatorBase myResultsPreviewSearchProgress;
 
-  private JLabel myTitleLabel;
-  private JLabel myInfoLabel;
+  private FindPopupHeader header;
   private final AtomicBoolean myCaseSensitiveState = new AtomicBoolean();
   private final AtomicBoolean myPreserveCaseState = new AtomicBoolean();
   private final AtomicBoolean myWholeWordsState = new AtomicBoolean();
   private final AtomicBoolean myRegexState = new AtomicBoolean();
-  private StateRestoringCheckBox myCbFileFilter;
   private JCheckBox myNewTabCheckbox;
   private ActionToolbarImpl myScopeSelectionToolbar;
-  private ComboBox<String> myFileMaskField;
   private ActionButton myFilterContextButton;
   private JButton myOKButton;
   private JButton myReplaceAllButton;
@@ -158,10 +156,8 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   private SimpleColoredComponent myUsagePreviewTitle;
   private UsagePreviewPanel myUsagePreviewPanel;
   private DialogWrapper myDialog;
-  private JLabel myLoadingIcon;
   private int myLoadingHash;
   private final AtomicBoolean myNeedReset = new AtomicBoolean(true);
-  private JPanel myTitlePanel;
   private String myUsagesCount;
   private String myFilesCount;
   private UsageViewPresentation myUsageViewPresentation;
@@ -280,8 +276,8 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         }
       });
       WindowMoveListener windowListener = new WindowMoveListener(this);
-      myTitlePanel.addMouseListener(windowListener);
-      myTitlePanel.addMouseMotionListener(windowListener);
+      header.panel.addMouseListener(windowListener);
+      header.panel.addMouseMotionListener(windowListener);
       addMouseListener(windowListener);
       addMouseMotionListener(windowListener);
       Dimension panelSize = getPreferredSize();
@@ -408,8 +404,8 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     if (myIsPinned.get()) return false;
     if (!ApplicationManager.getApplication().isActive()) return false;
     if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() == null) return false;
-    if (myFileMaskField.isPopupVisible()) {
-      myFileMaskField.setPopupVisible(false);
+    if (header.fileMaskField.isPopupVisible()) {
+      header.fileMaskField.setPopupVisible(false);
       return false;
     }
     List<JBPopup> popups = ContainerUtil.filter(JBPopupFactory.getInstance().getChildPopups(this), popup -> !popup.isDisposed());
@@ -456,63 +452,41 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   }
 
   private void initComponents() {
-    myTitleLabel = new JBLabel(FindBundle.message("find.in.path.dialog.title"), UIUtil.ComponentStyle.REGULAR);
-    RelativeFont.BOLD.install(myTitleLabel);
-    myInfoLabel = new JBLabel("", UIUtil.ComponentStyle.SMALL);
-    myLoadingIcon = new JLabel(EmptyIcon.ICON_16);
+    AnAction myShowFilterPopupAction = new MyShowFilterPopupAction();
+    myFilterContextButton =
+      new ActionButton(myShowFilterPopupAction, myShowFilterPopupAction.getTemplatePresentation(), ActionPlaces.UNKNOWN,
+                       ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+        @Override
+        public Icon getIcon() {
+          Icon icon = myShowFilterPopupAction.getTemplatePresentation().getIcon();
+          return mySelectedContextName.equals(FindInProjectUtil.getPresentableName(FindModel.SearchContext.ANY))
+                 ? icon
+                 : ExecutionUtil.getLiveIndicator(icon);
+        }
+      };
+    myShowFilterPopupAction.registerCustomShortcutSet(myShowFilterPopupAction.getShortcutSet(), this);
+
+    header = new FindPopupHeader(myProject, myFilterContextButton, new MyPinAction());
+
     ItemListener liveResultsPreviewUpdateListener = __ -> scheduleResultsUpdate();
-    myCbFileFilter = createCheckBox(myProject);
-    myCbFileFilter.addItemListener(__ -> {
-      if (myCbFileFilter.isSelected()) {
-        myFileMaskField.setEnabled(true);
-        if (myCbFileFilter.getClientProperty("dontRequestFocus") == null) {
-          IdeFocusManager.getInstance(myProject).requestFocus(myFileMaskField, true);
-          myFileMaskField.getEditor().selectAll();
+    header.cbFileFilter.addItemListener(__ -> {
+      if (header.cbFileFilter.isSelected()) {
+        header.fileMaskField.setEnabled(true);
+        if (header.cbFileFilter.getClientProperty("dontRequestFocus") == null) {
+          IdeFocusManager.getInstance(myProject).requestFocus(header.fileMaskField, true);
+          header.fileMaskField.getEditor().selectAll();
         }
       }
       else {
-        myFileMaskField.setEnabled(false);
-        if (myCbFileFilter.getClientProperty("dontRequestFocus") == null) {
+        header.fileMaskField.setEnabled(false);
+        if (header.cbFileFilter.getClientProperty("dontRequestFocus") == null) {
           IdeFocusManager.getInstance(myProject).requestFocus(mySearchComponent, true);
         }
       }
     });
-    myCbFileFilter.addItemListener(liveResultsPreviewUpdateListener);
-    myFileMaskField = new ComboBox<>() {
-      @Override
-      public Dimension getPreferredSize() {
-        int width = 0;
-        int buttonWidth = 0;
-        Component[] components = getComponents();
-        for (Component component : components) {
-          Dimension size = component.getPreferredSize();
-          int w = size != null ? size.width : 0;
-          if (component instanceof JButton) {
-            buttonWidth = w;
-          }
-          width += w;
-        }
-        ComboBoxEditor editor = getEditor();
-        if (editor != null) {
-          Component editorComponent = editor.getEditorComponent();
-          if (editorComponent != null) {
-            FontMetrics fontMetrics = editorComponent.getFontMetrics(editorComponent.getFont());
-            width = Math.max(width, fontMetrics.stringWidth(String.valueOf(getSelectedItem())) + buttonWidth);
-            //Let's reserve some extra space for just one 'the next' letter
-            width += fontMetrics.stringWidth("m");
-          }
-        }
-        Dimension size = super.getPreferredSize();
-        Insets insets = getInsets();
-        width += insets.left + insets.right;
-        size.width = MathUtil.clamp(width, JBUIScale.scale(80), JBUIScale.scale(500));
-        return size;
-      }
-    };
-    myFileMaskField.setEditable(true);
-    myFileMaskField.setMaximumRowCount(8);
-    myFileMaskField.addActionListener(__ -> scheduleResultsUpdate());
-    Component editorComponent = myFileMaskField.getEditor().getEditorComponent();
+    header.cbFileFilter.addItemListener(liveResultsPreviewUpdateListener);
+    header.fileMaskField.addActionListener(__ -> scheduleResultsUpdate());
+    Component editorComponent = header.fileMaskField.getEditor().getEditorComponent();
     if (editorComponent instanceof EditorTextField) {
       final EditorTextField etf = (EditorTextField) editorComponent;
       etf.addDocumentListener(new DocumentListener() {
@@ -535,23 +509,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         assert false;
       }
     }
-
-    AnAction myShowFilterPopupAction = new MyShowFilterPopupAction();
-    myFilterContextButton =
-      new ActionButton(myShowFilterPopupAction, myShowFilterPopupAction.getTemplatePresentation(), ActionPlaces.UNKNOWN,
-                       ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
-        @Override
-        public Icon getIcon() {
-          Icon icon = myShowFilterPopupAction.getTemplatePresentation().getIcon();
-          return mySelectedContextName.equals(FindInProjectUtil.getPresentableName(FindModel.SearchContext.ANY))
-                 ? icon
-                 : ExecutionUtil.getLiveIndicator(icon);
-        }
-      };
-    myShowFilterPopupAction.registerCustomShortcutSet(myShowFilterPopupAction.getShortcutSet(), this);
-    ToggleAction pinAction = new MyPinAction();
-    ActionButton pinButton =
-      new ActionButton(pinAction, pinAction.getTemplatePresentation(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
 
     myResetFiltersAction = DumbAwareAction.create(event -> resetAllFilters());
     myResetFiltersAction.registerCustomShortcutSet(new CustomShortcutSet(RESET_FILTERS), this);
@@ -843,45 +800,41 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     JPanel scopesPanel = new JPanel(new MigLayout("flowx, gap 26, ins 0"));
     scopesPanel.add(myScopeSelectionToolbar.getComponent());
     scopesPanel.add(myScopeDetailsPanel, "growx, pushx");
-    setLayout(new MigLayout("flowx, ins 4, gap 0, fillx, hidemode 3"));
-    myTitlePanel = new JPanel(new MigLayout("flowx, ins 0, gap 0, fillx, filly"));
-    myTitlePanel.add(myTitleLabel, "gapright 4");
-    myTitlePanel.add(myInfoLabel);
-    myTitlePanel.add(myLoadingIcon, "w 24, wmin 24");
-    myTitlePanel.add(Box.createHorizontalGlue(), "growx, pushx");
-
-    add(myTitlePanel, "sx 2, growx, growx, growy");
-    add(myCbFileFilter);
-    add(myFileMaskField, "gapleft 4, gapright 16");
+    setLayout(new MigLayout("flowx, ins 0, gap 0, fillx, hidemode 3"));
 
     myIsPinned.set(UISettings.getInstance().getPinFindInPath());
-    JPanel twoButtons = new JPanel(new MigLayout("flowx, ins 0, gap 4, fillx, hidemode 3"));
-    twoButtons.add(myFilterContextButton);
-    JComponent separatorComponent = (JComponent)Box.createRigidArea(new JBDimension(1, 24));
-    separatorComponent.setOpaque(true);
-    separatorComponent.setBackground(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
-    twoButtons.add(separatorComponent);
-    twoButtons.add(pinButton);
-    add(twoButtons, "wrap");
+
+    if (ExperimentalUI.isNewUI()) {
+      Insets headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets();
+      int verticalGap = SpacingConfiguration.createIntelliJSpacingConfiguration().getVerticalComponentGap();
+      headerInsets.top -= verticalGap;
+      headerInsets.bottom -= verticalGap;
+      header.panel.setBorder(JBUI.Borders.empty(headerInsets));
+      header.panel.setBackground(JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND);
+      header.cbFileFilter.setOpaque(false);
+    } else {
+      header.panel.setBorder(JBUI.Borders.empty(4, 5));
+    }
+    add(header.panel, "growx, pushx, wrap");
 
     mySearchTextArea.setBorder(
       new CompoundBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 1, 0),
                          JBUI.Borders.empty(1, 0, 2, 0)));
-    add(mySearchTextArea, "pushx, growx, sx 10, pad 0 -4 0 4, gaptop 4, wrap");
+    add(mySearchTextArea, "pushx, growx, wrap");
     myReplaceTextArea.setBorder(
       new CompoundBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 0, 0, 1, 0),
                          JBUI.Borders.empty(1, 0, 2, 0)));
-    add(myReplaceTextArea, "pushx, growx, sx 10, pad 0 -4 0 4, wrap");
-    add(scopesPanel, "sx 10, pushx, growx, ax left, wrap, gaptop 4, gapbottom 4");
-    add(myPreviewSplitter, "pushx, growx, growy, pushy, sx 10, wrap, pad -4 -4 4 4");
-    add(bottomPanel, "pushx, growx, dock south, sx 10");
+    add(myReplaceTextArea, "pushx, growx, wrap");
+    add(scopesPanel, "pushx, growx, ax left, wrap, gap 4 4 4 4");
+    add(myPreviewSplitter, "pushx, growx, growy, pushy, wrap");
+    add(bottomPanel, "pushx, growx, dock south");
 
     List<Component> focusOrder = new ArrayList<>();
     focusOrder.add(mySearchComponent);
     focusOrder.add(myReplaceComponent);
     focusOrder.addAll(searchExtraButtons);
     focusOrder.addAll(replaceExtraButtons);
-    focusOrder.add(myCbFileFilter);
+    focusOrder.add(header.cbFileFilter);
     ContainerUtil.addAll(focusOrder, focusableComponents(myScopeDetailsPanel));
     focusOrder.add(editorComponent);
     ContainerUtil.addAll(focusOrder, focusableComponents(bottomPanel));
@@ -946,8 +899,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
           firstResultPath = v.get(0).getPath();
         }
         else {
-          @SuppressWarnings("RedundantCast") final int p =
-            Collections.binarySearch((Vector<Vector<UsageInfoAdapter>>)((Vector)dataVector), v, COMPARATOR);
+          int p = Collections.binarySearch((Vector<Vector<UsageInfoAdapter>>)((Vector)dataVector), v, COMPARATOR);
           if (p < 0) {
             // only insert when not already present.
             int row = -(p + 1);
@@ -962,9 +914,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   }
 
   private void onFileMaskChanged() {
-    Object item = myFileMaskField.getEditor().getItem();
-    if (item != null && !item.equals(myFileMaskField.getSelectedItem())){
-      myFileMaskField.setSelectedItem(item);
+    Object item = header.fileMaskField.getEditor().getItem();
+    if (item != null && !item.equals(header.fileMaskField.getSelectedItem())){
+      header.fileMaskField.setSelectedItem(item);
     }
     scheduleResultsUpdate();
   }
@@ -1022,15 +974,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     myDialog.doCancelAction();
   }
 
-  @NotNull
-  private static StateRestoringCheckBox createCheckBox(@NotNull Project project) {
-    StateRestoringCheckBox checkBox = new StateRestoringCheckBox(FindBundle.message("find.popup.filemask"));
-    checkBox.addActionListener(
-      __ -> FindUsagesCollector.CHECK_BOX_TOGGLED.log(project, FindUsagesCollector.FIND_IN_PATH, ToggleOptionName.FileFilter, checkBox.isSelected())
-    );
-    return checkBox;
-  }
-
   @Override
   public void addNotify() {
     super.addNotify();
@@ -1054,23 +997,23 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
 
     boolean isThereFileFilter = myModel.getFileFilter() != null && !myModel.getFileFilter().isEmpty();
     try {
-      myCbFileFilter.putClientProperty("dontRequestFocus", Boolean.TRUE);
-      myCbFileFilter.setSelected(isThereFileFilter);
+      header.cbFileFilter.putClientProperty("dontRequestFocus", Boolean.TRUE);
+      header.cbFileFilter.setSelected(isThereFileFilter);
     }
     finally {
-      myCbFileFilter.putClientProperty("dontRequestFocus", null);
+      header.cbFileFilter.putClientProperty("dontRequestFocus", null);
     }
-    myFileMaskField.removeAllItems();
+    header.fileMaskField.removeAllItems();
     FindSettings findSettings = FindSettings.getInstance();
     @NlsSafe String[] fileMasks = findSettings.getRecentFileMasks();
     for (int i = fileMasks.length - 1; i >= 0; i--) {
-      myFileMaskField.addItem(fileMasks[i]);
+      header.fileMaskField.addItem(fileMasks[i]);
     }
     if (fileMasks.length > 0) {
       String fileMask = findSettings.getFileMask();
-      myFileMaskField.setSelectedItem(fileMask != null ? fileMask : fileMasks[fileMasks.length - 1]);
+      header.fileMaskField.setSelectedItem(fileMask != null ? fileMask : fileMasks[fileMasks.length - 1]);
     }
-    myFileMaskField.setEnabled(isThereFileFilter);
+    header.fileMaskField.setEnabled(isThereFileFilter);
     String toSearch = myModel.getStringToFind();
     FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
 
@@ -1091,7 +1034,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     updateScopeDetailsPanel();
 
     boolean isReplaceState = myHelper.isReplaceState();
-    myTitleLabel.setText(myHelper.getTitle());
+    header.titleLabel.setText(myHelper.getTitle());
     myReplaceTextArea.setVisible(isReplaceState);
     myOKHintLabel.setText(KeymapUtil.getKeystrokeText(ENTER_WITH_MODIFIERS));
     myOKButton.setText(FindBundle.message("find.popup.find.button"));
@@ -1288,16 +1231,16 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
               if (occurrences < ShowUsagesAction.getUsagesPageSize()) {
                 myUsagesCount = String.valueOf(occurrences);
                 myFilesCount = String.valueOf(filesWithOccurrences);
-                myInfoLabel.setText(FindBundle.message("message.matches.in.files", occurrences, filesWithOccurrences));
+                header.infoLabel.setText(FindBundle.message("message.matches.in.files", occurrences, filesWithOccurrences));
               }
               else {
                 myUsagesCount = occurrences + "+";
                 myFilesCount = filesWithOccurrences + "+";
-                myInfoLabel.setText(FindBundle.message("message.matches.in.files.incomplete", occurrences, filesWithOccurrences));
+                header.infoLabel.setText(FindBundle.message("message.matches.in.files.incomplete", occurrences, filesWithOccurrences));
               }
             }
             else {
-              myInfoLabel.setText("");
+              header.infoLabel.setText("");
             }
           }, state);
 
@@ -1339,7 +1282,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     ((DefaultTableModel)myResultsPreviewTable.getModel()).fireTableDataChanged();
     myResultsPreviewTable.getSelectionModel().clearSelection();
     myPreviewSplitter.getSecondComponent().setVisible(false);
-    myInfoLabel.setText(null);
+    header.infoLabel.setText(null);
   }
 
   private void showEmptyText(@Nullable @NlsContexts.StatusText String message) {
@@ -1396,7 +1339,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     }
     String fileTypeMask = getFileTypeMask();
     if (fileTypeMask != null && (FindInProjectUtil.createFileMaskCondition(fileTypeMask) != Conditions.<CharSequence>alwaysTrue())) {
-      usedOptions.add(myCbFileFilter);
+      usedOptions.add(header.cbFileFilter);
     }
     if (model.isInCommentsOnly()
         || model.isInStringLiteralsOnly()
@@ -1437,7 +1380,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   }
 
   private void resetAllFilters() {
-    myCbFileFilter.setSelected(false);
+    header.cbFileFilter.setSelected(false);
     mySelectedContextName = FindInProjectUtil.getPresentableName(FindModel.SearchContext.ANY);
     myFilterContextButton.repaint();
     myCaseSensitiveState.set(false);
@@ -1485,7 +1428,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   private void onStart(int hash) {
     myNeedReset.set(true);
     myLoadingHash = hash;
-    myLoadingIcon.setIcon(AnimatedIcon.Default.INSTANCE);
+    header.loadingIcon.setIcon(AnimatedIcon.Default.INSTANCE);
     myResultsPreviewTable.getEmptyText().setText(FindBundle.message("empty.text.searching"));
   }
 
@@ -1501,7 +1444,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     UIUtil.invokeLaterIfNeeded(() -> {
       //noinspection HardCodedStringLiteral
       showEmptyText(message);
-      myLoadingIcon.setIcon(EmptyIcon.ICON_16);
+      header.loadingIcon.setIcon(EmptyIcon.ICON_16);
     });
   }
 
@@ -1509,8 +1452,8 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   @Nullable
   public String getFileTypeMask() {
     String mask = null;
-    if (myCbFileFilter != null && myCbFileFilter.isSelected()) {
-      mask = (String)myFileMaskField.getSelectedItem();
+    if (header.cbFileFilter != null && header.cbFileFilter.isSelected()) {
+      mask = (String)header.fileMaskField.getSelectedItem();
     }
     return mask;
   }
@@ -1567,17 +1510,17 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
 
     if (mask != null) {
       if (mask.isEmpty()) {
-        return new ValidationInfo(FindBundle.message("find.filter.empty.file.mask.error"), myFileMaskField);
+        return new ValidationInfo(FindBundle.message("find.filter.empty.file.mask.error"), header.fileMaskField);
       }
 
       if (mask.contains(";")) {
-        return new ValidationInfo(FindBundle.message("message.file.masks.should.be.comma.separated"), myFileMaskField);
+        return new ValidationInfo(FindBundle.message("message.file.masks.should.be.comma.separated"), header.fileMaskField);
       }
       try {
         createFileMaskRegExp(mask);   // verify that the regexp compiles
       }
       catch (PatternSyntaxException ex) {
-        return new ValidationInfo(FindBundle.message("find.filter.invalid.file.mask.error", mask), myFileMaskField);
+        return new ValidationInfo(FindBundle.message("find.filter.invalid.file.mask.error", mask), header.fileMaskField);
       }
     }
     return null;
@@ -2050,13 +1993,14 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(
         e.getData(CommonDataKeys.EDITOR) == null ||
-        SwingUtilities.isDescendingFrom(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT), myFileMaskField));
+        SwingUtilities.isDescendingFrom(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT), header.fileMaskField));
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if (SwingUtilities.isDescendingFrom(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT), myFileMaskField) && myFileMaskField.isPopupVisible()) {
-        myFileMaskField.hidePopup();
+      if (SwingUtilities.isDescendingFrom(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT), header.fileMaskField) &&
+          header.fileMaskField.isPopupVisible()) {
+        header.fileMaskField.hidePopup();
         return;
       }
       if (myScopeUI.hideAllPopups()) {
