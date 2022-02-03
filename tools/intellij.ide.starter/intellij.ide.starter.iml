@@ -52,6 +52,7 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.performanceTesting.commands" scope="TEST" />
     <orderEntry type="module" module-name="intellij.performanceTesting.maven.commands" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.performanceTesting.gradle.commands" scope="TEST" />
     <orderEntry type="library" name="commons-logging" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />

@@ -1,4 +1,4 @@
-package com.intellij.ide.starter.tests.reporter
+package com.intellij.ide.starter.tests.unit
 
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.ide.IDETestContext
@@ -17,7 +17,7 @@ import org.mockito.junit.MockitoJUnitRunner
 
 
 @RunWith(MockitoJUnitRunner::class)
-class PluginsDITest {
+class PluginsInjectionTest {
 
   @Rule
   @JvmField

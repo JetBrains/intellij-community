@@ -1,4 +1,4 @@
-package com.intellij.ide.starter.tests.reporter
+package com.intellij.ide.starter.tests.unit
 
 import com.intellij.ide.starter.utils.convertToHashCodeWithOnlyLetters
 import com.intellij.ide.starter.utils.generifyErrorMessage

@@ -17,6 +17,10 @@ buildscript {
 sourceSets {
   main.kotlin.srcDirs += 'src'
   test.kotlin.srcDirs += 'testSrc'
+  test.resources {
+    srcDirs "testResources"
+    includes = ["**/*.*"]
+  }
 }
 
 repositories {
@@ -89,8 +93,4 @@ compileTestKotlin {
       "-Xopt-in=kotlin.time.ExperimentalTime"
     ]
   }
-}
-
-test {
-  useJUnitPlatform()
 }
