@@ -71,7 +71,6 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   };
 
   @NotNull private final Project myProject;
-  @NotNull private final GitVcs myVcs;
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final VcsLogRefManager myRefSorter;
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
@@ -81,7 +80,6 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     myRepositoryManager = GitRepositoryManager.getInstance(project);
     myRefSorter = new GitRefManager(myProject, myRepositoryManager);
     myVcsObjectsFactory = project.getService(VcsLogObjectsFactory.class);
-    myVcs = GitVcs.getInstance(project);
   }
 
   @NotNull
