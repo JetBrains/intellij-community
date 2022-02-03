@@ -2,17 +2,18 @@
 
 package org.jetbrains.kotlin.idea.references
 
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementResolveResult
-import com.intellij.psi.ResolveResult
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.ResolveCache
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PackageViewDescriptor
+import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.util.application.runWithCancellationCheck
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtImportAlias
 import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import java.util.*
@@ -24,7 +25,26 @@ interface KtDescriptorsBasedReference : KtReference {
 
     fun getTargetDescriptors(context: BindingContext): Collection<DeclarationDescriptor>
 
-    override fun isReferenceTo(element: PsiElement): Boolean = matchesTarget(element)
+    fun isReferenceToImportAlias(alias: KtImportAlias): Boolean {
+        val importDirective = alias.importDirective ?: return false
+        val importedFqName = importDirective.importedFqName ?: return false
+        val importedDescriptors = importDirective.containingKtFile.resolveImportReference(importedFqName)
+        val importableTargets = unwrappedTargets.mapNotNull {
+            when {
+                it is KtConstructor<*> -> it.containingClassOrObject
+                it is PsiMethod && it.isConstructor -> it.containingClass
+                else -> it
+            }
+        }
+
+        val project = element.project
+        val resolveScope = element.resolveScope
+        return importedDescriptors.any {
+            it.findPsiDeclarations(project, resolveScope).any { declaration ->
+                declaration in importableTargets
+            }
+        }
+    }
 }
 
 fun KtReference.resolveToDescriptors(bindingContext: BindingContext): Collection<DeclarationDescriptor> {
