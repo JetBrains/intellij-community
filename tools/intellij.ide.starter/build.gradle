@@ -57,6 +57,9 @@ dependencies {
   testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
   testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
   testImplementation 'org.junit.jupiter:junit-jupiter-params:5.7.0'
+  testImplementation 'org.junit.vintage:junit-vintage-engine:5.8.1'
+  testImplementation 'org.junit.platform:junit-platform-launcher:1.8.2'
+
   testImplementation 'io.kotest:kotest-assertions-core-jvm:4.5.0'
   testImplementation 'org.mockito:mockito-core:3.12.4'
   testImplementation 'org.mockito:mockito-junit-jupiter:3.12.4'
@@ -96,10 +99,23 @@ compileTestKotlin {
   }
 }
 
+
 test {
+  useJUnitPlatform()
+
+  testLogging {
+    events "passed", "skipped", "failed", "standardOut", "standardError"
+  }
+}
+
+task runOnlyUnitTests(type: Test) {
   filter {
     includeTestsMatching "com.intellij.ide.starter.tests.unit.*"
   }
 
   useJUnitPlatform()
+
+  testLogging {
+    events "passed", "skipped", "failed", "standardOut", "standardError"
+  }
 }
