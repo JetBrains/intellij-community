@@ -16,10 +16,12 @@ import com.intellij.remote.RemoteSdkException
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
 
+@Throws(RemoteSdkException::class)
 fun PyTargetAwareAdditionalData.getInterpreterVersion(project: Project?, nullForUnparsableVersion: Boolean = true): String? {
   return getInterpreterVersion(project, interpreterPath, nullForUnparsableVersion)
 }
 
+@Throws(RemoteSdkException::class)
 fun PyTargetAwareAdditionalData.getInterpreterVersion(project: Project?,
                                                       interpreterPath: String,
                                                       nullForUnparsableVersion: Boolean = true): String? {
