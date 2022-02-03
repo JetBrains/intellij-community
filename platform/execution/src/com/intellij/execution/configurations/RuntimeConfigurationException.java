@@ -31,7 +31,7 @@ public class RuntimeConfigurationException extends ConfigurationException {
       return new ValidationInfo("", component);
     }
     catch (ProcessCanceledException e) {
-      return new ValidationInfo("", component);
+      throw e;
     }
     catch (Throwable t) {
       return new ValidationInfo(t.getMessage(), component);
