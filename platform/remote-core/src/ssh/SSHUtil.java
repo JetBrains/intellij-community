@@ -7,7 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class SSHUtil {
-  public static final @NonNls Pattern PASSPHRASE_PROMPT = Pattern.compile("\\r?Enter passphrase for( key)? '(?<keyfile>.*)':\\s?");
+  public static final @NonNls Pattern PASSPHRASE_PROMPT = Pattern.compile("\\r?Enter passphrase for( key)? '?(?<keyfile>[^']*)'?:\\s?");
   public static final @NonNls Pattern PASSWORD_PROMPT = Pattern.compile("(?<username>.*)'s password:\\s?");
   public static final @NonNls String PASSWORD_PROMPT_PREFIX = "password for";
   public static final @NonNls String PASSWORD_PROMPT_SUFFIX = "password:";
