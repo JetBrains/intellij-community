@@ -130,7 +130,7 @@ class GitMergeDialog(private val project: Project,
 
   override fun getPreferredFocusedComponent() = branchField
 
-  override fun doValidateAll() = listOf(::validateBranchField).mapNotNull { it() }
+  override fun doValidateAll(): List<ValidationInfo> = listOf(::validateBranchField).mapNotNull { it() }
 
   override fun createSouthPanel() = createSouthPanelWithOptionsDropDown(super.createSouthPanel(), createOptionsDropDown())
 
@@ -229,7 +229,23 @@ class GitMergeDialog(private val project: Project,
     return result
   }
 
-  private fun validateBranchField() = validateBranchField(branchField, "merge.no.branch.selected.error")
+  private fun validateBranchField(): ValidationInfo? {
+    val validationInfo = validateBranchField(branchField, GitBundle.message("merge.no.branch.selected.error"))
+    if (validationInfo != null) return validationInfo
+
+    val selectedBranch = branchField.getText()
+    if (selectedBranch.isNullOrBlank()) return null
+
+    val selectedRepository = getSelectedRepository()
+    val unmergedBranches = unmergedBranches[selectedRepository] ?: return null
+    val selectedBranchMerged = unmergedBranches.none { equalBranches(it, selectedBranch) }
+
+    if (selectedBranchMerged) {
+      return ValidationInfo(GitBundle.message("merge.branch.already.merged", selectedBranch), branchField)
+    }
+
+    return null
+  }
 
   private fun updateBranchesField() {
     var branchToSelect = branchField.item
@@ -268,7 +284,7 @@ class GitMergeDialog(private val project: Project,
 
   private fun getBranches(): List<@NlsSafe String> {
     val repository = getSelectedRepository()
-    return unmergedBranches[repository] ?: allBranches[repository] ?: emptyList()
+    return allBranches[repository] ?: emptyList()
   }
 
   private fun getRepository(root: VirtualFile) = repositories.find { repo -> repo.root == root }
