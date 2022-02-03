@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
@@ -258,10 +258,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         return future;
       }
       List<NodeRenderer> enabledRenderers = ContainerUtil.filter(myRenderers, NodeRenderer::isEnabled);
-      CompletableFuture<NodeRenderer> res = DebuggerUtilsImpl.getApplicableRenderers(enabledRenderers, type)
-        .handle((renderers, throwable) -> {
+      CompletableFuture<NodeRenderer> res = DebuggerUtilsImpl.getFirstApplicableRenderer(enabledRenderers, type)
+        .handle((r, throwable) -> {
           DebuggerManagerThreadImpl.assertIsManagerThread();
-          NodeRenderer r = ContainerUtil.getFirstItem(renderers);
           if (r == null || throwable != null) {
             r = getDefaultRenderer(type); // do not cache the fallback renderer
             myNodeRenderersMap.remove(type);
