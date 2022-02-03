@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.util.AsyncSupplier
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -72,22 +73,58 @@ internal suspend fun <X> resolveLink(
   url: String,
   ram: (DocumentationTarget) -> X,
 ): InternalResolveLinkResult<X> {
-  return readAction {
+  val readActionResult = readAction {
     resolveLinkInReadAction(targetSupplier, url, ram)
   }
+  return when (readActionResult) {
+    is ResolveLinkInReadActionResult.Sync -> readActionResult.syncResult
+    is ResolveLinkInReadActionResult.Async -> asyncTarget(readActionResult.supplier, ram)
+  }
+}
+
+private suspend fun <X> asyncTarget(
+  supplier: AsyncSupplier<LinkResolveResult.Async?>,
+  ram: (DocumentationTarget) -> X,
+): InternalResolveLinkResult<X> {
+  val asyncLinkResolveResult: LinkResolveResult.Async? = supplier.invoke()
+  if (asyncLinkResolveResult == null) {
+    return InternalResolveLinkResult.CannotResolve
+  }
+  @Suppress("REDUNDANT_ELSE_IN_WHEN")
+  when (asyncLinkResolveResult) {
+    is AsyncResolvedTarget -> {
+      val pointer = asyncLinkResolveResult.pointer
+      return readAction {
+        val target: DocumentationTarget? = pointer.dereference()
+        if (target == null) {
+          InternalResolveLinkResult.InvalidTarget
+        }
+        else {
+          InternalResolveLinkResult.Value(ram(target))
+        }
+      }
+    }
+    else -> error("Unexpected result: $asyncLinkResolveResult")
+  }
+}
+
+private sealed class ResolveLinkInReadActionResult<out X> {
+  class Sync<X>(val syncResult: InternalResolveLinkResult<X>) : ResolveLinkInReadActionResult<X>()
+  class Async(val supplier: AsyncSupplier<LinkResolveResult.Async?>) : ResolveLinkInReadActionResult<Nothing>()
 }
 
 private fun <X> resolveLinkInReadAction(
   targetSupplier: () -> DocumentationTarget?,
   url: String,
   m: (DocumentationTarget) -> X,
-): InternalResolveLinkResult<X> {
+): ResolveLinkInReadActionResult<X> {
   val documentationTarget = targetSupplier()
-                            ?: return InternalResolveLinkResult.InvalidTarget
+                            ?: return ResolveLinkInReadActionResult.Sync(InternalResolveLinkResult.InvalidTarget)
   @Suppress("REDUNDANT_ELSE_IN_WHEN")
   return when (val linkResolveResult: LinkResolveResult? = resolveLink(documentationTarget, url)) {
-    null -> InternalResolveLinkResult.CannotResolve
-    is ResolvedTarget -> InternalResolveLinkResult.Value(m(linkResolveResult.target))
+    null -> ResolveLinkInReadActionResult.Sync(InternalResolveLinkResult.CannotResolve)
+    is ResolvedTarget -> ResolveLinkInReadActionResult.Sync(InternalResolveLinkResult.Value(m(linkResolveResult.target)))
+    is AsyncLinkResolveResult -> ResolveLinkInReadActionResult.Async(linkResolveResult.supplier)
     else -> error("Unexpected result: $linkResolveResult") // this fixes Kotlin incremental compilation
   }
 }
