@@ -22,7 +22,6 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
-import org.jetbrains.idea.maven.importing.MavenModelUtil;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -207,7 +206,7 @@ public class MavenProjectsManagerWatcher {
     @Override
     public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
       if (Registry.is("maven.modules.do.not.ignore.on.delete")) return;
-      if (MavenProjectImporter.isImportToTreeStructureEnabled() && MavenModelUtil.isMainOrTestSubmodule(module.getName())) return;
+      if (MavenProjectImporter.isImportToTreeStructureEnabled()) return;
 
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
       MavenProject mavenProject = projectsManager.findProject(module);
