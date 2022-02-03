@@ -51,11 +51,7 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
         if (allApplicableDefinitions.size < 2 || areDefinitionsForGradleKts(allApplicableDefinitions)) return CONST_NULL
 
         return Function { fileEditor: FileEditor ->
-            createNotification(
-                fileEditor,
-                ktFile,
-                allApplicableDefinitions
-            )
+            createNotification(fileEditor, project, allApplicableDefinitions)
         }
     }
 
@@ -66,7 +62,7 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
         }
     }
 
-    private fun createNotification(fileEditor: FileEditor, psiFile: KtFile, defs: List<ScriptDefinition>): EditorNotificationPanel =
+    private fun createNotification(fileEditor: FileEditor, project: Project, defs: List<ScriptDefinition>): EditorNotificationPanel =
         EditorNotificationPanel(fileEditor).apply {
             text = KotlinBundle.message("script.text.multiple.script.definitions.are.applicable.for.this.script", defs.first().name)
             createComponentActionLabel(
@@ -89,12 +85,12 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
             }
 
             createComponentActionLabel(KotlinBundle.message("script.action.text.ignore")) {
-                KotlinScriptingSettings.getInstance(psiFile.project).suppressDefinitionsCheck = true
-                EditorNotifications.getInstance(psiFile.project).updateAllNotifications()
+                KotlinScriptingSettings.getInstance(project).suppressDefinitionsCheck = true
+                EditorNotifications.getInstance(project).updateAllNotifications()
             }
 
             createComponentActionLabel(KotlinBundle.message("script.action.text.open.settings")) {
-                ShowSettingsUtilImpl.showSettingsDialog(psiFile.project, KotlinScriptingSettingsConfigurable.ID, "")
+                ShowSettingsUtilImpl.showSettingsDialog(project, KotlinScriptingSettingsConfigurable.ID, "")
             }
         }
 
