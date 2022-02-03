@@ -725,6 +725,8 @@
       <module fileurl="file://$PROJECT_DIR$/platform/execution/intellij.platform.execution.iml" filepath="$PROJECT_DIR$/platform/execution/intellij.platform.execution.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/execution-impl/intellij.platform.execution.impl.iml" filepath="$PROJECT_DIR$/platform/execution-impl/intellij.platform.execution.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/extensions/intellij.platform.extensions.iml" filepath="$PROJECT_DIR$/platform/extensions/intellij.platform.extensions.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/external-process-auth-helper/intellij.platform.externalProcessAuthHelper.iml" filepath="$PROJECT_DIR$/platform/external-process-auth-helper/intellij.platform.externalProcessAuthHelper.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/external-process-auth-helper/rt/intellij.platform.externalProcessAuthHelper.rt.iml" filepath="$PROJECT_DIR$/platform/external-process-auth-helper/rt/intellij.platform.externalProcessAuthHelper.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/external-system-api/intellij.platform.externalSystem.iml" filepath="$PROJECT_DIR$/platform/external-system-api/intellij.platform.externalSystem.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/external-system-impl/intellij.platform.externalSystem.impl.iml" filepath="$PROJECT_DIR$/platform/external-system-impl/intellij.platform.externalSystem.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/external-system-rt/intellij.platform.externalSystem.rt.iml" filepath="$PROJECT_DIR$/platform/external-system-rt/intellij.platform.externalSystem.rt.iml" />
