@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main.rels;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -143,7 +143,7 @@ public class NestedClassProcessor {
                 mapNewNames.put(varVersion, enclosingCollector.getFreeName(method.varproc.getVarName(varVersion)));
               }
 
-              varIndex += md_content.params[i].stackSize;
+              varIndex += md_content.params[i].getStackSize();
             }
           }
         }
@@ -434,7 +434,7 @@ public class NestedClassProcessor {
               mapNewTypes.put(newVar, varType);
             }
 
-            varIndex += md.params[index++].stackSize;
+            varIndex += md.params[index++].getStackSize();
           }
         }
 
@@ -587,7 +587,7 @@ public class NestedClassProcessor {
           for (int i = 0; i < md.params.length; i++) {  // no static methods allowed
             String keyField = getEnclosingVarField(cl, method, graph, varIndex);
             fields.add(keyField == null ? null : new VarFieldPair(keyField, new VarVersionPair(-1, 0))); // TODO: null?
-            varIndex += md.params[i].stackSize;
+            varIndex += md.params[i].getStackSize();
           }
 
           mapMasks.put(mt.getDescriptor(), fields);
@@ -857,7 +857,7 @@ public class NestedClassProcessor {
     List<Exprent> lst = exprent.getAllExprents(true);
     lst.add(exprent);
 
-    String classname = classType.value;
+    String classname = classType.getValue();
 
     for (Exprent expr : lst) {
       boolean res = false;
@@ -876,13 +876,13 @@ public class NestedClassProcessor {
           break;
         case Exprent.EXPRENT_NEW:
           VarType newType = expr.getExprType();
-          res = newType.type == CodeConstants.TYPE_OBJECT && classname.equals(newType.value);
+          res = newType.getType() == CodeConstants.TYPE_OBJECT && classname.equals(newType.getValue());
           break;
         case Exprent.EXPRENT_VAR:
           VarExprent varExpr = (VarExprent)expr;
           if (varExpr.isDefinition()) {
             VarType varType = varExpr.getVarType();
-            if (classType.equals(varType) || (varType.arrayDim > 0 && classType.value.equals(varType.value))) {
+            if (classType.equals(varType) || (varType.getArrayDim() > 0 && classType.getValue().equals(varType.getValue()))) {
               res = true;
             }
           }

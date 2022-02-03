@@ -86,7 +86,7 @@ public class VarExprent extends Exprent {
     tracer.addMapping(bytecode);
 
     if (classDef) {
-      ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(varType.value);
+      ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(varType.getValue());
       new ClassWriter().classToJava(child, buffer, indent, tracer);
       tracer.incrementCurrentSourceLine(buffer.countLines());
     }
@@ -195,7 +195,7 @@ public class VarExprent extends Exprent {
       vt = processor.getVarType(getVarVersionPair());
     }
 
-    if (vt == null || (varType != null && varType.type != CodeConstants.TYPE_UNKNOWN)) {
+    if (vt == null || (varType != null && varType.getType() != CodeConstants.TYPE_UNKNOWN)) {
       vt = varType;
     }
 

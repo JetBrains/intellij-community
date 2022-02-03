@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.sforms;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -251,7 +251,7 @@ public class SSAUConstructorSparseEx {
     }
     else if (expr.type == Exprent.EXPRENT_INVOCATION ||
              (expr.type == Exprent.EXPRENT_ASSIGNMENT && ((AssignmentExprent)expr).getLeft().type == Exprent.EXPRENT_FIELD) ||
-             (expr.type == Exprent.EXPRENT_NEW && ((NewExprent)expr).getNewType().type == CodeConstants.TYPE_OBJECT) ||
+             (expr.type == Exprent.EXPRENT_NEW && ((NewExprent)expr).getNewType().getType() == CodeConstants.TYPE_OBJECT) ||
              expr.type == Exprent.EXPRENT_FUNCTION) {
 
       boolean ismmpp = true;
@@ -754,11 +754,11 @@ public class SSAUConstructorSparseEx {
           varindex++;
         }
         else {
-          varindex += md.params[i - 1].stackSize;
+          varindex += md.params[i - 1].getStackSize();
         }
       }
       else {
-        varindex += md.params[i].stackSize;
+        varindex += md.params[i].getStackSize();
       }
     }
 

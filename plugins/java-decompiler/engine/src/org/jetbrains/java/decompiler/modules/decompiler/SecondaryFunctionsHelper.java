@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -212,10 +212,10 @@ public final class SecondaryFunctionsHelper {
               VarType operandtype = operand.getExprType();
 
               if (operand.type == Exprent.EXPRENT_CONST &&
-                  operandtype.type != CodeConstants.TYPE_BOOLEAN) {
+                  operandtype.getType() != CodeConstants.TYPE_BOOLEAN) {
                 ConstExprent cexpr = (ConstExprent)operand;
                 long val;
-                if (operandtype.type == CodeConstants.TYPE_LONG) {
+                if (operandtype.getType() == CodeConstants.TYPE_LONG) {
                   val = (Long)cexpr.getValue();
                 }
                 else {
@@ -232,8 +232,8 @@ public final class SecondaryFunctionsHelper {
             break;
           case FunctionExprent.FUNCTION_EQ:
           case FunctionExprent.FUNCTION_NE:
-            if (lstOperands.get(0).getExprType().type == CodeConstants.TYPE_BOOLEAN &&
-                lstOperands.get(1).getExprType().type == CodeConstants.TYPE_BOOLEAN) {
+            if (lstOperands.get(0).getExprType().getType() == CodeConstants.TYPE_BOOLEAN &&
+                lstOperands.get(1).getExprType().getType() == CodeConstants.TYPE_BOOLEAN) {
               for (int i = 0; i < 2; i++) {
                 if (lstOperands.get(i).type == Exprent.EXPRENT_CONST) {
                   ConstExprent cexpr = (ConstExprent)lstOperands.get(i);
@@ -271,8 +271,8 @@ public final class SecondaryFunctionsHelper {
               ConstExprent cexpr1 = (ConstExprent)expr1;
               ConstExprent cexpr2 = (ConstExprent)expr2;
 
-              if (cexpr1.getExprType().type == CodeConstants.TYPE_BOOLEAN &&
-                  cexpr2.getExprType().type == CodeConstants.TYPE_BOOLEAN) {
+              if (cexpr1.getExprType().getType() == CodeConstants.TYPE_BOOLEAN &&
+                  cexpr2.getExprType().getType() == CodeConstants.TYPE_BOOLEAN) {
 
                 if (cexpr1.getIntValue() == 0 && cexpr2.getIntValue() != 0) {
                   return new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT, lstOperands.get(0), fexpr.bytecode);
@@ -293,7 +293,7 @@ public final class SecondaryFunctionsHelper {
 
             FunctionExprent iff = new FunctionExprent(FunctionExprent.FUNCTION_IIF, Arrays.asList(
               new FunctionExprent(FunctionExprent.FUNCTION_LT, Arrays.asList(new VarExprent(var, type, varProc),
-                ConstExprent.getZeroConstant(type.type)), null),
+                ConstExprent.getZeroConstant(type.getType())), null),
               new ConstExprent(VarType.VARTYPE_INT, -1, null),
               new ConstExprent(VarType.VARTYPE_INT, 1, null)), null);
 
@@ -301,7 +301,7 @@ public final class SecondaryFunctionsHelper {
               new AssignmentExprent(new VarExprent(var, type, varProc),
                                     new FunctionExprent(FunctionExprent.FUNCTION_SUB, Arrays.asList(lstOperands.get(0), lstOperands.get(1)), null),
                                     null),
-              ConstExprent.getZeroConstant(type.type)), null);
+              ConstExprent.getZeroConstant(type.getType())), null);
 
             varProc.setVarType(new VarVersionPair(var, 0), type);
 
@@ -414,7 +414,7 @@ public final class SecondaryFunctionsHelper {
                 VarType right = operands.get(1).getExprType();
                 VarType commonSupertype = VarType.getCommonSupertype(left, right);
                 if (commonSupertype != null) {
-                  canSimplify = commonSupertype.type != CodeConstants.TYPE_FLOAT && commonSupertype.type != CodeConstants.TYPE_DOUBLE;
+                  canSimplify = commonSupertype.getType() != CodeConstants.TYPE_FLOAT && commonSupertype.getType() != CodeConstants.TYPE_DOUBLE;
                 }
               }
               if (canSimplify) {

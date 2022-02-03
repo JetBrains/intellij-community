@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -117,18 +117,18 @@ public class VarVersionsProcessor {
       VarType type = mapExprentMinTypes.get(paar);
       VarType maxType = mapExprentMaxTypes.get(paar);
 
-      if (type.type == CodeConstants.TYPE_BYTECHAR || type.type == CodeConstants.TYPE_SHORTCHAR) {
-        if (maxType != null && maxType.type == CodeConstants.TYPE_CHAR) {
+      if (type.getType() == CodeConstants.TYPE_BYTECHAR || type.getType() == CodeConstants.TYPE_SHORTCHAR) {
+        if (maxType != null && maxType.getType() == CodeConstants.TYPE_CHAR) {
           type = VarType.VARTYPE_CHAR;
         }
         else {
-          type = type.type == CodeConstants.TYPE_BYTECHAR ? VarType.VARTYPE_BYTE : VarType.VARTYPE_SHORT;
+          type = type.getType() == CodeConstants.TYPE_BYTECHAR ? VarType.VARTYPE_BYTE : VarType.VARTYPE_SHORT;
         }
         mapExprentMinTypes.put(paar, type);
         //} else if(type.type == CodeConstants.TYPE_CHAR && (maxType == null || maxType.type == CodeConstants.TYPE_INT)) { // when possible, lift char to int
         //	mapExprentMinTypes.put(paar, VarType.VARTYPE_INT);
       }
-      else if (type.type == CodeConstants.TYPE_NULL) {
+      else if (type.getType() == CodeConstants.TYPE_NULL) {
         mapExprentMinTypes.put(paar, VarType.VARTYPE_OBJECT);
       }
     }
@@ -169,25 +169,25 @@ public class VarVersionsProcessor {
             VarType secondType = mapExprentMinTypes.get(secondPair);
 
             if (firstType.equals(secondType) ||
-                firstType.equals(VarType.VARTYPE_NULL) && secondType.type == CodeConstants.TYPE_OBJECT ||
-                secondType.equals(VarType.VARTYPE_NULL) && firstType.type == CodeConstants.TYPE_OBJECT ||
-                firstType.typeFamily == CodeConstants.TYPE_FAMILY_INTEGER && secondType.typeFamily == CodeConstants.TYPE_FAMILY_INTEGER) {
+                firstType.equals(VarType.VARTYPE_NULL) && secondType.getType() == CodeConstants.TYPE_OBJECT ||
+                secondType.equals(VarType.VARTYPE_NULL) && firstType.getType() == CodeConstants.TYPE_OBJECT ||
+                firstType.getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER && secondType.getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER) {
               VarType firstMaxType = mapExprentMaxTypes.get(firstPair);
               VarType secondMaxType = mapExprentMaxTypes.get(secondPair);
               VarType type = firstMaxType == null ? secondMaxType :
                              secondMaxType == null ? firstMaxType :
                              VarType.getCommonMinType(firstMaxType, secondMaxType);
 
-              if (firstType.typeFamily == CodeConstants.TYPE_FAMILY_INTEGER && secondType.typeFamily == CodeConstants.TYPE_FAMILY_INTEGER) {
-                switch (secondType.type) {
+              if (firstType.getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER && secondType.getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER) {
+                switch (secondType.getType()) {
                   case CodeConstants.TYPE_INT:
                     type = VarType.VARTYPE_INT;
                     break;
                   case CodeConstants.TYPE_SHORT:
-                    type = firstType.type == CodeConstants.TYPE_INT ? null : VarType.VARTYPE_SHORT;
+                    type = firstType.getType() == CodeConstants.TYPE_INT ? null : VarType.VARTYPE_SHORT;
                     break;
                   case CodeConstants.TYPE_CHAR:
-                    switch (firstType.type) {
+                    switch (firstType.getType()) {
                       case CodeConstants.TYPE_INT:
                       case CodeConstants.TYPE_SHORT:
                         type = null;
@@ -197,7 +197,7 @@ public class VarVersionsProcessor {
                     }
                     break;
                   case CodeConstants.TYPE_SHORTCHAR:
-                    switch (firstType.type) {
+                    switch (firstType.getType()) {
                       case CodeConstants.TYPE_INT:
                       case CodeConstants.TYPE_SHORT:
                       case CodeConstants.TYPE_CHAR:
@@ -208,7 +208,7 @@ public class VarVersionsProcessor {
                     }
                     break;
                   case CodeConstants.TYPE_BYTECHAR:
-                    switch (firstType.type) {
+                    switch (firstType.getType()) {
                       case CodeConstants.TYPE_INT:
                       case CodeConstants.TYPE_SHORT:
                       case CodeConstants.TYPE_CHAR:
@@ -220,7 +220,7 @@ public class VarVersionsProcessor {
                     }
                     break;
                   case CodeConstants.TYPE_BYTE:
-                    switch (firstType.type) {
+                    switch (firstType.getType()) {
                       case CodeConstants.TYPE_INT:
                       case CodeConstants.TYPE_SHORT:
                       case CodeConstants.TYPE_CHAR:

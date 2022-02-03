@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -232,7 +232,7 @@ public class SimplifyExprentsHelper {
 
                         if (tempExpr.type == Exprent.EXPRENT_NEW) {
                           NewExprent tempNewExpr = (NewExprent)tempExpr;
-                          int dims = newExpr.getNewType().arrayDim;
+                          int dims = newExpr.getNewType().getArrayDim();
                           if (dims > 1 && !tempNewExpr.getLstArrayElements().isEmpty()) {
                             tempNewExpr.setDirectArrayInit(true);
                           }
@@ -261,7 +261,7 @@ public class SimplifyExprentsHelper {
       if (as.getRight().type == Exprent.EXPRENT_NEW && as.getLeft().type == Exprent.EXPRENT_VAR) {
         NewExprent newExpr = (NewExprent)as.getRight();
 
-        if (newExpr.getExprType().arrayDim > 0 && newExpr.getLstDims().size() == 1 && newExpr.getLstArrayElements().isEmpty() &&
+        if (newExpr.getExprType().getArrayDim() > 0 && newExpr.getLstDims().size() == 1 && newExpr.getLstArrayElements().isEmpty() &&
             newExpr.getLstDims().get(0).type == Exprent.EXPRENT_CONST) {
 
           int size = (Integer)((ConstExprent)newExpr.getLstDims().get(0)).getValue();
@@ -313,7 +313,7 @@ public class SimplifyExprentsHelper {
               lstRet.add(defaultVal.copy());
             }
 
-            int dims = newExpr.getNewType().arrayDim;
+            int dims = newExpr.getNewType().getArrayDim();
             for (Entry<Integer, Exprent> ent : mapInit.entrySet()) {
               Exprent tempExpr = ent.getValue();
               lstRet.set(ent.getKey(), tempExpr);
@@ -523,7 +523,7 @@ public class SimplifyExprentsHelper {
             if (newExpr.getConstructor() != null && !newExpr.getConstructor().getParameters().isEmpty() &&
                 newExpr.getConstructor().getParameters().get(0).equals(invocation.getInstance())) {
 
-              String classname = newExpr.getNewType().value;
+              String classname = newExpr.getNewType().getValue();
               ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
               if (node != null && node.type != ClassNode.CLASS_ROOT) {
                 return true;
@@ -550,7 +550,7 @@ public class SimplifyExprentsHelper {
         VarType newType = newExpr.getNewType();
         VarVersionPair leftPair = new VarVersionPair((VarExprent)as.getLeft());
 
-        if (newType.type == CodeConstants.TYPE_OBJECT && newType.arrayDim == 0 && newExpr.getConstructor() == null) {
+        if (newType.getType() == CodeConstants.TYPE_OBJECT && newType.getArrayDim() == 0 && newExpr.getConstructor() == null) {
           for (int i = index + 1; i < list.size(); i++) {
             Exprent remote = list.get(i);
 

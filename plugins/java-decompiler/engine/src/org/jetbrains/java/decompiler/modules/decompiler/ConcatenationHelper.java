@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.ClassNameConstants;
@@ -222,7 +222,7 @@ public final class ConcatenationHelper {
       MethodDescriptor md = expr.getDescriptor();
       if (md.ret.equals(cltype) && md.params.length == 1) {
         VarType param = md.params[0];
-        switch (param.type) {
+        switch (param.getType()) {
           case CodeConstants.TYPE_OBJECT:
             if (!param.equals(VarType.VARTYPE_STRING) &&
                 !param.equals(VarType.VARTYPE_OBJECT)) {
@@ -260,7 +260,7 @@ public final class ConcatenationHelper {
         MethodDescriptor md = iex.getDescriptor();
         if (md.params.length == 1) {
           VarType param = md.params[0];
-          switch (param.type) {
+          switch (param.getType()) {
             case CodeConstants.TYPE_OBJECT:
               if (!param.equals(VarType.VARTYPE_OBJECT)) {
                 break;

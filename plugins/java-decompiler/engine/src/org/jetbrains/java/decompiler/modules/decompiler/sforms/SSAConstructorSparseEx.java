@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.sforms;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -490,11 +490,11 @@ public class SSAConstructorSparseEx {
           varindex++;
         }
         else {
-          varindex += md.params[i - 1].stackSize;
+          varindex += md.params[i - 1].getStackSize();
         }
       }
       else {
-        varindex += md.params[i].stackSize;
+        varindex += md.params[i].getStackSize();
       }
     }
 

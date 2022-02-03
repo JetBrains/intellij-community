@@ -370,7 +370,7 @@ public class StructMethod extends StructMember {
 
   @Override
   protected int getArrayDimensions() {
-    return MethodDescriptor.parseDescriptor(getDescriptor()).ret.arrayDim;
+    return MethodDescriptor.parseDescriptor(getDescriptor()).ret.getArrayDim();
   }
 
   @Override

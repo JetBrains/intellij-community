@@ -162,9 +162,9 @@ public final class GenericMain {
   public static String getGenericCastTypeName(GenericType type, List<TypeAnnotationWriteHelper> typePathWriteStack) {
     List<TypeAnnotationWriteHelper> arrayPaths = new ArrayList<>();
     List<TypeAnnotationWriteHelper> notArrayPath = typePathWriteStack.stream().filter(stack -> {
-      boolean isArrayPath = stack.getPaths().size() < type.arrayDim;
-      if (stack.getPaths().size() > type.arrayDim) {
-        for (int i = 0; i < type.arrayDim; i++) {
+      boolean isArrayPath = stack.getPaths().size() < type.getArrayDim();
+      if (stack.getPaths().size() > type.getArrayDim()) {
+        for (int i = 0; i < type.getArrayDim(); i++) {
           stack.getPaths().poll(); // remove all trailing
         }
       }
@@ -174,12 +174,12 @@ public final class GenericMain {
       return !isArrayPath;
     }).collect(Collectors.toList());
     StringBuilder sb = new StringBuilder(getTypeName(type, notArrayPath));
-    ExprProcessor.writeArray(sb, type.arrayDim, arrayPaths);
+    ExprProcessor.writeArray(sb, type.getArrayDim(), arrayPaths);
     return sb.toString();
   }
 
   private static String getTypeName(GenericType type, List<TypeAnnotationWriteHelper> typePathWriteHelper) {
-    int tp = type.type;
+    int tp = type.getType();
     if (tp <= CodeConstants.TYPE_BOOLEAN) {
       return typeNames[tp];
     }
@@ -189,7 +189,7 @@ public final class GenericMain {
     else if (tp == CodeConstants.TYPE_GENVAR) {
       StringBuilder sb = new StringBuilder();
       appendTypeAnnotationBeforeType(type, sb, typePathWriteHelper);
-      sb.append(type.value);
+      sb.append(type.getValue());
       return sb.toString();
     }
     else if (tp == CodeConstants.TYPE_OBJECT) {
@@ -205,18 +205,18 @@ public final class GenericMain {
     List<GenericType> enclosingTypes = type.getEnclosingClasses();
     appendTypeAnnotationBeforeType(type, sb, typePathWriteHelper);
     if (enclosingTypes.isEmpty()) {
-      String[] nestedClasses = DecompilerContext.getImportCollector().getNestedName(type.value.replace('/', '.')).split("\\.");
+      String[] nestedClasses = DecompilerContext.getImportCollector().getNestedName(type.getValue().replace('/', '.')).split("\\.");
       ExprProcessor.writeNestedClass(sb, nestedClasses, typePathWriteHelper);
     }
     else {
       for (GenericType tp : enclosingTypes) {
-        String[] nestedClasses = DecompilerContext.getImportCollector().getNestedName(tp.value.replace('/', '.')).split("\\.");
+        String[] nestedClasses = DecompilerContext.getImportCollector().getNestedName(tp.getValue().replace('/', '.')).split("\\.");
         ExprProcessor.writeNestedClass(sb, nestedClasses, typePathWriteHelper);
         appendTypeArguments(tp, sb, typePathWriteHelper);
         sb.append('.');
         ExprProcessor.writeNestedTypeAnnotations(sb, typePathWriteHelper);
       }
-      sb.append(type.value);
+      sb.append(type.getValue());
     }
     appendTypeArguments(type, sb, typePathWriteHelper);
   }
@@ -228,7 +228,7 @@ public final class GenericMain {
         writeHelper.writeTo(sb);
         return true;
       }
-      if (path.getTypePathEntryKind() == StructTypePathEntry.Kind.ARRAY.getId() && type.arrayDim == writeHelper.getPaths().size()) {
+      if (path.getTypePathEntryKind() == StructTypePathEntry.Kind.ARRAY.getId() && type.getArrayDim() == writeHelper.getPaths().size()) {
         writeHelper.writeTo(sb);
         return true;
       }
@@ -266,7 +266,7 @@ public final class GenericMain {
             return true;
           }
           if (path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.TYPE.getId() && path.getTypeArgumentIndex() == it &&
-            genPar.arrayDim != 0 && genPar.arrayDim == writeHelper.getPaths().size()
+              genPar.getArrayDim() != 0 && genPar.getArrayDim() == writeHelper.getPaths().size()
           ) {
             writeHelper.writeTo(sb);
             return true;
@@ -296,7 +296,7 @@ public final class GenericMain {
           StructTypePathEntry path = writeHelper.getPaths().peek();
           if (path != null && path.getTypeArgumentIndex() == it &&
               path.getTypePathEntryKind() == StructTypePathEntry.Kind.TYPE_WILDCARD.getId() &&
-            writeHelper.getPaths().size() - 1 == genPar.arrayDim
+            writeHelper.getPaths().size() - 1 == genPar.getArrayDim()
           ) {
             writeHelper.writeTo(sb);
             return true;

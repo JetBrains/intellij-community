@@ -118,7 +118,7 @@ public class ClassWriter {
               firstParameter = false;
             }
 
-            index += md_content.params[i].stackSize;
+            index += md_content.params[i].getStackSize();
           }
 
           buffer.append(") ->");
@@ -746,7 +746,8 @@ public class ClassWriter {
             }
 
             int arrayDim;
-            if (descriptor != null) arrayDim = descriptor.parameterTypes.get(paramCount).arrayDim; else arrayDim = md.params[i].arrayDim;
+            if (descriptor != null) arrayDim = descriptor.parameterTypes.get(paramCount).getArrayDim(); else arrayDim =
+              md.params[i].getArrayDim();
             appendParameterAnnotations(buffer, mt, arrayDim, paramCount);
 
             VarVersionPair pair = new VarVersionPair(index, 0);
@@ -760,7 +761,7 @@ public class ClassWriter {
             List<TypeAnnotation> typeParamAnnotations = TargetInfo.FormalParameterTarget.extract(typeAnnotations, i);
             if (descriptor != null) {
               GenericType parameterType = descriptor.parameterTypes.get(paramCount);
-              isVarArg &= parameterType.arrayDim > 0;
+              isVarArg &= parameterType.getArrayDim() > 0;
               if (isVarArg) {
                 parameterType = parameterType.decreaseArrayDim();
               }
@@ -768,7 +769,7 @@ public class ClassWriter {
             }
             else {
               VarType parameterType = md.params[i];
-              isVarArg &= parameterType.arrayDim > 0;
+              isVarArg &= parameterType.getArrayDim() > 0;
               if (isVarArg) {
                 parameterType = parameterType.decreaseArrayDim();
               }
@@ -792,7 +793,7 @@ public class ClassWriter {
             paramCount++;
           }
 
-          index += md.params[i].stackSize;
+          index += md.params[i].getStackSize();
         }
 
         buffer.append(')');
@@ -969,7 +970,7 @@ public class ClassWriter {
             firstParameter = false;
           }
 
-          index += md_content.params[i].stackSize;
+          index += md_content.params[i].getStackSize();
         }
 
         buffer.append(") {").appendLineSeparator();
@@ -1267,7 +1268,7 @@ public class ClassWriter {
       TargetInfo.TypeParameterTarget.extract(typeAnnotations, i).forEach(typeAnnotation -> typeAnnotation.writeTo(buffer));
       buffer.append(parameters.get(i));
       List<GenericType> parameterBounds = bounds.get(i);
-      if (parameterBounds.size() > 1 || !"java/lang/Object".equals(parameterBounds.get(0).value)) {
+      if (parameterBounds.size() > 1 || !"java/lang/Object".equals(parameterBounds.get(0).getValue())) {
         buffer.append(" extends ");
         TargetInfo.TypeParameterBoundTarget.extract(typeAnnotations, i, 0).forEach(typeAnnotation -> typeAnnotation.writeTo(buffer));
         buffer.append(GenericMain.getGenericCastTypeName(parameterBounds.get(0), Collections.emptyList()));

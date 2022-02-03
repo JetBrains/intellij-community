@@ -55,6 +55,6 @@ public class StructField extends StructMember {
 
   @Override
   protected int getArrayDimensions() {
-    return new VarType(descriptor).arrayDim;
+    return new VarType(descriptor).getArrayDim();
   }
 }

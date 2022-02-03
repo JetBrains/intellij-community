@@ -174,7 +174,7 @@ public class InvocationExprent extends Exprent {
 
       VarType leftType = descriptor.params[i];
 
-      result.addMinTypeExprent(parameter, VarType.getMinTypeInFamily(leftType.typeFamily));
+      result.addMinTypeExprent(parameter, VarType.getMinTypeInFamily(leftType.getTypeFamily()));
       result.addMaxTypeExprent(parameter, leftType);
     }
 
@@ -339,7 +339,7 @@ public class InvocationExprent extends Exprent {
     // omit 'new Type[] {}' for the last parameter of a vararg method call
     if (parameters.size() == descriptor.params.length && isVarArgCall()) {
       Exprent lastParam = parameters.get(parameters.size() - 1);
-      if (lastParam.type == EXPRENT_NEW && lastParam.getExprType().arrayDim >= 1) {
+      if (lastParam.type == EXPRENT_NEW && lastParam.getExprType().getArrayDim() >= 1) {
         ((NewExprent) lastParam).setVarArgParam(true);
       }
     }
@@ -391,14 +391,14 @@ public class InvocationExprent extends Exprent {
 
   public boolean isBoxingCall() {
     if (isStatic && "valueOf".equals(name) && parameters.size() == 1) {
-      int paramType = parameters.get(0).getExprType().type;
+      int paramType = parameters.get(0).getExprType().getType();
 
       // special handling for ambiguous types
       if (parameters.get(0).type == Exprent.EXPRENT_CONST) {
         // 'Integer.valueOf(1)' has '1' type detected as TYPE_BYTECHAR
         // 'Integer.valueOf(40_000)' has '40_000' type detected as TYPE_CHAR
         // so we check the type family instead
-        if (parameters.get(0).getExprType().typeFamily == CodeConstants.TYPE_FAMILY_INTEGER) {
+        if (parameters.get(0).getExprType().getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER) {
           if (className.equals("java/lang/Integer")) {
             return true;
           }
@@ -478,7 +478,7 @@ public class InvocationExprent extends Exprent {
         MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
         if (md.params.length == descriptor.params.length) {
           for (int i = 0; i < md.params.length; i++) {
-            if (md.params[i].typeFamily != descriptor.params[i].typeFamily) {
+            if (md.params[i].getTypeFamily() != descriptor.params[i].getTypeFamily()) {
               continue nextMethod;
             }
           }

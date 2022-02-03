@@ -495,7 +495,7 @@ public class ExprProcessor implements CodeConstants {
             }
 
             InvocationExprent exprinv = new InvocationExprent(instr.opcode, invoke_constant, bootstrap_arguments, stack, offsets);
-            if (exprinv.getDescriptor().ret.type == CodeConstants.TYPE_VOID) {
+            if (exprinv.getDescriptor().ret.getType() == CodeConstants.TYPE_VOID) {
               exprList.add(exprinv);
             }
             else {
@@ -509,7 +509,7 @@ public class ExprProcessor implements CodeConstants {
           int dimensions = (instr.opcode == opc_new) ? 0 : (instr.opcode == opc_anewarray) ? 1 : instr.operand(1);
           VarType arrType = new VarType(pool.getPrimitiveConstant(instr.operand(0)).getString(), true);
           if (instr.opcode != opc_multianewarray) {
-            arrType = arrType.resizeArrayDim(arrType.arrayDim + dimensions);
+            arrType = arrType.resizeArrayDim(arrType.getArrayDim() + dimensions);
           }
           pushEx(stack, exprList, new NewExprent(arrType, stack, dimensions, offsets));
           break;
@@ -523,7 +523,7 @@ public class ExprProcessor implements CodeConstants {
           insertByOffsetEx(-2, stack, exprList, -1);
           break;
         case opc_dup_x2:
-          if (stack.getByOffset(-2).getExprType().stackSize == 2) {
+          if (stack.getByOffset(-2).getExprType().getStackSize() == 2) {
             insertByOffsetEx(-2, stack, exprList, -1);
           }
           else {
@@ -531,7 +531,7 @@ public class ExprProcessor implements CodeConstants {
           }
           break;
         case opc_dup2:
-          if (stack.getByOffset(-1).getExprType().stackSize == 2) {
+          if (stack.getByOffset(-1).getExprType().getStackSize() == 2) {
             pushEx(stack, exprList, stack.getByOffset(-1).copy());
           }
           else {
@@ -540,7 +540,7 @@ public class ExprProcessor implements CodeConstants {
           }
           break;
         case opc_dup2_x1:
-          if (stack.getByOffset(-1).getExprType().stackSize == 2) {
+          if (stack.getByOffset(-1).getExprType().getStackSize() == 2) {
             insertByOffsetEx(-2, stack, exprList, -1);
           }
           else {
@@ -549,8 +549,8 @@ public class ExprProcessor implements CodeConstants {
           }
           break;
         case opc_dup2_x2:
-          if (stack.getByOffset(-1).getExprType().stackSize == 2) {
-            if (stack.getByOffset(-2).getExprType().stackSize == 2) {
+          if (stack.getByOffset(-1).getExprType().getStackSize() == 2) {
+            if (stack.getByOffset(-2).getExprType().getStackSize() == 2) {
               insertByOffsetEx(-2, stack, exprList, -1);
             }
             else {
@@ -558,7 +558,7 @@ public class ExprProcessor implements CodeConstants {
             }
           }
           else {
-            if (stack.getByOffset(-3).getExprType().stackSize == 2) {
+            if (stack.getByOffset(-3).getExprType().getStackSize() == 2) {
               insertByOffsetEx(-3, stack, exprList, -2);
               insertByOffsetEx(-3, stack, exprList, -1);
             }
@@ -576,7 +576,7 @@ public class ExprProcessor implements CodeConstants {
           stack.pop();
           break;
         case opc_pop2:
-          if (stack.getByOffset(-1).getExprType().stackSize == 1) {
+          if (stack.getByOffset(-1).getExprType().getStackSize() == 1) {
             // Since value at the top of the stack is a value of category 1 (JVMS9 2.11.1)
             // we should remove one more item from the stack.
             // See JVMS9 pop2 chapter.
@@ -654,16 +654,16 @@ public class ExprProcessor implements CodeConstants {
   }
 
   public static String getTypeName(VarType type, boolean getShort, List<TypeAnnotationWriteHelper> typePathWriteHelper) {
-    int tp = type.type;
+    int tp = type.getType();
     StringBuilder sb = new StringBuilder();
     typePathWriteHelper.removeIf(typeAnnotationWriteHelper -> {
       StructTypePathEntry path = typeAnnotationWriteHelper.getPaths().peek();
-      if (path == null && type.arrayDim == 0) { // nested type
+      if (path == null && type.getArrayDim() == 0) { // nested type
         typeAnnotationWriteHelper.writeTo(sb);
         return true;
       }
       if (path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.ARRAY.getId() &&
-        typeAnnotationWriteHelper.getPaths().size() == type.arrayDim
+          typeAnnotationWriteHelper.getPaths().size() == type.getArrayDim()
       ) {
         typeAnnotationWriteHelper.writeTo(sb);
         return true;
@@ -689,9 +689,9 @@ public class ExprProcessor implements CodeConstants {
     else if (tp == CodeConstants.TYPE_OBJECT) {
       String ret;
       if (getShort) {
-        ret = DecompilerContext.getImportCollector().getNestedName(type.value);
+        ret = DecompilerContext.getImportCollector().getNestedName(type.getValue());
       } else {
-        ret = buildJavaClassName(type.value);
+        ret = buildJavaClassName(type.getValue());
       }
       if (ret == null) {
         // FIXME: a warning should be logged
@@ -768,9 +768,9 @@ public class ExprProcessor implements CodeConstants {
   public static String getCastTypeName(VarType type, boolean getShort, List<TypeAnnotationWriteHelper> typePathWriteHelper) {
     List<TypeAnnotationWriteHelper> arrayPaths = new ArrayList<>();
     List<TypeAnnotationWriteHelper> notArrayPath = typePathWriteHelper.stream().filter(stack -> {
-      boolean isArrayPath = stack.getPaths().size() < type.arrayDim;
-      if (stack.getPaths().size() > type.arrayDim) {
-        for (int i = 0; i < type.arrayDim; i++) {
+      boolean isArrayPath = stack.getPaths().size() < type.getArrayDim();
+      if (stack.getPaths().size() > type.getArrayDim()) {
+        for (int i = 0; i < type.getArrayDim(); i++) {
           stack.getPaths().poll(); // remove all trailing
         }
       }
@@ -780,7 +780,7 @@ public class ExprProcessor implements CodeConstants {
       return !isArrayPath;
     }).collect(Collectors.toList());
     StringBuilder sb = new StringBuilder(getTypeName(type, getShort, notArrayPath));
-    writeArray(sb, type.arrayDim, arrayPaths);
+    writeArray(sb, type.getArrayDim(), arrayPaths);
     return sb.toString();
   }
 
@@ -919,16 +919,16 @@ public class ExprProcessor implements CodeConstants {
 
   public static ConstExprent getDefaultArrayValue(VarType arrType) {
     ConstExprent defaultVal;
-    if (arrType.type == CodeConstants.TYPE_OBJECT || arrType.arrayDim > 0) {
+    if (arrType.getType() == CodeConstants.TYPE_OBJECT || arrType.getArrayDim() > 0) {
       defaultVal = new ConstExprent(VarType.VARTYPE_NULL, null, null);
     }
-    else if (arrType.type == CodeConstants.TYPE_FLOAT) {
+    else if (arrType.getType() == CodeConstants.TYPE_FLOAT) {
       defaultVal = new ConstExprent(VarType.VARTYPE_FLOAT, 0f, null);
     }
-    else if (arrType.type == CodeConstants.TYPE_LONG) {
+    else if (arrType.getType() == CodeConstants.TYPE_LONG) {
       defaultVal = new ConstExprent(VarType.VARTYPE_LONG, 0L, null);
     }
-    else if (arrType.type == CodeConstants.TYPE_DOUBLE) {
+    else if (arrType.getType() == CodeConstants.TYPE_DOUBLE) {
       defaultVal = new ConstExprent(VarType.VARTYPE_DOUBLE, 0d, null);
     }
     else { // integer types
@@ -961,8 +961,8 @@ public class ExprProcessor implements CodeConstants {
       if (exprent.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)exprent).isBoxingCall()) {
         InvocationExprent invocationExprent = (InvocationExprent)exprent;
         exprent = invocationExprent.getParameters().get(0);
-        int paramType = invocationExprent.getDescriptor().params[0].type;
-        if (exprent.type == Exprent.EXPRENT_CONST && ((ConstExprent)exprent).getConstType().type != paramType) {
+        int paramType = invocationExprent.getDescriptor().params[0].getType();
+        if (exprent.type == Exprent.EXPRENT_CONST && ((ConstExprent)exprent).getConstType().getType() != paramType) {
           leftType = new VarType(paramType);
         }
       }
@@ -972,8 +972,8 @@ public class ExprProcessor implements CodeConstants {
 
     boolean cast =
       castAlways ||
-      (!leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) ||
-      (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType, Collections.emptyList()))) ||
+      (!leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.getType() != CodeConstants.TYPE_OBJECT)) ||
+      (castNull && rightType.getType() == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType, Collections.emptyList()))) ||
       (castNarrowing && isIntConstant(exprent) && isNarrowedIntType(leftType));
 
     boolean quote = cast && exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST);
@@ -1005,7 +1005,7 @@ public class ExprProcessor implements CodeConstants {
 
   private static boolean isIntConstant(Exprent exprent) {
     if (exprent.type == Exprent.EXPRENT_CONST) {
-      switch (((ConstExprent)exprent).getConstType().type) {
+      switch (((ConstExprent)exprent).getConstType().getType()) {
         case CodeConstants.TYPE_BYTE:
         case CodeConstants.TYPE_BYTECHAR:
         case CodeConstants.TYPE_SHORT:

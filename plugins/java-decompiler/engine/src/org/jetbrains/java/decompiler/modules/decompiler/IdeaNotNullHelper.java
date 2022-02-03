@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -65,7 +65,7 @@ public final class IdeaNotNullHelper {
         Exprent second_param = func.getLstOperands().get(1);
 
         if (second_param.type == Exprent.EXPRENT_CONST &&
-            second_param.getExprType().type == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
+            second_param.getExprType().getType() == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
           if (first_param.type == Exprent.EXPRENT_VAR) {
             VarExprent var = (VarExprent)first_param;
 
@@ -103,7 +103,7 @@ public final class IdeaNotNullHelper {
                   break;
                 }
 
-                index += md.params[i].stackSize;
+                index += md.params[i].getStackSize();
               }
             }
           }
@@ -204,7 +204,7 @@ public final class IdeaNotNullHelper {
             Statement elsebranch = ifparent.getElsestat();
 
             if (second_param.type == Exprent.EXPRENT_CONST &&
-                second_param.getExprType().type == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
+                second_param.getExprType().getType() == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
               //if(first_param.type == Exprent.EXPRENT_VAR && ((VarExprent)first_param).getIndex() == var_value.getIndex()) {
               if (first_param.equals(exprent_value)) {        // TODO: check for absence of side effects like method invocations etc.
                 if (ifbranch.type == StatementType.BASIC_BLOCK &&
@@ -268,7 +268,7 @@ public final class IdeaNotNullHelper {
               Statement ifbranch = ifstat.getIfstat();
 
               if (second_param.type == Exprent.EXPRENT_CONST &&
-                  second_param.getExprType().type == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
+                  second_param.getExprType().getType() == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
                 if (first_param.equals(exprent_value)) {        // TODO: check for absence of side effects like method invocations etc.
                   if (ifbranch.type == StatementType.BASIC_BLOCK &&
                       ifbranch.getExprents().size() == 1 &&

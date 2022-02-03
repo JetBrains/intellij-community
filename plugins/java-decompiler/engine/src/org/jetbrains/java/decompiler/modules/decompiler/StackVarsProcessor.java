@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -282,8 +282,8 @@ public class StackVarsProcessor {
         if (right.type == Exprent.EXPRENT_NEW) {
           // new Object(); permitted
           NewExprent nexpr = (NewExprent)right;
-          if (nexpr.isAnonymous() || nexpr.getNewType().arrayDim > 0
-              || nexpr.getNewType().type != CodeConstants.TYPE_OBJECT) {
+          if (nexpr.isAnonymous() || nexpr.getNewType().getArrayDim() > 0
+              || nexpr.getNewType().getType() != CodeConstants.TYPE_OBJECT) {
             return new int[]{-1, changed};
           }
         }
