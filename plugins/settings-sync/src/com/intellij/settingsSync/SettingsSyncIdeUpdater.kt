@@ -13,6 +13,7 @@ import com.intellij.ide.ui.UISettings.Companion.instance
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.diagnostic.logger
@@ -55,6 +56,8 @@ internal class SettingsSyncIdeUpdater(private val componentStore: ComponentStore
     // 3. after that update the rest of changed settings
     val regularFileStates = snapshot.fileStates.filter { it !=  settingsSyncFileState && it != pluginsFileState }
     updateSettings(regularFileStates)
+
+    invokeLater { updateUI() }
   }
 
   private fun updateSettings(fileStates: Collection<FileState>) {
@@ -101,8 +104,6 @@ internal class SettingsSyncIdeUpdater(private val componentStore: ComponentStore
 
     val notReloadableComponents = componentStore.getNotReloadableComponents(changedComponentNames)
     componentStore.reinitComponents(changedComponentNames, changed.toSet(), notReloadableComponents)
-
-    updateUI()
   }
 
   private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateStorages: Collection<StateStorage>, deleted: Boolean) {

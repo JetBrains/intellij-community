@@ -65,7 +65,7 @@ class TestPluginInstaller : SettingsSyncPluginInstaller {
     installedPluginIds.add(pluginId.idString)
   }
 
-  override fun startInstallation() {
+  override fun installPlugins() {
   }
 }
 

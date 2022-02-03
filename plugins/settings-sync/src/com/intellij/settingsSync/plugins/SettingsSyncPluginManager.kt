@@ -122,7 +122,7 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
         }
       }
     }
-    installer.startInstallation()
+    installer.installPlugins()
   }
 
   private fun findPlugin(idString: String): IdeaPluginDescriptor? {
