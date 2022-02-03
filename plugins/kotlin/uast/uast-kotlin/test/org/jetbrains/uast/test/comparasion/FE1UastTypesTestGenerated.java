@@ -43,6 +43,11 @@ public class FE1UastTypesTestGenerated extends AbstractFE1UastTypesTest {
         runTest("../uast-kotlin-fir/testData/type/classLiteral.kt");
     }
 
+    @TestMetadata("objectLiteral.kt")
+    public void testObjectLiteral() throws Exception {
+        runTest("../uast-kotlin-fir/testData/type/objectLiteral.kt");
+    }
+
     @TestMetadata("threadSafe.kt")
     public void testThreadSafe() throws Exception {
         runTest("../uast-kotlin-fir/testData/type/threadSafe.kt");
