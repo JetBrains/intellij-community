@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.sourceToSink.propagate;
 
 import com.intellij.analysis.JvmAnalysisBundle;
+import com.intellij.analysis.problemsView.toolWindow.ProblemsViewToolWindowUtils;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.sourceToSink.MarkAsSafeFix;
 import com.intellij.codeInspection.sourceToSink.TaintAnalyzer;
@@ -10,13 +11,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.ui.content.Content;
-import com.intellij.usageView.UsageViewContentManager;
+import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +43,11 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   }
 
   @Override
+  public boolean availableInBatchMode() {
+    return false;
+  }
+
+  @Override
   public void invoke(@NotNull Project project,
                      @NotNull PsiFile file,
                      @Nullable Editor editor,
@@ -64,15 +69,19 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     }
     Consumer<Collection<TaintNode>> callback = toAnnotate -> {
       annotate(project, toAnnotate, false);
-      ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.FIND);
+      ToolWindow toolWindow = ProblemsViewToolWindowUtils.INSTANCE.getToolWindow(project);
       if (toolWindow != null) toolWindow.hide();
     };
     PropagateAnnotationPanel panel = new PropagateAnnotationPanel(project, root, callback);
     String title = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.toolwindow.title");
-    Content content = UsageViewContentManager.getInstance(project).addContent(title, false, panel, true, true);
+    ToolWindow toolWindow = ProblemsViewToolWindowUtils.INSTANCE.getToolWindow(project);
+    if (toolWindow == null) return;
+    Content content = ContentFactory.SERVICE.getInstance().createContent(panel, title, true);
     panel.setContent(content);
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.FIND);
-    if (toolWindow != null) toolWindow.activate(null);
+    ContentManager contentManager = toolWindow.getContentManager();
+    contentManager.addContent(content);
+    contentManager.setSelectedContent(content);
+    toolWindow.activate(null);
   }
 
   @Override

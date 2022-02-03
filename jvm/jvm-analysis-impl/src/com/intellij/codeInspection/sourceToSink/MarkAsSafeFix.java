@@ -106,10 +106,10 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
     String title = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.mark.as.safe.command.name");
     if (annotateExternally) {
       Runnable annotateCommand = () -> {
+        ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
         for (PsiElement element : toAnnotate) {
           PsiModifierListOwner owner = ObjectUtils.tryCast(element, PsiModifierListOwner.class);
           if (owner == null) continue;
-          ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
           annotationsManager.annotateExternally(owner, DEFAULT_UNTAINTED_ANNOTATION, owner.getContainingFile(), null);
         }
       };
