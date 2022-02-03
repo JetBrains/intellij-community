@@ -22,6 +22,10 @@ sourceSets {
 repositories {
   maven { url = "https://cache-redirector.jetbrains.com/maven-central" }
   maven { url = "https://cache-redirector.jetbrains.com/intellij-dependencies" }
+
+  maven { url = "https://www.jetbrains.com/intellij-repository/releases" }
+  maven { url = "https://www.jetbrains.com/intellij-repository/snapshots" }
+  maven { url = "https://www.jetbrains.com/intellij-repository/nightly" }
 }
 
 dependencies {
@@ -39,6 +43,10 @@ dependencies {
   implementation "org.apache.commons:commons-compress:1.21"
   implementation "org.rauschig:jarchivelib:1.2.0"
   implementation "commons-logging:commons-logging:1.2"
+
+  testImplementation 'com.jetbrains.intellij.performanceTesting:performance-testing-commands:LATEST-TRUNK-SNAPSHOT'
+  testImplementation 'com.jetbrains.intellij.performanceTesting:performance-testing-maven-commands:LATEST-TRUNK-SNAPSHOT'
+  testImplementation 'com.jetbrains.intellij.performanceTesting:performance-testing-gradle-commands:LATEST-TRUNK-SNAPSHOT'
 
   testImplementation 'junit:junit:4.13.2'
 
