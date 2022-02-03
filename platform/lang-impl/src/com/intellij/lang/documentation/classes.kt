@@ -6,18 +6,7 @@ import com.intellij.openapi.progress.withJob
 import com.intellij.util.AsyncSupplier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.VisibleForTesting
 import java.util.function.Supplier
-
-@VisibleForTesting
-data class DocumentationData internal constructor(
-  val html: @Nls String,
-  val anchor: String?,
-  val externalUrl: String?,
-  val linkUrls: List<String>,
-  val imageResolver: DocumentationImageResolver?
-) : DocumentationResult
 
 internal class AsyncDocumentation(
   val supplier: AsyncSupplier<DocumentationResult?>
