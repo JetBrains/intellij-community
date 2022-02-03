@@ -43,6 +43,11 @@ public class FirUastTypesTestGenerated extends AbstractFirUastTypesTest {
         runTest("testData/type/classLiteral.kt");
     }
 
+    @TestMetadata("objectLiteral.kt")
+    public void testObjectLiteral() throws Exception {
+        runTest("testData/type/objectLiteral.kt");
+    }
+
     @TestMetadata("threadSafe.kt")
     public void testThreadSafe() throws Exception {
         runTest("testData/type/threadSafe.kt");
