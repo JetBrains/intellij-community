@@ -109,6 +109,7 @@
                     interface="com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationProvider" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.languageCompilerRefAdapter" interface="com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.compiler.isUpToDateChecker" interface="com.intellij.compiler.backwardRefs.IsUpToDateCheckConsumer" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.languageCompilerRefAdapter.directInheritorProvider" area="IDEA_PROJECT"
                     interface="com.intellij.compiler.backwardRefs.DirectInheritorProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.framework.type" interface="com.intellij.framework.FrameworkTypeEx" dynamic="true"/>
@@ -303,7 +304,7 @@
     <backgroundPostStartupActivity implementation="com.intellij.packaging.impl.artifacts.ArtifactTypeFeatureCollector"/>
     <projectService serviceInterface="com.intellij.compiler.CompilerConfiguration" serviceImplementation="com.intellij.compiler.CompilerConfigurationImpl" preload="await"/>
     <projectService serviceInterface="com.intellij.compiler.ProblemsView" serviceImplementation="com.intellij.compiler.impl.ProblemsViewImpl"/>
-    <backgroundPostStartupActivity implementation="com.intellij.compiler.backwardRefs.CompilerReferenceIndexIsUpToDateStartupActivity"/>
+    <backgroundPostStartupActivity implementation="com.intellij.compiler.backwardRefs.IsUpToDateCheckStartupActivity"/>
     <projectService serviceInterface="com.intellij.compiler.CompilerReferenceService"
                     serviceImplementation="com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl"
                     preload="notHeadless"/>
@@ -1270,6 +1271,7 @@
     <lang.refactoringSupport language="JAVA" implementationClass="com.intellij.lang.java.JavaRefactoringSupportProvider"/>
     <intentionsOrderProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.quickfix.JavaIntentionsOrderProvider"/>
     <languageCompilerRefAdapter implementation="com.intellij.compiler.backwardRefs.JavaCompilerRefAdapter"/>
+    <compiler.isUpToDateChecker implementation="com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase$JCRIIsUpToDateConsumer"/>
     <editor.injectedFileChangesHandlerProvider language="JAVA" implementationClass="com.intellij.psi.impl.source.tree.injected.JavaInjectedFileChangesHandlerProvider"/>
     <registryKey key="injections.java.fragment.editor.new" defaultValue="true" restartRequired="false"
                  description="Using new optimised JavaInjectedFileChangesHandler when editing code injected to Java in the fragment editor"/>

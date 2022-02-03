@@ -8,22 +8,31 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 
 /**
- * Marked CRI as "up to date" if the project is already compiled.
+ * Call [IsUpToDateCheckConsumer.isUpToDate] if [CompilerManager.isUpToDate] returns 'true'.
  *
- * @see IsUpToDateCheckListener
+ * @see IsUpToDateCheckConsumer
  */
-class CompilerReferenceIndexIsUpToDateStartupActivity : StartupActivity.Background {
+class IsUpToDateCheckStartupActivity : StartupActivity.Background {
   override fun runActivity(project: Project) {
-    if (!CompilerReferenceServiceBase.isEnabled() || ApplicationManager.getApplication().isUnitTestMode) return
-
+    if (ApplicationManager.getApplication().isUnitTestMode) return
     val logger = thisLogger()
-    logger.info("CRI activity started")
+
+    val isUpToDateConsumers = IsUpToDateCheckConsumer.EP_NAME.extensionList.filter { it.isApplicable(project) }
+    if (isUpToDateConsumers.isEmpty()) {
+      logger.info("suitable consumer is not found")
+      return
+    }
+    else {
+      logger.info("activity started")
+    }
 
     val compilerManager = CompilerManager.getInstance(project)
     val projectCompileScope = compilerManager.createProjectCompileScope(project)
     val isUpToDate = compilerManager.isUpToDate(projectCompileScope)
 
-    logger.info("CRI activity result: isUpToDate = $isUpToDate")
-    project.messageBus.syncPublisher(IsUpToDateCheckListener.TOPIC).isUpToDateCheckFinished(isUpToDate)
+    logger.info("isUpToDate = $isUpToDate")
+    for (consumer in isUpToDateConsumers) {
+      consumer.isUpToDate(project, isUpToDate)
+    }
   }
 }

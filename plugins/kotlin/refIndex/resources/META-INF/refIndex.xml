@@ -12,6 +12,7 @@
     />
 
     <languageCompilerRefAdapter implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerRefHelper"/>
+    <compiler.isUpToDateChecker implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService$KCRIIsUpToDateConsumer"/>
     <languageCompilerRefAdapter.directInheritorProvider implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinDirectInheritorProvider"/>
   </extensions>
   <actions>
