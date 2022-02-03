@@ -49,7 +49,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.KeyboardLayoutUtil;
+import com.intellij.util.text.matching.KeyboardLayoutUtil;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
