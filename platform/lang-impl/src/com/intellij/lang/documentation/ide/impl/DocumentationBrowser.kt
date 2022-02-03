@@ -54,22 +54,22 @@ internal class DocumentationBrowser private constructor(
 
   override val targetPointer: Pointer<out DocumentationTarget> get() = state.request.targetPointer
 
-  private fun setState(state: BrowserState, byLink: Boolean) {
+  private fun setState(state: BrowserState) {
     EDT.assertIsEdt()
     this.state = state
-    fireStateUpdate(state, byLink)
+    fireStateUpdate(state)
   }
 
-  private fun fireStateUpdate(state: BrowserState, byLink: Boolean) {
+  private fun fireStateUpdate(state: BrowserState) {
     stateListeners.map { listener ->
-      listener.stateChanged(state.request, state.result, byLink)
+      listener.stateChanged(state.request, state.result)
     }
   }
 
   fun addStateListener(listener: BrowserStateListener): Disposable {
     EDT.assertIsEdt()
     stateListeners.add(listener)
-    listener.stateChanged(state.request, state.result, byLink = false)
+    listener.stateChanged(state.request, state.result)
     return Disposable {
       EDT.assertIsEdt()
       stateListeners.remove(listener)
@@ -81,19 +81,19 @@ internal class DocumentationBrowser private constructor(
     cs.launch(Dispatchers.EDT) {
       backStack.clear()
       forwardStack.clear()
-      browseDocumentation(request, byLink = false)
+      browseDocumentation(request)
     }
   }
 
   override fun reload() {
     cs.coroutineContext.cancelChildren()
     cs.launch(Dispatchers.EDT) {
-      browseDocumentation(state.request, false)
+      browseDocumentation(state.request)
     }
   }
 
-  private fun browseDocumentation(request: DocumentationRequest, byLink: Boolean) {
-    setState(BrowserState(request, cs.computeDocumentationAsync(request.targetPointer)), byLink)
+  private fun browseDocumentation(request: DocumentationRequest) {
+    setState(BrowserState(request, cs.computeDocumentationAsync(request.targetPointer)))
   }
 
   fun navigateByLink(url: String) {
@@ -129,7 +129,7 @@ internal class DocumentationBrowser private constructor(
       is InternalLinkResult.Request -> {
         backStack.push(historySnapshot())
         forwardStack.clear()
-        browseDocumentation(internalResult.request, byLink = true)
+        browseDocumentation(internalResult.request)
       }
       is InternalLinkResult.Updater -> {
         handleContentUpdates(internalResult.updater)
@@ -182,7 +182,7 @@ internal class DocumentationBrowser private constructor(
     cs.coroutineContext.cancelChildren()
     val result = state.result
     if (result.isCompleted && !result.isCancelled) {
-      setState(state, false)
+      setState(state)
     }
     else {
       // This can happen in the following scenario:
@@ -192,7 +192,7 @@ internal class DocumentationBrowser private constructor(
       //    At this point the request from link is cancelled, but stored in history.
       // 4. Invoke the Forward action.
       //    Here we reload that cancelled request again
-      browseDocumentation(state.request, byLink = false)
+      browseDocumentation(state.request)
     }
   }
 

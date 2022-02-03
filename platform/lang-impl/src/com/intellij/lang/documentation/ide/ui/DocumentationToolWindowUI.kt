@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.codeInsight.documentation.DocumentationEditorPane
@@ -108,7 +108,7 @@ internal val Content.isReusable: Boolean get() = toolWindowUI.isReusable
 private val TW_UI_KEY: Key<DocumentationToolWindowUI> = Key.create("documentation.tw.ui")
 
 private fun updateContentTab(browser: DocumentationBrowser, content: Content, asterisk: Boolean): Disposable {
-  return browser.addStateListener { request, _, _ ->
+  return browser.addStateListener { request, _ ->
     val presentation = request.presentation
     content.icon = presentation.icon
     content.displayName = if (asterisk) "* ${presentation.presentableText}" else presentation.presentableText

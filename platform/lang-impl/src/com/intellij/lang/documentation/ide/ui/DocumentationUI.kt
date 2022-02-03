@@ -68,7 +68,7 @@ internal class DocumentationUI(
 
     browser.ui = this
     Disposer.register(this, browser)
-    Disposer.register(this, browser.addStateListener { request, result, _ ->
+    Disposer.register(this, browser.addStateListener { request, result ->
       applyStateLater(request, result)
     })
 

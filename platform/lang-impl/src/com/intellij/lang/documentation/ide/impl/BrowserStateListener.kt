@@ -11,5 +11,5 @@ import kotlinx.coroutines.Deferred
 internal fun interface BrowserStateListener {
 
   @RequiresEdt
-  fun stateChanged(request: DocumentationRequest, result: Deferred<DocumentationResultData?>, byLink: Boolean)
+  fun stateChanged(request: DocumentationRequest, result: Deferred<DocumentationResultData?>)
 }
