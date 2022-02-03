@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +17,7 @@ import javax.swing.*;
  * <p/>
  * FileType corresponding to any language that supported via TextMate bundle.
  */
-public final class TextMateFileType extends LanguageFileType implements PlainTextLikeFileType {
+public final class TextMateFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile, PlainTextLikeFileType {
   public static final TextMateFileType INSTANCE = new TextMateFileType();
 
   private TextMateFileType() {
@@ -44,6 +45,17 @@ public final class TextMateFileType extends LanguageFileType implements PlainTex
   @Override
   public Icon getIcon() {
     return AllIcons.FileTypes.Text;
+  }
+
+  @Override
+  public boolean isMyFileType(@NotNull VirtualFile file) {
+    if (file.isDirectory() || !(file instanceof LightVirtualFile)) {
+      return false;
+    }
+    CharSequence fileName = file.getNameSequence();
+    FileType originalFileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
+    return isTypeShouldBeReplacedByTextMateType(originalFileType) &&
+           TextMateService.getInstance().getLanguageDescriptorByFileName(fileName) != null;
   }
 
   private static boolean isTypeShouldBeReplacedByTextMateType(@Nullable FileType registeredType) {
