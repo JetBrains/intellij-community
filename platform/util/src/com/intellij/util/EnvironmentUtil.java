@@ -339,16 +339,22 @@ public final class EnvironmentUtil {
       final StreamGobbler stderrGobbler = new StreamGobbler(process.getErrorStream(), Charset.defaultCharset());
       final int exitCode = waitAndTerminateAfter(process, myTimeoutMillis);
       try {
-        stdoutGobbler.waitFor(1000L, TimeUnit.MILLISECONDS);
-        stdoutGobbler.waitFor(1000L, TimeUnit.MILLISECONDS);
+        stdoutGobbler.waitFor(5000L, TimeUnit.MILLISECONDS);
+        stdoutGobbler.waitFor(5000L, TimeUnit.MILLISECONDS);
         stdoutGobbler.stop();
         stderrGobbler.stop();
       }
       catch (TimeoutException te) {
-        LOG.warn("output reader process is timed out");
+        LOG.error("Output reader for Environment reader process is timed out\n\tcommand: " + command,
+                  te,
+                  new Attachment("EnvReaderStdout.txt", stdoutGobbler.getText().trim()),
+                  new Attachment("EnvReaderStderr.txt", stderrGobbler.getText().trim()));
       }
       catch (InterruptedException ie) {
-        LOG.warn("Interrupted while waiting for output reader process", ie);
+        LOG.error("Output reader for Environment reader process is interrupted\n\tcommand: " + command,
+                  ie,
+                  new Attachment("EnvReaderStdout.txt", stdoutGobbler.getText().trim()),
+                  new Attachment("EnvReaderStderr.txt", stderrGobbler.getText().trim()));
       }
 
       final String output = stdoutGobbler.getText().trim();
