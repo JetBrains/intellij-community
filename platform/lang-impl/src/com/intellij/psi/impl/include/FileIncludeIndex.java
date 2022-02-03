@@ -139,14 +139,15 @@ public final class FileIncludeIndex extends FileBasedIndexExtension<String, List
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new FileBasedIndex.FileTypeSpecificInputFilter() {
+    return new DefaultFileTypeSpecificWithProjectInputFilter() {
       @Override
-      public boolean acceptInput(@NotNull VirtualFile file) {
+      public boolean acceptInput(@NotNull IndexedFile indexedFile) {
+        VirtualFile file = indexedFile.getFile();
         if (file.getFileSystem() == JarFileSystem.getInstance()) {
           return false;
         }
         for (FileIncludeProvider provider : FileIncludeProvider.EP_NAME.getExtensionList()) {
-          if (provider.acceptFile(file)) {
+          if (provider.acceptFile(file, indexedFile.getProject())) {
             return true;
           }
         }
