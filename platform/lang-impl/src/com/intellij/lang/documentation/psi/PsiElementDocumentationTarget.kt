@@ -120,7 +120,7 @@ class PsiElementDocumentationTarget private constructor(
       targetElement: PsiElement,
       provider: ExternalDocumentationProvider,
       urls: List<String>,
-      localDoc: DocumentationResult?,
+      localDoc: DocumentationResult.Data?,
     ): DocumentationResult = DocumentationResult.asyncDocumentation(Supplier {
       LOG.debug("External documentation URLs: $urls")
       for (url in urls) {

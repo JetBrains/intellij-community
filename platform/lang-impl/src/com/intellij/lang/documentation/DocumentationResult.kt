@@ -46,10 +46,9 @@ sealed interface DocumentationResult {
     /**
      * The [supplier]:
      * - will be invoked in background;
-     * - is expected to return [documentation];
      * - is free to obtain a read action itself if needed.
      */
-    fun asyncDocumentation(supplier: AsyncSupplier<DocumentationResult?>): DocumentationResult {
+    fun asyncDocumentation(supplier: AsyncSupplier<Data?>): DocumentationResult {
       return AsyncDocumentation(supplier)
     }
 
@@ -58,7 +57,7 @@ sealed interface DocumentationResult {
      * The [supplier] will be invoked under progress indicator.
      */
     @JvmStatic
-    fun asyncDocumentation(supplier: Supplier<DocumentationResult?>): DocumentationResult {
+    fun asyncDocumentation(supplier: Supplier<Data?>): DocumentationResult {
       return AsyncDocumentation(supplier.asAsyncSupplier())
     }
   }

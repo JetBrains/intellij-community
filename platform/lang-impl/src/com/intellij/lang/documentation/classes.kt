@@ -9,7 +9,7 @@ import kotlinx.coroutines.withContext
 import java.util.function.Supplier
 
 internal class AsyncDocumentation(
-  val supplier: AsyncSupplier<DocumentationResult?>
+  val supplier: AsyncSupplier<DocumentationResult.Data?>
 ) : DocumentationResult
 
 internal class ResolvedTarget(
