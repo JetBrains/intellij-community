@@ -59,6 +59,7 @@ dependencies {
   testImplementation 'org.junit.jupiter:junit-jupiter-params:5.7.0'
   testImplementation 'io.kotest:kotest-assertions-core-jvm:4.5.0'
   testImplementation 'org.mockito:mockito-core:3.12.4'
+  testImplementation 'org.mockito:mockito-junit-jupiter:3.12.4'
 }
 
 compileKotlin {
@@ -99,4 +100,6 @@ test {
   filter {
     includeTestsMatching "com.intellij.ide.starter.tests.unit.*"
   }
+
+  useJUnitPlatform()
 }

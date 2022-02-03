@@ -6,22 +6,21 @@ import com.intellij.ide.starter.ide.InstalledIDE
 import com.intellij.ide.starter.models.TestCase
 import com.intellij.ide.starter.path.IDEDataPaths
 import io.kotest.matchers.shouldBe
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
-import org.junit.runner.RunWith
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.io.TempDir
 import org.kodein.di.direct
 import org.kodein.di.instance
 import org.mockito.Mock
-import org.mockito.junit.MockitoJUnitRunner
+import org.mockito.junit.jupiter.MockitoExtension
+import java.nio.file.Path
 
 
-@RunWith(MockitoJUnitRunner::class)
+@ExtendWith(MockitoExtension::class)
 class PluginsInjectionTest {
 
-  @Rule
-  @JvmField
-  val testDirectory: TemporaryFolder = TemporaryFolder()
+  @TempDir
+  lateinit var testDirectory: Path
 
   @Mock
   private lateinit var testCase: TestCase
@@ -32,7 +31,7 @@ class PluginsInjectionTest {
   @Test
   fun theSameIDETestContextShouldBeReferencedInPluginConfigurator() {
     val testName = "example test"
-    val paths = IDEDataPaths.createPaths(testName, testDirectory.newFolder().toPath(), useInMemoryFs = false)
+    val paths = IDEDataPaths.createPaths(testName, testDirectory, useInMemoryFs = false)
 
     val projectHome = testCase.projectInfo?.resolveProjectHome()
     val context = IDETestContext(paths = paths,
