@@ -4,7 +4,12 @@ package com.intellij.model;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.function.Function;
 
+/**
+ * @deprecated See deprecation notice on {@link #delegatingPointer(Pointer, Object, Function)}.
+ */
+@Deprecated
 final class HardPointerEq<T> implements Pointer<T> {
 
   private final T myValue;

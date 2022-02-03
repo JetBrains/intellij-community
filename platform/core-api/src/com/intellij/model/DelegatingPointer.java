@@ -4,22 +4,15 @@ package com.intellij.model;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-/**
- * @deprecated See deprecation notice on {@link #delegatingPointer(Pointer, Object, Function)}.
- */
-@Deprecated
-abstract class DelegatingPointerEq<T, U> implements Pointer<T> {
+abstract class DelegatingPointer<T, U> implements Pointer<T> {
 
   private final @NotNull Pointer<? extends U> myUnderlyingPointer;
-  private final @NotNull Object myKey;
 
-  protected DelegatingPointerEq(@NotNull Pointer<? extends U> underlyingPointer, @NotNull Object key) {
+  protected DelegatingPointer(@NotNull Pointer<? extends U> underlyingPointer) {
     myUnderlyingPointer = underlyingPointer;
-    myKey = key;
   }
 
   @Override
@@ -30,27 +23,13 @@ abstract class DelegatingPointerEq<T, U> implements Pointer<T> {
 
   protected abstract T dereference(@NotNull U underlyingValue);
 
-  @Override
-  public final boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    DelegatingPointerEq<?, ?> base = (DelegatingPointerEq<?, ?>)o;
-    return myKey.equals(base.myKey) && myUnderlyingPointer.equals(base.myUnderlyingPointer);
-  }
-
-  @Override
-  public final int hashCode() {
-    return Objects.hash(myKey, myUnderlyingPointer);
-  }
-
-  static final class ByValue<T, U> extends DelegatingPointerEq<T, U> {
+  static final class ByValue<T, U> extends DelegatingPointer<T, U> {
 
     private final @NotNull Function<? super U, ? extends T> myRestoration;
 
     ByValue(@NotNull Pointer<? extends U> underlyingPointer,
-            @NotNull Object key,
             @NotNull Function<? super U, ? extends T> restoration) {
-      super(underlyingPointer, key);
+      super(underlyingPointer);
       myRestoration = restoration;
     }
 
@@ -60,14 +39,13 @@ abstract class DelegatingPointerEq<T, U> implements Pointer<T> {
     }
   }
 
-  static final class ByValueAndPointer<T, U> extends DelegatingPointerEq<T, U> {
+  static final class ByValueAndPointer<T, U> extends DelegatingPointer<T, U> {
 
     private final @NotNull BiFunction<? super U, ? super Pointer<T>, ? extends T> myRestoration;
 
     ByValueAndPointer(@NotNull Pointer<? extends U> underlyingPointer,
-                      @NotNull Object key,
                       @NotNull BiFunction<? super U, ? super Pointer<T>, ? extends T> restoration) {
-      super(underlyingPointer, key);
+      super(underlyingPointer);
       myRestoration = restoration;
     }
 
