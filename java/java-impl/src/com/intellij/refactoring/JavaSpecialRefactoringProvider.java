@@ -104,28 +104,12 @@ public interface JavaSpecialRefactoringProvider {
                                      final boolean forStatic,
                                      @NotNull final PsiClass parentClass);
 
-  void collectMethodConflicts(MultiMap<PsiElement, String> conflicts, PsiMethod method, PsiParameter parameter);
-
-  void analyzeModuleConflicts(final Project project,
-                              final Collection<? extends PsiElement> scopes,
-                              final UsageInfo[] usages,
-                              final PsiElement target,
-                              final MultiMap<PsiElement,String> conflicts);
-
-  void analyzeModuleConflicts(final Project project,
-                              final Collection<? extends PsiElement> scopes,
-                              final UsageInfo[] usages,
-                              final VirtualFile vFile,
-                              final MultiMap<PsiElement, String> conflicts);
-
   boolean canBeStatic(final PsiClass targetClass, final PsiElement place, final PsiElement[] elements, Set<? super PsiField> usedFields);
 
   PsiExpression inlineVariable(PsiVariable variable,
                                PsiExpression initializer,
                                PsiJavaCodeReferenceElement ref,
                                PsiExpression thisAccessExpr) throws IncorrectOperationException;
-
-  void searchForHierarchyConflicts(PsiMethod method, MultiMap<PsiElement, @Nls String> conflicts, final String modifier);
 
   void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination) throws IncorrectOperationException;
 

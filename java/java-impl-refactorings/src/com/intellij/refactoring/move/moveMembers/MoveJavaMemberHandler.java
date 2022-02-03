@@ -120,7 +120,8 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
 
     final PsiReference reference = usageInfo.getReference();
     if (reference != null) {
-      RefactoringConflictsUtil.checkAccessibilityConflicts(reference, member, modifierListCopy, targetClass, membersToMove, conflicts);
+      RefactoringConflictUtil.getInstance()
+        .checkAccessibilityConflictsAfterMove(reference, member, modifierListCopy, targetClass, membersToMove, conflicts);
     }
   }
 
@@ -148,7 +149,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
       conflicts.putValue(member, StringUtil.capitalize(message));
     }
 
-    RefactoringConflictsUtil.checkUsedElements(member, member, membersToMove, null, targetClass, targetClass, conflicts);
+    RefactoringConflictUtil.getInstance().checkUsedElementsAfterMove(member, member, membersToMove, null, targetClass, targetClass, conflicts);
   }
 
   protected static boolean hasMethod(PsiClass targetClass, PsiMethod method) {

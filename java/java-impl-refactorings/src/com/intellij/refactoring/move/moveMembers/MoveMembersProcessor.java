@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -20,8 +21,8 @@ import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveMemberViewDescriptor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringConflictUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
-import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -354,7 +355,10 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     analyzeConflictsOnUsages(usages, myMembersToMove, myTargetClass, modifierListCopies, myOptions, conflicts);
     analyzeConflictsOnMembers(myMembersToMove, newVisibility, myTargetClass, modifierListCopies, conflicts);
 
-    RefactoringConflictsUtil.analyzeModuleConflicts(myProject, myMembersToMove, usages, myTargetClass, conflicts);
+    final VirtualFile vFile = PsiUtilCore.getVirtualFile(myTargetClass);
+    if (vFile != null) {
+      RefactoringConflictUtil.getInstance().analyzeModuleConflicts(myProject, myMembersToMove, usages, vFile, conflicts);
+    }
 
     return showConflicts(conflicts, usages);
   }

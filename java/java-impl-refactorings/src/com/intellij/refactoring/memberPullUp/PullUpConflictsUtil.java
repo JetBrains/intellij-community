@@ -8,13 +8,14 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
-import com.intellij.refactoring.util.RefactoringConflictsUtil;
+import com.intellij.refactoring.util.RefactoringConflictUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
@@ -26,10 +27,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public final class PullUpConflictsUtil {
   private PullUpConflictsUtil() {}
@@ -112,8 +110,9 @@ public final class PullUpConflictsUtil {
         }
       }
     }
-    RefactoringConflictsUtil.analyzeAccessibilityConflicts(movedMembers, superClass, conflicts, VisibilityUtil.ESCALATE_VISIBILITY, targetRepresentativeElement, abstrMethods,
-                                                           Conditions.alwaysTrue());
+    RefactoringConflictUtil.getInstance()
+      .analyzeAccessibilityConflictsAfterMemberMove(movedMembers, superClass, conflicts, VisibilityUtil.ESCALATE_VISIBILITY, targetRepresentativeElement,
+                                                    abstrMethods, Conditions.alwaysTrue());
     if (superClass != null) {
       if (movedMembers2Super) {
         checkSuperclassMembers(superClass, infos, conflicts);
@@ -150,7 +149,11 @@ public final class PullUpConflictsUtil {
       ContainerUtil.addIfNotNull(checkModuleConflictsList, method.getReturnTypeElement());
       ContainerUtil.addIfNotNull(checkModuleConflictsList, method.getTypeParameterList());
     }
-    RefactoringConflictsUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList, UsageInfo.EMPTY_ARRAY, targetDirectory, conflicts);
+    final VirtualFile vFile = PsiUtilCore.getVirtualFile(targetDirectory);
+    if (vFile != null) {
+      RefactoringConflictUtil.getInstance()
+        .analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList, UsageInfo.EMPTY_ARRAY, vFile, conflicts);
+    }
 
     final PsiClassOwner psiFile = PsiTreeUtil.getParentOfType(subclass, PsiClassOwner.class);
     final boolean toDifferentPackage = !Comparing.strEqual(targetPackage.getQualifiedName(),

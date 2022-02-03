@@ -3,14 +3,16 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.refactoring.util.RefactoringConflictsUtil;
+import com.intellij.refactoring.util.RefactoringConflictUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -148,7 +150,13 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
                                UsageInfo[] infos,
                                PsiDirectory directory,
                                MultiMap<PsiElement, String> conflicts) {
-    RefactoringConflictsUtil.analyzeModuleConflicts(project, files, infos, directory, conflicts);
+    if (files != null) {
+      final VirtualFile vFile = PsiUtilCore.getVirtualFile(directory);
+      if (vFile != null) {
+        RefactoringConflictUtil.getInstance().analyzeModuleConflicts(project, files, infos, vFile, conflicts);
+      }
+    }
+
     if (directory != null) {
       PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
       if (aPackage != null) {

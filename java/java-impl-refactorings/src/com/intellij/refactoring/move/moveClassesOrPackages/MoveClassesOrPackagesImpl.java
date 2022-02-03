@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.rename.DirectoryAsPackageRenameHandlerBase;
@@ -297,8 +298,13 @@ public final class MoveClassesOrPackagesImpl {
     final PsiDirectory selectedTarget = chooser.getSelectedDirectory();
     if (selectedTarget == null) return;
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-    final Runnable analyzeConflicts = () -> ApplicationManager.getApplication().runReadAction(() -> RefactoringConflictsUtil
-      .analyzeModuleConflicts(project, Arrays.asList(directories), UsageInfo.EMPTY_ARRAY, selectedTarget, conflicts));
+    final Runnable analyzeConflicts = () -> ApplicationManager.getApplication().runReadAction(() -> {
+      final Collection<? extends PsiElement> scopes = Arrays.asList(directories);
+      final VirtualFile vFile = PsiUtilCore.getVirtualFile(selectedTarget);
+      if (vFile != null) {
+        RefactoringConflictUtil.getInstance().analyzeModuleConflicts(project, scopes, UsageInfo.EMPTY_ARRAY, vFile, conflicts);
+      }
+    });
     if (!ProgressManager.getInstance()
       .runProcessWithProgressSynchronously(analyzeConflicts, JavaRefactoringBundle.message("analyze.module.conflicts"), true, project)) {
       return;

@@ -28,6 +28,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringConflictUtil;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.fields.IntegerField;
@@ -317,7 +318,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       Map<PsiParameter, Collection<PsiReference>> paramsToInline = new HashMap<>();
       for (PsiMethod psiMethod : methods) {
         PsiParameter psiParameter = psiMethod.getParameterList().getParameters()[parameterIndex];
-        JavaSpecialRefactoringProvider.getInstance().collectMethodConflicts(conflicts, psiMethod, psiParameter);
+        RefactoringConflictUtil.getInstance().collectMethodConflictsForDeletion(conflicts, psiMethod, psiParameter);
         final Collection<PsiReference> refsToInline = ReferencesSearch.search(psiParameter).findAll();
         for (PsiReference reference : refsToInline) {
           PsiElement referenceElement = reference.getElement();

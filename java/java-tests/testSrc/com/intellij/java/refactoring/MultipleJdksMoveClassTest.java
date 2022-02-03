@@ -30,7 +30,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
-import com.intellij.refactoring.util.RefactoringConflictsUtil;
+import com.intellij.refactoring.util.RefactoringConflictUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -95,8 +95,8 @@ public class MultipleJdksMoveClassTest extends UsefulTestCase {
   public void testConflictStringUsage() {
     final PsiFile[] files = myFixture.configureByFiles("java7/p/Main.java", "java8/p/Foo.java");
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-    RefactoringConflictsUtil.analyzeModuleConflicts(files[0].getProject(), Collections.singletonList(files[0]), 
-                                                    UsageInfo.EMPTY_ARRAY, files[1].getVirtualFile(), conflicts);
+    RefactoringConflictUtil.getInstance().analyzeModuleConflicts(files[0].getProject(), Collections.singletonList(files[0]),
+                                                                 UsageInfo.EMPTY_ARRAY, files[1].getVirtualFile(), conflicts);
     
     assertEmpty(conflicts.keySet());
   }

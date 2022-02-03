@@ -10,9 +10,10 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
+import com.intellij.refactoring.util.RefactoringConflictUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -74,8 +75,10 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
   @Override
   public void analyzeModuleConflicts(@NotNull final Collection<? extends PsiElement> elements,
                                      @NotNull MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
-    JavaSpecialRefactoringProvider.getInstance()
-      .analyzeModuleConflicts(myPackage.getManager().getProject(), elements, usages, myTargetDirectory, conflicts);
+    final VirtualFile targetDirFile = PsiUtilCore.getVirtualFile(myTargetDirectory);
+    if (targetDirFile == null) return;
+    RefactoringConflictUtil.getInstance()
+      .analyzeModuleConflicts(myPackage.getManager().getProject(), elements, usages, targetDirFile, conflicts);
   }
 
   @Override

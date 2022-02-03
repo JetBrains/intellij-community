@@ -5,7 +5,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.search.SearchScope;
@@ -20,24 +19,19 @@ import com.intellij.refactoring.introduceField.InplaceIntroduceFieldPopup;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
-import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.InlineUtil;
-import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -136,23 +130,8 @@ public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactorin
   }
 
   @Override
-  public void searchForHierarchyConflicts(PsiMethod method,
-                                          MultiMap<PsiElement, @Nls String> conflicts,
-                                          String modifier) {
-    JavaChangeSignatureUsageProcessor.ConflictSearcher.searchForHierarchyConflicts(method, conflicts, modifier);
-  }
-
-  @Override
   public void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination) throws IncorrectOperationException {
     MoveClassesOrPackagesUtil.moveDirectoryRecursively(dir, destination);
-  }
-
-  @Override
-  public void analyzeAccessibilityConflicts(@NotNull Set<? extends PsiMember> membersToMove,
-                                            @NotNull PsiClass targetClass,
-                                            @NotNull MultiMap<PsiElement, String> conflicts,
-                                            @Nullable String newVisibility) {
-    RefactoringConflictsUtil.analyzeAccessibilityConflicts(membersToMove, targetClass, conflicts, newVisibility);
   }
 
   @Override
@@ -162,31 +141,6 @@ public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactorin
                                             boolean forStatic,
                                             @NotNull PsiClass parentClass) {
     return InplaceIntroduceFieldPopup.suggestFieldName(defaultType, localVariable, initializer, forStatic, parentClass);
-  }
-
-  @Override
-  public void collectMethodConflicts(MultiMap<PsiElement, String> conflicts,
-                                     PsiMethod method,
-                                     PsiParameter parameter) {
-    JavaSafeDeleteProcessor.collectMethodConflicts(conflicts, method, parameter);
-  }
-
-  @Override
-  public void analyzeModuleConflicts(Project project,
-                                     Collection<? extends PsiElement> scopes,
-                                     UsageInfo[] usages,
-                                     PsiElement target,
-                                     MultiMap<PsiElement, String> conflicts) {
-    RefactoringConflictsUtil.analyzeModuleConflicts(project, scopes, usages, target, conflicts);
-  }
-
-  @Override
-  public void analyzeModuleConflicts(Project project,
-                                     Collection<? extends PsiElement> scopes,
-                                     UsageInfo[] usages,
-                                     VirtualFile vFile,
-                                     MultiMap<PsiElement, String> conflicts) {
-    RefactoringConflictsUtil.analyzeModuleConflicts(project, scopes, usages, vFile, conflicts);
   }
 
   @Override
