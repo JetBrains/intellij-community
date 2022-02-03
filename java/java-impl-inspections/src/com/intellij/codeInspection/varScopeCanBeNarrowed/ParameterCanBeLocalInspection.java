@@ -1,19 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.refactoring.JavaSpecialRefactoringProvider;
-import com.intellij.refactoring.changeSignature.JavaChangeInfo;
-import com.intellij.refactoring.changeSignature.JavaChangeInfoImpl;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.VisibilityUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -157,6 +154,7 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
       final PsiElement scope = parameter.getDeclarationScope();
       if (scope instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)scope;
+        if (!FileModificationService.getInstance().preparePsiElementsForWrite(method)) return null;
         final PsiParameter[] parameters = method.getParameterList().getParameters();
 
         final List<ParameterInfoImpl> info = new ArrayList<>();
@@ -167,20 +165,15 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
         }
         final ParameterInfoImpl[] newParams = info.toArray(new ParameterInfoImpl[0]);
         final String visibilityModifier = VisibilityUtil.getVisibilityModifier(method.getModifierList());
-        final PsiType returnType = method.getReturnType();
-        final JavaChangeInfo changeInfo = new JavaChangeInfoImpl(visibilityModifier, method, method.getName(),
-                                                                 returnType != null ? CanonicalTypes.createTypeWrapper(returnType) : null,
-                                                                 newParams, null, false, new HashSet<>(), new HashSet<>());
-        Ref<PsiElement> newDeclaration = new Ref<>();
-        var processor = JavaSpecialRefactoringProvider.getInstance().getChangeSignatureProcessor(project, changeInfo, () -> {
-          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-          newDeclaration.set(WriteAction.compute(
-            () -> moveDeclaration(elementFactory, localName, parameter, initializer, action, references)));
-        });
+
+        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+        SmartPsiElementPointer<PsiElement> newDeclaration = SmartPointerManager.createPointer(WriteAction.compute(() -> moveDeclaration(elementFactory, localName, parameter, initializer, action, references)));
+        var processor = 
+          JavaSpecialRefactoringProvider.getInstance().getChangeSignatureProcessor(project, method, false, visibilityModifier, method.getName(),
+                                                                                   method.getReturnType(), newParams, null);
 
         processor.run();
-
-        return newDeclaration.get();
+        return newDeclaration.getElement();
       }
       return null;
     }

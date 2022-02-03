@@ -11,7 +11,6 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessorBase;
-import com.intellij.refactoring.changeSignature.JavaChangeInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
@@ -42,8 +41,6 @@ public interface JavaSpecialRefactoringProvider {
   static JavaSpecialRefactoringProvider getInstance() {
     return ApplicationManager.getApplication().getService(JavaSpecialRefactoringProvider.class);
   }
-
-  @NotNull ChangeSignatureProcessorBase getChangeSignatureProcessor(Project project, JavaChangeInfo changeInfo, Runnable beforeRefactoringCallback);
 
   @NotNull ChangeSignatureProcessorBase getChangeSignatureProcessor(Project project,
                                                                     PsiMethod method,

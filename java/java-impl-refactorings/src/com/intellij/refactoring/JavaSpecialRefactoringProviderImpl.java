@@ -44,26 +44,6 @@ import java.util.Set;
 public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactoringProvider {
 
   @Override
-  public @NotNull ChangeSignatureProcessorBase getChangeSignatureProcessor(Project project, JavaChangeInfo changeInfo, Runnable beforeRefactoringCallback) {
-    return new ParameterToLocalProcessor(project, changeInfo, beforeRefactoringCallback);
-  }
-
-  private static class ParameterToLocalProcessor extends ChangeSignatureProcessor {
-    private final Runnable myBeforeRefactoringCallback;
-
-    ParameterToLocalProcessor(Project project, JavaChangeInfo changeInfo, Runnable beforeRefactoringCallback) {
-      super(project, changeInfo);
-      myBeforeRefactoringCallback = beforeRefactoringCallback;
-    }
-
-    @Override
-    protected void performRefactoring(UsageInfo @NotNull [] usages) {
-      myBeforeRefactoringCallback.run();
-      super.performRefactoring(usages);
-    }
-  }
-
-  @Override
   public @NotNull ChangeSignatureProcessorBase getChangeSignatureProcessor(Project project,
                                                                            PsiMethod method,
                                                                            final boolean generateDelegate,
