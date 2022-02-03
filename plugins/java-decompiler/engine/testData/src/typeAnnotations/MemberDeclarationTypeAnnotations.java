@@ -21,4 +21,7 @@ public class MemberDeclarationTypeAnnotations<@A P extends @B Number & @F Serial
     public <T> @C Number bar(@D T @E [] a) throws @A IOException, @B IllegalStateException {
         return 0;
     }
+
+    public void fooBar(@L @A String param1, @K @L @B String param2) {
+    }
 }

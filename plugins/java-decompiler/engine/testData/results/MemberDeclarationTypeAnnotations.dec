@@ -9,17 +9,20 @@ public class MemberDeclarationTypeAnnotations<@A P extends @B Number & @F Serial
 
    @K
    public @L @A MemberDeclarationTypeAnnotations() {
-   }// 13
+   }// 14
 
    @K
    public <@A T extends @B Number & @F Serializable> @L @C Number foo(@D T @E [] a) {
-      return 0;// 17
+      return 0;// 18
    }
 
    @K
    public <T> @C Number bar(@D T @E [] a) throws @A IOException, @B IllegalStateException {
-      return 0;// 22
+      return 0;// 23
    }
+
+   public void fooBar(@L @A String param1, @K @L @B String param2) {
+   }// 26
 }
 
 class 'typeAnnotations/MemberDeclarationTypeAnnotations' {
@@ -38,13 +41,18 @@ class 'typeAnnotations/MemberDeclarationTypeAnnotations' {
       1      20
       4      20
    }
+
+   method 'fooBar (Ljava/lang/String;Ljava/lang/String;)V' {
+      0      24
+   }
 }
 
 Lines mapping:
-13 <-> 12
-17 <-> 16
-22 <-> 21
+14 <-> 12
+18 <-> 16
+23 <-> 21
+26 <-> 25
 Not mapped:
-7
-9
-12
+8
+10
+13

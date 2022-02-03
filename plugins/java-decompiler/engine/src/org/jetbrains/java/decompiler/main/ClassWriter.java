@@ -745,7 +745,9 @@ public class ClassWriter {
               buffer.append(", ");
             }
 
-            appendParameterAnnotations(buffer, mt, paramCount);
+            int arrayDim;
+            if (descriptor != null) arrayDim = descriptor.parameterTypes.get(paramCount).arrayDim; else arrayDim = md.params[i].arrayDim;
+            appendParameterAnnotations(buffer, mt, arrayDim, paramCount);
 
             VarVersionPair pair = new VarVersionPair(index, 0);
             if (methodWrapper.varproc.isParameterFinal(pair) ||
@@ -1168,7 +1170,7 @@ public class ClassWriter {
       StructAnnotationAttribute attribute = (StructAnnotationAttribute)mb.getAttribute(key);
       if (attribute != null) {
         for (AnnotationExprent annotation : attribute.getAnnotations()) {
-          if (mb.willCollideWithMemberAnnotation(annotation)) continue;
+          if (mb.memberAnnCollidesWithTypeAnnotation(annotation)) continue;
           String text = annotation.toJava(indent, BytecodeMappingTracer.DUMMY).toString();
           buffer.append(text);
           if (indent < 0) {
@@ -1182,13 +1184,14 @@ public class ClassWriter {
     }
   }
 
-  private static void appendParameterAnnotations(TextBuffer buffer, StructMethod mt, int param) {
+  private static void appendParameterAnnotations(TextBuffer buffer, StructMethod mt, int arrayDim, int param) {
     for (StructGeneralAttribute.Key<?> key : StructGeneralAttribute.PARAMETER_ANNOTATION_ATTRIBUTES) {
       StructAnnotationParameterAttribute attribute = (StructAnnotationParameterAttribute)mt.getAttribute(key);
       if (attribute != null) {
         List<List<AnnotationExprent>> annotations = attribute.getParamAnnotations();
         if (param < annotations.size()) {
           for (AnnotationExprent annotation : annotations.get(param)) {
+            if (mt.paramAnnCollidesWithTypeAnnotation(annotation, arrayDim, param)) continue;
             String text = annotation.toJava(-1, BytecodeMappingTracer.DUMMY).toString();
             buffer.append(text).append(' ');
           }

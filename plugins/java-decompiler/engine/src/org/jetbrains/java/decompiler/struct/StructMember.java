@@ -3,6 +3,8 @@ package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.typeann.TargetInfo;
+import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotation;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTypeTableAttribute;
@@ -11,10 +13,7 @@ import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,8 +49,24 @@ public abstract class StructMember {
 
   protected abstract int getArrayDimensions();
 
-  public boolean willCollideWithMemberAnnotation(AnnotationExprent typeAnnotation) {
-    Set<AnnotationExprent> typeAnnotations = Arrays.stream(StructGeneralAttribute.TYPE_ANNOTATION_ATTRIBUTES)
+  public boolean memberAnnCollidesWithTypeAnnotation(AnnotationExprent typeAnnotationExpr) {
+    Set<AnnotationExprent> typeAnnotations = TargetInfo.EmptyTarget.extract(getPossibleTypeAnnotationCollisions(getArrayDimensions()))
+      .stream()
+      .map(typeAnnotation-> typeAnnotation.getAnnotationExpr())
+      .collect(Collectors.toUnmodifiableSet());
+    return typeAnnotations.contains(typeAnnotationExpr);
+  }
+
+  public boolean paramAnnCollidesWithTypeAnnotation(AnnotationExprent typeAnnotationExpr, int arrayDim, int param) {
+    Set<AnnotationExprent> typeAnnotations = TargetInfo.FormalParameterTarget
+      .extract(getPossibleTypeAnnotationCollisions(arrayDim), param).stream()
+      .map(typeAnnotation-> typeAnnotation.getAnnotationExpr())
+      .collect(Collectors.toUnmodifiableSet());
+    return typeAnnotations.contains(typeAnnotationExpr);
+  }
+
+  private List<TypeAnnotation> getPossibleTypeAnnotationCollisions(int arrayDim) {
+    return Arrays.stream(StructGeneralAttribute.TYPE_ANNOTATION_ATTRIBUTES)
       .flatMap(attrKey -> {
         StructTypeAnnotationAttribute attribute = (StructTypeAnnotationAttribute)getAttribute(attrKey);
         if (attribute == null) {
@@ -60,10 +75,8 @@ public abstract class StructMember {
           return attribute.getAnnotations().stream();
         }
       })
-      .filter(ta -> ta.isForDeepestArrayComponent(getArrayDimensions()))
-      .map(ta -> ta.getAnnotationExpr())
-      .collect(Collectors.toUnmodifiableSet());
-    return typeAnnotations.contains(typeAnnotation);
+      .filter(ta -> ta.isForDeepestArrayComponent(arrayDim))
+      .collect(Collectors.toList());
   }
 
   public static Map<String, StructGeneralAttribute> readAttributes(DataInputFullStream in, ConstantPool pool) throws IOException {

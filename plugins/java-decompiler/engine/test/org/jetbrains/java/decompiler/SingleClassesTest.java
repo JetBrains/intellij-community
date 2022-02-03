@@ -208,7 +208,8 @@ public class SingleClassesTest {
     "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/F");
   }
   @Test public void testMemberDeclarationTypeAnnotations() {doTest("typeAnnotations/MemberDeclarationTypeAnnotations",
-    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E",  "typeAnnotations/K");
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E",
+                                                                   "typeAnnotations/K", "typeAnnotations/L");
   }
   @Test public void testNestedType() { doTest("pkg/NestedType"); }
   @Test public void testInheritanceChainCycle() { doTest("pkg/TestInheritanceChainCycle"); }
