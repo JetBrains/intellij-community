@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compiler.configuration
 
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
@@ -15,6 +14,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider.KOTL
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider.resolveMavenArtifactInMavenRepo
 import java.io.File
+import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.nameWithoutExtension
 
@@ -48,41 +48,41 @@ sealed interface KotlinPluginLayout {
         const val KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID = "kotlin-jps-plugin-classpath"
 
         @JvmStatic
-        fun getInstance(): KotlinPluginLayout {
-            return if (PluginManagerCore.isRunningFromSources() && !System.getProperty("idea.use.dev.build.server", "false").toBoolean()) {
-                KotlinPluginLayoutWhenRunFromSources
-            } else {
-                val jarInsideLib = PathManager.getJarPathForClass(KotlinPluginLayout::class.java)
-                    ?.let { File(it) }
-                    ?: error("Can't find jar file for ${KotlinPluginLayout::class.simpleName}")
-                check(jarInsideLib.extension == "jar") { "$jarInsideLib should be jar file" }
-                KotlinPluginLayoutWhenRunInProduction(
-                    jarInsideLib
-                        .parentFile
-                        .also { check(it.name == "lib") { "$it should be lib directory" } }
-                        .parentFile
-                )
+        val instance: KotlinPluginLayout by lazy {
+            val ideaDirectory = Paths.get(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER)
+            if (ideaDirectory.isDirectory() && !System.getProperty("idea.use.dev.build.server", "false").toBoolean()) {
+                return@lazy KotlinPluginLayoutWhenRunFromSources(ideaDirectory)
             }
+
+            val jarInsideLib = PathManager.getJarPathForClass(KotlinPluginLayout::class.java)
+                ?.let { File(it) }
+                ?: error("Can't find jar file for ${KotlinPluginLayout::class.simpleName}")
+
+            check(jarInsideLib.extension == "jar") { "$jarInsideLib should be jar file" }
+
+            KotlinPluginLayoutWhenRunInProduction(
+                jarInsideLib
+                    .parentFile
+                    .also { check(it.name == "lib") { "$it should be lib directory" } }
+                    .parentFile
+            )
         }
     }
 }
 
-private class KotlinPluginLayoutWhenRunInProduction(private val root: File) : KotlinPluginLayout {
+private class KotlinPluginLayoutWhenRunInProduction(private val kotlinPluginRoot: File) : KotlinPluginLayout {
     init {
-        check(root.exists()) { "$root doesn't exist" }
+        check(kotlinPluginRoot.exists()) { "$kotlinPluginRoot doesn't exist" }
     }
 
-    private fun resolve(path: String) = root.resolve(path).also { check(it.exists()) { "$it doesn't exist" } }
+    override val kotlinc: File by lazy { resolve("kotlinc") }
+    override val jpsPluginJar: File by lazy { resolve("lib/jps/kotlin-jps-plugin.jar") }
 
-    override val kotlinc: File get() = resolve("kotlinc")
-    override val jpsPluginJar: File get() = resolve("lib/jps/kotlin-jps-plugin.jar")
+    private fun resolve(path: String) = kotlinPluginRoot.resolve(path).also { check(it.exists()) { "$it doesn't exist" } }
 }
 
-private object KotlinPluginLayoutWhenRunFromSources : KotlinPluginLayout {
+private class KotlinPluginLayoutWhenRunFromSources(private val ideaDirectory: Path) : KotlinPluginLayout {
     private val bundledJpsVersion by lazy {
-        val ideaDirectory = Paths.get(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER)
-        require(ideaDirectory.isDirectory()) { "Can't find IDEA home directory" }
-
         val distLibraryFile = ideaDirectory.resolve("libraries/kotlinc_kotlin_dist.xml")
         require(distLibraryFile.isFile()) { "${distLibraryFile.nameWithoutExtension} library is not found in $ideaDirectory" }
 
@@ -126,9 +126,10 @@ private object KotlinPluginLayoutWhenRunFromSources : KotlinPluginLayout {
         KotlinPathsProvider.lazyUnpackKotlincDist(packedDist, bundledJpsVersion)
     }
 
-    override val jpsPluginJar: File
-        get() = KotlinPathsProvider.getExpectedMavenArtifactJarPath(
+    override val jpsPluginJar: File by lazy {
+        KotlinPathsProvider.getExpectedMavenArtifactJarPath(
             KotlinPluginLayout.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
             bundledJpsVersion
         )
+    }
 }

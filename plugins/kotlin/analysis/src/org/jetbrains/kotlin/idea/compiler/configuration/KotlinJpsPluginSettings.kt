@@ -28,7 +28,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                 // Encourage user to specify desired Kotlin compiler version in project settings for sake of reproducible builds
                 jpsPluginSettings.settings = jpsPluginSettings.settings.unfrozen().apply {
                     // Use bundled by default because this will work even without internet connection
-                    version = KotlinPluginLayout.getInstance().standaloneCompilerVersion
+                    version = KotlinPluginLayout.instance.standaloneCompilerVersion
                 }
             }
             return jpsPluginSettings

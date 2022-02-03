@@ -147,7 +147,7 @@ class KotlinNativeABICompatibilityCheckerService(private val project: Project): 
                     }
                     val recipe = KotlinGradleNativeBundle.message(
                         "error.incompatible.libraries.recipe",
-                        KotlinPluginLayout.getInstance().standaloneCompilerVersion
+                        KotlinPluginLayout.instance.standaloneCompilerVersion
                     )
                     "$text\n\n$explanation\n$recipe"
                 }
@@ -159,7 +159,7 @@ class KotlinNativeABICompatibilityCheckerService(private val project: Project): 
                     val librariesLineByLine = libraries.joinToString(separator = "\n") { (libraryName, _) -> libraryName }
                     val recipe = KotlinGradleNativeBundle.message(
                         "error.incompatible.3p.libraries.recipe",
-                        KotlinPluginLayout.getInstance().standaloneCompilerVersion
+                        KotlinPluginLayout.instance.standaloneCompilerVersion
                     )
                     "$text\n$librariesLineByLine\n\n$recipe"
                 }
@@ -186,7 +186,7 @@ class KotlinNativeABICompatibilityCheckerService(private val project: Project): 
                     val librariesLineByLine = libraries.joinToString(separator = "\n", transform = ::getLibraryTextToPrint)
                     val recipe = KotlinGradleNativeBundle.message(
                         "error.incompatible.user.libraries.recipe",
-                        KotlinPluginLayout.getInstance().standaloneCompilerVersion
+                        KotlinPluginLayout.instance.standaloneCompilerVersion
                     )
                     "$text\n$librariesLineByLine\n\n$recipe"
                 }

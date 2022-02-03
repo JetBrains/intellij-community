@@ -10,7 +10,7 @@ class KotlinJpsClasspathProvider(private val project: Project) : BuildProcessPar
     override fun getClassPath(): List<String> {
         val jpsPluginClasspath = KotlinJpsPluginSettings.getInstance(project)?.settings?.version
             ?.let { SetupKotlinJpsPluginBeforeCompileTask.getKotlinJpsClasspathLocation(it) }
-            ?: KotlinPluginLayout.getInstance().jpsPluginJar
+            ?: KotlinPluginLayout.instance.jpsPluginJar
         return listOf(jpsPluginClasspath.canonicalPath)
     }
 }
