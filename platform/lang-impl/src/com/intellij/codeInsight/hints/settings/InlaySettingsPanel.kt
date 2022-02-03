@@ -110,7 +110,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       TreeUtil.selectNode(tree, nodeToSelect)
     }
 
-    val splitter = JBSplitter(false, "inlay.settings.proportion.key", 0.5f)
+    val splitter = JBSplitter(false, "inlay.settings.proportion.key", 0.45f)
     splitter.setHonorComponentsMinimumSize(false)
     splitter.firstComponent = ScrollPaneFactory.createScrollPane(tree, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER)
     splitter.secondComponent = rightPanel
