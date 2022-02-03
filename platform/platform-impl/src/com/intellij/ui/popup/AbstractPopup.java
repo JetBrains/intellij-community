@@ -1289,7 +1289,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       textField.setOpaque(false);
       JBEmptyBorder outsideBorder = new JBEmptyBorder(JBUI.CurrentTheme.Popup.searchFieldBorderInsets());
       Border lineBorder = JBUI.Borders.customLine(JBUI.CurrentTheme.Popup.separatorColor(), 0, 0, 1, 0);
-      mySpeedSearchPatternField.setBorder(new CompoundBorder(outsideBorder, lineBorder));
+      mySpeedSearchPatternField.setBorder(JBUI.Borders.compound(outsideBorder, lineBorder));
       textField.setBorder(JBUI.Borders.empty());
       textField.setMargin(JBUI.CurrentTheme.Popup.searchFieldInputInsets());
     } else {
