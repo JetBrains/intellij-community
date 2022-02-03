@@ -162,4 +162,43 @@ public class MavenProjectTreeImporterTest extends MavenMultiVersionImportingTest
     Assert.assertTrue(contentRoots.stream().anyMatch(r -> r.contains("src/main")));
     Assert.assertTrue(contentRoots.stream().anyMatch(r -> r.contains("target/generated-sources/src1")));
   }
+
+  @Test
+  public void testContentRootOutsideOfModuleDir() throws Exception {
+    createModulePom("m1",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>" +
+                    "<parent>" +
+                    "  <groupId>test</groupId>" +
+                    "  <artifactId>project</artifactId>" +
+                    "  <version>1</version>" +
+                    "</parent>" +
+
+                    "<build>" +
+                    "  <sourceDirectory>../custom-sources</sourceDirectory>" +
+                    "</build>");
+
+    createProjectSubFile("custom-sources/com/CustomSource.java", "package com; class CustomSource {}");
+    createProjectSubFile("m1/src/main/resources/test.txt", "resource");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
+
+                  "<properties>" +
+                  "  <maven.compiler.source>8</maven.compiler.source>" +
+                  "  <maven.compiler.target>8</maven.compiler.target>" +
+                  "  <maven.compiler.testSource>11</maven.compiler.testSource>" +
+                  "  <maven.compiler.testTarget>11</maven.compiler.testTarget>" +
+                  "</properties>" +
+
+                  "<modules>" +
+                  "  <module>m1</module>" +
+                  "</modules>");
+
+    assertModules("project", "project.m1", "project.m1.main", "project.m1.test");
+    assertContentRoots("project.m1.main", getProjectPath() + "/m1/src/main", getProjectPath() + "/custom-sources");
+  }
 }

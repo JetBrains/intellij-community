@@ -192,8 +192,6 @@ public class MavenProjectTreeImporter extends MavenProjectImporterBase {
       int size = allModules.size();
       LOG.info("[maven import] applying " + configurers.size() + " configurers to " + size + " Maven projects");
       for (MavenModuleImportData importData : allModules) {
-        if (importData.getModuleData().getType() == AGGREGATOR_MAIN_TEST) continue;
-
         Module module = importData.getModuleData().getModule();
         indicator.setFraction(count++ / size);
         indicator.setText2(MavenProjectBundle.message("progress.details.configuring.module", module.getName()));

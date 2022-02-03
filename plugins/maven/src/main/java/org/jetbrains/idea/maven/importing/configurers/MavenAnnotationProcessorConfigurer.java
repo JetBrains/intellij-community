@@ -14,6 +14,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
@@ -92,7 +93,11 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
       }
       if (!moduleProfile.isEnabled()) return;
 
-      moduleProfile.setOutputRelativeToContentRoot(true);
+      if (MavenProjectImporter.isImportToTreeStructureEnabled()) {
+        moduleProfile.setOutputRelativeToContentRoot(false);
+      } else {
+        moduleProfile.setOutputRelativeToContentRoot(true);
+      }
       moduleProfile.setObtainProcessorsFromClasspath(true);
       moduleProfile.setGeneratedSourcesDirectoryName(annotationProcessorDirectory, false);
       moduleProfile.setGeneratedSourcesDirectoryName(testAnnotationProcessorDirectory, true);
