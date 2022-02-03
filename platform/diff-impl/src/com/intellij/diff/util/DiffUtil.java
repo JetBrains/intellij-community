@@ -25,6 +25,7 @@ import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.text.*;
 import com.intellij.diff.util.MergeConflictType.Type;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -1370,6 +1371,12 @@ public final class DiffUtil {
     if (undoManager != null) {
       DocumentReference ref = DocumentReferenceManager.getInstance().create(document);
       undoManager.nonundoableActionPerformed(ref, false);
+    }
+  }
+
+  public static void refreshOnFrameActivation(VirtualFile @NotNull ... files) {
+    if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
+      DiffUtil.markDirtyAndRefresh(true, false, false, files);
     }
   }
 
