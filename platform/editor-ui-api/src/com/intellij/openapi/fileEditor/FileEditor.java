@@ -8,21 +8,29 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
- *
  * @see TextEditor
  */
 public interface FileEditor extends UserDataHolder, Disposable {
-  /** @see #isModified() */
+  /**
+   * @see #isModified()
+   */
   String PROP_MODIFIED = "modified";
-  /** @see #isValid() */
+  /**
+   * @see #isValid()
+   */
   String PROP_VALID = "valid";
 
   FileEditor[] EMPTY_ARRAY = {};
@@ -126,5 +134,13 @@ public interface FileEditor extends UserDataHolder, Disposable {
   default @Nullable VirtualFile getFile() {
     PluginException.reportDeprecatedDefault(getClass(), "getFile", "A proper @NotNull implementation required");
     return FILE_KEY.get(this);
+  }
+
+  /**
+   * Returns the files for which {@link com.intellij.ide.SaveAndSyncHandler)} should be called on frame activation.
+   */
+  default @NotNull List<VirtualFile> getFilesToRefresh() {
+    VirtualFile file = getFile();
+    return file != null ? Collections.singletonList(file) : Collections.emptyList();
   }
 }

@@ -47,6 +47,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
   private val refreshDelayAlarm = SingleAlarm(Runnable { doScheduledRefresh() }, delay = 300, parentDisposable = this)
   private val blockSaveOnFrameDeactivationCount = AtomicInteger()
   private val blockSyncOnFrameActivationCount = AtomicInteger()
+
   @Volatile
   private var refreshSessionId = -1L
 
@@ -286,7 +287,9 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
   override fun refreshOpenFiles() {
     val files = ArrayList<VirtualFile>()
     processOpenedProjects { project ->
-      FileEditorManager.getInstance(project).selectedFiles.filterTo(files) { it is NewVirtualFile }
+      FileEditorManager.getInstance(project).selectedEditors
+        .flatMap { it.filesToRefresh }
+        .filterTo(files) { it is NewVirtualFile }
     }
 
     if (files.isNotEmpty()) {

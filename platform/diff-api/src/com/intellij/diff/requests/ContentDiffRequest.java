@@ -16,6 +16,9 @@
 package com.intellij.diff.requests;
 
 import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.FileContent;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,4 +38,13 @@ public abstract class ContentDiffRequest extends DiffRequest {
    */
   @NotNull
   public abstract List<@Nls String> getContentTitles();
+
+  @NotNull
+  @Override
+  public List<VirtualFile> getFilesToRefresh() {
+    List<VirtualFile> files = ContainerUtil.map(getContents(), content -> {
+      return content instanceof FileContent ? ((FileContent)content).getFile() : null;
+    });
+    return ContainerUtil.filter(files, file -> file.isInLocalFileSystem());
+  }
 }
