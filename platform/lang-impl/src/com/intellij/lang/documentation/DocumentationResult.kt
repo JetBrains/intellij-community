@@ -9,41 +9,44 @@ import java.util.function.Supplier
 @Experimental
 sealed interface DocumentationResult {
 
+  sealed interface Data : DocumentationResult {
+
+    fun html(html: @Nls String): Data
+
+    /**
+     * @param imageResolver allows resolving images by their URL in `<img src="url">` tags
+     */
+    fun imageResolver(imageResolver: DocumentationImageResolver?): Data
+
+    /**
+     * The scrolling is only executed on the initial showing, the anchor does not have an effect on [updates].
+     *
+     * @param anchor element `id` or link `name` in the [html] to scroll to,
+     * or `null` to scroll to the top
+     */
+    fun anchor(anchor: String?): Data
+
+    /**
+     * @param externalUrl a URL to use in *External Documentation* action;
+     * the URL will be appended to the bottom of the [html]
+     */
+    fun externalUrl(externalUrl: String?): Data
+  }
+
   companion object {
 
     /**
-     * @param anchor element `id` or link `name` in the [html] to scroll to, or `null` to scroll to the top
-     * @return result of documentation computation
+     * @param html see [Data.html]
      */
     @JvmStatic
-    @JvmOverloads
-    fun documentation(
-      html: @Nls String,
-      anchor: String? = null,
-      imageResolver: DocumentationImageResolver? = null,
-    ): DocumentationResult {
-      return DocumentationResultData(html, anchor, externalUrl = null, linkUrls = emptyList(), imageResolver)
-    }
-
-    /**
-     * @param anchor an element `id` or a link `name` in the [html] to scroll to, or `null` to scroll to the top
-     * @param externalUrl a URL to append to the bottom of the [html]
-     */
-    @JvmStatic
-    @JvmOverloads
-    fun externalDocumentation(
-      html: @Nls String,
-      anchor: String? = null,
-      externalUrl: String,
-      imageResolver: DocumentationImageResolver? = null,
-    ): DocumentationResult {
-      return DocumentationResultData(html, anchor, externalUrl, linkUrls = emptyList(), imageResolver)
+    fun documentation(html: @Nls String): Data {
+      return DocumentationResultData(html)
     }
 
     /**
      * The [supplier]:
      * - will be invoked in background;
-     * - is expected to return [documentation] or [externalDocumentation];
+     * - is expected to return [documentation];
      * - is free to obtain a read action itself if needed.
      */
     fun asyncDocumentation(supplier: AsyncSupplier<DocumentationResult?>): DocumentationResult {

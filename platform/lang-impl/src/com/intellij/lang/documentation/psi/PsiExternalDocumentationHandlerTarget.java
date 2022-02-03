@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.psi;
 
 import com.intellij.codeInsight.navigation.UtilKt;
@@ -74,7 +74,7 @@ final class PsiExternalDocumentationHandlerTarget implements DocumentationTarget
     return () -> {
       String text = handler.fetchExternalDocumentation(url, context);
       String ref = handler.extractRefFromLink(url);
-      return DocumentationResult.externalDocumentation(text, ref, url);
+      return DocumentationResult.documentation(text).anchor(ref).externalUrl(url);
     };
   }
 

@@ -78,13 +78,11 @@ class PsiElementDocumentationTarget private constructor(
   private fun localDoc(provider: DocumentationProvider): DocumentationResultData? {
     val html = localDocHtml(provider)
                ?: return null
-    return DocumentationResultData(
-      html,
-      pointer.anchor,
-      null,
-      emptyList(),
-      pointer.imageResolver
-    )
+    return DocumentationResult
+      .documentation(html)
+      .imageResolver(pointer.imageResolver)
+      .anchor(pointer.anchor)
+      as DocumentationResultData
   }
 
   @RequiresReadLock
@@ -130,7 +128,7 @@ class PsiElementDocumentationTarget private constructor(
         val doc = provider.fetchExternalDocumentation(project, targetElement, listOf(url), false)
                   ?: continue
         LOG.debug("Fetched documentation from $url")
-        return@Supplier DocumentationResult.externalDocumentation(doc, anchor, url, imageResolver)
+        return@Supplier DocumentationResult.documentation(doc).imageResolver(imageResolver).anchor(anchor).externalUrl(url)
       }
       localDoc
     })
