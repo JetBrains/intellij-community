@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration.ui
 
@@ -38,23 +38,23 @@ class KotlinConfigurationCheckerService(val project: Project) {
     fun performProjectPostOpenActions() {
         val task = object : Task.Backgroundable(project, KotlinJvmBundle.message("configure.kotlin.language.settings"), false) {
             override fun run(indicator: ProgressIndicator) {
-                val modules = runReadAction {
-                    project.allModules()
-                }
-
-                val kotlinLanguageVersionConfigured = project.isKotlinLanguageVersionConfigured()
+                val kotlinLanguageVersionConfigured = runReadAction { project.isKotlinLanguageVersionConfigured() }
 
                 // pick up modules with kotlin faces those use custom (non project) settings
-                val modulesWithKotlinFacets =
-                    modules.filter {
+                val modulesWithKotlinFacets by lazy {
+                    runReadAction {
+                        project.allModules()
+                    }.filter {
                         KotlinFacet.get(it)?.configuration?.settings?.useProjectSettings == false
                     }.takeUnless(List<Module>::isEmpty)
+                }
 
                 val ktModules = if (kotlinLanguageVersionConfigured && modulesWithKotlinFacets != null) {
-                    getModulesWithKotlinFiles(project, *modulesWithKotlinFacets.toTypedArray())
+                    getModulesWithKotlinFiles(project, modulesWithKotlinFacets)
                 } else {
                     getModulesWithKotlinFiles(project)
                 }
+
                 indicator.isIndeterminate = false
                 for ((idx, module) in ktModules.withIndex()) {
                     indicator.checkCanceled()

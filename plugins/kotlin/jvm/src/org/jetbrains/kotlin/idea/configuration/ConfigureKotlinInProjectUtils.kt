@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration
 
@@ -121,15 +121,15 @@ fun isModuleConfigured(moduleSourceRootGroup: ModuleSourceRootGroup): Boolean {
  * DO NOT CALL THIS ON AWT THREAD
  */
 @RequiresBackgroundThread
-fun getModulesWithKotlinFiles(project: Project, vararg modulesWithKotlinFacets: Module): Collection<Module> {
+fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Module>? = null): Collection<Module> {
     if (!isUnitTestMode() && isDispatchThread()) {
         LOG.error("getModulesWithKotlinFiles could be a heavy operation and should not be call on AWT thread")
     }
 
-    val globalSearchScope = if (modulesWithKotlinFacets.isEmpty()) {
+    val globalSearchScope = if (modulesWithKotlinFacets.isNullOrEmpty()) {
         GlobalSearchScope.projectScope(project)
     } else {
-        modulesWithKotlinFacets.fold(null as? GlobalSearchScope) { acc, module ->
+        modulesWithKotlinFacets.fold(null as GlobalSearchScope?) { acc, module ->
             val scope = GlobalSearchScope.moduleScope(module)
             acc?.uniteWith(scope) ?: scope
         } ?: error("modulesWithKotlinFacets is not empty, at least one module search scope has to be created")
@@ -148,7 +148,7 @@ fun getModulesWithKotlinFiles(project: Project, vararg modulesWithKotlinFacets: 
 
     val projectFileIndex = ProjectFileIndex.getInstance(project)
     val modules =
-        if (modulesWithKotlinFacets.isEmpty()) {
+        if (modulesWithKotlinFacets.isNullOrEmpty()) {
             kotlinFiles.mapNotNullTo(mutableSetOf()) { ktFile: VirtualFile ->
                 if (projectFileIndex.isInSourceContent(ktFile)) {
                     projectFileIndex.getModuleForFile(ktFile)
