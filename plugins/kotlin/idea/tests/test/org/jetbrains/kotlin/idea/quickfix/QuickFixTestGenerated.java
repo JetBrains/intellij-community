@@ -7877,11 +7877,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/experimental/experimentalUnused.kt");
         }
 
-        @TestMetadata("experimentalUnused2.kt")
-        public void testExperimentalUnused2() throws Exception {
-            runTest("testData/quickfix/experimental/experimentalUnused2.kt");
-        }
-
         @TestMetadata("forbiddenTargetsExpression.kt")
         public void testForbiddenTargetsExpression() throws Exception {
             runTest("testData/quickfix/experimental/forbiddenTargetsExpression.kt");
@@ -7965,11 +7960,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("override.kt")
         public void testOverride() throws Exception {
             runTest("testData/quickfix/experimental/override.kt");
-        }
-
-        @TestMetadata("overrideAnnotationRemove.kt")
-        public void testOverrideAnnotationRemove() throws Exception {
-            runTest("testData/quickfix/experimental/overrideAnnotationRemove.kt");
         }
 
         @TestMetadata("propertyInConstructor.kt")
