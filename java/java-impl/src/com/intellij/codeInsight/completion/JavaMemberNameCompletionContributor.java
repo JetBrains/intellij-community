@@ -24,6 +24,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.refactoring.util.JavaNameSuggestionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CommonJavaRefactoringUtil;
@@ -324,8 +325,8 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
     PsiExpression initializer = var.getInitializer();
     PsiClass containingClass = var.getContainingClass();
     if (initializer != null && containingClass != null) {
-      SuggestedNameInfo initializerSuggestions = JavaSpecialRefactoringProvider.getInstance()
-        .suggestFieldName(var.getType(), null, initializer, var.hasModifierProperty(PsiModifier.STATIC), containingClass);
+      SuggestedNameInfo initializerSuggestions = JavaNameSuggestionUtil.suggestFieldName(
+        var.getType(), null, initializer, var.hasModifierProperty(PsiModifier.STATIC), containingClass);
       addLookupItems(set, initializerSuggestions, matcher, project, initializerSuggestions.names);
     }
   }

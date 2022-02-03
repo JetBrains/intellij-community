@@ -5,9 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessorBase;
@@ -18,16 +16,12 @@ import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedDa
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -95,12 +89,6 @@ public interface JavaSpecialRefactoringProvider {
                                                           @Nullable JavaSdkVersion javaVersion) throws PrepareFailedException;
 
   // utils which have too many deps
-
-  SuggestedNameInfo suggestFieldName(@Nullable PsiType defaultType,
-                                     @Nullable final PsiLocalVariable localVariable,
-                                     final PsiExpression initializer,
-                                     final boolean forStatic,
-                                     @NotNull final PsiClass parentClass);
 
   PsiExpression inlineVariable(PsiVariable variable,
                                PsiExpression initializer,

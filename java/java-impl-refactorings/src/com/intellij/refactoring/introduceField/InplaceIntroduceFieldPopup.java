@@ -6,13 +6,13 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import com.intellij.refactoring.util.JavaNameSuggestionUtil;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
@@ -93,18 +93,8 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
 
   @Override
   protected String[] suggestNames(PsiType defaultType, String propName) {
-    return suggestFieldName(defaultType, (PsiLocalVariable)getLocalVariable(), myExpr != null && myExpr.isValid() ? myExpr : null, myStatic,
-                            getParentClass()).names;
-  }
-
-    public static SuggestedNameInfo suggestFieldName(@Nullable PsiType defaultType,
-                                                    @Nullable final PsiLocalVariable localVariable,
-                                                    final PsiExpression initializer,
-                                                    final boolean forStatic,
-                                                    @NotNull final PsiClass parentClass) {
-    return IntroduceFieldDialog.
-      createGenerator(forStatic, localVariable, initializer, localVariable != null, null, parentClass, parentClass.getProject()).
-      getSuggestedNameInfo(defaultType);
+    return JavaNameSuggestionUtil.suggestFieldName(defaultType, (PsiLocalVariable)getLocalVariable(), myExpr != null && myExpr.isValid() ? myExpr : null, myStatic,
+                                                   getParentClass()).names;
   }
 
   @Override

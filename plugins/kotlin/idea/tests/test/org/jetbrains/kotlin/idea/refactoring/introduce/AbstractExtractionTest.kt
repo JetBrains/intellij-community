@@ -15,12 +15,12 @@ import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.IntroduceParameterRefactoring
 import com.intellij.refactoring.introduceField.ElementToWorkOn
-import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor
 import com.intellij.refactoring.introduceParameter.Util
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.DocCommentPolicy
+import com.intellij.refactoring.util.JavaNameSuggestionUtil
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -179,9 +179,9 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                 expr,
                 true
             )
-            val suggestedNames = AbstractJavaInplaceIntroducer.appendUnresolvedExprName(
-                JavaCompletionUtil.completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, info),
-                initializer
+            val suggestedNames = JavaNameSuggestionUtil.appendUnresolvedExprName(
+              JavaCompletionUtil.completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, info),
+              initializer
             )
 
             IntroduceParameterProcessor(

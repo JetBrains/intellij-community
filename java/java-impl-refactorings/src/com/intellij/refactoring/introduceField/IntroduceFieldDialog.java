@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -9,22 +8,17 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.JavaNameSuggestionUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -165,9 +159,12 @@ class IntroduceFieldDialog extends DialogWrapper {
       @Override
       public void showNotify() {
         myNameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField,
-                                                              createGenerator(myWillBeDeclaredStatic, myLocalVariable,
-                                                                              myInitializerExpression, myIsInvokedOnDeclaration,
-                                                                              myEnteredName, myParentClass, myProject));
+                                                              JavaNameSuggestionUtil.createFieldNameGenerator(myWillBeDeclaredStatic,
+                                                                                                              myLocalVariable,
+                                                                                                              myInitializerExpression,
+                                                                                                              myIsInvokedOnDeclaration,
+                                                                                                              myEnteredName, myParentClass,
+                                                                                                              myProject));
         myNameSuggestionsManager.setLabelsFor(type, namePrompt);
 
         Editor editor = myNameField.getEditor();
@@ -193,39 +190,6 @@ class IntroduceFieldDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     return myCentralPanel.createCenterPanel();
-  }
-
-  static NameSuggestionsGenerator createGenerator(final boolean willBeDeclaredStatic,
-                                                  final PsiLocalVariable localVariable,
-                                                  final PsiExpression initializerExpression,
-                                                  final boolean isInvokedOnDeclaration,
-                                                  @Nullable final String enteredName,
-                                                  final PsiClass parentClass,
-                                                  final Project project) {
-    return new NameSuggestionsGenerator() {
-      private final JavaCodeStyleManager myCodeStyleManager = JavaCodeStyleManager.getInstance(project);
-      @Override
-      public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
-        VariableKind variableKind = willBeDeclaredStatic ? VariableKind.STATIC_FIELD : VariableKind.FIELD;
-
-        String propertyName = null;
-        if (isInvokedOnDeclaration) {
-          propertyName = myCodeStyleManager.variableNameToPropertyName(localVariable.getName(), VariableKind.LOCAL_VARIABLE);
-        }
-        final SuggestedNameInfo nameInfo = myCodeStyleManager.suggestVariableName(variableKind, propertyName, initializerExpression, type);
-        if (initializerExpression != null) {
-          String[] names = nameInfo.names;
-          for (int i = 0, namesLength = names.length; i < namesLength; i++) {
-            String name = names[i];
-            if (parentClass.findFieldByName(name, false) != null) {
-              names[i] = myCodeStyleManager.suggestUniqueVariableName(name, initializerExpression, true);
-            }
-          }
-        }
-        final String[] strings = AbstractJavaInplaceIntroducer.appendUnresolvedExprName(JavaCompletionUtil.completeVariableNameForRefactoring(myCodeStyleManager, type, VariableKind.LOCAL_VARIABLE, nameInfo), initializerExpression);
-        return new SuggestedNameInfo.Delegate(enteredName != null ? ArrayUtil.mergeArrays(new String[]{enteredName}, strings) : strings, nameInfo);
-      }
-    };
   }
 
   @Override

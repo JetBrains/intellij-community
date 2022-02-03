@@ -27,10 +27,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.EnumConstantsUtil;
+import com.intellij.refactoring.util.JavaNameSuggestionUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
@@ -306,7 +306,7 @@ class IntroduceConstantDialog extends DialogWrapper {
             }
           }
         }
-        final String[] strings = AbstractJavaInplaceIntroducer.appendUnresolvedExprName(JavaCompletionUtil
+        final String[] strings = JavaNameSuggestionUtil.appendUnresolvedExprName(JavaCompletionUtil
           .completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, nameInfo), psiExpression);
         return new SuggestedNameInfo.Delegate(enteredName != null ? ArrayUtil.mergeArrays(new String[]{enteredName}, strings): strings, nameInfo);
       }

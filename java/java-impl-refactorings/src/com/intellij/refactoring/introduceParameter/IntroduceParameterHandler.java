@@ -52,6 +52,7 @@ import com.intellij.refactoring.ui.MethodCellRenderer;
 import com.intellij.refactoring.ui.NameSuggestionsGenerator;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.JavaNameSuggestionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
@@ -289,7 +290,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       if (expr != null && expr.isValid()) {
         info = codeStyleManager.suggestUniqueVariableName(info, expr, true);
       }
-      final String[] strings = AbstractJavaInplaceIntroducer.appendUnresolvedExprName(JavaCompletionUtil
+      final String[] strings = JavaNameSuggestionUtil.appendUnresolvedExprName(JavaCompletionUtil
         .completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, info), expr);
       return new SuggestedNameInfo.Delegate(enteredName != null ? ArrayUtil.mergeArrays(new String[]{enteredName}, strings): strings, info);
     };

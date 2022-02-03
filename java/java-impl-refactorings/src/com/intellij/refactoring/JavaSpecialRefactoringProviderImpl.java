@@ -14,7 +14,6 @@ import com.intellij.refactoring.changeSignature.*;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
-import com.intellij.refactoring.introduceField.InplaceIntroduceFieldPopup;
 import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
@@ -22,9 +21,9 @@ import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.InlineUtil;
+import com.intellij.refactoring.util.JavaNameSuggestionUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -131,15 +130,6 @@ public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactorin
   @Override
   public void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination) throws IncorrectOperationException {
     MoveClassesOrPackagesUtil.moveDirectoryRecursively(dir, destination);
-  }
-
-  @Override
-  public SuggestedNameInfo suggestFieldName(@Nullable PsiType defaultType,
-                                            @Nullable PsiLocalVariable localVariable,
-                                            PsiExpression initializer,
-                                            boolean forStatic,
-                                            @NotNull PsiClass parentClass) {
-    return InplaceIntroduceFieldPopup.suggestFieldName(defaultType, localVariable, initializer, forStatic, parentClass);
   }
 
   @Override

@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -114,16 +113,6 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
 
   public PsiType getType() {
     return myTypeSelectorManager.getDefaultType();
-  }
-
-  public static String[] appendUnresolvedExprName(String[] names, final PsiExpression expr) {
-    if (expr instanceof PsiReferenceExpression && ((PsiReferenceExpression)expr).resolve() == null) {
-      final String name = expr.getText();
-      if (PsiNameHelper.getInstance(expr.getProject()).isIdentifier(name, LanguageLevel.HIGHEST)) {
-        names = ArrayUtil.mergeArrays(new String[]{name}, names);
-      }
-    }
-    return names;
   }
 
   @Nullable
