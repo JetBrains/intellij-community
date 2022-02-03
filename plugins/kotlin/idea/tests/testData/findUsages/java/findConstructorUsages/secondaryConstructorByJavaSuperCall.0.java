@@ -11,4 +11,4 @@ public class JJ extends B {
     }
 }
 
-// FIR_IGNORE
+// FIR_COMPARISON

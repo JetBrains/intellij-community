@@ -12,3 +12,5 @@ class J extends A {
         new A(1);
     }
 }
+
+// FIR_COMPARISON
