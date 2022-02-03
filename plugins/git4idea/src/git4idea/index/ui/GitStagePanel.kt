@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPO
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.ExpandableItemsHandler
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
@@ -34,12 +35,9 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.*
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Panels.simplePanel
-import com.intellij.util.ui.ProportionKey
-import com.intellij.util.ui.ThreeStateCheckBox
-import com.intellij.util.ui.TwoKeySplitter
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.CommitStatusPanel
 import com.intellij.vcs.commit.CommitWorkflowListener
@@ -226,13 +224,24 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     diffPreviewProcessor!!.getToolbarWrapper().setVerticalSizeReferent(toolbar.component)
 
     if (isInEditor) {
-      editorTabPreview = GitStageEditorDiffPreview(diffPreviewProcessor!!, tree, this, activate)
+      editorTabPreview = GitStageEditorDiffPreview(diffPreviewProcessor!!, tree).apply { setup() }
       commitDiffSplitter.secondComponent = null
     }
     else {
       editorTabPreview = null
       commitDiffSplitter.secondComponent = diffPreviewProcessor!!.component
     }
+  }
+
+  private fun GitStageEditorDiffPreview.setup() {
+    escapeHandler = Runnable {
+      closePreview()
+      activate()
+    }
+
+    installListeners(tree, false)
+    installNextDiffActionOn(this@GitStagePanel)
+    UIUtil.putClientProperty(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
   }
 
   override fun dispose() {
