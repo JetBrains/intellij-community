@@ -500,4 +500,11 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val result = ConfigImportHelper.findConfigDirectories(current)
     assertThat(result.paths).isEmpty()
   }
+
+  @Test fun `suffix-less directories are excluded case-insensitively`() {
+    createConfigDir(product = "RIDER", version = "", modern = true)
+    val current = createConfigDir(product = "Rider", version = "2022.1")
+    val result = ConfigImportHelper.findConfigDirectories(current)
+    assertThat(result.paths).isEmpty()
+  }
 }
