@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import git4idea.GitBranchesUsageCollector;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchIncomingOutgoingManager;
@@ -85,6 +86,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   @NotNull
   @Override
   protected ListPopup getPopup(@NotNull Project project, @NotNull GitRepository repository) {
+    GitBranchesUsageCollector.branchWidgetClicked();
     return GitBranchPopup.getInstance(project, repository, DataManager.getInstance().getDataContext(myStatusBar.getComponent()))
       .asListPopup();
   }

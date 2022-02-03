@@ -18,10 +18,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import one.util.streamex.IntStreamEx;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraphImpl;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraph;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -49,8 +50,12 @@ public class TextExtractionTest extends BasePlatformTestCase {
   }
 
   public void testMarkdownIndent() {
-    TextContent extracted = extractText("a.md", "* first line\n  second line", 3);
+    TextContent extracted = extractText("a.md", "* first line \n  second line", 3);
     assertEquals("first line\nsecond line", unknownOffsets(extracted));
+  }
+
+  public void testMarkdownStyles() {
+    assertEquals("bold italic strikethrough", unknownOffsets(extractText("a.md", "**bold** *italic* ~~strikethrough~~", 3)));
   }
 
   public void testMarkdownInlineCode() {
@@ -177,6 +182,28 @@ public class TextExtractionTest extends BasePlatformTestCase {
     checkHtmlXml(true);
   }
 
+  public void testLargeXmlPerformance() {
+    String text = "<!DOCTYPE rules [\n" +
+                  IntStreamEx.range(0, 1000).mapToObj(i -> "<!ENTITY pnct" + i + " \"x\">\n").joining() +
+                  "]>\n" +
+                  "<rules> content </rules><caret>";
+    int offset1 = text.indexOf("content");
+    int offset2 = text.indexOf("\n<!ENTITY");
+    PsiFile file = myFixture.configureByText("a.xml", text);
+
+    PlatformTestUtil
+      .startPerformanceTest("text extraction", 1_000, () -> {
+        assertEquals("content", TextExtractor.findTextAt(file, offset1, TextContent.TextDomain.ALL).toString());
+        assertNull(TextExtractor.findTextAt(file, offset2, TextContent.TextDomain.ALL));
+      })
+      .setup(() -> {
+        myFixture.type(' ');
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // drop file caches
+      })
+      .usesAllCPUCores()
+      .assertTiming();
+  }
+
   private void checkHtmlXml(boolean inlineTagsSupported) {
     assertEquals(inlineTagsSupported ? "abc" : "|abc|", unknownOffsets(extractText("a.html", "<b>abc</b>", 4)));
     assertEquals("|abc|", unknownOffsets(extractText("a.xml", "<b>abc</b>", 4)));
@@ -259,7 +286,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
       @Override
       protected @NotNull List<TextContent> buildTextContents(@NotNull PsiElement element,
                                                              @NotNull Set<TextContent.TextDomain> allowedDomains) {
-        if (element instanceof MarkdownParagraphImpl) {
+        if (element instanceof MarkdownParagraph) {
           count++;
         }
         return delegate.buildTextContents(element, allowedDomains);

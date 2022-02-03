@@ -1,0 +1,47 @@
+<idea-plugin package="com.jetbrains.packagesearch.intellij.plugin.gradle">
+
+    <dependencies>
+        <plugin id="org.jetbrains.plugins.gradle"/>
+    </dependencies>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!--suppress PluginXmlCapitalization -->
+        <localInspection
+                bundle="messages.packageSearchBundle"
+                enabledByDefault="true"
+                groupKey="packagesearch.inspection.upgrade.group"
+                implementationClass="com.jetbrains.packagesearch.intellij.plugin.gradle.GradlePackageUpdateInspection"
+                key="packagesearch.inspection.upgrade.key.gradle"
+                hasStaticDescription="true"
+                level="WEAK WARNING"/>
+
+        <packagesearch.projectModuleOperationProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleProjectModuleOperationProvider"/>
+        <packagesearch.moduleTransformer
+                implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleModuleTransformer"/>
+
+        <packagesearch.moduleChangesSignalProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.ExternalProjectSignalProvider"/>
+
+        <packagesearch.moduleChangesSignalProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.SmartModeSignalProvider"/>
+
+        <packagesearch.moduleChangesSignalProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleModuleLinkSignalProvider"/>
+
+        <packagesearch.flowModuleChangesSignalProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradlePropertiesChangedSignalProvider"/>
+
+        <packagesearch.flowModuleChangesSignalProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GlobalGradlePropertiesChangedSignalProvider"/>
+
+        <packagesearch.configurableContributor
+                implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.ui.GradleConfigurableContributor"/>
+
+        <search.optionContributor
+                implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.GradleSearchableOptionContributor"/>
+
+        <projectService
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.PackageSearchGradleConfiguration"/>
+    </extensions>
+</idea-plugin>

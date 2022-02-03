@@ -6,6 +6,7 @@
 package org.jetbrains.mvstore;
 
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.testFramework.TemporaryDirectory;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.rules.InMemoryFsRule;
@@ -40,6 +41,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.*;
 
 public class MVStoreTest {
+  private static final Logger LOG = Logger.getInstance(MVStoreTest.class);
   // test using a regular FS as in production, not using InMemoryFsRule
   @Rule
   public final TemporaryDirectory tempDir = new TemporaryDirectory();
@@ -510,9 +512,14 @@ public class MVStoreTest {
       assertThat(format).isEqualTo(3);
 
       ByteBuf buf = PooledByteBufAllocator.DEFAULT.ioBuffer(2 * MVStore.BLOCK_SIZE);
-      header.format = 12;
-      header.write(buf);
-      s.getFileStore().writeFully(buf, 0);
+      try {
+        header.format = 12;
+        header.write(buf);
+        s.getFileStore().writeFully(buf, 0);
+      }
+      finally {
+        buf.release();
+      }
     }
 
     try {
@@ -612,7 +619,7 @@ public class MVStoreTest {
 
         long readCount = s.getFileStore().getReadCount();
 
-        System.out.println(leafCacheStats.toString() + "; readCount=" + readCount);
+        LOG.debug(leafCacheStats.toString() + "; readCount=" + readCount);
 
         assertThat(nonLeafCacheStats.loadFailureCount()).isEqualTo(0);
         assertThat(nonLeafCacheStats.loadFailureRate()).isEqualTo(0);
@@ -1033,7 +1040,7 @@ public class MVStoreTest {
 
       // add and read some data
       map.put(1, "Hello World");
-      // System.out.println(map.get(1));
+      // LOG.debug(map.get(1));
     }
     try (MVStore s = openStore(file)) {
       MVMap<Integer, String> map = s.openMap("data", intToStringMapBuilder);
@@ -1107,13 +1114,13 @@ public class MVStoreTest {
       // print the old version (can be done
       // concurrently with further modifications)
       // this will print "Hello" and "World":
-      // System.out.println(oldMap.get(1));
+      // LOG.debug(oldMap.get(1));
       assertEquals("Hello", oldMap.get(1));
-      // System.out.println(oldMap.get(2));
+      // LOG.debug(oldMap.get(2));
       assertEquals("World", oldMap.get(2));
 
       // print the newest version ("Hi")
-      // System.out.println(map.get(1));
+      // LOG.debug(map.get(1));
       assertEquals("Hi", map.get(1));
     }
   }
@@ -1133,9 +1140,9 @@ public class MVStoreTest {
           }
         }
       }
-      // System.out.println("open/close: " +
+      // LOG.debug("open/close: " +
       //        TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t));
-      // System.out.println("size: " + FileUtils.size(fileName));
+      // LOG.debug("size: " + FileUtils.size(fileName));
     }
   }
 
@@ -1269,7 +1276,7 @@ public class MVStoreTest {
       for (int i = 0; i < 1000; i++) {
         m.put(i, "Hello World");
         assertThat(m.size()).isEqualTo(i + 1);
-        //System.out.println(i + " " + s.getUnsavedMemory());
+        //LOG.debug(i + " " + s.getUnsavedMemory());
       }
       assertThat(m.size()).isEqualTo(1000);
       // memory calculations were adjusted, so as this out-of-the-thin-air number
@@ -1531,10 +1538,10 @@ public class MVStoreTest {
   //        }
   //      }
   //    }
-  //    // System.out.println(prof.getTop(5));
-  //    // System.out.println("store time " +
+  //    // LOG.debug(prof.getTop(5));
+  //    // LOG.debug("store time " +
   //    //         TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t));
-  //    // System.out.println("store size " +
+  //    // LOG.debug("store size " +
   //    //         FileUtils.size(fileName));
   //  }
   //}
@@ -1643,17 +1650,17 @@ public class MVStoreTest {
           m.put(j + i, "Hello " + j);
         }
 
-        System.out.println(j + " Before - fill rate: " + s.getFillRate() + "%, chunks fill rate: "
+        LOG.debug(j + " Before - fill rate: " + s.getFillRate() + "%, chunks fill rate: "
               + s.getChunksFillRate() + ", len: " + Files.size(file));
         s.compact(80, 2048);
         s.compactMoveChunks();
 
-        System.out.println(j + " After  - fill rate: " + s.getFillRate() + "%, chunks fill rate: "
+        LOG.debug(j + " After  - fill rate: " + s.getFillRate() + "%, chunks fill rate: "
                            + s.getChunksFillRate() + ", len: " + Files.size(file));
       }
 
       long fileSize = Files.size(file);
-      System.out.println("   len:" + fileSize);
+      LOG.debug("   len:" + fileSize);
       if (initialLength == 0) {
         initialLength = fileSize;
       }
@@ -1663,7 +1670,7 @@ public class MVStoreTest {
     }
 
     // long len = Files.size(file);
-    // System.out.println("len0: " + len);
+    // LOG.debug("len0: " + len);
     try (MVStore s = new MVStore.Builder().compressionLevel(0).open(file)) {
       MVMap<Integer, String> m = s.openMap("data", intToStringMapBuilder);
       for (int i = 0; i < 100; i++) {
@@ -1673,13 +1680,13 @@ public class MVStoreTest {
     }
 
     // len = Files.size(file);
-    // System.out.println("len1: " + len);
+    // LOG.debug("len1: " + len);
     try (MVStore s = new MVStore.Builder().compressionLevel(0).open(file)) {
       s.openMap("data", intToStringMapBuilder);
       s.compact(80, 1024);
     }
     // len = Files.size(file);
-    // System.out.println("len2: " + len);
+    // LOG.debug("len2: " + len);
   }
 
   @Test
@@ -1700,17 +1707,17 @@ public class MVStoreTest {
 
         s.commit();
 
-        System.out.println(j + " Before - fill rate: " + s.getFillRate() + "%, chunks fill rate: "
+        LOG.debug(j + " Before - fill rate: " + s.getFillRate() + "%, chunks fill rate: "
               + s.getChunksFillRate() + ", len: " + Files.size(file));
         s.compact(80, 2048);
         s.compactMoveChunks();
 
-        System.out.println(j + " After  - fill rate: " + s.getFillRate() + "%, chunks fill rate: "
+        LOG.debug(j + " After  - fill rate: " + s.getFillRate() + "%, chunks fill rate: "
                            + s.getChunksFillRate() + ", len: " + Files.size(file));
       }
 
       long fileSize = Files.size(file);
-      System.out.println("   len:" + fileSize);
+      LOG.debug("   len:" + fileSize);
       if (initialLength == 0) {
         initialLength = fileSize;
       }
@@ -1972,7 +1979,7 @@ public class MVStoreTest {
           long time = System.nanoTime();
           if (time - last > TimeUnit.SECONDS.toNanos(2)) {
             long mb = store.getFileStore().size() / 1024 / 1024;
-            System.out.println(mb + "/4500");
+            LOG.debug(mb + "/4500");
             if (mb > 4500) {
               break;
             }

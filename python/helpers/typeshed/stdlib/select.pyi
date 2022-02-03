@@ -13,6 +13,7 @@ if sys.platform != "win32":
     POLLOUT: int
     POLLPRI: int
     POLLRDBAND: int
+    POLLRDHUP: int
     POLLRDNORM: int
     POLLWRBAND: int
     POLLWRNORM: int
@@ -118,6 +119,7 @@ if sys.platform == "linux":
         @classmethod
         def fromfd(cls, __fd: FileDescriptorLike) -> epoll: ...
     EPOLLERR: int
+    EPOLLEXCLUSIVE: int
     EPOLLET: int
     EPOLLHUP: int
     EPOLLIN: int
@@ -126,10 +128,12 @@ if sys.platform == "linux":
     EPOLLOUT: int
     EPOLLPRI: int
     EPOLLRDBAND: int
+    EPOLLRDHUP: int
     EPOLLRDNORM: int
     EPOLLWRBAND: int
     EPOLLWRNORM: int
     EPOLL_RDHUP: int
+    EPOLL_CLOEXEC: int
 
 if sys.platform != "linux" and sys.platform != "darwin" and sys.platform != "win32":
     # Solaris only

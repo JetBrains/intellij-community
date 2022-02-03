@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.classpath
 
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleConfigurationStateImpl
@@ -13,92 +14,100 @@ import junit.framework.TestCase
 
 class InlineModuleDependencyActionTest : JavaModuleTestCase() {
 
-  override fun isRunInWriteAction(): Boolean = true
-
   override fun tearDown() {
     ProjectStructureConfigurable.getInstance(myProject).context.modulesConfigurator.disposeUIResources()
     super.tearDown()
   }
 
   fun `test inline module with module library`() {
-    val newCreatedModule = createModule("My Module")
+    WriteAction.run<RuntimeException> {
+      val newCreatedModule = createModule("My Module")
 
-    val moduleLibrary = newCreatedModule.update { it.moduleLibraryTable.createLibrary("My Library") }
+      val moduleLibrary = newCreatedModule.update { it.moduleLibraryTable.createLibrary("My Library") }
 
-    val newModuleOrderEntry = module.update { it.addModuleOrderEntry(newCreatedModule) }
+      val newModuleOrderEntry = module.update { it.addModuleOrderEntry(newCreatedModule) }
 
-    val inlinedLibrary = module.update { modifiableRootModel ->
-      val classPathPanel = setUpClasspathPanel(modifiableRootModel, newModuleOrderEntry)
+      val inlinedLibrary = module.update { modifiableRootModel ->
+        val classPathPanel = setUpClasspathPanel(modifiableRootModel, newModuleOrderEntry)
 
-      val action = InlineModuleDependencyAction(classPathPanel)
-      action.actionPerformed(TestActionEvent())
+        val action = InlineModuleDependencyAction(classPathPanel)
+        action.actionPerformed(TestActionEvent())
 
-      val orderEntries = modifiableRootModel.moduleLibraryTable.libraries
-      TestCase.assertEquals(1, orderEntries.size)
-      orderEntries.first()
+        val orderEntries = modifiableRootModel.moduleLibraryTable.libraries
+        TestCase.assertEquals(1, orderEntries.size)
+        orderEntries.first()
+      }
+
+      TestCase.assertNotSame(moduleLibrary, inlinedLibrary)
+      TestCase.assertEquals(moduleLibrary.name, inlinedLibrary.name)
     }
-
-    TestCase.assertNotSame(moduleLibrary, inlinedLibrary)
-    TestCase.assertEquals(moduleLibrary.name, inlinedLibrary.name)
   }
 
   fun `test inline module with project library`() {
-    val newCreatedModule = createModule("My Module")
+    WriteAction.run<RuntimeException> {
+      val newCreatedModule = createModule("My Module")
 
-    val library = LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary("My Library")
-    newCreatedModule.update {
-      it.addLibraryEntry(library)
+      val library = LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary("My Library")
+      newCreatedModule.update {
+        it.addLibraryEntry(library)
+      }
+
+      val newModuleOrderEntry = module.update { it.addModuleOrderEntry(newCreatedModule) }
+
+      val inlinedLibrary = module.update { modifiableRootModel ->
+        val classPathPanel = setUpClasspathPanel(modifiableRootModel, newModuleOrderEntry)
+
+        val action = InlineModuleDependencyAction(classPathPanel)
+        action.actionPerformed(TestActionEvent())
+
+        val orderEntries = modifiableRootModel.orderEntries.filterIsInstance<LibraryOrderEntry>()
+        TestCase.assertEquals(1, orderEntries.size)
+        orderEntries.first()
+      }
+
+      TestCase.assertSame(library, inlinedLibrary.library)
     }
-
-    val newModuleOrderEntry = module.update { it.addModuleOrderEntry(newCreatedModule) }
-
-    val inlinedLibrary = module.update { modifiableRootModel ->
-      val classPathPanel = setUpClasspathPanel(modifiableRootModel, newModuleOrderEntry)
-
-      val action = InlineModuleDependencyAction(classPathPanel)
-      action.actionPerformed(TestActionEvent())
-
-      val orderEntries = modifiableRootModel.orderEntries.filterIsInstance<LibraryOrderEntry>()
-      TestCase.assertEquals(1, orderEntries.size)
-      orderEntries.first()
-    }
-
-    TestCase.assertSame(library, inlinedLibrary.library)
   }
 
   fun `test inline module with global library`() {
-    val newCreatedModule = createModule("My Module")
+    WriteAction.run<RuntimeException> {
+      val newCreatedModule = createModule("My Module")
 
-    val globalLibraryEntry = newCreatedModule.update {
-      it.addLibraryEntry(LibraryTablesRegistrar.getInstance().libraryTable.createLibrary("My Library"))
-    }
+      val globalLibraryEntry = newCreatedModule.update {
+        it.addLibraryEntry(LibraryTablesRegistrar.getInstance().libraryTable.createLibrary("My Library"))
+      }
 
-    val newModuleOrderEntry = module.update { it.addModuleOrderEntry(newCreatedModule) }
+      val newModuleOrderEntry = module.update { it.addModuleOrderEntry(newCreatedModule) }
 
-    val inlinedLibrary = module.update { modifiableRootModel ->
-      val classPathPanel = setUpClasspathPanel(modifiableRootModel, newModuleOrderEntry)
+      val inlinedLibrary = module.update { modifiableRootModel ->
+        val classPathPanel = setUpClasspathPanel(modifiableRootModel, newModuleOrderEntry)
 
-      val action = InlineModuleDependencyAction(classPathPanel)
-      action.actionPerformed(TestActionEvent())
+        val action = InlineModuleDependencyAction(classPathPanel)
+        action.actionPerformed(TestActionEvent())
 
-      val orderEntries = modifiableRootModel.orderEntries.filterIsInstance<LibraryOrderEntry>()
-      TestCase.assertEquals(1, orderEntries.size)
-      orderEntries.first()
-    }
+        val orderEntries = modifiableRootModel.orderEntries.filterIsInstance<LibraryOrderEntry>()
+        TestCase.assertEquals(1, orderEntries.size)
+        orderEntries.first()
+      }
 
-    TestCase.assertSame(globalLibraryEntry.library, inlinedLibrary.library)
+      TestCase.assertSame(globalLibraryEntry.library, inlinedLibrary.library)
 
-    runWriteAction {
-      LibraryTablesRegistrar.getInstance().libraryTable.removeLibrary(globalLibraryEntry.library!!)
+      runWriteAction {
+        LibraryTablesRegistrar.getInstance().libraryTable.removeLibrary(globalLibraryEntry.library!!)
+      }
     }
   }
 
   fun `test inline module with submodule`() {
-    doTestInlineModuleWithSubModule(DependencyScope.COMPILE)
+    WriteAction.run<RuntimeException> {
+      doTestInlineModuleWithSubModule(DependencyScope.COMPILE)
+    }
   }
 
   fun `test inline module with submodule with runtime scope`() {
-    doTestInlineModuleWithSubModule(DependencyScope.RUNTIME)
+    WriteAction.run<RuntimeException> {
+      doTestInlineModuleWithSubModule(DependencyScope.RUNTIME)
+    }
   }
 
   private fun doTestInlineModuleWithSubModule(scope: DependencyScope) {

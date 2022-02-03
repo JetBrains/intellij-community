@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.plugins.groovy;
 
 import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicNullableLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -18,9 +18,14 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.util.dynamicMembers.DynamicMemberUtils;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.openapi.util.NullableLazyValue.atomicLazyNullable;
 
 
 public class MavenGroovyPolyglotPomMemberContributor extends NonCodeMembersContributor {
@@ -268,25 +273,23 @@ public class MavenGroovyPolyglotPomMemberContributor extends NonCodeMembersContr
   }
 
   private static class Contributor {
-    private final AtomicNullableLazyValue<String> myClassSourceValue = new AtomicNullableLazyValue<>() {
-      @Override
-      protected String compute() {
-        try {
-          return FileUtil.loadTextAndClose(MavenGroovyPolyglotPomMemberContributor.class.getResourceAsStream(myClassSourcePath));
-        }
-        catch (Exception ignored) {
-        }
-        return null;
-      }
-    };
     private final String myClassSourcePath;
     private final String[] myPaths;
+    private final NullableLazyValue<String> myClassSourceValue;
 
     Contributor(@NotNull String classSourcePath, String... paths) {
       myClassSourcePath = classSourcePath;
       myPaths = paths;
+      myClassSourceValue = atomicLazyNullable(() -> {
+        try (InputStream stream = MavenGroovyPolyglotPomMemberContributor.class.getResourceAsStream(myClassSourcePath)) {
+          if (stream != null) {
+            return StreamUtil.readText(new InputStreamReader(stream, StandardCharsets.UTF_8));
+          }
+        }
+        catch (Exception ignored) { }
+        return null;
+      });
     }
-
 
     public void populate(@NotNull Project project, @NotNull MultiMap<String, String> map, @NotNull MultiMap<String, String> leafMap) {
       String myClassSource = myClassSourceValue.getValue();

@@ -3,6 +3,7 @@ package training.ui
 
 import com.intellij.feedback.FEEDBACK_REPORT_ID_KEY
 import com.intellij.feedback.FeedbackRequestType
+import com.intellij.feedback.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
 import com.intellij.feedback.dialog.CommonFeedbackSystemInfoData
 import com.intellij.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.submitGeneralFeedback
@@ -17,6 +18,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeBalloonLayoutImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.HyperlinkAdapter
@@ -50,8 +52,11 @@ import javax.swing.text.html.HTMLDocument
 private const val FEEDBACK_CONTENT_WIDTH = 500
 private const val SUB_OFFSET = 20
 
+/** Increase the additional number when onboarding feedback format is changed */
+private const val FEEDBACK_JSON_VERSION = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 0
 
 fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData: OnboardingFeedbackData) {
+  onboardingFeedbackData.feedbackHasBeenProposed()
   StatisticBase.logOnboardingFeedbackNotification(getFeedbackEntryPlace(project))
   val notification = iftNotificationGroup.createNotification(LearnBundle.message("onboarding.feedback.notification.title"),
                                                              LearnBundle.message("onboarding.feedback.notification.message",
@@ -75,6 +80,7 @@ fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData
 fun showOnboardingLessonFeedbackForm(project: Project?,
                                      onboardingFeedbackData: OnboardingFeedbackData,
                                      openedViaNotification: Boolean): Boolean {
+  onboardingFeedbackData?.feedbackHasBeenProposed()
   val saver = mutableListOf<JsonObjectBuilder.() -> Unit>()
 
   fun feedbackTextArea(fieldName: String, optionalText: @Nls String, width: Int, height: Int): JBScrollPane {
@@ -194,6 +200,7 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
 
     val collectedData = buildJsonObject {
       put(FEEDBACK_REPORT_ID_KEY, onboardingFeedbackData.feedbackReportId)
+      put("format_version", FEEDBACK_JSON_VERSION + onboardingFeedbackData.additionalFeedbackFormatVersion)
       for (function in saver) {
         function()
       }
@@ -207,7 +214,7 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
     val description = getShortDescription(likenessResult(), technicalIssuesOption, freeForm)
     submitGeneralFeedback(project, onboardingFeedbackData.reportTitle, description,
                           onboardingFeedbackData.reportTitle, jsonConverter.encodeToString(collectedData),
-                          feedbackRequestType = FeedbackRequestType.PRODUCTION_REQUEST
+                          feedbackRequestType = getFeedbackRequestType()
     )
   }
   StatisticBase.logOnboardingFeedbackDialogResult(
@@ -218,6 +225,12 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
     experiencedUser = experiencedUserOption.isChosen
   )
   return maySendFeedback
+}
+
+private fun getFeedbackRequestType() = when(Registry.stringValue("ift.send.onboarding.feedback")) {
+  "production" -> FeedbackRequestType.PRODUCTION_REQUEST
+  "staging" -> FeedbackRequestType.TEST_REQUEST
+  else -> FeedbackRequestType.NO_REQUEST
 }
 
 private fun getShortDescription(likenessResult: FeedbackLikenessAnswer,

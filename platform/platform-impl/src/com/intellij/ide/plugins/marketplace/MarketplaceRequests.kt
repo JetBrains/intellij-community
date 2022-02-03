@@ -6,9 +6,11 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginInfoProvider
 import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.auth.PluginRepositoryAuthService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -18,10 +20,7 @@ import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
-import com.intellij.util.io.HttpRequests
-import com.intellij.util.io.URLUtil
-import com.intellij.util.io.exists
-import com.intellij.util.io.write
+import com.intellij.util.io.*
 import com.intellij.util.ui.IoErrorText
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -149,6 +148,11 @@ class MarketplaceRequests : PluginInfoProvider {
           if (eTag != null) {
             connection.setRequestProperty("If-None-Match", eTag)
           }
+          if (ApplicationManager.getApplication() != null) {
+            serviceOrNull<PluginRepositoryAuthService>()
+              ?.connectionTuner
+              ?.tune(connection)
+          }
         }
         .productNameAsUserAgent()
         .connect { request ->
@@ -218,6 +222,7 @@ class MarketplaceRequests : PluginInfoProvider {
         .request(createFeatureUrl(param))
         .throwStatusCodeException(false)
         .productNameAsUserAgent()
+        .setHeadersViaTuner()
         .connect {
           objectMapper.readValue(
             it.inputStream,
@@ -282,7 +287,9 @@ class MarketplaceRequests : PluginInfoProvider {
 
   @Throws(IOException::class)
   fun searchPlugins(query: String, count: Int): List<PluginNode> {
-    val marketplaceSearchPluginData = HttpRequests.request(createSearchUrl(query, count))
+    val marketplaceSearchPluginData = HttpRequests
+      .request(createSearchUrl(query, count))
+      .setHeadersViaTuner()
       .throwStatusCodeException(false)
       .connect {
         objectMapper.readValue(
@@ -298,6 +305,7 @@ class MarketplaceRequests : PluginInfoProvider {
     try {
       return HttpRequests
         .request(MARKETPLACE_ORGANIZATIONS_URL)
+        .setHeadersViaTuner()
         .productNameAsUserAgent()
         .throwStatusCodeException(false)
         .connect {
@@ -352,6 +360,7 @@ class MarketplaceRequests : PluginInfoProvider {
         .request(Urls.newFromEncoded(
           "${pluginManagerUrl}/api/search/aggregation/tags"
         ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST)))
+        .setHeadersViaTuner()
         .productNameAsUserAgent()
         .throwStatusCodeException(false)
         .connect {
@@ -448,6 +457,7 @@ class MarketplaceRequests : PluginInfoProvider {
       HttpRequests
         .request(JETBRAINS_PLUGINS_URL)
         .productNameAsUserAgent()
+        .setHeadersViaTuner()
         .throwStatusCodeException(false)
         .connect {
           deserializeJetBrainsPluginsIds(it.inputStream)
@@ -479,6 +489,7 @@ class MarketplaceRequests : PluginInfoProvider {
       HttpRequests
         .request(IDE_EXTENSIONS_URL)
         .productNameAsUserAgent()
+        .setHeadersViaTuner()
         .throwStatusCodeException(false)
         .connect {
           deserializeExtensionsForIdes(it.inputStream)
@@ -497,6 +508,17 @@ class MarketplaceRequests : PluginInfoProvider {
 
   private fun parseXmlIds(input: InputStream) = objectMapper.readValue(input, object : TypeReference<Set<PluginId>>() {})
 }
+
+/**
+ * NB!: any previous tuners set by {@link RequestBuilder#tuner} will be overwritten by this call
+ */
+fun RequestBuilder.setHeadersViaTuner(): RequestBuilder =
+  if (ApplicationManager.getApplication() != null) {
+    serviceOrNull<PluginRepositoryAuthService>()
+      ?.let {
+        tuner(it.connectionTuner)
+      } ?: this
+  } else this
 
 private fun loadETagForFile(file: Path): String {
   val eTagFile = getETagFile(file)

@@ -2,15 +2,11 @@
 package org.jetbrains.plugins.github.ui.util
 
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.ColorUtil
 import com.intellij.ui.Graphics2DDelegate
 import com.intellij.util.ui.ExtendableHTMLViewFactory
 import com.intellij.util.ui.HTMLEditorKitBuilder
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.StyleSheetUtil
 import java.awt.*
 import java.awt.image.ImageObserver
 import javax.swing.text.Element
@@ -23,29 +19,7 @@ import javax.swing.text.html.InlineView
 internal class HtmlEditorPane() : BaseHtmlEditorPane() {
 
   init {
-    editorKit = HTMLEditorKitBuilder().withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.WORD_WRAP,
-                                                                 GHExtensions()).build().apply {
-      val borderWidth = JBUI.scale(2)
-      val borderColor = ColorUtil.toHex(DarculaUIUtil.getOutlineColor(true, false))
-      val padding = JBUI.scale(10)
-      //TODO: update with LAF
-      //language=css
-      styleSheet.addStyleSheet(StyleSheetUtil.createStyleSheet("""
-        ul { 
-            margin-left-ltr: 30; 
-            margin-right-rtl: 30; 
-        }
-        
-        blockquote {
-            margin: 5px 0;
-        }
-        
-        blockquote p {
-            border-left: ${borderWidth}px solid ${borderColor};
-            padding-left: ${padding}px;
-        }
-      """.trimIndent()))
-    }
+    editorKit = HTMLEditorKitBuilder().withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.WORD_WRAP, GHExtensions()).build()
   }
 
   constructor(@NlsSafe body: String) : this() {

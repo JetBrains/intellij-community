@@ -55,6 +55,7 @@
     <registryKey key="unknown.sdk.show.editor.actions" defaultValue="true" description="Show editor suggestions to fix missing SKDs"/>
 
     <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification"/>
+    <editorNotificationProvider implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotificationsProvider"/>
     <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkBalloonNotification"/>
     <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkTracker"/>
 
@@ -82,6 +83,9 @@
     <bookmarksListProvider implementation="com.intellij.ide.bookmark.ui.tree.BookmarkListProvider"/>
     <bookmarksListProvider implementation="com.intellij.ide.bookmark.ui.tree.GroupListProvider"/>
     <bookmarksListProvider implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointListProvider"/>
+    <projectService serviceImplementation="com.intellij.ide.bookmark.BookmarksListProviderService"/>
+    <advancedSetting id="show.line.bookmarks.in.popup" default="true"
+                     bundle="messages.BookmarkBundle" groupKey="group.advanced.settings.bookmarks"/>
 
     <moduleRendererFactory implementation="com.intellij.ide.util.PlatformModuleRendererFactory" order="last" id="platform"/>
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
@@ -108,15 +112,6 @@
     <projectService serviceInterface="com.intellij.refactoring.suggested.SuggestedRefactoringProvider"
                     serviceImplementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl"/>
     <postStartupActivity implementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl$Startup"/>
-    <notificationGroup id="Show control flow group" displayType="BALLOON"/>
-    <notificationGroup id="Power Save Mode" displayType="BALLOON"/>
-    <notificationGroup id="IDE Caches" displayType="BALLOON"/>
-    <notificationGroup id="Cache Recovery" displayType="STICKY_BALLOON"/>
-    <notificationGroup id="Framework Detection" displayType="BALLOON"/>
-    <notificationGroup id="Code style settings migration" displayType="STICKY_BALLOON"/>
-    <notificationGroup id="Find Problems" displayType="STICKY_BALLOON" isLogByDefault="false"/>
-    <notificationGroup id="Missing SDKs" displayType="BALLOON"/>
-    <notificationGroup id="Automatic indent detection" displayType="STICKY_BALLOON"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.impl.PushedFilePropertiesRetriever"
                         serviceImplementation="com.intellij.openapi.roots.impl.PushedFilePropertiesRetrieverImpl"/>
@@ -157,10 +152,6 @@
   </xi:include>
 
   <xi:include href="/META-INF/ExternalSystem.xml">
-    <xi:fallback/>
-  </xi:include>
-
-  <xi:include href="intellij.notebooks.visualization.xml">
     <xi:fallback/>
   </xi:include>
 </idea-plugin>

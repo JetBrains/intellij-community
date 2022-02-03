@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -99,6 +100,8 @@ public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<
 
     Rectangle cellRect = getCellRect(key);
     Component renderer = myComponent.prepareRenderer(myComponent.getCellRenderer(key.row, key.column), key.row, key.column);
+    Component unwrapped = ExpandedItemRendererComponentWrapper.unwrap(renderer);
+    if (unwrapped instanceof JCheckBox && StringUtil.isEmptyOrSpaces(((JCheckBox)unwrapped).getText())) return null;
     AppUIUtil.targetToDevice(renderer, myComponent);
     cellRect.width = renderer.getPreferredSize().width;
 

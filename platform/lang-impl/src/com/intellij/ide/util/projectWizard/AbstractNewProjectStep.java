@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.RecentProjectsManager;
@@ -188,6 +188,18 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
                                               @NotNull String locationString,
                                               @Nullable DirectoryProjectGenerator<T> generator,
                                               @NotNull T settings) {
+    OpenProjectTask options = OpenProjectTask.build()
+      .withProjectToClose(projectToClose)
+      .asNewProject().withRunConfigurators().withCreatedByWizard().withoutVfsRefresh()
+      .withBeforeOpenCallback(project -> { project.putUserData(CREATED_KEY, true); return true; });
+    return doGenerateProject(projectToClose, locationString, generator, settings, options);
+  }
+
+  public static <T> Project doGenerateProject(@Nullable Project projectToClose,
+                                              @NotNull String locationString,
+                                              @Nullable DirectoryProjectGenerator<T> generator,
+                                              @NotNull T settings,
+                                              @NotNull OpenProjectTask options) {
     Path location = Paths.get(locationString);
     try {
       Files.createDirectories(location);
@@ -224,11 +236,6 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       ((TemplateProjectDirectoryGenerator<?>)generator).generateProject(baseDir.getName(), locationString);
     }
 
-    OpenProjectTask options = OpenProjectTask.newProjectFromWizardAndRunConfigurators(projectToClose, /* isRefreshVfsNeeded = */ false)
-      .withBeforeOpenCallback((project) -> {
-        project.putUserData(CREATED_KEY, true);
-        return true;
-      });
     TrustedPaths.getInstance().setProjectPathTrusted(location, true);
     Project project = ProjectManagerEx.getInstanceEx().openProject(location, options);
     if (project != null && generator != null && !(generator instanceof TemplateProjectDirectoryGenerator)) {

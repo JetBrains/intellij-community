@@ -134,6 +134,10 @@ public interface TextContent extends CharSequence, UserDataHolderEx {
   @Contract(pure = true)
   TextContent removeIndents(Set<Character> indentChars);
 
+  /** For each line of the text, remove the suffix consisting of the given characters. */
+  @Contract(pure = true)
+  TextContent removeLineSuffixes(Set<Character> suffixChars);
+
   enum TextDomain {
     /** String literals of a programming language */
     LITERALS,

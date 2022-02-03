@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
@@ -23,7 +23,6 @@ import java.util.function.BiConsumer
 @CompileStatic
 final class PlatformLayout extends BaseLayout {
   final Set<String> excludedProjectLibraries = new HashSet<>()
-  final List<String> projectLibrariesWithRemovedVersionFromJarNames = []
 
   void customize(@DelegatesTo(PlatformLayoutSpec) Closure body) {
     def spec = new PlatformLayoutSpec(this)
@@ -39,15 +38,15 @@ final class PlatformLayout extends BaseLayout {
     includedProjectLibraries.add(new ProjectLibraryData(libraryName, "", packMode))
   }
 
+  void withProjectLibrary(ProjectLibraryData data) {
+    includedProjectLibraries.add(data)
+  }
+
   /**
    * Exclude project library {@code libraryName} even if it's added to dependencies of some module or plugin included into the product
    */
   void withoutProjectLibrary(String libraryName) {
     excludedProjectLibraries.add(libraryName)
-  }
-
-  void removeVersionFromProjectLibraryJarNames(String libraryName) {
-    projectLibrariesWithRemovedVersionFromJarNames.add(libraryName)
   }
 
   static final class PlatformLayoutSpec extends BaseLayoutSpec {
@@ -63,16 +62,6 @@ final class PlatformLayout extends BaseLayout {
      */
     void withoutProjectLibrary(String libraryName) {
       layout.withoutProjectLibrary(libraryName)
-    }
-
-    /**
-     * Remove version numbers from {@code libraryName}'s JAR file names before copying to the product distributions. Currently it's needed
-     * for libraries included into bootstrap classpath of the platform, because their names are hardcoded in startup scripts and it's not
-     * convenient to change them each time the library is updated. <strong>Do not use this method for anything else.</strong> This method
-     * will be removed when build scripts automatically compose bootstrap classpath.
-     */
-    void removeVersionFromProjectLibraryJarNames(String libraryName) {
-      layout.removeVersionFromProjectLibraryJarNames(libraryName)
     }
   }
 

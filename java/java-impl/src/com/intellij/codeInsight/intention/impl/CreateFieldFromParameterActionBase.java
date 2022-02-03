@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -27,6 +27,7 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (!BaseIntentionAction.canModify(file)) return false;
     PsiParameter parameter = FieldFromParameterUtils.findParameterAtCursor(file, editor);
     if (parameter == null || !isAvailable(parameter)) {
       return false;

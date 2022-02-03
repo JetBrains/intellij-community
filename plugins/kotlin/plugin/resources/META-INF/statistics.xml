@@ -9,7 +9,7 @@
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.configuration.KotlinMigrationProjectFUSCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.J2KFusCollector"/>
     <statistics.counterUsagesCollector groupId="kotlin.gradle.library" version="1"/>
-    <statistics.counterUsagesCollector groupId="kotlin.gradle.performance" version="1"/>
+    <statistics.counterUsagesCollector groupId="kotlin.gradle.performance" version="2"/>
     <statistics.counterUsagesCollector groupId="kotlin.ide.debugger" version="2"/>
     <statistics.counterUsagesCollector
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector"/>
@@ -17,5 +17,7 @@
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.IDESettingsFUSCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.statistics.ProjectConfigurationCollector"/>
+    <internal.statistic.libraryUsage.libraryUsageImportProcessor
+            implementation="org.jetbrains.kotlin.idea.statistics.KotlinLibraryUsageImportProcessor"/>
   </extensions>
 </idea-plugin>

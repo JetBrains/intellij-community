@@ -6,7 +6,9 @@ import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
+import com.intellij.ui.content.Content;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
@@ -15,32 +17,67 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-
+/**
+ * Extension point to register persistent tabs in 'Version Control' and 'Commit' toolwindows.
+ * <p>
+ * Tabs are initialized lazily and {@link ChangesViewContentProvider#initTabContent} is only called when tab is selected for the first time.
+ * Use {@link #preloaderClassName} to perform activity on tab creation, even if it is not selected yet.
+ * <p>
+ * Classes specified in attributes may receive {@link Project} in constructor parameter.
+ */
 public final class ChangesViewContentEP implements PluginAware {
   private static final Logger LOG = Logger.getInstance(ChangesViewContentEP.class);
 
-  public static final ProjectExtensionPointName<ChangesViewContentEP> EP_NAME = new ProjectExtensionPointName<>("com.intellij.changesViewContent");
+  public static final ProjectExtensionPointName<ChangesViewContentEP> EP_NAME =
+    new ProjectExtensionPointName<>("com.intellij.changesViewContent");
 
   /**
-   * Used to determine specific tab content in {@link ChangesViewContentManager#selectContent}
+   * Non-user-visible id that is used to locate specific tab content in {@link ChangesViewContentManager#selectContent} and similar methods.
    * <p>
    * To provide localized tab name use {@link #displayNameSupplierClassName}
+   *
+   * @see Content#getTabName()
    */
   @Attribute("tabName")
   public String tabName;
 
+  /**
+   * {@link ChangesViewContentProvider} instance that is used to set tab content.
+   */
   @Attribute("className")
   public String className;
 
+  /**
+   * Optional {@link Predicate<Project>} instance that is being used to check if tab should be visible.
+   * <p>
+   * Use {@link ChangesViewContentManagerListener#TOPIC} to notify that predicate value might have changed.
+   */
   @Attribute("predicateClassName")
   public String predicateClassName;
 
+  /**
+   * Optional {@link ChangesViewContentProvider.Preloader} instance that invoked on {@link com.intellij.ui.content.Content} creation.
+   * <p>
+   * ex: it can be used to register DnD-drop handlers.
+   * It can be also used to specify tab order, see {@link ChangesViewContentManager#ORDER_WEIGHT_KEY}.
+   */
   @Attribute("preloaderClassName")
   public String preloaderClassName;
 
+  /**
+   * {@link Supplier<@NlsContexts.TabTitle String>} instance that returns user-visible title.
+   *
+   * @see Content#getDisplayName()
+   */
   @Attribute("displayNameSupplierClassName")
   public String displayNameSupplierClassName;
 
+  /**
+   * Whether tab should be shown in 'Version Control' toolwindow (default) or in 'Commit' toolwindow.
+   * Note, that 'Commit' toolwindow may be disabled, see {@link ChangesViewContentManager#isCommitToolWindowShown(Project)}.
+   * <p>
+   * Use {@link ChangesViewContentManager#getToolWindowFor(Project, String)} to get actual toolwindow for the tab.
+   */
   @Attribute("isInCommitToolWindow")
   public boolean isInCommitToolWindow;
 

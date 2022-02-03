@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structureView;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -8,12 +8,11 @@ import com.intellij.ide.util.treeView.smartTree.Grouper;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class TestGrouper implements Grouper {
+public final class TestGrouper implements Grouper {
   private final String[] mySubStrings;
 
   public TestGrouper(String[] subString) {
@@ -91,7 +90,7 @@ public class TestGrouper implements Grouper {
     Collection<TreeElement> elements = new LinkedHashSet<>(children);
     for (String subString : mySubStrings) {
       if (parentGroupUsedStrings.contains(subString)) continue;
-      Set<String> childrenStrings = new THashSet<>(parentGroupUsedStrings);
+      Set<String> childrenStrings = new HashSet<>(parentGroupUsedStrings);
       ContainerUtil.addAll(childrenStrings, mySubStrings);
       StringGroup group = new StringGroup(subString, elements, childrenStrings);
       Collection<TreeElement> groupChildren = group.getChildren();

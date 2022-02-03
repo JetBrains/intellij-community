@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.util.text.StringTokenizer;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -16,7 +17,7 @@ public class LabeledIcon implements Icon {
   private final String[] myStrings;
   private int myIconTextGap = 5;
 
-  private Font myFont = UIUtil.getLabelFont();
+  private Font myFont = StartupUiUtil.getLabelFont();
 
   /**
    * @param icon     not {@code null} icon.
@@ -82,7 +83,7 @@ public class LabeledIcon implements Icon {
   private int getTextWidth() {
     if (myStrings != null) {
       int width = 0;
-      Font font = UIUtil.getLabelFont();
+      Font font = StartupUiUtil.getLabelFont();
       FontMetrics fontMetrics = Toolkit.getDefaultToolkit().getFontMetrics(font);
       for (String string : myStrings) {
         width = fontMetrics.stringWidth(string);

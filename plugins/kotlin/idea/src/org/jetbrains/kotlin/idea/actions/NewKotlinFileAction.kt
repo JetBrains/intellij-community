@@ -14,8 +14,8 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
@@ -29,6 +29,9 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
+import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
+import org.jetbrains.kotlin.idea.configuration.toModuleGroup
 import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.statistics.KotlinCreateFileFUSCollector
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
@@ -265,6 +268,15 @@ class NewKotlinFileAction : CreateFileFromTemplateAction(
                     }
                 }
                 JavaCreateTemplateInPackageAction.setupJdk(adjustedDir, psiFile)
+                val module = ModuleUtil.findModuleForFile(psiFile)
+                val configurator = KotlinProjectConfigurator.EP_NAME.extensions.firstOrNull()
+                if (module != null && configurator != null) {
+                    DumbService.getInstance(module.project).runWhenSmart {
+                        if (configurator.getStatus(module.toModuleGroup()) == ConfigureKotlinStatus.CAN_BE_CONFIGURED) {
+                            configurator.configure(module.project, emptyList())
+                        }
+                    }
+                }
                 return psiFile
             } finally {
                 service.isAlternativeResolveEnabled = false

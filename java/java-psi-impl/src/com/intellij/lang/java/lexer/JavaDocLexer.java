@@ -144,6 +144,7 @@ public class JavaDocLexer extends MergingLexerAdapter {
 
         final int state = myFlex.yystate();
         if (state == _JavaDocLexer.COMMENT_DATA ||
+            state != _JavaDocLexer.SNIPPET_TAG_BODY_DATA &&
             myTokenEndOffset < myBufferEndOffset && (myBuffer.charAt(myTokenEndOffset) == '@' ||
                                                      myBuffer.charAt(myTokenEndOffset) == '{' ||
                                                      myBuffer.charAt(myTokenEndOffset) == '\"' ||
@@ -155,7 +156,7 @@ public class JavaDocLexer extends MergingLexerAdapter {
           myTokenType = lf ||
                         state == _JavaDocLexer.PARAM_TAG_SPACE || state == _JavaDocLexer.TAG_DOC_SPACE ||
                         state == _JavaDocLexer.INLINE_TAG_NAME || state == _JavaDocLexer.DOC_TAG_VALUE_IN_PAREN ||
-                        state == _JavaDocLexer.INDEX_COMMENT_DATA
+                        state == _JavaDocLexer.SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON
                         ? myTokenTypes.space() : myTokenTypes.commentData();
 
           return;

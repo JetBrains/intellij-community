@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.testFramework
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.TestLoggerFactory
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.exporter.jaeger.JaegerGrpcSpanExporter
@@ -66,7 +67,9 @@ fun runTestBuild(homePath: String,
       verifier(buildContext.paths)
     }
     catch (e: Throwable) {
-      span.recordException(e)
+      if (e !is FileComparisonFailure) {
+        span.recordException(e)
+      }
       span.setStatus(StatusCode.ERROR)
 
       copyDebugLog(productProperties, messages)

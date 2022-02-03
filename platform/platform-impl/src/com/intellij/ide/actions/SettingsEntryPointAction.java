@@ -330,6 +330,10 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
       return false;
     }
 
+    public boolean isRestartRequired() {
+      return false;
+    }
+
     public boolean isNewAction() {
       return myNewAction;
     }

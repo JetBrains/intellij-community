@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.icons.AllIcons
@@ -9,6 +10,7 @@ import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.Link
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
 import java.awt.BorderLayout
@@ -106,13 +108,13 @@ class FailedEditorBuilder internal constructor(@DialogMessage val message: Strin
     val impl = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return false
 
     for (window in impl.windows) {
-      for (composite in window.editors) {
-        for (tab in composite.editors) {
+      for (composite in window.allComposites) {
+        for (tab in composite.allEditors) {
           if (tab == this) {
             //move focus to current window
             window.setAsCurrentWindow(true)
             //select editor
-            window.setSelectedEditor(composite, true)
+            window.setSelectedComposite(composite, true)
             //open tab
             composite.fileEditorManager.setSelectedEditor(composite.file, editorProviderId)
             return true
@@ -159,7 +161,7 @@ class FailedEditorBuilder internal constructor(@DialogMessage val message: Strin
       isFocusable = false
       isEditable = false
       border = null
-      font = UIUtil.getLabelFont()
+      font = StartupUiUtil.getLabelFont()
       background = UIUtil.getLabelBackground()
       val centerAttribute = SimpleAttributeSet()
       StyleConstants.setAlignment(centerAttribute, StyleConstants.ALIGN_CENTER)

@@ -1,4 +1,4 @@
-// "Add '@MyExperimentalAPI' annotation to 'outer'" "true"
+// "Propagate '@MyExperimentalAPI' annotation to 'outer'" "true"
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
 

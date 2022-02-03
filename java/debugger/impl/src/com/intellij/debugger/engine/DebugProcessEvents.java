@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.*;
@@ -21,6 +21,7 @@ import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -567,7 +568,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
       catch (InterruptedException ignored) {
       }
       catch (TimeoutException e) {
-        LOG.error("Timeout while preloading thread data", ThreadDumper.dumpThreadsToString());
+        Attachment threadDumpAttachment = new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString());
+        threadDumpAttachment.setIncluded(true);
+        LOG.error("Timeout while preloading thread data", threadDumpAttachment);
       }
       catch (Exception e) {
         Throwable throwable = DebuggerUtilsAsync.unwrap(e);

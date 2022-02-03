@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -97,7 +97,7 @@ public class JBTabsImpl extends JComponent
   public final NonOpaquePanel myTitleWrapper = new NonOpaquePanel();
   public Dimension myHeaderFitSize;
 
-  private Insets myInnerInsets = JBUI.emptyInsets();
+  private Insets myInnerInsets = JBInsets.emptyInsets();
 
   private final List<EventListener> myTabMouseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<TabsListener> myTabListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -2086,14 +2086,6 @@ public class JBTabsImpl extends JComponent
     return myPosition;
   }
 
-  /**
-   * @deprecated You should implement {@link JBTabsBorder} interface
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected void doPaintBackground(Graphics2D g2d, Rectangle clip) {
-  }
-
   @Override
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
@@ -3777,15 +3769,6 @@ public class JBTabsImpl extends JComponent
       select(getTabInfo(), true);
       return true;
     }
-  }
-
-  /**
-   * @deprecated unused. You should move the painting logic to an implementation of {@link JBTabPainter} interface }
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public int getActiveTabUnderlineHeight() {
-    return 0;
   }
 
   /**

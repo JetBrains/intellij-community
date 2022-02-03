@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Consumer;
 
 public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
@@ -104,23 +102,19 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   private void scheduleAsynchronousPreprocessing(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
-    try {
-      startRefreshActivity();
-      ReadAction
-        .nonBlocking(() -> runAsyncListeners(session))
-        .wrapProgress(myRefreshIndicator)
-        .finishOnUiThread(modality, Runnable::run)
-        .submit(myEventProcessingQueue)
-        .onProcessed(__ -> finishRefreshActivity())
-        .onError(t -> {
-          if (!myRefreshIndicator.isCanceled()) {
-            LOG.error(t);
-          }
-        });
-    }
-    catch (RejectedExecutionException | AlreadyDisposedException e) {
-      LOG.debug(e);
-    }
+    startRefreshActivity();
+    ReadAction
+      .nonBlocking(() -> runAsyncListeners(session))
+      .expireWith(this)
+      .wrapProgress(myRefreshIndicator)
+      .finishOnUiThread(modality, Runnable::run)
+      .submit(myEventProcessingQueue)
+      .onProcessed(__ -> finishRefreshActivity())
+      .onError(t -> {
+        if (!myRefreshIndicator.isCanceled()) {
+          LOG.error(t);
+        }
+      });
   }
 
   private synchronized void startRefreshActivity() {

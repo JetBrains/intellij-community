@@ -1,15 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerListener;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,9 +39,13 @@ public interface ToolWindow extends BusyObject {
    * @param runnable A command to execute right after the window gets activated. The call is asynchronous since it may require animation.
    * @throws IllegalStateException if tool window isn't installed.
    */
-  void activate(@Nullable Runnable runnable);
+  default void activate(@Nullable Runnable runnable) {
+    activate(runnable, true, true);
+  }
 
-  void activate(@Nullable Runnable runnable, boolean autoFocusContents);
+  default void activate(@Nullable Runnable runnable, boolean autoFocusContents) {
+    activate(runnable, autoFocusContents, true);
+  }
 
   void activate(@Nullable Runnable runnable, boolean autoFocusContents, boolean forced);
 
@@ -77,21 +81,7 @@ public interface ToolWindow extends BusyObject {
   /**
    * @throws IllegalStateException if tool window isn't installed.
    */
-  @NotNull
-  ToolWindowAnchor getAnchor();
-
-  boolean isVisibleOnLargeStripe();
-
-  void setVisibleOnLargeStripe(boolean visible);
-
-  void setOrderOnLargeStripe(int order);
-
-  int getOrderOnLargeStripe();
-
-  @NotNull
-  ToolWindowAnchor getLargeStripeAnchor();
-
-  void setLargeStripeAnchor(@NotNull ToolWindowAnchor anchor);
+  @NotNull ToolWindowAnchor getAnchor();
 
   /**
    * @throws IllegalStateException if tool window isn't installed.
@@ -125,8 +115,7 @@ public interface ToolWindow extends BusyObject {
   /**
    * @throws IllegalStateException if tool window isn't installed.
    */
-  @NotNull
-  ToolWindowType getType();
+  @NotNull ToolWindowType getType();
 
   /**
    * @throws IllegalStateException if tool window isn't installed.
@@ -136,8 +125,7 @@ public interface ToolWindow extends BusyObject {
   /**
    * @return Window icon. Returns {@code null} if window has no icon.
    */
-  @Nullable
-  Icon getIcon();
+  @Nullable Icon getIcon();
 
   /**
    * Sets new window icon.
@@ -171,7 +159,7 @@ public interface ToolWindow extends BusyObject {
 
   /**
    * Sets whether the tool window available or not. Term "available" means that tool window
-   * can be shown and it has button on tool window bar.
+   * can be shown, and it has a button on tool window bar.
    *
    * @throws IllegalStateException if tool window isn't installed.
    */
@@ -183,8 +171,7 @@ public interface ToolWindow extends BusyObject {
 
   void setDefaultContentUiType(@NotNull ToolWindowContentUiType type);
 
-  @NotNull
-  ToolWindowContentUiType getContentUiType();
+  @NotNull ToolWindowContentUiType getContentUiType();
 
   void installWatcher(ContentManager contentManager);
 
@@ -193,14 +180,11 @@ public interface ToolWindow extends BusyObject {
    *
    * @return component which represents window content.
    */
-  @NotNull
-  JComponent getComponent();
+  @NotNull JComponent getComponent();
 
-  @NotNull
-  ContentManager getContentManager();
+  @NotNull ContentManager getContentManager();
 
-  @Nullable
-  ContentManager getContentManagerIfCreated();
+  @Nullable ContentManager getContentManagerIfCreated();
 
   void addContentManagerListener(@NotNull ContentManagerListener listener);
 
@@ -219,8 +203,7 @@ public interface ToolWindow extends BusyObject {
 
   void showContentPopup(@NotNull InputEvent inputEvent);
 
-  @NotNull
-  Disposable getDisposable();
+  @NotNull Disposable getDisposable();
 
   default void setHelpId(@NotNull @NonNls String helpId) {
   }
@@ -234,14 +217,9 @@ public interface ToolWindow extends BusyObject {
    */
   void remove();
 
-  /**
-   * @deprecated Not used anymore.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  default ActionCallback getActivation() {
-    return ActionCallback.DONE;
-  }
-
   void setTitleActions(@NotNull List<? extends AnAction> actions);
+
+  void setAdditionalGearActions(@Nullable ActionGroup additionalGearActions);
+
+  @NotNull Project getProject();
 }

@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Set;
 
 @ApiStatus.Internal
 public interface CodeStyleSettingsService {
@@ -26,12 +25,4 @@ public interface CodeStyleSettingsService {
 
   @NotNull
   List<? extends LanguageCodeStyleProvider> getLanguageCodeStyleProviders();
-
-  /**
-   * @deprecated Use {@link #getCustomCodeStyleSettingsFactories()} which returns all factories, including settings pages.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @NotNull
-  Set<? extends CustomCodeStyleSettingsFactory> getSettingsPagesProviders();
 }

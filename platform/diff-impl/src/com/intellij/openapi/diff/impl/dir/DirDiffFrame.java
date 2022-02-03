@@ -6,9 +6,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.WindowState;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
@@ -34,12 +32,5 @@ public class DirDiffFrame extends FrameWrapper {
       }
       return null;
     });
-  }
-
-
-  @Override
-  protected void loadFrameState(@Nullable WindowState state) {
-    super.loadFrameState(state);
-    myPanel.setupSplitter();
   }
 }

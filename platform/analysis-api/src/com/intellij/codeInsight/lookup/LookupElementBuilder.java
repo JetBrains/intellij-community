@@ -140,16 +140,6 @@ public final class LookupElementBuilder extends LookupElement {
     return myAllLookupStrings;
   }
 
-  /**
-   * @deprecated use {@link #withIcon(Icon)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Contract(pure=true)
-  public @NotNull LookupElementBuilder setIcon(@Nullable Icon icon) {
-    return withIcon(icon);
-  }
-
   @Contract(pure=true)
   public @NotNull LookupElementBuilder withIcon(@Nullable Icon icon) {
     final LookupElementPresentation presentation = copyPresentation();
@@ -327,15 +317,6 @@ public final class LookupElementBuilder extends LookupElement {
     return withTailText(tailText, false);
   }
 
-  /**
-   * @deprecated use {@link #withTailText(String, boolean)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Contract(pure=true)
-  public @NotNull LookupElementBuilder setTailText(@Nullable String tailText, boolean grayed) {
-    return withTailText(tailText, grayed);
-  }
   @Contract(pure=true)
   public @NotNull LookupElementBuilder withTailText(@Nullable String tailText, boolean grayed) {
     final LookupElementPresentation presentation = copyPresentation();

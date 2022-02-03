@@ -1,6 +1,6 @@
 from _typeshed import Self
 from collections.abc import Iterator
-from typing import Any, Callable, Generic, Iterable, List, Mapping, Pattern, Set, Tuple, Type, TypeVar, Union, overload
+from typing import Any, Callable, Generic, Iterable, List, Mapping, Pattern, Tuple, Type, TypeVar, Union, overload
 
 from . import BeautifulSoup
 from .builder import TreeBuilder
@@ -10,7 +10,7 @@ DEFAULT_OUTPUT_ENCODING: str
 PY3K: bool
 nonwhitespace_re: Pattern[str]
 whitespace_re: Pattern[str]
-PYTHON_SPECIFIC_ENCODINGS: Set[str]
+PYTHON_SPECIFIC_ENCODINGS: set[str]
 
 class NamespacedAttribute(str):
     def __new__(cls: Type[Self], prefix: str, name: str | None = ..., namespace: str | None = ...) -> Self: ...

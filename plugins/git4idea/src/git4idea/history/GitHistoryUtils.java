@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -114,8 +114,7 @@ public final class GitHistoryUtils {
                                                                          @NotNull VirtualFile root,
                                                                          String @NotNull ... hashes)
     throws VcsException {
-    List<? extends VcsCommitMetadata> result = GitLogUtil.collectMetadata(project, GitVcs.getInstance(project), root,
-                                                                          Arrays.asList(hashes));
+    List<? extends VcsCommitMetadata> result = GitLogUtil.collectMetadata(project, root, Arrays.asList(hashes));
     if (result.size() != hashes.length) return null;
     return result;
   }
@@ -162,10 +161,10 @@ public final class GitHistoryUtils {
    * @param hashes a list of hashes to call `git log` for
    * @return a list of parameters that could be fed to a `git log` command
    */
-  public static String @NotNull [] formHashParameters(@NotNull GitVcs vcs, @NotNull Collection<String> hashes) {
+  public static String @NotNull [] formHashParameters(@NotNull Project project, @NotNull Collection<String> hashes) {
     List<String> parameters = new ArrayList<>();
 
-    parameters.add(GitLogUtil.getNoWalkParameter(vcs));
+    parameters.add(GitLogUtil.getNoWalkParameter(project));
     parameters.addAll(hashes);
 
     return ArrayUtilRt.toStringArray(parameters);

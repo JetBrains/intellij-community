@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -151,7 +151,7 @@ final class UpdateCheckerService {
     MyActivity() {
       Application app = ApplicationManager.getApplication();
       if (app.isCommandLine() || app.isHeadlessEnvironment() || app.isUnitTestMode()) {
-        throw ExtensionNotApplicableException.INSTANCE;
+        throw ExtensionNotApplicableException.create();
       }
     }
 
@@ -241,7 +241,7 @@ final class UpdateCheckerService {
     String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
     String message = blogPost == null ? IdeBundle.message("update.snap.message")
                                       : IdeBundle.message("update.snap.message.with.blog.post", StringUtil.escapeXmlEntities(blogPost));
-    UpdateChecker.getNotificationGroup()
+    UpdateChecker.getNotificationGroupForIdeUpdateResults()
       .createNotification(title, message, NotificationType.INFORMATION)
       .setListener(NotificationListener.URL_OPENING_LISTENER)
       .setDisplayId("ide.updated.by.snap")
@@ -291,7 +291,7 @@ final class UpdateCheckerService {
 
     String title = IdeBundle.message("update.installed.notification.title");
     String text = new HtmlBuilder().appendWithSeparators(HtmlChunk.text(", "), links).wrapWith("html").toString();
-    UpdateChecker.getNotificationGroupForUpdateResults()
+    UpdateChecker.getNotificationGroupForPluginUpdateResults()
       .createNotification(title, text, NotificationType.INFORMATION)
       .setListener((__, e) -> showPluginConfigurable(e, project))  // benign leak - notifications are disposed of on project close
       .setDisplayId("plugins.updated.after.restart")

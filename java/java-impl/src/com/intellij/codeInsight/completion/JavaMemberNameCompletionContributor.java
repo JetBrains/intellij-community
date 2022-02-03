@@ -23,10 +23,10 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.*;
-import com.intellij.refactoring.introduceField.InplaceIntroduceFieldPopup;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -146,7 +146,7 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
 
     PsiExpression initializer = var.getInitializer();
     if (initializer != null) {
-      SuggestedNameInfo initializerSuggestions = IntroduceVariableBase.getSuggestedName(type, initializer);
+      SuggestedNameInfo initializerSuggestions = CommonJavaRefactoringUtil.getSuggestedName(type, initializer);
       addLookupItems(set, initializerSuggestions, matcher, project, initializerSuggestions.names);
     }
   }
@@ -324,8 +324,8 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
     PsiExpression initializer = var.getInitializer();
     PsiClass containingClass = var.getContainingClass();
     if (initializer != null && containingClass != null) {
-      SuggestedNameInfo initializerSuggestions = InplaceIntroduceFieldPopup.
-        suggestFieldName(var.getType(), null, initializer, var.hasModifierProperty(PsiModifier.STATIC), containingClass);
+      SuggestedNameInfo initializerSuggestions = JavaSpecialRefactoringProvider.getInstance()
+        .suggestFieldName(var.getType(), null, initializer, var.hasModifierProperty(PsiModifier.STATIC), containingClass);
       addLookupItems(set, initializerSuggestions, matcher, project, initializerSuggestions.names);
     }
   }

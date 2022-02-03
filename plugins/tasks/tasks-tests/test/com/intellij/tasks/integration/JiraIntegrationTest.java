@@ -18,7 +18,9 @@ package com.intellij.tasks.integration;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.impl.LocalTaskImpl;
@@ -26,6 +28,7 @@ import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.tasks.jira.JiraRepositoryType;
 import com.intellij.tasks.jira.JiraVersion;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
@@ -36,7 +39,10 @@ import org.apache.xmlrpc.XmlRpcRequest;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assume;
+import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
@@ -46,6 +52,7 @@ import static com.intellij.tasks.jira.JiraRemoteApi.ApiType.REST_2_0_ALPHA;
 /**
  * @author Dmitry Avdeev
  */
+@RunWith(JUnit38AssumeSupportRunner.class)
 public class JiraIntegrationTest extends TaskManagerTestCase {
 
   /**
@@ -58,9 +65,13 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
    */
   @NonNls private static final String JIRA_5_TEST_SERVER_URL = "http://trackers-tests.labs.intellij.net:8015";
 
+  private static final Logger LOG = Logger.getInstance(JiraIntegrationTest.class);
+
   private JiraRepository myRepository;
 
   public void testGerman() throws Exception {
+    assumeServerAccessible(JIRA_5_TEST_SERVER_URL);
+
     myRepository.setUsername("german");
     myRepository.setPassword("german");
     final Task[] issues = myRepository.getIssues(null, 50, 0);
@@ -70,6 +81,8 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
   }
 
   public void testLogin() {
+    assumeServerAccessible(JIRA_5_TEST_SERVER_URL);
+
     myRepository.setUsername("german");
     myRepository.setUsername("wrong password");
     //noinspection ConstantConditions
@@ -79,6 +92,9 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
   }
 
   public void testVersionDiscovery() throws Exception {
+    assumeServerAccessible(JIRA_5_TEST_SERVER_URL);
+    assumeServerAccessible(JIRA_4_TEST_SERVER_URL);
+
     myRepository.setUrl(JIRA_5_TEST_SERVER_URL);
     assertEquals(REST_2_0, myRepository.discoverApiVersion().getType());
     myRepository.setUrl(JIRA_4_TEST_SERVER_URL);
@@ -86,6 +102,8 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
   }
 
   public void testJqlQuery() throws Exception {
+    assumeServerAccessible(JIRA_5_TEST_SERVER_URL);
+
     myRepository.setSearchQuery("assignee = currentUser() AND (summary ~ 'foo' or resolution = Fixed)");
     assertEquals(2, myRepository.getIssues("", 50, 0).length);
 
@@ -98,6 +116,8 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
    * Should return null, not throw exceptions by contact.
    */
   public void testIssueNotExists() throws Exception {
+    assumeServerAccessible(JIRA_5_TEST_SERVER_URL);
+
     assertNull(myRepository.findTask("FOO-42"));
   }
 
@@ -105,6 +125,8 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
    * If query string looks like task ID, separate request will be made to download issue.
    */
   public void testFindSingleIssue() throws Exception {
+    assumeServerAccessible(JIRA_5_TEST_SERVER_URL);
+
     final Task[] found = myRepository.getIssues("UT-6", 0, 1, true);
     assertEquals(1, found.length);
     assertEquals("Summary contains 'bar'", found[0].getSummary());
@@ -114,6 +136,8 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
    * Holds only for JIRA > 5.x.x
    */
   public void testExtractedErrorMessage() {
+    assumeServerAccessible(JIRA_5_TEST_SERVER_URL);
+
     myRepository.setSearchQuery("foo < bar");
     try {
       myRepository.getIssues("", 50, 0);
@@ -128,6 +152,8 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
   // we create new issue for every test run (via XML-RPC API in JIRA 4.x and REST API in JIRA 5+)
 
   public void testSetTaskStateInJira5() throws Exception {
+    assumeServerAccessible(JIRA_5_TEST_SERVER_URL);
+
     myRepository.setUrl(JIRA_5_TEST_SERVER_URL);
     final String id = createIssueViaRestApi("BTSU", "Test issue for state updates (" + SHORT_TIMESTAMP_FORMAT.format(new Date()) + ")");
     changeTaskStateAndCheck(id);
@@ -162,6 +188,8 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
   }
 
   public void testSetTaskStateInJira4() throws Exception {
+    assumeServerAccessible(JIRA_4_TEST_SERVER_URL);
+
     myRepository.setUrl(JIRA_4_TEST_SERVER_URL);
     final String id = createIssueViaXmlRpc("BTSU", "Test issue for state updates (" + SHORT_TIMESTAMP_FORMAT.format(new Date()) + ")");
     changeTaskStateAndCheck(id);
@@ -195,6 +223,8 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
   }
 
   public void testSetTimeSpend() throws Exception {
+    assumeServerAccessible(JIRA_5_TEST_SERVER_URL);
+
     // only REST API 2.0 supports this feature
     myRepository.setUrl(JIRA_5_TEST_SERVER_URL);
     final String issueId = createIssueViaRestApi("BTTTU", "Test issue for time tracking updates (" + SHORT_TIMESTAMP_FORMAT.format(new Date()) + ")");
@@ -233,5 +263,32 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
     myRepository.setUrl(JIRA_5_TEST_SERVER_URL);
     myRepository.setUsername("buildtest");
     myRepository.setPassword("buildtest");
+  }
+
+  private void assumeServerAccessible(@NotNull String baseUrl) {
+    GetMethod method = new GetMethod(baseUrl + "/rest/api/latest/serverInfo");
+    boolean accessible = false;
+    try {
+      accessible = myRepository.getHttpClient().executeMethod(method) == 200;
+      Assume.assumeTrue("Server '" + myRepository.getUrl() + "' is inaccessible", accessible);
+    }
+    catch (IOException e) {
+      Assume.assumeNoException(e);
+    }
+    finally {
+      if (!accessible) {
+        try {
+          LOG.warn(
+            "Response from " + method.getURI() + ":\n" +
+            method.getStatusCode() + " " + method.getStatusText() + "\n" +
+            StringUtil.join(Arrays.asList(method.getResponseHeaders()), "") + "\n" +
+            method.getResponseBodyAsString()
+          );
+        }
+        catch (Exception e) {
+          LOG.warn("Failed to log response", e);
+        }
+      }
+    }
   }
 }

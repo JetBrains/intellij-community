@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -608,9 +608,12 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   public void updateThrowsList(PsiClassType exceptionType) {
     LOG.assertTrue(isInitialized());
-    for (RefMethod refSuper : getSuperMethods()) {
-      ((RefMethodImpl)refSuper).updateThrowsList(exceptionType);
-    }
+    myManager.executeTask(() -> {
+      for (RefMethod refSuper : getSuperMethods()) {
+        refSuper.waitForInitialized();
+        ((RefMethodImpl)refSuper).updateThrowsList(exceptionType);
+      }
+    });
     synchronized (this) {
       List<String> unThrownExceptions = myUnThrownExceptions;
       if (unThrownExceptions != null) {

@@ -1,3 +1,12 @@
 _?curses.A_ITALIC
 _curses.color_pair
 curses.color_pair
+
+# Exists at runtime, but missing from stubs
+asyncio.PidfdChildWatcher
+asyncio.unix_events.PidfdChildWatcher
+os.CLD_KILLED
+os.CLD_STOPPED
+os.POSIX_SPAWN_CLOSE
+os.POSIX_SPAWN_DUP2
+os.POSIX_SPAWN_OPEN

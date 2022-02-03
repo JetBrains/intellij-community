@@ -26,8 +26,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.makeStatic.MakeMethodStaticProcessor;
-import com.intellij.refactoring.makeStatic.Settings;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -64,7 +63,7 @@ public class MethodMayBeStaticInspection extends BaseInspection {
       public void doFix(Project project, ProblemDescriptor descriptor) {
         final PsiMethod element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
         if (element != null) {
-          new MakeMethodStaticProcessor(project, element, new Settings(m_replaceQualifier, null, null)).run();
+          JavaRefactoringFactory.getInstance(project).createMakeMethodStatic(element, m_replaceQualifier, null, PsiField.EMPTY_ARRAY, null).run();
         }
       }
 

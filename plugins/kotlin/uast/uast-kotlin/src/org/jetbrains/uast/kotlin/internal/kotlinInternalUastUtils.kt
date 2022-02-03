@@ -15,7 +15,6 @@ import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.elements.FakeFileForLightClass
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalTypeOrSubtype
 import org.jetbrains.kotlin.codegen.signature.BothSignatureWriter
 import org.jetbrains.kotlin.descriptors.*
@@ -23,6 +22,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationArgumentVisitor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.synthetic.SyntheticMemberDescriptor
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.lazy.descriptors.LazyJavaPackageFragment
 import org.jetbrains.kotlin.load.java.sam.SamAdapterDescriptor
@@ -64,38 +64,18 @@ import org.jetbrains.kotlin.utils.addToStdlib.constant
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
-import org.jetbrains.uast.kotlin.expressions.KotlinLocalFunctionUVariable
 import org.jetbrains.uast.kotlin.psi.UastDescriptorLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeLightPrimaryConstructor
 import java.text.StringCharacterIterator
 
-
-@Suppress("NOTHING_TO_INLINE")
-internal inline fun String?.orAnonymous(kind: String = ""): String =
-    this ?: ("<anonymous" + (if (kind.isNotBlank()) " $kind" else "") + ">")
-
-internal fun <T> lz(initializer: () -> T) = lazy(LazyThreadSafetyMode.SYNCHRONIZED, initializer)
-
-internal fun KtExpression.unwrapBlockOrParenthesis(): KtExpression {
-    val innerExpression = KtPsiUtil.safeDeparenthesize(this)
-    if (innerExpression is KtBlockExpression) {
-        val statement = innerExpression.statements.singleOrNull() ?: return this
-        return KtPsiUtil.safeDeparenthesize(statement)
-    }
-    return innerExpression
-}
-
-internal inline fun <reified T : UDeclaration, reified P : PsiElement> unwrap(element: P): P {
-    val unwrapped = if (element is T) element.javaPsi else element
-    assert(unwrapped !is UElement)
-    return unwrapped as P
+val kotlinUastPlugin: UastLanguagePlugin by lz {
+    UastLanguagePlugin.getInstances().find { it.language == KotlinLanguage.INSTANCE }
+        ?: KotlinUastLanguagePlugin()
 }
 
 internal fun getContainingLightClass(original: KtDeclaration): KtLightClass? =
     (original.containingClassOrObject?.toLightClass() ?: original.containingKtFile.findFacadeClass())
-
-internal fun unwrapFakeFileForLightClass(file: PsiFile): PsiFile = (file as? FakeFileForLightClass)?.ktFile ?: file
 
 // mb merge with org.jetbrains.kotlin.idea.references.ReferenceAccess ?
 internal enum class ReferenceAccess(val isRead: Boolean, val isWrite: Boolean) {
@@ -187,7 +167,8 @@ internal fun KotlinType.toPsiType(lightDeclaration: PsiModifierListOwner?, conte
 
     val signatureWriter = BothSignatureWriter(BothSignatureWriter.Mode.TYPE)
     val typeMappingMode = if (boxed) TypeMappingMode.GENERIC_ARGUMENT_UAST else TypeMappingMode.DEFAULT_UAST
-    val approximatedType = TypeApproximator(this.builtIns).approximateDeclarationType(this, true, languageVersionSettings)
+    val approximatedType =
+        TypeApproximator(this.builtIns, languageVersionSettings).approximateDeclarationType(this, true)
     typeMapper.mapType(approximatedType, signatureWriter, typeMappingMode)
 
     val signature = StringCharacterIterator(signatureWriter.toString())
@@ -268,18 +249,6 @@ internal fun KtTypeReference?.toPsiType(source: UElement, boxed: Boolean = false
     return (analyze()[BindingContext.TYPE, this] ?: return UastErrorType).toPsiType(source, this, boxed)
 }
 
-internal fun KtClassOrObject.toPsiType(): PsiType {
-    val lightClass = toLightClass() ?: return UastErrorType
-    return PsiTypesUtil.getClassType(lightClass)
-}
-
-internal fun KtElement.canAnalyze(): Boolean {
-    if (!isValid) return false
-    val containingFile = containingFile as? KtFile ?: return false // EA-114080, EA-113475, EA-134193
-    if (containingFile.doNotAnalyze != null) return false // To prevent exceptions during analysis
-    return true
-}
-
 @Suppress("NAME_SHADOWING")
 internal fun KtElement.analyze(): BindingContext {
     if (!canAnalyze()) return BindingContext.EMPTY
@@ -290,11 +259,6 @@ internal fun KtElement.analyze(): BindingContext {
 internal fun KtExpression.getExpectedType(): KotlinType? = analyze()[BindingContext.EXPECTED_EXPRESSION_TYPE, this]
 
 internal fun KtTypeReference.getType(): KotlinType? = analyze()[BindingContext.TYPE, this]
-
-internal val KtTypeReference.nameElement: PsiElement?
-    get() = this.typeElement?.let {
-        (it as? KtUserType)?.referenceExpression?.getReferencedNameElement() ?: it.navigationElement
-    }
 
 internal fun KotlinType.getFunctionalInterfaceType(source: UElement, element: KtElement): PsiType? =
     takeIf { it.isInterface() && !it.isBuiltinFunctionalTypeOrSubtype }?.toPsiType(source, element, false)
@@ -366,17 +330,32 @@ internal fun resolveToPsiMethod(
     }
 }
 
-internal fun resolveToDeclaration(sourcePsi: KtExpression): PsiElement? =
+internal fun resolveToClassIfConstructorCallImpl(ktCallElement: KtCallElement, source: UElement): PsiElement? =
+    when (val resultingDescriptor = ktCallElement.getResolvedCall(ktCallElement.analyze())?.descriptorForResolveViaConstructor()) {
+        is ConstructorDescriptor -> {
+            ktCallElement.calleeExpression?.let { resolveToDeclarationImpl(it, resultingDescriptor.constructedClass) }
+        }
+        is SamConstructorDescriptor ->
+            (resultingDescriptor.returnType?.getFunctionalInterfaceType(source, ktCallElement) as? PsiClassType)?.resolve()
+        else -> null
+    }
+
+// In new inference, SAM constructor is substituted with a function descriptor, so we use candidate descriptor to preserve behavior
+private fun ResolvedCall<*>.descriptorForResolveViaConstructor(): CallableDescriptor? {
+    return if (this is NewResolvedCallImpl) candidateDescriptor else resultingDescriptor
+}
+
+internal fun resolveToDeclarationImpl(sourcePsi: KtExpression): PsiElement? =
     when (sourcePsi) {
         is KtSimpleNameExpression ->
             sourcePsi.analyze()[BindingContext.REFERENCE_TARGET, sourcePsi]
-                ?.let { resolveToDeclaration(sourcePsi, it) }
+                ?.let { resolveToDeclarationImpl(sourcePsi, it) }
         else ->
             sourcePsi.getResolvedCall(sourcePsi.analyze())?.resultingDescriptor
-                ?.let { descriptor -> resolveToDeclaration(sourcePsi, descriptor) }
+                ?.let { descriptor -> resolveToDeclarationImpl(sourcePsi, descriptor) }
     }
 
-internal fun resolveToDeclaration(sourcePsi: KtExpression, declarationDescriptor: DeclarationDescriptor): PsiElement? {
+fun resolveToDeclarationImpl(sourcePsi: KtExpression, declarationDescriptor: DeclarationDescriptor): PsiElement? {
     declarationDescriptor.toSource()?.getMaybeLightElement(sourcePsi)?.let { return it }
 
     @Suppress("NAME_SHADOWING")
@@ -403,7 +382,7 @@ internal fun resolveToDeclaration(sourcePsi: KtExpression, declarationDescriptor
     }
 
     if (declarationDescriptor is ValueParameterDescriptor) {
-        val parentDeclaration = resolveToDeclaration(sourcePsi, declarationDescriptor.containingDeclaration)
+        val parentDeclaration = resolveToDeclarationImpl(sourcePsi, declarationDescriptor.containingDeclaration)
         if (parentDeclaration is PsiClass && parentDeclaration.isAnnotationType) {
             parentDeclaration.findMethodsByName(declarationDescriptor.name.asString(), false).firstOrNull()?.let { return it }
         }
@@ -411,7 +390,7 @@ internal fun resolveToDeclaration(sourcePsi: KtExpression, declarationDescriptor
 
     if (declarationDescriptor is CallableMemberDescriptor && declarationDescriptor.kind == CallableMemberDescriptor.Kind.FAKE_OVERRIDE) {
         declarationDescriptor.overriddenDescriptors.asSequence()
-            .mapNotNull { resolveToDeclaration(sourcePsi, it) }
+            .mapNotNull { resolveToDeclarationImpl(sourcePsi, it) }
             .firstOrNull()
             ?.let { return it }
     }
@@ -555,13 +534,15 @@ private fun getMethodSignatureFromDescriptor(context: KtElement, descriptor: Cal
     return JvmMemberSignature.Method(descriptor.name.asString(), desc)
 }
 
-private fun KotlinType.containsLocalTypes(): Boolean {
+private fun KotlinType.containsLocalTypes(visited: MutableSet<KotlinType> = hashSetOf()): Boolean {
+    if (!visited.add(this)) return false
     val typeDeclarationDescriptor = this.constructor.declarationDescriptor
     if (typeDeclarationDescriptor is ClassDescriptor && DescriptorUtils.isLocal(typeDeclarationDescriptor)) {
         return true
     }
 
-    return arguments.any { !it.isStarProjection && it.type.containsLocalTypes() }
+    return arguments.any { !it.isStarProjection && it.type.containsLocalTypes(visited) }
+            || constructor.supertypes.any { it.containsLocalTypes(visited) }
 }
 
 private fun PsiElement.getMaybeLightElement(sourcePsi: KtExpression? = null): PsiElement? {

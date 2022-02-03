@@ -11,6 +11,7 @@
     <orderEntry type="library" name="kotlinc.kotlin-stdlib" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-reflect" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-build-common-tests" level="project" />
     <orderEntry type="library" scope="TEST" name="Guava" level="project" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test" />
@@ -23,9 +24,9 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.tests" />
     <orderEntry type="module" module-name="kotlin.j2k.old.tests" />
     <orderEntry type="module" module-name="kotlin.j2k.new.tests" />
-    <orderEntry type="module" module-name="kotlin.jps-plugin" />
-    <orderEntry type="module" module-name="kotlin.fir.frontend-fir" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.fir.fir-fe10-binding" />
+    <orderEntry type="module" module-name="kotlin.fir.analysis-api-providers-ide-impl" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" scope="TEST" />
@@ -33,9 +34,10 @@
     <orderEntry type="module" module-name="intellij.platform.jps.build" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.jps-plugin.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.refIndex.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.coverage.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.copyright.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.tests" scope="TEST" />
   </component>
 </module>

@@ -1,0 +1,50 @@
+plugins {
+  id("java")
+#if ($context.hasLanguage("kotlin"))
+  id("org.jetbrains.kotlin.jvm") version "${context.getBomProperty("kotlin.version")}"
+#end
+  id("org.jetbrains.intellij") version "${context.getBomProperty("gradle.intellij.version")}"
+}
+
+group = "${context.group}"
+version = "${context.version}"
+
+repositories {
+  mavenCentral()
+}
+
+// Configure Gradle IntelliJ Plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
+intellij {
+  version.set("${context.getBomProperty("intellij.version")}")
+  type.set("IC") // Target IDE Platform
+
+  plugins.set(listOf(/* Plugin Dependencies */))
+}
+
+tasks {
+  // Set the JVM compatibility versions
+  withType<JavaCompile> {
+    sourceCompatibility = "${context.getBomProperty("java.version")}"
+    targetCompatibility = "${context.getBomProperty("java.version")}"
+  }
+#if ($context.hasLanguage("kotlin"))
+  withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions.jvmTarget = "${context.getBomProperty("kotlin.target")}"
+  }
+#end
+
+  patchPluginXml {
+    sinceBuild.set("${context.getBomProperty("intellij.since.build")}")
+    untilBuild.set("${context.getBomProperty("intellij.until.build")}")
+  }
+
+  signPlugin {
+    certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
+    privateKey.set(System.getenv("PRIVATE_KEY"))
+    password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
+  }
+
+  publishPlugin {
+    token.set(System.getenv("PUBLISH_TOKEN"))
+  }
+}

@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
+import com.intellij.codeInsight.StaticAnalysisAnnotationManager;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.completion.impl.LiftShorterItemsClassifier;
 import com.intellij.codeInsight.lookup.*;
@@ -12,6 +14,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -25,20 +28,13 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-import static com.intellij.patterns.PsiJavaPatterns.psiElement;
-
-/**
- * @author peter
- */
 public final class JavaCompletionSorting {
   private JavaCompletionSorting() {
   }
@@ -126,7 +122,7 @@ public final class JavaCompletionSorting {
 
   @Nullable
   private static LookupElementWeigher dispreferPreviousChainCalls(PsiElement position) {
-    TObjectIntHashMap<PsiMethod> previousChainCalls = new TObjectIntHashMap<>();
+    Object2IntMap<PsiMethod> previousChainCalls = new Object2IntOpenHashMap<>();
     if (position.getParent() instanceof PsiReferenceExpression) {
       PsiReferenceExpression ref = (PsiReferenceExpression)position.getParent();
       PsiMethodCallExpression qualifier = getCallQualifier(ref);
@@ -139,7 +135,7 @@ public final class JavaCompletionSorting {
             boolean seemsLikeExpectsMultipleCalls =
               name.startsWith("put") || name.startsWith("add") || name.startsWith("append") || name.startsWith("get");
             if (!seemsLikeExpectsMultipleCalls && qualifierClass == method.getContainingClass()) {
-              previousChainCalls.put(method, previousChainCalls.get(method) + 1);
+              previousChainCalls.put(method, previousChainCalls.getInt(method) + 1);
             }
           }
           qualifier = getCallQualifier(qualifier.getMethodExpression());
@@ -150,7 +146,7 @@ public final class JavaCompletionSorting {
       @Override
       public Boolean weigh(@NotNull LookupElement element, @NotNull WeighingContext context) {
         PsiElement psi = element.getPsiElement();
-        return psi instanceof PsiMethod && previousChainCalls.get((PsiMethod)psi) == 1;
+        return psi instanceof PsiMethod && previousChainCalls.getInt(psi) == 1;
       }
     };
   }
@@ -161,7 +157,7 @@ public final class JavaCompletionSorting {
   }
 
   private static ExpectedTypeInfo @NotNull [] getExpectedTypesWithDfa(CompletionParameters parameters, PsiElement position) {
-    if (psiElement().beforeLeaf(psiElement().withText(".")).accepts(position)) {
+    if (PsiJavaPatterns.psiElement().beforeLeaf(PsiJavaPatterns.psiElement().withText(".")).accepts(position)) {
       return ExpectedTypeInfo.EMPTY_ARRAY;
     }
 
@@ -500,6 +496,9 @@ public final class JavaCompletionSorting {
         final PsiDocCommentOwner member = (PsiDocCommentOwner)object;
         if (!JavaPsiFacade.getInstance(member.getProject()).getResolveHelper().isAccessible(member, myPosition, null)) return MyEnum.INACCESSIBLE;
         if (JavaCompletionUtil.isEffectivelyDeprecated(member)) return MyEnum.DEPRECATED;
+        if (AnnotationUtil.isAnnotated(member, StaticAnalysisAnnotationManager.getInstance().getKnownUnstableApiAnnotations(), 0)) {
+          return MyEnum.DISCOURAGED;
+        }
         if (member instanceof PsiClass) {
           PsiFile file = member.getContainingFile();
           if (file instanceof PsiJavaFile) {
@@ -627,7 +626,7 @@ public final class JavaCompletionSorting {
     SUBTYPE, CONVERTIBLE, HAS_NESTED, UNKNOWN, SUPERTYPE, NON_CONVERTIBLE
   }
 
-  private static class PreferExpected extends LookupElementWeigher {
+  private static final class PreferExpected extends LookupElementWeigher {
     private final boolean myConstructorPossible;
     private final ExpectedTypeInfo[] myExpectedTypes;
     private final PsiElement myPosition;
@@ -733,7 +732,7 @@ public final class JavaCompletionSorting {
         for (ExpectedTypeInfo myExpectedInfo : myExpectedTypes) {
           String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).getExpectedName();
           if (expectedName != null) {
-            final THashSet<String> set = new THashSet<>(NameUtil.nameToWordsLowerCase(truncDigits(expectedName)));
+            final Set<String> set = new HashSet<>(NameUtil.nameToWordsLowerCase(truncDigits(expectedName)));
             set.retainAll(wordsNoDigits);
             max = Math.max(max, set.size());
           }

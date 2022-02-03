@@ -59,7 +59,7 @@ public class FinalStaticMethodInspection extends BaseInspection {
           || !method.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
-      if (HighlightUtil.isIllegalModifierCombination(method.getModifierList())) {
+      if (!HighlightUtil.isLegalModifierCombination(method.getModifierList())) {
         return;
       }
       registerModifierError(PsiModifier.FINAL, method, PsiModifier.FINAL);

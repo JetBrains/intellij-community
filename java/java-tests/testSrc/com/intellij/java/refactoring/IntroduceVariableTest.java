@@ -1,7 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,10 +23,10 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+import java.util.regex.Pattern;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
@@ -40,31 +42,53 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
 
   public void testSimpleExpression() { doTest("i", false, false, true, "int"); }
   public void testInsideFor() { doTest("temp", false, false, true, "int"); }
-  public void testReplaceAll() { doTest("s", true, true, true, JAVA_LANG_STRING); }
-  public void testIDEADEV3678() { doTest("component", true, true, true, CommonClassNames.JAVA_LANG_OBJECT); }
+  public void testReplaceAll() {
+    doTestReplaceAll("s", true, true, true, JAVA_LANG_STRING);
+  }
+
+  public void testIDEADEV3678() {
+    doTestReplaceAll("component", true, true, true, CommonClassNames.JAVA_LANG_OBJECT);
+  }
   public void testIDEADEV13369() { doTest("ints", true, true, true, "int[]"); }
-  public void testAnonymousClass() { doTest("temp", true, false, true, "int"); }
+  public void testAnonymousClass() {
+    doTestReplaceAll("temp", true, false, true, "int");
+  }
   public void testAnonymousClass1() { doTest("runnable", false, false, false, CommonClassNames.JAVA_LANG_RUNNABLE); }
-  public void testAnonymousClass2() { doTest("j", true, false, false, "int"); }
-  public void testAnonymousClass3() { doTest("j", true, false, false, "Foo"); }
+  public void testAnonymousClass2() {
+    doTestReplaceAll("j", true, false, false, "int");
+  }
+  public void testAnonymousClass3() {
+    doTestReplaceAll("j", true, false, false, "Foo");
+  }
   public void testAnonymousClass4() { doTest("j", true, false, false, "int"); }
   public void testAnonymousClass5() { doTest("j", true, false, false, "int"); }
-  public void testAnonymousClass6() { doTest("str", true, false, false, JAVA_LANG_STRING); }
+  public void testAnonymousClass6() {
+    doTestReplaceAll("str", true, false, false, JAVA_LANG_STRING);
+  }
   public void testAnonymousClass7() { doTest("str", true, false, false, JAVA_LANG_STRING); }
   public void testLambda() { doTest("j", true, false, false, "int"); }
   public void testParenthesized() { doTest("temp", true, false, false, "int"); }
   public void testExpectedType8Inference() { doTest("temp", true, false, false, "java.util.Map<java.lang.String,java.util.List<java.lang.String>>"); }
-  public void testMethodCall() { doTest("temp", true, true, true, CommonClassNames.JAVA_LANG_OBJECT); }
-  public void testMethodCallInSwitch() { doTest("i", true, true, true, "int"); }
+  public void testMethodCall() {
+    doTestReplaceAll("temp", true, true, true, CommonClassNames.JAVA_LANG_OBJECT);
+  }
+  public void testMethodCallInSwitch() {
+    doTestReplaceAll("i", true, true, true, "int");
+  }
   public void testFunctionalExpressionInSwitch() { doTest("p", true, true, true, "java.util.function.Predicate<java.lang.String>"); }
-  public void testParenthesizedOccurrence1() { doTest("empty", true, true, true, "boolean"); }
+  public void testParenthesizedOccurrence1() {
+    doTestReplaceAll("empty", true, true, true, "boolean");
+  }
   public void testParenthesizedOccurrence2() { doTest("s", true, true, true, JAVA_LANG_STRING); }
   public void testAfterSemicolon() {
     UiInterceptors.register(new ChooserInterceptor(null, StringUtil.escapeToRegexp("new Runnable() {...}")));
     doTest("s", true, true, true, CommonClassNames.JAVA_LANG_RUNNABLE); 
   }
   public void testConflictingField() { doTest("name", true, false, true, JAVA_LANG_STRING); }
-  public void testConflictingFieldInExpression() { doTest("name", false, false, true, "int"); }
+  public void testConflictingFieldInExpression() {
+    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace this occurrence only")));
+    doTest("name", false, false, true, "int"); 
+  }
   public void testStaticConflictingField() { doTest("name", false, false, true, "int"); }
   public void testNonConflictingField() { doTest("name", false, false, true, "int"); }
   public void testScr16910() { doTest("i", true, true, false, "int"); }
@@ -72,7 +96,9 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testSCR18295a() { doTest("it", false, false, false, JAVA_LANG_STRING); }
   public void testFromInjected() { doTest("regexp", false, false, false, JAVA_LANG_STRING); }
   public void testSCR10412() { doTest("newVar", false, false, false, "java.lang.String[]"); }
-  public void testSCR22718() { doTest("object", true, true, false, CommonClassNames.JAVA_LANG_OBJECT); }
+  public void testSCR22718() {
+    doTestReplaceAll("object", true, true, false, CommonClassNames.JAVA_LANG_OBJECT);
+  }
   public void testSCR26075() { doTest("ok", false, false, false, JAVA_LANG_STRING); }
 
   public void testSCR26075For() {
@@ -83,12 +109,8 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
       }
 
       @Override
-      protected boolean reportConflicts(MultiMap<PsiElement, String> conflicts, final Project project, IntroduceVariableSettings dialog) {
-        assertEquals(2, conflicts.size());
-        Collection<String> conflictsMessages = conflicts.values();
-        assertTrue(conflictsMessages.contains(JavaRefactoringBundle.message("introducing.variable.may.break.code.logic")));
-        assertTrue(conflictsMessages.contains("Local variable <b><code>c</code></b> is modified in loop body"));
-        return false;
+      protected void showErrorMessage(Project project, Editor editor, String message) {
+        assertEquals("Introducing variable may break code logic<br>Local variable <b><code>c</code></b> is modified in loop body", message);
       }
     });
   }
@@ -99,16 +121,40 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testInsideIf() { doTest("s1", false, false, false, JAVA_LANG_STRING); }
   public void testInsideElse() { doTest("s1", false, false, false, JAVA_LANG_STRING); }
   public void testInsideWhile() { doTest("temp", false, false, false, "int"); }
-  public void testWhileCondition() { doTest("temp", true, false, false, "Node"); }
-  public void testWhileCondition2() { doTest("temp", true, false, false, "Node"); }
+
+  public void testWhileCondition() {
+    doTestReplaceAll("temp", true, false, false, "Node");
+  }
+
+  public void testWhileCondition2() {
+    doTestReplaceAll("temp", true, false, false, "Node");
+  }
+
   public void testWhileConditionIncomplete() { doTest("temp", true, false, false, "boolean"); }
+
   public void testWhileConditionNoBrace() { doTest("temp", true, false, false, "int"); }
-  public void testWhileConditionPlusNormal() { doTest("temp", true, false, false, "int"); }
-  public void testWhileConditionPlusNormal2() { doTest("temp", true, false, false, "int"); }
-  public void testWhileConditionAndOr() { doTest("temp", true, false, false, "boolean");}
-  public void testField() { doTest("temp", false, false, false, JAVA_LANG_STRING); }
-  public void testFieldAll() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
-  public void testCaseLabel() { doTest("temp", true, false, false, "int"); }
+
+  public void testWhileConditionPlusNormal() {
+    doTestReplaceAll("temp", true, false, false, "int");
+  }
+
+  public void testWhileConditionPlusNormal2() {
+    doTestReplaceAll("temp", true, false, false, "int");
+  }
+
+  public void testWhileConditionAndOr() { doTest("temp", true, false, false, "boolean"); }
+
+  public void testField() {
+    doTestReplaceAll("temp", false, false, false, JAVA_LANG_STRING);
+  }
+
+  public void testFieldAll() {
+    doTestReplaceAll("temp", true, false, false, JAVA_LANG_STRING);
+  }
+
+  public void testCaseLabel() {
+    doTestReplaceAll("temp", true, false, false, "int");
+  }
   public void testCaseLabelSingle() { doTest(new IntroduceVariableHandler()); }
   public void testCaseLabelRuleSingle() { doTest(new IntroduceVariableHandler()); }
   public void testCaseLabelRuleExpression() { doTest(new IntroduceVariableHandler()); }
@@ -148,12 +194,12 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     doTestWithVarType(new MockIntroduceVariableHandler("temp", true, false, false, JAVA_LANG_STRING));
   }
   public void testPatternVariableDeclarationUsedInLocalJava16() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
-  public void testPatternVariableDeclarationAfterIfJava16() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
-  public void testNonPatternVariableDeclarationTwoBlocksJava16() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
+  public void testPatternVariableDeclarationAfterIfJava16() { doTestReplaceAll("temp", true, false, false, JAVA_LANG_STRING); }
+  public void testNonPatternVariableDeclarationTwoBlocksJava16() { doTestReplaceAll("temp", true, false, false, JAVA_LANG_STRING); }
   public void testNonPatternDeclarationJava16() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
 
-  public void testTernaryBothBranches() { doTest("temp", true, false, false, "int"); }
-  public void testIfConditionAndChain() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15, () -> doTest("temp", true, false, false, JAVA_LANG_STRING)); }
+  public void testTernaryBothBranches() { doTestReplaceAll("temp", true, false, false, "int"); }
+  public void testIfConditionAndChain() { UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15, () -> doTest("temp", true, false, false, JAVA_LANG_STRING)); }
   public void testReturnAndChain() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15, () -> doTest("temp", true, false, false, JAVA_LANG_STRING)); }
   public void testReturnOrChain() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testReturnOrAndChain() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
@@ -184,12 +230,12 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testDeclareTernary() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testLambdaAndChain() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testSCR40281() { doTest("temp", false, false, false, "Set<? extends Map<?,java.lang.String>.Entry<?,java.lang.String>>"); }
-  public void testWithIfBranches() { doTest("temp", true, false, false, "int"); }
+  public void testWithIfBranches() { doTestReplaceAll("temp", true, false, false, "int"); }
   public void testInsideTryWithResources() { doTest("temp", true, false, false, "java.io.FileInputStream"); }
-  public void testInsideForLoop() { doTest("temp", true, false, false, "int"); }
-  public void testInsideForLoopIndependentFromLoopVariable() { doTest("temp", true, false, false, "int"); }
+  public void testInsideForLoop() { doTestReplaceAll("temp", true, false, false, "int"); }
+  public void testInsideForLoopIndependentFromLoopVariable() { doTestReplaceAll("temp", true, false, false, "int"); }
   public void testDistinguishLambdaParams() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
-  public void testDuplicateGenericExpressions() { doTest("temp", true, false, false, "Foo2<? extends java.lang.Runnable>"); }
+  public void testDuplicateGenericExpressions() { doTestReplaceAll("temp", true, false, false, "Foo2<? extends java.lang.Runnable>"); }
   public void testStaticImport() { doTest("i", true, true, false, "int"); }
   public void testGenericTypeMismatch() { doTest("i", true, true, false, CommonClassNames.JAVA_LANG_OBJECT); }
   public void testGenericTypeMismatch1() { doTest("i", true, true, false, "java.util.List<java.lang.String>"); }
@@ -239,13 +285,19 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testAndAndSubexpression() { doTest("ab", true, true, false, "boolean"); }
   public void testSubexpressionWithSpacesInSelection() { doTest("ab", true, true, false, "boolean"); }
   public void testSubexpressionWithSpacesInSelectionAndTailingComment() { doTest("ab", true, true, false, JAVA_LANG_STRING); }
-  public void testDuplicatesAnonymousClassCreationWithSimilarParameters () { doTest("foo1", true, true, false, "Foo"); }
+  public void testDuplicatesAnonymousClassCreationWithSimilarParameters () {
+    doTestReplaceAll("foo1", true, true, false, "Foo");
+  }
   public void testDifferentForeachParameters() { doTest("toStr", true, true, false, JAVA_LANG_STRING); }
   public void testCollapsedToDiamond() { doTest("a", true, true, true, "java.util.ArrayList<java.lang.String>"); }
   public void testCantCollapsedToDiamond() { doTest("a", true, true, true, "Foo<java.lang.Number>"); }
-  public void testFromForInitializer() { doTest("list", true, true, true, "java.util.List"); }
+  public void testFromForInitializer() {
+    doTestReplaceAll("list", true, true, true, "java.util.List");
+  }
   public void testInvalidPostfixExpr() { doTest("a1", true, false, true, "int[]"); }
-  public void testPolyadic() { doTest("b1", true, true, true, "boolean"); }
+  public void testPolyadic() {
+    doTestReplaceAll("b1", true, true, true, "boolean");
+  }
   public void testAssignmentToUnresolvedReference() { doTest("collection", true, true, true, "java.util.List<? extends java.util.Collection<?>>"); }
   public void testSubstringInSwitch() { doTest("ba", false, false, false, JAVA_LANG_STRING);}
   public void testEnumValues() { doTest("vs", false, false, false, "E[]"); }
@@ -263,7 +315,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
                                                    PsiElement anchor, final JavaReplaceChoice replaceChoice) {
         final PsiType type = typeSelectorManager.getDefaultType();
         assertEquals(type.getPresentableText(), expectedTypeName, type.getPresentableText());
-        assertEquals("path", getSuggestedName(type, expr).names[0]);
+        assertEquals("path", CommonJavaRefactoringUtil.getSuggestedName(type, expr).names[0]);
         return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS,
                                  validator, anchor, replaceChoice);
       }
@@ -312,7 +364,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testMultiCatchSimple() { doTest("e", true, true, false, "java.lang.Exception", true); }
   public void testMultiCatchTyped() { doTest("b", true, true, false, "java.lang.Exception", true); }
   public void testBeforeVoidStatement() { doTest("c", false, false, false, CommonClassNames.JAVA_LANG_OBJECT); }
-  public void testWriteUsages() { doTest("c", true, false, false, JAVA_LANG_STRING); }
+  public void testWriteUsages() { UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all occurrences but write"))); doTest("c", true, false, false, JAVA_LANG_STRING); }
   public void testLambdaExpr() { doTest("c", false, false, false, "SAM<java.lang.Integer>"); }
   public void testMethodRef() { doTest("c", false, false, false, "Test.Bar"); }
   public void testLambdaExprNotAccepted() { doTest("c", false, false, false, "SAM<java.lang.Integer>"); }
@@ -340,14 +392,37 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     fail("Should not be able to perform refactoring");
   }
 
-  public void testOneLineLambdaVoidCompatible() { doTest("c", false, false, false, JAVA_LANG_STRING); }
+  public void testOneLineLambdaVoidCompatible() {UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Runnable: () -> {...}"))); doTest("c", false, false, false, JAVA_LANG_STRING); }
   public void testOneLineLambdaValueCompatible() { doTest("c", false, false, false, "int"); }
-  public void testPutInLambdaBody() { doTest("c", false, false, false, "int"); }
-  public void testPutInLambdaBodyMultipleOccurrences() { doTest("c", true, false, false, "java.lang.Class<?>"); }
-  public void testPutInLambdaBodyVoidValueConflict() { doTest("c", false, false, false, "int"); }
-  public void testPutInLambdaBodyVoid() { doTest("s", false, false, false, "java.lang.String"); }
-  public void testPutInNestedLambdaBody() { doTest("s", false, false, false, "java.lang.String"); }
-  public void testPutOuterLambda() { doTest("s", true, false, false, "java.lang.String"); }
+
+  public void testPutInLambdaBody() {
+    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("J: (Object a) -> {...}")));
+    doTest("c", false, false, false, "int");
+  }
+
+  public void testPutInLambdaBodyMultipleOccurrences() {
+    doTestReplaceAll("c", true, false, false, "java.lang.Class<?>");
+  }
+
+  public void testPutInLambdaBodyVoidValueConflict() {
+    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("I<String>: (a) -> {...}")));
+    doTest("c", false, false, false, "int");
+  }
+
+  public void testPutInLambdaBodyVoid() {
+    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Runnable: () -> {...}")));
+    doTest("s", false, false, false, "java.lang.String");
+  }
+
+  public void testPutInNestedLambdaBody() {
+    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Runnable: () -> {...}")));
+    doTest("s", false, false, false, "java.lang.String");
+  }
+
+  public void testPutOuterLambda() {
+    doTestReplaceAll("s", true, false, false, "java.lang.String");
+  }
+
   public void testNormalizeDeclarations() { doTest("i3", false, false, false, "int"); }
   public void testNoNameConflict() { doTest("cTest", false, false, false, "cTest"); }
   public void testMethodReferenceExpr() { doTest("m", false, false, false, "Foo.I"); }
@@ -358,16 +433,13 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testDenotableType3() { doTest("m", false, false, false, "java.util.function.IntFunction<java.lang.Class<?>[]>"); }
   public void testCapturedWildcardUpperBoundSuggestedAsType() { doTest("m", false, false, false, "I"); }
   public void testArrayOfCapturedWildcardUpperBoundSuggestedAsType() { doTest("m", false, false, false, "I[]"); }
-  public void testFieldFromLambda() { doTest("foo", false, false, true, "int"); }
+  public void testFieldFromLambda() {
+    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("IntSupplier: () -> {...}")));
+    doTest("foo", false, false, true, "int"); }
   public void testNestedAndOrParentheses() { doTest("foo", false, false, false, "boolean"); }
 
   public void testReturnNonExportedArray() {
-    doTest(new MockIntroduceVariableHandler("i", false, false, false, "java.io.File[]") {
-      @Override
-      protected boolean isInplaceAvailableInTestMode() {
-        return true;
-      }
-    });
+    doTest(new MockIntroduceVariableHandler("i", false, false, false, "java.io.File[]"));
   }
 
   public void testTypesHierarchyBasedOnCalledMethod() {
@@ -403,14 +475,8 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testAllButWriteNoRead() {
-    try {
-      doTest("x", true, false, false, "int");
-    }
-    catch (Exception e) {
-      assertEquals("Error message:No matching occurrences", e.getMessage());
-      return;
-    }
-    fail("Should not be able to perform refactoring");
+    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 2 occurrences (will change semantics!)")));
+    doTest("x", true, false, true, "int");
   }
 
   private void doTestWithVarType(IntroduceVariableBase testMe) {
@@ -422,6 +488,11 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     finally {
       JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE = asVarType;
     }
+  }
+
+  private void doTestReplaceAll(String newName, boolean replaceAll, boolean declareFinal, boolean replaceLValues, String typeText) {
+    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")));
+    doTest(newName, replaceAll, declareFinal, replaceLValues, typeText);
   }
 
   private void doTest(String name, boolean replaceAll, boolean declareFinal, boolean replaceLValues, String expectedTypeText) {
@@ -436,6 +507,9 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     String baseName = "/refactoring/introduceVariable/" + getTestName(false);
     configureByFile(baseName + ".java");
     testMe.invoke(getProject(), getEditor(), getFile(), null);
+    TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
+    if (state == null) return;
+    state.gotoEnd(false);
     checkResultByFile(baseName + ".after.java");
   }
 }

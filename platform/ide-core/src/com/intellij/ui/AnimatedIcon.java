@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +19,9 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import static com.intellij.ui.AnimatedIcon.Default.DELAY;
+import static com.intellij.ui.AnimatedIcon.Default.ICONS;
 
 public class AnimatedIcon implements Icon {
   private static final Logger LOG = Logger.getInstance(AnimatedIcon.class);
@@ -49,11 +53,10 @@ public class AnimatedIcon implements Icon {
   public static class Default extends AnimatedIcon {
 
     public Default() {
-      super(DELAY, ICONS.toArray(new Icon[0]));
+      super(DEFAULT_FRAMES);
     }
 
-    public static final int DELAY = 130;
-    public static final List<Icon> ICONS = List.of(
+    private static final Icon[] OLD_ICONS = {
       AllIcons.Process.Step_1,
       AllIcons.Process.Step_2,
       AllIcons.Process.Step_3,
@@ -61,7 +64,18 @@ public class AnimatedIcon implements Icon {
       AllIcons.Process.Step_5,
       AllIcons.Process.Step_6,
       AllIcons.Process.Step_7,
-      AllIcons.Process.Step_8);
+      AllIcons.Process.Step_8};
+    private static final Frame[] DEFAULT_FRAMES = getDefaultFrames();
+
+    private static Frame[] getDefaultFrames() {
+      if (Boolean.getBoolean("disable.new.spinning.icon")) {
+        return AnimatedIcon.getFrames(DELAY, OLD_ICONS);
+      }
+      return new SpinningProgressIcon().frames;
+    }
+
+    public static final int DELAY = 125;
+    public static final List<Icon> ICONS = ContainerUtil.map(getDefaultFrames(), frame -> frame.getIcon());
 
     public static final AnimatedIcon INSTANCE = new Default();
   }
@@ -71,7 +85,7 @@ public class AnimatedIcon implements Icon {
       super(DELAY, ICONS.toArray(new Icon[0]));
     }
 
-    public static final int DELAY = 130;
+    public static final int DELAY = 125;
     public static final List<Icon> ICONS = List.of(
       AllIcons.Process.Big.Step_1,
       AllIcons.Process.Big.Step_2,
@@ -183,7 +197,7 @@ public class AnimatedIcon implements Icon {
   }
 
 
-  private final Frame[] frames;
+  Frame[] frames;
   private final Set<Component> requested = Collections.newSetFromMap(new IdentityHashMap<>());
   private long time;
   private int index;
@@ -197,6 +211,15 @@ public class AnimatedIcon implements Icon {
     assert frames.length > 0 : "empty array";
     for (Frame frame : frames) assert frame != null : "null animation frame";
     time = System.currentTimeMillis();
+  }
+
+  AnimatedIcon() {
+    frames = createFrames();
+    time = System.currentTimeMillis();
+  }
+
+  protected Frame[] createFrames() {
+    return getFrames(DELAY, ICONS.toArray(new Icon[0]));
   }
 
   private static Frame[] getFrames(int delay, Icon @NotNull ... icons) {
@@ -228,15 +251,19 @@ public class AnimatedIcon implements Icon {
     time = current;
   }
 
+  protected Frame[] getFrames() {
+    return frames;
+  }
+
   @NotNull
   private Icon getUpdatedIcon() {
     int index = getCurrentIndex();
-    return frames[index].getIcon();
+    return getFrames()[index].getIcon();
   }
 
   private int getCurrentIndex() {
     long current = System.currentTimeMillis();
-    Frame frame = frames[index];
+    Frame frame = getFrames()[index];
     if (frame.getDelay() <= (current - time)) updateFrameAt(current);
     return index;
   }
@@ -246,7 +273,7 @@ public class AnimatedIcon implements Icon {
       return;
     }
 
-    Frame frame = frames[index];
+    Frame frame = getFrames()[index];
     int delay = frame.getDelay();
     if (delay > 0) {
       requested.add(c);

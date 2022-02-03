@@ -133,7 +133,7 @@ while true; do
   issues=$(python -c "import sys, json; print(json.load(sys.stdin)['issues'])" < "$developer_log")
   if [ "$issues" != "None" ] && [ "$issues" != "[]" ]; then
     log "Notarization has issues"
-    ec=1
+    ec=23
   fi
   if [ $ec != 0 ]; then
     log "Publishing $developer_log"

@@ -167,6 +167,7 @@ public final class PyConsoleUtil {
 
       @Override
       public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setVisible(false);
         Editor editor = consoleView.getConsoleEditor();
         if (LookupManager.getActiveLookup(editor) != null) {
           e.getPresentation().setEnabled(false);
@@ -179,9 +180,7 @@ public final class PyConsoleUtil {
       }
     };
 
-    runCompletions
-      .registerCustomShortcutSet(KeyEvent.VK_TAB, 0, consoleView.getConsoleEditor().getComponent());
-    runCompletions.getTemplatePresentation().setVisible(false);
+    runCompletions.registerCustomShortcutSet(KeyEvent.VK_TAB, 0, consoleView.getConsoleEditor().getComponent());
     return runCompletions;
   }
 
@@ -208,6 +207,7 @@ public final class PyConsoleUtil {
 
       @Override
       public void update(@NotNull final AnActionEvent e) {
+        e.getPresentation().setVisible(false);
         boolean enabled = false;
         EditorEx consoleEditor = consoleView.getConsoleEditor();
         if (IJSwingUtilities.hasFocus(consoleEditor.getComponent())) {
@@ -223,7 +223,6 @@ public final class PyConsoleUtil {
 
     anAction.registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK, consoleView.getConsoleEditor().getComponent());
     anAction.registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK, consoleView.getHistoryViewer().getComponent());
-    anAction.getTemplatePresentation().setVisible(false);
     return anAction;
   }
 

@@ -288,6 +288,12 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     checkResultWithGutter();
   }
 
+  public void testCustomFoldRegionInsideSelection() throws Exception {
+    initText("<selection>\ntext\n<caret></selection>");
+    addCustomLinesFolding(1, 1);
+    checkResult();
+  }
+
   private void addCustomLinesFolding(int startLine, int endLine) {
     FoldingModel foldingModel = getEditor().getFoldingModel();
     foldingModel.runBatchFoldingOperation(() -> foldingModel.addCustomLinesFolding(startLine, endLine, new OurCustomFoldRegionRenderer()));

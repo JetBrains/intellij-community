@@ -237,7 +237,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
     }
 
     @Override
-    public @Nullable Icon getIcon() {
+    public Icon getIcon() {
       return PlatformIcons.FOLDER_ICON;
     }
 

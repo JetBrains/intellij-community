@@ -3,11 +3,12 @@ package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.cache.AsyncRecoveryResult
+import com.intellij.ide.actions.cache.ProjectRecoveryScope
+import com.intellij.ide.actions.cache.RecoveryScope
 import com.intellij.ide.actions.cache.RecoveryAction
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.platform.PlatformProjectOpenProcessor
 import java.nio.file.Files
@@ -22,7 +23,8 @@ class WorkspaceModelRecoveryAction : RecoveryAction {
   override val actionKey: String
     get() = "reload-workspace-model"
 
-  override fun perform(project: Project): CompletableFuture<AsyncRecoveryResult> {
+  override fun perform(recoveryScope: RecoveryScope): CompletableFuture<AsyncRecoveryResult> {
+    val project = recoveryScope.project
     val file = Paths.get(project.basePath!!)
     WorkspaceModelCacheImpl.invalidateCaches()
     ApplicationManager.getApplication().invokeAndWait {
@@ -31,10 +33,10 @@ class WorkspaceModelRecoveryAction : RecoveryAction {
     val result = CompletableFuture<AsyncRecoveryResult>()
     ApplicationManager.getApplication().invokeLater({
       val projectFuture = ProjectUtil.openOrImportAsync(file, PlatformProjectOpenProcessor.createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, null))
-      projectFuture.handle { r, th -> if (th == null) result.complete(AsyncRecoveryResult(r!!, emptyList())) else result.completeExceptionally(th)};
+      projectFuture.handle { r, th -> if (th == null) result.complete(AsyncRecoveryResult(ProjectRecoveryScope(r!!), emptyList())) else result.completeExceptionally(th)};
     }, ModalityState.NON_MODAL)
     return result
   }
 
-  override fun canBeApplied(project: Project): Boolean = project.basePath?.let { Files.isDirectory(Paths.get(it)) } == true
+  override fun canBeApplied(recoveryScope: RecoveryScope): Boolean = recoveryScope is ProjectRecoveryScope && recoveryScope.project.basePath?.let { Files.isDirectory(Paths.get(it)) } == true
 }

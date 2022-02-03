@@ -7,11 +7,9 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.cache.impl.IndexPatternUtil;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
-import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -49,13 +47,13 @@ public class PyIndexingTest extends PyTestCase {
   }
 
   private static List<VirtualFile> getTodoFiles(@NotNull Project project) {
-    final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
     List<VirtualFile> files = new ArrayList<>();
-    for (IndexPattern indexPattern : IndexPatternUtil.getIndexPatterns()) {
-      files.addAll(fileBasedIndex.getContainingFiles(
-        TodoIndex.NAME,
-        new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), GlobalSearchScope.allScope(project)));
-    }
+    ManagingFS fs = ManagingFS.getInstance();
+    FileBasedIndex.getInstance().processAllKeys(TodoIndex.NAME, fileId -> {
+      VirtualFile file = fs.findFileById(fileId);
+      if (file != null) files.add(file);
+      return true;
+    }, GlobalSearchScope.allScope(project), null);
     return files;
   }
 

@@ -66,7 +66,8 @@ class MavenArtifactsBuilder {
           def javaSourceRoots = aModule.getSourceRoots(JavaSourceRootType.SOURCE).toList()
           def javaResourceRoots = aModule.getSourceRoots(JavaResourceRootType.RESOURCE).toList()
           def hasSources = !(javaSourceRoots.isEmpty() && javaResourceRoots.isEmpty())
-          ant.jar(name: artifactData.coordinates.getFileName("", "jar"), duplicate: "fail", whenmanifestonly: "create") {
+          ant.jar(name: artifactData.coordinates.getFileName("", "jar"), duplicate: "fail",
+                  filesetmanifest: "merge", whenmanifestonly: "create") {
             if (hasSources) {
               module(aModule.name)
             }

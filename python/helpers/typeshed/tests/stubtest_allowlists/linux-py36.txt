@@ -1,4 +1,12 @@
 ctypes.wintypes
+ftplib.FTP.trust_server_pasv_ipv4_address  # Dangerous to use, intentionally undocumented, intentionally missing from typeshed. #6154
 pwd.getpwnam
 ssl.PROTOCOL_SSLv3  # Depends on openssl compilation
 ssl.RAND_egd  # Depends on openssl compilation
+
+# Exists at runtime, but missing from stubs
+ntpath.splitunc
+posix.stat_float_times
+ssl.OP_ENABLE_MIDDLEBOX_COMPAT
+ssl.Options.OP_ENABLE_MIDDLEBOX_COMPAT
+uuid.lib

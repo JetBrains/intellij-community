@@ -204,12 +204,12 @@ runner = DocTestRunner()
 
 
 def _load_file(moduleName, fileName):
-  if sys.version_info >= (3, 3):
-      from importlib import machinery
-      return machinery.SourceFileLoader(moduleName, fileName).load_module()
-  else:
-    import imp
-    return imp.load_source(moduleName, fileName)
+    if sys.version_info >= (3, 5):
+        import importlib
+        return importlib.import_module(moduleName, fileName)
+    else:
+        import imp
+        return imp.load_source(moduleName, fileName)
 
 def loadSource(fileName):
   """

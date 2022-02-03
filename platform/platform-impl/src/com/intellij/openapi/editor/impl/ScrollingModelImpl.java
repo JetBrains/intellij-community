@@ -16,10 +16,14 @@ import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.components.Interpolable;
+import com.intellij.util.MathUtil;
+import com.intellij.util.animation.Animations;
+import com.intellij.util.animation.Easing;
+import com.intellij.util.animation.JBAnimator;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.Animator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -336,13 +340,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     }
     else {
       VisibleEditorsTracker editorTracker = VisibleEditorsTracker.getInstance();
-      if (editorTracker.getCurrentCommandStart() - editorTracker.getLastCommandFinish() <
-          AnimatedScrollingRunnable.SCROLL_DURATION) {
-        useAnimation = false;
-      }
-      else {
-        useAnimation = editorTracker.wasEditorVisibleOnCommandStart(editor);
-      }
+      useAnimation = editorTracker.wasEditorVisibleOnCommandStart(editor);
     }
 
     cancelAnimatedScrolling(false);
@@ -436,8 +434,6 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
   }
 
   private final class AnimatedScrollingRunnable {
-    private static final int SCROLL_DURATION = 100;
-    private static final int SCROLL_INTERVAL = 10;
 
     private final int myStartHOffset;
     private final int myStartVOffset;
@@ -446,12 +442,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
 
     private final ArrayList<Runnable> myPostRunnables = new ArrayList<>();
 
-    private final int myMaxDistToScroll;
-    private final double myTotalDist;
-
-    private final int myStepCount;
-    private final double myPow;
-    private final Animator myAnimator;
+    private final JBAnimator myAnimator;
 
     AnimatedScrollingRunnable(int startHOffset,
                                      int startVOffset,
@@ -462,48 +453,37 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
       myEndHOffset = endHOffset;
       myEndVOffset = endVOffset;
 
+      myAnimator = new JBAnimator()
+        .setPeriod(4);
+      myAnimator.animate(
+        Animations
+          .animation((fraction) -> {
+            final int hOffset = (int)(myStartHOffset + (myEndHOffset - myStartHOffset) * fraction + 0.5);
+            final int vOffset = (int)(myStartVOffset + (myEndVOffset - myStartVOffset) * fraction + 0.5);
+
+            _scrollHorizontally(hOffset);
+            _scrollVertically(vOffset);
+          })
+          .setDuration(getScrollDuration())
+          .setEasing(Easing.EASE_OUT)
+          .runWhenExpired(() -> finish(true))
+      );
+    }
+
+    int getScrollDuration() {
+      var defaultDuration = Registry.intValue("idea.editor.smooth.scrolling.navigation.duration", 100);
+      if (defaultDuration < 0) {
+        return 0;
+      }
+      // old calculation for animation duration decreasing
       int HDist = Math.abs(myEndHOffset - myStartHOffset);
       int VDist = Math.abs(myEndVOffset - myStartVOffset);
+      double totalDist = Math.hypot(HDist, VDist);
 
-      Editor editor = mySupplier.getEditor();
-      myMaxDistToScroll = editor.getLineHeight() * 50;
-      myTotalDist = Math.sqrt((double)HDist * HDist + (double)VDist * VDist);
-      double scrollDist = Math.min(myTotalDist, myMaxDistToScroll);
-      int animationDuration = calcAnimationDuration();
-      if (animationDuration < SCROLL_INTERVAL * 2) {
-        throw new NoAnimationRequiredException();
-      }
-      myStepCount = animationDuration / SCROLL_INTERVAL - 1;
-      double firstStepTime = 1.0 / myStepCount;
-      double firstScrollDist = 5.0;
-      if (myTotalDist > scrollDist) {
-        firstScrollDist *= myTotalDist / scrollDist;
-        firstScrollDist = Math.min(firstScrollDist, editor.getLineHeight() * 5);
-      }
-      myPow = scrollDist > 0 ? setupPow(firstStepTime, firstScrollDist / scrollDist) : 1;
-
-      myAnimator = new Animator("Animated scroller", myStepCount, SCROLL_DURATION, false, true) {
-        @Override
-        public void paintNow(int frame, int totalFrames, int cycle) {
-          double time = (frame + 1.0) / totalFrames;
-          double fraction = timeToFraction(time);
-
-          final int hOffset = (int)(myStartHOffset + (myEndHOffset - myStartHOffset) * fraction + 0.5);
-          final int vOffset = (int)(myStartVOffset + (myEndVOffset - myStartVOffset) * fraction + 0.5);
-
-          _scrollHorizontally(hOffset);
-          _scrollVertically(vOffset);
-        }
-
-        @Override
-        protected void paintCycleEnd() {
-          if (!isDisposed()) { // Animator will invoke paintCycleEnd() even if it was disposed
-            finish(true);
-          }
-        }
-      };
-
-      myAnimator.resume();
+      int lineHeight = mySupplier.getEditor().getLineHeight();
+      double lineDist = totalDist / lineHeight;
+      double part = MathUtil.clamp((lineDist - 1) / 10, 0, 1);
+      return (int)Math.round(part * defaultDuration);
     }
 
     @NotNull
@@ -538,35 +518,6 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
       for (Runnable runnable : myPostRunnables) {
         runnable.run();
       }
-    }
-
-    private double timeToFraction(double time) {
-      if (time > 0.5) {
-        return 1 - timeToFraction(1 - time);
-      }
-
-      double fraction = Math.pow(time * 2, myPow) / 2;
-
-      if (myTotalDist > myMaxDistToScroll) {
-        fraction *= myMaxDistToScroll / myTotalDist;
-      }
-
-      return fraction;
-    }
-
-    private double setupPow(double inTime, double moveBy) {
-      double pow = Math.log(2 * moveBy) / Math.log(2 * inTime);
-      if (pow < 1) pow = 1;
-      return pow;
-    }
-
-    private int calcAnimationDuration() {
-      int lineHeight = mySupplier.getEditor().getLineHeight();
-      double lineDist = myTotalDist / lineHeight;
-      double part = (lineDist - 1) / 10;
-      if (part > 1) part = 1;
-      //System.out.println("duration = " + duration);
-      return (int)(part * SCROLL_DURATION);
     }
   }
 

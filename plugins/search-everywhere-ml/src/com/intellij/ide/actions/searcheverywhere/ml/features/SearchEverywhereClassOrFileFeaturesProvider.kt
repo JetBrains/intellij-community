@@ -20,8 +20,8 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.textMatching.PrefixMatchingUtil
 import com.intellij.util.Time
 
-abstract class SearchEverywhereClassOrFileFeaturesProvider(supportedTab: Class<out SearchEverywhereContributor<*>>)
-  : SearchEverywhereElementFeaturesProvider(supportedTab) {
+abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: Class<out SearchEverywhereContributor<*>>)
+  : SearchEverywhereElementFeaturesProvider(*supportedTab) {
   companion object {
     internal const val IS_SAME_MODULE_DATA_KEY = "isSameModule"
     internal const val PACKAGE_DISTANCE_DATA_KEY = "packageDistance"
@@ -67,7 +67,7 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(supportedTab: Class<o
 
     cache as Cache?
     val file = getContainingFile(item)
-    val project = item.project
+    val project = ReadAction.compute<Project, Nothing> { item.project }
 
     val data = HashMap<String, Any>()
     if (file != null && cache != null) {
@@ -185,9 +185,10 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(supportedTab: Class<o
 
     val (openedFilePackage, foundFilePackage) = ReadAction.compute<Pair<String?, String?>, Nothing> {
       val fileIndex = ProjectRootManager.getInstance(project).fileIndex
+      val openedFileDirectory = openedFile.parent.takeIf { it.isDirectory }  // Parents of some files may still not be directories
       val foundFileDirectory = if (file.isDirectory) file else file.parent
 
-      val openedFilePackageName = openedFile.parent?.let { fileIndex.getPackageNameByDirectory(it) }
+      val openedFilePackageName = openedFileDirectory?.let { fileIndex.getPackageNameByDirectory(it) }
       val foundFilePackageName = foundFileDirectory?.let { fileIndex.getPackageNameByDirectory(it) }
 
       Pair(openedFilePackageName, foundFilePackageName)
@@ -242,26 +243,6 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(supportedTab: Class<o
         IS_EXCLUDED_DATA_KEY to fileIndex.isExcluded(file),
       )
     }
-  }
-
-  protected fun getNameMatchingFeatures(nameOfFoundElement: String, searchQuery: String): Map<String, Any> {
-    fun changeToCamelCase(str: String): String {
-      val words = str.split('_')
-      val firstWord = words.first()
-      if (words.size == 1) {
-        return firstWord
-      } else {
-        return firstWord.plus(
-          words.subList(1, words.size)
-            .joinToString(separator = "") { s -> s.replaceFirstChar { it.uppercaseChar() } }
-        )
-      }
-    }
-
-    val features = mutableMapOf<String, Any>()
-    PrefixMatchingUtil.calculateFeatures(nameOfFoundElement, searchQuery, features)
-    return features.mapKeys { changeToCamelCase(it.key) }  // Change snake case to camel case for consistency with other feature names.
-      .mapValues { if (it.value is Double) roundDouble(it.value as Double) else it.value }
   }
 
   protected data class Cache(val fileTypeStats: Map<String, FileTypeUsageSummary>, val openedFile: VirtualFile?)

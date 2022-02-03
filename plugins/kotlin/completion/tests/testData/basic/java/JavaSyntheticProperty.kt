@@ -1,5 +1,4 @@
 // FIR_COMPARISON
-
 fun foo(a: java.lang.Thread) {
     a.na<caret>
 }

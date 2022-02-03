@@ -240,11 +240,6 @@ public class DaemonsUi implements Disposable {
         myWidth = width;
       }
 
-      @Override
-      public boolean isCellEditable(DaemonState daemonState) {
-        return false;
-      }
-
       @Nullable
       @Override
       protected String getDescription(DaemonState daemonState) {

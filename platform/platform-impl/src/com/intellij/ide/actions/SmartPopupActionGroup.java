@@ -16,22 +16,20 @@ import org.jetbrains.annotations.NotNull;
  */
 public class SmartPopupActionGroup extends DefaultActionGroup implements DumbAware, UpdateInBackground {
 
-  private boolean myCachedIsPopup = true;
-
   protected int getChildrenCountThreshold() {
     return 2;
   }
 
   @Override
   public boolean isPopup() {
-    return myCachedIsPopup; // called after update()
+    return false;
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     int size = ActionGroupUtil.getVisibleActions(this, e).take(getChildrenCountThreshold() + 1).size();
     e.getPresentation().setEnabledAndVisible(size > 0);
-    myCachedIsPopup = size > getChildrenCountThreshold();
+    e.getPresentation().setPopupGroup(size > getChildrenCountThreshold());
   }
 
   @Override

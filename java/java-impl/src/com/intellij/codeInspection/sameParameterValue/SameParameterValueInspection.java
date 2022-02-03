@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sameParameterValue;
 
 import com.intellij.analysis.AnalysisScope;
@@ -25,15 +25,14 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.ui.components.fields.valueEditors.ValueEditor;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
@@ -234,7 +233,6 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     if (usedForWriting) return false;
     PsiParameter javaParameter = ObjectUtils.tryCast(parameter.getSourcePsi(), PsiParameter.class);
     if (javaParameter == null) return null;
-    if (javaParameter.isVarArgs()) return false;
     if (value instanceof PsiField && !PsiUtil.isMemberAccessibleAt((PsiMember)value, javaParameter)) {
       return false;
     }
@@ -319,7 +317,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       Map<PsiParameter, Collection<PsiReference>> paramsToInline = new HashMap<>();
       for (PsiMethod psiMethod : methods) {
         PsiParameter psiParameter = psiMethod.getParameterList().getParameters()[parameterIndex];
-        JavaSafeDeleteProcessor.collectMethodConflicts(conflicts, psiMethod, psiParameter);
+        JavaSpecialRefactoringProvider.getInstance().collectMethodConflicts(conflicts, psiMethod, psiParameter);
         final Collection<PsiReference> refsToInline = ReferencesSearch.search(psiParameter).findAll();
         for (PsiReference reference : refsToInline) {
           PsiElement referenceElement = reference.getElement();
@@ -340,12 +338,12 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
             int idx = 0;
             for (PsiReference reference : refsToInline) {
               if (reference instanceof PsiJavaCodeReferenceElement) {
-                exprs[idx++] = InlineUtil.inlineVariable(entry.getKey(), defToInline, (PsiJavaCodeReferenceElement)reference);
+                exprs[idx++] = JavaSpecialRefactoringProvider.getInstance().inlineVariable(entry.getKey(), defToInline, (PsiJavaCodeReferenceElement)reference, null);
               }
             }
 
             for (final PsiExpression expr : exprs) {
-              if (expr != null) InlineUtil.tryToInlineArrayCreationForVarargs(expr);
+              if (expr != null) CommonJavaRefactoringUtil.tryToInlineArrayCreationForVarargs(expr);
             }
           }
           catch (IncorrectOperationException e) {
@@ -369,8 +367,12 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
         paramIdx++;
       }
 
-      new ChangeSignatureProcessor(method.getProject(), method, false, null, method.getName(), method.getReturnType(),
-                                   psiParameters.toArray(new ParameterInfoImpl[0])).run();
+      var provider = JavaSpecialRefactoringProvider.getInstance();
+      var processor = provider.getChangeSignatureProcessorWithCallback(
+        method.getProject(), method, false, null, method.getName(), method.getReturnType(),
+        psiParameters.toArray(new ParameterInfoImpl[0]), true, null
+      );
+      processor.run();
     }
 
     public String getParamName() {

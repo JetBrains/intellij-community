@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.hover;
 
 import com.intellij.openapi.util.Key;
@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JTable;
 import javax.swing.JTree;
+import javax.swing.JViewport;
 import java.awt.Component;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -65,9 +66,14 @@ public abstract class TableHoverListener extends HoverListener {
     int rowOld = getHoveredRow(table);
     if (rowNew == rowOld) return;
     table.putClientProperty(HOVERED_ROW_KEY, rowNew < 0 ? null : rowNew);
-    if (RenderingUtil.isHoverPaintingDisabled(table)) return;
-    repaintRow(table, rowOld, 0);
-    repaintRow(table, rowNew, 0);
+    // tables without scroll pane do not repaint rows correctly (BasicTableUI.paint:1868-1872)
+    if (table.getParent() instanceof JViewport) {
+      repaintRow(table, rowOld);
+      repaintRow(table, rowNew);
+    }
+    else {
+      table.repaint();
+    }
   }
 
   /**
@@ -80,8 +86,8 @@ public abstract class TableHoverListener extends HoverListener {
     return property instanceof Integer ? (Integer)property : -1;
   }
 
-  private static void repaintRow(@NotNull JTable table, int row, int column) {
-    Rectangle bounds = row < 0 ? null : table.getCellRect(row, column, false);
+  private static void repaintRow(@NotNull JTable table, int row) {
+    Rectangle bounds = row < 0 ? null : table.getCellRect(row, 0, false);
     if (bounds != null) table.repaint(0, bounds.y, table.getWidth(), bounds.height);
   }
 }

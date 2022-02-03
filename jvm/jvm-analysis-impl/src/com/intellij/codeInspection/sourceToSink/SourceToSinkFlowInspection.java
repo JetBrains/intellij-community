@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.UntaintedAnnotationProvider;
 import com.intellij.codeInspection.restriction.AnnotationContext;
 import com.intellij.codeInspection.restriction.StringFlowUtil;
 import com.intellij.codeInspection.sourceToSink.propagate.PropagateFix;
@@ -19,6 +20,11 @@ public class SourceToSinkFlowInspection extends AbstractBaseJavaLocalInspectionT
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (JavaPsiFacade.getInstance(holder.getProject()).findClass(UntaintedAnnotationProvider.DEFAULT_TAINTED_ANNOTATION,
+                                                                 holder.getFile().getResolveScope()) == null) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
+
     return new PsiElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {

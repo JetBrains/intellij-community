@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.action;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.JBTerminalWidget;
@@ -13,8 +12,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public class TerminalClearBufferAction extends TerminalBaseContextAction {
 
-  public TerminalClearBufferAction() {
-    getTemplatePresentation().setEnabledAndVisible(false);
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(false);
   }
 
   @Override

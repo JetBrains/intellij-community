@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Version
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GroovyDslGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedJavaLibraryPlugin
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedTaskConfigurationAvoidance
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.io.File
@@ -21,13 +22,31 @@ open class TestGradleBuildScriptBuilder(
   fun applyPlugin(plugin: String) =
     withPrefix { call("apply", argument("plugin", code(plugin))) }
 
-  fun withTask(name: String, type: String? = null, configure: ScriptTreeBuilder.() -> Unit = {}) =
+  fun withTask(name: String) = withTask(name, null)
+  fun withTask(name: String, type: String?) = withTask(name, type, null)
+  fun withTask(name: String, type: String?, dependsOn: String?) = withTask(name, type, dependsOn) {}
+  fun withTask(name: String, configure: ScriptTreeBuilder.() -> Unit) = withTask(name, null, configure)
+  fun withTask(name: String, type: String?, configure: ScriptTreeBuilder.() -> Unit) = withTask(name, type, null, configure)
+  fun withTask(name: String, type: String?, dependsOn: String?, configure: ScriptTreeBuilder.() -> Unit) =
     withPostfix {
-      when (type) {
-        null -> call("tasks.create", string(name), configure = configure)
-        else -> call("tasks.create", string(name), code(type), configure = configure)
+      val arguments = listOfNotNull(
+        argument(name),
+        type?.let { argument(code(it)) },
+      )
+      call("tasks.create", arguments) {
+        if (dependsOn != null) {
+          call("dependsOn", dependsOn)
+        }
+        configure()
       }
     }
+
+  fun registerTask(name: String, configure: ScriptTreeBuilder.() -> Unit) = apply {
+    assert(isSupportedTaskConfigurationAvoidance(gradleVersion))
+    withPostfix {
+      call("tasks.register", name, configure = configure)
+    }
+  }
 
   // Note: These are Element building functions
   fun project(name: String) = call("project", name)

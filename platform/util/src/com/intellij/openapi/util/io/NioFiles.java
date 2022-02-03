@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -19,6 +20,18 @@ import static java.nio.file.attribute.PosixFilePermission.*;
  */
 public final class NioFiles {
   private NioFiles() { }
+
+  /**
+   * A stream-friendly wrapper around {@link Paths#get} that turns {@link InvalidPathException} into {@code null}.
+   */
+  public static @Nullable Path toPath(@NotNull String path) {
+    try {
+      return Paths.get(path);
+    }
+    catch (InvalidPathException e) {
+      return null;
+    }
+  }
 
   /**
    * A null-safe replacement for {@link Path#getFileName} + {@link Path#toString} combination

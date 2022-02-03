@@ -2,7 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.openapi.project.Project
 
-internal sealed class TargetModules(
+sealed class TargetModules(
     open val modules: List<ModuleModel>,
     open val isMixedBuildSystems: Boolean
 ) : Collection<ModuleModel> by modules {
@@ -14,7 +14,7 @@ internal sealed class TargetModules(
             .sorted()
 
     fun defaultScope(project: Project): PackageScope =
-        if (!isMixedBuildSystems) {
+        if (!isMixedBuildSystems && this !is None) {
             PackageScope.from(modules.first().projectModule.moduleType.defaultScope(project))
         } else {
             PackageScope.Missing

@@ -3,10 +3,13 @@ package com.intellij.lang.properties.codeInspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class UseEllipsisInPropertyInspectionTest extends LightPlatformCodeInsightFixture4TestCase {
@@ -25,6 +28,8 @@ public class UseEllipsisInPropertyInspectionTest extends LightPlatformCodeInsigh
 
   @Test
   public void testSimple() {
+    EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, StandardCharsets.UTF_8);
+    UIUtil.dispatchAllInvocationEvents();
     String filePath = "threeDots.properties";
     myFixture.configureByFile(filePath);
 

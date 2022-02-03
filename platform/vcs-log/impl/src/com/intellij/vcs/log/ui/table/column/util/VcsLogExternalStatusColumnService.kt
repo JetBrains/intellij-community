@@ -19,6 +19,7 @@ import com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn
 import com.intellij.vcs.log.ui.table.column.isVisible
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.onClosed
 import kotlinx.coroutines.flow.*
 import javax.swing.JScrollPane
 import javax.swing.JTable
@@ -105,7 +106,9 @@ abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : 
 
     private fun JTable.modelChangedFlow(): Flow<Unit> =
       callbackFlow {
-        val emit = { offer(Unit) }
+        val emit: () -> Unit = {
+          trySend(Unit).onClosed { throw IllegalStateException(it) }
+        }
         val listener = TableModelListener {
           if (it.column == TableModelEvent.ALL_COLUMNS) emit()
         }
@@ -130,7 +133,7 @@ abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : 
       val scrollPane = viewport.parent as? JScrollPane ?: return emptyFlow()
 
       val flow = callbackFlow {
-        val emit = { offer(getVisibleRows()) }
+        val emit: () -> Unit = { trySend(getVisibleRows()).onClosed { throw IllegalStateException(it) } }
         val listener = ChangeListener { emit() }
 
         emit() // initial value

@@ -51,16 +51,10 @@ public class HighlightingAnnotator extends PyAnnotator {
     if (!node.isQualified() && referencedName != null) {
       PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class);
       if (function != null) {
-        PyNamedParameter element = function.getParameterList().findParameterByName(referencedName);
+        PyNamedParameter element = findParameterRecursively(function, referencedName);
         if (element != null) {
           final TextAttributesKey attrKey = element.isSelf() ? PyHighlighter.PY_SELF_PARAMETER : PyHighlighter.PY_PARAMETER;
           addHighlightingAnnotation(node, attrKey);
-        }
-        else {
-          element = findParameterRecursively(function, referencedName);
-          if (element != null && element.isSelf()) {
-            addHighlightingAnnotation(node, PyHighlighter.PY_SELF_PARAMETER);
-          }
         }
       }
     }

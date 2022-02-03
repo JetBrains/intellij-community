@@ -15,6 +15,7 @@ import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ObjectUtils
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.util.function.Consumer
@@ -140,13 +141,9 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
         row(ApplicationBundle.message("settings.editor.font.bold.weight")) {
           val component = createBoldWeightCombo()
           boldWeightCombo = component
-          cell(component)
-        }
-        row {
           val boldFontHint = createBoldFontHint()
-          if (boldFontHint != null) {
-            cell(boldFontHint)
-          }
+          cell(component)
+            .comment(boldFontHint.first, DEFAULT_COMMENT_WIDTH, boldFontHint.second)
         }.bottomGap(BottomGap.SMALL)
       }
 
@@ -154,14 +151,13 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
       setSecondaryFontLabel(secondaryFont)
       row(secondaryFont) {
         cell(secondaryCombo)
-      }
-      row {
-        comment(ApplicationBundle.message("label.fallback.fonts.list.description"))
+          .comment(ApplicationBundle.message("label.fallback.fonts.list.description"))
       }
     }
   }
 
-  protected open fun createBoldFontHint() : JComponent? = null
+  protected open fun createBoldFontHint(): Pair<@Nls String?, HyperlinkEventAction> =
+    Pair(null, HyperlinkEventAction.HTML_HYPERLINK_INSTANCE)
 
   private fun createRegularWeightCombo(): FontWeightCombo {
     val result = RegularFontWeightCombo()

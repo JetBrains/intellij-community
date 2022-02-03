@@ -91,6 +91,9 @@ class InspectionRunner {
                                                      @NotNull BiPredicate<? super ProblemDescriptor, ? super LocalInspectionToolWrapper> applyIncrementallyCallback,
                                                      @NotNull Consumer<? super InspectionContext> afterInsideProcessedCallback,
                                                      @NotNull Consumer<? super InspectionContext> afterOutsideProcessedCallback) {
+    if (!shouldRun()) {
+      return Collections.emptyList();
+    }
     List<Divider.DividedElements> allDivided = new ArrayList<>();
     Divider.divideInsideAndOutsideAllRoots(myPsiFile, myRestrictRange, myPriorityRange,
                                            file -> HighlightingLevelManager.getInstance(file.getProject()).shouldInspect(file), new CommonProcessors.CollectProcessor<>(allDivided));
@@ -463,5 +466,11 @@ class InspectionRunner {
         }
       }
     }
+  }
+
+  private boolean shouldRun() {
+    HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(myPsiFile.getProject());
+    // for ESSENTIAL mode, it depends on the current phase: when we run regular LocalInspectionPass then don't, when we run Save All handler then run everything
+    return highlightingLevelManager.shouldInspect(myPsiFile) && !highlightingLevelManager.runEssentialHighlightingOnly(myPsiFile);
   }
 }

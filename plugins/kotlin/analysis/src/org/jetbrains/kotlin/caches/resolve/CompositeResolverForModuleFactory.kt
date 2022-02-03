@@ -112,7 +112,13 @@ class CompositeResolverForModuleFactory(
             yieldAll(getExtensionsProvidersIfAny(moduleInfo, moduleContext, trace))
         }.toList()
 
-        return ResolverForModule(CompositePackageFragmentProvider(packageFragmentProviders), container)
+        return ResolverForModule(
+            CompositePackageFragmentProvider(
+                packageFragmentProviders,
+                "CompositeProvider@CompositeResolver for $moduleDescriptor"
+            ),
+            container
+        )
     }
 
     private fun getCommonProvidersIfAny(
@@ -272,8 +278,8 @@ class CompositePlatformConfigurator(private val componentConfigurators: List<Pla
             }
         }
 
-    override fun configureModuleComponents(container: StorageComponentContainer, languageVersionSettings: LanguageVersionSettings) {
-        componentConfigurators.forEach { it.configureModuleComponents(container, languageVersionSettings) }
+    override fun configureModuleComponents(container: StorageComponentContainer) {
+        componentConfigurators.forEach { it.configureModuleComponents(container) }
     }
 
     override fun configureModuleDependentCheckers(container: StorageComponentContainer) {

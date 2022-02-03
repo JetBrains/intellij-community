@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.ide.BrowserUtil;
@@ -552,7 +552,7 @@ public class SwingHelper {
           }
         }
       };
-      textPane.setFont(myFont != null ? myFont : UIUtil.getLabelFont());
+      textPane.setFont(myFont != null ? myFont : StartupUiUtil.getLabelFont());
       textPane.setEditorKit(HTMLEditorKitBuilder.simple());
       textPane.setEditable(false);
       if (myBackground != null) {
@@ -614,7 +614,7 @@ public class SwingHelper {
       textPane = new JEditorPane();
     }
     GraphicsUtil.setAntialiasingType(textPane, AntialiasingType.getAAHintForSwingComponent());
-    textPane.setFont(font != null ? font : UIUtil.getLabelFont());
+    textPane.setFont(font != null ? font : StartupUiUtil.getLabelFont());
     textPane.setEditorKit(HTMLEditorKitBuilder.simple());
     textPane.setEditable(false);
     if (background != null) {
@@ -763,7 +763,7 @@ public class SwingHelper {
   public static @NotNull JEditorPane createHtmlLabel(@NotNull @Nls String bodyInnerHtml,
                                                      @Nullable @Nls String disabledBodyInnerHtml,
                                                      @Nullable Consumer<? super String> hyperlinkListener) {
-    final Font font = UIUtil.getLabelFont();
+    final Font font = StartupUiUtil.getLabelFont();
     String html = buildHtml(
       UIUtil.getCssFontDeclaration(font, UIUtil.getActiveTextColor(), null, null),
       bodyInnerHtml
@@ -775,7 +775,7 @@ public class SwingHelper {
 
     final JEditorPane pane = new SwingHelper.HtmlViewerBuilder()
       .setCarryTextOver(false)
-      .setFont(UIUtil.getLabelFont())
+      .setFont(StartupUiUtil.getLabelFont())
       .setDisabledHtml(disabledHtml)
       .create();
     pane.setText(html);

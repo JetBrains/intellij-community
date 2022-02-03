@@ -1,13 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
 import org.junit.platform.commons.util.AnnotationUtils;
+import org.junit.platform.commons.util.ReflectionUtils;
 import org.junit.platform.engine.DiscoverySelector;
-import org.junit.platform.engine.discovery.ClassNameFilter;
-import org.junit.platform.engine.discovery.ClasspathRootSelector;
-import org.junit.platform.engine.discovery.DiscoverySelectors;
-import org.junit.platform.engine.discovery.PackageNameFilter;
+import org.junit.platform.engine.FilterResult;
+import org.junit.platform.engine.TestDescriptor;
+import org.junit.platform.engine.TestSource;
+import org.junit.platform.engine.discovery.*;
+import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.PostDiscoveryFilter;
 import org.junit.platform.launcher.TagFilter;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 
@@ -23,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class JUnit5TestRunnerUtil {
   private static final String[] DISABLED_ANNO = {"org.junit.jupiter.api.Disabled"};
@@ -69,19 +73,28 @@ public class JUnit5TestRunnerUtil {
 
           List<DiscoverySelector> selectors = new ArrayList<>();
           while ((line = reader.readLine()) != null) {
-            DiscoverySelector selector = createSelector(line);
+            DiscoverySelector selector = createSelector(line, null);
             if (selector != null) {
               selectors.add(selector);
             }
           }
+          if (hasBrokenSelector(selectors)) {
+            builder.filters(createMethodFilter(new ArrayList<>(selectors)));
+            for (int i = 0; i < selectors.size(); i++) {
+              DiscoverySelector selector = selectors.get(i);
+              if (selector instanceof MethodSelector) {
+                selectors.set(i, createClassSelector(((MethodSelector)selector).getClassName()));
+              }
+            }
+          }
           packageNameRef[0] = packageName.length() == 0 ? "<default package>" : packageName;
           if (selectors.isEmpty()) {
-            builder = builder.selectors(DiscoverySelectors.selectPackage(packageName));
+            builder.selectors(DiscoverySelectors.selectPackage(packageName));
           }
           else {
-            builder = builder.selectors(selectors);
+            builder.selectors(selectors);
             if (!packageName.isEmpty()) {
-              builder = builder.filters(PackageNameFilter.includePackageNames(packageName));
+              builder.filters(PackageNameFilter.includePackageNames(packageName));
             }
           }
           if (filters != null && !filters.isEmpty()) {
@@ -96,11 +109,10 @@ public class JUnit5TestRunnerUtil {
                 }
               }
             }
-            builder = builder.filters(ClassNameFilter.includeClassNamePatterns(classNames));
+            builder.filters(ClassNameFilter.includeClassNamePatterns(classNames));
           }
           if (tags != null && !tags.isEmpty()) {
-            builder = builder
-              .filters(TagFilter.includeTags(tags.split(" ")));
+            builder.filters(TagFilter.includeTags(tags.split(" ")));
           }
           return builder.filters(ClassNameFilter.excludeClassNamePatterns("com\\.intellij\\.rt.*", "com\\.intellij\\.junit3.*")).build();
         }
@@ -119,12 +131,80 @@ public class JUnit5TestRunnerUtil {
         builder = builder.configurationParameter("junit.jupiter.conditions.deactivate", disableDisabledCondition);
       }
 
-      DiscoverySelector selector = createSelector(suiteClassNames[0]);
+      DiscoverySelector selector = createSelector(suiteClassNames[0], packageNameRef);
+      if (selector instanceof MethodSelector) {
+        try {
+          ((MethodSelector)selector).getJavaMethod();
+        }
+        catch (Throwable e) {
+          DiscoverySelector classSelector = createClassSelector(((MethodSelector)selector).getClassName());
+          DiscoverySelector methodSelector = classSelector instanceof NestedClassSelector
+                                ? DiscoverySelectors.selectMethod(((NestedClassSelector)classSelector).getNestedClassName(),
+                                                                  ((MethodSelector)selector).getMethodName())
+                                : selector;
+          builder.filters(createMethodFilter(Collections.singletonList(methodSelector)));
+          selector = classSelector;
+        }
+      }
       assert selector != null : "selector by class name is never null";
       return builder.selectors(selector).build();
     }
 
     return null;
+  }
+
+  private static boolean hasBrokenSelector(List<DiscoverySelector> selectors) {
+    for (DiscoverySelector selector : selectors) {
+      if (selector instanceof MethodSelector) {
+        try {
+          ((MethodSelector)selector).getJavaMethod();
+        }
+        catch (Throwable e) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private static PostDiscoveryFilter createMethodFilter(List<DiscoverySelector> selectors) {
+    return new PostDiscoveryFilter() {
+      @Override
+      public FilterResult apply(TestDescriptor descriptor) {
+        return FilterResult.includedIf(shouldRun(descriptor), 
+                                       () -> descriptor.getDisplayName() + " matches", 
+                                       () -> descriptor.getDisplayName() + " doesn't match");
+      }
+
+      private boolean shouldRun(TestDescriptor descriptor) {
+        TestSource source = descriptor.getSource().orElse(null);
+        if (source instanceof MethodSource) {
+          for (DiscoverySelector selector : selectors) {
+            if (selector instanceof MethodSelector &&
+                ((MethodSelector)selector).getMethodName().equals(((MethodSource)source).getMethodName()) &&
+                (((MethodSelector)selector).getClassName().equals(((MethodSource)source).getClassName()) || 
+                 inNestedClass((MethodSource)source, createClassSelector(((MethodSelector)selector).getClassName())))) {
+              return true;
+            }
+          }
+          for (DiscoverySelector selector : selectors) {
+            if (selector instanceof ClassSelector && ((ClassSelector)selector).getClassName().equals(((MethodSource)source).getClassName()) ||
+                inNestedClass((MethodSource)source, selector)) {
+              return true;
+            }
+          }
+          return false;
+        }
+
+        return true;
+      }
+
+      private boolean inNestedClass(MethodSource source, DiscoverySelector selector) {
+        return selector instanceof NestedClassSelector &&
+               ((NestedClassSelector)selector).getNestedClassName().equals(source.getClassName());
+      }
+    };
   }
 
   public static String getDisabledConditionValue(String name) {
@@ -205,7 +285,7 @@ public class JUnit5TestRunnerUtil {
    * Unique id is prepended with prefix: @see com.intellij.execution.junit.TestUniqueId#getUniqueIdPresentation()
    * Method contains ','
    */
-  protected static DiscoverySelector createSelector(String line) {
+  protected static DiscoverySelector createSelector(String line, String[] packageNameRef) {
     if (line.startsWith("\u001B")) {
       String uniqueId = line.substring("\u001B".length());
       return DiscoverySelectors.selectUniqueId(uniqueId);
@@ -220,10 +300,59 @@ public class JUnit5TestRunnerUtil {
       }
     }
     else if (line.contains(",")) {
-      return DiscoverySelectors.selectMethod(line.replaceFirst(",", "#"));
+      MethodSelector selector = DiscoverySelectors.selectMethod(line.replaceFirst(",", "#"));
+      if (packageNameRef != null) {
+        packageNameRef[0] = selector.getClassName();
+      }
+      return selector;
     }
     else {
-      return DiscoverySelectors.selectClass(line);
+      if (packageNameRef != null) {
+        packageNameRef[0] = line;
+      }
+      
+      return createClassSelector(line);
     }
+  }
+
+  private static DiscoverySelector createClassSelector(String line) {
+    int nestedClassIdx = line.lastIndexOf("$");
+    if (nestedClassIdx > 0) {
+      AtomicReference<DiscoverySelector> nestedClassSelector = new AtomicReference<>();
+      ReflectionUtils.tryToLoadClass(line).ifFailure(__ -> {
+        nestedClassSelector.set(getNestedSelector(line, nestedClassIdx));
+      });
+      if (nestedClassSelector.get() != null) return nestedClassSelector.get();
+    }
+    
+    return DiscoverySelectors.selectClass(line);
+  }
+
+  private static NestedClassSelector getNestedSelector(String line,
+                                                       int nestedClassIdx) {
+    String enclosingClass = line.substring(0, nestedClassIdx);
+    String nestedClassName = line.substring(nestedClassIdx + 1);
+    DiscoverySelector enclosingClassSelector = createClassSelector(enclosingClass);
+    Class<?> klass = enclosingClassSelector instanceof NestedClassSelector
+                     ? ((NestedClassSelector)enclosingClassSelector).getNestedClass()
+                     : ((ClassSelector)enclosingClassSelector).getJavaClass();
+    Class<?> superclass = klass.getSuperclass();
+    while (superclass != null) {
+      for (Class<?> nested : superclass.getDeclaredClasses()) {
+        if (nested.getSimpleName().equals(nestedClassName)) {
+          List<Class<?>> enclosingClasses;
+          if (enclosingClassSelector instanceof NestedClassSelector) {
+            enclosingClasses = new ArrayList<>(((NestedClassSelector)enclosingClassSelector).getEnclosingClasses());
+            enclosingClasses.add(klass);
+          }
+          else {
+            enclosingClasses = Collections.singletonList(klass);
+          }
+          return DiscoverySelectors.selectNestedClass(enclosingClasses, nested);
+        }
+      }
+      superclass = superclass.getSuperclass();
+    }
+    return null;
   }
 }

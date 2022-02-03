@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ide.ui.search.ConfigurableHit;
@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -208,19 +209,22 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     if (candidate == null && current != null) {
       myLastSelected = current;
     }
-    if (myFiltered != null) {
-      SettingsCounterUsagesCollector.SEARCH.log(getConfigurableClass(candidate), myFiltered.size(), text.length());
+
+    if (myFiltered != null &&
+        candidate != null) {
+      SettingsCounterUsagesCollector.SEARCH.log(getUnnamedConfigurable(candidate).getClass(),
+                                                myFiltered.size(),
+                                                text.length());
     }
+
     SimpleNode node = !adjustSelection ? null : findNode(candidate);
     fireUpdate(node, adjustSelection, now);
   }
 
-  @Nullable
-  private static Class<?> getConfigurableClass(Configurable candidate) {
-    if (candidate instanceof ConfigurableWrapper) {
-      return ((ConfigurableWrapper) candidate).getConfigurable().getClass();
-    }
-    return candidate != null ? candidate.getClass() : null;
+  private static @NotNull UnnamedConfigurable getUnnamedConfigurable(@NotNull Configurable candidate) {
+    return candidate instanceof ConfigurableWrapper ?
+           ((ConfigurableWrapper)candidate).getConfigurable() :
+           candidate;
   }
 
   private static Configurable findConfigurable(Set<? extends Configurable> configurables, Set<? extends Configurable> hits) {

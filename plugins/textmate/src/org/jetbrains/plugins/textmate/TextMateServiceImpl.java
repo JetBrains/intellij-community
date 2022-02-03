@@ -90,7 +90,7 @@ public final class TextMateServiceImpl extends TextMateService {
       if (bundleConfigBean.isEnabled()) {
         VirtualFile bundleFile = LocalFileSystem.getInstance().findFileByPath(bundleConfigBean.getPath());
         boolean result = registerBundle(bundleFile, newExtensionsMapping);
-        if (!result) {
+        if (!result && (bundleFile != null || !bundleConfigBean.getPath().startsWith(BUNDLED_BUNDLES_PATH))) {
           String bundleName = bundleConfigBean.getName();
           String errorMessage = bundleFile != null ? TextMateBundle.message("textmate.cant.register.bundle", bundleName)
                                                    : TextMateBundle.message("textmate.cant.find.bundle", bundleName);

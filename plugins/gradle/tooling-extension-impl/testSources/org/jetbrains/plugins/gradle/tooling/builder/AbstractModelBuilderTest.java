@@ -38,6 +38,7 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleJvmSupportMatriciesKt;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -63,6 +64,7 @@ import static com.intellij.util.containers.ContainerUtil.set;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * @author Vladislav.Soroka
@@ -171,11 +173,12 @@ public abstract class AbstractModelBuilderTest {
   }
 
   public static void assumeGradleCompatibleWithJava(@NotNull String gradleVersion) {
+    assumeTrue("Gradle version [" + gradleVersion + "] is incompatible with Java version [" + JavaVersion.current() + "]",
+               GradleJvmSupportMatriciesKt.isSupported(GradleVersion.version(gradleVersion),
+                                                       JavaVersion.current()));
+
     if (GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("4.8")) < 0) {
-      Properties properties = System.getProperties();
-      String javaVersionString = properties.getProperty("java.runtime.version", properties.getProperty("java.version", "unknown"));
-      JavaVersion javaVersion = JavaVersion.tryParse(javaVersionString);
-      assumeThat(javaVersion.feature, new CustomMatcher<Integer>("Java version older than 9") {
+      assumeThat(JavaVersion.current().feature, new CustomMatcher<Integer>("Java version older than 9") {
         @Override
         public boolean matches(Object item) {
           return item instanceof Integer && ((Integer)item).compareTo(9) < 0;

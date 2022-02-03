@@ -13,8 +13,9 @@ class PerfTestBuilder<SV, TV> {
     private var setUp: (TestData<SV, TV>) -> Unit = { }
     private lateinit var test: (TestData<SV, TV>) -> Unit
     private var tearDown: (TestData<SV, TV>) -> Unit = { }
-    private var checkStability: Boolean = true
+    private var stabilityWatermark: Int? = 20
     internal var profilerConfig: ProfilerConfig = ProfilerConfig()
+    private var stopAtException: Boolean = false
 
     internal fun run() {
         perfTest(
@@ -26,7 +27,8 @@ class PerfTestBuilder<SV, TV> {
             setUp = setUp,
             test = test,
             tearDown = tearDown,
-            checkStability = checkStability
+            stabilityWatermark = stabilityWatermark,
+            stopAtException = stopAtException,
         )
     }
 
@@ -66,8 +68,12 @@ class PerfTestBuilder<SV, TV> {
         this.profilerConfig = profilerConfig
     }
 
-    fun checkStability(checkStability: Boolean) {
-        this.checkStability = checkStability
+    fun stabilityWatermark(stabilityWatermark: Int?) {
+        this.stabilityWatermark = stabilityWatermark
+    }
+
+    fun stopAtException(stopAtException: Boolean) {
+        this.stopAtException = stopAtException
     }
 }
 

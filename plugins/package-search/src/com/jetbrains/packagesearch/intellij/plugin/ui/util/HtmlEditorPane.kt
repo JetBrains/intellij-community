@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.HTMLEditorKitBuilder
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import javax.swing.JEditorPane
@@ -42,7 +43,7 @@ internal open class HtmlEditorPane : JEditorPane() {
         isEditable = false
         isOpaque = false
         addHyperlinkListener(ProxyingHyperlinkListener(::onLinkClicked))
-        margin = JBUI.emptyInsets()
+        margin = JBInsets.emptyInsets()
         GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
 
         val caret = caret as DefaultCaret

@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment
 
-import com.intellij.collaboration.lang.CodeBlockHtmlSyntaxHighlighter
-import com.intellij.collaboration.lang.HtmlSyntaxHighlighter
-import com.intellij.collaboration.markdown.CodeFenceSyntaxHighlighterGeneratingProvider
-import com.intellij.collaboration.markdown.MarkdownToHtmlConverter
+import com.intellij.markdown.utils.CodeFenceSyntaxHighlighterGeneratingProvider
+import com.intellij.markdown.utils.MarkdownToHtmlConverter
+import com.intellij.markdown.utils.lang.CodeBlockHtmlSyntaxHighlighter
+import com.intellij.markdown.utils.lang.HtmlSyntaxHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import org.intellij.markdown.IElementType

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -16,9 +16,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
+import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
@@ -107,9 +108,9 @@ public final class ElementToWorkOn {
           PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiLocalVariable.class);
 
         final int offset = editor.getCaretModel().getOffset();
-        final PsiElement[] statementsInRange = IntroduceVariableBase.findStatementsAtOffset(editor, file, offset);
+        final PsiElement[] statementsInRange = IntroduceVariableUtil.findStatementsAtOffset(editor, file, offset);
 
-        if (statementsInRange.length == 1 && IntroduceVariableBase.selectLineAtCaret(offset, statementsInRange)) {
+        if (statementsInRange.length == 1 && IntroduceVariableUtil.selectLineAtCaret(offset, statementsInRange)) {
           editor.getSelectionModel().selectLineAtCaret();
           final ElementToWorkOn elementToWorkOn = getElementToWorkOn(editor, file, refactoringName, helpId, project, null, null);
           if (elementToWorkOn == null ||
@@ -120,7 +121,7 @@ public final class ElementToWorkOn {
         }
 
         if (!editor.getSelectionModel().hasSelection()) {
-          final List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(file, editor, offset);
+          final List<PsiExpression> expressions = CommonJavaRefactoringUtil.collectExpressions(file, editor, offset);
           for (Iterator<PsiExpression> iterator = expressions.iterator(); iterator.hasNext(); ) {
             PsiExpression expression = iterator.next();
             if (!processor.accept(new ElementToWorkOn(null, expression))) {
@@ -131,11 +132,11 @@ public final class ElementToWorkOn {
           if (expressions.isEmpty()) {
             editor.getSelectionModel().selectLineAtCaret();
           }
-          else if (!IntroduceVariableBase.isChooserNeeded(expressions)) {
+          else if (!IntroduceVariableUtil.isChooserNeeded(expressions)) {
             expr = expressions.get(0);
           }
           else {
-            final int selection = IntroduceVariableBase.preferredSelection(statementsInRange, expressions);
+            final int selection = IntroduceVariableUtil.preferredSelection(statementsInRange, expressions);
             IntroduceTargetChooser.showChooser(editor, expressions, new Pass<>() {
                @Override
                public void pass(final PsiExpression selectedValue) {
@@ -191,11 +192,11 @@ public final class ElementToWorkOn {
       }
     }
     if (localVar == null && expr == null) {
-      expr = IntroduceVariableBase.getSelectedExpression(project, file, startOffset, endOffset);
+      expr = IntroduceVariableUtil.getSelectedExpression(project, file, startOffset, endOffset);
     }
 
     if (localVar == null && expr != null) {
-      final String errorMessage = IntroduceVariableBase.getErrorMessage(expr);
+      final String errorMessage = IntroduceVariableUtil.getErrorMessage(expr);
       if (errorMessage != null) {
         CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, refactoringName, helpId);
         return null;

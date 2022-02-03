@@ -12,9 +12,9 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.maven" scope="PROVIDED" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.common" scope="PROVIDED" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.gradle" scope="PROVIDED" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.maven" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.common" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.gradle" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.maven" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kapt" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.gradle" scope="PROVIDED" />
@@ -47,8 +47,7 @@
     <orderEntry type="module" module-name="kotlin.j2k.new" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.j2k.old" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.j2k.services" scope="PROVIDED" />
-    <orderEntry type="module" module-name="kotlin.jps-common" scope="PROVIDED" />
-    <orderEntry type="module" module-name="kotlin.jps-plugin" scope="PROVIDED" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="kotlin.junit" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.jvm" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" scope="PROVIDED" />
@@ -67,6 +66,7 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.maven" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-wizard-compose" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.properties" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.refIndex" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.repl" scope="PROVIDED" />
@@ -76,5 +76,7 @@
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.features-trainer" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.gradle" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.maven" scope="PROVIDED" />
   </component>
 </module>

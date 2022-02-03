@@ -292,6 +292,7 @@ public final class NameUtil {
     private MatchingCaseSensitivity caseSensitivity = MatchingCaseSensitivity.NONE;
     private boolean typoTolerant = false;
     private boolean preferStartMatches = false;
+    private boolean allOccurrences = false;
 
     public MatcherBuilder(String pattern) {
       this.pattern = pattern;
@@ -317,10 +318,20 @@ public final class NameUtil {
       return this;
     }
 
+    public MatcherBuilder allOccurrences() {
+      allOccurrences = true;
+      return this;
+    }
+
     public MinusculeMatcher build() {
-      MinusculeMatcher matcher = typoTolerant ? FixingLayoutTypoTolerantMatcher.create(pattern, caseSensitivity, separators)
-                                              : new FixingLayoutMatcher(pattern, caseSensitivity, separators);
-      return preferStartMatches ? new PreferStartMatchMatcherWrapper(matcher) : matcher;
+      MinusculeMatcher matcher = typoTolerant ? FixingLayoutTypoTolerantMatcher.create(pattern, caseSensitivity, separators) :
+                                 allOccurrences ? AllOccurrencesMatcher.create(pattern, caseSensitivity, separators) :
+                                 new FixingLayoutMatcher(pattern, caseSensitivity, separators);
+      if (preferStartMatches) {
+        matcher = new PreferStartMatchMatcherWrapper(matcher);
+      }
+      matcher = PinyinMatcher.create(matcher);
+      return matcher;
     }
   }
 

@@ -15,5 +15,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts" exported="" />
+    <orderEntry type="library" scope="RUNTIME" name="test-discovery-plugin-base" level="project" />
   </component>
 </module>

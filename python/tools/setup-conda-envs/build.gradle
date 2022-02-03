@@ -16,7 +16,7 @@ envs {
     shouldUseZipsFromRepository = Os.isFamily(Os.FAMILY_WINDOWS)
   }
 
-  conda "Anaconda3-20.2", "Anaconda3-2020.02", "64", []
-  conda "Anaconda3-20.7", "Anaconda3-2020.07", "64", []
   conda "Anaconda3-20.11", "Anaconda3-2020.11", "64", []
+  conda "Anaconda3-21.5", "Anaconda3-2021.05", "64", []
+  conda "Anaconda3-21.11", "Anaconda3-2021.11", "64", []
 }

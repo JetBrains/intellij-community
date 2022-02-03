@@ -17,8 +17,11 @@ instead of more verbose or less efficient constructs.
 </code></pre>
 <!-- tooltip end -->
 <p>
-  The <code>Double.compare()</code> and <code>Float.compare()</code> methods were introduced in Java 1.4. Methods for other primitive types
-  are available since Java 1.7.
+  Note that <code>Double.compare</code> and <code>Float.compare</code> slightly change the code semantics. In particular,
+  they make <code>-0.0</code> and <code>0.0</code> distinguishable (<code>Double.compare(-0.0, 0.0)</code> yields -1).
+  Also, they consistently process <code>NaN</code> value. In most of the cases, this semantics change actually improves the
+  code. Use the checkbox to disable this inspection for floating point numbers if semantics change is unacceptable
+  in your case.
 </p>
 <p><small>New in 2017.2</small></p>
 </body>

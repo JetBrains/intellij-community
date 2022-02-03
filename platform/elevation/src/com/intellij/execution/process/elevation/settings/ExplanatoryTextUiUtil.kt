@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process.elevation.settings
 
 import com.intellij.execution.process.elevation.ElevationBundle
@@ -8,7 +8,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.util.ui.GraphicsUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.StartupUiUtil
 import java.awt.FontMetrics
 
 internal object ExplanatoryTextUiUtil {
@@ -46,7 +46,7 @@ internal object ExplanatoryTextUiUtil {
                           fontMetrics: FontMetrics?): Int {
     val text = someText.ifEmpty { "some text to estimate string width with given metric" }
     val substring = text.repeat((maxLineLength + 1) / (text.length + 1) + 1).substring(0, maxLineLength)
-    return fontMetrics?.stringWidth(substring) ?: GraphicsUtil.stringWidth(substring, UIUtil.getLabelFont())
+    return fontMetrics?.stringWidth(substring) ?: GraphicsUtil.stringWidth(substring, StartupUiUtil.getLabelFont())
   }
 }
 

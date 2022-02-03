@@ -1,0 +1,6 @@
+<node text="D.foo(self, x) (D in hierarchy.call.Static.QualifierDefinedInside.main)" base="true">
+  <node text="A.__init__(self) (A in hierarchy.call.Static.QualifierDefinedInside.main)"/>
+  <node text="B.foo(self, x) (B in hierarchy.call.Static.QualifierDefinedInside.main)">
+    <node text="A.__init__(self) (A in hierarchy.call.Static.QualifierDefinedInside.main)"/>
+  </node>
+</node>

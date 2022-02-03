@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
 import com.intellij.application.options.colors.ReaderModeStatsCollector
-import com.intellij.codeInsight.actions.ReaderModeSettings.Companion.applyReaderMode
 import com.intellij.codeInsight.actions.ReaderModeSettingsListener.Companion.applyToAllEditors
 import com.intellij.ide.DataManager
 import com.intellij.openapi.editor.EditorFactory
@@ -14,36 +13,34 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.options.ex.Settings
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.messages.Topic
 import java.beans.PropertyChangeListener
 import java.util.*
 
-interface ReaderModeListener : EventListener {
+internal interface ReaderModeListener : EventListener {
   fun modeChanged(project: Project)
 }
 
 class ReaderModeSettingsListener : ReaderModeListener {
   companion object {
     @Topic.ProjectLevel
-    @JvmStatic
-    val TOPIC = Topic(ReaderModeListener::class.java, Topic.BroadcastDirection.NONE)
+    @JvmField
+    internal val TOPIC = Topic(ReaderModeListener::class.java, Topic.BroadcastDirection.NONE)
 
     fun applyToAllEditors(project: Project) {
-      FileEditorManager.getInstance(project).allEditors.forEach {
-        if (it !is TextEditor) return@forEach
-        applyReaderMode(project, it.editor, it.file, fileIsOpenAlready = true)
+      for (editor in FileEditorManager.getInstance(project).allEditors) {
+        if (editor is TextEditor) {
+          ReaderModeSettings.applyReaderMode(project, editor.editor, editor.file, fileIsOpenAlready = true)
+        }
       }
 
       EditorFactory.getInstance().allEditors.forEach {
         if (it !is EditorImpl) return@forEach
         if (it.getProject() != project) return@forEach
-        applyReaderMode(project, it, FileDocumentManager.getInstance().getFile(it.document),
-                        fileIsOpenAlready = true)
+        ReaderModeSettings.applyReaderMode(project, it, FileDocumentManager.getInstance().getFile(it.document), fileIsOpenAlready = true)
       }
     }
 
@@ -59,15 +56,17 @@ class ReaderModeSettingsListener : ReaderModeListener {
     }
   }
 
-  override fun modeChanged(project: Project) = applyToAllEditors(project)
+  override fun modeChanged(project: Project) {
+    applyToAllEditors(project)
+  }
 }
 
-internal class ReaderModeEditorSettingsListener : StartupActivity, DumbAware {
+private class ReaderModeEditorSettingsListener : StartupActivity.DumbAware {
   override fun runActivity(project: Project) {
     val propertyChangeListener = PropertyChangeListener { event ->
       when (event.propertyName) {
         EditorSettingsExternalizable.PROP_DOC_COMMENT_RENDERING -> {
-          ReaderModeSettings.instance(project).showRenderedDocs = EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled
+          ReaderModeSettings.getInstance(project).showRenderedDocs = EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled
           applyToAllEditors(project)
         }
       }
@@ -77,7 +76,7 @@ internal class ReaderModeEditorSettingsListener : StartupActivity, DumbAware {
     val fontPreferences = AppEditorFontOptions.getInstance().fontPreferences as FontPreferencesImpl
     fontPreferences.changeListener = Runnable {
       fontPreferences.changeListener
-      ReaderModeSettings.instance(project).showLigatures = fontPreferences.useLigatures()
+      ReaderModeSettings.getInstance(project).showLigatures = fontPreferences.useLigatures()
       applyToAllEditors(project)
     }
 

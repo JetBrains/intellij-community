@@ -106,7 +106,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     myId = -42;
   }
 
-  @NotNull VfsData getVfsData() {
+  @NotNull public VfsData getVfsData() {
     return getSegment().vfsData;
   }
 
@@ -370,6 +370,9 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @Override
   @NonNls
   public String toString() {
+    if (!ourPersistence.doesHoldFile(this)) {
+      return "Alien file!";
+    }
     if (isValid()) {
       return getUrl();
     }

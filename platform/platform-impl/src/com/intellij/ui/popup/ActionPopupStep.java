@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -207,23 +208,13 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   @Override
-  public PopupStep<?> onChosen(PopupFactoryImpl.ActionItem actionChoice, boolean finalChoice, int eventModifiers) {
-    if (!actionChoice.isEnabled()) return FINAL_CHOICE;
-    final AnAction action = actionChoice.getAction();
-    final DataContext dataContext = myContext.get();
-    if (action instanceof ActionGroup && (!finalChoice || !((ActionGroup)action).canBePerformed(dataContext))) {
+  public PopupStep<?> onChosen(@NotNull PopupFactoryImpl.ActionItem item, boolean finalChoice, int eventModifiers) {
+    if (!item.isEnabled()) return FINAL_CHOICE;
+    AnAction action = item.getAction();
+    if (action instanceof ActionGroup && (!finalChoice || !item.isPerformGroup())) {
       return createActionsStep(
-        (ActionGroup)action,
-        dataContext,
-        myEnableMnemonics,
-        true,
-        myShowDisabledActions,
-        null,
-        false, false,
-        myContext,
-        myActionPlace,
-        myPreselectActionCondition, -1,
-        myPresentationFactory);
+        (ActionGroup)action, myContext.get(), myEnableMnemonics, true, myShowDisabledActions, null,
+        false, false, myContext, myActionPlace, myPreselectActionCondition, -1, myPresentationFactory);
     }
     else {
       myFinalRunnable = () -> performAction(action, eventModifiers);
@@ -232,11 +223,22 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   @Override
-  public boolean isFinal(PopupFactoryImpl.ActionItem value) {
-    if (!value.isEnabled()) return true;
-    final AnAction action = value.getAction();
-    final DataContext dataContext = myContext.get();
-    return !(action instanceof ActionGroup) || ((ActionGroup)action).canBePerformed(dataContext);
+  public boolean isFinal(@NotNull PopupFactoryImpl.ActionItem item) {
+    if (!item.isEnabled()) return true;
+    return !(item.getAction() instanceof ActionGroup) || item.isPerformGroup();
+  }
+
+  @ApiStatus.Internal
+  public static void performAction(@NotNull Supplier<? extends DataContext> contextSupplier, @NotNull String actionPlace,
+                                   @NotNull AnAction action, int modifiers, @Nullable InputEvent inputEvent) {
+    DataContext dataContext = contextSupplier.get();
+    AnActionEvent event = new AnActionEvent(
+      inputEvent, dataContext, actionPlace, action.getTemplatePresentation().clone(),
+      ActionManager.getInstance(), modifiers);
+    event.setInjectedContext(action.isInInjectedContext());
+    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
+    }
   }
 
   public void performAction(@NotNull AnAction action, int modifiers) {
@@ -244,14 +246,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   public void performAction(@NotNull AnAction action, int modifiers, InputEvent inputEvent) {
-    DataContext dataContext = myContext.get();
-    AnActionEvent event = new AnActionEvent(
-      inputEvent, dataContext, myActionPlace, action.getTemplatePresentation().clone(),
-      ActionManager.getInstance(), modifiers);
-    event.setInjectedContext(action.isInInjectedContext());
-    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
-    }
+    performAction(myContext, myActionPlace, action, modifiers, inputEvent);
   }
 
   @Override
@@ -261,7 +256,8 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
 
   @Override
   public boolean hasSubstep(final PopupFactoryImpl.ActionItem selectedValue) {
-    return selectedValue != null && selectedValue.isEnabled() && selectedValue.getAction() instanceof ActionGroup;
+    return selectedValue != null && selectedValue.isEnabled() &&
+           selectedValue.getAction() instanceof ActionGroup && !selectedValue.isSubstepSuppressed();
   }
 
   @Override

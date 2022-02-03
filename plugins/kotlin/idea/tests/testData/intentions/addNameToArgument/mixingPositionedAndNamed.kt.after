@@ -1,4 +1,4 @@
-// COMPILER_ARGUMENTS: -XXLanguage:+NewInference -XXLanguage:+MixedNamedArgumentsInTheirOwnPosition
+// COMPILER_ARGUMENTS: -XXLanguage:+MixedNamedArgumentsInTheirOwnPosition
 // WITH_STDLIB
 // AFTER-WARNING: Parameter 'b' is never used
 // AFTER-WARNING: Parameter 's' is never used

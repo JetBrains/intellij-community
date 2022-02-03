@@ -7,6 +7,7 @@ object KotlinArtifactNames {
     const val KOTLIN_STDLIB_SOURCES = "kotlin-stdlib-sources.jar"
     const val KOTLIN_STDLIB_JDK7 = "kotlin-stdlib-jdk7.jar"
     const val KOTLIN_STDLIB_JDK8 = "kotlin-stdlib-jdk8.jar"
+    const val KOTLIN_STDLIB_JDK8_SOURCES = "kotlin-stdlib-jdk8-sources.jar"
     const val KOTLIN_REFLECT = "kotlin-reflect.jar"
     const val KOTLIN_STDLIB_JS = "kotlin-stdlib-js.jar"
     const val KOTLIN_TEST = "kotlin-test.jar"
@@ -17,6 +18,7 @@ object KotlinArtifactNames {
     const val KOTLIN_SCRIPTING_COMMON = "kotlin-scripting-common.jar"
     const val KOTLIN_SCRIPTING_JVM = "kotlin-scripting-jvm.jar"
     const val KOTLIN_COMPILER = "kotlin-compiler.jar"
+    const val LOMBOK_COMPILER_PLUGIN = "lombok-compiler-plugin.jar"
     const val KOTLIN_ANNOTATIONS_JVM = "kotlin-annotations-jvm.jar"
     const val TROVE4J = "trove4j.jar"
     const val KOTLIN_DAEMON = "kotlin-daemon.jar"
@@ -25,4 +27,5 @@ object KotlinArtifactNames {
     const val ALLOPEN_COMPILER_PLUGIN = "allopen-compiler-plugin.jar"
     const val NOARG_COMPILER_PLUGIN = "noarg-compiler-plugin.jar"
     const val SAM_WITH_RECEIVER_COMPILER_PLUGIN = "sam-with-receiver-compiler-plugin.jar"
+    const val KOTLINX_SERIALIZATION_COMPILER_PLUGIN = "kotlinx-serialization-compiler-plugin.jar"
 }

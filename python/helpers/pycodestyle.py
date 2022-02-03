@@ -25,7 +25,6 @@
 # ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 r"""
 Check Python source code formatting, according to PEP 8.
 
@@ -49,6 +48,7 @@ W warnings
 """
 from __future__ import with_statement
 
+import bisect
 import inspect
 import keyword
 import os
@@ -57,7 +57,6 @@ import sys
 import time
 import tokenize
 import warnings
-import bisect
 
 try:
     from functools import lru_cache
@@ -78,7 +77,14 @@ try:
 except ImportError:
     from ConfigParser import RawConfigParser
 
-__version__ = '2.7.0'  # patched PY-37054, #989, #990, #1002
+# this is a performance hack.  see https://bugs.python.org/issue43014
+if (
+        sys.version_info < (3, 10) and
+        callable(getattr(tokenize, '_compile', None))
+):  # pragma: no cover (<py310)
+    tokenize._compile = lru_cache()(tokenize._compile)  # type: ignore
+
+__version__ = '2.8.0'  # patched PY-37054
 
 DEFAULT_EXCLUDE = '.svn,CVS,.bzr,.hg,.git,__pycache__,.tox'
 DEFAULT_IGNORE = 'E121,E123,E126,E226,E24,E704,W503,W504'
@@ -137,7 +143,7 @@ RAISE_COMMA_REGEX = re.compile(r'raise\s+\w+\s*,')
 RERAISE_COMMA_REGEX = re.compile(r'raise\s+\w+\s*,.*,\s*\w+\s*$')
 ERRORCODE_REGEX = re.compile(r'\b[A-Z]\d{3}\b')
 DOCSTRING_REGEX = re.compile(r'u?r?["\']')
-EXTRANEOUS_WHITESPACE_REGEX = re.compile(r'[\[({] | [\]}),;]| :(?!=)')
+EXTRANEOUS_WHITESPACE_REGEX = re.compile(r'[\[({][ \t]|[ \t][\]}),;:](?!=)')
 WHITESPACE_AFTER_COMMA_REGEX = re.compile(r'[,;:]\s*(?:  |\t)')
 COMPARE_SINGLETON_REGEX = re.compile(r'(\bNone|\bFalse|\bTrue)?\s*([=!]=)'
                                      r'\s*(?(1)|(None|False|True))\b')
@@ -162,8 +168,8 @@ STARTSWITH_INDENT_STATEMENT_REGEX = re.compile(
         'while',
     )))
 )
-DUNDER_REGEX = re.compile(r'^__([^\s]+)__ = ')
-MATCH_CASE_REGEX = re.compile(r'^\s*\b(?:match|case)(\s*)(?=.*\:)')
+DUNDER_REGEX = re.compile(r"^__([^\s]+)__(?::\s*[a-zA-Z.0-9_\[\]\"]+)? = ")
+BLANK_EXCEPT_REGEX = re.compile(r"except\s*:")
 
 _checks = {'physical_line': {}, 'logical_line': {}, 'tree': {}}
 
@@ -463,7 +469,7 @@ def extraneous_whitespace(logical_line):
         text = match.group()
         char = text.strip()
         found = match.start()
-        if text == char + ' ':
+        if text[-1].isspace():
             # assert char in '([{'
             yield found + 1, "E201 whitespace after '%s'" % char
         elif line[found - 1] != ',':
@@ -493,16 +499,6 @@ def whitespace_around_keywords(logical_line):
             yield match.start(2), "E273 tab after keyword"
         elif len(after) > 1:
             yield match.start(2), "E271 multiple spaces after keyword"
-
-    if sys.version_info >= (3, 10):
-        match = MATCH_CASE_REGEX.match(logical_line)
-        if match:
-            if match[1] == ' ':
-                return
-            if match[1] == '':
-                yield match.start(1), "E275 missing whitespace after keyword"
-            else:
-                yield match.start(1), "E271 multiple spaces after keyword"
 
 
 @register_check
@@ -556,7 +552,7 @@ def missing_whitespace(logical_line):
 @register_check
 def indentation(logical_line, previous_logical, indent_char,
                 indent_level, previous_indent_level,
-                indent_size, indent_size_str):
+                indent_size):
     r"""Use indent_size (PEP8 says 4) spaces per indentation level.
 
     For really old code that you don't want to mess up, you can continue
@@ -580,7 +576,7 @@ def indentation(logical_line, previous_logical, indent_char,
     if indent_level % indent_size:
         yield 0, tmpl % (
             1 + c,
-            "indentation is not a multiple of " + indent_size_str,
+            "indentation is not a multiple of " + str(indent_size),
         )
     indent_expect = previous_logical.endswith(':')
     if indent_expect and indent_level <= previous_indent_level:
@@ -597,8 +593,7 @@ def indentation(logical_line, previous_logical, indent_char,
 
 @register_check
 def continued_indentation(logical_line, tokens, indent_level, hang_closing,
-                          indent_char, indent_size, indent_size_str, noqa,
-                          verbose):
+                          indent_char, indent_size, noqa, verbose):
     r"""Continuation lines indentation.
 
     Continuation lines should align wrapped elements either vertically
@@ -925,7 +920,9 @@ def missing_whitespace_around_operator(logical_line, tokens):
                     #           ^
                     # def f(a, b, /):
                     #              ^
-                    prev_text == '/' and text in {',', ')'} or
+                    # f = lambda a, /:
+                    #                ^
+                    prev_text == '/' and text in {',', ')', ':'} or
                     # def f(a, b, /):
                     #               ^
                     prev_text == ')' and text == ':'
@@ -1416,8 +1413,10 @@ def comparison_to_singleton(logical_line, noqa):
     None was set to some other value.  The other value might have a type
     (such as a container) that could be false in a boolean context!
     """
-    match = not noqa and COMPARE_SINGLETON_REGEX.search(logical_line)
-    if match:
+    if noqa:
+        return
+
+    for match in COMPARE_SINGLETON_REGEX.finditer(logical_line):
         singleton = match.group(1) or match.group(3)
         same = (match.group(2) == '==')
 
@@ -1491,8 +1490,7 @@ def bare_except(logical_line, noqa):
     if noqa:
         return
 
-    regex = re.compile(r"except\s*:")
-    match = regex.match(logical_line)
+    match = BLANK_EXCEPT_REGEX.match(logical_line)
     if match:
         yield match.start(), "E722 do not use bare 'except'"
 
@@ -1993,8 +1991,6 @@ class Checker(object):
         self.multiline = False  # in a multiline string?
         self.hang_closing = options.hang_closing
         self.indent_size = options.indent_size
-        self.indent_size_str = ({2: 'two', 4: 'four', 8: 'eight'}
-                                .get(self.indent_size, str(self.indent_size)))
         self.verbose = options.verbose
         self.filename = filename
         # Dictionary where a checker can store its custom state.

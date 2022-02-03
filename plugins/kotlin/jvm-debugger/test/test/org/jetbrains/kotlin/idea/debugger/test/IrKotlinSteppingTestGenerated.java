@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -342,6 +342,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
         @TestMetadata("souSuspendFun.kt")
         public void testSouSuspendFun() throws Exception {
             runTest("testData/stepping/stepOut/souSuspendFun.kt");
+        }
+
+        @TestMetadata("stepOutFromInlineFunctionThenResume.kt")
+        public void testStepOutFromInlineFunctionThenResume() throws Exception {
+            runTest("testData/stepping/stepOut/stepOutFromInlineFunctionThenResume.kt");
         }
 
         @TestMetadata("stepOutInlineFunction.kt")
@@ -1110,6 +1115,41 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/crossinlineLiteral.kt");
         }
 
+        @TestMetadata("filterChainedFunctionCalls.kt")
+        public void testFilterChainedFunctionCalls() throws Exception {
+            runTest("testData/stepping/custom/filterChainedFunctionCalls.kt");
+        }
+
+        @TestMetadata("filterFunctionCallsFromClass.kt")
+        public void testFilterFunctionCallsFromClass() throws Exception {
+            runTest("testData/stepping/custom/filterFunctionCallsFromClass.kt");
+        }
+
+        @TestMetadata("filterFunctionCallsFromInlineClass.kt")
+        public void testFilterFunctionCallsFromInlineClass() throws Exception {
+            runTest("testData/stepping/custom/filterFunctionCallsFromInlineClass.kt");
+        }
+
+        @TestMetadata("filterFunctionCallsInTryCatchBlock.kt")
+        public void testFilterFunctionCallsInTryCatchBlock() throws Exception {
+            runTest("testData/stepping/custom/filterFunctionCallsInTryCatchBlock.kt");
+        }
+
+        @TestMetadata("filterInlineFunctionCalls.kt")
+        public void testFilterInlineFunctionCalls() throws Exception {
+            runTest("testData/stepping/custom/filterInlineFunctionCalls.kt");
+        }
+
+        @TestMetadata("filterNestedFunctionCalls.kt")
+        public void testFilterNestedFunctionCalls() throws Exception {
+            runTest("testData/stepping/custom/filterNestedFunctionCalls.kt");
+        }
+
+        @TestMetadata("filterProperties.kt")
+        public void testFilterProperties() throws Exception {
+            runTest("testData/stepping/custom/filterProperties.kt");
+        }
+
         @TestMetadata("finallyBlock.kt")
         public void testFinallyBlock() throws Exception {
             runTest("testData/stepping/custom/finallyBlock.kt");
@@ -1270,6 +1310,16 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/smartStepIntoConstructor.kt");
         }
 
+        @TestMetadata("smartStepIntoDeferredLambdas.kt")
+        public void testSmartStepIntoDeferredLambdas() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoDeferredLambdas.kt");
+        }
+
+        @TestMetadata("smartStepIntoDeferredSamLambdas.kt")
+        public void testSmartStepIntoDeferredSamLambdas() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoDeferredSamLambdas.kt");
+        }
+
         @TestMetadata("smartStepIntoFunWithDefaultArgs.kt")
         public void testSmartStepIntoFunWithDefaultArgs() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoFunWithDefaultArgs.kt");
@@ -1363,6 +1413,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
         @TestMetadata("smartStepIntoWithOverrides.kt")
         public void testSmartStepIntoWithOverrides() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoWithOverrides.kt");
+        }
+
+        @TestMetadata("smartStepWithInlineClass.kt")
+        public void testSmartStepWithInlineClass() throws Exception {
+            runTest("testData/stepping/custom/smartStepWithInlineClass.kt");
         }
 
         @TestMetadata("stepIntoLibWithSources.kt")

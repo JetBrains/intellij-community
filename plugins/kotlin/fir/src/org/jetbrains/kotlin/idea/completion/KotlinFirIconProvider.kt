@@ -6,15 +6,16 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.util.PlatformIcons
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.frontend.api.symbols.*
 import org.jetbrains.kotlin.idea.frontend.api.symbols.markers.*
 import javax.swing.Icon
 
 internal object KotlinFirIconProvider {
-    fun getIconFor(symbol: KtNamedSymbol): Icon? {
+    fun getIconFor(symbol: KtSymbol): Icon? {
         if (symbol is KtFunctionSymbol) {
-            val isAbstract = symbol.modality == KtCommonSymbolModality.ABSTRACT
+            val isAbstract = symbol.modality == Modality.ABSTRACT
 
             return when {
                 symbol.isExtension -> {
@@ -28,7 +29,7 @@ internal object KotlinFirIconProvider {
         }
 
         if (symbol is KtClassOrObjectSymbol) {
-            val isAbstract = symbol.modality == KtCommonSymbolModality.ABSTRACT
+            val isAbstract = (symbol as? KtNamedClassOrObjectSymbol)?.modality == Modality.ABSTRACT
 
             return when (symbol.classKind) {
                 KtClassKind.CLASS -> if (isAbstract) KotlinIcons.ABSTRACT_CLASS else KotlinIcons.CLASS
@@ -36,10 +37,11 @@ internal object KotlinFirIconProvider {
                 KtClassKind.ANNOTATION_CLASS -> KotlinIcons.ANNOTATION
                 KtClassKind.OBJECT, KtClassKind.COMPANION_OBJECT -> KotlinIcons.OBJECT
                 KtClassKind.INTERFACE -> KotlinIcons.INTERFACE
+                KtClassKind.ANONYMOUS_OBJECT -> KotlinIcons.OBJECT
             }
         }
 
-        if (symbol is KtParameterSymbol) return KotlinIcons.PARAMETER
+        if (symbol is KtValueParameterSymbol) return KotlinIcons.PARAMETER
 
         if (symbol is KtLocalVariableSymbol) return if (symbol.isVal) KotlinIcons.VAL else KotlinIcons.VAR
 
@@ -48,6 +50,8 @@ internal object KotlinFirIconProvider {
         if (symbol is KtTypeParameterSymbol) return PlatformIcons.CLASS_ICON
 
         if (symbol is KtTypeAliasSymbol) return KotlinIcons.TYPE_ALIAS
+
+        if (symbol is KtEnumEntrySymbol) return KotlinIcons.ENUM
 
         return null
     }

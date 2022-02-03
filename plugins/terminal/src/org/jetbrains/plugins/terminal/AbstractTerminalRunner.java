@@ -269,6 +269,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     Dimension size = terminalWidget.getTerminalPanel().getTerminalSizeFromComponent();
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      if (myProject.isDisposed()) return;
       try {
         T process = createProcess(new TerminalProcessOptions(directory,
                                                              size != null ? size.width : null,
@@ -290,7 +291,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
           catch (RuntimeException e) {
             printError(terminalWidget, "Cannot open " + runningTargetName(), e);
           }
-        }, modalityState);
+        }, modalityState, myProject.getDisposed());
       }
       catch (Exception e) {
         printError(terminalWidget, "Cannot open " + runningTargetName(), e);

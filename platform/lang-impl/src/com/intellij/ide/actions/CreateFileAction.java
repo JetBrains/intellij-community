@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
@@ -50,7 +49,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     super(text, description, icon);
   }
 
-  public CreateFileAction(Supplier<String> dynamicText, Supplier<String> dynamicDescription, final Icon icon) {
+  public CreateFileAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, final Icon icon) {
     super(dynamicText, dynamicDescription, icon);
   }
 
@@ -60,12 +59,12 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   }
 
   @Override
-  protected PsiElement @NotNull [] invokeDialog(final Project project, PsiDirectory directory) {
+  protected PsiElement @NotNull [] invokeDialog(final @NotNull Project project, @NotNull PsiDirectory directory) {
     return PsiElement.EMPTY_ARRAY;
   }
 
   @Override
-  protected void invokeDialog(@NotNull Project project, @NotNull PsiDirectory directory, @NotNull Consumer<PsiElement[]> elementsConsumer) {
+  protected void invokeDialog(@NotNull Project project, @NotNull PsiDirectory directory, @NotNull Consumer<? super PsiElement[]> elementsConsumer) {
     MyInputValidator validator = new MyValidator(project, directory);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       try {
@@ -77,7 +76,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     }
     else {
       if (Experiments.getInstance().isFeatureEnabled("show.create.new.element.in.popup")) {
-        createLightWeightPopup(validator, elementsConsumer, directory).showCenteredInCurrentWindow(project);
+        createLightWeightPopup(validator, elementsConsumer).showCenteredInCurrentWindow(project);
       }
       else {
         Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.file.name"),
@@ -87,10 +86,8 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     }
   }
 
-  private JBPopup createLightWeightPopup(MyInputValidator validator,
-                                         Consumer<PsiElement[]> consumer,
-                                         @NotNull PsiDirectory directory) {
-    Project project = directory.getProject();
+  private @NotNull JBPopup createLightWeightPopup(@NotNull MyInputValidator validator,
+                                                  @NotNull Consumer<? super PsiElement[]> consumer) {
     NewItemSimplePopupPanel contentPanel = new NewItemSimplePopupPanel();
     JTextField nameField = contentPanel.getTextField();
     JBPopup popup = NewItemPopupUtil.createNewItemPopup(IdeBundle.message("title.new.file"), contentPanel, nameField);
@@ -99,9 +96,6 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
       if (validator.checkInput(name) && validator.canClose(name)) {
         popup.closeOk(event);
         consumer.accept(validator.getCreatedElements());
-        if (StringUtil.isNotEmpty(name)) {
-          FileTypeChooser.getKnownFileTypeOrAssociate(directory.getVirtualFile(), getFileName(name), project);
-        }
       }
       else {
         String errorMessage = validator instanceof InputValidatorEx
@@ -115,18 +109,21 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   }
 
   @Override
-  protected PsiElement @NotNull [] create(@NotNull String newName, PsiDirectory directory) throws Exception {
+  protected PsiElement @NotNull [] create(@NotNull String newName, @NotNull PsiDirectory directory) throws Exception {
     MkDirs mkdirs = new MkDirs(newName, directory);
     return new PsiElement[]{WriteAction.compute(() -> mkdirs.directory.createFile(getFileName(mkdirs.newName)))};
   }
 
+  @NotNull
   public static PsiDirectory findOrCreateSubdirectory(@NotNull PsiDirectory parent, @NotNull String subdirName) {
     final PsiDirectory sub = parent.findSubdirectory(subdirName);
     return sub == null ? WriteAction.compute(() -> parent.createSubdirectory(subdirName)) : sub;
   }
 
   public static class MkDirs {
+    @NotNull
     public final String newName;
+    @NotNull
     public final PsiDirectory directory;
 
     public MkDirs(@NotNull String newName, @NotNull PsiDirectory directory) {
@@ -163,7 +160,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   }
 
   @Override
-  protected String getActionName(PsiDirectory directory, String newName) {
+  protected @NotNull String getActionName(@NotNull PsiDirectory directory, @NotNull String newName) {
     return IdeBundle.message("progress.creating.file", directory.getVirtualFile().getPresentableUrl(), File.separator, newName);
   }
 

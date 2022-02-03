@@ -1,0 +1,2 @@
+FirLightClassForSymbol: Y
+FirLightClassForSymbol: Z

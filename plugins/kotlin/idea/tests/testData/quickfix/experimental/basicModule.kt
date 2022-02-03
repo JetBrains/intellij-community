@@ -12,6 +12,7 @@ annotation class MyExperimentalAPI
 
 @MyExperimentalAPI
 class Some {
+    @MyExperimentalAPI
     fun foo() {}
 }
 

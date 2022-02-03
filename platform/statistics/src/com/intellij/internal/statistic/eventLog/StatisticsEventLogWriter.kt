@@ -1,16 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
+import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.Disposable
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
-import org.apache.log4j.Level
-import org.apache.log4j.Logger
-import org.apache.log4j.PatternLayout
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
+import java.util.concurrent.TimeUnit
 
-interface StatisticsEventLogWriter: Disposable {
+interface StatisticsEventLogWriter : Disposable {
   fun log(logEvent: LogEvent)
 
   fun getActiveFile(): EventLogFile?
@@ -23,25 +24,20 @@ interface StatisticsEventLogWriter: Disposable {
 }
 
 class StatisticsEventLogFileWriter(private val recorderId: String,
-                                   private val maxFileSize: String,
+                                   maxFileSizeInBytes: Int,
                                    isEap: Boolean,
                                    prefix: String) : StatisticsEventLogWriter {
-  private var fileAppender: StatisticsEventLogFileAppender? = null
-
-  @Suppress("SSBasedInspection")
-  private val eventLogger: Logger = Logger.getLogger("event.logger.$recorderId")
+  private var logger: EventLogFileWriter? = null
 
   init {
-    eventLogger.level = Level.INFO
-    eventLogger.additivity = false
-
-    val pattern = PatternLayout("%m\n")
     try {
       val dir = getEventLogDir()
-      fileAppender = StatisticsEventLogFileAppender.create(pattern, dir, prefix, isEap)
-      fileAppender?.let { appender ->
-        appender.setMaxFileSize(maxFileSize)
-        eventLogger.addAppender(appender)
+      val buildType = if (isEap) EventLogBuildType.EAP else EventLogBuildType.RELEASE
+      val logFilePathProvider = { directory: Path -> EventLogFile.create(directory, buildType, prefix).file }
+      val fileEventLoggerLogger = EventLogFileWriter(dir, maxFileSizeInBytes, logFilePathProvider)
+      logger = fileEventLoggerLogger
+      if (StatisticsRecorderUtil.isTestModeEnabled(recorderId)) {
+        AppExecutorUtil.getAppScheduledExecutorService().schedule({ fileEventLoggerLogger.flush() }, 10, TimeUnit.SECONDS)
       }
     }
     catch (e: IOException) {
@@ -54,25 +50,27 @@ class StatisticsEventLogFileWriter(private val recorderId: String,
   }
 
   override fun log(logEvent: LogEvent) {
-    eventLogger.info(LogEventSerializer.toString(logEvent))
+    logger?.log(LogEventSerializer.toString(logEvent))
   }
 
   override fun getActiveFile(): EventLogFile? {
-    val activeLog = fileAppender?.activeLogName ?: return null
+    val activeLog = logger?.getActiveLogName() ?: return null
     return EventLogFile(File(File(getEventLogDir().toUri()), activeLog))
   }
 
   override fun getLogFilesProvider(): EventLogFilesProvider {
-    return DefaultEventLogFilesProvider(getEventLogDir()) { fileAppender?.activeLogName }
+    return DefaultEventLogFilesProvider(getEventLogDir()) { logger?.getActiveLogName() }
   }
 
   override fun cleanup() {
-    fileAppender?.cleanUp()
+    logger?.cleanUp()
   }
 
   override fun rollOver() {
-    fileAppender?.rollOver()
+    logger?.rollOver()
   }
 
-  override fun dispose() = Unit
+  override fun dispose() {
+    logger?.close()
+  }
 }

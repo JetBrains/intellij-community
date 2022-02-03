@@ -1,26 +1,14 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
-import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -39,7 +27,7 @@ import java.util.Locale;
 
 import static org.junit.Assert.*;
 
-public class BuildResult implements MessageHandler {
+public final class BuildResult implements MessageHandler {
   private final List<BuildMessage> myErrorMessages;
   private final List<BuildMessage> myWarnMessages;
   private final List<BuildMessage> myInfoMessages;
@@ -66,9 +54,10 @@ public class BuildResult implements MessageHandler {
 
   private static void dumpSourceToOutputMappings(ProjectDescriptor pd, PrintStream stream) throws IOException {
     List<BuildTarget<?>> targets = new ArrayList<>(pd.getBuildTargetIndex().getAllTargets());
-    targets.sort(
-      (o1, o2) -> StringUtil.comparePairs(o1.getTargetType().getTypeId(), o1.getId(), o2.getTargetType().getTypeId(), o2.getId(), false));
-    final TIntObjectHashMap<BuildTarget<?>> id2Target = new TIntObjectHashMap<>();
+    targets.sort((o1, o2) -> {
+      return StringUtil.comparePairs(o1.getTargetType().getTypeId(), o1.getId(), o2.getTargetType().getTypeId(), o2.getId(), false);
+    });
+    final Int2ObjectMap<BuildTarget<?>> id2Target = new Int2ObjectOpenHashMap<>();
     for (BuildTarget<?> target : targets) {
       id2Target.put(pd.dataManager.getTargetsState().getBuildTargetId(target), target);
     }
@@ -96,13 +85,12 @@ public class BuildResult implements MessageHandler {
     Collections.sort(keys);
     stream.println("Begin Of OutputToTarget");
     for (Integer key : keys) {
-      TIntHashSet targetsIds = registry.getState(key);
+      IntSet targetsIds = registry.getState(key);
       if (targetsIds == null) continue;
       final List<String> targetsNames = new ArrayList<>();
       targetsIds.forEach(value -> {
         BuildTarget<?> target = id2Target.get(value);
         targetsNames.add(target != null ? getTargetIdWithTypeId(target) : "<unknown " + value + ">");
-        return true;
       });
       Collections.sort(targetsNames);
       stream.println(hashCodeToOutputPath.get(key) + " -> " + targetsNames);

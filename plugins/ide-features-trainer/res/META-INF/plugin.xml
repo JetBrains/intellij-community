@@ -124,9 +124,87 @@
                  description="Use scroll animation in IFT lessons."
                  defaultValue="TRUE"
                  restartRequired="false"/>
+    <registryKey key="ift.send.onboarding.feedback"
+                 description="Where to send onboarding lessons feedback (nowhere, staging, production)."
+                 defaultValue="nowhere"
+                 restartRequired="false"/>
     <registryKey key="ift.adapt.to.not.native.localization"
                  description="Lessons logic will be changed like using not native localization."
                  defaultValue="FALSE"
                  restartRequired="false"/>
   </extensions>
+
+
+
+  <!--FEATURES SUGGESTER PART-->
+
+  <extensionPoints>
+    <extensionPoint name="ifs.suggester" interface="training.featuresSuggester.suggesters.FeatureSuggester" dynamic="true"/>
+    <extensionPoint name="ifs.suggesterSupport"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="training.featuresSuggester.SuggesterSupport"/>
+    </extensionPoint>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="training">
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.LineCommentingSuggester"/>
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.IntroduceVariableSuggester"/>
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.CopyPasteSuggester"/>
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.SurroundWithSuggester"/>
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.UnwrapSuggester"/>
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.FileStructureSuggester"/>
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.CompletionPopupSuggester"/>
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.ReplaceCompletionSuggester"/>
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.RunToCursorSuggester"/>
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.EditBreakpointSuggester"/>
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.MuteBreakpointsSuggester"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+      serviceImplementation="training.featuresSuggester.settings.FeatureSuggesterSettings"/>
+    <applicationConfigurable parentId="tools"
+                             instance="training.featuresSuggester.settings.FeatureSuggesterConfigurable"
+                             id="org.intellij.featuresSuggester.FeatureSuggesterConfigurable"/>
+    <projectService serviceImplementation="training.featuresSuggester.FeatureSuggestersManager"/>
+    <psi.treeChangeListener
+      implementation="training.featuresSuggester.listeners.PsiActionsListener"/>
+    <editorFactoryDocumentListener
+      implementation="training.featuresSuggester.listeners.DocumentActionsListener"/>
+    <statistics.counterUsagesCollector
+      implementationClass="training.featuresSuggester.statistics.FeatureSuggesterStatistics"/>
+    <statistics.validation.customValidationRule
+      implementation="training.featuresSuggester.statistics.FeatureSuggesterIdRuleValidator"/>
+    <registryKey defaultValue="true" description="Enable actions processing by IDE Feature Suggester plugin"
+                 key="feature.suggester.enabled"/>
+    <registryKey defaultValue="true" description="Send statistics about IDE Feature Suggester plugin usage"
+                 key="feature.suggester.send.statistics"/>
+    <registryKey defaultValue="false" description="Show suggestion even if corresponding action has been used recently"
+                 key="feature.suggester.force.show.suggestions"/>
+    <notificationGroup id="IDE Feature Suggester" displayType="STICKY_BALLOON" isLogByDefault="false"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="training.featuresSuggester.listeners.BreakpointsListener"
+              topic="com.intellij.xdebugger.breakpoints.XBreakpointListener"/>
+    <listener class="training.featuresSuggester.listeners.DebuggerListener"
+              topic="com.intellij.xdebugger.XDebuggerManagerListener"/>
+  </projectListeners>
+
+  <applicationListeners>
+    <listener class="training.featuresSuggester.listeners.EditorActionsListener"
+              topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
+  </applicationListeners>
 </idea-plugin>

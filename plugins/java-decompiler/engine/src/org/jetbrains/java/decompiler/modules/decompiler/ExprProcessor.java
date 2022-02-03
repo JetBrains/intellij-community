@@ -1,20 +1,25 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.Instruction;
 import org.jetbrains.java.decompiler.code.InstructionSequence;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
+import org.jetbrains.java.decompiler.main.ClassesProcessor;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper.FinallyPathWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
+import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotationWriteHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.struct.StructClass;
+import org.jetbrains.java.decompiler.struct.StructTypePathEntry;
 import org.jetbrains.java.decompiler.struct.attr.StructBootstrapMethodsAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
@@ -24,9 +29,9 @@ import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.TextBuffer;
-import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ExprProcessor implements CodeConstants {
   @SuppressWarnings("SpellCheckingInspection")
@@ -158,7 +163,7 @@ public class ExprProcessor implements CodeConstants {
 
       String currentEntrypoint = entryPoints.isEmpty() ? null : entryPoints.getLast();
 
-      for (DirectNode nd : node.succs) {
+      for (DirectNode nd : node.successors) {
         boolean isSuccessor = true;
 
         if (currentEntrypoint != null && dgraph.mapLongRangeFinallyPaths.containsKey(node.id)) {
@@ -220,13 +225,13 @@ public class ExprProcessor implements CodeConstants {
   private static void collectCatchVars(Statement stat, FlattenStatementsHelper flatthelper, Map<String, VarExprent> map) {
     List<VarExprent> lst = null;
 
-    if (stat.type == Statement.TYPE_CATCHALL) {
+    if (stat.type == StatementType.CATCH_ALL) {
       CatchAllStatement catchall = (CatchAllStatement)stat;
       if (!catchall.isFinally()) {
         lst = catchall.getVars();
       }
     }
-    else if (stat.type == Statement.TYPE_TRYCATCH) {
+    else if (stat.type == StatementType.TRY_CATCH) {
       lst = ((CatchStatement)stat).getVars();
     }
 
@@ -644,48 +649,157 @@ public class ExprProcessor implements CodeConstants {
     }
   }
 
-  public static String getTypeName(VarType type) {
-    return getTypeName(type, true);
+  public static String getTypeName(VarType type, List<TypeAnnotationWriteHelper> typePathWriteHelper) {
+    return getTypeName(type, true, typePathWriteHelper);
   }
 
-  public static String getTypeName(VarType type, boolean getShort) {
+  public static String getTypeName(VarType type, boolean getShort, List<TypeAnnotationWriteHelper> typePathWriteHelper) {
     int tp = type.type;
+    StringBuilder sb = new StringBuilder();
+    typePathWriteHelper.removeIf(typeAnnotationWriteHelper -> {
+      StructTypePathEntry path = typeAnnotationWriteHelper.getPaths().peek();
+      if (path == null && type.arrayDim == 0) { // nested type
+        typeAnnotationWriteHelper.writeTo(sb);
+        return true;
+      }
+      if (path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.ARRAY.getOpcode() &&
+        typeAnnotationWriteHelper.getPaths().size() == type.arrayDim
+      ) {
+        typeAnnotationWriteHelper.writeTo(sb);
+        return true;
+      }
+      return false;
+    });
     if (tp <= CodeConstants.TYPE_BOOLEAN) {
-      return typeNames[tp];
+      sb.append(typeNames[tp]);
+      return sb.toString();
     }
     else if (tp == CodeConstants.TYPE_UNKNOWN) {
-      return UNKNOWN_TYPE_STRING; // INFO: should not occur
+      sb.append(UNKNOWN_TYPE_STRING);
+      return sb.toString(); // INFO: should not occur
     }
     else if (tp == CodeConstants.TYPE_NULL) {
-      return NULL_TYPE_STRING; // INFO: should not occur
+      sb.append(NULL_TYPE_STRING);
+      return sb.toString(); // INFO: should not occur
     }
     else if (tp == CodeConstants.TYPE_VOID) {
-      return "void";
+      sb.append("void");
+      return sb.toString();
     }
     else if (tp == CodeConstants.TYPE_OBJECT) {
-      String ret = buildJavaClassName(type.value);
+      String ret;
       if (getShort) {
-        ret = DecompilerContext.getImportCollector().getShortName(ret);
+        ret = DecompilerContext.getImportCollector().getNestedName(type.value);
+      } else {
+        ret = buildJavaClassName(type.value);
       }
-
       if (ret == null) {
         // FIXME: a warning should be logged
-        ret = UNDEFINED_TYPE_STRING;
+        return UNDEFINED_TYPE_STRING;
       }
-      return ret;
+      String[] nestedClasses = ret.split("\\.");
+      writeNestedClass(sb, nestedClasses, typePathWriteHelper);
+      return sb.toString();
     }
 
     throw new RuntimeException("invalid type");
   }
 
-  public static String getCastTypeName(VarType type) {
-    return getCastTypeName(type, true);
+  public static void writeNestedClass(StringBuilder sb, String[] nestedClasses, List<TypeAnnotationWriteHelper> typeAnnWriteHelper) {
+    List<ClassesProcessor.ClassNode> enclosingClasses = enclosingClassList();
+    for (int i = 0; i < nestedClasses.length; i++) {
+      String nestedType = nestedClasses[i];
+      boolean shouldWrite = true;
+      if (!enclosingClasses.isEmpty() && i != nestedClasses.length - 1) {
+        String enclosingType = enclosingClasses.remove(0).simpleName;
+        shouldWrite = !nestedType.equals(enclosingType);
+      }
+      if (i == 0) { // first annotation can be written already
+        if (!sb.toString().isEmpty()) shouldWrite= true; // write if annotation exists
+      } else {
+        shouldWrite |= checkNestedTypeAnnotation(sb, typeAnnWriteHelper); // if writing annotation, also write nested type
+      }
+      if (shouldWrite) {
+        sb.append(nestedType);
+        if (i != nestedClasses.length - 1) sb.append(".");
+      }
+    }
   }
 
-  public static String getCastTypeName(VarType type, boolean getShort) {
-    StringBuilder s = new StringBuilder(getTypeName(type, getShort));
-    TextUtil.append(s, "[]", type.arrayDim);
-    return s.toString();
+  public static List<ClassesProcessor.ClassNode> enclosingClassList() {
+    ClassesProcessor.ClassNode enclosingClass = (ClassesProcessor.ClassNode) DecompilerContext.getProperty(
+      DecompilerContext.CURRENT_CLASS_NODE
+    );
+    List<ClassesProcessor.ClassNode> enclosingClassList = new ArrayList<>(List.of(enclosingClass));
+    while (enclosingClass.parent != null) {
+      enclosingClass = enclosingClass.parent;
+      enclosingClassList.add(0, enclosingClass);
+    }
+    return enclosingClassList.stream()
+      .filter(classNode -> classNode.type != ClassesProcessor.ClassNode.CLASS_ANONYMOUS &&
+                           classNode.type != ClassesProcessor.ClassNode.CLASS_LAMBDA
+      ).collect(Collectors.toList());
+  }
+
+  public static boolean checkNestedTypeAnnotation(StringBuilder sb, List<TypeAnnotationWriteHelper> typePathWriteHelper) {
+    var wroteAnnotation = new Object() { boolean value = false; };
+    typePathWriteHelper.removeIf(typeAnnotationWriteHelper -> {
+      StructTypePathEntry path = typeAnnotationWriteHelper.getPaths().peek();
+      if (path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.NESTED.getOpcode()) {
+        typeAnnotationWriteHelper.getPaths().pop();
+        if (typeAnnotationWriteHelper.getPaths().isEmpty()) {
+          typeAnnotationWriteHelper.writeTo(sb);
+          wroteAnnotation.value = true;
+          return true;
+        }
+      }
+      return false;
+    });
+    return wroteAnnotation.value;
+  }
+
+  public static String getCastTypeName(VarType type, List<TypeAnnotationWriteHelper> typePathWriteHelper) {
+    return getCastTypeName(type, true, typePathWriteHelper);
+  }
+
+  public static String getCastTypeName(VarType type, boolean getShort, List<TypeAnnotationWriteHelper> typePathWriteHelper) {
+    List<TypeAnnotationWriteHelper> arrayPaths = new ArrayList<>();
+    List<TypeAnnotationWriteHelper> notArrayPath = typePathWriteHelper.stream().filter(stack -> {
+      boolean isArrayPath = stack.getPaths().size() < type.arrayDim;
+      if (stack.getPaths().size() > type.arrayDim) {
+        for (int i = 0; i < type.arrayDim; i++) {
+          stack.getPaths().poll(); // remove all trailing
+        }
+      }
+      if (isArrayPath) {
+        arrayPaths.add(stack);
+      }
+      return !isArrayPath;
+    }).collect(Collectors.toList());
+    StringBuilder sb = new StringBuilder(getTypeName(type, getShort, notArrayPath));
+    writeArray(sb, type.arrayDim, arrayPaths);
+    return sb.toString();
+  }
+
+  public static void writeArray(StringBuilder sb, int arrayDim, List<TypeAnnotationWriteHelper> typePathWriteStack) {
+    for (int i = 0; i < arrayDim; i++) {
+      var ref = new Object() {
+        boolean firstIteration = true;
+      };
+      final int it = i;
+      typePathWriteStack.removeIf(writeHelper -> {
+        if (it == writeHelper.getPaths().size()) {
+          if (ref.firstIteration) {
+            sb.append(' ');
+            ref.firstIteration = false;
+          }
+          writeHelper.writeTo(sb);
+          return true;
+        }
+        return false;
+      });
+      sb.append("[]");
+    }
   }
 
   public static PrimitiveExpressionList getExpressionData(VarExprent var) {
@@ -720,24 +834,23 @@ public class ExprProcessor implements CodeConstants {
   public static TextBuffer jmpWrapper(Statement stat, int indent, boolean semicolon, BytecodeMappingTracer tracer) {
     TextBuffer buf = stat.toJava(indent, tracer);
 
-    List<StatEdge> lstSuccs = stat.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL);
+    List<StatEdge> lstSuccs = stat.getSuccessorEdges(EdgeType.DIRECT_ALL);
     if (lstSuccs.size() == 1) {
       StatEdge edge = lstSuccs.get(0);
-      if (edge.getType() != StatEdge.TYPE_REGULAR && edge.explicit && edge.getDestination().type != Statement.TYPE_DUMMYEXIT) {
+      if (edge.getType() != EdgeType.REGULAR && edge.explicit && edge.getDestination().type != StatementType.DUMMY_EXIT) {
         buf.appendIndent(indent);
 
-        switch (edge.getType()) {
-          case StatEdge.TYPE_BREAK:
-            addDeletedGotoInstructionMapping(stat, tracer);
-            buf.append("break");
-            break;
-          case StatEdge.TYPE_CONTINUE:
-            addDeletedGotoInstructionMapping(stat, tracer);
-            buf.append("continue");
+        if (EdgeType.BREAK.equals(edge.getType())) {
+          addDeletedGotoInstructionMapping(stat, tracer);
+          buf.append("break");
+        }
+        else if (EdgeType.CONTINUE.equals(edge.getType())) {
+          addDeletedGotoInstructionMapping(stat, tracer);
+          buf.append("continue");
         }
 
         if (edge.labeled) {
-          buf.append(" label").append(edge.closure.id.toString());
+          buf.append(" label").append(Integer.toString(edge.closure.id));
         }
         buf.append(";").appendLineSeparator();
         tracer.incrementCurrentSourceLine();
@@ -844,7 +957,7 @@ public class ExprProcessor implements CodeConstants {
       // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
       if (exprent.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)exprent).isBoxingCall()) {
         InvocationExprent invocationExprent = (InvocationExprent)exprent;
-        exprent = invocationExprent.getLstParameters().get(0);
+        exprent = invocationExprent.getParameters().get(0);
         int paramType = invocationExprent.getDescriptor().params[0].type;
         if (exprent.type == Exprent.EXPRENT_CONST && ((ConstExprent)exprent).getConstType().type != paramType) {
           leftType = new VarType(paramType);
@@ -857,7 +970,7 @@ public class ExprProcessor implements CodeConstants {
     boolean cast =
       castAlways ||
       (!leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) ||
-      (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType))) ||
+      (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType, Collections.emptyList()))) ||
       (castNarrowing && isIntConstant(exprent) && isNarrowedIntType(leftType));
 
     boolean quote = cast && exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST);
@@ -872,7 +985,7 @@ public class ExprProcessor implements CodeConstants {
       }
     }
 
-    if (cast) buffer.append('(').append(getCastTypeName(leftType)).append(')');
+    if (cast) buffer.append('(').append(ExprProcessor.getCastTypeName(leftType, Collections.emptyList())).append(')');
 
     if (quote) buffer.append('(');
 

@@ -80,7 +80,9 @@ internal class ChangesViewCommitWorkflowHandler(
     currentChangeList = workflow.getAffectedChangeList(emptySet())
 
     if (isToggleMode()) deactivate(false)
-    project.messageBus.connect(this).subscribe(CommitModeManager.COMMIT_MODE_TOPIC, object : CommitModeManager.CommitModeListener {
+
+    val busConnection = project.messageBus.connect(this)
+    CommitModeManager.subscribeOnCommitModeChange(busConnection, object : CommitModeManager.CommitModeListener {
       override fun commitModeChanged() {
         if (isToggleMode()) {
           deactivate(false)

@@ -14,8 +14,8 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.InlineUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -86,7 +86,7 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
   @Nullable
   private static PsiCodeBlock getVariableScopeBlock(@Nullable PsiVariable variable) {
     if (variable instanceof PsiLocalVariable) {
-      final PsiElement variableScope = RefactoringUtil.getVariableScope((PsiLocalVariable)variable);
+      final PsiElement variableScope = CommonJavaRefactoringUtil.getVariableScope((PsiLocalVariable)variable);
       if (variableScope instanceof PsiCodeBlock) {
         return (PsiCodeBlock)variableScope;
       }
@@ -225,7 +225,7 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
     boolean isSingleUsage = value != null && usages.size() == 1;
     if (isSimple || isSingleUsage) {
       for (PsiJavaCodeReferenceElement usage : usages) {
-        PsiExpression inlined = InlineUtil.inlineVariable(context.returnedVariable, value, usage);
+        PsiExpression inlined = JavaSpecialRefactoringProvider.getInstance().inlineVariable(context.returnedVariable, value, usage, null);
         if (firstInlined == null) firstInlined = inlined;
         highlighter.add(inlined);
       }

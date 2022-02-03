@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.icons.AllIcons;
@@ -37,11 +37,9 @@ import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 import static com.intellij.ui.scale.ScaleType.USR_SCALE;
 
 /**
- * @author max
  * @author Konstantin Bulenkov
  */
-@ApiStatus.NonExtendable
-public class IconUtil {
+public final class IconUtil {
   public static final Key<Integer> ICON_FLAG_IGNORE_MASK = new Key<>("ICON_FLAG_IGNORE_MASK");
   private static final Key<Boolean> PROJECT_WAS_EVER_INITIALIZED = Key.create("iconDeferrer:projectWasEverInitialized");
 
@@ -60,8 +58,7 @@ public class IconUtil {
     return was.booleanValue();
   }
 
-  @NotNull
-  public static Icon cropIcon(@NotNull Icon icon, int maxWidth, int maxHeight) {
+  public static @NotNull Icon cropIcon(@NotNull Icon icon, int maxWidth, int maxHeight) {
     if (icon.getIconHeight() <= maxHeight && icon.getIconWidth() <= maxWidth) {
       return icon;
     }
@@ -77,8 +74,8 @@ public class IconUtil {
       image = ((JBHiDPIScaledImage)image).getDelegate();
     }
 
-    BufferedImage bi = ImageUtil.toBufferedImage(image);
-    final Graphics2D g = bi.createGraphics();
+    BufferedImage bi = ImageUtil.toBufferedImage(Objects.requireNonNull(image));
+    Graphics2D g = bi.createGraphics();
 
     int imageWidth = ImageUtil.getRealWidth(image);
     int imageHeight = ImageUtil.getRealHeight(image);
@@ -100,16 +97,14 @@ public class IconUtil {
     return new JBImageIcon(RetinaImage.createFrom(img, scale, null));
   }
 
-  @NotNull
-  public static Icon cropIcon(@NotNull Icon icon, @NotNull Rectangle area) {
+  public static @NotNull Icon cropIcon(@NotNull Icon icon, @NotNull Rectangle area) {
     if (!new Rectangle(icon.getIconWidth(), icon.getIconHeight()).contains(area)) {
       return icon;
     }
     return new CropIcon(icon, area);
   }
 
-  @NotNull
-  public static Icon flip(@NotNull final Icon icon, final boolean horizontal) {
+  public static @NotNull Icon flip(final @NotNull Icon icon, final boolean horizontal) {
     return new Icon() {
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
@@ -144,8 +139,7 @@ public class IconUtil {
   /**
    * @return a deferred icon for the file, taking into account {@link FileIconProvider} and {@link FileIconPatcher} extensions.
    */
-  @NotNull
-  public static Icon computeFileIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
+  public static @NotNull Icon computeFileIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
     if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) {
       return AllIcons.FileTypes.Unknown;
     }
@@ -203,8 +197,7 @@ public class IconUtil {
    * @see #computeFileIcon(VirtualFile, int, Project)
    * @see FileType#getIcon()
    */
-  @NotNull
-  public static Icon computeBaseFileIcon(@NotNull VirtualFile vFile) {
+  public static @NotNull Icon computeBaseFileIcon(@NotNull VirtualFile vFile) {
     Icon icon = TypePresentationService.getService().getIcon(vFile);
     if (icon != null) {
       return icon;
@@ -217,8 +210,7 @@ public class IconUtil {
     return icon != null ? icon : getEmptyIcon(false);
   }
 
-  @Nullable
-  private static Icon getProvidersIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, Project project) {
+  private static @Nullable Icon getProvidersIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, Project project) {
     for (FileIconProvider provider : FileIconProvider.EP_NAME.getExtensionList()) {
       final Icon icon = provider.getIcon(file, flags, project);
       if (icon != null) return icon;
@@ -226,8 +218,7 @@ public class IconUtil {
     return null;
   }
 
-  @NotNull
-  public static Icon getEmptyIcon(boolean showVisibility) {
+  public static @NotNull Icon getEmptyIcon(boolean showVisibility) {
     com.intellij.ui.icons.RowIcon baseIcon = new RowIcon(2);
     baseIcon.setIcon(EmptyIcon.create(PlatformIcons.CLASS_ICON), 0);
     if (showVisibility) {
@@ -236,13 +227,11 @@ public class IconUtil {
     return baseIcon;
   }
 
-  @NotNull
-  public static Image toImage(@NotNull Icon icon) {
+  public static @NotNull Image toImage(@NotNull Icon icon) {
     return toImage(icon, null);
   }
 
-  @NotNull
-  public static Image toImage(@NotNull Icon icon, @Nullable ScaleContext context) {
+  public static @NotNull Image toImage(@NotNull Icon icon, @Nullable ScaleContext context) {
     Image image = IconLoader.toImage(icon, context);
     if (image == null) {
       //noinspection UndesirableClassUsage
@@ -251,18 +240,15 @@ public class IconUtil {
     return image;
   }
 
-  @NotNull
-  public static BufferedImage toBufferedImage(@NotNull Icon icon) {
+  public static @NotNull BufferedImage toBufferedImage(@NotNull Icon icon) {
     return toBufferedImage(icon, false);
   }
 
-  @NotNull
-  public static BufferedImage toBufferedImage(@NotNull Icon icon, boolean inUserScale) {
+  public static @NotNull BufferedImage toBufferedImage(@NotNull Icon icon, boolean inUserScale) {
     return toBufferedImage(icon, null, inUserScale);
   }
 
-  @NotNull
-  public static BufferedImage toBufferedImage(@NotNull Icon icon, @Nullable ScaleContext context, boolean inUserScale) {
+  public static @NotNull BufferedImage toBufferedImage(@NotNull Icon icon, @Nullable ScaleContext context, boolean inUserScale) {
     Image image = IconLoader.toImage(icon, context);
     if (image == null) {
       //noinspection UndesirableClassUsage
@@ -271,63 +257,51 @@ public class IconUtil {
     return ImageUtil.toBufferedImage(image, inUserScale);
   }
 
-  @NotNull
-  public static Icon getAddIcon() {
+  public static @NotNull Icon getAddIcon() {
     return AllIcons.General.Add;
   }
 
-  @NotNull
-  public static Icon getRemoveIcon() {
+  public static @NotNull Icon getRemoveIcon() {
     return AllIcons.General.Remove;
   }
 
-  @NotNull
-  public static Icon getMoveUpIcon() {
+  public static @NotNull Icon getMoveUpIcon() {
     return AllIcons.Actions.MoveUp;
   }
 
-  @NotNull
-  public static Icon getMoveDownIcon() {
+  public static @NotNull Icon getMoveDownIcon() {
     return AllIcons.Actions.MoveDown;
   }
 
-  @NotNull
-  public static Icon getEditIcon() {
+  public static @NotNull Icon getEditIcon() {
     return AllIcons.Actions.Edit;
   }
 
-  @NotNull
-  public static Icon getAddClassIcon() {
+  public static @NotNull Icon getAddClassIcon() {
     return AllIcons.ToolbarDecorator.AddClass;
   }
 
-  @NotNull
-  public static Icon getAddPatternIcon() {
+  public static @NotNull Icon getAddPatternIcon() {
     return AllIcons.ToolbarDecorator.AddPattern;
   }
 
-  @NotNull
-  public static Icon getAddJiraPatternIcon() {
+  public static @NotNull Icon getAddJiraPatternIcon() {
     return AllIcons.ToolbarDecorator.AddJira;
   }
 
-  @NotNull
-  public static Icon getAddYouTrackPatternIcon() {
+  public static @NotNull Icon getAddYouTrackPatternIcon() {
     return AllIcons.ToolbarDecorator.AddYouTrack;
   }
 
-  @NotNull
-  public static Icon getAddBlankLineIcon() {
+  public static @NotNull Icon getAddBlankLineIcon() {
     return AllIcons.ToolbarDecorator.AddBlankLine;
   }
 
-  @NotNull
-  public static Icon getAddPackageIcon() {
+  public static @NotNull Icon getAddPackageIcon() {
     return AllIcons.ToolbarDecorator.AddFolder;
   }
 
-  @NotNull
-  public static Icon getAddLinkIcon() {
+  public static @NotNull Icon getAddLinkIcon() {
     return AllIcons.ToolbarDecorator.AddLink;
   }
 
@@ -346,8 +320,7 @@ public class IconUtil {
     icon.paintIcon(c, g, x, y);
   }
 
-  @NotNull
-  private static @NonNls String getToolbarDecoratorIconsFolder() {
+  private static @NotNull @NonNls String getToolbarDecoratorIconsFolder() {
     return "/toolbarDecorator/" + (SystemInfoRt.isMac ? "mac/" : "");
   }
 
@@ -368,8 +341,7 @@ public class IconUtil {
     return result;
   }
 
-  @NotNull
-  public static Icon toSize(@Nullable Icon icon, int width, int height) {
+  public static @NotNull Icon toSize(@Nullable Icon icon, int width, int height) {
     return new IconSizeWrapper(icon, width, height);
   }
 
@@ -384,10 +356,9 @@ public class IconUtil {
   /**
    * Use only for icons under selection
    */
-  @Nullable
   @ApiStatus.Internal
   @Contract("null -> null; !null -> !null")
-  public static Icon wrapToSelectionAwareIcon(@Nullable Icon iconUnderSelection) {
+  public static @Nullable Icon wrapToSelectionAwareIcon(@Nullable Icon iconUnderSelection) {
     if (iconUnderSelection == null) return null;
     return new Icon() {
       @Override
@@ -501,8 +472,7 @@ public class IconUtil {
    * @deprecated use {@link #scale(Icon, Component, float)}
    */
   @Deprecated
-  @NotNull
-  public static Icon scale(@NotNull final Icon source, double _scale) {
+  public static @NotNull Icon scale(final @NotNull Icon source, double _scale) {
     final double scale = clampScale(_scale);
     return new Icon() {
       @Override
@@ -568,8 +538,7 @@ public class IconUtil {
    *
    * @see CopyableIcon
    */
-  @NotNull
-  public static Icon copy(@NotNull Icon icon, @Nullable Component ancestor) {
+  public static @NotNull Icon copy(@NotNull Icon icon, @Nullable Component ancestor) {
     return IconLoader.copy(icon, ancestor, false);
   }
 
@@ -578,8 +547,7 @@ public class IconUtil {
    *
    * @see CopyableIcon
    */
-  @NotNull
-  public static Icon deepCopy(@NotNull Icon icon, @Nullable Component ancestor) {
+  public static @NotNull Icon deepCopy(@NotNull Icon icon, @Nullable Component ancestor) {
     return IconLoader.copy(icon, ancestor, true);
   }
 
@@ -607,8 +575,7 @@ public class IconUtil {
    * @param scale the scale factor
    * @return the scaled icon
    */
-  @NotNull
-  public static Icon scale(@NotNull Icon icon, @Nullable Component ancestor, float scale) {
+  public static @NotNull Icon scale(@NotNull Icon icon, @Nullable Component ancestor, float scale) {
     ScaleContext ctx;
     if (ancestor == null && icon instanceof ScaleContextAware) {
       // In this case the icon's context should be preserved, except the OBJ_SCALE.
@@ -617,7 +584,7 @@ public class IconUtil {
     } else {
       ctx = ScaleContext.create(ancestor);
     }
-    ctx.update(OBJ_SCALE.of(scale));
+    ctx.setScale(OBJ_SCALE.of(scale));
     return scale(icon, ctx);
   }
 
@@ -631,8 +598,7 @@ public class IconUtil {
    * @param ctx the scale context to apply
    * @return the scaled icon
    */
-  @NotNull
-  public static Icon scale(@NotNull Icon icon, @NotNull ScaleContext ctx) {
+  public static @NotNull Icon scale(@NotNull Icon icon, @NotNull ScaleContext ctx) {
     double scale = ctx.getScale(OBJ_SCALE);
     if (icon instanceof CopyableIcon) {
       icon = ((CopyableIcon)icon).deepCopy();
@@ -641,7 +607,7 @@ public class IconUtil {
           ctx = ctx.copy();
           // Reset OBJ_SCALE in the context to preserve ScalableIcon.scale(float) implementation
           // from accumulation of the scales: OBJ_SCALE * scale.
-          ctx.update(OBJ_SCALE.of(1.0));
+          ctx.setScale(OBJ_SCALE.of(1.0));
           ((ScaleContextAware)icon).updateScaleContext(ctx);
         }
         return ((ScalableIcon)icon).scale((float)scale);
@@ -663,8 +629,7 @@ public class IconUtil {
    * @param fontSize the reference font size
    * @return the scaled icon
    */
-  @NotNull
-  public static Icon scaleByFont(@NotNull Icon icon, @Nullable Component ancestor, float fontSize) {
+  public static @NotNull Icon scaleByFont(@NotNull Icon icon, @Nullable Component ancestor, float fontSize) {
     float scale = JBUIScale.getFontScale(fontSize);
     if (icon instanceof ScaleContextAware) {
       ScaleContextAware ctxIcon = (ScaleContextAware)icon;
@@ -695,8 +660,7 @@ public class IconUtil {
    *
    * @see UserScaleContext#overrideScale(Scale)
    */
-  @NotNull
-  public static Icon overrideScale(@NotNull Icon icon, Scale scale) {
+  public static @NotNull Icon overrideScale(@NotNull Icon icon, Scale scale) {
     if (icon instanceof CompositeIcon) {
       CompositeIcon compositeIcon = (CompositeIcon)icon;
       for (int i = 0; i < compositeIcon.getIconCount(); i++) {
@@ -710,43 +674,35 @@ public class IconUtil {
     return icon;
   }
 
-  @NotNull
-  public static Icon colorize(@NotNull Icon source, @NotNull Color color) {
+  public static @NotNull Icon colorize(@NotNull Icon source, @NotNull Color color) {
     return colorize(source, color, false);
   }
 
-  @NotNull
-  public static Icon colorize(Graphics2D g, @NotNull Icon source, @NotNull Color color) {
+  public static @NotNull Icon colorize(Graphics2D g, @NotNull Icon source, @NotNull Color color) {
     return colorize(g, source, color, false);
   }
 
-  @NotNull
-  public static Icon colorize(@NotNull Icon source, @NotNull Color color, boolean keepGray) {
+  public static @NotNull Icon colorize(@NotNull Icon source, @NotNull Color color, boolean keepGray) {
     return filterIcon(source, () -> new ColorFilter(color, keepGray), null);
   }
 
-  @NotNull
-  public static Icon colorize(Graphics2D g, @NotNull Icon source, @NotNull Color color, boolean keepGray) {
+  public static @NotNull Icon colorize(Graphics2D g, @NotNull Icon source, @NotNull Color color, boolean keepGray) {
     return filterIcon(g, source, new ColorFilter(color, keepGray));
   }
 
-  @NotNull
-  public static Icon desaturate(@NotNull Icon source) {
+  public static @NotNull Icon desaturate(@NotNull Icon source) {
     return filterIcon(source, () -> new DesaturationFilter(), null);
   }
 
-  @NotNull
-  public static Icon brighter(@NotNull Icon source, int tones) {
+  public static @NotNull Icon brighter(@NotNull Icon source, int tones) {
     return filterIcon(source, () -> new BrighterFilter(tones), null);
   }
 
-  @NotNull
-  public static Icon darker(@NotNull Icon source, int tones) {
+  public static @NotNull Icon darker(@NotNull Icon source, int tones) {
     return filterIcon(source, () -> new DarkerFilter(tones), null);
   }
 
-  @NotNull
-  private static Icon filterIcon(Graphics2D g, @NotNull Icon source, @NotNull ColorFilter filter) {
+  private static @NotNull Icon filterIcon(Graphics2D g, @NotNull Icon source, @NotNull ColorFilter filter) {
     BufferedImage src = g != null ? ImageUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB) :
                         ImageUtil.createImage(source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2d = src.createGraphics();
@@ -837,13 +793,11 @@ public class IconUtil {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  public static JBImageIcon createImageIcon(@NotNull final BufferedImage img) {
+  public static @NotNull JBImageIcon createImageIcon(final @NotNull BufferedImage img) {
     return createImageIcon((Image)img);
   }
 
-  @NotNull
-  public static JBImageIcon createImageIcon(@NotNull final Image img) {
+  public static @NotNull JBImageIcon createImageIcon(final @NotNull Image img) {
     return new JBImageIcon(img) {
       @Override
       public int getIconWidth() {
@@ -857,15 +811,14 @@ public class IconUtil {
     };
   }
 
-  @NotNull
-  public static Icon textToIcon(@NotNull final String text, @NotNull final Component component, final float fontSize) {
+  public static @NotNull Icon textToIcon(final @NotNull String text, final @NotNull Component component, final float fontSize) {
     final class MyIcon extends JBScalableIcon {
-      private @NotNull final String myText;
+      private final @NotNull String myText;
       private Font myFont;
       private FontMetrics myMetrics;
       private final WeakReference<Component> myCompRef = new WeakReference<>(component);
 
-      private MyIcon(@NotNull final String text) {
+      private MyIcon(final @NotNull String text) {
         myText = text;
         setIconPreScaled(false);
         getScaleContext().addUpdateListener(() -> update());
@@ -920,8 +873,7 @@ public class IconUtil {
     return new MyIcon(text);
   }
 
-  @NotNull
-  public static Icon addText(@NotNull Icon base, @NotNull String text) {
+  public static @NotNull Icon addText(@NotNull Icon base, @NotNull String text) {
     LayeredIcon icon = new LayeredIcon(2);
     icon.setIcon(base, 0);
     icon.setIcon(textToIcon(text, new JLabel(), JBUIScale.scale(6.0f)), 1, SwingConstants.SOUTH_EAST);
@@ -931,8 +883,7 @@ public class IconUtil {
   /**
    * Creates new icon with the filter applied.
    */
-  @NotNull
-  public static Icon filterIcon(@NotNull Icon icon, Supplier<? extends RGBImageFilter> filterSupplier, @Nullable Component ancestor) {
+  public static @NotNull Icon filterIcon(@NotNull Icon icon, Supplier<? extends RGBImageFilter> filterSupplier, @Nullable Component ancestor) {
     return IconLoader.filterIcon(icon, filterSupplier, ancestor);
   }
 
@@ -978,5 +929,36 @@ public class IconUtil {
     else {
       return right;
     }
+  }
+
+  @ApiStatus.Internal
+  public static Icon toRetinaAwareIcon(BufferedImage image) {
+    return new Icon() {
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        // [tav] todo: the icon is created in def screen scale
+        if (UIUtil.isJreHiDPI()) {
+          Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(), image.getHeight());
+          float s = JBUIScale.sysScale();
+          newG.scale(1.0 / s, 1.0 / s);
+          newG.drawImage(image, 0, 0, null);
+          newG.scale(1.0, 1.0);
+          newG.dispose();
+        }
+        else {
+          g.drawImage(image, x, y, null);
+        }
+      }
+
+      @Override
+      public int getIconWidth() {
+        return UIUtil.isJreHiDPI() ? (int)(image.getWidth() / JBUIScale.sysScale()) : image.getWidth();
+      }
+
+      @Override
+      public int getIconHeight() {
+        return UIUtil.isJreHiDPI() ? (int)(image.getHeight() / JBUIScale.sysScale()) : image.getHeight();
+      }
+    };
   }
 }

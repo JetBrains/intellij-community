@@ -15,13 +15,21 @@
  */
 package com.intellij.application.options.colors;
 
+import com.intellij.application.options.editor.fonts.AppConsoleFontConfigurable;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.DelegatingFontPreferences;
 import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.colors.impl.AppConsoleFontOptions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.Settings;
+import com.intellij.ui.components.ActionLink;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
 
 public class ConsoleFontOptions extends FontOptions {
   public ConsoleFontOptions(ColorAndFontOptions options) {
@@ -34,14 +42,39 @@ public class ConsoleFontOptions extends FontOptions {
   }
 
   @Override
+  protected @Nullable Component createOverwriteCheckBox() {
+    if (!AppConsoleFontOptions.getInstance().isUseEditorFont()) {
+      JPanel overwritePanel = new JPanel(new FlowLayout(FlowLayout.LEADING));
+      overwritePanel.setBorder(JBUI.Borders.empty());
+      overwritePanel.add(new JLabel(ApplicationBundle.message("settings.editor.console.font.overwritten")));
+      ActionLink consoleSettingsLink = new ActionLink(
+        ApplicationBundle.message("settings.editor.console.font.overwritten.link"),
+        e -> {
+          navigateToParentFontConfigurable();
+        });
+      overwritePanel.add(consoleSettingsLink);
+      return overwritePanel;
+    }
+    return super.createOverwriteCheckBox();
+  }
+
+  @Override
   protected void navigateToParentFontConfigurable() {
     Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(getPanel()));
     if (allSettings != null) {
-      ColorAndFontOptions colorAndFontOptions = allSettings.find(ColorAndFontOptions.class);
-      if (colorAndFontOptions != null) {
-        Configurable editorFontConfigurable = colorAndFontOptions.findSubConfigurable(ColorAndFontOptions.getFontConfigurableName());
-        if (editorFontConfigurable != null) {
-          allSettings.select(editorFontConfigurable);
+      if (!AppConsoleFontOptions.getInstance().isUseEditorFont()) {
+        final Configurable fontConfigurable = allSettings.find(AppConsoleFontConfigurable.ID);
+        if (fontConfigurable != null) {
+          allSettings.select(fontConfigurable);
+        }
+      }
+      else {
+        ColorAndFontOptions colorAndFontOptions = allSettings.find(ColorAndFontOptions.class);
+        if (colorAndFontOptions != null) {
+          Configurable editorFontConfigurable = colorAndFontOptions.findSubConfigurable(ColorAndFontOptions.getFontConfigurableName());
+          if (editorFontConfigurable != null) {
+            allSettings.select(editorFontConfigurable);
+          }
         }
       }
     }
@@ -85,5 +118,13 @@ public class ConsoleFontOptions extends FontOptions {
   @Override
   protected void setCurrentLineSpacing(float lineSpacing) {
     getCurrentScheme().setConsoleLineSpacing(lineSpacing);
+  }
+
+  @Override
+  protected boolean isReadOnly() {
+    if (!AppConsoleFontOptions.getInstance().isUseEditorFont()) {
+      return true;
+    }
+    return super.isReadOnly();
   }
 }

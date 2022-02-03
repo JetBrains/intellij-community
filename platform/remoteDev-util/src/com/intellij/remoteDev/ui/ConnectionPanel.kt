@@ -10,11 +10,15 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.StartupUiUtil
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
-import java.awt.event.*
+import java.awt.BorderLayout
+import java.awt.Dimension
+import java.awt.Font
+import java.awt.event.ActionEvent
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
 import java.beans.PropertyChangeListener
 import javax.swing.*
 
@@ -46,10 +50,10 @@ open class ConnectionPanel(private val manager: ConnectionManager) : ActionPanel
 
     titleLabel = JBLabel(RemoteDevUtilBundle.message("connection.panel.description"), SwingConstants.LEFT).apply {
       isOpaque = false
-      font = font.deriveFont(UIUtil.getLabelFont().size + JBUIScale.scale(5).toFloat()).deriveFont(Font.BOLD)
+      font = font.deriveFont(StartupUiUtil.getLabelFont().size + JBUIScale.scale(5).toFloat()).deriveFont(Font.BOLD)
     }
     userNameTextLabel = JBLabel(RemoteDevUtilBundle.message("connection.panel.cwm.name.label")).apply {
-      font = UIUtil.getLabelFont().deriveFont(UIUtil.getLabelFont().size + JBUIScale.scale(1).toFloat()).deriveFont(Font.BOLD)
+      font = StartupUiUtil.getLabelFont().deriveFont(StartupUiUtil.getLabelFont().size + JBUIScale.scale(1).toFloat()).deriveFont(Font.BOLD)
     }
     userNameTextField = JBTextField(LocalUserSettings.userName)
     userNameTextField.minimumSize = Dimension(JBUI.scale(280), userNameTextField.minimumSize.height)
@@ -57,7 +61,7 @@ open class ConnectionPanel(private val manager: ConnectionManager) : ActionPanel
     TextComponentHint(userNameTextField, RemoteDevUtilBundle.message("connection.panel.cwm.name.textfield"))
 
     remoteUrlTextLabel = JBLabel(RemoteDevUtilBundle.message("connection.panel.url.label")).apply {
-      font = UIUtil.getLabelFont().deriveFont(UIUtil.getLabelFont().size + JBUIScale.scale(1).toFloat()).deriveFont(Font.BOLD)
+      font = StartupUiUtil.getLabelFont().deriveFont(StartupUiUtil.getLabelFont().size + JBUIScale.scale(1).toFloat()).deriveFont(Font.BOLD)
     }
     remoteUrlTextField = JBTextField()
     remoteUrlTextField.minimumSize = Dimension(JBUI.scale(280), remoteUrlTextField.minimumSize.height)

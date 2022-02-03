@@ -1,12 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.uploader.events;
 
-import com.intellij.internal.statistic.eventLog.connection.StatisticsResult;
 import com.intellij.internal.statistic.eventLog.DataCollectorSystemEventLogger;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
+import com.intellij.internal.statistic.eventLog.connection.StatisticsResult;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,30 +12,40 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.*;
 
 import static com.intellij.internal.statistic.uploader.ExternalDataCollectorLogger.findDirectory;
 
 public class ExternalEventsLogger implements DataCollectorSystemEventLogger {
-  @NonNls private final Logger myLogger;
+  @SuppressWarnings("NonConstantLogger") @NonNls private final Logger myLogger;
 
   public ExternalEventsLogger() {
     myLogger = Logger.getLogger("com.intellij.internal.statistic.uploader.events");
     String logDirectory = findDirectory(1_000_000L);
     if (logDirectory != null) {
-      myLogger.addAppender(newAppender(getEventLogFile(logDirectory).getAbsolutePath()));
+      myLogger.addHandler(newAppender(getEventLogFile(logDirectory).getAbsolutePath()));
       myLogger.setLevel(Level.ALL);
     }
   }
 
   @NotNull
-  public static FileAppender newAppender(@NotNull String directory) {
-    @NonNls FileAppender appender = new FileAppender();
-    appender.setFile(directory);
-    appender.setLayout(new PatternLayout("%m\n"));
-    appender.setThreshold(Level.ALL);
-    appender.setAppend(false);
-    appender.activateOptions();
-    return appender;
+  public static Handler newAppender(@NotNull String logPath) {
+    try {
+      @NonNls FileHandler appender = new FileHandler(logPath, false);
+      appender.setFormatter(new Formatter() {
+        @Override
+        public String format(LogRecord record) {
+          return record.getMessage() + "\n";
+        }
+      });
+      appender.setLevel(Level.ALL);
+      return appender;
+    }
+    catch (IOException e) {
+      //noinspection UseOfSystemOutOrSystemErr
+      System.err.println("Error creating log file: " + e.getMessage());
+      return new ConsoleHandler();
+    }
   }
 
   @NotNull

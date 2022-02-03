@@ -1371,11 +1371,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private void flushQualifiedMethods(@NotNull DfaVariableValue variable) {
-    DfaVariableValue qualifier = variable.getQualifier();
-    if (qualifier != null) {
+    if (variable.isFlushableByCalls()) {
       // Flush method results on field write
       List<DfaVariableValue> toFlush =
-        ContainerUtil.filter(qualifier.getDependentVariables(), DfaVariableValue::containsCalls);
+        ContainerUtil.filter(myVariableTypes.keySet(), DfaVariableValue::containsCalls);
       toFlush.forEach(val -> doFlush(val, true));
     }
   }

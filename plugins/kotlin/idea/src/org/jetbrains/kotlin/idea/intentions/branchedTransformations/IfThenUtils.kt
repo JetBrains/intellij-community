@@ -10,7 +10,6 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -27,6 +26,7 @@ import org.jetbrains.kotlin.idea.util.application.invokeLater
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.getResolutionScope
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -182,14 +182,14 @@ fun KtPostfixExpression.inlineBaseExpressionIfApplicable(editor: Editor?, withPr
 
 // I.e. stable val/var/receiver
 // We exclude stable complex expressions here, because we don't do smartcasts on them (even though they are stable)
-fun KtExpression.isStableSimpleExpression(context: BindingContext = this.analyze()): Boolean {
+fun KtExpression.isStableSimpleExpression(context: BindingContext = this.safeAnalyzeNonSourceRootCode()): Boolean {
     val dataFlowValue = this.toDataFlowValue(context)
     return dataFlowValue?.isStable == true &&
             dataFlowValue.kind != DataFlowValue.Kind.STABLE_COMPLEX_EXPRESSION
 
 }
 
-fun KtExpression.isStableVal(context: BindingContext = this.analyze()): Boolean {
+fun KtExpression.isStableVal(context: BindingContext = this.safeAnalyzeNonSourceRootCode()): Boolean {
     return this.toDataFlowValue(context)?.kind == DataFlowValue.Kind.STABLE_VALUE
 }
 
@@ -321,7 +321,7 @@ data class IfThenToSelectData(
 }
 
 internal fun KtIfExpression.buildSelectTransformationData(): IfThenToSelectData? {
-    val context = analyze()
+    val context = safeAnalyzeNonSourceRootCode()
 
     val condition = condition?.unwrapBlockOrParenthesis() as? KtOperationExpression ?: return null
     val thenClause = then?.unwrapBlockOrParenthesis()

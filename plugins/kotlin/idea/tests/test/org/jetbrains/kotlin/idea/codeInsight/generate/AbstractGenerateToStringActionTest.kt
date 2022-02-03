@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateToStringAction
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateToStringAction.Generator
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 abstract class AbstractGenerateToStringActionTest : AbstractCodeInsightActionTest() {
     override fun createAction(fileText: String) = KotlinGenerateToStringAction()

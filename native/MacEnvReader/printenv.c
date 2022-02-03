@@ -3,26 +3,16 @@
 
 #include <stdio.h>
 
-int main(int argc, const char **argv, const char **env) {
-  if (argc != 2) {
-    printf("usage: %s output_file\n", argv[0]);
-    return 1;
-  }
-
-  FILE *f = fopen(argv[1], "w");
-  if (f == NULL) {
-    perror("fopen");
-    return 2;
-  }
+int main(int argc __attribute__((unused)),
+  const char **argv __attribute__((unused)),
+  const char **env) {
 
   const char **v = env;
   while (*v != NULL) {
-    fputs(*v, f);
-    fputc('\0', f);
+    fputs(*v, stdout);
+    putc('\0', stdout);
     v++;
   }
-
-  fclose(f);
 
   return 0;
 }

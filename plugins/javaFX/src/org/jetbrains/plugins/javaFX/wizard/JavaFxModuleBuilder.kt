@@ -54,6 +54,10 @@ internal class JavaFxModuleBuilder : StarterModuleBuilder() {
                 "com.dlsc.formsfx", "formsfx-core", listOf(
           LibraryLink(LibraryLinkType.WEBSITE, "https://github.com/dlsc-software-consulting-gmbh/FormsFX/")
         )),
+        Library("fxgl", null, "FXGL", JavaFXBundle.message("library.fxgl.description"),
+                "com.github.almasb", "fxgl", listOf(
+          LibraryLink(LibraryLinkType.WEBSITE, "https://github.com/AlmasB/FXGL")
+        )),
         Library("ikonli", null, "Ikonli", JavaFXBundle.message("library.ikonli.description"),
                 "org.kordamp.ikonli", "ikonli-javafx", listOf(
           LibraryLink(LibraryLinkType.REFERENCE, "https://kordamp.org/ikonli/")

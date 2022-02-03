@@ -1,4 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+@file:Suppress("UnstableApiUsage")
 package org.jetbrains.kotlin.idea.gradle.configuration.utils
 
 import com.google.common.graph.*
@@ -41,7 +43,7 @@ fun createSourceSetDependsOnGraph(
 fun MutableGraph<KotlinSourceSet>.putInferredTestToProductionEdges() {
     val sourceSets = this.nodes()
     for (sourceSet in sourceSets) {
-        if (sourceSet.isTestModule) {
+        if (sourceSet.isTestComponent) {
             @OptIn(UnsafeTestSourceSetHeuristicApi::class)
             val predictedMainSourceSetName = predictedProductionSourceSetName(sourceSet.name)
             val predictedMainSourceSet = sourceSets.firstOrNull { it.name == predictedMainSourceSetName } ?: continue
@@ -61,7 +63,7 @@ private fun getFixedDependsOnSourceSets(
     val implicitDependsOnEdgeForAndroid = if (
         sourceSet.actualPlatforms.contains(KotlinPlatform.ANDROID) && sourceSet.declaredDependsOnSourceSets.isEmpty()
     ) {
-        val commonSourceSetName = if (sourceSet.isTestModule) KotlinSourceSet.COMMON_TEST_SOURCE_SET_NAME
+        val commonSourceSetName = if (sourceSet.isTestComponent) KotlinSourceSet.COMMON_TEST_SOURCE_SET_NAME
         else KotlinSourceSet.COMMON_MAIN_SOURCE_SET_NAME
         listOfNotNull(sourceSetsByName[commonSourceSetName])
     } else emptyList()

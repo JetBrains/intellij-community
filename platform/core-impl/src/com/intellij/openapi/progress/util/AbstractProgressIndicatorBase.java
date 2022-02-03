@@ -228,14 +228,12 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   }
 
   @Override
-  @SuppressWarnings({"deprecation", "NonAtomicOperationOnVolatileField"})
   public void startNonCancelableSection() {
     PluginException.reportDeprecatedUsage("ProgressIndicator#startNonCancelableSection", "Use `ProgressManager.executeNonCancelableSection()` instead");
     myNonCancelableSectionCount++;
   }
 
   @Override
-  @SuppressWarnings({"deprecation", "NonAtomicOperationOnVolatileField"})
   public void finishNonCancelableSection() {
     myNonCancelableSectionCount--;
   }

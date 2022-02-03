@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,7 +8,8 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectCache;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -229,7 +230,7 @@ public class PersistentBTreeEnumeratorTest {
     System.setProperty(PersistentBTreeEnumerator.DO_SELF_HEAL_PROP, Boolean.toString(true));
     try {
       List<String> values = new ArrayList<>();
-      TIntArrayList ids = new TIntArrayList();
+      IntList ids = new IntArrayList();
       for (int i = 0; i < 1_000_000; i++) {
         String value = String.valueOf(i);
         values.add(value);
@@ -239,7 +240,7 @@ public class PersistentBTreeEnumeratorTest {
       for (int i = 0; i < values.size(); i += 50_000) {
         String value = values.get(i);
         System.out.println("checked " + i);
-        assertEquals(ids.get(i), myEnumerator.catchCorruption(new CorruptAndEnumerateAfter(value)).intValue());
+        assertEquals(ids.getInt(i), myEnumerator.catchCorruption(new CorruptAndEnumerateAfter(value)).intValue());
       }
     }
     finally {

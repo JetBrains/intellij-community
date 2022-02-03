@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.PlaceProvider;
 import com.intellij.ui.awt.RelativePoint;
@@ -50,7 +49,6 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
   private MessageBusConnection myConnection;
 
   private IdeFrame myFrame;
-  private boolean myIsToolWindowContextMenu;
 
   ActionPopupMenuImpl(@NotNull String place, @NotNull ActionGroup group,
                       @NotNull ActionManagerImpl actionManager,
@@ -81,18 +79,9 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     return myMenu.myGroup;
   }
 
-  void setDataContextProvider(@NotNull Supplier<? extends DataContext> dataContextProvider) {
-    myDataContextProvider = dataContextProvider;
-  }
-
   @Override
   public void setTargetComponent(@NotNull JComponent component) {
     myDataContextProvider = () -> DataManager.getInstance().getDataContext(component);
-    myIsToolWindowContextMenu = ComponentUtil.getParentOfType(InternalDecoratorImpl.class, component) != null;
-  }
-
-  boolean isToolWindowContextMenu() {
-    return myIsToolWindowContextMenu;
   }
 
   private class MyMenu extends JBPopupMenu implements PlaceProvider {
@@ -176,12 +165,10 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
     private void updateChildren(@Nullable RelativePoint point) {
       removeAll();
-      Utils.performWithRetries(() -> {
-        TimeoutUtil.run(
-          () -> Utils.fillMenu(myGroup, this, !UISettings.getInstance().getDisableMnemonics(),
-                               myPresentationFactory, myContext, myPlace, false, false, point),
-          1000, ms -> LOG.warn(ms + " ms to fill popup menu " + myPlace));
-      }, () -> false);
+      TimeoutUtil.run(
+        () -> Utils.fillMenu(myGroup, this, !UISettings.getInstance().getDisableMnemonics(),
+                             myPresentationFactory, myContext, myPlace, false, false, point, null),
+        1000, ms -> LOG.warn(ms + " ms to fill popup menu " + myPlace));
     }
 
     private void disposeMenu() {

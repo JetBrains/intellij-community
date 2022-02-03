@@ -1,6 +1,6 @@
 package sample
 
-expect interface <!LINE_MARKER("descr='Is subclassed by B  Click or press ... to navigate'"), LINE_MARKER("descr='Has actuals in JVM'")!>A<!><T : A<T>> {
+expect interface <!LINE_MARKER("descr='Has actuals in JVM'"), LINE_MARKER("descr='Is subclassed by B  Click or press ... to navigate'")!>A<!><T : A<T>> {
     fun <!LINE_MARKER("descr='Has actuals in JVM'")!>foo<!>(): T
 }
 

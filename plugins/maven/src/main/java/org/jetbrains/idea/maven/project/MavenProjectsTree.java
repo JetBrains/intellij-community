@@ -1302,9 +1302,9 @@ public final class MavenProjectsTree {
     }
   }
 
-  void fireAllProjectsResolved() {
+  void resolutionCompleted() {
     for (Listener each : myListeners) {
-      each.allProjectsResolved();
+      each.resolutionCompleted();
     }
   }
 
@@ -1508,7 +1508,7 @@ public final class MavenProjectsTree {
     default void artifactsDownloaded(@NotNull MavenProject project) {
     }
 
-    default void allProjectsResolved() {}
+    default void resolutionCompleted() {}
   }
 
   @ApiStatus.Internal

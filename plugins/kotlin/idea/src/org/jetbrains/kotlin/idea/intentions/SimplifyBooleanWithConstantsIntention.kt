@@ -6,11 +6,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.copied
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isTrueConstant
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
@@ -68,7 +68,7 @@ class SimplifyBooleanWithConstantsIntention : SelfTargetingOffsetIndependentInte
         val left = element.left?.deparenthesize() as? KtExpression ?: return false
         val right = element.right?.deparenthesize() as? KtExpression ?: return false
 
-        val context = element.analyze(PARTIAL)
+        val context = element.safeAnalyzeNonSourceRootCode(PARTIAL)
 
         fun KtExpression.getConstantValue() =
             ConstantExpressionEvaluator.getConstant(this, context)?.toConstantValue(TypeUtils.NO_EXPECTED_TYPE)?.value
@@ -181,12 +181,12 @@ class SimplifyBooleanWithConstantsIntention : SelfTargetingOffsetIndependentInte
     private fun simplifyExpression(expression: KtExpression) = expression.replaced(toSimplifiedExpression(expression))
 
     private fun KtExpression?.hasBooleanType(): Boolean {
-        val type = this?.getType(this.analyze(PARTIAL)) ?: return false
+        val type = this?.getType(safeAnalyzeNonSourceRootCode(PARTIAL)) ?: return false
         return KotlinBuiltIns.isBoolean(type) && !type.isFlexible()
     }
 
     private fun KtExpression.canBeReducedToBooleanConstant(constant: Boolean? = null): Boolean =
-        CompileTimeConstantUtils.canBeReducedToBooleanConstant(this, this.analyze(PARTIAL), constant)
+        CompileTimeConstantUtils.canBeReducedToBooleanConstant(this, safeAnalyzeNonSourceRootCode(PARTIAL), constant)
 
     private fun KtExpression.canBeReducedToTrue() = canBeReducedToBooleanConstant(true)
 

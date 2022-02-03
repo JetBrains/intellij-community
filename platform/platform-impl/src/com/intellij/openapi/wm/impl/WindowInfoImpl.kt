@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.facet.ui.FacetDependentToolWindow
@@ -32,12 +32,6 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   @get:Attribute(converter = ToolWindowAnchorConverter::class)
   override var anchor by property(ToolWindowAnchor.LEFT) { it == ToolWindowAnchor.LEFT }
 
-  @get:Attribute(converter = ToolWindowAnchorConverter::class)
-  override var largeStripeAnchor by property(ToolWindowAnchor.NONE) { it == ToolWindowAnchor.NONE }
-
-  @get:Attribute("visibleOnLargeStripe")
-  override var isVisibleOnLargeStripe by property(false)
-
   @get:Attribute("auto_hide")
   override var isAutoHide by property(false)
 
@@ -48,7 +42,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   override var floatingBounds by property<Rectangle?>(null) { it == null || (it.width == 0 && it.height == 0 && it.x == 0 && it.y == 0) }
 
   /**
-   * This attribute persists state 'maximized' for ToolWindowType.WINDOWED where decoration is presented by JFrame
+   * This attribute persists state 'maximized' for `ToolWindowType.WINDOWED` where decoration is presented by JFrame
    */
   @get:Attribute("maximized")
   override var isMaximized by property(false)
@@ -93,9 +87,6 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
    * Defines order of tool window button inside the stripe.
    */
   override var order by property(-1)
-
-  @get:Attribute("orderOnLargeStripe")
-  override var orderOnLargeStripe by property(-1)
 
   @get:Transient
   override var isFromPersistentSettings = true
@@ -150,7 +141,9 @@ private class ToolWindowAnchorConverter : Converter<ToolWindowAnchor>() {
       return ToolWindowAnchor.fromText(value)
     }
     catch (e: IllegalArgumentException) {
-      LOG.warn(e)
+      if (!value.equals("none", ignoreCase = true)) {
+        LOG.warn(e)
+      }
       return ToolWindowAnchor.LEFT
     }
   }

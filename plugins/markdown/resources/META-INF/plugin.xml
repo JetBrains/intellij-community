@@ -1,0 +1,552 @@
+<idea-plugin package="org.intellij.plugins.markdown">
+  <id>org.intellij.plugins.markdown</id>
+  <name>Markdown</name>
+  <vendor>JetBrains</vendor>
+  <category>Languages</category>
+  <resource-bundle>messages.MarkdownBundle</resource-bundle>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="com.intellij.platform.images"/>
+  </dependencies>
+  <content>
+    <module name="intellij.markdown.fenceInjection"/>
+  </content>
+
+  <description><![CDATA[
+<p>Provides the capability to edit Markdown files within the IDE and see the rendered HTML in a live preview.
+</br>
+</br>
+Includes the following features:</p>
+<ul>
+<li>Document structure view, headers folding, highlighting, TODOs.</li>
+<li>Code completion and navigation for links to project files.</li>
+<li>Embedding fenced code blocks for different languages.</li>
+<li>Visualizing diagrams for the DOT or PlantUML diagramming languages.</li>
+<li>Ability to use custom stylesheets for a live preview.</li>
+</ul>
+]]></description>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.intellij.markdown.html.panel.provider"
+                    interface="org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.fenceLanguageProvider"
+                    interface="org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.fenceGeneratingProvider"
+                    interface="org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.previewStylesProvider"
+                    interface="org.intellij.plugins.markdown.ui.preview.MarkdownPreviewStylesProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.browserPreviewExtensionProvider"
+                    interface="org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension$Provider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.markdownExportProvider"
+                    interface="org.intellij.plugins.markdown.fileActions.export.MarkdownExportProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.markdownRunner"
+                    interface="org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunner"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <typedHandler implementation="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableTypedHandler"/>
+    <backspaceHandlerDelegate implementation="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableBackspaceHandler"/>
+    <enterHandlerDelegate implementation="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableEnterHandler"/>
+    <editorActionHandler action="EditorTab" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableTabHandler$Tab"/>
+    <editorActionHandler action="EditorUnindentSelection" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableTabHandler$ShiftTab"/>
+    <editorActionHandler action="EditorStartNewLine" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableShiftEnterHandler"/>
+    <editorActionHandler action="EditorDeleteToWordStart" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableReformatAfterActionHook"/>
+    <codeInsight.inlayProvider language="Markdown"
+                               implementationClass="org.intellij.plugins.markdown.editor.tables.ui.MarkdownTableInlayProvider"
+                               id="MarkdownTableInlayProvider"/>
+    <editorFactoryListener implementation="org.intellij.plugins.markdown.editor.tables.ui.MarkdownInlayUpdateOnSoftWrapListener"/>
+
+    <localInspection language="Markdown"
+                     shortName="MarkdownIncorrectTableFormatting"
+                     bundle="messages.MarkdownBundle"
+                     key="markdown.incorrect.table.formatting.inspection.name"
+                     groupKey="markdown.inspection.group.ruby.name"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     implementationClass="org.intellij.plugins.markdown.editor.tables.inspections.MarkdownIncorrectTableFormattingInspection"/>
+
+    <localInspection language="Markdown"
+                     shortName="MarkdownNoTableBorders"
+                     bundle="messages.MarkdownBundle"
+                     key="markdown.no.table.borders.inspection.name"
+                     groupKey="markdown.inspection.group.ruby.name"
+                     enabledByDefault="true"
+                     level="ERROR"
+                     implementationClass="org.intellij.plugins.markdown.editor.tables.inspections.MarkdownNoTableBordersInspection"/>
+
+    <intentionAction>
+      <className>org.intellij.plugins.markdown.editor.tables.intentions.MarkdownInsertTableColumnIntention$InsertBefore</className>
+      <bundleName>messages.MarkdownBundle</bundleName>
+      <categoryKey>markdown.intention.category</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>org.intellij.plugins.markdown.editor.tables.intentions.MarkdownInsertTableColumnIntention$InsertAfter</className>
+      <bundleName>messages.MarkdownBundle</bundleName>
+      <categoryKey>markdown.intention.category</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>org.intellij.plugins.markdown.editor.tables.intentions.MarkdownSetColumnAlignmentIntention</className>
+      <bundleName>messages.MarkdownBundle</bundleName>
+      <categoryKey>markdown.intention.category</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>org.intellij.plugins.markdown.editor.tables.intentions.MarkdownRemoveColumnIntention</className>
+      <bundleName>messages.MarkdownBundle</bundleName>
+      <categoryKey>markdown.intention.category</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>org.intellij.plugins.markdown.editor.tables.intentions.MarkdownRemoveRowIntention</className>
+      <bundleName>messages.MarkdownBundle</bundleName>
+      <categoryKey>markdown.intention.category</categoryKey>
+    </intentionAction>
+
+    <httpRequestHandler implementation="org.intellij.plugins.markdown.google.authorization.GoogleOAuthCallbackHandler"/>
+
+    <renameHandler implementation="org.intellij.plugins.markdown.ui.projectTree.MarkdownRenameHandler"/>
+    <automaticRenamerFactory implementation="org.intellij.plugins.markdown.ui.projectTree.MarkdownRenamerFactory"/>
+
+    <fileType name="Markdown" extensions="markdown;md" language="Markdown"
+              implementationClass="org.intellij.plugins.markdown.lang.MarkdownFileType" fieldName="INSTANCE"/>
+    <lang.fileViewProviderFactory language="Markdown"
+                                  implementationClass="org.intellij.plugins.markdown.lang.MarkdownFileViewProviderFactory"/>
+    <lang.parserDefinition language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.parser.MarkdownParserDefinition"/>
+    <lang.ast.factory language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.psi.MarkdownAstFactory"/>
+
+    <lang.elementManipulator forClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence"
+                             implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence$Manipulator"/>
+    <lang.elementManipulator forClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination"
+                             implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination$Manipulator"/>
+
+    <colorSettingsPage implementation="org.intellij.plugins.markdown.highlighting.MarkdownColorSettingsPage"/>
+    <syntaxHighlighter key="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownSyntaxHighlighter"/>
+    <additionalTextAttributes scheme="Default" file="colorSchemes/MarkdownDefault.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorSchemes/MarkdownDarcula.xml"/>
+
+    <braceMatcher filetype="Markdown" implementationClass="org.intellij.plugins.markdown.braces.MarkdownBraceMatcher"/>
+    <quoteHandler fileType="Markdown" className="org.intellij.plugins.markdown.braces.MarkdownQuoteHandler"/>
+    <typedHandler implementation="org.intellij.plugins.markdown.editor.MarkdownTypedHandler"/>
+
+    <bidiRegionsSeparator language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownBidiRegionsSeparator"/>
+
+    <annotator language="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownHighlightingAnnotator"/>
+
+    <runLineMarkerContributor language="Markdown" implementationClass="org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunLineMarkersProvider"/>
+
+    <completion.contributor language="Markdown"
+                            implementationClass="org.intellij.plugins.markdown.editor.MarkdownCompletionContributor"/>
+
+    <fileEditorProvider implementation="org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider"/>
+
+    <customPasteProvider implementation="org.intellij.plugins.markdown.editor.images.MarkdownImagePasteProvider"/>
+
+    <customFileDropHandler implementation="org.intellij.plugins.markdown.editor.images.MarkdownImageFileDropHandler"/>
+
+    <spellchecker.support language="Markdown"
+                          implementationClass="org.intellij.plugins.markdown.spellchecking.MarkdownSpellcheckingStrategy"/>
+
+    <customFileDropHandler implementation="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownDocxFileDropHandler"/>
+
+    <breadcrumbsInfoProvider implementation="org.intellij.plugins.markdown.breadcrumbs.MarkdownBreadcrumbsProvider"/>
+
+    <treeStructureProvider implementation="org.intellij.plugins.markdown.ui.projectTree.MarkdownTreeStructureProvider"/>
+
+    <applicationService serviceInterface="org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager"
+                        serviceImplementation="org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager$Impl"/>
+
+    <applicationService serviceInterface="org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener"
+                        serviceImplementation="org.intellij.plugins.markdown.ui.preview.accessor.impl.MarkdownLinkOpenerImpl"/>
+
+    <applicationService serviceImplementation="org.intellij.plugins.markdown.google.accounts.GooglePersistentAccounts"/>
+    <applicationService serviceImplementation="org.intellij.plugins.markdown.google.authorization.GoogleOAuthService"/>
+    <filePasteProvider implementation="org.intellij.plugins.markdown.fileActions.importFrom.googleDocs.GoogleDocsImportPasteProvider"/>
+
+    <projectService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownSettings"/>
+    <projectService serviceImplementation="org.intellij.plugins.markdown.settings.pandoc.PandocSettings"/>
+
+    <projectConfigurable id="Settings.Markdown"
+                         bundle="messages.MarkdownBundle"
+                         groupId="language"
+                         nonDefaultProject="false"
+                         key="markdown.settings.name"
+                         instance="org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable"/>
+
+    <applicationConfigurable parentId="Settings.Markdown"
+                             provider="org.intellij.plugins.markdown.google.ui.GoogleSettingsConfigurableProvider"/>
+
+    <!--suppress DeprecatedClassUsageInspection -->
+    <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings"/>
+    <applicationService serviceImplementation="org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFenceHtmlCache"/>
+    <applicationService serviceImplementation="org.intellij.plugins.markdown.fileActions.export.MarkdownHtmlExportSettings"/>
+    <lang.psiStructureViewFactory language="Markdown"
+                                  implementationClass="org.intellij.plugins.markdown.structureView.MarkdownStructureViewFactory"/>
+    <psi.referenceContributor implementation="org.intellij.plugins.markdown.lang.references.MarkdownReferenceProvider"/>
+    <stripTrailingSpacesFilterFactory implementation="org.intellij.plugins.markdown.editor.MarkdownStripTrailingSpacesFilterFactory"/>
+    <httpRequestHandler implementation="org.intellij.plugins.markdown.ui.preview.PreviewStaticServer"/>
+
+    <localInspection language="Markdown" shortName="MarkdownUnresolvedFileReference" bundle="messages.MarkdownBundle"
+                     key="markdown.unresolved.file.inspection.name" groupKey="markdown.inspection.group.ruby.name"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.intellij.plugins.markdown.lang.references.MarkdownUnresolvedFileReferenceInspection"/>
+
+    <lang.foldingBuilder language="Markdown" implementationClass="org.intellij.plugins.markdown.folding.MarkdownFoldingBuilder"/>
+    <stubIndex implementation="org.intellij.plugins.markdown.lang.index.MarkdownHeadersIndex"/>
+    <stubElementTypeHolder class="org.intellij.plugins.markdown.lang.MarkdownElementTypes"/>
+    <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.MissingExtensionPathReferenceProvider"/>
+    <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.MarkdownAnchorPathReferenceProvider"/>
+    <todoIndexer filetype="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownTodoIndexer"/>
+    <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder"/>
+    <enterHandlerDelegate id="MarkdownEnterHandler"
+                          implementation="org.intellij.plugins.markdown.editor.MarkdownEnterHandler"/>
+    <highlightErrorFilter
+      implementation="org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention$CodeFenceHighlightErrorFilter"/>
+    <extendWordSelectionHandler implementation="org.intellij.plugins.markdown.editor.MarkdownCodeSpanExtendWordSelectionHandler"/>
+
+    <typedHandler implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListItemCreatingTypedHandlerDelegate"/>
+
+    <lineIndentProvider implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListIndentProvider"/>
+    <enterHandlerDelegate implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListEnterHandlerDelegate"
+                          order="before MarkdownEnterHandler"/> <!-- to be able to handle Enter inside indent -->
+
+    <backspaceHandlerDelegate implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListMarkerBackspaceHandlerDelegate"/>
+    <backspaceHandlerDelegate implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListIndentBackspaceHandlerDelegate"
+                              order="before SmartIndentingBackspaceHandler"/>
+
+    <editorActionHandler action="EditorTab" implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemTabHandler"/>
+    <editorActionHandler action="EditorIndentSelection"
+                         implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemTabHandler"/>
+    <editorActionHandler action="EditorUnindentSelection"
+                         implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemUnindentHandler"/>
+
+    <actionPromoter implementation="org.intellij.plugins.markdown.ui.actions.MarkdownActionPromoter"/>
+    <customizableActionGroupProvider implementation="org.intellij.plugins.markdown.ui.floating.FloatingToolbarCustomizableGroupProvider"/>
+
+    <!--Formatting-->
+    <langCodeStyleSettingsProvider implementation="org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCodeStyleSettingsProvider"/>
+    <lang.formatter language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.formatter.MarkdownFormattingModelBuilder"/>
+    <postFormatProcessor implementation="org.intellij.plugins.markdown.lang.formatter.BlockQuotePostFormatProcessor"/>
+    <lang.lineWrapStrategy language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy"/>
+
+    <lang.commenter language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.MarkdownCommenter"/>
+
+    <codeInsight.lineMarkerProvider language="Markdown"
+                                    implementationClass="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceDownloadLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Markdown"
+                                    implementationClass="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceDownloadLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Markdown"
+                                    implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureMarkdownImageLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="HTML"
+                                    implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureHtmlImageLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Markdown"
+                                    implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureTextHtmlImageLineMarkerProvider"/>
+
+    <intentionAction>
+      <className>org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention</className>
+      <bundleName>messages.MarkdownBundle</bundleName>
+      <categoryKey>markdown.intention.category</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>org.intellij.plugins.markdown.editor.images.MarkdownConfigureImageIntention</className>
+      <bundleName>messages.MarkdownBundle</bundleName>
+      <categoryKey>markdown.intention.category</categoryKey>
+    </intentionAction>
+
+
+    <notificationGroup id="Markdown" displayType="BALLOON"/>
+
+    <registryKey key="markdown.clear.cache.interval"
+                 defaultValue="600000"
+                 description="Interval in milliseconds defining how often Markdown plugin caches (e.g. PlantUML diagrams) should be cleared"/>
+    <registryKey key="markdown.plantuml.download.link"
+                 defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/plantuml/plantuml-1.2021.12-3.jar"
+                 description="Link which Markdown plugin will use to download PlantUML JAR"/>
+    <registryKey key="markdown.mermaid.download.link"
+                 defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/mermaid/mermaid-8.13.6-4.js"
+                 description="Link which Markdown plugin will use to download Mermaid.js library"/>
+    <registryKey key="markdown.open.link.in.external.browser"
+                 defaultValue="true"
+                 description="Open Markdown link in an external browser (otherwise open in the IDE viewer)"/>
+    <registryKey key="markdown.formatter.apply.to.code.fence"
+                 defaultValue="false"
+                 description="Should Markdown use injected languages' formatters to format code-fences"/>
+    <registryKey key="markdown.mermaid.theme"
+                 defaultValue="follow-ide"
+                 description="Theme name to be used for Mermaid.js diagrams (set to 'follow-ide' to let the IDE decide)"/>
+    <registryKey key="markdown.structure.view.list.visibility"
+                 defaultValue="false"
+                 description="Determines whether lists are visible in the document structure view"/>
+
+    <registryKey key="markdown.google.docs.import.paste.link.enable"
+                 defaultValue="false"
+                 description="Temporarily disabling the ability to import documents from Google by inserting a link"/>
+
+    <registryKey key="markdown.google.docs.import.action.enable"
+                 defaultValue="false"
+                 description="Temporarily disable the action of the import docs from google"/>
+
+    <registryKey key="markdown.google.accounts.enable"
+                 defaultValue="false"
+                 description="Temporarily disabling the use of Google accounts, as the functionality is available only for internal users"/>
+
+    <registryKey key="markdown.tables.editing.support.enable"
+                 defaultValue="true"
+                 description="Enables Markdown tables editing support"/>
+
+    <registryKey key="markdown.experimental.boundary.precise.scroll.enable"
+                 defaultValue="false"
+                 description="Enables precise scrolling on the document boundaries (direct passing of scroll events from IDE to JCEF preview). Any opened Markdown editors should be manually reopened."/>
+    <registryKey key="markdown.experimental.boundary.precise.scroll.multiplier"
+                 defaultValue="8"
+                 description="A multiplier used in translation of awt scroll event to the browser one"/>
+
+    <advancedSetting id="markdown.hide.floating.toolbar" default="false" groupKey="markdown.settings.name"/>
+  </extensions>
+
+  <applicationListeners>
+    <listener topic="com.intellij.ide.ui.LafManagerListener"
+              class="org.intellij.plugins.markdown.settings.MarkdownLafListener"/>
+  </applicationListeners>
+
+  <projectListeners>
+    <listener topic="org.intellij.plugins.markdown.settings.MarkdownSettings$ChangeListener"
+              class="org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention$CodeAnalyzerRestartListener"/>
+  </projectListeners>
+
+  <extensions defaultExtensionNs="org.intellij.markdown">
+    <html.panel.provider implementation="org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider"/>
+
+    <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceLanguageProvider"/>
+    <!--suppress PluginXmlValidity -->
+    <fenceGeneratingProvider implementation="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeGeneratingProvider"/>
+
+    <!--suppress PluginXmlValidity -->
+    <fenceGeneratingProvider implementation="org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter"/>
+    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.BaseStylesExtension$Provider"/>
+    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.InlineStylesExtension$Provider"/>
+
+    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.ProcessLinksExtension$Provider"/>
+    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension$Provider"/>
+
+    <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceLanguageProvider"/>
+    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidBrowserExtension$Provider"/>
+    <!--suppress PluginXmlValidity -->
+    <fenceGeneratingProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeGeneratingProviderExtension"/>
+
+    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.highlighter.CodeFenceCopyButtonBrowserExtension$Provider"/>
+
+    <!--suppress PluginXmlValidity -->
+    <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownDocxExportProvider"/>
+    <!--suppress PluginXmlValidity -->
+    <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownPdfExportProvider"/>
+    <!--suppress PluginXmlValidity -->
+    <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownHtmlExportProvider"/>
+  </extensions>
+
+  <actions>
+    <group id="Markdown.TableActions" compact="true" class="org.intellij.plugins.markdown.editor.tables.actions.TableActionsGroup">
+      <group id="Markdown.TableColumnActions" compact="true">
+        <action id="Markdown.Table.SwapColumns.SwapWithLeftColumn"
+                class="org.intellij.plugins.markdown.editor.tables.actions.column.SwapColumnsAction$SwapWithLeftColumn"
+                icon="AllIcons.Actions.Back"/>
+        <action id="Markdown.Table.SwapColumns.SwapWithRightColumn"
+                class="org.intellij.plugins.markdown.editor.tables.actions.column.SwapColumnsAction$SwapWithRightColumn"
+                icon="AllIcons.Actions.Forward"/>
+        <separator/>
+        <action id="Markdown.Table.InsertTableColumn.InsertBefore"
+                class="org.intellij.plugins.markdown.editor.tables.actions.column.InsertTableColumnAction$InsertBefore"
+                icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.AddColumnLeft"/>
+        <action id="Markdown.Table.InsertTableColumn.InsertAfter"
+                class="org.intellij.plugins.markdown.editor.tables.actions.column.InsertTableColumnAction$InsertAfter"
+                icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.AddColumnRight"/>
+        <separator/>
+        <action id="Markdown.Table.SelectCurrentColumn.SelectContentCells"
+                class="org.intellij.plugins.markdown.editor.tables.actions.column.SelectCurrentColumnAction$SelectContentCells"
+                icon="AllIcons.Actions.InSelection"/>
+        <separator/>
+        <!--<action id="org.intellij.plugins.markdown.editor.tables.actions.column.SelectCurrentColumnAction.SelectWholeColumn"-->
+        <!--        class="org.intellij.plugins.markdown.editor.tables.actions.column.SelectCurrentColumnAction$SelectWholeColumn"/>-->
+        <group id="Markdown.Table.ColumnAlignmentActions"
+               compact="true"
+               class="org.intellij.plugins.markdown.editor.tables.actions.column.TableColumnAlignmentActionsGroup">
+          <!--<action id="org.intellij.plugins.markdown.editor.tables.actions.column.SetColumnAlignmentAction.None"-->
+          <!--        class="org.intellij.plugins.markdown.editor.tables.actions.column.SetColumnAlignmentAction$None"/>-->
+          <action id="Markdown.Table.SetColumnAlignment.Left"
+                  class="org.intellij.plugins.markdown.editor.tables.actions.column.SetColumnAlignmentAction$Left"
+                  icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.LeftAlign"/>
+          <action id="Markdown.Table.SetColumnAlignment.Center"
+                  class="org.intellij.plugins.markdown.editor.tables.actions.column.SetColumnAlignmentAction$Center"
+                  icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.CenterAlign"/>
+          <action id="Markdown.Table.SetColumnAlignment.Right"
+                  class="org.intellij.plugins.markdown.editor.tables.actions.column.SetColumnAlignmentAction$Right"
+                  icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.RightAlign"/>
+        </group>
+        <separator/>
+        <action id="Markdown.Table.RemoveCurrentColumn"
+                class="org.intellij.plugins.markdown.editor.tables.actions.column.RemoveCurrentColumnAction"
+                icon="AllIcons.Actions.GC"/>
+      </group>
+      <group id="Markdown.TableRowActions" compact="true">
+        <action id="Markdown.Table.SwapRows.SwapWithAbove"
+                class="org.intellij.plugins.markdown.editor.tables.actions.row.SwapRowsAction$SwapWithAbove"
+                icon="AllIcons.Actions.PreviousOccurence"/>
+        <action id="Markdown.Table.SwapRows.SwapWithBelow"
+                class="org.intellij.plugins.markdown.editor.tables.actions.row.SwapRowsAction$SwapWithBelow"
+                icon="AllIcons.Actions.NextOccurence"/>
+        <separator/>
+        <action id="Markdown.Table.InsertRow.InsertAbove"
+                class="org.intellij.plugins.markdown.editor.tables.actions.row.InsertRowAction$InsertAbove"
+                icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.AddRowAbove"/>
+        <action id="Markdown.Table.InsertRow.InsertBelow"
+                class="org.intellij.plugins.markdown.editor.tables.actions.row.InsertRowAction$InsertBelow"
+                icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.AddRowBelow"/>
+        <separator/>
+        <action id="Markdown.Table.SelectRow"
+                class="org.intellij.plugins.markdown.editor.tables.actions.row.SelectRowAction"
+                icon="AllIcons.Actions.InSelection"/>
+        <separator/>
+        <action id="Markdown.Table.RemoveCurrentRow"
+                class="org.intellij.plugins.markdown.editor.tables.actions.row.RemoveCurrentRowAction"
+                icon="AllIcons.Actions.GC"/>
+      </group>
+
+      <group id="Markdown.TableContextMenuGroup"
+             class="com.intellij.ide.actions.NonTrivialActionGroup"
+             popup="true"
+             compact="true">
+        <reference id="Markdown.Table.InsertTableColumn.InsertBefore"/>
+        <reference id="Markdown.Table.InsertTableColumn.InsertAfter"/>
+        <reference id="Markdown.Table.InsertRow.InsertAbove"/>
+        <reference id="Markdown.Table.InsertRow.InsertBelow"/>
+        <separator/>
+        <group id="Markdown.TableColumnActions.ColumnAlignmentActions.Popup"
+               class="com.intellij.ide.actions.NonTrivialActionGroup"
+               popup="true"
+               compact="true">
+          <reference id="Markdown.Table.ColumnAlignmentActions"/>
+        </group>
+        <reference id="Markdown.Table.SwapColumns.SwapWithLeftColumn"/>
+        <reference id="Markdown.Table.SwapColumns.SwapWithRightColumn"/>
+        <separator/>
+        <reference id="Markdown.Table.RemoveCurrentColumn"/>
+        <reference id="Markdown.Table.RemoveCurrentRow"/>
+      </group>
+    </group>
+
+    <!--Old id org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction-->
+    <action class="org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"
+            id="Markdown.Styling.CreateLink"
+            icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Link">
+      <keyboard-shortcut first-keystroke="control shift U" keymap="$default"/>
+    </action>
+
+    <group id="Markdown.Toolbar.Floating">
+      <action id="Markdown.Styling.SetHeaderLevel"
+              class="org.intellij.plugins.markdown.ui.actions.styling.SetHeaderLevelAction"/>
+      <separator/>
+      <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"
+              id="org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"
+              icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Bold">
+        <keyboard-shortcut first-keystroke="control B" keymap="$default"/>
+      </action>
+      <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"
+              id="org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"
+              icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Italic">
+        <keyboard-shortcut first-keystroke="control I" keymap="$default"/>
+      </action>
+      <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"
+              id="org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"
+              icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Strike_through">
+        <keyboard-shortcut first-keystroke="control shift S" keymap="$default"/>
+      </action>
+      <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"
+              id="org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"
+              icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Code_span">
+        <keyboard-shortcut first-keystroke="control shift C" keymap="$default"/>
+      </action>
+      <reference id="Markdown.Styling.CreateLink"/>
+      <separator/>
+      <action class="org.intellij.plugins.markdown.ui.actions.styling.CreateOrChangeListPopupAction"
+              id="Markdown.Styling.CreateOrChangeList"
+              icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.BulletList"/>
+    </group>
+
+
+    <action class="org.intellij.plugins.markdown.ui.actions.styling.HeaderDownAction"
+            id="org.intellij.plugins.markdown.ui.actions.styling.HeaderDownAction"
+            icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Header_level_down"/>
+    <action class="org.intellij.plugins.markdown.ui.actions.styling.HeaderUpAction"
+            id="org.intellij.plugins.markdown.ui.actions.styling.HeaderUpAction"
+            icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Header_level_up"/>
+
+    <!--
+      This group is supposed to override default generate popup.
+      Please, make sure to adjust action text for MarkdownActionPlaces.INSERT_POPUP.
+    -->
+    <group id="Markdown.InsertGroup">
+      <!-- Also add all insert actions into default generate popup -->
+      <add-to-group group-id="GenerateGroup" anchor="last"/>
+      <reference id="Markdown.Styling.CreateLink"/>
+      <action id="Markdown.InsertEmptyTable"
+              class="org.intellij.plugins.markdown.editor.tables.actions.InsertEmptyTableAction"
+              icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Table"/>
+      <action class="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
+              id="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
+              icon="AllIcons.General.LayoutPreviewOnly">
+        <keyboard-shortcut first-keystroke="control U" keymap="$default"/>
+      </action>
+    </group>
+    <action id="Markdown.Insert"
+            class="org.intellij.plugins.markdown.ui.actions.InsertAction"
+            use-shortcut-of="Generate"/>
+
+    <action class="org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
+            id="org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
+            icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Link">
+    </action>
+
+    <group id="Markdown.EditorContextMenuGroup">
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="EditorToggleColumnMode"/>
+      <separator/>
+      <reference id="Markdown.TableContextMenuGroup"/>
+      <reference id="Markdown.Insert"/>
+    </group>
+
+    <group id="Markdown.Toolbar.Left" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
+    </group>
+
+    <group id="Markdown.Toolbar.Right" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
+      <action class="org.intellij.plugins.markdown.ui.actions.scrolling.AutoScrollAction"
+              id="org.intellij.plugins.markdown.ui.actions.scrolling.AutoScrollAction"
+              icon="AllIcons.Actions.SynchronizeScrolling">
+      </action>
+    </group>
+
+    <group id="Markdown.Tools" popup="true">
+      <add-to-group group-id="ToolsMenu" anchor="before" relative-to-action="ExternalToolsGroup"/>
+      <action id="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportFromDocxAction"
+              class="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportFromDocxAction"/>
+      <action id="org.intellij.plugins.markdown.fileActions.importFrom.googleDocs.GoogleDocsImportAction"
+              class="org.intellij.plugins.markdown.fileActions.importFrom.googleDocs.GoogleDocsImportAction"/>
+      <action id="org.intellij.plugins.markdown.fileActions.export.MarkdownExportAction"
+              class="org.intellij.plugins.markdown.fileActions.export.MarkdownExportAction"/>
+      <action id="org.intellij.plugins.markdown.ui.actions.ConfigurePandocAction"
+              class="org.intellij.plugins.markdown.ui.actions.ConfigurePandocAction"/>
+    </group>
+    <action id="Markdown.OpenDevtoolsAction"
+            class="org.intellij.plugins.markdown.ui.actions.MarkdownOpenDevtoolsAction"/>
+    <action id="Markdown.Extensions.CleanupExternalFiles"
+            class="org.intellij.plugins.markdown.extensions.CleanupExtensionsExternalFilesAction"
+            icon="AllIcons.Actions.GC"/>
+
+    <action id="Markdown.Layout.EditorOnly" class="org.intellij.plugins.markdown.ui.actions.ChangePreviewLayoutAction$EditorOnly"/>
+    <action id="Markdown.Layout.EditorAndPreview" class="org.intellij.plugins.markdown.ui.actions.ChangePreviewLayoutAction$EditorAndPreview"/>
+    <action id="Markdown.Layout.PreviewOnly" class="org.intellij.plugins.markdown.ui.actions.ChangePreviewLayoutAction$PreviewOnly"/>
+  </actions>
+</idea-plugin>

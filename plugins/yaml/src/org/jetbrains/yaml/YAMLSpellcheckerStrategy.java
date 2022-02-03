@@ -30,6 +30,9 @@ public class YAMLSpellcheckerStrategy extends SpellcheckingStrategy {
     if (node != null){
       final IElementType type = node.getElementType();
       if (type == YAMLTokenTypes.SCALAR_TEXT ||
+          type == YAMLTokenTypes.SCALAR_LIST ||
+          type == YAMLTokenTypes.TEXT ||
+          type == YAMLTokenTypes.SCALAR_KEY ||
           type == YAMLTokenTypes.SCALAR_STRING ||
           type == YAMLTokenTypes.SCALAR_DSTRING ||
           type == YAMLTokenTypes.COMMENT) {

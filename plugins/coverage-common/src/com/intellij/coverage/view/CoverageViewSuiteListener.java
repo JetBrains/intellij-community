@@ -44,7 +44,7 @@ public class CoverageViewSuiteListener implements CoverageSuiteListener {
     final CoverageSuitesBundle suitesBundle = myDataManager.getCurrentSuitesBundle();
     if (suitesBundle == null) return;
     final CoverageViewManager viewManager = CoverageViewManager.getInstance(myProject);
-    if (suitesBundle.getCoverageEngine().createCoverageViewExtension(myProject, suitesBundle, viewManager.getState()) != null) {
+    if (suitesBundle.getCoverageEngine().createCoverageViewExtension(myProject, suitesBundle, viewManager.getStateBean()) != null) {
       viewManager.createToolWindow(CoverageViewManager.getDisplayName(suitesBundle), shouldActivate(suitesBundle));
     }
   }

@@ -128,6 +128,13 @@ final class PortableCompilationCacheUploader {
     executor.submit {
       def sourcePath = compilationOutput.remotePath
       def outputFolder = new File(compilationOutput.path)
+      if (!outputFolder.exists()) {
+        context.messages.warning("$outputFolder doesn't exist, was a respective module removed?")
+        return
+      }
+      if (!outputFolder.isDirectory()) {
+        context.messages.error("$outputFolder isn't a directory")
+      }
       File zipFile = new File(outputFolder.getParent(), compilationOutput.hash)
       zipBinaryData(zipFile, outputFolder)
       if (!uploader.isExist(sourcePath)) {

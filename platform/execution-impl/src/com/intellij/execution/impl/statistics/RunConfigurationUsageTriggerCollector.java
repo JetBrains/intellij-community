@@ -32,7 +32,7 @@ import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesC
 
 public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCollector {
   public static final String GROUP_NAME = "run.configuration.exec";
-  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 62);
+  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 63);
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP_NAME, "started");
   private static final StringEventField EXECUTOR = EventFields.StringValidatedByCustomRule("executor", "run_config_executor");
   /**
@@ -160,5 +160,5 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
     }
   }
 
-  public enum RunConfigurationFinishType {FAILED_TO_START, UNKNOWN}
+  public enum RunConfigurationFinishType {FAILED_TO_START, UNKNOWN, TERMINATED}
 }

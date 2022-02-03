@@ -5,18 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBPanel
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Component
 import java.awt.LayoutManager
 import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.text.JTextComponent
-
-/**
- * Client property for children with class [DialogPanel] that should be integrated into parents [DialogPanel.apply]/[DialogPanel.reset]/
- * [DialogPanel.isModified] and validation mechanism. The property must be set before adding into parent
- */
-@ApiStatus.Internal
-const val INTEGRATED_PANEL_PROPERTY = "DialogPanel.child"
 
 class DialogPanel : JBPanel<DialogPanel> {
   var preferredFocusedComponent: JComponent? = null
@@ -36,6 +28,7 @@ class DialogPanel : JBPanel<DialogPanel> {
     }
 
   var componentValidateCallbacks: Map<JComponent, () -> ValidationInfo?> = emptyMap()
+  var validationRequestors: List<(() -> Unit) -> Unit> = emptyList()
   var customValidationRequestors: Map<JComponent, List<(() -> Unit) -> Unit>> = emptyMap()
   var applyCallbacks: Map<JComponent?, List<() -> Unit>> = emptyMap()
   var resetCallbacks: Map<JComponent?, List<() -> Unit>> = emptyMap()
@@ -107,25 +100,31 @@ class DialogPanel : JBPanel<DialogPanel> {
     return isModifiedCallbacks.values.any { list -> list.any { it() } } || integratedPanels.keys.any { it.isModified() }
   }
 
-  override fun addImpl(comp: Component?, constraints: Any?, index: Int) {
-    super.addImpl(comp, constraints, index)
-    if (comp is DialogPanel && comp.getClientProperty(INTEGRATED_PANEL_PROPERTY) != null) {
-      integratedPanels[comp] = null
-      registerValidatorsForIntegratedPanels(setOf(comp))
+  /**
+   * Registers panel that should be integrated into [DialogPanel.apply]/[DialogPanel.reset]/
+   * [DialogPanel.isModified] and validation mechanism
+   *
+   * @see unregisterSubPanel
+   */
+  @ApiStatus.Internal
+  fun registerSubPanel(panel: DialogPanel) {
+    if (integratedPanels.contains(panel)) {
+      throw Exception("Double registration of $panel")
     }
+    integratedPanels[panel] = null
+    registerValidatorsForIntegratedPanels(setOf(panel))
   }
 
-  override fun remove(index: Int) {
-    val comp = getComponent(index)
-    val disposable = integratedPanels.remove(comp)
+  /**
+   * @see registerSubPanel
+   */
+  @ApiStatus.Internal
+  fun unregisterSubPanel(panel: DialogPanel) {
+    if (!integratedPanels.contains(panel)) {
+      throw Exception("Panel is not registered: $panel")
+    }
+    val disposable = integratedPanels.remove(panel)
     disposable?.let { Disposer.dispose(it) }
-    super.remove(index)
-  }
-
-  override fun removeAll() {
-    integratedPanels.values.filterNotNull().forEach { Disposer.dispose(it) }
-    integratedPanels.clear()
-    super.removeAll()
   }
 
   private fun registerValidatorsForIntegratedPanels(panels: Set<DialogPanel>) {
@@ -140,7 +139,8 @@ class DialogPanel : JBPanel<DialogPanel> {
   }
 
   private fun registerCustomValidationRequestors(component: JComponent, validator: ComponentValidator) {
-    for (onCustomValidationRequest in customValidationRequestors.get(component) ?: return) {
+    val customValidationRequestors = validationRequestors + (customValidationRequestors[component] ?: emptyList())
+    for (onCustomValidationRequest in customValidationRequestors) {
       onCustomValidationRequest { validator.revalidate() }
     }
   }

@@ -10,6 +10,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.MergingCharSequence;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ public class DocumentEventImpl extends DocumentEvent {
   private LineSet myOldFragmentLineSet;
   private int myOldFragmentLineSetStart;
 
+  @ApiStatus.Internal
   public DocumentEventImpl(@NotNull Document document,
                            int offset,
                            @NotNull CharSequence oldString,

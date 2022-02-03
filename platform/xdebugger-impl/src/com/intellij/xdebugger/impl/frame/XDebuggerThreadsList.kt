@@ -148,25 +148,27 @@ class XDebuggerThreadsList(private val renderer: ListCellRenderer<StackInfo>) : 
 }
 
 data class StackInfo private constructor(val kind: StackKind, val stack: XExecutionStack?, @Nls val error: String?) {
-    companion object {
-        fun from(executionStack: XExecutionStack): StackInfo = StackInfo(StackKind.ExecutionStack, executionStack, null)
-        fun error(@Nls error: String): StackInfo = StackInfo(StackKind.Error, null, error)
+  companion object {
+    fun from(executionStack: XExecutionStack): StackInfo = StackInfo(StackKind.ExecutionStack, executionStack, null)
+    fun error(@Nls error: String): StackInfo = StackInfo(StackKind.Error, null, error)
 
-        val loading = StackInfo(StackKind.Loading, null, null)
-    }
+    val loading = StackInfo(StackKind.Loading, null, null)
+  }
 
-    @Nls
-    fun getText(): String {
-        return when (kind) {
-            StackKind.ExecutionStack -> stack!!.displayName
-            StackKind.Error -> error!!
-            StackKind.Loading -> XDebuggerBundle.message("stack.frame.loading.text")
-        }
+  @Nls
+  fun getText(): String {
+    return when (kind) {
+      StackKind.ExecutionStack -> stack!!.displayName
+      StackKind.Error -> error!!
+      StackKind.Loading -> XDebuggerBundle.message("stack.frame.loading.text")
     }
+  }
 
-    enum class StackKind {
-        ExecutionStack,
-        Error,
-        Loading
-    }
+  override fun toString(): String = getText()
+
+  enum class StackKind {
+    ExecutionStack,
+    Error,
+    Loading
+  }
 }

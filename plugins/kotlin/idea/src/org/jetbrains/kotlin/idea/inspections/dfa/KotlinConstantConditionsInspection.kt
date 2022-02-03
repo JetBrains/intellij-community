@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.*
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isConstant
 import org.jetbrains.kotlin.idea.intentions.negate
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -410,9 +411,10 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                         }
                     }
                     is KotlinForVisitedAnchor -> {
-                        if (cv == ConstantValue.FALSE) {
+                        val loopRange = anchor.forExpression.loopRange!!
+                        if (cv == ConstantValue.FALSE && !shouldSuppressForCondition(loopRange)) {
                             val message = KotlinBundle.message("inspection.message.for.never.visited")
-                            holder.registerProblem(anchor.forExpression.loopRange!!, message)
+                            holder.registerProblem(loopRange, message)
                         }
                     }
                 }
@@ -438,6 +440,16 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 }
             }
         }
+    }
+
+    private fun shouldSuppressForCondition(loopRange: KtExpression): Boolean {
+        if (loopRange is KtBinaryExpression) {
+            val left = loopRange.left
+            val right = loopRange.right
+            // Reported separately by EmptyRangeInspection
+            return left != null && right != null && left.isConstant() && right.isConstant()
+        }
+        return false
     }
 
     private fun shouldReportAsValue(expr: KtExpression) =

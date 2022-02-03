@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build;
 
 import org.junit.Test;
 
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
@@ -17,8 +18,10 @@ public class ApplicationInfoPropertiesTest {
 
   @Test
   public void majorReleaseDateGenerated() {
-    var now = ZonedDateTime.now(ZoneOffset.UTC).format(ApplicationInfoProperties.getMAJOR_RELEASE_DATE_PATTERN());
-    assertEquals(now, ApplicationInfoProperties.formatMajorReleaseDate(null));
-    assertEquals(now, ApplicationInfoProperties.formatMajorReleaseDate("__BUILD_DATE__"));
+    var now = System.currentTimeMillis() / 1000;
+    var expectedDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(now), ZoneOffset.UTC)
+      .format(ApplicationInfoProperties.getMAJOR_RELEASE_DATE_PATTERN());
+    assertEquals(expectedDate, ApplicationInfoProperties.formatMajorReleaseDate(null, now));
+    assertEquals(expectedDate, ApplicationInfoProperties.formatMajorReleaseDate("__BUILD_DATE__", now));
   }
 }

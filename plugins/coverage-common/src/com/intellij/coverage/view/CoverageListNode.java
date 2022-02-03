@@ -17,9 +17,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.awt.*;
+import java.util.List;
 
 public class CoverageListNode extends AbstractTreeNode<Object> {
   protected CoverageSuitesBundle myBundle;
@@ -40,26 +41,26 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
 
   @NotNull
   @Override
-  public Collection<? extends AbstractTreeNode<?>> getChildren() {
-    final Object[] children = CoverageViewTreeStructure.getChildren(this, myBundle, myStateBean);
-    return Arrays.asList((CoverageListNode[])children);
+  public List<? extends AbstractTreeNode<?>> getChildren() {
+    return myBundle.getCoverageEngine().createCoverageViewExtension(myProject, myBundle, myStateBean)
+      .getChildrenNodes(this);
   }
 
   @Override
   protected void update(@NotNull final PresentationData presentation) {
     ApplicationManager.getApplication().runReadAction(() -> {
-      final Object value = getValue();
-      if (value instanceof PsiNamedElement) {
-
+      final Object object = getValue();
+      if (object instanceof PsiNamedElement) {
+        final PsiNamedElement value = (PsiNamedElement)object;
         if (value instanceof PsiQualifiedNamedElement &&
-            (myStateBean.myFlattenPackages && ((PsiNamedElement)value).getContainingFile() == null ||
-             getParent() instanceof CoverageListRootNode)) {
+            (myStateBean.myFlattenPackages && value.getContainingFile() == null || getParent() instanceof CoverageListRootNode)) {
           presentation.setPresentableText(((PsiQualifiedNamedElement)value).getQualifiedName());
         }
         else {
-          presentation.setPresentableText(((PsiNamedElement)value).getName());
+          presentation.setPresentableText(value.getName());
         }
-        presentation.setIcon(((PsiElement)value).getIcon(0));
+        presentation.setIcon(value.getIcon(0));
+        presentation.setForcedTextForeground(getFileStatus().getColor());
       }
     });
   }
@@ -74,6 +75,16 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
       return null;
     });
     return containingFile != null ? myFileStatusManager.getStatus(containingFile.getVirtualFile()) : super.getFileStatus();
+  }
+
+  @Override
+  protected @Nullable Color computeBackgroundColor() {
+    return null;
+  }
+
+  @Override
+  protected boolean shouldPostprocess() {
+    return false;
   }
 
   @Override

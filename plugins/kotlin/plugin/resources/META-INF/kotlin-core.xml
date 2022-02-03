@@ -62,6 +62,7 @@
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JsCompilerArgumentsHolder"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings"/>
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerWorkspaceSettings"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightWorkspaceSettings"/>
 
@@ -195,8 +196,6 @@
     <annotationSupport language="kotlin" implementationClass="com.intellij.psi.impl.source.tree.java.JavaAnnotationSupport"/>
 
     <deadCode implementation="org.jetbrains.kotlin.idea.inspections.KotlinJUnitStaticEntryPoint"/>
-
-    <checkinHandlerFactory implementation="org.jetbrains.kotlin.idea.vcs.BunchFileCheckInHandlerFactory"/>
 
     <stripTrailingSpacesFilterFactory implementation="org.jetbrains.kotlin.idea.editor.KotlinStripTrailingSpacesFilterFactory"/>
 
@@ -353,6 +352,30 @@
     <tipAndTrick file="Kotlin_Java_convert.html"/>
   </extensions>
 
+  <!-- Notifications -->
+  <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup
+            id="kotlin.external.compiler.updates"
+            displayType="STICKY_BALLOON"
+            key="kotlin.external.compiler.updates.notification.group.name"
+    />
+    <notificationGroup
+            id="Kotlin plugin updates"
+            displayType="STICKY_BALLOON"
+            key="plugin.updater.notification.group"
+    />
+    <notificationGroup
+            id="Kotlin Migration"
+            displayType="STICKY_BALLOON"
+            key="configuration.migration.group.name"
+    />
+    <notificationGroup
+            id="Update Kotlin code style"
+            displayType="STICKY_BALLOON"
+            key="configuration.kotlin.code.style.group.name"
+    />
+  </extensions>
+
   <!-- Navigation -->
   <extensions defaultExtensionNs="com.intellij">
     <navbar implementation="org.jetbrains.kotlin.idea.navigationToolbar.KotlinNavBarModelExtension" order="first"/>
@@ -436,7 +459,7 @@
     <codeInsight.lineMarkerProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.highlighter.markers.KotlinLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinRecursiveCallLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinSuspendCallLineMarkerProvider"/>
-    <runLineMarkerContributor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinRunLineMarkerContributor"/>
+    <runLineMarkerContributor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinFE10MainRunLineMarkerContributor"/>
     <runLineMarkerContributor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor"/>
   </extensions>
 

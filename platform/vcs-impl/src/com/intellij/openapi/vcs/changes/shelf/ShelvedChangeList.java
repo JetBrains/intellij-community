@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -10,11 +11,16 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.xmlb.Constants;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -136,14 +142,27 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
   }
 
   public void loadChangesIfNeeded(@NotNull Project project) {
+    try {
+      loadChangesIfNeededOrThrow(project);
+    }
+    catch (Exception e) {
+      LOG.error("Failed to parse the file patch: [" + path + "]", e);
+    }
+  }
+
+  public void loadChangesIfNeededOrThrow(@NotNull Project project) throws VcsException {
     if (myChanges == null) {
-      try {
-        List<? extends FilePatch> list = ShelveChangesManager.loadPatchesWithoutContent(project, path, null);
-        myChanges = createShelvedChangesFromFilePatches(project, path, list);
-      }
-      catch (Exception e) {
-        LOG.error("Failed to parse the file patch: [" + path + "]", e);
-      }
+      myChanges = loadChanges(project);
+    }
+  }
+
+  private @NotNull List<ShelvedChange> loadChanges(@NotNull Project project) throws VcsException {
+    try {
+      List<? extends FilePatch> list = ShelveChangesManager.loadPatchesWithoutContent(project, path, null);
+      return createShelvedChangesFromFilePatches(project, path, list);
+    }
+    catch (IOException | PatchSyntaxException e) {
+      throw new VcsException(e);
     }
   }
 

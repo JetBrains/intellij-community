@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
@@ -24,7 +24,6 @@ import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
@@ -382,7 +381,10 @@ public final class GenerateMembersUtil {
                                                           @NotNull PsiSubstitutor substitutor,
                                                           @NotNull PsiMethod sourceMethod) {
     final PsiElement copy = ObjectUtils.notNull(typeParameter instanceof PsiCompiledElement ? ((PsiCompiledElement)typeParameter).getMirror() : typeParameter, typeParameter).copy();
-    LOG.assertTrue(copy != null, typeParameter);
+    if (copy == null) {
+      List<PsiClassType> substitutedSupers = ContainerUtil.map(typeParameter.getSuperTypes(), t -> ObjectUtils.notNull(toClassType(substitutor.substitute(t)), t));
+      return factory.createTypeParameter(Objects.requireNonNull(typeParameter.getName()), substitutedSupers.toArray(PsiClassType.EMPTY_ARRAY));
+    }
     final Map<PsiElement, PsiElement> replacementMap = new HashMap<>();
     copy.accept(new JavaRecursiveElementVisitor() {
       @Override
@@ -395,7 +397,20 @@ public final class GenerateMembersUtil {
         }
       }
     });
-    return (PsiTypeParameter)RefactoringUtil.replaceElementsWithMap(copy, replacementMap);
+    return (PsiTypeParameter)CommonJavaRefactoringUtil.replaceElementsWithMap(copy, replacementMap);
+  }
+
+  private static PsiClassType toClassType(PsiType type) {
+    if (type instanceof PsiClassType) {
+      return (PsiClassType)type;
+    }
+    if (type instanceof PsiCapturedWildcardType) {
+      return toClassType(((PsiCapturedWildcardType)type).getUpperBound());
+    }
+    if (type instanceof PsiWildcardType) {
+      return toClassType(((PsiWildcardType)type).getBound());
+    }
+    return null;
   }
 
   private static void substituteParameters(@NotNull JVMElementFactory factory,
@@ -477,7 +492,7 @@ public final class GenerateMembersUtil {
     }
     final PsiParameter[] sourceParameters = source.getParameterList().getParameters();
     final PsiParameterList targetParameterList = target.getParameterList();
-    RefactoringUtil.fixJavadocsForParams(target, ContainerUtil.set(targetParameterList.getParameters()), pair -> {
+    CommonJavaRefactoringUtil.fixJavadocsForParams(target, ContainerUtil.set(targetParameterList.getParameters()), pair -> {
       final int parameterIndex = targetParameterList.getParameterIndex(pair.first);
       if (parameterIndex >= 0 && parameterIndex < sourceParameters.length) {
         return Comparing.strEqual(pair.second, sourceParameters[parameterIndex].getName());

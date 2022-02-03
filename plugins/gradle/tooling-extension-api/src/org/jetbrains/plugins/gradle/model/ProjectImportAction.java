@@ -34,13 +34,14 @@ import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.build
 import java.io.File;
 import java.io.Serializable;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 
 /**
  * @author Vladislav.Soroka
  */
 public class ProjectImportAction implements BuildAction<ProjectImportAction.AllModels>, Serializable {
   private static final ModelConverter NOOP_CONVERTER = new NoopConverter();
+  public static final String IDEA_BACKGROUND_CONVERT = "idea.background.convert";
 
   private final Set<ProjectImportModelProvider> myProjectsLoadedModelProviders = new HashSet<ProjectImportModelProvider>();
   private final Set<ProjectImportModelProvider> myBuildFinishedModelProviders = new HashSet<ProjectImportModelProvider>();
@@ -52,6 +53,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   private AllModels myAllModels = null;
   @Nullable
   private transient GradleBuild myGradleBuild;
+  private transient ExecutorService myConverterExecutor;
   private ModelConverter myModelConverter;
 
   public ProjectImportAction(boolean isPreviewMode, boolean isCompositeBuildsSupported) {
@@ -104,6 +106,14 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   @Nullable
   @Override
   public AllModels execute(final BuildController controller) {
+    if (!System.getProperties().containsKey(IDEA_BACKGROUND_CONVERT) || Boolean.getBoolean(IDEA_BACKGROUND_CONVERT)) {
+      myConverterExecutor =  Executors.newSingleThreadExecutor(new ThreadFactory() {
+        @Override
+        public Thread newThread(@NotNull Runnable runnable) {
+          return new Thread(runnable, "idea-tooling-model-converter");
+        }
+      });
+    }
     configureAdditionalTypes(controller);
     final boolean isProjectsLoadedAction = myAllModels == null && myUseProjectsLoadedPhase;
     if (isProjectsLoadedAction || !myUseProjectsLoadedPhase) {
@@ -140,6 +150,15 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
     if (isProjectsLoadedAction) {
       wrappedController.getModel(TurnOffDefaultTasks.class);
+    }
+    if (myConverterExecutor != null) {
+      myConverterExecutor.shutdown();
+      try {
+        myConverterExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+      }
+      catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
     }
     return isProjectsLoadedAction && !myAllModels.hasModels() ? null : myAllModels;
   }
@@ -277,13 +296,18 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
         ProjectModelConsumer modelConsumer = new ProjectModelConsumer() {
           @Override
           public void consume(final @NotNull Object object, final @NotNull Class clazz) {
-            result.add(new Runnable() {
+            Runnable convert = new Runnable() {
               @Override
               public void run() {
                 Object o = myModelConverter.convert(object);
                 allModels.addModel(o, clazz, project);
               }
-            });
+            };
+            if (myConverterExecutor != null) {
+              myConverterExecutor.execute(convert);
+            } else {
+              result.add(convert);
+            }
             obtainedModels.add(clazz.getName());
           }
         };
@@ -316,19 +340,37 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
         long startTime = System.currentTimeMillis();
         BuildModelConsumer modelConsumer = new BuildModelConsumer() {
           @Override
-          public void consumeProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class clazz) {
-            object = myModelConverter.convert(object);
-            allModels.addModel(object, clazz, projectModel);
+          public void consumeProjectModel(@NotNull final ProjectModel projectModel, @NotNull final Object object, @NotNull final Class clazz) {
             obtainedModels.add(clazz.getName());
+            Runnable convert = new Runnable() {
+              @Override
+              public void run() {
+                Object converted = myModelConverter.convert(object);
+                allModels.addModel(converted, clazz, projectModel);
+              }
+            };
+            if (myConverterExecutor != null) {
+              myConverterExecutor.execute(convert);
+            } else {
+              convert.run();
+            }
           }
 
           @Override
-          public void consume(@NotNull BuildModel buildModel, @NotNull Object object, @NotNull Class clazz) {
-            if (myModelConverter != null) {
-              object = myModelConverter.convert(object);
-            }
-            allModels.addModel(object, clazz, buildModel);
+          public void consume(@NotNull final BuildModel buildModel, @NotNull final Object object, @NotNull final Class clazz) {
             obtainedModels.add(clazz.getName());
+            Runnable convert = new Runnable() {
+              @Override
+              public void run() {
+                Object converted = myModelConverter.convert(object);
+                allModels.addModel(converted, clazz, buildModel);
+              }
+            };
+            if (myConverterExecutor != null) {
+              myConverterExecutor.execute(convert);
+            } else {
+              convert.run();
+            }
           }
         };
         extension.populateBuildModels(controller, buildModel, modelConsumer);

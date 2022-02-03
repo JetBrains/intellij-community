@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -29,7 +30,7 @@ class ReplaceJavaStaticMethodWithKotlinAnalogInspection : AbstractKotlinInspecti
             ?.filter { it.filter(call) && it.transformation.isApplicable(call) }
             ?.takeIf { it.isNotEmpty() }
             ?.let { list ->
-                val context = call.analyze(BodyResolveMode.PARTIAL)
+                val context = call.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
                 val callDescriptor = call.getResolvedCall(context) ?: return
                 list.filter {
                     callDescriptor.isCalling(FqName(it.javaMethodFqName)) && it.transformation.isApplicableInContext(

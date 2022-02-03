@@ -51,10 +51,12 @@
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="SSHJ" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Slf4j" level="project" />
-    <orderEntry type="library" name="Log4J" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="slf4j-jdk14" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="bouncy-castle-provider" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.immutableKeyValueStore" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
+    <orderEntry type="library" name="jsch-agent-proxy" level="project" />
+    <orderEntry type="library" name="jsch-agent-proxy-sshj" level="project" />
   </component>
 </module>

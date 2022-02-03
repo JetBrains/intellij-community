@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.ui.ListComponentUpdater;
@@ -10,7 +10,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ActiveComponent;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.popup.HintUpdateSupply;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -27,6 +26,7 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   private final PopupComponentAdapter<T> myChooserComponent;
@@ -109,7 +109,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     }
 
     @Nullable
-    default BooleanFunction<KeyEvent> getKeyEventHandler() {
+    default Predicate<KeyEvent> getKeyEventHandler() {
       return null;
     }
 
@@ -404,9 +404,9 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     if (myCancelCallback != null) {
       builder.setCancelCallback(myCancelCallback);
     }
-    BooleanFunction<KeyEvent> keyEventHandler = myChooserComponent.getKeyEventHandler();
+    Predicate<KeyEvent> keyEventHandler = myChooserComponent.getKeyEventHandler();
     if (keyEventHandler != null) {
-      builder.setKeyEventHandler(keyEventHandler);
+      builder.setKeyEventHandler(keyEventHandler::test);
     }
 
     if (myCommandButton != null) {

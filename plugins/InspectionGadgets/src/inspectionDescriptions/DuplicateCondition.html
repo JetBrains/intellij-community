@@ -1,8 +1,8 @@
 <html>
 <body>
-Reports duplicate conditions in &amp;&amp; and || expressions
-and branches of if statements.
-While sometimes these duplicate conditions are intended, in most cases they are used due to oversight.
+Reports duplicate conditions in <code>&amp;&amp;</code> and <code>||</code> expressions
+and branches of <code>if</code> statements.
+While sometimes duplicate conditions are intended, in most cases they the result of an oversight.
 <p>Example:</p>
 <pre><code>
   boolean result = digit1 != digit2 || digit1 != digit2;
@@ -14,7 +14,7 @@ Disabling this option may lead to false-positives, for example, when the same me
 </p>
 <p>Example:</p>
 <pre><code>
-  if (iterator.next() != null || iterator.next() != null)
+  if (iterator.next() != null || iterator.next() != null) {
     System.out.println("Got it");
   }
 </code></pre>

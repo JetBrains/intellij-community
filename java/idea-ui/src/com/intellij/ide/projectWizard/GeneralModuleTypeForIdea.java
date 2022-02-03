@@ -99,12 +99,13 @@ public class GeneralModuleTypeForIdea extends GeneralModuleType {
           String shortcutText = KeymapUtil.getShortcutText(IdeActions.ACTION_NEW_ELEMENT);
           GotItTooltip tooltip =
             new GotItTooltip("empty.project.create.file", IdeBundle.message("to.create.new.file.tooltip", shortcutText), project)
-              .withPosition(Balloon.Position.atRight);
+              .withPosition(Balloon.Position.atRight).withContrastColors(true);
           ApplicationManager.getApplication().getMessageBus().connect(tooltip).subscribe(AnActionListener.TOPIC, new AnActionListener() {
                                                                                               @Override
                                                                                               public void afterActionPerformed(@NotNull AnAction action,
                                                                                                                                @NotNull AnActionEvent event,
                                                                                                                                @NotNull AnActionResult result) {
+                                                                                                tooltip.gotIt();
                                                                                                 Disposer.dispose(tooltip);
                                                                                               }
                                                                                             });

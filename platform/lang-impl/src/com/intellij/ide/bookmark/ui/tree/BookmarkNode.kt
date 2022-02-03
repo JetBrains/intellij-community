@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui.tree
 
 import com.intellij.ide.bookmark.Bookmark
@@ -6,7 +6,7 @@ import com.intellij.ide.bookmark.BookmarkGroup
 import com.intellij.ide.bookmark.BookmarkType
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.ProjectViewNode
-import com.intellij.ide.projectView.ViewSettings
+import com.intellij.ide.projectView.ProjectViewSettings.Immutable.DEFAULT
 import com.intellij.ide.projectView.impl.CompoundIconProvider.findIcon
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -22,7 +22,7 @@ import com.intellij.ui.SimpleTextAttributes
 import javax.swing.Icon
 
 abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B)
-  : BackgroundSupplier, ProjectViewNode<B>(project, bookmark, ViewSettings.DEFAULT) {
+  : BackgroundSupplier, ProjectViewNode<B>(project, bookmark, DEFAULT) {
 
   val bookmarksView
     get() = parentRootNode?.value

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -23,6 +23,6 @@ class ShowStandaloneDiffFromLogActionProvider : AnActionExtensionProvider {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    ChangesBrowserBase.ShowStandaloneDiff.showStandaloneDiff(e.project!!, e.getRequiredData(VcsLogInternalDataKeys.MAIN_UI).changesBrowser)
+    ChangesBrowserBase.showStandaloneDiff(e.project!!, e.getRequiredData(VcsLogInternalDataKeys.MAIN_UI).changesBrowser)
   }
 }

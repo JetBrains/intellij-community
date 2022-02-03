@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.docking.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -564,9 +564,11 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       myNorthPanel.setVisible(!(myContainer instanceof DockContainer.Dialog) && visible);
 
       Set<String> processedKeys = new HashSet<>();
-      for (IdeRootPaneNorthExtension each : IdeRootPaneNorthExtension.EP_NAME.getExtensionList(myProject)) {
+      for (IdeRootPaneNorthExtension each : IdeRootPaneNorthExtension.EP_NAME.getExtensions(myProject)) {
         processedKeys.add(each.getKey());
-        if (myNorthExtensions.containsKey(each.getKey())) continue;
+        if (myNorthExtensions.containsKey(each.getKey())) {
+          continue;
+        }
         IdeRootPaneNorthExtension toInstall = each.copy();
         myNorthExtensions.put(toInstall.getKey(), toInstall);
         myNorthPanel.add(toInstall.getComponent());
@@ -575,7 +577,9 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       Iterator<String> existing = myNorthExtensions.keySet().iterator();
       while (existing.hasNext()) {
         String each = existing.next();
-        if (processedKeys.contains(each)) continue;
+        if (processedKeys.contains(each)) {
+          continue;
+        }
 
         IdeRootPaneNorthExtension toRemove = myNorthExtensions.get(each);
         myNorthPanel.remove(toRemove.getComponent());

@@ -1,19 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.structureView.StructureViewBundle;
-import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -23,7 +20,7 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiDirectory;
@@ -37,34 +34,30 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class NavBarPresentation {
-  private final Project myProject;
-  private EditorColorsScheme scheme;
+public final class NavBarPresentation {
+  private final Project project;
 
   public NavBarPresentation(Project project) {
-    myProject = project;
-    updateScheme();
-
-    ApplicationManager.getApplication().getMessageBus().connect(myProject).subscribe(LafManagerListener.TOPIC, laf -> updateScheme());
+    this.project = project;
   }
 
-  private void updateScheme() {
-    scheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
-  }
-
-  private SimpleTextAttributes getErrorAttributes() {
-    SimpleTextAttributes schemeAttributes = SimpleTextAttributes.fromTextAttributes(scheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES));
+  private static SimpleTextAttributes getErrorAttributes() {
+    SimpleTextAttributes schemeAttributes = SimpleTextAttributes.fromTextAttributes(
+      EditorColorsManager.getInstance().getSchemeForCurrentUITheme().getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES)
+    );
     return SimpleTextAttributes.merge(new SimpleTextAttributes(SimpleTextAttributes.STYLE_USE_EFFECT_COLOR, schemeAttributes.getFgColor()),
                                       schemeAttributes);
   }
 
-  @Nullable
-  public Icon getIcon(final Object object) {
-    if (!NavBarModel.isValid(object)) return null;
+  public @Nullable Icon getIcon(final Object object) {
+    if (!NavBarModel.isValid(object)) {
+      return null;
+    }
 
     for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {
       Icon icon = modelExtension.getIcon(object);
@@ -73,8 +66,13 @@ public class NavBarPresentation {
       }
     }
 
-    if (object instanceof Project) return AllIcons.Nodes.Project;
-    if (object instanceof Module) return ModuleType.get(((Module)object)).getIcon();
+    if (object instanceof Project) {
+      return AllIcons.Nodes.Project;
+    }
+    if (object instanceof Module) {
+      return ModuleType.get(((Module)object)).getIcon();
+    }
+
     try {
       if (object instanceof PsiElement) {
         Icon icon = ReadAction
@@ -89,6 +87,7 @@ public class NavBarPresentation {
     catch (IndexNotReadyException e) {
       return null;
     }
+
     if (object instanceof JdkOrderEntry) {
       Sdk jdk = ((JdkOrderEntry)object).getJdk();
       if (jdk == null) return null;
@@ -96,21 +95,25 @@ public class NavBarPresentation {
       final SdkTypeId sdkType = jdk.getSdkType();
       return ((SdkType) sdkType).getIcon();
     }
-    if (object instanceof LibraryOrderEntry) return AllIcons.Nodes.PpLibFolder;
-    if (object instanceof ModuleOrderEntry) return ModuleType.get(((ModuleOrderEntry)object).getModule()).getIcon();
-    return null;
+    else if (object instanceof LibraryOrderEntry) {
+      return AllIcons.Nodes.PpLibFolder;
+    }
+    else if (object instanceof ModuleOrderEntry) {
+      return ModuleType.get(((ModuleOrderEntry)object).getModule()).getIcon();
+    }
+    else {
+      return null;
+    }
   }
 
   @NotNull
   @Nls
-  protected String getPresentableText(Object object, boolean forPopup) {
+  String getPresentableText(Object object, boolean forPopup) {
     String text = calcPresentableText(object, forPopup);
     return text.length() > 50 ? text.substring(0, 47) + "..." : text;
   }
 
-  @NotNull
-  @Nls
-  public static String calcPresentableText(Object object, boolean forPopup) {
+  public static @NotNull @Nls String calcPresentableText(Object object, boolean forPopup) {
     if (!NavBarModel.isValid(object)) {
       return StructureViewBundle.message("node.structureview.invalid");
     }
@@ -121,24 +124,29 @@ public class NavBarPresentation {
     return object.toString(); //NON-NLS
   }
 
-  protected SimpleTextAttributes getTextAttributes(final Object object, final boolean selected) {
-    if (!NavBarModel.isValid(object)) return SimpleTextAttributes.REGULAR_ATTRIBUTES;
+  SimpleTextAttributes getTextAttributes(final Object object, final boolean selected) {
+    if (!NavBarModel.isValid(object)) {
+      return SimpleTextAttributes.REGULAR_ATTRIBUTES;
+    }
+
     if (object instanceof PsiElement) {
       if (!ReadAction.compute(() -> ((PsiElement)object).isValid()).booleanValue()) {
         return SimpleTextAttributes.GRAYED_ATTRIBUTES;
       }
+
       PsiFile psiFile = ((PsiElement)object).getContainingFile();
       if (psiFile != null) {
         VirtualFile virtualFile = psiFile.getVirtualFile();
-        return new SimpleTextAttributes(null, selected ? null : FileStatusManager.getInstance(myProject).getStatus(virtualFile).getColor(),
-                                        getErrorAttributes().getWaveColor(),
-                                        virtualFile != null && WolfTheProblemSolver.getInstance(myProject).isProblemFile(virtualFile)
-                                                   ? getErrorAttributes().getStyle() : SimpleTextAttributes.STYLE_PLAIN);
+        int style = virtualFile != null && WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile)
+                    ? getErrorAttributes().getStyle()
+                    : SimpleTextAttributes.STYLE_PLAIN;
+        Color color = selected ? null : FileStatusManager.getInstance(project).getStatus(virtualFile).getColor();
+        return new SimpleTextAttributes(null, color, getErrorAttributes().getWaveColor(), style);
       }
       else {
         if (object instanceof PsiDirectory) {
           VirtualFile vDir = ((PsiDirectory)object).getVirtualFile();
-          if (vDir.getParent() == null || ProjectRootsUtil.isModuleContentRoot(vDir, myProject)) {
+          if (vDir.getParent() == null || ProjectRootsUtil.isModuleContentRoot(vDir, project)) {
             return SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
           }
         }
@@ -149,16 +157,16 @@ public class NavBarPresentation {
       }
     }
     else if (object instanceof Module) {
-      if (WolfTheProblemSolver.getInstance(myProject).hasProblemFilesBeneath((Module)object)) {
+      if (WolfTheProblemSolver.getInstance(project).hasProblemFilesBeneath((Module)object)) {
         return getErrorAttributes();
       }
-
     }
     else if (object instanceof Project) {
-      final Project project = (Project)object;
-      final Module[] modules = ReadAction.compute(() -> ModuleManager.getInstance(project).getModules());
+      Project project = (Project)object;
+      Module[] modules = ReadAction.compute(() -> ModuleManager.getInstance(project).getModules());
+      WolfTheProblemSolver problemSolver = WolfTheProblemSolver.getInstance(project);
       for (Module module : modules) {
-        if (WolfTheProblemSolver.getInstance(project).hasProblemFilesBeneath(module)) {
+        if (problemSolver.hasProblemFilesBeneath(module)) {
           return getErrorAttributes();
         }
       }
@@ -166,17 +174,17 @@ public class NavBarPresentation {
     return SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
-  public static boolean wolfHasProblemFilesBeneath(final PsiElement scope) {
+  public static boolean wolfHasProblemFilesBeneath(@NotNull PsiElement scope) {
     return WolfTheProblemSolver.getInstance(scope.getProject()).hasProblemFilesBeneath(virtualFile -> {
       if (scope instanceof PsiDirectory) {
         final PsiDirectory directory = (PsiDirectory)scope;
-        if (!VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false)) return false;
-        return ModuleUtil.findModuleForFile(virtualFile, scope.getProject()) == ModuleUtil.findModuleForPsiElement(scope);
+        if (!VfsUtilCore.isAncestor(directory.getVirtualFile(), virtualFile, false)) return false;
+        return ModuleUtilCore.findModuleForFile(virtualFile, scope.getProject()) == ModuleUtilCore.findModuleForPsiElement(scope);
       }
       else if (scope instanceof PsiDirectoryContainer) { // TODO: remove. It doesn't look like we'll have packages in navbar ever again
         final PsiDirectory[] psiDirectories = ((PsiDirectoryContainer)scope).getDirectories();
         for (PsiDirectory directory : psiDirectories) {
-          if (VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false)) {
+          if (VfsUtilCore.isAncestor(directory.getVirtualFile(), virtualFile, false)) {
             return true;
           }
         }

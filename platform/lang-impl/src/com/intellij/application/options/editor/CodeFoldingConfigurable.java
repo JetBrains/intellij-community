@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.editor;
 
@@ -16,7 +16,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +56,7 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
       JComponent component = provider.createComponent();
       assert component != null : "CodeFoldingOptionsProvider " + provider.getClass() + " has a null component.";
       myFoldingPanel.add(component, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
-                                                           GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+                                                           GridBagConstraints.HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
     }
     return myRootPanel;
   }

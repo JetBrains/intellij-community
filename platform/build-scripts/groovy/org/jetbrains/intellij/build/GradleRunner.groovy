@@ -2,10 +2,9 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 import io.opentelemetry.api.trace.Span
-import org.jetbrains.jps.model.java.JdkVersionDetector
 
 import java.util.function.Supplier
 
@@ -14,28 +13,20 @@ final class GradleRunner {
   final File gradleProjectDir
   private final String projectDir
   private final BuildMessages messages
-  private final String javaHome
   private final List<String> additionalParams
   private final BuildOptions options
-
-  @Lazy
-  private volatile GradleRunner modularGradleRunner = {
-    createModularRunner()
-  }()
 
   GradleRunner(
     File gradleProjectDir,
     String projectDir,
     BuildMessages messages,
     BuildOptions options,
-    String javaHome,
     List<String> additionalParams = getDefaultAdditionalParams()
   ) {
     this.messages = messages
     this.options = options
     this.projectDir = projectDir
     this.gradleProjectDir = gradleProjectDir
-    this.javaHome = javaHome
     this.additionalParams = additionalParams
   }
 
@@ -60,25 +51,8 @@ final class GradleRunner {
     return runInner(title, buildFile, false, false, tasks)
   }
 
-  /**
-   *
-   * @see GradleRunner#run(java.lang.String, java.lang.String [ ])
-   */
-  boolean runWithModularRuntime(String title, String... tasks) {
-    if (isModularRuntime()) return run(title, tasks)
-    return modularGradleRunner.run(title, tasks)
-  }
-
-  /**
-   * Invokes Gradle tasks on {@link #gradleProjectDir} project.
-   * Ignores the result of running Gradle.
-   */
-  boolean forceRun(String title, String... tasks) {
-    return runInner(title, null, true, false, tasks)
-  }
-
   GradleRunner withParams(List<String> additionalParams) {
-    return new GradleRunner(gradleProjectDir, projectDir, messages, options, javaHome, this.additionalParams + additionalParams)
+    return new GradleRunner(gradleProjectDir, projectDir, messages, options, this.additionalParams + additionalParams)
   }
 
   private static List<String> getDefaultAdditionalParams() {
@@ -145,29 +119,10 @@ final class GradleRunner {
     command.addAll(additionalParams)
     command.addAll(tasks)
     def processBuilder = new ProcessBuilder(command).directory(gradleProjectDir)
-    processBuilder.environment().put("JAVA_HOME", javaHome)
+    processBuilder.environment().put("JAVA_HOME", SystemProperties.javaHome)
     def process = processBuilder.start()
     process.consumeProcessOutputStream((OutputStream)System.out)
     process.consumeProcessErrorStream((OutputStream)System.err)
     return process.waitFor() == 0
-  }
-
-  private boolean isModularRuntime() {
-    return JdkVersionDetector.instance
-             .detectJdkVersionInfo(javaHome)
-             .@version.feature >= 11
-  }
-
-  private GradleRunner createModularRunner() {
-    if (isModularRuntime()) {
-      return this
-    }
-    run('Downloading JBR 11', 'setupJbr11')
-    def modularRuntime = "$projectDir/build/jdk/11"
-    if (SystemInfoRt.isMac) {
-      modularRuntime += '/Contents/Home'
-    }
-    modularRuntime = FileUtil.toSystemIndependentName(new File(modularRuntime).canonicalPath)
-    return new GradleRunner(gradleProjectDir, projectDir, messages, options, modularRuntime)
   }
 }

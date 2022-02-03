@@ -42,9 +42,8 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.AccessModifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-import com.intellij.refactoring.changeSignature.JavaChangeSignatureUsageProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider;
@@ -349,15 +348,17 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     if (parent instanceof PsiMethod && hasConflicts) {
       PsiMethod method = (PsiMethod)parent;
       //no myPrepareSuccessfulSwingThreadCallback means that the conflicts when any, won't be shown again
-      new ChangeSignatureProcessor(project,
-                                   method,
-                                   false,
-                                   modifier.toPsiModifier(),
-                                   method.getName(),
-                                   method.getReturnType(),
-                                   ParameterInfoImpl.fromMethod(method),
-                                   JavaThrownExceptionInfo.extractExceptions(method))
-        .run();
+      var provider = JavaSpecialRefactoringProvider.getInstance();
+      var csp = provider.getChangeSignatureProcessor(project,
+                                                                 method,
+                                                                 false,
+                                                                 modifier.toPsiModifier(),
+                                                                 method.getName(),
+                                                                 method.getReturnType(),
+                                                                 ParameterInfoImpl.fromMethod(method),
+                                                                 JavaThrownExceptionInfo.extractExceptions(method)
+                                                                 );
+      csp.run();
       return;
     }
     PsiFile file = modifierList.getContainingFile();
@@ -412,7 +413,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       copy.setModifierProperty(modifier.toPsiModifier(), true);
 
       if (member instanceof PsiMethod) {
-        JavaChangeSignatureUsageProcessor.ConflictSearcher.searchForHierarchyConflicts((PsiMethod)member, conflicts, modifier.toPsiModifier());
+        JavaSpecialRefactoringProvider.getInstance().searchForHierarchyConflicts((PsiMethod)member, conflicts, modifier.toPsiModifier());
       }
 
       final Query<PsiReference> search = ReferencesSearch.search(member, useScope);

@@ -25,5 +25,6 @@
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" name="jediterm-typeahead" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.wsl.impl" />
   </component>
 </module>

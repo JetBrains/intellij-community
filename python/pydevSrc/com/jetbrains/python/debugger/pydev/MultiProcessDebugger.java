@@ -15,6 +15,7 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,12 @@ public class MultiProcessDebugger implements ProcessDebugger {
 
   private final RemoteDebugger myMainDebugger;
   private final List<RemoteDebugger> myOtherDebuggers = new ArrayList<>();
-  private ServerSocket myDebugServerSocket;
+  /**
+   * @deprecated the dispatcher code must be removed if no issues arise in Python debugger
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  private final @Nullable ServerSocket myDebugServerSocket;
   private DebuggerProcessAcceptor myDebugProcessAcceptor;
   private final List<DebuggerProcessListener> myOtherDebuggerCloseListener = new ArrayList<>();
 
@@ -42,18 +48,38 @@ public class MultiProcessDebugger implements ProcessDebugger {
   public MultiProcessDebugger(@NotNull final IPyDebugProcess debugProcess,
                               @NotNull final ServerSocket serverSocket,
                               final int timeoutInMillis) {
+    this(debugProcess, serverSocket, timeoutInMillis, false);
+  }
+
+  /**
+   * @deprecated the dispatcher code must be removed if no issues arise in Python debugger
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  public MultiProcessDebugger(@NotNull final IPyDebugProcess debugProcess,
+                              @NotNull final ServerSocket serverSocket,
+                              final int timeoutInMillis,
+                              boolean useDispatcher) {
     myDebugProcess = debugProcess;
 
     myServerSocket = serverSocket;
     myTimeoutInMillis = timeoutInMillis;
 
-    try {
-      myDebugServerSocket = createServerSocket();
+    ServerSocket debugServerSocket;
+    if (useDispatcher) {
+      try {
+        debugServerSocket = createServerSocket();
+        myDebugServerSocket = debugServerSocket;
+      }
+      catch (ExecutionException e) {
+        throw new RuntimeException("Failed to start debugger", e);
+      }
     }
-    catch (ExecutionException e) {
-      LOG.error("Failed to start debugger:", e);
+    else {
+      debugServerSocket = serverSocket;
+      myDebugServerSocket = null;
     }
-    myMainDebugger = new RemoteDebugger(myDebugProcess, myDebugServerSocket, myTimeoutInMillis);
+    myMainDebugger = new RemoteDebugger(myDebugProcess, debugServerSocket, myTimeoutInMillis);
   }
 
   @Override
@@ -63,18 +89,20 @@ public class MultiProcessDebugger implements ProcessDebugger {
 
   @Override
   public void waitForConnect() throws Exception {
-    //noinspection SocketOpenedButNotSafelyClosed
-    final Socket socket = myServerSocket.accept();
+    if (myDebugServerSocket != null) {
+      //noinspection SocketOpenedButNotSafelyClosed
+      final Socket socket = myServerSocket.accept();
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      try {
-        //do we need any synchronization here with myMainDebugger.waitForConnect() ??? TODO
-        sendDebuggerPort(socket, myDebugServerSocket, myDebugProcess);
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        try {
+          //do we need any synchronization here with myMainDebugger.waitForConnect() ??? TODO
+          sendDebuggerPort(socket, myDebugServerSocket, myDebugProcess);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      });
+    }
 
     myMainDebugger.waitForConnect();
 
@@ -84,6 +112,11 @@ public class MultiProcessDebugger implements ProcessDebugger {
     ApplicationManager.getApplication().executeOnPooledThread(myDebugProcessAcceptor);
   }
 
+  /**
+   * @deprecated the dispatcher code must be removed if no issues arise in Python debugger
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   private static void sendDebuggerPort(@NotNull Socket socket, @NotNull ServerSocket serverSocket, @NotNull IPyDebugProcess processHandler)
     throws IOException {
     int port = processHandler.handleDebugPort(serverSocket.getLocalPort());
@@ -98,6 +131,11 @@ public class MultiProcessDebugger implements ProcessDebugger {
     }
   }
 
+  /**
+   * @deprecated the dispatcher code must be removed if no issues arise in Python debugger
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @NotNull
   private static ServerSocket createServerSocket() throws ExecutionException {
     final ServerSocket serverSocket;
@@ -109,6 +147,15 @@ public class MultiProcessDebugger implements ProcessDebugger {
       throw new ExecutionException("Failed to find free socket port", e); //NON-NLS
     }
     return serverSocket;
+  }
+
+  /**
+   * @deprecated the dispatcher code must be removed if no issues arise in Python debugger
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  private boolean useDispatcher() {
+    return myDebugServerSocket != null;
   }
 
   @Override
@@ -186,7 +233,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public  List<Pair<String, Boolean>> getSmartStepIntoVariants(String threadId, String frameId, int startContextLine, int endContextLine)
+  public List<Pair<String, Boolean>> getSmartStepIntoVariants(String threadId, String frameId, int startContextLine, int endContextLine)
     throws PyDebuggerException {
     return debugger(threadId).getSmartStepIntoVariants(threadId, frameId, startContextLine, endContextLine);
   }
@@ -460,15 +507,29 @@ public class MultiProcessDebugger implements ProcessDebugger {
           if (serverSocketCopy == null) {
             break;
           }
-          Socket socket = serverSocketCopy.accept();
+          Socket socket;
+          if (myMultiProcessDebugger.useDispatcher()) {
+            socket = serverSocketCopy.accept();
+          }
+          else {
+            socket = null;
+          }
 
           try {
-            final ServerSocket serverSocket = createServerSocket();
+            final ServerSocket serverSocket;
+            if (socket != null) {
+              serverSocket = createServerSocket();
+            }
+            else {
+              serverSocket = serverSocketCopy;
+            }
             final RemoteDebugger debugger =
               new RemoteDebugger(myMultiProcessDebugger.myDebugProcess, serverSocket, myMultiProcessDebugger.myTimeoutInMillis);
             addCloseListener(debugger);
-            sendDebuggerPort(socket, serverSocket, myMultiProcessDebugger.myDebugProcess);
-            socket.close();
+            if (socket != null) {
+              sendDebuggerPort(socket, serverSocket, myMultiProcessDebugger.myDebugProcess);
+              socket.close();
+            }
             debugger.waitForConnect();
             debugger.handshake();
             myMultiProcessDebugger.addDebugger(debugger);
@@ -480,7 +541,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
             LOG.warn(e);
           }
           finally {
-            if (!socket.isClosed()) {
+            if (socket != null && !socket.isClosed()) {
               socket.close();
             }
           }

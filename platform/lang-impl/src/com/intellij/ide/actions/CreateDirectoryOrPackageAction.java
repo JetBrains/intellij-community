@@ -8,8 +8,6 @@ import com.intellij.ide.projectView.actions.MarkRootActionBase;
 import com.intellij.ide.ui.newItemPopup.NewItemPopupUtil;
 import com.intellij.ide.ui.newItemPopup.NewItemWithTemplatesPopupPanel;
 import com.intellij.ide.util.DirectoryChooserUtil;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
@@ -194,7 +192,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
     contentPanel.setApplyAction(event -> {
       for (CompletionItem it : contentPanel.getSelectedItems()) {
-        it.reportToStatistics(project);
+        CreateDirectoryUsageCollector.logCompletionVariantChosen(project, it.contributor.getClass());
       }
 
       // if there are selected suggestions, we need to create the selected folders (not the path in the text field)
@@ -344,16 +342,6 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
       this.displayText = FileUtil.toSystemDependentName(relativePath);
       this.icon = icon;
-    }
-
-    public void reportToStatistics(@Nullable Project project) {
-      Class contributorClass = contributor.getClass();
-      String nameToReport = getPluginInfo(contributorClass).isSafeToReport()
-                            ? contributorClass.getSimpleName() : "third.party";
-
-      FUCounterUsageLogger.getInstance().logEvent(project, "create.directory.dialog",
-                                                  "completion.variant.chosen",
-                                                  new FeatureUsageData().addData("contributor", nameToReport));
     }
   }
 

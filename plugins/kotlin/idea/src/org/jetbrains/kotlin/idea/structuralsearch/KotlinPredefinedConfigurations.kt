@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.structuralsearch
 
 import com.intellij.structuralsearch.PatternContext
@@ -9,9 +8,9 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.structuralsearch.filters.AlsoMatchCompanionObjectModifier
+import org.jetbrains.kotlin.idea.structuralsearch.filters.AlsoMatchValModifier
 import org.jetbrains.kotlin.idea.structuralsearch.filters.OneStateFilter
-import org.jetbrains.kotlin.idea.structuralsearch.filters.ValOnlyFilter
-import org.jetbrains.kotlin.idea.structuralsearch.filters.VarOnlyFilter
 
 object KotlinPredefinedConfigurations {
     private val CLASS_TYPE get() = KotlinBundle.message("category.class")
@@ -33,7 +32,7 @@ object KotlinPredefinedConfigurations {
         // Classes
         searchTemplate(
             KotlinBundle.message("predefined.configuration.all.vars.of.the.class"),
-            "all vars/vals of a class",
+            "all vars of a class",
             """
                 class '_Class {  
                     var 'Field+ = '_Init?
@@ -53,7 +52,7 @@ object KotlinPredefinedConfigurations {
         ),
         searchTemplate(
             KotlinBundle.message("predefined.configuration.all.vars.of.the.object"),
-            "all vars/vals of an object or companion object",
+            "all vars of an object",
             """
                 object '_Object {  
                     var 'Field+ = '_Init?
@@ -71,6 +70,14 @@ object KotlinPredefinedConfigurations {
             "annotated classes",
             """
                 @'_Annotation class 'Name
+            """.trimIndent(),
+            CLASS_TYPE
+        ),
+        searchTemplate(
+            KotlinBundle.message("predefined.configuration.object.companion.object"),
+            "object also match companion object",
+            """
+                object '_Object{0,1}:[_${AlsoMatchCompanionObjectModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})]
             """.trimIndent(),
             CLASS_TYPE
         ),
@@ -139,20 +146,14 @@ object KotlinPredefinedConfigurations {
             EXPRESSION_TYPE
         ),
         searchTemplate(
-            KotlinBundle.message("predefined.configuration.vars.only"),
-            "vars only",
-            """var '_Variable:[_${VarOnlyFilter.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})]""",
-            EXPRESSION_TYPE
-        ),
-        searchTemplate(
-            KotlinBundle.message("predefined.configuration.vals.only"),
-            "vals only",
-            """val '_Value:[_${ValOnlyFilter.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})]""",
+            KotlinBundle.message("predefined.configuration.also.match.vals"),
+            "var also match vals",
+            """var '_Variable:[_${AlsoMatchValModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})]""",
             EXPRESSION_TYPE
         ),
         searchTemplate(
             KotlinBundle.message("predefined.configuration.vars.of.given.type"),
-            "vars and vals of given type",
+            "vars of a given type",
             """var '_Variable:[exprtype(Int)] = '_Init""",
             EXPRESSION_TYPE
         ),

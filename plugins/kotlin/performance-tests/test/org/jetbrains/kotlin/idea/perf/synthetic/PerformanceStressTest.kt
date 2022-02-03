@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.perf.suite.StatsScopeConfig
 import org.jetbrains.kotlin.idea.perf.suite.suite
 import org.jetbrains.kotlin.idea.perf.util.*
 import org.jetbrains.kotlin.idea.perf.util.registerLoadingErrorsHeadlessNotifier
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.junit.runner.RunWith
 
 @RunWith(JUnit3RunnerWithInners::class)
@@ -48,82 +48,82 @@ open class PerformanceStressTest : UsefulTestCase() {
         //
         // Find usages have to resolve each reference due to the fact they have same names
         val numberOfFuns = 50
-        val numberOfPackagesWithCandidates = 50
+        for (numberOfPackagesWithCandidates in arrayOf(30, 50, 100)) {
+            val name = "findUsages${numberOfFuns}_$numberOfPackagesWithCandidates" + if (withCompilerIndex) "_with_cri" else ""
+            suiteWithConfig(name) {
+                app {
+                    warmUpProject()
 
-        val name = "findUsages${numberOfFuns}_$numberOfPackagesWithCandidates" + if (withCompilerIndex) "_with_cri" else ""
-        suiteWithConfig(name) {
-            app {
-                warmUpProject()
+                    project {
 
-                project {
+                        descriptor {
+                            name(name)
 
-                    descriptor {
-                        name(name)
+                            module {
+                                kotlinStandardLibrary()
 
-                        module {
-                            kotlinStandardLibrary()
+                                for (index in 1..2) {
+                                    kotlinFile("DataClass") {
+                                        pkg("pkg$index")
 
-                            for (index in 1..2) {
-                                kotlinFile("DataClass") {
-                                    pkg("pkg$index")
+                                        topClass("DataClass") {
+                                            dataClass()
 
-                                    topClass("DataClass") {
-                                        dataClass()
-
-                                        ctorParameter(Parameter("name", "String"))
-                                        ctorParameter(Parameter("value", "Int"))
+                                            ctorParameter(Parameter("name", "String"))
+                                            ctorParameter(Parameter("value", "Int"))
+                                        }
                                     }
                                 }
-                            }
 
-                            for (pkgIndex in 1..numberOfPackagesWithCandidates) {
-                                kotlinFile("SomeService") {
-                                    pkg("pkgX$pkgIndex")
-                                    // use pkg1 for `pkgX1.SomeService`, and pkg2 for all other `pkgX*.SomeService`
-                                    import("pkg${if (pkgIndex == 1) 1 else 2}.DataClass")
+                                for (pkgIndex in 1..numberOfPackagesWithCandidates) {
+                                    kotlinFile("SomeService") {
+                                        pkg("pkgX$pkgIndex")
+                                        // use pkg1 for `pkgX1.SomeService`, and pkg2 for all other `pkgX*.SomeService`
+                                        import("pkg${if (pkgIndex == 1) 1 else 2}.DataClass")
 
-                                    topClass("SomeService") {
-                                        for (index in 1..numberOfFuns) {
-                                            function("foo$index") {
-                                                returnType("DataClass")
-                                                param("data", "DataClass")
+                                        topClass("SomeService") {
+                                            for (index in 1..numberOfFuns) {
+                                                function("foo$index") {
+                                                    returnType("DataClass")
+                                                    param("data", "DataClass")
 
-                                                body("return DataClass(data.name, data.value + $index)")
+                                                    body("return DataClass(data.name, data.value + $index)")
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    profile(DefaultProfile)
-                    if (withCompilerIndex) {
-                        withCompiler()
-                        rebuildProject()
-                    }
-
-                    fixture("pkg1/DataClass.kt").use { fixture ->
-                        with(fixture.cursorConfig) { marker = "DataClass" }
-
-                        with(config) {
-                            warmup = 8
-                            iterations = 15
+                        profile(DefaultProfile)
+                        if (withCompilerIndex) {
+                            withCompiler()
+                            rebuildProject()
                         }
 
-                        measure<Set<Usage>>(fixture, "findUsages") {
-                            before = {
-                                fixture.moveCursor()
+                        fixture("pkg1/DataClass.kt").use { fixture ->
+                            with(fixture.cursorConfig) { marker = "DataClass" }
+
+                            with(config) {
+                                warmup = 8
+                                iterations = 15
                             }
-                            test = {
-                                val findUsages = findUsages(fixture.cursorConfig)
-                                // 1 from import
-                                //   + numberOfUsages as function argument
-                                //   + numberOfUsages as return type functions
-                                //   + numberOfUsages as new instance in a body of function
-                                // in a SomeService
-                                assertEquals(1 + 3 * numberOfFuns, findUsages.size)
-                                findUsages
+
+                            measure<Set<Usage>>(fixture, "findUsages") {
+                                before = {
+                                    fixture.moveCursor()
+                                }
+                                test = {
+                                    val findUsages = findUsages(fixture.cursorConfig)
+                                    // 1 from import
+                                    //   + numberOfUsages as function argument
+                                    //   + numberOfUsages as return type functions
+                                    //   + numberOfUsages as new instance in a body of function
+                                    // in a SomeService
+                                    assertEquals(1 + 3 * numberOfFuns, findUsages.size)
+                                    findUsages
+                                }
                             }
                         }
                     }

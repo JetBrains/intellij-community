@@ -24,26 +24,31 @@ public class TextContentBuilder {
   /**
    * A basic builder that takes the full PSI text, considering any {@link OuterLanguageElement}s as unknown fragments.
    */
-  public static final TextContentBuilder FromPsi = new TextContentBuilder(e -> e instanceof OuterLanguageElement, e -> false, Collections.emptySet());
+  public static final TextContentBuilder FromPsi =
+    new TextContentBuilder(e -> e instanceof OuterLanguageElement, e -> false, Collections.emptySet(), Collections.emptySet());
 
   private final Predicate<PsiElement> unknown;
   private final Predicate<PsiElement> excluded;
-  private final Set<Character> indentChars;
+  private final Set<Character> indentChars, suffixChars;
 
-  private TextContentBuilder(Predicate<PsiElement> unknown, Predicate<PsiElement> excluded, Set<Character> indentChars) {
+  private TextContentBuilder(Predicate<PsiElement> unknown,
+                             Predicate<PsiElement> excluded,
+                             Set<Character> indentChars,
+                             Set<Character> suffixChars) {
     this.unknown = unknown;
     this.excluded = excluded;
     this.indentChars = indentChars;
+    this.suffixChars = suffixChars;
   }
 
   /** Exclude and {@link TextContent#markUnknown} all PSI elements satisfying the given condition. */
   public TextContentBuilder withUnknown(Predicate<PsiElement> unknown) {
-    return new TextContentBuilder(e -> this.unknown.test(e) || unknown.test(e), excluded, indentChars);
+    return new TextContentBuilder(e -> this.unknown.test(e) || unknown.test(e), excluded, indentChars, suffixChars);
   }
 
   /** Call {@link TextContent#excludeRange} for all PSI elements satisfying the given condition. */
   public TextContentBuilder excluding(Predicate<PsiElement> excluded) {
-    return new TextContentBuilder(unknown, e -> this.excluded.test(e) || excluded.test(e), indentChars);
+    return new TextContentBuilder(unknown, e -> this.excluded.test(e) || excluded.test(e), indentChars, suffixChars);
   }
 
   /**
@@ -55,7 +60,19 @@ public class TextContentBuilder {
     for (int i = 0; i < indentChars.length(); i++) {
       set.add(indentChars.charAt(i));
     }
-    return new TextContentBuilder(unknown, excluded, set);
+    return new TextContentBuilder(unknown, excluded, set, suffixChars);
+  }
+
+  /**
+   * For each line of the text, remove the suffix consisting of the given characters
+   * (packed together in a string for compactness)
+   */
+  public TextContentBuilder removingLineSuffixes(String suffixChars) {
+    Set<Character> set = new HashSet<>(this.suffixChars);
+    for (int i = 0; i < suffixChars.length(); i++) {
+      set.add(suffixChars.charAt(i));
+    }
+    return new TextContentBuilder(unknown, excluded, indentChars, set);
   }
 
   /**
@@ -127,7 +144,7 @@ public class TextContentBuilder {
         return tokens.isEmpty() ? null : new TextContentImpl(domain, tokens);
       }
     }.walkPsiTree();
-    return content == null ? null : content.removeIndents(indentChars).trimWhitespace();
+    return content == null ? null : content.removeIndents(indentChars).removeLineSuffixes(suffixChars).trimWhitespace();
   }
 
   private static boolean isWrongRange(TextRange valueRange, int maxLength) {

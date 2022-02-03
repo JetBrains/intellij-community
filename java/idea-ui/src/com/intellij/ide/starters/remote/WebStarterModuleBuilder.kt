@@ -25,6 +25,7 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.GitRepositoryInitializer
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -37,6 +38,7 @@ import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JavaSdkType
@@ -259,6 +261,15 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
     }
 
     openSampleFiles(module, getFilePathsToOpen())
+    if (starterContext.gitIntegration) {
+      val moduleContentRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(contentEntryPath!!.replace("\\", "/"))
+                              ?: throw IllegalStateException("Module root not found")
+
+      runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), module.project) {
+        GitRepositoryInitializer.getInstance()?.initRepository(module.project, moduleContentRoot)
+      }
+    }
+
     importModule(module)
 
     verifyIdePlugins(module.project)

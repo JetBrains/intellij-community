@@ -3,10 +3,7 @@ package com.intellij.codeInspection.blockingCallsDetection;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,17 +19,8 @@ public interface BlockingMethodChecker {
    */
   boolean isApplicable(@NotNull PsiFile file);
 
-  /**
-   * @deprecated Override {@link #isMethodBlocking(MethodContext)} instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  default boolean isMethodBlocking(@NotNull PsiMethod method) {
-    return false;
-  }
-
   default boolean isMethodBlocking(@NotNull MethodContext methodContext) {
-    return isMethodBlocking(methodContext.getElement());
+    return false;
   }
 
   default boolean isMethodNonBlocking(@NotNull MethodContext methodContext) {
@@ -45,15 +33,6 @@ public interface BlockingMethodChecker {
    * @return empty array if one cannot provide any fixes, non-empty array of quick fixes otherwise
    */
   default LocalQuickFix @NotNull [] getQuickFixesFor(@NotNull ElementContext elementContext) {
-    return LocalQuickFix.EMPTY_ARRAY;
-  }
-
-  /**
-   * @deprecated Override {@link #getQuickFixesFor(ElementContext)} instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  default LocalQuickFix @NotNull [] getQuickFixesFor(@NotNull PsiElement element) {
     return LocalQuickFix.EMPTY_ARRAY;
   }
 }

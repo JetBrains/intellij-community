@@ -3448,6 +3448,7 @@
     <inspection_tool class="SubtractionInCompareTo" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SuperClassHasFrequentlyUsedInheritors" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SuperTearDownInFinally" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="SuspiciousLiteralUnderscore" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="SuppressionAnnotation" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SuspendFunctionOnCoroutineScope" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SuspiciousArrayCast" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -3592,6 +3593,10 @@
           <module name="intellij.platform.configurationStore.impl" />
           <module name="intellij.platform.codeStyle" />
           <module name="intellij.platform.codeStyle.impl" />
+          <module name="intellij.platform.vfs.impl" />
+          <module name="intellij.platform.lang.core" />
+          <module name="intellij.platform.ide.core" />
+          <module name="intellij.codeServer.db.connectivity" />
         </modules-set>
         <modules-set>
           <module name="intellij.xslt.debugger.impl.rt" />
@@ -3664,6 +3669,20 @@
           <module name="intellij.maven.server.m3.impl" />
           <module name="intellij.maven.server.m3.common" />
           <module name="intellij.maven.server.m30.impl" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.platform.graph.impl" />
+          <module name="intellij.platform.graph" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.platform.util.ex" />
+          <module name="intellij.platform.util.zip" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.platform.util.ex" />
+          <module name="intellij.platform.util.zip" />
+          <module name="intellij.platform.util.rt.java8" />
+          <module name="intellij.platform.util.immutableKeyValueStore" />
         </modules-set>
       </option>
     </inspection_tool>

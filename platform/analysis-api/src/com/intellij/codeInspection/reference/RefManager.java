@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisScope;
@@ -111,8 +111,30 @@ public abstract class RefManager {
     return element;
   }
 
+  /**
+   * Writes specified reference into org.jdom.Element. Serialized data is used for reporting of inspection problems.
+   *
+   * @param entity     reference to be serialized
+   * @param actualLine value is used only if {@code entity } is {@link RefElement}. If {@code actualLine != -1} then
+   *                   {@code (actualLine+1)} is used as value for {@code line} element in serialized data.
+   * @return element describing specified reference.
+   */
   @Nullable
   public Element export(@NotNull RefEntity entity, final int actualLine) {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * Writes specified reference into org.jdom.Element. If {@code entity } is {@link RefElement} then this method
+   * in addition to {@link RefManager#export(RefEntity, int)} reports {@code offset}, {@code length} and {@code highlighted_element}
+   * elements as children of returned element.
+   *
+   * @param entity reference to be serialized
+   * @return element describing specified reference.
+   * @see RefManager#export(RefEntity, int)
+   */
+  @Nullable
+  public Element export(@NotNull RefEntity entity) {
     throw new UnsupportedOperationException();
   }
 

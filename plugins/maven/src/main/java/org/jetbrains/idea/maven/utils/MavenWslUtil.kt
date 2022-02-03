@@ -28,7 +28,6 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.navigation.Place
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.idea.maven.config.MavenConfig
 import org.jetbrains.idea.maven.config.MavenConfigSettings
@@ -36,22 +35,22 @@ import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.server.CannotStartServerException
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.WslMavenDistribution
 import org.jetbrains.idea.maven.server.wsl.BuildIssueWslJdk
-import org.jetbrains.idea.maven.wizards.MavenProjectBuilder
 import java.io.File
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.event.HyperlinkEvent
 
-internal object MavenWslUtil : MavenUtil() {
+object MavenWslUtil : MavenUtil() {
   @JvmStatic
   fun getWslJdk(project: Project, name: String): Sdk {
     val projectWslDistr = tryGetWslDistribution(project) ?: throw IllegalStateException("project $project is not WSL based");
     if (name == MavenRunnerSettings.USE_JAVA_HOME) {
-      val jdk =MavenWslCache.getInstance().wslEnv(projectWslDistr)["JAVA_HOME"]?.let { projectWslDistr.getWindowsPath(it) }?.let {
+      val jdk =MavenWslCache.getInstance().wslEnv(projectWslDistr)?.get("JAVA_HOME")?.let { projectWslDistr.getWindowsPath(it) }?.let {
         JavaSdk.getInstance().createJdk("", it)
       }
       if (jdk != null && jdk.sdkType is JavaSdkType) {
@@ -77,7 +76,7 @@ internal object MavenWslUtil : MavenUtil() {
 
   @JvmStatic
   fun getPropertiesFromMavenOpts(distribution: WSLDistribution): Map<String, String> {
-    return parseMavenProperties(MavenWslCache.getInstance().wslEnv(distribution)["MAVEN_OPTS"])
+    return parseMavenProperties(MavenWslCache.getInstance().wslEnv(distribution)?.get("MAVEN_OPTS"))
   }
 
   @JvmStatic
@@ -119,10 +118,13 @@ internal object MavenWslUtil : MavenUtil() {
     return File(File(directory, CONF_DIR), SETTINGS_XML)
   }
 
-
   @JvmStatic
   fun WSLDistribution.resolveM2Dir(): File {
-    return this.getWindowsFile(File(MavenWslCache.getInstance().wslEnv(this)["HOME"], DOT_M2_DIR))
+    val userHome = MavenWslCache.getInstance().wslEnv(this)?.get("HOME")
+    if (userHome.isNullOrBlank()) {
+      throw CannotStartServerException(SyncBundle.message("maven.sync.wsl.userhome.cannot.resolve"))
+    }
+    return this.getWindowsFile(File(userHome, DOT_M2_DIR))
   }
 
   /**
@@ -145,7 +147,7 @@ internal object MavenWslUtil : MavenUtil() {
         return null
       }
     }
-    val m2home = MavenWslCache.getInstance().wslEnv(this)[ENV_M2_HOME]
+    val m2home = MavenWslCache.getInstance().wslEnv(this)?.get(ENV_M2_HOME)
     if (m2home != null && !isEmptyOrSpaces(m2home)) {
       val homeFromEnv = this.getWindowsPath(m2home)?.let(::File)
       if (isValidMavenHome(homeFromEnv)) {
@@ -213,7 +215,7 @@ internal object MavenWslUtil : MavenUtil() {
 
   @JvmStatic
   fun getJdkPath(wslDistribution: WSLDistribution): String? {
-    return MavenWslCache.getInstance().wslEnv(wslDistribution)["JDK_HOME"]
+    return MavenWslCache.getInstance().wslEnv(wslDistribution)?.get("JDK_HOME")
   }
 
   @JvmStatic
@@ -424,13 +426,19 @@ class MavenWslCache {
 
   private val myEnvCache: MutableMap<String, Map<String, String>> = HashMap()
 
-  fun wslEnv(distribution: WSLDistribution): Map<String, String> {
+  fun wslEnv(distribution: WSLDistribution): Map<String, String>? {
     var result = myEnvCache[distribution.msId];
     if (result != null) return result
-    result = distribution.environment
-    myEnvCache[distribution.msId] = result
-    return result
+    for(i in 1..2){
+      result = distribution.environment
+      if(result!=null) {
+        myEnvCache[distribution.msId] = result
+        return result
+      }
+    }
+    return null;
   }
+
   fun clearCache() {
     myEnvCache.clear()
   }

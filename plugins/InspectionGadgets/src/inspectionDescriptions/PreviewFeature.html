@@ -1,16 +1,16 @@
 <html>
 <body>
-Reports usages of the Preview Feature API: a set of elements that are annotated with <code>@PreviewFeature</code>.
+Reports usages of Preview Feature APIs, i.e. of a module, package, class, interface, method, constructor, field, or enum constant
+in the <code>java.*</code> or <code>javax.*</code> namespace annotated with <code>@PreviewFeature</code>.
 <p>
   A preview feature is a new feature of the Java language, Java Virtual Machine, or Java SE API that is fully specified, fully implemented,
   and is yet impermanent. The notion of a preview feature is defined in <a href="https://openjdk.java.net/jeps/12">JEP 12</a>.
 </p>
 <p>
-  If a piece of code depends on a preview feature, it might stop compiling in future JDK versions in case the feature gets no positive
-  feedback and gets removed or changed.
+  If some piece of code depends on a preview API, it may stop compiling in future JDK versions if the feature is changed or removed.
 </p>
 <!-- tooltip end -->
-<p>The inspection is enabled only if the language level of the current project is <b>Preview</b>.</p>
+<p>The inspection only reports if the language level of the project or module is <b>Preview</b>.</p>
 <p><small>New in 2021.1</small></p>
 </body>
 </html>

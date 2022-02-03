@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -41,6 +41,8 @@ public abstract class JavaTestConfigurationBase extends JavaRunConfigurationBase
   public abstract void beMethodConfiguration(Location<PsiMethod> location);
 
   public abstract void beClassConfiguration(PsiClass aClass);
+
+  public void withNestedClass(PsiClass aClass) {}
 
   public abstract boolean isConfiguredByElement(PsiElement element);
 

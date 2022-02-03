@@ -11,8 +11,10 @@ import com.jetbrains.cloudconfig.ETagStorage
 import com.jetbrains.cloudconfig.HeaderStorage
 import com.jetbrains.cloudconfig.auth.JbaTokenAuthProvider
 import com.jetbrains.cloudconfig.exception.InvalidVersionIdException
+import java.io.File
 import java.io.IOException
 import java.io.InputStream
+import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -32,8 +34,11 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   private val currentVersionOfFiles = mutableMapOf<String, String>() // todo persist this information
   private val clientVersionContext = VersionContext()
 
-  private fun createConfiguration(): Configuration? {
-    val userId: String = SettingsSyncAuthService.getInstance().getUserData()?.id ?: return null
+  private fun createConfiguration(): Configuration {
+    val userId = SettingsSyncAuthService.getInstance().getUserData()?.id
+    if (userId == null) {
+      throw SettingsSyncAuthException("Authentication required")
+    }
     return Configuration().connectTimeout(TIMEOUT).readTimeout(TIMEOUT).auth(JbaTokenAuthProvider(userId))
   }
 
@@ -48,6 +53,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
 
   private fun sendSnapshotFile(inputStream: InputStream) {
     val currentVersion = getCurrentVersion()
+    LOG.info("Sending $SETTINGS_SYNC_SNAPSHOT_ZIP, current version: $currentVersion")
     if (currentVersion != null) {
       clientVersionContext.doWithVersion(SETTINGS_SYNC_SNAPSHOT_ZIP, currentVersion) {
         client.write(SETTINGS_SYNC_SNAPSHOT_ZIP, inputStream)
@@ -86,6 +92,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   }
 
   override fun receiveUpdates(): UpdateResult {
+    LOG.info("Receiving settings snapshot from the cloud config server...")
     try {
       val stream = receiveSnapshotFile()
       if (stream == null) {
@@ -93,11 +100,11 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
         return UpdateResult.NoFileOnServer
       }
 
-      val tempFile = FileUtil.createTempFile(SETTINGS_SYNC_SNAPSHOT_ZIP, UUID.randomUUID().toString())
+      val tempFile = FileUtil.createTempFile(SETTINGS_SYNC_SNAPSHOT, UUID.randomUUID().toString() + ".zip")
       try {
         FileUtil.writeToFile(tempFile, stream.readAllBytes())
         val snapshot = extractZipFile(tempFile.toPath())
-        return UpdateResult.Success(snapshot)
+        return if (snapshot.isEmpty()) UpdateResult.NoFileOnServer else UpdateResult.Success(snapshot)
       }
       finally {
         FileUtil.delete(tempFile)
@@ -124,7 +131,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
       return SettingsSyncPushResult.Success
     }
     catch (ive: InvalidVersionIdException) {
-      LOG.info("Rejected: version doesn't match the version on server")
+      LOG.info("Rejected: version doesn't match the version on server: ${ive.message}")
       return SettingsSyncPushResult.Rejected
     }
     // todo handle authentication failure: propose to login
@@ -142,7 +149,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
     }
   }
 
-  private fun handleRemoteError(e: Throwable) : String {
+  private fun handleRemoteError(e: Throwable): String {
     val defaultMessage = "Error during communication with server"
     if (e is IOException) {
       LOG.warn(e)
@@ -151,6 +158,25 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
     else {
       LOG.error(e)
       return defaultMessage
+    }
+  }
+
+  fun downloadSnapshot(): File? {
+    val stream = receiveSnapshotFile()
+    if (stream == null) {
+      LOG.info("$SETTINGS_SYNC_SNAPSHOT_ZIP not found on the server")
+      return null
+    }
+
+    try {
+      val currentDate = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US).format(Date())
+      val tempFile = FileUtil.createTempFile("settings.sync.snapshot.$currentDate.zip", null)
+      FileUtil.writeToFile(tempFile, stream.readAllBytes())
+      return tempFile
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
+      return null
     }
   }
 
@@ -163,7 +189,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
     }
 
     override fun store(path: String, value: String) {
-      contextVersionMap[path] = path
+      contextVersionMap[path] = value
     }
 
     fun <T> doWithVersion(path: String, version: String, function: () -> T): T {

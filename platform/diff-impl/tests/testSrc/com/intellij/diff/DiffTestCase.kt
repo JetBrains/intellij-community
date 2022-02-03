@@ -15,6 +15,7 @@
  */
 package com.intellij.diff
 
+import com.intellij.diff.comparison.CancellationChecker
 import com.intellij.diff.comparison.ComparisonManagerImpl
 import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.util.DiffUtil
@@ -39,6 +40,7 @@ abstract class DiffTestCase : TestCase() {
   val RNG: Random = Random()
   private var gotSeedException = false
 
+  val CANCELLATION: CancellationChecker = CancellationChecker.EMPTY
   val INDICATOR: ProgressIndicator = DumbProgressIndicator.INSTANCE
   val MANAGER: ComparisonManagerImpl = ComparisonManagerImpl()
 

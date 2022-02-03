@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.codeInsight.hint.HintManager
@@ -381,8 +381,12 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     return SequencePresentation(seq)
   }
 
-  fun button(default: InlayPresentation, clicked: InlayPresentation, clickListener: ClickListener?, hoverListener: HoverListener?) : InlayPresentation {
-    val defaultOrClicked: BiStatePresentation = object : BiStatePresentation({ default }, { clicked }, false) {
+  fun button(default: InlayPresentation,
+             clicked: InlayPresentation,
+             clickListener: ClickListener?,
+             hoverListener: HoverListener?,
+             initialState: Boolean = false): Pair<InlayPresentation, BiStatePresentation> {
+    val defaultOrClicked: BiStatePresentation = object : BiStatePresentation({ default }, { clicked }, initialState) {
       override val width: Int
         get() = max(default.width, clicked.width)
 
@@ -402,7 +406,7 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
       override fun mouseExited() {
         hoverListener?.onHoverFinished()
       }
-    }
+    } to defaultOrClicked
   }
 
   private fun attributes(base: InlayPresentation,

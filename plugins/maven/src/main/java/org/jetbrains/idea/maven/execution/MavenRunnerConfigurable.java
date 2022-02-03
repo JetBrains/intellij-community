@@ -74,9 +74,4 @@ public abstract class MavenRunnerConfigurable extends MavenRunnerPanel implement
     //noinspection ConstantConditions
     return getHelpTopic();
   }
-
-  @Override
-  public void disposeUIResources() {
-
-  }
 }

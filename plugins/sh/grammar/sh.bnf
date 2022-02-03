@@ -159,7 +159,10 @@ private redirection_inner ::= ('<&' | '>&') (number | '-')
 private redirection_target ::= process_substitution | <<parseUntilSpace w>> {name="redirection target"}
 process_substitution ::= ('<(' | '>(') list ')' {pin=1}
 
-include_command ::= include_directive (simple_command_element | <<keywordsRemapped>>)+ {pin=0}
+include_command ::= include_directive (simple_command_element | <<keywordsRemapped>>)+ {
+  pin=0
+  mixin="com.intellij.sh.psi.impl.ShIncludeCommandMixin"
+}
 include_directive ::= &('source' | '.') word {extends=generic_command_directive}
 
 shell_command ::=  if_command

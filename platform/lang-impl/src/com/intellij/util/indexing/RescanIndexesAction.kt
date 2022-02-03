@@ -1,13 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
-import com.intellij.ide.actions.cache.CacheInconsistencyProblem
-import com.intellij.ide.actions.cache.ExceptionalCompletionProblem
-import com.intellij.ide.actions.cache.RecoveryAction
+import com.intellij.ide.actions.cache.*
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.project.DumbModeTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
@@ -15,6 +14,8 @@ import com.intellij.psi.stubs.StubTreeBuilder
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.util.BooleanFunction
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
+import com.intellij.util.indexing.roots.IndexableFilesIterator
+import com.intellij.util.indexing.roots.ProjectIndexableFilesIteratorImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
@@ -29,11 +30,16 @@ class RescanIndexesAction : RecoveryAction {
   override val actionKey: String
     get() = "rescan"
 
-  override fun performSync(project: Project): List<CacheInconsistencyProblem> {
+  override fun performSync(recoveryScope: RecoveryScope): List<CacheInconsistencyProblem> {
+    val project = recoveryScope.project
     val historyFuture = CompletableFuture<ProjectIndexingHistoryImpl>()
     val stubAndIndexingStampInconsistencies = Collections.synchronizedList(arrayListOf<CacheInconsistencyProblem>())
 
-    object : UnindexedFilesUpdater(project, "Rescanning indexes recovery action") {
+    var predefinedIndexableFilesIterators: List<IndexableFilesIterator>? = null
+    if (recoveryScope is FilesRecoveryScope) {
+      predefinedIndexableFilesIterators = recoveryScope.files.map { ProjectIndexableFilesIteratorImpl(it) }
+    }
+    object : UnindexedFilesUpdater(project, predefinedIndexableFilesIterators, "Rescanning indexes recovery action") {
       private val stubIndex =
         runCatching { (FileBasedIndex.getInstance() as FileBasedIndexImpl).getIndex(StubUpdatingIndex.INDEX_ID) }
         .onFailure { logger<RescanIndexesAction>().error(it) }.getOrNull()
@@ -75,6 +81,9 @@ class RescanIndexesAction : RecoveryAction {
           throw e
         }
       }
+
+      override fun tryMergeWith(taskFromQueue: DumbModeTask): DumbModeTask? =
+        if (taskFromQueue is UnindexedFilesUpdater && project == taskFromQueue.myProject && taskFromQueue.javaClass == javaClass) this else null
     }.queue(project)
     try {
       return ProgressIndicatorUtils.awaitWithCheckCanceled(historyFuture).extractConsistencyProblems() +

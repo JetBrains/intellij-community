@@ -50,10 +50,10 @@ public abstract class PathReferenceProviderBase implements PathReferenceProvider
   }
 
   public abstract boolean createReferences(@NotNull final PsiElement psiElement,
-                                  final int offset,
-                                  String text,
+                                           final int offset,
+                                           String text,
                                            @NotNull List<? super PsiReference> references,
-                                  final boolean soft);
+                                           final boolean soft);
 
   public static int getLastPosOfURL(final int offset, @NotNull String url) {
     for (int i = offset; i < url.length(); i++) {

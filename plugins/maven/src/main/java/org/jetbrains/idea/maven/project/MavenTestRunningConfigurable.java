@@ -76,11 +76,6 @@ public class MavenTestRunningConfigurable implements SearchableConfigurable, Con
     return !projectSettings.equals(uiSettings);
   }
 
-  @Override
-  public void disposeUIResources() {
-
-  }
-
   @NotNull
   @Override
   public String getId() {

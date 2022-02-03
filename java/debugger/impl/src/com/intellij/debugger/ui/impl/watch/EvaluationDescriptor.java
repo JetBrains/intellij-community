@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,28 +57,33 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
     return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context).createCodeFragment(text, context, myProject);
   }
 
+  @ApiStatus.Experimental
+  protected @NotNull ExpressionEvaluator getEvaluator(EvaluationContextImpl evaluationContext) throws EvaluateException {
+    SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
+    return ReadAction.compute(() -> {
+      PsiCodeFragment code = getEvaluationCode(evaluationContext);
+      PsiElement psiContext = ContextUtil.getContextElement(evaluationContext, position);
+      try {
+        return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(getEvaluationText(), psiContext).getEvaluatorBuilder().build(code, position);
+      }
+      catch (UnsupportedExpressionException ex) {
+        ExpressionEvaluator eval = CompilingEvaluatorImpl.create(myProject, code.getContext(), element -> code);
+        if (eval != null) {
+          return eval;
+        }
+        throw ex;
+      }
+    });
+  }
+
   @Override
   public final Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
     try {
       PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(() -> {});
 
       EvaluationContextImpl thisEvaluationContext = getEvaluationContext(evaluationContext);
-      SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
 
-      ExpressionEvaluator evaluator = ReadAction.compute(() -> {
-        PsiCodeFragment code = getEvaluationCode(thisEvaluationContext);
-        PsiElement psiContext = ContextUtil.getContextElement(evaluationContext, position);
-        try {
-          return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(getEvaluationText(), psiContext).getEvaluatorBuilder().build(code, position);
-        }
-        catch (UnsupportedExpressionException ex) {
-          ExpressionEvaluator eval = CompilingEvaluatorImpl.create(myProject, code.getContext(), element -> code);
-          if (eval != null) {
-            return eval;
-          }
-          throw ex;
-        }
-      });
+      ExpressionEvaluator evaluator = getEvaluator(thisEvaluationContext);
 
       if (!thisEvaluationContext.getDebugProcess().isAttached()) {
         throw EvaluateExceptionUtil.PROCESS_EXITED;

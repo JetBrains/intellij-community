@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.ide.CliResult;
@@ -14,10 +14,16 @@ import java.util.concurrent.Future;
 final class ExitStarter extends ApplicationStarterBase {
   private ExitStarter() {
     // extra argument count (2) to allow for usage of remote-dev-server.sh exit /path/to/project --restart
-    super("exit", 0, 1, 2);
+    super(0, 1, 2);
   }
 
   private static final String ourRestartParameter = "--restart";
+
+
+  @Override
+  public String getCommandName() {
+    return "exit";
+  }
 
   @Override
   public String getUsageMessage() {

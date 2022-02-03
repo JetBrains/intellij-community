@@ -324,15 +324,15 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     protected void refresh(@Nullable EditorMarkupModelImpl editorMarkupModel) {
       super.refresh(editorMarkupModel);
       if (editorMarkupModel != null) {
-        editorMarkupModel.setTrafficLightIconVisible(hasHighSeverities(getErrorCount()));
+        editorMarkupModel.setTrafficLightIconVisible(hasHighSeverities(getErrorCounts()));
       }
     }
 
-    private boolean hasHighSeverities(int @NotNull [] errorCount) {
+    private boolean hasHighSeverities(int @NotNull [] errorCounts) {
       HighlightSeverity minSeverity = notNull(HighlightDisplayLevel.find("TYPO"), HighlightDisplayLevel.DO_NOT_SHOW).getSeverity();
 
-      for (int i = 0; i < errorCount.length; i++) {
-        if (errorCount[i] > 0 && getSeverityRegistrar().compare(getSeverityRegistrar().getSeverityByIndex(i), minSeverity) > 0) {
+      for (int i = 0; i < errorCounts.length; i++) {
+        if (errorCounts[i] > 0 && getSeverityRegistrar().compare(getSeverityRegistrar().getSeverityByIndex(i), minSeverity) > 0) {
           return true;
         }
       }

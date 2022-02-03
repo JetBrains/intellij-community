@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.lang.documentation.DocumentationProvider
+import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.psi.PsiElement
 import org.junit.Test
 

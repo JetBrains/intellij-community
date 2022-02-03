@@ -717,37 +717,24 @@
       <reference ref="SettingsEntryPoint"/>
     </group>
 
-    <action id="SmallSpacer" class="com.intellij.ide.navigationToolbar.experimental.SmallSpacerAction"/>
-    <action id="BigSpacer" class="com.intellij.ide.navigationToolbar.experimental.BigSpacerAction"/>
-    <action id="TinySpacer" class="com.intellij.ide.navigationToolbar.experimental.TinySpacerAction"/>
-
     <group id="NewToolbarActions">
       <group id="LeftToolbarSideGroup">
         <reference id="Back"/>
         <reference id="Forward"/>
-        <reference id="BigSpacer"/>
         <action id="SegmentedVcsControlAction" class="com.intellij.execution.segmentedVcsWidget.SegmentedVcsControlAction"/>
-        <reference id="SmallSpacer"/>
         <action id="SearchEverywhereNewToolbarAction" class="com.intellij.ide.navigationToolbar.experimental.SearchEverywhereNewToolbarAction"/>
       </group>
-      <group id="CenterToolbarSideGroup">
-        <group id="CustomActions"/>
-      </group>
       <group id="RightToolbarSideGroup">
-        <reference id="TinySpacer"/>
-        <reference id="BigSpacer"/>
         <reference id="RunToolbarWidgetAction"/>
-        <reference id="SmallSpacer"/>
         <reference id="SettingsEntryPoint"/>
       </group>
     </group>
 
     <group id="NewToolbarActionsWithoutRight">
       <reference ref="LeftToolbarSideGroup"/>
-      <reference ref="CenterToolbarSideGroup"/>
       <group id="RightToolbarSideGroupNoRunWidget">
         <reference id="ToolbarRunGroup"/>
-        <reference id="SmallSpacer"/>
+        <!-- 6px -->
         <reference id="SettingsEntryPoint"/>
       </group>
     </group>
@@ -798,6 +785,7 @@
       <reference ref="ProjectViewPopupMenuRunGroup"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
+      <reference ref="CacheRecovery"/>
       <action id="SynchronizeCurrentFile" class="com.intellij.ide.actions.SynchronizeCurrentFileAction" icon="AllIcons.Actions.Refresh"/>
       <separator/>
       <action id="GoToLinkTarget" class="com.intellij.ide.actions.GoToLinkTargetAction"/>
@@ -999,6 +987,7 @@
 
     <group id="EditorTabPopupMenuEx" searchable="false">
       <separator/>
+      <reference ref="Scratch.ChangeLanguage"/>
       <reference ref="AssociateWithFileType"/>
       <reference ref="MarkFileAs"/>
       <reference ref="AddToFavorites"/>
@@ -1137,7 +1126,7 @@
       <action id="Debugger.EvaluateInConsole" class="com.intellij.xdebugger.impl.actions.EvaluateInConsoleAction"/>
 
       <action id="XDebugger.SetValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction">
-        <override-text place="XDebuggerTreeInlayPopup"/>
+        <override-text place="XDebuggerTreePopup"/>
       </action>
       <action id="XDebugger.CopyValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyValueAction" use-shortcut-of="$Copy"/>
       <action id="XDebugger.CompareValueWithClipboard" class="com.intellij.xdebugger.impl.ui.tree.actions.XCompareWithClipboardAction"/>
@@ -1220,6 +1209,7 @@
       <separator/>
       <reference ref="ShowExecutionPoint"/>
       <separator/>
+      <reference ref="EvaluateExpression" />
     </group>
 
     <group id="XDebugger.ToolWindow.LeftToolbar">
@@ -1293,7 +1283,6 @@
     <group id="XDebugger.Watches.Inline.Popup" popup="true">
       <reference ref="XDebugger.SetValue"/>
     </group>
-
 
     <group id="XDebugger.Inspect.Tree.Popup">
       <reference ref="XDebugger.ValueGroup"/>
@@ -1654,6 +1643,11 @@
         <action class="com.intellij.ide.todo.TodoPanel$MyShowPackagesAction" id="TodoViewGroupByShowPackages"/>
         <action class="com.intellij.ide.todo.TodoPanel$MyFlattenPackagesAction" id="TodoViewGroupByFlattenPackage"/>
       </group>
+    </group>
+    
+    <group id="RunToolbarWidgetCustomizableActionGroup">
+      <action class="com.intellij.execution.ui.RunWithDropDownAction" id="RunWithDropDown"/>
+      <action class="com.intellij.execution.ui.StopWithDropDownAction" id="StopWithDropDown"/>
     </group>
 
     <action id="FileChooser.LightEditGotoOpenedFile"

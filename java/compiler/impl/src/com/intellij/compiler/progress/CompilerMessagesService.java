@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.progress;
 
 import com.intellij.compiler.HelpID;
@@ -45,8 +45,8 @@ import java.util.StringTokenizer;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @ApiStatus.Internal
-public class CompilerMessagesService implements BuildViewService {
-  private static final Logger LOG = Logger.getInstance(CompilerTask.class);
+public final class CompilerMessagesService implements BuildViewService {
+  private static final Logger LOG = Logger.getInstance(CompilerMessagesService.class);
   private static final Key<Object> CONTENT_ID_KEY = Key.create("CONTENT_ID");
   private static final Key<Object> SESSION_ID_KEY = Key.create("SESSION_ID");
 

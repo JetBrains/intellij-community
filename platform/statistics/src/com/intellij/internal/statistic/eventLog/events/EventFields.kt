@@ -1,10 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.events
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfo
+import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileTypes.FileType
@@ -54,6 +56,16 @@ object EventFields {
 
   @JvmStatic
   fun Int(@NonNls name: String): IntEventField = IntEventField(name)
+
+  /**
+   * Creates an int field that will be validated by regexp rule
+   * @param name  name of the field
+   * @param regexp  regular expression, e.g "-?[0-9]{1,3}"
+   * Please choose regexp carefully to avoid reporting any sensitive data.
+   */
+  @JvmStatic
+  fun RegexpInt(@NonNls name: String, @NonNls regexp: String): RegexpIntEventField =
+    RegexpIntEventField(name, regexp)
 
   /**
    * Rounds integer value to the next power of two.
@@ -214,24 +226,59 @@ object EventFields {
   //will be replaced with ObjectEventField in the future
   @JvmField
   val PluginInfo = object : PrimitiveEventField<PluginInfo?>() {
-    override val name = "plugin_type"
+
+    override val name: String
+      get() = "plugin_type"
+
     override val validationRule: List<String>
       get() = listOf("plugin_info")
 
-    override fun addData(fuData: FeatureUsageData, value: PluginInfo?) {
+    override fun addData(
+      fuData: FeatureUsageData,
+      value: PluginInfo?,
+    ) {
       fuData.addPluginInfo(value)
+    }
+  }
+
+  @JvmField
+  val PluginInfoByDescriptor = object : PrimitiveEventField<IdeaPluginDescriptor>() {
+
+    private val delegate
+      get() = PluginInfo
+
+    override val name: String
+      get() = delegate.name
+
+    override val validationRule: List<String>
+      get() = delegate.validationRule
+
+    override fun addData(
+      fuData: FeatureUsageData,
+      value: IdeaPluginDescriptor,
+    ) {
+      delegate.addData(fuData, getPluginInfoByDescriptor(value))
     }
   }
 
   //will be replaced with ObjectEventField in the future
   @JvmField
   val PluginInfoFromInstance = object : PrimitiveEventField<Any>() {
-    override val name = "plugin_type"
-    override val validationRule: List<String>
-      get() = listOf("plugin_info")
 
-    override fun addData(fuData: FeatureUsageData, value: Any) {
-      fuData.addPluginInfo(getPluginInfo(value::class.java))
+    private val delegate
+      get() = PluginInfo
+
+    override val name: String
+      get() = delegate.name
+
+    override val validationRule: List<String>
+      get() = delegate.validationRule
+
+    override fun addData(
+      fuData: FeatureUsageData,
+      value: Any,
+    ) {
+      delegate.addData(fuData, getPluginInfo(value::class.java))
     }
   }
 

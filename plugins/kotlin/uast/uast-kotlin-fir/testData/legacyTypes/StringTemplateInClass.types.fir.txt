@@ -1,0 +1,12 @@
+UFile (package = ) [public final class Demo {...]
+    UClass (name = Demo) [public final class Demo {...}]
+        UField (name = foo) [@null private final var foo: error.NonExistentClass = X.<anonymous class>("lorem")]
+            UAnnotation (fqName = null) [@null]
+            UQualifiedReferenceExpression [X.<anonymous class>("lorem")] : PsiType:NonExistentClass
+                USimpleNameReferenceExpression (identifier = X) [X] : PsiType:NonExistentClass
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [<anonymous class>("lorem")] : PsiType:NonExistentClass
+                    UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
+                    ULiteralExpression (value = "lorem") ["lorem"] : PsiType:String
+        UMethod (name = getFoo) [public final fun getFoo() : error.NonExistentClass = UastEmptyExpression]
+        UMethod (name = Demo) [public fun Demo() = UastEmptyExpression]

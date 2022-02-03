@@ -12,8 +12,8 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.cfg.LeakingThisDescriptor.*
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
-import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
+import org.jetbrains.kotlin.idea.util.safeAnalyzeWithContentNonSourceRootCode
+import org.jetbrains.kotlin.idea.quickfix.AddModifierFixMpp
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -29,7 +29,7 @@ class LeakingThisInspection : AbstractKotlinInspection() {
         // It's possible to use analyze(), but then we should repeat class constructor consistency check
         // for different class internal elements, like KtProperty and KtClassInitializer.
         // It can affect performance, so yet we want to avoid this.
-        val context = klass.analyzeWithContent()
+        val context = klass.safeAnalyzeWithContentNonSourceRootCode()
         klass.forEachDescendantOfType(fun(expression: KtExpression) {
             val leakingThisDescriptor = context[LEAKING_THIS, expression] ?: return
             if (leakingThisDescriptor.classOrObject != klass) return
@@ -97,7 +97,7 @@ class LeakingThisInspection : AbstractKotlinInspection() {
             val useScope = declaration.useScope
             if (DefinitionsScopedSearch.search(declaration, useScope).findFirst() != null) return null
             if ((declaration.containingClassOrObject as? KtClass)?.isInterface() == true) return null
-            return IntentionWrapper(AddModifierFix(declaration, KtTokens.FINAL_KEYWORD))
+            return IntentionWrapper(AddModifierFixMpp(declaration, KtTokens.FINAL_KEYWORD))
         }
     }
 }

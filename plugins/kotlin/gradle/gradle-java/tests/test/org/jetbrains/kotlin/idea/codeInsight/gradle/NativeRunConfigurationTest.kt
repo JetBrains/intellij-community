@@ -7,7 +7,7 @@ import com.intellij.execution.PsiLocation
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
 import org.jetbrains.kotlin.gradle.GradleDaemonAnalyzerTestCase
-import org.jetbrains.kotlin.test.TagsTestDataUtil
+import org.jetbrains.kotlin.idea.test.TagsTestDataUtil
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
@@ -19,6 +19,14 @@ abstract class NativeRunConfigurationTest : MultiplePluginVersionGradleImporting
         @Test
         @TargetVersions("6.0+")
         fun multiplatformNativeRunGutter() {
+            doTest()
+        }
+    }
+
+    class MultiplatformWithoutHmppNativeRunGutter : NativeRunConfigurationTest() {
+        @Test
+        @TargetVersions("6.0+")
+        fun multiplatformWithoutHmppNativeRunGutter() {
             doTest()
         }
     }

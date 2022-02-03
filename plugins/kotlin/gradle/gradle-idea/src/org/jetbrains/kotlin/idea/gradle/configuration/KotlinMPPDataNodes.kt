@@ -14,9 +14,10 @@ import com.intellij.serialization.PropertyMapping
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.config.ExternalSystemRunTask
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinImportingDiagnosticsContainer
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinPlatformContainerImpl
 import org.jetbrains.kotlin.idea.projectModel.KonanArtifactModel
-import org.jetbrains.kotlin.idea.projectModel.KotlinModule
+import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatformContainer
 import org.jetbrains.kotlin.idea.util.CopyableDataNodeUserDataProperty
@@ -39,7 +40,7 @@ val DataNode<out ModuleData>.kotlinSourceSetData: KotlinSourceSetData?
 val DataNode<out ModuleData>.kotlinAndroidSourceSets: List<KotlinSourceSetInfo>?
     get() = ExternalSystemApiUtil.getChildren(this, KotlinAndroidSourceSetData.KEY).firstOrNull()?.data?.sourceSetInfos
 
-class KotlinSourceSetInfo @PropertyMapping("kotlinModule") constructor(val kotlinModule: KotlinModule) : Serializable {
+class KotlinSourceSetInfo @PropertyMapping("kotlinComponent") constructor(val kotlinComponent: KotlinComponent) : Serializable {
     var moduleId: String? = null
     var gradleModuleId: String = ""
 

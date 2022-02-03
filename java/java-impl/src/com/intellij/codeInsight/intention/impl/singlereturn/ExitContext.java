@@ -5,7 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
@@ -118,7 +118,7 @@ class ExitContext {
       }
       PsiDeclarationStatement declaration = myFactory.createVariableDeclarationStatement(myReturnVariable, myReturnType, initializer);
       PsiLocalVariable var = (PsiLocalVariable)((PsiDeclarationStatement)myBlock.addAfter(declaration, start)).getDeclaredElements()[0];
-      if (var.hasModifierProperty(PsiModifier.FINAL) && !RefactoringUtil.canBeDeclaredFinal(var)) {
+      if (var.hasModifierProperty(PsiModifier.FINAL) && !CommonJavaRefactoringUtil.canBeDeclaredFinal(var)) {
         // Keep final when possible to respect code style setting "generate local variables as 'final'"
         requireNonNull(var.getModifierList()).setModifierProperty(PsiModifier.FINAL, false);
       }

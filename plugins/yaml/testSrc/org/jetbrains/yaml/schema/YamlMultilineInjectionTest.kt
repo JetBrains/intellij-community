@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.schema
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction
@@ -18,7 +18,6 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.InjectionTestFixture
 import com.intellij.testFramework.fixtures.injectionForHost
 import com.intellij.util.castSafelyTo
-import com.intellij.util.containers.Predicate
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase.registerJsonSchema
 import junit.framework.TestCase
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
@@ -26,6 +25,7 @@ import org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction
 import org.jetbrains.concurrency.collectResults
 import org.jetbrains.concurrency.runAsync
 import org.jetbrains.yaml.psi.impl.YAMLScalarImpl
+import java.util.function.Predicate
 
 class YamlMultilineInjectionTest : BasePlatformTestCase() {
 
@@ -583,7 +583,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |  #language=XML
       |  xml: |
       |    <xml>
-      |        <tag>   </tag>
+      |        <tag></tag>
       |    </xml>
       |  #language=YAML
       |  yaml: |
@@ -593,7 +593,8 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |  #language=Java
       |  after: |
       |    class B {
-      |        void foo(){}
+      |        void foo() {
+      |        }
       |    }
       |  #language=Properties
       |  prop: |

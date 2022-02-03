@@ -5,7 +5,7 @@ import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +32,7 @@ public final class StreamRefactoringUtil {
     PsiType inType = variable.getType();
     String operationName = getMapOperationName(inType, outType);
     if(outType != null && mapper instanceof PsiArrayInitializerExpression) {
-      mapper = RefactoringUtil.convertInitializerToNormalExpression((PsiExpression)mapper, outType);
+      mapper = CommonJavaRefactoringUtil.convertInitializerToNormalExpression((PsiExpression)mapper, outType);
     }
     String typeArgument = mapper instanceof PsiExpression ? OptionalRefactoringUtil.getMapTypeArgument((PsiExpression)mapper, outType) : "";
     return "." + typeArgument + operationName +

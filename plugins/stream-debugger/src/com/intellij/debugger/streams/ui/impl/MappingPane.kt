@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.ui.impl
 
 import com.intellij.debugger.streams.ui.LinkedValuesMapping
@@ -27,10 +27,10 @@ class MappingPane(@Nls name: String,
   private companion object {
     val DARCULA_LINE_COLOR = LineColor(regular = JBColor.GRAY,
                                        selected = JBColor.BLUE,
-                                       inactive = JBColor({ Color(92, 92, 92) }))
-    val INTELLIJ_LINE_COLOR = LineColor(regular = JBColor({ Color(168, 168, 168) }),
-                                        selected = JBColor({ Color(0, 96, 229) }),
-                                        inactive = JBColor({ Color(204, 204, 204) }))
+                                       inactive = JBColor.lazy({ Color(92, 92, 92) }))
+    val INTELLIJ_LINE_COLOR = LineColor(regular = JBColor.lazy({ Color(168, 168, 168) }),
+                                        selected = JBColor.lazy({ Color(0, 96, 229) }),
+                                        inactive = JBColor.lazy({ Color(204, 204, 204) }))
 
     val STROKE = BasicStroke(JBUIScale.scale(1.toFloat()))
   }

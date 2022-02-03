@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -26,14 +26,14 @@ import org.jetbrains.annotations.Nullable;
 */
 public final class SuppressForTestsScopeFix extends InspectionGadgetsFix {
 
-  private final AbstractBaseJavaLocalInspectionTool myInspection;
+  private final String myShortName;
 
-  private SuppressForTestsScopeFix(AbstractBaseJavaLocalInspectionTool inspection) {
-    myInspection = inspection;
+  private SuppressForTestsScopeFix(InspectionProfileEntry inspection) {
+    myShortName = inspection.getShortName();
   }
 
   @Nullable
-  public static SuppressForTestsScopeFix build(AbstractBaseJavaLocalInspectionTool inspection, PsiElement context) {
+  public static SuppressForTestsScopeFix build(InspectionProfileEntry inspection, PsiElement context) {
     if (!TestUtils.isInTestSourceContent(context)) {
       return null;
     }
@@ -70,19 +70,18 @@ public final class SuppressForTestsScopeFix extends InspectionGadgetsFix {
 
   private void addRemoveTestsScope(Project project, boolean add) {
     final InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-    final String shortName = myInspection.getShortName();
-    final InspectionToolWrapper tool = profile.getInspectionTool(shortName, project);
+    final InspectionToolWrapper<?, ?> tool = profile.getInspectionTool(myShortName, project);
     if (tool == null) {
       return;
     }
     if (add) {
       final NamedScope namedScope = NamedScopesHolder.getScope(project, "Tests");
-      final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+      final HighlightDisplayKey key = HighlightDisplayKey.find(myShortName);
       final HighlightDisplayLevel level = profile.getErrorLevel(key, namedScope, project);
       profile.addScope(tool, namedScope, level, false, project);
     }
     else {
-      profile.removeScope(shortName, "Tests", project);
+      profile.removeScope(myShortName, "Tests", project);
     }
     profile.scopesChanged();
   }

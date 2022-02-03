@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.renderer.render
  * @param argumentClassFqName the fully qualified name of the argument class (e.g., `SomeExperimentalAnnotation`) (optional)
  * @param existingAnnotationEntry a smart pointer to the existing annotation entry with the same annotation class (optional)
  */
-class AddFileAnnotationFix(
+open class AddFileAnnotationFix(
     file: KtFile,
     private val annotationFqName: FqName,
     private val argumentClassFqName: FqName? = null,

@@ -31,7 +31,7 @@ final class StartStopMacroRecordingAction extends AnAction implements DumbAware 
   public void actionPerformed(@NotNull AnActionEvent e) {
     if (!ActionMacroManager.getInstance().isRecording()) {
       final ActionMacroManager manager = ActionMacroManager.getInstance();
-      manager.startRecording(ActionMacroManager.NO_NAME_NAME);
+      manager.startRecording(e.getProject(), ActionMacroManager.NO_NAME_NAME);
     }
     else {
       ActionMacroManager.getInstance().stopRecording(e.getProject());

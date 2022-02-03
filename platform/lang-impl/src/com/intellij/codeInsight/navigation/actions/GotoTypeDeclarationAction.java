@@ -1,27 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.actions;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.CtrlMouseAction;
 import com.intellij.codeInsight.navigation.CtrlMouseInfo;
-import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.codeInsight.navigation.SingleTargetElementInfo;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
@@ -30,11 +19,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public final class GotoTypeDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware, CtrlMouseAction {
+public final class GotoTypeDeclarationAction extends BaseCodeInsightAction implements DumbAware, CtrlMouseAction {
+
   @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
-    return Registry.is("ide.symbol.gttd") ? GotoTypeDeclarationHandler2.INSTANCE : this;
+    return GotoTypeDeclarationHandler2.INSTANCE;
   }
 
   @Override
@@ -57,44 +47,6 @@ public final class GotoTypeDeclarationAction extends BaseCodeInsightAction imple
       }
     }
     super.update(event);
-  }
-
-  @Override
-  public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> {
-      try {
-        int offset = editor.getCaretModel().getOffset();
-        PsiElement[] symbolTypes = ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.resolving.reference"),
-                                                                 () -> findSymbolTypes(editor, offset));
-        if (symbolTypes == null || symbolTypes.length == 0) return;
-        if (symbolTypes.length == 1) {
-          navigate(project, symbolTypes[0]);
-        }
-        else {
-          NavigationUtil.getPsiElementPopup(symbolTypes, CodeInsightBundle.message("choose.type.popup.title"))
-            .showInBestPositionFor(editor);
-        }
-      }
-      catch (IndexNotReadyException e) {
-        DumbService.getInstance(project).showDumbModeNotification(
-          CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update"));
-      }
-    });
-  }
-
-  private static void navigate(@NotNull Project project, @NotNull PsiElement symbolType) {
-    PsiElement element = symbolType.getNavigationElement();
-    assert element != null : "SymbolType :"+symbolType+"; file: "+symbolType.getContainingFile();
-    VirtualFile file = element.getContainingFile().getVirtualFile();
-    if (file != null) {
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, element.getTextOffset());
-      FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-    }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
   }
 
   @Nullable
@@ -157,17 +109,6 @@ public final class GotoTypeDeclarationAction extends BaseCodeInsightAction imple
 
   @Override
   public @Nullable CtrlMouseInfo getCtrlMouseInfo(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
-    if (Registry.is("ide.symbol.gttd")) {
-      return GotoTypeDeclarationHandler2.getCtrlMouseInfo(file, offset);
-    }
-    PsiElement targetElement = findSymbolType(editor, offset);
-    if (targetElement == null || !targetElement.isPhysical()) {
-      return null;
-    }
-    PsiElement elementAtPointer = file.findElementAt(offset);
-    if (elementAtPointer != null) {
-      return new SingleTargetElementInfo(elementAtPointer, targetElement);
-    }
-    return null;
+    return GotoTypeDeclarationHandler2.getCtrlMouseInfo(file, offset);
   }
 }

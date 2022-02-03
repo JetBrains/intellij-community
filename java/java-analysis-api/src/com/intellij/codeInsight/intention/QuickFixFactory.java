@@ -557,4 +557,16 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createMoveSwitchBranchUpFix(@NotNull PsiCaseLabelElement moveBeforeLabel,
                                                               @NotNull PsiCaseLabelElement labelElement);
+
+  @NotNull
+  public abstract IntentionAction createSimplifyBooleanFix(@NotNull PsiExpression expression, boolean value);
+
+  /**
+   * Creates a fix that sets explicit variable type
+   *
+   * @param variable variable to update
+   * @param type type to set
+   * @return a new fix
+   */
+  public abstract @NotNull IntentionAction createSetVariableTypeFix(@NotNull PsiVariable variable, @NotNull PsiType type);
 }

@@ -23,7 +23,7 @@ internal class KotlinTextExtractor : TextExtractor() {
     .withUnknown { e -> e.elementType == KDocTokens.MARKDOWN_LINK && e.text.startsWith("[") }
     .excluding { e -> e.elementType == KDocTokens.MARKDOWN_LINK && !e.text.startsWith("[") }
     .excluding { e -> e.elementType == KDocTokens.LEADING_ASTERISK }
-    .removingIndents(" \t")
+    .removingIndents(" \t").removingLineSuffixes(" \t")
 
   public override fun buildTextContent(root: PsiElement, allowedDomains: Set<TextContent.TextDomain>): TextContent? {
     if (DOCUMENTATION in allowedDomains) {
@@ -39,14 +39,14 @@ internal class KotlinTextExtractor : TextExtractor() {
         it == root || root.elementType == KtTokens.EOL_COMMENT && it.elementType == KtTokens.EOL_COMMENT
       }
       return TextContent.joinWithWhitespace('\n', roots.mapNotNull {
-          TextContentBuilder.FromPsi.removingIndents(" \t*/").build(it, COMMENTS)
+          TextContentBuilder.FromPsi.removingIndents(" \t*/").removingLineSuffixes(" \t").build(it, COMMENTS)
       })
     }
     if (LITERALS in allowedDomains && root is KtStringTemplateExpression) {
       // For multiline strings, we want to treat `'|'` as an indentation because it is commonly used with [String.trimMargin].
       return TextContentBuilder.FromPsi
           .withUnknown { it is KtStringTemplateEntryWithExpression }
-          .removingIndents(" \t|")
+          .removingIndents(" \t|").removingLineSuffixes(" \t")
           .build(root, LITERALS)
     }
     return null

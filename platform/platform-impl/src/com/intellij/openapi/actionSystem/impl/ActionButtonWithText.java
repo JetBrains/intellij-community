@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
@@ -32,6 +32,7 @@ import java.beans.PropertyChangeListener;
 public class ActionButtonWithText extends ActionButton {
   private static final int ICON_TEXT_SPACE = 2;
   private static final int TEXT_ARROW_SPACE = 1;
+  private static final int BUTTONS_GAP = 4;
 
   private int myHorizontalTextPosition = SwingConstants.TRAILING;
   private int myHorizontalTextAlignment = SwingConstants.CENTER;
@@ -43,7 +44,7 @@ public class ActionButtonWithText extends ActionButton {
                               final String place,
                               final Dimension minimumSize) {
     super(action, presentation, place, minimumSize);
-    setFont(action.useSmallerFontForTextInToolbar() ? JBUI.Fonts.toolbarSmallComboBoxFont() : UIUtil.getLabelFont());
+    setFont(action.useSmallerFontForTextInToolbar() ? JBUI.Fonts.toolbarSmallComboBoxFont() : StartupUiUtil.getLabelFont());
     setForeground(UIUtil.getLabelForeground());
     myPresentation.addPropertyChangeListener(new PropertyChangeListener() {
       @Override
@@ -78,7 +79,7 @@ public class ActionButtonWithText extends ActionButton {
     }
     else {
       AnAction action = getAction();
-      setFont(action.useSmallerFontForTextInToolbar() ? JBUI.Fonts.toolbarSmallComboBoxFont() : UIUtil.getLabelFont());
+      setFont(action.useSmallerFontForTextInToolbar() ? JBUI.Fonts.toolbarSmallComboBoxFont() : StartupUiUtil.getLabelFont());
     }
   }
 
@@ -138,7 +139,7 @@ public class ActionButtonWithText extends ActionButton {
     int y2 = Math.max(iconR.y + iconR.height, textR.y + textR.height);
     Dimension rv = new Dimension(x2 - x1 + dx, y2 - y1 + dy);
 
-    rv.width += Math.max(basicSize.height - rv.height, 0);
+    rv.width += 2 * JBUI.scale(BUTTONS_GAP);
     if (shallPaintDownArrow()) {
       rv.width += AllIcons.General.LinkDropTriangle.getIconWidth()  + JBUI.scale(TEXT_ARROW_SPACE);
     }

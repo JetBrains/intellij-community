@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -196,9 +196,17 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
         setIcon(wrapNullIcon(getIcon()));
       }
       else if (myToggled) {
-        setIcon(LafIconLookup.getIcon("checkmark"));
-        setSelectedIcon(LafIconLookup.getSelectedIcon("checkmark"));
-        setDisabledIcon(LafIconLookup.getDisabledIcon("checkmark"));
+        Icon checkmark = LafIconLookup.getIcon("checkmark");
+        Icon selectedCheckmark = LafIconLookup.getSelectedIcon("checkmark");
+        Icon disabledCheckmark = LafIconLookup.getDisabledIcon("checkmark");
+        if (ActionMenu.shouldConvertIconToDarkVariant()) {
+          checkmark = IconLoader.getDarkIcon(checkmark, true);
+          selectedCheckmark = IconLoader.getDarkIcon(selectedCheckmark, true);
+          disabledCheckmark = IconLoader.getDarkIcon(disabledCheckmark, true);
+        }
+        setIcon(checkmark);
+        setSelectedIcon(selectedCheckmark);
+        setDisabledIcon(disabledCheckmark);
       }
       else {
         setIcon(EmptyIcon.ICON_16);
@@ -241,9 +249,13 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
 
   @Override
   public void setIcon(Icon icon) {
-    if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace) && icon != null) {
-      // JDK can't paint correctly our HiDPI icons at the system menu bar
-      icon = IconLoader.getMenuBarIcon(icon, myUseDarkIcons);
+    if (icon != null) {
+      if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
+        // JDK can't paint correctly our HiDPI icons at the system menu bar
+        icon = IconLoader.getMenuBarIcon(icon, myUseDarkIcons);
+      } else if (ActionMenu.shouldConvertIconToDarkVariant()) {
+        icon = IconLoader.getDarkIcon(icon, true);
+      }
     }
     super.setIcon(icon);
     if (myScreenMenuItemPeer != null) myScreenMenuItemPeer.setIcon(icon);

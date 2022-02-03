@@ -2,10 +2,7 @@
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.roots.libraries.LibraryKind;
-import com.intellij.openapi.roots.libraries.LibraryProperties;
-import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
-import com.intellij.openapi.roots.libraries.TemporaryLibraryKind;
+import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +32,7 @@ public final class UnknownLibraryKind extends PersistentLibraryKind<UnknownLibra
   }
 
   public static UnknownLibraryKind getOrCreate(@NotNull String kindId) {
-    LibraryKind kind = LibraryKind.findById(kindId);
+    LibraryKind kind = LibraryKindRegistry.getInstance().findKindById(kindId);
     if (kind instanceof UnknownLibraryKind) {
       return (UnknownLibraryKind)kind;
     }

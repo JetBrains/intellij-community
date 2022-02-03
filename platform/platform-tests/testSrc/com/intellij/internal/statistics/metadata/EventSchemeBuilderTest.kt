@@ -4,7 +4,10 @@ package com.intellij.internal.statistics.metadata
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
+import com.intellij.internal.statistic.eventLog.events.scheme.EventsScheme
+import com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilder
+import com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilder.pluginInfoFields
+import com.intellij.internal.statistic.eventLog.events.scheme.FieldDescriptor
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
@@ -19,7 +22,7 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
   }
 
   fun `test generate string field validated by custom rule`() {
-    doFieldTest(EventFields.StringValidatedByCustomRule("class", "class_name"), hashSetOf("{util#class_name}"))
+    doFieldTest(EventFields.StringValidatedByCustomRule("class", "custom_rule"), hashSetOf("{util#custom_rule}"))
   }
 
   fun `test generate string field validated by list of possible values`() {
@@ -54,6 +57,11 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
     doFieldTest(EventFields.StringListValidatedByInlineRegexp("fields", "\\d+.\\d+"), hashSetOf("{regexp:\\d+.\\d+}"))
   }
 
+  fun `test generate plugin info with class name`() {
+    val expectedValues = hashSetOf(FieldDescriptor("quickfix_name", hashSetOf("{util#class_name}"))) + pluginInfoFields
+    doCompositeFieldTest(EventFields.Class("quickfix_name"), expectedValues)
+  }
+
   private fun doFieldTest(eventField: EventField<*>, expectedValues: Set<String>) {
     val eventLogGroup = EventLogGroup("test.group.id", 1)
     eventLogGroup.registerEvent("test_event", eventField)
@@ -63,6 +71,17 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
     assertNotNull(group)
     val event = group.schema.first()
     assertSameElements(event.fields.first().value, expectedValues)
+  }
+
+  private fun doCompositeFieldTest(eventField: EventField<*>, expectedValues: Set<FieldDescriptor>) {
+    val eventLogGroup = EventLogGroup("test.group.id", 1)
+    eventLogGroup.registerEvent("test_event", eventField)
+    val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(TestCounterCollector(eventLogGroup)))
+    assertSize(1, groups)
+    val group = groups.first()
+    assertNotNull(group)
+    val event = group.schema.first()
+    assertSameElements(event.fields, expectedValues)
   }
 
   enum class TestEnum { FOO, BAR }

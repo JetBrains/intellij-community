@@ -14,7 +14,6 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
 import javax.swing.Icon
-import javax.swing.JTextField
 
 abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
   private var panel: NewProjectWizardStepPanel? = null
@@ -66,10 +65,6 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
     override fun updateDataModel() = panel.apply()
 
     override fun getPreferredFocusedComponent() = panel.getPreferredFocusedComponent()
-
-    override fun updateStep() {
-      (preferredFocusedComponent as? JTextField)?.selectAll()
-    }
 
     override fun getComponent() = panel.component
   }

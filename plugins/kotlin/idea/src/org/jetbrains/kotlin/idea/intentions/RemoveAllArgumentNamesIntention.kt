@@ -45,11 +45,11 @@ class RemoveAllArgumentNamesIntention : SelfTargetingIntention<KtCallElement>(
             }
         }
 
-        private fun createArgumentWithoutName(argument: KtValueArgument, parameter: ValueParameterDescriptor): List<KtValueArgument> {
+        private fun createArgumentWithoutName(argument: KtValueArgument, parameter: ValueParameterDescriptor?): List<KtValueArgument> {
             if (!argument.isNamed()) return listOf(argument.copied())
             val argumentExpr = argument.getArgumentExpression() ?: return emptyList()
             val psiFactory = KtPsiFactory(argument)
-            val isVararg = parameter.isVararg
+            val isVararg = parameter?.isVararg ?: false
             return when {
                 isVararg && argumentExpr is KtCollectionLiteralExpression ->
                     argumentExpr.getInnerExpressions().map { psiFactory.createArgument(it) }

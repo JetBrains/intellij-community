@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -26,7 +26,10 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -36,28 +39,45 @@ import java.util.function.Consumer;
 @HardwareAgentRequired
 public class BigJavaFilesPerformanceTest extends LightJavaCodeInsightFixtureTestCase5 {
 
-  public void _testHighlightingThinletBig() {
-    long mean = doHighlightingTest("/psi/resolve/ThinletBig.java", 9);
-    Assertions.assertTrue(mean < 60_000);
-  }
-
-  public void _testHighlightingWithInspectionsThinletBig() {
-    MadTestingUtil.enableAllInspections(getFixture().getProject());
-    long mean = doHighlightingTest("/psi/resolve/ThinletBig.java", 9);
-    Assertions.assertTrue(mean < 100_000);
+  @Test
+  public void testHighlightingJComponent() {
+    long mean = doHighlightingTest("/codeInsight/bigFilesPerformance/JComponent.java", 9);
+    Assertions.assertTrue(mean < 10_000);
   }
 
   @Test
-  public void testTypingThinletBig() {
-    long mean = doTypingTest("/psi/resolve/ThinletBig.java", 50,false);
+  public void testHighlightingWithInspectionsJComponent() {
+    MadTestingUtil.enableDefaultInspections(getFixture().getProject());
+    long mean = doHighlightingTest("/codeInsight/bigFilesPerformance/JComponent.java", 9);
+    Assertions.assertTrue(mean < 15_000);
+  }
+
+  @Test
+  public void testTypingJComponent(){
+    long mean = doTypingTest("/codeInsight/bigFilesPerformance/JComponent.java", 50, false);
+    Assertions.assertTrue(mean < 25);
+  }
+
+  @Test
+  public void testTypingWithInspectionsJComponent(){
+    MadTestingUtil.enableDefaultInspections(getFixture().getProject());
+    long mean = doTypingTest("/codeInsight/bigFilesPerformance/JComponent.java", 50, true);
     Assertions.assertTrue(mean < 50);
   }
 
   @Test
+  public void testHighlightingWithInspectionsThinletBig() {
+    MadTestingUtil.enableDefaultInspections(getFixture().getProject());
+    long mean = doHighlightingTest("/psi/resolve/ThinletBig.java", 9);
+    System.out.println("Warnings: " + getFixture().doHighlighting().size());
+    Assertions.assertTrue(mean < 75_000);
+  }
+
+  @Test
   public void testTypingWithInspectionsThinletBig() {
-    MadTestingUtil.enableAllInspections(getFixture().getProject());
+    MadTestingUtil.enableDefaultInspections(getFixture().getProject());
     long mean = doTypingTest("/psi/resolve/ThinletBig.java", 50,true);
-    Assertions.assertTrue(mean < 100);
+    Assertions.assertTrue(mean < 70, "Slow typing, delay is " + mean);
   }
 
   private void doTest(String filename, int samples, Consumer<DaemonListener> processSample) {
@@ -174,11 +194,11 @@ public class BigJavaFilesPerformanceTest extends LightJavaCodeInsightFixtureTest
     System.out.println("Intervals: " + typingTimings);
     System.out.println("Adjusted intervals: " + adjustedTimings);
     System.out.println("Mean: " + mean);
-    System.out.println(crateMetaDataForTeamCity("mean", mean));
+    System.out.println(createMetaDataForTeamCity("mean", mean));
     return mean;
   }
 
-  private static String crateMetaDataForTeamCity(String name, long value){
+  private static String createMetaDataForTeamCity(String name, long value){
     return "##teamcity[testMetadata name='" + name + "' type='number' value='" + value + "']";
   }
 

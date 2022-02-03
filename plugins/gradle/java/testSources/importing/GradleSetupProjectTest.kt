@@ -90,17 +90,19 @@ class GradleSetupProjectTest : ExternalSystemSetupProjectTest, GradleImportingTe
     assertEquals(expectedImportActionsCounter.get(), actualImportActionsCounter.get())
   }
 
-  override fun <R> waitForImport(action: () -> R): R {
+  override fun waitForImport(action: () -> Project): Project {
     expectedImportActionsCounter.incrementAndGet()
     return waitForProjectReload(action)
   }
 
-  override fun attachProject(project: Project, projectFile: VirtualFile) {
+  override fun attachProject(project: Project, projectFile: VirtualFile): Project {
     AttachExternalProjectAction().perform(project, selectedFile = projectFile)
+    return project
   }
 
-  override fun attachProjectFromScript(project: Project, projectFile: VirtualFile) {
+  override fun attachProjectFromScript(project: Project, projectFile: VirtualFile): Project {
     ImportProjectFromScriptAction().perform(project, selectedFile = projectFile)
+    return project
   }
 
   override fun cleanupProjectTestResources(project: Project) {

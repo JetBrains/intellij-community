@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.compiler;
 
 import com.google.gson.Gson;
@@ -13,7 +13,7 @@ import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.slf4j.Logger;
-import org.slf4j.impl.Log4jLoggerFactory;
+import org.slf4j.impl.JDK14LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,6 +63,6 @@ public class GradleBuildProcessParametersProvider extends BuildProcessParameters
     classpath.add(PathUtil.getJarPathForClass(GroovyObject.class));
     classpath.add(PathUtil.getJarPathForClass(Gson.class));
     classpath.add(PathUtil.getJarPathForClass(Logger.class));
-    classpath.add(PathUtil.getJarPathForClass(Log4jLoggerFactory.class));
+    classpath.add(PathUtil.getJarPathForClass(JDK14LoggerFactory.class));
   }
 }

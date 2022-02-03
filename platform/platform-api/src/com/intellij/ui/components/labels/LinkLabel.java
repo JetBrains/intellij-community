@@ -54,7 +54,7 @@ public class LinkLabel<T> extends JLabel {
    * Creates a {@link JLabel}-based link that does not support mnemonics.
    * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
    * Note that this constructor sets inappropriate icon.
-   * @see https://jetbrains.github.io/ui/controls/link/
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
    */
   public LinkLabel() {
     this("", AllIcons.Ide.Link);
@@ -63,7 +63,7 @@ public class LinkLabel<T> extends JLabel {
   /**
    * Creates a {@link JLabel}-based link that does not support mnemonics.
    * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
-   * @see https://jetbrains.github.io/ui/controls/link/
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
    */
   public LinkLabel(@NlsContexts.LinkLabel String text, @Nullable Icon icon) {
     this(text, icon, null, null, null);
@@ -72,14 +72,14 @@ public class LinkLabel<T> extends JLabel {
   /**
    * Creates a {@link JLabel}-based link that does not support mnemonics.
    * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
-   * @see https://jetbrains.github.io/ui/controls/link/
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
    */
   public LinkLabel(@NlsContexts.LinkLabel String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener) {
     this(text, icon, aListener, null, null);
   }
 
   /**
-   * @see https://jetbrains.github.io/ui/controls/link/
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
    * @deprecated use {@link com.intellij.ui.components.ActionLink} instead
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
@@ -92,14 +92,14 @@ public class LinkLabel<T> extends JLabel {
   /**
    * Creates a {@link JLabel}-based link that does not support mnemonics.
    * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
-   * @see https://jetbrains.github.io/ui/controls/link/
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
    */
   public LinkLabel(@NlsContexts.LinkLabel String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener, @Nullable T aLinkData) {
     this(text, icon, aListener, aLinkData, null);
   }
 
   /**
-   * @see https://jetbrains.github.io/ui/controls/link/
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
    * @deprecated use {@link com.intellij.ui.components.ActionLink} instead
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")

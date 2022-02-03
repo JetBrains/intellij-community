@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import javax.swing.*;
@@ -10,12 +10,14 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class JBEmptyBorder extends EmptyBorder {
+  static final JBEmptyBorder SHARED_EMPTY_INSTANCE = new JBEmptyBorder(0);
+
   public JBEmptyBorder(int top, int left, int bottom, int right) {
-    super(JBUI.insets(top, left, bottom, right));
+    super(new JBInsets(top, left, bottom, right));
   }
 
   public JBEmptyBorder(Insets insets) {
-    super(JBUI.insets(insets));
+    super(JBInsets.create(insets));
   }
 
   public JBEmptyBorder(int offset) {
@@ -31,9 +33,9 @@ public class JBEmptyBorder extends EmptyBorder {
     return component;
   }
 
-  public static class JBEmptyBorderUIResource extends JBEmptyBorder implements UIResource {
+  public static final class JBEmptyBorderUIResource extends JBEmptyBorder implements UIResource {
     public JBEmptyBorderUIResource(JBEmptyBorder border) {
-      super(0,0,0,0);
+      super(0, 0, 0, 0);
       top = border.top;
       left = border.left;
       bottom = border.bottom;

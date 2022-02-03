@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.impl
 
 import com.intellij.diagnostic.*
@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
@@ -46,7 +47,6 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.Supplier
 
 private val LOG = logger<StartupManagerImpl>()
 
@@ -67,7 +67,6 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         override fun extensionAdded(activity: StartupActivity, descriptor: PluginDescriptor) {
           val startupManager = getInstance(project) as StartupManagerImpl
           val pluginId = descriptor.pluginId
-
           if (DumbService.isDumbAware(activity)) {
             AppExecutorUtil.getAppExecutorService().execute {
               if (!project.isDisposed) {
@@ -162,15 +161,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     // see https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity
     LOG.assertTrue(!isStartupActivitiesPassed)
     runActivity("project startup") {
-      runActivities(startupActivities, indicator = indicator)
-      val extensionPoint = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
-        .getExtensionPoint<StartupActivity>("com.intellij.startupActivity")
-
-      // use processImplementations to not even create extension if not allow-listed
-      val extensionPointName = extensionPoint.name
-      extensionPoint.processImplementations(true) { supplier, descriptor ->
-        executeActivityFromExtensionPoint(descriptor, extensionPointName, supplier, indicator)
-      }
+      runStartUpActivities(indicator, app)
       isStartupActivitiesPassed = true
     }
 
@@ -188,38 +179,40 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
           try {
             BackgroundTaskUtil.runUnderDisposeAwareIndicator(project) { runPostStartupActivities() }
           }
-          catch (ignore: ProcessCanceledException) { }
+          catch (ignore: ProcessCanceledException) {
+          }
         }
       }
       if (app.isUnitTestMode) {
         LOG.assertTrue(app.isDispatchThread)
+        @Suppress("TestOnlyProblems")
         waitAndProcessInvocationEventsInIdeEventQueue(this)
       }
     }
   }
 
-  private fun executeActivityFromExtensionPoint(
-    descriptor: PluginDescriptor,
-    extensionPointName: String,
-    supplier: Supplier<out StartupActivity?>,
-    indicator: ProgressIndicator?
-  ) {
-    if (project.isDisposed) {
-      return
-    }
+  private fun runStartUpActivities(indicator: ProgressIndicator?, app: Application) {
+    runActivities(startupActivities, indicator = indicator)
+    val extensionPoint = (app.extensionArea as ExtensionsAreaImpl).getExtensionPoint<StartupActivity>("com.intellij.startupActivity")
 
-    val pluginId = descriptor.pluginId
-    if (pluginId != PluginManagerCore.CORE_ID
-        && pluginId != PluginManagerCore.JAVA_PLUGIN_ID
-        && pluginId.idString != "com.jetbrains.performancePlugin"
-        && pluginId.idString != "com.intellij.kotlinNative.platformDeps") {
-      LOG.error("Only bundled plugin can define $extensionPointName: $descriptor")
-      return
-    }
+    // do not create extension if not allow-listed
+    val extensionPointName = extensionPoint.name
+    for (adapter in extensionPoint.sortedAdapters) {
+      if (project.isDisposed) {
+        break
+      }
 
-    indicator?.checkCanceled()
-    supplier.get()?.let {
-      runActivityAndMeasureDuration(it, pluginId, indicator)
+      val pluginId = adapter.pluginDescriptor.pluginId
+      if (pluginId != PluginManagerCore.CORE_ID
+          && pluginId != PluginManagerCore.JAVA_PLUGIN_ID
+          && pluginId.idString != "com.jetbrains.performancePlugin"
+          && pluginId.idString != "com.intellij.kotlinNative.platformDeps") {
+        LOG.error("Only bundled plugin can define $extensionPointName: ${adapter.pluginDescriptor}")
+        continue
+      }
+
+      indicator?.checkCanceled()
+      runActivityAndMeasureDuration(adapter.createInstance<StartupActivity>(project) ?: continue, pluginId, indicator)
     }
   }
 
@@ -276,9 +269,13 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         addActivityEpListener(project)
       }
     }
-    catch (t: Throwable) {
-      if (ApplicationManager.getApplication().isUnitTestMode) postStartupActivitiesPassed = -1
-      else throw t
+    catch (e: Throwable) {
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        postStartupActivitiesPassed = -1
+      }
+      else {
+        throw e
+      }
     }
   }
 
@@ -293,7 +290,9 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       runStartupActivity(activity)
     }
     catch (e: Throwable) {
-      if (e is ControlFlowException) throw e
+      if (e is ControlFlowException) {
+        throw e
+      }
       LOG.error(e)
     }
     finally {

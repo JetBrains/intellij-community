@@ -10,6 +10,7 @@ import com.intellij.ide.ExporterToTextFile;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.java.JavaBundle;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -331,7 +332,7 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
     }
   }
   private static final class CopyToClipboardAction extends DumbAwareAction {
-    private static final NotificationGroup GROUP = NotificationGroup.toolWindowGroup("Analyze thread dump", ToolWindowId.RUN, false);
+    private static final NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Analyze thread dump");
     private final List<? extends ThreadState> myThreadDump;
     private final Project myProject;
 

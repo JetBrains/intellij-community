@@ -4,6 +4,7 @@ package org.jetbrains.jpsBootstrap;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -16,7 +17,12 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.verbose;
 
 // This currently a copy of BuildDependenciesDownloader.groovy. In the feature both places will share one java implementation
 final class BuildDependenciesDownloader {
@@ -27,7 +33,7 @@ final class BuildDependenciesDownloader {
   private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
 
   static void debug(String message) {
-    JpsBootstrapUtil.verbose(message);
+    verbose(message);
   }
 
   static void info(String message) {
@@ -87,23 +93,17 @@ final class BuildDependenciesDownloader {
     return targetFile;
   }
 
-  static synchronized Path extractFileToCacheLocation(Path communityRoot, Path archiveFile) {
+  static Path extractFileToCacheLocation(Path communityRoot, Path archiveFile) {
     try {
-      String directoryName = DigestUtils.sha256Hex(JPS_BOOTSTRAP_SALT + archiveFile).substring(0, 6) + "-" + archiveFile.getFileName().toString();
-      Path cacheDirectory = getDownloadCachePath(communityRoot).resolve(directoryName + ".d");
+      Path cachePath = getDownloadCachePath(communityRoot);
 
-      // Maintain one top-level directory (cacheDirectory) under persistent cache directory, since
-      // TeamCity removes whole top-level directories upon cleanup, so both flag and extract directory
-      // will be deleted at the same time
-      Path flagFile = cacheDirectory.resolve(".flag.jps-bootstrap");
-      Path extractDirectory = cacheDirectory.resolve(archiveFile.getFileName().toString() + ".d");
-      extractFileWithFlagFileLocation(archiveFile, extractDirectory, flagFile);
+      String toHash = JPS_BOOTSTRAP_SALT + archiveFile.toString();
+      String directoryName = archiveFile.getFileName().toString() + "." + DigestUtils.sha256Hex(toHash).substring(0, 6) + ".d";
+      Path targetDirectory = cachePath.resolve(directoryName);
+      Path flagFile = cachePath.resolve(directoryName + ".flag");
+      extractFileWithFlagFileLocation(archiveFile, targetDirectory, flagFile);
 
-      // Update file modification time to maintain FIFO caches i.e.
-      // in persistent cache folder on TeamCity agent
-      Files.setLastModifiedTime(cacheDirectory, FileTime.from(Instant.now()));
-
-      return extractDirectory;
+      return targetDirectory;
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -140,7 +140,9 @@ final class BuildDependenciesDownloader {
 
       // Update file modification time to maintain FIFO caches i.e.
       // in persistent cache folder on TeamCity agent
-      Files.setLastModifiedTime(targetDirectory, FileTime.from(Instant.now()));
+      FileTime now = FileTime.from(Instant.now());
+      Files.setLastModifiedTime(targetDirectory, now);
+      Files.setLastModifiedTime(flagFile, now);
 
       return;
     }
@@ -153,7 +155,7 @@ final class BuildDependenciesDownloader {
       BuildDependenciesUtil.cleanDirectory(targetDirectory);
     }
 
-    info(" * Extracting " + archiveFile + " to " + targetDirectory);
+    verbose(" * Extracting " + archiveFile + " to " + targetDirectory);
 
     Files.createDirectories(targetDirectory);
     BuildDependenciesUtil.extractZip(archiveFile, targetDirectory);
@@ -195,7 +197,26 @@ final class BuildDependenciesDownloader {
 
       HttpResponse<Path> response = httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
       if (response.statusCode() != 200) {
-        throw new IllegalStateException("Error downloading " + uri + ": non-200 http status code " + response.statusCode());
+        StringBuilder builder = new StringBuilder("Error downloading " + uri + ": non-200 http status code " + response.statusCode() + "\n");
+
+        Map<String, List<String>> headers = response.headers().map();
+        for (String headerName : headers.keySet().stream().sorted().collect(Collectors.toList())) {
+          for (String value : headers.get(headerName)) {
+            builder.append("Header: ").append(headerName).append(": ").append(value).append("\n");
+          }
+        }
+
+        builder.append("\n");
+        if (Files.exists(tempFile)) {
+          try (InputStream inputStream = Files.newInputStream(tempFile)) {
+            // yes, not trying to guess encoding
+            // string constructor should be exception free,
+            // so at worse we'll get some random characters
+            builder.append(new String(inputStream.readNBytes(1024), StandardCharsets.UTF_8));
+          }
+        }
+
+        throw new IllegalStateException(builder.toString());
       }
 
       long contentLength = response.headers().firstValueAsLong(HTTP_HEADER_CONTENT_LENGTH).orElse(-1);

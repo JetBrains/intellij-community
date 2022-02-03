@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.impl;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -55,6 +55,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NonNls;
@@ -855,6 +856,11 @@ public abstract class DiffRequestProcessor implements Disposable {
     public MyNextDifferenceAction() {
     }
 
+    @Nullable
+    protected PrevNextDifferenceIterable getDifferenceIterable(@NotNull AnActionEvent e) {
+      return e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (DiffUtil.isFromShortcut(e)) {
@@ -862,7 +868,7 @@ public abstract class DiffRequestProcessor implements Disposable {
         return;
       }
 
-      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
+      PrevNextDifferenceIterable iterable = getDifferenceIterable(e);
       if (iterable != null && iterable.canGoNext()) {
         e.getPresentation().setEnabled(true);
         return;
@@ -878,7 +884,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
+      PrevNextDifferenceIterable iterable = getDifferenceIterable(e);
       if (iterable != null && iterable.canGoNext()) {
         iterable.goNext();
         myIterationState = IterationState.NONE;
@@ -894,12 +900,18 @@ public abstract class DiffRequestProcessor implements Disposable {
       }
 
       goToNextChange(true);
+      myIterationState = IterationState.NONE;
     }
   }
 
   protected class MyPrevDifferenceAction extends PrevDifferenceAction {
 
     public MyPrevDifferenceAction() {
+    }
+
+    @Nullable
+    protected PrevNextDifferenceIterable getDifferenceIterable(@NotNull AnActionEvent e) {
+      return e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
     }
 
     @Override
@@ -909,7 +921,7 @@ public abstract class DiffRequestProcessor implements Disposable {
         return;
       }
 
-      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
+      PrevNextDifferenceIterable iterable = getDifferenceIterable(e);
       if (iterable != null && iterable.canGoPrev()) {
         e.getPresentation().setEnabled(true);
         return;
@@ -925,7 +937,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
+      PrevNextDifferenceIterable iterable = getDifferenceIterable(e);
       if (iterable != null && iterable.canGoPrev()) {
         iterable.goPrev();
         myIterationState = IterationState.NONE;
@@ -941,6 +953,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       }
 
       goToPrevChange(true);
+      myIterationState = IterationState.NONE;
     }
   }
 
@@ -991,7 +1004,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     return new HintHint(component, point)
       .setPreferredPosition(above ? Balloon.Position.above : Balloon.Position.below)
       .setAwtTooltip(true)
-      .setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD))
+      .setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD))
       .setTextBg(HintUtil.getInformationColor())
       .setShowImmediately(true);
   }

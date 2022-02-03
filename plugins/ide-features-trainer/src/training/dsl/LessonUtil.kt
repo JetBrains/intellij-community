@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.dsl
 
 import com.intellij.codeInsight.documentation.DocumentationComponent
@@ -30,6 +30,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.ui.ScreenUtil
@@ -44,6 +45,7 @@ import org.jetbrains.annotations.Nls
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
+import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
 import training.ui.*
 import training.ui.LearningUiUtil.findComponentWithTimeout
@@ -69,16 +71,17 @@ object LessonUtil {
     val helpIdeName: String = ide ?: when (val name = ApplicationNamesInfo.getInstance().productName) {
       "GoLand" -> "go"
       "RubyMine" -> "ruby"
+      "AppCode" -> "objc"
       else -> name.lowercase(Locale.ENGLISH)
     }
     return "https://www.jetbrains.com/help/$helpIdeName/$topic"
   }
 
   fun hideStandardToolwindows(project: Project) {
-    val windowManager = ToolWindowManager.getInstance(project)
-    for (id in windowManager.toolWindowIds) {
-      if (id != LearnToolWindowFactory.LEARN_TOOL_WINDOW) {
-        windowManager.getToolWindow(id)?.hide()
+    val windowManager = ToolWindowManagerEx.getInstanceEx(project)
+    for (window in windowManager.toolWindows) {
+      if (window.id != LearnToolWindowFactory.LEARN_TOOL_WINDOW) {
+        window.hide()
       }
     }
   }
@@ -313,6 +316,22 @@ object LessonUtil {
     val isSingleProject = ProjectManager.getInstance().openProjects.size == 1
     return if (isSingleProject) LessonsBundle.message("onboarding.return.to.welcome.remark") else ""
   }
+
+  fun showFeedbackNotification(lesson: Lesson, project: Project) {
+    invokeLater {
+      if (project.isDisposed) {
+        return@invokeLater
+      }
+      lesson.module.primaryLanguage?.let { langSupport ->
+        // exit link will show notification directly and reset this field to null
+        langSupport.onboardingFeedbackData?.let {
+          showOnboardingFeedbackNotification(project, it)
+        }
+        langSupport.onboardingFeedbackData = null
+      }
+    }
+  }
+
 }
 
 fun LessonContext.firstLessonCompletedMessage() {
@@ -350,14 +369,20 @@ fun TaskContext.proceedLink(additionalAbove: Int = 0) {
   }
   addStep(gotIt)
   test {
-    ideFrame {
-      val linkText = "Click to proceed"
-      val lessonMessagePane = findComponentWithTimeout(defaultTimeout) { _: LessonMessagePane -> true }
-      val offset = lessonMessagePane.text.indexOf(linkText)
-      if (offset == -1) error("Not found '$linkText' in the LessonMessagePane")
-      val rect = lessonMessagePane.modelToView2D(offset + linkText.length / 2)
-      robot.click(lessonMessagePane, Point(rect.centerX.toInt(), rect.centerY.toInt()))
-    }
+    clickLessonMessagePaneLink("Click to proceed")
+  }
+}
+
+/**
+ * Will click on the first occurrence of [linkText] in the [LessonMessagePane]
+ */
+fun TaskTestContext.clickLessonMessagePaneLink(linkText: String) {
+  ideFrame {
+    val lessonMessagePane = findComponentWithTimeout(defaultTimeout) { _: LessonMessagePane -> true }
+    val offset = lessonMessagePane.text.indexOf(linkText)
+    if (offset == -1) error("Not found '$linkText' in the LessonMessagePane")
+    val rect = lessonMessagePane.modelToView2D(offset + linkText.length / 2)
+    robot.click(lessonMessagePane, Point(rect.centerX.toInt(), rect.centerY.toInt()))
   }
 }
 
@@ -428,8 +453,10 @@ fun @Nls String.dropMnemonic(): @Nls String {
 fun TaskContext.waitSmartModeStep() {
   val future = CompletableFuture<Boolean>()
   addStep(future)
-  DumbService.getInstance(project).runWhenSmart {
-    future.complete(true)
+  before {
+    DumbService.getInstance(project).runWhenSmart {
+      future.complete(true)
+    }
   }
 }
 

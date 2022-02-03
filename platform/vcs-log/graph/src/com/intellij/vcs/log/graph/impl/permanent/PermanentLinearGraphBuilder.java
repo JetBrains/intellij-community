@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.vcs.log.graph.impl.permanent;
 
@@ -51,7 +51,7 @@ public final class PermanentLinearGraphBuilder<CommitId> {
 
       CommitId nextCommitHashIndex = nextCommitHashIndex(graphCommits, nodeIndex);
 
-      List parents = commit.getParents();
+      List<CommitId> parents = commit.getParents();
       if (parents.size() == 1 && parents.get(0).equals(nextCommitHashIndex)) {
         simpleNodes.set(nodeIndex, true);
       }

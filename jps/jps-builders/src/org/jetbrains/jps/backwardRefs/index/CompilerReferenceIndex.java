@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.backwardRefs.index;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,6 +27,9 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -97,13 +99,6 @@ public class CompilerReferenceIndex<Input> {
         //noinspection unchecked
         myIndices.put(indexExtension.getName(), new CompilerMapReduceIndex(indexExtension, myIndicesDir, readOnly));
       }
-
-      ShutDownTracker.getInstance().registerShutdownTask(() -> {
-        for (IndexId<?, ?> id : myIndices.keySet()) {
-          //noinspection UseOfSystemOutOrSystemErr
-          System.err.println("Leaked javac compiler index \"" + id.getName() + "\"");
-        }
-      });
 
       myNameEnumerator = new NameEnumerator(new File(myIndicesDir, NAME_ENUM_TAB));
     }
@@ -205,20 +200,17 @@ public class CompilerReferenceIndex<Input> {
   }
 
   public static boolean versionDiffers(@NotNull File buildDir, int expectedVersion) {
-    File versionFile = new File(getIndexDir(buildDir), VERSION_FILE);
-
-    if (!versionFile.exists()) {
-      LOG.info("backward reference index version doesn't exist");
-      return true;
-    }
-
-    try (DataInputStream is = new DataInputStream(new FileInputStream(versionFile))) {
+    Path versionFile = getIndexDir(buildDir).toPath().resolve(VERSION_FILE);
+    try (DataInputStream is = new DataInputStream(Files.newInputStream(versionFile))) {
       int currentIndexVersion = is.readInt();
       boolean isDiffer = currentIndexVersion != expectedVersion;
       if (isDiffer) {
         LOG.info("backward reference index version differ, expected = " + expectedVersion + ", current = " + currentIndexVersion);
       }
       return isDiffer;
+    }
+    catch (NoSuchFileException ignore) {
+      LOG.info("backward reference index version doesn't exist");
     }
     catch (IOException e) {
       LOG.info("backward reference index version differ due to: " + e.getClass());

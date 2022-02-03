@@ -11,12 +11,12 @@ import org.jetbrains.kotlin.idea.testFramework.performanceTest
 import org.jetbrains.kotlin.idea.test.KotlinLightPlatformCodeInsightTestCase
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
 import org.jetbrains.kotlin.idea.testFramework.dispatchAllInvocationEvents
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 
 /**
- * inspired by @see [org.jetbrains.kotlin.formatter.AbstractTypingIndentationTestBase]
+ * inspired by @see [org.jetbrains.kotlin.formatter.AbstractEnterHandlerTest]
  */
 abstract class AbstractPerformanceTypingIndentationTest : KotlinLightPlatformCodeInsightTestCase() {
     companion object {

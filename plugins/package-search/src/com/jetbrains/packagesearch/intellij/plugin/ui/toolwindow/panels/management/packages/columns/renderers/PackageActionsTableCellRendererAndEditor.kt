@@ -8,9 +8,8 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageOperationType
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ActionsColumn.ActionViewModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.colors
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.setUnderlined
 import java.util.EventObject
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -63,33 +62,30 @@ internal class PackageActionsTableCellRendererAndEditor(
         }
 
         return JLabel().apply {
-            colors.applyTo(this, isSelected)
-            isOpaque = true
-            horizontalAlignment = SwingConstants.RIGHT
-            border = scaledEmptyBorder(right = 10)
+          colors.applyTo(this, isSelected)
+          isOpaque = true
+          horizontalAlignment = SwingConstants.RIGHT
+          border = emptyBorder(right = 10)
 
-            if (viewModel.isHover) {
-                setUnderlined()
-            }
+          foreground = if (isSelected) {
+            table.colors.selectionForeground
+          }
+          else {
+            JBUI.CurrentTheme.Link.Foreground.ENABLED
+          }
 
-            foreground = if (isSelected) {
-                table.colors.selectionForeground
-            } else {
-                JBUI.CurrentTheme.Link.Foreground.ENABLED
-            }
+          if (viewModel.infoMessage != null) {
+            icon = AllIcons.General.BalloonInformation
+            iconTextGap = 4.scaled()
 
-            if (viewModel.infoMessage != null) {
-                icon = AllIcons.General.BalloonInformation
-                iconTextGap = 4.scaled()
+            toolTipText = viewModel.infoMessage
+          }
 
-                toolTipText = viewModel.infoMessage
-            }
-
-            text = when (viewModel.operationType) {
-                PackageOperationType.SET -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.actions.set")
-                PackageOperationType.INSTALL -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.actions.install")
-                PackageOperationType.UPGRADE -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.actions.upgrade")
-            }
+          text = when (viewModel.operationType) {
+            PackageOperationType.SET -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.actions.set")
+            PackageOperationType.INSTALL -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.actions.install")
+            PackageOperationType.UPGRADE -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.actions.upgrade")
+          }
         }
     }
 

@@ -1899,11 +1899,6 @@
   <item name="java.util.Collection boolean removeAll(java.util.Collection&lt;?&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name='java.util.Collection boolean removeIf(java.util.function.Predicate&lt;? super E&gt;)'>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;this&quot;"/>
-    </annotation>
-  </item>
   <item name="java.util.Collection boolean retainAll(java.util.Collection&lt;?&gt;)">
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>

@@ -59,9 +59,9 @@ const val NUL = "\u0000"
 fun getStatus(project: Project,
               root: VirtualFile,
               files: List<FilePath> = emptyList(),
-              withRenames: Boolean = true,
-              withUntracked: Boolean = true,
-              withIgnored: Boolean = false): List<GitFileStatus> {
+              withRenames: Boolean,
+              withUntracked: Boolean,
+              withIgnored: Boolean): List<GitFileStatus> {
   return getFileStatus(project, root, files, withRenames, withUntracked, withIgnored)
     .map { GitFileStatus(root, it) }
 }

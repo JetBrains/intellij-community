@@ -1,11 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.Function;
+import com.intellij.util.ResourceUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -13,19 +16,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
 public final class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegistry {
-  private static final Logger LOG = Logger.getInstance(ProductivityFeaturesRegistry.class);
+  private static final Logger LOG = Logger.getInstance(ProductivityFeaturesRegistryImpl.class);
+
   private final Map<String, FeatureDescriptor> myFeatures = new HashMap<>();
   private final List<FeatureUsageEvent.Action> myActionEvents = new ArrayList<>();
   private final List<FeatureUsageEvent.Intention> myIntentionEvents = new ArrayList<>();
   private final Map<String, GroupDescriptor> myGroups = new HashMap<>();
   private final List<Pair<String, ApplicabilityFilter>> myApplicabilityFilters = new ArrayList<>();
 
-  private boolean myAdditionalFeaturesLoaded = false;
+  private boolean myAdditionalFeaturesLoaded;
 
   @NonNls public static final String WELCOME = "features.welcome";
 
@@ -41,38 +44,43 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
   }
 
   private void reloadFromXml() {
+    String path = "ProductivityFeaturesRegistry.xml";
+    boolean found;
     try {
-      readFromXml("/ProductivityFeaturesRegistry.xml");
-    }
-    catch (FileNotFoundException e) {
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        LOG.error(e);
-      }
+      found = readFromXml(path);
     }
     catch (Throwable e) {
       LOG.error(e);
+      found = false;
+    }
+    if (!found && !ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.error(path + " not found");
     }
 
     try {
-      readFromXml("/IdeSpecificFeatures.xml");
-    }
-    catch (FileNotFoundException ignore) {
+      readFromXml("IdeSpecificFeatures.xml");
     }
     catch (Throwable e) {
       LOG.error(e);
     }
   }
 
-  private void readFromXml(@NotNull @NonNls String path) throws JDOMException, IOException {
-    readFromXml(path, ProductivityFeaturesRegistryImpl.class);
+  private boolean readFromXml(@NotNull @NonNls String path) throws JDOMException, IOException {
+    return readFromXml(path, ProductivityFeaturesRegistryImpl.class.getClassLoader());
   }
 
-  private void readFromXml(@NotNull String path, @NotNull Class<?> clazz) throws JDOMException, IOException {
-    Element root = JDOMUtil.load(clazz, path);
+  private boolean readFromXml(@NotNull String path, @NotNull ClassLoader classLoader) throws JDOMException, IOException {
+    byte[] data = ResourceUtil.getResourceAsBytes(path, classLoader, true);
+    if (data == null) {
+      return false;
+    }
+
+    Element root = JDOMUtil.load(data);
     for (Element groupElement : root.getChildren(TAG_GROUP)) {
       readGroup(groupElement);
     }
-    readFilters(root);
+    readFilters(root, classLoader);
+    return true;
   }
 
   private void lazyLoadFromPluginsFeaturesProviders() {
@@ -81,17 +89,14 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
     }
 
     myAdditionalFeaturesLoaded = true;
-    loadFeaturesFromProviders(ProductivityFeaturesProvider.EP_NAME.getExtensionList());
-  }
-
-  private void loadFeaturesFromProviders(@NotNull List<? extends ProductivityFeaturesProvider> providers) {
-    for (ProductivityFeaturesProvider provider : providers) {
+    ProductivityFeaturesProvider.EP_NAME.processWithPluginDescriptor((provider, pluginDescriptor) -> {
       for (String xmlUrl : provider.getXmlFilesUrls()) {
         try {
-          readFromXml(xmlUrl, provider.getClass());
+          readFromXml(Strings.trimStart(xmlUrl, "/"), pluginDescriptor.getClassLoader());
         }
         catch (Exception e) {
-          LOG.error("Error while reading " + xmlUrl + " from " + provider + ": " + e.getMessage());
+          LOG.error(new PluginException("Error while reading " + xmlUrl + " from " + provider + ": " + e.getMessage(),
+                                        pluginDescriptor.getPluginId()));
         }
       }
 
@@ -118,21 +123,21 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
           myApplicabilityFilters.add(Pair.create(applicabilityFilter.getPrefix(), applicabilityFilter));
         }
       }
-    }
+    });
   }
 
-  private void readFilters(Element element) {
+  private void readFilters(Element element, @NotNull ClassLoader classLoader) {
     for (Element filterElement : element.getChildren(TAG_FILTER)) {
       String className = filterElement.getAttributeValue(CLASS_ATTR);
       try {
-        Class klass = Class.forName(className);
-        if (!ApplicabilityFilter.class.isAssignableFrom(klass)) {
+        Class<?> aClass = classLoader.loadClass(className);
+        if (!ApplicabilityFilter.class.isAssignableFrom(aClass)) {
           LOG.error("filter class must implement com.intellij.featureStatistics.ApplicabilityFilter");
           continue;
         }
 
-        ApplicabilityFilter filter = (ApplicabilityFilter)klass.newInstance();
-        myApplicabilityFilters.add(Pair.create(filterElement.getAttributeValue(PREFIX_ATTR), filter));
+        ApplicabilityFilter filter = (ApplicabilityFilter)aClass.getDeclaredConstructor().newInstance();
+        myApplicabilityFilters.add(new Pair<>(filterElement.getAttributeValue(PREFIX_ATTR), filter));
       }
       catch (Exception e) {
         LOG.error("Cannot instantiate filter " + className, e);

@@ -5,8 +5,8 @@
 
 package org.toml
 
+import com.intellij.testFramework.PlatformTestUtil
 import java.nio.file.Path
-import java.nio.file.Paths
 
 interface TestCase {
     val testFileExtension: String
@@ -25,8 +25,11 @@ interface TestCase {
     }
 }
 
+fun getTomlTestsResourcesPath(): Path =
+    Path.of(PlatformTestUtil.getCommunityPath(), "plugins/toml/core/src/test", TestCase.testResourcesPath)
+
 fun TestCase.pathToSourceTestFile(): Path =
-    Paths.get("${TestCase.testResourcesPath}/${getTestDataPath()}/${getTestName(true)}.$testFileExtension")
+    getTomlTestsResourcesPath().resolve("${getTestDataPath()}/${getTestName(true)}.$testFileExtension")
 
 fun TestCase.pathToGoldTestFile(): Path =
-    Paths.get("${TestCase.testResourcesPath}/${getTestDataPath()}/${getTestName(true)}.txt")
+    getTomlTestsResourcesPath().resolve("${getTestDataPath()}/${getTestName(true)}.txt")

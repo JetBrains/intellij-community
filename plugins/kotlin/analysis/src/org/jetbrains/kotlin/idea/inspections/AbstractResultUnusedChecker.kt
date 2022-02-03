@@ -3,9 +3,9 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
@@ -29,8 +29,8 @@ abstract class AbstractResultUnusedChecker(
             parent = parent.parent
         }
         // Then check by call
-        val context = expression.analyze(BodyResolveMode.PARTIAL_WITH_CFA)
-        if (expression.isUsedAsExpression(context)) return false
+        val context = expression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL_WITH_CFA)
+        if (context == BindingContext.EMPTY || expression.isUsedAsExpression(context)) return false
         val resolvedCall = expression.getResolvedCall(context) ?: return false
         return callChecker(resolvedCall, this)
     }

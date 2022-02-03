@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 
@@ -78,6 +78,8 @@ public class LanguageLevelUtil {
     ourPresentableShortMessage.put(LanguageLevel.JDK_15, "16");
     ourPresentableShortMessage.put(LanguageLevel.JDK_16, "17");
     ourPresentableShortMessage.put(LanguageLevel.JDK_16_PREVIEW, "17");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_17, "18");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_17_PREVIEW, "18");
   }
 
   @Nullable
@@ -91,7 +93,14 @@ public class LanguageLevelUtil {
     Reference<Set<String>> ref = ourForbiddenAPI.get(languageLevel);
     Set<String> result = SoftReference.dereference(ref);
     if (result == null) {
-      result = loadSignatureList(LanguageLevelUtil.class.getResource("api" + getShortMessage(languageLevel) + ".txt"));
+      String fileName = "api" + getShortMessage(languageLevel) + ".txt";
+      URL resource = LanguageLevelUtil.class.getResource(fileName);
+      if (resource != null) {
+        result = loadSignatureList(resource);
+      } else {
+        Logger.getInstance(LanguageLevelUtil.class).warn("File not found: " + fileName);
+        result = Collections.emptySet();
+      }
       ourForbiddenAPI.put(languageLevel, new SoftReference<>(result));
     }
     return result;
@@ -129,12 +138,7 @@ public class LanguageLevelUtil {
     return nextForbiddenApi != null ? getLastIncompatibleLanguageLevelForSignature(signature, nextLanguageLevel, nextForbiddenApi) : null;
   }
 
-  public static Set<String> loadSignatureList(URL resource) {
-    if (resource == null) {
-      Logger.getInstance(LanguageLevelUtil.class).warn("not found: " + resource.getFile());
-      return Collections.emptySet();
-    }
-
+  public static Set<String> loadSignatureList(@NotNull URL resource) {
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8))) {
       return new HashSet<>(FileUtil.loadLines(reader));
     }

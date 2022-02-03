@@ -173,13 +173,13 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     PsiType keyType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 0, false);
     PsiType valueType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 1, false);
     if (!isValidElementType(keyType, terminalCall, true) || !isValidElementType(valueType, terminalCall, true)) return null;
-    keyType = GenericsUtil.getVariableTypeByExpressionType(keyType);
-    valueType = GenericsUtil.getVariableTypeByExpressionType(valueType);
     Project project = terminalCall.getProject();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     PsiClass entryClass = facade.findClass(CommonClassNames.JAVA_UTIL_MAP_ENTRY, terminalCall.getResolveScope());
     if (entryClass == null || entryClass.getTypeParameters().length != 2) return null;
     PsiType entryType = JavaPsiFacade.getElementFactory(project).createType(entryClass, keyType, valueType);
+    keyType = GenericsUtil.getVariableTypeByExpressionType(keyType);
+    valueType = GenericsUtil.getVariableTypeByExpressionType(valueType);
     TerminalOperation terminal = new TerminalOperation.MapForEachTerminalOperation(fn, keyType, valueType);
     SourceOperation source = new SourceOperation.ForEachSource(qualifier, true);
     OperationRecord terminalRecord = new OperationRecord();

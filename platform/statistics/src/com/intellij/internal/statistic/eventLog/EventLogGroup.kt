@@ -83,8 +83,9 @@ class EventLogGroup(val id: String, val version: Int) {
   @JvmOverloads
   fun registerIdeActivity(activityName: String?,
                           startEventAdditionalFields: Array<EventField<*>> = emptyArray(),
-                          finishEventAdditionalFields: Array<EventField<*>> = emptyArray()): IdeActivityDefinition {
-    return IdeActivityDefinition(this, activityName, startEventAdditionalFields, finishEventAdditionalFields)
+                          finishEventAdditionalFields: Array<EventField<*>> = emptyArray(),
+                          parentActivity: IdeActivityDefinition? = null): IdeActivityDefinition {
+    return IdeActivityDefinition(this, parentActivity, activityName, startEventAdditionalFields, finishEventAdditionalFields)
   }
 
   internal fun validateEventId(eventId: String) {

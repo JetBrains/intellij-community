@@ -4,7 +4,7 @@ val moduleName = "top-mpp"
 val commonInt = 42
 expect val <!LINE_MARKER("descr='Has actuals in Native (3 modules), JS, JVM'")!>sourceSetName<!>: String
 
-expect open class <!LINE_MARKER("descr='Has subclasses'"), LINE_MARKER("descr='Has actuals in Native (2 modules), common'")!>BottomActualDeclarations<!>() {
+expect open class <!LINE_MARKER("descr='Has actuals in Native (2 modules), common'"), LINE_MARKER("descr='Has subclasses'")!>BottomActualDeclarations<!>() {
     val <!LINE_MARKER("descr='Has actuals in Native (2 modules), common'")!>simpleVal<!>: Int
 
     companion object <!LINE_MARKER("descr='Has actuals in Native (2 modules), common'")!>Compainon<!> {
@@ -38,7 +38,7 @@ open class <!LINE_MARKER("descr='Is subclassed by ChildOfCommonInMacos ChildOfCo
 }
 
 // has a child in jsJvm18Main
-expect open class <!LINE_MARKER("descr='Is subclassed by ChildOfMPOuterInMacos ChildOfMPOuterInShared  Click or press ... to navigate'"), LINE_MARKER("descr='Has actuals in Native (2 modules), common'")!>MPOuter<!> {
+expect open class <!LINE_MARKER("descr='Has actuals in Native (2 modules), common'"), LINE_MARKER("descr='Is subclassed by ChildOfMPOuterInMacos ChildOfMPOuterInShared  Click or press ... to navigate'")!>MPOuter<!> {
     protected open val <!LINE_MARKER("descr='Has actuals in Native (2 modules), common'")!>b<!>: Int
     internal val <!LINE_MARKER("descr='Has actuals in Native (2 modules), common'")!>c<!>: Int
     val <!LINE_MARKER("descr='Has actuals in Native (2 modules), common'")!>d<!>: Int // public by default

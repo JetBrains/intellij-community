@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -180,7 +180,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
                                 : colorsScheme.getDefaultBackground());
       if (inheritFontFromLaF) {
         ((EditorImpl)editor).setUseEditorAntialiasing(false);
-        Font font = UIUtil.getLabelFont();
+        Font font = StartupUiUtil.getLabelFont();
         colorsScheme.setEditorFontName(font.getFontName());
         colorsScheme.setEditorFontSize(font.getSize());
       }

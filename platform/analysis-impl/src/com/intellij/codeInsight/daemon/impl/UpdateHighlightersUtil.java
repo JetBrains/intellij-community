@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -163,7 +165,9 @@ public final class UpdateHighlightersUtil {
 
     assertMarkupConsistent(markup, project);
 
-    setHighlightersInRange(project, document, range, colorsScheme, new ArrayList<>(highlights), markup, group);
+    if (psiFile != null) {
+      setHighlightersInRange(project, psiFile, document, range, colorsScheme, new ArrayList<>(highlights), markup, group);
+    }
   }
 
 
@@ -247,10 +251,8 @@ public final class UpdateHighlightersUtil {
       }
       return true;
     });
-    for (RangeHighlighter highlighter : infosToRemove.forAllInGarbageBin()) {
-      highlighter.dispose();
-      changed[0] = true;
-    }
+
+    changed[0] |= incinerateObsoleteHighlighters(psiFile, infosToRemove);
 
     if (changed[0]) {
       clearWhiteSpaceOptimizationFlag(document);
@@ -259,6 +261,7 @@ public final class UpdateHighlightersUtil {
   }
 
   static void setHighlightersInRange(@NotNull Project project,
+                                     @NotNull PsiFile psiFile,
                                      @NotNull Document document,
                                      @NotNull TextRange range,
                                      @Nullable EditorColorsScheme colorsScheme, // if null global scheme will be used
@@ -287,7 +290,6 @@ public final class UpdateHighlightersUtil {
     List<HighlightInfo> filteredInfos = applyPostFilter(project, infos);
     ContainerUtil.quickSort(filteredInfos, BY_START_OFFSET_NODUPS);
     Long2ObjectMap<RangeMarker> ranges2markersCache = new Long2ObjectOpenHashMap<>(10);
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     boolean[] changed = {false};
     SweepProcessor.Generator<HighlightInfo> generator = processor -> ContainerUtil.process(filteredInfos, processor);
@@ -295,7 +297,7 @@ public final class UpdateHighlightersUtil {
       if (!atStart) {
         return true;
       }
-      if (info.isFileLevelAnnotation() && psiFile != null) {
+      if (info.isFileLevelAnnotation()) {
         codeAnalyzer.addFileLevelHighlight(group, info, psiFile);
         changed[0] = true;
         return true;
@@ -303,21 +305,55 @@ public final class UpdateHighlightersUtil {
       if (isWarningCoveredByError(info, overlappingIntervals, severityRegistrar)) {
         return true;
       }
-      if (info.getStartOffset() >= range.getStartOffset() && info.getEndOffset() <= range.getEndOffset() && psiFile != null) {
+      if (info.getStartOffset() >= range.getStartOffset() && info.getEndOffset() <= range.getEndOffset()) {
         createOrReuseHighlighterFor(info, colorsScheme, document, group, psiFile, markup, infosToRemove, ranges2markersCache, severityRegistrar);
         changed[0] = true;
       }
       return true;
     });
-    for (RangeHighlighter highlighter : infosToRemove.forAllInGarbageBin()) {
-      highlighter.dispose();
-      changed[0] = true;
-    }
+
+    changed[0] |= incinerateObsoleteHighlighters(psiFile, infosToRemove);
 
     if (changed[0]) {
       clearWhiteSpaceOptimizationFlag(document);
     }
     assertMarkupConsistent(markup, project);
+  }
+
+  private static boolean incinerateObsoleteHighlighters(@NotNull PsiFile psiFile, @NotNull HighlightersRecycler infosToRemove) {
+    boolean changed = false;
+    // do not remove obsolete highlighters if we are in "essential highlighting only" mode, because otherwise all inspection-produced results would be gone
+    for (RangeHighlighter highlighter : infosToRemove.forAllInGarbageBin()) {
+      if (shouldRemoveHighlighter(psiFile, highlighter)) {
+        highlighter.dispose();
+        changed = true;
+      }
+    }
+    return changed;
+  }
+
+  static boolean shouldRemoveHighlighter(@NotNull PsiFile psiFile, @NotNull RangeHighlighter highlighter) {
+    return !HighlightingLevelManager.getInstance(psiFile.getProject()).runEssentialHighlightingOnly(psiFile)
+           || shouldRemoveInfoEvenInEssentialMode(highlighter);
+  }
+
+  private static boolean shouldRemoveInfoEvenInEssentialMode(@NotNull RangeHighlighter highlighter) {
+    Object tooltip = highlighter.getErrorStripeTooltip();
+    if (!(tooltip instanceof HighlightInfo)) return true;
+    HighlightInfo info = (HighlightInfo)tooltip;
+    int group = info.getGroup();
+    if (group != Pass.LOCAL_INSPECTIONS
+        && group != Pass.EXTERNAL_TOOLS
+        && group != Pass.WHOLE_FILE_LOCAL_INSPECTIONS
+        && group != Pass.UPDATE_ALL
+        && group != GeneralHighlightingPass.POST_UPDATE_ALL
+    ) {
+      return true;
+    }
+
+    // update highlight if it's symbol type (field/statics/etc), otherwise don't touch it (could have been e.g. unused symbol highlight)
+    return group == Pass.UPDATE_ALL && (
+      info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY || info.getSeverity() == HighlightSeverity.ERROR);
   }
 
   private static boolean isWarningCoveredByError(@NotNull HighlightInfo info,

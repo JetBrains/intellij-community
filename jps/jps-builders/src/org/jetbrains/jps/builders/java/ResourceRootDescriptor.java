@@ -90,11 +90,6 @@ public class ResourceRootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
-  public boolean isGenerated() {
-    return false;
-  }
-
-  @Override
   public String toString() {
     return "ResourceRootDescriptor{target='" + myTarget + '\'' + ", root=" + myRoot + '}';
   }

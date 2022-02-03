@@ -12,12 +12,22 @@ import java.util.*;
 public abstract class Difference {
 
   public static boolean weakerAccess(final int me, final int than) {
-    return ((me & Opcodes.ACC_PRIVATE) > 0 && (than & Opcodes.ACC_PRIVATE) == 0) ||
-           ((me & Opcodes.ACC_PROTECTED) > 0 && (than & Opcodes.ACC_PUBLIC) > 0) ||
-           (isPackageLocal(me) && (than & (Opcodes.ACC_PROTECTED | Opcodes.ACC_PUBLIC)) > 0);
+    return (isPrivate(me) && !isPrivate(than)) || (isProtected(me) && isPublic(than)) || (isPackageLocal(me) && (than & (Opcodes.ACC_PROTECTED | Opcodes.ACC_PUBLIC)) != 0);
   }
 
-  private static boolean isPackageLocal(final int access) {
+  public static boolean isPrivate(int access) {
+    return (access & Opcodes.ACC_PRIVATE) != 0;
+  }
+
+  public static boolean isPublic(int access) {
+    return (access & Opcodes.ACC_PUBLIC) != 0;
+  }
+
+  public static boolean isProtected(int access) {
+    return (access & Opcodes.ACC_PROTECTED) != 0;
+  }
+
+  public static boolean isPackageLocal(final int access) {
     return (access & (Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED | Opcodes.ACC_PUBLIC)) == 0;
   }
 
@@ -161,6 +171,8 @@ public abstract class Difference {
   public abstract boolean no();
 
   public abstract boolean accessRestricted();
+
+  public abstract boolean accessExpanded();
 
   public abstract int addedModifiers();
 

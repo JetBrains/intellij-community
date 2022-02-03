@@ -667,6 +667,7 @@ private fun areShortcutsEqual(shortcuts1: List<Shortcut>, shortcuts2: List<Short
 @Suppress("SpellCheckingInspection") private const val resharperKeymap = "com.intellij.plugins.resharperkeymap"
 @Suppress("SpellCheckingInspection") private const val sublimeKeymap = "com.intellij.plugins.sublimetextkeymap"
 @Suppress("SpellCheckingInspection") private const val visualStudioKeymap = "com.intellij.plugins.visualstudiokeymap"
+@Suppress("SpellCheckingInspection") private const val visualStudio2022Keymap = "com.intellij.plugins.visualstudio2022keymap"
 @Suppress("SpellCheckingInspection") private const val xcodeKeymap = "com.intellij.plugins.xcodekeymap"
 @Suppress("SpellCheckingInspection") private const val visualAssistKeymap = "com.intellij.plugins.visualassistkeymap"
 @Suppress("SpellCheckingInspection") private const val riderKeymap = "com.intellij.plugins.riderkeymap"
@@ -699,6 +700,7 @@ internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.Notificat
             "Sublime Text (Mac OS X)" -> sublimeKeymap
             "Visual Studio",
             "Visual Studio OSX" -> visualStudioKeymap
+            "Visual Studio 2022" -> visualStudio2022Keymap
             "Visual Assist",
             "Visual Assist OSX" -> visualAssistKeymap
             "Xcode" -> xcodeKeymap
@@ -730,7 +732,7 @@ internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.Notificat
                           KeymapManagerEx.getInstanceEx().activeKeymap = keymap
                           IdeBundle.message("notification.content.keymap.successfully.activated", keymapName)
                         }
-                        Notification("Keymap", successMessage,
+                        Notification("KeymapInstalled", successMessage,
                                                                                   NotificationType.INFORMATION).notify(e.project)
                       }
                     }
@@ -741,6 +743,8 @@ internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.Notificat
                 when (pluginId) {
                   gnomeKeymap, kdeKeymap -> plugins += PluginId.getId(xwinKeymap)
                   resharperKeymap -> plugins += PluginId.getId(visualStudioKeymap)
+                  visualAssistKeymap -> plugins += PluginId.getId(visualStudioKeymap)
+                  visualStudio2022Keymap -> plugins += PluginId.getId(visualStudioKeymap)
                   xcodeKeymap, vsForMacKeymap -> plugins += PluginId.getId(macOSKeymap)
                 }
                 installAndEnable(project, plugins) { }
@@ -750,7 +754,7 @@ internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.Notificat
             }
           }
 
-          Notification("Keymap", IdeBundle.message("notification.group.missing.keymap"),
+          Notification("KeymapMissing", IdeBundle.message("notification.group.missing.keymap"),
                                                                     message, NotificationType.ERROR)
             .addAction(action)
             .notify(project)

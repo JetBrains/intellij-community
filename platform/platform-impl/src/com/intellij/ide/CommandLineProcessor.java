@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.actions.ShowLogAction;
 import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.ide.impl.OpenResult;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.impl.ProjectUtilCore;
 import com.intellij.ide.lightEdit.LightEdit;
@@ -66,12 +68,18 @@ public final class CommandLineProcessor {
   // public for testing
   @ApiStatus.Internal
   public static @NotNull CommandLineProcessorResult doOpenFileOrProject(@NotNull Path file, boolean shouldWait) {
-    OpenProjectTask openProjectOptions = PlatformProjectOpenProcessor.createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, null);
-    // do not check for .ipr files in the specified directory (@develar: it is existing behaviour, I am not fully sure that it is correct)
-    openProjectOptions.checkDirectoryForFileBasedProjects = false;
     Project project = null;
     if (!LightEditUtil.isForceOpenInLightEditMode()) {
-      project = ProjectUtil.openOrImport(file, openProjectOptions);
+      OpenProjectTask options = PlatformProjectOpenProcessor.createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, null);
+      // do not check for .ipr files in the specified directory (@develar: it is existing behaviour, I am not fully sure that it is correct)
+      ProjectUtil.FORCE_CHECK_DIRECTORY_KEY.set(options, Boolean.TRUE);
+      OpenResult openResult = ProjectUtil.tryOpenOrImport(file, options);
+      if (openResult instanceof OpenResult.Success) {
+        project = ((OpenResult.Success)openResult).getProject();
+      }
+      else if (openResult instanceof OpenResult.Cancel) {
+        return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.open.cancelled"));
+      }
     }
     if (project == null) {
       return doOpenFile(file, -1, -1, false, shouldWait);
@@ -200,7 +208,8 @@ public final class CommandLineProcessor {
           if (file != null) {
             int line = StringUtil.parseInt(ContainerUtil.getLastItem(parameters.get("line")), -1);
             int column = StringUtil.parseInt(ContainerUtil.getLastItem(parameters.get("column")), -1);
-            openFileOrProject(file, line, column, false, false, false);
+            CommandLineProcessorResult result = openFileOrProject(file, line, column, false, false, false);
+            LifecycleUsageTriggerCollector.onProtocolOpenCommandHandled(result.getProject());
             return CompletableFuture.completedFuture(CliResult.OK);
           }
         }

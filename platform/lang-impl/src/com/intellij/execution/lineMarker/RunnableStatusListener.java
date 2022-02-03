@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.lineMarker;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerSettings;
+import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -29,9 +31,7 @@ class RunnableStatusListener implements DaemonCodeAnalyzer.DaemonListener {
         Project project = editor.getProject();
         VirtualFile file = fileEditor.getFile();
         if (file != null && project != null && file.isValid()) {
-          boolean hasRunMarkers = ContainerUtil.findInstance(
-            DaemonCodeAnalyzerImpl.getLineMarkers(editor.getDocument(), project),
-            RunLineMarkerProvider.RunLineMarkerInfo.class) != null;
+          boolean hasRunMarkers = hasRunMarkers(editor, project);
           FileViewProvider vp = PsiManager.getInstance(project).findViewProvider(file);
           if (hasRunMarkers || (vp != null && weMayTrustRunGutterContributors(vp))) {
             RunLineMarkerProvider.markRunnable(file, hasRunMarkers);
@@ -39,6 +39,19 @@ class RunnableStatusListener implements DaemonCodeAnalyzer.DaemonListener {
         }
       }
     }
+  }
+
+  private static boolean hasRunMarkers(Editor editor, Project project) {
+    for (LineMarkerInfo<?> marker : DaemonCodeAnalyzerImpl.getLineMarkers(editor.getDocument(), project)) {
+      if (marker instanceof RunLineMarkerProvider.RunLineMarkerInfo) {
+        return true;
+      }
+      if (ContainerUtil.findInstance(MergeableLineMarkerInfo.getMergedMarkers(marker), RunLineMarkerProvider.RunLineMarkerInfo.class) != null) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private static boolean weMayTrustRunGutterContributors(FileViewProvider vp) {
@@ -52,3 +65,4 @@ class RunnableStatusListener implements DaemonCodeAnalyzer.DaemonListener {
     return true;
   }
 }
+interface I { public static void main(String[] args) { }}

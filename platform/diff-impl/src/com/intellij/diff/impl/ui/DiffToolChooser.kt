@@ -52,7 +52,7 @@ abstract class DiffToolChooser(private val targetComponent: JComponent? = null) 
     for (tool in getTools()) {
       group.add(MyDiffToolAction(tool, tool == getActiveTool()))
     }
-    return SegmentedButtonToolbar(group, true, SpacingConfiguration.createIntelliJSpacingConfiguration())
+    return SegmentedButtonToolbar(group, SpacingConfiguration.createIntelliJSpacingConfiguration())
       .also { it.targetComponent = targetComponent }
   }
 

@@ -17,6 +17,7 @@ import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.gr
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.properties.map
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.roots.ui.configuration.validateJavaVersion
@@ -27,6 +28,8 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.UIBundle
+import com.intellij.ui.dsl.builder.EMPTY_LABEL
 import com.intellij.ui.layout.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -59,13 +62,15 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
   private val locationProperty: GraphProperty<String> = propertyGraph.graphProperty(::suggestLocationByName)
   private val groupIdProperty: GraphProperty<String> = propertyGraph.graphProperty { starterContext.group }
   private val artifactIdProperty: GraphProperty<String> = propertyGraph.graphProperty { entityName }
-  private val sdkProperty: GraphProperty<Sdk?> = propertyGraph.graphProperty { null }
+  protected val sdkProperty: GraphProperty<Sdk?> = propertyGraph.graphProperty { null }
 
   private val projectTypeProperty: GraphProperty<StarterProjectType?> = propertyGraph.graphProperty { starterContext.projectType }
   private val languageProperty: GraphProperty<StarterLanguage> = propertyGraph.graphProperty { starterContext.language }
   private val testFrameworkProperty: GraphProperty<StarterTestRunner?> = propertyGraph.graphProperty { starterContext.testFramework }
   private val applicationTypeProperty: GraphProperty<StarterAppType?> = propertyGraph.graphProperty { starterContext.applicationType }
   private val exampleCodeProperty: GraphProperty<Boolean> = propertyGraph.graphProperty { starterContext.includeExamples }
+
+  private val gitProperty: GraphProperty<Boolean> = propertyGraph.graphProperty { false }
 
   private var entityName: String by entityNameProperty.map { it.trim() }
   private var location: String by locationProperty
@@ -75,6 +80,11 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
   private val contentPanel: DialogPanel by lazy { createComponent() }
 
   private val sdkModel: ProjectSdksModel = ProjectSdksModel()
+  protected lateinit var sdkComboBox: JdkComboBox
+
+  protected lateinit var languageRow: Row
+  protected lateinit var groupRow: Row
+  protected lateinit var artifactRow: Row
 
   @Volatile
   private var isDisposed: Boolean = false
@@ -95,16 +105,16 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
     starterContext.artifact = artifactId
     starterContext.testFramework = testFrameworkProperty.get()
     starterContext.includeExamples = exampleCodeProperty.get()
+    starterContext.gitIntegration = gitProperty.get()
 
     wizardContext.projectName = entityName
     wizardContext.setProjectFileDirectory(FileUtil.join(location, entityName))
 
     val sdk = sdkProperty.get()
+    moduleBuilder.moduleJdk = sdk
+
     if (wizardContext.project == null) {
       wizardContext.projectJdk = sdk
-    }
-    else {
-      moduleBuilder.moduleJdk = sdk
     }
   }
 
@@ -138,10 +148,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
         }
       }.largeGapAfter()
 
-      row(JavaStartersBundle.message("title.project.location.label")) {
-        projectLocationField(locationProperty, wizardContext)
-          .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_LOCATION_FOR_ERROR)
-      }.largeGapAfter()
+      addProjectLocationUi()
 
       addFieldsBefore(this)
 
@@ -156,38 +163,45 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
 
       if (starterSettings.languages.size > 1) {
         row(JavaStartersBundle.message("title.project.language.label")) {
-          buttonSelector(starterSettings.languages, languageProperty) { it.title }
+          languageRow = this
+
+          segmentedButton(starterSettings.languages, languageProperty) { it.title }
         }.largeGapAfter()
       }
 
       if (starterSettings.projectTypes.isNotEmpty()) {
         val messages = starterSettings.customizedMessages
         row(messages?.projectTypeLabel ?: JavaStartersBundle.message("title.project.build.system.label")) {
-          buttonSelector(starterSettings.projectTypes, projectTypeProperty) { it?.title ?: "" }
+          segmentedButton(starterSettings.projectTypes, projectTypeProperty) { it?.title ?: "" }
         }.largeGapAfter()
       }
 
       if (starterSettings.testFrameworks.isNotEmpty()) {
         row(JavaStartersBundle.message("title.project.test.framework.label")) {
-          buttonSelector(starterSettings.testFrameworks, testFrameworkProperty) { it?.title ?: "" }
+          segmentedButton(starterSettings.testFrameworks, testFrameworkProperty) { it?.title ?: "" }
         }.largeGapAfter()
       }
 
       row(JavaStartersBundle.message("title.project.group.label")) {
+        groupRow = this
+
         textField(groupIdProperty)
           .growPolicy(GrowPolicy.SHORT_TEXT)
           .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_NO_WHITESPACES, CHECK_GROUP_FORMAT, CHECK_NO_RESERVED_WORDS)
       }.largeGapAfter()
 
       row(JavaStartersBundle.message("title.project.artifact.label")) {
+        artifactRow = this
+
         textField(artifactIdProperty)
           .growPolicy(GrowPolicy.SHORT_TEXT)
           .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_NO_WHITESPACES, CHECK_ARTIFACT_SIMPLE_FORMAT, CHECK_NO_RESERVED_WORDS)
       }.largeGapAfter()
 
       row(JavaStartersBundle.message("title.project.sdk.label")) {
-        sdkComboBox(sdkModel, sdkProperty, wizardContext.project, moduleBuilder)
+        sdkComboBox = sdkComboBox(sdkModel, sdkProperty, wizardContext.project, moduleBuilder)
           .growPolicy(GrowPolicy.SHORT_TEXT)
+          .component
       }.largeGapAfter()
 
       if (starterSettings.isExampleCodeProvided) {
@@ -198,6 +212,22 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
 
       addFieldsAfter(this)
     }.withVisualPadding(topField = true)
+  }
+
+  private fun LayoutBuilder.addProjectLocationUi() {
+    val locationRow = row(JavaStartersBundle.message("title.project.location.label")) {
+      projectLocationField(locationProperty, wizardContext)
+        .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_LOCATION_FOR_ERROR)
+    }
+
+    if (wizardContext.isCreatingNewProject) {
+      // Git should not be enabled for single module
+      row(EMPTY_LABEL) {
+        checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"), gitProperty)
+      }.largeGapAfter()
+    } else {
+      locationRow.largeGapAfter()
+    }
   }
 
   protected open fun addFieldsBefore(layout: LayoutBuilder) {}

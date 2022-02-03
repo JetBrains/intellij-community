@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +30,7 @@ public final class OSAgnosticPathUtil {
 
     int length1 = path1.length();
     int length2 = path2.length();
-    boolean ignoreCase = !SystemInfo.isFileSystemCaseSensitive;
+    boolean ignoreCase = !SystemInfoRt.isFileSystemCaseSensitive;
 
     for (int pos = 0; pos < length1 && pos < length2; pos++) {
       char ch1 = path1.charAt(pos);
@@ -61,7 +61,7 @@ public final class OSAgnosticPathUtil {
    * @see OSAgnosticPathUtil applicability warning
    */
   public static boolean isAbsolute(@NotNull String path) {
-    return isAbsoluteDosPath(path) || isUncPath(path) || path.startsWith("/");
+    return path.startsWith("/") || isAbsoluteDosPath(path) || isUncPath(path);
   }
 
   public static boolean isAbsoluteDosPath(@NotNull String path) {
@@ -76,7 +76,7 @@ public final class OSAgnosticPathUtil {
     int pathLength = path.length(), prefixLength = prefix.length();
     if (prefixLength == 0) return true;
     if (prefixLength > pathLength) return false;
-    boolean ignoreCase = !SystemInfo.isFileSystemCaseSensitive;
+    boolean ignoreCase = !SystemInfoRt.isFileSystemCaseSensitive;
     for (int pos = 0; pos < pathLength && pos < prefixLength; pos++) {
       char ch1 = path.charAt(pos);
       char ch2 = prefix.charAt(pos);
@@ -92,7 +92,9 @@ public final class OSAgnosticPathUtil {
       else if (ch2 == '/' || ch2 == '\\') {
         return false;
       }
-      if (StringUtil.compare(ch1, ch2, ignoreCase) != 0) return false;
+      if (StringUtil.compare(ch1, ch2, ignoreCase) != 0) {
+        return false;
+      }
     }
     if (pathLength == prefixLength) {
       return true;

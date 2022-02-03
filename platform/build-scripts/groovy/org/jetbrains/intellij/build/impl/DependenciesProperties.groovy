@@ -2,21 +2,21 @@
 package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
-import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.CompilationContext
 
 import java.nio.file.Files
 import java.nio.file.Path
 
 @CompileStatic
 final class DependenciesProperties {
-  private final BuildContext context
+  private final CompilationContext context
   private final Path directory
   private final Path propertiesFile
 
-  DependenciesProperties(BuildContext context) {
+  DependenciesProperties(CompilationContext context) {
     this.context = context
     this.directory = context.paths.communityHomeDir.resolve("build/dependencies")
-    this.propertiesFile = directory.resolve("build/dependencies.properties")
+    this.propertiesFile = directory.resolve("gradle.properties")
   }
 
   @Lazy
@@ -29,20 +29,17 @@ final class DependenciesProperties {
 
   @Lazy
   private Properties props = {
-    synchronized (DependenciesProperties.class) {
-      context.gradle.run("prepare dependencies file", "dependenciesFile")
-      Files.newInputStream(propertiesFile).withCloseable {
-        Properties properties = new Properties()
-        properties.load(it)
-        properties
-      }
+    Files.newInputStream(propertiesFile).withCloseable {
+      Properties properties = new Properties()
+      properties.load(it)
+      properties
     }
   }()
 
   String property(String name) {
     def value = props.get(name)
     if (value == null) {
-      context.messages.error("`$name` is not defined in `$directory/gradle.properties`")
+      context.messages.error("`$name` is not defined in `$propertiesFile`")
     }
     return value
   }
@@ -50,7 +47,7 @@ final class DependenciesProperties {
   String propertyOrNull(String name) {
     def value = props.get(name)
     if (value == null) {
-      context.messages.warning("`$name` is not defined in `$directory/gradle.properties`")
+      context.messages.warning("`$name` is not defined in `$propertiesFile`")
     }
     return value
   }

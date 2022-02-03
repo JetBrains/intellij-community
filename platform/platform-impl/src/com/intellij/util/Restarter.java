@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
@@ -32,6 +32,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
+
 public final class Restarter {
   private static final String DO_NOT_LOCK_INSTALL_FOLDER_PROPERTY = "restarter.do.not.lock.install.folder";
   private static final String SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR = "IDEA_RESTART_VIA_EXIT_CODE";
@@ -42,20 +44,22 @@ public final class Restarter {
     return ourRestartSupported.getValue();
   }
 
-  private static final NullableLazyValue<File> ourStarter = NullableLazyValue.createValue(() -> {
+  private static final NullableLazyValue<Path> ourStarter = lazyNullable(() -> {
     if (SystemInfo.isWindows && JnaLoader.isLoaded()) {
       Kernel32 kernel32 = Native.load("kernel32", Kernel32.class);
       char[] buffer = new char[32767];  // using 32,767 as buffer size to avoid limiting ourselves to MAX_PATH (260)
       int result = kernel32.GetModuleFileNameW(null, buffer, new WinDef.DWORD(buffer.length)).intValue();
-      if (result != 0) return new File(Native.toString(buffer));
+      if (result != 0) return Path.of(Native.toString(buffer));
     }
     else if (SystemInfo.isMac) {
       File appDir = new File(PathManager.getHomePath()).getParentFile();
-      if (appDir != null && appDir.getName().endsWith(".app") && appDir.isDirectory()) return appDir;
+      if (appDir != null && appDir.getName().endsWith(".app") && appDir.isDirectory()) return appDir.toPath();
     }
     else if (SystemInfo.isUnix) {
-      File starter = new File(PathManager.getBinPath(), ApplicationNamesInfo.getInstance().getScriptName() + ".sh");
-      if (starter.canExecute()) return starter;
+      Path starter = Path.of(PathManager.getBinPath(), ApplicationNamesInfo.getInstance().getScriptName() + ".sh");
+      if (Files.exists(starter)) {
+        return starter;
+      }
     }
 
     return null;
@@ -158,7 +162,7 @@ public final class Restarter {
     }
   }
 
-  public static @Nullable File getIdeStarter() {
+  public static @Nullable Path getIdeStarter() {
     return ourStarter.getValue();
   }
 
@@ -174,9 +178,11 @@ public final class Restarter {
 
     // See https://blogs.msdn.microsoft.com/oldnewthing/20060515-07/?p=31203
     // argv[0] as the program name is only a convention, i.e. there is no guarantee the name is the full path to the executable
-    File starter = ourStarter.getValue();
-    if (starter == null) throw new IOException("GetModuleFileName() failed");
-    argv[0] = starter.getPath();
+    Path starter = ourStarter.getValue();
+    if (starter == null) {
+      throw new IOException("GetModuleFileName() failed");
+    }
+    argv[0] = starter.toString();
 
     List<String> args = new ArrayList<>();
     args.add(String.valueOf(pid));
@@ -227,17 +233,21 @@ public final class Restarter {
   }
 
   private static void restartOnMac(String... beforeRestart) throws IOException {
-    File appDir = ourStarter.getValue();
-    if (appDir == null) throw new IOException("Application bundle not found: " + PathManager.getHomePath());
+    Path appDir = ourStarter.getValue();
+    if (appDir == null) {
+      throw new IOException("Application bundle not found: " + PathManager.getHomePath());
+    }
     List<String> args = new ArrayList<>();
-    args.add(appDir.getPath());
+    args.add(appDir.toString());
     Collections.addAll(args, beforeRestart);
     runRestarter(new File(PathManager.getBinPath(), "restarter"), args);
   }
 
   private static void restartOnUnix(String... beforeRestart) throws IOException {
-    File starterScript = ourStarter.getValue();
-    if (starterScript == null) throw new IOException("Starter script not found in " + PathManager.getBinPath());
+    Path starterScript = ourStarter.getValue();
+    if (starterScript == null) {
+      throw new IOException("Starter script not found in " + PathManager.getBinPath());
+    }
 
     int pid = OSProcessUtil.getCurrentProcessId();
     if (pid <= 0) throw new IOException("Invalid process ID: " + pid);
@@ -250,14 +260,14 @@ public final class Restarter {
     List<String> args = new ArrayList<>();
     if ("python".equals(python.getName())) {
       args.add(String.valueOf(pid));
-      args.add(starterScript.getPath());
+      args.add(starterScript.toString());
       Collections.addAll(args, beforeRestart);
       runRestarter(script, args);
     }
     else {
       args.add(script.getPath());
       args.add(String.valueOf(pid));
-      args.add(starterScript.getPath());
+      args.add(starterScript.toString());
       Collections.addAll(args, beforeRestart);
       runRestarter(python, args);
     }

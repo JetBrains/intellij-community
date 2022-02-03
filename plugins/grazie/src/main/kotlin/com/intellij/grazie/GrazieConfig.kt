@@ -133,7 +133,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
   }
 
   class PresentableNameGetter : com.intellij.openapi.components.State.NameGetter() {
-    override fun get() = "Grazie Config"
+    override fun get() = GrazieBundle.message("grazie.config.name")
   }
 
   private var myState = State()

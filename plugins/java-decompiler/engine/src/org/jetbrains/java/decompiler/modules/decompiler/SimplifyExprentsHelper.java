@@ -6,10 +6,12 @@ import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.SSAConstructorSparseEx;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -518,8 +520,8 @@ public class SimplifyExprentsHelper {
         for (Exprent expr : lstExprents) {
           if (expr.type == Exprent.EXPRENT_NEW) {
             NewExprent newExpr = (NewExprent)expr;
-            if (newExpr.getConstructor() != null && !newExpr.getConstructor().getLstParameters().isEmpty() &&
-                newExpr.getConstructor().getLstParameters().get(0).equals(invocation.getInstance())) {
+            if (newExpr.getConstructor() != null && !newExpr.getConstructor().getParameters().isEmpty() &&
+                newExpr.getConstructor().getParameters().get(0).equals(invocation.getInstance())) {
 
               String classname = newExpr.getNewType().value;
               ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
@@ -556,7 +558,7 @@ public class SimplifyExprentsHelper {
             if (remote.type == Exprent.EXPRENT_INVOCATION) {
               InvocationExprent in = (InvocationExprent)remote;
 
-              if (in.getFunctype() == InvocationExprent.TYP_INIT &&
+              if (in.getFuncType() == InvocationExprent.TYPE_INIT &&
                   in.getInstance().type == Exprent.EXPRENT_VAR &&
                   as.getLeft().equals(in.getInstance())) {
                 newExpr.setConstructor(in);
@@ -593,7 +595,7 @@ public class SimplifyExprentsHelper {
     if (exprent.type == Exprent.EXPRENT_INVOCATION) {
       InvocationExprent in = (InvocationExprent)exprent;
 
-      if (in.getInvocationTyp() == InvocationExprent.INVOKE_DYNAMIC) {
+      if (in.getInvocationType() == InvocationExprent.INVOKE_DYNAMIC) {
         String lambda_class_name = cl.qualifiedName + in.getInvokeDynamicClassSuffix();
         ClassNode lambda_class = DecompilerContext.getClassProcessor().getMapRootClasses().get(lambda_class_name);
 
@@ -623,7 +625,7 @@ public class SimplifyExprentsHelper {
 
     if (exprent.type == Exprent.EXPRENT_INVOCATION) {
       InvocationExprent in = (InvocationExprent)exprent;
-      if (in.getFunctype() == InvocationExprent.TYP_INIT && in.getInstance().type == Exprent.EXPRENT_NEW) {
+      if (in.getFuncType() == InvocationExprent.TYPE_INIT && in.getInstance().type == Exprent.EXPRENT_NEW) {
         NewExprent newExpr = (NewExprent)in.getInstance();
         newExpr.setConstructor(in);
         in.setInstance(null);
@@ -635,7 +637,7 @@ public class SimplifyExprentsHelper {
   }
 
   private static boolean buildIff(Statement stat, SSAConstructorSparseEx ssa) {
-    if (stat.type == Statement.TYPE_IF && stat.getExprents() == null) {
+    if (stat.type == StatementType.IF && stat.getExprents() == null) {
       IfStatement statement = (IfStatement)stat;
       Exprent ifHeadExpr = statement.getHeadexprent();
       Set<Integer> ifHeadExprBytecode = (ifHeadExpr == null ? null : ifHeadExpr.bytecode);
@@ -724,7 +726,7 @@ public class SimplifyExprentsHelper {
 
               StatEdge retEdge = ifStatement.getAllSuccessorEdges().get(0);
               Statement closure = retEdge.closure == statement ? statement.getParent() : retEdge.closure;
-              statement.addSuccessor(new StatEdge(StatEdge.TYPE_BREAK, statement, retEdge.getDestination(), closure));
+              statement.addSuccessor(new StatEdge(EdgeType.BREAK, statement, retEdge.getDestination(), closure));
 
               SequenceHelper.destroyAndFlattenStatement(statement);
 

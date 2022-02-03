@@ -49,7 +49,7 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
   }
 
   private fun isShellIntegrationAvailable(shellPath: String) : Boolean {
-    if (TerminalOptionsProvider.instance.shellIntegration()) {
+    if (TerminalOptionsProvider.instance.shellIntegration) {
       val shellName = File(shellPath).name
       return shellName == "bash" || (SystemInfo.isMac && shellName == "sh") || shellName == "zsh" || shellName == "fish"
     }

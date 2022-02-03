@@ -6,13 +6,13 @@ class Test {
 
   public void assertThatPositive1() {
     try {
-      <warning descr="'assertThat()' cannot fail as it's masked via 'catch'">assertThat(1).as("test").isEqualTo(1)</warning>;
+      <warning descr="'assertThat()' cannot fail as it's suppressed by a surrounding 'catch'">assertThat(1).as("test").isEqualTo(1)</warning>;
     } catch (AssertionError e) {}
   }
 
   public void assertThatPositive2() {
     try {
-      <warning descr="'assertThat()' cannot fail as it's masked via 'catch'">assertThat(1).as("test").isEqualTo(1)</warning>;
+      <warning descr="'assertThat()' cannot fail as it's suppressed by a surrounding 'catch'">assertThat(1).as("test").isEqualTo(1)</warning>;
     } catch (Exception e) {
     } catch (AssertionError e) {}
   }
@@ -20,7 +20,7 @@ class Test {
   public void assertThatPositive3() {
     try {
       int a = 1;
-      <warning descr="'assertThat()' cannot fail as it's masked via 'catch'">assertThat(1).as("test").isEqualTo(1)</warning>;
+      <warning descr="'assertThat()' cannot fail as it's suppressed by a surrounding 'catch'">assertThat(1).as("test").isEqualTo(1)</warning>;
     } catch (AssertionError e) {}
   }
 

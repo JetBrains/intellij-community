@@ -1,5 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns
 
+import com.intellij.openapi.project.Project
 import com.intellij.util.ui.ColumnInfo
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
@@ -16,10 +17,9 @@ import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
 
 internal class ActionsColumn(
+    private val project: Project,
     private val operationExecutor: (Deferred<List<PackageSearchOperation<*>>>) -> Unit
 ) : ColumnInfo<PackagesTableItem<*>, Any>(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.columns.actions")) {
-
-    var hoverItem: PackagesTableItem<*>? = null
 
     private var targetModules: TargetModules = TargetModules.None
     private var knownRepositoriesInTargetModules = KnownRepositories.InTargetModules.EMPTY
@@ -52,8 +52,7 @@ internal class ActionsColumn(
             item.uiPackageModel.packageOperations.primaryOperations,
             operationType,
             generateMessageFor(item),
-            isSearchResult = item is PackagesTableItem.InstallablePackage,
-            isHover = item == hoverItem
+            isSearchResult = item is PackagesTableItem.InstallablePackage
         )
     }
 
@@ -64,9 +63,9 @@ internal class ActionsColumn(
 
                 val packageOperations = item.uiPackageModel.packageOperations
                 when {
-                  currentVersion is NormalizedPackageVersion.Missing -> PackageOperationType.SET
-                  packageOperations.canUpgradePackage -> PackageOperationType.UPGRADE
-                  else -> null
+                    currentVersion is NormalizedPackageVersion.Missing -> PackageOperationType.SET
+                    packageOperations.canUpgradePackage -> PackageOperationType.UPGRADE
+                    else -> null
                 }
             }
             is PackagesTableItem.InstallablePackage -> PackageOperationType.INSTALL
@@ -77,6 +76,7 @@ internal class ActionsColumn(
         val packageModel = item.packageModel
 
         val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
+            project = project,
             packageModel = packageModel,
             selectedVersion = item.uiPackageModel.selectedVersion.originalVersion
         ) ?: return null
@@ -92,7 +92,6 @@ internal class ActionsColumn(
         val operations: Deferred<List<PackageSearchOperation<*>>>,
         val operationType: PackageOperationType?,
         @Nls val infoMessage: String?,
-        val isSearchResult: Boolean,
-        val isHover: Boolean
+        val isSearchResult: Boolean
     )
 }

@@ -50,11 +50,6 @@ public class YamlEmptyObjectAdapter implements JsonObjectValueAdapter {
     return ContainerUtil.emptyList();
   }
 
-  @Override
-  public boolean isNull() {
-    return false;
-  }
-
   @NotNull
   @Override
   public PsiElement getDelegate() {

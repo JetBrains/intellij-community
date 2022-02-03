@@ -46,8 +46,8 @@ public abstract class ActionProcessor {
                             @NotNull AnActionEvent event) {
     inputEvent.consume();
 
-    DataContext ctx = event.getDataContext();
-    if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(ctx)) {
+    if (action instanceof ActionGroup && !event.getPresentation().isPerformGroup()) {
+      DataContext ctx = event.getDataContext();
       ActionGroup group = (ActionGroup)action;
       String groupId = ActionManager.getInstance().getId(action);
       ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(

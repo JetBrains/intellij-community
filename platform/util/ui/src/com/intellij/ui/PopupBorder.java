@@ -1,9 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.paint.RectanglePainter;
+import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.ui.paint.RectanglePainter2D;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -13,6 +16,12 @@ import java.awt.*;
 public interface PopupBorder extends Border {
 
   void setActive(boolean active);
+
+  /**
+   * Says the border that it's used in popup. Regardless of the class name it's used in many places, which are not related to popups
+   */
+  @ApiStatus.Internal
+  void setPopupUsed();
 
   final class Factory {
     private Factory() { }
@@ -42,6 +51,7 @@ public interface PopupBorder extends Border {
     private final Color myActiveColor;
     private final Color myPassiveColor;
     private boolean myActive;
+    private boolean popupUsed = false;
 
     protected BaseBorder() {
       this(false, null, null);
@@ -59,22 +69,32 @@ public interface PopupBorder extends Border {
     }
 
     @Override
+    public void setPopupUsed() {
+      popupUsed = true;
+    }
+
+    @Override
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
       if (!myVisible) return;
 
       Color color = myActive ? myActiveColor : myPassiveColor;
       g.setColor(color);
-      RectanglePainter.DRAW.paint((Graphics2D)g, x, y, width, height, null);
+      RectanglePainter2D.DRAW.paint((Graphics2D)g, x, y, width, height, null, LinePainter2D.StrokeType.INSIDE,
+                                    getBorderWidth(), RenderingHints.VALUE_ANTIALIAS_DEFAULT);
     }
 
     @Override
     public Insets getBorderInsets(final Component c) {
-      return myVisible ? JBUI.insets(1) : JBUI.emptyInsets();
+      return myVisible ? JBUI.insets((int)Math.ceil(getBorderWidth())) : JBInsets.emptyInsets();
     }
 
     @Override
     public boolean isBorderOpaque() {
       return true;
+    }
+
+    private float getBorderWidth() {
+      return popupUsed ? JBUI.CurrentTheme.Popup.borderWidth() : 1;
     }
   }
 }

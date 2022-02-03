@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 @ApiStatus.Internal
-public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T>, Iterable<T> {
+public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T>, Iterable<@Nullable T> {
   static final Logger LOG = Logger.getInstance(ExtensionPointImpl.class);
 
   // test-only
@@ -233,7 +233,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       }
       else {
         message += " (adapter=" + adapter + ")";
-        throw componentManager.createError(message, null, adapter.getPluginDescriptor().getPluginId(),
+        throw componentManager.createError(message, null, adapter.pluginDescriptor.getPluginId(),
                                            Collections.singletonMap("threadDump", ThreadDumper.dumpThreadsToString()));
       }
     }
@@ -295,10 +295,10 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       return;
     }
 
-    for (ExtensionComponentAdapter adapter : shouldBeSorted ? getThreadSafeAdapterList(true) : adapters) {
+    for (ExtensionComponentAdapter adapter : shouldBeSorted ? getSortedAdapters() : adapters) {
       T extension = processAdapter(adapter);
       if (extension != null) {
-        consumer.accept(extension, adapter.getPluginDescriptor());
+        consumer.accept(extension, adapter.pluginDescriptor);
       }
     }
   }
@@ -313,7 +313,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
     // do not use getThreadSafeAdapterList - no need to check that no listeners, because processImplementations is not a generic-purpose method
     for (ExtensionComponentAdapter adapter : shouldBeSorted ? getSortedAdapters() : adapters) {
-      consumer.accept((Supplier<T>)() -> adapter.createInstance(componentManager), adapter.getPluginDescriptor());
+      consumer.accept((Supplier<T>)() -> adapter.createInstance(componentManager), adapter.pluginDescriptor);
     }
   }
 
@@ -325,33 +325,16 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   }
 
   // null id means that instance was created and extension element cleared
-  public final void processIdentifiableImplementations(@NotNull BiConsumer<? super @NotNull Supplier<@Nullable T>, ? super @Nullable String> consumer) {
+  public final void processIdentifiableImplementations(@NotNull BiConsumer<@NotNull Supplier<@Nullable T>, @Nullable String> consumer) {
     // do not use getThreadSafeAdapterList - no need to check that no listeners, because processImplementations is not a generic-purpose method
     for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
-      consumer.accept((Supplier<T>)() -> adapter.createInstance(componentManager), adapter.getOrderId());
+      consumer.accept(() -> adapter.createInstance(componentManager), adapter.getOrderId());
     }
   }
 
-  private synchronized @NotNull List<ExtensionComponentAdapter> getThreadSafeAdapterList(boolean failIfListenerAdded) {
-    CHECK_CANCELED.run();
-
-    if (!isDynamic && listeners.length > 0) {
-      String message = "Listeners not allowed for extension point " + getName();
-      if (failIfListenerAdded) {
-        LOG.error(message);
-      }
-      else {
-        LOG.warn(message);
-        getExtensionList();
-      }
-    }
-
-    return getSortedAdapters();
-  }
-
-  private @NotNull Iterator<T> createIterator() {
+  private @NotNull Iterator<@Nullable T> createIterator() {
     int size;
-    List<ExtensionComponentAdapter> adapters = getThreadSafeAdapterList(true);
+    List<ExtensionComponentAdapter> adapters = getSortedAdapters();
     size = adapters.size();
     if (size == 0) {
       return Collections.emptyIterator();
@@ -396,7 +379,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     return cache == null ? adapters.size() : cache.size();
   }
 
-  private @NotNull List<ExtensionComponentAdapter> getSortedAdapters() {
+  public final @NotNull List<ExtensionComponentAdapter> getSortedAdapters() {
     if (adaptersAreSorted) {
       return adapters;
     }
@@ -486,7 +469,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
         return null;
       }
 
-      boolean isNotifyThatAdded = listeners != null && listeners.length != 0 && !adapter.isInstanceCreated() && !isDynamic;
+      boolean isNotifyThatAdded = listeners != null && listeners.length != 0 && !adapter.isInstanceCreated$intellij_platform_extensions() && !isDynamic;
       // do not call CHECK_CANCELED here in loop because it is called by createInstance()
       T extension = adapter.createInstance(componentManager);
       if (extension == null) {
@@ -527,7 +510,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   }
 
   private static boolean checkThatClassloaderIsActive(@NotNull ExtensionComponentAdapter adapter) {
-    ClassLoader classLoader = adapter.getPluginDescriptor().getPluginClassLoader();
+    ClassLoader classLoader = adapter.pluginDescriptor.getPluginClassLoader();
     if (classLoader instanceof PluginAwareClassLoader &&
         ((PluginAwareClassLoader)classLoader).getState() != PluginAwareClassLoader.ACTIVE) {
       LOG.warn(adapter + " not loaded because classloader is being unloaded");
@@ -541,7 +524,8 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
    * For tests this method is more preferable than {@link #registerExtension)} because makes registration more isolated and strict
    * (no one can modify extension point until `parentDisposable` is not disposed).
    * <p>
-   * Please use {@link com.intellij.testFramework.ExtensionTestUtil#maskExtensions(ExtensionPointName, List, Disposable)} instead of direct usage.
+   * Please use {@link com.intellij.testFramework.ExtensionTestUtil#maskExtensions(ExtensionPointName, List, Disposable)}
+   * instead of direct usage.
    */
   @TestOnly
   @ApiStatus.Internal
@@ -556,10 +540,15 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
     List<T> oldList = cachedExtensions;
     T[] oldArray = cachedExtensionsAsArray;
+    List<ExtensionComponentAdapter> oldAdapters = adapters;
+    boolean oldAdaptersAreSorted = adaptersAreSorted;
 
     cachedExtensions = ContainerUtil.immutableList(newList);
     //noinspection unchecked
     cachedExtensionsAsArray = newList.toArray((T[])Array.newInstance(getExtensionClass(), 0));
+    adapters = ContainerUtil.map(newList, it -> new ObjectComponentAdapter<>(it, pluginDescriptor, LoadingOrder.ANY));
+    adaptersAreSorted = true;
+
     POINTS_IN_READONLY_MODE.add(this);
 
     ExtensionPointListener<T>[] listeners = this.listeners;
@@ -574,11 +563,14 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
     Disposer.register(parentDisposable, new Disposable() {
       @Override
+      @TestOnly
       public void dispose() {
         synchronized (this) {
           POINTS_IN_READONLY_MODE.remove(ExtensionPointImpl.this);
           cachedExtensions = oldList;
           cachedExtensionsAsArray = oldArray;
+          adapters = oldAdapters;
+          adaptersAreSorted = oldAdaptersAreSorted;
 
           ExtensionPointListener<T>[] listeners = ExtensionPointImpl.this.listeners;
           if (fireEvents && listeners.length > 0) {
@@ -640,7 +632,10 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
   @Override
   public final synchronized void unregisterExtension(@NotNull T extension) {
-    if (!unregisterExtensions((__, adapter) -> !adapter.isInstanceCreated() || adapter.createInstance(componentManager) != extension, true)) {
+    if (!unregisterExtensions((__, adapter) -> {
+      return !adapter.isInstanceCreated$intellij_platform_extensions() ||
+             adapter.createInstance(componentManager) != extension;
+    }, true)) {
       // there is a possible case that particular extension was replaced in particular environment, e.g. Upsource
       // replaces some IntelliJ extensions (important for CoreApplicationEnvironment), so, just log as error instead of throw error
       LOG.warn("Extension to be removed not found: " + extension);
@@ -660,7 +655,8 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
                                             boolean stopAfterFirstMatch) {
     List<Runnable> listenerCallbacks = new ArrayList<>();
     List<Runnable> priorityListenerCallbacks = new ArrayList<>();
-    boolean result = unregisterExtensions(adapter -> extensionClassFilter.test(adapter.getAssignableToClassName(), adapter), stopAfterFirstMatch, priorityListenerCallbacks, listenerCallbacks);
+    boolean result = unregisterExtensions(stopAfterFirstMatch, priorityListenerCallbacks, listenerCallbacks,
+                                          adapter -> extensionClassFilter.test(adapter.getAssignableToClassName(), adapter));
     for (Runnable callback : priorityListenerCallbacks) {
       callback.run();
     }
@@ -674,10 +670,10 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
    * Unregisters extensions for which the specified predicate returns false and collects the runnables for listener invocation into the given list
    * so that listeners can be called later.
    */
-  final synchronized boolean unregisterExtensions(@NotNull Predicate<? super ExtensionComponentAdapter> extensionClassFilter,
-                                                  boolean stopAfterFirstMatch,
+  final synchronized boolean unregisterExtensions(boolean stopAfterFirstMatch,
                                                   @NotNull List<Runnable> priorityListenerCallbacks,
-                                                  @NotNull List<Runnable> listenerCallbacks) {
+                                                  @NotNull List<Runnable> listenerCallbacks,
+                                                  @NotNull Predicate<? super ExtensionComponentAdapter> extensionClassFilter) {
     ExtensionPointListener<T>[] listeners = this.listeners;
     List<ExtensionComponentAdapter> removedAdapters = null;
     List<ExtensionComponentAdapter> adapters = this.adapters;
@@ -755,7 +751,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       }
       else {
         for (ExtensionComponentAdapter adapter : adapters) {
-          if (isRemoved && !adapter.isInstanceCreated()) {
+          if (isRemoved && !adapter.isInstanceCreated$intellij_platform_extensions()) {
             continue;
           }
 
@@ -763,10 +759,10 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
             T extension = adapter.createInstance(componentManager);
             if (extension != null) {
               if (isRemoved) {
-                listener.extensionRemoved(extension, adapter.getPluginDescriptor());
+                listener.extensionRemoved(extension, adapter.pluginDescriptor);
               }
               else {
-                listener.extensionAdded(extension, adapter.getPluginDescriptor());
+                listener.extensionAdded(extension, adapter.pluginDescriptor);
               }
             }
           }
@@ -996,7 +992,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
     List<T> extensionsCache = cachedExtensions;
     if (extensionsCache == null) {
-      for (ExtensionComponentAdapter adapter : getThreadSafeAdapterList(false)) {
+      for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
         // findExtension is called for a lot of extension point - do not fail if listeners were added (e.g. FacetTypeRegistryImpl)
         try {
           if (aClass.isAssignableFrom(adapter.getImplementationClass(componentManager))) {
@@ -1005,7 +1001,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
           }
         }
         catch (ClassNotFoundException e) {
-          componentManager.logError(e, adapter.getPluginDescriptor().getPluginId());
+          componentManager.logError(e, adapter.pluginDescriptor.getPluginId());
         }
       }
     }
@@ -1036,7 +1032,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   private @Nullable T findExtensionByExactClass(@NotNull Class<? extends T> aClass) {
     List<T> cachedExtensions = this.cachedExtensions;
     if (cachedExtensions == null) {
-      for (ExtensionComponentAdapter adapter : getThreadSafeAdapterList(false)) {
+      for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
         Object classOrName = adapter.implementationClassOrName;
         if (classOrName instanceof String ? classOrName.equals(aClass.getName()) : classOrName == aClass) {
           return processAdapter(adapter);
@@ -1060,13 +1056,13 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     private ObjectComponentAdapter(@NotNull T extension,
                                    @NotNull PluginDescriptor pluginDescriptor,
                                    @NotNull LoadingOrder loadingOrder) {
-      super(extension.getClass().getName(), pluginDescriptor, null, loadingOrder, (componentManager1, adapter) -> extension.getClass());
+      super(extension.getClass().getName(), pluginDescriptor, null, loadingOrder, (__, ___) -> extension.getClass());
 
       componentInstance = extension;
     }
 
     @Override
-    boolean isInstanceCreated() {
+    public boolean isInstanceCreated$intellij_platform_extensions() {
       return true;
     }
 

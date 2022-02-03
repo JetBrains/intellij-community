@@ -274,7 +274,7 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
       return
     }
     val flow = ControlFlowUtils.getCaseSectionInstructions(caseSection)
-    val returns = ControlFlowUtils.collectReturns(flow, false)
+    val returns = ControlFlowUtils.collectReturns(flow, caseSection, false)
     for (returnStatement in returns.filterIsInstance<GrReturnStatement>()) {
       holder
         .newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("inspection.message.switch.expressions.do.not.support.return"))

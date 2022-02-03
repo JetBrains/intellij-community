@@ -19,22 +19,9 @@ import org.jetbrains.annotations.NotNull;
 import sun.awt.AppContext;
 
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
-import java.util.function.Consumer;
 
 class IdeKeyboardFocusManager extends DefaultKeyboardFocusManager {
-  private Consumer<KeyEvent> onTypeaheadFinished = __ -> {};
-
-  public void setTypeaheadHandler(@NotNull Consumer<KeyEvent> onTypeaheadFinished) {
-    this.onTypeaheadFinished = onTypeaheadFinished;
-  }
-
-  @NotNull
-  protected Consumer<KeyEvent> getOnTypeaheadFinishedHandler () {
-    return onTypeaheadFinished;
-  }
-
   @Override
   public boolean dispatchEvent(AWTEvent e) {
     if (EventQueue.isDispatchThread()) {

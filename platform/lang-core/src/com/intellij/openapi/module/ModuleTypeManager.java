@@ -18,18 +18,18 @@ public abstract class ModuleTypeManager {
    * a plugin.
    */
   @ApiStatus.Internal
-  public abstract void registerModuleType(ModuleType<?> type);
+  public abstract void registerModuleType(@NotNull ModuleType<?> type);
 
   @ApiStatus.Internal
-  public abstract void unregisterModuleType(ModuleType<?> type);
+  public abstract void unregisterModuleType(@NotNull ModuleType<?> type);
 
   public abstract @NotNull List<ModuleType<?>> getRegisteredTypes();
 
-  public abstract ModuleType<?> findByID(@Nullable String moduleTypeID);
+  public abstract @NotNull ModuleType<?> findByID(@Nullable String moduleTypeID);
 
-  public abstract void registerModuleType(ModuleType<?> type, boolean classpathProvider);
+  public abstract void registerModuleType(@NotNull ModuleType<?> type, boolean classpathProvider);
 
   public abstract boolean isClasspathProvider(@NotNull ModuleType<?> moduleType);
 
-  public abstract ModuleType<?> getDefaultModuleType();
+  public abstract @NotNull ModuleType<?> getDefaultModuleType();
 }

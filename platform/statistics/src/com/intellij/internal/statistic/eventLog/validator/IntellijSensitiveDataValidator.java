@@ -101,7 +101,6 @@ public class IntellijSensitiveDataValidator extends SensitiveDataValidator<Intel
 
   static {
     CustomValidationRule.EP_NAME.addChangeListener(ourInstances::clear, null);
-    CustomWhiteListRule.EP_NAME.addChangeListener(ourInstances::clear, null);
   }
 
   public static @NotNull IntellijSensitiveDataValidator getInstance(@NotNull String recorderId) {

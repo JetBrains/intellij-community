@@ -205,11 +205,6 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
             public boolean splitToLines() {
               return false;
             }
-
-            @Override
-            public boolean withSeparators() {
-              return true;
-            }
           };
         }
       };
@@ -239,6 +234,8 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       }
       pythonExecution = pythonScriptExecution;
     }
+
+    pythonExecution.addParameters(getExpandedScriptParameters(myConfig));
 
     pythonExecution.setCharset(EncodingProjectManager.getInstance(myConfig.getProject()).getDefaultCharset());
 

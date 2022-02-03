@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger
 
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.engine.JavaStackFrame
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
+import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.ui.AlternativeSourceNotificationProvider
@@ -14,58 +15,53 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.EditorNotificationPanel
-import com.intellij.ui.EditorNotifications
-import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.ui.EditorNotificationProvider
+import com.intellij.ui.EditorNotificationProvider.CONST_NULL
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
+import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil.findFilesWithExactPackage
+import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.isCommon
+import org.jetbrains.kotlin.platform.js.isJs
+import org.jetbrains.kotlin.platform.jvm.isJvm
+import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.kotlin.psi.KtFile
+import java.util.function.Function
+import javax.swing.JComponent
 
-class KotlinAlternativeSourceNotificationProvider(private val myProject: Project) :
-    EditorNotifications.Provider<EditorNotificationPanel>() {
-    override fun getKey(): Key<EditorNotificationPanel> {
-        return KEY
-    }
+class KotlinAlternativeSourceNotificationProvider : EditorNotificationProvider {
 
-    override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel? {
+    override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
         if (!DebuggerSettings.getInstance().SHOW_ALTERNATIVE_SOURCE) {
-            return null
+            return CONST_NULL
         }
 
-        val session = XDebuggerManager.getInstance(myProject).currentSession
+        val javaSession = DebuggerManagerEx.getInstanceEx(project).context.debuggerSession
+        val session = javaSession?.xDebugSession
         if (session == null) {
             AlternativeSourceNotificationProvider.setFileProcessed(file, false)
-            return null
+            return CONST_NULL
         }
 
         val position = session.currentPosition
         if (file != position?.file) {
             AlternativeSourceNotificationProvider.setFileProcessed(file, false)
-            return null
+            return CONST_NULL
         }
 
-        if (DumbService.getInstance(myProject).isDumb) return null
+        if (DumbService.getInstance(project).isDumb) return CONST_NULL
 
-        val ktFile = PsiManager.getInstance(myProject).findFile(file) as? KtFile ?: return null
-
-        val packageFqName = ktFile.packageFqName
-        val fileName = ktFile.name
-
-        val alternativeKtFiles = findFilesWithExactPackage(
-            packageFqName,
-            GlobalSearchScope.allScope(myProject),
-            myProject,
-        ).filterTo(HashSet()) { it.name == fileName }
+        val ktFile = PsiManager.getInstance(project).findFile(file) as? KtFile ?: return CONST_NULL
+        val alternativeKtFiles = findAlternativeKtFiles(ktFile, project, javaSession)
 
         AlternativeSourceNotificationProvider.setFileProcessed(file, true)
 
         if (alternativeKtFiles.size <= 1) {
-            return null
+            return CONST_NULL
         }
 
         val currentFirstAlternatives: Collection<KtFile> = listOf(ktFile) + alternativeKtFiles.filter { it != ktFile }
@@ -78,15 +74,18 @@ class KotlinAlternativeSourceNotificationProvider(private val myProject: Project
             else -> null
         }
 
-        return AlternativeSourceNotificationPanel(currentFirstAlternatives, myProject, file, locationDeclName)
+        return Function {
+            AlternativeSourceNotificationPanel(it, project, currentFirstAlternatives, file, locationDeclName)
+        }
     }
 
     private class AlternativeSourceNotificationPanel(
-        alternatives: Collection<KtFile>,
+        fileEditor: FileEditor,
         project: Project,
+        alternatives: Collection<KtFile>,
         file: VirtualFile,
         locationDeclName: String?,
-    ) : EditorNotificationPanel() {
+    ) : EditorNotificationPanel(fileEditor) {
         private class ComboBoxFileElement(val ktFile: KtFile) {
             private val label: String by lazy(LazyThreadSafetyMode.NONE) {
                 val factory = ModuleRendererFactory.findInstance(ktFile)
@@ -144,8 +143,26 @@ class KotlinAlternativeSourceNotificationProvider(private val myProject: Project
             }
         }
     }
+}
 
-    companion object {
-        private val KEY = Key.create<EditorNotificationPanel>("KotlinAlternativeSource")
+private fun findAlternativeKtFiles(ktFile: KtFile, project: Project, javaSession: DebuggerSession): Set<KtFile> {
+    val packageFqName = ktFile.packageFqName
+    val fileName = ktFile.name
+    val platform = ktFile.platform
+    return findFilesWithExactPackage(
+        packageFqName,
+        javaSession.searchScope,
+        project,
+    ).filterTo(HashSet()) {
+        it.name == fileName && it.platformMatches(platform)
     }
 }
+
+private fun KtFile.platformMatches(otherPlatform: TargetPlatform): Boolean =
+    when {
+        platform.isJvm()    -> otherPlatform.isJvm()
+        platform.isJs()     -> otherPlatform.isJs()
+        platform.isNative() -> otherPlatform.isNative()
+        platform.isCommon() -> otherPlatform.isCommon()
+        else -> true
+    }

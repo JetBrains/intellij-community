@@ -32,10 +32,4 @@
          target="update-from-sources"
          deploy="${project.home}/out/deploy"/>
   </target>
-
-  <target name="build-intellij-core">
-    <run script="${project.home}/build/scripts/idea_community.gant"
-         target="build-intellij-core"
-         deploy="${project.home}/out/deploy"/>
-  </target>
 </project>

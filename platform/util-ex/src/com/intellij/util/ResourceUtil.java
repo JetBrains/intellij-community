@@ -51,15 +51,6 @@ public final class ResourceUtil {
     return getResource(loaderClass.getClassLoader(), basePath, fileName);
   }
 
-  /**
-   * @deprecated Use {@link #getResourceAsStream(ClassLoader, String, String)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  public static InputStream getResourceAsStream(@NotNull Class<?> loaderClass, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
-    return getResourceAsStream(loaderClass.getClassLoader(), basePath, fileName);
-  }
-
   public static InputStream getResourceAsStream(@NotNull ClassLoader loader, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
     String fixedPath = Strings.trimStart(Strings.trimEnd(basePath, "/"), "/");
     if (fixedPath.isEmpty()) {

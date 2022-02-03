@@ -8,7 +8,7 @@ class C {
         try {
             S = getString();
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 

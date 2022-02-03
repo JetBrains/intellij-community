@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.checkin
 
@@ -46,12 +46,17 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
   private val settings get() = VcsConfiguration.getInstance(project)
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
-    ProfileChooser(panel, settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT, 
-                   settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT_LOCAL, 
-                   settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT_PROFILE, 
-                   "before.checkin.cleanup.code", 
+    ProfileChooser(panel, settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT,
+                   settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT_LOCAL,
+                   settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT_PROFILE,
+                   "before.checkin.cleanup.code",
                    "before.checkin.cleanup.code.profile")
 
+  /**
+   * Won't be called for Commit Tool Window as [CommitCheck] is implemented.
+   *
+   * @see com.intellij.vcs.commit.NonModalCommitWorkflow.runMetaHandler
+   */
   override fun runCheckinHandlers(runnable: Runnable) {
     if (settings.CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(project)) {
       val filesToProcess = filterOutGeneratedAndExcludedFiles(panel.virtualFiles, project)
@@ -78,6 +83,9 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
     return null
   }
 
+  /**
+   * Does nothing as no problem is reported in [runCheck].
+   */
   override fun showDetails(problem: CommitProblem) = Unit
 
   private suspend fun findProblems(indicator: ProgressIndicator): CleanupProblems {

@@ -17,8 +17,10 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiPrefixExpression
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 class JavaUPrefixExpression(
   override val sourcePsi: PsiPrefixExpression,
   givenParent: UElement?

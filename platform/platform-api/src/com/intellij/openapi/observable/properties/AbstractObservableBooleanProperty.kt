@@ -3,8 +3,10 @@ package com.intellij.openapi.observable.properties
 
 import com.intellij.openapi.Disposable
 import com.intellij.util.containers.DisposableWrapperList
+import org.jetbrains.annotations.ApiStatus
 
-abstract class AbstractObservableBooleanProperty : AbstractObservableProperty<Boolean>(), BooleanProperty {
+@ApiStatus.Internal
+abstract class AbstractObservableBooleanProperty : AbstractObservableClearableProperty<Boolean>(), BooleanProperty {
 
   private val setListeners = DisposableWrapperList<() -> Unit>()
 

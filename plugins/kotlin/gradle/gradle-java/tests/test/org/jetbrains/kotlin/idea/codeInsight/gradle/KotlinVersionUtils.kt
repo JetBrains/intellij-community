@@ -5,42 +5,43 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.KotlinVersion
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase.KotlinVersionRequirement
-
-val KotlinVersion.isSnapshot: Boolean
-    get() = this.classifier != null && this.classifier.toLowerCase() == "snapshot"
-
-val KotlinVersion.isDev: Boolean
-    get() = this.classifier != null && this.classifier.matches(Regex("""dev-?\d*"""))
-
-val KotlinVersion.isMilestone: Boolean
-    get() = this.classifier != null &&
-            this.classifier.matches(Regex("""[mM]-?\d*"""))
-
-val KotlinVersion.isAlpha: Boolean
-    get() = this.classifier != null &&
-            this.classifier.matches(Regex("""(alpha|ALPHA)-?\d*"""))
-
-val KotlinVersion.isBeta: Boolean
-    get() = this.classifier != null &&
-            this.classifier.matches(Regex("""(beta|BETA)-?\d*"""))
-
-val KotlinVersion.isRC: Boolean
-    get() = this.classifier != null &&
-            this.classifier.matches(Regex("""(rc|RC)-?\d*"""))
+import java.util.*
+import kotlin.Comparator
 
 val KotlinVersion.isWildcard: Boolean
     get() = this.classifier != null &&
             this.classifier == WILDCARD_KOTLIN_VERSION_CLASSIFIER
 
+val KotlinVersion.isSnapshot: Boolean
+    get() = this.classifier != null && this.classifier.lowercase() == "snapshot"
 
-val KotlinVersion.isStable: Boolean get() = this.classifier == null
+val KotlinVersion.isDev: Boolean
+    get() = this.classifier != null && this.classifier.lowercase().matches(Regex("""dev-?\d*"""))
+
+val KotlinVersion.isMilestone: Boolean
+    get() = this.classifier != null &&
+            this.classifier.lowercase().matches(Regex("""m\d+(-\d*)?"""))
+
+val KotlinVersion.isAlpha: Boolean
+    get() = this.classifier != null &&
+            this.classifier.lowercase().matches(Regex("""alpha(\d*)?-?\d*"""))
+
+val KotlinVersion.isBeta: Boolean
+    get() = this.classifier != null &&
+            this.classifier.lowercase().matches(Regex("""beta(\d*)?-?\d*"""))
+
+val KotlinVersion.isRC: Boolean
+    get() = this.classifier != null &&
+            this.classifier.lowercase().matches(Regex("""(rc)(\d*)?-?\d*"""))
+
+val KotlinVersion.isStable: Boolean
+    get() = this.classifier == null ||
+            this.classifier.lowercase().matches(Regex("""(release-)?\d+"""))
 
 val KotlinVersion.isPreRelease: Boolean get() = !isStable
 
-
 enum class KotlinVersionMaturity {
     WILDCARD,
-    UNKNOWN,
     SNAPSHOT,
     DEV,
     MILESTONE,
@@ -50,41 +51,96 @@ enum class KotlinVersionMaturity {
     STABLE
 }
 
-val KotlinVersion.maturity: KotlinVersionMaturity
-    get() = when {
-        isStable -> KotlinVersionMaturity.STABLE
-        isRC -> KotlinVersionMaturity.RC
-        isBeta -> KotlinVersionMaturity.BETA
-        isAlpha -> KotlinVersionMaturity.ALPHA
-        isMilestone -> KotlinVersionMaturity.MILESTONE
-        isSnapshot -> KotlinVersionMaturity.SNAPSHOT
-        isDev -> KotlinVersionMaturity.DEV
-        isWildcard -> KotlinVersionMaturity.WILDCARD
-        else -> KotlinVersionMaturity.UNKNOWN
-    }
-
-object KotlinVersionComparator : Comparator<KotlinVersion> {
-    override fun compare(o1: KotlinVersion?, o2: KotlinVersion?): Int {
-        return o1?.compareTo(o2 ?: return 0) ?: 0
-    }
-}
-
 operator fun KotlinVersion.compareTo(other: KotlinVersion): Int {
     if (this == other) return 0
     (this.major - other.major).takeIf { it != 0 }?.let { return it }
     (this.minor - other.minor).takeIf { it != 0 }?.let { return it }
     (this.patch - other.patch).takeIf { it != 0 }?.let { return it }
     (this.maturity.ordinal - other.maturity.ordinal).takeIf { it != 0 }?.let { return it }
-    if (this.classifier != null && other.classifier != null) {
-        val thisLastNumber = Regex("""\d+""").findAll(this.classifier).lastOrNull()?.value?.toIntOrNull()
-        val otherLastNumber = Regex("""\d+""").findAll(other.classifier).lastOrNull()?.value?.toIntOrNull()
-        if (thisLastNumber != null && otherLastNumber != null) {
-            return thisLastNumber - otherLastNumber
-        }
+
+    if (this.classifier == null && other.classifier != null) {
+        /* eg. 1.6.20 > 1.6.20-200 */
+        return 1
+    }
+
+    if (this.classifier != null && other.classifier == null) {
+        /* e.g. 1.6.20-200 < 1.6.20 */
+        return -1
+    }
+
+    val thisClassifierNumber = this.classifierNumber
+    val otherClassifierNumber = other.classifierNumber
+    if (thisClassifierNumber != null && otherClassifierNumber != null) {
+        (thisClassifierNumber - otherClassifierNumber).takeIf { it != 0 }?.let { return it }
+    }
+
+    if (thisClassifierNumber != null && otherClassifierNumber == null) {
+        /* e.g. 1.6.20-rc1 > 1.6.20-rc */
+        return 1
+    }
+
+    if (thisClassifierNumber == null && otherClassifierNumber != null) {
+        /* e.g. 1.6.20-rc < 1.6.20-rc1 */
+        return -1
+    }
+
+    val thisBuildNumber = this.buildNumber
+    val otherBuildNumber = other.buildNumber
+    if (thisBuildNumber != null && otherBuildNumber != null) {
+        (thisBuildNumber - otherBuildNumber).takeIf { it != 0 }?.let { return it }
+    }
+
+    if (thisBuildNumber == null && otherBuildNumber != null) {
+        /* e.g. 1.6.20-M1 > 1.6.20-M1-200 */
+        return 1
+    }
+
+    if (thisBuildNumber != null && otherBuildNumber == null) {
+        /* e.g. 1.6.20-M1-200 < 1.6.20-M1 */
+        return -1
     }
 
     return 0
 }
+
+val KotlinVersion.buildNumber: Int?
+    get() {
+        if (classifier == null) return null
+
+        /*
+        Handle classifiers that only consist of version + build number. This is used for stable releases
+        like:
+        1.6.20-1
+        1.6.20-22
+        1.6.
+         */
+        val buildNumberOnlyClassifierRegex = Regex("\\d+")
+        if (buildNumberOnlyClassifierRegex.matches(classifier)) {
+            return classifier.toIntOrNull()
+        }
+
+        val classifierRegex = Regex("""(.+?)(\d*)?-?(\d*)?""")
+        val classifierMatch = classifierRegex.matchEntire(classifier) ?: return null
+        return classifierMatch.groupValues.getOrNull(3)?.toIntOrNull()
+    }
+
+val KotlinVersion.classifierNumber: Int?
+    get() {
+        if (classifier == null) return null
+
+        /*
+        Classifiers with only a buildNumber assigned
+         */
+        val buildNumberOnlyClassifierRegex = Regex("\\d+")
+        if (buildNumberOnlyClassifierRegex.matches(classifier)) {
+            return null
+        }
+
+
+        val classifierRegex = Regex("""(.+?)(\d*)?-?(\d*)?""")
+        val classifierMatch = classifierRegex.matchEntire(classifier) ?: return null
+        return classifierMatch.groupValues.getOrNull(2)?.toIntOrNull()
+    }
 
 fun KotlinVersionRequirement.matches(kotlinVersionString: String): Boolean {
     return matches(parseKotlinVersion(kotlinVersionString))
@@ -127,14 +183,6 @@ fun parseKotlinVersionRequirement(value: String): KotlinVersionRequirement {
     return KotlinVersionRequirement.Exact(parseKotlinVersion(value))
 }
 
-fun parseKotlinVersionOrNull(value: String): KotlinVersion? {
-    return try {
-        parseKotlinVersionOrNull(value)
-    } catch (t: IllegalArgumentException) {
-        return null
-    }
-}
-
 fun parseKotlinVersion(value: String): KotlinVersion {
     fun throwInvalid(): Nothing {
         throw IllegalArgumentException("Invalid Kotlin version: $value")
@@ -150,11 +198,11 @@ fun parseKotlinVersion(value: String): KotlinVersion {
         major = baseVersionSplit[0].toIntOrNull() ?: throwInvalid(),
         minor = baseVersionSplit[1].toIntOrNull() ?: throwInvalid(),
         patch = baseVersionSplit.getOrNull(2)?.let { it.toIntOrNull() ?: throwInvalid() } ?: 0,
-        classifier = classifier?.toLowerCase()
+        classifier = classifier?.lowercase()
     )
 }
 
-private const val WILDCARD_KOTLIN_VERSION_CLASSIFIER = "__*__"
+private const val WILDCARD_KOTLIN_VERSION_CLASSIFIER = "*"
 
 fun KotlinVersion.toWildcard(): KotlinVersion {
     return KotlinVersion(
@@ -162,3 +210,5 @@ fun KotlinVersion.toWildcard(): KotlinVersion {
         classifier = WILDCARD_KOTLIN_VERSION_CLASSIFIER
     )
 }
+
+val KotlinVersion.isHmppEnabledByDefault get() = this >= parseKotlinVersion("1.6.20-dev-6442")

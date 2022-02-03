@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiPrecedenceUtil;
@@ -78,10 +79,11 @@ public final class ParenthesesUtils {
   }
 
   public static String getText(@NotNull PsiExpression expression, int precedence) {
+    String text = InjectedLanguageManager.getInstance(expression.getProject()).getUnescapedText(expression);
     if (getPrecedence(expression) >= precedence) {
-      return '(' + expression.getText() + ')';
+      return '(' + text + ')';
     }
-    return expression.getText();
+    return text;
   }
 
   @Nullable public static PsiElement getParentSkipParentheses(PsiElement element) {

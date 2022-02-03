@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInsight.references
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy
@@ -8,7 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.IncorrectOperationException
 
-class EnumSourceReference(element: PsiLiteral) : PsiReferenceBase<PsiLiteral>(element, false) {
+class EnumSourceReference(element: PsiLanguageInjectionHost) : PsiReferenceBase<PsiLanguageInjectionHost>(element, false) {
   @Throws(IncorrectOperationException::class)
   override fun bindToElement(element: PsiElement): PsiElement {
     return if (element is PsiEnumConstant) {
@@ -42,7 +42,7 @@ class EnumSourceReference(element: PsiLiteral) : PsiReferenceBase<PsiLiteral>(el
     }
   }
 
-  private fun findReferencedEnumClass(literal: PsiLiteral): PsiClass? {
+  private fun findReferencedEnumClass(literal: PsiLanguageInjectionHost): PsiClass? {
     val annotation = PsiTreeUtil.getParentOfType(literal, PsiAnnotation::class.java, false)
                      ?: return null
     val memberValue = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)

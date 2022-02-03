@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Kotlin2JvmCompilerArguments">
-    <option name="jvmTarget" value="1.8" />
+    <option name="jvmTarget" value="11" />
   </component>
   <component name="KotlinCommonCompilerArguments">
     <option name="apiVersion" value="1.5" />
@@ -9,5 +9,8 @@
   </component>
   <component name="KotlinCompilerSettings">
     <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable -Xuse-old-backend -Xopt-in=kotlin.io.path.ExperimentalPathApi -Xopt-in=kotlin.RequiresOptIn -Xopt-in=com.intellij.openapi.util.IntellijInternalApi" />
+  </component>
+  <component name="KotlinJpsPluginSettings">
+    <option name="version" value="1.6.10-release-952" />
   </component>
 </project>

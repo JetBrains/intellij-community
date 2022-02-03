@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.core.isInTestSourceContentKotlinAware
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.framework.effectiveKind
 import org.jetbrains.kotlin.idea.framework.platform
+import org.jetbrains.kotlin.idea.klib.AbstractKlibLibraryInfo
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.project.findAnalyzerServices
 import org.jetbrains.kotlin.idea.project.getStableName
@@ -43,13 +44,16 @@ import org.jetbrains.kotlin.idea.project.libraryToSourceAnalysisEnabled
 import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.util.isInSourceContentWithoutInjected
 import org.jetbrains.kotlin.idea.util.rootManager
+import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.platform.CommonPlatforms
-import org.jetbrains.kotlin.platform.DefaultIdeTargetPlatformKindProvider
-import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.platform.compat.toOldPlatform
-import org.jetbrains.kotlin.platform.idePlatformKind
+import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.platform.jvm.isJvm
+import org.jetbrains.kotlin.platform.konan.NativePlatform
+import org.jetbrains.kotlin.platform.konan.NativePlatforms
+import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.resolve.jvm.TopPackageNamesProvider
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
@@ -88,7 +92,26 @@ fun createLibraryInfo(project: Project, library: Library): List<LibraryInfo> =
         approximatePlatform.idePlatformKind.resolution.createLibraryInfo(project, library)
     }
 
-interface ModuleSourceInfo : IdeaModuleInfo, TrackableModuleInfo {
+internal fun TargetPlatform.canDependOn(other: IdeaModuleInfo, isHmppEnabled: Boolean): Boolean {
+    if (isHmppEnabled) {
+        // HACK: allow depending on stdlib even if platforms do not match
+        if (isNative() && other is AbstractKlibLibraryInfo && other.libraryRoot.endsWith(KONAN_STDLIB_NAME)) return true
+
+        val platformsWhichAreNotContainedInOther = this.componentPlatforms - other.platform.componentPlatforms
+        if (platformsWhichAreNotContainedInOther.isEmpty()) return true
+
+        // unspecifiedNativePlatform is effectively a wildcard for NativePlatform
+        return platformsWhichAreNotContainedInOther.all { it is NativePlatform } &&
+                NativePlatforms.unspecifiedNativePlatform.componentPlatforms.single() in other.platform.componentPlatforms
+    } else {
+        return this.isJvm() && other.platform.isJvm() ||
+                this.isJs() && other.platform.isJs() ||
+                this.isNative() && other.platform.isNative() ||
+                this.isCommon() && other.platform.isCommon()
+    }
+}
+
+interface ModuleSourceInfo : IdeaModuleInfo, TrackableModuleInfo, ModuleSourceInfoBase {
     val module: Module
 
     override val expectedBy: List<ModuleSourceInfo>
@@ -299,7 +322,7 @@ abstract class LibraryInfo(override val project: Project, val library: Library) 
 }
 
 data class LibrarySourceInfo(override val project: Project, val library: Library, override val binariesModuleInfo: BinaryModuleInfo) :
-    IdeaModuleInfo, SourceForBinaryModuleInfo {
+    IdeaModuleInfo, SourceForBinaryModuleInfo, LibraryModuleSourceInfoBase {
 
     override val name: Name = Name.special("<sources for library ${library.name}>")
 
@@ -327,7 +350,7 @@ data class LibrarySourceInfo(override val project: Project, val library: Library
 }
 
 //TODO: (module refactoring) there should be separate SdkSourceInfo but there are no kotlin source in existing sdks for now :)
-data class SdkInfo(override val project: Project, val sdk: Sdk) : IdeaModuleInfo {
+data class SdkInfo(override val project: Project, val sdk: Sdk) : IdeaModuleInfo, SdkInfoBase {
     override val moduleOrigin: ModuleOrigin
         get() = ModuleOrigin.LIBRARY
 
@@ -351,12 +374,12 @@ data class SdkInfo(override val project: Project, val sdk: Sdk) : IdeaModuleInfo
 
     override val capabilities: Map<ModuleCapability<*>, Any?>
         get() = when (this.sdk.sdkType) {
-            is JavaSdk -> super.capabilities + mapOf(JDK_CAPABILITY to true)
-            else -> super.capabilities
+            is JavaSdk -> super<IdeaModuleInfo>.capabilities + mapOf(JDK_CAPABILITY to true)
+            else -> super<IdeaModuleInfo>.capabilities
         }
 }
 
-object NotUnderContentRootModuleInfo : IdeaModuleInfo {
+object NotUnderContentRootModuleInfo : IdeaModuleInfo, NonSourceModuleInfoBase {
     override val moduleOrigin: ModuleOrigin
         get() = ModuleOrigin.OTHER
 
@@ -515,6 +538,10 @@ data class PlatformModuleInfo(
         get() = platform.findAnalyzerServices(platformModule.module.project)
 
     override fun dependencies() = platformModule.dependencies()
+        // This is needed for cases when we create PlatformModuleInfo in Kotlin Multiplatform Analysis Mode is set to COMPOSITE, see
+        // KotlinCacheService.getResolutionFacadeWithForcedPlatform.
+        // For SEPARATE-mode, this filter will be executed in getSourceModuleDependencies.kt anyways, so it's essentially a no-op
+        .filter { NonHmppSourceModuleDependenciesFilter(platformModule.platform).isSupportedDependency(it) }
 
     override val expectedBy: List<ModuleInfo>
         get() = platformModule.expectedBy

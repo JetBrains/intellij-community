@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.processor.clazz.*;
 import de.plushnikov.intellij.plugin.processor.clazz.builder.*;
@@ -22,12 +23,10 @@ import de.plushnikov.intellij.plugin.processor.method.DelegateMethodProcessor;
 import de.plushnikov.intellij.plugin.processor.modifier.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public final class LombokProcessorManager {
 
@@ -36,6 +35,11 @@ public final class LombokProcessorManager {
   private static Collection<Processor> getWithCache(String key, Supplier<Collection<Processor>> function) {
     return PROCESSOR_CACHE.computeIfAbsent(key, s -> function.get());
   }
+
+  private static final Set<String> ourSupportedShortNames = getAllProcessors()
+    .stream().flatMap(p -> Arrays.stream(p.getSupportedAnnotationClasses()))
+    .map(StringUtil::getShortName)
+    .collect(Collectors.toSet());
 
   @NotNull
   private static Collection<Processor> getAllProcessors() {
@@ -113,6 +117,14 @@ public final class LombokProcessorManager {
 
   @NotNull
   public static Collection<Processor> getProcessors(@NotNull PsiAnnotation psiAnnotation) {
+    PsiJavaCodeReferenceElement nameReferenceElement = psiAnnotation.getNameReferenceElement();
+    if (nameReferenceElement == null) {
+      return Collections.emptyList();
+    }
+    String referenceName = nameReferenceElement.getReferenceName();
+    if (referenceName == null || !ourSupportedShortNames.contains(referenceName)) {
+      return Collections.emptyList();
+    }
     final String qualifiedName = psiAnnotation.getQualifiedName();
     if (StringUtil.isEmpty(qualifiedName) || !qualifiedName.contains("lombok")) {
       return Collections.emptyList();

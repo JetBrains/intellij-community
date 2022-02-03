@@ -6,8 +6,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.actions.ActionsCollector;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.Editor;
@@ -48,12 +46,11 @@ import java.util.*;
 import java.util.function.Supplier;
 
 final class InspectionPopupManager {
-
   private final ExtensionPointName<InspectionPopupLevelChangePolicy> EP_NAME = ExtensionPointName.create("com.intellij.inspectionPopupLevelChangePolicy");
   private static final int DELTA_X = 6;
   private static final int DELTA_Y = 6;
 
-  private final Supplier<AnalyzerStatus> statusSupplier;
+  private final Supplier<? extends @NotNull AnalyzerStatus> statusSupplier;
   private final Editor myEditor;
   private final AnAction compactViewAction;
 
@@ -69,7 +66,7 @@ final class InspectionPopupManager {
   private JBPopup myPopup;
   private boolean insidePopup;
 
-  InspectionPopupManager(@NotNull Supplier<AnalyzerStatus> statusSupplier, @NotNull Editor editor, @NotNull AnAction compactViewAction) {
+  InspectionPopupManager(@NotNull Supplier<? extends @NotNull AnalyzerStatus> statusSupplier, @NotNull Editor editor, @NotNull AnAction compactViewAction) {
     this.statusSupplier = statusSupplier;
     this.myEditor = editor;
     this.compactViewAction = compactViewAction;
@@ -79,7 +76,7 @@ final class InspectionPopupManager {
 
     myPopupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, null).
       setCancelOnClickOutside(true).
-      setCancelCallback(() -> getAnalyzerStatus() == null || getAnalyzerStatus().getController().canClosePopup());
+      setCancelCallback(() -> getAnalyzerStatus().getController().canClosePopup());
 
     myAncestorListener = new AncestorListenerAdapter() {
       @Override
@@ -91,9 +88,7 @@ final class InspectionPopupManager {
     myPopupListener = new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
-        if (statusSupplier.get() != null) {
-          statusSupplier.get().getController().onClosePopup();
-        }
+        statusSupplier.get().getController().onClosePopup();
         myEditor.getComponent().removeAncestorListener(myAncestorListener);
       }
     };
@@ -139,9 +134,9 @@ final class InspectionPopupManager {
     }, Registry.intValue("ide.tooltip.initialDelay.highlighter"));
   }
 
-  void showPopup(@NotNull InputEvent event) {
+  private void showPopup(@NotNull InputEvent event) {
     hidePopup();
-    if (myPopupState.isRecentlyHidden()) return; // do not show new popup
+    if (myPopupState.isRecentlyHidden() || AnalyzerStatus.isEmpty(getAnalyzerStatus())) return; // do not show new popup
 
     updateContentPanel(getAnalyzerStatus().getController());
 
@@ -169,6 +164,7 @@ final class InspectionPopupManager {
     myPopup = null;
   }
 
+  @NotNull
   private AnalyzerStatus getAnalyzerStatus() {
     return statusSupplier.get();
   }
@@ -200,7 +196,7 @@ final class InspectionPopupManager {
     else if (StringUtil.isNotEmpty(getAnalyzerStatus().getDetails())) {
       myContent.add(new JLabel(XmlStringUtil.wrapInHtml(getAnalyzerStatus().getDetails())), gc);
     }
-    else if (getAnalyzerStatus().getExpandedStatus().size() > 0 && getAnalyzerStatus().getAnalyzingType() != AnalyzingType.EMPTY) {
+    else if (!getAnalyzerStatus().getExpandedStatus().isEmpty() && getAnalyzerStatus().getAnalyzingType() != AnalyzingType.EMPTY) {
       myContent.add(createDetailsPanel(), gc);
     }
 
@@ -245,7 +241,7 @@ final class InspectionPopupManager {
       if (StringUtil.isNotEmpty(getAnalyzerStatus().getDetails())) {
         myContent.add(new JLabel(XmlStringUtil.wrapInHtml(getAnalyzerStatus().getDetails())), gc);
       }
-      else if (getAnalyzerStatus().getExpandedStatus().size() > 0 && getAnalyzerStatus().getAnalyzingType() != AnalyzingType.EMPTY) {
+      else if (!getAnalyzerStatus().getExpandedStatus().isEmpty() && getAnalyzerStatus().getAnalyzingType() != AnalyzingType.EMPTY) {
         myContent.add(createDetailsPanel(), gc);
       }
       else if (!passes.isEmpty()){
@@ -356,26 +352,18 @@ final class InspectionPopupManager {
     return new DropDownLink<>(level.getLevel(),
                               controller.getAvailableLevels(),
                               inspectionsLevel -> {
-                                controller.setHighLightLevel(level.copy(level.getLangID(), inspectionsLevel));
+                                controller.setHighLightLevel(new LanguageHighlightLevel(level.getLangID(), inspectionsLevel));
                                 myContent.revalidate();
 
                                 Dimension size = myContent.getPreferredSize();
                                 size.width = Math.max(size.width, JBUIScale.scale(296));
                                 myPopup.setSize(size);
-
-                                // Update statistics
-                                FeatureUsageData data = new FeatureUsageData().
-                                  addProject(myEditor.getProject()).
-                                  addLanguage(level.getLangID()).
-                                  addData("level", inspectionsLevel.name());
-
-                                FUCounterUsageLogger.getInstance().logEvent("inspection.widget", "highlight.level.changed", data);
                               },
                               true) {
       @NotNull
       @Override
-      protected String itemToString(InspectionsLevel item) {
-        return prefix + item.toString();
+      protected String itemToString(@NotNull InspectionsLevel item) {
+        return prefix + item;
       }
     };
   }

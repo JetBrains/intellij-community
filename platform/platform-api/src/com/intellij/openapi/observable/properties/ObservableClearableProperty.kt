@@ -2,25 +2,19 @@
 package com.intellij.openapi.observable.properties
 
 import com.intellij.openapi.Disposable
-import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KProperty
 
-interface ObservableClearableProperty<T> : ReadWriteProperty<Any?, T> {
-  fun get(): T
-
-  fun set(value: T)
+/**
+ * Deprecated. Please don't use this interface directly.
+ * Clearable features of this interface aren't used.
+ * Callback [afterChange] cannot be called when lazy property is [reset].
+ * @see AtomicLazyProperty
+ */
+@Deprecated("Use instead ObservableMutableProperty")
+interface ObservableClearableProperty<T> : ObservableMutableProperty<T> {
 
   fun reset()
 
-  fun afterChange(listener: (T) -> Unit)
-
   fun afterReset(listener: () -> Unit)
 
-  fun afterChange(listener: (T) -> Unit, parentDisposable: Disposable)
-
   fun afterReset(listener: () -> Unit, parentDisposable: Disposable)
-
-  override fun getValue(thisRef: Any?, property: KProperty<*>): T = get()
-
-  override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) = set(value)
 }

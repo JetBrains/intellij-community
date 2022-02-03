@@ -19,6 +19,7 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.uiDesigner.core.GridLayoutManager
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.onClosed
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -91,11 +92,11 @@ class HighlightingBenchmarkAction : AnAction() {
         val channel = Channel<String>(capacity = Channel.CONFLATED)
 
         override fun daemonFinished() {
-            channel.offer(SUCCESS)
+            channel.trySend(SUCCESS).onClosed { throw IllegalStateException(it) }
         }
 
         override fun daemonCancelEventOccurred(reason: String) {
-            channel.offer(reason)
+            channel.trySend(reason).onClosed { throw IllegalStateException(it) }
         }
     }
 

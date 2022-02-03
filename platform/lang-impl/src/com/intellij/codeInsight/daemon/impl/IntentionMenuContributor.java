@@ -16,6 +16,6 @@ import org.jetbrains.annotations.NotNull;
 public interface IntentionMenuContributor {
   ExtensionPointName<IntentionMenuContributor> EP_NAME = ExtensionPointName.create("com.intellij.intentionMenuContributor");
 
-  void collectActions(@NotNull Editor hostEditor, @NotNull PsiFile hostFile, @NotNull final ShowIntentionsPass.IntentionsInfo intentions,
+  void collectActions(@NotNull Editor hostEditor, @NotNull PsiFile hostFile, @NotNull ShowIntentionsPass.IntentionsInfo intentions,
                       int passIdToShowIntentionsFor, int offset);
 }

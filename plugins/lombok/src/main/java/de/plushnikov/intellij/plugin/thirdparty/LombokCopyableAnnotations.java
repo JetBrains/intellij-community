@@ -1,11 +1,11 @@
 package de.plushnikov.intellij.plugin.thirdparty;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public enum LombokCopyableAnnotations {
   BASE_COPYABLE(LombokUtils.BASE_COPYABLE_ANNOTATIONS),
@@ -13,14 +13,16 @@ public enum LombokCopyableAnnotations {
   COPY_TO_BUILDER_SINGULAR_SETTER(LombokUtils.COPY_TO_BUILDER_SINGULAR_SETTER_ANNOTATIONS),
   JACKSON_COPY_TO_BUILDER(LombokUtils.JACKSON_COPY_TO_BUILDER_ANNOTATIONS);
 
-  private final Map<String, String> fullQualifiedToShortNames;
+  private final Map<String, Set<String>> shortNames;
 
   LombokCopyableAnnotations(String[] fqns) {
-    fullQualifiedToShortNames =
-      Collections.unmodifiableMap(ContainerUtil.map2Map(fqns, fqn -> Pair.create(fqn, StringUtil.getShortName(fqn))));
+    shortNames = new HashMap<>(fqns.length);
+    for (String fqn : fqns) {
+      String shortName = StringUtil.getShortName(fqn);
+      shortNames.computeIfAbsent(shortName, __ -> new HashSet<>(5)).add(fqn);
+    }
   }
-
-  public Map<String, String> getFullQualifiedToShortNames() {
-    return fullQualifiedToShortNames;
+  public Map<String, Set<String>> getShortNames() {
+    return shortNames;
   }
 }

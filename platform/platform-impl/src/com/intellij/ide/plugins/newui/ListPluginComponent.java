@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.application.options.RegistryManager;
@@ -40,32 +40,29 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 
-/**
- * @author Alexander Lobas
- */
-public class ListPluginComponent extends JPanel {
+public final class ListPluginComponent extends JPanel {
   public static final Color DisabledColor = JBColor.namedColor("Plugins.disabledForeground", new JBColor(0xB1B1B1, 0x696969));
   public static final Color GRAY_COLOR = JBColor.namedColor("Label.infoForeground", new JBColor(Gray._120, Gray._135));
   public static final Color SELECTION_COLOR = JBColor.namedColor("Plugins.lightSelectionBackground", new JBColor(0xEDF6FE, 0x464A4D));
   public static final Color HOVER_COLOR = JBColor.namedColor("Plugins.hoverBackground", new JBColor(0xEDF6FE, 0x464A4D));
 
-  private static final Ref<Boolean> HANDLE_FOCUS_ON_SELECTION = Ref.create(Boolean.TRUE);
+  private static final Ref<Boolean> HANDLE_FOCUS_ON_SELECTION = new Ref<>(Boolean.TRUE);
 
   private final MyPluginModel myPluginModel;
   private final LinkListener<Object> mySearchListener;
   private final boolean myMarketplace;
   private final boolean myIsAllowed;
   private @NotNull IdeaPluginDescriptor myPlugin;
-  private @NotNull PluginsGroup myGroup;
+  private final @NotNull PluginsGroup myGroup;
   private boolean myOnlyUpdateMode;
   public IdeaPluginDescriptor myUpdateDescriptor;
 
   private final JLabel myNameComponent = new JLabel();
   private final JLabel myIconComponent = new JLabel(AllIcons.Plugins.PluginLogo);
   private final BaselineLayout myLayout = new BaselineLayout();
-  protected JButton myRestartButton;
-  protected InstallButton myInstallButton;
-  protected JButton myUpdateButton;
+  JButton myRestartButton;
+  InstallButton myInstallButton;
+  JButton myUpdateButton;
   private JComponent myEnableDisableButton;
   private JCheckBox myChooseUpdateButton;
   private JComponent myAlignButton;
@@ -80,7 +77,7 @@ public class ListPluginComponent extends JPanel {
   private ErrorComponent myErrorComponent;
   private OneLineProgressIndicator myIndicator;
   private EventHandler myEventHandler;
-  protected @NotNull EventHandler.SelectionType mySelection = EventHandler.SelectionType.NONE;
+  @NotNull private EventHandler.SelectionType mySelection = EventHandler.SelectionType.NONE;
 
   public ListPluginComponent(@NotNull MyPluginModel pluginModel,
                              @NotNull IdeaPluginDescriptor plugin,
@@ -211,7 +208,8 @@ public class ListPluginComponent extends JPanel {
         myInstallButton
           .addActionListener(
             e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
-        myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null,
+        myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null &&
+                                   !InstalledPluginsState.getInstance().wasInstalledWithoutRestart(myPlugin.getPluginId()),
                                    IdeBundle.message("plugin.status.installed"));
         ColorButton.setWidth72(myInstallButton);
       }
@@ -499,13 +497,13 @@ public class ListPluginComponent extends JPanel {
     eventHandler.addAll(this);
   }
 
-  protected void updateColors(@NotNull EventHandler.SelectionType type) {
+  void updateColors(@NotNull EventHandler.SelectionType type) {
     updateColors(GRAY_COLOR, type == EventHandler.SelectionType.NONE
                              ? PluginManagerConfigurable.MAIN_BG_COLOR
                              : (type == EventHandler.SelectionType.HOVER ? HOVER_COLOR : SELECTION_COLOR));
   }
 
-  protected void updateColors(@NotNull Color grayedFg, @NotNull Color background) {
+  private void updateColors(@NotNull Color grayedFg, @NotNull Color background) {
     setBackground(background);
 
     Color nameForeground = null;
@@ -595,7 +593,7 @@ public class ListPluginComponent extends JPanel {
     }
   }
 
-  protected void updateIcon(boolean errors, boolean disabled) {
+  private void updateIcon(boolean errors, boolean disabled) {
     myIconComponent.setIcon(myPluginModel.getIcon(myPlugin, false, errors, disabled));
   }
 
@@ -871,18 +869,18 @@ public class ListPluginComponent extends JPanel {
     }
   }
 
-  protected void fullRepaint() {
+  private void fullRepaint() {
     Container parent = getParent();
     parent.doLayout();
     parent.revalidate();
     parent.repaint();
   }
 
-  public final @NotNull IdeaPluginDescriptor getPluginDescriptor() {
+  public @NotNull IdeaPluginDescriptor getPluginDescriptor() {
     return myPlugin;
   }
 
-  public final void setPluginDescriptor(@NotNull IdeaPluginDescriptor plugin) {
+  public void setPluginDescriptor(@NotNull IdeaPluginDescriptor plugin) {
     myPlugin = plugin;
   }
 

@@ -163,10 +163,10 @@ public abstract class MetaAnnotationUtil {
   }
 
   private static @NotNull Iterator<VirtualFile> getJavaAnnotationInheritorIds(Project project) {
-    return StubIndex.getInstance().getContainingFiles(JavaStubIndexKeys.SUPER_CLASSES,
-                                                      "Annotation",
-                                                      project,
-                                                      GlobalSearchScope.allScope(project));
+    return StubIndex.getInstance().getContainingFilesIterator(JavaStubIndexKeys.SUPER_CLASSES,
+                                                              "Annotation",
+                                                              project,
+                                                              GlobalSearchScope.allScope(project));
   }
 
   private static void collectClassWithChildren(PsiClass psiClass, Set<? super PsiClass> classes, GlobalSearchScope scope) {

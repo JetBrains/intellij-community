@@ -70,7 +70,7 @@ private fun Converter.convertImport(fqName: FqName, ref: PsiJavaCodeReferenceEle
 
 private fun Converter.convertStaticImportOnDemand(fqName: FqName, target: PsiElement?): List<String> {
     when (target) {
-        is KtLightClassForFacade -> return listOf(target.fqName.parent().render() + ".*")
+        is KtLightClassForFacade -> return listOf(target.facadeClassFqName.parent().render() + ".*")
 
         is KtLightClass -> {
             val kotlinOrigin = target.kotlinOrigin
@@ -130,7 +130,7 @@ private fun convertStaticExplicitImport(fqName: FqName, target: PsiElement?): Li
 
 private fun convertNonStaticImport(fqName: FqName, isOnDemand: Boolean, target: PsiElement?): List<String> {
     when (target) {
-        is KtLightClassForFacade -> return listOf(target.fqName.parent().render() + ".*")
+        is KtLightClassForFacade -> return listOf(target.facadeClassFqName.parent().render() + ".*")
 
         is KtLightClass -> {
             if (!isOnDemand) {

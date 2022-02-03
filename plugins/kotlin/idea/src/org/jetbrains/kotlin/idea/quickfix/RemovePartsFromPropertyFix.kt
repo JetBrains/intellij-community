@@ -16,9 +16,9 @@ import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.TypeRefinement
 import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
 import org.jetbrains.kotlin.types.isError
-import org.jetbrains.kotlin.types.refinement.TypeRefinement
 
 open class RemovePartsFromPropertyFix(
     element: KtProperty,
@@ -115,8 +115,7 @@ open class RemovePartsFromPropertyFix(
 
     object LateInitFactory : KotlinSingleIntentionActionFactory() {
         public override fun createAction(diagnostic: Diagnostic): KotlinQuickFixAction<KtProperty>? {
-            val element = Errors.INAPPLICABLE_LATEINIT_MODIFIER.cast(diagnostic).psiElement
-            val property = PsiTreeUtil.getParentOfType(element, KtProperty::class.java) ?: return null
+            val property = Errors.INAPPLICABLE_LATEINIT_MODIFIER.cast(diagnostic).psiElement as? KtProperty ?: return null
             val hasInitializer = property.hasInitializer()
             val hasGetter = property.getter?.bodyExpression != null
             val hasSetter = property.setter?.bodyExpression != null

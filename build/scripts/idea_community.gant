@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import com.intellij.util.SystemProperties
 import org.jetbrains.intellij.build.BuildOptions
@@ -32,17 +32,6 @@ target('default': 'The default target') {
     def options = new BuildOptions()
     options.buildNumber = null //we cannot provide consistent build number for IDEA Community if it's built separately so use *.SNAPSHOT number to avoid confusion
     new IdeaCommunityBuilder(home, options).buildDistributions()
-  }
-  catch (Throwable e) {
-    e.printStackTrace()
-    throw e
-  }
-}
-
-target('build-intellij-core' : 'Build intellij-core.zip') {
-  try {
-    def options = new BuildOptions()
-    new IdeaCommunityBuilder(home, options).buildIntelliJCore()
   }
   catch (Throwable e) {
     e.printStackTrace()

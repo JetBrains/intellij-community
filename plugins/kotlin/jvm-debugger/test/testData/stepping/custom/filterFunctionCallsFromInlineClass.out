@@ -1,0 +1,75 @@
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:40
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:49
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:58
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:69
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:78
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:87
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:98
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:107
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:116
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:127
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:136
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:145
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:167
+LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:176
+Run Java
+Connected to the target VM
+filterFunctionCallsFromInlineClass.kt:40
+filterFunctionCallsFromInlineClass.kt:45
+filterFunctionCallsFromInlineClass.kt:6
+filterFunctionCallsFromInlineClass.kt:45
+filterFunctionCallsFromInlineClass.kt:49
+filterFunctionCallsFromInlineClass.kt:54
+filterFunctionCallsFromInlineClass.kt:14
+filterFunctionCallsFromInlineClass.kt:54
+filterFunctionCallsFromInlineClass.kt:58
+filterFunctionCallsFromInlineClass.kt:63
+filterFunctionCallsFromInlineClass.kt:10
+filterFunctionCallsFromInlineClass.kt:63
+filterFunctionCallsFromInlineClass.kt:69
+filterFunctionCallsFromInlineClass.kt:74
+filterFunctionCallsFromInlineClass.kt:22
+filterFunctionCallsFromInlineClass.kt:74
+filterFunctionCallsFromInlineClass.kt:78
+filterFunctionCallsFromInlineClass.kt:83
+filterFunctionCallsFromInlineClass.kt:14
+filterFunctionCallsFromInlineClass.kt:83
+filterFunctionCallsFromInlineClass.kt:87
+filterFunctionCallsFromInlineClass.kt:92
+filterFunctionCallsFromInlineClass.kt:10
+filterFunctionCallsFromInlineClass.kt:92
+filterFunctionCallsFromInlineClass.kt:98
+filterFunctionCallsFromInlineClass.kt:103
+filterFunctionCallsFromInlineClass.kt:22
+filterFunctionCallsFromInlineClass.kt:103
+filterFunctionCallsFromInlineClass.kt:107
+filterFunctionCallsFromInlineClass.kt:112
+filterFunctionCallsFromInlineClass.kt:14
+filterFunctionCallsFromInlineClass.kt:112
+filterFunctionCallsFromInlineClass.kt:116
+filterFunctionCallsFromInlineClass.kt:121
+filterFunctionCallsFromInlineClass.kt:26
+filterFunctionCallsFromInlineClass.kt:121
+filterFunctionCallsFromInlineClass.kt:127
+filterFunctionCallsFromInlineClass.kt:132
+filterFunctionCallsFromInlineClass.kt:22
+filterFunctionCallsFromInlineClass.kt:132
+filterFunctionCallsFromInlineClass.kt:136
+filterFunctionCallsFromInlineClass.kt:141
+filterFunctionCallsFromInlineClass.kt:30
+filterFunctionCallsFromInlineClass.kt:141
+filterFunctionCallsFromInlineClass.kt:145
+filterFunctionCallsFromInlineClass.kt:150
+filterFunctionCallsFromInlineClass.kt:26
+filterFunctionCallsFromInlineClass.kt:150
+filterFunctionCallsFromInlineClass.kt:167
+filterFunctionCallsFromInlineClass.kt:172
+filterFunctionCallsFromInlineClass.kt:155
+filterFunctionCallsFromInlineClass.kt:172
+filterFunctionCallsFromInlineClass.kt:176
+filterFunctionCallsFromInlineClass.kt:181
+filterFunctionCallsFromInlineClass.kt:159
+filterFunctionCallsFromInlineClass.kt:181
+Disconnected from the target VM
+
+Process finished with exit code 0

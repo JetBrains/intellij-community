@@ -16,6 +16,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +69,7 @@ public class PersistentEnumerator<Data> implements DataEnumeratorEx<Data>, Close
 
   @ApiStatus.Internal
   public static int getVersion() {
-    return PersistentBTreeEnumerator.VERSION;
+    return PersistentBTreeEnumerator.baseVersion();
   }
 
   @Override
@@ -131,5 +132,10 @@ public class PersistentEnumerator<Data> implements DataEnumeratorEx<Data>, Close
   @ApiStatus.Internal
   public Collection<Data> getAllDataObjects(@Nullable final PersistentEnumeratorBase.DataFilter filter) throws IOException {
     return myEnumerator.getAllDataObjects(filter);
+  }
+
+  @ApiStatus.Internal
+  public boolean processAllDataObjects(@NotNull Processor<? super Data> processor) throws IOException {
+    return myEnumerator.iterateData(processor);
   }
 }

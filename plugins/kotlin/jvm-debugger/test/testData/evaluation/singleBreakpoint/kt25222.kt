@@ -16,5 +16,5 @@ fun main() {
     val a = 5
 }
 
-// EXPRESSION: ann
-// RESULT: instance of com.sun.proxy.$Proxy1(id=ID): Lcom/sun/proxy/$Proxy1;
+// EXPRESSION: java.lang.reflect.Proxy.isProxyClass(ann::class.java)
+// RESULT: 1: Z

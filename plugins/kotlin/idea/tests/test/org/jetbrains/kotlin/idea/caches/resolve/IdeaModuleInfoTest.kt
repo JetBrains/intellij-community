@@ -27,13 +27,15 @@ import org.jetbrains.kotlin.idea.caches.project.ModuleTestSourceInfo
 import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.framework.platform
+import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM3
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase.addJdk
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
 import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.test.KotlinTestUtils.allowProjectRootAccess
-import org.jetbrains.kotlin.test.KotlinTestUtils.disposeVfsRootAccess
+import org.jetbrains.kotlin.platform.js.JsPlatforms
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
 import org.jetbrains.kotlin.test.util.addDependency
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.moduleLibrary
@@ -46,7 +48,7 @@ import org.junit.runner.RunWith
 import java.io.File
 
 @RunWith(JUnit38ClassRunner::class)
-class IdeaModuleInfoTest : JavaModuleTestCase() {
+class IdeaModuleInfoTest8 : JavaModuleTestCase() {
     private var vfsDisposable: Ref<Disposable>? = null
 
     fun testSimpleModuleDependency() {
@@ -324,6 +326,7 @@ class IdeaModuleInfoTest : JavaModuleTestCase() {
         a.addDependency(stdlibJvm)
 
         val b = module("b")
+        b.setUpPlatform(JsPlatforms.defaultJsPlatform)
         b.addDependency(stdlibCommon)
         b.addDependency(stdlibJs)
 
@@ -531,6 +534,14 @@ class IdeaModuleInfoTest : JavaModuleTestCase() {
 
     private fun projectLibraryWithFakeRoot(name: String): LibraryEx {
         return projectLibrary(name, sourcesRoot = createFileInProject(name))
+    }
+
+    private fun Module.setUpPlatform(targetPlatform: TargetPlatform) {
+        createMultiplatformFacetM3(
+            platformKind = targetPlatform,
+            dependsOnModuleNames = listOf(),
+            pureKotlinSourceFolders = listOf(),
+        )
     }
 
     override fun setUp() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
 import jetbrains.buildServer.messages.serviceMessages.MapSerializerUtil;
@@ -25,6 +25,8 @@ import org.junit.runner.Description;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 import org.junit.runner.notification.RunNotifier;
+import org.opentest4j.AssertionFailedError;
+import org.opentest4j.MultipleFailuresError;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -43,7 +45,12 @@ public class JUnit5Runner {
       else {
         selector = DiscoverySelectors.selectMethod(aClass, args[1]);
       }
-      launcher.execute(LauncherDiscoveryRequestBuilder.request().selectors(selector).build(), new TCExecutionListener());
+      TCExecutionListener listener = new TCExecutionListener();
+      launcher.execute(LauncherDiscoveryRequestBuilder.request().selectors(selector).build(), listener);
+      if (!listener.smthExecuted()) {
+        //see org.jetbrains.intellij.build.impl.TestingTasksImpl.NO_TESTS_ERROR
+        System.exit(42);
+      }
     }
     finally {
       System.exit(0);
@@ -90,12 +97,16 @@ public class JUnit5Runner {
   static class TCExecutionListener implements TestExecutionListener {
     private final PrintStream myPrintStream;
     private TestPlan myTestPlan;
-    private long myCurrentTestStart;
+    private long myCurrentTestStart = 0;
     private int myFinishCount = 0;
     
     TCExecutionListener() {
       myPrintStream = System.out;
       myPrintStream.println("##teamcity[enteredTheMatrix]");
+    }
+    
+    boolean smthExecuted() {
+      return myCurrentTestStart > 0;
     }
   
     @Override
@@ -260,12 +271,49 @@ public class JUnit5Runner {
         if (ex != null) {
           attrs.put("details", getTrace(ex));
         }
+        if (ex != null) {
+          if (ex instanceof MultipleFailuresError && ((MultipleFailuresError)ex).hasFailures()) {
+            for (Throwable assertionError : ((MultipleFailuresError)ex).getFailures()) {
+              testFailure(methodName, id, parentId, messageName, assertionError, duration, reason);
+            }
+          }
+          else if (ex instanceof AssertionFailedError &&
+                   ((AssertionFailedError)ex).isActualDefined() &&
+                   ((AssertionFailedError)ex).isExpectedDefined()) {
+            attrs.put("expected", ((AssertionFailedError)ex).getExpected().getStringRepresentation());
+            attrs.put("actual", ((AssertionFailedError)ex).getActual().getStringRepresentation());
+          }
+          else {
+            Class<? extends Throwable> aClass = ex.getClass();
+            if (isComparisonFailure(aClass)){
+              try {
+                String expected = (String)aClass.getDeclaredMethod("getExpected").invoke(ex);
+                String actual = (String)aClass.getDeclaredMethod("getActual").invoke(ex);
+
+                attrs.put("expected", expected);
+                attrs.put("actual", actual);
+              }
+              catch (Throwable e) {
+                e.printStackTrace(myPrintStream);
+              }
+            }
+          }
+        }
       }
       finally {
         myPrintStream.println(ServiceMessage.asString(messageName, attrs));
       }
     }
-    
+
+    private static boolean isComparisonFailure(Class<?> aClass) {
+      if (aClass == null) return false;
+      final String throwableClassName = aClass.getName();
+      if (throwableClassName.equals("junit.framework.ComparisonFailure") || 
+          throwableClassName.equals("org.junit.ComparisonFailure")) {
+        return true;
+      }
+      return isComparisonFailure(aClass.getSuperclass());
+    }
   
     protected String getTrace(Throwable ex) {
       final StringWriter stringWriter = new StringWriter();

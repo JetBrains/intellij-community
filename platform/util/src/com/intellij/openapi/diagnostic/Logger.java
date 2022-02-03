@@ -1,14 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.Level;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+ import org.jetbrains.annotations.*;
 
 import java.lang.reflect.Constructor;
 import java.util.Collection;
@@ -227,7 +224,38 @@ public abstract class Logger {
     return value || assertTrue(false, null);
   }
 
+  /**
+   * @deprecated IntelliJ Platform no longer uses log4j as the logging framework; please use {@link #setLevel(LogLevel)} instead.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public abstract void setLevel(@NotNull Level level);
+
+  public void setLevel(@NotNull LogLevel level) {
+    switch (level) {
+      case OFF:
+        setLevel(Level.OFF);
+        break;
+      case ERROR:
+        setLevel(Level.ERROR);
+        break;
+      case WARNING:
+        setLevel(Level.WARN);
+        break;
+      case INFO:
+        setLevel(Level.INFO);
+        break;
+      case DEBUG:
+        setLevel(Level.DEBUG);
+        break;
+      case TRACE:
+        setLevel(Level.TRACE);
+        break;
+      case ALL:
+        setLevel(Level.ALL);
+        break;
+    }
+  }
 
   protected static Throwable ensureNotControlFlow(@Nullable Throwable t) {
     return t instanceof ControlFlowException ?

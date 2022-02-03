@@ -19,14 +19,11 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.KotlinIcons.*
-import org.jetbrains.kotlin.idea.asJava.LightClassProvider.Companion.providedIsKtLightClassForDecompiledDeclaration
+import org.jetbrains.kotlin.idea.caches.lightClasses.KtLightClassForDecompiledDeclarationBase
 import org.jetbrains.kotlin.idea.util.ifTrue
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
-import org.jetbrains.kotlin.psi.psiUtil.isAbstract
+import org.jetbrains.kotlin.psi.psiUtil.*
 import javax.swing.Icon
 
 open class KotlinIconProviderBase : IconProvider(), DumbAware {
@@ -83,11 +80,11 @@ open class KotlinIconProviderBase : IconProvider(), DumbAware {
 
         fun getSingleClass(file: KtFile): KtClassOrObject? {
             val mainClass = getMainClass(file)
-            return if (mainClass != null && file.declarations.size == 1) mainClass else null
+            return if (mainClass != null && file.declarations.filterNot { it.isPrivate() }.size == 1) mainClass else null
         }
 
         fun getMainClass(file: KtFile): KtClassOrObject? {
-            val classes = file.declarations.filterIsInstance<KtClassOrObject>()
+            val classes = file.declarations.filterNot { it.isPrivate() }.filterIsInstance<KtClassOrObject>()
             if (classes.size == 1 && StringUtil.getPackageName(file.name) == classes[0].name) {
                 return classes[0]
             }
@@ -162,7 +159,7 @@ open class KotlinIconProviderBase : IconProvider(), DumbAware {
                     }
                 }
             }
-            is PsiClass -> providedIsKtLightClassForDecompiledDeclaration().ifTrue {
+            is PsiClass -> (this is KtLightClassForDecompiledDeclarationBase).ifTrue {
                 val origin = (this as? KtLightClass)?.kotlinOrigin
                 //TODO (light classes for decompiled files): correct presentation
                 if (origin != null) origin.getBaseIcon() else CLASS

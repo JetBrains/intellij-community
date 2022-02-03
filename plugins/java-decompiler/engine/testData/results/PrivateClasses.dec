@@ -32,12 +32,12 @@ class PrivateClasses {
          }
 
          (new CapturingLocalR1(42)).toString();// 40
-         PrivateClasses.Callable<String> c1 = new PrivateClasses.Callable<String>() {
+         Callable<String> c1 = new Callable<String>() {
             public String call() {
                return null;// 45
             }
          };// 42
-         PrivateClasses.Callable<String> c2 = new PrivateClasses.Callable<String>() {
+         Callable<String> c2 = new Callable<String>() {
             public String call() {
                return s;// 52
             }
@@ -76,12 +76,12 @@ class PrivateClasses {
          }
 
          (new CapturingLocalR1(42)).toString();// 92
-         PrivateClasses.Callable<String> c1 = new PrivateClasses.Callable<String>() {
+         Callable<String> c1 = new Callable<String>() {
             public String call() {
                return null;// 97
             }
          };// 94
-         PrivateClasses.Callable<String> c2 = new PrivateClasses.Callable<String>() {
+         Callable<String> c2 = new Callable<String>() {
             public String call() {
                return s;// 104
             }
@@ -118,12 +118,12 @@ class PrivateClasses {
       }
 
       (new CapturingLocalM1(42)).toString();// 140
-      PrivateClasses.Callable<String> c1 = new PrivateClasses.Callable<String>() {
+      Callable<String> c1 = new Callable<String>() {
          public String call() {
             return null;// 145
          }
       };// 142
-      PrivateClasses.Callable<String> c2 = new PrivateClasses.Callable<String>() {
+      Callable<String> c2 = new Callable<String>() {
          public String call() {
             return s;// 152
          }
@@ -159,12 +159,12 @@ class PrivateClasses {
       }
 
       (new CapturingLocalM2(42)).toString();// 187
-      PrivateClasses.Callable<String> c1 = new PrivateClasses.Callable<String>() {
+      Callable<String> c1 = new Callable<String>() {
          public String call() {
             return null;// 192
          }
       };// 189
-      PrivateClasses.Callable<String> c2 = new PrivateClasses.Callable<String>() {
+      Callable<String> c2 = new Callable<String>() {
          public String call() {
             return s;// 199
          }

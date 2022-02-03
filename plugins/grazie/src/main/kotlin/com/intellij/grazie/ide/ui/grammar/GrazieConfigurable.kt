@@ -14,7 +14,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.JComponent
 
 internal class GrazieConfigurable : ConfigurableBase<GrazieSettingsPanel, GrazieConfig>("reference.settingsdialog.project.grazie",
-                                                                               GraziePlugin.name,
+                                                                               GraziePlugin.settingsPageName,
                                                                                "reference.settings.ide.settings.grammar"), WithEpDependencies {
   private val ui: GrazieSettingsPanel by lazy { GrazieSettingsPanel() }
 

@@ -16,8 +16,10 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiAssignmentExpression
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 class JavaUAssignmentExpression(
   override val sourcePsi: PsiAssignmentExpression,
   givenParent: UElement?

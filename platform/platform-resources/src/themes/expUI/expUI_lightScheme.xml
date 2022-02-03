@@ -7,16 +7,29 @@
     <property name="originalScheme">_@user_IntelliJ Light</property>
   </metaInfo>
   <colors>
+    <option name="ADDED_LINES_COLOR" value="7fc784" />
+    <option name="ANNOTATIONS_COLOR" value="0" />
     <option name="CARET_ROW_COLOR" value="f5f8fe" />
+    <option name="DELETED_LINES_COLOR" value="767a8a" />
     <option name="DOCUMENTATION_COLOR" value="ffffff" />
+    <option name="FILESTATUS_IDEA_FILESTATUS_IGNORED" value="7d5020" />
     <option name="GUTTER_BACKGROUND" value="ffffff" />
+    <option name="IGNORED_ADDED_LINES_BORDER_COLOR" value="7fc784" />
+    <option name="IGNORED_DELETED_LINES_BORDER_COLOR" value="767a8a" />
+    <option name="IGNORED_MODIFIED_LINES_BORDER_COLOR" value="88adf7" />
     <option name="LINE_NUMBERS_COLOR" value="aeb3c2" />
     <option name="LINE_NUMBER_ON_CARET_ROW_COLOR" value="767a8a" />
+    <option name="LOOKUP_COLOR" value="ffffff" />
+    <option name="MODIFIED_LINES_COLOR" value="88adf7" />
     <option name="SELECTION_BACKGROUND" value="a6d2ff" />
     <option name="SELECTION_FOREGROUND" value="" />
     <option name="TEARLINE_COLOR" value="d4d4d4" />
-    <option name="LOOKUP_COLOR" value="ffffff" />
-    <option name="FILESTATUS_IDEA_FILESTATUS_IGNORED" value="7D5020" />
+    <option name="VCS_ANNOTATIONS_COLOR_1" value="a1bef7" />
+    <option name="VCS_ANNOTATIONS_COLOR_2" value="c9dafb" />
+    <option name="VCS_ANNOTATIONS_COLOR_3" value="dee8fc" />
+    <option name="VCS_ANNOTATIONS_COLOR_4" value="edf2fa" />
+    <option name="VCS_ANNOTATIONS_COLOR_5" value="f7f8fa" />
+    <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="f7e2cb" />
   </colors>
   <attributes>
     <option name="ANNOTATION_NAME_ATTRIBUTES" baseAttributes="DEFAULT_METADATA" />

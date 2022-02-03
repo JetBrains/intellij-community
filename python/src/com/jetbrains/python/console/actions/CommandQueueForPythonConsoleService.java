@@ -37,6 +37,10 @@ public final class CommandQueueForPythonConsoleService {
     myListeners.put(consoleComm, listener);
   }
 
+  public synchronized void removeListener(@NotNull ConsoleCommunication consoleComm) {
+    myListeners.remove(consoleComm);
+  }
+
   public synchronized void removeFirstCommand(@NotNull ConsoleCommunication consoleComm) {
     var queue = getQueue(consoleComm);
     if (queue != null) {

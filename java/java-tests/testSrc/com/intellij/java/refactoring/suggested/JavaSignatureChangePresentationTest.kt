@@ -2,7 +2,8 @@
 
 package com.intellij.java.refactoring.suggested
 
-import com.intellij.refactoring.suggested.*
+import com.intellij.refactoring.suggested.BaseSignatureChangePresentationTest
+import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 
@@ -1007,7 +1008,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
         Parameter(1, "p2", "String"),
         Parameter(2, "p3", "Object", JavaParameterAdditionalData("@Nullable"))
       ),
-      JavaSignatureAdditionalData("public", "", emptyList())
+      JavaDeclarationAdditionalData("public", "", emptyList())
     )!!
     val newSignature = signature(
       "foo",
@@ -1017,7 +1018,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
         Parameter(2, "p3", "Object"),
         Parameter(0, "p1New", "String", JavaParameterAdditionalData("@NotNull"))
       ),
-      JavaSignatureAdditionalData("public", "@NotNull", emptyList())
+      JavaDeclarationAdditionalData("public", "@NotNull", emptyList())
     )!!
     doTest(
       oldSignature,
@@ -1090,13 +1091,13 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
       "foo",
       "void",
       emptyList(),
-      JavaSignatureAdditionalData("public", "", listOf("IOException", "SQLException", "NumberFormatException"))
+      JavaDeclarationAdditionalData("public", "", listOf("IOException", "SQLException", "NumberFormatException"))
     )!!
     val newSignature = signature(
       "foo",
       "void",
       emptyList(),
-      JavaSignatureAdditionalData("public", "", listOf("NumberFormatException", "IOException", "SQLException"))
+      JavaDeclarationAdditionalData("public", "", listOf("NumberFormatException", "IOException", "SQLException"))
     )!!
     doTest(
       oldSignature,
@@ -1148,7 +1149,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
         Parameter(0, "p1", "String"),
         Parameter(1, "p2", "int")
       ),
-      JavaSignatureAdditionalData("public", "", listOf("IOException", "SQLException"))
+      JavaDeclarationAdditionalData("public", "", listOf("IOException", "SQLException"))
     )!!
     val newSignature = signature(
       "foo",
@@ -1157,7 +1158,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
         Parameter(1, "p2", "int"),
         Parameter(0, "p1", "String")
       ),
-      JavaSignatureAdditionalData("public", "", listOf("SQLException", "IOException"))
+      JavaDeclarationAdditionalData("public", "", listOf("SQLException", "IOException"))
     )!!
     doTest(
       oldSignature,

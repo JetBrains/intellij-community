@@ -8,8 +8,8 @@
         </compilerSettings>
         <compilerArguments>
           <option name="jvmTarget" value="1.6" />
-          <option name="languageVersion" value="1.3" />
-          <option name="apiVersion" value="1.3" />
+          <option name="languageVersion" value="1.4" />
+          <option name="apiVersion" value="1.4" />
         </compilerArguments>
       </configuration>
     </facet>
@@ -25,7 +25,7 @@
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="jetbrains-annotations-java5" level="project" />
     <orderEntry type="library" name="Slf4j" level="project" />
-    <orderEntry type="library" name="Log4J" level="project" />
+    <orderEntry type="library" name="slf4j-jdk14" level="project" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension" />
   </component>
 </module>

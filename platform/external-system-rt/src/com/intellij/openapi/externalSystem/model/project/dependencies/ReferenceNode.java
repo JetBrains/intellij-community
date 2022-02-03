@@ -28,7 +28,7 @@ public class ReferenceNode implements DependencyNode, Serializable {
 
   @Nullable
   @Override
-  public String getResolutionState() {
+  public ResolutionState getResolutionState() {
     return null;
   }
 

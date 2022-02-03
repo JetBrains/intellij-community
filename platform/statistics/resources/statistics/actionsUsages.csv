@@ -68,7 +68,7 @@ HighlightUsagesInFile,,PLATFORM,7,11,12064
 ConvertToWindowsLineSeparators,,PLATFORM,3,5,12064
 performancePlugin.ExecuteScriptAction,com.jetbrains.performancePlugin,JB_BUNDLED,2,2,12064
 AssemblyExplorerOpenFolder,,PLATFORM,1,1,12064
-org.intellij.datavis.r.inlays.components.ImageSettingsAction,R4Intellij,JB_NOT_BUNDLED,17,29,12064
+org.jetbrains.plugins.notebooks.visualization.r.inlays.components.ImageSettingsAction,R4Intellij,JB_NOT_BUNDLED,17,29,12064
 SurroundWithEmmet,,PLATFORM,11,34,12064
 Scala.ShowImplicitConversions,org.intellij.scala,JB_NOT_BUNDLED,5,7,12064
 PhpGenerateConstructor,com.jetbrains.php,JB_BUNDLED,8,21,12064

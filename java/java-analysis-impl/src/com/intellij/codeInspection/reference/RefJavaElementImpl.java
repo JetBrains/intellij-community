@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -266,9 +266,12 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   void setForbidProtectedAccess(RefElementImpl refFrom, @Nullable UExpression expressionFrom) {
     if (!checkFlag(FORBID_PROTECTED_ACCESS_MASK) &&
         (expressionFrom instanceof UQualifiedReferenceExpression ||
-         expressionFrom instanceof UCallExpression && ((UCallExpression)expressionFrom).getKind() == UastCallKind.CONSTRUCTOR_CALL) &&
-        RefJavaUtil.getPackage(refFrom) != RefJavaUtil.getPackage(this)) {
-      setFlag(true, FORBID_PROTECTED_ACCESS_MASK);
+         expressionFrom instanceof UCallExpression && ((UCallExpression)expressionFrom).getKind() == UastCallKind.CONSTRUCTOR_CALL)) {
+      waitForInitialized();
+      refFrom.waitForInitialized();
+      if (RefJavaUtil.getPackage(refFrom) != RefJavaUtil.getPackage(this)) {
+        setFlag(true, FORBID_PROTECTED_ACCESS_MASK);
+      }
     }
   }
 

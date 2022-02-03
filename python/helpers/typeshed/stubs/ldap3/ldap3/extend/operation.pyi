@@ -1,0 +1,19 @@
+from typing import Any
+
+class ExtendedOperation:
+    connection: Any
+    decoded_response: Any
+    result: Any
+    asn1_spec: Any
+    request_name: Any
+    response_name: Any
+    request_value: Any
+    response_value: Any
+    response_attribute: Any
+    controls: Any
+    def __init__(self, connection, controls: Any | None = ...) -> None: ...
+    def send(self): ...
+    def populate_result(self) -> None: ...
+    def decode_response(self, response: Any | None = ...) -> None: ...
+    def set_response(self) -> None: ...
+    def config(self) -> None: ...

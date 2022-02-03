@@ -1,6 +1,7 @@
-// "class org.jetbrains.kotlin.idea.quickfix.ImportFix" "false"
+// "Import" "false"
 // ERROR: Unresolved reference: Nested
 
 fun test() {
     Nested
 }
+/* IGNORE_FIR */

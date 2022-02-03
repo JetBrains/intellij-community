@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.tooling.builder;
 
-import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.internal.tasks.DefaultTaskContainer;
@@ -45,21 +44,17 @@ public class TasksFactory {
   @NotNull
   private Map<Project, Set<Task>> getAllTasks(@NotNull Project root) {
     final Map<Project, Set<Task>> foundTargets = new TreeMap<Project, Set<Task>>();
-    Action<Project> action = new Action<Project>() {
-      @Override
-      public void execute(@NotNull Project project) {
-        try {
-          maybeRefreshTasks(project);
-          TaskContainer projectTasks = project.getTasks();
-          foundTargets.put(project, new TreeSet<Task>(projectTasks));
-        }
-        catch (Exception e) {
-          String title = "Can not load tasks for " + project;
-          myMessageReporter.report(project, MessageBuilder.create(title, title).warning().withException(e).build());
-        }
+    for (Project project : root.getAllprojects()) {
+      try {
+        maybeRefreshTasks(project);
+        TaskContainer projectTasks = project.getTasks();
+        foundTargets.put(project, new TreeSet<Task>(projectTasks));
       }
-    };
-    root.allprojects(action);
+      catch (Exception e) {
+        String title = "Can not load tasks for " + project;
+        myMessageReporter.report(project, MessageBuilder.create(title, title).warning().withException(e).build());
+      }
+    }
     return foundTargets;
   }
 

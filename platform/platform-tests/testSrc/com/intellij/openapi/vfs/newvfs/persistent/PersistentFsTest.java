@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.CacheSwitcher;
 import com.intellij.ide.plugins.DynamicPluginsTestUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -59,12 +60,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
-import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
-import static com.intellij.openapi.util.io.IoTestUtil.setCaseSensitivity;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
-import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
+import static com.intellij.testFramework.UsefulTestCase.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
@@ -82,6 +87,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     assertNull(PersistentFS.getInstance().findFileById(id));
   }
 
+  @NotNull
   private static VirtualFile refreshAndFind(File file) {
     return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file), file.getPath());
   }
@@ -877,12 +883,12 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFileContentChangeEventsMustDifferentiateCaseSensitivityToggledFiles() throws IOException {
-    assumeWindows();
+    IoTestUtil.assumeWindows();
     assumeTrue("'fsutil.exe' needs elevated privileges to work", SuperUserStatus.isSuperUser());
 
     File dir = tempDirectory.newDirectory();
     VirtualFile vDir = refreshAndFind(dir);
-    setCaseSensitivity(dir, true);
+    IoTestUtil.setCaseSensitivity(dir, true);
     File file = new File(dir, "file.txt");
     assertTrue(file.createNewFile());
     File FILE = new File(dir, "FILE.TXT");
@@ -896,7 +902,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
       public void after(@NotNull List<? extends @NotNull VFileEvent> e) {
         for (VFileEvent event : e) {
           VirtualFile evFile = event.getFile();
-          if (evFile.getParent().equals(vDir)) {
+          if (vDir.equals(evFile.getParent())) {
             events.add(event);
           }
         }
@@ -958,7 +964,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
   private VFileEvent ignoreCrazyVFileContentChangedEquals(VFileEvent exp) {
     if (exp instanceof VFileContentChangeEvent) {
-      exp = new VFileContentChangeEvent(this, exp.getFile(), 0, 0, -1, -1, -1, -1, true);
+      exp = new VFileContentChangeEvent(this, ((VFileContentChangeEvent)exp).getFile(), 0, 0, -1, -1, -1, -1, true);
     }
     return exp;
   }
@@ -974,7 +980,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
       public void after(@NotNull List<? extends @NotNull VFileEvent> e) {
         for (VFileEvent event : e) {
           VirtualFile evFile = event.getFile();
-          if (evFile.getParent().equals(vDir)) {
+          if (vDir.equals(evFile.getParent())) {
             events.add(event);
           }
         }
@@ -989,5 +995,44 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     assertEquals(3, ((VFileContentChangeEvent)event).getNewLength());
 
     events.clear();
+  }
+
+  @Test
+  public void testChildMove() throws IOException {
+    final File firstDirIoFile = tempDirectory.newDirectory("dir1");
+    final File secondDirIoFile = tempDirectory.newDirectory("dir2");
+
+    final VirtualFile firstDir = refreshAndFind(firstDirIoFile);
+    final VirtualFile secondDir = refreshAndFind(secondDirIoFile);
+
+    final VirtualFile xxx = WriteAction.computeAndWait(() -> firstDir.createChildDirectory(this, "xxx"));
+    final VirtualFile xxxFooBar = WriteAction.computeAndWait(() -> xxx.createChildData(this, "foo.bar"));
+    final VirtualFile someTxt = WriteAction.computeAndWait(() -> firstDir.createChildData(this, "some.txt"));
+
+    assertEquals(List.of(xxx, someTxt), Arrays.asList(firstDir.getChildren()));
+    assertEquals(List.of(xxxFooBar), Arrays.asList(xxx.getChildren()));
+
+    assertEmpty(secondDir.getChildren());
+
+    final int firstDirId = ((NewVirtualFile)firstDir).getId();
+    final int secondDirId = ((NewVirtualFile)secondDir).getId();
+
+    final int xxxId = ((NewVirtualFile)xxx).getId();
+    final int xxxFooBarId = ((NewVirtualFile)xxxFooBar).getId();
+    final int someTxtId = ((NewVirtualFile)someTxt).getId();
+
+    CacheSwitcher.INSTANCE.switchIndexAndVfs(null, null, "resetting vfs", () -> { return null; });
+
+    PersistentFSImpl.moveChildrenRecords(firstDirId, secondDirId);
+
+    assertEmpty(refreshAndFind(firstDirIoFile).getChildren());
+
+    final VirtualFile[] movedChildren = refreshAndFind(secondDirIoFile).getChildren();
+    assertEquals(List.of(xxxId, someTxtId), ContainerUtil.map(movedChildren, it -> ((NewVirtualFile)it).getId()));
+    assertEquals(List.of("xxx", "some.txt"), ContainerUtil.map(movedChildren, VirtualFile::getName));
+
+    final VirtualFile[] movedGrandChildren = ContainerUtil.find(movedChildren, it -> "xxx".equals(it.getName())).getChildren();
+    assertEquals(List.of(xxxFooBarId), ContainerUtil.map(movedGrandChildren, it -> ((NewVirtualFile)it).getId()));
+    assertEquals(List.of("foo.bar"), ContainerUtil.map(movedGrandChildren, VirtualFile::getName));
   }
 }

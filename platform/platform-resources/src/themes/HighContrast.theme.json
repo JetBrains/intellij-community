@@ -62,6 +62,13 @@
       }
     },
 
+    "SegmentedButton": {
+      "selectedStartBorderColor": "#1AEBFF",
+      "selectedEndBorderColor": "#1AEBFF",
+      "selectedButtonColor": "#000000",
+      "focusedSelectedButtonColor": "#0f6780"
+    },
+
     "Borders": {
       "color": "#b3b3b3",
       "ContrastBorderColor": "#B3B3B3"
@@ -84,8 +91,6 @@
       "matchSelectionForeground": "#ED94FF"
     },
 
-
-
     "Component": {
       "errorFocusColor": "#E6194B",
       "inactiveErrorFocusColor": "#800002",
@@ -93,6 +98,12 @@
       "inactiveWarningFocusColor": "#804605",
       "iconColor": "#FFFFFF",
       "hoverIconColor": "#FFFFFF"
+    },
+
+    "ContextHelp": {
+      "fontSizeOffset": {
+        "os.windows": 0
+      }
     },
 
     "Counter": {
@@ -171,6 +182,16 @@
       "JVMFocusedFrameForeground": "#FFFFFF",
       "nativeFocusedFrameForeground": "#FFFFFF",
       "parentFocusedFrameForeground": "#FFFFFF"
+    },
+
+    "IconBadge": {
+      "borderWidth": 1.5,
+      "dotRadius": 3.5,
+      "dotX": 16.5,
+      "dotY": 3.5,
+      "errorBackground": "Actions.Red",
+      "infoBackground": "Actions.Blue",
+      "successBackground": "Actions.Green"
     },
 
     "InplaceRefactoringPopup": {
@@ -476,8 +497,18 @@
     },
 
     "MainToolbar": {
-      "icon.borderInsets": "10,10,10,10",
-      "dropdown.borderInsets": "12,6,12,6"
+      "Icon": {
+        "borderInsets": "10,10,10,10",
+        "background": "#000000",
+        "hoverBackground": "#3333FF",
+        "pressedBackground": "#3333FF"
+      },
+      "Dropdown": {
+        "borderInsets": "12,6,12,6",
+        "background": "#000000",
+        "hoverBackground": "#3333FF",
+        "pressedBackground": "#3333FF"
+      }
     },
 
     "Window.border" : "1,1,1,1,E6E6E6",

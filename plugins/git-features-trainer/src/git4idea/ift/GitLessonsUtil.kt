@@ -212,6 +212,12 @@ object GitLessonsUtil {
                   + " " + GitLessonsBundle.message("git.click.to.change.settings", callbackId)) {
         !VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES
       }
+      test {
+        if (!VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES) {
+          Thread.sleep(1000)  // need to wait until LessonMessagePane become updated after restart and warning will be showed
+          clickLessonMessagePaneLink(" click ")
+        }
+      }
     }
   }
 

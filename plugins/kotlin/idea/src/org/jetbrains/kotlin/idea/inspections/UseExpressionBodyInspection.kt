@@ -15,14 +15,14 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.canOmitDeclaredType
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.core.util.isOneLiner
 import org.jetbrains.kotlin.idea.intentions.hasResultingIfWithoutElse
-import org.jetbrains.kotlin.idea.intentions.resultingWhens
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.idea.util.resultingWhens
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -120,7 +120,7 @@ class UseExpressionBodyInspection(private val convertEmptyToUnit: Boolean) : Abs
                 // assignment does not have value
                 if (statement is KtBinaryExpression && statement.operationToken in KtTokens.ALL_ASSIGNMENTS) return null
 
-                val context = statement.analyze()
+                val context = statement.safeAnalyzeNonSourceRootCode()
                 val expressionType = context.getType(statement) ?: return null
                 val isUnit = KotlinBuiltIns.isUnit(expressionType)
                 if (!isUnit && !KotlinBuiltIns.isNothing(expressionType)) return null
@@ -164,7 +164,7 @@ class UseExpressionBodyInspection(private val convertEmptyToUnit: Boolean) : Abs
         val value = valueStatement.getValue()
 
         if (!declaration.hasDeclaredReturnType() && declaration is KtNamedFunction && block.statements.isNotEmpty()) {
-            val valueType = value.analyze().getType(value)
+            val valueType = value.safeAnalyzeNonSourceRootCode().getType(value)
             if (valueType == null || !KotlinBuiltIns.isUnit(valueType)) {
                 declaration.setType(StandardNames.FqNames.unit.asString(), shortenReferences = true)
             }

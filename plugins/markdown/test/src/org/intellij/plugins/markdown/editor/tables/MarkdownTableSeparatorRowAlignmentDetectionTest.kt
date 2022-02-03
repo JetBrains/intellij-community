@@ -3,7 +3,7 @@ package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 
 class MarkdownTableSeparatorRowAlignmentDetectionTest: LightPlatformCodeInsightTestCase() {
@@ -105,7 +105,7 @@ class MarkdownTableSeparatorRowAlignmentDetectionTest: LightPlatformCodeInsightT
 
   private fun doTest(content: String, expectedAlignments: List<MarkdownTableSeparatorRow.CellAlignment>) {
     configureFromFileText("some.md", content)
-    val table = file.firstChild?.firstChild as? MarkdownTableImpl
+    val table = file.firstChild?.firstChild as? MarkdownTable
     assertNotNull(table)
     requireNotNull(table)
     val separator = requireNotNull(table.separatorRow)

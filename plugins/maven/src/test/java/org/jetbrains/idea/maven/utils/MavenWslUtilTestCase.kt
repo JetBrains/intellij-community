@@ -7,7 +7,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.RunAll
 import junit.framework.TestCase
-import org.jetbrains.idea.maven.MavenTestCase
+import com.intellij.maven.testFramework.MavenTestCase
 import org.jetbrains.idea.maven.utils.MavenWslUtil.getWindowsFile
 import org.jetbrains.idea.maven.utils.MavenWslUtil.getWslFile
 import org.jetbrains.idea.maven.utils.MavenWslUtil.resolveLocalRepository
@@ -31,7 +31,11 @@ class MavenWslUtilTestCase : MavenTestCase() {
     Assume.assumeFalse("WSL should be installed", WslDistributionManager.getInstance().installedDistributions.isEmpty())
     myDistribution = WslDistributionManager.getInstance().installedDistributions[0]
 
-    myUserHome = File("\\\\wsl$\\${myDistribution.msId}\\home\\${myDistribution.environment["USER"]}")
+    val user = myDistribution.environment?.get("USER")
+    if (user == null){
+      fail("Cannot retrieve env variables from WSL")
+    }
+    myUserHome = File("\\\\wsl$\\${myDistribution.msId}\\home\\${user}")
     ensureWslTempDirCreated()
   }
 

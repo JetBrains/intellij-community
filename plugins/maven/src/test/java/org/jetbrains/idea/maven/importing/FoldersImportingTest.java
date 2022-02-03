@@ -23,7 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
@@ -145,13 +145,14 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertSources("project", "src/main/java");
     assertResources("project", "src/main/resources");
 
-    importProject("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
 
                   "<build>" +
                   "  <sourceDirectory>src</sourceDirectory>" +
                   "</build>");
+    resolveFoldersAndImport();
 
     assertSources("project", "src");
 
@@ -178,24 +179,26 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertSources("project", "src1");
 
     getMavenImporterSettings().setKeepSourceFolders(false);
-    importProject("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
 
                   "<build>" +
                   "  <sourceDirectory>src2</sourceDirectory>" +
                   "</build>");
+    resolveFoldersAndImport();
 
     assertSources("project", "src2");
 
     getMavenImporterSettings().setKeepSourceFolders(true);
-    importProject("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
 
                   "<build>" +
                   "  <sourceDirectory>src1</sourceDirectory>" +
                   "</build>");
+    resolveFoldersAndImport();
 
     assertSources("project", "src2", "src1");
   }
@@ -1280,7 +1283,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                      "  <sourceDirectory>target/src</sourceDirectory>" +
                      "  <testSourceDirectory>target/test/subFolder</testSourceDirectory>" +
                      "</build>");
-    importProject();
+    resolveFoldersAndImport();
 
     assertSources("project", "target/src");
     assertTestSources("project", "target/test/subFolder");
@@ -1305,7 +1308,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                      "<build>" +
                      "  <sourceDirectory>target/classes/src</sourceDirectory>" +
                      "</build>");
-    importProject();
+    resolveFoldersAndImport();
 
     assertSources("project", "target/classes/src");
     assertExcludes("project", "target");

@@ -4,7 +4,7 @@ import java.util.List;
 
 class Main extends ArrayList<String> {
   void modifyStrings(List<String> strings) {
-    for (int i = 0; i < this.size(); i++)<caret> {
+    for<caret> (int i = 0; i < this.size(); i++) {
       this.set(i, modifyString(this.get(i)));
     }
   }

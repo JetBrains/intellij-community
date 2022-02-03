@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DEPRECATION")
 
 package com.intellij.lang.documentation.ide.impl
@@ -61,7 +61,7 @@ internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, h
   }
 }
 
-private fun <X : Any> injectedThenHost(project: Project, hostEditor: Editor, hostOffset: Int, f: (Editor, PsiFile, Int) -> X?): X? {
+fun <X : Any> injectedThenHost(project: Project, hostEditor: Editor, hostOffset: Int, f: (Editor, PsiFile, Int) -> X?): X? {
   val hostFile = PsiUtilBase.getPsiFileInEditor(hostEditor, project)
                  ?: return null
   return tryInjected(project, hostFile, hostEditor, hostOffset, f)
@@ -101,6 +101,7 @@ private class DocumentationTargetHoverInfo(
       popupUI.setPopup(popup)
       popupUI.updatePopup {
         resizePopup(popup)
+        bridge.updateLocation()
       }
     }
     EditorUtil.disposeWithEditor(editor, popupUI)

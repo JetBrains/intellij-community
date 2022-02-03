@@ -4,15 +4,15 @@ package com.intellij.openapi.externalSystem.service.ui.project.path
 import com.intellij.ide.wizard.getCanonicalPath
 import com.intellij.ide.wizard.getPresentablePath
 import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.externalSystem.service.ui.completion.JTextCompletionContributor
-import com.intellij.openapi.externalSystem.service.ui.completion.JTextCompletionContributor.CompletionType
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
-import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionPopup
-import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionPopup.UpdatePopupType.SHOW_IF_HAS_VARIANCES
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfoRenderer
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.observable.properties.map
+import com.intellij.openapi.observable.util.bind
+import com.intellij.openapi.observable.util.trim
+import com.intellij.openapi.observable.util.whenMousePressed
+import com.intellij.openapi.observable.util.whenTextChanged
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.addKeyboardAction
 import com.intellij.openapi.ui.getKeyStrokes
@@ -22,10 +22,6 @@ import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.ui.layout.*
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
 import javax.swing.plaf.basic.BasicTextUI
 import javax.swing.text.DefaultHighlighter.DefaultHighlightPainter
 import javax.swing.text.Highlighter
@@ -34,26 +30,50 @@ import javax.swing.text.Highlighter
 class WorkingDirectoryField(
   project: Project,
   private val workingDirectoryInfo: WorkingDirectoryInfo
-) : ExtendableTextField() {
+) : TextCompletionField<TextCompletionInfo>(project) {
 
   private val propertyGraph = PropertyGraph(isBlockPropagation = false)
-  private val modeProperty = propertyGraph.graphProperty { Mode.NAME }
-  private val textProperty = propertyGraph.graphProperty { "" }
-  private val workingDirectoryProperty = propertyGraph.graphProperty { "" }
-  private val projectNameProperty = propertyGraph.graphProperty { "" }
+  private val modeProperty = propertyGraph.property(Mode.NAME)
+  private val workingDirectoryProperty = propertyGraph.property("")
+  private val projectNameProperty = propertyGraph.property("")
 
   var mode by modeProperty
   var workingDirectory by workingDirectoryProperty
   var projectName by projectNameProperty
 
-  private val externalProjects = workingDirectoryInfo.externalProjects
-
   private var highlightTag: Any? = null
   private val highlightRecursionGuard =
     RecursionManager.createGuard<WorkingDirectoryField>(WorkingDirectoryField::class.java.name)
 
+  private val externalProjects = workingDirectoryInfo.externalProjects
+
+  override fun getCompletionVariants(): List<TextCompletionInfo> {
+    return when (mode) {
+      Mode.NAME -> {
+        externalProjects
+          .map { it.name }
+          .map { TextCompletionInfo(it) }
+      }
+      Mode.PATH -> {
+        val textToComplete = getTextToComplete()
+        val pathToComplete = getCanonicalPath(textToComplete, removeLastSlash = false)
+        externalProjects
+          .filter { it.path.startsWith(pathToComplete) }
+          .map { it.path.substring(pathToComplete.length) }
+          .map { textToComplete + FileUtil.toSystemDependentName(it) }
+          .map { TextCompletionInfo(it) }
+      }
+    }
+  }
+
   init {
-    val text by textProperty.map { it.trim() }
+    renderer = TextCompletionInfoRenderer()
+    completionType = CompletionType.REPLACE_TEXT
+  }
+
+  init {
+    val textProperty = propertyGraph.property("")
+    val text by textProperty.trim()
     workingDirectoryProperty.dependsOn(textProperty) {
       when (mode) {
         Mode.PATH -> getCanonicalPath(text)
@@ -137,13 +157,11 @@ class WorkingDirectoryField(
   }
 
   init {
-    addMouseListener(object : MouseAdapter() {
-      override fun mouseClicked(e: MouseEvent) {
-        if (isTextUnderMouse(e)) {
-          mode = Mode.PATH
-        }
+    whenMousePressed {
+      if (isTextUnderMouse(it)) {
+        mode = Mode.PATH
       }
-    })
+    }
     addKeyboardAction(getKeyStrokes("CollapseRegion", "CollapseRegionRecursively", "CollapseAllRegions")) {
       mode = Mode.NAME
     }
@@ -156,7 +174,7 @@ class WorkingDirectoryField(
     addHighlighterListener {
       updateHighlight()
     }
-    textProperty.afterChange {
+    whenTextChanged {
       updateHighlight()
     }
     modeProperty.afterChange {
@@ -223,26 +241,8 @@ class WorkingDirectoryField(
   }
 
   init {
-    val textCompletionContributor = JTextCompletionContributor.create<WorkingDirectoryField>(CompletionType.REPLACE) { textToComplete ->
-      when (mode) {
-        Mode.NAME -> {
-          externalProjects
-            .map { it.name }
-            .map { TextCompletionInfo(it) }
-        }
-        Mode.PATH -> {
-          val pathToComplete = getCanonicalPath(textToComplete, removeLastSlash = false)
-          externalProjects
-            .filter { it.path.startsWith(pathToComplete) }
-            .map { it.path.substring(pathToComplete.length) }
-            .map { textToComplete + FileUtil.toSystemDependentName(it) }
-            .map { TextCompletionInfo(it) }
-        }
-      }
-    }
-    val textCompletionPopup = TextCompletionPopup(project, this, textCompletionContributor)
     modeProperty.afterChange {
-      textCompletionPopup.updatePopup(SHOW_IF_HAS_VARIANCES)
+      updatePopup(UpdatePopupType.SHOW_IF_HAS_VARIANCES)
     }
   }
 

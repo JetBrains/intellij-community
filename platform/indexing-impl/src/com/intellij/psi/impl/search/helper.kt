@@ -42,7 +42,7 @@ fun <R> runSearch(cs: CoroutineScope, project: Project, query: Query<R>): Receiv
   return cs.produce(capacity = Channel.UNLIMITED) {
     runUnderIndicator {
       runSearch(project, query, Processor {
-        require(channel.offer(it))
+        require(channel.trySend(it).isSuccess)
         true
       })
     }

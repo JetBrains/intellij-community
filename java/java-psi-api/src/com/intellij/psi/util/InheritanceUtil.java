@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.Condition;
@@ -127,7 +127,7 @@ public final class InheritanceUtil {
 
   public static boolean hasEnclosingInstanceInScope(@NotNull PsiClass aClass,
                                                     PsiElement scope,
-                                                    Condition<? super PsiClass> isSuperClassAccepted,
+                                                    @NotNull Condition<? super PsiClass> isSuperClassAccepted,
                                                     boolean isTypeParamsAccepted) {
     return findEnclosingInstanceInScope(aClass, scope, isSuperClassAccepted, isTypeParamsAccepted) != null;
   }
@@ -135,7 +135,7 @@ public final class InheritanceUtil {
   @Nullable
   public static PsiClass findEnclosingInstanceInScope(@NotNull PsiClass aClass,
                                                       PsiElement scope,
-                                                      Condition<? super PsiClass> isSuperClassAccepted,
+                                                      @NotNull Condition<? super PsiClass> isSuperClassAccepted,
                                                       boolean isTypeParamsAccepted) {
     PsiManager manager = aClass.getManager();
     PsiElement place = scope;
@@ -183,20 +183,32 @@ public final class InheritanceUtil {
     }
     try {
       usedClasses.add(aClass);
-      PsiClass[] superTypes = aClass.getSupers();
-      for (PsiElement superType : superTypes) {
-        while (superType instanceof PsiClass) {
-          if (!CommonClassNames.JAVA_LANG_OBJECT.equals(((PsiClass)superType).getQualifiedName())) {
-            PsiClass circularClass = getCircularClass((PsiClass)superType, usedClasses);
-            if (circularClass != null) return circularClass;
-          }
-          // check class qualifier
-          superType = superType.getParent();
+      PsiClassType[] superTypes = aClass.getSuperTypes();
+      for (PsiClassType superType : superTypes) {
+        PsiClass circularClass = getCircularClassInner(superType.resolve(), usedClasses);
+        if (circularClass != null) return circularClass;
+        for (PsiAnnotation annotation : superType.getAnnotations()) {
+          circularClass = getCircularClassInner(annotation.resolveAnnotationType(), usedClasses);
+          if (circularClass != null) return circularClass;
         }
       }
     }
     finally {
       usedClasses.remove(aClass);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiClass getCircularClassInner(@Nullable PsiElement superType,
+                                                @NotNull Collection<? super PsiClass> usedClasses) {
+    while (superType instanceof PsiClass) {
+      if (!CommonClassNames.JAVA_LANG_OBJECT.equals(((PsiClass)superType).getQualifiedName())) {
+        PsiClass circularClass = getCircularClass((PsiClass)superType, usedClasses);
+        if (circularClass != null) return circularClass;
+      }
+      // check class qualifier
+      superType = superType.getParent();
     }
     return null;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.registry
 
 import com.intellij.application.options.RegistryManager
@@ -53,6 +53,8 @@ internal class RegistryManagerImpl : PersistentStateComponent<Element>, Registry
   }
 
   override fun intValue(key: String) = Registry._getWithoutStateCheck(key).asInteger()
+
+  override fun stringValue(key: String) = Registry._getWithoutStateCheck(key).asString()
 
   override fun intValue(key: String, defaultValue: Int): Int {
     return try {

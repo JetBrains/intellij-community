@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
 package com.intellij.testFramework
@@ -32,6 +32,7 @@ import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
@@ -76,6 +77,7 @@ class TestApplicationManager private constructor() {
   companion object {
     init {
       Java11Shim.INSTANCE = StartupUtil.Java11ShimImpl()
+      ExtensionNotApplicableException.useFactoryWithStacktrace()
     }
 
     @Volatile
@@ -295,7 +297,9 @@ fun disposeApplicationAndCheckForLeaks() {
 
     l.catchAndStoreExceptions {
       try {
-        LeakHunter.checkNonDefaultProjectLeak()
+        if (ApplicationManager.getApplication() != null) {
+          LeakHunter.checkNonDefaultProjectLeak()
+        }
       }
       catch (e: AssertionError) {
         publishHeapDump("leakedProjects")

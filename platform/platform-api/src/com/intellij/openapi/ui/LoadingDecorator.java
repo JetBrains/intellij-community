@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -11,11 +11,7 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.Animator;
-import com.intellij.util.ui.AsyncProcessIcon;
-import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,7 +105,7 @@ public class LoadingDecorator {
 
   protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
     parent.setLayout(new GridBagLayout());
-    text.setFont(UIUtil.getLabelFont());
+    text.setFont(StartupUiUtil.getLabelFont());
     text.setForeground(UIUtil.getContextHelpForeground());
     icon.setBorder(Strings.notNullize(text.getText()).endsWith("...")
                    ? JBUI.Borders.emptyRight(8)

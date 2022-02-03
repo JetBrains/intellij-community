@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
 import java.awt.Desktop
+import java.awt.GraphicsEnvironment
 import java.io.File
 import java.io.IOException
 import java.net.URI
@@ -221,8 +222,12 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   protected open fun getEffectiveBrowser(browser: WebBrowser?): WebBrowser? = browser
 }
 
+// AWT-replacing Projector is not affected by that bug, detect it by GE class name to avoid direct dependency on Projector
+private fun isAffectedByDesktopBug(): Boolean =
+  Patches.SUN_BUG_ID_6486393 && (GraphicsEnvironment.isHeadless() || "PGraphicsEnvironment" != GraphicsEnvironment.getLocalGraphicsEnvironment()?.javaClass?.simpleName)
+
 private fun isDesktopActionSupported(action: Desktop.Action): Boolean =
-  !Patches.SUN_BUG_ID_6486393 && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)
+  !isAffectedByDesktopBug() && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)
 
 private val generalSettings: GeneralSettings
   get() = (if (ApplicationManager.getApplication() != null) GeneralSettings.getInstance() else null) ?: GeneralSettings()

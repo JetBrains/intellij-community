@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
@@ -6,6 +6,7 @@ import com.intellij.diff.actions.AllLinesIterator;
 import com.intellij.diff.actions.BufferedLineIterator;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.impl.ui.DifferencesLabel;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.*;
@@ -46,12 +47,12 @@ import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
-public class SimpleDiffViewer extends TwosideTextDiffViewer {
+public class SimpleDiffViewer extends TwosideTextDiffViewer implements DifferencesLabel.DifferencesCounter {
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable;
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
-  @NotNull private final MyStatusPanel myStatusPanel;
+  @NotNull protected final StatusPanel myStatusPanel;
 
-  @NotNull private final SimpleDiffModel myModel = new SimpleDiffModel(this);
+  @NotNull protected final SimpleDiffModel myModel = new SimpleDiffModel(this);
 
   @NotNull private final MyFoldingModel myFoldingModel;
   @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
@@ -360,8 +361,9 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     return myStatusPanel;
   }
 
-  public @Nullable String getStatusMessage() {
-    return myStatusPanel.getMessage();
+  @Override
+  public int getTotalDifferences() {
+    return getNonSkippedDiffChanges().size();
   }
 
   @NotNull
@@ -385,7 +387,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   //
 
   boolean isDiffForLocalChanges() {
-    boolean isLastWithLocal = DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL.get(myContext, false);
+    boolean isLastWithLocal = DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, myContext);
     return isLastWithLocal && !isEditable(Side.LEFT) && isEditable(Side.RIGHT);
   }
 
@@ -615,8 +617,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     if (!change.isValid()) return;
     Side outputSide = sourceSide.other();
 
-    DiffUtil.applyModification(getEditor(outputSide).getDocument(), change.getStartLine(outputSide), change.getEndLine(outputSide),
-                               getEditor(sourceSide).getDocument(), change.getStartLine(sourceSide), change.getEndLine(sourceSide));
+    boolean isLocalChangeRevert = sourceSide == Side.LEFT && isDiffForLocalChanges();
+    TextDiffViewerUtil.applyModification(getEditor(outputSide).getDocument(),
+                                         change.getStartLine(outputSide), change.getEndLine(outputSide),
+                                         getEditor(sourceSide).getDocument(),
+                                         change.getStartLine(sourceSide), change.getEndLine(sourceSide),
+                                         isLocalChangeRevert);
 
     myModel.destroyChange(change);
   }
@@ -744,14 +750,19 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Nullable
     @Override
     protected String getMessage() {
-      if (myTextDiffProvider.isHighlightingDisabled()) {
-        return DiffBundle.message("diff.highlighting.disabled.text");
-      }
-      List<SimpleDiffChange> allChanges = myModel.getAllChanges();
-      return DiffUtil.getStatusText(allChanges.size(),
-                                    ContainerUtil.count(allChanges, it -> it.isExcluded()),
-                                    myModel.isContentsEqual());
+      return getStatusTextMessage();
     }
+  }
+
+  @Nullable
+  protected @Nls String getStatusTextMessage() {
+    if (myTextDiffProvider.isHighlightingDisabled()) {
+      return DiffBundle.message("diff.highlighting.disabled.text");
+    }
+    List<SimpleDiffChange> allChanges = myModel.getAllChanges();
+    return DiffUtil.getStatusText(allChanges.size(),
+                                  ContainerUtil.count(allChanges, it -> it.isExcluded()),
+                                  myModel.isContentsEqual());
   }
 
   public class ModifierProvider extends KeyboardModifierListener {

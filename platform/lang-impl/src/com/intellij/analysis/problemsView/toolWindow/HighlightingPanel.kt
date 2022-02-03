@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.codeWithMe.ClientId
@@ -48,16 +48,6 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
   override fun getData(dataId: String): Any? {
     if (CommonDataKeys.VIRTUAL_FILE.`is`(dataId)) return currentFile
     return super.getData(dataId)
-  }
-
-  override fun getToolWindowIcon(count: Int): Icon? {
-    if (ProblemsView.isProjectErrorsEnabled()) return null
-    val root = currentRoot ?: return Toolwindows.ToolWindowProblemsEmpty
-    val problem = root.getChildren(root.file).any {
-      val severity = (it as? ProblemNode)?.severity
-      severity != null && severity >= HighlightSeverity.ERROR.myVal
-    }
-    return if (problem) Toolwindows.ToolWindowProblems else Toolwindows.ToolWindowProblemsEmpty
   }
 
   override fun selectionChangedTo(selected: Boolean) {

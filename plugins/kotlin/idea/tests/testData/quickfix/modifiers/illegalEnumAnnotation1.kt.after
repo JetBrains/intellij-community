@@ -1,3 +1,4 @@
 // "Remove 'enum' modifier" "true"
 <caret>interface A {
 }
+

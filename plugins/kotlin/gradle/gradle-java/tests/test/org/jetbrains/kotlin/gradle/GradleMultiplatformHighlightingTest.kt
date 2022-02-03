@@ -25,32 +25,24 @@ import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
-import org.jetbrains.kotlin.test.KotlinTestUtils
-import org.jetbrains.kotlin.test.TagsTestDataUtil
-import org.jetbrains.kotlin.test.TagsTestDataUtil.TagInfo
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.TagsTestDataUtil
+import org.jetbrains.kotlin.idea.test.TagsTestDataUtil.TagInfo
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Assert
 import org.junit.Test
 import java.io.File
 
-abstract class GradleMultiplatformHighlightingTest : MultiplePluginVersionGradleImportingTestCase() {
-    class First : GradleMultiplatformHighlightingTest() {
-        @Test
-        @PluginTargetVersions(pluginVersion = "1.3.0+")
-        fun testFirst() {
-            doTest()
-        }
-    }
+class GradleMultiplatformHighlightingTest : MultiplePluginVersionGradleImportingTestCase() {
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.3.0+")
+    fun testFirst(): Unit = doTest()
 
-    class NoErrors : GradleMultiplatformHighlightingTest() {
-        @Test
-        @PluginTargetVersions(pluginVersion = "1.3.0+")
-        fun testNoErrors() {
-            doTest()
-        }
-    }
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.3.0+")
+    fun testNoErrors(): Unit = doTest()
 
-    protected fun doTest() {
+    private fun doTest() {
         val files = importProjectFromTestData()
         val project = myTestFixture.project
 

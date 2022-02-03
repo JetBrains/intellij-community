@@ -151,7 +151,7 @@ public final class IdeKeyEventDispatcher {
       }
     }
 
-    // http://www.jetbrains.net/jira/browse/IDEADEV-12372
+    // http://www.jetbrains.net/jira/browse/IDEADEV-12372 (a.k.a. IDEA-35760)
     if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
       if (id == KeyEvent.KEY_PRESSED) {
         myLeftCtrlPressed = e.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT;
@@ -413,8 +413,11 @@ public final class IdeKeyEventDispatcher {
       setState(KeyState.STATE_WAIT_FOR_POSSIBLE_ALT_GR);
       return true;
     }
-    // http://www.jetbrains.net/jira/browse/IDEADEV-12372
-    boolean isCandidateForAltGr = myLeftCtrlPressed && myRightAltPressed && focusOwner != null && e.getModifiers() == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK);
+    // http://www.jetbrains.net/jira/browse/IDEADEV-12372 (a.k.a. IDEA-35760)
+    boolean isCandidateForAltGr = myLeftCtrlPressed &&
+                                  myRightAltPressed &&
+                                  focusOwner != null &&
+                                  ( (e.getModifiers() & ~InputEvent.SHIFT_MASK) == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK) );
     if (isCandidateForAltGr) {
       if (Registry.is("actionSystem.force.alt.gr", false)) {
         return false;
@@ -584,13 +587,8 @@ public final class IdeKeyEventDispatcher {
   };
 
   public boolean processAction(@NotNull InputEvent e, @NotNull ActionProcessor processor) {
-    boolean result = processAction(
-      e, ActionPlaces.KEYBOARD_SHORTCUT, myContext.getDataContext(),
-      new ArrayList<>(myContext.getActions()), processor, myPresentationFactory, myContext.getShortcut());
-    if (!result) {
-      IdeEventQueue.getInstance().flushDelayedKeyEvents();
-    }
-    return result;
+    return processAction(e, ActionPlaces.KEYBOARD_SHORTCUT, myContext.getDataContext(),
+                         new ArrayList<>(myContext.getActions()), processor, myPresentationFactory, myContext.getShortcut());
   }
 
   boolean processAction(@NotNull InputEvent e,
@@ -623,8 +621,7 @@ public final class IdeKeyEventDispatcher {
 
       if (!myContext.getSecondStrokeActions().contains(chosen.first)) {
         AnActionEvent actionEvent = chosen.second.withDataContext(wrappedContext); // use not frozen data context
-        if (Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once") &&
-            !ActionUtil.lastUpdateAndCheckDumb(chosen.first, actionEvent, false)) {
+        if (!ActionUtil.lastUpdateAndCheckDumb(chosen.first, actionEvent, false)) {
           LOG.warn("Action '" + actionEvent.getPresentation().getText() + "' (" + chosen.first.getClass() + ") " +
                    "has become disabled in `beforeActionPerformedUpdate` right after successful `update`");
           logTimeMillis(chosen.third, chosen.first);
@@ -652,7 +649,6 @@ public final class IdeKeyEventDispatcher {
       waitSecondStroke(chosen.first, chosen.second.getPresentation());
     }
     else if (!wouldBeEnabledIfNotDumb.isEmpty()) {
-      IdeEventQueue.getInstance().flushDelayedKeyEvents();
       showDumbModeBalloonLater(project, getActionUnavailableMessage(wouldBeEnabledIfNotDumb), () -> {
         //invokeLater to make sure correct dataContext is taken from focus
         ApplicationManager.getApplication().invokeLater(() ->

@@ -4362,16 +4362,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     VisualPosition visualPosition = location.getVisualPosition();
     LogicalPosition logicalPosition = location.getLogicalPosition();
     int offset = location.getOffset();
+    int relX = point.x - myEditorComponent.getInsets().left;
     Inlay<?> inlayCandidate = inEditingArea ? myInlayModel.getElementAt(location, true) : null;
     Inlay<?> inlay = inlayCandidate == null ||
                   (inlayCandidate.getPlacement() == Inlay.Placement.BELOW_LINE ||
                    inlayCandidate.getPlacement() == Inlay.Placement.ABOVE_LINE) &&
-                  inlayCandidate.getWidthInPixels() <= point.getX() ? null : inlayCandidate;
-    FoldRegion collapseFoldRegion = inEditingArea ? myFoldingModel.getFoldingPlaceholderAt(location) : null;
+                  inlayCandidate.getWidthInPixels() <= relX ? null : inlayCandidate;
+    FoldRegion foldRegionCandidate = inEditingArea ? myFoldingModel.getFoldingPlaceholderAt(location, true) : null;
+    FoldRegion foldRegion = foldRegionCandidate instanceof CustomFoldRegion &&
+                            ((CustomFoldRegion)foldRegionCandidate).getWidthInPixels() <= relX ? null : foldRegionCandidate;
     GutterIconRenderer gutterIconRenderer = inEditingArea ? null : myGutterComponent.getGutterRenderer(point);
-    boolean overText = inlayCandidate == null && offsetToLogicalPosition(offset).equals(logicalPosition);
+    boolean overText = inlayCandidate == null &&
+                       (foldRegionCandidate == null || foldRegion != null) &&
+                       offsetToLogicalPosition(offset).equals(logicalPosition);
     return new EditorMouseEvent(this, e, area, offset, logicalPosition, visualPosition,
-                                overText, collapseFoldRegion, inlay, gutterIconRenderer);
+                                overText, foldRegion, inlay, gutterIconRenderer);
   }
 
   private class MyMouseMotionListener implements MouseMotionListener {

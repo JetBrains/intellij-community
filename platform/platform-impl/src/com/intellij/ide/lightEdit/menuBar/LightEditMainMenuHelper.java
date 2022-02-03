@@ -63,6 +63,8 @@ public final class LightEditMainMenuHelper {
     );
     topGroup.add(
       createActionGroup(ActionsBundle.message("group.HelpMenu.text"),
+                        standardAction("GotoAction"),
+                        Separator.create(),
                         standardAction("HelpTopics"),
                         standardAction("About"))
     );

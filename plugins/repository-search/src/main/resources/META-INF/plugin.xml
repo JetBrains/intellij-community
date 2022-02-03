@@ -13,10 +13,8 @@
                     interface="org.jetbrains.idea.reposearch.DependencySearchProvidersFactory" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceImplementation="org.jetbrains.idea.reposearch.DependencySearchService"/>
-
     <registryKey key="maven.packagesearch.enabled" defaultValue="true"
-                 description="Enable package search dependency via https://package-search.services.jetbrains.com" restartRequired="false"/>
+                 description="Enable package search dependency via https://package-search.services.jetbrains.com"/>
 
     <registryKey key="packagesearch.config.url" defaultValue="https://resources.jetbrains.com/package-search/config/config.json"
                  description="package search service config url" restartRequired="true"/>

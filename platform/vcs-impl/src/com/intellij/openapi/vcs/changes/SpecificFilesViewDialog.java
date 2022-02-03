@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.CommonBundle;
@@ -32,10 +32,10 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
-import static com.intellij.util.containers.ContainerUtil.set;
 
 abstract class SpecificFilesViewDialog extends DialogWrapper {
   protected JPanel myPanel;
@@ -116,7 +116,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
 
     myPanel.add(toolbarPanel, BorderLayout.NORTH);
     myPanel.add(ScrollPaneFactory.createScrollPane(myView), BorderLayout.CENTER);
-    myView.getGroupingSupport().setGroupingKeysOrSkip(set(DEFAULT_GROUPING_KEYS));
+    myView.getGroupingSupport().setGroupingKeysOrSkip(Set.copyOf(DEFAULT_GROUPING_KEYS));
   }
 
   protected void addCustomActions(@NotNull DefaultActionGroup group) {

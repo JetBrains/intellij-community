@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.parameterInfo;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -72,6 +72,16 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
         @TestMetadata("Simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/parameterInfo/arrayAccess/Simple.kt");
+        }
+
+        @TestMetadata("UpdateOnTypingGet.kt")
+        public void testUpdateOnTypingGet() throws Exception {
+            runTest("testData/parameterInfo/arrayAccess/UpdateOnTypingGet.kt");
+        }
+
+        @TestMetadata("UpdateOnTypingSet.kt")
+        public void testUpdateOnTypingSet() throws Exception {
+            runTest("testData/parameterInfo/arrayAccess/UpdateOnTypingSet.kt");
         }
     }
 

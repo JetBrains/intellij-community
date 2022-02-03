@@ -4,7 +4,7 @@ package com.intellij.internal.statistic
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 
-class TestStatisticsEventLoggerProvider : StatisticsEventLoggerProvider("FUS", 1) {
+class TestStatisticsEventLoggerProvider : StatisticsEventLoggerProvider("FUS", 1, DEFAULT_SEND_FREQUENCY_MS, DEFAULT_MAX_FILE_SIZE_BYTES) {
   override val logger: TestStatisticsEventLogger = TestStatisticsEventLogger()
 
   override fun isRecordEnabled(): Boolean = true

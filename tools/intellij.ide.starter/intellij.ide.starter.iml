@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="3" platform="JVM 11" allPlatforms="JVM [11]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable -Xuse-old-backend -Xopt-in=kotlin.io.path.ExperimentalPathApi -Xopt-in=kotlin.time.ExperimentalTime" />
+        </compilerSettings>
+        <compilerArguments>
+          <option name="jvmTarget" value="11" />
+          <option name="languageVersion" value="1.5" />
+          <option name="apiVersion" value="1.5" />
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/testResources" type="java-test-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
+    <orderEntry type="library" name="kotlin-reflect" level="project" />
+    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="library" name="jackson-databind" level="project" />
+    <orderEntry type="library" name="jackson-module-kotlin" level="project" />
+    <orderEntry type="library" name="http-client" level="project" />
+    <orderEntry type="library" name="Gradle" level="project" />
+    <orderEntry type="library" name="commons-io" level="project" />
+    <orderEntry type="library" name="commons-lang3" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kodein-di-jvm" level="project" />
+    <orderEntry type="library" name="commons-compress" level="project" />
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library name="rauschig.jarchivelib" type="repository">
+        <properties maven-id="org.rauschig:jarchivelib:1.2.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/rauschig/jarchivelib/1.2.0/jarchivelib-1.2.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.21/commons-compress-1.21.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <excluded>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.21/commons-compress-1.21.jar!/" />
+        </excluded>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.performanceTesting.commands" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.performanceTesting.maven.commands" scope="TEST" />
+    <orderEntry type="library" name="commons-logging" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit5Jupiter" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
+    <orderEntry type="module-library" scope="TEST">
+      <library name="io.kotest:kotest-assertions-core-jvm" type="repository">
+        <properties maven-id="io.kotest:kotest-assertions-core-jvm:4.5.0">
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-assertions-core-jvm/4.5.0/kotest-assertions-core-jvm-4.5.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-assertions-shared-jvm/4.5.0/kotest-assertions-shared-jvm-4.5.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/java-diff-utils/java-diff-utils/4.9/java-diff-utils-4.9.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-common-jvm/4.5.0/kotest-common-jvm-4.5.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-assertions-api-jvm/4.5.0/kotest-assertions-api-jvm-4.5.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-assertions-core-jvm/4.5.0/kotest-assertions-core-jvm-4.5.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-assertions-shared-jvm/4.5.0/kotest-assertions-shared-jvm-4.5.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/java-diff-utils/java-diff-utils/4.9/java-diff-utils-4.9-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-common-jvm/4.5.0/kotest-common-jvm-4.5.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-assertions-api-jvm/4.5.0/kotest-assertions-api-jvm-4.5.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="library" scope="TEST" name="mockito" level="project" />
+  </component>
+</module>

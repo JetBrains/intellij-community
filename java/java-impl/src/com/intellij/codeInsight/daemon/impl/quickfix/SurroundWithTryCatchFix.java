@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -68,7 +68,7 @@ public class SurroundWithTryCatchFix implements IntentionAction {
       if (surrounder == null) return;
       myElement = surrounder.surround().getAnchor();
     } else {
-      myElement = RefactoringUtil.getParentStatement(myElement, false);
+      myElement = CommonJavaRefactoringUtil.getParentStatement(myElement, false);
       if (myElement == null) return;
     }
 

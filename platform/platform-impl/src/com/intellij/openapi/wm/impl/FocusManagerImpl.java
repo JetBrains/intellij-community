@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -97,7 +97,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
       else {
         Window window = getLastFocusedIdeWindow();
         if (window != null && !window.isVisible()) {
-          // it is need to forget about the closed window
+          // it is needed to forget about the closed window
           myLastFocusedFrame = null;
         }
       }
@@ -109,9 +109,8 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     return myLastFocusedFrame;
   }
 
-  @Nullable
   @Override
-  public Window getLastFocusedIdeWindow() {
+  public @Nullable Window getLastFocusedIdeWindow() {
     return (Window)myLastFocusedFrame;
   }
 
@@ -131,15 +130,13 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   }
 
   @Override
-  @NotNull
-  public ActionCallback requestFocus(@NotNull final Component c, final boolean forced) {
+  public @NotNull ActionCallback requestFocus(final @NotNull Component c, final boolean forced) {
     logFocusRequest(c, null, false);
     c.requestFocus();
     return ActionCallback.DONE;
   }
 
-  @NotNull
-  public List<FocusRequestInfo> getRequests() {
+  public @NotNull List<FocusRequestInfo> getRequests() {
     return myRequests;
   }
 
@@ -293,9 +290,8 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
       }
     }
 
-    @NotNull
     @Override
-    public ActionCallback requestFocus(@NotNull Component c, boolean forced) {
+    public @NotNull ActionCallback requestFocus(@NotNull Component c, boolean forced) {
       ActionCallback result = isExpired() ? ActionCallback.REJECTED : myManager.requestFocus(c, forced);
       result.doWhenProcessed(() -> Disposer.dispose(this));
       return result;
@@ -311,7 +307,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     }
   }
 
-  final static class EdtAlarm {
+  static final class EdtAlarm {
     private final Set<EdtRunnable> myRequests = new HashSet<>();
 
     public void cancelAllRequests() {

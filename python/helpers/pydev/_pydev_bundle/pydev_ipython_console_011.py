@@ -134,7 +134,7 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
         """Switch amongst GUI input hooks by name.
         """
         # Deferred import
-        if not INLINE_OUTPUT_SUPPORTED:
+        if gui != 'inline':
             from pydev_ipython.inputhook import enable_gui as real_enable_gui
             try:
                 return real_enable_gui(gui, app)
@@ -264,7 +264,7 @@ class _PyDevIPythonFrontEnd:
         # See: `pydevd_console_integration.console_exec()`.
         self.ipython.user_ns = self.ipython.user_global_ns if globals is locals else locals
 
-        if hasattr(self.ipython, 'history_manager') and hasattr(self.ipython.history_manager, 'save_thread'):
+        if hasattr(self.ipython, 'history_manager') and getattr(self.ipython.history_manager, 'save_thread', None) is not None:
             self.ipython.history_manager.save_thread.pydev_do_not_trace = True  # don't trace ipython history saving thread
 
     def complete(self, string):

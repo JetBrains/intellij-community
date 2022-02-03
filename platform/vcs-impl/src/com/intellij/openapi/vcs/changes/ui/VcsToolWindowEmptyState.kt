@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.icons.AllIcons
@@ -99,18 +99,20 @@ private fun invokeAction(project: Project, source: Any?, actionId: String, place
   invokeAction(project, source, action, place)
 }
 
-private fun invokeAction(project: Project, source: Any?, action: AnAction, place: String) =
+private fun invokeAction(project: Project, source: Any?, action: AnAction, place: String) {
   invokeAction(action, createDataContext(project), place, source as? InputEvent, null)
+}
 
-private fun createDataContext(project: Project): DataContext =
-  SimpleDataContext.builder()
+private fun createDataContext(project: Project): DataContext {
+  return SimpleDataContext.builder()
     .add(PROJECT, project)
     .add(VIRTUAL_FILE, project.guessProjectDir())
     .add(HELP_ID, "version.control.empty.state")
     .build()
+}
 
 
-internal fun ToolWindow.hideIdLabelIfNotEmptyState() =
+internal fun ToolWindow.hideIdLabelIfNotEmptyState() {
   contentManager.addContentManagerListener(object : ContentManagerListener {
     override fun contentAdded(event: ContentManagerEvent) {
       if (contentManager.contentCount != 1) return
@@ -126,6 +128,7 @@ internal fun ToolWindow.hideIdLabelIfNotEmptyState() =
       contentManager.updateContentUi()
     }
   })
+}
 
 private fun ContentManager.updateContentUi() {
   if (this !is ContentManagerImpl) return

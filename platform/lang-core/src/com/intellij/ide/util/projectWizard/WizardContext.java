@@ -3,6 +3,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
@@ -20,6 +21,7 @@ import javax.swing.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class WizardContext extends UserDataHolderBase {
   /**
@@ -78,9 +80,16 @@ public class WizardContext extends UserDataHolderBase {
   }
 
   public interface Listener {
-    default void buttonsUpdateRequested() {}
-    default void nextStepRequested() {}
-    default void switchToRequested(@NotNull String placeId) {}
+
+    default void buttonsUpdateRequested() { }
+
+    default void nextStepRequested() { }
+
+    default void switchToRequested(@NotNull String placeId) { }
+
+    default void switchToRequested(@NotNull String placeId, @NotNull Consumer<Step> configure) {
+      switchToRequested(placeId);
+    }
   }
 
   public WizardContext(@Nullable Project project, Disposable parentDisposable) {
@@ -147,6 +156,16 @@ public class WizardContext extends UserDataHolderBase {
     return myProject == null;
   }
 
+  /**
+   * Useses to select presentable name for message bundle texts.
+   * <br/>Message bundle examples:
+   * <br/><code>sentence="New {0,choice,0#module|1#project}"</code> -> New project, New module
+   * <br/><code>title="New {0,choice,0#Module|1#Project}"</code> -> New Project, New Module
+   */
+  public int isCreatingNewProjectInt() {
+    return isCreatingNewProject() ? 1 : 0;
+  }
+
   @Nullable
   public Icon getStepIcon() {
     return null;
@@ -165,8 +184,12 @@ public class WizardContext extends UserDataHolderBase {
   }
 
   public void requestSwitchTo(@NotNull String placeId) {
+    requestSwitchTo(placeId, __ -> {});
+  }
+
+  public void requestSwitchTo(@NotNull String placeId, @NotNull Consumer<Step> configure) {
     for (Listener listener : myListeners) {
-      listener.switchToRequested(placeId);
+      listener.switchToRequested(placeId, configure);
     }
   }
 

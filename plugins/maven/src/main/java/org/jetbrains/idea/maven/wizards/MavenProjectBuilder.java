@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.wizards;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.importing.MavenModuleNameMapper;
+import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.*;
@@ -250,6 +252,10 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
         modifiableModel.addContentEntry(contentRoot);
         modifiableModel.commit();
         renameModuleToProjectName(project, module, root);
+        if (MavenProjectImporter.isImportToWorkspaceModelEnabled() || MavenProjectImporter.isImportToTreeStructureEnabled()) {
+          //this is needed to ensure that dummy module created here will be correctly replaced by real ModuleEntity when import finishes
+          ExternalSystemModulePropertyManager.getInstance(module).setMavenized(true);
+        }
         return module;
       });
     }

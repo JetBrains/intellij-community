@@ -17,6 +17,7 @@ import com.intellij.psi.search.UsageSearchContext
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IndexableSetContributor
 import org.junit.Test
@@ -350,5 +351,30 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
     assertIndexableFiles(contentFileToRetain.file)
     ModuleManager.getInstance(project).setUnloadedModules(Collections.emptyList())
     assertIndexableFiles(contentFileToUnload.file, contentFileToRetain.file)
+  }
+
+  @Test
+  fun `test iterators from different modules for same libs are merged`() {
+    val libraryRoot = tempDirectory.newVirtualDirectory("library")
+    lateinit var classesDir: DirectorySpec
+
+    buildDirectoryContent(libraryRoot) {
+      dir("library") {
+        classesDir = dir("classes") {
+          file("ClassFile.java", "class ClassFile {}")
+        }
+      }
+    }
+    val module = projectModelRule.createModule(name = "first")
+    projectModelRule.addModuleLevelLibrary(module, "libraryName") { model ->
+      model.addRoot(classesDir.file, OrderRootType.CLASSES)
+    }
+    val otherModule = projectModelRule.createModule(name = "second")
+    projectModelRule.addModuleLevelLibrary(otherModule, "libraryName") { model ->
+      model.addRoot(classesDir.file, OrderRootType.CLASSES)
+    }
+    val fileBasedIndexEx = FileBasedIndex.getInstance() as FileBasedIndexEx
+    val providers = fileBasedIndexEx.getIndexableFilesProviders(project)
+    UsefulTestCase.assertSize(1, providers)
   }
 }

@@ -10,7 +10,7 @@ import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.KotlinRoot
 
 abstract class AbstractHierarchyWithLibTest : AbstractHierarchyTest() {
@@ -38,7 +38,7 @@ abstract class AbstractHierarchyWithLibTest : AbstractHierarchyTest() {
     }
 
     private fun findTargetJavaClass(targetClass: String): PsiClass {
-        return JavaFullClassNameIndex.getInstance().get(targetClass.hashCode(), project, GlobalSearchScope.allScope(project)).find {
+        return JavaFullClassNameIndex.getInstance().get(targetClass, project, GlobalSearchScope.allScope(project)).find {
             it.qualifiedName == targetClass
         } ?: error("Could not find java class: $targetClass")
     }

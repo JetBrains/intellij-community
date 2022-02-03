@@ -16,9 +16,48 @@
 
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.openapi.editor.markup.InspectionsLevel;
+import org.jetbrains.annotations.NotNull;
+
 public enum FileHighlightingSetting {
+  /**
+   * @deprecated Do not use. For "do not run highlighting, do not run inspections" setting use {@link #SKIP_HIGHLIGHTING}
+   */
+  @Deprecated
   NONE,
-  SKIP_HIGHLIGHTING,
-  FORCE_HIGHLIGHTING,
-  SKIP_INSPECTION
+  SKIP_HIGHLIGHTING,  // do not run highlighting/annotators nor inspections
+  SKIP_INSPECTION,    // run everything except inspections
+  ESSENTIAL,          // run essential highlighting only, run the rest on Save All
+  FORCE_HIGHLIGHTING; // do run everything
+
+  @NotNull
+  public static FileHighlightingSetting fromInspectionsLevel(@NotNull InspectionsLevel inspectionsLevel)  {
+    switch (inspectionsLevel) {
+      case NONE:
+        return SKIP_HIGHLIGHTING;
+      case SYNTAX:
+        return SKIP_INSPECTION;
+      case ESSENTIAL:
+        return ESSENTIAL;
+      case ALL:
+      default:
+        return FORCE_HIGHLIGHTING;
+    }
+  }
+
+  @NotNull
+  public static InspectionsLevel toInspectionsLevel(@NotNull FileHighlightingSetting highlightingSetting)  {
+    switch (highlightingSetting) {
+      case SKIP_HIGHLIGHTING:
+        return InspectionsLevel.NONE;
+      case SKIP_INSPECTION:
+        return InspectionsLevel.SYNTAX;
+      case ESSENTIAL:
+        return InspectionsLevel.ESSENTIAL;
+      case FORCE_HIGHLIGHTING:
+      default:
+        return InspectionsLevel.ALL;
+    }
+  }
+
 }

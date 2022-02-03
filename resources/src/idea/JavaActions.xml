@@ -1,6 +1,6 @@
 <idea-plugin>
   <actions>
-    <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirectory"
+    <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirAction"
             icon="AllIcons.Actions.ModuleDirectory">
       <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoProject"/>
     </action>
@@ -84,6 +84,7 @@
     <group id="Java.BuildMenu">
       <action id="CompileDirty" class="com.intellij.compiler.actions.CompileDirtyAction" icon="AllIcons.Actions.Compile">
         <add-to-group group-id="TouchBarDefault" anchor="before" relative-to-action="RunConfiguration"/>
+        <add-to-group group-id="RightToolbarSideGroup" anchor="first"/>
       </action>
       <action id="MakeModule" class="com.intellij.compiler.actions.MakeModuleAction"/>
       <action id="Compile" class="com.intellij.compiler.actions.CompileAction"/>
@@ -144,11 +145,11 @@
     </group>
 
     <action internal="true" id="TestParseEventsSchemeAction"
-            class="com.intellij.internal.statistic.actions.TestParseEventsSchemeAction">
+            class="com.intellij.internal.statistic.devkit.actions.TestParseEventsSchemeAction">
     </action>
 
     <action internal="true" id="CollectFUStatisticsAction"
-            class="com.intellij.internal.statistic.actions.CollectFUStatisticsAction">
+            class="com.intellij.internal.statistic.devkit.actions.CollectFUStatisticsAction">
       <add-to-group group-id="FeatureUsage.Internal" anchor="last"/>
     </action>
 
@@ -531,7 +532,7 @@
 
       <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction">
         <add-to-group group-id="XDebugger.Watches.Inline.Popup" anchor="last"/>
-        <override-text place="XDebuggerTreeInlayPopup"/>
+        <override-text place="XDebuggerTreePopup"/>
       </action>
       <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
       <action id="Debugger.MuteRenderers" class="com.intellij.debugger.actions.ForceOnDemandRenderersAction">
@@ -656,4 +657,3 @@
     </action>
   </actions>
 </idea-plugin>
-

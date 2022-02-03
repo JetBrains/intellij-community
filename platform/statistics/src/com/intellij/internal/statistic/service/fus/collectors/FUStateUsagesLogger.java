@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -51,9 +51,20 @@ public final class FUStateUsagesLogger implements UsagesCollectorConsumer {
   }
 
   public @NotNull CompletableFuture<Void> logApplicationStates() {
+    return logApplicationStates(false);
+  }
+
+  public @NotNull CompletableFuture<Void> logApplicationStatesOnStartup() {
+    return logApplicationStates(true);
+  }
+
+  private @NotNull CompletableFuture<Void> logApplicationStates(boolean onStartup) {
     synchronized (LOCK) {
       List<CompletableFuture<Void>> futures = new ArrayList<>();
       for (ApplicationUsagesCollector usagesCollector : ApplicationUsagesCollector.getExtensions(this)) {
+        if (onStartup && !(usagesCollector instanceof AllowedDuringStartupCollector)) {
+          continue;
+        }
         String groupId = usagesCollector.getGroupId();
         if (!PluginInfoDetectorKt.getPluginInfo(usagesCollector.getClass()).isDevelopedByJetBrains()) {
           LOG.warn("Skip '" + groupId + "' because its registered in a third-party plugin");

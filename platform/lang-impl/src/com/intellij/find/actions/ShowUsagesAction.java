@@ -1174,7 +1174,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     Insets contentInsets = popup.getContent().getInsets();
     JBInsets.removeFrom(d, contentInsets);
 
-    Component toolbarComponent = ((BorderLayout)popup.getContent().getLayout()).getLayoutComponent(BorderLayout.NORTH);
+    Component toolbarComponent = ((BorderLayout)popup.getComponent().getLayout()).getLayoutComponent(BorderLayout.NORTH);
     Dimension toolbarSize = toolbarComponent != null ? toolbarComponent.getPreferredSize() : JBUI.emptySize();
     Dimension headerSize = popup.getHeaderPreferredSize();
 

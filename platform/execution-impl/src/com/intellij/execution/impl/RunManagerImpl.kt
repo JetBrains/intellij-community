@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package com.intellij.execution.impl
 
 import com.intellij.ProjectTopics
@@ -416,8 +418,6 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     val newId = settings.uniqueID
     var existingId: String?
     lock.write {
-      listManager.immutableSortedSettingsList = null
-
       // https://youtrack.jetbrains.com/issue/IDEA-112821
       // we should check by instance, not by id (todo is it still relevant?)
       existingId = if (idToSettings.get(newId) === settings) newId else findExistingConfigurationId(settings)
@@ -432,6 +432,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       }
 
       idToSettings.put(newId, settings)
+      listManager.requestSort()
 
       if (existingId == null) {
         refreshUsagesList(settings)

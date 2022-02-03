@@ -1,11 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex
 
-import com.intellij.diff.comparison.ComparisonUtil
 import com.intellij.diff.comparison.iterables.DiffIterable
 import com.intellij.diff.comparison.iterables.FairDiffIterable
 import com.intellij.diff.comparison.trimStart
 import com.intellij.diff.tools.util.text.LineOffsets
+import com.intellij.diff.util.DiffRangeUtil
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
@@ -276,7 +276,7 @@ class DocumentTracker(
     if (isDisposed) return false
 
     LOCK.write {
-      if (!ComparisonUtil.isValidRanges(content1, content2, content1.lineOffsets, content2.lineOffsets, lineRanges)) return false
+      if (!isValidRanges(content1, content2, content1.lineOffsets, content2.lineOffsets, lineRanges)) return false
 
       freezeHelper.setFrozenContent(Side.LEFT, content1)
       freezeHelper.setFrozenContent(Side.RIGHT, content2)
@@ -294,7 +294,7 @@ class DocumentTracker(
     LOCK.write {
       val content1 = getContent(Side.LEFT)
       val content2 = getContent(Side.RIGHT)
-      if (!ComparisonUtil.isValidRanges(content1, content2, content1.lineOffsets, content2.lineOffsets, lineRanges)) return false
+      if (!isValidRanges(content1, content2, content1.lineOffsets, content2.lineOffsets, lineRanges)) return false
 
       tracker.setRanges(lineRanges, true)
 
@@ -960,8 +960,8 @@ private class BlocksRefresher(val handlers: List<Handler>,
   }
 
   private fun isWhitespaceOnlySeparated(block1: Block, block2: Block): Boolean {
-    val range1 = DiffUtil.getLinesRange(lineOffsets1, block1.range.start1, block1.range.end1, false)
-    val range2 = DiffUtil.getLinesRange(lineOffsets1, block2.range.start1, block2.range.end1, false)
+    val range1 = DiffRangeUtil.getLinesRange(lineOffsets1, block1.range.start1, block1.range.end1, false)
+    val range2 = DiffRangeUtil.getLinesRange(lineOffsets1, block2.range.start1, block2.range.end1, false)
     val start = range1.endOffset
     val end = range2.startOffset
     return trimStart(text1, start, end) == end

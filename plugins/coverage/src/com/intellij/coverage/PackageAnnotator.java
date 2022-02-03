@@ -22,10 +22,12 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.rt.coverage.data.*;
+import com.intellij.rt.coverage.instrumentation.SaveHook;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.coverage.org.objectweb.asm.ClassReader;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,6 +48,7 @@ public final class PackageAnnotator {
   private final JavaCoverageClassesAnnotator myAnnotator;
   private final boolean myIgnoreEmptyPrivateConstructors;
   private final boolean myIgnoreImplicitConstructor;
+  private final ProjectData myUnloadedClassesProjectData = new ProjectData();
 
   public PackageAnnotator(CoverageSuitesBundle suite,
                           Project project,
@@ -264,7 +267,10 @@ public final class PackageAnnotator {
                                                                             @Nullable final PsiClass psiClass,
                                                                             final String className) {
     final PackageAnnotator.ClassCoverageInfo info = new PackageAnnotator.ClassCoverageInfo();
-    final ClassData classData = myProjectData.getClassData(className);
+    ClassData classData = myProjectData.getClassData(className);
+    if (classData == null || classData.getLines() == null) {
+      classData = collectNonCoveredClassInfo(classFile, className, myUnloadedClassesProjectData);
+    }
 
     if (classData != null && classData.getLines() != null) {
       boolean isDefaultConstructorGenerated = false;
@@ -312,10 +318,7 @@ public final class PackageAnnotator {
       }
     }
     else {
-      if (!collectNonCoveredClassInfo(classFile, psiClass, info)) {
-        LOG.debug("Did not collect non-covered class info for " + className);
-        return null;
-      }
+      return null;
     }
 
 
@@ -361,20 +364,16 @@ public final class PackageAnnotator {
     return classFQVMName.replace('/', '.');
   }
 
-  /**
-   * Return true if there is executable code in the class
-   */
-  private boolean collectNonCoveredClassInfo(final File classFile,
-                                             @Nullable PsiClass psiClass,
-                                             final ClassCoverageInfo classCoverageInfo) {
+  @Nullable
+  private ClassData collectNonCoveredClassInfo(final File classFile, String className, ProjectData projectData) {
     final byte[] content;
     try {
       content = FileUtil.loadFileBytes(classFile);
     }
     catch (IOException e) {
-      return false;
+      return null;
     }
-    return SourceLineCounterUtil.collectNonCoveredClassInfo(classCoverageInfo, content, mySuite.isTracingEnabled(),
-                                                            myIgnoreEmptyPrivateConstructors, myIgnoreImplicitConstructor, psiClass);
+    SaveHook.appendUnloadedClass(projectData, className, new ClassReader(content), !mySuite.isTracingEnabled(), false, myIgnoreEmptyPrivateConstructors);
+    return projectData.getClassData(className);
   }
 }

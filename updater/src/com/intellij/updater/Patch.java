@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.io.*;
@@ -27,6 +27,7 @@ public class Patch {
   private final boolean myIsNormalized;
   private final Map<String, String> myWarnings;
   private final List<String> myDeleteFiles;
+  private final int myTimeout;
   private final List<PatchAction> myActions;
 
   public Patch(PatchSpec spec, UpdaterUI ui) throws IOException {
@@ -38,6 +39,7 @@ public class Patch {
     myIsNormalized = spec.isNormalized();
     myWarnings = spec.getWarnings();
     myDeleteFiles = spec.getDeleteFiles();
+    myTimeout = spec.getTimeout();
     myActions = calculateActions(spec, ui);
   }
 
@@ -51,6 +53,7 @@ public class Patch {
     myIsNormalized = in.readBoolean();
     myWarnings = readMap(in);
     myDeleteFiles = readList(in);
+    myTimeout = 0;
     myActions = readActions(in);
   }
 
@@ -279,7 +282,7 @@ public class Patch {
   }
 
   private static String mapPath(String path) {
-    if (!Runner.isCaseSensitiveFs()) {
+    if (!isCaseSensitiveFs()) {
       path = path.toLowerCase(Locale.getDefault());
     }
     if (path.endsWith("/")) {
@@ -367,7 +370,7 @@ public class Patch {
     }
 
     try {
-      // on macOS, we need to update bundle timestamp to reset Info.plist caches
+      // on macOS, we need to update the bundle timestamp to reset Info.plist caches
       Files.setLastModifiedTime(toDir.toPath(), FileTime.from(Instant.now()));
     }
     catch (IOException e) {
@@ -457,6 +460,10 @@ public class Patch {
       }
     }
     return true;
+  }
+
+  public int getTimeout() {
+    return myTimeout;
   }
 
   @FunctionalInterface

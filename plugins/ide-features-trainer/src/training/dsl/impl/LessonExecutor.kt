@@ -24,10 +24,12 @@ import training.learn.course.KLesson
 import training.learn.exceptons.NoTextEditor
 import training.learn.lesson.LessonManager
 import training.statistic.StatisticBase
+import training.ui.LearningUiUtil
 import training.util.WeakReferenceDelegator
 import training.util.getLearnToolWindowForProject
 import java.awt.Component
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
 internal class LessonExecutor(val lesson: KLesson,
@@ -303,6 +305,7 @@ internal class LessonExecutor(val lesson: KLesson,
 
   internal fun applyRestore(taskContext: TaskContextImpl, restoreId: TaskContext.TaskId? = null) {
     clearRestore()
+    disposeRecorders()
     taskContext.steps.forEach { it.cancel(true) }
     val restoreIndex = restoreId?.idx ?: taskActions[taskContext.taskIndex].restoreIndex
     for (info in taskActions.subList(restoreIndex + 1, taskActions.size)) {
@@ -312,11 +315,21 @@ internal class LessonExecutor(val lesson: KLesson,
       info.removeAfterDoneMessages.clear()
     }
     val restoreInfo = taskActions[restoreIndex]
-    restoreInfo.rehighlightComponent?.let {
+    val rehighlightComponentFn = restoreInfo.rehighlightComponent
+    if (rehighlightComponentFn != null) {
+      val feature = CompletableFuture<Boolean>()
+      feature.whenCompleteAsync { _, _ -> invokeLater { finishRestore(restoreInfo, restoreIndex) } }
+      feature.completeOnTimeout(true, LearningUiUtil.defaultComponentSearchShortTimeout.duration(), TimeUnit.MILLISECONDS)
       ApplicationManager.getApplication().executeOnPooledThread {
-        it()
+        rehighlightComponentFn()
+        feature.complete(true)
       }
+    } else {
+      finishRestore(restoreInfo, restoreIndex)
     }
+  }
+
+  private fun finishRestore(restoreInfo: TaskInfo, restoreIndex: Int) {
     LessonManager.instance.resetMessagesNumber(restoreInfo.messagesNumberBeforeStart)
 
     StatisticBase.logRestorePerformed(lesson, currentTaskIndex)

@@ -5,7 +5,6 @@ import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.lang.ASTNode
-import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import org.editorconfig.language.filetype.EditorConfigFileConstants.ROOT_KEY
 import org.editorconfig.language.filetype.EditorConfigFileConstants.ROOT_VALUE
 import org.editorconfig.language.psi.EditorConfigRootDeclaration
@@ -22,8 +21,7 @@ abstract class EditorConfigRootDeclarationBase(node: ASTNode) : ASTWrapperPsiEle
 
   private val declarationSite: String
     get() {
-      val virtualFile = containingFile.virtualFile ?: return ""
-      return VfsPresentationUtil.getPresentableNameForUI(project, virtualFile)
+      return containingFile.virtualFile?.presentableName ?: return ""
     }
 
   final override fun getPresentation() = PresentationData(text, declarationSite, AllIcons.Nodes.HomeFolder, null)

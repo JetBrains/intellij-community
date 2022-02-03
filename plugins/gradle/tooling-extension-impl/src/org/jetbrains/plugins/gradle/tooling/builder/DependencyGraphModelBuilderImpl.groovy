@@ -17,6 +17,9 @@ import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolv
 
 @CompileStatic
 class DependencyGraphModelBuilderImpl implements ModelBuilderService {
+
+  DependenciesReport.ReportGenerator reportGenerator = new DependenciesReport.ReportGenerator()
+
   @Override
   boolean canBuild(String modelName) {
     return ProjectDependencies.name == modelName
@@ -40,8 +43,8 @@ class DependencyGraphModelBuilderImpl implements ModelBuilderService {
       def runtimeConfiguration = project.configurations.findByName(runtimeConfigurationName)
       if (runtimeConfiguration == null) continue
 
-      DependencyScopeNode compileScopeNode = DependenciesReport.buildDependenciesGraph(compileConfiguration, project)
-      DependencyScopeNode runtimeScopeNode = DependenciesReport.buildDependenciesGraph(runtimeConfiguration, project)
+      DependencyScopeNode compileScopeNode = reportGenerator.buildDependenciesGraph(compileConfiguration, project)
+      DependencyScopeNode runtimeScopeNode = reportGenerator.buildDependenciesGraph(runtimeConfiguration, project)
 
       if (!compileScopeNode.dependencies.isEmpty() || !runtimeScopeNode.dependencies.isEmpty()) {
         dependencies.add(new ComponentDependenciesImpl(sourceSet.name, compileScopeNode, runtimeScopeNode))

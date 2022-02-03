@@ -1,21 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
 final class ComboContentLayout extends ContentLayout {
-  ContentComboLabel myComboLabel;
+  ContentComboLabel comboLabel;
 
   ComboContentLayout(ToolWindowContentUi ui) {
     super(ui);
@@ -25,29 +24,29 @@ final class ComboContentLayout extends ContentLayout {
   public void init(@NotNull ContentManager contentManager) {
     reset();
 
-    myIdLabel = new BaseLabel(myUi, Registry.is("ide.experimental.ui"));
-    MouseDragHelper.setComponentDraggable(myIdLabel, true);
-    myComboLabel = new ContentComboLabel(this);
+    idLabel = new BaseLabel(ui, ExperimentalUI.isNewUI());
+    MouseDragHelper.setComponentDraggable(idLabel, true);
+    comboLabel = new ContentComboLabel(this);
   }
 
   @Override
   public void reset() {
-    myIdLabel = null;
-    myComboLabel = null;
+    idLabel = null;
+    comboLabel = null;
   }
 
   @Override
   public void layout() {
-    Rectangle bounds = myUi.getTabComponent().getBounds();
-    Dimension idSize = isIdVisible() ? myIdLabel.getPreferredSize() : JBUI.emptySize();
+    Rectangle bounds = ui.getTabComponent().getBounds();
+    Dimension idSize = isIdVisible() ? idLabel.getPreferredSize() : JBUI.emptySize();
 
     int eachX = 0;
     int eachY = 0;
 
-    myIdLabel.setBounds(eachX, eachY, idSize.width, bounds.height);
+    idLabel.setBounds(eachX, eachY, idSize.width, bounds.height);
     eachX += idSize.width;
 
-    Dimension comboSize = myComboLabel.getPreferredSize();
+    Dimension comboSize = comboLabel.getPreferredSize();
     int spaceLeft = bounds.width - eachX - (isToDrawCombo() && isIdVisible() ? 3 : 0);
 
     int width = comboSize.width;
@@ -55,53 +54,40 @@ final class ComboContentLayout extends ContentLayout {
       width = spaceLeft;
     }
 
-    myComboLabel.setBounds(eachX, eachY, width, bounds.height);
+    comboLabel.setBounds(eachX, eachY, width, bounds.height);
   }
 
   @Override
   public int getMinimumWidth() {
-    return myIdLabel != null ? myIdLabel.getPreferredSize().width : 0;
-  }
-
-  @Override
-  public void paintComponent(Graphics g) {
+    return idLabel == null ? 0 : idLabel.getPreferredSize().width;
   }
 
   @Override
   public void update() {
-    updateIdLabel(myIdLabel);
-    myComboLabel.update();
+    updateIdLabel(idLabel);
+    comboLabel.update();
   }
 
   @Override
   public void rebuild() {
-    myUi.getTabComponent().removeAll();
+    ui.getTabComponent().removeAll();
 
-    myUi.getTabComponent().add(myIdLabel);
-    ToolWindowContentUi.initMouseListeners(myIdLabel, myUi, true, true);
+    ui.getTabComponent().add(idLabel);
+    ToolWindowContentUi.initMouseListeners(idLabel, ui, true, true);
 
-    myUi.getTabComponent().add(myComboLabel);
-    ToolWindowContentUi.initMouseListeners(myComboLabel, myUi, false);
+    ui.getTabComponent().add(comboLabel);
+    ToolWindowContentUi.initMouseListeners(comboLabel, ui, false);
   }
 
   boolean isToDrawCombo() {
-    ContentManager manager = myUi.getContentManager();
-    return manager != null && manager.getContentCount() > 1;
-  }
-
-  @Override
-  public void contentAdded(ContentManagerEvent event) {
-  }
-
-  @Override
-  public void contentRemoved(ContentManagerEvent event) {
+    return ui.getContentManager().getContentCount() > 1;
   }
 
   @Override
   public void showContentPopup(ListPopup listPopup) {
-    final int width = myComboLabel.getSize().width;
+    final int width = comboLabel.getSize().width;
     listPopup.setMinimumSize(new Dimension(width, 0));
-    listPopup.show(new RelativePoint(myComboLabel, new Point(0, myComboLabel.getHeight())));
+    listPopup.show(new RelativePoint(comboLabel, new Point(0, comboLabel.getHeight())));
   }
 
   @Override

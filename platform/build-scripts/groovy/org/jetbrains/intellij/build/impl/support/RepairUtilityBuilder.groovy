@@ -126,9 +126,8 @@ final class RepairUtilityBuilder {
           buildContext.messages.error("Unable to generate installation integrity manifest: ${Files.readString(repairLog)}")
         }
 
-        Path artifact = tmpDir.resolve("${manifestFileNamePrefix}.manifest")
+        Path artifact = buildContext.paths.artifactDir.resolve("${manifestFileNamePrefix}.manifest")
         Files.move(manifest, artifact, StandardCopyOption.REPLACE_EXISTING)
-        buildContext.notifyArtifactBuilt(artifact)
       }
     })
   }

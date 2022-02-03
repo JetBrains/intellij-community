@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.gant.ant;
 
 import com.intellij.lang.ant.AntIntrospector;
@@ -20,11 +20,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
-class AntBuilderMethod extends LightMethodBuilder {
-
+final class AntBuilderMethod extends LightMethodBuilder {
   private final @NotNull PsiFile myFile;
   private final @Nullable Class<?> myAntClass;
 

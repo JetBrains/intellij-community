@@ -1,20 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.distribution
 
 import com.intellij.openapi.application.ex.ClipboardUtil
 import com.intellij.openapi.fileChooser.FileChooserFactory
+import com.intellij.openapi.observable.properties.AtomicProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ui.distribution.DistributionComboBox.Item
-import com.intellij.openapi.ui.whenItemSelected
-import com.intellij.openapi.ui.whenTextModified
-import com.intellij.openapi.ui.BrowseFolderRunnable
-import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.TextComponentAccessor
+import com.intellij.openapi.ui.*
 import com.intellij.ui.*
 import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.util.lockOrSkip
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBInsets
 import java.awt.event.ActionEvent
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -27,13 +25,16 @@ import javax.swing.text.DefaultEditorKit
 import javax.swing.text.JTextComponent
 
 
-class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<Item>(CollectionComboBoxModel()) {
+class DistributionComboBox(
+  private val project: Project?,
+  private val info: FileChooserInfo
+) : ComboBox<Item>(CollectionComboBoxModel()) {
 
   var sdkListLoadingText: String = ProjectBundle.message("sdk.loading.item")
   var noDistributionText: String = ProjectBundle.message("sdk.missing.item")
   var specifyLocationActionName: String = ProjectBundle.message("sdk.specify.location")
 
-  var defaultDistributionLocation: String = System.getProperty("user.home", "")
+  var defaultDistributionLocation: String? = null
 
   private val collectionModel: CollectionComboBoxModel<Item>
     get() = model as CollectionComboBoxModel
@@ -45,10 +46,13 @@ class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<
     }
 
   override fun setSelectedItem(anObject: Any?) {
+    if (anObject is Item.SpecifyDistributionAction) {
+      showBrowseDistributionDialog()
+      return
+    }
     val item = when (anObject) {
       is Item.ListLoading -> Item.ListLoading
       is Item.NoDistribution, null -> Item.NoDistribution
-      is Item.SpecifyDistributionAction -> addDistributionIfNotExists(LocalDistributionInfo(defaultDistributionLocation))
       is Item.Distribution -> addDistributionIfNotExists(anObject.info)
       is DistributionInfo -> addDistributionIfNotExists(anObject)
       else -> throw IllegalArgumentException("Unsupported combobox item: ${anObject.javaClass.name}")
@@ -86,6 +90,72 @@ class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<
     return foundItem ?: item
   }
 
+  private fun getSelectedDistributionUiPath(): String {
+    val path =
+      (selectedDistribution as? LocalDistributionInfo)?.path
+      ?: defaultDistributionLocation
+      ?: collectionModel.items.asSequence()
+        .mapNotNull { (it as? Item.Distribution)?.info }
+        .mapNotNull { (it as? LocalDistributionInfo)?.path }
+        .firstOrNull()
+      ?: System.getProperty("user.home", "")
+    return getPresentablePath(path)
+  }
+
+  private fun setSelectedDistributionUiPath(uiPath: String) {
+    when (val distribution = selectedDistribution) {
+      is LocalDistributionInfo -> {
+        distribution.uiPath = uiPath
+        popup?.list?.repaint()
+        selectedItemChanged()
+      }
+      else -> {
+        selectedDistribution = LocalDistributionInfo(uiPath)
+      }
+    }
+  }
+
+  private fun bindSelectedDistributionPath(property: ObservableMutableProperty<String>) {
+    val mutex = AtomicBoolean()
+    property.afterChange { text ->
+      mutex.lockOrSkip {
+        setSelectedDistributionUiPath(text)
+      }
+    }
+    whenItemSelected {
+      mutex.lockOrSkip {
+        property.set(getSelectedDistributionUiPath())
+      }
+    }
+  }
+
+  private fun showBrowseDistributionDialog() {
+    val fileBrowserAccessor = object : TextComponentAccessor<DistributionComboBox> {
+      override fun getText(component: DistributionComboBox) = getSelectedDistributionUiPath()
+      override fun setText(component: DistributionComboBox, text: String) = setSelectedDistributionUiPath(text)
+    }
+    val selectFolderAction = BrowseFolderRunnable<DistributionComboBox>(
+      info.fileChooserTitle,
+      info.fileChooserDescription,
+      project,
+      info.fileChooserDescriptor,
+      this,
+      fileBrowserAccessor
+    )
+    selectFolderAction.run()
+  }
+
+  private fun createEditor(): Editor {
+    val property = AtomicProperty("")
+    val editor = object : Editor() {
+      override fun setItem(anObject: Any?) {}
+      override fun getItem(): Any? = selectedItem
+    }
+    editor.textField.bind(property)
+    bindSelectedDistributionPath(property)
+    return editor
+  }
+
   init {
     renderer = Optional.ofNullable(popup)
       .map { it.list }
@@ -101,10 +171,14 @@ class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<
   }
 
   init {
-    ComboBoxEditor.installComboBoxEditor(project, info, this)
+    val editor = createEditor()
+    setEditor(editor)
     whenItemSelected {
       setEditable(it is Item.Distribution && it.info is LocalDistributionInfo)
     }
+    editor.textField.addBrowseExtension(::showBrowseDistributionDialog, null)
+    FileChooserFactory.getInstance()
+      .installFileCompletion(editor.textField, info.fileChooserDescriptor, true, null)
   }
 
   init {
@@ -140,7 +214,7 @@ class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<
       selected: Boolean,
       hasFocus: Boolean
     ) {
-      ipad = JBUI.emptyInsets()
+      ipad = JBInsets.emptyInsets()
       myBorder = null
 
       when (value) {
@@ -160,74 +234,13 @@ class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<
     }
   }
 
-  private class ComboBoxEditor(
-    project: Project?,
-    info: FileChooserInfo,
-    component: DistributionComboBox
-  ) : ExtendableTextField() {
-    init {
-      val fileBrowserAccessor = object : TextComponentAccessor<DistributionComboBox> {
-        override fun getText(component: DistributionComboBox) = component.selectedDistribution?.name ?: ""
-        override fun setText(component: DistributionComboBox, text: String) {
-          component.selectedDistribution = LocalDistributionInfo(text)
-        }
-      }
-      val selectFolderAction = BrowseFolderRunnable<DistributionComboBox>(
-        info.fileChooserTitle,
-        info.fileChooserDescription,
-        project,
-        info.fileChooserDescriptor,
-        component,
-        fileBrowserAccessor
-      )
-      addBrowseExtension(selectFolderAction, null)
-    }
+  private abstract class Editor : BasicComboBoxEditor() {
+    val textField get() = editor as ExtendableTextField
 
-    init {
-      val fileChooserFactory = FileChooserFactory.getInstance()
-      fileChooserFactory.installFileCompletion(this, info.fileChooserDescriptor, true, null)
-    }
-
-    init {
-      border = null
-    }
-
-    companion object {
-      fun installComboBoxEditor(
-        project: Project?,
-        info: FileChooserInfo,
-        component: DistributionComboBox
-      ) {
-        val mutex = AtomicBoolean()
-        component.setEditor(object : BasicComboBoxEditor() {
-          override fun createEditorComponent(): JTextField {
-            return ComboBoxEditor(project, info, component).apply {
-              whenTextModified {
-                mutex.lockOrSkip {
-                  val distribution = component.selectedDistribution
-                  if (distribution is LocalDistributionInfo) {
-                    distribution.uiPath = text
-                    component.popup?.list?.repaint()
-                    component.selectedItemChanged()
-                  }
-                }
-              }
-            }
-          }
-
-          override fun setItem(anObject: Any?) {
-            mutex.lockOrSkip {
-              if (anObject is Item.Distribution) {
-                editor.text = anObject.info.name
-              }
-            }
-          }
-
-          override fun getItem(): Any? {
-            return component.selectedItem
-          }
-        })
-      }
+    override fun createEditorComponent(): JTextField {
+      val textField = ExtendableTextField()
+      textField.border = null
+      return textField
     }
   }
 

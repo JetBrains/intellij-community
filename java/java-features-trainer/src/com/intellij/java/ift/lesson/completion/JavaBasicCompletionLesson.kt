@@ -2,18 +2,16 @@
 package com.intellij.java.ift.lesson.completion
 
 import com.intellij.java.ift.JavaLessonsBundle
-import training.dsl.LessonContext
-import training.dsl.LessonUtil
+import training.dsl.*
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.LessonUtil.restoreIfModifiedOrMovedIncorrectly
-import training.dsl.TaskTestContext
-import training.dsl.parseLessonSample
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
+import training.util.isToStringContains
 
-class JavaBasicCompletionLesson : KLesson("Basic completion", LessonsBundle.message("basic.completion.lesson.name")) {
-  val sample = parseLessonSample("""
+open class JavaBasicCompletionLesson : KLesson("Basic completion", LessonsBundle.message("basic.completion.lesson.name")) {
+  private val sample = parseLessonSample("""
     import java.lang.*;
     import java.util.*;
     
@@ -21,10 +19,10 @@ class JavaBasicCompletionLesson : KLesson("Basic completion", LessonsBundle.mess
     
     class BasicCompletionDemo {
     
-        private int i = 0;
+        private int PROCESS_ID = 0;
     
         public void systemProcess(){
-            System.out.println(i++);
+            System.out.println(PROCESS_ID++);
         }
     
         public BasicCompletionDemo() {
@@ -45,34 +43,16 @@ class JavaBasicCompletionLesson : KLesson("Basic completion", LessonsBundle.mess
       stateCheck {
         editor.document.charsSequence.contains("Random()")
       }
-      proposeRestore {
-        checkExpectedStateOfEditor(previous.sample) { typedString -> "Random".startsWith(typedString) }
-      }
+      restoreIfTypedIncorrectly(sample, "Random")
       test {
         type("Ran")
         doubleClickListItem("Random")
       }
     }
+
     caret(19, 36)
-    task("CodeCompletion") {
-      text(JavaLessonsBundle.message("java.basic.completion.activate", action(it)))
-      triggerByListItemAndHighlight(false, false) { item -> item.toString() == "i" }
-      restoreIfModifiedOrMoved()
-      test {
-        invokeCompletion()
-      }
-    }
-    task {
-      text(JavaLessonsBundle.message("java.basic.completion.choose.item",
-                                     code("i"), action("EditorChooseLookupItem")))
-      stateCheck {
-        editor.document.charsSequence.contains("Random(i)")
-      }
-      restoreByUi()
-      test {
-        doubleClickListItem("i")
-      }
-    }
+    invokeCompletionTasks("PROCESS_ID", "Random(PROCESS_ID)")
+
     actionTask("EditorCompleteStatement") {
       restoreIfModifiedOrMoved()
       JavaLessonsBundle.message("java.basic.completion.complete", action(it))
@@ -88,7 +68,39 @@ class JavaBasicCompletionLesson : KLesson("Basic completion", LessonsBundle.mess
         invokeCompletion()
       }
     }
+    epilogue()
+  }
+
+  protected fun LessonContext.invokeCompletionTasks(itemToChoose: String, resultingMethodCall: String) {
+    task("CodeCompletion") {
+      text(JavaLessonsBundle.message("java.basic.completion.activate", action(it)))
+      triggerByListItemAndHighlight(false, false) { item -> item.isToStringContains(itemToChoose) }
+      restoreIfModifiedOrMoved()
+      test {
+        invokeCompletion()
+      }
+    }
+    task {
+      text(JavaLessonsBundle.message("java.basic.completion.choose.item",
+                                     code(itemToChoose), action("EditorChooseLookupItem")))
+      stateCheck {
+        editor.document.charsSequence.contains(resultingMethodCall)
+      }
+      restoreByUi()
+      test {
+        doubleClickListItem(itemToChoose)
+      }
+    }
+  }
+
+  protected fun LessonContext.epilogue() {
     text(JavaLessonsBundle.message("java.basic.completion.module.promotion", strong(LessonsBundle.message("refactorings.module.name"))))
+  }
+
+  protected fun TaskContext.restoreIfTypedIncorrectly(sample: LessonSample, stringToType: String) {
+    proposeRestore {
+      checkExpectedStateOfEditor(sample) { typedString -> stringToType.startsWith(typedString) }
+    }
   }
 
   private fun TaskTestContext.doubleClickListItem(itemText: String) {

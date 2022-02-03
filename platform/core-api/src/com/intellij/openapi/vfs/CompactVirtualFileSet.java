@@ -33,16 +33,28 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
   private BitSet fileIds;
   private boolean frozen;
 
+  /**
+   * @deprecated Use {@link VfsUtilCore#createCompactVirtualFileSet()} instead
+   */
+  @Deprecated
   @ApiStatus.Internal
   public CompactVirtualFileSet() {
   }
 
+  /**
+   * @deprecated Use {@link VfsUtilCore#createCompactVirtualFileSet(Collection)} instead
+   */
+  @Deprecated
   @ApiStatus.Internal
   CompactVirtualFileSet(@NotNull Collection<? extends VirtualFile> files) {
     addAll(files);
   }
 
   //TODO hide it
+  /**
+   * @deprecated Use {@link VfsUtilCore#createCompactVirtualFileSet()} instead
+   */
+  @Deprecated
   @ApiStatus.Internal
   public CompactVirtualFileSet(int @NotNull [] fileIds) {
     idSet = new StrippedIntOpenHashSet();
@@ -170,11 +182,15 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
 
   /**
    * Make unmodifiable
-   * @return
    */
   @Override
-  public Set<VirtualFile> freeze() {
+  public void freeze() {
     frozen = true;
+  }
+
+  @Override
+  public Set<VirtualFile> freezed() {
+    freeze();
     return this;
   }
 

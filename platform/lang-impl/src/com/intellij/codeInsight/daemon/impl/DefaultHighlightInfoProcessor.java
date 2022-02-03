@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -27,18 +28,18 @@ import java.util.List;
 
 public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   @Override
-  public void highlightsInsideVisiblePartAreProduced(@NotNull final HighlightingSession session,
+  public void highlightsInsideVisiblePartAreProduced(@NotNull HighlightingSession session,
                                                      @Nullable Editor editor,
-                                                     @NotNull final List<? extends HighlightInfo> infos,
+                                                     @NotNull List<? extends HighlightInfo> infos,
                                                      @NotNull TextRange priorityRange,
                                                      @NotNull TextRange restrictRange,
-                                                     final int groupId) {
-    final PsiFile psiFile = session.getPsiFile();
-    final Project project = psiFile.getProject();
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+                                                     int groupId) {
+    PsiFile psiFile = session.getPsiFile();
+    Project project = psiFile.getProject();
+    Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     if (document == null) return;
-    final long modificationStamp = document.getModificationStamp();
-    final TextRange priorityIntersection = priorityRange.intersection(restrictRange);
+    long modificationStamp = document.getModificationStamp();
+    TextRange priorityIntersection = priorityRange.intersection(restrictRange);
     List<? extends HighlightInfo> infoCopy = new ArrayList<>(infos);
     ((HighlightingSessionImpl)session).applyInEDT(() -> {
       if (modificationStamp != document.getModificationStamp()) return;
@@ -46,7 +47,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
         MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, true);
 
         EditorColorsScheme scheme = session.getColorsScheme();
-        UpdateHighlightersUtil.setHighlightersInRange(project, document, priorityIntersection, scheme, infoCopy, (MarkupModelEx)markupModel, groupId);
+        UpdateHighlightersUtil.setHighlightersInRange(project, psiFile, document, priorityIntersection, scheme, infoCopy, (MarkupModelEx)markupModel, groupId);
       }
       if (editor != null && !editor.isDisposed()) {
         // usability: show auto import popup as soon as possible
@@ -72,16 +73,17 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   }
 
   @Override
-  public void highlightsOutsideVisiblePartAreProduced(@NotNull final HighlightingSession session,
+  public void highlightsOutsideVisiblePartAreProduced(@NotNull HighlightingSession session,
                                                       @Nullable Editor editor,
-                                                      @NotNull final List<? extends HighlightInfo> infos,
-                                                      @NotNull final TextRange priorityRange,
-                                                      @NotNull final TextRange restrictedRange, final int groupId) {
-    final PsiFile psiFile = session.getPsiFile();
-    final Project project = psiFile.getProject();
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+                                                      @NotNull List<? extends HighlightInfo> infos,
+                                                      @NotNull TextRange priorityRange,
+                                                      @NotNull TextRange restrictedRange,
+                                                      int groupId) {
+    PsiFile psiFile = session.getPsiFile();
+    Project project = psiFile.getProject();
+    Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     if (document == null) return;
-    final long modificationStamp = document.getModificationStamp();
+    long modificationStamp = document.getModificationStamp();
     ((HighlightingSessionImpl)session).applyInEDT(() -> {
       if (project.isDisposed() || modificationStamp != document.getModificationStamp()) return;
 
@@ -107,8 +109,8 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   private static void killAbandonedHighlightsUnder(@NotNull Project project,
                                                    @NotNull Document document,
                                                    long range,
-                                                   @Nullable final List<? extends HighlightInfo> infos,
-                                                   @NotNull final HighlightingSession highlightingSession) {
+                                                   @Nullable List<? extends HighlightInfo> infos,
+                                                   @NotNull HighlightingSession highlightingSession) {
     DaemonCodeAnalyzerEx.processHighlights(document, project, null, TextRange.startOffset(range), TextRange.endOffset(range), existing -> {
       if (existing.getGroup() == Pass.UPDATE_ALL && range == existing.getVisitingTextRange()) {
         if (infos != null) {
@@ -116,8 +118,11 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
             if (existing.equalsByActualOffset(created)) return true;
           }
         }
-        // seems that highlight info 'existing' is going to disappear; remove it earlier
-        ((HighlightingSessionImpl)highlightingSession).queueDisposeHighlighterFor(existing);
+        RangeHighlighterEx highlighter = existing.highlighter;
+        if (highlighter != null && UpdateHighlightersUtil.shouldRemoveHighlighter(highlightingSession.getPsiFile(), highlighter)) {
+          // seems that highlight info 'existing' is going to disappear; remove it earlier
+          ((HighlightingSessionImpl)highlightingSession).queueDisposeHighlighter(existing);
+        }
       }
       return true;
     });
@@ -141,7 +146,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   }
 
   private final Alarm repaintIconAlarm = new Alarm();
-  private void repaintTrafficIcon(@NotNull final PsiFile file, @Nullable Editor editor, double progress) {
+  private void repaintTrafficIcon(@NotNull PsiFile file, @Nullable Editor editor, double progress) {
     if (ApplicationManager.getApplication().isCommandLine()) return;
 
     if (repaintIconAlarm.isEmpty() || progress >= 1) {

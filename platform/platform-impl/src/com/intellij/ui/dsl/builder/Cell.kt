@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.JLabel
 
+@ApiStatus.Internal
 internal const val DSL_INT_TEXT_RANGE_PROPERTY = "dsl.intText.range"
 
 enum class LabelPosition {
@@ -20,7 +21,6 @@ enum class LabelPosition {
   TOP
 }
 
-@ApiStatus.Experimental
 interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): Cell<T>
@@ -30,6 +30,8 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   override fun resizableColumn(): Cell<T>
 
   override fun gap(rightGap: RightGap): Cell<T>
+
+  override fun customize(customGaps: Gaps): Cell<T>
 
   /**
    * Component that occupies the cell
@@ -53,8 +55,13 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    */
   fun bold(): Cell<T>
 
+  @Deprecated("Use overloaded comment(...) instead", level = DeprecationLevel.HIDDEN)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  fun comment(@NlsContexts.DetailedDescription comment: String?,
+              maxLineLength: Int = DEFAULT_COMMENT_WIDTH): Cell<T>
+
   /**
-   * Adds comment under the cell aligned by left edge with appropriate color and font size (macOS uses smaller font).
+   * Adds comment under the cell aligned by left edge with appropriate color and font size (macOS and Linux use smaller font).
    * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically.
    * \n does not work as new line in html, use &lt;br&gt; instead.
    * Links with href to http/https are automatically marked with additional arrow icon.
@@ -71,6 +78,11 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
               maxLineLength: Int = DEFAULT_COMMENT_WIDTH,
               action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<T>
 
+  @Deprecated("Use comment(...) instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  fun commentHtml(@NlsContexts.DetailedDescription comment: String?,
+                  action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<T>
+
   /**
    * See doc for overloaded method
    */
@@ -84,6 +96,11 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * can be implemented later)
    */
   fun label(label: JLabel, position: LabelPosition = LabelPosition.LEFT): Cell<T>
+
+  /**
+   * All components from the same width group will have the same width equals to maximum width from the group.
+   */
+  fun widthGroup(group: String): Cell<T>
 
   /**
    * If this method is called, the value of the component will be stored to the backing property only if the component is enabled
@@ -103,10 +120,18 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): Cell<T>
 
   /**
-   * Binds [component] value changing to [property]. The property is updated when value is changed and is not related to [DialogPanel.apply].
-   * This method is rarely used directly, see [Cell] extension methods named like "bindXXX" for specific components
+   * Installs [property] as validation requestor.
+   * @deprecated use [validationRequestor] instead
    */
-  fun graphProperty(property: GraphProperty<*>): Cell<T>
+  @Deprecated("Use validationRequestor instead", ReplaceWith("validationRequestor(property::afterPropagation)"))
+  fun graphProperty(property: GraphProperty<*>): Cell<T> =
+    validationRequestor(property::afterPropagation)
+
+  /**
+   * Registers custom validation requestor for current [component].
+   * @param validationRequestor gets callback (component validator) that should be subscribed on custom event.
+   */
+  fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): Cell<T>
 
   /**
    * Adds [component] validation
@@ -137,10 +162,5 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * Registers [callback] that will be called for [component] from [DialogPanel.isModified] method
    */
   fun onIsModified(callback: () -> Boolean): Cell<T>
-
-  /**
-   * Overrides all gaps around cell by [customGaps]. Should be used for very specific cases
-   */
-  fun customize(customGaps: Gaps): Cell<T>
 
 }

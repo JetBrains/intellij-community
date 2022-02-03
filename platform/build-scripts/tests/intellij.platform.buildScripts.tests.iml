@@ -13,5 +13,6 @@
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" scope="TEST" name="decentxml" level="project" />
     <orderEntry type="library" scope="TEST" name="opentelemetry" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" scope="TEST" />
   </component>
 </module>

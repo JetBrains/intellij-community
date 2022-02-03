@@ -136,6 +136,10 @@ interface InlayHintsProvider<T : Any> {
   @JvmDefault
   fun getProperty(key: String): String? = null
 
+  @JvmDefault
+  fun preparePreview(editor: Editor, file: PsiFile, settings: T) {
+  }
+
   val isVisibleInSettings: Boolean
     get() = true
 }

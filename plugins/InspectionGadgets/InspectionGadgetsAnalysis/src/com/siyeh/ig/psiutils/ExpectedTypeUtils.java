@@ -111,22 +111,13 @@ public final class ExpectedTypeUtils {
       if (!wrappedExpression.equals(pair.getValue())) {
         return;
       }
-      final PsiElement parent = pair.getParent();
-      if (!(parent instanceof PsiAnnotationParameterList)) {
+      final PsiReference reference = pair.getReference();
+      if (reference == null) {
         return;
       }
-      final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiAnnotation)) {
-        return;
-      }
-      final PsiAnnotation annotation = (PsiAnnotation)grandParent;
-      final PsiClass aClass = annotation.resolveAnnotationType();
-      if (aClass == null) {
-        return;
-      }
-      final PsiMethod[] methods = aClass.findMethodsByName(pair.getAttributeName(), false);
-      if (methods.length == 1) {
-        expectedType = methods[0].getReturnType();
+      final PsiElement target = reference.resolve();
+      if (target instanceof PsiAnnotationMethod) {
+        expectedType = ((PsiMethod)target).getReturnType();
       }
     }
 

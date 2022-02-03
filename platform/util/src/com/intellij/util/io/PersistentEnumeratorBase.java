@@ -23,6 +23,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.keyStorage.AppendableObjectStorage;
 import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile;
 import com.intellij.util.io.keyStorage.InlinedKeyStorage;
@@ -134,6 +135,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
     myStorage = storage;
 
+    boolean created = false;
     lockStorageWrite();
     try {
       if (myStorage.length() == 0) {
@@ -143,6 +145,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
           putMetaData2(0);
           setupEmptyFile();
           doFlush();
+          created = true;
         }
         catch (RuntimeException e) {
           LOG.info(e);
@@ -200,6 +203,10 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         myStorage.close();
         throw new CorruptedException(file);
       }
+    }
+
+    if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
+      LOG.info("PersistentEnumeratorBase at " + myFile + " has been open (new = " + created + ")");
     }
   }
 
@@ -462,6 +469,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         if (!myClosed) {
           myClosed = true;
           doClose();
+          if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
+            LOG.info("PersistentEnumeratorBase at " + myFile + " has been closed");
+          }
         }
       }
       finally {
@@ -573,6 +583,10 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   protected void markCorrupted() {
+    if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
+      dumpKeysOnCorruption();
+    }
+
     lockStorageWrite();
     try {
       if (!myCorrupted) {
@@ -590,6 +604,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     finally {
       unlockStorageWrite();
     }
+  }
+
+  protected void dumpKeysOnCorruption() {
   }
 
   protected boolean trySelfHeal() {

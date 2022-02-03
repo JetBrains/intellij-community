@@ -1,0 +1,13 @@
+// FIR_IDENTICAL
+interface <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>TheTrait<!> {
+}
+
+class <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>TheClass<!> : <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>TheTrait<!> {
+}
+
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>annotation<!> class <!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>magnificent<!>
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>annotation<!> class <!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>Deprecated<!>
+
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@Deprecated<!>
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@magnificent<!> <!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>abstract<!> class <!HIGHLIGHTING("textAttributesKey='KOTLIN_ABSTRACT_CLASS'")!>AbstractClass<!><<!HIGHLIGHTING("textAttributesKey='KOTLIN_TYPE_PARAMETER'")!>T<!>> {
+}

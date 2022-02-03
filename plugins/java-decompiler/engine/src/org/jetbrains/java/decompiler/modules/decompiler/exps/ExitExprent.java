@@ -13,11 +13,11 @@ import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class ExitExprent extends Exprent {
@@ -126,7 +126,7 @@ public class ExitExprent extends Exprent {
 
     ExitExprent et = (ExitExprent)o;
     return exitType == et.getExitType() &&
-           InterpreterUtil.equalObjects(value, et.getValue());
+           Objects.equals(value, et.getValue());
   }
 
   public int getExitType() {

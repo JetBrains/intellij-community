@@ -17,7 +17,6 @@ package org.intellij.plugins.xpathView;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -25,7 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class XPathAction extends AnAction {
+public abstract class XPathAction extends AnAction implements UpdateInBackground {
   @Override
   public void update(@NotNull AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
@@ -62,10 +61,6 @@ public abstract class XPathAction extends AnAction {
     }
 
     Editor editor = event.getData(CommonDataKeys.EDITOR);
-    if (editor == null) {
-      FileEditorManager fem = FileEditorManager.getInstance(project);
-      editor = fem.getSelectedTextEditor();
-    }
     if (editor == null) {
       return false;
     }

@@ -4,36 +4,21 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
-import org.jetbrains.kotlin.resolve.calls.tower.NewResolvedCallImpl
-import org.jetbrains.kotlin.resolve.sam.SamConstructorDescriptor
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.acceptList
-import org.jetbrains.uast.internal.log
-import org.jetbrains.uast.kotlin.declarations.KotlinUIdentifier
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
-import org.jetbrains.uast.kotlin.internal.multiResolveResults
 import org.jetbrains.uast.visitor.UastVisitor
 
-open class KotlinUSimpleReferenceExpression(
+class KotlinUSimpleReferenceExpression(
     override val sourcePsi: KtSimpleNameExpression,
     givenParent: UElement?
-) : KotlinAbstractUExpression(givenParent), USimpleNameReferenceExpression, KotlinUElementWithType, KotlinEvaluatableUElement {
-    private val resolvedDeclaration: PsiElement? by lz { resolveToDeclaration(sourcePsi) }
-
-    override val identifier get() = sourcePsi.getReferencedName()
-
-    override fun resolve() = resolvedDeclaration
-
-    override val resolvedName: String?
-        get() = (resolvedDeclaration as? PsiNamedElement)?.name
+) : KotlinAbstractUSimpleReferenceExpression(sourcePsi, givenParent) {
 
     override fun accept(visitor: UastVisitor) {
         visitor.visitSimpleNameReferenceExpression(this)
@@ -45,8 +30,6 @@ open class KotlinUSimpleReferenceExpression(
 
         visitor.afterVisitSimpleNameReferenceExpression(this)
     }
-
-    override val referenceNameElement: UElement? by lz { sourcePsi.getIdentifier()?.toUElement() }
 
     private fun visitAccessorCalls(visitor: UastVisitor) {
         // Visit Kotlin get-set synthetic Java property calls as function calls
@@ -150,69 +133,3 @@ open class KotlinUSimpleReferenceExpression(
     }
 
 }
-
-class KotlinClassViaConstructorUSimpleReferenceExpression(
-    override val sourcePsi: KtCallElement,
-    override val identifier: String,
-    givenParent: UElement?
-) : KotlinAbstractUExpression(givenParent), USimpleNameReferenceExpression, KotlinUElementWithType {
-    override val resolvedName: String?
-        get() = (resolved as? PsiNamedElement)?.name
-
-    private val resolved by lazy {
-        when (val resultingDescriptor = sourcePsi.getResolvedCall(sourcePsi.analyze())?.descriptorForResolveViaConstructor()) {
-            is ConstructorDescriptor -> {
-                sourcePsi.calleeExpression?.let { resolveToDeclaration(it, resultingDescriptor.constructedClass) }
-            }
-            is SamConstructorDescriptor ->
-                (resultingDescriptor.returnType?.getFunctionalInterfaceType(this, sourcePsi) as? PsiClassType)?.resolve()
-            else -> null
-        }
-    }
-
-    override fun accept(visitor: UastVisitor) {
-        super<KotlinAbstractUExpression>.accept(visitor)
-    }
-
-    override fun resolve(): PsiElement? = resolved
-
-    override fun asLogString(): String {
-        val resolveStr = when (val resolved = resolve()) {
-            is PsiClass -> "PsiClass: ${resolved.name}"
-            is PsiMethod -> "PsiMethod: ${resolved.name}"
-            else -> resolved.toString()
-        }
-        return log<USimpleNameReferenceExpression>("identifier = $identifier, resolvesTo = $resolveStr")
-    }
-
-    // In new inference, SAM constructor is substituted with a function descriptor, so we use candidate descriptor to preserve behavior
-    private fun ResolvedCall<*>.descriptorForResolveViaConstructor(): CallableDescriptor? {
-        return if (this is NewResolvedCallImpl) candidateDescriptor else resultingDescriptor
-    }
-}
-
-class KotlinStringUSimpleReferenceExpression(
-    override val identifier: String,
-    givenParent: UElement?,
-    override val sourcePsi: PsiElement? = null,
-    private val referenceAnchor: KtElement? = null
-) : KotlinAbstractUExpression(givenParent), USimpleNameReferenceExpression, UMultiResolvable {
-    override val psi: PsiElement?
-        get() = null
-
-    private val resolved by lz { referenceAnchor?.references?.singleOrNull()?.resolve() }
-
-    override fun resolve() = resolved
-
-    override val resolvedName: String
-        get() = (resolved as? PsiNamedElement)?.name ?: identifier
-
-    override fun multiResolve(): Iterable<ResolveResult> = referenceAnchor?.multiResolveResults().orEmpty().asIterable()
-}
-
-internal fun createKDocNameSimpleNameReference(parentKDocName: KDocName, givenParent: UElement?): USimpleNameReferenceExpression? =
-    parentKDocName.lastChild?.let { psiIdentifier ->
-        parentKDocName.getQualifiedName().lastOrNull()?.let { qualifierText ->
-            KotlinStringUSimpleReferenceExpression(qualifierText, givenParent, psiIdentifier, parentKDocName)
-        }
-    }

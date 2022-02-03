@@ -24,10 +24,6 @@ import java.util.zip.ZipFile;
 public abstract class ZipHandlerBase extends ArchiveHandler {
   private static final Logger LOG = Logger.getInstance(ZipHandlerBase.class);
 
-  @ApiStatus.Internal
-  @SuppressWarnings("StaticNonFinalField")
-  public static volatile boolean USE_CRC_INSTEAD_OF_TIMESTAMP = getUseCrcInsteadOfTimestampPropertyValue();
-
   public @NotNull Map<String, Long> getArchiveCrcHashes() throws IOException {
     try (@NotNull ResourceHandle<ZipFile> handle = acquireZipHandle()) {
       ZipFile file = handle.get();
@@ -41,20 +37,9 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     }
   }
 
-  private static boolean getUseCrcInsteadOfTimestampPropertyValue() {
+  @ApiStatus.Internal
+  public static boolean getUseCrcInsteadOfTimestampPropertyValue() {
     return Boolean.getBoolean("zip.handler.uses.crc.instead.of.timestamp");
-  }
-
-  @VisibleForTesting
-  @ApiStatus.Internal
-  public static void forceUseCrcInsteadOfTimestamp() {
-    USE_CRC_INSTEAD_OF_TIMESTAMP = true;
-  }
-
-  @VisibleForTesting
-  @ApiStatus.Internal
-  public static void resetUseCrcInsteadOfTimestamp() {
-    USE_CRC_INSTEAD_OF_TIMESTAMP = getUseCrcInsteadOfTimestampPropertyValue();
   }
 
   public ZipHandlerBase(@NotNull String path) {
@@ -75,7 +60,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     while (entries.hasMoreElements()) {
       ZipEntry ze = entries.nextElement();
       processEntry(map, LOG, ze.getName(), ze.isDirectory() ? null : (parent, name) -> {
-        long fileStamp = USE_CRC_INSTEAD_OF_TIMESTAMP ? ze.getCrc() : getEntryFileStamp();
+        long fileStamp = getUseCrcInsteadOfTimestampPropertyValue() ? ze.getCrc() : getEntryFileStamp();
         return new EntryInfo(name, false, ze.getSize(), fileStamp, parent);
       });
     }

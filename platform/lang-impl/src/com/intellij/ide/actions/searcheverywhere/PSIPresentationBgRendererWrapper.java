@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.navigation.TargetPresentation;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -328,7 +329,7 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
   public static PsiElement toPsi(Object o) {
     if (o instanceof PsiElement) return (PsiElement)o;
     if (o instanceof PsiItemWithPresentation) return ((PsiItemWithPresentation)o).getItem();
-
+    if (o instanceof PsiElementNavigationItem) return ((PsiElementNavigationItem) o).getTargetElement();
     return null;
   }
 }

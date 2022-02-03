@@ -5,7 +5,6 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProject
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.fullName
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.getKotlinModuleId
 
-
 internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependenciesByCompilations(
     context: KotlinMppPopulateModuleDependenciesContext
 ): Unit = with(context) {
@@ -19,7 +18,7 @@ internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependencies
             for (sourceSet in compilation.declaredSourceSets) {
                 if (sourceSet.fullName() == compilation.fullName()) continue
                 val targetDataNode = getSiblingKotlinModuleData(sourceSet, gradleModule, ideModule, resolverCtx) ?: continue
-                addDependency(dataNode, targetDataNode, sourceSet.isTestModule)
+                addDependency(dataNode, targetDataNode, sourceSet.isTestComponent)
             }
         }
 

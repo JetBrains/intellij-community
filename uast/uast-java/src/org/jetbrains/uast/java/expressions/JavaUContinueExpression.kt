@@ -17,9 +17,11 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiContinueStatement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UContinueExpression
 import org.jetbrains.uast.UElement
 
+@ApiStatus.Internal
 class JavaUContinueExpression(
   override val sourcePsi: PsiContinueStatement,
   givenParent: UElement?

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """Script to generate unannotated baseline stubs using stubgen.
 
 Basic usage:

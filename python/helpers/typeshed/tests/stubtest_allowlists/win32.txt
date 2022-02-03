@@ -1,13 +1,31 @@
+_msi.MSI[A-Z_]+
+_msi.PID_[A-Z_]+
+_stat.FILE_ATTRIBUTE_[A-Z_]+
 ctypes.GetLastError  # Is actually a pointer
+distutils.archive_util.getgrnam
+distutils.archive_util.getpwnam
+distutils.msvccompiler.HKEYS
+locale.[A-Z0-9_]+  # Constants that should be moved to _locale and re-exported conditionally
+locale.nl_langinfo  # Function that should be moved to _locale and re-exported conditionally
+mmap.PAGESIZE
+msilib.MSI[A-Z_]+
+msilib.text.dirname
+msilib.PID_[A-Z_]+
+msvcrt.CRT_ASSEMBLY_VERSION
+msvcrt.SEM_[A-Z]+
 selectors.KqueueSelector
 signal.SIGEMT
 signal.SIGINFO
-locale.[A-Z0-9_]+  # Constants that should be moved to _locale and re-exported conditionally
-locale.nl_langinfo  # Function that should be moved to _locale and re-exported conditionally
+winsound.SND_APPLICATION
+xmlrpc.server.fcntl
 
 # ==========
 # Allowlist entries that cannot or should not be fixed
 # ==========
+
+# Aliases for OSError
+builtins.WindowsError.characters_written
+winreg.error.characters_written
 
 # Modules that do not exist on Windows systems
 _curses
@@ -38,3 +56,19 @@ curses.textpad
 # Modules that rely on termios
 pty
 tty
+
+# Exists at runtime, but missing from stubs
+_msi.MSIError
+asyncio.windows_utils.Popen
+distutils.msvccompiler.MSVCCompiler.manifest_get_embed_info
+distutils.msvccompiler.MSVCCompiler.manifest_setup_ldargs
+distutils.msvccompiler.OldMSVCCompiler
+msvcrt.SetErrorMode
+os.get_handle_inheritable
+os.set_handle_inheritable
+socket.MsgFlag.MSG_BCAST
+socket.MsgFlag.MSG_MCAST
+ssl.SSLSocket.recvmsg
+ssl.SSLSocket.recvmsg_into
+ssl.SSLSocket.sendmsg
+winreg.HKEYType.handle

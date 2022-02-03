@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.IndexableFilesIterationMethods.iterateRoots
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
@@ -30,7 +29,7 @@ internal class AdditionalLibraryIndexableAddedFilesIterator(val presentableLibra
     return iterateRoots(project, rootsToIndex, fileIterator, fileFilter, true)
   }
 
-  override fun getRootUrls(): Set<String> = rootsToIndex.map { it.url }.toSet()
+  override fun getRootUrls(project: Project): Set<String> = rootsToIndex.map { it.url }.toSet()
 }
 
 private data class PartialAdditionalLibraryIndexableSetOrigin(val rootsToIndex: Iterable<VirtualFile>) : IndexableSetOrigin

@@ -222,7 +222,9 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
       myResult = getContinuationWithoutFirstIndent();
     }
     else if (TokenSets.BLOCK_SET.contains(myChildType)) {
-      myResult = getContinuationWithoutFirstIndent();
+      if (myChild == ifStatement.getCondition()) {
+        myResult = getContinuationWithoutFirstIndent();
+      }
     }
     else if (myChild == ifStatement.getThenBranch()) {
       myResult = getNormalIndent();

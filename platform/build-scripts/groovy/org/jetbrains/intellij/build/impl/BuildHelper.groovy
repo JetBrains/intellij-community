@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -70,6 +70,8 @@ final class BuildHelper {
   private final BiFunction<SpanBuilder, Supplier<?>, ForkJoinTask<?>> createTask
   private final BiConsumer<SpanBuilder, Runnable> spanImpl
 
+  final BiConsumer<Path, List<Path>> packInternalUtilities
+
   private BuildHelper(ClassLoader helperClassLoader) {
     this.helperClassLoader = helperClassLoader
     Class<?> iterable = Iterable.class
@@ -140,6 +142,7 @@ final class BuildHelper {
     createZipSource = (BiFunction<Path, IntConsumer, ?>)expose.get("createZipSource")
     isLibraryMergeable = (Predicate<String>)expose.get("isLibraryMergeable")
     buildJar = (BiConsumer<Path, List<?>>)expose.get("buildJar")
+    packInternalUtilities = (BiConsumer<Path, List<Path>>)expose.get("packInternalUtilities")
 
     runScrambler = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.ScrambleKt"), "runScrambler",
                                      MethodType.methodType(aVoid,
@@ -282,16 +285,22 @@ final class BuildHelper {
                             @NotNull Path targetFile, List<Path> dirs,
                             @Nullable String prefix,
                             boolean compress) {
+    Map<Path, String> map = new LinkedHashMap<>(dirs.size())
+    for (Path dir : dirs) {
+      map.put(dir, prefix ?: "")
+    }
+    zipWithPrefixes(context, targetFile, map, compress)
+  }
+
+  static void zipWithPrefixes(@NotNull CompilationContext context,
+                              @NotNull Path targetFile,
+                              @NotNull Map<Path, String> map,
+                              boolean compress) {
     Span span = TracerManager.spanBuilder("pack")
       .setAttribute("targetFile", context.paths.buildOutputDir.relativize(targetFile).toString())
       .startSpan()
     Scope scope = span.makeCurrent()
     try {
-      Map<Path, String> map = new LinkedHashMap<>(dirs.size())
-      for (Path dir : dirs) {
-        map.put(dir, prefix ?: "")
-      }
-
       // invoke cannot be called reflectively (as Groovy does)
       getInstance(context).zipHandle.invokeWithArguments(targetFile, map, compress, false)
     }
@@ -413,6 +422,7 @@ final class BuildHelper {
     Set<String> ideClasspath = new LinkedHashSet<String>()
 
     Span.current().addEvent("collect classpath to run application starter", Attributes.of(AttributeKey.stringArrayKey("args"), arguments))
+    context.messages.debug("Collecting classpath to run application starter '${arguments.first()}:")
     for (moduleName in modules) {
       for (pathElement in context.getModuleRuntimeClasspath(context.findRequiredModule(moduleName), false)) {
         if (ideClasspath.add(pathElement)) {

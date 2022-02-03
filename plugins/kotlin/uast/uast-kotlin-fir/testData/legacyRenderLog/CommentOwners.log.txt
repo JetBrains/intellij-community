@@ -1,0 +1,79 @@
+UFile (package = )
+    UClass (name = CommentOwnersKt)
+        UField (name = topLevelProperty)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+            ULiteralExpression (value = 42)
+        UMethod (name = getTopLevelProperty)
+        UMethod (name = topLevelFun)
+            UBlockExpression
+                UReturnExpression
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                        UIdentifier (Identifier (TODO))
+                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null)
+        UMethod (name = funPlainCall)
+            UParameter (name = a)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+            UBlockExpression
+                UReturnExpression
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                        UIdentifier (Identifier (TODO))
+                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null)
+        UMethod (name = funNamedArgumentsCall)
+            UParameter (name = a)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+            UBlockExpression
+                UReturnExpression
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                        UIdentifier (Identifier (TODO))
+                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null)
+        UMethod (name = func)
+            UParameter (name = a)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+            UBlockExpression
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                    UIdentifier (Identifier (funPlainCall))
+                    USimpleNameReferenceExpression (identifier = funPlainCall, resolvesTo = null)
+                    ULiteralExpression (value = 42)
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                    UIdentifier (Identifier (funNamedArgumentsCall))
+                    USimpleNameReferenceExpression (identifier = funNamedArgumentsCall, resolvesTo = null)
+                    ULiteralExpression (value = 42)
+                UWhileExpression
+                    ULiteralExpression (value = true)
+                    UBlockExpression
+                        UBreakExpression (label = null)
+                UIfExpression
+                    ULiteralExpression (value = true)
+                    UBlockExpression
+                    UBlockExpression
+                UDeclarationsExpression
+                    ULocalVariable (name = localValueDefinition)
+                        ULiteralExpression (value = 42)
+    UClass (name = TopLevelClass)
+        UField (name = classLevelProperty)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+            ULiteralExpression (value = 42)
+        UMethod (name = getClassLevelProperty)
+        UMethod (name = classLevelMethod)
+            UBlockExpression
+                UReturnExpression
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                        UIdentifier (Identifier (TODO))
+                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null)
+        UMethod (name = TopLevelClass)
+            UParameter (name = t)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+            UBlockExpression
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
+                    UIdentifier (Identifier ())
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Object)
+        UClass (name = NestedClass)
+            UMethod (name = NestedClass)
+    UClass (name = MyBooleanEnum)
+        UEnumConstant (name = TRUE)
+            UAnnotation (fqName = null)
+            USimpleNameReferenceExpression (identifier = MyBooleanEnum)
+        UEnumConstant (name = FALSE)
+            UAnnotation (fqName = null)
+            USimpleNameReferenceExpression (identifier = MyBooleanEnum)
+        UMethod (name = MyBooleanEnum)

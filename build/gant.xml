@@ -4,6 +4,12 @@
   <property name="idea.lib" value="${project.home}/lib"/>
   <property environment="env"/>
 
+  <!-- Universal workaround for "VerifyError: Illegal type at constant pool entry" -->
+  <!-- https://issues.apache.org/jira/browse/GROOVY-8930 -->
+  <script language="javascript">
+    java.lang.System.setProperty('groovy.target.bytecode', '1.8');
+  </script>
+
   <xmlproperty file="${build.dir}/../.idea/libraries/jps_build_script_dependencies_bootstrap.xml" prefix="jps.bootstrap.library.xml"/>
   <loadresource property="jps.bootstrap.library.version">
     <propertyresource name="jps.bootstrap.library.xml.component.library.properties(maven-id)"/>
@@ -13,6 +19,8 @@
       </tokenfilter>
     </filterchain>
   </loadresource>
+
+  <xmlproperty file="${build.dir}/../.idea/libraries/test_discovery_plugin_base.xml" prefix="test-discovery-plugin-base.library.xml"/>
 
   <property name="maven.resolver.ant.tasks.version" value="1.2.1"/>
   <property name="maven.resolver.ant.tasks.file.name" value="maven-resolver-ant-tasks-${maven.resolver.ant.tasks.version}-uber.jar"/>
@@ -56,6 +64,7 @@
       <resolver:remoterepos refid="remoterepos.buildscript"/>
       <resolver:dependencies>
         <dependency coords="${jps.bootstrap.library.xml.component.library.properties(maven-id)}"/>
+        <dependency coords="${test-discovery-plugin-base.library.xml.component.library.properties(maven-id)}"/>
         <dependency coords="com.jetbrains.intellij.platform:test-framework-core:${jps.bootstrap.library.version}"/>
         <dependency coords="commons-cli:commons-cli:1.2"/>
         <dependency coords="org.apache.commons:commons-compress:1.21"/>

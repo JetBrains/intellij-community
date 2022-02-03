@@ -25,12 +25,12 @@ public final class Kt25937_1Kt {
          @Nullable
          public final Object invokeSuspend(@NotNull Object $result) {
             Object var2 = IntrinsicsKt.getCOROUTINE_SUSPENDED();
-            switch(this.label) {
-            case 0:
-               ResultKt.throwOnFailure($result);
-               return Unit.INSTANCE;
-            default:
-               throw new IllegalStateException("call to 'resume' before 'invoke' with coroutine");
+            switch (this.label) {
+               case 0:
+                  ResultKt.throwOnFailure($result);
+                  return Unit.INSTANCE;
+               default:
+                  throw new IllegalStateException("call to 'resume' before 'invoke' with coroutine");
             }
          }
 

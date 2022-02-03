@@ -26,9 +26,6 @@ class ProjectNotificationAware(private val project: Project) : ExternalSystemPro
     AutoImportProjectNotificationAware.getInstance(project).dispose()
   }
 
-
-  override fun hideNotification() = AutoImportProjectNotificationAware.getInstance(project).hideNotification()
-
   override fun getSystemIds(): Set<ProjectSystemId> {
     return AutoImportProjectNotificationAware.getInstance(project).getSystemIds()
   }

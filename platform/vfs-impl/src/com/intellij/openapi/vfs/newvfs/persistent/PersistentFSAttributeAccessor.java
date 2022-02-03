@@ -2,6 +2,8 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
+import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -38,7 +40,7 @@ final class PersistentFSAttributeAccessor {
   }
 
   @Nullable
-  DataInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) throws IOException {
+  AttributeInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) throws IOException {
     myLock.readLock().lock();
     try {
       PersistentFSConnection connection = myFSConnection;
@@ -68,7 +70,7 @@ final class PersistentFSAttributeAccessor {
             if (myInlineAttributes && attrAddressOrSize < MAX_SMALL_ATTR_SIZE) {
               byte[] b = ArrayUtil.newByteArray(attrAddressOrSize);
               attrRefs.readFully(b);
-              return new DataInputStream(new UnsyncByteArrayInputStream(b));
+              return new AttributeInputStream(new UnsyncByteArrayInputStream(b), myFSConnection.getEnumeratedAttributes());
             }
             page = myInlineAttributes ? attrAddressOrSize - MAX_SMALL_ATTR_SIZE : attrAddressOrSize;
             break;
@@ -79,7 +81,7 @@ final class PersistentFSAttributeAccessor {
       if (page == 0) {
         return null;
       }
-      DataInputStream stream = connection.getAttributes().readStream(page);
+      AttributeInputStream stream = new AttributeInputStream(connection.getAttributes().readStream(page), myFSConnection.getEnumeratedAttributes());
       if (myBulkAttrReadSupport) skipRecordHeader(stream, encodedAttrId, fileId);
       return stream;
     }
@@ -99,8 +101,9 @@ final class PersistentFSAttributeAccessor {
   }
 
   @NotNull
-  DataOutputStream writeAttribute(int fileId, @NotNull FileAttribute attribute) {
-    DataOutputStream stream = new AttributeOutputStream(fileId, attribute);
+  AttributeOutputStream writeAttribute(int fileId, @NotNull FileAttribute attribute) {
+    AttributeOutputStream stream = new AttributeOutputStream(new AttributeOutputStreamImpl(fileId, attribute),
+                                                             myFSConnection.getEnumeratedAttributes());
     if (attribute.isVersioned()) {
       try {
         DataInputOutputUtil.writeINT(stream, attribute.getVersion());
@@ -214,12 +217,12 @@ final class PersistentFSAttributeAccessor {
     return myModCount.get();
   }
 
-  private final class AttributeOutputStream extends DataOutputStream {
+  private final class AttributeOutputStreamImpl extends DataOutputStream {
     @NotNull
     private final FileAttribute myAttribute;
     private final int myFileId;
 
-    private AttributeOutputStream(final int fileId, @NotNull FileAttribute attribute) {
+    private AttributeOutputStreamImpl(final int fileId, @NotNull FileAttribute attribute) {
       super(new BufferExposingByteArrayOutputStream());
       myFileId = fileId;
       myAttribute = attribute;

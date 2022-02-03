@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -33,6 +33,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
@@ -45,6 +46,8 @@ import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import javax.swing.plaf.basic.BasicHTML;
 import java.awt.*;
 import java.awt.event.*;
@@ -138,7 +141,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     @Override
     public void update() {
-      mySpeedSearchPatternField.getTextEditor().setBackground(UIUtil.getTextFieldBackground());
+      updateColors(false);
       onSpeedSearchPatternChanged();
       mySpeedSearchPatternField.setText(getFilter());
       if (!mySpeedSearchAlwaysShown) {
@@ -155,7 +158,17 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     @Override
     public void noHits() {
-      mySpeedSearchPatternField.getTextEditor().setBackground(LightColors.RED);
+      updateColors(true);
+    }
+
+    private void updateColors(boolean error) {
+      JBTextField textEditor = mySpeedSearchPatternField.getTextEditor();
+      if (ExperimentalUI.isNewUI()) {
+        textEditor.setForeground(error ? UIUtil.getErrorForeground() : UIUtil.getLabelForeground());
+      }
+      else {
+        textEditor.setBackground(error ? LightColors.RED : UIUtil.getTextFieldBackground());
+      }
     }
   };
 
@@ -245,6 +258,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     myPopupBorder = showBorder ? borderColor != null ? PopupBorder.Factory.createColored(borderColor) :
                                  PopupBorder.Factory.create(true, showShadow) :
                                  PopupBorder.Factory.createEmpty();
+    myPopupBorder.setPopupUsed();
     myShadowed = showShadow;
     myContent = createContentPanel(resizable, myPopupBorder, false);
     myMayBeParent = mayBeParent;
@@ -272,8 +286,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     if (caption != null) {
       if (!caption.isEmpty()) {
-        myCaption = new TitlePanel(actualIcon.getRegular(), actualIcon.getInactive());
-        ((TitlePanel)myCaption).setText(caption);
+        TitlePanel titlePanel = new TitlePanel(actualIcon.getRegular(), actualIcon.getInactive());
+        titlePanel.setText(caption);
+        titlePanel.setPopupTitle(ExperimentalUI.isNewUI());
+        myCaption = titlePanel;
       }
       else {
         myCaption = new CaptionPanel();
@@ -603,7 +619,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     show(getBestPositionFor(editor));
   }
 
-  private @NotNull RelativePoint getBestPositionFor(@NotNull Editor editor) {
+  @ApiStatus.Internal
+  public final @NotNull RelativePoint getBestPositionFor(@NotNull Editor editor) {
     if (editor instanceof EditorEx) {
       DataContext context = ((EditorEx)editor).getDataContext();
       PopupLocator popupLocator = PlatformDataKeys.CONTEXT_MENU_LOCATOR.getData(context);
@@ -1264,8 +1281,22 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     mySpeedSearchPatternField.getTextEditor().setFocusable(mySpeedSearchAlwaysShown);
     if (mySpeedSearchAlwaysShown) {
       setHeaderComponent(mySpeedSearchPatternField);
-      mySpeedSearchPatternField.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 1, 0));
-      mySpeedSearchPatternField.getTextEditor().setBorder(JBUI.Borders.empty());
+    }
+
+    JBTextField textField = mySpeedSearchPatternField.getTextEditor();
+    if (ExperimentalUI.isNewUI()) {
+      mySpeedSearchPatternField.setOpaque(false);
+      textField.setOpaque(false);
+      JBEmptyBorder outsideBorder = new JBEmptyBorder(JBUI.CurrentTheme.Popup.searchFieldBorderInsets());
+      Border lineBorder = JBUI.Borders.customLine(JBUI.CurrentTheme.Popup.separatorColor(), 0, 0, 1, 0);
+      mySpeedSearchPatternField.setBorder(new CompoundBorder(outsideBorder, lineBorder));
+      textField.setBorder(JBUI.Borders.empty());
+      textField.setMargin(JBUI.CurrentTheme.Popup.searchFieldInputInsets());
+    } else {
+      if (mySpeedSearchAlwaysShown) {
+        mySpeedSearchPatternField.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 1, 0));
+        textField.setBorder(JBUI.Borders.empty());
+      }
     }
     if (SystemInfo.isMac) {
       RelativeFont.TINY.install(mySpeedSearchPatternField);
@@ -1646,27 +1677,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   @Override
   public void setLocation(@NotNull Point screenPoint) {
-    if (myPopup == null) {
-      myForcedLocation = screenPoint;
-    }
-    else if (!isBusy()) {
-      final Insets insets = myContent.getInsets();
-      if (insets != null && (insets.top != 0 || insets.left != 0)) {
-        screenPoint = new Point(screenPoint.x - insets.left, screenPoint.y - insets.top);
-      }
-      moveTo(myContent, screenPoint, myLocateByContent ? myHeaderPanel.getPreferredSize() : null);
-    }
-  }
-
-  private static void moveTo(@NotNull JComponent content, @NotNull Point screenPoint, @Nullable Dimension headerCorrectionSize) {
-    final Window wnd = getContentWindow(content);
-    if (wnd != null) {
-      wnd.setCursor(Cursor.getDefaultCursor());
-      if (headerCorrectionSize != null) {
-        screenPoint.y -= headerCorrectionSize.height;
-      }
-      wnd.setLocation(screenPoint);
-    }
+    // do not update the bounds programmatically if the user moves or resizes the popup
+    if (!isBusy()) setBounds(new Point(screenPoint), null);
   }
 
   private static Window getContentWindow(@NotNull Component content) {
@@ -1694,16 +1706,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   @Override
   public void setSize(final @NotNull Dimension size) {
-    if (isBusy()) return;
-
-    Dimension toSet = new Dimension(size);
-    toSet.height += getAdComponentHeight();
-    if (myPopup == null) {
-      myForcedSize = toSet;
-    }
-    else {
-      updateMaskAndAlpha(setSize(myContent, toSet));
-    }
+    // do not update the bounds programmatically if the user moves or resizes the popup
+    if (!isBusy()) setBounds(null, new Dimension(size));
   }
 
   public int getAdComponentHeight() {
@@ -1743,6 +1747,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     updateMaskAndAlpha(popupWindow);
   }
 
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public static Window setSize(@NotNull JComponent content, @NotNull Dimension size) {
     final Window popupWindow = getContentWindow(content);
     if (popupWindow == null) return null;
@@ -1750,6 +1756,56 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     content.setPreferredSize(size);
     popupWindow.pack();
     return popupWindow;
+  }
+
+  @Override
+  public void setBounds(@NotNull Rectangle bounds) {
+    // do not update the bounds programmatically if the user moves or resizes the popup
+    if (!isBusy()) setBounds(bounds.getLocation(), bounds.getSize());
+  }
+
+  /**
+   * Updates the popup location and size at once.
+   * Note that this internal implementation modifies input parameters.
+   *
+   * @param location a new popup location if needed
+   * @param size     a new popup size if needed
+   */
+  private void setBounds(@Nullable Point location, @Nullable Dimension size) {
+    if (size != null) size.height += getAdComponentHeight();
+    if (myPopup == null) {
+      // store bounds to show popup later
+      if (location != null) myForcedLocation = location;
+      if (size != null) myForcedSize = size;
+    }
+    else {
+      MyContentPanel content = myContent;
+      if (content == null) return;
+      Window window = getContentWindow(content);
+      if (window == null) return;
+      Insets insets = content.getInsets();
+      if (location == null) {
+        location = window.getLocation(); // use current window location
+      }
+      else {
+        fixLocateByContent(location, false);
+        if (insets != null) {
+          location.x -= insets.left;
+          location.y -= insets.top;
+        }
+      }
+      if (size == null) {
+        size = window.getSize(); // use current window size
+      }
+      else {
+        JBInsets.addTo(size, insets);
+        content.setPreferredSize(size);
+        size = window.getPreferredSize();
+      }
+      window.setBounds(location.x, location.y, size.width, size.height);
+      window.setCursor(Cursor.getDefaultCursor());
+      updateMaskAndAlpha(window);
+    }
   }
 
   @Override

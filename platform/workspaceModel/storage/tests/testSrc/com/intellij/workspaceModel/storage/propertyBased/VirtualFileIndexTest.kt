@@ -145,7 +145,7 @@ class VirtualFileIndexTest {
     ))
     val id = env.generate(Generator.integers(0, 100))
     
-    createEntityId(id, ClassToIntConverter.getInt(clazz))
+    createEntityId(id, ClassToIntConverter.INSTANCE.getInt(clazz))
   }
 
   internal val propertyGenerator = Generator.from { env ->

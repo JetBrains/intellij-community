@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.plugins
 
 import com.intellij.ide.plugins.*
@@ -7,13 +7,14 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.AllowedDuringStartupCollector
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.extensions.PluginId
 
-class PluginsUsagesCollector : ApplicationUsagesCollector() {
+class PluginsUsagesCollector : ApplicationUsagesCollector(), AllowedDuringStartupCollector {
   companion object {
-    private val GROUP = EventLogGroup("plugins", 6)
+    private val GROUP = EventLogGroup("plugins", 8)
     private val DISABLED_PLUGIN = GROUP.registerEvent("disabled.plugin", EventFields.PluginInfo)
     private val ENABLED_NOT_BUNDLED_PLUGIN = GROUP.registerEvent("enabled.not.bundled.plugin", EventFields.PluginInfo)
     private val PER_PROJECT_ENABLED = GROUP.registerEvent("per.project.enabled", EventFields.Count)

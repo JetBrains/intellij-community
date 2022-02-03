@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -129,6 +129,21 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("primaryConstructorAnnotation.java")
         public void testPrimaryConstructorAnnotation() throws Exception {
             runTest("testData/newJ2k/annotations/primaryConstructorAnnotation.java");
+        }
+
+        @TestMetadata("repeatableAnnotationOneFive.java")
+        public void testRepeatableAnnotationOneFive() throws Exception {
+            runTest("testData/newJ2k/annotations/repeatableAnnotationOneFive.java");
+        }
+
+        @TestMetadata("repeatableAnnotationOneSix.java")
+        public void testRepeatableAnnotationOneSix() throws Exception {
+            runTest("testData/newJ2k/annotations/repeatableAnnotationOneSix.java");
+        }
+
+        @TestMetadata("repeatableAnnotationOneSixWithAlias.java")
+        public void testRepeatableAnnotationOneSixWithAlias() throws Exception {
+            runTest("testData/newJ2k/annotations/repeatableAnnotationOneSixWithAlias.java");
         }
 
         @TestMetadata("serialVersionUID.java")
@@ -480,6 +495,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("inExpressionAssignmentsChain.java")
         public void testInExpressionAssignmentsChain() throws Exception {
             runTest("testData/newJ2k/assignmentExpression/inExpressionAssignmentsChain.java");
+        }
+
+        @TestMetadata("ktij-16986.java")
+        public void testKtij_16986() throws Exception {
+            runTest("testData/newJ2k/assignmentExpression/ktij-16986.java");
         }
 
         @TestMetadata("minusAssign.java")
@@ -2526,6 +2546,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/function/referenceToConstructor.java");
         }
 
+        @TestMetadata("referenceToProperty.java")
+        public void testReferenceToProperty() throws Exception {
+            runTest("testData/newJ2k/function/referenceToProperty.java");
+        }
+
         @TestMetadata("synchronizedMethod.java")
         public void testSynchronizedMethod() throws Exception {
             runTest("testData/newJ2k/function/synchronizedMethod.java");
@@ -2671,6 +2696,31 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("arithmeticInFunctionCall.java")
         public void testArithmeticInFunctionCall() throws Exception {
             runTest("testData/newJ2k/implicitCasts/arithmeticInFunctionCall.java");
+        }
+
+        @TestMetadata("bitwise.java")
+        public void testBitwise() throws Exception {
+            runTest("testData/newJ2k/implicitCasts/bitwise.java");
+        }
+
+        @TestMetadata("inConstructorCall.java")
+        public void testInConstructorCall() throws Exception {
+            runTest("testData/newJ2k/implicitCasts/inConstructorCall.java");
+        }
+
+        @TestMetadata("ktij-16665.java")
+        public void testKtij_16665() throws Exception {
+            runTest("testData/newJ2k/implicitCasts/ktij-16665.java");
+        }
+
+        @TestMetadata("operationsWithChar.java")
+        public void testOperationsWithChar() throws Exception {
+            runTest("testData/newJ2k/implicitCasts/operationsWithChar.java");
+        }
+
+        @TestMetadata("unary.java")
+        public void testUnary() throws Exception {
+            runTest("testData/newJ2k/implicitCasts/unary.java");
         }
     }
 
@@ -3216,11 +3266,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("kt-9997.java")
         public void testKt_9997() throws Exception {
             runTest("testData/newJ2k/issues/kt-9997.java");
-        }
-
-        @TestMetadata("operationsWithChar.java")
-        public void testOperationsWithChar() throws Exception {
-            runTest("testData/newJ2k/issues/operationsWithChar.java");
         }
 
         @TestMetadata("qualifyStatic.java")
@@ -4880,6 +4925,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/toKotlinClasses/LibraryFunctions.java");
         }
 
+        @TestMetadata("MutableIterator.java")
+        public void testMutableIterator() throws Exception {
+            runTest("testData/newJ2k/toKotlinClasses/MutableIterator.java");
+        }
+
         @TestMetadata("TypeParameterBound.java")
         public void testTypeParameterBound() throws Exception {
             runTest("testData/newJ2k/toKotlinClasses/TypeParameterBound.java");
@@ -5090,6 +5140,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("intCast.java")
         public void testIntCast() throws Exception {
             runTest("testData/newJ2k/typeCastExpression/intCast.java");
+        }
+
+        @TestMetadata("ktij-17648.java")
+        public void testKtij_17648() throws Exception {
+            runTest("testData/newJ2k/typeCastExpression/ktij-17648.java");
         }
 
         @TestMetadata("primitiveType.java")

@@ -15,7 +15,7 @@ import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-object SettingsSyncPanelFactory {
+internal object SettingsSyncPanelFactory {
   fun createPanel(syncLabel: @Nls String): DialogPanel {
     return panel {
       row {
@@ -39,20 +39,21 @@ object SettingsSyncPanelFactory {
               else {
                 val topCheckBox = ThreeStateCheckBox(descriptor.name)
                 topCheckBox.isThirdStateEnabled = false
+                val subcategoryLink = configureLink(descriptor.secondaryGroup) {
+                  topCheckBox.state = getGroupState(descriptor)
+                  descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
+                }
                 topCheckBox.addActionListener {
                   descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
                   descriptor.secondaryGroup.getDescriptors().forEach {
                     it.isSelected = descriptor.isSynchronized
                   }
-                }
-                val updateTopCheckBox = {
-                  topCheckBox.state = getGroupState(descriptor.secondaryGroup)
-                  descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
+                  subcategoryLink.isEnabled = descriptor.secondaryGroup.isComplete() || descriptor.isSynchronized
                 }
                 component(topCheckBox)
                   .onReset {
                     descriptor.reset()
-                    updateTopCheckBox()
+                    topCheckBox.state = getGroupState(descriptor)
                   }
                   .onApply {
                     descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
@@ -60,7 +61,7 @@ object SettingsSyncPanelFactory {
                   }
                   .onIsModified { descriptor.isModified() }
                 commentNoWrap(descriptor.description)
-                component(configureLink(descriptor.secondaryGroup, updateTopCheckBox))
+                component(subcategoryLink)
               }
             }
           }
@@ -69,7 +70,12 @@ object SettingsSyncPanelFactory {
     }
   }
 
-  private fun getGroupState(group: SettingsSyncSubcategoryGroup): State {
+  private fun getGroupState(descriptor: SettingsCategoryDescriptor): State {
+    val group = descriptor.secondaryGroup
+    if (group == null) {
+      return if (descriptor.isSynchronized) State.SELECTED else State.NOT_SELECTED
+    }
+    if (!group.isComplete() && !descriptor.isSynchronized) return State.NOT_SELECTED
     val descriptors = group.getDescriptors()
     if (descriptors.isEmpty()) return State.NOT_SELECTED
     val isFirstSelected = descriptors.first().isSelected

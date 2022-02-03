@@ -223,6 +223,10 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     return settings;
   }
 
+  boolean supportsSnapshots() {
+    return !(myConfigurationEditor instanceof CheckableRunConfigurationEditor);
+  }
+
   public void targetChanged(String targetName) {
     for (SettingsEditor<RunnerAndConfigurationSettings> editor : myEditors) {
       if (editor instanceof TargetAwareRunConfigurationEditor) {

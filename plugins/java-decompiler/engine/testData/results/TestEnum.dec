@@ -18,10 +18,10 @@ public enum TestEnum {
    }// 32
 
    private TestEnum() {
-      this("?", (TestEnum.Type)null);// 36
+      this("?", (Type)null);// 36
    }
 
-   private TestEnum(@Deprecated String var3, TestEnum.Type var4) {
+   private TestEnum(@Deprecated String var3, Type var4) {
       this.s = var3;// 37
    }
 

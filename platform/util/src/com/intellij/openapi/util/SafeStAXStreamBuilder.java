@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import org.codehaus.stax2.XMLStreamReader2;
@@ -52,7 +52,7 @@ public final class SafeStAXStreamBuilder {
           if (!Verifier.isAllXMLWhitespace(badTxt)) {
             throw new XMLStreamException("Unexpected XMLStream event at Document level: CHARACTERS (" + badTxt + ")");
           }
-          // otherwise ignore the chars.
+          // otherwise, ignore the chars
           break;
 
         default:
@@ -138,13 +138,13 @@ public final class SafeStAXStreamBuilder {
 
         case SPACE:
           if (!isIgnoreBoundaryWhitespace) {
-            current.addContent(factory.text(reader.getText(), current));
+            current.addContent(factory.text(reader.getText()));
           }
           break;
 
         case CHARACTERS:
           if (!isIgnoreBoundaryWhitespace || !reader.isWhiteSpace()) {
-            current.addContent(factory.text(reader.getText(), current));
+            current.addContent(factory.text(reader.getText()));
           }
           break;
 

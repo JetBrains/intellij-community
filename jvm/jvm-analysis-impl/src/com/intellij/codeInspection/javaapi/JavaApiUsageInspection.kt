@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaapi
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -36,13 +36,14 @@ import javax.swing.*
 /**
  * In order to add the support for new API in the most recent JDK execute:
  * <ol>
- *   <li>Generate apiXXX.txt by uncommenting the body of [com.intellij.codeInspection.tests.JavaApiUsageInspectionTestBase#testCollectSinceApiUsages] and run it;</li>
- *   <li>Put the generated text file under community/java/java-analysis-api/resources/javaApi</li>
- *   <li>Add two new entries to the {@link LanguageLevelUtils#ourPresentableShortMessage}:
+ *   <li>Generate apiXXX.txt by running [com.intellij.codeInspection.tests.JavaApiUsageInspectionTestBase#testCollectSinceApiUsages]</li>
+ *   <li>Put the generated text file under community/java/java-analysis-api/src/com/intellij/openapi/module</li>
+ *   <li>Add two new entries to the {@link com.intellij.openapi.module.LanguageLevelUtil.ourPresentableShortMessage}:
  *    <ul>
  *      <li>The First entry: The key is the most recent language level, the value is the second to the most recent language level.</li>
  *      <li>The Second entry: The key is the most recent preview language level, the value is the second to the most recent language level.</li>
  *    </ul>
+ *   </li>
  * </ol>
  */
 class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
@@ -240,9 +241,12 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
 
     private const val EFFECTIVE_LL = "effectiveLL"
 
-    private val ignored6ClassesApi = LanguageLevelUtil.loadSignatureList(
-      JavaApiUsageInspection::class.java.getResource("ignore6List.txt")
-    )
+    private val ignored6ClassesApi = JavaApiUsageInspection::class.java.getResource("ignore6List.txt")?.let {
+      LanguageLevelUtil.loadSignatureList(it)
+    } ?: run {
+      logger.warn("Could not load ignore list.")
+      emptySet<String>()
+    }
 
     private val generifiedClasses = hashSetOf("javax.swing.JComboBox", "javax.swing.ListModel", "javax.swing.JList")
 

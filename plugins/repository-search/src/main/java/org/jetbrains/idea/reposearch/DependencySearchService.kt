@@ -1,6 +1,10 @@
 package org.jetbrains.idea.reposearch
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
@@ -8,7 +12,7 @@ import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.AsyncPromise
@@ -18,51 +22,49 @@ import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import java.util.*
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ExecutorService
 import java.util.function.BiConsumer
 import java.util.function.Consumer
 
 typealias ResultConsumer = (RepositoryArtifactData) -> Unit
 
+private val EP_NAME = ExtensionPointName<DependencySearchProvidersFactory>("org.jetbrains.idea.reposearch.provider")
+
 @ApiStatus.Experimental
-class DependencySearchService(private val myProject: Project) {
-  private val myExecutorService: ExecutorService
-  private val cache: MutableMap<String, CompletableFuture<Collection<RepositoryArtifactData>>> = ContainerUtil.createConcurrentWeakKeyWeakValueMap()
+@Service(Service.Level.PROJECT)
+class DependencySearchService(private val project: Project) : Disposable {
+  private val executorService = AppExecutorUtil.createBoundedScheduledExecutorService("DependencySearch", 2)
+  private val cache = CollectionFactory.createConcurrentWeakKeyWeakValueMap<String, CompletableFuture<Collection<RepositoryArtifactData>>>()
 
   @Volatile
-  private var remoteProviders: MutableList<DependencySearchProvider> = ArrayList()
+  private var remoteProviders = mutableListOf<DependencySearchProvider>()
   @Volatile
-  private var localProviders: MutableList<DependencySearchProvider> = ArrayList()
+  private var localProviders = mutableListOf<DependencySearchProvider>()
 
   init {
-    myExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService("DependencySearch", 2)
-    DependencySearchProvidersFactory.EXTENSION_POINT_NAME.addExtensionPointListener(
+    EP_NAME.addExtensionPointListener(
       object : ExtensionPointListener<DependencySearchProvidersFactory?> {
-        override fun extensionAdded(extension: DependencySearchProvidersFactory,
-                                    pluginDescriptor: PluginDescriptor) {
+        override fun extensionAdded(extension: DependencySearchProvidersFactory, pluginDescriptor: PluginDescriptor) {
           updateProviders()
         }
 
-        override fun extensionRemoved(extension: DependencySearchProvidersFactory,
-                                      pluginDescriptor: PluginDescriptor) {
+        override fun extensionRemoved(extension: DependencySearchProvidersFactory, pluginDescriptor: PluginDescriptor) {
           updateProviders()
         }
-      }, myProject)
+      }, this)
     updateProviders()
+  }
+
+  override fun dispose() {
   }
 
   @Synchronized
   fun updateProviders() {
-    val newRemoteProviders = mutableListOf<DependencySearchProvider>();
-    val newLocalProviders = mutableListOf<DependencySearchProvider>();
+    val newRemoteProviders = mutableListOf<DependencySearchProvider>()
+    val newLocalProviders = mutableListOf<DependencySearchProvider>()
 
-    if (myProject.isDisposed) return
-    for (f in DependencySearchProvidersFactory.EXTENSION_POINT_NAME.extensionList) {
-      if (!f.isApplicable(myProject)) {
-        continue
-      }
-
-      for (provider in f.getProviders(myProject)) {
+    if (project.isDisposed) return
+    for (f in EP_NAME.extensionList) {
+      for (provider in f.getProviders(project)) {
         if (provider.isLocal) {
           newLocalProviders.add(provider)
         }
@@ -111,12 +113,12 @@ class DependencySearchService(private val myProject: Project) {
       val promise = AsyncPromise<Void>()
       promises.add(promise)
       val wrapper = ProgressWrapper.wrap(ProgressIndicatorProvider.getInstance().progressIndicator)
-      myExecutorService.submit {
+      executorService.submit {
         try {
           ProgressManager.getInstance().runProcess({
                                                      searchMethod(provider) { if (resultSet.add(it)) consumer(it) }
                                                      promise.setResult(null)
-                                                   }, wrapper);
+                                                   }, wrapper)
         }
         catch (e: Exception) {
           promise.setError(e)
@@ -164,10 +166,10 @@ class DependencySearchService(private val myProject: Project) {
     val result = mutableSetOf<String>()
     fulltextSearch(pattern ?: "", SearchParameters(true, true)) {
       if (it is MavenRepositoryArtifactInfo) {
-        result.add(it.groupId);
+        result.add(it.groupId)
       }
     }
-    return result;
+    return result
   }
 
   fun getArtifactIds(groupId: String): Set<String>{
@@ -180,7 +182,7 @@ class DependencySearchService(private val myProject: Project) {
         }
       }
     }
-    return result;
+    return result
   }
 
   fun getVersions(groupId: String, artifactId: String): Set<String>{
@@ -195,7 +197,7 @@ class DependencySearchService(private val myProject: Project) {
         }
       }
     }
-    return result;
+    return result
   }
 
   private fun foundInCache(searchString: String, consumer: ResultConsumer): Promise<Int>? {
@@ -225,9 +227,7 @@ class DependencySearchService(private val myProject: Project) {
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): DependencySearchService {
-      return project.getService(DependencySearchService::class.java)
-    }
+    fun getInstance(project: Project): DependencySearchService = project.service()
   }
 
   @TestOnly

@@ -1,11 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.idea.TestFor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
@@ -21,7 +19,6 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.intellij.java.codeInsight.daemon.impl.SdkSetupNotificationTestBase.openTextInEditor;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
@@ -55,9 +51,6 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
       .withFailMessage(String.valueOf(fixes))
       .hasSize(1)
       .first().asString().startsWith("SdkFixInfo:");
-
-    assertThat(unknownSdkNotificationsFor("Sample.java", "class Sample { java.lang.String foo; }")).hasSize(1);
-    assertThat(unknownSdkNotificationsFor("jonnyzzz.js", "(function() { })();")).isEmpty();
   }
 
   public void testMissingProjectUnknownJdk() {
@@ -129,9 +122,8 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
         return true;
       }
 
-      @Nullable
       @Override
-      public UnknownSdkLookup createResolver(@Nullable Project project, @NotNull ProgressIndicator indicator) {
+      public @Nullable UnknownSdkLookup createResolver(@Nullable Project project, @NotNull ProgressIndicator indicator) {
         lookupCalls.incrementAndGet();
         return null;
       }
@@ -272,31 +264,18 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
     setProjectSdk2(IdeaTestUtil.getMockJdk17());
   }
 
-  @Nullable
-  private List<EditorNotificationPanel> unknownSdkNotificationsFor(@NotNull String fileName, @NotNull String text) {
-    FileEditor editor = openTextInEditor(myFixture, fileName, text);
-
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    UIUtil.dispatchAllInvocationEvents();
-
-    return editor.getUserData(UnknownSdkEditorNotification.NOTIFICATIONS);
-  }
-
-  @NotNull
-  private List<String> detectMissingSdks() {
+  private @NotNull List<String> detectMissingSdks() {
     UnknownSdkTracker.getInstance(getProject()).updateUnknownSdks();
 
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    UIUtil.dispatchAllInvocationEvents();
-
     ArrayList<String> infos = new ArrayList<>();
-    for (UnknownSdkFix notification : UnknownSdkEditorNotification.getInstance(getProject()).getNotifications()) {
-      infos.add("SdkFixInfo:" + notification.toString());
-    }
-
-    EditorNotificationPanel sdkNotification = SdkSetupNotificationTestBase.runOnText(myFixture, "Sample.java", "class Sample { java.lang.String foo; }");
+    EditorNotificationPanel sdkNotification =
+      SdkSetupNotificationTestBase.runOnText(myFixture, "Sample.java", "class Sample { java.lang.String foo; }");
     if (sdkNotification != null) {
       infos.add("SdkSetupNotification:" + sdkNotification.getText());
+    }
+
+    for (UnknownSdkFix notification : UnknownSdkEditorNotification.getInstance(getProject()).getNotifications()) {
+      infos.add("SdkFixInfo:" + notification.toString());
     }
 
     return infos;

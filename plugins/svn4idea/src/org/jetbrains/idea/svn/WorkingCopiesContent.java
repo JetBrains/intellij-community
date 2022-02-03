@@ -28,10 +28,6 @@ public final class WorkingCopiesContent implements ChangesViewContentProvider {
     return new CopiesPanel(myProject);
   }
 
-  @Override
-  public void disposeContent() {
-  }
-
   public static void show(@NotNull Project project) {
     final ToolWindowManager manager = ToolWindowManager.getInstance(project);
     if (manager != null) {

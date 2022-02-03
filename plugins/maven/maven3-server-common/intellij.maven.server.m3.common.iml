@@ -10,7 +10,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.maven.server" />
     <orderEntry type="library" name="commons-logging" level="project" />
-    <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module-library">
       <library name="org.sonatype.nexus:nexus-indexer-artifact:1.0.1" type="repository">
         <properties maven-id="org.sonatype.nexus:nexus-indexer-artifact:1.0.1">

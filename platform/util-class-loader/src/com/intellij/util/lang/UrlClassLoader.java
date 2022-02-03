@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import com.intellij.util.UrlUtilRt;
@@ -20,7 +20,7 @@ import java.nio.file.Paths;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.function.BiConsumer;
-import java.util.function.BiPredicate;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -186,7 +186,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     return Collections.unmodifiableList(files);
   }
 
-  public final boolean hasLoadedClass(String name) {
+  public boolean hasLoadedClass(String name) {
     Class<?> aClass = findLoadedClass(name);
     return aClass != null && aClass.getClassLoader() == this;
   }
@@ -337,7 +337,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   @ApiStatus.Internal
-  public @Nullable BiPredicate<String, Boolean> resolveScopeManager;
+  public @Nullable BiFunction<String, Boolean, String> resolveScopeManager;
 
   public @Nullable Class<?> loadClassInsideSelf(String name,
                                                 String fileName,

@@ -1,0 +1,13 @@
+public final class LambdaParametersKt {
+    public static final fun lambdaWithRecivier() : void {
+        buildString({
+            append("a")
+        })
+    }
+    public static final fun itParameter() : void {
+        10.let({ var it: <ErrorType> ->
+
+            return it
+        })
+    }
+}

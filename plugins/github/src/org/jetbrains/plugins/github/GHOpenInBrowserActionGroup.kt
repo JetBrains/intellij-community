@@ -45,6 +45,8 @@ open class GHOpenInBrowserActionGroup
   override fun update(e: AnActionEvent) {
     val data = getData(e.dataContext)
     e.presentation.isEnabledAndVisible = data != null && data.isNotEmpty()
+    e.presentation.isPerformGroup = data?.size == 1
+    e.presentation.isPopupGroup = true
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
@@ -55,14 +57,8 @@ open class GHOpenInBrowserActionGroup
     return data.map { GithubOpenInBrowserAction(it) }.toTypedArray()
   }
 
-  override fun isPopup(): Boolean = true
-
   override fun actionPerformed(e: AnActionEvent) {
     getData(e.dataContext)?.let { GithubOpenInBrowserAction(it.first()) }?.actionPerformed(e)
-  }
-
-  override fun canBePerformed(context: DataContext): Boolean {
-    return getData(context)?.size == 1
   }
 
   override fun disableIfNoVisibleChildren(): Boolean = false

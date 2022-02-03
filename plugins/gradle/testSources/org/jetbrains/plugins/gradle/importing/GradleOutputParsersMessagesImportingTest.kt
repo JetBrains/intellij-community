@@ -382,4 +382,28 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
       assertEquals( scriptOutputText + scriptOutputTextWOEol, text)
     }
   }
+
+  @Test
+  fun `test log level settings in gradle_dot_properties applied`() {
+    createProjectSubFile("gradle.properties", "org.gradle.logging.level=debug")
+    importProject("""
+      println("=================")
+      LogLevel.values().each {
+          project.logger.log(it, "Message with level ${'$'}it")
+      }
+      println("=================")
+    """.trimIndent())
+
+    assertSyncViewTreeEquals("-\n" +
+                             " finished")
+
+    assertSyncViewSelectedNode("finished", false) {
+      assertThat(it)
+        .contains("Message with level DEBUG",
+                  "Message with level INFO",
+                  "Message with level LIFECYCLE",
+                  "Message with level WARN",
+                  "Message with level QUIET")
+    }
+  }
 }

@@ -18,11 +18,13 @@ package org.jetbrains.uast.java
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiSuperExpression
 import com.intellij.psi.ResolveResult
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.UMultiResolvable
 import org.jetbrains.uast.USuperExpression
 
+@ApiStatus.Internal
 class JavaUSuperExpression(
   override val sourcePsi: PsiSuperExpression,
   givenParent: UElement?

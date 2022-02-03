@@ -33,7 +33,7 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
-    setPopup(isPopup(e));
+    e.getPresentation().setPopupGroup(isPopup(e));
     e.getPresentation().setEnabledAndVisible(isEnabledAndVisible(e));
   }
 

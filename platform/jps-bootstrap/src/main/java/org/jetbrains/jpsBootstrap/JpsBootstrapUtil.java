@@ -63,11 +63,13 @@ public class JpsBootstrapUtil {
   public static void fatal(String message) {
     if (underTeamCity) {
       System.out.println(new Message(message, "FAILURE", null).asString());
+      // Under TeamCity non-zero exit code will be displayed as a separate build error
+      // so logging FAILURE message is enough
+      System.exit(0);
     } else {
       System.err.println("\nFATAL: " + message);
+      System.exit(1);
     }
-
-    System.exit(1);
   }
 
   public static void setVerboseEnabled(boolean verboseEnabled) {

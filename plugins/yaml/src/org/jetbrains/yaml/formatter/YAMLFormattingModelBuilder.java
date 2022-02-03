@@ -6,14 +6,12 @@ import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.psi.impl.YAMLBlockScalarImpl;
 
@@ -24,12 +22,6 @@ public class YAMLFormattingModelBuilder implements FormattingModelBuilder {
     CodeStyleSettings settings = formattingContext.getCodeStyleSettings();
     Block rootBlock = createBlock(new YAMLFormattingContext(settings, file), formattingContext.getNode());
     return new DocumentBasedFormattingModel(rootBlock, settings, file);
-  }
-
-  @Nullable
-  @Override
-  public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
-    return null;
   }
 
   @NotNull

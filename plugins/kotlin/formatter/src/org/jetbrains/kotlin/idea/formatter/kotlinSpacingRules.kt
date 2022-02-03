@@ -10,7 +10,6 @@ import com.intellij.formatting.SpacingBuilder.RuleBuilder
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.tree.IElementType
@@ -23,7 +22,6 @@ import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.children
 import org.jetbrains.kotlin.psi.psiUtil.isObjectLiteral
-import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.textRangeWithoutComments
 
 val MODIFIERS_LIST_ENTRIES = TokenSet.orSet(TokenSet.create(ANNOTATION_ENTRY, ANNOTATION), MODIFIER_KEYWORDS)
@@ -179,12 +177,10 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
             inPosition(parent = VALUE_PARAMETER_LIST, right = VALUE_PARAMETER).customRule(parameterWithDocCommentRule)
 
             inPosition(parent = PROPERTY, right = PROPERTY_ACCESSOR).customRule { parent, _, _ ->
-                val startNode = parent.requireNode().psi.firstChild
-                    .siblings()
-                    .dropWhile { it is PsiComment || it is PsiWhiteSpace }.firstOrNull() ?: parent.requireNode().psi
+                val startNode = parent.requireNode().let { it.startOfDeclaration() ?: it }
                 Spacing.createDependentLFSpacing(
                     1, 1,
-                    TextRange(startNode.textRange.startOffset, parent.textRange.endOffset),
+                    TextRange(startNode.startOffset, parent.textRange.endOffset),
                     false, 0
                 )
             }
@@ -265,6 +261,7 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
 
             // TYPEALIAS - TYPEALIAS is an exception
             between(TYPEALIAS, DECLARATIONS).blankLines(1)
+            before(TYPEALIAS).lineBreakInCode()
 
             // ENUM_ENTRY - ENUM_ENTRY is exception
             between(ENUM_ENTRY, DECLARATIONS).blankLines(1)
@@ -420,6 +417,7 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
             between(VALUE_ARGUMENT_LIST, LAMBDA_ARGUMENT).spaces(1)
             betweenInside(REFERENCE_EXPRESSION, LAMBDA_ARGUMENT, CALL_EXPRESSION).spaces(1)
             betweenInside(TYPE_ARGUMENT_LIST, LAMBDA_ARGUMENT, CALL_EXPRESSION).spaces(1)
+            betweenInside(STRING_TEMPLATE, LAMBDA_ARGUMENT, CALL_EXPRESSION).spaces(1)
 
             around(COLONCOLON).spaces(0)
 

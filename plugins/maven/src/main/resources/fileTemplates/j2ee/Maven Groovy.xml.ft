@@ -1,0 +1,62 @@
+#set ( $d = "project.basedir")
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>${GROUP_ID}</groupId>
+  <artifactId>${ARTIFACT_ID}</artifactId>
+  <version>${VERSION}</version>
+
+  <dependencies>
+    <dependency>
+      <groupId>${GROOVY_REPOSITORY}</groupId>
+      <artifactId>groovy-all</artifactId>
+      <version>${GROOVY_VERSION}</version>
+      #if (${NEED_POM})
+      <type>pom</type>
+      #end
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.gmavenplus</groupId>
+        <artifactId>gmavenplus-plugin</artifactId>
+        <version>1.13.1</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>execute</goal>
+            </goals>
+          </execution>
+        </executions>
+        <dependencies>
+          <dependency>
+            <groupId>${GROOVY_REPOSITORY}</groupId>
+            <artifactId>groovy</artifactId>
+            <version>${GROOVY_VERSION}</version>
+            <scope>runtime</scope>
+          </dependency>
+        </dependencies>
+        #if (${CREATE_SAMPLE_CODE})
+        <configuration>
+          <scripts>
+            <script>src/main/groovy/Main.groovy</script>
+          </scripts>
+        </configuration>
+        #end
+      </plugin>
+    </plugins>
+  </build>
+
+  #if (${SHOULD_SET_LANG_LEVEL})
+    <properties>
+      <maven.compiler.source>${COMPILER_LEVEL_SOURCE}</maven.compiler.source>
+      <maven.compiler.target>${COMPILER_LEVEL_TARGET}</maven.compiler.target>
+    </properties>
+  #end
+  ${END}
+</project>

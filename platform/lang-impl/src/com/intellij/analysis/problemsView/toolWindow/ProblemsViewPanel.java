@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow;
 
 import com.intellij.codeInsight.daemon.impl.IntentionsUI;
@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeSpeedSearch;
@@ -42,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.Comparator;
@@ -88,8 +90,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     Root root = myTreeModel.getRoot();
     int count = root == null ? 0 : root.getProblemCount();
     content.setDisplayName(getName(count));
-    Icon icon = getToolWindowIcon(count);
-    if (icon != null) window.setIcon(icon);
+    ProblemsViewIconUpdater.update(getProject());
   }, 50, stateForComponent(this), this);
 
   private final Option myAutoscrollToSource = new Option() {
@@ -214,10 +215,21 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     myToolbar = getToolbar();
     myToolbar.setTargetComponent(myTree);
     myToolbar.getComponent().setVisible(state.getShowToolbar());
-    UIUtil.addBorder(myToolbar.getComponent(), new CustomLineBorder(myToolbarInsets));
 
     myPanel = new JPanel(new BorderLayout());
-    myPanel.add(BorderLayout.CENTER, createScrollPane(myTree, true));
+    JScrollPane scrollPane = createScrollPane(myTree, true);
+    if (ExperimentalUI.isNewUI()) {
+      scrollPane.getHorizontalScrollBar().addAdjustmentListener(event -> {
+        Border border = event.getAdjustable().getValue() != 0 ? new CustomLineBorder(myToolbarInsets) : JBUI.Borders.empty(myToolbarInsets);
+        myToolbar.getComponent().setBorder(border);
+        myToolbar.getComponent().repaint();
+      });
+    }
+    else {
+      UIUtil.addBorder(myToolbar.getComponent(), new CustomLineBorder(myToolbarInsets));
+    }
+
+    myPanel.add(BorderLayout.CENTER, scrollPane);
     myPanel.add(BorderLayout.WEST, myToolbar.getComponent());
     myPanel.putClientProperty(OPEN_IN_PREVIEW_TAB, true);
     setFirstComponent(myPanel);
@@ -272,10 +284,6 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
 
   protected void updateToolWindowContent() {
     myUpdateAlarm.cancelAndRequest();
-  }
-
-  public @Nullable Icon getToolWindowIcon(int count) {
-    return null;
   }
 
   @Override
@@ -339,7 +347,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
       ToolWindow window = ProblemsView.getToolWindow(getProject());
       if (window instanceof ToolWindowEx) {
         ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("ProblemsView.ToolWindow.SecondaryActions");
-        ((ToolWindowEx)window).setAdditionalGearActions(group);
+        window.setAdditionalGearActions(group);
       }
     }
     visibilityChangedTo(selected);

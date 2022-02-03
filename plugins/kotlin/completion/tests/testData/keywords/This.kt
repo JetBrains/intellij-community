@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 class Outer {
     class Nested {
         inner class Inner {

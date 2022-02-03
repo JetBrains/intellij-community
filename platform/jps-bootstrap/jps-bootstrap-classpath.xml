@@ -91,6 +91,7 @@
       destdir="${classes.dir}"
       encoding="UTF-8"
       release="11"
+      debug="true"
       includeantruntime="false"
       classpathref="classpath.buildscripts"
     />

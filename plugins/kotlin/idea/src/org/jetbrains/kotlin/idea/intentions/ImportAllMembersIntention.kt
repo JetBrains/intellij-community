@@ -6,7 +6,6 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.util.range
 import org.jetbrains.kotlin.idea.imports.importableFqName
@@ -14,6 +13,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.util.ImportDescriptorResult
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
@@ -71,7 +71,7 @@ class ImportAllMembersIntention : SelfTargetingIntention<KtElement>(
         }
 
         private fun target(qualifiedElement: KtElement, receiverExpression: KtExpression): DeclarationDescriptor? {
-            val bindingContext = qualifiedElement.analyze(BodyResolveMode.PARTIAL)
+            val bindingContext = qualifiedElement.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
             if (bindingContext[BindingContext.QUALIFIER, receiverExpression] !is ClassQualifier) {
                 return null
             }

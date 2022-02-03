@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -6,8 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.DesktopLayout;
+import com.intellij.toolWindow.ToolWindowDefaultLayoutManager;
 import org.jetbrains.annotations.NotNull;
 
 public final class RestoreDefaultLayoutAction extends AnAction implements DumbAware {
@@ -18,8 +17,7 @@ public final class RestoreDefaultLayoutAction extends AnAction implements DumbAw
       return;
     }
 
-    DesktopLayout layout = WindowManagerEx.getInstanceEx().getLayout();
-    ToolWindowManagerEx.getInstanceEx(project).setLayout(layout.copy());
+    ToolWindowManagerEx.getInstanceEx(project).setLayout(ToolWindowDefaultLayoutManager.getInstance().getLayoutCopy());
   }
 
   @Override

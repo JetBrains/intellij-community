@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -292,7 +292,7 @@ public final class JDOMUtil {
   /**
    * @deprecated Use {@link #load(CharSequence)}
    * <p>
-   * Direct usage of element allows to get rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
+   * Direct usage of element allows getting rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
    */
   @Deprecated
   public static @NotNull Document loadDocument(@NotNull InputStream stream) throws JDOMException, IOException {
@@ -308,7 +308,7 @@ public final class JDOMUtil {
     try {
       XMLStreamReader2 xmlStreamReader = StaxFactory.createXmlStreamReader(reader);
       try {
-        return SafeStAXStreamBuilder.build(xmlStreamReader, true, true, null == null ? SafeStAXStreamBuilder.FACTORY : null);
+        return SafeStAXStreamBuilder.build(xmlStreamReader, true, true, SafeStAXStreamBuilder.FACTORY);
       }
       finally {
         xmlStreamReader.close();
@@ -355,7 +355,7 @@ public final class JDOMUtil {
   /**
    * @deprecated Use {@link #load(CharSequence)}
    * <p>
-   * Direct usage of element allows to get rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
+   * Direct usage of element allows getting rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
    */
   @Deprecated
   public static @NotNull Document loadDocument(@NotNull URL url) throws JDOMException, IOException {
@@ -808,11 +808,11 @@ public final class JDOMUtil {
    *   }
    *   }</pre>
    *
-   * @return interned Element, i.e Element which<br/>
+   * @return interned Element, i.e. Element which<br/>
    * - is the same for equivalent parameters. E.g. two calls of internElement() with {@code <xxx/>} and the other {@code <xxx/>}
    * will return the same element {@code <xxx/>}<br/>
    * - getParent() method is not implemented (and will throw exception; interning would not make sense otherwise)<br/>
-   * - is immutable (all modifications methods like setName(), setParent() etc will throw)<br/>
+   * - is immutable (all modifications methods like setName(), setParent() etc. will throw)<br/>
    * - has {@code clone()} method which will return modifiable org.jdom.Element copy.<br/>
    */
   public static @NotNull Element internElement(@NotNull Element element) {

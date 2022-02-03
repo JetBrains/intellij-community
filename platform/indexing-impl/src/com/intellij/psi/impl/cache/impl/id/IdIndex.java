@@ -48,7 +48,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
 
   @Override
   public int getVersion() {
-    return 17 + IdIndexEntry.getUsedHashAlgorithmVersion();
+    return 21 + IdIndexEntry.getUsedHashAlgorithmVersion();
   }
 
   @Override

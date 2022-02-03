@@ -1,6 +1,5 @@
 import datetime
 import sys
-from typing import Set
 
 from dateparser.date import DateDataParser
 
@@ -34,9 +33,9 @@ class _Settings(TypedDict, total=False):
 
 def parse(
     date_string: str,
-    date_formats: list[str] | tuple[str] | Set[str] | None = ...,
-    languages: list[str] | tuple[str] | Set[str] | None = ...,
-    locales: list[str] | tuple[str] | Set[str] | None = ...,
+    date_formats: list[str] | tuple[str] | set[str] | None = ...,
+    languages: list[str] | tuple[str] | set[str] | None = ...,
+    locales: list[str] | tuple[str] | set[str] | None = ...,
     region: str | None = ...,
     settings: _Settings | None = ...,
 ) -> datetime.datetime | None: ...

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -430,12 +430,21 @@ public final class PsiTypesUtil {
     });
   }
 
+  /**
+   * @return i's parameter type. 
+   *         Never returns ellipsis type: in case of vararg usage, it returns the corresponding component type, otherwise an array type.
+   */
   @NotNull
   public static PsiType getParameterType(PsiParameter @NotNull [] parameters, int i, boolean varargs) {
     final PsiParameter parameter = parameters[i < parameters.length ? i : parameters.length - 1];
     PsiType parameterType = parameter.getType();
-    if (parameterType instanceof PsiEllipsisType && varargs) {
-      parameterType = ((PsiEllipsisType)parameterType).getComponentType();
+    if (parameterType instanceof PsiEllipsisType) {
+      if (varargs) {
+        parameterType = ((PsiEllipsisType)parameterType).getComponentType();
+      }
+      else {
+        parameterType = ((PsiEllipsisType)parameterType).toArrayType();
+      }
     }
     if (!parameterType.isValid()) {
       PsiUtil.ensureValidType(parameterType, "Invalid type of parameter " + parameter + " of " + parameter.getClass());

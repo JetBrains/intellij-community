@@ -16,11 +16,13 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UCallableReferenceExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UMultiResolvable
 
+@ApiStatus.Internal
 class JavaUCallableReferenceExpression(
   override val sourcePsi: PsiMethodReferenceExpression,
   givenParent: UElement?
@@ -43,6 +45,5 @@ class JavaUCallableReferenceExpression(
   override val referenceNameElement: UElement? by lz {
     sourcePsi.referenceNameElement?.let { JavaUSimpleNameReferenceExpression(it, callableName, this, it.reference) }
   }
-
 
 }

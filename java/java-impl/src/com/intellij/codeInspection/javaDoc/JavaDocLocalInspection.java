@@ -842,10 +842,15 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
 
     @Override
     public void problem(@NotNull PsiElement toHighlight, @NotNull @Nls String message, @Nullable LocalQuickFix fix) {
-      myHolder.registerProblem(myHolder.getManager().createProblemDescriptor(
-        toHighlight, message, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly));
+      final LocalQuickFix[] fixes = new LocalQuickFix[] { fix };
+      problemWithFixes(toHighlight, message, fixes);
     }
 
+    @Override
+    public void problemWithFixes(@NotNull PsiElement toHighlight, @NotNull @Nls String message, LocalQuickFix@NotNull [] fixes) {
+      myHolder.registerProblem(myHolder.getManager().createProblemDescriptor(
+        toHighlight, message, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly, false));
+    }
     @Override
     public void eolProblem(@NotNull PsiElement toHighlight, @NotNull @Nls String message, @Nullable LocalQuickFix fix) {
       LocalQuickFix[] fixes = fix != null ? new LocalQuickFix[]{fix} : null;

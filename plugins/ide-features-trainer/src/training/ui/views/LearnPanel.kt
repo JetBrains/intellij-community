@@ -1,17 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui.views
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.CloseProjectWindowHelper
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.VerticalBox
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.StartupUiUtil
 import org.intellij.lang.annotations.Language
 import training.lang.LangManager
 import training.learn.CourseManager
@@ -137,7 +139,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     lessonMessagePane.isFocusable = false
     lessonMessagePane.isOpaque = false
     lessonMessagePane.alignmentX = Component.LEFT_ALIGNMENT
-    lessonMessagePane.margin = JBUI.emptyInsets()
+    lessonMessagePane.margin = JBInsets.emptyInsets()
     lessonMessagePane.border = EmptyBorder(0, 0, JBUI.scale(20), JBUI.scale(14))
 
     lessonPanel.add(scaledRigid(UISettings.instance.panelWidth - 2 * UISettings.instance.learnPanelSideOffset, JBUI.scale(19)))
@@ -183,27 +185,32 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     linksPanel.border = EmptyBorder(0, 0, JBUI.scale(12), 0)
 
     linksPanel.add(moduleNameLabel)
-    if (findLanguageSupport(learnToolWindow.project) != null) {
-      linksPanel.add(Box.createHorizontalGlue())
+    linksPanel.add(Box.createHorizontalGlue())
 
-      val exitLink = JLabel(LearnBundle.message("exit.learning.link"), AllIcons.Actions.Exit, SwingConstants.LEADING)
-      exitLink.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-      exitLink.addMouseListener(object : MouseAdapter() {
-        override fun mouseClicked(e: MouseEvent) {
-          if (!StatisticBase.isLearnProjectCloseLogged) {
-            StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.EXIT_LINK)
-          }
-          LessonManager.instance.stopLesson()
-          val langSupport = LangManager.getInstance().getLangSupport()
-          langSupport?.onboardingFeedbackData?.let {
-            showOnboardingLessonFeedbackForm(learnToolWindow.project, it, false)
-            langSupport.onboardingFeedbackData = null
-          }
-          CloseProjectWindowHelper().windowClosing(learnToolWindow.project)
+    val exitLink = JLabel(LearnBundle.message("exit.learning.link"), AllIcons.Actions.Exit, SwingConstants.LEADING)
+    exitLink.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+    exitLink.addMouseListener(object : MouseAdapter() {
+      override fun mouseClicked(e: MouseEvent) {
+        if (!StatisticBase.isLearnProjectCloseLogged) {
+          StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.EXIT_LINK)
         }
-      })
-      linksPanel.add(exitLink)
-    }
+        LessonManager.instance.stopLesson()
+        val langSupport = LangManager.getInstance().getLangSupport()
+        val project = learnToolWindow.project
+        langSupport?.onboardingFeedbackData?.let {
+          showOnboardingLessonFeedbackForm(project, it, false)
+          langSupport.onboardingFeedbackData = null
+        }
+
+        if (langSupport != null && isLearningProject(project, langSupport)) {
+          CloseProjectWindowHelper().windowClosing(project)
+        } else {
+          LearningUiManager.resetModulesView()
+          ToolWindowManager.getInstance(project).getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)?.hide()
+        }
+      }
+    })
+    linksPanel.add(exitLink)
 
     val headerPanel = VerticalBox()
     headerPanel.isOpaque = false
@@ -288,7 +295,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     nextButton = nextLesson?.let { createNavigationButton(nextLesson, isNext = true) }
 
     for (button in listOfNotNull(prevButton, nextButton)) {
-      button.margin = JBUI.emptyInsets()
+      button.margin = JBInsets.emptyInsets()
       button.isFocusable = false
       button.isEnabled = true
       button.isOpaque = false
@@ -377,7 +384,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
 
 private class LinkLabelWithBackArrow<T>(linkListener: LinkListener<T>) : LinkLabel<T>("", null, linkListener) {
   init {
-    font = UIUtil.getLabelFont()
+    font = StartupUiUtil.getLabelFont()
   }
 
   override fun paint(g: Graphics?) {

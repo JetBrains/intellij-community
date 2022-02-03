@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.*;
@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.execution.junit2.info.NestedClassLocation;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.target.TargetEnvironmentUtil;
@@ -45,9 +46,12 @@ import java.util.Set;
 public class TestPackage extends TestObject {
   protected static final Function<Location<?>, String> CLASS_NAME_FUNCTION = location -> {
     if (location instanceof MethodLocation) {
-      PsiClass containingClass = ((MethodLocation)location).getContainingClass();
+      return ((MethodLocation)location).getContainingClassJVMClassName() + "," + ((MethodLocation)location).getPsiElement().getName();
+    }
+    if (location instanceof NestedClassLocation) {
+      PsiClass containingClass = ((NestedClassLocation)location).getContainingClass();
       if (containingClass == null) return null;
-      return ClassUtil.getJVMClassName(containingClass) + "," + ((MethodLocation)location).getPsiElement().getName();
+      return ClassUtil.getJVMClassName(containingClass) + "$" + ((NestedClassLocation)location).getPsiElement().getName();
     }
     PsiElement psiElement = location.getPsiElement();
     return psiElement instanceof PsiClass ? ClassUtil.getJVMClassName((PsiClass)psiElement) : null;
@@ -188,7 +192,7 @@ public class TestPackage extends TestObject {
   protected void collectClassesRecursively(TestClassFilter classFilter,
                                            Condition<? super PsiClass> acceptClassCondition,
                                            Set<Location<?>> classes) throws CantRunException {
-    PsiPackage aPackage = getPackage(getConfiguration().getPersistentData());
+    PsiPackage aPackage = getPackage();
     GlobalSearchScope scope = GlobalSearchScope.projectScope(getConfiguration().getProject()).intersectWith(classFilter.getScope());
     collectClassesRecursively(aPackage, scope, acceptClassCondition, classes);
   }
@@ -239,7 +243,7 @@ public class TestPackage extends TestObject {
       SourceScope sourceScope = getSourceScope();
       if (sourceScope != null) {
         collectSubPackages(options,
-                           getPackage(getConfiguration().getPersistentData()),
+                           getPackage(),
                            sourceScope.getGlobalSearchScope());
       }
     }
@@ -262,12 +266,12 @@ public class TestPackage extends TestObject {
   }
 
   protected GlobalSearchScope filterScope(final JUnitConfiguration.Data data) throws CantRunException {
-    return ReadAction.compute(() -> PackageScope.packageScope(getPackage(data), true));
+    return ReadAction.compute(() -> PackageScope.packageScope(getPackage(), true));
   }
 
   @NotNull
-  protected PsiPackage getPackage(JUnitConfiguration.Data data) throws CantRunException {
-    final String packageName = data.getPackageName();
+  protected PsiPackage getPackage() throws CantRunException {
+    final String packageName = getConfiguration().getPersistentData().getPackageName();
     final PsiPackage aPackage = JavaPsiFacade.getInstance(getConfiguration().getProject()).findPackage(packageName);
     if (aPackage == null) throw CantRunException.packageNotFound(packageName);
     return aPackage;
@@ -282,8 +286,8 @@ public class TestPackage extends TestObject {
   }
 
   @Override
-  public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {
-    return element instanceof PsiPackage ? RefactoringListeners.getListener((PsiPackage)element, configuration.myPackage) : null;
+  public RefactoringElementListener getListener(final PsiElement element) {
+    return element instanceof PsiPackage ? RefactoringListeners.getListener((PsiPackage)element, getConfiguration().myPackage) : null;
   }
 
   @Override

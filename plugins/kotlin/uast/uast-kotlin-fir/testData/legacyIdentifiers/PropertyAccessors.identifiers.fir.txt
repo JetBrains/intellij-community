@@ -1,0 +1,13 @@
+PropertyTest -> UClass (name = PropertyTest)
+stringRepresentation -> null
+String -> USimpleNameReferenceExpression (identifier = String)
+get -> [!] UnknownKotlinExpression (PROPERTY_ACCESSOR)
+this -> USimpleNameReferenceExpression (identifier = this)
+toString -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+set -> [!] UnknownKotlinExpression (PROPERTY_ACCESSOR)
+value -> [!] UnknownKotlinExpression (VALUE_PARAMETER)
+    setDataFromString -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+    value -> USimpleNameReferenceExpression (identifier = value)
+setDataFromString -> UMethod (name = setDataFromString)
+data -> UParameter (name = data)
+String -> USimpleNameReferenceExpression (identifier = String)

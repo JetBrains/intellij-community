@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.application.options.PathMacrosCollector;
@@ -34,11 +34,6 @@ public final class DirectoryStorageUtil {
         }
 
         try {
-          if (Files.size(file) == 0) {
-            LOG.warn("Ignore empty file " + file);
-            continue;
-          }
-
           Element element = JDOMUtil.load(file);
           String componentName = FileStorageCoreUtil.getComponentNameIfValid(element);
           if (componentName == null) {
@@ -70,7 +65,12 @@ public final class DirectoryStorageUtil {
           fileToState.put(file.getFileName().toString(), state);
         }
         catch (Throwable e) {
-          LOG.warn("Unable to load state from " + file, e);
+          if (e.getMessage().startsWith("Unexpected End-of-input in prolog")) {
+            LOG.warn("Ignore empty file " + file);
+          }
+          else {
+            LOG.warn("Unable to load state from " + file, e);
+          }
         }
       }
       return fileToState;

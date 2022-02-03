@@ -1,10 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
+
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 
 import java.nio.file.Path
+import java.util.function.Predicate
 
 @CompileStatic
 abstract class MacDistributionCustomizer {
@@ -83,6 +85,11 @@ abstract class MacDistributionCustomizer {
    * Relative paths to files in macOS distribution which should take 'executable' permissions
    */
   List<String> extraExecutables = []
+
+  /**
+   * Filter for files that is going to be put to `<distribution>/bin` directory.
+   */
+  Predicate<Path> binFilesFilter = { true } as Predicate<Path>
 
   /**
    * Relative paths to files in macOS distribution which should be signed

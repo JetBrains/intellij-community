@@ -96,8 +96,7 @@ class EventLogConfiguration {
     }
   }
 
-  private val defaultConfiguration: EventLogRecorderConfiguration = EventLogRecorderConfiguration(FUS_RECORDER,
-    this, defaultSessionId)
+  private val defaultConfiguration = EventLogRecorderConfiguration(FUS_RECORDER, this, defaultSessionId)
   private val configurations: MutableMap<String, EventLogRecorderConfiguration> = HashMap()
 
   val build: String by lazy { ApplicationInfo.getInstance().build.asBuildNumber() }

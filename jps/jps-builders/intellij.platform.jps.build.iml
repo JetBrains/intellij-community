@@ -22,7 +22,6 @@
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="library" name="protobuf" level="project" />
     <orderEntry type="module" module-name="intellij.java.rt" scope="RUNTIME" />
-    <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="Eclipse" level="project" />
@@ -30,20 +29,19 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization.tests" scope="TEST" />
-    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="javax.annotation-api" level="project" />
     <orderEntry type="module-library">
       <library name="qdox-java-parser" type="repository">
-        <properties maven-id="com.thoughtworks.qdox:qdox:2.0.0" />
+        <properties maven-id="com.thoughtworks.qdox:qdox:2.0.1" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2.0.0/qdox-2.0.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2.0.1/qdox-2.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2.0.0/qdox-2.0.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2.0.1/qdox-2.0.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

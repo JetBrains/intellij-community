@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.CodeInsightSettings
@@ -6,7 +6,10 @@ import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.propComponentProperty
-import com.intellij.lang.documentation.*
+import com.intellij.lang.documentation.DocumentationTarget
+import com.intellij.lang.documentation.InlineDocumentation
+import com.intellij.lang.documentation.LinkResolveResult
+import com.intellij.lang.documentation.ResolvedTarget
 import com.intellij.lang.documentation.ide.actions.documentationTargets
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.lang.documentation.impl.DocumentationRequest
@@ -98,6 +101,12 @@ internal class DocumentationManager(private val project: Project) : Disposable {
   }
 
   private var popup: WeakReference<AbstractPopup>? = null
+
+  val isPopupVisible: Boolean
+    get() {
+      EDT.assertIsEdt()
+      return popup?.get()?.isVisible == true
+    }
 
   private fun getPopup(): AbstractPopup? {
     EDT.assertIsEdt()
@@ -248,16 +257,12 @@ internal class DocumentationManager(private val project: Project) : Disposable {
   private fun resolveInlineLink(documentation: () -> InlineDocumentation?, url: String): DocumentationTarget? {
     val ownerTarget = documentation()?.ownerTarget
                       ?: return null
-    val linkResult: LinkResult = resolveLink(ownerTarget, url)
-                                 ?: return null
+    val linkResolveResult: LinkResolveResult = resolveLink(ownerTarget, url)
+                                               ?: return null
     @Suppress("REDUNDANT_ELSE_IN_WHEN")
-    return when (linkResult) {
-      is ResolvedTarget -> linkResult.target
-      is UpdateContent -> {
-        LOG.warn("Content updates are not supported in inline documentation")
-        null
-      }
-      else -> error("Unexpected result: $linkResult") // this fixes Kotlin incremental compilation
+    return when (linkResolveResult) {
+      is ResolvedTarget -> linkResolveResult.target
+      else -> error("Unexpected result: $linkResolveResult") // this fixes Kotlin incremental compilation
     }
   }
 }

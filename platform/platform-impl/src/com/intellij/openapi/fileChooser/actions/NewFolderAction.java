@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -15,6 +14,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -27,38 +27,33 @@ public class NewFolderAction extends FileChooserAction implements LightEditCompa
   }
 
   @Override
-  protected void update(FileSystemTree fileSystemTree, AnActionEvent e) {
-    Presentation presentation = e.getPresentation();
+  protected void update(@NotNull FileSystemTree fileSystemTree, @NotNull AnActionEvent e) {
     VirtualFile parent = fileSystemTree.getNewFileParent();
-    presentation.setEnabled(parent != null && parent.isDirectory());
-    setEnabledInModalContext(true);
+    e.getPresentation().setEnabled(parent != null && parent.isDirectory());
   }
 
   @Override
-  protected void actionPerformed(FileSystemTree fileSystemTree, AnActionEvent e) {
+  protected void actionPerformed(@NotNull FileSystemTree fileSystemTree, @NotNull AnActionEvent e) {
     createNewFolder(fileSystemTree);
   }
 
   private static void createNewFolder(FileSystemTree fileSystemTree) {
-    final VirtualFile file = fileSystemTree.getNewFileParent();
-    if (file == null || !file.isDirectory()) return;
+    VirtualFile parent = fileSystemTree.getNewFileParent();
+    if (parent == null || !parent.isDirectory()) return;
 
-    final InputValidatorEx validator = new NewFolderValidator(file);
-    final String newFolderName = Messages.showInputDialog(UIBundle.message("create.new.folder.enter.new.folder.name.prompt.text"),
-                                                          UIBundle.message("new.folder.dialog.title"), Messages.getQuestionIcon(),
-                                                          "", validator);
+    InputValidatorEx validator = new NewFolderValidator(parent);
+
+    String newFolderName = Messages.showInputDialog(UIBundle.message("create.new.folder.enter.new.folder.name.prompt.text"), UIBundle.message("new.folder.dialog.title"), Messages.getQuestionIcon(), "", validator);
     if (newFolderName == null) {
       return;
     }
-    Exception failReason = ((FileSystemTreeImpl)fileSystemTree).createNewFolder(file, newFolderName);
+    Exception failReason = ((FileSystemTreeImpl)fileSystemTree).createNewFolder(parent, newFolderName);
     if (failReason != null) {
-      Messages.showMessageDialog(UIBundle.message("create.new.folder.could.not.create.folder.error.message", newFolderName),
-                                 UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
+      Messages.showMessageDialog(UIBundle.message("create.new.folder.could.not.create.folder.error.message", newFolderName), UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
     }
   }
 
   private static class NewFolderValidator implements InputValidatorEx {
-
     private final VirtualFile myDirectory;
     private @NlsContexts.DetailedDescription String myErrorText;
 
@@ -66,9 +61,8 @@ public class NewFolderAction extends FileChooserAction implements LightEditCompa
       myDirectory = directory;
     }
 
-    @Nullable
     @Override
-    public String getErrorText(String inputString) {
+    public @Nullable String getErrorText(String inputString) {
       return myErrorText;
     }
 

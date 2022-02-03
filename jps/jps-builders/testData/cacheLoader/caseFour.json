@@ -1,0 +1,26 @@
+{
+  "java-test": {
+    "intellij.cidr.externalSystem": {
+      "hash": "2278b175facf7afb99432408b82489c2",
+      "relativePath": "$BUILD_DIR$/test/intellij.cidr.externalSystem"
+    }
+  },
+  "resources-test": {
+    "intellij.platform.ssh.integrationTests": {
+      "hash": "71c661e849ef948135bdfa5b4d105a7c",
+      "relativePath": "$BUILD_DIR$/test/intellij.platform.ssh.integrationTests"
+    }
+  },
+  "java-production": {
+    "intellij.cidr.externalSystem": {
+      "hash": "9bd11b1670357c60b4f0520755597ae7",
+      "relativePath": "$BUILD_DIR$/production/intellij.cidr.externalSystem"
+    }
+  },
+  "resources-production": {
+    "intellij.cidr.externalSystem": {
+      "hash": "9bd11b17f0357c60b4f0520755597ae7",
+      "relativePath": "$BUILD_DIR$/production/intellij.cidr.externalSystem"
+    }
+  }
+}

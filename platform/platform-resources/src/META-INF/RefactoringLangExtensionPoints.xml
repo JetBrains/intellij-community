@@ -1,0 +1,45 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="lang.refactoringSupport.classMembersRefactoringSupport" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.classMembers.ClassMembersRefactoringSupport"/>
+    </extensionPoint>
+
+    <extensionPoint name="refactoring.copyHandler" interface="com.intellij.refactoring.copy.CopyHandlerDelegate" dynamic="true"/>
+    <extensionPoint name="refactoring.moveHandler" interface="com.intellij.refactoring.move.MoveHandlerDelegate" dynamic="true"/>
+    <extensionPoint name="refactoring.invertBoolean" interface="com.intellij.refactoring.invertBoolean.InvertBooleanDelegate" dynamic="true"/>
+    <extensionPoint name="refactoring.introduceParameterObject" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectDelegate"/>
+    </extensionPoint>
+
+    <extensionPoint name="refactoring.pushDown" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.memberPushDown.PushDownDelegate"/>
+    </extensionPoint>
+    <extensionPoint name="refactoring.moveDirectoryWithClassesHelper" interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHelper" dynamic="true"/>
+    <extensionPoint name="refactoring.helper" interface="com.intellij.refactoring.RefactoringHelper" dynamic="true"/>
+    <extensionPoint name="refactoring.inlineHandler" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.refactoring.InlineHandler"/>
+    </extensionPoint>
+    <extensionPoint name="refactoring.safeDeleteProcessor" interface="com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegate" dynamic="true"/>
+    <extensionPoint name="refactoring.extractIncludeHandler" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.RefactoringActionHandler"/>
+    </extensionPoint>
+
+    <extensionPoint name="refactoring.changeSignatureUsageProcessor" interface="com.intellij.refactoring.changeSignature.ChangeSignatureUsageProcessor" dynamic="true"/>
+
+    <extensionPoint name="moveFileHandler" interface="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler" dynamic="true"/>
+    <extensionPoint name="rename.symbolRenameTargetFactory" dynamic="true"
+                    interface="com.intellij.refactoring.rename.symbol.SymbolRenameTargetFactory"/>
+
+    <extensionPoint name="renameFileActionProvider" interface="com.intellij.refactoring.actions.RenameFileActionProvider" dynamic="true"/>
+
+    <extensionPoint name="inlineActionHandler" interface="com.intellij.lang.refactoring.InlineActionHandler" dynamic="true"/>
+
+    <extensionPoint name="changeSignatureDetector" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.changeSignature.inplace.LanguageChangeSignatureDetector"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.suggestedRefactoringSupport" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.suggested.SuggestedRefactoringSupport"/>
+    </extensionPoint>
+  </extensionPoints>
+</idea-plugin>

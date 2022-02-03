@@ -11,6 +11,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageM
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScaledPixels
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.compensateForHighlightableComponentMarginLeft
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.noInsets
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
@@ -79,10 +80,8 @@ internal class PackageDetailsInfoPanel : JPanel() {
         background = PackageSearchUI.UsualBackgroundColor
         alignmentX = Component.LEFT_ALIGNMENT
 
-        @ScaledPixels val horizontalBorder = 12.scaled()
-        border = emptyBorder(left = horizontalBorder, bottom = 20.scaled(), right = horizontalBorder)
-
-        fun CC.compensateForHighlightableComponentMarginLeft() = pad(0, (-2).scaled(), 0, 0)
+        val horizontalBorder = 12
+        border = emptyBorder(left = horizontalBorder, bottom = 20, right = horizontalBorder)
 
         add(noDataLabel, CC().wrap())
         add(repositoriesLabel, CC().wrap())

@@ -21,18 +21,17 @@ class GradleScriptInfo(
     val model: KotlinDslScriptModel
 ) : ScriptClassRootsCache.LightScriptInfo(scriptDefinition) {
     override fun buildConfiguration(): ScriptCompilationConfigurationWrapper? {
-        val javaHome = buildRoot.javaHome
-
         val scriptFile = File(model.file)
         val virtualFile = VfsUtil.findFile(scriptFile.toPath(), true)
 
+        val definition = definition
         if (definition == null || virtualFile == null) return null
 
         return ScriptCompilationConfigurationWrapper.FromCompilationConfiguration(
             VirtualFileScriptSource(virtualFile),
             definition.compilationConfiguration.with {
-                if (javaHome != null) {
-                    jvm.jdkHome(javaHome)
+                buildRoot.javaHome?.let {
+                    jvm.jdkHome(it.toFile())
                 }
                 defaultImports(model.imports)
                 dependencies(JvmDependency(model.classPath.map { File(it) }))

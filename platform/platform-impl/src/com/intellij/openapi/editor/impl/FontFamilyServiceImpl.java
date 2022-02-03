@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
+import com.intellij.openapi.editor.colors.impl.AppFontOptions;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -47,7 +48,8 @@ final class FontFamilyServiceImpl extends FontFamilyService {
   private final SortedMap<String, FontFamily> myFamilies = new TreeMap<>();
 
   private FontFamilyServiceImpl() {
-    if (ApplicationManager.getApplication().isUnitTestMode() || !AppEditorFontOptions.NEW_FONT_SELECTOR) {
+    Application app = ApplicationManager.getApplication();
+    if (app.isUnitTestMode() || app.isHeadlessEnvironment() || !AppFontOptions.NEW_FONT_SELECTOR) {
       return;
     }
 

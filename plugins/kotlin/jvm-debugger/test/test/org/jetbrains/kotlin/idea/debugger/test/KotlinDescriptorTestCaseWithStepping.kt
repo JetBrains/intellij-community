@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.debugger.actions.MethodSmartStepTarget
+import com.intellij.debugger.actions.SmartStepTarget
 import com.intellij.debugger.engine.BasicStepMethodFilter
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.MethodFilter
@@ -20,23 +21,28 @@ import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
+import com.intellij.psi.PsiElement
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.xdebugger.XDebuggerTestUtil
 import com.intellij.xdebugger.frame.XStackFrame
 import com.sun.jdi.request.StepRequest
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
+import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
 import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.stepping.KotlinSteppingCommandProvider
-import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.*
+import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler
+import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepTarget
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstruction
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstructionKind
 import org.jetbrains.kotlin.idea.debugger.test.util.render
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.KotlinBaseTest
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinBaseTest
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 
 abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase() {
@@ -68,7 +74,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         myCommandProvider = JvmSteppingCommandProvider.EP_NAME.extensions.firstIsInstance<KotlinSteppingCommandProvider>()
     }
 
-    protected fun SuspendContextImpl.getKotlinStackFrames(): List<KotlinStackFrame> {
+    private fun SuspendContextImpl.getKotlinStackFrames(): List<KotlinStackFrame> {
         val proxy = frameProxy ?: return emptyList()
         if (myInProgress) {
             val positionManager = KotlinPositionManager(debugProcess)
@@ -89,7 +95,6 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
             null
         }
     }
-
 
     internal fun process(instructions: List<SteppingInstruction>) {
         instructions.forEach(this::process)
@@ -160,7 +165,21 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
             SteppingInstructionKind.SmartStepInto -> loop(instruction.arg) { doSmartStepInto() }
             SteppingInstructionKind.SmartStepIntoByIndex -> doOnBreakpoint { doSmartStepInto(instruction.arg) }
             SteppingInstructionKind.Resume -> loop(instruction.arg) { resume(this) }
+            SteppingInstructionKind.SmartStepTargetsExpectedNumber ->
+                doOnBreakpoint {
+                    checkNumberOfSmartStepTargets(instruction.arg)
+                    resume(this)
+                }
         }
+    }
+
+    private fun checkNumberOfSmartStepTargets(expectedNumber: Int) {
+        val smartStepFilters = createSmartStepIntoFilters()
+        assertEquals(
+            "Actual and expected numbers of smart step targets do not match",
+            expectedNumber,
+            smartStepFilters.size
+        )
     }
 
     private fun SuspendContextImpl.doSmartStepInto(chooseFromList: Int = 0) {
@@ -194,17 +213,51 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         }
     }
 
-    private fun createSmartStepIntoFilters() = runReadAction {
+    private fun createSmartStepIntoFilters(): List<MethodFilter> {
         val position = debuggerContext.sourcePosition
-
-        val stepTargets = KotlinSmartStepIntoHandler().findSmartStepTargets(position)
-        stepTargets.mapNotNull { stepTarget ->
-            when (stepTarget) {
-                is KotlinSmartStepTarget -> stepTarget.createMethodFilter()
-                is MethodSmartStepTarget -> BasicStepMethodFilter(stepTarget.method, stepTarget.getCallingExpressionLines())
-                else -> null
+        val stepTargets = KotlinSmartStepIntoHandler()
+            .findStepIntoTargets(position, debuggerSession)
+            .blockingGet(XDebuggerTestUtil.TIMEOUT_MS)
+            ?: error("Couldn't calculate smart step targets")
+        return runReadAction {
+            stepTargets.sortedByPositionInTree().mapNotNull { stepTarget ->
+                when (stepTarget) {
+                    is KotlinSmartStepTarget -> stepTarget.createMethodFilter()
+                    is MethodSmartStepTarget -> BasicStepMethodFilter(stepTarget.method, stepTarget.getCallingExpressionLines())
+                    else -> null
+                }
             }
         }
+    }
+
+    private fun List<SmartStepTarget>.sortedByPositionInTree(): List<SmartStepTarget> {
+        if (isEmpty()) return emptyList()
+        val sortedTargets = MutableList(size) { first() }
+        for ((i, indexInTree) in getIndicesInTree().withIndex()) {
+            sortedTargets[indexInTree] = get(i)
+        }
+        return sortedTargets
+    }
+
+    private fun List<SmartStepTarget>.getIndicesInTree(): List<Int> {
+        val targetsIndicesInTree = MutableList(size) { 0 }
+        runReadAction {
+            val elementAt = debuggerContext.sourcePosition.elementAt
+            val topmostElement = getTopmostElementAtOffset(elementAt, elementAt.textRange.startOffset)
+            topmostElement.accept(object : KtTreeVisitorVoid() {
+                private var elementIndex = 0
+                override fun visitElement(element: PsiElement) {
+                    for ((i, target) in withIndex()) {
+                        if (element === target.highlightElement) {
+                            targetsIndicesInTree[i] = elementIndex++
+                            break
+                        }
+                    }
+                    super.visitElement(element)
+                }
+            })
+        }
+        return targetsIndicesInTree
     }
 
     protected fun SuspendContextImpl.runActionInSuspendCommand(action: SuspendContextImpl.() -> Unit) {

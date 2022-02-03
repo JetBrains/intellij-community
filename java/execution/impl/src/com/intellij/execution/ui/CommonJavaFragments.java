@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
@@ -12,7 +12,6 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.util.JavaParametersUtil;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -197,13 +196,13 @@ public final class CommonJavaFragments {
                                    configuration -> true);
     jrePath.setRemovable(false);
     jrePath.setHint(ExecutionBundle.message("run.configuration.jre.hint"));
-    jrePath.setValidation(configuration -> new SmartList<>(RuntimeConfigurationException.validate(comboBox, () -> ReadAction.run(() -> {
+    jrePath.setValidation(configuration -> new SmartList<>(RuntimeConfigurationException.validate(comboBox, () -> {
       if (!(configuration instanceof TargetEnvironmentAwareRunProfile) ||
           TargetEnvironmentConfigurations.getEffectiveTargetName((TargetEnvironmentAwareRunProfile)configuration,
                                                                  configuration.getProject()) == null) {
         JavaParametersUtil.checkAlternativeJRE(configuration);
       }
-    }))));
+    })));
     return jrePath;
   }
 }

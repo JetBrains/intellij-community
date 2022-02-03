@@ -6,6 +6,8 @@
     <extensions defaultExtensionNs="com.intellij">
         <completion.contributor order="first" language="TOML" id="TomlJsonSchema"
                                 implementationClass="org.toml.ide.json.TomlJsonSchemaCompletionContributor"/>
+
+        <documentationProvider implementation="org.toml.ide.json.TomlJsonSchemaDocumentationProvider"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij.json">

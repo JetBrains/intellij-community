@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -10,15 +10,13 @@ import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.JavaTokenType.*;
@@ -43,6 +41,7 @@ public class ExpressionMayBeFactorizedInspection extends BaseInspection {
 
     private static final TokenSet outerTokens = TokenSet.create(OROR, ANDAND, OR, AND, PLUS, MINUS);
     private static final TokenSet innerTokens = TokenSet.create(OROR, ANDAND, OR, AND, ASTERISK);
+    private static final TokenSet eagerTokens = TokenSet.create(OR, AND, ASTERISK, PLUS, MINUS);
 
     private final ExpressionMayBeFactorizedFix expressionMayBeFactorizedFix;
 
@@ -85,24 +84,60 @@ public class ExpressionMayBeFactorizedInspection extends BaseInspection {
           || rrExpression == null) {
         return;
       }
-      if ((OR == lTokenType || AND == lTokenType)
-          || (!SideEffectChecker.mayHaveSideEffects(lrExpression)
-              && !SideEffectChecker.mayHaveSideEffects(rlExpression)
-              && !SideEffectChecker.mayHaveSideEffects(rrExpression))) {
-        if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(llExpression, rlExpression)
-            && !SideEffectChecker.mayHaveSideEffects(llExpression)) {
-          warnOrFix(expression, lBinaryExpression, llExpression, lrExpression, rrExpression, true);
-        } else if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(llExpression, rrExpression)
-                   && !SideEffectChecker.mayHaveSideEffects(llExpression)) {
-          warnOrFix(expression, lBinaryExpression, llExpression, lrExpression, rlExpression, true);
-        } else if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(lrExpression, rlExpression)
-                   && !SideEffectChecker.mayHaveSideEffects(lrExpression)) {
-          warnOrFix(expression, lBinaryExpression, lrExpression, llExpression, rrExpression, false);
-        } else if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(lrExpression, rrExpression)
-                   && !SideEffectChecker.mayHaveSideEffects(lrExpression)) {
-          warnOrFix(expression, lBinaryExpression, lrExpression, llExpression, rlExpression, false);
+      final boolean eagerEvaluation = eagerTokens.contains(tokenType) && eagerTokens.contains(lTokenType);
+      if (!maybeReplaceDuplicateExpression(expression, lBinaryExpression, llExpression, rlExpression, lrExpression, rrExpression,
+                                           eagerEvaluation,false, true)
+             && !maybeReplaceDuplicateExpression(expression, lBinaryExpression, llExpression, rrExpression, lrExpression, rlExpression,
+                                                 eagerEvaluation, false, false)
+             && !maybeReplaceDuplicateExpression(expression, lBinaryExpression, lrExpression, rlExpression, llExpression, rrExpression,
+                                                 eagerEvaluation, true, true)) {
+        maybeReplaceDuplicateExpression(expression, lBinaryExpression, lrExpression, rrExpression, llExpression, rlExpression,
+                                        eagerEvaluation, true, false);
+      }
+    }
+
+    private boolean maybeReplaceDuplicateExpression(
+      @NotNull PsiBinaryExpression visitedElement,
+      @NotNull PsiBinaryExpression lBinaryExpression,
+      @NotNull PsiExpression factor,
+      @NotNull PsiExpression factorDuplicate,
+      @NotNull PsiExpression thenExpression,
+      @NotNull PsiExpression elseExpression,
+      boolean eagerEvaluation,
+      boolean isThenExpressionFirst,
+      boolean isElseExpressionLast
+    ) {
+      if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(factor, factorDuplicate)
+          && !EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(thenExpression, elseExpression)
+          && !BoolUtils.areExpressionsOpposite(thenExpression, elseExpression)
+          && isPassiveWithoutBreak(factor)) {
+        final boolean isThenExpressionPassiveWithoutBreak = isPassiveWithoutBreak(thenExpression);
+        final boolean isElseExpressionPassiveWithoutBreak = isPassiveWithoutBreak(elseExpression);
+        if (isThenExpressionPassiveWithoutBreak
+            && isElseExpressionLast
+            && (eagerEvaluation || isElseExpressionPassiveWithoutBreak)) {
+          warnOrFix(visitedElement, lBinaryExpression, factorDuplicate, thenExpression, elseExpression, true);
+          return true;
+        }
+        if (isElseExpressionPassiveWithoutBreak
+            && (isThenExpressionFirst || isThenExpressionPassiveWithoutBreak)) {
+          warnOrFix(visitedElement, lBinaryExpression, factorDuplicate, thenExpression, elseExpression, false);
+          return true;
         }
       }
+      return false;
+    }
+
+    /**
+     * True if the expression is passive, may not throw exception and is a primitive
+     * (because a wrapper may create a NullPointerException).
+     *
+     * @param disturbingExpression The expression
+     * @return true if the expression is passive, may not throw exception and is a primitive
+     */
+    private static boolean isPassiveWithoutBreak(@NotNull PsiExpression disturbingExpression) {
+      return TypeConversionUtil.isPrimitiveAndNotNull(disturbingExpression.getType())
+             && !SideEffectChecker.mayHaveSideEffects(disturbingExpression);
     }
 
     private void warnOrFix(@NotNull PsiBinaryExpression visitedElement,
@@ -114,8 +149,8 @@ public class ExpressionMayBeFactorizedInspection extends BaseInspection {
       if (expressionMayBeFactorizedFix == null) {
         registerError(visitedElement);
       } else {
-        ExpressionMayBeFactorizedFix.effectivelyDoFix(visitedElement, lBinaryExpression, duplicateExpression, thenExpression, elseExpression,
-                                                      isFactorizedExpressionFirst);
+        ExpressionMayBeFactorizedFix.effectivelyDoFix(visitedElement, lBinaryExpression, duplicateExpression, thenExpression,
+                                                      elseExpression, isFactorizedExpressionFirst);
       }
     }
   }

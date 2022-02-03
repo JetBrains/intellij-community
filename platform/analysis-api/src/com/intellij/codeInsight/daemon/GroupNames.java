@@ -53,9 +53,7 @@ public interface GroupNames {
   /** @deprecated use groupKey="group.names.code.style.issues" instead */
   @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   String STYLE_GROUP_NAME = "Code style issues";
-  /** @deprecated use groupKey="group.names.j2me.issues" instead */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  String J2ME_GROUP_NAME = "Embedded";
+
   /** @deprecated use groupKey="group.names.declaration.redundancy" instead */
   @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   String DECLARATION_REDUNDANCY = "Declaration redundancy";

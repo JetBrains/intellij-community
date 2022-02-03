@@ -36,7 +36,7 @@ task setupCidr
   lldb: [
     platforms: [
       win: [
-        version: "b1eef8043e0d1cbc5dc25f4f32bf0bf21b64f99e",
+        version: "0bbc22564d53aaded763298f49e01d6ad564f449",
         archs: ["x64", "x86"]
       ],
       linux: [
@@ -51,7 +51,7 @@ task setupCidr
     path: "CIDR/cidr-debugger/bin/lldb"
   ],
   lldbfrontend: [
-    version: "beb610145de1e0187f5887c47357c70c54af6242",
+    version: "9a2042e226b54cca37f2c41f06d629e52c67a74e",
     platforms: [
       win: [archs: ["x64", "x86"]],
       linux: [archs: ["x64"]],
@@ -60,7 +60,7 @@ task setupCidr
     path: "CIDR/cidr-debugger/bin/lldb"
   ],
   bridge: [
-    version: "51b0c22",
+    version: "ed6c9b1",
     platforms: [
       mac: [archs: ["x64"]]
     ],
@@ -68,7 +68,7 @@ task setupCidr
     no_platform_subdir: true
   ],
   jbdevice: [
-    version: "78c68ee",
+    version: "b19d276",
     platforms: [
       "mac": [archs: ["x64"]]
     ],
@@ -76,7 +76,7 @@ task setupCidr
     no_platform_subdir: true
   ],
   objchelper: [
-    version: "e9b1fe3",
+    version: "f0d856",
     platforms: [
       "mac": [archs: ["x64"]],
       "linux": [archs: ["x64"]]

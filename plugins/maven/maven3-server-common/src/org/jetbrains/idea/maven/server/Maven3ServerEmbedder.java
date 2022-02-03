@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -20,9 +6,6 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.VersionComparatorUtil;
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.DefaultMaven;
 import org.apache.maven.Maven;
@@ -76,6 +59,8 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -99,37 +84,36 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
 
   protected Maven3ServerEmbedder(MavenServerSettings settings) {
     myServerSettings = settings;
-    initLog4J(myServerSettings);
+    initLogging(myServerSettings);
   }
 
-  private static void initLog4J(MavenServerSettings settings) {
+  private static void initLogging(MavenServerSettings settings) {
     try {
-      BasicConfigurator.configure();
-      final Level rootLoggerLevel = toLog4JLevel(settings.getLoggingLevel());
-      Logger.getRootLogger().setLevel(rootLoggerLevel);
-      if (!rootLoggerLevel.isGreaterOrEqual(Level.ERROR)) {
-        Logger.getLogger("org.apache.maven.wagon.providers.http.httpclient.wire").setLevel(Level.ERROR);
-        Logger.getLogger("org.apache.http.wire").setLevel(Level.ERROR);
+      final Level rootLoggerLevel = toJavaUtilLoggingLevel(settings.getLoggingLevel());
+      Logger.getLogger("").setLevel(rootLoggerLevel);
+      if (rootLoggerLevel.intValue() < Level.SEVERE.intValue()) {
+        Logger.getLogger("org.apache.maven.wagon.providers.http.httpclient.wire").setLevel(Level.SEVERE);
+        Logger.getLogger("org.apache.http.wire").setLevel(Level.SEVERE);
       }
     }
     catch (Throwable ignore) {
     }
   }
 
-  private static Level toLog4JLevel(int level) {
+  private static Level toJavaUtilLoggingLevel(int level) {
     switch (level) {
       case MavenServerConsole.LEVEL_DEBUG:
         return Level.ALL;
       case MavenServerConsole.LEVEL_ERROR:
-        return Level.ERROR;
+        return Level.SEVERE;
       case MavenServerConsole.LEVEL_FATAL:
-        return Level.FATAL;
+        return Level.SEVERE;
       case MavenServerConsole.LEVEL_DISABLED:
         return Level.OFF;
       case MavenServerConsole.LEVEL_INFO:
         return Level.INFO;
       case MavenServerConsole.LEVEL_WARN:
-        return Level.WARN;
+        return Level.WARNING;
     }
     return Level.INFO;
   }

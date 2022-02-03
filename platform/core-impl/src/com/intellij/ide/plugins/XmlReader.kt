@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("XmlReader")
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplacePutWithAssignment", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
@@ -11,7 +11,6 @@ import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.createNonCoalescingXmlStreamReader
-import com.intellij.platform.util.plugins.DataLoader
 import com.intellij.util.NoOpXmlInterner
 import com.intellij.util.XmlInterner
 import com.intellij.util.lang.ZipFilePool
@@ -67,11 +66,11 @@ fun readModuleDescriptor(input: ByteArray,
 }
 
 internal fun readModuleDescriptor(reader: XMLStreamReader2,
-                                 readContext: ReadModuleContext,
-                                 pathResolver: PathResolver,
-                                 dataLoader: DataLoader,
-                                 includeBase: String?,
-                                 readInto: RawPluginDescriptor?): RawPluginDescriptor {
+                                  readContext: ReadModuleContext,
+                                  pathResolver: PathResolver,
+                                  dataLoader: DataLoader,
+                                  includeBase: String?,
+                                  readInto: RawPluginDescriptor?): RawPluginDescriptor {
   try {
     if (reader.eventType != XMLStreamConstants.START_DOCUMENT) {
       throw XMLStreamException("State ${XMLStreamConstants.START_DOCUMENT} is expected, " +
@@ -353,6 +352,8 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
     var qualifiedExtensionPointName: String? = null
     var order = LoadingOrder.ANY
     var orderId: String? = null
+
+    var hasExtraAttributes = false
     for (i in 0 until reader.attributeCount) {
       when (reader.getAttributeLocalName(i)) {
         "implementation" -> implementation = reader.getAttributeValue(i)
@@ -364,6 +365,7 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
         "id" -> orderId = getNullifiedAttributeValue(reader, i)
         "order" -> order = readOrder(reader.getAttributeValue(i))
         "point" -> qualifiedExtensionPointName = getNullifiedAttributeValue(reader, i)
+        else -> hasExtraAttributes = true
       }
     }
 
@@ -395,7 +397,7 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
           descriptor.epNameToExtensions = map
         }
 
-        val extensionDescriptor = ExtensionDescriptor(implementation, os, orderId, order, element)
+        val extensionDescriptor = ExtensionDescriptor(implementation, os, orderId, order, element, hasExtraAttributes)
 
         val list = map.get(qualifiedExtensionPointName)
         if (list == null) {
@@ -439,6 +441,7 @@ private fun checkXInclude(elementName: String, reader: XMLStreamReader2): Boolea
   return false
 }
 
+@Suppress("DuplicatedCode")
 private fun readExtensionPoints(reader: XMLStreamReader2,
                                 descriptor: RawPluginDescriptor,
                                 readContext: ReadModuleContext,
@@ -537,6 +540,7 @@ private inline fun applyPartialContainer(from: RawPluginDescriptor,
   }
 }
 
+@Suppress("DuplicatedCode")
 private fun readServiceDescriptor(reader: XMLStreamReader2, os: ExtensionDescriptor.Os?): ServiceDescriptor {
   var serviceInterface: String? = null
   var serviceImplementation: String? = null

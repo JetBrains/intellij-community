@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model;
 
 import com.intellij.openapi.application.Application;
@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -72,33 +71,5 @@ public interface Pointer<T> {
                                                     @NotNull Object key,
                                                     @NotNull BiFunction<? super U, ? super Pointer<T>, ? extends T> restoration) {
     return new DelegatingPointer.ByValueAndPointer<>(underlyingPointer, key, restoration);
-  }
-}
-
-final class HardPointer<T> implements Pointer<T> {
-
-  private final T myValue;
-
-  HardPointer(@NotNull T value) {
-    myValue = value;
-  }
-
-  @NotNull
-  @Override
-  public T dereference() {
-    return myValue;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    HardPointer<?> pointer = (HardPointer<?>)o;
-    return Objects.equals(myValue, pointer.myValue);
-  }
-
-  @Override
-  public int hashCode() {
-    return myValue.hashCode();
   }
 }

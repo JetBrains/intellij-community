@@ -262,6 +262,41 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON27, this::doTest);
   }
 
+  // PY-33843
+  public void testIteratorVariableInComprehension() {
+    doTestCannotPerform();
+  }
+
+  // PY-33843
+  public void testIteratorDependentExpressionInComprehensionIfComponent() {
+    doTestCannotPerform();
+  }
+
+  // PY-33843
+  public void testIteratorDependentExpressionInComprehensionResult() {
+    doTestCannotPerform();
+  }
+
+  // PY-33843
+  public void testIteratorFreeExpressionInComprehensionIfComponent() {
+    doTest();
+  }
+
+  // PY-33843
+  public void testIteratorFreeExpressionInComprehensionResult() {
+    doTest();
+  }
+
+  // PY-33843
+  public void testExpressionInComprehensionIteratedList() {
+    doTest();
+  }
+
+  // PY-33843
+  public void testIteratorVariableDependentExpressionInComprehensionIteratedList() {
+    doTestCannotPerform();
+  }
+
   private void doTestCannotPerform() {
     boolean thrownExpectedException = false;
     try {

@@ -7,15 +7,13 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar
 import com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.DslConfigurableBase
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.SearchTextField
+import com.intellij.ui.*
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
@@ -32,7 +30,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.event.DocumentEvent
 
-class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurable {
+class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurable, Configurable.NoScroll {
 
   private class SettingsGroup(val groupRow: Row,
                               val title: String,
@@ -66,7 +64,8 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
   }
 
   override fun createPanel(): DialogPanel {
-    return panel {
+    val extensionsSettings = createExtensionsSettings()
+    val result = panel {
       row {
         cell(searchField)
           .horizontalAlign(HorizontalAlign.FILL)
@@ -78,10 +77,33 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
           }
       }.layout(RowLayout.INDEPENDENT)
 
-      val groupedExtensions = AdvancedSettingBean.EP_NAME.extensions.groupBy {
-        it.group() ?: ApplicationBundle.message("group.advanced.settings.other")
-      }.toSortedMap()
+      nothingFoundRow = row {
+        label(ApplicationBundle.message("search.advanced.settings.nothing.found"))
+          .horizontalAlign(HorizontalAlign.CENTER)
+          .verticalAlign(VerticalAlign.CENTER)
+          .applyToComponent {
+            foreground = UIUtil.getInactiveTextColor()
+          }
+      }.visible(false)
 
+      row {
+        val scrollable = ScrollPaneFactory.createScrollPane(extensionsSettings, true)
+        scrollable.preferredSize = Dimension(JBUI.scale(300), JBUI.scale(200))
+        cell(scrollable)
+          .horizontalAlign(HorizontalAlign.FILL)
+          .verticalAlign(VerticalAlign.FILL)
+      }.resizableRow()
+    }
+    result.registerSubPanel(extensionsSettings)
+    return result
+  }
+
+  private fun createExtensionsSettings(): DialogPanel {
+    val groupedExtensions = AdvancedSettingBean.EP_NAME.extensions.groupBy {
+      it.group() ?: ApplicationBundle.message("group.advanced.settings.other")
+    }.toSortedMap()
+
+    return panel {
       for ((group, extensions) in groupedExtensions) {
         val settingsRows = mutableListOf<SettingsRow>()
         val groupRow = group(title = group) {
@@ -129,15 +151,6 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
 
         settingsGroups.add(SettingsGroup(groupRow, group, settingsRows))
       }
-
-      nothingFoundRow = row {
-        label(ApplicationBundle.message("search.advanced.settings.nothing.found"))
-          .horizontalAlign(HorizontalAlign.CENTER)
-          .verticalAlign(VerticalAlign.CENTER)
-          .applyToComponent {
-            foreground = UIUtil.getInactiveTextColor()
-          }
-      }.visible(false)
     }
   }
 
@@ -263,9 +276,9 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
 
   companion object {
     fun updateMatchText(component: JComponent, @NlsSafe baseText: String, @NlsSafe searchText: String?) {
+      val textColor = JBColor(Gray._50, Gray._0) // Same color as in SimpleColoredComponent.doPaintText
       val text = searchText?.takeIf { it.isNotBlank() }?.let {
-        @NlsSafe val highlightedText = SearchUtil.markup(baseText, it, UIUtil.getLabelFontColor(UIUtil.FontColor.NORMAL),
-          UIUtil.getSearchMatchGradientStartColor())
+        @NlsSafe val highlightedText = SearchUtil.markup(baseText, it, textColor, UIUtil.getSearchMatchGradientStartColor())
         "<html>$highlightedText"
       } ?: baseText
       when (component) {
@@ -277,6 +290,8 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
   override fun getDisplayName(): String = ApplicationBundle.message("title.advanced.settings")
 
   override fun getId(): String = "advanced.settings"
+
+  override fun getHelpTopic(): String = "Advanced_settings"
 
   override fun enableSearch(option: String?): Runnable {
     return Runnable { applyFilter(option, false) }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.imports
 
@@ -14,12 +14,12 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.ScriptModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.idea.util.getResolutionScope
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -95,19 +95,19 @@ class KotlinImportOptimizer : ImportOptimizer {
     private data class OptimizeInformation(val add: Int, val remove: Int, val imports: List<ImportPath>)
 
     private class CollectUsedDescriptorsVisitor(file: KtFile, val progressIndicator: ProgressIndicator? = null) : KtVisitorVoid() {
-        private val elementsSize: Int = if (progressIndicator != null) {
-            var size = 0
-            file.accept(object : KtVisitorVoid() {
-                override fun visitElement(element: PsiElement) {
-                    size += 1
-                    element.acceptChildren(this)
-                }
-            })
-
-            size
-        } else {
-            0
-        }
+        //private val elementsSize: Int = if (progressIndicator != null) {
+        //    var size = 0
+        //    file.accept(object : KtVisitorVoid() {
+        //        override fun visitElement(element: PsiElement) {
+        //            size += 1
+        //            element.acceptChildren(this)
+        //        }
+        //    })
+        //
+        //    size
+        //} else {
+        //    0
+        //}
 
         private var elementProgress: Int = 0
         private val currentPackageName = file.packageFqName
@@ -133,11 +133,11 @@ class KotlinImportOptimizer : ImportOptimizer {
         override fun visitElement(element: PsiElement) {
             ProgressIndicatorProvider.checkCanceled()
             elementProgress += 1
-            progressIndicator?.apply {
-                if (elementsSize != 0) {
-                    fraction = elementProgress / elementsSize.toDouble()
-                }
-            }
+            //progressIndicator?.apply {
+            //    if (elementsSize != 0) {
+            //        fraction = elementProgress / elementsSize.toDouble()
+            //    }
+            //}
 
             element.acceptChildren(this)
         }
@@ -153,7 +153,7 @@ class KotlinImportOptimizer : ImportOptimizer {
             if (element is KtLabelReferenceExpression) return
 
             val references = element.references.ifEmpty { return }
-            val bindingContext = element.analyze(BodyResolveMode.PARTIAL)
+            val bindingContext = element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
             val isResolved = hasResolvedDescriptor(element, bindingContext)
 
             for (reference in references) {

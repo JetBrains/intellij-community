@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
@@ -171,8 +171,8 @@ class TestDirectory extends TestPackage {
 
   @NotNull
   @Override
-  protected PsiPackage getPackage(JUnitConfiguration.Data data) throws CantRunException {
-    final PsiDirectory directory = getDirectory(data);
+  protected PsiPackage getPackage() throws CantRunException {
+    final PsiDirectory directory = getDirectory(getConfiguration().getPersistentData());
     PsiPackage aPackage = ReadAction.compute(() -> JavaDirectoryService.getInstance().getPackageInSources(directory));
     if (aPackage == null) throw CantRunException.packageNotFound(directory.getName());
     return aPackage;
@@ -180,7 +180,7 @@ class TestDirectory extends TestPackage {
 
   @Override
   protected @NotNull String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
-    return getPackage(data).getQualifiedName();
+    return getPackage().getQualifiedName();
   }
 
   private PsiDirectory getDirectory(JUnitConfiguration.Data data) throws CantRunException {

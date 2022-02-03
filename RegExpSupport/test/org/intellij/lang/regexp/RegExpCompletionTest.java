@@ -31,14 +31,24 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
                                                  "SMILING CAT FACE WITH HEART-SHAPED EYES", "SMILING FACE WITH OPEN MOUTH AND SMILING EYES",
                                                  "SMILING FACE WITH OPEN MOUTH AND TIGHTLY-CLOSED EYES", "CAT FACE WITH WRY SMILE",
                                                  "GRINNING CAT FACE WITH SMILING EYES", "GRINNING FACE WITH SMILING EYES",
-                                                 "KISSING FACE WITH SMILING EYES");
+                                                 "KISSING FACE WITH SMILING EYES",
+                                                 // Unicode 10.0
+                                                 "SMILING FACE WITH SMILING EYES AND HAND COVERING MOUTH",
+                                                 "SIGNWRITING MOUTH SMILE", "SIGNWRITING MOUTH SMILE OPEN",
+                                                 "SIGNWRITING MOUTH SMILE WRINKLED");
       String message = strings.toString();
       assertTrue(message, strings.containsAll(alwaysPresent));
       List<String> other = new ArrayList<>(strings);
       other.removeAll(alwaysPresent);
-      // Unicode 10.0
-      List<String> maybePresent = Arrays.asList("SMILING FACE WITH SMILING EYES AND HAND COVERING MOUTH", "SIGNWRITING MOUTH SMILE",
-                                                "SIGNWRITING MOUTH SMILE OPEN", "SIGNWRITING MOUTH SMILE WRINKLED");
+      List<String> maybePresent = Arrays.asList(
+        // Unicode 11.0
+        "SMILING FACE WITH SMILING EYES AND THREE HEARTS",
+        // Unicode 13.0
+        "CHORASMIAN LETTER ALEPH", "CHORASMIAN LETTER AYIN", "CHORASMIAN LETTER BETH", "CHORASMIAN LETTER CURLED WAW",
+        "CHORASMIAN LETTER DALETH", "CHORASMIAN LETTER GIMEL", "CHORASMIAN LETTER HE", "CHORASMIAN LETTER HETH", "CHORASMIAN LETTER KAPH",
+        "CHORASMIAN LETTER LAMEDH", "CHORASMIAN LETTER MEM", "CHORASMIAN LETTER NUN", "CHORASMIAN LETTER PE", "CHORASMIAN LETTER RESH",
+        "CHORASMIAN LETTER SAMEKH", "CHORASMIAN LETTER SHIN", "CHORASMIAN LETTER SMALL ALEPH", "CHORASMIAN LETTER TAW",
+        "CHORASMIAN LETTER WAW", "CHORASMIAN LETTER YODH", "CHORASMIAN LETTER ZAYIN");
       assertTrue(message, maybePresent.containsAll(other));
     }
 

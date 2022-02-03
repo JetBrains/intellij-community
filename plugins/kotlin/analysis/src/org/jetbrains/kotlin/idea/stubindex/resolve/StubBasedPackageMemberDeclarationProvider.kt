@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.stubindex.resolve
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.util.application.runReadAction
@@ -27,10 +26,16 @@ class StubBasedPackageMemberDeclarationProvider(
 ) : PackageMemberDeclarationProvider {
 
     override fun getDeclarations(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean): List<KtDeclaration> {
+        val fqNameAsString = fqName.asString()
         val result = ArrayList<KtDeclaration>()
 
-        fun addFromIndex(index: StringStubIndexExtension<out KtNamedDeclaration>) {
-            index.get(fqName.asString(), project, searchScope).filterTo(result) { nameFilter(it.nameAsSafeName) }
+        fun addFromIndex(index: AbstractStringStubIndexExtension<out KtNamedDeclaration>) {
+            index.processElements(fqNameAsString, project, searchScope) {
+                if (nameFilter(it.nameAsSafeName)) {
+                    result.add(it)
+                }
+                true
+            }
         }
 
         if (kindFilter.acceptsKinds(DescriptorKindFilter.CLASSIFIERS_MASK)) {

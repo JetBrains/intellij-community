@@ -217,6 +217,7 @@
       "space_within_empty_method_call_parentheses": false,
       "space_within_empty_method_parentheses": false,
       "spaces_around_additive_operators": true,
+      "spaces_around_annotation_eq": true,
       "spaces_around_assignment_operators": true,
       "spaces_around_bitwise_operators": true,
       "spaces_around_equality_operators": true,

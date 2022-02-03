@@ -9,6 +9,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -24,6 +25,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.actions.ToggleCaseAction
+import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -37,8 +39,8 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.openapi.wm.impl.IdeFrameImpl
-import com.intellij.openapi.wm.impl.StripeButton
 import com.intellij.openapi.wm.impl.status.TextPanel
+import com.intellij.toolWindow.StripeButton
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.fields.ExtendableTextField
@@ -78,7 +80,6 @@ import training.learn.lesson.general.run.toggleBreakpointTask
 import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
-import training.ui.showOnboardingFeedbackNotification
 import training.util.*
 import java.awt.Point
 import java.awt.Rectangle
@@ -128,7 +129,7 @@ class PythonOnboardingTour :
       useDelay = true
       configurations().forEach { runManager().removeConfiguration(it) }
 
-      val root = ProjectUtils.getProjectRoot(project)
+      val root = ProjectUtils.getCurrentLearningProjectRoot()
       if (root.findChild(demoFileName) == null) invokeLater {
         runWriteAction {
           root.createChildData(this, demoFileName)
@@ -181,7 +182,7 @@ class PythonOnboardingTour :
     uiSettings.fireUISettingsChanged()
 
     if (!lessonEndInfo.lessonPassed) {
-      showFeedbackNotification(project)
+      LessonUtil.showFeedbackNotification(this, project)
       return
     }
     val dataContextPromise = DataManager.getInstance().dataContextFromFocusAsync
@@ -210,27 +211,17 @@ class PythonOnboardingTour :
         }
       }
       if (result != Messages.YES) {
-        showFeedbackNotification(project)
-      }
-    }
-  }
-
-  private fun showFeedbackNotification(project: Project) {
-    invokeLater {
-      if (project.isDisposed) {
-        return@invokeLater
-      }
-      module.primaryLanguage?.let { langSupport ->
-        // exit link will show notification directly and reset this field to null
-        langSupport.onboardingFeedbackData?.let {
-          showOnboardingFeedbackNotification(project, it)
-        }
-        langSupport.onboardingFeedbackData = null
+        LessonUtil.showFeedbackNotification(this, project)
       }
     }
   }
 
   private fun prepareFeedbackData(project: Project, lessonEndInfo: LessonEndInfo) {
+    val configPropertyName = "ift.pycharm.onboarding.feedback.proposed"
+    if (PropertiesComponent.getInstance().getBoolean(configPropertyName, false)) {
+      return
+    }
+
     val primaryLanguage = module.primaryLanguage
     if (primaryLanguage == null) {
       thisLogger().error("Onboarding lesson has no language support for some magical reason")
@@ -251,6 +242,8 @@ class PythonOnboardingTour :
 
     primaryLanguage.onboardingFeedbackData = object : OnboardingFeedbackData("PyCharm Onboarding Tour Feedback", lessonEndInfo) {
       override val feedbackReportId = "pycharm_onboarding_tour"
+
+      override val additionalFeedbackFormatVersion: Int = 0
 
       val interpreters: List<String>? by lazy {
         if (interpreterVersions.isDone) interpreterVersions.get() else null
@@ -278,6 +271,10 @@ class PythonOnboardingTour :
       override val possibleTechnicalIssues: Map<String, @Nls String> = mapOf(
         "interpreter_issues" to PythonLessonsBundle.message("python.onboarding.option.interpreter.issues")
       )
+
+      override fun feedbackHasBeenProposed() {
+        PropertiesComponent.getInstance().setValue(configPropertyName, true, false)
+      }
     }
   }
 
@@ -370,6 +367,12 @@ class PythonOnboardingTour :
   }
 
   private fun LessonContext.runTasks() {
+    task {
+      triggerByUiComponentAndHighlight(highlightInside = false) { ui: EditorComponentImpl ->
+        ui.text.contains("find_average")
+      }
+    }
+
     val runItem = ExecutionBundle.message("default.runner.start.action.text").dropMnemonic() + " '$demoConfigurationName'"
 
     task {
@@ -382,7 +385,7 @@ class PythonOnboardingTour :
     task {
       text(PythonLessonsBundle.message("python.onboarding.run.sample", strong(runItem), action("RunClass")))
       checkToolWindowState("Run", true)
-      stateCheck {
+      timerCheck {
         configurations().isNotEmpty()
       }
       restoreIfModified(sample)
@@ -693,7 +696,7 @@ class PythonOnboardingTour :
     }
 
     task {
-      triggerByUiComponentAndHighlight(usePulsation = true) { info: TextPanel.WithIconAndArrows ->
+      triggerByUiComponentAndHighlight(highlightInside = false) { info: TextPanel.WithIconAndArrows ->
         info.toolTipText.isToStringContains(PyBundle.message("current.interpreter", ""))
       }
     }
@@ -702,6 +705,8 @@ class PythonOnboardingTour :
         useDelay = false
       }
       text(PythonLessonsBundle.message("python.onboarding.interpreter.description"))
+      text(PythonLessonsBundle.message("python.onboarding.interpreter.tip"),
+           LearningBalloonConfig(Balloon.Position.above, width = 0))
 
       restoreState(restoreId = openLearnTaskId) {
         learningToolWindow(project)?.isVisible?.not() ?: true

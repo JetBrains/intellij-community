@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 class BaseLayoutSpec {
@@ -31,6 +31,7 @@ class BaseLayoutSpec {
   /**
    * @deprecated localizable resources are now put to the module JAR, so {@code localizableResourcesJars} parameter is ignored now
    */
+  @SuppressWarnings("unused")
   @Deprecated
   void withModule(String moduleName, String relativeJarPath, String localizableResourcesJar) {
     withModule(moduleName, relativeJarPath)
@@ -40,12 +41,12 @@ class BaseLayoutSpec {
    * Include the project library to 'lib' directory or its subdirectory of the plugin distribution
    * @relativeOutputPath path relative to 'lib' plugin directory
    */
-  void withProjectLibrary(String libraryName, String relativeOutputPath = "") {
-    layout.includedProjectLibraries.add(new ProjectLibraryData(libraryName, relativeOutputPath, ProjectLibraryData.PackMode.STANDALONE_MERGED))
+  void withProjectLibrary(String libraryName, String outPath = null) {
+    layout.includedProjectLibraries.add(new ProjectLibraryData(libraryName, outPath, ProjectLibraryData.PackMode.MERGED))
   }
 
   void withProjectLibrary(String libraryName, ProjectLibraryData.PackMode packMode) {
-    layout.includedProjectLibraries.add(new ProjectLibraryData(libraryName, "", packMode))
+    layout.includedProjectLibraries.add(new ProjectLibraryData(libraryName, null, packMode))
   }
 
   /**

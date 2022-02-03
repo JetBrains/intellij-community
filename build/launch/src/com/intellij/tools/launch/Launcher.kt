@@ -1,16 +1,16 @@
 package com.intellij.tools.launch
 
 import com.intellij.tools.launch.impl.ClassPathBuilder
-import org.apache.log4j.Logger
 import java.io.File
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.nio.file.Files
+import java.util.logging.Logger
 
 object Launcher {
 
   private const val defaultDebugPort = 5050
-  private val logger = Logger.getLogger(Launcher::class.java)
+  private val logger = Logger.getLogger(Launcher::class.java.name)
 
   fun launch(paths: PathsProvider,
              modules: ModulesProvider,

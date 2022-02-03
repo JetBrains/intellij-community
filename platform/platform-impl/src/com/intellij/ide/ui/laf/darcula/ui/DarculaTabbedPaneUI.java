@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
@@ -99,7 +99,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
     Object rStyle = UIManager.get("TabbedPane.tabFillStyle");
     tabStyle = rStyle != null ? TabStyle.valueOf(rStyle.toString()) : TabStyle.underline;
-    contentBorderInsets = tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT ? JBUI.insetsTop(1) : JBUI.emptyInsets();
+    contentBorderInsets = tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT ? JBUI.insetsTop(1) : JBInsets.emptyInsets();
     tabsOverlapBorder = UIManager.getBoolean("TabbedPane.tabsOverlapBorder");
   }
 
@@ -120,7 +120,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
         boolean fullBorder = tabPane.getClientProperty("JTabbedPane.hasFullBorder") == Boolean.TRUE;
         contentBorderInsets = (tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT) ?
                               fullBorder ? JBUI.insets(1) : JBUI.insetsTop(1) :
-                              fullBorder ? JBUI.insets(0, 1, 1, 1) : JBUI.emptyInsets();
+                              fullBorder ? JBUI.insets(0, 1, 1, 1) : JBInsets.emptyInsets();
         tabPane.revalidate();
         tabPane.repaint();
       }

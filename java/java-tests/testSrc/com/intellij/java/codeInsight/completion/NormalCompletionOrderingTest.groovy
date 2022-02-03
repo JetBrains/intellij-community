@@ -993,12 +993,21 @@ class Foo {
     assert elements.length == 4
     def weights = DumpLookupElementWeights.getLookupElementWeights(lookup, false)
     assert elements[0].as(JavaPsiClassReferenceElement).getQualifiedName() == "TestImport"
-    assert weights[0].contains("explicitlyImported=200,") // same package
+    assert weights[0].contains("explicitlyImported=CLASS_DECLARED_IN_SAME_PACKAGE_TOP_LEVEL,") // same package
     assert elements[1].as(JavaPsiClassReferenceElement).getQualifiedName() == "demo.TestImport"
-    assert weights[1].contains("explicitlyImported=80,") // on-demand import
+    assert weights[1].contains("explicitlyImported=CLASS_ON_DEMAND_TOP_LEVEL,") // on-demand import
     assert elements[2].as(JavaPsiClassReferenceElement).getQualifiedName() == "Cls2.TestImport"
-    assert weights[2].contains("explicitlyImported=60,") // same package, nested class imported
+    assert weights[2].contains("explicitlyImported=CLASS_ON_DEMAND_NESTED,") // same package, nested class imported
     assert elements[3].as(JavaPsiClassReferenceElement).getQualifiedName() == "Cls.TestImport"
-    assert weights[3].contains("explicitlyImported=50,") // same package but nested class not imported
+    assert weights[3].contains("explicitlyImported=CLASS_DECLARED_IN_SAME_PACKAGE_NESTED,") // same package but nested class not imported
+  }
+
+  @NeedsIndex.Full
+  void "test discourage experimental"() {
+    myFixture.addClass("package org.jetbrains.annotations;public class ApiStatus{public @interface Experimental {}}");
+    myFixture.addClass("class Cls {@org.jetbrains.annotations.ApiStatus.Experimental public void methodA() {} public void methodB() {}}")
+    myFixture.configureByText("a.java", "class Test {void t(Cls cls) {cls.me<caret>}}")
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ["methodB", "methodA"]
   }
 }

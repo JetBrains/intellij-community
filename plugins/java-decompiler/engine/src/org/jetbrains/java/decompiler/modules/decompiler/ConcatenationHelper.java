@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
+import org.jetbrains.java.decompiler.ClassNameConstants;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
@@ -17,7 +18,6 @@ public final class ConcatenationHelper {
 
   private static final String builderClass = "java/lang/StringBuilder";
   private static final String bufferClass = "java/lang/StringBuffer";
-  private static final String stringClass = "java/lang/String";
 
   private static final VarType builderType = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/StringBuilder");
   private static final VarType bufferType = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/StringBuffer");
@@ -32,10 +32,10 @@ public final class ConcatenationHelper {
     if (expr.type == Exprent.EXPRENT_INVOCATION) {
       InvocationExprent iex = (InvocationExprent)expr;
       if ("toString".equals(iex.getName())) {
-        if (builderClass.equals(iex.getClassname())) {
+        if (builderClass.equals(iex.getClassName())) {
           cltype = builderType;
         }
-        else if (bufferClass.equals(iex.getClassname())) {
+        else if (bufferClass.equals(iex.getClassName())) {
           cltype = bufferType;
         }
         if (cltype != null) {
@@ -66,7 +66,7 @@ public final class ConcatenationHelper {
         case Exprent.EXPRENT_INVOCATION:
           InvocationExprent iex = (InvocationExprent)exprTmp;
           if (isAppendConcat(iex, cltype)) {
-            lstOperands.add(0, iex.getLstParameters().get(0));
+            lstOperands.add(0, iex.getParameters().get(0));
             exprTmp = iex.getInstance();
             found = 1;
           }
@@ -76,7 +76,7 @@ public final class ConcatenationHelper {
           if (isNewConcat(nex, cltype)) {
             VarType[] params = nex.getConstructor().getDescriptor().params;
             if (params.length == 1) {
-              lstOperands.add(0, nex.getConstructor().getLstParameters().get(0));
+              lstOperands.add(0, nex.getConstructor().getParameters().get(0));
             }
             found = 2;
           }
@@ -140,7 +140,7 @@ public final class ConcatenationHelper {
   private static final char TAG_CONST = '\u0002';
 
   private static List<Exprent> extractParameters(List<PooledConstant> bootstrapArguments, InvocationExprent expr) {
-    List<Exprent> parameters = expr.getLstParameters();
+    List<Exprent> parameters = expr.getParameters();
     if (bootstrapArguments != null) {
       PooledConstant constant = bootstrapArguments.get(0);
       if (constant.type == CodeConstants.CONSTANT_String) {
@@ -256,7 +256,7 @@ public final class ConcatenationHelper {
 
     if (exprent.type == Exprent.EXPRENT_INVOCATION) {
       InvocationExprent iex = (InvocationExprent)exprent;
-      if ("valueOf".equals(iex.getName()) && stringClass.equals(iex.getClassname())) {
+      if ("valueOf".equals(iex.getName()) && ClassNameConstants.JAVA_LANG_STRING.equals(iex.getClassName())) {
         MethodDescriptor md = iex.getDescriptor();
         if (md.params.length == 1) {
           VarType param = md.params[0];
@@ -271,7 +271,7 @@ public final class ConcatenationHelper {
             case CodeConstants.TYPE_FLOAT:
             case CodeConstants.TYPE_INT:
             case CodeConstants.TYPE_LONG:
-              return iex.getLstParameters().get(0);
+              return iex.getParameters().get(0);
           }
         }
       }

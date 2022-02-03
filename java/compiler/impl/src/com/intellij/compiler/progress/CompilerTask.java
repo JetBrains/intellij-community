@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -30,6 +29,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.AppIcon;
 import com.intellij.util.ModalityUiUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,7 +74,7 @@ public final class CompilerTask extends Task.Backgroundable {
     myContentId = new IDObject("content_id");
     mySessionId = myContentId; // by default sessionID should be unique, just as content ID
 
-    if (Registry.is("ide.jps.use.build.tool.window", true)) {
+    if (SystemProperties.getBooleanProperty("ide.jps.use.build.tool.window", true)) {
       myBuildViewService = new BuildOutputService(project, contentName);
     } else {
       myBuildViewService = new CompilerMessagesService(project, myContentId, contentName, headlessMode);

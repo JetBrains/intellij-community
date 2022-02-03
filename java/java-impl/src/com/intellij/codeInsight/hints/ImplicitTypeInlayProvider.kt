@@ -46,8 +46,17 @@ class ImplicitTypeInlayProvider : InlayHintsProvider<NoSettings> {
     get() = InlayGroup.TYPES_GROUP
   override val key: SettingsKey<NoSettings>
     get() = SettingsKey("java.implicit.types")
-  override val previewText: String?
-    get() = null
+  override val previewText: String
+    get() = "class HintsDemo {\n" +
+            "\n" +
+            "    public static void main(String[] args) {\n" +
+            "        var list = getList(); // List<String> is inferred\n" +
+            "    }\n" +
+            "\n" +
+            "    private static List<String> getList() {\n" +
+            "        return Arrays.asList(\"hello\", \"world\");\n" +
+            "    }\n" +
+            "}"
 
   override fun createConfigurable(settings: NoSettings): ImmediateConfigurable {
     return object : ImmediateConfigurable {
@@ -56,4 +65,7 @@ class ImplicitTypeInlayProvider : InlayHintsProvider<NoSettings> {
       }
     }
   }
+
+  override val description: String
+    get() = JavaBundle.message("settings.inlay.java.implicit.types.description")
 }

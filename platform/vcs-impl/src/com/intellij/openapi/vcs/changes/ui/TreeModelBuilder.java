@@ -17,7 +17,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +27,6 @@ import java.util.*;
 import java.util.function.Function;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.createLockedFolders;
-import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
-import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.NONE_GROUPING;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.sorted;
 import static com.intellij.util.containers.ContainerUtil.toList;
@@ -77,15 +74,6 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
    */
   public final static Comparator<FilePath> PATH_COMPARATOR = comparingInt(path -> path.getPath().length());
   public final static Comparator<Change> CHANGE_COMPARATOR = comparing(ChangesUtil::getFilePath, PATH_COMPARATOR);
-
-  /**
-   * @deprecated Use {@link #TreeModelBuilder(Project, ChangesGroupingPolicyFactory)}.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public TreeModelBuilder(@NotNull Project project, boolean showFlatten) {
-    this(project, ChangesGroupingSupport.getFactory(showFlatten ? NONE_GROUPING : DIRECTORY_GROUPING));
-  }
 
   /**
    * Requires non-null Project for local changes.
@@ -269,16 +257,6 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   @NotNull
   public ChangesBrowserNode<?> createTagNode(@NotNull @Nls String tag) {
     return createTagNode(new ChangesBrowserNode.TagImpl(tag));
-  }
-
-  /**
-   * @deprecated Use {@link #createTagNode(ChangesBrowserNode.Tag)} instead.
-   */
-  @NotNull
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  public ChangesBrowserNode<?> createTagNode(@Nullable Object tag) {
-    return createTagNode(ChangesBrowserNode.WrapperTag.wrap(tag));
   }
 
   @NotNull
@@ -574,15 +552,5 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
   public boolean isEmpty() {
     return myModel.getChildCount(myRoot) == 0;
-  }
-
-  /**
-   * @deprecated Use {@link #setChanges(Collection, ChangeNodeDecorator)} directly.
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public DefaultTreeModel buildModel(@NotNull List<? extends Change> changes, @Nullable ChangeNodeDecorator changeNodeDecorator) {
-    return setChanges(changes, changeNodeDecorator).build();
   }
 }

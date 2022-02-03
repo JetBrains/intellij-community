@@ -86,7 +86,6 @@ enum class BottomGap {
   MEDIUM
 }
 
-@ApiStatus.Experimental
 @LayoutDslMarker
 interface Row {
 
@@ -106,8 +105,13 @@ interface Row {
    */
   fun resizableRow(): Row
 
+  @Deprecated("Use overloaded rowComment(...) instead", level = DeprecationLevel.HIDDEN)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  fun rowComment(@NlsContexts.DetailedDescription comment: String,
+                 maxLineLength: Int = DEFAULT_COMMENT_WIDTH): Row
+
   /**
-   * Adds comment after the row with appropriate color and font size (macOS uses smaller font).
+   * Adds comment after the row with appropriate color and font size (macOS and Linux use smaller font).
    * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically.
    * \n does not work as new line in html, use &lt;br&gt; instead.
    * Links with href to http/https are automatically marked with additional arrow icon.
@@ -186,6 +190,10 @@ interface Row {
 
   fun checkBox(@NlsContexts.Checkbox text: String): Cell<JBCheckBox>
 
+  @Deprecated("Use overloaded radioButton(...) instead", level = DeprecationLevel.HIDDEN)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  fun radioButton(@NlsContexts.RadioButton text: String): Cell<JBRadioButton>
+
   /**
    * Adds radio button. [Panel.buttonsGroup] must be defined above hierarchy before adding radio buttons.
    * If there is a binding [ButtonsGroup.bind] for the buttons group then [value] must be provided with correspondent to binding type,
@@ -206,7 +214,14 @@ interface Row {
                     @NonNls actionPlace: String = ActionPlaces.UNKNOWN,
                     icon: Icon = AllIcons.General.GearPlain): Cell<ActionButton>
 
+  @Deprecated("Use overloaded method")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): Cell<SegmentedButtonToolbar>
+
+  /**
+   * @see [SegmentedButton]
+   */
+  fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> String): SegmentedButton<T>
 
   fun slider(min: Int, max: Int, minorTickSpacing: Int, majorTickSpacing: Int): Cell<JSlider>
 
@@ -215,6 +230,11 @@ interface Row {
    * because they set correct gap between label and component and set [JLabel.labelFor] property
    */
   fun label(@NlsContexts.Label text: String): Cell<JLabel>
+
+  @Deprecated("Use text(...) instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  fun labelHtml(@NlsContexts.Label text: String,
+                action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
   /**
    * Adds text. [text] can contain HTML tags except &lt;html&gt;, which is added automatically.
@@ -229,8 +249,12 @@ interface Row {
   fun text(@NlsContexts.Label text: String, maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP,
            action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
+  @Deprecated("Use overloaded comment(...) instead", level = DeprecationLevel.HIDDEN)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  fun comment(@NlsContexts.DetailedDescription text: String, maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP): Cell<JLabel>
+
   /**
-   * Adds comment with appropriate color and font size (macOS uses smaller font).
+   * Adds comment with appropriate color and font size (macOS and Linux use smaller font).
    * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically.
    * \n does not work as new line in html, use &lt;br&gt; instead.
    * Links with href to http/https are automatically marked with additional arrow icon.
@@ -241,6 +265,10 @@ interface Row {
    */
   fun comment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP,
               action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
+
+  @Deprecated("Use comment(...) instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  fun commentNoWrap(@NlsContexts.DetailedDescription text: String): Cell<JLabel>
 
   @Deprecated("Use comment(...) instead")
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
@@ -315,9 +343,13 @@ interface Row {
    */
   fun textArea(): Cell<JBTextArea>
 
-  fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<T?>? = null): Cell<ComboBox<T>>
+  fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<in T?>? = null): Cell<ComboBox<T>>
 
-  fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<T?>? = null): Cell<ComboBox<T>>
+  fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<in T?>? = null): Cell<ComboBox<T>>
+
+  @Deprecated("Use overloaded comboBox(...) with Collection")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  fun <T> comboBox(items: Array<T>, renderer: ListCellRenderer<T?>? = null): Cell<ComboBox<T>>
 
   /**
    * Overrides all gaps around row by [customRowGaps]. Should be used for very specific cases

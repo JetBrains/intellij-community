@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.util
 
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -17,9 +18,20 @@ fun KtModifierListOwner.addAnnotation(
     whiteSpaceText: String = "\n",
     addToExistingAnnotation: ((KtAnnotationEntry) -> Boolean)? = null
 ): Boolean {
+    return addAnnotation(annotationFqName, annotationInnerText, null, whiteSpaceText, addToExistingAnnotation)
+}
+
+fun KtModifierListOwner.addAnnotation(
+    annotationFqName: FqName,
+    annotationInnerText: String? = null,
+    useSiteTarget: AnnotationUseSiteTarget?,
+    whiteSpaceText: String = "\n",
+    addToExistingAnnotation: ((KtAnnotationEntry) -> Boolean)? = null
+): Boolean {
+    val useSiteTargetPrefix = useSiteTarget?.let { "${it.renderName}:" } ?: ""
     val annotationText = when (annotationInnerText) {
-        null -> "@${annotationFqName.render()}"
-        else -> "@${annotationFqName.render()}($annotationInnerText)"
+        null -> "@${useSiteTargetPrefix}${annotationFqName.render()}"
+        else -> "@${useSiteTargetPrefix}${annotationFqName.render()}($annotationInnerText)"
     }
 
     val psiFactory = KtPsiFactory(this)

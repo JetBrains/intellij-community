@@ -9,10 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NamedRunnable;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -43,6 +40,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   @NotNull protected final VcsLogColorManager myColorManager;
   @NotNull protected final VcsLogImpl myLog;
   @NotNull protected final VisiblePackRefresher myRefresher;
+  @NotNull private final CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
 
   @NotNull protected final Collection<VcsLogListener> myLogListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   @NotNull protected final VisiblePackChangeListener myVisiblePackChangeListener;
@@ -60,10 +58,11 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
     myColorManager = manager;
 
     Disposer.register(this, myRefresher);
+    Disposer.register(this, myDisposableFlag);
 
     myLog = new VcsLogImpl(logData, this);
     myVisiblePackChangeListener = visiblePack -> UIUtil.invokeLaterIfNeeded(() -> {
-      if (!Disposer.isDisposed(this)) {
+      if (!myDisposableFlag.isDisposed()) {
         setVisiblePack(visiblePack);
       }
     });
@@ -164,7 +163,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
     else if (model.canRequestMore()) {
       model.requestToLoadMore(() -> tryJumpTo(commitId, rowGetter, future, focus));
     }
-    else if (!myVisiblePack.isFull()) {
+    else if (!myVisiblePack.isFull() || myLogData.getDataPack() != myVisiblePack.getDataPack()) {
       invokeOnChange(() -> tryJumpTo(commitId, rowGetter, future, focus));
     }
     else if (result == COMMIT_DOES_NOT_MATCH) {

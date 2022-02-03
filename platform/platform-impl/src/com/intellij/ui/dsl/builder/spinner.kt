@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.ui.JBIntSpinner
+import com.intellij.ui.dsl.builder.impl.toBindingInternal
 import com.intellij.ui.layout.*
 import javax.swing.JSpinner
 import kotlin.reflect.KMutableProperty0
@@ -11,7 +12,7 @@ fun <T : JBIntSpinner> Cell<T>.bindIntValue(binding: PropertyBinding<Int>): Cell
 }
 
 fun <T : JBIntSpinner> Cell<T>.bindIntValue(prop: KMutableProperty0<Int>): Cell<T> {
-  return bindIntValue(prop.toBinding())
+  return bindIntValue(prop.toBindingInternal())
 }
 
 fun <T : JBIntSpinner> Cell<T>.bindIntValue(getter: () -> Int, setter: (Int) -> Unit): Cell<T> {
@@ -23,7 +24,7 @@ fun <T : JSpinner> Cell<T>.bindValue(binding: PropertyBinding<Double>): Cell<T> 
 }
 
 fun <T : JSpinner> Cell<T>.bindValue(prop: KMutableProperty0<Double>): Cell<T> {
-  return bindValue(prop.toBinding())
+  return bindValue(prop.toBindingInternal())
 }
 
 fun <T : JSpinner> Cell<T>.bindValue(getter: () -> Double, setter: (Double) -> Unit): Cell<T> {

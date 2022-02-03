@@ -13,7 +13,8 @@ data class JsonProjectIndexingHistory(
   val totalStatsPerFileType: List<JsonStatsPerFileType> = emptyList(),
   val totalStatsPerIndexer: List<JsonStatsPerIndexer> = emptyList(),
   val scanningStatistics: List<JsonScanningStatistics> = emptyList(),
-  val fileProviderStatistics: List<JsonFileProviderIndexStatistics> = emptyList()
+  val fileProviderStatistics: List<JsonFileProviderIndexStatistics> = emptyList(),
+  val visibleTimeToAllThreadTimeRatio: Double = 0.0
 ) {
 
   @JsonIgnoreProperties(ignoreUnknown = true)

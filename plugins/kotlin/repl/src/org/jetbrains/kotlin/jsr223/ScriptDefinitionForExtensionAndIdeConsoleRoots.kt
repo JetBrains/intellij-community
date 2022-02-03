@@ -6,9 +6,11 @@ import com.intellij.ide.extensionResources.ExtensionsRootType
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.scratch.RootType
 import com.intellij.ide.script.IdeConsoleRootType
+import com.intellij.openapi.application.PathManager
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceAsContributor
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
+import kotlin.io.path.nameWithoutExtension
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.experimental.jvm.dependenciesFromClassContext
@@ -46,12 +48,15 @@ private object ScriptCompilationConfigurationForExtensionAndIdeConsoleRoots : Sc
         baseClass(KotlinType(ScriptTemplateWithBindings::class))
         displayName(SCRIPT_DEFINITION_NAME)
         jvm {
+            val kotlincLibraryName =
+                PathManager.getJarForClass(KotlinVersion::class.java)?.nameWithoutExtension
+                    ?: error("unable to locate Kotlin standard library")
             // This approach works, but could be quite expensive, since it forces indexing of the whole IDEA classpath
             // more economical approach would be to list names (without versions and .jar extension) of all jars
             // required for the scripts after the kotlin stdlib/script-runtime, and set wholeClasspath to false
             dependenciesFromClassContext(
                 ScriptCompilationConfigurationForExtensionAndIdeConsoleRoots::class,
-                "kotlin-stdlib-jdk8",
+                kotlincLibraryName,
                 wholeClasspath = true
             )
             PluginManagerCore.getPlugins().forEach {

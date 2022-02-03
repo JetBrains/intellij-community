@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.application.options.RegistryManager
@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.project.stateStore
 import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.ApiStatus
@@ -27,11 +28,10 @@ import javax.swing.JComponent
   reloadable = false,
 )
 @ApiStatus.Internal
-class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnablerState>(DynamicPluginEnablerState()),
-                             PluginEnabler {
+class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnablerState>(DynamicPluginEnablerState()), PluginEnabler {
   companion object {
-
-    private val isPerProjectEnabledValue = RegistryManager.getInstance()["ide.plugins.per.project"]
+    private val isPerProjectEnabledValue: RegistryValue
+      get() = RegistryManager.getInstance().get("ide.plugins.per.project")
 
     @JvmStatic
     var isPerProjectEnabled: Boolean
@@ -40,15 +40,13 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
 
     @JvmStatic
     @JvmOverloads
-    fun findPluginTracker(
-      project: Project,
-      pluginEnabler: PluginEnabler = PluginEnabler.getInstance(),
-    ): ProjectPluginTracker? = (pluginEnabler as? DynamicPluginEnabler)?.getPluginTracker(project)
+    fun findPluginTracker(project: Project, pluginEnabler: PluginEnabler = PluginEnabler.getInstance()): ProjectPluginTracker? {
+      return (pluginEnabler as? DynamicPluginEnabler)?.getPluginTracker(project)
+    }
 
     internal class EnableDisablePluginsActivity : StartupActivity {
-
       private val dynamicPluginEnabler = PluginEnabler.getInstance() as? DynamicPluginEnabler
-                                         ?: throw ExtensionNotApplicableException.INSTANCE
+                                         ?: throw ExtensionNotApplicableException.create()
 
       override fun runActivity(project: Project) {
         val tracker = dynamicPluginEnabler.getPluginTracker(project)
@@ -59,8 +57,7 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
 
         val pluginIdsToUnload = tracker.disabledPluginsIds
 
-        if (pluginIdsToLoad.isNotEmpty() ||
-            pluginIdsToUnload.isNotEmpty()) {
+        if (pluginIdsToLoad.isNotEmpty() || pluginIdsToUnload.isNotEmpty()) {
           val indicator = ProgressManager.getInstance().progressIndicator
           ApplicationManager.getApplication().invokeAndWait {
             indicator?.let {
@@ -84,23 +81,30 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
     private fun openProjectsExcludingCurrent(project: Project?) = ProjectManager.getInstance().openProjects.filterNot { it == project }
   }
 
+  val trackers: Map<String, ProjectPluginTracker>
+    get(): Map<String, ProjectPluginTracker> = state.trackers
+
   private var applicationShuttingDown = false
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.connect()
     connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
       override fun projectClosing(project: Project) {
-        if (applicationShuttingDown) return
+        if (applicationShuttingDown) {
+          return
+        }
 
         val tracker = getPluginTracker(project)
         val projects = openProjectsExcludingCurrent(project)
 
-        val descriptorsToLoad = if (projects.isNotEmpty())
+        val descriptorsToLoad = if (projects.isNotEmpty()) {
           emptyList()
-        else
+        }
+        else {
           tracker.disabledPluginsIds
             .filterNot { isDisabled(it) }
             .toPluginDescriptors()
+        }
         DynamicPlugins.loadPlugins(descriptorsToLoad)
 
         val descriptorsToUnload = tracker.enabledPluginsIds
@@ -123,8 +127,6 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
   }
 
   fun getPluginTracker(project: Project): ProjectPluginTracker = state.findStateByProject(project)
-
-  val trackers get(): Map<String, ProjectPluginTracker> = state.trackers
 
   override fun isDisabled(pluginId: PluginId) = PluginEnabler.HEADLESS.isDisabled(pluginId)
 
@@ -232,7 +234,6 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
 
 @ApiStatus.Internal
 class DynamicPluginEnablerState : BaseState() {
-
   @get:XCollection(propertyElementName = "trackers", style = XCollection.Style.v2)
   internal val trackers by map<String, ProjectPluginTracker>()
 

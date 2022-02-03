@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.containers.SLRUCache;
@@ -6,19 +6,16 @@ import com.intellij.util.io.AppendablePersistentMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
-import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.*;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
 
-/**
- * @author: db
- */
-public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
+public final class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
   private static final Collection NULL_COLLECTION = Collections.emptySet();
   private static final int CACHE_SIZE = 128;
   private final PersistentHashMap<Integer, Collection<V>> myMap;
@@ -159,24 +156,12 @@ public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
 
   @Override
   public void putAll(IntObjectMultiMaplet<V> m) {
-    m.forEachEntry(new TIntObjectProcedure<Collection<V>>() {
-      @Override
-      public boolean execute(int key, Collection<V> value) {
-        put(key, value);
-        return true;
-      }
-    });
+    m.forEachEntry((vs, value) -> put(value, vs));
   }
 
   @Override
   public void replaceAll(IntObjectMultiMaplet<V> m) {
-    m.forEachEntry(new TIntObjectProcedure<Collection<V>>() {
-      @Override
-      public boolean execute(int key, Collection<V> value) {
-        replace(key, value);
-        return true;
-      }
-    });
+    m.forEachEntry((vs, value) -> replace(value, vs));
   }
 
   @Override
@@ -203,15 +188,16 @@ public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
   }
 
   @Override
-  public void forEachEntry(final TIntObjectProcedure<Collection<V>> procedure) {
+  void forEachEntry(ObjIntConsumer<? super Collection<V>> procedure) {
     try {
       myMap.processKeysWithExistingMapping(key -> {
         try {
-          return procedure.execute(key, myMap.get(key));
+          procedure.accept(myMap.get(key), key);
         }
         catch (IOException e) {
           throw new BuildDataCorruptedException(e);
         }
+        return true;
       });
     }
     catch (IOException e) {

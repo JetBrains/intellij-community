@@ -21,7 +21,7 @@ import java.util.*;
 
 
 /**
- * <p><b>NOTE:</b> The class is a full copy of the {@code com.google.common.graph.EndpointPair}.
+ * <p><b>NOTE:</b> The class is a full copy of the {@code com.google.common.graph.ElementOrder}.
  * We like Guava's implementation, but we cannot use Guava in our API because
  * we need additional abstraction layer on our side.</p>
  *

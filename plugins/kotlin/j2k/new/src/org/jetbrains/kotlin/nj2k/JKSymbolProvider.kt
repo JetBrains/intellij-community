@@ -2,21 +2,18 @@
 
 package org.jetbrains.kotlin.nj2k
 
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
-import org.jetbrains.kotlin.nj2k.conversions.JKResolver
 import org.jetbrains.kotlin.nj2k.symbols.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
 import org.jetbrains.kotlin.psi.*
 
-
 class JKSymbolProvider(private val resolver: JKResolver) {
     private val symbolsByFqName = mutableMapOf<String, JKSymbol>()
+    private val symbolsByFqNameWithExactSignature = mutableMapOf<List<String>, JKSymbol>()
     val symbolsByPsi = mutableMapOf<PsiElement, JKSymbol>()
     private val symbolsByJK = mutableMapOf<JKDeclaration, JKSymbol>()
 
@@ -132,7 +129,7 @@ class JKSymbolProvider(private val resolver: JKResolver) {
         } as? JKClassSymbol ?: JKUnresolvedClassSymbol(fqName.asString(), typeFactory)
 
     fun provideClassSymbol(fqName: String): JKClassSymbol =
-        provideClassSymbol(FqName(fqName.asSafeFqNameString()))
+        provideClassSymbol(fqName.asSafeFqName())
 
     fun provideClassSymbol(fqName: FqNameUnsafe): JKClassSymbol =
         provideClassSymbol(fqName.toSafe())
@@ -145,7 +142,18 @@ class JKSymbolProvider(private val resolver: JKResolver) {
         } as? JKMethodSymbol ?: JKUnresolvedMethod(fqName.asString(), typeFactory)
 
     fun provideMethodSymbol(fqName: String): JKMethodSymbol =
-        provideMethodSymbol(FqName(fqName.asSafeFqNameString()))
+        provideMethodSymbol(fqName.asSafeFqName())
+
+    fun provideMethodSymbolWithExactSignature(methodFqName: String, parameterTypesFqNames: List<String>): JKMethodSymbol {
+        return symbolsByFqNameWithExactSignature.getOrPutIfNotNull(listOf(methodFqName) + parameterTypesFqNames) {
+            resolver.resolveMethodWithExactSignature(
+                methodFqName.asSafeFqName(),
+                parameterTypesFqNames.map { it.asSafeFqName() }
+            )?.let {
+                provideDirectSymbol(it) as? JKMethodSymbol
+            }
+        } as? JKMethodSymbol ?: JKUnresolvedMethod(methodFqName, typeFactory)
+    }
 
     fun provideFieldSymbol(fqName: FqName): JKFieldSymbol =
         symbolsByFqName.getOrPutIfNotNull(fqName.asString()) {
@@ -155,8 +163,7 @@ class JKSymbolProvider(private val resolver: JKResolver) {
         } as? JKFieldSymbol ?: JKUnresolvedField(fqName.asString(), typeFactory)
 
     fun provideFieldSymbol(fqName: String): JKFieldSymbol =
-        provideFieldSymbol(FqName(fqName.asSafeFqNameString()))
-
+        provideFieldSymbol(fqName.asSafeFqName())
 
     private inner class ElementVisitor : JavaElementVisitor() {
         override fun visitElement(element: PsiElement) {
@@ -213,5 +220,5 @@ private inline fun <K, V : Any> MutableMap<K, V>.getOrPutIfNotNull(key: K, defau
     }
 }
 
-private fun String.asSafeFqNameString() =
-    replace('/', '.')
+private fun String.asSafeFqName() =
+    FqName(replace('/', '.'))

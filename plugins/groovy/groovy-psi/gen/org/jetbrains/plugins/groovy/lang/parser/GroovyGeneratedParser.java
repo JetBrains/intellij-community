@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // This is a generated file. Not intended for manual editing.
 package org.jetbrains.plugins.groovy.lang.parser;
@@ -2560,42 +2560,43 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // IDENTIFIER | code_reference_identifiers_soft (<<isQualifiedName>> | &'.')
+  // IDENTIFIER | weak_keyword_identifiers | code_reference_identifiers_soft (<<isQualifiedName>> | &'.')
   static boolean code_reference_identifiers(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "code_reference_identifiers")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, IDENTIFIER);
-    if (!r) r = code_reference_identifiers_1(b, l + 1);
+    if (!r) r = weak_keyword_identifiers(b, l + 1);
+    if (!r) r = code_reference_identifiers_2(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // code_reference_identifiers_soft (<<isQualifiedName>> | &'.')
-  private static boolean code_reference_identifiers_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "code_reference_identifiers_1")) return false;
+  private static boolean code_reference_identifiers_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "code_reference_identifiers_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = code_reference_identifiers_soft(b, l + 1);
-    r = r && code_reference_identifiers_1_1(b, l + 1);
+    r = r && code_reference_identifiers_2_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // <<isQualifiedName>> | &'.'
-  private static boolean code_reference_identifiers_1_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "code_reference_identifiers_1_1")) return false;
+  private static boolean code_reference_identifiers_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "code_reference_identifiers_2_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = isQualifiedName(b, l + 1);
-    if (!r) r = code_reference_identifiers_1_1_1(b, l + 1);
+    if (!r) r = code_reference_identifiers_2_1_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // &'.'
-  private static boolean code_reference_identifiers_1_1_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "code_reference_identifiers_1_1_1")) return false;
+  private static boolean code_reference_identifiers_2_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "code_reference_identifiers_2_1_1")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _AND_);
     r = consumeToken(b, T_DOT);
@@ -8030,15 +8031,24 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'var' | 'yield' | 'permits' | 'record' | clear_variants_and_fail
+  // weak_keyword_identifiers | clear_variants_and_fail
   static boolean weak_keyword(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "weak_keyword")) return false;
     boolean r;
-    r = consumeToken(b, KW_VAR);
-    if (!r) r = consumeToken(b, KW_YIELD);
-    if (!r) r = consumeToken(b, KW_PERMITS);
-    if (!r) r = consumeToken(b, KW_RECORD);
+    r = weak_keyword_identifiers(b, l + 1);
     if (!r) r = clear_variants_and_fail(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // 'var' | 'yield' | 'permits' | 'record'
+  static boolean weak_keyword_identifiers(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "weak_keyword_identifiers")) return false;
+    boolean r;
+    r = consumeTokenFast(b, KW_VAR);
+    if (!r) r = consumeTokenFast(b, KW_YIELD);
+    if (!r) r = consumeTokenFast(b, KW_PERMITS);
+    if (!r) r = consumeTokenFast(b, KW_RECORD);
     return r;
   }
 

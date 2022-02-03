@@ -2,10 +2,15 @@
 package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager
+import com.intellij.util.ui.UIUtil
+import java.nio.charset.StandardCharsets
 
 
 class PropertiesSupportTest : GrazieTestBase() {
   fun `test grammar check in file`() {
+    EncodingProjectManager.getInstance(project).setDefaultCharsetForPropertiesFiles(null, StandardCharsets.UTF_8)
+    UIUtil.dispatchAllInvocationEvents()
     runHighlightTestForFile("ide/language/properties/Example.properties")
   }
 }

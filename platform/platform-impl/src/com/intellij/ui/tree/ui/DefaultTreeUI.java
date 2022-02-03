@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -247,7 +247,48 @@ public final class DefaultTreeUI extends BasicTreeUI {
           Color background = getBackground(tree, path, row, selected);
           if (background != null) {
             g.setColor(background);
-            g.fillRect(helper.getX(), bounds.y, helper.getWidth(), bounds.height);
+            if (g instanceof Graphics2D && is("ide.experimental.ui.tree.selection") && (selected || row == TreeHoverListener.getHoveredRow(tree))) {
+              int borderOffset = JBUI.scale(12);
+              int rendererOffset = painter.getRendererOffset(control, depth, leaf);
+              int controlOffset = painter.getControlOffset(control, depth, leaf);
+              int left = Math.min(helper.getX() + borderOffset, controlOffset < 0 ? rendererOffset : controlOffset);
+              int right = Math.max(helper.getX() + helper.getWidth() - borderOffset, rendererOffset + bounds.width + JBUI.scale(4));
+              int[] rows = tree.getSelectionRows();
+              boolean shouldPaintTop = false;
+              boolean shouldPaintBottom = false;
+              if (rows != null && rows.length > 1) {
+                for (int selectedRow : rows) {
+                  int delta = selectedRow - row;
+                  if (delta == 1) shouldPaintBottom = true;
+                  if (delta == -1) shouldPaintTop = true;
+                  if (shouldPaintTop && shouldPaintBottom) break;
+                }
+              }
+
+              if (shouldPaintTop && shouldPaintBottom) {
+                g.fillRect(left, bounds.y, right - left, bounds.height);
+              } else {
+                int arc = JBUI.scale(8);
+                FILL.paint((Graphics2D)g, left, bounds.y, right - left, bounds.height, arc);
+                if (shouldPaintTop) {
+                  g.fillRect(left, bounds.y, right - left, arc);
+                }
+                if (shouldPaintBottom) {
+                  g.fillRect(left, bounds.y + bounds.height - arc, right - left, arc);
+                }
+              }
+              //if (lead) {
+              //  g.setColor(Color.lightGray);
+              //  ((Graphics2D)g).setStroke(new BasicStroke(1.0f,
+              //                                            BasicStroke.CAP_BUTT,
+              //                                            BasicStroke.JOIN_MITER,
+              //                                            2.0f, new float[]{2.0f}, 0.0f));
+              //  g.drawRoundRect(left + 1, bounds.y, right - left - 2, bounds.height-1, JBUI.scale(8), JBUI.scale(8));
+              //}
+            }
+            else {
+              g.fillRect(helper.getX(), bounds.y, helper.getWidth(), bounds.height);
+            }
             if (selectedControl && !dark && !isDark(background)) selectedControl = false;
           }
           int offset = painter.getRendererOffset(control, depth, leaf);

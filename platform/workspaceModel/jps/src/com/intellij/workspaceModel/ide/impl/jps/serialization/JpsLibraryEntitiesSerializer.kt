@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ConcurrentFactoryMap
@@ -75,7 +76,8 @@ internal class JpsLibrariesFileSerializer(entitySource: JpsFileEntitySource.Exac
 }
 
 internal class JpsLibrariesExternalFileSerializer(private val externalFile: JpsFileEntitySource.ExactFile,
-                                                  private val internalLibrariesDirUrl: VirtualFileUrl)
+                                                  private val internalLibrariesDirUrl: VirtualFileUrl,
+                                                  private val fileInDirectorySourceNames: FileInDirectorySourceNames)
   : JpsLibraryEntitiesSerializer(externalFile.file, externalFile, LibraryTableId.ProjectLibraryTableId), JpsFileEntityTypeSerializer<LibraryEntity> {
   override val isExternalStorage: Boolean
     get() = true
@@ -84,7 +86,14 @@ internal class JpsLibrariesExternalFileSerializer(private val externalFile: JpsF
 
   override fun createEntitySource(libraryTag: Element): EntitySource? {
     val externalSystemId = libraryTag.getAttributeValue(SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE) ?: return null
-    val internalEntitySource = JpsFileEntitySource.FileInDirectory(internalLibrariesDirUrl, externalFile.projectLocation)
+    val libraryName = libraryTag.getAttributeValueStrict(JpsModuleRootModelSerializer.NAME_ATTRIBUTE)
+    val existingInternalSource = fileInDirectorySourceNames.findSource(mainEntityClass, libraryName)
+    val internalEntitySource = if (existingInternalSource != null && existingInternalSource.directory == internalLibrariesDirUrl) {
+      logger<JpsLibrariesExternalFileSerializer>().debug{ "Reuse existing source for library: ${existingInternalSource.fileNameId}=$libraryName" }
+      existingInternalSource
+    } else {
+      JpsFileEntitySource.FileInDirectory(internalLibrariesDirUrl, externalFile.projectLocation)
+    }
     return JpsImportedEntitySource(internalEntitySource, externalSystemId, true)
   }
 

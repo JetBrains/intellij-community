@@ -2,12 +2,12 @@
 package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemFinished
 import com.intellij.ide.wizard.*
+import com.intellij.ide.wizard.util.LinkNewProjectWizardStep
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.EMPTY_LABEL
-import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.SystemProperties
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.asPath
@@ -17,11 +17,12 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.StructurePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.applyProjectTemplate
-import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.ConsoleApplicationProjectTemplate
+import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.*
 import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
 import java.util.*
 
 class KotlinNewProjectWizard : LanguageNewProjectWizard {
+    override val ordinal = 100
 
     companion object {
         private const val DEFAULT_GROUP_ID = "me.user"
@@ -34,7 +35,8 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
             buildSystemType: BuildSystemType,
             projectGroupId: String? = suggestGroupId(),
             artifactId: String? = projectName,
-            version: String? = "1.0-SNAPSHOT"
+            version: String? = "1.0-SNAPSHOT",
+            addSampleCode: Boolean = true
         ) {
             NewProjectWizardModuleBuilder()
                 .apply {
@@ -50,7 +52,7 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
 
                         BuildSystemPlugin.type.reference.setValue(buildSystemType)
 
-                        applyProjectTemplate(ConsoleApplicationProjectTemplate)
+                        applyProjectTemplate(ConsoleApplicationProjectTemplate(addSampleCode = addSampleCode))
                     }
                 }.commit(project, null, null)
         }
@@ -69,25 +71,17 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
         CommentStep(parent)
             .chain(::Step)
 
-    class CommentStep(parent: NewProjectWizardLanguageStep) :
-        AbstractNewProjectWizardStep(parent),
-        LanguageNewProjectWizardData by parent {
+    class CommentStep(parent: NewProjectWizardLanguageStep) : LinkNewProjectWizardStep(parent), LanguageNewProjectWizardData by parent {
 
-        override fun setupUI(builder: Panel) {
-            with(builder) {
-                row(EMPTY_LABEL) {
-                    comment(KotlinBundle.message("project.wizard.new.project.kotlin.comment")) {
-                        context.requestSwitchTo(NewProjectWizardModuleBuilder.MODULE_BUILDER_ID)
-                    }
-                }.bottomGap(BottomGap.SMALL)
-            }
-        }
+        override val isFullWidth: Boolean = false
 
-        override fun setupProject(project: Project) {}
+        override val builderId: String = NewProjectWizardModuleBuilder.MODULE_BUILDER_ID
+
+        override val comment: String = KotlinBundle.message("project.wizard.new.project.kotlin.comment")
     }
 
     class Step(parent: CommentStep) :
-        AbstractNewProjectWizardMultiStep<Step>(parent, BuildSystemKotlinNewProjectWizard.EP_NAME),
+        AbstractNewProjectWizardMultiStep<Step, BuildSystemKotlinNewProjectWizard>(parent, BuildSystemKotlinNewProjectWizard.EP_NAME),
         LanguageNewProjectWizardData by parent,
         BuildSystemKotlinNewProjectWizardData {
 
@@ -96,8 +90,16 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
         override val buildSystemProperty by ::stepProperty
         override var buildSystem by ::step
 
+        override fun setupProject(project: Project) {
+            super.setupProject(project)
+
+            logBuildSystemFinished()
+        }
+
         init {
             data.putUserData(BuildSystemKotlinNewProjectWizardData.KEY, this)
+
+            buildSystemProperty.afterChange { logBuildSystemChanged() }
         }
     }
 }

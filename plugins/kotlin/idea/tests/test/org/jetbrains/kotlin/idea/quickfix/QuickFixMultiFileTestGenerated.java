@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -349,6 +349,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/importFromRoot.before.Main.kt");
             }
 
+            @TestMetadata("importFunctionWithDefinitelyNotNullType.before.Main.kt")
+            public void testImportFunctionWithDefinitelyNotNullType() throws Exception {
+                runTest("testData/quickfix/autoImports/importFunctionWithDefinitelyNotNullType.before.Main.kt");
+            }
+
             @TestMetadata("importGetValueExtensionForDelegateWithLambda.before.Main.kt")
             public void testImportGetValueExtensionForDelegateWithLambda() throws Exception {
                 runTest("testData/quickfix/autoImports/importGetValueExtensionForDelegateWithLambda.before.Main.kt");
@@ -422,6 +427,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("importKotlinStaticPropertyOverloadedSetterFromJava.test")
             public void testImportKotlinStaticPropertyOverloadedSetterFromJava() throws Exception {
                 runTest("testData/quickfix/autoImports/importKotlinStaticPropertyOverloadedSetterFromJava.test");
+            }
+
+            @TestMetadata("importNullableTraitWithGenerics.before.Main.kt")
+            public void testImportNullableTraitWithGenerics() throws Exception {
+                runTest("testData/quickfix/autoImports/importNullableTraitWithGenerics.before.Main.kt");
             }
 
             @TestMetadata("ImportOperatorInvokeWithConvention.before.Main.kt")
@@ -612,6 +622,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("noImportForPrivateClass.before.Main.kt")
             public void testNoImportForPrivateClass() throws Exception {
                 runTest("testData/quickfix/autoImports/noImportForPrivateClass.before.Main.kt");
+            }
+
+            @TestMetadata("noImportForPrivateFunction.before.Main.kt")
+            public void testNoImportForPrivateFunction() throws Exception {
+                runTest("testData/quickfix/autoImports/noImportForPrivateFunction.before.Main.kt");
             }
 
             @TestMetadata("noImportInImports.before.Main.kt")

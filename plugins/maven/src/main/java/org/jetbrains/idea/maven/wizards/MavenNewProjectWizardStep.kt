@@ -8,7 +8,6 @@ import com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewPr
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
@@ -29,11 +28,11 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
-  private val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
+  val sdkProperty = propertyGraph.property<Sdk?>(null)
 
   val sdk by sdkProperty
 
-  override fun setupUI(builder: Panel) {
+  override fun setupSettingsUI(builder: Panel) {
     with(builder) {
       row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
         val sdkTypeFilter = { it: SdkTypeId -> it is JavaSdkType && it !is DependentSdkType }
@@ -41,7 +40,7 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
           .columns(COLUMNS_MEDIUM)
       }
     }
-    super.setupUI(builder)
+    super.setupSettingsUI(builder)
   }
 
   override fun createView(data: MavenProject) = MavenDataView(data)
@@ -85,7 +84,6 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     }
     return null
   }
-
 
   class MavenDataView(override val data: MavenProject) : DataView<MavenProject>() {
     override val location: String = data.directory

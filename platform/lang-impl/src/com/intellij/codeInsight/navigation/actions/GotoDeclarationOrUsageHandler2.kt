@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.actions
 
 import com.intellij.codeInsight.CodeInsightActionHandler
@@ -45,28 +45,29 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
     }
 
     val offset = editor.caretModel.offset
-    val actionResult: GTDUActionResult? = try {
-      underModalProgress(project, CodeInsightBundle.message("progress.title.resolving.reference")) {
+    try {
+      val actionResult: GTDUActionResult? = underModalProgress(
+        project,
+        CodeInsightBundle.message("progress.title.resolving.reference")
+      ) {
         gotoDeclarationOrUsages(project, editor, file, offset)?.result()
+      }
+      when (actionResult) {
+        null -> notifyNowhereToGo(project, editor, file, offset)
+        is GTDUActionResult.GTD -> {
+          GTDUCollector.recordPerformed(GTDUCollector.GTDUChoice.GTD)
+          gotoDeclaration(project, editor, actionResult.navigationActionResult)
+        }
+        is GTDUActionResult.SU -> {
+          GTDUCollector.recordPerformed(GTDUCollector.GTDUChoice.SU)
+          showUsages(project, editor, file, actionResult.targetVariants)
+        }
       }
     }
     catch (e: IndexNotReadyException) {
       DumbService.getInstance(project).showDumbModeNotification(
         CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update")
       )
-      return
-    }
-
-    when (actionResult) {
-      null -> notifyNowhereToGo(project, editor, file, offset)
-      is GTDUActionResult.GTD -> {
-        GTDUCollector.recordPerformed(GTDUCollector.GTDUChoice.GTD)
-        gotoDeclaration(project, editor, actionResult.navigationActionResult)
-      }
-      is GTDUActionResult.SU -> {
-        GTDUCollector.recordPerformed(GTDUCollector.GTDUChoice.SU)
-        showUsages(project, editor, file, actionResult.targetVariants)
-      }
     }
   }
 
@@ -77,7 +78,14 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
       .add(CommonDataKeys.EDITOR, editor)
       .add(PlatformCoreDataKeys.CONTEXT_COMPONENT, editor.contentComponent)
       .build()
-    showUsages(project, dataContext, searchTargets)
+    try {
+      showUsages(project, dataContext, searchTargets)
+    }
+    catch (e: IndexNotReadyException) {
+      DumbService.getInstance(project).showDumbModeNotification(
+        CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update")
+      )
+    }
   }
 
   @TestOnly

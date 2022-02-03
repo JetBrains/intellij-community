@@ -9,9 +9,9 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.maven" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.common" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.gradle" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.maven" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.common" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.gradle" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kapt" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.gradle" exported="" />
@@ -23,12 +23,10 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting-ide-services" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.core" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.eval4j" exported="" />
-    <orderEntry type="module" module-name="kotlin.fir" exported="" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" exported="" />
     <orderEntry type="module" module-name="kotlin.formatter" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" exported="" />
@@ -40,8 +38,6 @@
     <orderEntry type="module" module-name="kotlin.j2k.new" exported="" />
     <orderEntry type="module" module-name="kotlin.j2k.old" exported="" />
     <orderEntry type="module" module-name="kotlin.j2k.services" exported="" />
-    <orderEntry type="module" module-name="kotlin.jps-common" exported="" />
-    <orderEntry type="module" module-name="kotlin.jps-plugin" exported="" />
     <orderEntry type="module" module-name="kotlin.i18n" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" exported="" />
@@ -58,6 +54,7 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.idea" exported="" />
     <orderEntry type="module" module-name="kotlin.repl" exported="" />
     <orderEntry type="module" module-name="kotlin.scripting" exported="" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" exported="" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" exported="" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" exported="" />
     <orderEntry type="module" module-name="kotlin.refIndex" exported="" />
@@ -77,9 +74,15 @@
     <orderEntry type="module" module-name="kotlin.scripting-support" exported="" />
     <orderEntry type="module" module-name="kotlin.project-model" exported="" />
     <orderEntry type="module" module-name="kotlin.features-trainer" exported="" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-jps-common" level="project" />
+    <orderEntry type="module" module-name="kotlin.jvm-run-configurations" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.gradle" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.maven" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-common" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-compiler" level="project" />
-    <orderEntry type="library" exported="" name="kotlinc.kotlin-script-util" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-jvm" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.allopen-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlinx-serialization-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.noarg-compiler-plugin" level="project" />

@@ -72,24 +72,24 @@ public class PyStructureViewTest extends PyTestCase {
            "  __class__(self)\n" +
            "  __init__(self)\n" +
            "  __new__(cls)\n" +
-           "  __setattr__(self, name, value)\n" +
-           "  __eq__(self, o)\n" +
-           "  __ne__(self, o)\n" +
+           "  __setattr__(self, __name, __value)\n" +
+           "  __eq__(self, __o)\n" +
+           "  __ne__(self, __o)\n" +
            "  __repr__(self)\n" +
            "  __hash__(self)\n" +
-           "  __format__(self, format_spec)\n" +
-           "  __getattribute__(self, name)\n" +
-           "  __delattr__(self, name)\n" +
+           "  __format__(self, __format_spec)\n" +
+           "  __getattribute__(self, __name)\n" +
+           "  __delattr__(self, __name)\n" +
            "  __sizeof__(self)\n" +
            "  __reduce__(self)\n" +
-           "  __reduce_ex__(self, protocol)\n" +
+           "  __reduce_ex__(self, __protocol)\n" +
            "  __dir__(self)\n" +
            "  __init_subclass__(cls)\n" +
            "  __annotations__\n" +
            "  __dict__\n" +
            "  __doc__\n" +
            "  __module__\n" +
-           "  __slots__\n",
+           "  __slots__",
            true);
   }
 
@@ -117,25 +117,25 @@ public class PyStructureViewTest extends PyTestCase {
            "  __class__(self)\n" +
            "  __init__(self)\n" +
            "  __new__(cls)\n" +
-           "  __setattr__(self, name, value)\n" +
-           "  __eq__(self, o)\n" +
-           "  __ne__(self, o)\n" +
+           "  __setattr__(self, __name, __value)\n" +
+           "  __eq__(self, __o)\n" +
+           "  __ne__(self, __o)\n" +
            "  __str__(self)\n" +
            "  __repr__(self)\n" +
            "  __hash__(self)\n" +
-           "  __format__(self, format_spec)\n" +
-           "  __getattribute__(self, name)\n" +
-           "  __delattr__(self, name)\n" +
+           "  __format__(self, __format_spec)\n" +
+           "  __getattribute__(self, __name)\n" +
+           "  __delattr__(self, __name)\n" +
            "  __sizeof__(self)\n" +
            "  __reduce__(self)\n" +
-           "  __reduce_ex__(self, protocol)\n" +
+           "  __reduce_ex__(self, __protocol)\n" +
            "  __dir__(self)\n" +
            "  __init_subclass__(cls)\n" +
            "  __annotations__\n" +
            "  __dict__\n" +
            "  __doc__\n" +
            "  __module__\n" +
-           "  __slots__\n",
+           "  __slots__",
            true);
   }
 

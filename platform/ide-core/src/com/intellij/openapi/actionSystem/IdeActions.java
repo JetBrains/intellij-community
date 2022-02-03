@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 /**
@@ -109,13 +109,15 @@ public interface IdeActions {
   String GROUP_MAIN_MENU = "MainMenu";
   String GROUP_MAIN_TOOLBAR = "MainToolBar";
   String GROUP_EXPERIMENTAL_TOOLBAR_ACTIONS = "ExperimentalToolbarActions";
-  String GROUP_EXPERIMENTAL_TOOLBAR = "CenterToolbarSideGroup";
+  String GROUP_EXPERIMENTAL_TOOLBAR = "NewToolbarActions";
+  String GROUP_EXPERIMENTAL_TOOLBAR_WITHOUT_RIGHT_PART = "NewToolbarActionsWithoutRight";
   String GROUP_EDITOR_POPUP = "EditorPopupMenu";
   String GROUP_BASIC_EDITOR_POPUP = "BasicEditorPopupMenu";
   String GROUP_CONSOLE_EDITOR_POPUP = "ConsoleEditorPopupMenu";
   String GROUP_CUT_COPY_PASTE = "CutCopyPasteGroup";
   String GROUP_EDITOR_TAB_POPUP = "EditorTabPopupMenu";
   String GROUP_HELP_MENU = "HelpMenu";
+  String GROUP_INTENTIONS = "Intentions";
 
   String ACTION_CVS_ADD = "Cvs.Add";
   String ACTION_CVS_COMMIT = "Cvs.Commit";

@@ -3,7 +3,7 @@ LineBreakpoint created at kt25222.kt:16
 Run Java
 Connected to the target VM
 kt25222.kt:16
-Compile bytecode for ann
+Compile bytecode for java.lang.reflect.Proxy.isProxyClass(ann::class.java)
 Disconnected from the target VM
 
 Process finished with exit code 0

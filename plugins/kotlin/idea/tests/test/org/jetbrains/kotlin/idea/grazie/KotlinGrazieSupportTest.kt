@@ -6,7 +6,7 @@ import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextContentTest
 import com.intellij.grazie.text.TextExtractor
 
-class KotlinGrazieSupportTest : GrazieTestBase() {
+class KotlinGrazieSupportTest28 : GrazieTestBase() {
     override val additionalEnabledRules: Set<String> = setOf("UPPERCASE_SENTENCE_START")
 
     override fun runHighlightTestForFile(file: String) {

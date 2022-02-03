@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UsePropertyAccessSyntax")
 package org.jetbrains.intellij.build.tasks
 
@@ -6,6 +6,8 @@ import com.intellij.testFramework.rules.InMemoryFsExtension
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.io.BufferedInputStream
+import java.io.DataInputStream
 import java.nio.file.Files
 import java.util.*
 
@@ -44,8 +46,9 @@ class TaskTest {
   fun `broken plugins`() {
     val targetFile = fs.root.resolve("result")
     buildBrokenPlugins(targetFile, "2020.3", isInDevelopmentMode = false)
-    val data = Files.readAllBytes(targetFile)
-    assertThat(data).isNotEmpty()
-    assertThat(data[0]).isEqualTo(1)
+    DataInputStream(BufferedInputStream(Files.newInputStream(targetFile), 32_000)).use { stream ->
+      assertThat(stream.readByte()).isEqualTo(2)
+      assertThat(stream.readUTF()).isEqualTo("2020.3")
+    }
   }
 }

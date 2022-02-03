@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DuplicatedCode") // extracted from org.jetbrains.r.rendering.toolwindow.RDocumentationComponent
 
 package com.intellij.lang.documentation.ide.ui
@@ -17,6 +17,7 @@ import com.intellij.ui.LightColors
 import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.addPropertyChangeListener
 import java.awt.Point
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -24,13 +25,11 @@ import javax.swing.JEditorPane
 import javax.swing.JLabel
 import javax.swing.SwingConstants
 import javax.swing.event.DocumentEvent
-import javax.swing.text.Highlighter
 import kotlin.math.abs
 
 internal class SearchModel(ui: DocumentationUI) : Disposable {
 
   private val editorPane: JEditorPane = ui.editorPane
-  private val highlighter: Highlighter = editorPane.highlighter
 
   val searchField = SearchTextField()
 
@@ -62,12 +61,15 @@ internal class SearchModel(ui: DocumentationUI) : Disposable {
       updateIndices()
       updateHighlighting()
     })
+    editorPane.addPropertyChangeListener(parent = this, "highlighter") {
+      updateHighlighting()
+    }
   }
 
   private var pattern: String = ""
   private val indices = ArrayList<Int>()
   private var currentSelection = 0
-  private val tags = ArrayList<Any>()
+  private val tagHandles = ArrayList<() -> Unit>()
 
   override fun dispose() {
     pattern = ""
@@ -183,18 +185,22 @@ internal class SearchModel(ui: DocumentationUI) : Disposable {
   }
 
   private fun removeHighlights() {
-    for (it in tags) {
-      highlighter.removeHighlight(it)
+    for (tagHandle in tagHandles) {
+      tagHandle()
     }
-    tags.clear()
+    tagHandles.clear()
   }
 
   private fun updateHighlighting() {
     removeHighlights()
+    val highlighter = editorPane.highlighter ?: return
     editorPane.invalidate()
     editorPane.repaint()
     for (index in indices) {
-      tags.add(highlighter.addHighlight(index, index + pattern.length, SearchHighlighterPainter(indices[currentSelection] == index)))
+      val tag = highlighter.addHighlight(index, index + pattern.length, SearchHighlighterPainter(indices[currentSelection] == index))
+      tagHandles.add {
+        highlighter.removeHighlight(tag)
+      }
     }
   }
 }

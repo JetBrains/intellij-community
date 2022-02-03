@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
@@ -490,6 +490,13 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val defaultProjectPath = "${SystemProperties.getUserHome()}/PhpstormProjects"
     Files.createDirectories(memoryFs.fs.getPath(defaultProjectPath))
     val current = createConfigDir("2021.2", product = "PhpStorm")
+    val result = ConfigImportHelper.findConfigDirectories(current)
+    assertThat(result.paths).isEmpty()
+  }
+
+  @Test fun `suffix-less directories are excluded`() {
+    createConfigDir(product = "Rider", version = "", modern = true)
+    val current = createConfigDir(product = "Rider", version = "2022.1")
     val result = ConfigImportHelper.findConfigDirectories(current)
     assertThat(result.paths).isEmpty()
   }

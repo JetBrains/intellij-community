@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.uploader;
 
 import com.intellij.internal.statistic.eventLog.*;
@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener;
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService;
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult;
 import com.intellij.internal.statistic.uploader.events.ExternalEventsLogger;
+import com.intellij.internal.statistic.uploader.util.ExtraHTTPHeadersParser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.intellij.internal.statistic.StatisticsStringUtil.split;
+import static com.intellij.internal.statistic.config.StatisticsStringUtil.split;
 
 public final class EventLogUploader {
   private static final int WAIT_FOR_IDE_MS = 2000;
@@ -148,12 +149,14 @@ public final class EventLogUploader {
     String productCode = options.get(EventLogUploaderOptions.PRODUCT_OPTION);
     String productVersion = options.get(EventLogUploaderOptions.PRODUCT_VERSION_OPTION);
     String userAgent = options.get(EventLogUploaderOptions.USER_AGENT_OPTION);
+    String headersString = options.get(EventLogUploaderOptions.EXTRA_HEADERS);
+    Map<String, String> extraHeaders = ExtraHTTPHeadersParser.parse(headersString);
     if (url != null && productCode != null) {
       boolean isInternal = options.containsKey(EventLogUploaderOptions.INTERNAL_OPTION);
       boolean isTest = options.containsKey(EventLogUploaderOptions.TEST_OPTION);
       boolean isEAP = options.containsKey(EventLogUploaderOptions.EAP_OPTION);
       return new EventLogExternalApplicationInfo(
-        url, productCode, productVersion, userAgent, isInternal, isTest, isEAP, logger, eventLogger
+        url, productCode, productVersion, userAgent, isInternal, isTest, isEAP, extraHeaders, logger, eventLogger
       );
     }
     return null;

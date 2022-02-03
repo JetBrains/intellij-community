@@ -2,7 +2,6 @@
 package com.intellij.execution.services;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
@@ -14,10 +13,5 @@ public class AddServiceActionGroup extends DefaultActionGroup implements DumbAwa
   public void update(@NotNull AnActionEvent e) {
     ServiceView selectedView = getSelectedView(e);
     e.getPresentation().setEnabled(selectedView != null);
-  }
-
-  @Override
-  public boolean canBePerformed(@NotNull DataContext context) {
-    return super.canBePerformed(context);
   }
 }

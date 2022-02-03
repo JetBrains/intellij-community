@@ -62,18 +62,12 @@ class PluginDeclarationProviderFactory(
     }
 
     private fun diagnoseMissingPackageFragmentExactPackageIndexCorruption(message: String): Nothing {
-        throw IllegalStateException(
-            "KotlinExactPackageIndex seems corrupted.\n" +
-                    message
-        )
+        throw IllegalStateException("KotlinExactPackageIndex seems corrupted.\n$message")
     }
 
     private fun diagnoseMissingPackageFragmentPerModulePackageCacheMiss(message: String): Nothing {
         PerModulePackageCacheService.getInstance(project).onTooComplexChange() // Postpone cache rebuild
-        throw IllegalStateException(
-            "PerModulePackageCache miss.\n" +
-                    message
-        )
+        throw IllegalStateException("PerModulePackageCache miss.\n$message")
     }
 
     private fun diagnoseMissingPackageFragmentUnknownReason(message: String): Nothing {
@@ -81,7 +75,6 @@ class PluginDeclarationProviderFactory(
     }
 
     override fun diagnoseMissingPackageFragment(fqName: FqName, file: KtFile?) {
-
         val subpackagesIndex = SubpackagesIndexService.getInstance(project)
         val moduleSourceInfo = moduleInfo as? ModuleSourceInfo
         val packageExists = PackageIndexUtil.packageExists(fqName, indexedFilesScope, project)
@@ -137,7 +130,8 @@ class PluginDeclarationProviderFactory(
     private val onCreationDebugInfo = debugInfo()
 
     fun debugToString(): String {
-        return "PluginDeclarationProviderFactory\nOn failure:\n${debugInfo()}On creation:\n$onCreationDebugInfo"
+        return arrayOf("PluginDeclarationProviderFactory", "On failure:", debugInfo(), "On creation:", onCreationDebugInfo,
+                      "moduleInfo:$moduleInfo.name", "moduleInfo dependencies: ${moduleInfo.dependencies()}").joinToString("\n")
     }
 
     private fun oldPackageExists(packageFqName: FqName): Boolean? = try {

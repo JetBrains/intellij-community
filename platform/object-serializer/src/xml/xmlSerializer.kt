@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("PackageDirectoryMismatch")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("PackageDirectoryMismatch", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.BaseState
@@ -7,8 +7,10 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.reference.SoftReference
 import com.intellij.serialization.SerializationException
 import com.intellij.serialization.xml.KotlinAwareBeanBinding
+import com.intellij.serialization.xml.KotlinxSerializationBinding
 import com.intellij.util.io.URLUtil
 import com.intellij.util.xmlb.*
+import kotlinx.serialization.Serializable
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.TestOnly
@@ -116,7 +118,7 @@ private class JdomSerializerImpl : JdomSerializer {
 
   override fun <T> deserialize(url: URL, aClass: Class<T>): T {
     try {
-      return deserialize(JDOMXIncluder.resolveRoot(JDOMUtil.load(URLUtil.openStream(url)), url), aClass)
+      return deserialize(JDOMUtil.load(URLUtil.openStream(url)), aClass)
     }
     catch (e: IOException) {
       throw XmlSerializationException(e)
@@ -170,7 +172,15 @@ private abstract class OldBindingProducer<ROOT_BINDING> {
 private class MyXmlSerializer : XmlSerializerImpl.XmlSerializerBase() {
   val bindingProducer = object : OldBindingProducer<Binding>() {
     override fun createRootBinding(aClass: Class<*>, type: Type, cacheKey: Type, map: MutableMap<Type, Binding>): Binding {
-      val binding = createClassBinding(aClass, null, type) ?: KotlinAwareBeanBinding(aClass)
+      var binding = createClassBinding(aClass, null, type)
+      if (binding == null) {
+        if (aClass.isAnnotationPresent(Serializable::class.java)) {
+          binding = KotlinxSerializationBinding(aClass)
+        }
+        else {
+          binding = KotlinAwareBeanBinding(aClass)
+        }
+      }
       map.put(cacheKey, binding)
       try {
         binding.init(type, this@MyXmlSerializer)

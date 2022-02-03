@@ -16,6 +16,7 @@ import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
+import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
 import com.intellij.util.indexing.impl.storage.AbstractIntLog;
@@ -210,11 +211,16 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
     }
   }
 
+  @Override
+  public @NotNull Computable<Boolean> prepareUpdate(int inputId, @NotNull InputData<FileType, Void> data) {
+    throw new UnsupportedOperationException();
+  }
+
   private FileType getFileTypeById(int id) {
     assert id < Short.MAX_VALUE : "file type id = " + id;
     Ref<FileType> fileType = myId2FileTypeCache.get(id);
     if (fileType == null) {
-      String fileTypeName = myFileTypeEnumerator.valueOf((short)id);
+      String fileTypeName = myFileTypeEnumerator.valueOf(id);
       FileType fileTypeByName = fileTypeName == null ? null : FileTypeManager.getInstance().findFileTypeByName(fileTypeName);
       myId2FileTypeCache.put(id, fileType = Ref.create(fileTypeByName));
     }
@@ -362,7 +368,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
     assert id < Short.MAX_VALUE;
     Ref<String> fileType = myId2FileNameCache.get(id);
     if (fileType == null) {
-      String fileTypeName = myFileTypeEnumerator.valueOf((short)id);
+      String fileTypeName = myFileTypeEnumerator.valueOf(id);
       myId2FileNameCache.put(id, fileType = Ref.create(fileTypeName));
     }
     return fileType.get();

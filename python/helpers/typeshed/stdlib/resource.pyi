@@ -1,5 +1,7 @@
 import sys
-from typing import Any, Tuple, overload
+from _typeshed import structseq
+from typing import Tuple, overload
+from typing_extensions import final
 
 RLIMIT_AS: int
 RLIMIT_CORE: int
@@ -23,26 +25,40 @@ if sys.platform == "linux":
     RLIMIT_SIGPENDING: int
     RUSAGE_THREAD: int
 
-_Tuple16 = Tuple[float, float, int, int, int, int, int, int, int, int, int, int, int, int, int, int]
-
-class struct_rusage(_Tuple16):
-    def __new__(cls, sequence: _Tuple16, dict: dict[str, Any] = ...) -> struct_rusage: ...
-    ru_utime: float
-    ru_stime: float
-    ru_maxrss: int
-    ru_ixrss: int
-    ru_idrss: int
-    ru_isrss: int
-    ru_minflt: int
-    ru_majflt: int
-    ru_nswap: int
-    ru_inblock: int
-    ru_oublock: int
-    ru_msgsnd: int
-    ru_msgrcv: int
-    ru_nsignals: int
-    ru_nvcsw: int
-    ru_nivcsw: int
+@final
+class struct_rusage(structseq[float], Tuple[float, float, int, int, int, int, int, int, int, int, int, int, int, int, int, int]):
+    @property
+    def ru_utime(self) -> float: ...
+    @property
+    def ru_stime(self) -> float: ...
+    @property
+    def ru_maxrss(self) -> int: ...
+    @property
+    def ru_ixrss(self) -> int: ...
+    @property
+    def ru_idrss(self) -> int: ...
+    @property
+    def ru_isrss(self) -> int: ...
+    @property
+    def ru_minflt(self) -> int: ...
+    @property
+    def ru_majflt(self) -> int: ...
+    @property
+    def ru_nswap(self) -> int: ...
+    @property
+    def ru_inblock(self) -> int: ...
+    @property
+    def ru_oublock(self) -> int: ...
+    @property
+    def ru_msgsnd(self) -> int: ...
+    @property
+    def ru_msgrcv(self) -> int: ...
+    @property
+    def ru_nsignals(self) -> int: ...
+    @property
+    def ru_nvcsw(self) -> int: ...
+    @property
+    def ru_nivcsw(self) -> int: ...
 
 def getpagesize() -> int: ...
 def getrlimit(__resource: int) -> tuple[int, int]: ...

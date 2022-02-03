@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
@@ -94,7 +94,7 @@ public class DarculaButtonUI extends BasicButtonUI {
   public void installDefaults(AbstractButton b) {
     super.installDefaults(b);
     b.setIconTextGap(textIconGap());
-    b.setMargin(JBUI.emptyInsets());
+    b.setMargin(JBInsets.emptyInsets());
   }
 
   protected int textIconGap() {

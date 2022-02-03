@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.diagnostic.IdeMessagePanel;
@@ -54,9 +54,8 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     return myEditPanel;
   }
 
-  @NotNull
   @Override
-  protected IdeRootPane createIdeRootPane() {
+  protected @NotNull IdeRootPane createIdeRootPane() {
     return new LightEditRootPane(requireNotNullFrame(), this, this);
   }
 
@@ -84,9 +83,8 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  protected CloseProjectWindowHelper createCloseProjectWindowHelper() {
+  protected @NotNull CloseProjectWindowHelper createCloseProjectWindowHelper() {
     return new CloseProjectWindowHelper() {
       @Override
       public void windowClosing(@Nullable Project project) {
@@ -118,16 +116,14 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
       super(frame, frameHelper, parentDisposable);
     }
 
-    @NotNull
     @Override
-    protected Component getCenterComponent(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
+    protected @NotNull Component createCenterComponent(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
       myEditPanel = new LightEditPanel(LightEditUtil.requireProject());
       return myEditPanel;
     }
 
-    @NotNull
     @Override
-    public ToolWindowsPane getToolWindowPane() {
+    public @NotNull ToolWindowsPane getToolWindowPane() {
       throw new IllegalStateException("Tool windows are unavailable in LightEdit");
     }
 
@@ -136,9 +132,8 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
       return new LightEditMainMenuHelper().getMainMenuActionGroup();
     }
 
-    @NotNull
     @Override
-    protected IdeStatusBarImpl createStatusBar(@NotNull IdeFrame frame) {
+    protected @NotNull IdeStatusBarImpl createStatusBar(@NotNull IdeFrame frame) {
       return new IdeStatusBarImpl(frame, false) {
         @Override
         public void updateUI() {
@@ -153,7 +148,7 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     }
 
     @Override
-    protected void updateNorthComponents() {
+    public void updateNorthComponents() {
     }
 
     @Override

@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInspection.restriction.AnnotationContext;
 import com.intellij.codeInspection.restriction.RestrictionInfo;
 import com.intellij.codeInspection.restriction.RestrictionInfoFactory;
@@ -11,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.ULocalVariable;
 import org.jetbrains.uast.UastContextKt;
+
+import java.util.Arrays;
 
 class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
 
@@ -41,6 +44,8 @@ class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
     if (owner == null) return TaintValue.UNKNOWN;
     info = fromAnnotationOwner(owner.getModifierList());
     if (info != TaintValue.UNKNOWN) return info;
+    info = fromExternalAnnotations(owner);
+    if (info != TaintValue.UNKNOWN) return info;
     if (owner instanceof PsiParameter) {
       PsiParameter parameter = (PsiParameter)owner;
       info = of(parameter);
@@ -70,6 +75,15 @@ class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
       }
     }
     return info;
+  }
+
+  private static @NotNull TaintValue fromExternalAnnotations(@NotNull PsiModifierListOwner owner) {
+    ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(owner.getProject());
+    PsiAnnotation[] annotations = annotationsManager.findExternalAnnotations(owner);
+    if (annotations == null) return TaintValue.UNKNOWN;
+    return Arrays.stream(annotations)
+      .map(a -> fromAnnotation(a)).filter(a -> a != null)
+      .findFirst().orElse(TaintValue.UNKNOWN);
   }
 
   static @NotNull TaintValue of(@NotNull PsiModifierListOwner annotationOwner) {

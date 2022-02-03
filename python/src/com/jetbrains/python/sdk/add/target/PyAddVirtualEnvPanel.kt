@@ -7,19 +7,16 @@ import com.intellij.execution.target.fixHighlightingOfUiDslComponents
 import com.intellij.execution.target.joinTargetPaths
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
 import com.intellij.util.PathUtil
@@ -227,8 +224,13 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
     if (!shared) {
       sdk.associateWithModule(module, newProjectPath)
     }
-    moduleToExcludeSdkFrom(root, project)?.excludeInnerVirtualEnv(sdk)
-    PySdkSettings.instance.onVirtualEnvCreated(baseSdk, FileUtil.toSystemIndependentName(root), projectBasePath)
+    project.excludeInnerVirtualEnv(sdk)
+    if (isUnderLocalTarget) {
+      // The method `onVirtualEnvCreated(..)` stores preferred base path to virtual envs. Storing here the base path from the non-local
+      // target (e.g. a path from SSH machine or a Docker image) ends up with a meaningless default for the local machine.
+      // If we would like to store preferred paths for non-local targets we need to use some key to identify the exact target.
+      PySdkSettings.instance.onVirtualEnvCreated(baseSdk, FileUtil.toSystemIndependentName(root), projectBasePath)
+    }
     return sdk
   }
 
@@ -247,16 +249,6 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
       val homePath = selectedSdk.homePath!!
       return createSdkForTarget(project, targetEnvironmentConfiguration, homePath, existingSdks)
     }
-  }
-
-  private fun moduleToExcludeSdkFrom(path: String, project: Project?): Module? {
-    val possibleProjects = if (project != null) listOf(project) else ProjectManager.getInstance().openProjects.asList()
-    val rootFile = StandardFileSystems.local().refreshAndFindFileByPath(path) ?: return null
-    return possibleProjects
-      .asSequence()
-      .map { ModuleUtil.findModuleForFile(rootFile, it) }
-      .filterNotNull()
-      .firstOrNull()
   }
 
   private fun applyOptionalProjectSyncConfiguration(targetConfiguration: TargetEnvironmentConfiguration?) {

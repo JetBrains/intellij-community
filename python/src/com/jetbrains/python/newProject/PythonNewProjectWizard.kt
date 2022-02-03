@@ -37,6 +37,8 @@ import kotlin.streams.toList
  */
 class PythonNewProjectWizard : LanguageNewProjectWizard {
   override val name: String = "Python"
+  override val ordinal = 600
+
   override fun createStep(parent: NewProjectWizardLanguageStep): NewProjectWizardStep = NewPythonProjectStep(parent)
 }
 
@@ -150,9 +152,9 @@ class PythonSdkStep<P>(parent: P)
 
   override val label: String = PyBundle.message("python.sdk.new.project.environment")
 
-  override val steps: Map<String, NewProjectWizardStep> by lazy {
+  override fun initSteps(): Map<String, NewProjectWizardStep> {
     val existingSdkPanel = PyAddExistingSdkPanel(null, null, existingSdks(context), projectPath.toString(), null)
-    mapOf(
+    return mapOf(
       "New" to NewEnvironmentStep(this),
       // TODO: Handle remote project creation for remote SDKs
       "Existing" to PythonSdkPanelAdapterStep(this, existingSdkPanel),
@@ -190,7 +192,7 @@ private class NewEnvironmentStep<P>(parent: P)
 
   override val label: String = PyBundle.message("python.sdk.new.project.environment.type")
 
-  override val steps: Map<String, NewProjectWizardStep> by lazy {
+  override fun initSteps(): Map<String, PythonSdkPanelAdapterStep<NewEnvironmentStep<P>>> {
     val sdks = existingSdks(context)
     val newProjectPath = projectPath.toString()
     val basePanels = listOf(
@@ -201,7 +203,7 @@ private class NewEnvironmentStep<P>(parent: P)
       .map { it.createNewEnvironmentPanel(null, null, sdks, newProjectPath, context) }
       .toList()
     val panels = basePanels + providedPanels
-    panels
+    return panels
       .associateBy { it.envName }
       .mapValues { (_, v) -> PythonSdkPanelAdapterStep(this, v) }
   }

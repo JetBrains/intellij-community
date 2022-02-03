@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import com.intellij.util.xmlb.XmlSerializer
@@ -82,7 +84,9 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
 private const val ARTIFACT_MANAGER_COMPONENT_NAME = "ArtifactManager"
 
 internal class JpsArtifactsExternalFileSerializer(private val externalFile: JpsFileEntitySource.ExactFile,
-                                                  private val internalArtifactsDirUrl: VirtualFileUrl, virtualFileManager: VirtualFileUrlManager)
+                                                  private val internalArtifactsDirUrl: VirtualFileUrl,
+                                                  private val fileInDirectorySourceNames: FileInDirectorySourceNames,
+                                                  virtualFileManager: VirtualFileUrlManager)
   : JpsArtifactEntitiesSerializer(externalFile.file, externalFile, false, virtualFileManager), JpsFileEntityTypeSerializer<ArtifactEntity> {
   override val isExternalStorage: Boolean
     get() = true
@@ -95,7 +99,14 @@ internal class JpsArtifactsExternalFileSerializer(private val externalFile: JpsF
 
   override fun createEntitySource(artifactTag: Element): EntitySource? {
     val externalSystemId = artifactTag.getAttributeValue(SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE) ?: return null
-    val internalEntitySource = JpsFileEntitySource.FileInDirectory(internalArtifactsDirUrl, externalFile.projectLocation)
+    val artifactName = XmlSerializer.deserialize(artifactTag, ArtifactState::class.java).name
+    val existingInternalSource = fileInDirectorySourceNames.findSource(mainEntityClass, artifactName)
+    val internalEntitySource = if (existingInternalSource != null && existingInternalSource.directory == internalArtifactsDirUrl) {
+      logger<JpsLibrariesExternalFileSerializer>().debug{ "Reuse existing source for artifact: ${existingInternalSource.fileNameId}=$artifactName" }
+      existingInternalSource
+    } else {
+      JpsFileEntitySource.FileInDirectory(internalArtifactsDirUrl, externalFile.projectLocation)
+    }
     return JpsImportedEntitySource(internalEntitySource, externalSystemId, true)
   }
 

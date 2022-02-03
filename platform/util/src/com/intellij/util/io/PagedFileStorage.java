@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -120,6 +121,19 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
+  public <R> @NotNull R readChannel(@NotNull ThrowableNotNullFunction<? super ReadableByteChannel, R, ? extends IOException> consumer) throws IOException {
+    synchronized (myInputStreamLock) {
+      try {
+        return useChannel(ch -> {
+          ch.position(0);
+          return consumer.fun(ch);
+        }, true);
+      }
+      catch (NoSuchFileException ignored) {
+        return consumer.fun(Channels.newChannel(new ByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY)));
+      }
+    }
+  }
 
   <R> R useChannel(@NotNull OpenChannelsCache.ChannelProcessor<R> processor, boolean read) throws IOException {
     if (myStorageLockContext.useChannelCache()) {

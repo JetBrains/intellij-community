@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.DataManager;
@@ -63,7 +63,7 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
           final IdeRootPaneNorthExtension navBarExt = ((IdeFrameEx)frame).getNorthExtension(IdeStatusBarImpl.NAVBAR_WIDGET_KEY);
           if (navBarExt != null) {
             final JComponent c = navBarExt.getComponent();
-            final NavBarPanel panel = (NavBarPanel)c.getClientProperty("NavBarPanel");
+            final NavBarPanel panel = (NavBarPanel)c.getClientProperty(NavBarRootPaneExtension.PANEL_KEY);
             panel.rebuildAndSelectItem((list) -> {
               if (UISettings.getInstance().getShowMembersInNavigationBar()) {
                 int lastDirectory = ContainerUtil.lastIndexOf(list, (item) -> NavBarPanel.isExpandable(item.getObject()));

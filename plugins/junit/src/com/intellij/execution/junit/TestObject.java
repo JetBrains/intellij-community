@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -206,7 +206,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   public abstract @NlsActions.ActionText String suggestActionName();
 
-  public abstract RefactoringElementListener getListener(PsiElement element, JUnitConfiguration configuration);
+  public abstract RefactoringElementListener getListener(PsiElement element);
 
   public abstract boolean isConfiguredByElement(JUnitConfiguration configuration,
                                                 PsiClass testClass,
@@ -340,7 +340,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
 
     final List<String> additionalDependencies = new ArrayList<>();
-    if (!hasPackageWithDirectories(psiFacade, "org.junit.platform.launcher", globalSearchScope)) {
+    if (!JUnitUtil.hasPackageWithDirectories(psiFacade, "org.junit.platform.launcher", globalSearchScope)) {
       downloadDependenciesWhenRequired(project, additionalDependencies,
                                        new RepositoryLibraryProperties("org.junit.platform", "junit-platform-launcher", launcherVersion));
     }
@@ -349,8 +349,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     if (!hasJUnit5EnginesAPI(globalSearchScope, psiFacade) || !isCustomJUnit5(globalSearchScope)) {
       PsiClass testAnnotation = dumbService.computeWithAlternativeResolveEnabled(() -> ReadAction.nonBlocking(() -> psiFacade.findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope)).executeSynchronously());
       String jupiterVersion = ObjectUtils.notNull(getVersion(testAnnotation), "5.0.0");
-      if (hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
-        if (!hasPackageWithDirectories(psiFacade, JUPITER_ENGINE_NAME, globalSearchScope)) {
+      if (JUnitUtil.hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
+        if (!JUnitUtil.hasPackageWithDirectories(psiFacade, JUPITER_ENGINE_NAME, globalSearchScope)) {
           downloadDependenciesWhenRequired(project, additionalDependencies,
                                            new RepositoryLibraryProperties("org.junit.jupiter", "junit-jupiter-engine", jupiterVersion));
         }
@@ -359,8 +359,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         }
       }
 
-      if (!hasPackageWithDirectories(psiFacade, VINTAGE_ENGINE_NAME, globalSearchScope)) {
-        if (hasPackageWithDirectories(psiFacade, "junit.framework", globalSearchScope)) {
+      if (!JUnitUtil.hasPackageWithDirectories(psiFacade, VINTAGE_ENGINE_NAME, globalSearchScope)) {
+        if (JUnitUtil.hasPackageWithDirectories(psiFacade, "junit.framework", globalSearchScope)) {
           PsiClass junit4RunnerClass = dumbService.computeWithAlternativeResolveEnabled(
             () -> ReadAction.nonBlocking(() -> psiFacade.findClass("junit.runner.Version", globalSearchScope)).executeSynchronously());
           if (junit4RunnerClass != null && isAcceptableVintageVersion()) {
@@ -419,7 +419,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   public static boolean hasJUnit5EnginesAPI(GlobalSearchScope globalSearchScope, JavaPsiFacade psiFacade) {
-    return hasPackageWithDirectories(psiFacade, "org.junit.platform.engine", globalSearchScope);
+    return JUnitUtil.hasPackageWithDirectories(psiFacade, "org.junit.platform.engine", globalSearchScope);
   }
 
   private static String getVersion(PsiClass classFromCommon) {
@@ -479,15 +479,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         }
       }
     }
-  }
-
-  private static boolean hasPackageWithDirectories(JavaPsiFacade psiFacade,
-                                                   String packageQName,
-                                                   GlobalSearchScope globalSearchScope) {
-    return ReadAction.compute(() -> {
-      PsiPackage aPackage = psiFacade.findPackage(packageQName);
-      return aPackage != null && aPackage.getDirectories(globalSearchScope).length > 0;
-    });
   }
 
   private static GlobalSearchScope getScopeForJUnit(@Nullable Module module, Project project) {
@@ -676,7 +667,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   @NotNull
   protected String getRunner() {
     if (myRunner == null) {
-      myRunner = ReadAction.compute(this::getRunnerInner);
+      myRunner = ReadAction.nonBlocking(this::getRunnerInner).executeSynchronously();
     }
     return myRunner;
   }
@@ -692,8 +683,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     final PsiClass psiClass = isMethodConfiguration || isClassConfiguration
                               ? JavaExecutionUtil.findMainClass(project, data.getMainClassName(), globalSearchScope) : null;
     if (psiClass != null) {
-      TestFramework testFramework = TestFrameworks.detectFramework(psiClass);
-      if (testFramework instanceof JUnit5Framework) {
+      Set<TestFramework> testFrameworks = TestFrameworks.detectApplicableFrameworks(psiClass);
+      TestFramework testFramework = ContainerUtil.getFirstItem(testFrameworks);
+      if (testFramework instanceof JUnit5Framework ||
+          testFrameworks.size() > 1 && ContainerUtil.find(testFrameworks, f -> f instanceof JUnit5Framework) != null) {
         return JUnitStarter.JUNIT5_PARAMETER;
       }
       if (testFramework instanceof JUnit4Framework) {

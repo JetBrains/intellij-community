@@ -5,9 +5,9 @@ open class <!LINE_MARKER("descr='Is subclassed by ExpectedChild [common] Expecte
     open val <!LINE_MARKER("descr='Is overridden in test.ExpectedChild test.ExpectedChildChild test.ExpectedChildChildJvm test.SimpleChild'")!>bar<!>: Int get() = 1
 }
 
-expect open class <!LINE_MARKER("descr='Is subclassed by ExpectedChildChild ExpectedChildChildJvm  Click or press ... to navigate'"), LINE_MARKER("descr='Has actuals in JVM'")!>ExpectedChild<!> : SimpleParent {
-    override fun <!LINE_MARKER("descr='Overrides function in 'SimpleParent''"), LINE_MARKER("descr='Has actuals in JVM'"), LINE_MARKER("descr='Is overridden in test.ExpectedChildChild test.ExpectedChildChildJvm'")!>foo<!>(n: Int)
-    override val <!LINE_MARKER("descr='Overrides property in 'SimpleParent''"), LINE_MARKER("descr='Has actuals in JVM'"), LINE_MARKER("descr='Is overridden in test.ExpectedChildChild test.ExpectedChildChildJvm'")!>bar<!>: Int
+expect open class <!LINE_MARKER("descr='Has actuals in JVM'"), LINE_MARKER("descr='Is subclassed by ExpectedChildChild ExpectedChildChildJvm  Click or press ... to navigate'")!>ExpectedChild<!> : SimpleParent {
+    override fun <!LINE_MARKER("descr='Has actuals in JVM'"), LINE_MARKER("descr='Is overridden in test.ExpectedChildChild test.ExpectedChildChildJvm'"), LINE_MARKER("descr='Overrides function in 'SimpleParent''")!>foo<!>(n: Int)
+    override val <!LINE_MARKER("descr='Has actuals in JVM'"), LINE_MARKER("descr='Is overridden in test.ExpectedChildChild test.ExpectedChildChildJvm'"), LINE_MARKER("descr='Overrides property in 'SimpleParent''")!>bar<!>: Int
 }
 
 class ExpectedChildChild : ExpectedChild() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -48,7 +48,6 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,11 +59,7 @@ import java.util.*;
 
 import static com.intellij.openapi.util.Conditions.not;
 
-/**
- * @author ignatov
- */
 public final class ScratchFileActions {
-
   private static int ourCurrentBuffer = 0;
 
   private static int nextBufferIndex() {
@@ -78,9 +73,11 @@ public final class ScratchFileActions {
 
     private static final String ACTION_ID = "NewScratchFile";
 
-    private final NotNullLazyValue<@Nls String> myActionText = NotNullLazyValue.createValue(
-      () -> NewActionGroup.isActionInNewPopupMenu(this) ? ActionsBundle.actionText(ACTION_ID) : ActionsBundle.message("action.NewScratchFile.text.with.new")
-    );
+    private final NotNullLazyValue<@Nls String> myActionText = NotNullLazyValue.lazy(() -> {
+      return NewActionGroup.isActionInNewPopupMenu(this)
+             ? ActionsBundle.actionText(ACTION_ID)
+             : ActionsBundle.message("action.NewScratchFile.text.with.new");
+    });
 
     public NewFileAction() {
       getTemplatePresentation().setIcon(ICON);

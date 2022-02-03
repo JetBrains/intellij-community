@@ -62,13 +62,9 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    boolean runInCommand = isRunInCommand();
-    boolean runInWriteAction = isRunInWriteAction();
+    boolean runInWriteAction = false;
 
-    if (runInCommand && runInWriteAction) {
-      WriteCommandAction.writeCommandAction(getProject()).run(() -> super.runTestRunnable(testRunnable));
-    }
-    else if (runInCommand) {
+    if (isRunInCommand()) {
       Ref<Throwable> e = new Ref<>();
       CommandProcessor.getInstance().executeCommand(getProject(), () -> {
         try {
@@ -82,16 +78,9 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         throw e.get();
       }
     }
-    else if (runInWriteAction) {
-      WriteAction.runAndWait(() -> super.runTestRunnable(testRunnable));
-    }
     else {
       super.runTestRunnable(testRunnable);
     }
-  }
-
-  protected boolean isRunInWriteAction() {
-    return false;
   }
 
   protected boolean isRunInCommand() {

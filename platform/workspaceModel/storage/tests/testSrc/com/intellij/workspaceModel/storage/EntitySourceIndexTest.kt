@@ -116,7 +116,7 @@ class EntitySourceIndexTest {
     val builder = createEmptyBuilder()
     builder.addSourceEntity("hello", oldSource)
 
-    builder.indexes.entitySourceIndex.index(createEntityId(1, ClassToIntConverter.getInt(SourceEntity::class.java)), oldSource)
+    builder.indexes.entitySourceIndex.index(createEntityId(1, ClassToIntConverter.INSTANCE.getInt(SourceEntity::class.java)), oldSource)
 
     builder.assertConsistency()
   }

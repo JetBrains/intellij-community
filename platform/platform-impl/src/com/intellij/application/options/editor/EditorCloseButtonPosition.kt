@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.UISettings
@@ -18,13 +18,16 @@ private const val NONE = "None"
 private val items = listOf(LEFT, RIGHT, NONE)
 
 @Nls
-private fun optionName(@NonNls option: String): String = when (option) {
-  LEFT -> message("combobox.tab.placement.left")
-  RIGHT -> message("combobox.tab.placement.right")
-  else -> message("combobox.tab.placement.none")
+private fun optionName(@NonNls option: String): String {
+  return when (option) {
+    LEFT -> message("combobox.tab.placement.left")
+    RIGHT -> message("combobox.tab.placement.right")
+    else -> message("combobox.tab.placement.none")
+  }
 }
 
-internal val CLOSE_BUTTON_POSITION = message("tabs.close.button.placement")
+internal val CLOSE_BUTTON_POSITION: String
+  get() = message("tabs.close.button.placement")
 
 internal fun Row.closeButtonPositionComboBox() {
   comboBox(CollectionComboBoxModel(items), listCellRenderer { value, _, _ -> text = optionName(value) })
@@ -34,30 +37,35 @@ internal fun Row.closeButtonPositionComboBox() {
 internal fun closeButtonPlacementOptionDescription(): Collection<BooleanOptionDescription> = items.map { asOptionDescriptor(it) }
 
 private fun set(s: String?) {
+  val ui = UISettings.instance.state
   ui.showCloseButton = s != NONE
   if (s != NONE) {
     ui.closeTabButtonOnTheRight = s == RIGHT
   }
 }
 
-private fun asOptionDescriptor(s: String) = object : BooleanOptionDescription(CLOSE_BUTTON_POSITION + " | " + optionName(s), ID) {
-  override fun isOptionEnabled() = getCloseButtonPlacement() === s
+private fun asOptionDescriptor(s: String): BooleanOptionDescription {
+  return object : BooleanOptionDescription(CLOSE_BUTTON_POSITION + " | " + optionName(s), EDITOR_TABS_OPTIONS_ID) {
+    override fun isOptionEnabled() = getCloseButtonPlacement() === s
 
-  override fun setOptionState(enabled: Boolean) {
-    when {
-      enabled -> set(s)
-      else -> set(
-        when {
-          s === RIGHT -> LEFT
-          else -> RIGHT
-        })
+    override fun setOptionState(enabled: Boolean) {
+      when {
+        enabled -> set(s)
+        else -> set(when {
+                      s === RIGHT -> LEFT
+                      else -> RIGHT
+                    })
+      }
+      UISettings.instance.fireUISettingsChanged()
     }
-    UISettings.instance.fireUISettingsChanged()
   }
 }
 
-private fun getCloseButtonPlacement() = when {
-  !ui.showCloseButton -> NONE
-  java.lang.Boolean.getBoolean("closeTabButtonOnTheLeft") || !ui.closeTabButtonOnTheRight -> LEFT
-  else -> RIGHT
+private fun getCloseButtonPlacement(): String {
+  val ui = UISettings.instance.state
+  return when {
+    !ui.showCloseButton -> NONE
+    java.lang.Boolean.getBoolean("closeTabButtonOnTheLeft") || !ui.closeTabButtonOnTheRight -> LEFT
+    else -> RIGHT
+  }
 }

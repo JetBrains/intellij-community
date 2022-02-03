@@ -7,7 +7,7 @@ import com.intellij.ui.jcef.JBCefBrowser;
 import com.intellij.ui.jcef.JBCefCookie;
 import com.intellij.ui.jcef.JBCefCookieManager;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -17,7 +17,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
-
 
 class CookieManagerDialog extends JDialog {
   private static final String myTitle = "Cookie Manager";
@@ -29,7 +28,7 @@ class CookieManagerDialog extends JDialog {
   protected CookieManagerDialog(Frame owner, JBCefBrowser jbCefBrowser) {
     super(owner, myTitle, false);
     setLayout(new BorderLayout());
-    setSize(JBUI.size(new Dimension(800, 600)));
+    setSize(JBDimension.size(new Dimension(800, 600)));
 
     myJBCefBrowser = jbCefBrowser;
     myJBCefCookieManager = jbCefBrowser.getJBCefCookieManager();

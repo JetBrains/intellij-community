@@ -42,6 +42,12 @@ internal object LessonExecutorUtil {
     return fakeTaskContext.messages
   }
 
+  fun getTaskCallInfo(): String? {
+    return Exception().stackTrace.first { element ->
+      element.toString().let { it.startsWith("training.learn.lesson") || !it.startsWith("training.") }
+    }?.toString()
+  }
+
   fun showBalloonMessage(text: String,
                          ui: JComponent,
                          balloonConfig: LearningBalloonConfig,

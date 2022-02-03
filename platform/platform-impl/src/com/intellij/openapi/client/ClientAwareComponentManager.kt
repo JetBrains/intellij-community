@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
@@ -79,22 +79,22 @@ abstract class ClientAwareComponentManager @JvmOverloads constructor(
 
   override fun preloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
                                activityPrefix: String,
-                               onlyIfAwait: Boolean): Pair<CompletableFuture<Void?>, CompletableFuture<Void?>> {
-    val (asyncPreloadFuture, syncPreloadFuture) = super.preloadServices(modules, activityPrefix, onlyIfAwait)
+                               onlyIfAwait: Boolean): PreloadServicesResult {
+    val result = super.preloadServices(modules, activityPrefix, onlyIfAwait)
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
 
-    val asyncPreloadFutures = mutableListOf<CompletableFuture<Void?>>()
-    val syncPreloadFutures = mutableListOf<CompletableFuture<Void?>>()
+    val syncPreloadFutures = mutableListOf<CompletableFuture<*>>()
+    val asyncPreloadFutures = mutableListOf<CompletableFuture<*>>()
     for (session in sessionsManager.getSessions(true)) {
       session as? ClientSessionImpl ?: continue
-      val (sessionAsyncPreloadFuture, sessionSyncPreloadFuture) = session.preloadServices(modules, activityPrefix, onlyIfAwait)
-      asyncPreloadFutures.add(sessionAsyncPreloadFuture)
-      syncPreloadFutures.add(sessionSyncPreloadFuture)
+      val sessionResult = session.preloadServices(modules, activityPrefix, onlyIfAwait)
+      syncPreloadFutures.add(sessionResult.sync)
+      asyncPreloadFutures.add(sessionResult.async)
     }
 
-    return Pair(
-      CompletableFuture.allOf(asyncPreloadFuture, *asyncPreloadFutures.toTypedArray()),
-      CompletableFuture.allOf(syncPreloadFuture, *syncPreloadFutures.toTypedArray())
+    return PreloadServicesResult(
+      sync = CompletableFuture.allOf(result.sync, *syncPreloadFutures.toTypedArray()),
+      async = CompletableFuture.allOf(result.async, *asyncPreloadFutures.toTypedArray())
     )
   }
 

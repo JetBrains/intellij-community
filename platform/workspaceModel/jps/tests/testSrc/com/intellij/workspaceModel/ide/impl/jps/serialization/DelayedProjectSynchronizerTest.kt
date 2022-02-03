@@ -1,10 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
+import com.intellij.facet.mock.AnotherMockFacetType
+import com.intellij.facet.mock.MockFacetType
+import com.intellij.facet.mock.registerFacetType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
@@ -14,14 +18,14 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.readText
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.storage.EntityStorageSerializer
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -55,6 +59,8 @@ class DelayedProjectSynchronizerTest {
     WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
     virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
     serializer = EntityStorageSerializerImpl(WorkspaceModelCacheImpl.PluginAwareEntityTypesResolver, virtualFileManager)
+    registerFacetType(MockFacetType(), disposableRule.disposable)
+    registerFacetType(AnotherMockFacetType(), disposableRule.disposable)
   }
 
   @After
@@ -128,6 +134,69 @@ class DelayedProjectSynchronizerTest {
     assertTrue(librariesPaths[3].readText().contains("library name=\"log4j\""))
   }
 
+  @Test
+  fun `check entity source reuse at project loading from idea folder`() {
+    val projectFile = projectFile("internalStorage")
+    val projectData = copyAndLoadProject(projectFile, virtualFileManager)
+    val fileInDirectorySourceNames = FileInDirectorySourceNames.from(projectData.storage)
+
+    val originalBuilder = WorkspaceEntityStorageBuilder.create()
+    val configLocation = toConfigLocation(projectData.projectDir.toPath(), virtualFileManager)
+    val serializers = loadProject(configLocation, originalBuilder, virtualFileManager, fileInDirectorySourceNames) as JpsProjectSerializersImpl
+    val loadedProjectData = LoadedProjectData(originalBuilder.toStorage(), serializers, configLocation, projectFile)
+    serializers.checkConsistency(loadedProjectData.projectDirUrl, loadedProjectData.storage, virtualFileManager)
+
+    assertThat(projectData.storage.entities(ModuleEntity::class.java).map {
+      assertTrue(it.entitySource is JpsFileEntitySource.FileInDirectory)
+      it.entitySource
+    }.toList())
+      .containsAll(loadedProjectData.storage.entities(ModuleEntity::class.java).map { it.entitySource }.toList())
+    assertThat(projectData.storage.entities(LibraryEntity::class.java).map {
+      assertTrue(it.entitySource is JpsFileEntitySource.FileInDirectory)
+      it.entitySource
+    }.toList())
+      .containsAll(loadedProjectData.storage.entities(LibraryEntity::class.java).map { it.entitySource }.toList())
+    assertThat(projectData.storage.entities(FacetEntity::class.java).map {
+      assertTrue(it.entitySource is JpsFileEntitySource.FileInDirectory)
+      it.entitySource
+    }.toList())
+      .containsAll(loadedProjectData.storage.entities(FacetEntity::class.java).map { it.entitySource }.toList())
+  }
+
+  @Test
+  fun `check entity source reuse at project loading from external system folder`() {
+    val testCacheFilesDir = projectFile("externalStorage")
+    val (projectDir, _) = copyProjectFiles(testCacheFilesDir)
+
+    val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(projectModel.project)
+    externalStorageConfigurationManager.isEnabled = true
+    val originalBuilder = WorkspaceEntityStorageBuilder.create()
+    loadProject(toConfigLocation(projectDir.toPath(), virtualFileManager), originalBuilder, virtualFileManager, externalStorageConfigurationManager = externalStorageConfigurationManager)
+
+    val fileInDirectorySourceNames = FileInDirectorySourceNames.from(originalBuilder)
+    val builderForAnotherProject = WorkspaceEntityStorageBuilder.create()
+    loadProject(toConfigLocation(projectDir.toPath(), virtualFileManager), builderForAnotherProject, virtualFileManager,
+                externalStorageConfigurationManager = externalStorageConfigurationManager,
+                fileInDirectorySourceNames = fileInDirectorySourceNames)
+
+    assertThat(originalBuilder.entities(ModuleEntity::class.java).map {
+      assertTrue(it.entitySource is JpsImportedEntitySource)
+      it.entitySource
+    }.toList())
+      .containsAll(builderForAnotherProject.entities(ModuleEntity::class.java).map { it.entitySource }.toList())
+    assertThat(originalBuilder.entities(LibraryEntity::class.java).map {
+      assertTrue(it.entitySource is JpsImportedEntitySource)
+      it.entitySource
+    }.toList())
+      .containsAll(builderForAnotherProject.entities(LibraryEntity::class.java).map { it.entitySource }.toList())
+    assertThat(originalBuilder.entities(FacetEntity::class.java).map {
+      assertTrue(it.entitySource is JpsImportedEntitySource)
+      it.entitySource
+    }.toList())
+      .containsAll(builderForAnotherProject.entities(FacetEntity::class.java).map { it.entitySource }.toList())
+  }
+
+
   private fun saveToCache(storage: WorkspaceEntityStorage) {
     val cacheFile = tempDirectory.newFile("cache.data")
     WorkspaceModelCacheImpl.testCacheFile = cacheFile
@@ -143,6 +212,7 @@ class DelayedProjectSynchronizerTest {
     Disposer.register(disposableRule.disposable, Disposable {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     })
+    DelayedProjectSynchronizer.backgroundPostStartupProjectLoading(project)
     return project
   }
 

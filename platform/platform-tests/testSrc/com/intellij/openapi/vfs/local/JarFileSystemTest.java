@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.impl.jar.TimedZipHandler;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
@@ -20,6 +21,7 @@ import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.zip.JBZipFile;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
@@ -27,6 +29,7 @@ import org.junit.Test;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -377,5 +380,44 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     VfsTestUtil.deleteFile(local);
     assertFalse(a.isValid());
     assertFalse(jarRoot.isValid());
+  }
+
+  @Test
+  public void testUsingCrcAsTimestamp() throws IOException {
+    final boolean value = ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue();
+
+    try {
+      System.setProperty("zip.handler.uses.crc.instead.of.timestamp", Boolean.toString(true));
+
+      File jar = IoTestUtil.createTestJar(
+        tempDir.newFile("p.jar"),
+        "file1.txt", "my_content", "file2.dat", "my_content"
+      );
+
+      VirtualFile jarRoot =
+        JarFileSystem.getInstance().getJarRootForLocalFile(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar));
+
+      VirtualFile file1Txt = jarRoot.findChild("file1.txt");
+      VirtualFile file2Dat = jarRoot.findChild("file2.dat");
+
+      assertEquals(file1Txt.getTimeStamp(), file2Dat.getTimeStamp());
+
+      try (JBZipFile it = new JBZipFile(jar)) {
+        it.getOrCreateEntry(file1Txt.getName()).setData("my_new_content".getBytes(StandardCharsets.UTF_8));
+      }
+      // LFS invalidates JarFS caches
+      LocalFileSystem.getInstance().refreshNioFiles(List.of(jar.toPath()), false, true, null);
+      assertNotEquals(file1Txt.getTimeStamp(), file2Dat.getTimeStamp());
+
+      try (JBZipFile it = new JBZipFile(jar)) {
+        it.getOrCreateEntry(file2Dat.getName()).setData("my_new_content".getBytes(StandardCharsets.UTF_8));
+      }
+      // LFS invalidates JarFS caches
+      LocalFileSystem.getInstance().refreshNioFiles(List.of(jar.toPath()), false, true, null);
+      assertEquals(file1Txt.getTimeStamp(), file2Dat.getTimeStamp());
+    }
+    finally {
+      System.setProperty("zip.handler.uses.crc.instead.of.timestamp", Boolean.toString(value));
+    }
   }
 }

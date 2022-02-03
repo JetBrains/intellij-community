@@ -11,10 +11,10 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.maven" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.tests" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.common" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.common" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.kotlin.tests" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.gradle" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.maven" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.gradle" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.maven" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kapt" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.gradle" />
@@ -27,9 +27,10 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.maven" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.gradle" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.maven" />
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.formatter" />
-    <orderEntry type="module" module-name="kotlin.generators" />
     <orderEntry type="module" module-name="kotlin.git" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-native" />
@@ -41,8 +42,6 @@
     <orderEntry type="module" module-name="kotlin.j2k.new" />
     <orderEntry type="module" module-name="kotlin.j2k.old" />
     <orderEntry type="module" module-name="kotlin.j2k.services" />
-    <orderEntry type="module" module-name="kotlin.jps-common" />
-    <orderEntry type="module" module-name="kotlin.jps-plugin" />
     <orderEntry type="module" module-name="kotlin.i18n" />
     <orderEntry type="module" module-name="kotlin.jvm" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" />
@@ -67,14 +66,12 @@
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" />
     <orderEntry type="module" module-name="kotlin.performance-tests" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting-ide-services" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.common" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.gradle" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" />
     <orderEntry type="module" module-name="kotlin.idea.tests" />
-    <orderEntry type="module" module-name="kotlin.jps-plugin.tests" />
     <orderEntry type="module" module-name="kotlin.refIndex" />
     <orderEntry type="module" module-name="kotlin.refIndex.tests" />
     <orderEntry type="module" module-name="kotlin.coverage" />
@@ -102,5 +99,7 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-native.tests" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.tests" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea.tests" />
+    <orderEntry type="module" module-name="kotlin.features-trainer" />
+    <orderEntry type="module" module-name="kotlin.features-trainer.tests" />
   </component>
 </module>

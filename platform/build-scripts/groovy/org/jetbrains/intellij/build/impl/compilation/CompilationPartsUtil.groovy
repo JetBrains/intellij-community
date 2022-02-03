@@ -1,16 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.google.gson.Gson
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Trinity
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.io.Compressor
 import com.intellij.util.io.Decompressor
 import groovy.transform.CompileStatic
 import org.apache.http.HttpStatus
@@ -18,17 +15,12 @@ import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpHead
 import org.apache.http.impl.client.HttpClientBuilder
-import org.apache.log4j.AppenderSkeleton
-import org.apache.log4j.Level
-import org.apache.log4j.Logger
-import org.apache.log4j.PatternLayout
-import org.apache.log4j.spi.LoggingEvent
 import org.apache.tools.ant.BuildException
-import org.apache.tools.ant.taskdefs.ExecTask
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.impl.CompilationContextImpl
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.logging.IntelliJBuildException
 
 import java.nio.charset.StandardCharsets
@@ -45,85 +37,28 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
 import java.util.function.Predicate
+import java.util.zip.GZIPOutputStream
 
 @CompileStatic
 class CompilationPartsUtil {
 
-  static void initLog4J(BuildMessages messages) {
-    def logger = Logger.getRootLogger()
-    logger.setLevel(Level.INFO)
-    if (logger.allAppenders.hasMoreElements()) {
-      messages.
-        warning("Will override existing log4j appenders: ${logger.allAppenders.iterator().collect { it -> it.toString() }.join(",")}")
-      logger.removeAllAppenders()
-    }
-    logger.addAppender(new AppenderSkeleton() {
-      {
-        setLayout(new PatternLayout("[%c] %m"))
-      }
-
-      @Override
-      protected void append(LoggingEvent event) {
-        def level = event.getLevel()
-        String message = getLayout().format(event)
-        if (level.isGreaterOrEqual(Level.ERROR)) {
-          def throwable = event.throwableInformation?.throwable
-          if (throwable != null) {
-            messages.error(message, throwable)
-          }
-          else {
-            messages.error(message)
-          }
-          return
-        }
-        if (level.isGreaterOrEqual(Level.WARN)) {
-          messages.warning(message)
-          return
-        }
-        if (level.isGreaterOrEqual(Level.INFO)) {
-          messages.info(message)
-          return
-        }
-        if (level.isGreaterOrEqual(Level.DEBUG)) {
-          messages.debug(message)
-          return
-        }
-        messages.warning("Unsupported log4j level: $level")
-        messages.info(message)
-      }
-
-      @Override
-      void close() {
-      }
-
-      @Override
-      boolean requiresLayout() {
-        return false
-      }
-    })
-  }
-
-  static void deinitLog4J() {
-    def logger = Logger.getRootLogger()
-    logger.setLevel(Level.DEBUG)
-    logger.removeAllAppenders()
-  }
-
-  static void packAndUploadToServer(CompilationContextImpl context, String zipsLocation) {
+  static void packAndUploadToServer(CompilationContext context, String zipsLocation) {
     BuildMessages messages = context.messages
+
+    messages.progress("Packing classes and uploading them to the server")
 
     String serverUrl = System.getProperty("intellij.build.compiled.classes.server.url")
     if (StringUtil.isEmptyOrSpaces(serverUrl)) {
-      messages.warning("Compile Parts archive server url is not defined. \n" +
-                       "Will not upload to remote server. Please set 'intellij.compile.archive.url' system property.")
+      messages.error("Compile Parts archive server url is not defined. \n" +
+                     "Please set 'intellij.compile.archive.url' system property.")
       return
     }
     String intellijCompileArtifactsBranchProperty = 'intellij.build.compiled.classes.branch'
     String branch = System.getProperty(intellijCompileArtifactsBranchProperty)
     if (StringUtil.isEmptyOrSpaces(branch)) {
-      messages.warning("Unable to determine current git branch, assuming 'master'. \n" +
-                       "Please set '$intellijCompileArtifactsBranchProperty' system property")
-      branch = 'master'
+      messages.error("Unable to determine current git branch, assuming 'master'. \n" +
+                     "Please set '$intellijCompileArtifactsBranchProperty' system property")
+      return
     }
 
     //region Prepare executor
@@ -155,6 +90,12 @@ class CompilationPartsUtil {
           // Skip empty directories
           continue
         }
+
+        if (context.findModule(module.name) == null) {
+          messages.warning("Skipping module output from missing in project module: ${module.name}")
+          continue
+        }
+
         String name = "${subroot.name}/${module.name}".toString()
         PackAndUploadContext ctx = new PackAndUploadContext(module, name, "$zipsLocation/${name}.jar".toString())
         contexts.add(ctx)
@@ -168,7 +109,7 @@ class CompilationPartsUtil {
             def childMessages = messages.forkForParallelTask(ctx.name)
             executor.submit {
               withForkedMessages(childMessages) { BuildMessages msgs ->
-                pack(msgs, context.ant, ctx, incremental)
+                pack(msgs, context, ctx)
               }
             }
           }
@@ -257,7 +198,7 @@ class CompilationPartsUtil {
 
         executor.waitForAllComplete(messages)
 
-        StreamUtil.closeStream(uploader)
+        CloseStreamUtil.closeStream(uploader)
       }
 
       messages.info("Upload complete: reused ${reusedCount.get()} parts, uploaded ${uploadedCount.get()} parts")
@@ -273,12 +214,18 @@ class CompilationPartsUtil {
 
     executor.reportErrors(messages)
 
-
     // Save and publish metadata file
     def metadataFile = new File("$zipsLocation/metadata.json")
     FileUtil.writeToFile(metadataFile, metadataJson)
-
     messages.artifactBuilt(metadataFile.absolutePath)
+
+    def gzippedMetadataFile = new File(zipsLocation, "metadata.json.gz")
+    new GZIPOutputStream(gzippedMetadataFile.newOutputStream()).withCloseable { OutputStream outputStream ->
+      metadataFile.newInputStream().withCloseable { InputStream inputStream ->
+        FileUtil.copy(inputStream, outputStream)
+      }
+    }
+    messages.artifactBuilt(gzippedMetadataFile.absolutePath)
   }
 
   static void fetchAndUnpackCompiledClasses(BuildMessages messages, File classesOutput, BuildOptions options) {
@@ -444,8 +391,6 @@ class CompilationPartsUtil {
       Set<Pair<FetchAndUnpackContext, Integer>> failed = ContainerUtil.newConcurrentSet()
 
       if (!toDownload.isEmpty()) {
-        initLog4J(messages)
-
         def httpClient = HttpClientBuilder.create()
           .setUserAgent('Parts Downloader')
           .setMaxConnTotal(20)
@@ -495,9 +440,7 @@ class CompilationPartsUtil {
         }
         executor.waitForAllComplete(messages)
 
-        StreamUtil.closeStream(httpClient)
-
-        deinitLog4J()
+        CloseStreamUtil.closeStream(httpClient)
       }
 
       messages.reportStatisticValue('compile-parts:download:time',
@@ -588,26 +531,13 @@ class CompilationPartsUtil {
     }
   }
 
-  private static void pack(BuildMessages messages, AntBuilder ant, PackAndUploadContext ctx, boolean incremental) {
+  private static void pack(BuildMessages messages, CompilationContext compilationContext, PackAndUploadContext ctx) {
     messages.block("Packing $ctx.name") {
-      if (SystemInfo.isUnix) {
-        def task = new ExecTask()
-        task.project = ant.project
-        task.executable = "zip"
-        task.dir = new File(ctx.output.absolutePath)
-        task.createArg().line = "-1 -r -q"
-        if (incremental) {
-          task.createArg().line = "--filesync"
-        }
-        task.createArg().line = ctx.archive
-        task.createArg().value = '.'
-        task.execute()
+      def destination = new File(ctx.archive).toPath()
+      if (Files.exists(destination)) {
+        Files.delete(destination)
       }
-      else {
-        def zip = new Compressor.Zip(new File(ctx.archive)).withLevel(1)
-        zip.addDirectory(new File(ctx.output.absolutePath))
-        zip.close()
-      }
+      BuildHelper.zip(compilationContext, destination, ctx.output.absoluteFile.toPath(), true)
     }
   }
 

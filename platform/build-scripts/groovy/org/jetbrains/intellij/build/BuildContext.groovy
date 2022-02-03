@@ -6,11 +6,11 @@ import io.opentelemetry.api.trace.SpanBuilder
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.impl.BuildContextImpl
-import org.jetbrains.intellij.build.impl.BundledJreManager
 import org.jetbrains.intellij.build.impl.DependenciesProperties
 import org.jetbrains.jps.model.module.JpsModule
 
 import java.nio.file.Path
+import java.util.function.UnaryOperator
 
 @CompileStatic
 abstract class BuildContext implements CompilationContext {
@@ -19,7 +19,6 @@ abstract class BuildContext implements CompilationContext {
   LinuxDistributionCustomizer linuxDistributionCustomizer
   MacDistributionCustomizer macDistributionCustomizer
   ProprietaryBuildTools proprietaryBuildTools
-  BundledJreManager bundledJreManager
   DependenciesProperties dependenciesProperties
 
   abstract ApplicationInfoProperties getApplicationInfo()
@@ -49,6 +48,11 @@ abstract class BuildContext implements CompilationContext {
    * Names of JARs inside `IDE_HOME/lib` directory which need to be added to the JVM classpath to start the IDE.
    */
   List<String> bootClassPathJarNames
+
+  /**
+   * Allows customize classpath for buildSearchableOptions and builtinModules
+   */
+  UnaryOperator<Set<String>> classpathCustomizer
 
   /**
    * Add file to be copied into application.

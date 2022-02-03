@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -26,12 +27,12 @@ class InsertExplicitTypeArgumentsIntention : SelfTargetingRangeIntention<KtCallE
     KotlinBundle.lazyMessage("add.explicit.type.arguments")
 ), LowPriorityAction {
     override fun applicabilityRange(element: KtCallExpression): TextRange? =
-        if (isApplicableTo(element, element.analyze())) element.calleeExpression?.textRange else null
+        if (isApplicableTo(element, element.safeAnalyzeNonSourceRootCode())) element.calleeExpression?.textRange else null
 
     override fun applyTo(element: KtCallExpression, editor: Editor?) = applyTo(element)
 
     companion object {
-        fun isApplicableTo(element: KtCallElement, bindingContext: BindingContext = element.analyze(BodyResolveMode.PARTIAL)): Boolean {
+        fun isApplicableTo(element: KtCallElement, bindingContext: BindingContext = element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)): Boolean {
             if (element.typeArguments.isNotEmpty()) return false
             if (element.calleeExpression == null) return false
 

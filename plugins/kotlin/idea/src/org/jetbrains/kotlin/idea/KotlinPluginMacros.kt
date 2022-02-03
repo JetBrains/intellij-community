@@ -3,7 +3,10 @@
 package org.jetbrains.kotlin.idea
 
 import com.intellij.openapi.application.PathMacroContributor
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.config.KotlinCompilerVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 /**
@@ -18,7 +21,7 @@ class KotlinPluginMacros : PathMacroContributor {
 
     override fun forceRegisterPathMacros(macros: MutableMap<String, String>) {
         if (!isUnitTestMode()) {
-            macros[KOTLIN_BUNDLED_PATH_VARIABLE] = KotlinArtifacts.instance.kotlincDirectory.path
+            macros[KOTLIN_BUNDLED_PATH_VARIABLE] = KotlinPluginLayout.getInstance().kotlinc.canonicalPath
         }
     }
 

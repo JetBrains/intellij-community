@@ -5,6 +5,9 @@ import com.intellij.openapi.project.Project
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flattenMerge
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.stream.consumeAsFlow
 import java.util.function.Supplier
 import kotlin.streams.toList
 
@@ -37,9 +40,35 @@ interface ModuleChangesSignalProvider {
     fun registerModuleChangesListener(project: Project, listener: Runnable): Subscription
 }
 
-internal operator fun <T> Supplier<T>.invoke() = get()
+/**
+ * Extension point that allows to listen to module changes using Kotlin [Flow]s.
+ */
+interface FlowModuleChangesSignalProvider {
 
-internal operator fun Runnable.invoke() = run()
+    companion object {
+
+        private val extensionPointName: ExtensionPointName<FlowModuleChangesSignalProvider> =
+            ExtensionPointName.create("com.intellij.packagesearch.flowModuleChangesSignalProvider")
+
+        /**
+         * Returns a [Flow] of signals combining all registered [ModuleChangesSignalProvider].
+         */
+        internal fun listenToModuleChanges(project: Project): Flow<Unit> =
+            extensionPointName.extensions(project).consumeAsFlow()
+                .map { it.registerModuleChangesListener(project) }
+                .flattenMerge()
+    }
+
+    /**
+     * Returns a [Flow]<[Unit]> that emits  every time the build systems has made a change
+     * in the module structure.
+     */
+    fun registerModuleChangesListener(project: Project): Flow<Unit>
+}
+
+operator fun <T> Supplier<T>.invoke() = get()
+
+operator fun Runnable.invoke() = run()
 
 /**
  * Functional interface used to unsubscribe listeners for [ModuleChangesSignalProvider].

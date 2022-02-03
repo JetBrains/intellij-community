@@ -6,13 +6,14 @@ import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.settingsSync.SettingsSyncBundle.message
+import com.intellij.settingsSync.SettingsSyncEnabledStateListener
 import com.intellij.settingsSync.SettingsSyncSettings
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
-import com.intellij.settingsSync.isSettingsSyncEnabled
+import com.intellij.settingsSync.isSettingsSyncEnabledByKey
 import com.intellij.ui.layout.*
 import javax.swing.JCheckBox
 
-class SettingsSyncConfigurable : BoundConfigurable(message("title.settings.sync")) {
+internal class SettingsSyncConfigurable : BoundConfigurable(message("title.settings.sync")) {
 
   private lateinit var configPanel: DialogPanel
 
@@ -29,8 +30,8 @@ class SettingsSyncConfigurable : BoundConfigurable(message("title.settings.sync"
 
   inner class EnabledPredicate : ComponentPredicate() {
     override fun addListener(listener: (Boolean) -> Unit) {
-      SettingsSyncSettings.getInstance().addListener(object : SettingsSyncSettings.Listener {
-        override fun settingsChanged() {
+      SettingsSyncSettings.getInstance().addListener(object : SettingsSyncEnabledStateListener {
+        override fun enabledStateChanged(syncEnabled: Boolean) {
           listener(invoke())
         }
       }, disposable!!)
@@ -126,5 +127,5 @@ class SettingsSyncConfigurable : BoundConfigurable(message("title.settings.sync"
 class SettingsSyncConfigurableProvider: ConfigurableProvider() {
   override fun createConfigurable(): Configurable = SettingsSyncConfigurable()
 
-  override fun canCreateConfigurable() = isSettingsSyncEnabled()
+  override fun canCreateConfigurable() = isSettingsSyncEnabledByKey()
 }

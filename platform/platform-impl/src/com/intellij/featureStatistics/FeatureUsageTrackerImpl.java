@@ -1,16 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics;
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId3;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
@@ -28,9 +33,8 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 @State(
   name = "FeatureUsageStatistics",
   storages = {
-    @Storage(value = FeatureUsageTrackerImpl.FEATURES_USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
-    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true),
-    @Storage(value = StoragePathMacros.CACHE_FILE, deprecated = true)
+    @Storage(value = FeatureUsageTrackerImpl.FEATURES_USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, usePathMacroManager = false),
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true)
   }
 )
 public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implements PersistentStateComponent<Element> {
@@ -198,9 +202,9 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
 
     Class<? extends ProductivityFeaturesProvider> provider = descriptor.getProvider();
     String id = provider == null || getPluginInfo(provider).isDevelopedByJetBrains() ? descriptor.getId() : "third.party";
-    String group = descriptor.getGroupId();
-    FeatureUsageData data = new FeatureUsageData().addData("id", id).addData("group", StringUtil.notNullize(group, "unknown"));
-    FUCounterUsageLogger.getInstance().logEvent("productivity", "feature.used", data);
+    ProductivityUsageCollector.FEATURE_USED.log(id, StringUtil.notNullize(descriptor.getGroupId(), "unknown"),
+                                                provider == null ? null : getPluginInfo(provider));
+
     ApplicationManager.getApplication().getMessageBus().syncPublisher(FeaturesRegistryListener.TOPIC).featureUsed(descriptor);
   }
 
@@ -258,7 +262,6 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
             final Class<? extends ProductivityFeaturesProvider> provider = descriptor.getProvider();
             final PluginInfo info =
               provider == null ? PluginInfoDetectorKt.getPlatformPlugin() : getPluginInfo(provider);
-            context.setPayload(PLUGIN_INFO, info);
             return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
           }
         }
@@ -268,6 +271,20 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
 
     private static boolean isValid(@NotNull String data, String id, String group) {
       return id != null && group != null && (data.equals(id) || data.equals(group));
+    }
+  }
+
+  private static final class ProductivityUsageCollector extends CounterUsagesCollector {
+    private static final EventLogGroup GROUP = new EventLogGroup("productivity", 58);
+    private static final EventId3<String, String, PluginInfo> FEATURE_USED =
+      GROUP.registerEvent("feature.used",
+                          EventFields.StringValidatedByCustomRule("id", "productivity"),
+                          EventFields.StringValidatedByCustomRule("group", "productivity_group"),
+                          EventFields.PluginInfo);
+
+    @Override
+    public EventLogGroup getGroup() {
+      return GROUP;
     }
   }
 }

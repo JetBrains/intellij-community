@@ -21,7 +21,8 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
-import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
+import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics;
+import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
 import com.intellij.util.progress.SubTaskProgressIndicator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -92,17 +93,18 @@ public final class IndexUpdateRunner {
   public static final class FileSet {
     public final String debugName;
     public final Collection<VirtualFile> files;
-    public final IndexingJobStatistics statistics;
+    public final IndexingFileSetStatistics statistics;
     public FileSet(@NotNull Project project, @NotNull String debugName, @NotNull Collection<VirtualFile> files) {
       this.debugName = debugName;
       this.files = files;
-      statistics = new IndexingJobStatistics(project, debugName);
+      statistics = new IndexingFileSetStatistics(project, debugName);
     }
   }
 
   public void indexFiles(@NotNull Project project,
                          @NotNull List<FileSet> fileSets,
-                         @NotNull ProgressIndicator indicator) throws IndexingInterruptedException {
+                         @NotNull ProgressIndicator indicator,
+                         @NotNull ProjectIndexingHistoryImpl projectIndexingHistory) throws IndexingInterruptedException {
     long startTime = System.nanoTime();
     try {
       doIndexFiles(project, fileSets, indicator);
@@ -112,12 +114,9 @@ public final class IndexUpdateRunner {
     }
     finally {
       long visibleIndexingTime = System.nanoTime() - startTime;
-      long totalProcessingTimeInAllThreads = fileSets.stream().mapToLong(b -> b.statistics.getProcessingTimeInAllThreads()).sum();
-      fileSets.forEach(b -> {
-        long weightedVisibleTime = totalProcessingTimeInAllThreads == 0
-                                   ? 0 : (long)(visibleIndexingTime * ((double) b.statistics.getProcessingTimeInAllThreads() / totalProcessingTimeInAllThreads));
-        b.statistics.setIndexingVisibleTime(weightedVisibleTime);
-      });
+      long totalProcessingTimeInAllThreads = fileSets.stream().mapToLong(b -> b.statistics.getIndexingTimeInAllThreads()).sum();
+      projectIndexingHistory.setVisibleTimeToAllThreadsTimeRatio(totalProcessingTimeInAllThreads == 0
+                                                                 ? 0 : ((double)visibleIndexingTime) / totalProcessingTimeInAllThreads);
     }
   }
 
@@ -237,7 +236,7 @@ public final class IndexUpdateRunner {
     }
     catch (TooLargeContentException e) {
       indexingJob.oneMoreFileProcessed();
-      IndexingJobStatistics statistics = indexingJob.getStatistics(e.getFile());
+      IndexingFileSetStatistics statistics = indexingJob.getStatistics(e.getFile());
       //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (statistics) {
         statistics.addTooLargeForIndexingFile(e.getFile());
@@ -269,7 +268,7 @@ public final class IndexUpdateRunner {
           .wrapProgress(indexingJob.myIndicator)
           .executeSynchronously();
         long processingTime = System.nanoTime() - startTime;
-        IndexingJobStatistics statistics = indexingJob.getStatistics(file);
+        IndexingFileSetStatistics statistics = indexingJob.getStatistics(file);
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (statistics) {
           statistics.addFileStatistics(file,
@@ -480,7 +479,7 @@ public final class IndexUpdateRunner {
       myOriginalProgressSuspender = originalProgressSuspender;
     }
 
-    public @NotNull IndexingJobStatistics getStatistics(@NotNull VirtualFile file) {
+    public @NotNull IndexingFileSetStatistics getStatistics(@NotNull VirtualFile file) {
       return myFileToSet.get(file).statistics;
     }
 

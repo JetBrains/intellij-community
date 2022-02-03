@@ -14,6 +14,9 @@ import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.jvm.JvmLanguage;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -32,9 +35,11 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -48,7 +53,6 @@ public final class ProjectProblemUtils {
   public static final Key<Boolean> ourTestingProjectProblems = Key.create("TestingProjectProblems");
   private static final Key<Map<PsiMember, Set<Problem>>> PROBLEMS_KEY = Key.create("project.problems.problem.key");
   private static final Key<Long> MODIFICATION_COUNT = Key.create("ProjectProblemModificationCount");
-  private static final String RELATED_PROBLEMS_CLICKED_EVENT_ID = "related.problems.clicked";
 
   static @NotNull InlayPresentation getPresentation(@NotNull Project project,
                                                     @NotNull Editor editor,
@@ -94,9 +98,32 @@ public final class ProjectProblemUtils {
         return new BrokenUsage(usageInfo, reportedElement);
       });
 
-      UsageTarget[] usageTargets = new UsageTarget[]{new RelatedProblemTargetAdapter(member)};
-      UsageViewManager usageViewManager = UsageViewManager.getInstance(project);
-      usageViewManager.showUsages(usageTargets, usages, presentation);
+      class MemberInfo {
+        private final String myText;
+        private final String myLocation;
+        private final Icon myIcon;
+
+        MemberInfo(String memberText, String memberLocation, Icon memberIcon) {
+          myText = memberText;
+          myLocation = memberLocation;
+          myIcon = memberIcon;
+        }
+      }
+
+      ReadAction.nonBlocking(() -> {
+          ItemPresentation memberPresentation = member.getPresentation();
+          return memberPresentation == null ? null :
+                 new MemberInfo(memberPresentation.getPresentableText(), memberPresentation.getLocationString(),
+                                memberPresentation.getIcon(true));
+        })
+        .finishOnUiThread(ModalityState.any(), (info) -> {
+          if (info == null) return;
+          RelatedProblemTargetAdapter adapter = new RelatedProblemTargetAdapter(member, info.myText, info.myLocation, info.myIcon);
+          UsageTarget[] usageTargets = new UsageTarget[]{adapter};
+          UsageViewManager usageViewManager = UsageViewManager.getInstance(project);
+          usageViewManager.showUsages(usageTargets, usages, presentation);
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
   }
 

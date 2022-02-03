@@ -186,7 +186,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
           PsiElement element = SearchForUsagesRunnable.getPsiElement(searchFor);
           if (element != null) {
             Class<? extends PsiElement> targetClass = element.getClass();
-            Language language = element.getLanguage();
+            Language language = ReadAction.compute(element::getLanguage);
             SearchScope scope = null;
 
             if (element instanceof DataProvider) {

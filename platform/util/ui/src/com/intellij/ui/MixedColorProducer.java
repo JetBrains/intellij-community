@@ -1,16 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Couple;
-import com.intellij.util.NotNullProducer;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.function.Supplier;
 
 /**
  * This is a color producer that allows dynamically mix two colors.
  */
-public final class MixedColorProducer implements NotNullProducer<Color> {
+public final class MixedColorProducer implements Supplier<Color> {
   private final Couple<Color> couple;
   private double mixer;
   private Color cached;
@@ -57,15 +57,13 @@ public final class MixedColorProducer implements NotNullProducer<Color> {
     return value0 + (int)Math.round(mixer * (value1 - value0));
   }
 
-  @NotNull
-  public Color produce(double mixer) {
+  public @NotNull Color produce(double mixer) {
     setMixer(mixer);
-    return produce();
+    return get();
   }
 
-  @NotNull
   @Override
-  public Color produce() {
+  public @NotNull Color get() {
     if (mixer <= 0) return couple.first;
     if (mixer >= 1) return couple.second;
     updateFirstARGB();

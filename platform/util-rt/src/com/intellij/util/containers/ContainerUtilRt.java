@@ -32,22 +32,6 @@ public final class ContainerUtilRt {
   }
 
   /**
-   * @deprecated isn't used in the platform and the plugins anymore; use {@link LinkedList#LinkedList(Collection)} if {@code elements} is
-   * instance of {@link Collection}
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Contract(value = "_ -> new", pure = true)
-  public static <T> LinkedList<T> newLinkedList(@NotNull Iterable<? extends T> elements) {
-    LinkedList<T> collection = new LinkedList<T>();
-    for (T element : elements) {
-      collection.add(element);
-    }
-    return collection;
-  }
-
-  /**
    * @deprecated Use {@link ArrayList#ArrayList()} instead
    */
   @NotNull

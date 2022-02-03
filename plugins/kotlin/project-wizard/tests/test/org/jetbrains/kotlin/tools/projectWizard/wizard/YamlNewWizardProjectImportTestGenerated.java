@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -20,481 +20,205 @@ import org.junit.runner.RunWith;
 public abstract class YamlNewWizardProjectImportTestGenerated extends AbstractYamlNewWizardProjectImportTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../cli/testData/buildFileGeneration")
-    public abstract static class GradleKts extends AbstractYamlNewWizardProjectImportTest {
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestAndroid extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
-            }
-
-            @TestMetadata("android")
-            public void testAndroid() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/android/");
-            }
+    public static class GradleKts extends AbstractYamlNewWizardProjectImportTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestJsNodeAndBrowserTargets extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
-            }
-
-            @TestMetadata("jsNodeAndBrowserTargets")
-            public void testJsNodeAndBrowserTargets() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/jsNodeAndBrowserTargets/");
-            }
+        @TestMetadata("android")
+        public void testAndroid() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/android/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestJvmTarget extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
-            }
-
-            @TestMetadata("jvmTarget")
-            public void testJvmTarget() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/jvmTarget/");
-            }
+        @TestMetadata("jsNodeAndBrowserTargets")
+        public void testJsNodeAndBrowserTargets() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/jsNodeAndBrowserTargets/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestJvmTargetWithJava extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
-            }
-
-            @TestMetadata("jvmTargetWithJava")
-            public void testJvmTargetWithJava() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/jvmTargetWithJava/");
-            }
+        @TestMetadata("jvmTarget")
+        public void testJvmTarget() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/jvmTarget/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestJvmToJvmDependency extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
-            }
-
-            @TestMetadata("jvmToJvmDependency")
-            public void testJvmToJvmDependency() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/jvmToJvmDependency/");
-            }
+        @TestMetadata("jvmTargetWithJava")
+        public void testJvmTargetWithJava() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/jvmTargetWithJava/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestJvmToJvmDependencyWithSingleRoot extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
-            }
-
-            @TestMetadata("jvmToJvmDependencyWithSingleRoot")
-            public void testJvmToJvmDependencyWithSingleRoot() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/jvmToJvmDependencyWithSingleRoot/");
-            }
+        @TestMetadata("jvmToJvmDependency")
+        public void testJvmToJvmDependency() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/jvmToJvmDependency/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestKotlinJvm extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
-            }
-
-            @TestMetadata("kotlinJvm")
-            public void testKotlinJvm() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/kotlinJvm/");
-            }
+        @TestMetadata("jvmToJvmDependencyWithSingleRoot")
+        public void testJvmToJvmDependencyWithSingleRoot() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/jvmToJvmDependencyWithSingleRoot/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestNativeForCurrentSystem extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
-            }
-
-            @TestMetadata("nativeForCurrentSystem")
-            public void testNativeForCurrentSystem() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/nativeForCurrentSystem/");
-            }
+        @TestMetadata("kotlinJvm")
+        public void testKotlinJvm() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/kotlinJvm/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestSimpleMultiplatform extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
-            }
-
-            @TestMetadata("simpleMultiplatform")
-            public void testSimpleMultiplatform() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/simpleMultiplatform/");
-            }
+        @TestMetadata("nativeForCurrentSystem")
+        public void testNativeForCurrentSystem() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/nativeForCurrentSystem/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestSimpleNativeTarget extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
-            }
-
-            @TestMetadata("simpleNativeTarget")
-            public void testSimpleNativeTarget() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/simpleNativeTarget/");
-            }
+        @TestMetadata("simpleMultiplatform")
+        public void testSimpleMultiplatform() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/simpleMultiplatform/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestSinglePlatformJsBrowser extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
-            }
-
-            @TestMetadata("singlePlatformJsBrowser")
-            public void testSinglePlatformJsBrowser() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/singlePlatformJsBrowser/");
-            }
+        @TestMetadata("simpleNativeTarget")
+        public void testSimpleNativeTarget() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/simpleNativeTarget/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestSinglePlatformJsNode extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
-            }
+        @TestMetadata("singlePlatformJsBrowser")
+        public void testSinglePlatformJsBrowser() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/singlePlatformJsBrowser/");
+        }
 
-            @TestMetadata("singlePlatformJsNode")
-            public void testSinglePlatformJsNode() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/singlePlatformJsNode/");
-            }
+        @TestMetadata("singlePlatformJsNode")
+        public void testSinglePlatformJsNode() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/singlePlatformJsNode/");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../cli/testData/buildFileGeneration")
-    public abstract static class GradleGroovy extends AbstractYamlNewWizardProjectImportTest {
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestAndroid extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
-            }
-
-            @TestMetadata("android")
-            public void testAndroid() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/android/");
-            }
+    public static class GradleGroovy extends AbstractYamlNewWizardProjectImportTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestJsNodeAndBrowserTargets extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
-            }
-
-            @TestMetadata("jsNodeAndBrowserTargets")
-            public void testJsNodeAndBrowserTargets() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/jsNodeAndBrowserTargets/");
-            }
+        @TestMetadata("android")
+        public void testAndroid() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/android/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestJvmTarget extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
-            }
-
-            @TestMetadata("jvmTarget")
-            public void testJvmTarget() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/jvmTarget/");
-            }
+        @TestMetadata("jsNodeAndBrowserTargets")
+        public void testJsNodeAndBrowserTargets() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/jsNodeAndBrowserTargets/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestJvmTargetWithJava extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
-            }
-
-            @TestMetadata("jvmTargetWithJava")
-            public void testJvmTargetWithJava() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/jvmTargetWithJava/");
-            }
+        @TestMetadata("jvmTarget")
+        public void testJvmTarget() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/jvmTarget/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestJvmToJvmDependency extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
-            }
-
-            @TestMetadata("jvmToJvmDependency")
-            public void testJvmToJvmDependency() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/jvmToJvmDependency/");
-            }
+        @TestMetadata("jvmTargetWithJava")
+        public void testJvmTargetWithJava() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/jvmTargetWithJava/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestJvmToJvmDependencyWithSingleRoot extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
-            }
-
-            @TestMetadata("jvmToJvmDependencyWithSingleRoot")
-            public void testJvmToJvmDependencyWithSingleRoot() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/jvmToJvmDependencyWithSingleRoot/");
-            }
+        @TestMetadata("jvmToJvmDependency")
+        public void testJvmToJvmDependency() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/jvmToJvmDependency/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestKotlinJvm extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
-            }
-
-            @TestMetadata("kotlinJvm")
-            public void testKotlinJvm() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/kotlinJvm/");
-            }
+        @TestMetadata("jvmToJvmDependencyWithSingleRoot")
+        public void testJvmToJvmDependencyWithSingleRoot() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/jvmToJvmDependencyWithSingleRoot/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestNativeForCurrentSystem extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
-            }
-
-            @TestMetadata("nativeForCurrentSystem")
-            public void testNativeForCurrentSystem() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/nativeForCurrentSystem/");
-            }
+        @TestMetadata("kotlinJvm")
+        public void testKotlinJvm() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/kotlinJvm/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestSimpleMultiplatform extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
-            }
-
-            @TestMetadata("simpleMultiplatform")
-            public void testSimpleMultiplatform() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/simpleMultiplatform/");
-            }
+        @TestMetadata("nativeForCurrentSystem")
+        public void testNativeForCurrentSystem() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/nativeForCurrentSystem/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestSimpleNativeTarget extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
-            }
-
-            @TestMetadata("simpleNativeTarget")
-            public void testSimpleNativeTarget() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/simpleNativeTarget/");
-            }
+        @TestMetadata("simpleMultiplatform")
+        public void testSimpleMultiplatform() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/simpleMultiplatform/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestSinglePlatformJsBrowser extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
-            }
-
-            @TestMetadata("singlePlatformJsBrowser")
-            public void testSinglePlatformJsBrowser() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/singlePlatformJsBrowser/");
-            }
+        @TestMetadata("simpleNativeTarget")
+        public void testSimpleNativeTarget() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/simpleNativeTarget/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestSinglePlatformJsNode extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
-            }
+        @TestMetadata("singlePlatformJsBrowser")
+        public void testSinglePlatformJsBrowser() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/singlePlatformJsBrowser/");
+        }
 
-            @TestMetadata("singlePlatformJsNode")
-            public void testSinglePlatformJsNode() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/singlePlatformJsNode/");
-            }
+        @TestMetadata("singlePlatformJsNode")
+        public void testSinglePlatformJsNode() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/singlePlatformJsNode/");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../cli/testData/buildFileGeneration")
-    public abstract static class Maven extends AbstractYamlNewWizardProjectImportTest {
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestAndroid extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
-            }
-
-            @TestMetadata("android")
-            public void testAndroid() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/android/");
-            }
+    public static class Maven extends AbstractYamlNewWizardProjectImportTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestJsNodeAndBrowserTargets extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
-            }
-
-            @TestMetadata("jsNodeAndBrowserTargets")
-            public void testJsNodeAndBrowserTargets() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/jsNodeAndBrowserTargets/");
-            }
+        @TestMetadata("android")
+        public void testAndroid() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/android/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestJvmTarget extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
-            }
-
-            @TestMetadata("jvmTarget")
-            public void testJvmTarget() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/jvmTarget/");
-            }
+        @TestMetadata("jsNodeAndBrowserTargets")
+        public void testJsNodeAndBrowserTargets() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/jsNodeAndBrowserTargets/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestJvmTargetWithJava extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
-            }
-
-            @TestMetadata("jvmTargetWithJava")
-            public void testJvmTargetWithJava() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/jvmTargetWithJava/");
-            }
+        @TestMetadata("jvmTarget")
+        public void testJvmTarget() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/jvmTarget/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestJvmToJvmDependency extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
-            }
-
-            @TestMetadata("jvmToJvmDependency")
-            public void testJvmToJvmDependency() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/jvmToJvmDependency/");
-            }
+        @TestMetadata("jvmTargetWithJava")
+        public void testJvmTargetWithJava() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/jvmTargetWithJava/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestJvmToJvmDependencyWithSingleRoot extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
-            }
-
-            @TestMetadata("jvmToJvmDependencyWithSingleRoot")
-            public void testJvmToJvmDependencyWithSingleRoot() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/jvmToJvmDependencyWithSingleRoot/");
-            }
+        @TestMetadata("jvmToJvmDependency")
+        public void testJvmToJvmDependency() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/jvmToJvmDependency/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestKotlinJvm extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
-            }
-
-            @TestMetadata("kotlinJvm")
-            public void testKotlinJvm() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/kotlinJvm/");
-            }
+        @TestMetadata("jvmToJvmDependencyWithSingleRoot")
+        public void testJvmToJvmDependencyWithSingleRoot() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/jvmToJvmDependencyWithSingleRoot/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestNativeForCurrentSystem extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
-            }
-
-            @TestMetadata("nativeForCurrentSystem")
-            public void testNativeForCurrentSystem() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/nativeForCurrentSystem/");
-            }
+        @TestMetadata("kotlinJvm")
+        public void testKotlinJvm() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/kotlinJvm/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestSimpleMultiplatform extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
-            }
-
-            @TestMetadata("simpleMultiplatform")
-            public void testSimpleMultiplatform() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/simpleMultiplatform/");
-            }
+        @TestMetadata("nativeForCurrentSystem")
+        public void testNativeForCurrentSystem() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/nativeForCurrentSystem/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestSimpleNativeTarget extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
-            }
-
-            @TestMetadata("simpleNativeTarget")
-            public void testSimpleNativeTarget() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/simpleNativeTarget/");
-            }
+        @TestMetadata("simpleMultiplatform")
+        public void testSimpleMultiplatform() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/simpleMultiplatform/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestSinglePlatformJsBrowser extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
-            }
-
-            @TestMetadata("singlePlatformJsBrowser")
-            public void testSinglePlatformJsBrowser() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/singlePlatformJsBrowser/");
-            }
+        @TestMetadata("simpleNativeTarget")
+        public void testSimpleNativeTarget() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/simpleNativeTarget/");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../cli/testData/buildFileGeneration")
-        public static class TestSinglePlatformJsNode extends AbstractYamlNewWizardProjectImportTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
-            }
+        @TestMetadata("singlePlatformJsBrowser")
+        public void testSinglePlatformJsBrowser() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/singlePlatformJsBrowser/");
+        }
 
-            @TestMetadata("singlePlatformJsNode")
-            public void testSinglePlatformJsNode() throws Exception {
-                runTest("../cli/testData/buildFileGeneration/singlePlatformJsNode/");
-            }
+        @TestMetadata("singlePlatformJsNode")
+        public void testSinglePlatformJsNode() throws Exception {
+            runTest("../cli/testData/buildFileGeneration/singlePlatformJsNode/");
         }
     }
 }

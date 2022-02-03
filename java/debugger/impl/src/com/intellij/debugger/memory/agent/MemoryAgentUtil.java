@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -9,7 +9,6 @@ import com.intellij.debugger.memory.ui.SizedReferenceInfo;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -45,12 +44,11 @@ public final class MemoryAgentUtil {
     );
   }
 
-  @NotNull
-  static AgentExtractor.AgentLibraryType detectAgentKindByBitness(@NotNull Bitness bitness) {
+  static AgentExtractor.@NotNull AgentLibraryType detectAgentKindByArch(CpuArch arch) {
     LOG.assertTrue(isPlatformSupported());
     if (SystemInfo.isLinux) return AgentExtractor.AgentLibraryType.LINUX;
     if (SystemInfo.isMac) return AgentExtractor.AgentLibraryType.MACOS;
-    return bitness.equals(Bitness.x32) ? AgentExtractor.AgentLibraryType.WINDOWS32 : AgentExtractor.AgentLibraryType.WINDOWS64;
+    return arch.width == 32 ? AgentExtractor.AgentLibraryType.WINDOWS32 : AgentExtractor.AgentLibraryType.WINDOWS64;
   }
 
   @NotNull

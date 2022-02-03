@@ -56,10 +56,6 @@ public class PyConsoleDebugProcess extends PyDebugProcess {
     printToConsole(getCurrentStateMessage() + "\n", ConsoleViewContentType.SYSTEM_OUTPUT);
   }
 
-  @Override
-  protected void afterConnect() {
-  }
-
 
   @Override
   public int getConnectTimeout() {

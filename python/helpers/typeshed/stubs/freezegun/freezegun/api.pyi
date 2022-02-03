@@ -31,6 +31,7 @@ class _freeze_time:
         ignore: Sequence[str],
         tick: bool,
         as_arg: bool,
+        as_kwarg: str,
         auto_tick_seconds: float,
     ) -> None: ...
     @overload
@@ -53,5 +54,6 @@ def freeze_time(
     ignore: Sequence[str] | None = ...,
     tick: bool | None = ...,
     as_arg: bool | None = ...,
+    as_kwarg: str | None = ...,
     auto_tick_seconds: float | None = ...,
 ) -> _freeze_time: ...

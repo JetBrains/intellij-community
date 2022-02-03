@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.controlflow;
 
 import com.siyeh.InspectionGadgetsBundle;
@@ -56,24 +56,11 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
     doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                  "boolean test(boolean duplicateExpression, boolean payload) {\n" +
                  "    boolean reassigned = false;\n" +
-                 "    return (true &/**/ duplicateExpression) || duplicateExpression & ((reassigned = payload));\n" +
+                 "    return (true &/**/ duplicateExpression) | duplicateExpression & ((reassigned = payload));\n" +
                  "}",
                  "boolean test(boolean duplicateExpression, boolean payload) {\n" +
                  "    boolean reassigned = false;\n" +
-                 "    return (true || (reassigned = payload)) & duplicateExpression;\n" +
-                 "}"
-    );
-  }
-
-  public void testFactorOnEdge() {
-    doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
-                 "boolean test(boolean duplicateExpression, boolean payload) {\n" +
-                 "    boolean reassigned = false;\n" +
-                 "    return (duplicateExpression &/**/ (reassigned = payload)) || (true & duplicateExpression);\n" +
-                 "}",
-                 "boolean test(boolean duplicateExpression, boolean payload) {\n" +
-                 "    boolean reassigned = false;\n" +
-                 "    return duplicateExpression & ((reassigned = payload) || true);\n" +
+                 "    return duplicateExpression & (true | (reassigned = payload));\n" +
                  "}"
     );
   }
@@ -93,11 +80,11 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
     doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                  "boolean test(boolean duplicateExpression, boolean payload) {\n" +
                  "    boolean reassigned = false;\n" +
-                 "    return (duplicateExpression &/**/ (reassigned = payload)) | (duplicateExpression & true);\n" +
+                 "    return ((reassigned = payload)/**/ & duplicateExpression) | (true & duplicateExpression);\n" +
                  "}",
                  "boolean test(boolean duplicateExpression, boolean payload) {\n" +
                  "    boolean reassigned = false;\n" +
-                 "    return duplicateExpression & ((reassigned = payload) | true);\n" +
+                 "    return ((reassigned = payload) | true) & duplicateExpression;\n" +
                  "}"
     );
   }
@@ -106,11 +93,11 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
     doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                  "int test(int duplicateExpression, int payload) {\n" +
                  "    int reassigned = 1;\n" +
-                 "    return (duplicateExpression &/**/ (reassigned = payload)) | (duplicateExpression & 2);\n" +
+                 "    return ((reassigned = payload)/**/ & duplicateExpression) | (2 & duplicateExpression);\n" +
                  "}",
                  "int test(int duplicateExpression, int payload) {\n" +
                  "    int reassigned = 1;\n" +
-                 "    return duplicateExpression & ((reassigned = payload) | 2);\n" +
+                 "    return ((reassigned = payload) | 2) & duplicateExpression;\n" +
                  "}"
     );
   }
@@ -134,6 +121,16 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
                                "}");
   }
 
+  public void testFinalEagerActiveExpression() {
+    doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+                 "boolean test(int x, int y, int updatedState, int newState) {\n" +
+                 "    return (x > y & updatedState == -1) | /**/(y < x & (updatedState = newState) == 0);\n" +
+                 "  }",
+                 "boolean test(int x, int y, int updatedState, int newState) {\n" +
+                 "    return y < x & (updatedState == -1 | (updatedState = newState) == 0);\n" +
+                 "  }");
+  }
+
   public void testComparison() {
     doTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
            "class X {\n" +
@@ -143,7 +140,7 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
            "}",
            "class X {\n" +
            "  boolean test(int x, int y, int z) {\n" +
-           "    return x > y && (z == 1 || z == 2);\n" +
+           "    return y < x && (z == 1 || z == 2);\n" +
            "  }\n" +
            "}");
   }
@@ -170,6 +167,32 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
                                "    boolean thenExpression = false;\n" +
                                "    boolean elseExpression = true;\n" +
                                "    return (duplicateExpression ^ thenExpression) &&/**/ (duplicateExpression ^ elseExpression);\n" +
+                               "  }\n" +
+                               "}\n");
+  }
+
+  public void testDoNotCleanupWithFinalLazyActiveExpression() {
+    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+                               "class X {\n" +
+                               "  boolean test() {\n" +
+                               "    boolean duplicateExpression = true;\n" +
+                               "    boolean thenExpression = true;\n" +
+                               "    boolean updatedExpression = true;\n" +
+                               "    boolean newValue = false;\n" +
+                               "    boolean evaluation = (duplicateExpression || thenExpression) &&/**/ (duplicateExpression || (updatedExpression = newValue));\n" +
+                               "    return updatedExpression;\n" +
+                               "  }\n" +
+                               "}\n");
+  }
+
+  public void testDoNotCleanupWithNotFinalEagerActiveExpression() {
+    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+                               "class X {\n" +
+                               "  boolean test() {\n" +
+                               "    boolean duplicateExpression = true;\n" +
+                               "    boolean newValue = false;\n" +
+                               "    boolean elseExpression = false;\n" +
+                               "    return (duplicateExpression | (duplicateExpression = newValue)) &/**/ (duplicateExpression | elseExpression);\n" +
                                "  }\n" +
                                "}\n");
   }

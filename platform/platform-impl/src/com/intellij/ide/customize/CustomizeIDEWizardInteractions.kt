@@ -3,8 +3,6 @@ package com.intellij.ide.customize
 
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.internal.statistic.FeaturedPluginsInfoProvider
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptorWithFeaturedPlugins
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
@@ -52,17 +50,17 @@ internal class CustomizeIDEWizardCollectorActivity : ApplicationInitializedListe
 
     ForkJoinPool.commonPool().execute {
       if (CustomizeIDEWizardInteractions.skippedOnPage != -1) {
-        FUCounterUsageLogger.getInstance().logEvent("customize.wizard", "remaining.pages.skipped",
-                                                    FeatureUsageData().addData("page", CustomizeIDEWizardInteractions.skippedOnPage))
+        CustomizeWizardCollector.logRemainingPagesSkipped(CustomizeIDEWizardInteractions.skippedOnPage)
       }
 
       val featuredPluginsProvider = CustomizeIDEWizardFeaturedPluginsProvider(CustomizeIDEWizardInteractions.featuredPluginGroups.get())
       for (interaction in CustomizeIDEWizardInteractions.interactions) {
-        val data = FeatureUsageData()
-        data.addData("timestamp", interaction.timestamp)
-        interaction.pluginDescriptor?.let { data.addPluginInfo(getPluginInfoByDescriptorWithFeaturedPlugins(it, featuredPluginsProvider)) }
-        interaction.groupId?.let { data.addData("group", it) }
-        FUCounterUsageLogger.getInstance().logEvent("customize.wizard", interaction.type.toString(), data)
+        val pluginInfo = if (interaction.pluginDescriptor != null)
+          getPluginInfoByDescriptorWithFeaturedPlugins(interaction.pluginDescriptor, featuredPluginsProvider)
+        else
+          null
+
+        CustomizeWizardCollector.logEvent(interaction.type, interaction.timestamp, pluginInfo, interaction.groupId)
       }
     }
   }

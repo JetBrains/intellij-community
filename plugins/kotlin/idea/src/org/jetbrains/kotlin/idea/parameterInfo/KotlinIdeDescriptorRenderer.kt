@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.parameterInfo
 
+import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.builtins.*
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
@@ -264,8 +265,11 @@ open class KotlinIdeDescriptorRenderer(
     }
 
     override fun renderFlexibleType(lowerRendered: String, upperRendered: String, builtIns: KotlinBuiltIns): String {
-        if (differsOnlyInNullability(lowerRendered, upperRendered)) {
-            if (upperRendered.startsWith("(")) {
+        val lowerType = escape(StringUtil.removeHtmlTags(lowerRendered))
+        val upperType = escape(StringUtil.removeHtmlTags(upperRendered))
+
+        if (differsOnlyInNullability(lowerType, upperType)) {
+            if (upperType.startsWith("(")) {
                 // the case of complex type, e.g. (() -> Unit)?
                 return buildString {
                     appendHighlighted("(") { asParentheses }
@@ -280,35 +284,39 @@ open class KotlinIdeDescriptorRenderer(
             }
         }
 
-        val kotlinCollectionsPrefix = classifierNamePolicy.renderClassifier(builtIns.collection, this).substringBefore("Collection")
+        val kotlinCollectionsPrefix = classifierNamePolicy.renderClassifier(builtIns.collection, this)
+            .let { escape(StringUtil.removeHtmlTags(it)) }
+            .substringBefore("Collection")
         val mutablePrefix = "Mutable"
         // java.util.List<Foo> -> (Mutable)List<Foo!>!
         val simpleCollection = replacePrefixes(
-            lowerRendered,
+            lowerType,
             kotlinCollectionsPrefix + mutablePrefix,
-            upperRendered,
+            upperType,
             kotlinCollectionsPrefix,
             "$kotlinCollectionsPrefix($mutablePrefix)"
         )
         if (simpleCollection != null) return simpleCollection
         // java.util.Map.Entry<Foo, Bar> -> (Mutable)Map.(Mutable)Entry<Foo!, Bar!>!
         val mutableEntry = replacePrefixes(
-            lowerRendered,
+            lowerType,
             kotlinCollectionsPrefix + "MutableMap.MutableEntry",
-            upperRendered,
+            upperType,
             kotlinCollectionsPrefix + "Map.Entry",
-            "$kotlinCollectionsPrefix(Mutable)Map.(Mutable)Entry"
+            "$kotlinCollectionsPrefix(Mutable)${highlight("Map") { asClassName }}.(Mutable)${highlight("Entry") { asClassName }}"
         )
         if (mutableEntry != null) return mutableEntry
 
-        val kotlinPrefix = classifierNamePolicy.renderClassifier(builtIns.array, this).substringBefore("Array")
+        val kotlinPrefix = classifierNamePolicy.renderClassifier(builtIns.array, this)
+            .let { escape(StringUtil.removeHtmlTags(it)) }
+            .substringBefore("Array")
         // Foo[] -> Array<(out) Foo!>!
         val array = replacePrefixes(
-            lowerRendered,
+            lowerType,
             kotlinPrefix + escape("Array<"),
-            upperRendered,
+            upperType,
             kotlinPrefix + escape("Array<out "),
-            kotlinPrefix + escape("Array<(out) ")
+            kotlinPrefix + highlight("Array") { asClassName } + escape("<(out) ")
         )
         if (array != null) return array
 
@@ -377,7 +385,7 @@ open class KotlinIdeDescriptorRenderer(
         is TypeParameterDescriptor -> highlight(renderClassifierName(cd)) { asTypeParameterName }
         is ClassDescriptor -> highlight(renderClassifierName(cd)) { asClassName }
         is TypeAliasDescriptor -> highlight(renderClassifierName(cd)) { asTypeAlias }
-        null -> highlight(typeConstructor.toString()) { asClassName }
+        null -> highlight(escape(typeConstructor.toString())) { asClassName }
         else -> error("Unexpected classifier: " + cd::class.java)
     }
 
@@ -1187,8 +1195,7 @@ open class KotlinIdeDescriptorRenderer(
             }
             appendValueParameters(primaryConstructor.valueParameters, primaryConstructor.hasSynthesizedParameterNames())
             appendSuperTypes(klass, indent = "  ")
-        }
-        else {
+        } else {
             appendSuperTypes(klass, prefix = "\n    ")
         }
 
@@ -1345,11 +1352,10 @@ open class KotlinIdeDescriptorRenderer(
             val lowerWithoutPrefix = lowerRendered.substring(lowerPrefix.length)
             val upperWithoutPrefix = upperRendered.substring(upperPrefix.length)
             val flexibleCollectionName = foldedPrefix + lowerWithoutPrefix
-
-            if (lowerWithoutPrefix == upperWithoutPrefix) return flexibleCollectionName
-
-            if (differsOnlyInNullability(lowerWithoutPrefix, upperWithoutPrefix)) {
-                return "$flexibleCollectionName!"
+            return when {
+                lowerWithoutPrefix == upperWithoutPrefix -> flexibleCollectionName
+                differsOnlyInNullability(lowerWithoutPrefix, upperWithoutPrefix) -> "$flexibleCollectionName!"
+                else -> null
             }
         }
         return null

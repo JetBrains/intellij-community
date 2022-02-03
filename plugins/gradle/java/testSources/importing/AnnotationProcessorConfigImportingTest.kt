@@ -436,12 +436,8 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
     importProject(
       createBuildScriptBuilder()
         .withJavaLibraryPlugin()
-        .addPostfix("""
-                dependencies {
-                  compileOnly 'org.projectlombok:lombok:1.18.8'
-                  annotationProcessor 'org.projectlombok:lombok:1.18.8'
-                }
-        """.trimIndent())
+        .addCompileOnlyDependency("org.projectlombok:lombok:1.18.8")
+        .addDependency("annotationProcessor", "org.projectlombok:lombok:1.18.8")
         .generate());
 
     val annotationProcessingConfiguration = config.getAnnotationProcessingConfiguration(nonGradleModule)

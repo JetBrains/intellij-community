@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DuplicatedCode") // extracted from org.jetbrains.r.rendering.toolwindow.RDocumentationComponent
 
 package com.intellij.lang.documentation.ide.ui
@@ -18,7 +18,7 @@ internal class SearchHighlighterPainter(private val current: Boolean) : Highligh
     val rec0: Rectangle = mapper.modelToView(c, p0)
     val rec1: Rectangle = mapper.modelToView(c, p1)
 
-    val borderColor = getBorderColor()
+    val borderColor = getBorderColor(current)
     val backgroundColor = getBackgroundColor(current)
     val g2d = g.create() as Graphics2D
     try {
@@ -41,14 +41,16 @@ private fun drawRectangle(
   g2d: Graphics2D,
   target: Rectangle,
   backgroundColor: Color?,
-  borderColor: Color
+  borderColor: Color?,
 ) {
   if (backgroundColor != null) {
     g2d.color = backgroundColor
     g2d.fillRect(target.x, target.y, target.width, target.height - 1)
   }
-  g2d.color = borderColor
-  g2d.drawRect(target.x, target.y, target.width, target.height - 1)
+  if (borderColor != null) {
+    g2d.color = borderColor
+    g2d.drawRect(target.x, target.y, target.width, target.height - 1)
+  }
 }
 
 private fun drawMultiLineSelection(
@@ -57,7 +59,7 @@ private fun drawMultiLineSelection(
   rec1: Rectangle,
   g2d: Graphics2D,
   backgroundColor: Color?,
-  borderColor: Color
+  borderColor: Color?,
 ) {
   val area = bounds.bounds
   val rec0ToMarginWidth = area.x + area.width - rec0.x
@@ -105,6 +107,11 @@ private fun getBackgroundColor(current: Boolean): Color? {
   }
 }
 
-private fun getBorderColor(): Color {
-  return EditorColorsManager.getInstance().globalScheme.defaultForeground
+private fun getBorderColor(current: Boolean): Color? {
+  if (current) {
+    return EditorColorsManager.getInstance().globalScheme.defaultForeground
+  }
+  else {
+    return null
+  }
 }

@@ -89,6 +89,12 @@
       "warningFocusColor": "#e2a53a"
     },
 
+    "ContextHelp": {
+      "fontSizeOffset": {
+        "os.windows": 0
+      }
+    },
+
     "BookmarkMnemonicCurrent": {
       "background": "#389FD6",
       "borderColor": "#389FD6",
@@ -405,8 +411,9 @@
     },
 
     "MainToolbar": {
-      "icon.borderInsets": "10,10,10,10",
-      "dropdown.borderInsets": "12,6,12,6"
+      "background": "#f2f2f2",
+      "Icon.borderInsets": "10,10,10,10",
+      "Dropdown.borderInsets": "12,6,12,6"
     },
 
     "control": "#f2f2f2",

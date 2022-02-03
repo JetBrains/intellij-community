@@ -4,78 +4,11 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/resource" type="java-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/test/src" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/test/data" type="java-test-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" generated="true" />
-      <sourceFolder url="file://$MODULE_DIR$/compatibilityResources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.lang.impl" exported="" />
-    <orderEntry type="module" module-name="intellij.spellchecker" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.xml.psi.impl" />
-    <orderEntry type="module" module-name="intellij.platform.langInjection" />
-    <orderEntry type="module" module-name="intellij.platform.builtInServer" />
-    <orderEntry type="module" module-name="intellij.xml.langInjection" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
-    <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="library" name="netty-codec-http" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
-    <orderEntry type="library" name="jcef" level="project" />
-    <orderEntry type="library" name="jsoup" level="project" />
-    <orderEntry type="library" name="netty-buffer" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="intellij.platform.images" />
-    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
-    <orderEntry type="library" name="intellij-markdown" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
-    <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
-    <orderEntry type="module" module-name="intellij.platform.collaborationTools" />
-    <orderEntry type="library" name="jackson" level="project" />
-    <orderEntry type="library" name="jackson-databind" level="project" />
-    <orderEntry type="library" name="jackson-module-kotlin" level="project" />
-    <orderEntry type="library" name="Velocity" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.collaborationTools.auth" />
-    <orderEntry type="module" module-name="intellij.platform.execution.impl" />
-    <orderEntry type="library" name="miglayout-swing" level="project" />
-    <orderEntry type="module-library">
-      <library name="google.apis.api.services.drive" type="repository">
-        <properties maven-id="com.google.apis:google-api-services-drive:v3-rev20211107-1.32.1">
-          <exclude>
-            <dependency maven-id="com.google.guava:guava" />
-            <dependency maven-id="com.google.code.gson:gson" />
-            <dependency maven-id="com.google.http-client:google-http-client-apache-v2" />
-            <dependency maven-id="org.apache.httpcomponents:httpcore" />
-            <dependency maven-id="org.apache.httpcomponents:httpclient" />
-            <dependency maven-id="com.google.code.findbugs:jsr305" />
-            <dependency maven-id="com.google.j2objc:j2objc-annotations" />
-          </exclude>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/google/apis/google-api-services-drive/v3-rev20211107-1.32.1/google-api-services-drive-v3-rev20211107-1.32.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/google/api-client/google-api-client/1.32.1/google-api-client-1.32.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/google/oauth-client/google-oauth-client/1.31.5/google-oauth-client-1.31.5.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/google/http-client/google-http-client-gson/1.39.2/google-http-client-gson-1.39.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/google/http-client/google-http-client/1.39.2/google-http-client-1.39.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/opencensus/opencensus-api/0.28.0/opencensus-api-0.28.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-context/1.27.2/grpc-context-1.27.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/opencensus/opencensus-contrib-http-util/0.28.0/opencensus-contrib-http-util-0.28.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/google/apis/google-api-services-drive/v3-rev20211107-1.32.1/google-api-services-drive-v3-rev20211107-1.32.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/google/api-client/google-api-client/1.32.1/google-api-client-1.32.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/google/oauth-client/google-oauth-client/1.31.5/google-oauth-client-1.31.5-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/google/http-client/google-http-client-gson/1.39.2/google-http-client-gson-1.39.2-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/google/http-client/google-http-client/1.39.2/google-http-client-1.39.2-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/opencensus/opencensus-api/0.28.0/opencensus-api-0.28.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-context/1.27.2/grpc-context-1.27.2-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/opencensus/opencensus-contrib-http-util/0.28.0/opencensus-contrib-http-util-0.28.0-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="module" module-name="intellij.markdown.core" exported="" />
+    <orderEntry type="module" module-name="intellij.markdown.fenceInjection" />
   </component>
 </module>

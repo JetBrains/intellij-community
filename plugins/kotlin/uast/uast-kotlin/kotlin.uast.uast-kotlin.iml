@@ -15,5 +15,11 @@
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
     <orderEntry type="module" module-name="intellij.java.uast" />
     <orderEntry type="library" name="javaslang" level="project" />
+    <orderEntry type="module" module-name="kotlin.common" />
+    <orderEntry type="module" module-name="kotlin.core" />
+    <orderEntry type="module" module-name="kotlin.native" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" scope="RUNTIME" />
   </component>
 </module>

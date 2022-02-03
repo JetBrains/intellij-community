@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.copy;
 
 import com.intellij.CommonBundle;
@@ -91,13 +91,14 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
   private final boolean myShowNewNameField;
 
   private PsiDirectory myTargetDirectory;
-  private boolean myFileCopy = false;
+  private final boolean myFileCopy;
 
   public CopyFilesOrDirectoriesDialog(PsiElement[] elements, @Nullable PsiDirectory defaultTargetDirectory, Project project, boolean doClone) {
     super(project, true, canBeOpenedInEditor(elements));
     myElements = elements;
     myShowDirectoryField = !doClone;
     myShowNewNameField = elements.length == 1;
+    myFileCopy = elements.length == 1 && elements[0] instanceof PsiFile;
 
     if (doClone && elements.length != 1) {
       throw new IllegalArgumentException("wrong number of elements to clone: " + elements.length);
@@ -129,7 +130,6 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
           selectNameWithoutExtension(dotIdx);
         }
         myTargetDirectory = file.getContainingDirectory();
-        myFileCopy = true;
       }
       else {
         VirtualFile vFile = ((PsiDirectory)elements[0]).getVirtualFile();
@@ -157,6 +157,11 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
       }
     }
     return false;
+  }
+
+  @Override
+  protected boolean isOpenInEditorEnabledByDefault() {
+    return myFileCopy;
   }
 
   private void selectNameWithoutExtension(int dotIdx) {
@@ -248,7 +253,7 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
       formBuilder.addLabeledComponent(RefactoringBundle.message("copy.files.to.directory.label"), myTargetDirectoryField);
 
       String shortcutText =
-        KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
+        KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions  .ACTION_CODE_COMPLETION));
       formBuilder.addTooltip(RefactoringBundle.message("path.completion.shortcut", shortcutText));
     }
 

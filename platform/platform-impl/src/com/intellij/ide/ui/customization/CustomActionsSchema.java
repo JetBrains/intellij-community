@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
@@ -156,10 +156,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     myIconCustomizations.clear();
 
     for (ActionUrl actionUrl : result.myActions) {
-      ActionUrl url = new ActionUrl(new ArrayList<>(actionUrl.getGroupPath()), actionUrl.getComponent(),
-                                    actionUrl.getActionType(), actionUrl.getAbsolutePosition());
-      url.setInitialPosition(actionUrl.getInitialPosition());
-      myActions.add(url);
+      myActions.add(actionUrl.copy());
     }
     resortActions();
 
@@ -443,7 +440,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     }
   }
 
-  private static class ActionUrlComparator implements Comparator<ActionUrl> {
+  private static final class ActionUrlComparator implements Comparator<ActionUrl> {
     static final ActionUrlComparator INSTANCE = new ActionUrlComparator();
     static int DELETED = 1;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.application.options.RegistryManager;
@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -70,11 +69,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-/**
- * @author Alexander Lobas
- */
 public final class PluginManagerConfigurable
   implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider {
 
@@ -84,7 +79,7 @@ public final class PluginManagerConfigurable
   public static final String SELECTION_TAB_KEY = "PluginConfigurable.selectionTab";
 
   @SuppressWarnings("UseJBColor") public static final Color MAIN_BG_COLOR =
-    JBColor.namedColor("Plugins.background", new JBColor(() -> JBColor.isBright() ? UIUtil.getListBackground() : new Color(0x313335)));
+    JBColor.namedColor("Plugins.background", JBColor.lazy(() -> JBColor.isBright() ? UIUtil.getListBackground() : new Color(0x313335)));
   public static final Color SEARCH_BG_COLOR = JBColor.namedColor("Plugins.SearchField.background", MAIN_BG_COLOR);
   public static final Color SEARCH_FIELD_BORDER_COLOR =
     JBColor.namedColor("Plugins.SearchField.borderColor", new JBColor(0xC5C5C5, 0x515151));
@@ -824,7 +819,8 @@ public final class PluginManagerConfigurable
           PluginsGroup downloaded = new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"), PluginsGroupType.INSTALLED);
           downloaded.descriptors.addAll(InstalledPluginsState.getInstance().getInstalledPlugins());
 
-          Map<Boolean, List<IdeaPluginDescriptorImpl>> visiblePlugins = getVisiblePlugins()
+          Map<Boolean, List<IdeaPluginDescriptorImpl>> visiblePlugins = PluginManager
+            .getVisiblePlugins(RegistryManager.getInstance().is("plugins.show.implementation.details"))
             .collect(Collectors.partitioningBy(IdeaPluginDescriptorImpl::isBundled));
 
           List<IdeaPluginDescriptorImpl> nonBundledPlugins = visiblePlugins.get(Boolean.FALSE);
@@ -1449,18 +1445,6 @@ public final class PluginManagerConfigurable
                              ApplicationNamesInfo.getInstance().getFullProductName());
   }
 
-  @ApiStatus.Internal
-  public static @NotNull Stream<IdeaPluginDescriptorImpl> getVisiblePlugins() {
-    ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
-    boolean showImplementationDetails = RegistryManager.getInstance().is("plugins.show.implementation.details");
-
-    return PluginManagerCore.getPluginSet()
-      .allPlugins
-      .stream()
-      .filter(descriptor -> !applicationInfo.isEssentialPlugin(descriptor.getPluginId()))
-      .filter(descriptor -> showImplementationDetails || !descriptor.isImplementationDetail());
-  }
-
   /**
    * @deprecated Please use {@link #showPluginConfigurable(Project, Collection)}.
    */
@@ -1518,10 +1502,17 @@ public final class PluginManagerConfigurable
   private final class MarketplaceSortByAction extends ToggleAction implements DumbAware {
     private final SortBySearchOption myOption;
     private boolean myState;
+    private boolean myVisible;
 
     private MarketplaceSortByAction(@NotNull SortBySearchOption option) {
       super(option.myPresentableNameSupplier);
       myOption = option;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setVisible(myVisible);
     }
 
     @Override
@@ -1538,12 +1529,11 @@ public final class PluginManagerConfigurable
     public void setState(@NotNull SearchQueryParser.Marketplace parser) {
       if (myOption == SortBySearchOption.Relevance) {
         myState = parser.sortBy == null;
-        getTemplatePresentation().setVisible(
-          parser.sortBy == null || !parser.tags.isEmpty() || !parser.vendors.isEmpty() || parser.searchQuery != null
-        );
+        myVisible = parser.sortBy == null || !parser.tags.isEmpty() || !parser.vendors.isEmpty() || parser.searchQuery != null;
       }
       else {
         myState = parser.sortBy != null && myOption.name().equalsIgnoreCase(parser.sortBy);
+        myVisible = true;
       }
     }
 
@@ -1850,6 +1840,13 @@ public final class PluginManagerConfigurable
   public void openMarketplaceTab(@NotNull String option) {
     myLaterSearchQuery = option;
     myShowMarketplaceTab = true;
+    if (myTabHeaderComponent != null) {
+      updateSelectionTab(MARKETPLACE_TAB);
+    }
+    if (myMarketplaceTab != null) {
+      myMarketplaceTab.clearSearchPanel(option);
+      myMarketplaceTab.showSearchPanel(option);
+    }
   }
 
   private final class InstallFromDiskAction extends DumbAwareAction {

@@ -6,25 +6,28 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.model.serialization.JpsPathVariablesConfiguration;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
+import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+
+import static org.jetbrains.jpsBootstrap.BuildDependenciesDownloader.info;
 
 @SuppressWarnings("SameParameterValue")
 public class JpsProjectUtils {
@@ -46,7 +49,9 @@ public class JpsProjectUtils {
         model.getProject().getLibraryCollection().getLibraries().size() + " libraries in " +
         (System.currentTimeMillis() - startTime) + " ms");
 
-    addSdk(model, "corretto-11", System.getProperty("java.home"));
+    String sdkName = "current-java-home-sdk";
+    addSdk(model, sdkName, System.getProperty("java.home"));
+    JpsSdkTableSerializer.setSdkReference(model.getProject().getSdkReferencesTable(), sdkName, JpsJavaSdkType.INSTANCE);
 
     return model;
   }
@@ -58,25 +63,39 @@ public class JpsProjectUtils {
       .findFirst().orElseThrow(() -> new IllegalStateException("Module " + moduleName + " is not found"));
   }
 
-  public static List<URL> getModuleRuntimeClasspath(JpsModule module) throws MalformedURLException {
-    JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService
+  public static List<File> getModuleRuntimeClasspath(JpsModule module) {
+    JpsJavaDependenciesEnumerator enumerator = getModuleRuntimeClasspathEnumerator(module);
+
+    List<File> roots = new ArrayList<>(enumerator.classes().getRoots());
+    roots.sort(Comparator.comparing(File::toString));
+
+    for (File root : roots) {
+      if (!root.exists()) {
+        throw new IllegalStateException("Classpath element does not exist: " + root);
+      }
+    }
+
+    return roots;
+  }
+
+  @NotNull
+  private static JpsJavaDependenciesEnumerator getModuleRuntimeClasspathEnumerator(JpsModule module) {
+    return JpsJavaExtensionService
       .dependencies(module)
       .runtimeOnly()
       .productionOnly()
       .recursively()
       .withoutSdk();
+  }
 
-    List<URL> roots = new ArrayList<>();
-    for (File file : enumerator.classes().getRoots()) {
-      URL toURL = file.toURI().toURL();
-      roots.add(toURL);
-    }
-    roots.sort(Comparator.comparing(URL::toString));
-
-    return roots;
+  public static Set<JpsModule> getRuntimeModulesClasspath(JpsModule module) {
+    JpsJavaDependenciesEnumerator enumerator = getModuleRuntimeClasspathEnumerator(module);
+    return enumerator.getModules();
   }
 
   private static void addSdk(JpsModel model, String sdkName, String sdkHome) throws IOException {
+    info("Adding SDK '" + sdkName + "' at " + sdkHome);
+
     JpsJavaExtensionService.getInstance().addJavaSdk(model.getGlobal(), sdkName, sdkHome);
     JpsLibrary additionalSdk = model.getGlobal().getLibraryCollection().findLibrary(sdkName);
     if (additionalSdk == null) {

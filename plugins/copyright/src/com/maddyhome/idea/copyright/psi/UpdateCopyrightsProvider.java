@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.maddyhome.idea.copyright.psi;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -15,8 +15,11 @@ public abstract class UpdateCopyrightsProvider {
   /**
    * @return {@link UpdateCopyright} for the file. In most cases, {@link UpdatePsiFileCopyright} would be used
    */
-  public abstract UpdateCopyright createInstance(Project project, Module module, VirtualFile file,
-                                                 FileType base, CopyrightProfile options);
+  public abstract UpdateCopyright createInstance(Project project,
+                                                 Module module,
+                                                 VirtualFile file,
+                                                 FileType base,
+                                                 CopyrightProfile options);
 
   public LanguageOptions getDefaultOptions() {
     return new LanguageOptions();

@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtReferenceExpression
@@ -34,7 +35,7 @@ class RedundantRequireNotNullCallInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = callExpressionVisitor(fun(callExpression) {
         val callee = callExpression.calleeExpression ?: return
         val resolutionFacade = callExpression.getResolutionFacade()
-        val context = callExpression.analyze(resolutionFacade, BodyResolveMode.PARTIAL)
+        val context = callExpression.safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL)
         if (!callExpression.isCalling(FqName("kotlin.requireNotNull"), context)
             && !callExpression.isCalling(FqName("kotlin.checkNotNull"), context)
         ) return

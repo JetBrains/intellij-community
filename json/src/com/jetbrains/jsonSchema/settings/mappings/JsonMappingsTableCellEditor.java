@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.settings.mappings;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.ex.FileLookup.LookupFile;
 import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
 import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl;
@@ -19,7 +20,6 @@ import com.intellij.util.ui.JBUI;
 import com.jetbrains.jsonSchema.JsonMappingKind;
 import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,9 +28,9 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 
 class JsonMappingsTableCellEditor extends AbstractTableCellEditor {
-
   final TextFieldWithBrowseButton myComponent;
   final JPanel myWrapper;
+
   private final UserDefinedJsonSchemaConfiguration.Item myItem;
   private final Project myProject;
   private final TreeUpdater myTreeUpdater;
@@ -62,15 +62,13 @@ class JsonMappingsTableCellEditor extends AbstractTableCellEditor {
       myComponent.addBrowseFolderListener(
         new TextBrowseFolderListener(
           descriptor, myProject) {
-          @NotNull
           @Override
-          protected String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
+          protected @NotNull String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
             String relativePath = VfsUtilCore.getRelativePath(chosenFile, myProject.getBaseDir());
             return relativePath != null ? relativePath : chosenFile.getPath();
           }
         });
     }
-
 
     FileTextFieldImpl field = null;
     if (!item.isPattern() && !ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
@@ -91,11 +89,10 @@ class JsonMappingsTableCellEditor extends AbstractTableCellEditor {
     });
   }
 
-  @NotNull
-  private static FileChooserDescriptor createDescriptor(UserDefinedJsonSchemaConfiguration.Item item) {
+  private static @NotNull FileChooserDescriptor createDescriptor(UserDefinedJsonSchemaConfiguration.Item item) {
     return item.mappingKind == JsonMappingKind.File
-                                       ? FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-                                       : FileChooserDescriptorFactory.createSingleFolderDescriptor();
+           ? FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+           : FileChooserDescriptorFactory.createSingleFolderDescriptor();
   }
 
   @Override
@@ -121,18 +118,10 @@ class JsonMappingsTableCellEditor extends AbstractTableCellEditor {
     private final Project myProject;
 
     MyFileTextFieldImpl(LocalFsFinder finder, FileChooserDescriptor descriptor, JTextField textField, Project project, Disposable parent) {
-      super(textField, finder, new LocalFsFinder.FileChooserFilter(descriptor, true),
-            FileChooserFactoryImpl.getMacroMap(), parent);
+      super(textField, finder, new LocalFsFinder.FileChooserFilter(descriptor, true), FileChooserFactoryImpl.getMacroMap(), parent);
       myTextField = textField;
       myProject = project;
       myAutopopup = true;
-    }
-
-    @Nullable
-    @Override
-    public VirtualFile getSelectedFile() {
-      LookupFile lookupFile = getFile();
-      return lookupFile != null ? ((LocalFsFinder.VfsFile)lookupFile).getFile() : null;
     }
 
     @Override

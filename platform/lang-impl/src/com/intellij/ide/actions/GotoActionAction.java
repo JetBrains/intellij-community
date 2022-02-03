@@ -73,32 +73,36 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
     performAction(element, component, e, 0);
   }
 
-  private static void performAction(Object element,
+  private static void performAction(@NotNull Object element,
                                     @Nullable Component component,
                                     @Nullable AnActionEvent e,
                                     @JdkConstants.InputEventMask int modifiers) {
     // element could be AnAction (SearchEverywhere)
     if (component == null) return;
-    AnAction action = element instanceof AnAction ? (AnAction)element : ((GotoActionModel.ActionWrapper)element).getAction();
-    InputEvent inputEvent = e != null ? e.getInputEvent() : null;
-    ApplicationManager.getApplication().invokeLater(() -> performActionImpl(action, component, inputEvent, modifiers));
+    ApplicationManager.getApplication().invokeLater(() -> performActionImpl(element, component, e, modifiers));
   }
 
-  private static void performActionImpl(@NotNull AnAction action,
+  private static void performActionImpl(@NotNull Object element,
                                         @NotNull Component component,
-                                        @Nullable InputEvent inputEvent,
-                                        int modifiers) {
+                                        @Nullable AnActionEvent e,
+                                        @JdkConstants.InputEventMask int modifiers) {
+    GotoActionModel.ActionWrapper wrapper = element instanceof AnAction ? null : (GotoActionModel.ActionWrapper)element;
+    AnAction action = element instanceof AnAction ? (AnAction)element : wrapper.getAction();
+    Presentation presentation = wrapper != null && wrapper.hasPresentation() ? wrapper.getPresentation() :
+                                action.getTemplatePresentation().clone();
+    InputEvent inputEvent = e != null ? e.getInputEvent() : null;
     DataManager dataManager = DataManager.getInstance();
     DataContext context = dataManager != null ? dataManager.getDataContext(component) : DataContext.EMPTY_CONTEXT;
-    Presentation presentation = action.getTemplatePresentation().clone();
     AnActionEvent event = new AnActionEvent(
       inputEvent, context, ActionPlaces.ACTION_SEARCH, presentation, ActionManager.getInstance(),
       inputEvent == null ? modifiers : inputEvent.getModifiers());
     event.setInjectedContext(action.isInInjectedContext());
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(context)) {
+      if (action instanceof ActionGroup &&
+          !(event.getPresentation().isPerformGroup() || ((ActionGroup)action).canBePerformed(context))) {
         ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-          event.getPresentation().getText(), (ActionGroup)action, context, false, null, -1);
+          event.getPresentation().getText(), (ActionGroup)action, context,
+          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, null, -1, null, ActionPlaces.ACTION_SEARCH_INDUCED_POPUP);
         Window window = SwingUtilities.getWindowAncestor(component);
         if (window != null) {
           popup.showInCenterOf(window);

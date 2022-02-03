@@ -30,6 +30,11 @@ class DifferenceImpl extends Difference{
   }
 
   @Override
+  public boolean accessExpanded() {
+    return myDelegate.accessExpanded();
+  }
+
+  @Override
   public int addedModifiers() {
     return myDelegate.addedModifiers();
   }

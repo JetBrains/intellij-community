@@ -1150,7 +1150,7 @@
         </option>
         <option name="CONSOLE_WHITE_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="FFFFFF" />
+            <option name="FOREGROUND" value="C9C9C9" />
             <option name="BACKGROUND" value="FFFFFF" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />

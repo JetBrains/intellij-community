@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.event.KeyEvent;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,9 +55,30 @@ public final class TextWithMnemonic {
 
   /**
    * @return a mnemonic character (upper-cased) if mnemonic is set; 0 otherwise
+   * @deprecated use {@link #getMnemonicChar} or {@link #getMnemonicCode} instead
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public int getMnemonic() {
-    return hasMnemonic() ? Character.toUpperCase((myText + myMnemonicSuffix).charAt(myMnemonicIndex)) : 0;
+    char ch = getMnemonicChar();
+    return ch == 0 ? 0 : Character.toUpperCase(ch);
+  }
+
+  /**
+   * @return an extended key code for a mnemonic character, or {@code KeyEvent.VK_UNDEFINED} if mnemonic is not set
+   */
+  public int getMnemonicCode() {
+    char ch = getMnemonicChar();
+    return ch == 0 ? KeyEvent.VK_UNDEFINED : KeyEvent.getExtendedKeyCodeForChar(ch);
+  }
+
+  /**
+   * @return a mnemonic character, or {@code 0} if mnemonic is not set
+   */
+  public char getMnemonicChar() {
+    if (myMnemonicIndex < 0) return 0;
+    int index = myMnemonicIndex - myText.length();
+    return index < 0 ? myText.charAt(myMnemonicIndex) : myMnemonicSuffix.charAt(index);
   }
 
   /**
@@ -107,7 +130,9 @@ public final class TextWithMnemonic {
    * @return TextWithMnemonic object which text is the concatenation of this object text and supplied text.
    */
   public TextWithMnemonic append(@NotNull @Nls String textToAppend) {
-    return new TextWithMnemonic(myText + textToAppend, myMnemonicIndex, myMnemonicSuffix);
+    return new TextWithMnemonic(myText + textToAppend,
+                                myMnemonicIndex < myText.length() ? myMnemonicIndex : myMnemonicIndex + textToAppend.length(),
+                                myMnemonicSuffix);
   }
 
   /**

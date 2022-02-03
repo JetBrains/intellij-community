@@ -479,7 +479,7 @@ abstract class KotlinCommonBlock(
         val wrappingStrategy = getWrappingStrategy()
 
         val childNodes = when {
-            overrideChildren != null -> overrideChildren.asSequence()
+            overrideChildren != null -> overrideChildren
             node.elementType == BINARY_EXPRESSION -> {
                 val binaryExpression = node.psi as? KtBinaryExpression
                 if (binaryExpression != null && ALL_ASSIGNMENTS.contains(binaryExpression.operationToken)) {

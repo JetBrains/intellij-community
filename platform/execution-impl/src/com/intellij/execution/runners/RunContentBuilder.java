@@ -94,9 +94,16 @@ public final class RunContentBuilder extends RunTab {
     }
     ActionGroup toolbar = createActionToolbar(contentDescriptor, consoleActionsToMerge);
     if (Registry.is("debugger.new.tool.window.layout")) {
+      var isVerticalToolbar = Registry.get("debugger.new.tool.window.layout.toolbar").isOptionEnabled("Vertical");
+
       mySupplier = new RunTabSupplier(toolbar) {
         {
-          setMoveToolbar(true);
+          setMoveToolbar(!isVerticalToolbar);
+        }
+
+        @Override
+        public @Nullable ActionGroup getToolbarActions() {
+          return isVerticalToolbar ? ActionGroup.EMPTY_GROUP : super.getToolbarActions();
         }
 
         @Override
@@ -117,13 +124,17 @@ public final class RunContentBuilder extends RunTab {
         }
       };
       if (myUi instanceof RunnerLayoutUiImpl) {
-        ((RunnerLayoutUiImpl)myUi).setLeftToolbarVisible(false);
+        ((RunnerLayoutUiImpl)myUi).setLeftToolbarVisible(isVerticalToolbar);
       }
-      // wrapped into DefaultActionGroup to prevent loading all actions instantly
-      DefaultActionGroup topToolbar = new DefaultActionGroup(
-        new EmptyWhenDuplicate(toolbar, group -> group instanceof RunTab.ToolbarActionGroup)
-      );
-      myUi.getOptions().setTopLeftToolbar(topToolbar, ActionPlaces.RUNNER_TOOLBAR);
+      if (isVerticalToolbar) {
+        myUi.getOptions().setLeftToolbar(toolbar, ActionPlaces.RUNNER_TOOLBAR);
+      } else {
+        // wrapped into DefaultActionGroup to prevent loading all actions instantly
+        DefaultActionGroup topToolbar = new DefaultActionGroup(
+          new EmptyWhenDuplicate(toolbar, group -> group instanceof RunTab.ToolbarActionGroup)
+        );
+        myUi.getOptions().setTopLeftToolbar(topToolbar, ActionPlaces.RUNNER_TOOLBAR);
+      }
     } else {
       myUi.getOptions().setLeftToolbar(toolbar, ActionPlaces.RUNNER_TOOLBAR);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -92,7 +92,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private static final ColorKey ICON_TEXT_COLOR = ColorKey.createColorKey("ActionButton.iconTextForeground",
                                                                           UIUtil.getContextHelpForeground());
 
-  private static final int QUICK_ANALYSIS_TIMEOUT = 3000; // mS
+  private static final int QUICK_ANALYSIS_TIMEOUT_MS = 3000;
 
   private static final Logger LOG = Logger.getInstance(EditorMarkupModelImpl.class);
 
@@ -147,7 +147,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private final ComponentListener toolbarComponentListener;
   private Rectangle cachedToolbarBounds = new Rectangle();
   private final JLabel smallIconLabel;
-  private AnalyzerStatus analyzerStatus;
+  @NotNull
+  private AnalyzerStatus analyzerStatus = AnalyzerStatus.getEMPTY();
   private boolean hasAnalyzed;
   private boolean isAnalyzing;
   private boolean showNavigation;
@@ -294,9 +295,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       @Override
       public void mouseClicked(MouseEvent event) {
         myPopupManager.hidePopup();
-        if (analyzerStatus != null) {
-          analyzerStatus.getController().toggleProblemsView();
-        }
+        analyzerStatus.getController().toggleProblemsView();
       }
 
       @Override
@@ -310,7 +309,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       }
     });
     smallIconLabel.setOpaque(false);
-    smallIconLabel.setBackground(new JBColor(() -> myEditor.getColorsScheme().getDefaultBackground()));
+    smallIconLabel.setBackground(JBColor.lazy(() -> myEditor.getColorsScheme().getDefaultBackground()));
     smallIconLabel.setVisible(false);
 
     JPanel statusPanel = new NonOpaquePanel();
@@ -336,8 +335,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() &&
-                      (analyzerStatus == null || analyzerStatus.getController().enableToolbar());
+        showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() && analyzerStatus.getController().enableToolbar();
 
         updateTrafficLightVisibility();
       }
@@ -486,21 +484,20 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     myStatusUpdates.queue(Update.create("icon", () -> {
       if (myErrorStripeRenderer != null) {
         AnalyzerStatus newStatus = myErrorStripeRenderer.getStatus();
-        if (!AnalyzerStatus.equals(newStatus, analyzerStatus)) {
+        if (!newStatus.equals(analyzerStatus)) {
           changeStatus(newStatus);
         }
       }
     }));
   }
 
-  private void changeStatus(AnalyzerStatus newStatus) {
+  private void changeStatus(@NotNull AnalyzerStatus newStatus) {
     statusTimer.cancelAllRequests();
 
-    boolean resetAnalyzingStatus = analyzerStatus != null &&
-                            analyzerStatus.isTextStatus() && analyzerStatus.getAnalyzingType() == AnalyzingType.COMPLETE;
+    AnalyzingType analyzingType = newStatus.getAnalyzingType();
+    boolean resetAnalyzingStatus = analyzerStatus.isTextStatus() && analyzerStatus.getAnalyzingType() == AnalyzingType.COMPLETE;
     analyzerStatus = newStatus;
-    AnalyzingType type = analyzerStatus.getAnalyzingType();
-    smallIconLabel.setIcon(type == AnalyzingType.COMPLETE || type == AnalyzingType.SUSPENDED ? analyzerStatus.getIcon() : AllIcons.General.InspectionsEye);
+    smallIconLabel.setIcon(analyzerStatus.getIcon());
 
     if (showToolbar != analyzerStatus.getController().enableToolbar()) {
       showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() &&
@@ -508,18 +505,18 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       updateTrafficLightVisibility();
     }
 
-    boolean analyzing = analyzerStatus.getAnalyzingType() != AnalyzingType.COMPLETE;
+    boolean analyzing = analyzingType != AnalyzingType.COMPLETE;
     hasAnalyzed = !resetAnalyzingStatus && (hasAnalyzed || (isAnalyzing && !analyzing));
     isAnalyzing = analyzing;
 
-    if (analyzerStatus.getAnalyzingType() != AnalyzingType.EMPTY) {
+    if (analyzingType != AnalyzingType.EMPTY) {
       showNavigation = analyzerStatus.getShowNavigation();
     }
     else {
       statusTimer.addRequest(() -> {
         hasAnalyzed = false;
         ActivityTracker.getInstance().inc();
-      }, QUICK_ANALYSIS_TIMEOUT);
+      }, QUICK_ANALYSIS_TIMEOUT_MS);
     }
 
     myPopupManager.updateVisiblePopup();
@@ -1007,7 +1004,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         myDirtyYPositions = null;
       }
 
-      UIUtil.drawImage(g, myCachedTrack, null, 0, 0);
+      StartupUiUtil.drawImage(g, myCachedTrack);
     }
 
     private void paintTrackBasement(@NotNull Graphics g, @NotNull Rectangle bounds) {
@@ -1210,7 +1207,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     @Override
     public void mouseMoved(@NotNull MouseEvent e) {
       EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
-      int buttonHeight = scrollBar.getDecScrollButtonHeight();
       int lineCount = getDocument().getLineCount() + myEditor.getSettings().getAdditionalLinesCount();
       if (lineCount == 0) {
         return;
@@ -1466,36 +1462,31 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myPopupManager.hidePopup();
-      if (analyzerStatus != null) {
-        analyzerStatus.getController().toggleProblemsView();
-      }
+      analyzerStatus.getController().toggleProblemsView();
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
-      if (analyzerStatus != null) {
-        List<StatusItem> newStatus = analyzerStatus.getExpandedStatus();
-        Icon newIcon = analyzerStatus.getIcon();
+      List<StatusItem> newStatus = analyzerStatus.getExpandedStatus();
+      Icon newIcon = analyzerStatus.getIcon();
 
-        if (!hasAnalyzed || analyzerStatus.getAnalyzingType() != AnalyzingType.EMPTY) {
-          if (newStatus.isEmpty()) {
-            newStatus = Collections.singletonList(new StatusItem("", newIcon));
-            presentation.putClientProperty(EXPANDED_STATUS, newStatus);
-          }
+      presentation.setVisible(!AnalyzerStatus.isEmpty(analyzerStatus));
 
-          if (!Objects.equals(presentation.getClientProperty(EXPANDED_STATUS), newStatus)) {
-            presentation.putClientProperty(EXPANDED_STATUS, newStatus);
-          }
-
-          presentation.putClientProperty(TRANSLUCENT_STATE, analyzerStatus.getAnalyzingType() != AnalyzingType.COMPLETE);
+      if (!hasAnalyzed || analyzerStatus.getAnalyzingType() != AnalyzingType.EMPTY) {
+        if (newStatus.isEmpty()) {
+          newStatus = Collections.singletonList(new StatusItem("", newIcon));
+          presentation.putClientProperty(EXPANDED_STATUS, newStatus);
         }
-        else {
-          presentation.putClientProperty(TRANSLUCENT_STATE, true);
+
+        if (!newStatus.equals(presentation.getClientProperty(EXPANDED_STATUS))) {
+          presentation.putClientProperty(EXPANDED_STATUS, newStatus);
         }
+
+        presentation.putClientProperty(TRANSLUCENT_STATE, analyzerStatus.getAnalyzingType() != AnalyzingType.COMPLETE);
       }
       else {
-        presentation.putClientProperty(EXPANDED_STATUS, Collections.emptyList());
+        presentation.putClientProperty(TRANSLUCENT_STATE, true);
       }
     }
   }
@@ -1537,6 +1528,11 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         }
         else if (propName.equals(TRANSLUCENT_STATE.toString())) {
           translucent = l.getNewValue() == Boolean.TRUE;
+          repaint();
+        }
+        else if (propName.equals(Presentation.PROP_VISIBLE)) {
+          setVisible(l.getNewValue() == Boolean.TRUE);
+          revalidate();
           repaint();
         }
       };
@@ -1651,7 +1647,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         add(createStyledLabel(null, status.get(0).getIcon(), SwingConstants.CENTER),
             gc.next().weightx(1).weighty(1).fillCell());
       }
-      else if (status.size() > 0) {
+      else if (!status.isEmpty()) {
         int leftRightOffset = JBUIScale.scale(LEFT_RIGHT_INDENT);
         add(Box.createHorizontalStrut(leftRightOffset), gc.next());
 
@@ -1692,7 +1688,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         }
       };
 
-      label.setForeground(new JBColor(() -> ObjectUtils.notNull(colorsScheme.getColor(ICON_TEXT_COLOR), ICON_TEXT_COLOR.getDefaultColor())));
+      label.setForeground(JBColor.lazy(() -> ObjectUtils.notNull(colorsScheme.getColor(ICON_TEXT_COLOR), ICON_TEXT_COLOR.getDefaultColor())));
       label.setIconTextGap(JBUIScale.scale(1));
 
       return label;
@@ -1872,7 +1868,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(analyzerStatus == null || analyzerStatus.getController().enableToolbar());
+      e.getPresentation().setEnabled(analyzerStatus.getController().enableToolbar());
     }
 
     @Override
@@ -1900,9 +1896,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
       if (focusManager.getFocusOwner() != myEditor.getContentComponent()) {
         focusManager.requestFocus(myEditor.getContentComponent(), true).
-          doWhenDone(() -> {
-            myDelegate.actionPerformed(delegateEvent);
-          });
+          doWhenDone(() -> myDelegate.actionPerformed(delegateEvent));
       }
       else {
         myDelegate.actionPerformed(delegateEvent);

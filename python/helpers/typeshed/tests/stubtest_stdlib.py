@@ -24,10 +24,6 @@ def run_stubtest(typeshed_dir: Path) -> int:
         sys.executable,
         "-m",
         "mypy.stubtest",
-        # Use --ignore-missing-stub, because if someone makes a correct addition, they'll need to
-        # also make a allowlist change and if someone makes an incorrect addition, they'll run into
-        # false negatives.
-        "--ignore-missing-stub",
         "--check-typeshed",
         "--custom-typeshed-dir",
         str(typeshed_dir),
@@ -39,15 +35,9 @@ def run_stubtest(typeshed_dir: Path) -> int:
     if ignore_unused_allowlist:
         cmd += ["--ignore-unused-allowlist"]
     if (allowlist_dir / platform_allowlist).exists():
-        cmd += [
-            "--allowlist",
-            str(allowlist_dir / platform_allowlist),
-        ]
+        cmd += ["--allowlist", str(allowlist_dir / platform_allowlist)]
     if (allowlist_dir / combined_allowlist).exists():
-        cmd += [
-            "--allowlist",
-            str(allowlist_dir / combined_allowlist),
-        ]
+        cmd += ["--allowlist", str(allowlist_dir / combined_allowlist)]
     if sys.version_info < (3, 10):
         # As discussed in https://github.com/python/typeshed/issues/3693, we only aim for
         # positional-only arg accuracy for the latest Python version.
@@ -63,7 +53,8 @@ def run_stubtest(typeshed_dir: Path) -> int:
             "\nCommand run was: {}\n".format(" ".join(cmd)),
             file=sys.stderr,
         )
-        print("stubtest failed", file=sys.stderr)
+        print("\n\n", file=sys.stderr)
+        print(f'To fix "unused allowlist" errors, remove the corresponding entries from {allowlist_dir}', file=sys.stderr)
         return e.returncode
     else:
         print("stubtest succeeded", file=sys.stderr)

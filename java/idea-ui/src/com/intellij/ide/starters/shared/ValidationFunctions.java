@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.impl.PsiNameHelperImpl;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 
 import java.io.File;
 import java.nio.file.InvalidPathException;
@@ -113,6 +114,11 @@ public final class ValidationFunctions {
     }
   };
 
+  /**
+   * @deprecated Use {@link #createLocationWarningValidator(GraphProperty)} with changes of IDEA-283336
+   */
+  @ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated
   public static final TextValidationFunction CHECK_LOCATION_FOR_WARNING = fieldText -> {
     File file = Paths.get(FileUtil.expandUserHome(fieldText)).toFile();
     if (file.exists()) {

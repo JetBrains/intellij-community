@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.XmlElement;
 import org.jdom.Content;
 import org.jdom.Element;
@@ -12,8 +11,6 @@ import java.lang.reflect.Type;
 import java.util.List;
 
 public interface Binding {
-  Logger LOG = Logger.getInstance(Binding.class);
-
   @Nullable Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter);
 
   boolean isBoundTo(@NotNull Element element);

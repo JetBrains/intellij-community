@@ -1,12 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui
 
 import com.intellij.codeInsight.hint.HintUtil
-import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.ui.ColorUtil
 import com.intellij.ui.HintHint
-import com.intellij.util.ObjectUtils
+import com.intellij.util.ui.HTMLEditorKitBuilder
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Color
@@ -21,13 +19,10 @@ open class DescriptionEditorPane : JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML) {
   init {
     isEditable = false
     isOpaque = false
+    editorKit = HTMLEditorKitBuilder().withGapsBetweenParagraphs().withoutContentCss().build()
     val css = (this.editorKit as HTMLEditorKit).styleSheet
-    with(EditorColorsManager.getInstance().globalScheme) {
-      css.addRule("a {overflow-wrap: anywhere;}")
-      css.addRule("pre {padding:10px; background:#"
-                  + ColorUtil.toHex(ObjectUtils.notNull(getColor(EditorColors.READONLY_BACKGROUND_COLOR), defaultBackground))
-                  + ";}")
-    }
+    css.addRule("a {overflow-wrap: anywhere;}")
+    css.addRule("pre {padding:10px;}")
   }
 
   override fun getBackground(): Color = UIUtil.getLabelBackground()
@@ -40,7 +35,7 @@ open class DescriptionEditorPane : JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML) {
 
 fun JEditorPane.readHTML(text: String) {
   try {
-    read(StringReader(text), null)
+    read(StringReader(text.replace("<pre>", "<pre class=\"editor-background\">")), null)
   }
   catch (e: IOException) {
     throw RuntimeException(e)
@@ -49,6 +44,6 @@ fun JEditorPane.readHTML(text: String) {
 
 fun JEditorPane.toHTML(text: @Nls String?, miniFontSize: Boolean): String {
   val hintHint = HintHint(this, Point(0, 0))
-  hintHint.setFont(if (miniFontSize) UIUtil.getLabelFont(UIUtil.FontSize.SMALL) else UIUtil.getLabelFont())
+  hintHint.setFont(if (miniFontSize) UIUtil.getLabelFont(UIUtil.FontSize.SMALL) else StartupUiUtil.getLabelFont())
   return HintUtil.prepareHintText(text!!, hintHint)
 }

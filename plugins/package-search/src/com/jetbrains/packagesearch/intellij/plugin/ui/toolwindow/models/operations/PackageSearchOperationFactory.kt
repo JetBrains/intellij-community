@@ -1,6 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations
 
 import com.intellij.buildsystem.model.unified.UnifiedDependency
+import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
@@ -16,6 +17,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedRepository
 internal class PackageSearchOperationFactory {
 
     inline fun <reified T : PackageModel, V : PackageVersion> computeInstallActionsFor(
+        project: Project,
         packageModel: T,
         moduleModel: ModuleModel,
         defaultScope: PackageScope,
@@ -30,11 +32,12 @@ internal class PackageSearchOperationFactory {
             version = versionToInstall,
             scope = defaultScope,
             targetModules = TargetModules.from(moduleModel),
-            repoToInstall = knownRepositories.repositoryToAddWhenInstallingOrUpgrading(packageModel, versionToInstall)
+            repoToInstall = knownRepositories.repositoryToAddWhenInstallingOrUpgrading(project, packageModel, versionToInstall)
         )
     }
 
     inline fun <reified T : PackageModel, V : PackageVersion> computeUpgradeActionsFor(
+        project: Project,
         packageModel: T,
         moduleModel: ModuleModel,
         knownRepositories: KnownRepositories.InTargetModules,
@@ -49,7 +52,7 @@ internal class PackageSearchOperationFactory {
                     packageModel = packageModel,
                     newVersion = targetVersion.originalVersion,
                     targetModules = TargetModules.from(moduleModel),
-                    repoToInstall = knownRepositories.repositoryToAddWhenInstallingOrUpgrading(packageModel, targetVersion.originalVersion)
+                    repoToInstall = knownRepositories.repositoryToAddWhenInstallingOrUpgrading(project, packageModel, targetVersion.originalVersion)
                 )
             }
             .toList()

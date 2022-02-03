@@ -126,7 +126,11 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     ApplicationManager.getApplication().assertIsDispatchThread();
     int index;
     synchronized (this) {
-      index = getNodeInsertionIndex(node, getSwingChildren());
+      index = getNodeIndex(node, getSwingChildren());
+      if(index >= 0) {
+        return;
+      }
+      else index = -index - 1;
       myChildren.add(index, node);
     }
     treeModel.insertNodeInto(node, this, index);

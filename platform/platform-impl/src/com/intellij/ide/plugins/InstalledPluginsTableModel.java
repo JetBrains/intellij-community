@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -76,7 +76,7 @@ public class InstalledPluginsTableModel {
     myEnabled.put(pluginId, enabled);
   }
 
-  protected void updatePluginDependencies() {
+  protected void updatePluginDependencies(@Nullable Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap) {
   }
 
   protected final void enableRows(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
@@ -89,14 +89,15 @@ public class InstalledPluginsTableModel {
                   (descriptor, pair) -> {
                   });
 
-    Set<IdeaPluginDescriptorImpl> impls = descriptors.stream()
+    List<IdeaPluginDescriptorImpl> impls = descriptors.stream()
       .filter(IdeaPluginDescriptorImpl.class::isInstance)
       .map(IdeaPluginDescriptorImpl.class::cast)
-      .collect(Collectors.toCollection(LinkedHashSet::new));
+      .collect(Collectors.toCollection(ArrayList::new));
 
-    Set<IdeaPluginDescriptorImpl> descriptorsToUpdate = action.isEnable() ?
-                                                        getDependenciesToEnable(impls, tempEnabled) :
-                                                        getDependentsToDisable(impls, tempEnabled);
+    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
+    List<IdeaPluginDescriptorImpl> descriptorsToUpdate = action.isEnable() ?
+                                                         getDependenciesToEnable(impls, tempEnabled, pluginIdMap) :
+                                                         getDependentsToDisable(impls, tempEnabled, pluginIdMap);
 
     Set<String> pluginNamesToUpdate = descriptorsToUpdate.stream()
       .filter(descriptor -> !isHiddenImplementationDetail(descriptor))
@@ -112,7 +113,7 @@ public class InstalledPluginsTableModel {
                   myEnabled,
                   action,
                   this::handleBeforeChangeEnableState);
-    updatePluginDependencies();
+    updatePluginDependencies(pluginIdMap);
   }
 
   private static void setNewEnabled(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
@@ -137,11 +138,12 @@ public class InstalledPluginsTableModel {
     return myEnabled;
   }
 
-  private static @NotNull Set<IdeaPluginDescriptorImpl> getDependenciesToEnable(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors,
-                                                                                @NotNull Map<PluginId, PluginEnabledState> enabledMap) {
-    LinkedHashSet<IdeaPluginDescriptorImpl> result = new LinkedHashSet<>();
+  private static @NotNull List<IdeaPluginDescriptorImpl> getDependenciesToEnable(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors,
+                                                                                 @NotNull Map<PluginId, PluginEnabledState> enabledMap,
+                                                                                 @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap) {
+    ArrayList<IdeaPluginDescriptorImpl> result = new ArrayList<>();
     for (IdeaPluginDescriptorImpl descriptor : descriptors) {
-      PluginManagerCore.processAllNonOptionalDependencies(descriptor, dependency -> {
+      PluginManagerCore.processAllNonOptionalDependencies(descriptor, pluginIdMap, dependency -> {
         PluginId dependencyId = dependency.getPluginId();
         PluginEnabledState state = enabledMap.get(dependencyId);
 
@@ -153,12 +155,13 @@ public class InstalledPluginsTableModel {
       });
     }
 
-    return Collections.unmodifiableSet(result);
+    return Collections.unmodifiableList(result);
   }
 
-  private static @NotNull Set<IdeaPluginDescriptorImpl> getDependentsToDisable(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors,
-                                                                               @NotNull Map<PluginId, PluginEnabledState> enabledMap) {
-    LinkedHashSet<IdeaPluginDescriptorImpl> result = new LinkedHashSet<>();
+  private static @NotNull List<IdeaPluginDescriptorImpl> getDependentsToDisable(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors,
+                                                                                @NotNull Map<PluginId, PluginEnabledState> enabledMap,
+                                                                                @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap) {
+    ArrayList<IdeaPluginDescriptorImpl> result = new ArrayList<>();
     Set<PluginId> pluginIds = descriptors.stream()
       .map(IdeaPluginDescriptorImpl::getPluginId)
       .collect(Collectors.toUnmodifiableSet());
@@ -170,14 +173,13 @@ public class InstalledPluginsTableModel {
         continue;
       }
 
-      PluginManagerCore.processAllNonOptionalDependencies(descriptor, dependency -> {
+      PluginManagerCore.processAllNonOptionalDependencies(descriptor, pluginIdMap, dependency -> {
         PluginId dependencyId = dependency.getPluginId();
         if (!isLoaded(dependencyId, enabledMap)) {
           return FileVisitResult.TERMINATE;
         }
 
         if (!dependencyId.equals(pluginId) &&
-            !isHidden(descriptor) &&
             pluginIds.contains(dependencyId)) {
           result.add(descriptor);
         }
@@ -185,7 +187,7 @@ public class InstalledPluginsTableModel {
       });
     }
 
-    return Collections.unmodifiableSet(result);
+    return Collections.unmodifiableList(result);
   }
 
   private boolean createUpdateDependenciesDialog(@NotNull Collection<String> dependencies,

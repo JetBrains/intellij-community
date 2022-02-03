@@ -3,6 +3,7 @@ package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.AnnotationUtil
+import com.intellij.codeInsight.StaticAnalysisAnnotationManager
 import com.intellij.codeInspection.AnnotatedApiUsageUtil.findAnnotatedContainingDeclaration
 import com.intellij.codeInspection.AnnotatedApiUsageUtil.findAnnotatedTypeUsedInDeclarationSignature
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
@@ -27,26 +28,12 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
 
     private val SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME: String = ApiStatus.ScheduledForRemoval::class.java.canonicalName
 
-    val DEFAULT_UNSTABLE_API_ANNOTATIONS: List<String> = listOf(
-      SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME,
-      "org.jetbrains.annotations.ApiStatus.Experimental",
-      "org.jetbrains.annotations.ApiStatus.Internal",
-      "com.google.common.annotations.Beta",
-      "io.reactivex.annotations.Beta",
-      "io.reactivex.annotations.Experimental",
-      "rx.annotations.Experimental",
-      "rx.annotations.Beta",
-      "org.apache.http.annotation.Beta",
-      "org.gradle.api.Incubating"
-    )
-
     private val knownAnnotationMessageProviders = mapOf(SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME to ScheduledForRemovalMessageProvider())
   }
 
   @JvmField
-  val unstableApiAnnotations: List<String> = ExternalizableStringSet(
-    *ArrayUtilRt.toStringArray(DEFAULT_UNSTABLE_API_ANNOTATIONS)
-  )
+  val unstableApiAnnotations: List<String> =
+    ExternalizableStringSet(*ArrayUtilRt.toStringArray(StaticAnalysisAnnotationManager.getInstance().knownUnstableApiAnnotations))
 
   @JvmField
   var myIgnoreInsideImports: Boolean = true

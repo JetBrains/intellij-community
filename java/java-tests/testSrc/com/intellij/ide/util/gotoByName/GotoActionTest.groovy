@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
@@ -124,6 +124,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
         return "testprovider"
       }
 
+      @NotNull
       @Override
       Collection<OptionDescription> getOptions() {
         return options

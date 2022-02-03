@@ -126,6 +126,7 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
         row {
           val checkBox = checkBox(message("vcs.config.track.changed.on.server"))
             .bindSelected(vcsConfiguration::CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND)
+            .gap(RightGap.SMALL)
             .onApply {
               if (!project.isDefault) {
                 RemoteRevisionsCache.getInstance(project).updateAutomaticRefreshAlarmState(true)

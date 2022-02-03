@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.credentialStore.Credentials;
@@ -23,6 +23,7 @@ import org.cef.callback.CefContextMenuParams;
 import org.cef.callback.CefMenuModel;
 import org.cef.callback.CefNativeAdapter;
 import org.cef.handler.*;
+import org.cef.network.CefCookieManager;
 import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -351,6 +352,10 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     return myCefClient;
   }
 
+  public static @NotNull JBCefCookieManager getGlobalJBCefCookieManager() {
+    return new JBCefCookieManager(CefCookieManager.getGlobalManager());
+  }
+
   @NotNull
   public final JBCefCookieManager getJBCefCookieManager() {
     myCookieManagerLock.lock();
@@ -579,13 +584,12 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         html = html.replace("${failedUrl}", failedUrl);
 
         ScaleContext ctx = ScaleContext.create();
-        ctx.update(OBJ_SCALE.of(1.2 * headerFontSize / (float)ERROR_PAGE_ICON.getIconHeight()));
+        ctx.setScale(OBJ_SCALE.of(1.2 * headerFontSize / (float)ERROR_PAGE_ICON.getIconHeight()));
         // Reset sys scale to prevent raster downscaling on passing the image to jcef.
         // Overriding is used to prevent scale change during further intermediate context transformations.
         ctx.overrideScale(SYS_SCALE.of(1.0));
 
         html = html.replace("${base64Image}", ObjectUtils.notNull(BASE64_ERROR_PAGE_ICON.get().getOrProvide(ctx), ""));
-
         return html;
       }
     };
@@ -603,7 +607,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   /**
    * Sets the error page to display in the browser on load error.
    * <p></p>
-   * By default no error page is displayed. To enable displaying default error page pass {@link ErrorPage#DEFAULT}.
+   * By default, no error page is displayed. To enable displaying default error page pass {@link ErrorPage#DEFAULT}.
    * Passing {@code null} prevents the browser from displaying an error page.
    *
    * @param errorPage the error page producer, or null

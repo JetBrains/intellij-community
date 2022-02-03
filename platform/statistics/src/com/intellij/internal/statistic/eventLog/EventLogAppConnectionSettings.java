@@ -15,7 +15,9 @@ import javax.net.ssl.SSLContext;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class EventLogAppConnectionSettings implements EventLogConnectionSettings {
   private static final StatsProxyInfo NO_PROXY = new StatsProxyInfo(Proxy.NO_PROXY, null);
@@ -49,6 +51,17 @@ public class EventLogAppConnectionSettings implements EventLogConnectionSettings
   @Override
   public SSLContext getSSLContext() {
     return IdeUiService.getInstance().getSslContext();
+  }
+
+  @NotNull
+  @Override
+  public Map<String, String> getExtraHeaders() {
+    ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
+    if (externalEventLogSettings != null) {
+      return externalEventLogSettings.getExtraLogUploadHeaders();
+    } else {
+      return Collections.emptyMap();
+    }
   }
 
   @Nullable

@@ -63,7 +63,8 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         val firstModel = lang.value.first()
         val langNode: CheckedTreeNode
         val startFrom: Int
-        if ((lang.value.size == 1 || group.key.toString() == firstModel.name) && InlayGroup.OTHER_GROUP != group.key) {
+        if ((lang.value.size == 1 || group.key.toString() == firstModel.name && firstModel.language == sortedMap.firstKey()) &&
+            InlayGroup.OTHER_GROUP != group.key) {
           nodeToSelect = addModelNode(firstModel, groupNode, lastSelected, nodeToSelect)
           firstModel.isMergedNode = true
           langNode = groupNode.firstChild as CheckedTreeNode

@@ -20,6 +20,7 @@ import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.layout.*
 import com.intellij.util.FontUtil
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import git4idea.GitUtil
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
@@ -47,7 +48,7 @@ class GitGpgConfigDialog(
     isVisible = false
   }
   private val errorLabel = JBLabel().apply {
-    foreground = ERROR_FOREGROUND_COLOR
+    foreground = UIUtil.getErrorForeground()
     isVisible = false
   }
   private val docLinkLabel = LinkLabel<String>(message("gpg.error.see.documentation.link.text"),

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
@@ -18,7 +17,7 @@ import javax.swing.*;
 import java.util.*;
 
 final class FlushQueue {
-  private static final Logger LOG = Logger.getInstance(LaterInvocator.class);
+  private static final Logger LOG = Logger.getInstance(FlushQueue.class);
   private final Object LOCK = ObjectUtils.sentinel("FlushQueue");
 
   private List<RunnableInfo> mySkippedItems = new ArrayList<>(); //protected by LOCK
@@ -90,7 +89,6 @@ final class FlushQueue {
           break;
         }
         if (info.expired.value(null)) {
-          info.markDone();
           continue;
         }
         if (!currentModality.dominates(info.modalityState)) {
@@ -112,7 +110,6 @@ final class FlushQueue {
     }
     try {
       doRun(info);
-      info.markDone();
     }
     catch (ProcessCanceledException ignored) {
 
@@ -156,10 +153,7 @@ final class FlushQueue {
 
       List<RunnableInfo> alive = new ArrayList<>(myQueue.size());
       for (RunnableInfo info : myQueue) {
-        if (info.expired.value(null)) {
-          info.markDone();
-        }
-        else {
+        if (!info.expired.value(null)) {
           alive.add(info);
         }
       }
@@ -192,24 +186,17 @@ final class FlushQueue {
     @NotNull private final Runnable runnable;
     @NotNull private final ModalityState modalityState;
     @NotNull private final Condition<?> expired;
-    @Nullable private final ActionCallback callback;
     @NotNull
     private final String clientId;
 
     @Async.Schedule
     RunnableInfo(@NotNull Runnable runnable,
                  @NotNull ModalityState modalityState,
-                 @NotNull Condition<?> expired,
-                 @Nullable ActionCallback callback) {
+                 @NotNull Condition<?> expired) {
       this.runnable = runnable;
       this.modalityState = modalityState;
       this.expired = expired;
-      this.callback = callback;
       this.clientId = ClientId.getCurrentValue();
-    }
-
-    void markDone() {
-      if (callback != null) callback.setDone();
     }
 
     @Override

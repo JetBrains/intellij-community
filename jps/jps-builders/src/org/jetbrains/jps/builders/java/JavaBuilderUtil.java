@@ -46,7 +46,7 @@ public final class JavaBuilderUtil {
    * @deprecated This functionality is obsolete and is not used by dependency analysis anymore. To be removed in future releases
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public static final Key<Callbacks.ConstantAffectionResolver> CONSTANT_SEARCH_SERVICE = Key.create("_constant_search_service_");
 
   private static final Logger LOG = Logger.getInstance(Builder.class);
@@ -375,7 +375,10 @@ public final class JavaBuilderUtil {
   }
 
   public static boolean isForcedRecompilationAllJavaModules(CompileContext context) {
-    CompileScope scope = context.getScope();
+    return isForcedRecompilationAllJavaModules(context.getScope());
+  }
+
+  public static boolean isForcedRecompilationAllJavaModules(CompileScope scope) {
     return scope.isBuildForcedForAllTargets(JavaModuleBuildTargetType.PRODUCTION) &&
            scope.isBuildForcedForAllTargets(JavaModuleBuildTargetType.TEST);
   }

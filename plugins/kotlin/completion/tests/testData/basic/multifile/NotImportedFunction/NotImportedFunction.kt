@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 package pack
 
 fun testFun() {
@@ -6,3 +7,4 @@ fun testFun() {
 
 // EXIST: globalFun1, globalFun2
 // ABSENT: globalFun3
+// ABSENT: globalFunPrivate

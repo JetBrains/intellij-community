@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import org.apache.log4j.Level;
@@ -69,6 +69,11 @@ public abstract class DelegatingLogger<T extends Logger> extends Logger {
 
   @Override
   public void setLevel(@NotNull Level level) {
+    myDelegate.setLevel(level);
+  }
+
+  @Override
+  public void setLevel(@NotNull LogLevel level) {
     myDelegate.setLevel(level);
   }
 }

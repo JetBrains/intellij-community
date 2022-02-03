@@ -1,0 +1,22 @@
+interface I<T> {
+    fun <U> a(t: T, u: U)
+    fun b()
+    fun c(t: T)
+    fun <U> d(t: T, u: U)
+}
+
+class C : I<Int> {
+    override fun <U> a(t: Int, u: U) {
+        TODO("Not yet implemented")
+    }
+
+    override fun b() {
+    }
+
+    override fun c(t: Int) {
+        TODO("Not yet implemented")
+    }
+
+    override fun <U> d(t: Int, u: U) {
+    }
+}

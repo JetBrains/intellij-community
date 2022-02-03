@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("UsePropertyAccessSyntax")
+
 package com.intellij.serviceContainer
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.testFramework.PlatformTestUtil
-import org.junit.Assert
-import org.junit.Test
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
 class ConstructorInjectionTest {
   private val pluginDescriptor = DefaultPluginDescriptor("test")
@@ -21,19 +23,13 @@ class ConstructorInjectionTest {
     componentManager.instantiateClassWithConstructorInjection(Foo::class.java, Foo::class.java, pluginDescriptor.pluginId)
   }
 
-  //@Test
-  //fun `resolve light service`() {
-  //  val componentManager = TestComponentManager()
-  //  componentManager.instantiateClassWithConstructorInjection(BarServiceClient::class.java, BarServiceClient::class.java.name, pluginDescriptor.pluginId)
-  //}
-
   @Test
   fun `light service getService() performance`() {
     val componentManager = TestComponentManager()
-    Assert.assertNotNull(componentManager.getService(BarService::class.java))
+    assertThat(componentManager.getService(BarService::class.java)).isNotNull()
     PlatformTestUtil.startPerformanceTest("getService() must be fast for cached service", 1000) {
       for (i in 0..30_000_000) {
-        Assert.assertNotNull(componentManager.getService(BarService::class.java))
+        componentManager.getService(BarService::class.java)!!
       }
     }.assertTiming()
   }

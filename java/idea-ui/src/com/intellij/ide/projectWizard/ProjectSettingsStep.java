@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.JavaUiBundle;
@@ -13,6 +13,7 @@ import com.intellij.projectImport.ProjectFormatPanel;
 import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -206,13 +207,13 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
   public void addSettingsComponent(@NotNull JComponent component) {
     JPanel panel = myWizardContext.isCreatingNewProject() ? myNamePathComponent : getModulePanel();
     panel.add(component, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
-                                                GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+                                                GridBagConstraints.HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
   }
 
   @Override
   public void addExpertPanel(@NotNull JComponent panel) {
     myExpertPanel.add(panel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
-                                                    GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+                                                    GridBagConstraints.HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
   }
 
   @Override

@@ -52,6 +52,9 @@
     <console.folding implementation="com.intellij.execution.wsl.WslDistributionConsoleFolding" os="windows"/>
     <projectService serviceInterface="com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager"
                     serviceImplementation="com.intellij.ide.ui.experimental.toolbar.BaseRunWidgetAvailabilityManager"/>
+    <projectToolbarWidget implementation="com.intellij.execution.ui.RunToolbarWidgetFactory"/>
+    <projectService serviceImplementation="com.intellij.execution.ui.RunConfigurationStartHistory"/>
+    <customizableActionGroupProvider implementation="com.intellij.execution.ui.RunToolbarWidgetCustomizableActionGroupProvider"/>
   </extensions>
   <project-components>
     <component>

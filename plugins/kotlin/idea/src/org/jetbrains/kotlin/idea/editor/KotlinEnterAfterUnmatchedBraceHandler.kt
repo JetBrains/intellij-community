@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.editor
 
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespace
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class KotlinEnterAfterUnmatchedBraceHandler : EnterAfterUnmatchedBraceHandler() {
@@ -47,12 +47,7 @@ class KotlinEnterAfterUnmatchedBraceHandler : EnterAfterUnmatchedBraceHandler() 
         if (nextSibling is PsiWhiteSpace && nextSibling.textContains('\n')) return super.getRBraceOffset(file, editor, caretOffset)
         val endOffset = when (val parent = element?.parent) {
             is KtFunctionLiteral -> {
-                val call = parent.getStrictParentOfType<KtCallExpression>()
-                if (call?.isDeclarationInitializer() == true) {
-                    (parent.parent as? KtLambdaExpression)?.bodyExpression?.statements?.firstOrNull()?.endOffset
-                } else {
-                    null
-                }
+                getRBraceForLambda(parent)
             }
             is KtWhenExpression -> {
                 if (parent.isDeclarationInitializer()) {
@@ -64,6 +59,12 @@ class KotlinEnterAfterUnmatchedBraceHandler : EnterAfterUnmatchedBraceHandler() 
             else -> null
         }
         return endOffset ?: super.getRBraceOffset(file, editor, caretOffset)
+    }
+
+    private fun getRBraceForLambda(functionLiteral: KtFunctionLiteral): Int? {
+        val bodyExpression = (functionLiteral.parent as? KtLambdaExpression)?.bodyExpression ?: return null
+        val firstVisibleChild = bodyExpression.firstChild?.getNextSiblingIgnoringWhitespace(withItself = true)
+        return firstVisibleChild?.endOffset
     }
 
     private fun KtExpression.isDeclarationInitializer(): Boolean {

@@ -14,7 +14,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 
 class InlayProviderUsageCollector : ProjectUsagesCollector() {
-  private val INLAY_CONFIGURATION_GROUP = EventLogGroup("inlay.configuration", 7)
+  private val INLAY_CONFIGURATION_GROUP = EventLogGroup("inlay.configuration", 10)
 
   private val GLOBAL_SETTINGS_EVENT = INLAY_CONFIGURATION_GROUP.registerEvent(
     "global.inlays.settings",

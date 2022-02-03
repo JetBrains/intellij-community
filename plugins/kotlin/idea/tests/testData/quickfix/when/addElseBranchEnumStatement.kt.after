@@ -3,8 +3,9 @@ enum class Color { R, G, B }
 fun use(c: Color) {
     when (c) {
         Color.R -> red()
-        else -> <caret>
+        else -> {<caret>}
     }
 }
 
 fun red() {}
+/* IGNORE_FIR */

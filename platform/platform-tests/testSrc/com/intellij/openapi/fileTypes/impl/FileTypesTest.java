@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -24,7 +24,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.fileTypes.ex.DetectedByContentFileType;
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.fileTypes.impl.ConflictingFileTypeMappingTracker.ResolveConflictResult;
@@ -87,6 +86,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     super.setUp();
     // we test against myFileTypeManager instance only, standard FileTypeManager.getInstance() must not be changed in any way
     myFileTypeManager = new FileTypeManagerImpl();
+    myFileTypeManager.listenAsyncVfsEvents();
     myFileTypeManager.initializeComponent();
     myFileTypeManager.getRegisteredFileTypes();
     myFileTypeManager.reDetectAsync(true);
@@ -236,10 +236,11 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     File dir = createTempDirectory();
     File file = FileUtil.createTempFile(dir, "x", "xxx_xx_xx", true);
     VirtualFile virtualFile = getVirtualFile(file);
-    assertEquals(FileTypes.UNKNOWN, getFileType(virtualFile));
+    Assume.assumeTrue(UnknownFileType.INSTANCE.equals(myFileTypeManager.getFileTypeByFileName(virtualFile.getName())));
+    assertEquals(DetectedByContentFileType.INSTANCE, getFileType(virtualFile));
     PsiFile psi = getPsiManager().findFile(virtualFile);
-    assertTrue(psi instanceof PsiBinaryFile);
-    assertEquals(FileTypes.UNKNOWN, getFileType(virtualFile));
+    assertFalse(psi.toString(), psi instanceof PsiBinaryFile);
+    assertEquals(DetectedByContentFileType.INSTANCE, getFileType(virtualFile));
 
     setBinaryContent(virtualFile, "x_x_x_x".getBytes(StandardCharsets.UTF_8));
     assertEquals(FileTypes.PLAIN_TEXT, getFileType(virtualFile));
@@ -969,9 +970,8 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   }
 
   public void testDEFAULT_IGNOREDIsSorted() {
-    List<String> strings = StringUtil.split(FileTypeManagerImpl.DEFAULT_IGNORED, ";");
-    String sorted = strings.stream().sorted().collect(Collectors.joining(";"));
-
+    List<String> strings = FileTypeManagerImpl.DEFAULT_IGNORED;
+    List<String> sorted = strings.stream().sorted().collect(Collectors.toList());
     assertEquals("FileTypeManagerImpl.DEFAULT_IGNORED entries must be sorted", sorted, FileTypeManagerImpl.DEFAULT_IGNORED);
   }
 
@@ -1063,7 +1063,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       }
 
       @Override
-      public @Nullable Icon getIcon() {
+      public Icon getIcon() {
         return null;
       }
 
@@ -1145,7 +1145,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     @Override public @NotNull String getDisplayName() { return getClass().getName(); }
     @Override public @NotNull String getDescription() { return getDisplayName(); }
     @Override public @NotNull String getDefaultExtension() { return "hs"; }
-    @Override public @Nullable Icon getIcon() { return null; }
+    @Override public Icon getIcon() { return null; }
     @Override  public boolean isBinary() { return false; }
   }
 
@@ -1155,9 +1155,10 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
   public void testPluginWhichOverridesBundledFileTypeMustWin() {
     FileType bundled = Objects.requireNonNull(myFileTypeManager.findFileTypeByName("Image"));
-    PluginDescriptor pluginDescriptor = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(bundled.getClass().getName());
-    assertTrue(pluginDescriptor.isBundled());
-    LOG.debug("pluginDescriptor = " + pluginDescriptor);
+    // this check doesn't work because in unit test mode plugin class loader is not created
+    //PluginDescriptor pluginDescriptor = PluginManager.getPluginByClass(bundled.getClass());
+    //assertTrue(pluginDescriptor.isBundled());
+    //LOG.debug("pluginDescriptor = " + pluginDescriptor);
 
     FileTypeBean bean = new FileTypeBean();
     bean.name = new MyCustomImageFileType().getName();
@@ -1191,9 +1192,9 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   public void testTwoPluginsWhichOverrideBundledFileTypeMustNegotiateBetweenThemselves() {
     FileTypeManager fileTypeManager = myFileTypeManager;
     FileType bundled = Objects.requireNonNull(fileTypeManager.findFileTypeByName("Image"));
-    PluginDescriptor pluginDescriptor = Objects.requireNonNull(PluginManagerCore.getPluginDescriptorOrPlatformByClassName(bundled.getClass().getName()));
-    assertTrue(pluginDescriptor.isBundled());
-    LOG.debug("pluginDescriptor = " + pluginDescriptor);
+    //PluginDescriptor pluginDescriptor = Objects.requireNonNull(PluginManagerCore.getPluginDescriptorOrPlatformByClassName(bundled.getClass().getName()));
+    //assertTrue(pluginDescriptor.isBundled());
+    //LOG.debug("pluginDescriptor = " + pluginDescriptor);
 
     String ext = myFileTypeManager.getAssociations(bundled).get(0).toString().replace("*.", "");
     FileTypeBean bean = new FileTypeBean();
@@ -1249,7 +1250,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     @Override public @NotNull String getName() { return NAME; }
     @Override public @NotNull String getDescription() { return ""; }
     @Override public @NotNull String getDefaultExtension() { return EXTENSION; }
-    @Override public @Nullable Icon getIcon() { return null; }
+    @Override public Icon getIcon() { return null; }
     @Override public boolean isBinary() { return false; }
   }
 
@@ -1261,7 +1262,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     @Override public @NotNull String getName() { return NAME; }
     @Override public @NotNull String getDescription() { return ""; }
     @Override public @NotNull String getDefaultExtension() { return "hs"; }
-    @Override public @Nullable Icon getIcon() { return null; }
+    @Override public Icon getIcon() { return null; }
     @Override public boolean isBinary() { return false; }
   }
 
@@ -1287,7 +1288,8 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
     setBinaryContent(virtualFile, new byte[0]);
     myFileTypeManager.drainReDetectQueue();
-    assertEquals(UnknownFileType.INSTANCE, getFileType(virtualFile));
+    FileType type = getFileType(virtualFile);
+    assertFalse(type.toString(), type.isBinary()); // either PlainTextFile or DetectedByContent are fine
 
     setBinaryContent(virtualFile, "qwe\newq".getBytes(StandardCharsets.UTF_8));
     myFileTypeManager.drainReDetectQueue();

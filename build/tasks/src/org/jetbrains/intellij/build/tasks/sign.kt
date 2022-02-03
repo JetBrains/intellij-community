@@ -1,8 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package org.jetbrains.intellij.build.tasks
 
+import com.jcraft.jsch.agentproxy.AgentProxy
+import com.jcraft.jsch.agentproxy.AgentProxyException
+import com.jcraft.jsch.agentproxy.Connector
+import com.jcraft.jsch.agentproxy.ConnectorFactory
+import com.jcraft.jsch.agentproxy.sshj.AuthAgent
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import net.schmizz.keepalive.KeepAliveProvider
@@ -10,18 +15,18 @@ import net.schmizz.sshj.DefaultConfig
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.SFTPClient
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier
+import net.schmizz.sshj.userauth.method.AuthKeyboardInteractive
+import net.schmizz.sshj.userauth.method.AuthMethod
+import net.schmizz.sshj.userauth.method.AuthPassword
+import net.schmizz.sshj.userauth.method.PasswordResponseProvider
+import net.schmizz.sshj.userauth.password.PasswordFinder
+import net.schmizz.sshj.userauth.password.Resource
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntryPredicate
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.compress.archivers.zip.ZipFile
-import org.apache.log4j.ConsoleAppender
-import org.apache.log4j.Level
-import org.apache.log4j.Logger
-import org.apache.log4j.PatternLayout
-import org.jetbrains.intellij.build.io.NioFileDestination
-import org.jetbrains.intellij.build.io.NioFileSource
-import org.jetbrains.intellij.build.io.runAsync
-import org.jetbrains.intellij.build.io.writeNewFile
+import org.jetbrains.intellij.build.io.*
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -32,6 +37,7 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
+import java.util.logging.*
 import java.util.zip.Deflater
 
 private val random by lazy { SecureRandom() }
@@ -115,7 +121,7 @@ fun signMacApp(
       .startSpan().use {
         sftp.put(NioFileSource(scriptDir.resolve("entitlements.xml"), filePermission = regularFileMode), "$remoteDir/entitlements.xml")
         @Suppress("SpellCheckingInspection")
-        for (fileName in listOf("sign.sh", "notarize.sh", "signapp.sh", "makedmg.sh", "makedmg.pl")) {
+        for (fileName in listOf("sign.sh", "notarize.sh", "signapp.sh", "makedmg.sh", "makedmg.py")) {
           sftp.put(NioFileSource(scriptDir.resolve(fileName), filePermission = executableFileMode), "$remoteDir/$fileName")
         }
 
@@ -165,7 +171,7 @@ fun signMacApp(
         @Suppress("SpellCheckingInspection")
         processFile(localFile = dmgFile,
                     ssh = ssh,
-                    commandString = "'$remoteDir/makedmg.sh' '${fileNameWithoutExt}' '$fullBuildNumber'",
+                    commandString = "/bin/bash -l '$remoteDir/makedmg.sh' '${fileNameWithoutExt}' '$fullBuildNumber'",
                     artifactDir = artifactDir,
                     artifactBuilt = artifactBuilt,
                     taskLogClassifier = "dmg")
@@ -288,17 +294,41 @@ private fun downloadResult(remoteFile: String,
 }
 
 private val initLog by lazy {
-  System.setProperty("log4j.defaultInitOverride", "true")
-  val root = Logger.getRootLogger()
-  if (!root.allAppenders.hasMoreElements()) {
+  val root = Logger.getLogger("")
+  if (root.handlers.isEmpty()) {
     root.level = Level.INFO
-    root.addAppender(ConsoleAppender(PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)))
+    root.addHandler(ConsoleHandler().also {
+      it.formatter = object : Formatter() {
+        override fun format(record: LogRecord): String {
+          return record.message + System.lineSeparator()
+        }
+      }
+    })
   }
 }
 
 private fun generateRemoteDirName(remoteDirPrefix: String): String {
   val currentDateTimeString = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME).replace(':', '-')
   return "$remoteDirPrefix-$currentDateTimeString-${java.lang.Long.toUnsignedString(random.nextLong(), Character.MAX_RADIX)}"
+}
+
+@Throws(java.lang.Exception::class)
+private fun AgentProxy.getAuthMethods(): List<AuthMethod> {
+  val identities = identities
+  System.getLogger("org.jetbrains.intellij.build.tasks.Sign")
+    .info("SSH-Agent identities: ${identities.joinToString { String(it.comment, StandardCharsets.UTF_8) }}")
+  return identities.map { AuthAgent(this, it) }
+}
+
+private fun getAgentConnector(): Connector? {
+  try {
+    return ConnectorFactory.getDefault().createConnector()
+  }
+  catch (ignored: AgentProxyException) {
+    System.getLogger("org.jetbrains.intellij.build.tasks.Sign")
+      .warn("SSH-Agent connector creation failed: ${ignored.message}")
+  }
+  return null
 }
 
 private inline fun executeTask(host: String,
@@ -313,8 +343,15 @@ private inline fun executeTask(host: String,
   SSHClient(config).use { ssh ->
     ssh.addHostKeyVerifier(PromiscuousVerifier())
     ssh.connect(host)
-    ssh.authPassword(user, password)
+    val passwordFinder = object : PasswordFinder {
+      override fun reqPassword(resource: Resource<*>?) = password.toCharArray().clone()
+      override fun shouldRetry(resource: Resource<*>?) = false
+    }
+    val authMethods: List<AuthMethod> =
+      (getAgentConnector()?.let { AgentProxy(it) }?.getAuthMethods() ?: emptyList()) +
+      listOf(AuthPassword(passwordFinder), AuthKeyboardInteractive(PasswordResponseProvider(passwordFinder)))
 
+    ssh.auth(user, authMethods)
     ssh.newSFTPClient().use { sftp ->
       val remoteDir = generateRemoteDirName(remoteDirPrefix)
       sftp.mkdir(remoteDir)

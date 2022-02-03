@@ -210,27 +210,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
 
   private void queueTasks(@NotNull List<? extends Runnable> actions, @NotNull @NonNls String reason) {
     actions.forEach(myTasks::offer);
-    DumbModeTask task = new DumbModeTask(this) {
-      @Override
-      public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(true);
-        indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
-        ChangedFilesPushingStatistics statistics;
-        if (!ApplicationManager.getApplication().isUnitTestMode() || IndexDiagnosticDumper.getShouldDumpInUnitTestMode()) {
-          statistics = new ChangedFilesPushingStatistics(reason);
-        }
-        else {
-          statistics = null;
-        }
-        ((GistManagerImpl)GistManager.getInstance()).startMergingDependentCacheInvalidations();
-        try {
-          performDelayedPushTasks(statistics);
-        }
-        finally {
-          ((GistManagerImpl)GistManager.getInstance()).endMergingDependentCacheInvalidations();
-        }
-      }
-    };
+    DumbModeTask task = new MyDumbModeTask(reason, this);
     myProject.getMessageBus().connect(task).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
@@ -479,5 +459,36 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
 
   private static List<FilePropertyPusher<?>> getFilePushers() {
     return ContainerUtil.findAll(FilePropertyPusher.EP_NAME.getExtensionList(), pusher -> !pusher.pushDirectoriesOnly());
+  }
+
+  private static class MyDumbModeTask extends DumbModeTask {
+    private final @NotNull @NonNls String myReason;
+    private final PushedFilePropertiesUpdaterImpl myUpdater;
+
+    private MyDumbModeTask(@NotNull @NonNls String reason, @NotNull PushedFilePropertiesUpdaterImpl updater) {
+      myUpdater = updater;
+      myReason = reason;
+    }
+
+    @Override
+    public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+      indicator.setIndeterminate(true);
+      indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
+      ChangedFilesPushingStatistics statistics;
+      if (!ApplicationManager.getApplication().isUnitTestMode() || IndexDiagnosticDumper.getShouldDumpInUnitTestMode()) {
+        statistics = new ChangedFilesPushingStatistics(myReason);
+      }
+      else {
+        statistics = null;
+      }
+      ((GistManagerImpl)GistManager.getInstance()).runWithMergingDependentCacheInvalidations(() ->
+        myUpdater.performDelayedPushTasks(statistics));
+    }
+
+    @Override
+    public @Nullable DumbModeTask tryMergeWith(@NotNull DumbModeTask taskFromQueue) {
+      if (taskFromQueue instanceof MyDumbModeTask && ((MyDumbModeTask)taskFromQueue).myUpdater == myUpdater) return this;
+      return null;
+    }
   }
 }

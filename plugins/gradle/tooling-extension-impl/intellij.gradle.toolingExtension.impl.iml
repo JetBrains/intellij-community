@@ -20,5 +20,6 @@
     <orderEntry type="library" name="ion" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
     <orderEntry type="library" exported="" name="Slf4j" level="project" />
+    <orderEntry type="library" exported="" name="slf4j-jdk14" level="project" />
   </component>
 </module>

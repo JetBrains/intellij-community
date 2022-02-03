@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor
 
 import com.intellij.accessibility.AccessibilityUtils
@@ -44,7 +44,6 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.Contract
@@ -52,48 +51,97 @@ import org.jetbrains.annotations.Nls
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JCheckBox
 
-// @formatter:off
-private val codeInsightSettings get() = CodeInsightSettings.getInstance()
-private val editorSettings get() = EditorSettingsExternalizable.getInstance()
+private val codeInsightSettings
+  get() = CodeInsightSettings.getInstance()
+private val editorSettings
+  get() = EditorSettingsExternalizable.getInstance()
 private val stripTrailingSpacesProxy get() = StripTrailingSpacesProxy()
-private val uiSettings get() = UISettings.instance
-private val richCopySettings get() = RichCopySettings.getInstance()
-private val codeAnalyzerSettings get() = DaemonCodeAnalyzerSettings.getInstance()
+
+private val richCopySettings
+  get() = RichCopySettings.getInstance()
+private val codeAnalyzerSettings
+  get() = DaemonCodeAnalyzerSettings.getInstance()
 
 @Contract(pure = true)
 private fun String.capitalizeWords(): String = StringUtil.capitalizeWords(this, true)
 
-private val enableWheelFontChange                                      get() = CheckboxDescriptor(if (SystemInfo.isMac) message("checkbox.enable.ctrl.mousewheel.changes.font.size.macos") else message("checkbox.enable.ctrl.mousewheel.changes.font.size"), PropertyBinding(editorSettings::isWheelFontChangeEnabled, editorSettings::setWheelFontChangeEnabled))
+private val enableWheelFontChange
+  get() = CheckboxDescriptor(if (SystemInfo.isMac) message("checkbox.enable.ctrl.mousewheel.changes.font.size.macos")
+                             else message("checkbox.enable.ctrl.mousewheel.changes.font.size"),
+                             PropertyBinding(editorSettings::isWheelFontChangeEnabled, editorSettings::setWheelFontChangeEnabled))
 
-private val enableDnD                                                  get() = CheckboxDescriptor(message("checkbox.enable.drag.n.drop.functionality.in.editor"), PropertyBinding(editorSettings::isDndEnabled, editorSettings::setDndEnabled))
-private val virtualSpace                                               get() = CheckboxDescriptor(message("checkbox.allow.placement.of.caret.after.end.of.line"), PropertyBinding(editorSettings::isVirtualSpace, editorSettings::setVirtualSpace), groupName = message("checkbox.allow.placement.of.caret.label").capitalizeWords())
-private val caretInsideTabs                                            get() = CheckboxDescriptor(message("checkbox.allow.placement.of.caret.inside.tabs"), PropertyBinding(editorSettings::isCaretInsideTabs, editorSettings::setCaretInsideTabs), groupName = message("checkbox.allow.placement.of.caret.label").capitalizeWords())
-private val virtualPageAtBottom                                        get() = CheckboxDescriptor(message("checkbox.show.virtual.space.at.file.bottom"), PropertyBinding(editorSettings::isAdditionalPageAtBottom, editorSettings::setAdditionalPageAtBottom))
+private val enableDnD
+  get() = CheckboxDescriptor(message("checkbox.enable.drag.n.drop.functionality.in.editor"),
+                             PropertyBinding(editorSettings::isDndEnabled, editorSettings::setDndEnabled))
+private val virtualSpace
+  get() = CheckboxDescriptor(message("checkbox.allow.placement.of.caret.after.end.of.line"),
+                             PropertyBinding(editorSettings::isVirtualSpace, editorSettings::setVirtualSpace),
+                             groupName = message("checkbox.allow.placement.of.caret.label").capitalizeWords())
+private val caretInsideTabs
+  get() = CheckboxDescriptor(message("checkbox.allow.placement.of.caret.inside.tabs"), PropertyBinding(editorSettings::isCaretInsideTabs,
+                                                                                                       editorSettings::setCaretInsideTabs),
+                             groupName = message("checkbox.allow.placement.of.caret.label").capitalizeWords())
+private val virtualPageAtBottom
+  get() = CheckboxDescriptor(message("checkbox.show.virtual.space.at.file.bottom"),
+                             PropertyBinding(editorSettings::isAdditionalPageAtBottom, editorSettings::setAdditionalPageAtBottom))
 
-private val highlightBraces                                            get() = CheckboxDescriptor(message("checkbox.highlight.matched.brace"), codeInsightSettings::HIGHLIGHT_BRACES, groupName = message("group.brace.highlighting"))
-private val highlightScope                                             get() = CheckboxDescriptor(message("checkbox.highlight.current.scope"), codeInsightSettings::HIGHLIGHT_SCOPE, groupName = message("group.brace.highlighting"))
-private val highlightIdentifierUnderCaret                              get() = CheckboxDescriptor(message("checkbox.highlight.usages.of.element.at.caret"), codeInsightSettings::HIGHLIGHT_IDENTIFIER_UNDER_CARET, groupName = message("group.brace.highlighting"))
+private val highlightBraces
+  get() = CheckboxDescriptor(message("checkbox.highlight.matched.brace"), codeInsightSettings::HIGHLIGHT_BRACES,
+                             groupName = message("group.brace.highlighting"))
+private val highlightScope
+  get() = CheckboxDescriptor(message("checkbox.highlight.current.scope"), codeInsightSettings::HIGHLIGHT_SCOPE,
+                             groupName = message("group.brace.highlighting"))
+private val highlightIdentifierUnderCaret
+  get() = CheckboxDescriptor(message("checkbox.highlight.usages.of.element.at.caret"),
+                             codeInsightSettings::HIGHLIGHT_IDENTIFIER_UNDER_CARET, groupName = message("group.brace.highlighting"))
 
-private val renameLocalVariablesInplace                                get() = CheckboxDescriptor(message("radiobutton.rename.local.variables.inplace"), PropertyBinding(editorSettings::isVariableInplaceRenameEnabled, editorSettings::setVariableInplaceRenameEnabled), groupName = message("radiogroup.rename.local.variables").capitalizeWords())
-private val preselectCheckBox                                          get() = CheckboxDescriptor(message("checkbox.rename.local.variables.preselect"), PropertyBinding(editorSettings::isPreselectRename, editorSettings::setPreselectRename), groupName = message("group.refactorings"))
-private val showInlineDialogForCheckBox                                get() = CheckboxDescriptor(message("checkbox.show.inline.dialog.on.local.variable.references"), PropertyBinding(editorSettings::isShowInlineLocalDialog, editorSettings::setShowInlineLocalDialog))
+private val renameLocalVariablesInplace
+  get() = CheckboxDescriptor(message("radiobutton.rename.local.variables.inplace"),
+                             PropertyBinding(editorSettings::isVariableInplaceRenameEnabled,
+                                             editorSettings::setVariableInplaceRenameEnabled), groupName = message(
+    "radiogroup.rename.local.variables").capitalizeWords())
+private val preselectCheckBox
+  get() = CheckboxDescriptor(message("checkbox.rename.local.variables.preselect"), PropertyBinding(editorSettings::isPreselectRename,
+                                                                                                   editorSettings::setPreselectRename),
+                             groupName = message("group.refactorings"))
+private val showInlineDialogForCheckBox
+  get() = CheckboxDescriptor(message("checkbox.show.inline.dialog.on.local.variable.references"),
+                             PropertyBinding(editorSettings::isShowInlineLocalDialog, editorSettings::setShowInlineLocalDialog))
 
-private val cdSmoothScrolling                                          get() = CheckboxDescriptor(message("checkbox.smooth.scrolling"), PropertyBinding(editorSettings::isSmoothScrolling, editorSettings::setSmoothScrolling))
-private val cdUseSoftWrapsAtEditor                                     get() = CheckboxDescriptor(message("checkbox.use.soft.wraps.at.editor"), PropertyBinding(editorSettings::isUseSoftWraps, editorSettings::setUseSoftWraps))
-private val cdUseCustomSoftWrapIndent                                  get() = CheckboxDescriptor(message("checkbox.use.custom.soft.wraps.indent"), PropertyBinding(editorSettings::isUseCustomSoftWrapIndent, editorSettings::setUseCustomSoftWrapIndent))
-private val cdShowSoftWrapsOnlyOnCaretLine                             get() = CheckboxDescriptor(message("checkbox.show.softwraps.only.for.caret.line"), PropertyBinding({ !editorSettings.isAllSoftWrapsShown }, { editorSettings.setAllSoftwrapsShown(!it) }))
-private val cdRemoveTrailingBlankLines                                 get() = CheckboxDescriptor(message("editor.options.remove.trailing.blank.lines"), PropertyBinding(editorSettings::isRemoveTrailingBlankLines, editorSettings::setRemoveTrailingBlankLines))
-private val cdEnsureBlankLineBeforeCheckBox                            get() = CheckboxDescriptor(message("editor.options.line.feed"), PropertyBinding(editorSettings::isEnsureNewLineAtEOF, editorSettings::setEnsureNewLineAtEOF))
-private val cdShowQuickDocOnMouseMove                                  get() = CheckboxDescriptor(message("editor.options.quick.doc.on.mouse.hover"), PropertyBinding(editorSettings::isShowQuickDocOnMouseOverElement, editorSettings::setShowQuickDocOnMouseOverElement))
-private val cdKeepTrailingSpacesOnCaretLine                            get() = CheckboxDescriptor(message("editor.settings.keep.trailing.spaces.on.caret.line"), PropertyBinding(editorSettings::isKeepTrailingSpacesOnCaretLine, editorSettings::setKeepTrailingSpacesOnCaretLine))
-private val cdStripTrailingSpacesEnabled                               get() = CheckboxDescriptor(message("combobox.strip.trailing.spaces.on.save"), PropertyBinding(stripTrailingSpacesProxy::isEnabled, stripTrailingSpacesProxy::setEnabled))
-
-// @formatter:on
+private val cdSmoothScrolling
+  get() = CheckboxDescriptor(message("checkbox.smooth.scrolling"), PropertyBinding(editorSettings::isSmoothScrolling,
+                                                                                   editorSettings::setSmoothScrolling))
+private val cdUseSoftWrapsAtEditor
+  get() = CheckboxDescriptor(message("checkbox.use.soft.wraps.at.editor"), PropertyBinding(editorSettings::isUseSoftWraps,
+                                                                                           editorSettings::setUseSoftWraps))
+private val cdUseCustomSoftWrapIndent
+  get() = CheckboxDescriptor(message("checkbox.use.custom.soft.wraps.indent"), PropertyBinding(editorSettings::isUseCustomSoftWrapIndent,
+                                                                                               editorSettings::setUseCustomSoftWrapIndent))
+private val cdShowSoftWrapsOnlyOnCaretLine
+  get() = CheckboxDescriptor(message("checkbox.show.softwraps.only.for.caret.line"),
+                             PropertyBinding({ !editorSettings.isAllSoftWrapsShown }, { editorSettings.setAllSoftwrapsShown(!it) }))
+private val cdRemoveTrailingBlankLines
+  get() = CheckboxDescriptor(message("editor.options.remove.trailing.blank.lines"),
+                             PropertyBinding(editorSettings::isRemoveTrailingBlankLines, editorSettings::setRemoveTrailingBlankLines))
+private val cdEnsureBlankLineBeforeCheckBox
+  get() = CheckboxDescriptor(message("editor.options.line.feed"), PropertyBinding(editorSettings::isEnsureNewLineAtEOF,
+                                                                                  editorSettings::setEnsureNewLineAtEOF))
+private val cdShowQuickDocOnMouseMove
+  get() = CheckboxDescriptor(message("editor.options.quick.doc.on.mouse.hover"),
+                             PropertyBinding(editorSettings::isShowQuickDocOnMouseOverElement,
+                                             editorSettings::setShowQuickDocOnMouseOverElement))
+private val cdKeepTrailingSpacesOnCaretLine
+  get() = CheckboxDescriptor(message("editor.settings.keep.trailing.spaces.on.caret.line"),
+                             PropertyBinding(editorSettings::isKeepTrailingSpacesOnCaretLine,
+                                             editorSettings::setKeepTrailingSpacesOnCaretLine))
+private val cdStripTrailingSpacesEnabled
+  get() = CheckboxDescriptor(message("combobox.strip.trailing.spaces.on.save"), PropertyBinding(stripTrailingSpacesProxy::isEnabled,
+                                                                                                stripTrailingSpacesProxy::setEnabled))
 
 internal val optionDescriptors: List<OptionDescription>
   get() {
     return sequenceOf(
-      myCbHonorCamelHumpsWhenSelectingByClicking,
+      cbHonorCamelHumpsWhenSelectingByClicking,
       enableWheelFontChange,
       enableDnD,
       virtualSpace,
@@ -165,6 +213,7 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
       group(message("group.soft.wraps")) {
         row {
           val useSoftWraps = checkBox(cdUseSoftWrapsAtEditor)
+            .gap(RightGap.SMALL)
           textField()
             .bindText({ editorSettings.softWrapFileMasks }, { editorSettings.softWrapFileMasks = it })
             .columns(COLUMNS_LARGE)
@@ -188,8 +237,7 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
         row { checkBox(cdShowSoftWrapsOnlyOnCaretLine) }
       }
       group(message("group.virtual.space")) {
-        row {
-          label(message("checkbox.allow.placement.of.caret.label"))
+        row(message("checkbox.allow.placement.of.caret.label")) {
           checkBox(virtualSpace)
           checkBox(caretInsideTabs)
         }
@@ -234,6 +282,7 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
         lateinit var stripEnabledBox: Cell<JBCheckBox>
         row {
           stripEnabledBox = checkBox(cdStripTrailingSpacesEnabled)
+            .gap(RightGap.SMALL)
           val model = DefaultComboBoxModel(
             arrayOf(
               EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED,
@@ -249,7 +298,9 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
                 else -> it
               }
             }
-          ).bindItem(stripTrailingSpacesProxy::getScope, {scope->stripTrailingSpacesProxy.setScope(scope, stripEnabledBox.selected.invoke())})
+          ).bindItem(stripTrailingSpacesProxy::getScope) { scope ->
+            stripTrailingSpacesProxy.setScope(scope, stripEnabledBox.selected.invoke())
+          }
             .enabledIf(stripEnabledBox.selected)
         }
         indent {
@@ -275,14 +326,14 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
     if (wasModified) {
       clearAllIdentifierHighlighters()
       reinitAllEditors()
-      uiSettings.fireUISettingsChanged()
+      UISettings.instance.fireUISettingsChanged()
       restartDaemons()
       ApplicationManager.getApplication().messageBus.syncPublisher(EditorOptionsListener.OPTIONS_PANEL_TOPIC).changesApplied()
     }
   }
 }
 
-class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsProvider>(message("title.code.editing"), ID), WithEpDependencies {
+private class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsProvider>(message("title.code.editing"), ID), WithEpDependencies {
   companion object {
     const val ID = "preferences.editor.code.editing"
   }
@@ -337,8 +388,8 @@ class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsPro
                 else -> it.toString()
               }
             }
-          ).bindItem(codeAnalyzerSettings::isNextErrorActionGoesToErrorsFirst,
-            { codeAnalyzerSettings.isNextErrorActionGoesToErrorsFirst = it ?: true })
+          ).bindItem(codeAnalyzerSettings::isNextErrorActionGoesToErrorsFirst
+          ) { codeAnalyzerSettings.isNextErrorActionGoesToErrorsFirst = it ?: true }
         }.layout(RowLayout.INDEPENDENT)
 
         for (configurable in configurables) {
@@ -395,15 +446,17 @@ private fun <E : EditorCaretStopPolicyItem> Panel.caretStopRow(@Nls label: Strin
 }
 
 private class StripTrailingSpacesProxy {
-  private val editorSettings = EditorSettingsExternalizable.getInstance()
   private var lastChoice: String? = getScope()
 
-  fun isEnabled(): Boolean =
-    EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE == editorSettings.stripTrailingSpaces ||
-    EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED == editorSettings.stripTrailingSpaces
+  fun isEnabled(): Boolean {
+    val editorSettings = EditorSettingsExternalizable.getInstance()
+    return EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE == editorSettings.stripTrailingSpaces ||
+           EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED == editorSettings.stripTrailingSpaces
+  }
 
   fun setEnabled(enable: Boolean) {
     if (enable != isEnabled()) {
+      val editorSettings = EditorSettingsExternalizable.getInstance()
       when {
         enable -> editorSettings.stripTrailingSpaces = lastChoice
         else -> {
@@ -414,15 +467,18 @@ private class StripTrailingSpacesProxy {
     }
   }
 
-  fun getScope(): String = when (editorSettings.stripTrailingSpaces) {
-    EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE -> {
-      val currChoice = lastChoice
-      when {
-        currChoice != null -> currChoice
-        else -> EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED
+  fun getScope(): String {
+    val editorSettings = EditorSettingsExternalizable.getInstance()
+    return when (editorSettings.stripTrailingSpaces) {
+      EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE -> {
+        val currChoice = lastChoice
+        when {
+          currChoice != null -> currChoice
+          else -> EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED
+        }
       }
+      else -> editorSettings.stripTrailingSpaces
     }
-    else -> editorSettings.stripTrailingSpaces
   }
 
   fun setScope(scope: String?, enabled: Boolean) = when {

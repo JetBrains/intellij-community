@@ -5,6 +5,8 @@ import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.intellij.xdebugger.frame.XValue;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.python.debugger.PyDebugValue;
+import org.assertj.core.api.SoftAssertions;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.util.List;
@@ -57,9 +59,8 @@ public class PythonDebuggerSetValueTest extends PyEnvTestCase {
 
         List<PyDebugValue> frameVariables = loadFrame();
         PyDebugValue var = findDebugValueByName(frameVariables, "objs");
-        List<XValue> children = XDebuggerTestUtil.collectChildren(var);
-        PyDebugValue two = (PyDebugValue)children.get(1);
-        PyDebugValue three = (PyDebugValue)children.get(2);
+        PyDebugValue two = getDictItem(var, "'two'");
+        PyDebugValue three = getDictItem(var, "'three'");
 
         eval("objs['two']").hasValue("2");
         myDebugProcess.changeVariable(two, "\"change\"");
@@ -69,10 +70,9 @@ public class PythonDebuggerSetValueTest extends PyEnvTestCase {
         myDebugProcess.changeVariable(three, "[1, 2, 3]");
         eval("objs['three']").hasValue("[1, 2, 3]");
 
-        children = XDebuggerTestUtil.collectChildren(var);
-        three = (PyDebugValue)children.get(2);
-        children = XDebuggerTestUtil.collectChildren(three);
-        PyDebugValue one = (PyDebugValue)children.get(0);
+        three = getDictItem(var, "'three'");
+        List<XValue> threeValues = XDebuggerTestUtil.collectChildren(three);
+        PyDebugValue one = (PyDebugValue)threeValues.get(0);
 
         eval("objs['three'][0]").hasValue("1");
         myDebugProcess.changeVariable(one, "\"hello\"");
@@ -122,12 +122,15 @@ public class PythonDebuggerSetValueTest extends PyEnvTestCase {
 
         eval("lst[2]").hasValue("3");
         myDebugProcess.changeVariable(three, "{'one': 1, 'two': 2}");
-        eval("lst[2]").hasValue("{'one': 1, 'two': 2}");
+        SoftAssertions.assertSoftly(softly -> softly
+          .assertThat(eval("lst[2]").getValue())
+          .as("lst[2]")
+          .isIn("{'one': 1, 'two': 2}", "{'two': 2, 'one': 1}")
+        );
 
         children = XDebuggerTestUtil.collectChildren(var);
         three = (PyDebugValue)children.get(2);
-        children = XDebuggerTestUtil.collectChildren(three);
-        one = (PyDebugValue)children.get(0);
+        one = getDictItem(three, "'one'");
 
         eval("lst[2]['one']").hasValue("1");
         myDebugProcess.changeVariable(one, "'hello'");
@@ -216,5 +219,13 @@ public class PythonDebuggerSetValueTest extends PyEnvTestCase {
         eval("lst").hasValue("[1, 2, 3]");
       }
     });
+  }
+
+  private static @NotNull PyDebugValue getDictItem(@NotNull PyDebugValue dict, @NotNull String key) {
+    List<XValue> children = XDebuggerTestUtil.collectChildren(dict);
+    return children.stream()
+      .map(value -> (PyDebugValue)value)
+      .filter(value -> value.getVisibleName().equals(key))
+      .findFirst().orElseThrow();
   }
 }

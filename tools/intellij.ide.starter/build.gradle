@@ -1,0 +1,88 @@
+apply plugin: 'java'
+apply plugin: 'kotlin'
+
+buildscript {
+  ext.kotlin_version = '1.5.10'
+
+  repositories {
+    maven { url = "https://cache-redirector.jetbrains.com/maven-central" }
+    maven { url = "https://cache-redirector.jetbrains.com/intellij-dependencies" }
+  }
+
+  dependencies {
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+  }
+}
+
+sourceSets {
+  main.kotlin.srcDirs += 'src'
+  test.kotlin.srcDirs += 'testSrc'
+}
+
+repositories {
+  maven { url = "https://cache-redirector.jetbrains.com/maven-central" }
+  maven { url = "https://cache-redirector.jetbrains.com/intellij-dependencies" }
+}
+
+dependencies {
+  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.5.2"
+  implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+  implementation "org.jetbrains.kotlin:kotlin-reflect:1.6.10"
+  implementation "com.fasterxml.jackson.core:jackson-core:2.13.1"
+  implementation "com.fasterxml.jackson.core:jackson-databind:2.13.1"
+  implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.13.1"
+  implementation "org.apache.httpcomponents:httpmime:4.5.13"
+  implementation "org.jetbrains.intellij.deps:gradle-api:7.1.1-sp2"
+  implementation "commons-io:commons-io:2.11.0"
+  implementation "org.apache.commons:commons-lang3:3.12.0"
+  implementation "org.kodein.di:kodein-di-jvm:7.9.0"
+  implementation "org.apache.commons:commons-compress:1.21"
+  implementation "org.rauschig:jarchivelib:1.2.0"
+  implementation "commons-logging:commons-logging:1.2"
+
+  testImplementation 'junit:junit:4.13.2'
+
+  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+  testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+  testImplementation 'org.junit.jupiter:junit-jupiter-params:5.7.0'
+  testImplementation 'io.kotest:kotest-assertions-core-jvm:4.5.0'
+  testImplementation 'org.mockito:mockito-core:3.12.4'
+}
+
+compileKotlin {
+  sourceCompatibility = JavaVersion.VERSION_11
+  targetCompatibility = JavaVersion.VERSION_11
+
+  kotlinOptions {
+    jvmTarget = JavaVersion.VERSION_11.toString()
+    freeCompilerArgs += [
+      "-version",
+      "-Xstrict-java-nullability-assertions",
+      "-Xjvm-default=enable",
+      "-Xuse-old-backend",
+      "-Xopt-in=kotlin.io.path.ExperimentalPathApi",
+      "-Xopt-in=kotlin.time.ExperimentalTime"
+    ]
+  }
+}
+
+compileTestKotlin {
+  sourceCompatibility = JavaVersion.VERSION_11
+  targetCompatibility = JavaVersion.VERSION_11
+
+  kotlinOptions {
+    jvmTarget = JavaVersion.VERSION_11.toString()
+    freeCompilerArgs += [
+      "-version",
+      "-Xstrict-java-nullability-assertions",
+      "-Xjvm-default=enable",
+      "-Xuse-old-backend",
+      "-Xopt-in=kotlin.io.path.ExperimentalPathApi",
+      "-Xopt-in=kotlin.time.ExperimentalTime"
+    ]
+  }
+}
+
+test {
+  useJUnitPlatform()
+}

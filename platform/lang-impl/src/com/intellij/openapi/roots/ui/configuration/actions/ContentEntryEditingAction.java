@@ -39,7 +39,6 @@ public abstract class ContentEntryEditingAction extends ToggleAction implements 
 
   protected ContentEntryEditingAction(JTree tree) {
     myTree = tree;
-    getTemplatePresentation().setEnabled(true);
   }
 
   @Override

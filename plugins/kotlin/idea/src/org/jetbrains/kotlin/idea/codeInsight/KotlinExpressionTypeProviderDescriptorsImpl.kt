@@ -9,12 +9,14 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.parameterInfo.KotlinIdeDescriptorRenderer
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.renderer.ClassifierNamePolicy
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
+import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
 import org.jetbrains.kotlin.renderer.RenderingFormat
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
@@ -27,9 +29,13 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.expressions.typeInfoFactory.noTypeInfo
 
+
 class KotlinExpressionTypeProviderDescriptorsImpl : KotlinExpressionTypeProvider() {
-    private val typeRenderer = DescriptorRenderer.COMPACT_WITH_SHORT_TYPES.withOptions {
+
+    private val typeRenderer = KotlinIdeDescriptorRenderer.withOptions {
         textFormat = RenderingFormat.HTML
+        modifiers = emptySet()
+        parameterNameRenderingPolicy = ParameterNameRenderingPolicy.ONLY_NON_SYNTHESIZED
         classifierNamePolicy = object : ClassifierNamePolicy {
             override fun renderClassifier(classifier: ClassifierDescriptor, renderer: DescriptorRenderer): String {
                 if (DescriptorUtils.isAnonymousObject(classifier)) {
@@ -52,14 +58,7 @@ class KotlinExpressionTypeProviderDescriptorsImpl : KotlinExpressionTypeProvider
     override fun getInformationHint(element: KtExpression): String {
         val bindingContext = element.analyze(BodyResolveMode.PARTIAL)
 
-        return "<html>${escapeBrackets(renderExpressionType(element, bindingContext))}</html>"
-    }
-
-    @NlsSafe
-    private fun escapeBrackets(string: String): String {
-        return string
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
+        return "<html>${renderExpressionType(element, bindingContext)}</html>"
     }
 
     @NlsSafe

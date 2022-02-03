@@ -5,20 +5,21 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.kotlin.cfg.*
+import org.jetbrains.kotlin.cfg.WhenChecker
+import org.jetbrains.kotlin.cfg.hasUnknown
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.core.quoteIfNeeded
 import org.jetbrains.kotlin.idea.intentions.ImportAllMembersIntention
+import org.jetbrains.kotlin.idea.util.generateWhenBranches
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
+import org.jetbrains.kotlin.util.firstNotNullResult
 
 class AddWhenRemainingBranchesFix(
     expression: KtWhenExpression,
@@ -62,35 +63,14 @@ class AddWhenRemainingBranchesFix(
         fun isAvailable(element: KtWhenExpression?): Boolean {
             if (element == null) return false
             return element.closeBrace != null &&
-                    with(WhenChecker.getMissingCases(element, element.analyze())) { isNotEmpty() && !hasUnknown }
+                    with(WhenChecker.getMissingCases(element, element.safeAnalyzeNonSourceRootCode())) { isNotEmpty() && !hasUnknown }
         }
 
         fun addRemainingBranches(element: KtWhenExpression?, withImport: Boolean = false) {
             if (element == null) return
             val missingCases = WhenChecker.getMissingCases(element, element.analyze())
 
-            val whenCloseBrace = element.closeBrace ?: throw AssertionError("isAvailable should check if close brace exist")
-            val elseBranch = element.entries.find { it.isElse }
-            val psiFactory = KtPsiFactory(element)
-            (whenCloseBrace.prevSibling as? PsiWhiteSpace)?.replace(psiFactory.createNewLine())
-            for (case in missingCases) {
-                val branchConditionText = when (case) {
-                    UnknownMissingCase, NullMissingCase, is BooleanMissingCase, is ConditionTypeIsExpectMissingCase ->
-                        case.branchConditionText
-                    is ClassMissingCase ->
-                        if (case.classIsSingleton) {
-                            ""
-                        } else {
-                            "is "
-                        } + case.descriptor.fqNameSafe.quoteIfNeeded().asString()
-                }
-                val entry = psiFactory.createWhenEntry("$branchConditionText -> TODO()")
-                if (elseBranch != null) {
-                    element.addBefore(entry, elseBranch)
-                } else {
-                    element.addBefore(entry, whenCloseBrace)
-                }
-            }
+            generateWhenBranches(element, missingCases)
 
             ShortenReferences.DEFAULT.process(element)
 

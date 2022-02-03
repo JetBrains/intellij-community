@@ -175,18 +175,20 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       else if (firstNode.getElementType() == PyTokenTypes.DOCSTRING) {
         return builtinCache.getStrType();
       }
+      else if (((PyStringElement)firstNode).isBytes()) {
+        return builtinCache.getBytesType(languageLevel);
+      }
 
-      if (file != null) {
-        final IElementType type = PythonHighlightingLexer.convertStringType(firstNode.getElementType(),
-                                                                            firstNode.getText(),
-                                                                            languageLevel,
-                                                                            file.hasImportFromFuture(FutureFeature.UNICODE_LITERALS));
-        if (PyTokenTypes.UNICODE_NODES.contains(type)) {
-          return builtinCache.getUnicodeType(languageLevel);
-        }
+      final IElementType type = PythonHighlightingLexer.convertStringType(firstNode.getElementType(),
+                                                                          firstNode.getText(),
+                                                                          languageLevel,
+                                                                          (file != null &&
+                                                                           file.hasImportFromFuture(FutureFeature.UNICODE_LITERALS)));
+      if (PyTokenTypes.UNICODE_NODES.contains(type)) {
+        return builtinCache.getUnicodeType(languageLevel);
       }
     }
-    return builtinCache.getBytesType(languageLevel);
+    return builtinCache.getStrType();
   }
 
   @Override

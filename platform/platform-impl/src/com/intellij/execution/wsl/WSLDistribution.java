@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.google.common.net.InetAddresses;
@@ -44,13 +44,14 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import static com.intellij.execution.wsl.WSLUtil.LOG;
+import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
 /**
  * Represents a single linux distribution in WSL, installed after <a href="https://blogs.msdn.microsoft.com/commandline/2017/10/11/whats-new-in-wsl-in-windows-10-fall-creators-update/">Fall Creators Update</a>
  *
  * @see WSLUtil
  */
-public class WSLDistribution {
+public class WSLDistribution implements AbstractWslDistribution {
   public static final String DEFAULT_WSL_MNT_ROOT = "/mnt/";
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
@@ -67,10 +68,10 @@ public class WSLDistribution {
   private final @NotNull WslDistributionDescriptor myDescriptor;
   private final @Nullable Path myExecutablePath;
   private @Nullable Integer myVersion;
-  private final NullableLazyValue<String> myHostIp = NullableLazyValue.createValue(this::readHostIp);
-  private final NullableLazyValue<String> myWslIp = NullableLazyValue.createValue(this::readWslIp);
-  private final NullableLazyValue<String> myShellPath = NullableLazyValue.createValue(this::readShellPath);
-  private final NullableLazyValue<String> myUserHomeProvider = NullableLazyValue.createValue(this::readUserHome);
+  private final NullableLazyValue<String> myHostIp = lazyNullable(this::readHostIp);
+  private final NullableLazyValue<String> myWslIp = lazyNullable(this::readWslIp);
+  private final NullableLazyValue<String> myShellPath = lazyNullable(this::readShellPath);
+  private final NullableLazyValue<String> myUserHomeProvider = lazyNullable(this::readUserHome);
 
   protected WSLDistribution(@NotNull WSLDistribution dist) {
     this(dist.myDescriptor, dist.myExecutablePath);
@@ -88,9 +89,10 @@ public class WSLDistribution {
 
   /**
    * @return executable file, null for WSL distributions parsed from `wsl.exe --list` output
-   * @deprecated please don't use it, to be removed
+   * @deprecated please don't use it, to be will be removed after we collect statistics and make sure versions before 1903 aren't used.
+   * Check statistics and remove in the next version
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Deprecated
   public @Nullable Path getExecutablePath() {
     return myExecutablePath;
@@ -133,10 +135,7 @@ public class WSLDistribution {
     return myVersion;
   }
 
-  /**
-   * @return creates and patches command line, e.g:
-   * {@code ruby -v} => {@code bash -c "ruby -v"}
-   */
+  @Override
   public @NotNull GeneralCommandLine createWslCommandLine(String @NotNull ... command) throws ExecutionException {
     return patchCommandLine(new GeneralCommandLine(command), null, new WSLCommandLineOptions());
   }
@@ -158,7 +157,13 @@ public class WSLDistribution {
     if (processHandlerConsumer != null) {
       processHandlerConsumer.consume(processHandler);
     }
-    return processHandler.runProcess(timeout);
+    ProcessOutput output = processHandler.runProcess(timeout);
+    if (output.getExitCode() != 0 || output.isTimeout() || output.isCancelled()) {
+      LOG.info("command on wsl: " + commandLine.getCommandLineString() + " was failed:" +
+               "ec=" + output.getExitCode() + ",timeout=" + output.isTimeout() + ",cancelled=" + output.isCancelled()
+               + ",stderr=" + output.getStderr() + ",stdout=" + output.getStdout());
+    }
+    return output;
   }
 
   public @NotNull ProcessOutput executeOnWsl(int timeout, @NonNls String @NotNull ... command) throws ExecutionException {
@@ -457,7 +462,7 @@ public class WSLDistribution {
   /**
    * @return environment map of the default user in wsl
    */
-  public @NotNull Map<String, String> getEnvironment() {
+  public @Nullable Map<String, String> getEnvironment() {
     try {
       ProcessOutput processOutput =
         executeOnWsl(Collections.singletonList("env"),
@@ -467,23 +472,24 @@ public class WSLDistribution {
                        .setExecuteCommandInInteractiveShell(true),
                      5000,
                      null);
-      Map<String, String> result = new HashMap<>();
-      for (String string : processOutput.getStdoutLines()) {
-        int assignIndex = string.indexOf('=');
-        if (assignIndex == -1) {
-          result.put(string, "");
+      if (processOutput.getExitCode() == 0){
+        Map<String, String> result = new HashMap<>();
+        for (String string : processOutput.getStdoutLines()) {
+          int assignIndex = string.indexOf('=');
+          if (assignIndex == -1) {
+            result.put(string, "");
+          }
+          else {
+            result.put(string.substring(0, assignIndex), string.substring(assignIndex + 1));
+          }
         }
-        else {
-          result.put(string.substring(0, assignIndex), string.substring(assignIndex + 1));
-        }
+        return result;
       }
-      return result;
     }
     catch (ExecutionException e) {
       LOG.warn(e);
     }
-
-    return Collections.emptyMap();
+    return null;
   }
 
   /**
@@ -497,9 +503,7 @@ public class WSLDistribution {
     return getUNCRoot() + FileUtil.toSystemDependentName(FileUtil.normalize(wslPath));
   }
 
-  /**
-   * @return Linux path for a file pointed by {@code windowsPath} or null if unavailable, like \\MACHINE\path
-   */
+  @Override
   public @Nullable @NlsSafe String getWslPath(@NotNull String windowsPath) {
     if (FileUtil.toSystemDependentName(windowsPath).startsWith(WslConstants.UNC_PREFIX)) {
       windowsPath = StringUtil.trimStart(FileUtil.toSystemDependentName(windowsPath), WslConstants.UNC_PREFIX);

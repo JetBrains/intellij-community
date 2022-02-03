@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
@@ -10,6 +10,7 @@ import com.intellij.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.impl.ui.DifferencesLabel;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.fragmented.UnifiedDiffModel.ChangedBlockData;
@@ -79,7 +80,7 @@ import java.util.function.IntUnaryOperator;
 
 import static com.intellij.diff.util.DiffUtil.getLinesContent;
 
-public class UnifiedDiffViewer extends ListenerDiffViewerBase {
+public class UnifiedDiffViewer extends ListenerDiffViewerBase implements DifferencesLabel.DifferencesCounter {
   @NotNull protected final EditorEx myEditor;
   @NotNull protected final Document myDocument;
   @NotNull private final UnifiedDiffPanel myPanel;
@@ -776,10 +777,13 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
     LineFragment lineFragment = change.getLineFragment();
 
-    DiffUtil.applyModification(outputSide.select(document1, document2),
-                               outputSide.getStartLine(lineFragment), outputSide.getEndLine(lineFragment),
-                               sourceSide.select(document1, document2),
-                               sourceSide.getStartLine(lineFragment), sourceSide.getEndLine(lineFragment));
+    boolean isLastWithLocal = DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, myContext);
+    boolean isLocalChangeRevert = sourceSide == Side.LEFT && isLastWithLocal;
+    TextDiffViewerUtil.applyModification(outputSide.select(document1, document2),
+                                         outputSide.getStartLine(lineFragment), outputSide.getEndLine(lineFragment),
+                                         sourceSide.select(document1, document2),
+                                         sourceSide.getStartLine(lineFragment), sourceSide.getEndLine(lineFragment),
+                                         isLocalChangeRevert);
 
     // no need to mark myStateIsOutOfDate - it will be made by DocumentListener
     // TODO: we can apply change manually, without marking state out-of-date. But we'll have to schedule rediff anyway.
@@ -874,10 +878,14 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return getContent(Side.RIGHT);
   }
 
-  @RequiresEdt
   @Nullable
   public List<UnifiedDiffChange> getDiffChanges() {
     return myModel.getDiffChanges();
+  }
+
+  @NotNull
+  private List<UnifiedDiffChange> getNonSkippedDiffChanges() {
+    return ContainerUtil.filter(ContainerUtil.notNullize(getDiffChanges()), it -> !it.isSkipped());
   }
 
   @NotNull
@@ -899,8 +907,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return myStatusPanel;
   }
 
-  public @Nullable String getStatusMessage() {
-    return myStatusPanel.getMessage();
+  @Override
+  public int getTotalDifferences() {
+    return getNonSkippedDiffChanges().size();
   }
 
   @RequiresEdt
@@ -973,7 +982,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     @NotNull
     @Override
     protected List<UnifiedDiffChange> getChanges() {
-      return ContainerUtil.notNullize(getDiffChanges());
+      return getNonSkippedDiffChanges();
     }
 
     @NotNull

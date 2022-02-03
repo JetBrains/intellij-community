@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation
 
 import com.intellij.openapi.progress.withJob
@@ -10,10 +10,11 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.util.function.Supplier
 
 @VisibleForTesting
-class DocumentationData internal constructor(
+data class DocumentationData internal constructor(
   val html: @Nls String,
   val anchor: String?,
   val externalUrl: String?,
+  val linkUrls: List<String>,
   val imageResolver: DocumentationImageResolver?
 ) : DocumentationResult
 
@@ -23,11 +24,7 @@ internal class AsyncDocumentation(
 
 internal class ResolvedTarget(
   val target: DocumentationTarget,
-) : LinkResult
-
-internal class UpdateContent(
-  val updater: LinkResult.ContentUpdater,
-) : LinkResult
+) : LinkResolveResult
 
 internal fun <X> Supplier<X>.asAsyncSupplier(): AsyncSupplier<X> = {
   withContext(Dispatchers.IO) {

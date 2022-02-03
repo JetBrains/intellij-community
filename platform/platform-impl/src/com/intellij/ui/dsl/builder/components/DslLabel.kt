@@ -15,8 +15,10 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import java.awt.Dimension
 import javax.swing.JEditorPane
 import javax.swing.event.HyperlinkEvent
+import javax.swing.text.DefaultCaret
 
 /**
  * Denied content and reasons
@@ -42,9 +44,21 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
 
   var action: HyperlinkEventAction? = null
 
+  var maxLineLength: Int = MAX_LINE_LENGTH_NO_WRAP
+    set(value) {
+      field = value
+      updateEditorPaneText()
+    }
+
+  @Nls
+  private var userText: String? = null
+
   init {
     contentType = UIUtil.HTML_MIME
     editorKit = HTMLEditorKitBuilder().build()
+
+    // JEditorPane.setText updates cursor and requests scrolling to cursor position if scrollable is used. Disable it
+    (caret as DefaultCaret).updatePolicy = DefaultCaret.NEVER_UPDATE
 
     foreground = when (type) {
       DslLabelType.COMMENT -> JBUI.CurrentTheme.ContextHelp.FOREGROUND
@@ -79,7 +93,18 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
     return fontMetrics.ascent
   }
 
-  fun setHtmlText(@Nls text: String, maxLineLength: Int) {
+  override fun setText(@Nls t: String?) {
+    userText = t
+    updateEditorPaneText()
+  }
+
+  private fun updateEditorPaneText() {
+    val text = userText
+    if (text == null) {
+      super.setText(null)
+      return
+    }
+
     for ((regex, reason) in DENIED_TAGS) {
       if (regex.find(text, 0) != null) {
         throw UiDslException("Invalid html: $reason, text: $text")
@@ -96,11 +121,16 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
     }
 
     @NonNls val css = createCss(maxLineLength != MAX_LINE_LENGTH_NO_WRAP)
-    setText(HtmlBuilder()
-              .append(HtmlChunk.raw(css))
-              .append(HtmlChunk.raw(processedText).wrapWith(body))
-              .wrapWith(HtmlChunk.html())
-              .toString())
+    super.setText(HtmlBuilder()
+                    .append(HtmlChunk.raw(css))
+                    .append(HtmlChunk.raw(processedText).wrapWith(body))
+                    .wrapWith(HtmlChunk.html())
+                    .toString())
+
+    // There is a bug in JDK: if JEditorPane gets height = 0 (text is null) then it never gets correct preferred size afterwards
+    // Below is a simple workaround to fix that, see details in BasicTextUI.getPreferredSize
+    // See also https://stackoverflow.com/questions/49273118/jeditorpane-getpreferredsize-not-always-working-in-java-9
+    size = Dimension(0, 0)
   }
 
   @Nls

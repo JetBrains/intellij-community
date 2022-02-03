@@ -30,17 +30,17 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   }
 
   @Override
-  public void registerModuleType(ModuleType type) {
+  public void registerModuleType(@NotNull ModuleType type) {
     registerModuleType(type, false);
   }
 
   @Override
-  public void unregisterModuleType(ModuleType<?> type) {
+  public void unregisterModuleType(@NotNull ModuleType<?> type) {
     myModuleTypes.remove(type);
   }
 
   @Override
-  public void registerModuleType(ModuleType type, boolean classpathProvider) {
+  public void registerModuleType(@NotNull ModuleType type, boolean classpathProvider) {
     for (ModuleType<?> oldType : myModuleTypes.keySet()) {
       if (oldType.getId().equals(type.getId())) {
         PluginException.logPluginError(LOG, "Trying to register a module type that clashes with existing one. Old=" + oldType + ", new = " + type, null, type.getClass());
@@ -64,7 +64,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   }
 
   @Override
-  public ModuleType<?> findByID(@Nullable String moduleTypeId) {
+  public @NotNull ModuleType<?> findByID(@Nullable String moduleTypeId) {
     if (moduleTypeId == null) {
       return getDefaultModuleType();
     }
@@ -95,7 +95,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   }
 
   @Override
-  public ModuleType<?> getDefaultModuleType() {
+  public @NotNull ModuleType<?> getDefaultModuleType() {
     return EmptyModuleType.getInstance();
   }
 }

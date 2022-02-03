@@ -69,7 +69,7 @@ val DEFAULT_GRADLE_PLUGIN_REPOSITORY = RepositoryDescription(
 fun devRepository(version: String) = RepositoryDescription(
     "teamcity.kotlin.dev",
     "Teamcity Repository of Kotlin Development Builds",
-    "https://teamcity.jetbrains.com/guestAuth/app/rest/builds/buildType:(id:Kotlin_KotlinPublic_Compiler),number:$version,branch:(default:any)/artifacts/content/maven",
+    "https://teamcity.jetbrains.com/guestAuth/app/rest/builds/buildType:(id:Kotlin_KotlinPublic_Aggregate),number:$version,branch:(default:any)/artifacts/content/maven",
     null,
     isSnapshot = false
 )
@@ -121,27 +121,46 @@ fun isModuleConfigured(moduleSourceRootGroup: ModuleSourceRootGroup): Boolean {
  * DO NOT CALL THIS ON AWT THREAD
  */
 @RequiresBackgroundThread
-fun getModulesWithKotlinFiles(project: Project): Collection<Module> {
+fun getModulesWithKotlinFiles(project: Project, vararg modulesWithKotlinFacets: Module): Collection<Module> {
     if (!isUnitTestMode() && isDispatchThread()) {
         LOG.error("getModulesWithKotlinFiles could be a heavy operation and should not be call on AWT thread")
     }
 
+    val globalSearchScope = if (modulesWithKotlinFacets.isEmpty()) {
+        GlobalSearchScope.projectScope(project)
+    } else {
+        modulesWithKotlinFacets.fold(null as? GlobalSearchScope) { acc, module ->
+            val scope = GlobalSearchScope.moduleScope(module)
+            acc?.uniteWith(scope) ?: scope
+        } ?: error("modulesWithKotlinFacets is not empty, at least one module search scope has to be created")
+    }
+
     val disposable = KotlinPluginDisposable.getInstance(project)
     val kotlinFiles = ReadAction.nonBlocking<Collection<VirtualFile>> {
-        return@nonBlocking FileTypeIndex.getFiles(KotlinFileType.INSTANCE, GlobalSearchScope.projectScope(project))
+        return@nonBlocking FileTypeIndex.getFiles(KotlinFileType.INSTANCE, globalSearchScope)
     }
-        .inSmartMode(project)
         .expireWith(disposable)
         .executeSynchronously()
 
-    val projectFileIndex = ProjectFileIndex.getInstance(project)
-    val modules = kotlinFiles.mapNotNullTo(mutableSetOf()) { ktFile: VirtualFile ->
-        project.runReadActionInSmartMode {
-            if (projectFileIndex.isInSourceContent(ktFile)) {
-                projectFileIndex.getModuleForFile(ktFile)
-            } else null
-        }
+    if (kotlinFiles.isEmpty()) {
+        return emptyList()
     }
+
+    val projectFileIndex = ProjectFileIndex.getInstance(project)
+    val modules =
+        if (modulesWithKotlinFacets.isEmpty()) {
+            kotlinFiles.mapNotNullTo(mutableSetOf()) { ktFile: VirtualFile ->
+                if (projectFileIndex.isInSourceContent(ktFile)) {
+                    projectFileIndex.getModuleForFile(ktFile)
+                } else null
+            }
+        } else {
+            modulesWithKotlinFacets.filterTo(mutableSetOf()) { module ->
+                if (module.isDisposed) return@filterTo false
+                val moduleFileIndex = module.rootManager.fileIndex
+                kotlinFiles.any { moduleFileIndex.isInSourceContent(it) }
+            }
+        }
     return modules
 }
 

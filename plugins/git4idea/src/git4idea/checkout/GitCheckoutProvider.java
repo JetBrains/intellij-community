@@ -4,13 +4,13 @@ package git4idea.checkout;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,6 +44,8 @@ import static git4idea.GitNotificationIdsHolder.CLONE_FAILED;
  * Checkout provider for the Git
  */
 public final class GitCheckoutProvider extends CheckoutProviderEx {
+  private static final Logger LOG = Logger.getInstance(GitCheckoutProvider.class);
+
   private static final List<@NonNls String> NON_ERROR_LINE_PREFIXES = Arrays.asList("Cloning into", "remote:", "submodule");
 
   @Override
@@ -87,16 +89,21 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
 
       @Override
       public void onSuccess() {
-        if (!cloneResult.get()) {
+        boolean success = cloneResult.get();
+        File directory = new File(parentDirectory, directoryName);
+        LOG.debug(String.format("Cloned into %s with success=%s", directory, success));
+        if (!success) {
           return;
         }
-        DvcsUtil.addMappingIfSubRoot(project, FileUtil.join(parentDirectory, directoryName), GitVcs.NAME);
+
+        DvcsUtil.addMappingIfSubRoot(project, directory.getPath(), GitVcs.NAME);
         destinationParent.refresh(true, true, () -> {
           if (project.isOpen() && (!project.isDisposed()) && !project.isDefault()) {
             VcsDirtyScopeManager.getInstance(project).fileDirty(destinationParent);
           }
         });
-        listener.directoryCheckedOut(new File(parentDirectory, directoryName), GitVcs.getKey());
+
+        listener.directoryCheckedOut(directory, GitVcs.getKey());
         listener.checkoutCompleted();
       }
     }.queue();

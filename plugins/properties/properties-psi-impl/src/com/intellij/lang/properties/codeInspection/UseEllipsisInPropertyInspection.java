@@ -9,13 +9,19 @@ import com.intellij.lang.properties.PropertiesInspectionBase;
 import com.intellij.lang.properties.psi.impl.PropertyValueImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+
 public class UseEllipsisInPropertyInspection extends PropertiesInspectionBase {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    final Charset charset = EncodingProjectManager.getInstance(holder.getProject()).getDefaultCharsetForPropertiesFiles(null);
+    if (charset != StandardCharsets.UTF_8) return PsiElementVisitor.EMPTY_VISITOR;
     return new PsiElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {

@@ -9,6 +9,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
@@ -71,10 +72,10 @@ public class VarTypeProcessor {
       Statement stat = stack.removeFirst();
 
       List<VarExprent> lstVars = null;
-      if (stat.type == Statement.TYPE_CATCHALL) {
+      if (stat.type == StatementType.CATCH_ALL) {
         lstVars = ((CatchAllStatement)stat).getVars();
       }
-      else if (stat.type == Statement.TYPE_TRYCATCH) {
+      else if (stat.type == StatementType.TRY_CATCH) {
         lstVars = ((CatchStatement)stat).getVars();
       }
 

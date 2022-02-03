@@ -89,6 +89,23 @@ public class BuilderInfo {
     return result;
   }
 
+  public static BuilderInfo fromPsiRecordComponent(@NotNull PsiRecordComponent psiRecordComponent) {
+    final BuilderInfo result = new BuilderInfo();
+
+    result.variableInClass = psiRecordComponent;
+    result.deprecated = hasDeprecatedAnnotation(psiRecordComponent);
+    result.fieldInBuilderType = psiRecordComponent.getType();
+    result.fieldInitializer = psiRecordComponent.getInitializer();
+    result.hasBuilderDefaultAnnotation = PsiAnnotationSearchUtil.isAnnotatedWith(psiRecordComponent, BUILDER_DEFAULT_ANNOTATION);
+
+    result.fieldInBuilderName = psiRecordComponent.getName();
+
+    result.singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiRecordComponent, LombokClassNames.SINGULAR);
+    result.builderElementHandler = SingularHandlerFactory.getHandlerFor(psiRecordComponent, null!=result.singularAnnotation);
+
+    return result;
+  }
+
   private static boolean isDeprecated(@NotNull PsiField psiField) {
     return PsiImplUtil.isDeprecatedByDocTag(psiField) || hasDeprecatedAnnotation(psiField);
   }

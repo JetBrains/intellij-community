@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.lang.Language;
@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -44,12 +45,12 @@ public class LightVirtualFile extends LightVirtualFileBase {
     setCharset(original.getCharset());
   }
 
-  public LightVirtualFile(@NlsSafe @NotNull String name, FileType fileType, @NotNull CharSequence text, long modificationStamp) {
+  public LightVirtualFile(@NlsSafe @NotNull String name, @Nullable FileType fileType, @NotNull CharSequence text, long modificationStamp) {
     this(name, fileType, text, CharsetUtil.extractCharsetFromFileContent(null, null, fileType, text), modificationStamp);
   }
 
   public LightVirtualFile(@NlsSafe @NotNull String name,
-                          FileType fileType,
+                          @Nullable FileType fileType,
                           @NlsSafe @NotNull CharSequence text,
                           Charset charset,
                           long modificationStamp) {

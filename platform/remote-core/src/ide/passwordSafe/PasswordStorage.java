@@ -4,23 +4,12 @@ package com.intellij.ide.passwordSafe;
 import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.credentialStore.CredentialAttributesKt.CredentialAttributes;
 
 public interface PasswordStorage {
-
-  /**
-   * @deprecated Please use {@link #set(CredentialAttributes, Credentials)} and pass value as null
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  default void removePassword(@SuppressWarnings("UnusedParameters") @Nullable Project project, @NotNull Class requestor, String key) {
-    set(CredentialAttributes(requestor, key), null);
-  }
 
   /**
    * @deprecated Please use {@link #set(CredentialAttributes, Credentials)}

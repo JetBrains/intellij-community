@@ -9,9 +9,10 @@ import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
-import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.DumbService;
@@ -21,9 +22,48 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class LookupUsageTracker {
-  private static final String GROUP_ID = "completion";
-  private static final String EVENT_ID = "finished";
+import java.util.ArrayList;
+import java.util.List;
+
+public final class LookupUsageTracker {
+  public static final String FINISHED_EVENT_ID = "finished";
+  public static final String GROUP_ID = "completion";
+  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 9);
+  private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", "file_type_schema");
+  private static final BooleanEventField ALPHABETICALLY = EventFields.Boolean("alphabetically");
+  private static final EnumEventField<FinishType> FINISH_TYPE = EventFields.Enum("finish_type", FinishType.class);
+  private static final LongEventField DURATION = EventFields.Long("duration");
+  private static final IntEventField SELECTED_INDEX = EventFields.Int("selected_index");
+  private static final IntEventField SELECTION_CHANGED = EventFields.Int("selection_changed");
+  private static final IntEventField TYPING = EventFields.Int("typing");
+  private static final IntEventField BACKSPACES = EventFields.Int("backspaces");
+  private static final EnumEventField<CompletionChar> COMPLETION_CHAR = EventFields.Enum("completion_char", CompletionChar.class);
+  private static final IntEventField TOKEN_LENGTH = EventFields.Int("token_length");
+  private static final IntEventField QUERY_LENGTH = EventFields.Int("query_length");
+  private static final ClassEventField CONTRIBUTOR = EventFields.Class("contributor");
+  private static final LongEventField TIME_TO_SHOW = EventFields.Long("time_to_show");
+  private static final BooleanEventField DUMB_FINISH = EventFields.Boolean("dumb_finish");
+  private static final BooleanEventField DUMB_START = EventFields.Boolean("dumb_start");
+  public static final ObjectEventField ADDITIONAL = EventFields.createAdditionalDataField(GROUP.getId(), FINISHED_EVENT_ID);
+  public static final VarargEventId FINISHED = GROUP.registerVarargEvent(FINISHED_EVENT_ID,
+                                                                         EventFields.Language,
+                                                                         EventFields.CurrentFile,
+                                                                         SCHEMA,
+                                                                         ALPHABETICALLY ,
+                                                                         FINISH_TYPE,
+                                                                         DURATION,
+                                                                         SELECTED_INDEX,
+                                                                         SELECTION_CHANGED,
+                                                                         TYPING,
+                                                                         BACKSPACES,
+                                                                         COMPLETION_CHAR,
+                                                                         TOKEN_LENGTH,
+                                                                         QUERY_LENGTH,
+                                                                         CONTRIBUTOR,
+                                                                         TIME_TO_SHOW,
+                                                                         DUMB_FINISH,
+                                                                         DUMB_START,
+                                                                         ADDITIONAL);
 
   private LookupUsageTracker() {
   }
@@ -96,65 +136,68 @@ final class LookupUsageTracker {
 
     private void triggerLookupUsed(@NotNull FinishType finishType, @Nullable LookupElement currentItem,
                                    char completionChar) {
-      FeatureUsageData data = new FeatureUsageData();
-      addCommonUsageInfo(data, finishType, currentItem, completionChar);
+      FeatureUsageData featureUsageData = new FeatureUsageData();
+      getCommonUsageInfo(finishType, currentItem, completionChar).forEach(pair -> pair.addData(featureUsageData));
 
       LookupUsageDescriptor.EP_NAME.forEachExtensionSafe(usageDescriptor -> {
         if (PluginInfoDetectorKt.getPluginInfo(usageDescriptor.getClass()).isSafeToReport()) {
-          FeatureUsageData additionalData = new FeatureUsageData();
-          usageDescriptor.fillUsageData(myLookup, additionalData);
-          data.addAll(additionalData);
+          List<EventPair<?>> data = usageDescriptor.getAdditionalUsageData(myLookup);
+          if(!data.isEmpty()) {
+            ADDITIONAL.addData(featureUsageData, new ObjectEventData(data));
+          } else {
+            // it is required to support usages in Iren plugin
+            usageDescriptor.fillUsageData(myLookup, featureUsageData);
+          }
         }
       });
-
-      FUCounterUsageLogger.getInstance().logEvent(myLookup.getProject(), GROUP_ID, EVENT_ID, data);
+      FUCounterUsageLogger.getInstance().logEvent(myLookup.getProject(), GROUP.getId(), FINISHED_EVENT_ID, featureUsageData);
     }
 
-    private void addCommonUsageInfo(@NotNull FeatureUsageData data,
-                                    @NotNull FinishType finishType,
-                                    @Nullable LookupElement currentItem,
-                                    char completionChar) {
+    private List<EventPair<?>> getCommonUsageInfo(@NotNull FinishType finishType,
+                                                  @Nullable LookupElement currentItem,
+                                                  char completionChar) {
+      List<EventPair<?>> data = new ArrayList<>();
       // Basic info
-      data.addLanguage(myLanguage);
+      data.add(EventFields.Language.with(myLanguage));
       PsiFile file = myLookup.getPsiFile();
       if (file != null) {
-        data.addCurrentFile(file.getLanguage());
+        data.add(EventFields.CurrentFile.with(file.getLanguage()));
         VirtualFile vFile = file.getVirtualFile();
         if (vFile != null) {
           String schema = FileTypeUsageCounterCollector.findSchema(myLookup.getProject(), vFile);
           if (schema != null) {
-            data.addData("schema", schema);
+            SCHEMA.with(schema);
           }
         }
       }
-      data.addData("alphabetically", UISettings.getInstance().getSortLookupElementsLexicographically());
+      data.add(ALPHABETICALLY.with(UISettings.getInstance().getSortLookupElementsLexicographically()));
 
       // Quality
-      data.addData("finish_type", finishType.toString());
-      data.addData("duration", System.currentTimeMillis() - myCreatedTimestamp);
-      data.addData("selected_index", myLookup.getSelectedIndex());
-      data.addData("selection_changed", mySelectionChangedCount);
-      data.addData("typing", myTypingTracker.typing);
-      data.addData("backspaces", myTypingTracker.backspaces);
-      data.addData("completion_char", CompletionChar.of(completionChar).toString());
+      data.add(FINISH_TYPE.with(finishType));
+      data.add(DURATION.with(System.currentTimeMillis() - myCreatedTimestamp));
+      data.add(SELECTED_INDEX.with(myLookup.getSelectedIndex()));
+      data.add(SELECTION_CHANGED.with(mySelectionChangedCount));
+      data.add(TYPING.with(myTypingTracker.typing));
+      data.add(BACKSPACES.with(myTypingTracker.backspaces));
+      data.add(COMPLETION_CHAR.with(CompletionChar.of(completionChar)));
 
       // Details
       if (currentItem != null) {
-        data.addData("token_length", currentItem.getLookupString().length());
-        data.addData("query_length", myLookup.itemPattern(currentItem).length());
+        data.add(TOKEN_LENGTH.with(currentItem.getLookupString().length()));
+        data.add(QUERY_LENGTH.with(myLookup.itemPattern(currentItem).length()));
         CompletionContributor contributor = currentItem.getUserData(BaseCompletionService.LOOKUP_ELEMENT_CONTRIBUTOR);
         if (contributor != null) {
-          PluginInfo info = PluginInfoDetectorKt.getPluginInfo(contributor.getClass());
-          data.addData("contributor", info.isSafeToReport() ? contributor.getClass().getName() : "third.party");
+          data.add(CONTRIBUTOR.with(contributor.getClass()));
         }
       }
 
       // Performance
-      data.addData("time_to_show", myTimeToShow);
+      data.add(TIME_TO_SHOW.with(myTimeToShow));
 
       // Indexing
-      data.addData("dumb_start", myIsDumbStart);
-      data.addData("dumb_finish", DumbService.isDumb(myLookup.getProject()));
+      data.add(DUMB_START.with(myIsDumbStart));
+      data.add(DUMB_FINISH.with(DumbService.isDumb(myLookup.getProject())));
+      return data;
     }
 
     @Nullable

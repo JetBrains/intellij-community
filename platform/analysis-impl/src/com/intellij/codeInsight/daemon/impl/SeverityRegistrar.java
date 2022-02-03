@@ -68,13 +68,12 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     STANDARD_SEVERITIES = new ConcurrentHashMap<>(map);
   }
 
-  @SuppressWarnings("unused")
   public static void registerStandard(@NotNull HighlightInfoType highlightInfoType, @NotNull HighlightSeverity highlightSeverity) {
     STANDARD_SEVERITIES.put(highlightSeverity.getName(), highlightInfoType);
     ApplicationManager.getApplication().getMessageBus().syncPublisher(STANDARD_SEVERITIES_CHANGED_TOPIC).run();
   }
 
-  public static void registerStandard(@NotNull Map<String, HighlightInfoType> map) {
+  public static void registerStandard(@NotNull Map<String, ? extends HighlightInfoType> map) {
     STANDARD_SEVERITIES.putAll(map);
     ApplicationManager.getApplication().getMessageBus().syncPublisher(STANDARD_SEVERITIES_CHANGED_TOPIC).run();
   }
@@ -90,7 +89,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     return myModificationTracker.getModificationCount();
   }
 
-  public void registerSeverity(@NotNull SeverityBasedTextAttributes info, Color renderColor) {
+  public void registerSeverity(@NotNull SeverityBasedTextAttributes info, @Nullable Color renderColor) {
     HighlightSeverity severity = info.getType().getSeverity(null);
     myMap.put(severity.getName(), info);
     if (renderColor != null) {
@@ -163,7 +162,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     severitiesChanged();
   }
 
-  private @NotNull Object2IntMap<HighlightSeverity> ensureAllStandardIncluded(@NotNull List<HighlightSeverity> read, @NotNull List<HighlightSeverity> knownSeverities) {
+  private @NotNull Object2IntMap<HighlightSeverity> ensureAllStandardIncluded(@NotNull List<? extends HighlightSeverity> read, @NotNull List<HighlightSeverity> knownSeverities) {
     Object2IntMap<HighlightSeverity> orderMap = fromList(read);
     if (orderMap.isEmpty()) {
       return fromList(knownSeverities);
@@ -250,14 +249,14 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     return null;
   }
 
-  Icon getRendererIconByIndex(int index, boolean defaultIcon) {
-    HighlightSeverity severity = getSeverityByIndex(index);
+  @NotNull
+  Icon getRendererIconBySeverity(@NotNull HighlightSeverity severity, boolean defaultIcon) {
     HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
     if (level != null) {
       return defaultIcon ? level.getIcon() : level.getOutlineIcon();
     }
 
-    return severity != null ? HighlightDisplayLevel.createIconByMask(myRendererColors.get(severity.getName())) : null;
+    return HighlightDisplayLevel.createIconByMask(myRendererColors.get(severity.getName()));
   }
 
   public boolean isSeverityValid(@NotNull String severityName) {
@@ -281,7 +280,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     return orderMap.updateAndGet(oldMap -> oldMap == null ? fromList(getDefaultOrder()) : oldMap);
   }
 
-  private static @NotNull Object2IntMap<HighlightSeverity> fromList(@NotNull List<HighlightSeverity> orderList) {
+  private static @NotNull Object2IntMap<HighlightSeverity> fromList(@NotNull List<? extends HighlightSeverity> orderList) {
     if (orderList.isEmpty()) {
       return Object2IntMaps.emptyMap();
     }
@@ -310,7 +309,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     return order;
   }
 
-  public void setOrder(@NotNull List<HighlightSeverity> orderList) {
+  public void setOrder(@NotNull List<? extends HighlightSeverity> orderList) {
     orderMap.set(ensureAllStandardIncluded(orderList, getDefaultOrder()));
     myReadOrder = null;
     severitiesChanged();
@@ -380,11 +379,11 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
   }
 
   @NotNull
-  Collection<SeverityBasedTextAttributes> allRegisteredAttributes() {
+  Collection<@NotNull SeverityBasedTextAttributes> allRegisteredAttributes() {
     return Collections.unmodifiableCollection(myMap.values());
   }
   @NotNull
-  Collection<HighlightInfoType> standardSeverities() {
+  static Collection<HighlightInfoType> standardSeverities() {
     return STANDARD_SEVERITIES.values();
   }
 }

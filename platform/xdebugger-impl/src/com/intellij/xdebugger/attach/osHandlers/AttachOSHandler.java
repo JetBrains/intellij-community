@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.attach.osHandlers;
 
 import com.intellij.execution.ExecutionException;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class AttachOSHandler {
 
-  private static final Logger LOGGER = Logger.getInstance(AttachOSHandler.class);
+  private static final Logger LOG = Logger.getInstance(AttachOSHandler.class);
   @NotNull
   private final OSType myOSType;
 
@@ -51,7 +51,7 @@ public abstract class AttachOSHandler {
       }
     }
     catch (ExecutionException e) {
-      LOGGER.warn("Error while obtaining host operating system", e);
+      LOG.warn("Error while obtaining host operating system", e);
     }
 
     return new GenericAttachOSHandler(host, OSType.UNKNOWN);
@@ -82,7 +82,9 @@ public abstract class AttachOSHandler {
 
     try {
       GeneralCommandLine getOsCommandLine = new GeneralCommandLine("uname", "-s");
-      final String osString = host.getProcessOutput(getOsCommandLine).getStdout().trim();
+      var unameOutput = host.getProcessOutput(getOsCommandLine);
+      LOG.debug("`uname -s` output: ", unameOutput);
+      final String osString = unameOutput.getStdout().trim();
 
       OSType osType;
 
@@ -103,6 +105,13 @@ public abstract class AttachOSHandler {
     catch (ExecutionException ex) {
       throw new ExecutionException(XDebuggerBundle.message("dialog.message.error.while.calculating.remote.operating.system"), ex);
     }
+  }
+
+  @Override
+  public String toString() {
+    return "AttachOSHandler{" +
+           "myOSType=" + myOSType +
+           '}';
   }
 
   public enum OSType {

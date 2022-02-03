@@ -32,9 +32,35 @@ class JavaQuoteTest extends LightJavaCodeInsightFixtureTestCase {
   }
   void testPrecedingTextBlock() { doTest 'f(""<caret> + """\n  .""")', 'f("""\n          <caret>""" + """\n  .""")' }
 
+  void testJavadocSnippetAttributeDouble() { doFileTest """/**
+* {@snippet <caret> :}
+*/
+class A {
+}""", """/**
+* {@snippet "<caret>" :}
+*/
+class A {
+}"""
+  }
+  
+  void testJavadocSnippetAttributeSingle() { doFileTest"""/**
+* {@snippet <caret> :}
+*/
+class A {
+}""", """/**
+* {@snippet '<caret>' :}
+*/
+class A {
+}""", '\'' as char
+  }
+
   private void doTest(String before, String after, char c = '"') {
-    myFixture.configureByText("a.java", "class C {{\n  ${before}\n}}")
+    doFileTest("class C {{\n  ${before}\n}}", "class C {{\n  ${after}\n}}", c)
+  }
+
+  private void doFileTest(String completeBefore, String expectedResult, char c = '"') {
+    myFixture.configureByText("a.java", completeBefore)
     TypedAction.instance.actionPerformed(editor, c, (editor as EditorEx).dataContext)
-    myFixture.checkResult("class C {{\n  ${after}\n}}")
+    myFixture.checkResult(expectedResult)
   }
 }

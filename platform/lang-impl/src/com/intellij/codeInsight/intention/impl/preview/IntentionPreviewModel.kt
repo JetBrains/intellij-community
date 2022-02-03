@@ -85,6 +85,8 @@ internal class IntentionPreviewModel {
             } else {
               endPos = oldText.length - suffix
               if (endPos > prefix) {
+                val deletedLength = oldText.length - newText.length
+                endPos = deletedLength.coerceAtLeast(prefix + deletedLength)
                 highlightRange = TextRange.create(prefix, endPos)
                 return@mapNotNull DiffInfo(oldText, fragment.startLine1, fragment.endLine1 - fragment.startLine1, true, highlightRange)
               }

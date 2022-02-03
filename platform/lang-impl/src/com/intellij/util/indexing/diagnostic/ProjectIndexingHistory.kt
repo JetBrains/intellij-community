@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.openapi.project.Project
@@ -30,6 +30,7 @@ interface ProjectIndexingHistory {
   val providerStatistics: List<JsonFileProviderIndexStatistics>
   val totalStatsPerFileType: Map<String, StatsPerFileType>
   val totalStatsPerIndexer: Map<String, StatsPerIndexer>
+  val visibleTimeToAllThreadsTimeRatio: Double
 }
 
 interface StatsPerFileType {
@@ -62,9 +63,10 @@ interface IndexingTimes {
   val totalUpdatingTime: TimeNano
   val updatingEnd: ZonedDateTime
   val indexingDuration: Duration
-  val contentLoadingDuration: Duration
+  val contentLoadingVisibleDuration: Duration
   val pushPropertiesDuration: Duration
   val indexExtensionsDuration: Duration
+  var creatingIteratorsDuration: Duration
   val scanFilesDuration: Duration
   val suspendedDuration: Duration
   val wasInterrupted: Boolean

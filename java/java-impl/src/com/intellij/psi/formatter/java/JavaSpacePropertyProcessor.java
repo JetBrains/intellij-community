@@ -26,8 +26,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.impl.source.jsp.jspJava.JspJavaComment;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.EnumConstantElement;
-import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -1778,7 +1777,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   @Override
   public void visitNameValuePair(PsiNameValuePair pair) {
     if (myRole1 == ChildRole.OPERATION_SIGN || myRole2 == ChildRole.OPERATION_SIGN) {
-      createSpaceInCode(mySettings.SPACE_AROUND_ASSIGNMENT_OPERATORS);
+      createSpaceInCode(myJavaSettings.SPACE_AROUND_ANNOTATION_EQ);
     }
   }
 
@@ -1881,6 +1880,19 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
+  @Override
+  public void visitSnippetAttribute(PsiSnippetAttribute attribute) {
+    createSpaceInCode(true);
+  }
+
+  @Override
+  public void visitSnippetTag(PsiSnippetDocTag snippetDocTag) {
+    if (myType1 == JavaDocTokenType.DOC_TAG_NAME && myType2 == JavaDocElementType.DOC_SNIPPET_TAG_VALUE) {
+      createSpaceInCode(true);
+    }
+  }
+
+
   public static Spacing getSpacing(Block node, CommonCodeStyleSettings settings, JavaCodeStyleSettings javaSettings) {
     return new JavaSpacePropertyProcessor(node, settings, javaSettings).myResult;
   }
@@ -1904,6 +1916,9 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
     // A workaround for IDEA-197644. The lexer below generates GT,EQ instead of GE.
     if (type1 == JavaTokenType.GE || type2 == JavaTokenType.GE) return true;
+    // for >> lexer generates > and >, we need to handle it separately (IDEA-287538)
+    if (type1 == JavaTokenType.GTGT && type2 != JavaTokenType.GT && type2 != JavaTokenType.EQ) return true;
+    if (type1 != JavaTokenType.GT && type2 == JavaTokenType.GTGT) return true;
 
     Pair<IElementType, IElementType> key = pair(type1, type2);
     Boolean result = ourTokenStickingMatrix.get(key);

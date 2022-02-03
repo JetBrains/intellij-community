@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.animation
 
 import com.intellij.openapi.util.registry.Registry.intValue
@@ -25,6 +25,7 @@ open class ShowHideAnimator(easing: Easing, private val consumer: DoubleConsumer
   }
 
   fun setVisibleImmediately(visible: Boolean) {
+    animator.stop()
     if (visible != atomicVisible.getAndSet(visible)) {
       consumer.accept(statefulEasing.calc(if (visible) 1.0 else 0.0))
     }

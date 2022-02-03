@@ -11,9 +11,9 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveDialogBase;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
+import com.intellij.refactoring.util.CommonMoveClassesOrPackagesUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ArrayUtil;
 import kotlin.jvm.functions.Function1;
@@ -241,7 +241,7 @@ public class MoveKotlinNestedClassesToUpperLevelDialog extends MoveDialogBase {
                 @NotNull List<? extends VirtualFile> contentSourceRoots,
                 @Nullable PsiDirectory initialDir
         ) {
-            return MoveClassesOrPackagesUtil.chooseSourceRoot(newPackage, contentSourceRoots, initialDir);
+            return CommonMoveClassesOrPackagesUtil.chooseSourceRoot(newPackage, contentSourceRoots, initialDir);
         }
     }
 

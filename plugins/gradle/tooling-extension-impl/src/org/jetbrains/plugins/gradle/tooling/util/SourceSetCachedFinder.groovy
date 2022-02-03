@@ -27,7 +27,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.tooling.MessageReporter
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
-import org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder
 
 import static java.util.Collections.unmodifiableMap
 import static org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider
@@ -38,6 +37,9 @@ import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolv
  */
 @CompileStatic
 class SourceSetCachedFinder {
+  private static final GradleVersion gradleBaseVersion = GradleVersion.current().baseVersion
+  private static final boolean is51OrBetter = gradleBaseVersion >= GradleVersion.version("5.1")
+
   private static final DataProvider<ArtifactsMap> ARTIFACTS_PROVIDER = new DataProvider<ArtifactsMap>() {
     @NotNull
     @Override
@@ -55,29 +57,6 @@ class SourceSetCachedFinder {
 
   private ArtifactsMap myArtifactsMap
   private Map<String, Set<File>> mySourcesMap
-
-  @Deprecated
-  SourceSetCachedFinder(@NotNull Project project) {
-    def context = ExtraModelBuilder.CURRENT_CONTEXT.get()
-    if (context != null) {
-      init(context)
-    }
-    else {
-      def extraProperties = project.rootProject.extensions.extraProperties
-      def key = "$SourceSetCachedFinder.name${System.identityHashCode(SourceSetCachedFinder.class)}"
-      if (extraProperties.has(key)) {
-        def cached = extraProperties.get(key)
-        if (cached instanceof SourceSetCachedFinder) {
-          myArtifactsMap = (cached as SourceSetCachedFinder).myArtifactsMap
-          mySourcesMap = (cached as SourceSetCachedFinder).mySourcesMap
-          return
-        }
-      }
-      myArtifactsMap = createArtifactsMap(project.gradle)
-      mySourcesMap = [:]
-      extraProperties.set(key, this)
-    }
-  }
 
   SourceSetCachedFinder(@NotNull ModelBuilderContext context) {
     init(context)
@@ -143,12 +122,34 @@ class SourceSetCachedFinder {
 
   private static List<Project> exposeIncludedBuilds(Gradle gradle, List<Project> projects) {
     for (IncludedBuild includedBuild : gradle.includedBuilds) {
-      if (includedBuild instanceof DefaultIncludedBuild) {
-        def build = includedBuild as DefaultIncludedBuild
-        projects += build.configuredBuild.rootProject.allprojects
+      def unwrapped = maybeUnwrapIncludedBuildInternal(includedBuild)
+      if (unwrapped instanceof DefaultIncludedBuild) {
+        def build = unwrapped as DefaultIncludedBuild
+        if (is51OrBetter) {
+          projects += build.withState { it.rootProject.allprojects  }
+        } else {
+          projects += build.configuredBuild.rootProject.allprojects
+        }
       }
     }
     return projects
+  }
+
+  // TODO: remove reflection when bundled Gradle TAPI is newer than 7.2
+  private static Object maybeUnwrapIncludedBuildInternal(IncludedBuild includedBuild) {
+    def wrapee = includedBuild
+    Class includedBuildInternalClass = null
+    try {
+      includedBuildInternalClass = Class.forName("org.gradle.internal.composite.IncludedBuildInternal");
+    }
+    catch (ClassNotFoundException ignored) {
+    }
+    if (includedBuildInternalClass != null &&
+        includedBuildInternalClass.isAssignableFrom(includedBuild.class)) {
+      def method = includedBuild.class.getMethod("getTarget")
+      wrapee = method.invoke(includedBuild)
+    }
+    wrapee
   }
 
   private static class ArtifactsMap {

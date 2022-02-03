@@ -1,18 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui
 
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.bookmark.*
 import com.intellij.ide.bookmark.ui.tree.BookmarksTreeStructure
+import com.intellij.ide.bookmark.ui.tree.FolderNodeComparator
 import com.intellij.ide.bookmark.ui.tree.FolderNodeUpdater
 import com.intellij.ide.bookmark.ui.tree.VirtualFileVisitor
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
 import com.intellij.openapi.application.ApplicationManager
@@ -49,17 +50,25 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   private val selectionAlarm = SingleAlarm(this::selectionChanged, 50, stateForComponent(this), this)
 
   private val structure = BookmarksTreeStructure(this)
-  val model = StructureTreeModel(structure, this)
+  val model = StructureTreeModel(structure, FolderNodeComparator(project), this)
   val tree = DnDAwareTree(AsyncTreeModel(model, this))
   private val treeExpander = DefaultTreeExpander(tree)
   private val panel = BorderLayoutPanel()
   private val updater = FolderNodeUpdater(this)
+  private val ideView = IdeViewForBookmarksView(this)
 
   val selectedNode
     get() = TreeUtil.getAbstractTreeNode(TreeUtil.getSelectedPathIfOne(tree))
 
   val selectedNodes
     get() = tree.selectionPaths?.mapNotNull { TreeUtil.getAbstractTreeNode(it) }?.ifEmpty { null }
+
+  private val selectedFiles: List<VirtualFile>?
+    get() {
+      val nodes = selectedNodes ?: return null
+      val files = nodes.mapNotNull { it.asVirtualFile }
+      return if (files.size == nodes.size) files else null
+    }
 
   private val previousOccurrence
     get() = when (val occurrence = selectedNode?.bookmarkOccurrence) {
@@ -77,9 +86,12 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   override fun dispose() = preview.close()
 
   override fun getData(dataId: String): Any? = when {
+    LangDataKeys.IDE_VIEW.`is`(dataId) -> ideView
     PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> treeExpander
     PlatformDataKeys.SELECTED_ITEMS.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Any>())
     PlatformDataKeys.SELECTED_ITEM.`is`(dataId) -> selectedNodes?.firstOrNull()
+    PlatformDataKeys.VIRTUAL_FILE.`is`(dataId) -> selectedNode?.asVirtualFile
+    PlatformDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selectedFiles?.toTypedArray()
     else -> null
   }
 
@@ -201,7 +213,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
         .install()
     }
 
-    tree.emptyText.initialize()
+    tree.emptyText.initialize(tree)
     tree.addTreeSelectionListener(RestoreSelectionListener())
     tree.addTreeSelectionListener { if (tree.hasFocus()) selectionAlarm.cancelAndRequest() }
     tree.addFocusListener(object : FocusListener {
@@ -213,7 +225,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     TreeUtil.promiseSelectFirstLeaf(tree)
     EditSourceOnEnterKeyHandler.install(tree)
     EditSourceOnDoubleClickHandler.install(tree)
-    CustomizationUtil.installPopupHandler(tree, "Bookmarks.ToolWindow.PopupMenu", "popup@BookmarksView")
+    ContextMenuActionGroup(tree)
 
     project.messageBus.connect(this).subscribe(BookmarksListener.TOPIC, object : BookmarksListener {
       override fun groupsSorted() {

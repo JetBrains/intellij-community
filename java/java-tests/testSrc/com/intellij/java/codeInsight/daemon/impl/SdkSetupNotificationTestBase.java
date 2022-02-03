@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.SdkSetupNotificationProvider;
@@ -7,9 +7,8 @@ import com.intellij.idea.TestFor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -41,11 +40,10 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
     setProjectSdk(IdeaTestUtil.getMockJdk17());
   }
 
-  @Nullable
-  protected EditorNotificationPanel configureBySdkAndText(@Nullable Sdk sdk,
-                                                          boolean isModuleSdk,
-                                                          @NotNull String name,
-                                                          @NotNull String text) {
+  protected @Nullable EditorNotificationPanel configureBySdkAndText(@Nullable Sdk sdk,
+                                                                    boolean isModuleSdk,
+                                                                    @NotNull String name,
+                                                                    @NotNull String text) {
     if (isModuleSdk) {
       ModuleRootModificationUtil.setModuleSdk(getModule(), sdk);
     }
@@ -57,23 +55,24 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
     return runOnText(myFixture, name, text);
   }
 
-  public static EditorNotificationPanel runOnText(@NotNull JavaCodeInsightTestFixture fixture,
-                                                  @NotNull String fileName,
-                                                  @NotNull String fileText) {
+  static @Nullable EditorNotificationPanel runOnText(@NotNull JavaCodeInsightTestFixture fixture,
+                                                     @NotNull String fileName,
+                                                     @NotNull String fileText) {
     FileEditor editor = openTextInEditor(fixture, fileName, fileText);
-    return editor.getUserData(SdkSetupNotificationProvider.KEY);
+    return (EditorNotificationPanel)EditorNotificationsImpl.getNotificationPanels(editor)
+      .get(SdkSetupNotificationProvider.class);
   }
 
-  @NotNull
-  public static FileEditor openTextInEditor(@NotNull JavaCodeInsightTestFixture fixture,
-                                            @NotNull String fileName,
-                                            @NotNull String fileText) {
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+  static @NotNull FileEditor openTextInEditor(@NotNull JavaCodeInsightTestFixture fixture,
+                                              @NotNull String fileName,
+                                              @NotNull String fileText) {
     UIUtil.dispatchAllInvocationEvents();
+    EditorNotificationsImpl.completeAsyncTasks();
 
     final PsiFile psiFile = fixture.configureByText(fileName, fileText);
-    FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(fixture.getProject());
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(fixture.getProject());
     VirtualFile virtualFile = psiFile.getVirtualFile();
+
     final FileEditor[] editors = fileEditorManager.openFile(virtualFile, true);
     Disposer.register(fixture.getTestRootDisposable(), new Disposable() {
       @Override

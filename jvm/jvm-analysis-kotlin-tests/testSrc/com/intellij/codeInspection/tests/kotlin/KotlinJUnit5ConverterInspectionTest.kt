@@ -8,7 +8,7 @@ import com.intellij.testFramework.TestDataPath
 private const val inspectionPath = "/codeInspection/junit5converter"
 
 @TestDataPath("\$CONTENT_ROOT/testData$inspectionPath")
-class KotlinJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTestBase() {
+class KotlinJUnit5ConverterInspectionTest9 : JUnit5ConverterInspectionTestBase() {
   override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 
   fun `test qualified conversion`() {

@@ -45,6 +45,8 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
         )
     }
 
+    open val afterDirectory get() = testDataDirectory().parentFile.resolve("after")
+
     protected fun doMultiFileQuickFixTest(
         ignoreChangesInBuildScriptFiles: Boolean = true,
         additionalResultFileFilter: (VirtualFile) -> Boolean = { true },
@@ -73,7 +75,6 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
             val action = actionHint.findAndCheck(actions) { "Test file: ${projectPath.relativize(mainFilePath).pathString}" }
             if (action != null) {
                 action.invoke(myProject, null, ktFile)
-                val afterDirectory = testDataDirectory().parentFile.resolve("after")
                 val expected = LocalFileSystem.getInstance().findFileByIoFile(afterDirectory)?.apply {
                     refreshRecursively(this)
                 } ?: error("Expected directory is not found")
@@ -87,7 +88,7 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
                     fun(vFile: VirtualFile): Boolean {
                         if (vFile.parent == projectVFile) {
                             when (vFile.name) {
-                                ".gradle", "gradle", "build" -> return false
+                                ".gradle", "gradle", "build", "gradle.properties" -> return false
                             }
                         }
 

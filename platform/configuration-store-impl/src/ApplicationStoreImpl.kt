@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
@@ -6,7 +6,10 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.StateStorageOperation
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.NamedJDOMExternalizable
@@ -14,7 +17,6 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.jps.model.serialization.JpsGlobalLoader
 import java.nio.file.Path
 
 internal class ApplicationPathMacroManager : PathMacroManager(null)
@@ -80,13 +82,6 @@ class ApplicationStorageManager(application: Application?, pathMacroManager: Pat
     return when (component) {
       is NamedJDOMExternalizable -> "${component.externalFileName}${PathManager.DEFAULT_EXT}"
       else -> StoragePathMacros.NON_ROAMABLE_FILE
-    }
-  }
-
-  override fun getMacroSubstitutor(fileSpec: String): PathMacroSubstitutor? {
-    return when (fileSpec) {
-      JpsGlobalLoader.PathVariablesSerializer.STORAGE_FILE_NAME -> null
-      else -> super.getMacroSubstitutor(fileSpec)
     }
   }
 

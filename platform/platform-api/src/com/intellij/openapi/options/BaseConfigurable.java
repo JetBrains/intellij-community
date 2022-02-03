@@ -18,6 +18,7 @@ public abstract class BaseConfigurable implements Configurable {
   }
 
   // defined here for backward-compatibility
+  @SuppressWarnings("RedundantMethodOverride")
   @Override
   public @Nullable JComponent getPreferredFocusedComponent() {
     return null;

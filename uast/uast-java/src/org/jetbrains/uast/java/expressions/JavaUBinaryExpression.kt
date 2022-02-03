@@ -16,8 +16,10 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiBinaryExpression
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 class JavaUBinaryExpression(
   override val sourcePsi: PsiBinaryExpression,
   givenParent: UElement?

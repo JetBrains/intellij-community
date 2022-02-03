@@ -779,5 +779,14 @@ public class IterationState {
     private int selectionEnd(int index, boolean reverse) {
       return selectionEnds[reverse ? selectionStarts.length - 1 - index : index];
     }
+
+    public static CaretData copyOf(CaretData original, boolean omitCaretRowData) {
+      if (original == null || !omitCaretRowData) {
+        return original;
+      }
+      else {
+        return new CaretData(-1, -1, original.selectionStarts, original.selectionEnds);
+      }
+    }
   }
 }

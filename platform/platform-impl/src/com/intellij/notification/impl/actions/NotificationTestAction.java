@@ -31,9 +31,9 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
   public static final String TEST_GROUP_ID = "Test Notification";
   private static class Holder {
     private static final NotificationGroup TEST_STICKY_GROUP =
-      new NotificationGroup("Test Sticky Notification", NotificationDisplayType.STICKY_BALLOON);
+      NotificationGroupManager.getInstance().getNotificationGroup("Test Sticky Notification");
     private static final NotificationGroup TEST_TOOLWINDOW_GROUP =
-      NotificationGroup.toolWindowGroup("Test ToolWindow Notification", ToolWindowId.TODO_VIEW);
+      NotificationGroupManager.getInstance().getNotificationGroup("Test ToolWindow Notification");
   }
   private static final String MESSAGE_KEY = "NotificationTestAction_Message";
 
@@ -166,6 +166,9 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
         else if (line.equals("Suggestion")) {
           notification.setSuggestionType(true);
         }
+        else if (line.equals("ImportantSuggestion")) {
+          notification.setImportantSuggestion(true);
+        }
         else if (line.equals("Sticky")) {
           notification.setSticky(true);
         }
@@ -200,6 +203,7 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
     private boolean myToolwindow;
     private boolean myRightActionsDirection = true;
     private boolean mySuggestionType;
+    private boolean myImportantSuggestion;
 
     private Notification myNotification;
     private String myRemindLaterHandlerId;
@@ -227,6 +231,7 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
         }
 
         myNotification.setSuggestionType(mySuggestionType);
+        myNotification.setImportantSuggestion(myImportantSuggestion);
 
         if (myActions != null && !myToolwindow) {
           for (String action : myActions) {
@@ -280,6 +285,10 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
 
     private void setSuggestionType(boolean suggestionType) {
       mySuggestionType = suggestionType;
+    }
+
+    private void setImportantSuggestion(boolean importantSuggestion) {
+      myImportantSuggestion = importantSuggestion;
     }
 
     public void setToolwindow(boolean toolwindow) {

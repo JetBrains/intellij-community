@@ -5,8 +5,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
+import org.jetbrains.idea.maven.project.importing.MavenImportingManager.Companion.getInstance
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 import org.junit.Test
@@ -48,6 +50,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
                                             "<artifactId>m2</artifactId>" +
                                             "<version>2</version>")
     MavenOpenProjectProvider().linkToExistingProject(p2Root, myProject)
+    waitForLinkingCompleted();
     assertModules("project1", "m1", "project2", "m2")
     assertEquals(1, MavenServerManager.getInstance().allConnectors.size);
 
@@ -57,6 +60,11 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
       },
       listOf("project", "anotherProject")
     )
+  }
+
+  private fun waitForLinkingCompleted() {
+    if (!isNewImportingProcess) return;
+    PlatformTestUtil.waitForPromise(getInstance(myProject).getImportFinishPromise())
   }
 
   @Test
@@ -86,6 +94,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
 
     createProjectSubFile("../anotherProject/.mvn/jvm.config", "-Dsomething=blablabla")
     MavenOpenProjectProvider().linkToExistingProject(p2Root, myProject)
+    waitForLinkingCompleted();
     assertModules("project1", "m1", "project2", "m2")
 
     assertEquals(2, MavenServerManager.getInstance().allConnectors.size);
@@ -128,6 +137,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     try {
       Registry.get("maven.server.per.idea.project").setValue(true);
       MavenOpenProjectProvider().linkToExistingProject(p2Root, myProject)
+      waitForLinkingCompleted();
       assertModules("project1", "m1", "project2", "m2")
 
       assertEquals(1, MavenServerManager.getInstance().allConnectors.size);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -32,31 +32,13 @@ public final class FileBasedIndexProjectHandler {
   public static final int ourMinFilesToStartDumbMode = Registry.intValue("ide.dumb.mode.minFilesToStart", 20);
   private static final int ourMinFilesSizeToStartDumbMode = Registry.intValue("ide.dumb.mode.minFilesSizeToStart", 1048576);
 
-  /**
-   * @deprecated Use {@link #scheduleReindexingInDumbMode(Project)} instead.
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  @Nullable
-  public static DumbModeTask createChangedFilesIndexingTask(@NotNull Project project) {
-    final FileBasedIndex i = FileBasedIndex.getInstance();
-    if (!(i instanceof FileBasedIndexImpl) || !IndexInfrastructure.hasIndices()) {
-      return null;
-    }
-    if (project.isDisposed()) return null;
-
-    if (!mightHaveManyChangedFilesInProject(project)) {
-      return null;
-    }
-
-    return new ProjectChangedFilesIndexingTask(project);
-  }
-
   public static void scheduleReindexingInDumbMode(@NotNull Project project) {
-    DumbModeTask task = createChangedFilesIndexingTask(project);
-    if (task != null) {
-      task.queue(project);
+    final FileBasedIndex i = FileBasedIndex.getInstance();
+    if (i instanceof FileBasedIndexImpl &&
+        IndexInfrastructure.hasIndices() &&
+        !project.isDisposed() &&
+        mightHaveManyChangedFilesInProject(project)) {
+      new ProjectChangedFilesIndexingTask(project).queue(project);
     }
   }
 
@@ -84,7 +66,6 @@ public final class FileBasedIndexProjectHandler {
     private @NotNull final Project myProject;
 
     private ProjectChangedFilesIndexingTask(@NotNull Project project) {
-      super(project);
       myProject = project;
     }
 
@@ -127,7 +108,7 @@ public final class FileBasedIndexProjectHandler {
         String fileSetName = "Refreshed files";
         IndexUpdateRunner.FileSet fileSet = new IndexUpdateRunner.FileSet(project, fileSetName, files);
         try {
-          indexUpdateRunner.indexFiles(project, Collections.singletonList(fileSet), indicator);
+          indexUpdateRunner.indexFiles(project, Collections.singletonList(fileSet), indicator, projectIndexingHistory);
         }
         catch (IndexUpdateRunner.IndexingInterruptedException e) {
           projectIndexingHistory.setWasInterrupted(true);
@@ -141,6 +122,7 @@ public final class FileBasedIndexProjectHandler {
         scanningStatistics.setNumberOfScannedFiles(files.size());
         scanningStatistics.setNumberOfFilesForIndexing(files.size());
         scanningStatistics.setScanningTime(refreshedFilesCalcDuration);
+        scanningStatistics.setNoRootsForRefresh();
         projectIndexingHistory.addScanningStatistics(scanningStatistics);
         projectIndexingHistory.addProviderStatistics(fileSet.statistics);
 
@@ -153,6 +135,15 @@ public final class FileBasedIndexProjectHandler {
         projectIndexingHistory.setScanFilesDuration(Duration.ofNanos(refreshedFilesCalcDuration));
         ((FileBasedIndexImpl)FileBasedIndex.getInstance()).fireUpdateFinished(project);
       }
+    }
+
+    @Override
+    public @Nullable DumbModeTask tryMergeWith(@NotNull DumbModeTask taskFromQueue) {
+      if (taskFromQueue instanceof ProjectChangedFilesIndexingTask &&
+          ((ProjectChangedFilesIndexingTask)taskFromQueue).myProject.equals(myProject)) {
+        return this;
+      }
+      return null;
     }
 
     @Override

@@ -3,17 +3,19 @@ _collections_abc.AsyncGenerator.ag_await
 _collections_abc.AsyncGenerator.ag_code
 _collections_abc.AsyncGenerator.ag_frame
 _collections_abc.AsyncGenerator.ag_running
-_collections_abc.AsyncGenerator.asend
-_collections_abc.AsyncGenerator.athrow
-_collections_abc.Container.__contains__
-_collections_abc.Coroutine.send
-_collections_abc.Coroutine.throw
-_collections_abc.Generator.send
-_collections_abc.Generator.throw
 _collections_abc.ItemsView.__reversed__
 _collections_abc.KeysView.__reversed__
 _collections_abc.ValuesView.__reversed__
-_dummy_thread
+
+# These are not positional-only at runtime, but we treat them
+# as positional-only to match dict.
+_collections_abc.Mapping.__getitem__
+_collections_abc.Mapping.__contains__
+_collections_abc.MutableMapping.__delitem__
+_collections_abc.MutableMapping.__setitem__
+_collections_abc.MutableMapping.pop
+_collections_abc.MutableMapping.setdefault
+
 ast.Bytes.__new__
 ast.Ellipsis.__new__
 ast.ExtSlice.__new__
@@ -28,45 +30,47 @@ asyncio.Future._callbacks  # Usually initialized from c object
 asyncio.futures.Future.__init__  # Usually initialized from c object
 asyncio.futures.Future._callbacks  # Usually initialized from c object
 builtins.dict.get
-collections.abc.AsyncGenerator.ag_await
-collections.abc.AsyncGenerator.ag_code
-collections.abc.AsyncGenerator.ag_frame
-collections.abc.AsyncGenerator.ag_running
-collections.abc.ItemsView.__reversed__
-collections.abc.KeysView.__reversed__
-collections.abc.ValuesView.__reversed__
 contextvars.Context.__init__  # Default C __init__ signature is wrong
+contextlib.AbstractAsyncContextManager.__class_getitem__
+contextlib.AbstractContextManager.__class_getitem__
 dataclasses.field
 dataclasses.KW_ONLY
-dummy_threading
 enum.Enum._generate_next_value_
 fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
+ftplib.FTP.trust_server_pasv_ipv4_address  # Dangerous to use, intentionally undocumented, intentionally missing from typeshed. #6154
 functools.partialmethod.__get__
 functools.singledispatchmethod.__call__
 gettext.install
 gettext.translation
+hashlib.sha3_\d+  # Can be a class or a built-in function
+hashlib.shake_\d+  # Can be a class or a built-in function
 hmac.new  # Stub is a white lie; see comments in the stub
 http.server.SimpleHTTPRequestHandler.__init__  # *args is expanded
 importlib.abc.Traversable.__init__  # Inherits __init__ from typing.Protocol
+importlib.metadata.PackageMetadata.__init__  # Inherits __init__ from typing.Protocol
+importlib.metadata._meta.PackageMetadata.__init__  # Inherits __init__ from typing.Protocol
+importlib.metadata._meta.SimplePath.__init__  # Inherits __init__ from typing.Protocol
 ipaddress.IPv4Interface.hostmask
 ipaddress.IPv6Interface.hostmask
 ipaddress._BaseNetwork.broadcast_address
 ipaddress._BaseNetwork.hostmask
 multiprocessing.spawn._main
+os.PathLike.__class_getitem__  # PathLike is a protocol; we don't expect all PathLike classes to implement class_getitem
 pickle.Pickler.reducer_override  # implemented in C pickler
 # platform.uname_result's processor field is now dynamically made to exist
 platform.uname_result.__new__
 platform.uname_result._fields
 platform.uname_result.processor
 queue.SimpleQueue.__init__  # Default C __init__ signature is wrong
-smtplib.LMTP.__init__
+re.Pattern.scanner  # Undocumented and not useful. #6405
 ssl.PROTOCOL_SSLv3  # Depends on ssl compilation
 ssl.RAND_egd  # Depends on openssl compilation
 symtable.SymbolTable.has_exec
 sys.UnraisableHookArgs  # Not exported from sys
 types.ClassMethodDescriptorType.__get__
-types.CodeType.replace
+types.CodeType.replace  # stubtest thinks default values are None but None doesn't work at runtime
 types.GenericAlias.__getattr__
+types.GenericAlias.__call__  # Would be complicated to fix properly, Any could silence problems. #6392
 types.MethodDescriptorType.__get__
 types.WrapperDescriptorType.__get__
 typing.ForwardRef._evaluate
@@ -97,72 +101,76 @@ builtins.bytearray.pop
 builtins.bytearray.remove
 collections.OrderedDict.fromkeys
 collections.OrderedDict.setdefault
-collections.abc.AsyncGenerator.asend
-collections.abc.AsyncGenerator.athrow
-collections.abc.Container.__contains__
-collections.abc.Coroutine.send
-collections.abc.Coroutine.throw
-collections.abc.Generator.send
-collections.abc.Generator.throw
+_collections_abc.AsyncGenerator.asend
+_collections_abc.AsyncGenerator.athrow
+_collections_abc.Container.__contains__
+_collections_abc.Coroutine.send
+_collections_abc.Coroutine.throw
+_collections_abc.Generator.send
+_collections_abc.Generator.throw
 contextvars.ContextVar.reset
 contextvars.ContextVar.set
+contextlib.AbstractAsyncContextManager.__aexit__
+contextlib.AbstractContextManager.__exit__
 io.IncrementalNewlineDecoder.setstate
-random.SystemRandom.getrandbits
-secrets.SystemRandom.getrandbits
+typing.SupportsRound.__round__
+types.DynamicClassAttribute..*  # In the stub we pretend it's an alias for property, but it has positional-only differences
+
 # These enums derive from (str, Enum). See comment in py3_common.txt
 pstats.SortKey.__new__
 tkinter.EventType.__new__
 
 # Rest of these errors are new in Python 3.10:
-_markupbase.ParserBase.error
 asyncio.proactor_events._ProactorReadPipeTransport.__init__
-builtins.aiter
 distutils.command.bdist_wininst
-importlib.abc.ResourceReader.is_resource
-importlib.machinery.BuiltinImporter.create_module
-importlib.machinery.BuiltinImporter.exec_module
-importlib.machinery.FrozenImporter.create_module
-importlib.machinery.PathFinder.invalidate_caches
-importlib.metadata.MetadataPathFinder.invalidate_caches
-locale.strcoll
-locale.strxfrm
-logging.Formatter.__init__
-logging.LoggerAdapter.__init__
-logging.PercentStyle.__init__
-pathlib.Path.chmod
-pathlib.Path.stat
-pathlib.Path.write_text
 py_compile.main
 pyclbr.Class.__init__
 pyclbr.Function.__init__
 sched.Event.__new__
 sched.Event._fields
 signal.default_int_handler
-sqlite3.Connection.interrupt
-sqlite3.Connection.iterdump
-sqlite3.Connection.rollback
-sqlite3.Connection.set_authorizer
-sqlite3.Connection.set_progress_handler
-sqlite3.Connection.set_trace_callback
-sqlite3.Cursor.close
-sqlite3.Cursor.setinputsizes
-sqlite3.Cursor.setoutputsize
-sqlite3.Row.keys
-sqlite3.complete_statement
-sqlite3.dbapi2.Connection.interrupt
-sqlite3.dbapi2.Connection.iterdump
-sqlite3.dbapi2.Connection.rollback
-sqlite3.dbapi2.Connection.set_authorizer
-sqlite3.dbapi2.Connection.set_progress_handler
-sqlite3.dbapi2.Connection.set_trace_callback
-sqlite3.dbapi2.Cursor.close
-sqlite3.dbapi2.Cursor.setinputsizes
-sqlite3.dbapi2.Cursor.setoutputsize
-sqlite3.dbapi2.Row.keys
-sqlite3.dbapi2.complete_statement
 ssl.SSLContext.__new__
 ssl._create_unverified_context
-ssl.get_server_certificate
-tempfile.TemporaryDirectory.__init__
 unicodedata.ucnhash_CAPI
 unittest.mock.create_autospec
+
+# Exists at runtime, but missing from stubs
+_ast.Tuple.dims
+_codecs.unregister
+_collections_abc.AsyncIterable.__class_getitem__
+_collections_abc.Awaitable.__class_getitem__
+_collections_abc.Container.__class_getitem__
+_collections_abc.Iterable.__class_getitem__
+_collections_abc.MappingView.__class_getitem__
+_csv.Reader
+_csv.Writer
+_imp.source_hash
+ast.Tuple.dims
+ast.main
+asyncio.AbstractEventLoop.connect_accepted_socket
+asyncio.BufferedProtocol.eof_received
+asyncio.events.AbstractEventLoop.connect_accepted_socket
+asyncio.protocols.BufferedProtocol.eof_received
+bdb.Breakpoint.clearBreakpoints
+distutils.dist.DistributionMetadata.set_classifiers
+distutils.dist.DistributionMetadata.set_keywords
+distutils.dist.DistributionMetadata.set_platforms
+distutils.util.get_host_platform
+multiprocessing.managers.SharedMemoryServer.create
+multiprocessing.managers.SharedMemoryServer.list_segments
+multiprocessing.managers.SharedMemoryServer.public
+multiprocessing.managers.SharedMemoryServer.release_segment
+multiprocessing.managers.SharedMemoryServer.shutdown
+multiprocessing.managers.SharedMemoryServer.track_segment
+pstats.FunctionProfile
+pstats.Stats.get_stats_profile
+pstats.StatsProfile
+pyexpat.XMLParserType.SkippedEntityHandler
+pyexpat.XMLParserType.intern
+sched.Event.sequence
+types.CoroutineType.cr_origin
+typing._SpecialForm.__call__
+unicodedata.UCD.is_normalized
+xml.parsers.expat.XMLParserType.SkippedEntityHandler
+xml.parsers.expat.XMLParserType.intern
+xml.sax.handler.LexicalHandler

@@ -71,7 +71,8 @@ class TypeClsStubBuilder(private val c: ClsStubBuilderContext) {
 
     private fun createTypeParameterStub(parent: KotlinStubBaseImpl<*>, type: Type, name: Name, annotations: List<ClassIdWithTarget>) {
         createTypeAnnotationStubs(parent, type, annotations)
-        createStubForTypeName(ClassId.topLevel(FqName.topLevel(name)), nullableTypeParent(parent, type))
+        val nullableParentWrapper = nullableTypeParent(parent, type)
+        createStubForTypeName(ClassId.topLevel(FqName.topLevel(name)), nullableParentWrapper)
     }
 
     private fun createClassReferenceTypeStub(parent: KotlinStubBaseImpl<*>, type: Type, annotations: List<ClassIdWithTarget>) {
@@ -191,8 +192,8 @@ class TypeClsStubBuilder(private val c: ClsStubBuilderContext) {
                     val classId = c.nameResolver.getClassId(parameterType.className)
                     val fqName = classId.asSingleFqName()
                     assert(
-                        fqName == StandardNames.CONTINUATION_INTERFACE_FQ_NAME_EXPERIMENTAL
-                                || fqName == StandardNames.CONTINUATION_INTERFACE_FQ_NAME_RELEASE
+                        fqName == FqName("kotlin.coroutines.Continuation") ||
+                                fqName == FqName("kotlin.coroutines.experimental.Continuation")
                     ) {
                         "Last parameter type of suspend function must be Continuation, but it is $fqName"
                     }

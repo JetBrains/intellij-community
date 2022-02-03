@@ -1,0 +1,39 @@
+<idea-plugin package="com.jetbrains.packagesearch.intellij.plugin.maven">
+
+    <dependencies>
+        <plugin id="org.jetbrains.idea.maven"/>
+    </dependencies>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!--suppress PluginXmlCapitalization -->
+        <localInspection
+                bundle="messages.packageSearchBundle"
+                enabledByDefault="true"
+                groupKey="packagesearch.inspection.upgrade.group"
+                implementationClass="com.jetbrains.packagesearch.intellij.plugin.maven.MavenPackageUpdateInspection"
+                key="packagesearch.inspection.upgrade.key.maven"
+                hasStaticDescription="true"
+                language="XML"
+                level="WEAK WARNING"/>
+
+        <packagesearch.projectModuleOperationProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.maven.MavenProjectModuleOperationProvider"/>
+        <packagesearch.coroutineModuleTransformer
+                implementation="com.jetbrains.packagesearch.intellij.plugin.maven.MavenModuleTransformer"/>
+
+        <packagesearch.moduleChangesSignalProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.maven.MavenSyncSignalProvider"/>
+
+        <packagesearch.flowModuleChangesSignalProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.maven.GlobalMavenSettingsChangedSignalProvider"/>
+
+        <packagesearch.configurableContributor
+                implementation="com.jetbrains.packagesearch.intellij.plugin.maven.configuration.ui.MavenConfigurableContributor"/>
+
+        <search.optionContributor
+                implementation="com.jetbrains.packagesearch.intellij.plugin.maven.configuration.MavenSearchableOptionContributor"/>
+
+        <projectService
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.maven.configuration.PackageSearchMavenConfiguration"/>
+    </extensions>
+</idea-plugin>

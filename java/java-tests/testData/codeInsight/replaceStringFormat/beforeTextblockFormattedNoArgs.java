@@ -14,5 +14,8 @@ class Main {
     String s1 = new String("""
         %s, %s!
         """).formatted("Hello", "World");
+    String s = (/* 1 */ new /* 2 */ String(/* 3 */"""
+        Hello, World!%n
+        """/* 4 */)/* 5 */)./* 6 */formatted();
   }
 }

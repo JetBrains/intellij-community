@@ -66,7 +66,7 @@ class _ActionsContainer:
         nargs: int | str = ...,
         const: Any = ...,
         default: Any = ...,
-        type: Callable[[str], _T] | Callable[[str], _T] | FileType = ...,
+        type: Callable[[str], _T] | FileType = ...,
         choices: Iterable[_T] | None = ...,
         required: bool = ...,
         help: str | None = ...,
@@ -143,11 +143,11 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
     @overload
     def parse_args(self, args: Sequence[str] | None = ...) -> Namespace: ...
     @overload
-    def parse_args(self, args: Sequence[str] | None, namespace: None) -> Namespace: ...  # type: ignore
+    def parse_args(self, args: Sequence[str] | None, namespace: None) -> Namespace: ...  # type: ignore[misc]
     @overload
     def parse_args(self, args: Sequence[str] | None, namespace: _N) -> _N: ...
     @overload
-    def parse_args(self, *, namespace: None) -> Namespace: ...  # type: ignore
+    def parse_args(self, *, namespace: None) -> Namespace: ...  # type: ignore[misc]
     @overload
     def parse_args(self, *, namespace: _N) -> _N: ...
     if sys.version_info >= (3, 7):

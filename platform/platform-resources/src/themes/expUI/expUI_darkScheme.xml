@@ -7,12 +7,24 @@
     <property name="originalScheme">_@user_Darcula</property>
   </metaInfo>
   <colors>
+    <option name="ADDED_LINES_COLOR" value="549159" />
+    <option name="ANNOTATIONS_COLOR" value="b4b8bf" />
     <option name="CARET_ROW_COLOR" value="2b2d30" />
+    <option name="DELETED_LINES_COLOR" value="868a91" />
     <option name="DOCUMENTATION_COLOR" value="2b2d30" />
+    <option name="IGNORED_ADDED_LINES_BORDER_COLOR" value="549159" />
+    <option name="IGNORED_DELETED_LINES_BORDER_COLOR" value="868a91" />
+    <option name="IGNORED_MODIFIED_LINES_BORDER_COLOR" value="375fad" />
     <option name="LINE_NUMBERS_COLOR" value="4e5157" />
     <option name="LINE_NUMBER_ON_CARET_ROW_COLOR" value="9da0a8" />
     <option name="LOOKUP_COLOR" value="2b2d30" />
-    <option name="CONSOLE_BACKGROUND_KEY" value="1e1f22" />
+    <option name="MODIFIED_LINES_COLOR" value="375fad" />
+    <option name="VCS_ANNOTATIONS_COLOR_1" value="2F5194" />
+    <option name="VCS_ANNOTATIONS_COLOR_2" value="2d416b" />
+    <option name="VCS_ANNOTATIONS_COLOR_3" value="283754" />
+    <option name="VCS_ANNOTATIONS_COLOR_4" value="242d42" />
+    <option name="VCS_ANNOTATIONS_COLOR_5" value="22252e" />
+    <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="52433d" />
   </colors>
   <attributes>
     <option name="TEXT">

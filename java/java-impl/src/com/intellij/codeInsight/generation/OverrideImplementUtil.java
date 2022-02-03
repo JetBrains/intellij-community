@@ -163,7 +163,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   @NotNull
-  private static PsiMethod decorateMethod(@NotNull PsiClass aClass,
+  public static PsiMethod decorateMethod(@NotNull PsiClass aClass,
                                           @NotNull PsiMethod method,
                                           boolean toCopyJavaDoc,
                                           boolean insertOverrideIfPossible,
@@ -292,7 +292,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     for (MethodImplementor implementor : getImplementors()) {
       final GenerationInfo info = implementor.createGenerationInfo(s, mergeIfExists);
       if (info instanceof PsiGenerationInfo) {
-        @SuppressWarnings({"unchecked"}) final PsiGenerationInfo<PsiMethod> psiGenerationInfo = (PsiGenerationInfo<PsiMethod>)info;
+        @SuppressWarnings("unchecked") final PsiGenerationInfo<PsiMethod> psiGenerationInfo = (PsiGenerationInfo<PsiMethod>)info;
         return psiGenerationInfo;
       }
     }

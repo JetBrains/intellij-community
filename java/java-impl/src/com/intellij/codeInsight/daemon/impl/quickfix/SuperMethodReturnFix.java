@@ -28,7 +28,7 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,13 +69,17 @@ public class SuperMethodReturnFix implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!FileModificationService.getInstance().prepareFileForWrite(mySuperMethod.getContainingFile())) return;
-    ChangeSignatureProcessor processor = new ChangeSignatureProcessor(
-            project,
-            mySuperMethod,
-            false, null,
-            mySuperMethod.getName(),
-            mySuperMethodType,
-            ParameterInfoImpl.fromMethod(mySuperMethod));
+    var provider = JavaSpecialRefactoringProvider.getInstance();
+    var processor = provider.getChangeSignatureProcessorWithCallback(
+      project,
+      mySuperMethod,
+      false, null,
+      mySuperMethod.getName(),
+      mySuperMethodType,
+      ParameterInfoImpl.fromMethod(mySuperMethod),
+      true,
+      null
+    );
     processor.run();
   }
 

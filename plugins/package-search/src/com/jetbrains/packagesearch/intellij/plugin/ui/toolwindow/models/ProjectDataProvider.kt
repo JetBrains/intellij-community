@@ -53,8 +53,7 @@ internal class ProjectDataProvider(
             }
         }
 
-        @Suppress("UNCHECKED_CAST") // We filter out null values before casting, we should be ok
-        return successfulApiInfoByDependency as Map<InstalledDependency, ApiStandardPackage>
+        return successfulApiInfoByDependency.filterNotNullValues()
     }
 
     private suspend fun fetchInfoFromCacheOrApiFor(
@@ -69,7 +68,7 @@ internal class ProjectDataProvider(
         val packagesToFetch = mutableListOf<InstalledDependency>()
         for (dependency in dependencies) {
             val standardV2Package = packageCache.get(dependency)
-            remoteInfoByDependencyMap[dependency] = standardV2Package as ApiStandardPackage?
+            remoteInfoByDependencyMap[dependency] = standardV2Package
             if (standardV2Package == null) {
                 packagesToFetch += dependency
             }
@@ -112,9 +111,13 @@ internal class ProjectDataProvider(
     }
 }
 
-private fun <K, V> Map<K, V>.partition(transform: (Map.Entry<K, V>) -> Boolean): Pair<Map<K, V>, Map<K, V>> =
-    entries.partition(transform).let { (a, b) -> a.toMap() to b.toMap() }
+private fun <K, V> Map<K, V>.partition(transform: (Map.Entry<K, V>) -> Boolean): Pair<Map<K, V>, Map<K, V>> {
+    val trueMap = mutableMapOf<K, V>()
+    val falseMap = mutableMapOf<K, V>()
+    forEach { if (transform(it)) trueMap[it.key] = it.value else falseMap[it.key] = it.value }
+    return trueMap to falseMap
+}
 
-private fun <K, V> Iterable<Map.Entry<K, V>>.toMap(): Map<K, V> = buildMap {
-    this@toMap.forEach { put(it.key, it.value) }
+private fun <K, V> Map<K, V?>.filterNotNullValues() = buildMap<K, V> {
+    this@filterNotNullValues.forEach { (k, v) -> if (v != null) put(k, v) }
 }

@@ -10,7 +10,7 @@ class HideProjectRefreshAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val notificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
-    notificationAware.hideNotification()
+    notificationAware.notificationExpire()
   }
 
   override fun update(e: AnActionEvent) {

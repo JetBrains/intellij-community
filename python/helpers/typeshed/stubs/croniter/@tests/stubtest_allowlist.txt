@@ -1,6 +1,3 @@
 croniter.CroniterError
 croniter.croniter.__next__
-croniter.croniter.expand
-croniter.croniter.get_next
-croniter.croniter.is_valid
 croniter.croniter.next

@@ -80,6 +80,13 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI"
     },
 
+    "SegmentedButton": {
+      "selectedStartBorderColor": "#5e6060",
+      "selectedEndBorderColor": "#5e6060",
+      "selectedButtonColor": "#4C5052",
+      "focusedSelectedButtonColor": "#3d4b5c"
+    },
+
     "CellEditor.border.width": 2,
 
     "CheckBox": {
@@ -120,6 +127,12 @@
       "inactiveWarningFocusColor": "#6E5324",
       "infoForeground": "#787878",
       "warningFocusColor": "#AC7920"
+    },
+
+    "ContextHelp": {
+      "fontSizeOffset": {
+        "os.windows": 0
+      }
     },
 
     "BookmarkMnemonicCurrent": {
@@ -537,6 +550,22 @@
       "spanForeground": "#F5F5F5",
       "foreground": "#F5F5F5",
       "stepNumberForeground": "#6A9DDE"
+    },
+
+    "MainToolbar": {
+      "background": "#3c3f41",
+      "Icon": {
+        "borderInsets": "10,10,10,10",
+        "background": "#3C3F41",
+        "hoverBackground": "#4C5052",
+        "pressedBackground": "#4C5052"
+      },
+      "Dropdown": {
+        "borderInsets": "12,6,12,6",
+        "background": "#3C3F41",
+        "hoverBackground": "#4C5052",
+        "pressedBackground": "#4C5052"
+      }
     }
   },
 
@@ -555,14 +584,5 @@
     "#b99bf899": "#977fca",
     "#9aa7b0cc": "#97acc6",
     "#9aa7b099": "#97acc6"
-  },
-
-  "MainToolbar": {
-    "icon": {
-      "borderInsets": "10,10,10,10"
-    },
-    "dropdown": {
-      "borderInsets": "12,6,12,6"
-    }
   }
 }

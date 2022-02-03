@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.NotNull;
@@ -37,24 +37,45 @@ final class FileLoader implements Loader {
   // find . -name "classpath.index" -delete
   private static final short indexFileVersion = 24;
 
-  private final int rootDirAbsolutePathLength;
-
   private final @NotNull Predicate<String> nameFilter;
   private final @NotNull Path path;
 
-  FileLoader(@NotNull Path path,
-             @Nullable Predicate<String> nameFilter,
-             @Nullable BiConsumer<ClasspathCache.IndexRegistrar, Loader> registrar,
-             boolean isClassPathIndexEnabled) {
+  FileLoader(@NotNull Path path) {
     this.path = path;
+    this.nameFilter = __ -> true;
+  }
 
-    rootDirAbsolutePathLength = path.toString().length();
-    if (nameFilter == null) {
-      this.nameFilter = registrar == null ? __ -> true : buildData(registrar, isClassPathIndexEnabled);
+  private FileLoader(@NotNull Path path, @NotNull Predicate<String> nameFilter) {
+    this.path = path;
+    this.nameFilter = nameFilter;
+  }
+
+  static @NotNull FileLoader createCachingFileLoader(Path file,
+                                                     @Nullable CachePoolImpl cachePool,
+                                                     Predicate<? super Path> cachingCondition,
+                                                     boolean isClassPathIndexEnabled,
+                                                     ClasspathCache cache) {
+    if (cachePool == null) {
+      LoaderData data = buildData(file, isClassPathIndexEnabled);
+      FileLoader loader = new FileLoader(file, data.nameFilter);
+      cache.applyLoaderData(data, loader);
+      return loader;
+    }
+
+    ClasspathCache.IndexRegistrar data = cachePool.loaderIndexCache.get(file);
+    if (data == null) {
+      LoaderData loaderData = buildData(file, isClassPathIndexEnabled);
+      FileLoader loader = new FileLoader(file, loaderData.nameFilter);
+      if (cachingCondition != null && cachingCondition.test(file)) {
+        cachePool.loaderIndexCache.put(file, loaderData);
+      }
+      cache.applyLoaderData(loaderData, loader);
+      return loader;
     }
     else {
-      assert registrar == null;
-      this.nameFilter = nameFilter;
+      FileLoader loader = new FileLoader(file, data.getNameFilter());
+      cache.applyLoaderData(data, loader);
+      return loader;
     }
   }
 
@@ -82,20 +103,21 @@ final class FileLoader implements Loader {
     }
   }
 
-  private void buildPackageAndNameCache(Path startDir,
-                                        ClasspathCache.LoaderDataBuilder context,
-                                        StrippedLongArrayList nameHashes) {
+  private static void buildPackageAndNameCache(Path startDir,
+                                               ClasspathCache.LoaderDataBuilder context,
+                                               StrippedLongArrayList nameHashes) {
     // FileVisitor is not used to avoid getting file attributes for class files
     // (.class extension is a strong indicator that it is file and not a directory)
     Deque<Path> dirCandidates = new ArrayDeque<>();
     dirCandidates.add(startDir);
     Path dir;
+    int rootDirAbsolutePathLength = startDir.toString().length();
     while ((dir = dirCandidates.pollFirst()) != null) {
       try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir)) {
         boolean containsClasses = false;
         boolean containsResources = false;
         for (Path file : dirStream) {
-          String path = startDir.relativize(file).toString().replace(File.separatorChar, '/');
+          String path = getRelativeResourcePath(file.toString(), rootDirAbsolutePathLength);
           if (path.endsWith(ClasspathCache.CLASS_EXTENSION)) {
             nameHashes.add(Xx3UnencodedString.hashUnencodedString(path));
             containsClasses = true;
@@ -110,7 +132,7 @@ final class FileLoader implements Loader {
         }
 
         if (containsClasses || containsResources) {
-          String relativeResourcePath = getRelativeResourcePath(dir.toString());
+          String relativeResourcePath = getRelativeResourcePath(dir.toString(), rootDirAbsolutePathLength);
           if (containsClasses) {
             context.addClassPackage(relativeResourcePath);
           }
@@ -128,11 +150,9 @@ final class FileLoader implements Loader {
     }
   }
 
-  private @NotNull String getRelativeResourcePath(@NotNull String absFilePath) {
-    String relativePath = absFilePath.substring(rootDirAbsolutePathLength);
-    relativePath = relativePath.replace(File.separatorChar, '/');
-    relativePath = relativePath.startsWith("/") ? relativePath.substring(1) : relativePath;
-    return relativePath;
+  private static @NotNull String getRelativeResourcePath(@NotNull String path, int startPathLength) {
+    String relativePath = path.substring(startPathLength).replace(File.separatorChar, '/');
+    return relativePath.startsWith("/") ? relativePath.substring(1) : relativePath;
   }
 
   @Override
@@ -232,8 +252,7 @@ final class FileLoader implements Loader {
     }
   }
 
-  private @NotNull Predicate<String> buildData(@NotNull BiConsumer<ClasspathCache.IndexRegistrar, Loader> registrar,
-                                               boolean isClassPathIndexEnabled) {
+  private static @NotNull LoaderData buildData(@NotNull Path path, boolean isClassPathIndexEnabled) {
     Path indexFile = isClassPathIndexEnabled ? path.resolve("classpath.index") : null;
     LoaderData loaderData = indexFile == null ? null : readFromIndex(indexFile);
 
@@ -283,9 +302,7 @@ final class FileLoader implements Loader {
       System.out.println("Scanning: " + (currentScanningTime / nsMsFactor) + "ms" +
                          ", loading: " + (totalReading.get() / nsMsFactor) + "ms for " + currentLoaders + " loaders");
     }
-
-    registrar.accept(loaderData, this);
-    return loaderData.nameFilter;
+    return loaderData;
   }
 
   private static final class FileResource implements Resource {
@@ -334,15 +351,15 @@ final class FileLoader implements Loader {
 
   @Override
   public boolean containsName(String name) {
-    return name.isEmpty() || nameFilter.test(name);
+    return nameFilter.test(name);
   }
 
   private static final class LoaderData implements ClasspathCache.IndexRegistrar {
     private final long[] resourcePackageHashes;
     private final long[] classPackageHashes;
-    private final NameFilter nameFilter;
+    private final @NotNull NameFilter nameFilter;
 
-    LoaderData(long[] resourcePackageHashes, long[] classPackageHashes, NameFilter nameFilter) {
+    LoaderData(long[] resourcePackageHashes, long[] classPackageHashes, @NotNull NameFilter nameFilter) {
       this.resourcePackageHashes = resourcePackageHashes;
       this.classPackageHashes = classPackageHashes;
       this.nameFilter = nameFilter;
@@ -359,7 +376,7 @@ final class FileLoader implements Loader {
     }
 
     @Override
-    public Predicate<String> getNameFilter() {
+    public @NotNull Predicate<String> getNameFilter() {
       return nameFilter;
     }
 
@@ -399,7 +416,11 @@ final class FileLoader implements Loader {
     }
 
     @Override
-    public boolean test(@NotNull String name) {
+    public boolean test(String name) {
+      if (name.isEmpty()) {
+        return true;
+      }
+
       int lastIndex = name.length() - 1;
       int end = name.charAt(lastIndex) == '/' ? lastIndex : name.length();
       return filter.mightContain(Xx3UnencodedString.hashUnencodedStringRange(name, 0, end));

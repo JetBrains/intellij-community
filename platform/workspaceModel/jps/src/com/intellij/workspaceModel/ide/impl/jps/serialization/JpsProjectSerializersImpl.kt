@@ -21,10 +21,7 @@ import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.reportErrorAndAttachStorage
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -292,6 +289,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
     val modules = mutableMapOf<String, MutableList<Triple<ModuleId, WorkspaceEntityStorageBuilder, JpsFileEntitiesSerializer<*>>>>()
     val libraries = mutableMapOf<LibraryId, MutableList<Pair<WorkspaceEntityStorageBuilder, JpsFileEntitiesSerializer<*>>>>()
+    val artifacts = mutableMapOf<ArtifactId, MutableList<Pair<WorkspaceEntityStorageBuilder, JpsFileEntitiesSerializer<*>>>>()
     builders.forEachIndexed { i, builder ->
       if (enableExternalStorage) {
         builder.entities(ModuleEntity::class.java).forEach { module ->
@@ -301,6 +299,9 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       }
       builder.entities(LibraryEntity::class.java).filter { it.tableId == LibraryTableId.ProjectLibraryTableId }.forEach { library ->
         libraries.getOrPut(library.persistentId()) { ArrayList() }.add(builder to serializers[i])
+      }
+      builder.entities(ArtifactEntity::class.java).forEach { artifact ->
+        artifacts.getOrPut(artifact.persistentId()) { ArrayList() }.add(builder to serializers[i])
       }
     }
 
@@ -360,6 +361,32 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           builder.removeEntity(entity)
         }
         LOG.warn("Libraries defined in ${entitiesToRemove.joinToString { it.third }} files will ignored and these files will be removed.")
+      }
+      else {
+        LOG.warn("Cannot determine which configuration file should be ignored: ${buildersWithSerializers.map { it.second }}")
+      }
+    }
+    for ((artifactId, buildersWithSerializers) in artifacts) {
+      if (buildersWithSerializers.size <= 1) continue
+      val defaultFileName = FileUtil.sanitizeFileName(artifactId.name) + ".xml"
+      val hasImportedEntity = buildersWithSerializers.any { (builder, _) ->
+        builder.resolve(artifactId)!!.entitySource is JpsImportedEntitySource
+      }
+      val entitiesToRemove = buildersWithSerializers.mapNotNull { (builder, serializer) ->
+        val artifact = builder.resolve(artifactId)!!
+        val entitySource = artifact.entitySource
+        if (entitySource !is JpsFileEntitySource.FileInDirectory) return@mapNotNull null
+        val fileName = serializer.fileUrl.fileName
+        if (fileName != defaultFileName || enableExternalStorage && hasImportedEntity) Triple(builder, artifact, fileName) else null
+      }
+
+      LOG.warn("Multiple configuration files were found for '${artifactId.name}' artifact.")
+      if (entitiesToRemove.isNotEmpty() && entitiesToRemove.size < buildersWithSerializers.size) {
+        for ((builder, entity) in entitiesToRemove) {
+          sourcesToUpdate.add(entity.entitySource)
+          builder.removeEntity(entity)
+        }
+        LOG.warn("Artifacts defined in ${entitiesToRemove.joinToString { it.third }} files will ignored and these files will be removed.")
       }
       else {
         LOG.warn("Cannot determine which configuration file should be ignored: ${buildersWithSerializers.map { it.second }}")
@@ -619,6 +646,11 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
             if (existingSerializers.isNotEmpty()) {
               val existingSources = existingSerializers.map { it.internalEntitySource }
               val entitiesWithOldSource = storage.entitiesBySource { it in existingSources }
+              val entitiesPersistentIds = entitiesWithOldSource.values
+                .flatMap { it.values }
+                .flatten()
+                .filterIsInstance<WorkspaceEntityWithPersistentId>()
+                .joinToString(separator = "||") { "$it (PersistentId: ${it.persistentId()})" }
               //technically this is not an error, but cases when different entities have the same default file name are rare so let's report this
               // as error for now to find real cause of IDEA-265327
               val message = """
@@ -627,7 +659,9 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
              |Old file name: $oldFileName
              |Existing serializers: $existingSerializers
              |Their entity sources: $existingSources
-             |Entities with these sources in the storage: $entitiesWithOldSource
+             |Entities with these sources in the storage: ${entitiesWithOldSource.mapValues { (_, value) -> value.values }}
+             |Entities with persistent ids: $entitiesPersistentIds
+             |Original entities to save: ${entities.values.flatten().joinToString(separator = "||") { "$it (Persistent Id: ${(it as? WorkspaceEntityWithPersistentId)?.persistentId()})" }}
             """.trimMargin()
               reportErrorAndAttachStorage(message, storage)
             }

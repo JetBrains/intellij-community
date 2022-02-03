@@ -47,5 +47,5 @@ if __name__ == '__main__':
                 set_parallel_mode()
             start_protocol()
 
-    os.environ["_JB_REPR_DIFF"] = "1"
+    os.environ["_JB_PPRINT_PRIMITIVES"] = "1"
     sys.exit(pytest.main(args, plugins_to_load + [Plugin]))

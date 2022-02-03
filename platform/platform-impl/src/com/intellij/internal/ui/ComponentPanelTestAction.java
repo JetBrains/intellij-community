@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui;
 
 import com.google.common.collect.ImmutableList;
@@ -151,7 +151,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       BorderLayoutPanel panel = JBUI.Panels.simplePanel(pane);
 
-      panel.addToTop(createToolbar());
+      panel.addToTop(createToolbar(pane));
 
       JPanel southPanel = new JPanel();
       southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.X_AXIS));
@@ -236,7 +236,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         }).withValidator(() -> {
           String tt = text2.getText();
           return StringUtil.isEmpty(tt) || tt.length() < 5 ?
-            new ValidationInfo("Message is too short.<br/>Should contain at least 5 symbols <a href=\"#check.rules\">check rules.</a>", text2) : null;
+            new ValidationInfo("'" + tt + "': message is too short.<br/>Should contain at least 5 symbols. 8 is preferred <a href=\"#check.rules\">check rules.</a>", text2) :
+                 tt.length() < 8 ? new ValidationInfo("'" + tt + "': message of 8 symbols is preferred", text2).asWarning() : null;
         }).andStartOnFocusLost().andRegisterOnDocumentListener(text2).installOn(text2);
 
       gc.gridy++;
@@ -372,7 +373,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       col.setCellEditor(new StatefulValidatingCellEditor(rightEditor, getDisposable()));
       col.setCellRenderer(new ValidatingTableCellRendererWrapper(new ColoredTableCellRenderer() {
 
-        { setIpad(JBUI.emptyInsets()); } // Reset standard pads
+        {
+          setIpad(JBInsets.emptyInsets()); } // Reset standard pads
 
         @Override
         protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected,
@@ -794,13 +796,21 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     }
 
     private int counter = 5;
-    private JComponent createToolbar() {
+
+    private JComponent createToolbar(@NotNull JComponent toolbarTarget) {
+      boolean[] enabledArray = new boolean[3];
+      Arrays.fill(enabledArray, true);
       AnAction[] actionsArray = new AnAction[3];
       actionsArray[0] = new MyAction("Play", AllIcons.Actions.Execute) {
         @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(enabledArray[0]);
+        }
+
+        @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           if (--counter == 0) {
-            e.getPresentation().setEnabled(false);
+            enabledArray[0] = false;
           }
           System.out.println(e.getPresentation().getDescription() + ", counter = " + counter);
         }
@@ -808,26 +818,36 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       actionsArray[1] = new MyAction("Stop", AllIcons.Actions.Suspend) {
         @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(enabledArray[1]);
+        }
+
+        @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           counter = 5;
-          actionsArray[0].getTemplatePresentation().setEnabled(true);
+          enabledArray[0] = true;
           System.out.println(e.getPresentation().getDescription() + ", counter = " + counter);
         }
       };
 
       actionsArray[2] = new MyToggleAction("Mute", AllIcons.Debugger.MuteBreakpoints) {
         @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(enabledArray[2]);
+        }
+
+        @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           selected = !selected;
           if (selected) {
             System.out.println("Unmute buttons");
-            actionsArray[0].getTemplatePresentation().setEnabled(true);
-            actionsArray[1].getTemplatePresentation().setEnabled(true);
+            enabledArray[0] = true;
+            enabledArray[1] = true;
           }
           else {
             System.out.println("Mute buttons");
-            actionsArray[0].getTemplatePresentation().setEnabled(false);
-            actionsArray[1].getTemplatePresentation().setEnabled(false);
+            enabledArray[0] = false;
+            enabledArray[1] = false;
           }
 
           Toggleable.setSelected(e.getPresentation(), selected);
@@ -858,6 +878,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       toolbarActions.add(new MyAction(null, AllIcons.Ide.Rating3).withShortCut("control P"));
 
       ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("TOP", toolbarActions, true);
+      toolbar.setTargetComponent(toolbarTarget);
       JComponent toolbarComponent = toolbar.getComponent();
       toolbarComponent.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
       return toolbarComponent;

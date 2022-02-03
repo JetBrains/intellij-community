@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.test
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -12,11 +13,28 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.*
+import org.jetbrains.kotlin.psi.KtFile
 import kotlin.test.fail
 
 object AstAccessControl {
     val ALLOW_AST_ACCESS_DIRECTIVE: String = "ALLOW_AST_ACCESS"
+
+    @JvmStatic
+    fun dropPsiAndTestWithControlledAccessToAst(
+        shouldFail: Boolean,
+        file: KtFile,
+        disposable: Disposable,
+        testBody: () -> Unit
+    ) {
+        testWithControlledAccessToAst(shouldFail, file.project, disposable) {
+            // clean up AST
+            ApplicationManager.getApplication().runWriteAction { file.onContentReload() }
+            assertNotNull("file is parsed from AST", file.stub)
+
+            testBody()
+        }
+    }
 
     // Please provide at least one test that fails ast switch check (shouldFail should be true for at least one test)
     // This kind of inconvenience is justified by the fact that the check can be invalidated by slight misconfiguration of the test

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.UISettings
@@ -10,8 +10,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.bindIntText
-import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
 import com.intellij.ui.tabs.impl.JBTabsImpl
@@ -22,15 +20,16 @@ import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import kotlin.math.max
 
-class EditorTabsConfigurable : BoundSearchableConfigurable(
+internal class EditorTabsConfigurable : BoundSearchableConfigurable(
   message("configurable.editor.tabs.display.name"),
   "reference.settingsdialog.IDE.editor.tabs",
-  ID
+  EDITOR_TABS_OPTIONS_ID
 ), EditorOptionsProvider {
   private lateinit var myEditorTabPlacement: JComboBox<Int>
   private lateinit var myOneRowCheckbox: JCheckBox
 
   override fun createPanel(): DialogPanel {
+    val ui = UISettings.instance.state
     return panel {
       group(message("group.tab.appearance")) {
 
@@ -76,7 +75,7 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
           }
           row { checkBox(showPinnedTabsInASeparateRow).enabledIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)) }
         }
-        row { checkBox(useSmallFont).enableIfTabsVisible() }
+        row { checkBox(useSmallFont).enableIfTabsVisible() }.visible(!ExperimentalUI.isNewUI())
         row { checkBox(showFileIcon).enableIfTabsVisible() }
         row { checkBox(showFileExtension).enableIfTabsVisible() }
         row { checkBox(showDirectoryForNonUniqueFilenames).enableIfTabsVisible() }

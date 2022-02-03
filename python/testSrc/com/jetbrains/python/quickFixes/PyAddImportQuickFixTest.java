@@ -19,7 +19,9 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
@@ -43,6 +45,8 @@ import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -337,22 +341,43 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
 
   // PY-46361
   public void testPackagesFromPythonSkeletonsNotSuggested() {
+    doMultiFileNegativeTest("Import");
+
     GlobalSearchScope scope = GlobalSearchScope.allScope(myFixture.getProject());
     List<PyFile> djangoPackages = PyModuleNameIndex.findByQualifiedName(QualifiedName.fromComponents("django"),
                                                                        myFixture.getProject(), scope);
+    if (djangoPackages.size() != 1) {
+      dumpSdkRootsFileSystemAndIndexResults();
+    }
     PyFile djangoPackage = assertOneElement(djangoPackages);
     assertTrue(PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(djangoPackage));
-
-    doMultiFileNegativeTest("Import");
   }
 
   // PY-46361
   public void testClassesFromPythonSkeletonsNotSuggested() {
+    doMultiFileNegativeTest("Import");
+
     PyClass djangoViewClass = PyClassNameIndex.findClass("django.views.generic.base.View", myFixture.getProject());
+    if (djangoViewClass == null) {
+      dumpSdkRootsFileSystemAndIndexResults();
+    }
     assertNotNull(djangoViewClass);
     assertTrue(PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(djangoViewClass.getContainingFile()));
-
-    doMultiFileNegativeTest("Import");
+  }
+  private void dumpSdkRootsFileSystemAndIndexResults() {
+    dumpSdkRoots();
+    VirtualFile skeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
+    skeletonsDir.refresh(true, true);
+    System.out.println("Under VFS: " + skeletonsDir.findChild("django"));
+    Path djangoDirPath = skeletonsDir.toNioPath().resolve("django");
+    System.out.println("Under NIO: " + Files.exists(djangoDirPath));
+    GlobalSearchScope projectScope = GlobalSearchScope.allScope(myFixture.getProject());
+    System.out.println("Under filename index (django): " + FilenameIndex.getVirtualFilesByName("django", projectScope));
+    List<VirtualFile> djangoInitPy = ContainerUtil.filter(FilenameIndex.getVirtualFilesByName("__init__.py", projectScope),
+                                                          f -> f.getParent().getName().equals("django"));
+    System.out.println("Under filename index (django/__init__.py): " + djangoInitPy);
+    final List<PyFile> djangoModules = PyModuleNameIndex.findByShortName("django", myFixture.getProject(), projectScope);
+    System.out.println("Under module name index: " + ContainerUtil.map(djangoModules, PsiFile::getVirtualFile));
   }
 
   // PY-46344

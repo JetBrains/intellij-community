@@ -159,7 +159,7 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
             val nullableExpected = expectedType.makeNullable()
             if (expressionType.isSubtypeOf(nullableExpected)) {
                 val targetExpression = diagnosticElement.getTopMostQualifiedForSelectorIfAny()
-                actions.add(AddExclExclCallFix(targetExpression))
+                getAddExclExclCallFix(targetExpression)?.let { actions.add(it) }
                 if (expectedType.isBoolean()) {
                     actions.add(AddEqEqTrueFix(targetExpression))
                 }

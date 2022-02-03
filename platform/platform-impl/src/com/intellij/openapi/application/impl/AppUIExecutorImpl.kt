@@ -121,24 +121,6 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
     return withConstraint(WithDocumentsCommitted(project, modality), project)
   }
 
-  override fun inTransaction(parentDisposable: Disposable): AppUIExecutorImpl {
-    val id = TransactionGuard.getInstance().contextTransaction
-    return withConstraint(object : ContextConstraint {
-      override fun isCorrectContext(): Boolean {
-        return TransactionGuard.getInstance().contextTransaction != null
-      }
-
-      override fun schedule(runnable: Runnable) {
-        // The Application instance is passed as a disposable here to ensure the runnable is always invoked,
-        // regardless expiration state of the proper parentDisposable. In case the latter is disposed,
-        // a continuation is resumed with a cancellation exception anyway (.expireWith() takes care of that).
-        TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), id, runnable)
-      }
-
-      override fun toString() = "inTransaction"
-    }).expireWith(parentDisposable)
-  }
-
   @Deprecated("Beware, context might be infectious, if coroutine resumes other waiting coroutines. " +
               "Use runUndoTransparentWriteAction instead.", ReplaceWith("this"))
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")

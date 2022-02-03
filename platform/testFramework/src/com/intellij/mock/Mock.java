@@ -211,10 +211,6 @@ public class Mock {
     }
 
     @Override
-    public void updateFilePresentation(@NotNull VirtualFile file) {
-    }
-
-    @Override
     public void unsplitWindow() {
 
     }
@@ -288,7 +284,7 @@ public class Mock {
     public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
                                                                           boolean focusEditor,
                                                                           boolean searchForSplitter) {
-      return Pair.create(FileEditor.EMPTY_ARRAY, new FileEditorProvider[0]);
+      return Pair.create(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
     }
 
     @Override

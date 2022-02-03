@@ -1,5 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
+import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageOperationType
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 
 internal inline fun <reified T : PackageModel> CoroutineScope.computeActionsAsync(
+    project: Project,
     packageModel: T,
     targetModules: TargetModules,
     knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
@@ -50,14 +52,15 @@ internal inline fun <reified T : PackageModel> CoroutineScope.computeActionsAsyn
         targetModules.modules.parallelForEach { moduleModel ->
             removeOperationsChannel.send(operationFactory.computeRemoveActionsFor(packageModel, moduleModel))
 
-            val project = moduleModel.projectModule.nativeModule.project
+            val moduleProject = moduleModel.projectModule.nativeModule.project
             val operation = when (primaryOperationType) {
                 PackageOperationType.INSTALL -> {
                     if (highestAvailableVersion != null) {
                         operationFactory.computeInstallActionsFor(
+                            project = moduleProject,
                             packageModel = packageModel,
                             moduleModel = moduleModel,
-                            defaultScope = selectedScope ?: targetModules.defaultScope(project),
+                            defaultScope = selectedScope ?: targetModules.defaultScope(moduleProject),
                             knownRepositories = knownRepositoriesInTargetModules,
                             targetVersion = highestAvailableVersion
                         )
@@ -72,6 +75,7 @@ internal inline fun <reified T : PackageModel> CoroutineScope.computeActionsAsyn
                 PackageOperationType.UPGRADE, PackageOperationType.SET -> {
                     if (upgradeVersion != null) {
                         operationFactory.computeUpgradeActionsFor(
+                            project = moduleProject,
                             packageModel = packageModel,
                             moduleModel = moduleModel,
                             knownRepositories = knownRepositoriesInTargetModules,
@@ -95,10 +99,10 @@ internal inline fun <reified T : PackageModel> CoroutineScope.computeActionsAsyn
 
     val repoToInstall = when (primaryOperationType) {
         PackageOperationType.INSTALL -> highestAvailableVersion?.let {
-            knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(packageModel, it.originalVersion)
+            knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(project, packageModel, it.originalVersion)
         }
         PackageOperationType.UPGRADE -> upgradeVersion?.let {
-            knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(packageModel, it.originalVersion)
+            knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(project, packageModel, it.originalVersion)
         }
         else -> null
     }

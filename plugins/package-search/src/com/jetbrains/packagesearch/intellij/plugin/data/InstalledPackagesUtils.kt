@@ -4,21 +4,31 @@ import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.DigestUtil
+import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.DependencyUsageInfo
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InstalledDependency
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackagesToUpgrade
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.computeActionsAsync
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
+import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -37,9 +47,8 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.encoding.decodeStructure
 import kotlinx.serialization.encoding.encodeStructure
 import kotlinx.serialization.json.Json
-import org.apache.commons.codec.binary.Hex
+import java.io.File
 import java.nio.file.Path
-import java.nio.file.Paths
 import kotlin.io.path.absolutePathString
 
 internal suspend fun installedPackages(
@@ -103,44 +112,58 @@ internal suspend fun fetchProjectDependencies(
 internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, json: Json): List<UnifiedDependency> = coroutineScope {
     val fileHashCode = buildFile.hashCode()
 
-    val cacheFile = Paths.get(cacheDirectory.absolutePathString(), "$fileHashCode.json").toFile()
+    val cacheFile = File(cacheDirectory.absolutePathString(), "$fileHashCode.json")
 
     if (!cacheFile.exists()) withContext(Dispatchers.IO) {
         cacheFile.apply { parentFile.mkdirs() }.createNewFile()
     }
 
-    val sha256Deferred: Deferred<String> = async(Dispatchers.IO) {
-        Hex.encodeHexString(DigestUtil.sha256().digest(buildFile.contentsToByteArray()))
+    val sha256Deferred: Deferred<String> = async(AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
+        StringUtil.toHexString(DigestUtil.sha256().digest(buildFile.contentsToByteArray()))
     }
 
-    val cache = withContext(Dispatchers.IO) {
-        runCatching { json.decodeFromString<InstalledDependenciesCache>(cacheFile.readText()) }
+    val cachedContents = withContext(Dispatchers.IO) { kotlin.runCatching { cacheFile.readText() } }
+        .onFailure { logDebug("installedDependencies", it) { "Someone messed with our cache file UGH ${cacheFile.absolutePath}" } }
+        .getOrNull()?.takeIf { it.isNotBlank() }
+
+    val cache = if (cachedContents != null) {
+        // TODO: consider invalidating when ancillary files change (e.g., gradle.properties)
+        runCatching { json.decodeFromString<InstalledDependenciesCache>(cachedContents) }
+            .onFailure { logDebug("installedDependencies", it) { "Dependency JSON cache file read failed for ${buildFile.path}" } }
             .getOrNull()
+    } else {
+        null
     }
 
     val sha256 = sha256Deferred.await()
-    if (cache?.sha256 == sha256 && cache.fileHashCode == fileHashCode) {
+    if (cache?.sha256 == sha256 && cache.fileHashCode == fileHashCode && cache.cacheVersion == PluginEnvironment.cachesVersion) {
         return@coroutineScope cache.dependencies
     }
 
     val dependencies =
         readAction {
             runCatching {
-                ProjectModuleOperationProvider.forProjectModuleType(moduleType)?.listDependenciesInModule(this@installedDependencies)
+                ProjectModuleOperationProvider.forProjectModuleType(moduleType)
+                    ?.listDependenciesInModule(this@installedDependencies)
             }
-        }.getOrNull()?.toList() ?: emptyList()
+        }
+            .onFailure { logDebug("installedDependencies", it) { "Unable to list dependencies in module $name" } }
+            .getOrNull()?.toList() ?: emptyList()
 
     nativeModule.project.lifecycleScope.launch {
-        cacheFile.writeText(
-            text = json.encodeToString(
-                value = InstalledDependenciesCache(
-                    fileHashCode = fileHashCode,
-                    sha256 = sha256,
-                    projectName = name,
-                    dependencies = dependencies
-                )
+        val jsonText = json.encodeToString(
+            value = InstalledDependenciesCache(
+                cacheVersion = PluginEnvironment.cachesVersion,
+                fileHashCode = fileHashCode,
+                sha256 = sha256,
+                projectName = name,
+                dependencies = dependencies
             )
         )
+
+        withContext(AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
+            cacheFile.writeText(jsonText)
+        }
     }
 
     dependencies
@@ -148,6 +171,7 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
 
 @Serializable
 internal data class InstalledDependenciesCache(
+    val cacheVersion: Int,
     val fileHashCode: Int,
     val sha256: String,
     val projectName: String,
@@ -213,4 +237,24 @@ internal object UnifiedDependencySerializer : KSerializer<UnifiedDependency> {
         encodeSerializableElement(descriptor, 0, UnifiedCoordinatesSerializer, value.coordinates)
         value.scope?.let { encodeStringElement(descriptor, 1, it) }
     }
+}
+
+internal suspend fun generateOperationData(
+    moduleModels: List<ModuleModel>,
+    stable: PackagesToUpgrade,
+    repos: KnownRepositories.All,
+    onlyStable: Boolean,
+    project: Project
+) = moduleModels.associate { module ->
+    module.projectModule.nativeModule to (stable.upgradesByModule[module.projectModule.nativeModule]?.parallelMap { packageUpgradeInfo ->
+        val targetModule = TargetModules.from(module)
+        val operations = computeActionsAsync(
+            project, packageUpgradeInfo.packageModel, targetModule, repos.filterOnlyThoseUsedIn(targetModule), onlyStable
+        )
+        PackageSearchProjectService.AvailableUpdatesMap.OperationData(
+            packageUpgradeInfo,
+            operations,
+            operations.primaryOperations.await()
+        )
+    } ?: emptyList())
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.merge.dialog
 
 import com.intellij.ui.SimpleColoredComponent
@@ -7,7 +7,7 @@ import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EmptyIcon
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.LafIconLookup
 import javax.swing.JComponent
 import javax.swing.JList
@@ -50,7 +50,7 @@ class OptionListCellRenderer<T>(
   override fun createItemComponent(): JComponent {
     createLabel()
     optionComponent = SimpleColoredComponent().apply {
-      ipad = JBUI.emptyInsets()
+      ipad = JBInsets.emptyInsets()
     }
     return layoutComponent(optionComponent)
   }

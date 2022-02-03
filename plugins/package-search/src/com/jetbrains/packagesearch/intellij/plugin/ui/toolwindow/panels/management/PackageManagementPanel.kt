@@ -12,7 +12,6 @@ import com.jetbrains.packagesearch.intellij.plugin.actions.ShowSettingsAction
 import com.jetbrains.packagesearch.intellij.plugin.actions.TogglePackageDetailsAction
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
@@ -23,22 +22,16 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
-import com.jetbrains.packagesearch.intellij.plugin.util.uiStateSource
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.newCoroutineContext
 import java.awt.Dimension
 import javax.swing.BorderFactory
@@ -55,11 +48,7 @@ internal class PackageManagementPanel(
     private val operationFactory = PackageSearchOperationFactory()
     private val operationExecutor = NotifyingOperationExecutor(project)
 
-    private val targetModulesChannel = Channel<TargetModules>(onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    private val targetModulesFlow = targetModulesChannel.consumeAsFlow()
-        .stateIn(this, SharingStarted.Eagerly, TargetModules.None)
-
-    private val modulesTree = ModulesTree { targetModulesChannel.trySend(it) }
+    private val modulesTree = ModulesTree(project)
     private val modulesScrollPanel = JBScrollPane(
         modulesTree,
         JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -67,7 +56,7 @@ internal class PackageManagementPanel(
     )
 
     private val knownRepositoriesInTargetModulesFlow = combine(
-        targetModulesFlow,
+        modulesTree.targetModulesFlow,
         project.packageSearchProjectService.allInstalledKnownRepositoriesFlow
     ) { targetModules, installedRepositories ->
         installedRepositories.filterOnlyThoseUsedIn(targetModules)
@@ -78,7 +67,7 @@ internal class PackageManagementPanel(
         operationExecutor = operationExecutor,
         operationFactory = operationFactory,
         viewModelFlow = combine(
-            targetModulesFlow,
+            modulesTree.targetModulesFlow,
             project.packageSearchProjectService.installedPackagesStateFlow,
             project.packageSearchProjectService.packageUpgradesStateFlow,
             knownRepositoriesInTargetModulesFlow
@@ -89,7 +78,7 @@ internal class PackageManagementPanel(
         dataProvider = project.packageSearchProjectService.dataProvider
     )
 
-    private val packageDetailsPanel = PackageDetailsPanel(operationExecutor)
+    private val packageDetailsPanel = PackageDetailsPanel(project, operationExecutor)
 
     private val packagesSplitter = JBSplitter(
         "PackageSearch.PackageManagementPanel.DetailsSplitter",
@@ -110,10 +99,6 @@ internal class PackageManagementPanel(
 
     init {
         updatePackageDetailsVisible(PackageSearchGeneralConfiguration.getInstance(project).packageDetailsVisible)
-
-        project.uiStateSource.targetModulesFlow
-            .onEach { targetModulesChannel.send(it) }
-            .launchIn(this)
 
         modulesScrollPanel.apply {
             border = BorderFactory.createEmptyBorder()
@@ -139,7 +124,7 @@ internal class PackageManagementPanel(
         combine(
             knownRepositoriesInTargetModulesFlow,
             packagesListPanel.selectedPackageStateFlow,
-            targetModulesFlow,
+            modulesTree.targetModulesFlow,
             packagesListPanel.onlyStableStateFlow
         ) { knownRepositoriesInTargetModules, selectedUiPackageModel,
             targetModules, onlyStable ->

@@ -10,7 +10,7 @@
 
   <properties>
     <maven.compiler.release>11</maven.compiler.release>
-    <bootstrap.intellij.version>221.1712</bootstrap.intellij.version>
+    <bootstrap.intellij.version>221.3886</bootstrap.intellij.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -19,6 +19,11 @@
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>31.0.1-jre</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+      <version>3.15.8</version>
     </dependency>
     <dependency>
       <groupId>commons-cli</groupId>

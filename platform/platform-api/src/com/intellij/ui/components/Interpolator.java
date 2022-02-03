@@ -20,7 +20,7 @@ import java.util.function.Supplier;
  */
 public class Interpolator {
   private static final int PERIOD = 7; // ms
-  private static final long TIMEOUT = 500_000000L; // ns
+  private static final long TIMEOUT = 500_000_000L; // ns
 
   private final Supplier<Integer> myInput;
   private final Consumer<? super Integer> myOutput;

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.CodeStyle;
@@ -26,12 +26,12 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
-import com.intellij.util.ObjectUtils;
 import org.editorconfig.EditorConfigNotifier;
 import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.EditorConfigFilesCollector;
 import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory;
 import org.editorconfig.core.EditorConfig;
+import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.core.EditorConfigException;
 import org.editorconfig.core.ParsingException;
 import org.editorconfig.language.messages.EditorConfigBundle;
@@ -47,14 +47,11 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 
-import static org.editorconfig.core.EditorConfig.OutPair;
-
 @SuppressWarnings("SameParameterValue")
-public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsModifier {
+public final class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsModifier {
+  private static final Logger LOG = Logger.getInstance(EditorConfigCodeStyleSettingsModifier.class);
 
-  private final static Logger LOG = Logger.getInstance(EditorConfigCodeStyleSettingsModifier.class);
-
-  private final static Duration TIMEOUT = Duration.ofSeconds(10);
+  private static final Duration TIMEOUT = Duration.ofSeconds(10);
 
   private static boolean ourEnabledInTests;
 
@@ -75,10 +72,10 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
               // Apply editorconfig settings for the current editor
               if (applyCodeStyleSettings(context)) {
                 settings.addDependencies(context.getEditorConfigFiles());
-                ObjectUtils.consumeIfNotNull(
-                  EditorConfigNavigationActionsFactory.getInstance(psiFile),
-                  navigationFactory -> navigationFactory.updateEditorConfigFilePaths(context.getFilePaths())
-                );
+                EditorConfigNavigationActionsFactory navigationFactory = EditorConfigNavigationActionsFactory.getInstance(psiFile);
+                if (navigationFactory != null) {
+                  navigationFactory.updateEditorConfigFilePaths(context.getFilePaths());
+                }
                 return true;
               }
               return false;
@@ -159,9 +156,8 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     }
   }
 
-  @Nullable
   @Override
-  public CodeStyleStatusBarUIContributor getStatusBarUiContributor(@NotNull TransientCodeStyleSettings transientSettings) {
+  public @NotNull CodeStyleStatusBarUIContributor getStatusBarUiContributor(@NotNull TransientCodeStyleSettings transientSettings) {
     return new EditorConfigCodeStyleStatusBarUIContributor();
   }
 
@@ -213,8 +209,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     return isModified;
   }
 
-  @NotNull
-  private static List<String> getDependentProperties(@NotNull String property, @Nullable String langPrefix) {
+  private static @NotNull List<String> getDependentProperties(@NotNull String property, @Nullable String langPrefix) {
     property = StringUtil.trimStart(property, EditorConfigIntellijNameUtil.IDE_PREFIX);
     if (langPrefix != null && property.startsWith(langPrefix)) {
       property = StringUtil.trimStart(property, langPrefix);
@@ -239,10 +234,9 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     return optionValue;
   }
 
-  @Nullable
-  private static CodeStylePropertyAccessor<?> findAccessor(@NotNull AbstractCodeStylePropertyMapper mapper,
-                                                        @NotNull String propertyName,
-                                                        @Nullable String langPrefix) {
+  private static @Nullable CodeStylePropertyAccessor<?> findAccessor(@NotNull AbstractCodeStylePropertyMapper mapper,
+                                                                     @NotNull String propertyName,
+                                                                     @Nullable String langPrefix) {
     if (langPrefix != null) {
       if (propertyName.startsWith(langPrefix)) {
         final String prefixlessName = StringUtil.trimStart(propertyName, langPrefix);
@@ -276,7 +270,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     }
     catch (ParsingException pe) {
       // Parsing exceptions may occur with incomplete files which is a normal case when .editorconfig is being edited.
-      // Thus the error is logged only when debug mode is enabled.
+      // Thus, the error is logged only when debug mode is enabled.
       LOG.debug(pe);
     }
   }
@@ -295,18 +289,15 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
       myOptions = options;
     }
 
-    @NotNull
-    private CodeStyleSettings getSettings() {
+    private @NotNull CodeStyleSettings getSettings() {
       return mySettings;
     }
 
-    @NotNull
-    private List<OutPair> getOptions() {
+    private @NotNull List<OutPair> getOptions() {
       return myOptions == null ? Collections.emptyList() : myOptions;
     }
 
-    @NotNull
-    private Language getLanguage() {
+    private @NotNull Language getLanguage() {
       return myFile.getLanguage();
     }
 
@@ -321,9 +312,8 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     }
   }
 
-  @Nullable
   @Override
-  public Consumer<CodeStyleSettings> getDisablingFunction() {
+  public @NotNull Consumer<CodeStyleSettings> getDisablingFunction() {
     return settings -> {
       EditorConfigSettings editorConfigSettings = settings.getCustomSettings(EditorConfigSettings.class);
       editorConfigSettings.ENABLED = false;
@@ -370,8 +360,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     return providers;
   }
 
-  @NotNull
-  private static Collection<String> getLanguageIds(@NotNull MyContext context) {
+  private static @NotNull Collection<String> getLanguageIds(@NotNull MyContext context) {
     Set<String> langIds = new HashSet<>();
     for (OutPair option : context.getOptions()) {
       String key = option.getKey();

@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.resolve;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -190,6 +190,59 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/resolve/references/inImport")
+    public static class InImport extends AbstractReferenceResolveTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("javaClass.kt")
+        public void testJavaClass() throws Exception {
+            runTest("testData/resolve/references/inImport/javaClass.kt");
+        }
+
+        @TestMetadata("javaPackageFirstQualifier.kt")
+        public void testJavaPackageFirstQualifier() throws Exception {
+            runTest("testData/resolve/references/inImport/javaPackageFirstQualifier.kt");
+        }
+
+        @TestMetadata("javaPackageSecondQualifier.kt")
+        public void testJavaPackageSecondQualifier() throws Exception {
+            runTest("testData/resolve/references/inImport/javaPackageSecondQualifier.kt");
+        }
+
+        @TestMetadata("kotlinClass.kt")
+        public void testKotlinClass() throws Exception {
+            runTest("testData/resolve/references/inImport/kotlinClass.kt");
+        }
+
+        @TestMetadata("kotlinPackageFirstQualifier.kt")
+        public void testKotlinPackageFirstQualifier() throws Exception {
+            runTest("testData/resolve/references/inImport/kotlinPackageFirstQualifier.kt");
+        }
+
+        @TestMetadata("kotlinPackageSecondQualifier.kt")
+        public void testKotlinPackageSecondQualifier() throws Exception {
+            runTest("testData/resolve/references/inImport/kotlinPackageSecondQualifier.kt");
+        }
+
+        @TestMetadata("kotlinTopLevelFunction.kt")
+        public void testKotlinTopLevelFunction() throws Exception {
+            runTest("testData/resolve/references/inImport/kotlinTopLevelFunction.kt");
+        }
+
+        @TestMetadata("staticMethodFromJavaClass.kt")
+        public void testStaticMethodFromJavaClass() throws Exception {
+            runTest("testData/resolve/references/inImport/staticMethodFromJavaClass.kt");
+        }
+
+        @TestMetadata("staticMethodFromJavaClassJavaClass.kt")
+        public void testStaticMethodFromJavaClassJavaClass() throws Exception {
+            runTest("testData/resolve/references/inImport/staticMethodFromJavaClassJavaClass.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/resolve/references/invoke")
     public static class Invoke extends AbstractReferenceResolveTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -331,6 +384,77 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/resolve/references/packageReference")
+    public static class PackageReference extends AbstractReferenceResolveTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("javaPackageFirstQualifier.kt")
+        public void testJavaPackageFirstQualifier() throws Exception {
+            runTest("testData/resolve/references/packageReference/javaPackageFirstQualifier.kt");
+        }
+
+        @TestMetadata("javaPackageSecondQualifier.kt")
+        public void testJavaPackageSecondQualifier() throws Exception {
+            runTest("testData/resolve/references/packageReference/javaPackageSecondQualifier.kt");
+        }
+
+        @TestMetadata("kotlinPackageFirstQualifier.kt")
+        public void testKotlinPackageFirstQualifier() throws Exception {
+            runTest("testData/resolve/references/packageReference/kotlinPackageFirstQualifier.kt");
+        }
+
+        @TestMetadata("kotlinPackageSecondQualifier.kt")
+        public void testKotlinPackageSecondQualifier() throws Exception {
+            runTest("testData/resolve/references/packageReference/kotlinPackageSecondQualifier.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/resolve/references/qualifiedAccess")
+    public static class QualifiedAccess extends AbstractReferenceResolveTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("callableReference1.kt")
+        public void testCallableReference1() throws Exception {
+            runTest("testData/resolve/references/qualifiedAccess/callableReference1.kt");
+        }
+
+        @TestMetadata("callableReference2.kt")
+        public void testCallableReference2() throws Exception {
+            runTest("testData/resolve/references/qualifiedAccess/callableReference2.kt");
+        }
+
+        @TestMetadata("callableReference3.kt")
+        public void testCallableReference3() throws Exception {
+            runTest("testData/resolve/references/qualifiedAccess/callableReference3.kt");
+        }
+
+        @TestMetadata("ResolveFirstPackageOfFullyQualifiedReference.kt")
+        public void testResolveFirstPackageOfFullyQualifiedReference() throws Exception {
+            runTest("testData/resolve/references/qualifiedAccess/ResolveFirstPackageOfFullyQualifiedReference.kt");
+        }
+
+        @TestMetadata("ResolveFullyQualifiedCompanionObject.kt")
+        public void testResolveFullyQualifiedCompanionObject() throws Exception {
+            runTest("testData/resolve/references/qualifiedAccess/ResolveFullyQualifiedCompanionObject.kt");
+        }
+
+        @TestMetadata("ResolveOuterClassOfFullyQualifiedReference.kt")
+        public void testResolveOuterClassOfFullyQualifiedReference() throws Exception {
+            runTest("testData/resolve/references/qualifiedAccess/ResolveOuterClassOfFullyQualifiedReference.kt");
+        }
+
+        @TestMetadata("ResolvePackageOfFullyQualifiedReference.kt")
+        public void testResolvePackageOfFullyQualifiedReference() throws Exception {
+            runTest("testData/resolve/references/qualifiedAccess/ResolvePackageOfFullyQualifiedReference.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/resolve/references")
     public static class Uncategorized extends AbstractReferenceResolveTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -452,6 +576,11 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
             runTest("testData/resolve/references/EnumValues.kt");
         }
 
+        @TestMetadata("ExternalCompanionObject.kt")
+        public void testExternalCompanionObject() throws Exception {
+            runTest("testData/resolve/references/ExternalCompanionObject.kt");
+        }
+
         @TestMetadata("FakeJavaLang1.kt")
         public void testFakeJavaLang1() throws Exception {
             runTest("testData/resolve/references/FakeJavaLang1.kt");
@@ -522,6 +651,11 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
             runTest("testData/resolve/references/InMethodParameter.kt");
         }
 
+        @TestMetadata("InMethodVarargParameter.kt")
+        public void testInMethodVarargParameter() throws Exception {
+            runTest("testData/resolve/references/InMethodVarargParameter.kt");
+        }
+
         @TestMetadata("InObjectClassObject.kt")
         public void testInObjectClassObject() throws Exception {
             runTest("testData/resolve/references/InObjectClassObject.kt");
@@ -530,6 +664,16 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
         @TestMetadata("InSecondClassObject.kt")
         public void testInSecondClassObject() throws Exception {
             runTest("testData/resolve/references/InSecondClassObject.kt");
+        }
+
+        @TestMetadata("InVaragReferenceInFunctionBody.kt")
+        public void testInVaragReferenceInFunctionBody() throws Exception {
+            runTest("testData/resolve/references/InVaragReferenceInFunctionBody.kt");
+        }
+
+        @TestMetadata("InVaragReferenceInNamedParameter.kt")
+        public void testInVaragReferenceInNamedParameter() throws Exception {
+            runTest("testData/resolve/references/InVaragReferenceInNamedParameter.kt");
         }
 
         @TestMetadata("JavaAnnotationParameter.kt")
@@ -672,6 +816,56 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
             runTest("testData/resolve/references/SyntheticProperty.kt");
         }
 
+        @TestMetadata("TopLevelClassVsLocalClassConstructor.kt")
+        public void testTopLevelClassVsLocalClassConstructor() throws Exception {
+            runTest("testData/resolve/references/TopLevelClassVsLocalClassConstructor.kt");
+        }
+
+        @TestMetadata("TopLevelClassVsLocalClassConstructor2.kt")
+        public void testTopLevelClassVsLocalClassConstructor2() throws Exception {
+            runTest("testData/resolve/references/TopLevelClassVsLocalClassConstructor2.kt");
+        }
+
+        @TestMetadata("TopLevelClassVsLocalClassQualifier.kt")
+        public void testTopLevelClassVsLocalClassQualifier() throws Exception {
+            runTest("testData/resolve/references/TopLevelClassVsLocalClassQualifier.kt");
+        }
+
+        @TestMetadata("TopLevelCompanionObjectVsLocalClassConstructor.kt")
+        public void testTopLevelCompanionObjectVsLocalClassConstructor() throws Exception {
+            runTest("testData/resolve/references/TopLevelCompanionObjectVsLocalClassConstructor.kt");
+        }
+
+        @TestMetadata("TopLevelCompanionObjectVsLocalClassConstructor2.kt")
+        public void testTopLevelCompanionObjectVsLocalClassConstructor2() throws Exception {
+            runTest("testData/resolve/references/TopLevelCompanionObjectVsLocalClassConstructor2.kt");
+        }
+
+        @TestMetadata("TopLevelCompanionObjectVsLocalClassQualifier.kt")
+        public void testTopLevelCompanionObjectVsLocalClassQualifier() throws Exception {
+            runTest("testData/resolve/references/TopLevelCompanionObjectVsLocalClassQualifier.kt");
+        }
+
+        @TestMetadata("TopLevelObjectVsLocalClassConstructor.kt")
+        public void testTopLevelObjectVsLocalClassConstructor() throws Exception {
+            runTest("testData/resolve/references/TopLevelObjectVsLocalClassConstructor.kt");
+        }
+
+        @TestMetadata("TopLevelObjectVsLocalClassConstructor2.kt")
+        public void testTopLevelObjectVsLocalClassConstructor2() throws Exception {
+            runTest("testData/resolve/references/TopLevelObjectVsLocalClassConstructor2.kt");
+        }
+
+        @TestMetadata("TopLevelObjectVsLocalClassConstructor3.kt")
+        public void testTopLevelObjectVsLocalClassConstructor3() throws Exception {
+            runTest("testData/resolve/references/TopLevelObjectVsLocalClassConstructor3.kt");
+        }
+
+        @TestMetadata("TopLevelObjectVsLocalClassQualifier.kt")
+        public void testTopLevelObjectVsLocalClassQualifier() throws Exception {
+            runTest("testData/resolve/references/TopLevelObjectVsLocalClassQualifier.kt");
+        }
+
         @TestMetadata("TypeAlias.kt")
         public void testTypeAlias() throws Exception {
             runTest("testData/resolve/references/TypeAlias.kt");
@@ -735,6 +929,11 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
         @TestMetadata("WrongNumberOfTypeArguments2.kt")
         public void testWrongNumberOfTypeArguments2() throws Exception {
             runTest("testData/resolve/references/WrongNumberOfTypeArguments2.kt");
+        }
+
+        @TestMetadata("WrongNumberOfTypeArguments3.kt")
+        public void testWrongNumberOfTypeArguments3() throws Exception {
+            runTest("testData/resolve/references/WrongNumberOfTypeArguments3.kt");
         }
 
         @TestMetadata("WrongNumberOfTypeArgumentsInSupertype.kt")

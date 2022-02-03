@@ -8,7 +8,7 @@ import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.perf.util.ExternalProject
 import org.jetbrains.kotlin.idea.perf.util.lastPathSegment
 import org.jetbrains.kotlin.idea.perf.suite.suite
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.junit.runner.RunWith
 
 /**
@@ -20,18 +20,18 @@ import org.junit.runner.RunWith
  */
 @RunWith(JUnit3RunnerWithInners::class)
 class AHeavyInspectionsPerformanceTest : UsefulTestCase() {
-    val listOfFiles = arrayOf(
+    private val listOfFiles = arrayOf(
         "libraries/tools/kotlin-gradle-plugin-integration-tests/src/test/kotlin/org/jetbrains/kotlin/gradle/NewMultiplatformIT.kt",
         "idea/idea-analysis/src/org/jetbrains/kotlin/idea/util/PsiPrecedences.kt",
         "compiler/psi/src/org/jetbrains/kotlin/psi/KtElement.kt",
         "compiler/psi/src/org/jetbrains/kotlin/psi/KtFile.kt",
         "compiler/psi/src/org/jetbrains/kotlin/psi/KtImportInfo.kt"
     )
-    val listOfInspections = arrayOf(
+    private val listOfInspections = arrayOf(
         "UnusedSymbol",
         "MemberVisibilityCanBePrivate"
     )
-    val passesToIgnore = ((1 until 100) - Pass.LOCAL_INSPECTIONS - Pass.WHOLE_FILE_LOCAL_INSPECTIONS).toIntArray()
+    private val passesToIgnore = ((1 until 100) - Pass.LOCAL_INSPECTIONS - Pass.WHOLE_FILE_LOCAL_INSPECTIONS).toIntArray()
 
     fun testLocalInspection() {
         suite {
@@ -81,37 +81,4 @@ class AHeavyInspectionsPerformanceTest : UsefulTestCase() {
         }
     }
 
-    // used locally to test
-    val UNUSED_AUTO = ExternalProject(
-        "../unused",
-        ExternalProject.autoOpenAction("../unused")
-    )
-
-    fun testSingleInspection1() {
-        suite {
-            with(config) {
-                warmup = 0
-                iterations = 1
-                //profilerConfig.enabled = true
-                //profilerConfig.tracing = true
-            }
-            app {
-                project(UNUSED_AUTO) {
-                    for (inspection in listOfInspections.sliceArray(0..1)) {
-                        enableSingleInspection(inspection)
-                        val listOfFiles = listOf("src/main/kotlin/org/test/test.kt")
-                        for (file in listOfFiles) {
-                            val editorFile = editor(file)
-
-                            measure<List<HighlightInfo>>(inspection, file.lastPathSegment()) {
-                                test = {
-                                    highlight(editorFile)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -266,10 +266,10 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     assertNull(vDir.findChild("xxx//extFiles"));
   }
 
-  @Test
+  @Test(timeout = 20_000)
   public void testRenameDuringFullRefresh() throws IOException { doRenameAndRefreshTest(true); }
 
-  @Test
+  @Test(timeout = 240_000)
   public void testRenameDuringPartialRefresh() throws IOException { doRenameAndRefreshTest(false); }
 
   private void doRenameAndRefreshTest(boolean full) throws IOException {
@@ -302,7 +302,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       TimeoutUtil.sleep(1);  // needed to prevent frequent event detector from triggering
     }
 
-    assertTrue(semaphore.waitFor(60000));
+    semaphore.waitFor();
   }
 
   @Test(timeout = 20_000)

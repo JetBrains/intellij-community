@@ -1,10 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ProjectTopics;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
-import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -20,6 +17,7 @@ import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.KeyWithDefaultValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -35,9 +33,13 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.WeakHashMap;
 
 public final class EditorNotificationsImpl extends EditorNotifications {
 
@@ -45,7 +47,10 @@ public final class EditorNotificationsImpl extends EditorNotifications {
    * @deprecated Please use {@link EditorNotificationProvider#EP_NAME} instead.
    */
   @Deprecated
-  public static final ProjectExtensionPointName<EditorNotificationProvider<?>> EP_PROJECT = EditorNotificationProvider.EP_NAME;
+  public static final ProjectExtensionPointName<EditorNotificationProvider> EP_PROJECT = EditorNotificationProvider.EP_NAME;
+
+  private static final Key<Map<Class<? extends EditorNotificationProvider>, JComponent>> EDITOR_NOTIFICATION_PROVIDER =
+    KeyWithDefaultValue.create("editor.notification.provider", WeakHashMap::new);
   private static final Key<Boolean> PENDING_UPDATE = Key.create("pending.notification.update");
 
   private final @NotNull MergingUpdateQueue myUpdateMerger;
@@ -96,21 +101,21 @@ public final class EditorNotificationsImpl extends EditorNotifications {
       .getPoint(project)
       .addExtensionPointListener(new ExtensionPointListener<>() {
         @Override
-        public void extensionAdded(@NotNull EditorNotificationProvider<?> extension,
-                                   @NotNull PluginDescriptor pluginDescriptor) {
+        public void extensionAdded(@NotNull EditorNotificationProvider extension,
+                                   @NotNull PluginDescriptor descriptor) {
           updateAllNotifications();
         }
 
         @Override
-        public void extensionRemoved(@NotNull EditorNotificationProvider<?> extension,
-                                     @NotNull PluginDescriptor pluginDescriptor) {
+        public void extensionRemoved(@NotNull EditorNotificationProvider extension,
+                                     @NotNull PluginDescriptor descriptor) {
           updateNotifications(extension);
         }
       }, false, null);
   }
 
   @Override
-  public void updateNotifications(@NotNull EditorNotificationProvider<?> provider) {
+  public void updateNotifications(@NotNull EditorNotificationProvider provider) {
     for (VirtualFile file : FileEditorManager.getInstance(myProject).getOpenFilesWithRemotes()) {
       List<FileEditor> editors = getEditors(file);
 
@@ -158,7 +163,7 @@ public final class EditorNotificationsImpl extends EditorNotifications {
       return;
     }
 
-    for (EditorNotificationProvider<?> provider : EditorNotificationProvider.EP_NAME.getExtensions(myProject)) {
+    for (EditorNotificationProvider provider : EditorNotificationProvider.EP_NAME.getExtensions(myProject)) {
       ReadAction.nonBlocking(() -> provider.collectNotificationData(myProject, file))
         .expireWith(myProject)
         .expireWhen(() -> !file.isValid() || DumbService.isDumb(myProject) && !DumbService.isDumbAware(provider))
@@ -171,40 +176,36 @@ public final class EditorNotificationsImpl extends EditorNotifications {
   }
 
   private void updateNotification(@NotNull FileEditor editor,
-                                  @NotNull EditorNotificationProvider<?> provider,
+                                  @NotNull EditorNotificationProvider provider,
                                   @Nullable JComponent component) {
-    @SuppressWarnings("unchecked") Key<JComponent> key = (Key<JComponent>)provider.getKey();
-    JComponent old = editor.getUserData(key);
+    Map<Class<? extends EditorNotificationProvider>, JComponent> map = getNotificationPanels(editor);
+    Class<? extends EditorNotificationProvider> providerClass = provider.getClass();
+
+    JComponent old = map.get(providerClass);
     if (old != null) {
       FileEditorManager.getInstance(myProject).removeTopComponent(editor, old);
     }
 
     if (component != null) {
       if (component instanceof EditorNotificationPanel) {
-        ((EditorNotificationPanel)component).setProviderKey(key);
-        ((EditorNotificationPanel)component).setProject(myProject);
+        EditorNotificationPanel panel = (EditorNotificationPanel)component;
+        panel.setProvider(provider);
+        panel.setProject(myProject);
       }
 
-      FeatureUsageData data = new FeatureUsageData()
-        .addData("key", key.toString())
-        .addPluginInfo(PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
-      FUCounterUsageLogger.getInstance().logEvent(myProject, "editor.notification.panel", "shown", data);
-
+      EditorNotificationUsagesCollectorKt.logNotificationShown(myProject, provider);
       FileEditorManager.getInstance(myProject).addTopComponent(editor, component);
     }
 
-    editor.putUserData(key, component);
+    map.put(providerClass, component);
   }
 
   @Override
-  public void logNotificationActionInvocation(@Nullable Key<?> providerKey, @Nullable Class<?> runnableClass) {
-    if (providerKey == null || runnableClass == null) return;
-
-    FeatureUsageData data = new FeatureUsageData()
-      .addData("key", providerKey.toString())
-      .addData("class_name", runnableClass.getName())
-      .addPluginInfo(PluginInfoDetectorKt.getPluginInfo(runnableClass));
-    FUCounterUsageLogger.getInstance().logEvent(myProject, "editor.notification.panel", "actionInvoked", data);
+  public void logNotificationActionInvocation(@NotNull EditorNotificationProvider provider,
+                                              @NotNull Class<?> runnableClass) {
+    EditorNotificationUsagesCollectorKt.logHandlerInvoked(myProject,
+                                                          provider,
+                                                          runnableClass);
   }
 
   @Override
@@ -252,9 +253,16 @@ public final class EditorNotificationsImpl extends EditorNotifications {
     }
   }
 
+  @VisibleForTesting
+  public static @NotNull Map<Class<? extends EditorNotificationProvider>, JComponent> getNotificationPanels(@NotNull FileEditor editor) {
+    return Objects.requireNonNull(editor.getUserData(EDITOR_NOTIFICATION_PROVIDER),
+                                  () -> String.format("'%s' doesn't seem to support '%s'",
+                                                      editor.getClass().getName(),
+                                                      KeyWithDefaultValue.class.getName()));
+  }
+
   @TestOnly
   public static void completeAsyncTasks() {
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
-
 }

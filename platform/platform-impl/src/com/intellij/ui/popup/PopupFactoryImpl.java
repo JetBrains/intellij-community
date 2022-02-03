@@ -258,7 +258,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       List<ActionItem> items = ActionPopupStep.createActionItems(
           actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace, presentationFactory);
 
-      return new ActionPopupStep(items, title, getComponentContextSupplier(component), actionPlace, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
+      return new ActionPopupStep(items, title, getComponentContextSupplier(dataContext, component), actionPlace, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
                                  preselectActionCondition, autoSelection, showDisabledActions, presentationFactory);
     }
 
@@ -313,7 +313,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   @NotNull
-  private static Supplier<DataContext> getComponentContextSupplier(Component component) {
+  private static Supplier<DataContext> getComponentContextSupplier(@NotNull DataContext parentDataContext,
+                                                                   @Nullable Component component) {
+    if(component == null) return () -> parentDataContext;
     DataContext dataContext = Utils.wrapDataContext(DataManager.getInstance().getDataContext(component));
     if (Utils.isAsyncDataContext(dataContext)) return () -> dataContext;
     return () -> DataManager.getInstance().getDataContext(component);
@@ -373,7 +375,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return ActionPopupStep.createActionsStep(
       actionGroup, dataContext, showNumbers, true, showDisabledActions,
       title, honorActionMnemonics, autoSelectionEnabled,
-      getComponentContextSupplier(component),
+      getComponentContextSupplier(dataContext, component),
       actionPlace, null, defaultOptionIndex, null);
   }
 
@@ -658,6 +660,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final Character myMnemonicChar;
     private final boolean myMnemonicsEnabled;
     private final boolean myIsEnabled;
+    private final boolean myIsPerformGroup;
+    private final boolean myIsSubstepSuppressed;
     private final Icon myIcon;
     private final Icon mySelectedIcon;
     private final boolean myPrependWithSeparator;
@@ -673,6 +677,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
                @Nullable @NlsContexts.DetailedDescription String description,
                @Nullable @NlsContexts.DetailedDescription String tooltip,
                boolean enabled,
+               boolean performingGroup,
+               boolean substepSuppressed,
                @Nullable Icon icon,
                @Nullable Icon selectedIcon,
                final boolean prependWithSeparator,
@@ -683,6 +689,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
       myMnemonicChar = mnemonicChar;
       myMnemonicsEnabled = mnemonicsEnabled;
       myIsEnabled = enabled;
+      myIsPerformGroup = performingGroup;
+      myIsSubstepSuppressed = substepSuppressed;
       myIcon = icon;
       mySelectedIcon = selectedIcon;
       myPrependWithSeparator = prependWithSeparator;
@@ -733,6 +741,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     public boolean isEnabled() { return myIsEnabled; }
+
+    public boolean isPerformGroup() { return myIsPerformGroup; }
+
+    public boolean isSubstepSuppressed() { return myIsSubstepSuppressed; }
 
     public @NlsContexts.DetailedDescription String getDescription() {
       return myDescription == null ? myTooltip : myDescription;

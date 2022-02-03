@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.execution.process.ProcessIOExecutorService
@@ -10,15 +10,14 @@ import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
-import com.intellij.openapi.fileTypes.ex.DetectedByContentFileType
+import com.intellij.openapi.fileTypes.impl.DetectedByContentFileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
@@ -26,17 +25,17 @@ import com.intellij.ui.EditorNotifications
 import com.intellij.ui.HyperlinkLabel
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.BorderLayout
+import java.util.function.Function
+import javax.swing.JComponent
 import javax.swing.JLabel
 
-class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider<EditorNotificationPanel>,
+class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
                                                    DumbAware {
-
-  override fun getKey(): Key<EditorNotificationPanel> = KEY
 
   override fun collectNotificationData(
     project: Project,
     file: VirtualFile,
-  ): EditorNotificationProvider.ComponentProvider<EditorNotificationPanel> {
+  ): Function<in FileEditor, out JComponent?> {
     val suggestionData = getSuggestionData(project, ApplicationInfo.getInstance().build.productCode, file.name, file.fileType)
 
     if (suggestionData == null) {
@@ -60,7 +59,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider<Ed
         LOG.debug("Tried to update extensions cache for file '${file.name}'. shouldUpdateNotifications=$shouldUpdateNotifications")
       }
 
-      return EditorNotificationProvider.ComponentProvider.getDummy()
+      return EditorNotificationProvider.CONST_NULL
     }
 
     return suggestionData
@@ -72,7 +71,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider<Ed
     dataSet: Set<PluginData>,
     jbPluginsIds: Set<String>,
     val suggestedIdes: List<SuggestedIde>,
-  ) : EditorNotificationProvider.ComponentProvider<EditorNotificationPanel> {
+  ) : Function<FileEditor, EditorNotificationPanel?> {
 
     private var disabledPlugin: IdeaPluginDescriptor? = null
     private val jbProduced = mutableSetOf<PluginId>()
@@ -184,8 +183,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider<Ed
 
   companion object {
 
-    private val KEY = Key.create<EditorNotificationPanel>("file.type.associations.detected")
-    private val LOG: Logger = Logger.getInstance(PluginAdvertiserEditorNotificationProvider::class.java)
+    private val LOG = logger<PluginAdvertiserEditorNotificationProvider>()
 
     @VisibleForTesting
     fun getSuggestionData(
@@ -217,7 +215,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider<Ed
       val hasBundledPlugin = getBundledPluginToInstall(dataSet).isNotEmpty()
       val suggestedIdes = if (fileType is PlainTextLikeFileType || fileType is DetectedByContentFileType) {
         getSuggestedIdes(activeProductCode, extensionOrFileName, ideExtensions).ifEmpty {
-          if (hasBundledPlugin) listOf(ideaUltimate) else emptyList()
+          if (hasBundledPlugin && !isIgnoreIdeSuggestion) listOf(ideaUltimate) else emptyList()
         }
       }
       else

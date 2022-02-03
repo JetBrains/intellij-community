@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,7 +17,6 @@ import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
 
 @ApiStatus.NonExtendable
-@ApiStatus.Internal
 public abstract class BundleBase {
   public static final char MNEMONIC = 0x1B;
   public static final @NlsSafe String MNEMONIC_STRING = Character.toString(MNEMONIC);

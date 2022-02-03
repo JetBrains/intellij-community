@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -7,6 +7,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -53,7 +54,7 @@ public class PluginHeaderPanel {
     myCategory.setVisible(true);
     myDownloadsPanel.setVisible(true);
     myUpdated.setVisible(true);
-    myName.setFont(UIUtil.getLabelFont().deriveFont(4f + UIUtil.getLabelFont().getSize()));
+    myName.setFont(StartupUiUtil.getLabelFont().deriveFont(4f + StartupUiUtil.getLabelFont().getSize()));
 
     //data
     //noinspection HardCodedStringLiteral

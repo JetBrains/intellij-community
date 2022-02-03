@@ -13,10 +13,13 @@ interface EventLogConnectionSettings {
   fun selectProxy(url: String): StatsProxyInfo
 
   fun getSSLContext(): SSLContext?
+
+  fun getExtraHeaders(): Map<String, String>
 }
 
-class EventLogBasicConnectionSettings(private val userAgent: String) : EventLogConnectionSettings {
+class EventLogBasicConnectionSettings(private val userAgent: String, private val extraHeaders: Map<String, String> = emptyMap()) : EventLogConnectionSettings {
   override fun getUserAgent(): String = userAgent
   override fun selectProxy(url: String): StatsProxyInfo = NO_PROXY
   override fun getSSLContext(): SSLContext? = null
+  override fun getExtraHeaders(): Map<String, String> = extraHeaders
 }

@@ -1647,4 +1647,23 @@ public class Test {
         """.trimIndent()
       )
   }
+
+  fun testEmptyJavadoc() {
+      doTextTest(
+        """
+        /**
+          */
+        public class Main {
+        }
+        """.trimIndent(),
+
+        """
+        /**
+         *
+         */
+        public class Main {
+        }
+        """.trimIndent()
+      )
+  }
 }

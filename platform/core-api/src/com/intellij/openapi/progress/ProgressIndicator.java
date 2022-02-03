@@ -62,7 +62,7 @@ public interface ProgressIndicator {
   void stop();
 
   /**
-   * Returns {2code true} when the computation associated with this progress indicator is currently running:
+   * Returns {@code true} when the computation associated with this progress indicator is currently running:
    * started, not yet finished, but possibly already canceled.
    */
   boolean isRunning();

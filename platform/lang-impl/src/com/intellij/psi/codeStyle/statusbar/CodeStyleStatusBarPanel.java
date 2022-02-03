@@ -3,6 +3,7 @@ package com.intellij.psi.codeStyle.statusbar;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.status.TextPanel;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
@@ -25,9 +26,13 @@ public class CodeStyleStatusBarPanel extends JPanel {
     myLabel.setFont(SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label());
     add(myLabel);
     myIconLabel = new JLabel("");
-    myIconLabel.setBorder(JBUI.Borders.empty(2,2,2,0));
+
+    if (!ExperimentalUI.isNewUI()) {
+      myIconLabel.setBorder(JBUI.Borders.empty(2, 2, 2, 0));
+    }
+
     add(myIconLabel);
-    setBorder(JBUI.Borders.empty(0));
+    setBorder(JBUI.Borders.empty());
   }
 
   public void setText(@NotNull @Nls String text) {

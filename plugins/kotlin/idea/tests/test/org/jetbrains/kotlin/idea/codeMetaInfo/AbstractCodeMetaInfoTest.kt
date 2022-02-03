@@ -30,18 +30,19 @@ import org.jetbrains.kotlin.checkers.diagnostics.SyntaxErrorDiagnostic
 import org.jetbrains.kotlin.checkers.diagnostics.factories.DebugInfoDiagnosticFactory0
 import org.jetbrains.kotlin.checkers.utils.CheckerTestUtil
 import org.jetbrains.kotlin.checkers.utils.DiagnosticsRenderingConfiguration
+import org.jetbrains.kotlin.idea.codeMetaInfo.CodeMetaInfoRenderer
+import org.jetbrains.kotlin.codeMetaInfo.model.CodeMetaInfo
+import org.jetbrains.kotlin.codeMetaInfo.model.DiagnosticCodeMetaInfo
+import org.jetbrains.kotlin.codeMetaInfo.renderConfigurations.AbstractCodeMetaInfoRenderConfiguration
+import org.jetbrains.kotlin.codeMetaInfo.renderConfigurations.DiagnosticCodeMetaInfoRenderConfiguration
 import org.jetbrains.kotlin.daemon.common.OSKind
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
 import org.jetbrains.kotlin.diagnostics.AbstractDiagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiModuleIdeResolveTest
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.codeMetaInfo.models.CodeMetaInfo
-import org.jetbrains.kotlin.idea.codeMetaInfo.models.DiagnosticCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.HighlightingCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.getCodeMetaInfo
-import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.AbstractCodeMetaInfoRenderConfiguration
-import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.DiagnosticCodeMetaInfoConfiguration
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.LineMarkerConfiguration
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
@@ -51,7 +52,7 @@ import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.junit.Ignore
 import java.io.File
 import java.nio.file.Path
@@ -60,11 +61,12 @@ import java.nio.file.Paths
 @Ignore
 class CodeMetaInfoTestCase(
     val codeMetaInfoTypes: Collection<AbstractCodeMetaInfoRenderConfiguration>,
-    val checkNoDiagnosticError: Boolean = false
+    val checkNoDiagnosticError: Boolean = false,
+    private val filterMetaInfo: (CodeMetaInfo) -> Boolean = { true },
 ) : DaemonAnalyzerTestCase() {
 
     fun getDiagnosticCodeMetaInfos(
-        configuration: DiagnosticCodeMetaInfoConfiguration = DiagnosticCodeMetaInfoConfiguration(),
+        configuration: DiagnosticCodeMetaInfoRenderConfiguration = DiagnosticCodeMetaInfoRenderConfiguration(),
         parseDirective: Boolean = true
     ): List<CodeMetaInfo> {
         val tempSourceKtFile = PsiManager.getInstance(project).findFile(file.virtualFile) as KtFile
@@ -86,7 +88,7 @@ class CodeMetaInfoTestCase(
             moduleDescriptor = moduleDescriptor as ModuleDescriptorImpl
         ).map { it.diagnostic }.filter { !parseDirective || diagnosticsFilter.value(it) }
         configuration.renderParams = directives.contains(AbstractMultiModuleIdeResolveTest.RENDER_DIAGNOSTICS_MESSAGES)
-        return getCodeMetaInfo(diagnostics, configuration)
+        return getCodeMetaInfo(diagnostics, configuration, filterMetaInfo)
     }
 
     fun getLineMarkerCodeMetaInfos(configuration: LineMarkerConfiguration): Collection<CodeMetaInfo> {
@@ -95,7 +97,7 @@ class CodeMetaInfoTestCase(
 
         CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, intArrayOf(), false)
         val lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(file), project)
-        return getCodeMetaInfo(lineMarkers, configuration)
+        return getCodeMetaInfo(lineMarkers, configuration, filterMetaInfo)
     }
 
     private fun getHighlightingCodeMetaInfos(configuration: HighlightingConfiguration): Collection<CodeMetaInfo> {
@@ -113,7 +115,7 @@ class CodeMetaInfoTestCase(
             }
         }
 
-        return getCodeMetaInfo(highlightingInfos, configuration)
+        return getCodeMetaInfo(highlightingInfos, configuration, filterMetaInfo)
     }
 
     fun checkFile(expectedFile: File, project: Project, editor: Editor) {
@@ -151,7 +153,7 @@ class CodeMetaInfoTestCase(
 
         for (configuration in codeMetaInfoTypes) {
             when (configuration) {
-                is DiagnosticCodeMetaInfoConfiguration -> {
+                is DiagnosticCodeMetaInfoRenderConfiguration -> {
                     codeMetaInfoForCheck.addAll(getDiagnosticCodeMetaInfos(configuration))
                 }
                 is HighlightingConfiguration -> {
@@ -163,16 +165,22 @@ class CodeMetaInfoTestCase(
                 else -> throw IllegalArgumentException("Unexpected code meta info configuration: $configuration")
             }
         }
-        if (codeMetaInfoTypes.any { it is DiagnosticCodeMetaInfoConfiguration } &&
+        if (codeMetaInfoTypes.any { it is DiagnosticCodeMetaInfoRenderConfiguration } &&
             !codeMetaInfoTypes.any { it is HighlightingConfiguration }
         ) {
             checkHighlightErrorItemsInDiagnostics(
-                getDiagnosticCodeMetaInfos(DiagnosticCodeMetaInfoConfiguration(), false).filterIsInstance<DiagnosticCodeMetaInfo>()
+                getDiagnosticCodeMetaInfos(DiagnosticCodeMetaInfoRenderConfiguration(), false).filterIsInstance<DiagnosticCodeMetaInfo>()
             )
         }
-        val parsedMetaInfo = CodeMetaInfoParser.getCodeMetaInfoFromText(
-            expectedFile.readText().replace(LineSeparator.CRLF.separatorString, LineSeparator.LF.separatorString) // Fix for Windows
-        ).toMutableList()
+
+        val parsedMetaInfo = if (expectedFile.exists()) {
+            // Fix for Windows
+            val expectedText = expectedFile.readText().replace(LineSeparator.CRLF.separatorString, LineSeparator.LF.separatorString)
+            CodeMetaInfoParser.getCodeMetaInfoFromText(expectedText).toMutableList()
+        } else {
+            mutableListOf()
+        }
+
         codeMetaInfoForCheck.forEach { codeMetaInfo ->
             val correspondingParsed = parsedMetaInfo.firstOrNull { it == codeMetaInfo }
             if (correspondingParsed != null) {
@@ -214,15 +222,15 @@ class CodeMetaInfoTestCase(
                     diagnosticCodeMetaInfo.start == highlightingCodeMetaInfo.start &&
                             when (diagnosticCodeMetaInfo.diagnostic) {
                                 is SyntaxErrorDiagnostic -> {
-                                    val diagnostic: SyntaxErrorDiagnostic = diagnosticCodeMetaInfo.diagnostic
+                                    val diagnostic: SyntaxErrorDiagnostic = diagnosticCodeMetaInfo.diagnostic as SyntaxErrorDiagnostic
                                     (highlightingCodeMetaInfo as HighlightingCodeMetaInfo).highlightingInfo.description in (diagnostic.psiElement as PsiErrorElementImpl).errorDescription
                                 }
                                 is AbstractDiagnostic<*> -> {
-                                    val diagnostic: AbstractDiagnostic<*> = diagnosticCodeMetaInfo.diagnostic
+                                    val diagnostic: AbstractDiagnostic<*> = diagnosticCodeMetaInfo.diagnostic as AbstractDiagnostic<*>
                                     diagnostic.factory.toString() in (highlightingCodeMetaInfo as HighlightingCodeMetaInfo).highlightingInfo.description
                                 }
                                 is DebugInfoDiagnostic -> {
-                                    val diagnostic: DebugInfoDiagnostic = diagnosticCodeMetaInfo.diagnostic
+                                    val diagnostic: DebugInfoDiagnostic = diagnosticCodeMetaInfo.diagnostic as DebugInfoDiagnostic
                                     diagnostic.factory == DebugInfoDiagnosticFactory0.MISSING_UNRESOLVED &&
                                             "[DEBUG] Reference is not resolved to anything, but is not marked unresolved" in (highlightingCodeMetaInfo as HighlightingCodeMetaInfo).highlightingInfo.description
                                 }
@@ -236,7 +244,7 @@ class CodeMetaInfoTestCase(
 
 abstract class AbstractDiagnosticCodeMetaInfoTest : AbstractCodeMetaInfoTest() {
     override fun getConfigurations() = listOf(
-        DiagnosticCodeMetaInfoConfiguration(),
+        DiagnosticCodeMetaInfoRenderConfiguration(),
         LineMarkerConfiguration()
     )
 }
@@ -256,7 +264,7 @@ abstract class AbstractHighlightingCodeMetaInfoTest : AbstractCodeMetaInfoTest()
 abstract class AbstractCodeMetaInfoTest : AbstractMultiModuleTest() {
     open val checkNoDiagnosticError get() = false
     open fun getConfigurations() = listOf(
-        DiagnosticCodeMetaInfoConfiguration(),
+        DiagnosticCodeMetaInfoRenderConfiguration(),
         LineMarkerConfiguration(),
         HighlightingConfiguration()
     )

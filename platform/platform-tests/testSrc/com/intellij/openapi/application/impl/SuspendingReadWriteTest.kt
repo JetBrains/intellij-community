@@ -1,18 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.*
-import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
-import com.intellij.openapi.progress.Cancellation
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.UIUtil
-import junit.framework.TestCase
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.Continuation
@@ -49,24 +45,24 @@ abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
     val scheduled = Semaphore(1)
     lateinit var constraintRunnable: Runnable
     var satisfied = false
-    val constraint = object : ContextConstraint {
+    val constraint = object : ReadConstraint {
       override fun toString(): String = "dummy constraint"
-      override fun isCorrectContext(): Boolean = satisfied
+      override fun isSatisfied(): Boolean = satisfied
       override fun schedule(runnable: Runnable) {
         constraintRunnable = runnable
         scheduled.up()
       }
     }
     val job = launch(Dispatchers.Default) {
-      assertFalse(constraint.isCorrectContext())
-      cra(ReadConstraints.unconstrained().withConstraint(constraint)) {
-        assertTrue(constraint.isCorrectContext())
+      assertFalse(constraint.isSatisfied())
+      cra(constraint) {
+        assertTrue(constraint.isSatisfied())
       }
     }
-    scheduled.waitTimeout() // constraint was unsatisfied initially
+    scheduled.timeoutWaitUp() // constraint was unsatisfied initially
     satisfied = true
     constraintRunnable.run() // retry with satisfied constraint
-    job.waitTimeout()
+    job.timeoutJoin()
   }
 
   fun `test read action is cancellable`(): Unit = runBlocking {
@@ -80,8 +76,11 @@ abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
         }
       }
     }
-    inRead.waitTimeout()
-    job.cancelAndWaitTimeout()
+    inRead.timeoutWaitUp()
+    job.cancel()
+    job.timeoutJoin()
+    job.job.cancel()
+    job.job.timeoutJoin()
   }
 
   fun `test suspending action inside read action is cancellable`(): Unit = runBlocking {
@@ -91,36 +90,37 @@ abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
       cra {
         runBlockingCancellable {
           inRead.up()
-          cancelled.waitTimeout()
+          cancelled.timeoutWaitUp()
           ensureActive() // should throw
           fail()
         }
       }
     }
-    inRead.waitTimeout()
+    inRead.timeoutWaitUp()
     job.cancel()
     cancelled.up()
-    job.waitTimeout()
+    job.timeoutJoin()
   }
 
   fun `test read action with unsatisfiable constraint is cancellable`(): Unit = runBlocking {
     val scheduled = Semaphore(1)
     lateinit var constraintRunnable: Runnable
-    val unsatisfiableConstraint = object : ContextConstraint {
+    val unsatisfiableConstraint = object : ReadConstraint {
       override fun toString(): String = "unsatisfiable constraint"
-      override fun isCorrectContext(): Boolean = false
+      override fun isSatisfied(): Boolean = false
       override fun schedule(runnable: Runnable) {
         constraintRunnable = runnable
         scheduled.up()
       }
     }
     val job = launch(Dispatchers.Default) {
-      cra(ReadConstraints.unconstrained().withConstraint(unsatisfiableConstraint)) {
+      cra(unsatisfiableConstraint) {
         fail("must not be called")
       }
     }
-    scheduled.waitTimeout()
-    job.cancelAndWaitTimeout()
+    scheduled.timeoutWaitUp()
+    job.job.cancel()
+    job.job.timeoutJoin()
     LeakHunter.checkLeak(constraintRunnable, Continuation::class.java)
   }
 
@@ -134,22 +134,22 @@ abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
           assertEquals(42, cra { 42 })
         }
       }
-    }.waitTimeout()
+    }.timeoutJoin()
   }
 
   /**
    * @see NonBlockingReadActionTest.testSyncExecutionFailsInsideReadActionWhenConstraintsAreNotSatisfied
    */
   fun `test read action with unsatisfiable constraint fails inside non-coroutine read action`(): Unit = runBlocking(Dispatchers.Default) {
-    val unsatisfiableConstraint = object : ContextConstraint {
+    val unsatisfiableConstraint = object : ReadConstraint {
       override fun toString(): String = "unsatisfiable constraint"
-      override fun isCorrectContext(): Boolean = false
+      override fun isSatisfied(): Boolean = false
       override fun schedule(runnable: Runnable) = fail("must not be called")
     }
     runReadAction {
       runBlocking {
         try {
-          cra(ReadConstraints.unconstrained().withConstraint(unsatisfiableConstraint)) {
+          cra(unsatisfiableConstraint) {
             fail("must not be called")
           }
           fail("exception must be thrown")
@@ -160,13 +160,13 @@ abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
     }
   }
 
-  protected abstract suspend fun <T> cra(constraints: ReadConstraints = ReadConstraints.unconstrained(), action: () -> T): T
+  protected abstract suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T
 }
 
 class NonBlocking : SuspendingReadWriteTest() {
 
-  override suspend fun <T> cra(constraints: ReadConstraints, action: () -> T): T {
-    return constrainedReadAction(constraints, action)
+  override suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T {
+    return constrainedReadAction(*constraints, action = action)
   }
 
   fun `test read action is cancelled by write but not restarted because finished`(): Unit = runBlocking {
@@ -178,19 +178,19 @@ class NonBlocking : SuspendingReadWriteTest() {
         assertFalse(attempt)
         attempt = true
         inRead.up()
-        beforeWrite.waitTimeout()
+        beforeWrite.timeoutWaitUp()
         assertTrue(Cancellation.isCancelled())
       }
     }
-    inRead.waitTimeout()
+    inRead.timeoutWaitUp()
     runWriteAction {}
-    job.waitTimeout()
+    job.timeoutJoin()
   }
 
   fun `test read action is cancelled by write and restarted`(): Unit = runBlocking {
-    val job = twoAttemptJob(this, ReadConstraints.unconstrained())
+    val job = twoAttemptJob(this)
     runWriteAction {}
-    withTimeout(1000) {
+    withTimeout(TEST_TIMEOUT_MS) {
       while (job.isActive) {
         coroutineContext.ensureActive()
         UIUtil.dispatchAllInvocationEvents()
@@ -199,7 +199,7 @@ class NonBlocking : SuspendingReadWriteTest() {
   }
 
   fun `test read action with constraints is cancelled by write and restarted`(): Unit = runBlocking {
-    val job = twoAttemptJob(this, ReadConstraints.inSmartMode(project))
+    val job = twoAttemptJob(this, ReadConstraint.inSmartMode(project))
     val application = ApplicationManager.getApplication()
     val dumbService = DumbServiceImpl.getInstance(project)
     application.runWriteAction { // cancel attempt 0
@@ -209,18 +209,22 @@ class NonBlocking : SuspendingReadWriteTest() {
     application.runWriteAction {
       dumbService.isDumb = false
     }
-    UIUtil.dispatchAllInvocationEvents() // retry with satisfied constraint, attempt 1
-    job.waitTimeout()
+    // retry with unsatisfied constraint
+    withTimeout(TEST_TIMEOUT_MS) {
+      while (job.isActive && isActive) {
+        UIUtil.dispatchAllInvocationEvents()
+      }
+    }
   }
 
-  private fun twoAttemptJob(cs: CoroutineScope, constraints: ReadConstraints): Job {
+  private fun twoAttemptJob(cs: CoroutineScope, vararg constraints: ReadConstraint): Job {
     val inRead = Semaphore(1)
     val beforeWrite = beforeWrite()
     val job = cs.launch(Dispatchers.Default) {
       var attempts = 0
-      constrainedReadAction(constraints) {
+      constrainedReadAction(*constraints) {
         inRead.up()
-        beforeWrite.waitTimeout()
+        beforeWrite.timeoutWaitUp()
         when (attempts) {
           0 -> assertTrue(Cancellation.isCancelled())
           1 -> assertFalse(Cancellation.isCancelled())
@@ -230,7 +234,7 @@ class NonBlocking : SuspendingReadWriteTest() {
         ProgressManager.checkCanceled()
       }
     }
-    inRead.waitTimeout()
+    inRead.timeoutWaitUp()
     return job
   }
 
@@ -255,14 +259,14 @@ class NonBlocking : SuspendingReadWriteTest() {
       UIUtil.dispatchAllInvocationEvents()
       delay(10)
     }
-    job.waitTimeout()
+    job.timeoutJoin()
   }
 }
 
 class Blocking : SuspendingReadWriteTest() {
 
-  override suspend fun <T> cra(constraints: ReadConstraints, action: () -> T): T {
-    return constrainedReadActionBlocking(constraints, action)
+  override suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T {
+    return constrainedReadActionBlocking(*constraints, action = action)
   }
 
   fun `test blocking read action is not cancelled by write`(): Unit = runBlocking {
@@ -275,14 +279,14 @@ class Blocking : SuspendingReadWriteTest() {
         assertFalse(attempt)
         attempt = true
         inRead.up()
-        beforeWrite.waitTimeout()
+        beforeWrite.timeoutWaitUp()
         assertFalse(Cancellation.isCancelled())
         ProgressManager.checkCanceled()
       }
     }
     inRead.waitFor()
     application.runWriteAction {}
-    job.waitTimeout()
+    job.timeoutJoin()
   }
 }
 
@@ -296,20 +300,4 @@ private fun beforeWrite(): Semaphore {
     }
   }, listenerDisposable)
   return beforeWrite
-}
-
-private fun Semaphore.waitTimeout() {
-  TestCase.assertTrue(waitFor(1000))
-}
-
-private suspend fun Job.waitTimeout() {
-  withTimeout(1000) {
-    join()
-  }
-}
-
-private suspend fun Job.cancelAndWaitTimeout() {
-  withTimeout(1000) {
-    cancelAndJoin()
-  }
 }

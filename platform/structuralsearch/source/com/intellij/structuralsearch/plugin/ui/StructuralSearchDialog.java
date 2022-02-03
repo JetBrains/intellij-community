@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.highlighting.HighlightHandlerBase;
@@ -20,7 +20,6 @@ import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -32,6 +31,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -74,17 +74,18 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.filters.FilterPanel;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
+import com.intellij.util.TriConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.textCompletion.TextCompletionUtil;
 import com.intellij.util.ui.TextTransferable;
+import net.miginfocom.swing.MigLayout;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -115,6 +116,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   @NonNls private static final String REFORMAT_STATE = "structural.search.reformat";
   @NonNls private static final String USE_STATIC_IMPORT_STATE = "structural.search.use.static.import";
   @NonNls private static final String FILTERS_VISIBLE_STATE = "structural.search.filters.visible";
+  @NonNls private static final String PINNED_STATE = "structural.seach.pinned";
 
   public static final Key<StructuralSearchDialog> STRUCTURAL_SEARCH_DIALOG = Key.create("STRUCTURAL_SEARCH_DIALOG");
   public static final Key<String> STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID = Key.create("STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID");
@@ -151,6 +153,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   // ui management
   private final Alarm myAlarm;
   private boolean myUseLastConfiguration;
+  private boolean myPinned;
   private final boolean myEditConfigOnly;
 
   // components
@@ -159,6 +162,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   private EditorTextField mySearchCriteriaEdit;
   private EditorTextField myReplaceCriteriaEdit;
   private OnePixelSplitter mySearchEditorPanel;
+  private MigLayout myCenterPanelLayout;
 
   private FilterPanel myFilterPanel;
   private LinkComboBox myTargetComboBox;
@@ -167,6 +171,8 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
   private JComponent myReplacePanel;
   private SwitchAction mySwitchAction;
+  private final ArrayList<JComponent> myComponentsWithEditorBackground = new ArrayList<>();
+  private final ArrayList<JComponent> myComponentsWithEditorBorder = new ArrayList<>();
 
   public StructuralSearchDialog(@NotNull SearchContext searchContext, boolean replace) {
     this(searchContext, replace, false);
@@ -229,6 +235,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         }
       }
     });
+    connection.subscribe(EditorColorsManager.TOPIC, uiSettings -> updateColors());
     myConfiguration = createConfiguration(null);
     setTitle(getDefaultTitle());
 
@@ -264,6 +271,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     textField.setFont(EditorFontType.getGlobalPlainFont());
     textField.setPreferredSize(new Dimension(550, 150));
     textField.setMinimumSize(new Dimension(200, 50));
+    myComponentsWithEditorBackground.add(textField);
     return textField;
   }
 
@@ -367,33 +375,24 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   }
 
   @Override
+  protected @NotNull DialogStyle getStyle() {
+    return DialogStyle.COMPACT;
+  }
+
+  @Override
   protected JComponent createCenterPanel() {
+    final var searchPanel = new JPanel(new MigLayout("fill, ins 0, hidemode 3", "[grow 0]0[grow 0]0[grow 0]0[grow 0][]", "[grow 100]0[grow 0]"));
+
     mySearchEditorPanel = new OnePixelSplitter(false, 1.0f);
     mySearchEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
     mySearchCriteriaEdit = createEditor(false);
-    mySearchEditorPanel.setFirstComponent(mySearchCriteriaEdit);
+    searchPanel.add(mySearchCriteriaEdit, "grow, span, wrap");
+    mySearchEditorPanel.setFirstComponent(searchPanel);
+    myComponentsWithEditorBackground.add(searchPanel);
 
     final JPanel wrapper = new JPanel(new BorderLayout()); // needed for border
-    final Color color = UIManager.getColor("Borders.ContrastBorderColor");
-    wrapper.setBorder(IdeBorderFactory.createBorder(color));
+    myComponentsWithEditorBorder.add(wrapper);
     wrapper.add(mySearchEditorPanel, BorderLayout.CENTER);
-
-    myReplacePanel = createReplacePanel();
-    myReplacePanel.setVisible(myReplace);
-
-    myScopePanel = new ScopePanel(getProject(), myDisposable);
-    if (!myEditConfigOnly) {
-      myScopePanel.setRecentDirectories(FindInProjectSettings.getInstance(getProject()).getRecentDirectories());
-      myScopePanel.setScopeConsumer(scope -> initValidation());
-    }
-    else {
-      myScopePanel.setVisible(false);
-    }
-
-    myFilterPanel = new FilterPanel(getProject(), myFileType, getDisposable());
-    myFilterPanel.setConstraintChangedCallback(() -> initValidation());
-    myFilterPanel.getComponent().setMinimumSize(new Dimension(300, 50));
-    mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
 
     myTargetComboBox = new LinkComboBox(SSRBundle.message("complete.match.variable.name"));
     myTargetComboBox.setItemConsumer(item -> {
@@ -406,135 +405,108 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final String text = SSRBundle.message("search.target.label");
     final JLabel searchTargetLabel = new JLabel(text);
     searchTargetLabel.setLabelFor(myTargetComboBox);
-    myTargetComboBox.setMnemonic(TextWithMnemonic.parse(text).getMnemonic());
+    myTargetComboBox.setMnemonic(TextWithMnemonic.parse(text).getMnemonicCode());
 
-    final JPanel centerPanel = new JPanel(null);
-    final GroupLayout layout = new GroupLayout(centerPanel);
-    centerPanel.setLayout(layout);
-    layout.setHorizontalGroup(
-      layout.createParallelGroup()
-        .addComponent(wrapper)
-        .addComponent(myReplacePanel)
-        .addComponent(myScopePanel)
-        .addGroup(layout.createSequentialGroup()
-                    .addComponent(searchTargetLabel)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 5, 5)
-                    .addComponent(myTargetComboBox, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-        )
-    );
-    layout.setVerticalGroup(
-      layout.createSequentialGroup()
-        .addComponent(wrapper)
-        .addGap(8)
-        .addComponent(myReplacePanel)
-        .addComponent(myScopePanel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-        .addGap(16)
-        .addGroup(layout.createParallelGroup()
-                    .addComponent(searchTargetLabel)
-                    .addComponent(myTargetComboBox, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-        )
-    );
+    final JBCheckBox injected = new JBCheckBox(SSRBundle.message("search.in.injected.checkbox"));
+    injected.setOpaque(false);
+    injected.setSelected(myConfiguration.getMatchOptions().isSearchInjectedCode());
+    injected.setVisible(!myEditConfigOnly);
+    injected.addActionListener(e -> {
+      myConfiguration.getMatchOptions().setSearchInjectedCode(injected.isSelected());
+      initValidation();
+    });
 
+    final JBCheckBox matchCase = new JBCheckBox(FindBundle.message("find.popup.case.sensitive"));
+    matchCase.setOpaque(false);
+    matchCase.setSelected(myConfiguration.getMatchOptions().isCaseSensitiveMatch());
+    matchCase.addActionListener(e -> {
+      myConfiguration.getMatchOptions().setCaseSensitiveMatch(matchCase.isSelected());
+        initValidation();
+    });
+
+    searchPanel.add(searchTargetLabel, "grow 0, gap 8 4 8 11");
+    searchPanel.add(myTargetComboBox, "grow 0, gapright 10");
+    searchPanel.add(injected, "grow 0, gapright 10");
+    searchPanel.add(matchCase, "grow 0");
+
+    myFilterPanel = new FilterPanel(getProject(), myFileType, getDisposable());
+    myFilterPanel.setConstraintChangedCallback(() -> initValidation());
+    myFilterPanel.getComponent().setMinimumSize(new Dimension(300, 50));
+    mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
+    myComponentsWithEditorBackground.add(myFilterPanel.getTable());
+
+    myScopePanel = new ScopePanel(getProject(), myDisposable);
+    if (!myEditConfigOnly) {
+      myScopePanel.setRecentDirectories(FindInProjectSettings.getInstance(getProject()).getRecentDirectories());
+      myScopePanel.setScopeConsumer(scope -> initValidation());
+    }
+    else {
+      myScopePanel.setVisible(false);
+    }
+
+    myReplacePanel = createReplacePanel();
+    myReplacePanel.setVisible(myReplace);
+
+    myCenterPanelLayout = new MigLayout("fill, ins 0, hidemode 2");
+    updateCenterPanelRowConstraints();
+    final JPanel centerPanel = new JPanel(myCenterPanelLayout);
+    centerPanel.add(wrapper, "grow, span, wrap");
+    centerPanel.add(myReplacePanel, "grow, span, wrap");
+    centerPanel.add(myScopePanel, "grow 100 0, gap 8 8 6 3");
+
+    updateColors();
     return centerPanel;
   }
 
-  private JComponent createReplacePanel() {
-    final ToolbarLabel replacementTemplateLabel = new ToolbarLabel(SSRBundle.message("replacement.template.label"));
-    final DefaultActionGroup labelGroup = new DefaultActionGroup(new Spacer(), replacementTemplateLabel);
-    final ActionManager actionManager = ActionManager.getInstance();
-    final ActionToolbar labelToolbar = actionManager.createActionToolbar("StructuralReplaceDialog", labelGroup, true);
-    labelToolbar.setTargetComponent(null);
+  private @NotNull JComponent createReplacePanel() {
+    final JBLabel replacementTemplateLabel = new JBLabel(SSRBundle.message("replacement.template.label"));
 
-    final CheckboxAction shortenFqn = new CheckboxAction(SSRBundle.message("shorten.fully.qualified.names.checkbox")) {
-
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        super.update(e);
-        final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
-        e.getPresentation().setEnabledAndVisible(profile != null && profile.supportsShortenFQNames());
-      }
-
-      @Override
-      public boolean isSelected(@NotNull AnActionEvent e) {
-        if (!myReplace) return false;
-        return myConfiguration.getReplaceOptions().isToShortenFQN();
-      }
-
-      @Override
-      public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        myConfiguration.getReplaceOptions().setToShortenFQN(state);
-      }
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+    final TriConsumer<JBCheckBox, Boolean, Boolean> initReplaceCheckbox = (checkBox, enabledAndVisible, selected) -> {
+      checkBox.setOpaque(false);
+      checkBox.setEnabled(enabledAndVisible); checkBox.setVisible(enabledAndVisible);
+      checkBox.setSelected(selected);
     };
-    final CheckboxAction staticImport = new CheckboxAction(SSRBundle.message("use.static.import.checkbox")) {
 
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        super.update(e);
-        final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
-        e.getPresentation().setEnabledAndVisible(profile != null && profile.supportsUseStaticImports());
-      }
+    final JBCheckBox shortenFqn = new JBCheckBox(SSRBundle.message("shorten.fully.qualified.names.checkbox"));
+    initReplaceCheckbox.accept(shortenFqn,
+                               profile != null && profile.supportsShortenFQNames(),
+                               myReplace && myConfiguration.getReplaceOptions().isToShortenFQN());
+    shortenFqn.addActionListener(e -> {
+      myConfiguration.getReplaceOptions().setToShortenFQN(shortenFqn.isSelected());
+    });
 
-      @Override
-      public boolean isSelected(@NotNull AnActionEvent e) {
-        if (!myReplace) return false;
-        return myConfiguration.getReplaceOptions().isToUseStaticImport();
-      }
+    final JBCheckBox staticImport = new JBCheckBox(SSRBundle.message("use.static.import.checkbox"));
+    initReplaceCheckbox.accept(staticImport,
+                               profile != null && profile.supportsUseStaticImports(),
+                               myReplace && myConfiguration.getReplaceOptions().isToUseStaticImport());
+    staticImport.addActionListener(e -> {
+      myConfiguration.getReplaceOptions().setToUseStaticImport(staticImport.isSelected());
+    });
 
-      @Override
-      public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        myConfiguration.getReplaceOptions().setToUseStaticImport(state);
-      }
-    };
-    final CheckboxAction reformat = new CheckboxAction(SSRBundle.message("reformat.checkbox")) {
-      @Override
-      public boolean isSelected(@NotNull AnActionEvent e) {
-        if (!myReplace) return false;
-        return myConfiguration.getReplaceOptions().isToReformatAccordingToStyle();
-      }
-
-      @Override
-      public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        myConfiguration.getReplaceOptions().setToReformatAccordingToStyle(state);
-      }
-    };
-    final DefaultActionGroup replacementActionGroup = new DefaultActionGroup(shortenFqn, staticImport, reformat);
-    final ActionToolbar replacementToolbar = actionManager.createActionToolbar("StructuralSearchDialog", replacementActionGroup, true);
-    replacementToolbar.setTargetComponent(null);
+    final JBCheckBox reformat = new JBCheckBox(SSRBundle.message("reformat.checkbox"));
+    reformat.setOpaque(false);
+    reformat.setSelected(myReplace && myConfiguration.getReplaceOptions().isToReformatAccordingToStyle());
+    reformat.addActionListener(e -> {
+      myConfiguration.getReplaceOptions().setToReformatAccordingToStyle(reformat.isSelected());
+    });
 
     final OnePixelSplitter replaceEditorPanel = new OnePixelSplitter(false, 1.0f);
     replaceEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
     myReplaceCriteriaEdit = createEditor(true);
     replaceEditorPanel.setFirstComponent(myReplaceCriteriaEdit);
 
-    final JPanel wrapper = new JPanel(new BorderLayout());
-    final Color color = UIManager.getColor("Borders.ContrastBorderColor");
-    wrapper.setBorder(IdeBorderFactory.createBorder(color));
-    wrapper.add(replaceEditorPanel, BorderLayout.CENTER);
+    final JPanel wrapper = new JPanel(new MigLayout("ins 0, fill, hidemode 3", "[grow 0]0[grow 0]0[grow 0][]", "[grow 100]8[grow 0]8"));
+    myComponentsWithEditorBackground.add(wrapper);
+    myComponentsWithEditorBorder.add(wrapper);
+    wrapper.add(replaceEditorPanel, "grow 100, span, wrap");
+    wrapper.add(shortenFqn, "grow 0, gapleft 8, gapright 10");
+    wrapper.add(staticImport, "gapright 10");
+    wrapper.add(reformat, "");
 
-    final JPanel replacePanel = new JPanel(null);
-    final GroupLayout layout = new GroupLayout(replacePanel);
-    replacePanel.setLayout(layout);
-    layout.setHorizontalGroup(
-      layout.createParallelGroup()
-        .addGroup(
-          layout.createSequentialGroup()
-            .addComponent(labelToolbar.getComponent(), GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED, 20, Integer.MAX_VALUE)
-            .addComponent(replacementToolbar.getComponent(), GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-        )
-        .addComponent(wrapper)
-    );
-    layout.setVerticalGroup(
-      layout.createSequentialGroup().
-        addGroup(
-          layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-            .addComponent(labelToolbar.getComponent(), GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-            .addComponent(replacementToolbar.getComponent(), GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-        )
-        .addGap(4)
-        .addComponent(wrapper)
-    );
-
+    final JPanel replacePanel = new JPanel(new MigLayout("ins 0, fill", "", "[grow 0]4[grow 100]"));
+    replacePanel.add(replacementTemplateLabel, "gap 22 0 5 5, wrap");
+    replacePanel.add(wrapper, "grow 100");
     return replacePanel;
   }
 
@@ -573,39 +545,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final ActionToolbar historyToolbar = actionManager.createActionToolbar("StructuralSearchDialog", historyActionGroup, true);
     historyToolbar.setTargetComponent(null);
 
-    final CheckboxAction injected = new CheckboxAction(SSRBundle.message("search.in.injected.checkbox")) {
-
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        if (myEditConfigOnly) {
-          e.getPresentation().setVisible(false);
-        }
-        super.update(e);
-      }
-
-      @Override
-      public boolean isSelected(@NotNull AnActionEvent e) {
-        return myConfiguration.getMatchOptions().isSearchInjectedCode();
-      }
-
-      @Override
-      public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        myConfiguration.getMatchOptions().setSearchInjectedCode(state);
-        initValidation();
-      }
-    };
-    final CheckboxAction matchCase = new CheckboxAction(FindBundle.message("find.popup.case.sensitive")) {
-      @Override
-      public boolean isSelected(@NotNull AnActionEvent e) {
-        return myConfiguration.getMatchOptions().isCaseSensitiveMatch();
-      }
-
-      @Override
-      public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        myConfiguration.getMatchOptions().setCaseSensitiveMatch(state);
-        initValidation();
-      }
-    };
     myFileType = UIUtil.detectFileType(mySearchContext);
     myDialect = myFileType.getLanguage();
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
@@ -725,29 +664,29 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         setFilterPanelVisible(state);
       }
     };
+    @SuppressWarnings("DialogTitleCapitalization") final DumbAwareToggleAction pinAction =
+      new DumbAwareToggleAction(SSRBundle.message("pin.button"), SSRBundle.message("pin.button.description"), AllIcons.General.Pin_tab) {
+
+        @Override
+        public boolean isSelected(@NotNull AnActionEvent e) {
+          return myPinned;
+        }
+
+        @Override
+        public void setSelected(@NotNull AnActionEvent e, boolean state) {
+          myPinned = state;
+        }
+      };
     final DefaultActionGroup optionsActionGroup =
-      new DefaultActionGroup(injected, matchCase, myFileTypeChooser, filterAction, templateActionGroup);
+      new DefaultActionGroup(myFileTypeChooser, filterAction, pinAction, templateActionGroup);
     myOptionsToolbar = (ActionToolbarImpl)actionManager.createActionToolbar("StructuralSearchDialog", optionsActionGroup, true);
     myOptionsToolbar.setTargetComponent(mySearchCriteriaEdit);
     myOptionsToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     myOptionsToolbar.setForceMinimumSize(true);
 
-    final JPanel northPanel = new JPanel(null);
-    final GroupLayout layout = new GroupLayout(northPanel);
-    northPanel.setLayout(layout);
-    layout.setHonorsVisibility(true);
-    layout.setHorizontalGroup(
-      layout.createSequentialGroup()
-            .addComponent(historyToolbar.getComponent(), GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED, 20, Integer.MAX_VALUE)
-            .addComponent(myOptionsToolbar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-    );
-    layout.setVerticalGroup(
-      layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-            .addComponent(historyToolbar.getComponent())
-            .addComponent(myOptionsToolbar)
-    );
-
+    final JPanel northPanel = new JPanel(new MigLayout("ins 4 0 3 0, fill", "[]0[grow 0]"));
+    northPanel.add(historyToolbar.getComponent());
+    northPanel.add(myOptionsToolbar.getComponent());
     return northPanel;
   }
 
@@ -797,6 +736,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     }
     final PropertiesComponent properties = PropertiesComponent.getInstance();
     setFilterPanelVisible(properties.getBoolean(FILTERS_VISIBLE_STATE, true));
+    myPinned = properties.getBoolean(PINNED_STATE, false);
     super.show();
     StructuralSearchPlugin.getInstance(getProject()).setDialog(this);
   }
@@ -828,7 +768,8 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
   @Override
   protected void doOKAction() {
-    super.doOKAction();
+    if (!getOKAction().isEnabled()) return;
+    if (!myPinned) close(OK_EXIT_CODE);
     removeMatchHighlights();
     myAlarm.cancelAllRequests();
     myConfiguration.removeUnusedVariables();
@@ -1230,7 +1171,9 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     storeDimensions();
 
     if (mySearchEditorPanel != null) {
-      PropertiesComponent.getInstance().setValue(FILTERS_VISIBLE_STATE, isFilterPanelVisible(), true);
+      final PropertiesComponent properties = PropertiesComponent.getInstance();
+      properties.setValue(FILTERS_VISIBLE_STATE, isFilterPanelVisible(), true);
+      properties.setValue(PINNED_STATE, myPinned);
     }
     StructuralSearchPlugin.getInstance(getProject()).setDialog(null);
     myAlarm.cancelAllRequests();
@@ -1265,6 +1208,22 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   @Override
   protected String getHelpId() {
     return "find.structuredSearch";
+  }
+
+  private void updateCenterPanelRowConstraints() {
+    myCenterPanelLayout.setRowConstraints(myReplace ? "[grow 100]14[grow 100]0[grow 0]" : "[grow 100]0[grow 0]");
+  }
+
+  private void updateColors() {
+    final var scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    myComponentsWithEditorBackground.forEach(component -> {
+      component.setBackground(scheme.getDefaultBackground());
+    });
+
+    final Color color = UIManager.getColor("Borders.ContrastBorderColor");
+    myComponentsWithEditorBorder.forEach(component -> {
+      component.setBorder(IdeBorderFactory.createBorder(color));
+    });
   }
 
   private static class ErrorBorder implements Border {
@@ -1309,6 +1268,8 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       myReplace = !myReplace;
       setTitle(getDefaultTitle());
       myReplacePanel.setVisible(myReplace);
+      updateCenterPanelRowConstraints();
+      setUseLastConfiguration(true);
       loadConfiguration(myConfiguration);
       final Dimension size =
         DimensionService.getInstance().getSize(myReplace ? REPLACE_DIMENSION_SERVICE_KEY : SEARCH_DIMENSION_SERVICE_KEY, e.getProject());
