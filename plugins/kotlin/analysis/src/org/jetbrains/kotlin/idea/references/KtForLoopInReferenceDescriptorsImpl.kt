@@ -7,14 +7,13 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtImportAlias
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 class KtForLoopInReferenceDescriptorsImpl(
     element: KtForExpression
 ) : KtForLoopInReference(element), KtDescriptorsBasedReference {
-    override fun isReferenceTo(element: PsiElement): Boolean =
-        super<KtDescriptorsBasedReference>.isReferenceTo(element)
 
     override fun getTargetDescriptors(context: BindingContext): Collection<DeclarationDescriptor> {
         val loopRange = expression.loopRange ?: return emptyList()
@@ -27,5 +26,9 @@ class KtForLoopInReferenceDescriptorsImpl(
             BindingContext.LOOP_RANGE_NEXT_RESOLVED_CALL,
             BindingContext.LOOP_RANGE_HAS_NEXT_RESOLVED_CALL
         )
+    }
+
+    override fun isReferenceToImportAlias(alias: KtImportAlias): Boolean {
+        return super<KtDescriptorsBasedReference>.isReferenceToImportAlias(alias)
     }
 }

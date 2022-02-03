@@ -7,3 +7,5 @@ fun test() {
 class KK {
     constructor()
 }
+
+// FIR_COMPARISON

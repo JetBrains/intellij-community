@@ -30,13 +30,11 @@ class SyntheticPropertyAccessorReferenceDescriptorImpl(
     getter: Boolean
 ) : SyntheticPropertyAccessorReference(expression, getter), KtDescriptorsBasedReference {
 
-    override fun isReferenceTo(element: PsiElement): Boolean {
+    override fun canBeReferenceTo(element: PsiElement): Boolean {
         if (element !is PsiMethod || !isAccessorName(element.name)) return false
         if (!getter && expression.readWriteAccess(true) == ReferenceAccess.READ) return false
-        return additionalIsReferenceToChecker(element)
+        return true
     }
-
-    override fun additionalIsReferenceToChecker(element: PsiElement): Boolean = matchesTarget(element)
 
     override fun getTargetDescriptors(context: BindingContext): Collection<DeclarationDescriptor> {
         val descriptors = expression.getReferenceTargets(context)
@@ -172,6 +170,10 @@ class SyntheticPropertyAccessorReferenceDescriptorImpl(
         }
 
         return renameByPropertyName(newName.identifier)
+    }
+
+    override fun isReferenceToImportAlias(alias: KtImportAlias): Boolean {
+        return super<KtDescriptorsBasedReference>.isReferenceToImportAlias(alias)
     }
 
     override val resolvesByNames: Collection<Name>

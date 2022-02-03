@@ -17,3 +17,5 @@ fun foo(n: Int) {
 val foo: Int
 
 // ERROR: Property must be initialized
+
+// FIR_COMPARISON

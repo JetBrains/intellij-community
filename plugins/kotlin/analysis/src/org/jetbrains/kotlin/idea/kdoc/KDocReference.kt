@@ -12,13 +12,12 @@ import org.jetbrains.kotlin.idea.references.KtMultiReference
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtImportAlias
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class KDocReferenceDescriptorsImpl(element: KDocName) : KDocReference(element), KtDescriptorsBasedReference {
-    override fun isReferenceTo(element: PsiElement): Boolean =
-        super<KtDescriptorsBasedReference>.isReferenceTo(element)
 
     override fun getTargetDescriptors(context: BindingContext): Collection<DeclarationDescriptor> {
         val declaration = element.getContainingDoc().getOwner() ?: return arrayListOf()
@@ -41,5 +40,9 @@ class KDocReferenceDescriptorsImpl(element: KDocName) : KDocReference(element), 
         val newText = textRange.replace(element.text, newElementName)
         val newLink = KDocElementFactory(element.project).createNameFromText(newText)
         return element.replace(newLink)
+    }
+
+    override fun isReferenceToImportAlias(alias: KtImportAlias): Boolean {
+        return super<KtDescriptorsBasedReference>.isReferenceToImportAlias(alias)
     }
 }

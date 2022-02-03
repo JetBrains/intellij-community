@@ -10,3 +10,5 @@ val <caret>foo: Int = 1
 
 val Int.foo: Int = 2
 // DISABLE-ERRORS
+
+// FIR_COMPARISON
