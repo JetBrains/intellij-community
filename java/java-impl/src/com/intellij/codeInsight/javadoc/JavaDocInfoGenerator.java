@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.CommonBundle;
@@ -1452,7 +1452,7 @@ public class JavaDocInfoGenerator {
     appendStyledSpan(buffer, getHighlightingManager().getParenthesesAttributes(), "(");
     PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiFile file = method.getContainingFile();
-    int indent = isTooltip ? 0 : file != null ? CodeStyle.getIndentSize(file) : 4;
+    int indent = getIndent(isTooltip, file);
     if (parameters.length > 0 && !isTooltip) {
       buffer.append(BR_TAG);
     }
@@ -1488,6 +1488,10 @@ public class JavaDocInfoGenerator {
         }
       }
     }
+  }
+
+  private static int getIndent(boolean isTooltip, PsiFile file) {
+    return isTooltip ? 0 : file != null && !(file instanceof PsiCompiledFile)  ? CodeStyle.getIndentSize(file) : 4;
   }
 
   private PsiDocComment getMethodDocComment(PsiMethod method) {
@@ -2642,7 +2646,7 @@ public class JavaDocInfoGenerator {
 
       PsiFile file = owner.getContainingFile();
       boolean allExtends = parameters.length > 1 & ContainerUtil.and(parameters, parameter -> parameter.getExtendsList().getReferenceElements().length > 0);
-      int indent = !allExtends ? 0 : file != null ? CodeStyle.getIndentSize(file) : 4;
+      int indent = getIndent(!allExtends, file);
       if (indent > 0) {
         buffer.append("\n");
       }
