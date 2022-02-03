@@ -531,8 +531,23 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void readProjects(List<VirtualFile> files, List<String> disabledProfiles, String... profiles) {
-    myProjectsManager.resetManagedFilesAndProfilesInTests(files, new MavenExplicitProfiles(Arrays.asList(profiles), disabledProfiles));
-    waitForImportCompletion();
+    if (isNewImportingProcess) {
+      MavenImportFlow flow = new MavenImportFlow();
+      MavenInitialImportContext initialImportContext =
+        flow.prepareNewImport(myProject, getMavenProgressIndicator(),
+                              new FilesList(files),
+                              getMavenGeneralSettings(),
+                              getMavenImporterSettings(),
+                              Arrays.asList(profiles),
+                              disabledProfiles);
+      myProjectsManager.initForTests();
+      myReadContext = flow.readMavenFiles(initialImportContext, myIgnorePaths, myIgnorePatterns);
+      flow.updateProjectManager(myReadContext);
+    }
+    else {
+      myProjectsManager.resetManagedFilesAndProfilesInTests(files, new MavenExplicitProfiles(Arrays.asList(profiles), disabledProfiles));
+      waitForImportCompletion();
+    }
   }
 
   protected void updateProjectsAndImport(VirtualFile... files) {

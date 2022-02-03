@@ -923,6 +923,8 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @ApiStatus.Internal
   public Promise<?> waitForImportCompletion() {
+    if(Registry.is("maven.new.import")) return MavenImportingManager.getInstance(myProject).getImportFinishPromise();
+
     AsyncPromise<?> promise = new AsyncPromise<>();
     MavenUtil.runInBackground(myProject, SyncBundle.message("maven.sync.waiting.for.completion"), false, indicator -> {
       if (myReadingProcessor != null) {
