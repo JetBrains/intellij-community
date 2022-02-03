@@ -8,8 +8,8 @@ import com.intellij.codeInsight.documentation.*
 import com.intellij.codeInsight.documentation.DocumentationManager.SELECTED_QUICK_DOC_TEXT
 import com.intellij.codeInsight.documentation.DocumentationManager.decorate
 import com.intellij.ide.DataManager
-import com.intellij.lang.documentation.DocumentationData
 import com.intellij.lang.documentation.DocumentationImageResolver
+import com.intellij.lang.documentation.DocumentationResultData
 import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_BROWSER
 import com.intellij.lang.documentation.ide.actions.PRIMARY_GROUP_ID
 import com.intellij.lang.documentation.ide.actions.registerBackForwardActions
@@ -120,7 +120,7 @@ internal class DocumentationUI(
     }
   }
 
-  private fun applyStateLater(request: DocumentationRequest, asyncData: Deferred<DocumentationData?>) {
+  private fun applyStateLater(request: DocumentationRequest, asyncData: Deferred<DocumentationResultData?>) {
     // to avoid flickering: don't show ""Fetching..." message right away, give a chance for documentation to load
     val fetchingMessage = cs.launch {
       delay(DEFAULT_UI_RESPONSE_TIMEOUT)
@@ -140,7 +140,7 @@ internal class DocumentationUI(
     }
   }
 
-  private fun applyState(request: DocumentationRequest, data: DocumentationData?) {
+  private fun applyState(request: DocumentationRequest, data: DocumentationResultData?) {
     icons.clear()
     imageResolver = null
     if (data == null) {

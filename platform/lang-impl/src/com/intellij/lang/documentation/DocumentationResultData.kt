@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 
 @VisibleForTesting
-data class DocumentationData internal constructor(
+data class DocumentationResultData internal constructor(
   val html: @Nls String,
   val anchor: String?,
   val externalUrl: String?,

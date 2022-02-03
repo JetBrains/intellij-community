@@ -4,7 +4,7 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.lang.documentation.ContentUpdater
-import com.intellij.lang.documentation.DocumentationData
+import com.intellij.lang.documentation.DocumentationResultData
 import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.ide.DocumentationBrowserFacade
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
@@ -161,7 +161,7 @@ internal class DocumentationBrowser private constructor(
 
   private class BrowserState(
     val request: DocumentationRequest,
-    val result: Deferred<DocumentationData?>,
+    val result: Deferred<DocumentationResultData?>,
   )
 
   private fun historySnapshot(): HistorySnapshot {

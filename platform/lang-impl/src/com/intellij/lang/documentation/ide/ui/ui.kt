@@ -7,7 +7,7 @@ import com.intellij.codeInsight.documentation.CornerAwareScrollPaneLayout
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.lang.documentation.DocumentationData
+import com.intellij.lang.documentation.DocumentationResultData
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -94,7 +94,7 @@ internal fun scrollPaneWithCorner(parent: Disposable, scrollPane: JScrollPane, c
   return layeredPane
 }
 
-internal fun linkChunk(presentableText: @Nls String, data: DocumentationData): HtmlChunk? {
+internal fun linkChunk(presentableText: @Nls String, data: DocumentationResultData): HtmlChunk? {
   val externalUrl = data.externalUrl
   if (externalUrl != null) {
     return DocumentationManager.getLink(presentableText, externalUrl)

@@ -3,7 +3,7 @@
 
 package com.intellij.lang.documentation.ide.impl
 
-import com.intellij.lang.documentation.DocumentationData
+import com.intellij.lang.documentation.DocumentationResultData
 import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Deferred
@@ -11,5 +11,5 @@ import kotlinx.coroutines.Deferred
 internal fun interface BrowserStateListener {
 
   @RequiresEdt
-  fun stateChanged(request: DocumentationRequest, result: Deferred<DocumentationData?>, byLink: Boolean)
+  fun stateChanged(request: DocumentationRequest, result: Deferred<DocumentationResultData?>, byLink: Boolean)
 }

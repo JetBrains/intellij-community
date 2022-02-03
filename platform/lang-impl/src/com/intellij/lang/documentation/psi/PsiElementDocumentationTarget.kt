@@ -74,13 +74,13 @@ class PsiElementDocumentationTarget private constructor(
   }
 
   @RequiresReadLock
-  private fun localDoc(provider: DocumentationProvider): DocumentationData? {
+  private fun localDoc(provider: DocumentationProvider): DocumentationResultData? {
     val originalPsi = targetElement.getUserData(DocumentationManager.ORIGINAL_ELEMENT_KEY)?.element
     val doc = provider.generateDoc(targetElement, originalPsi)
     if (targetElement is PsiFile) {
       val fileDoc = DocumentationManager.generateFileDoc(targetElement, doc == null)
       if (fileDoc != null) {
-        return DocumentationData(
+        return DocumentationResultData(
           if (doc == null) fileDoc else doc + fileDoc,
           pointer.anchor,
           null,
@@ -90,7 +90,7 @@ class PsiElementDocumentationTarget private constructor(
       }
     }
     if (doc != null) {
-      return DocumentationData(doc, pointer.anchor, null, emptyList(), pointer.imageResolver)
+      return DocumentationResultData(doc, pointer.anchor, null, emptyList(), pointer.imageResolver)
     }
     return null
   }
