@@ -351,10 +351,7 @@ public final class EnvironmentUtil {
                   new Attachment("EnvReaderStderr.txt", stderrGobbler.getText().trim()));
       }
       catch (InterruptedException ie) {
-        LOG.error("Output reader for Environment reader process is interrupted\n\tcommand: " + command,
-                  ie,
-                  new Attachment("EnvReaderStdout.txt", stdoutGobbler.getText().trim()),
-                  new Attachment("EnvReaderStderr.txt", stderrGobbler.getText().trim()));
+        LOG.warn("Output reader for Environment reader process is interrupted", ie);
       }
 
       final String output = stdoutGobbler.getText().trim();
