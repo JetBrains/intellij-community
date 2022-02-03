@@ -1,0 +1,23 @@
+UFile (package = ) [public final class ObjectLiteralKt {...]
+    UClass (name = ObjectLiteralKt) [public final class ObjectLiteralKt {...}]
+        UMethod (name = box) [public static final fun box() : int {...}]
+            UBlockExpression [{...}] : PsiType:Void
+                UDeclarationsExpression [var o: A = anonymous object : I, A() {...    }]
+                    ULocalVariable (name = o) [var o: A = anonymous object : I, A() {...    }]
+                        UObjectLiteralExpression [anonymous object : I, A() {...    }] : PsiType:A
+                            UClass (name = null) [final class null : I, A {...}]
+                                UMethod (name = foo) [public fun foo() : int {...}]
+                                    UBlockExpression [{...}]
+                                        UReturnExpression [return 42]
+                                            ULiteralExpression (value = 42) [42] : PsiType:int
+                                UMethod (name = ) [private fun () = UastEmptyExpression]
+                UReturnExpression [return o.foo()] : PsiType:Void
+                    UQualifiedReferenceExpression [o.foo()] : PsiType:int
+                        USimpleNameReferenceExpression (identifier = o) [o] : PsiType:A
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] : PsiType:int
+                            UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
+                            USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : PsiType:int
+    UClass (name = I) [public abstract interface I {...}]
+        UMethod (name = foo) [public abstract fun foo() : int = UastEmptyExpression]
+    UClass (name = A) [public final class A {...}]
+        UMethod (name = A) [public fun A() = UastEmptyExpression]
