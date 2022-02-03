@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.util.isSnapshot
 import org.jetbrains.kotlin.idea.util.projectStructure.version
 import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
@@ -76,7 +77,15 @@ enum class LibraryJarDescriptor(val mavenArtifactId: String) {
 }
 
 @NlsSafe
-fun bundledRuntimeVersion(): String = KotlinCompilerVersion.VERSION
+@Deprecated(
+    "Replace with `KotlinPluginLayout.standaloneCompilerVersion` or `KotlinPluginLayout.ideCompilerVersion`, depending on use-case.",
+    level = DeprecationLevel.ERROR,
+    replaceWith = ReplaceWith(
+        "KotlinPluginLayout.getInstance().standaloneCompilerVersion",
+        "org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout"
+    )
+)
+fun bundledRuntimeVersion(): String = KotlinPluginLayout.getInstance().standaloneCompilerVersion
 
 private val KOTLIN_COMPILER_VERSION_SEPARATOR = "-(?:dev|release)".toRegex()
 
@@ -85,7 +94,7 @@ private val KOTLIN_COMPILER_VERSION_SEPARATOR = "-(?:dev|release)".toRegex()
  * `kotlinCompilerVersionShort` would return `1.5.0` in such case
  */
 fun kotlinCompilerVersionShort(): String {
-    val parts = KOTLIN_COMPILER_VERSION_SEPARATOR.split(KotlinCompilerVersion.VERSION)
+    val parts = KOTLIN_COMPILER_VERSION_SEPARATOR.split(KotlinPluginLayout.getInstance().standaloneCompilerVersion)
     return parts.first()
 }
 

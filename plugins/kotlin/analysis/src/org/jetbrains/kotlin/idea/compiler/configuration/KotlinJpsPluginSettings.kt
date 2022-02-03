@@ -8,7 +8,6 @@ import com.intellij.project.stateStore
 import com.intellij.util.io.exists
 import org.jetbrains.kotlin.cli.common.arguments.unfrozen
 import org.jetbrains.kotlin.config.JpsPluginSettings
-import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.config.SettingConstants.KOTLIN_JPS_PLUGIN_SETTINGS_SECTION
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
@@ -29,7 +28,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                 // Encourage user to specify desired Kotlin compiler version in project settings for sake of reproducible builds
                 jpsPluginSettings.settings = jpsPluginSettings.settings.unfrozen().apply {
                     // Use bundled by default because this will work even without internet connection
-                    version = KotlinPluginLayout.getInstance().bundledKotlincVersion
+                    version = KotlinPluginLayout.getInstance().standaloneCompilerVersion
                 }
             }
             return jpsPluginSettings

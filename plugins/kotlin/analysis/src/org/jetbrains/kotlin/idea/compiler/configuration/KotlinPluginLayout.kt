@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.isDirectory
@@ -18,14 +19,35 @@ import java.nio.file.Paths
 import kotlin.io.path.nameWithoutExtension
 
 sealed interface KotlinPluginLayout {
+    /**
+     * Directory with the bundled Kotlin compiler distribution. Includes the compiler itself and a set of compiler plugins
+     * with a compatible version.
+     */
     val kotlinc: File
+
+    /**
+     * Location of the JPS plugin, compatible with the bundled Kotlin compiler distribution.
+     */
     val jpsPluginJar: File
 
-    val bundledKotlincVersion get() = kotlinc.resolve("build.txt").readText().trim()
+    /**
+     * Version of the stand-alone compiler (artifacts in the 'kotlinc/' directory of the Kotlin plugin).
+     * Stand-alone compiler is always stable in 'master' and release branches. It is used for compilation with JPS.
+     */
+    val standaloneCompilerVersion: String
+        @NlsSafe get() = kotlinc.resolve("build.txt").readText().trim()
+
+    /**
+     * Version of the compiler's analyzer bundled into the Kotlin IDE plugin ('kotlin-compiler-for-ide' and so on).
+     * Used solely for IDE code insight. Might have a pre-release version higher than `standaloneCompilerVersion`.
+     */
+    val ideCompilerVersion: String
+        @NlsSafe get() = KotlinCompilerVersion.VERSION
 
     companion object {
         const val KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID = "kotlin-jps-plugin-classpath"
 
+        @JvmStatic
         fun getInstance(): KotlinPluginLayout {
             return if (PluginManagerCore.isRunningFromSources() && !System.getProperty("idea.use.dev.build.server", "false").toBoolean()) {
                 KotlinPluginLayoutWhenRunFromSources
@@ -101,7 +123,7 @@ private object KotlinPluginLayoutWhenRunFromSources : KotlinPluginLayout {
             .takeIf { it.exists() }
             ?: error("Can't find artifact $KOTLIN_MAVEN_GROUP_ID:$KOTLIN_DIST_ARTIFACT_ID:$bundledJpsVersion artifact in Maven Local")
 
-        KotlinPathsProvider.lazyUnpackKotlincDist(packedDist, KotlinCompilerVersion.VERSION)
+        KotlinPathsProvider.lazyUnpackKotlincDist(packedDist, bundledJpsVersion)
     }
 
     override val jpsPluginJar: File

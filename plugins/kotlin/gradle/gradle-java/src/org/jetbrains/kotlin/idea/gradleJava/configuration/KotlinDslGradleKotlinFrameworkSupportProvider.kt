@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinBuildScriptManipulator.Companion.GSK_KOTLIN_VERSION_PROPERTY_NAME
@@ -51,7 +52,7 @@ abstract class KotlinDslGradleKotlinFrameworkSupportProvider(
     ) {
         var kotlinVersion = kotlinCompilerVersionShort()
         val additionalRepository = getRepositoryForVersion(kotlinVersion)
-        if (isSnapshot(bundledRuntimeVersion())) {
+        if (isSnapshot(KotlinPluginLayout.getInstance().standaloneCompilerVersion)) {
             kotlinVersion = LAST_SNAPSHOT_VERSION
         }
 
@@ -130,12 +131,12 @@ class KotlinDslGradleKotlinJavaFrameworkSupportProvider :
         buildScriptData: BuildScriptDataBuilder
     ) {
         super.addSupport(projectId, module, rootModel, modifiableModelsProvider, buildScriptData)
-        val jvmTarget = getDefaultJvmTarget(rootModel.sdk, bundledRuntimeVersion())
+        val jvmTarget = getDefaultJvmTarget(rootModel.sdk, KotlinPluginLayout.getInstance().standaloneCompilerVersion)
         if (jvmTarget != null) {
             addJvmTargetTask(buildScriptData)
         }
 
-        val artifactId = getStdlibArtifactId(rootModel.sdk, bundledRuntimeVersion())
+        val artifactId = getStdlibArtifactId(rootModel.sdk, KotlinPluginLayout.getInstance().standaloneCompilerVersion)
         buildScriptData.addDependencyNotation(composeDependency(buildScriptData, artifactId))
     }
 

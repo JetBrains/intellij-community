@@ -12,7 +12,7 @@ var Module.externalCompilerVersion: String? by UserDataProperty(Key.create("EXTE
 
 fun Module.findExternalKotlinCompilerVersion(): KotlinVersionVerbose? {
     val externalCompilerVersion = (if (getBuildSystemType() == BuildSystemType.JPS) {
-        KotlinJpsPluginSettings.getInstance(project)?.settings?.version ?: KotlinPluginLayout.getInstance().bundledKotlincVersion
+        KotlinJpsPluginSettings.getInstance(project)?.settings?.version ?: KotlinPluginLayout.getInstance().standaloneCompilerVersion
     } else {
         this.externalCompilerVersion
     }) ?: return null

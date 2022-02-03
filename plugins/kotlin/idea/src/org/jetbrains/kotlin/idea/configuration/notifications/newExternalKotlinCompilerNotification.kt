@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.KotlinVersionVerbose
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.findAnyExternalKotlinCompilerVersion
 
 @VisibleForTesting
@@ -50,7 +51,7 @@ fun checkExternalKotlinCompilerVersion(project: Project) {
 private fun Project.findExternalCompilerVersion(): KotlinVersion? = runReadAction { findAnyExternalKotlinCompilerVersion() }?.plainVersion
 
 private fun bundledCompilerVersionIfReleased(): KotlinVersion? {
-    val kotlinCompilerVersion = KotlinCompilerVersion.getVersion() ?: return null
+    val kotlinCompilerVersion = KotlinPluginLayout.getInstance().standaloneCompilerVersion
     val kotlinVersionVerbose = KotlinVersionVerbose.parse(kotlinCompilerVersion)?.takeIf {
         it.milestone == KotlinVersionVerbose.KotlinVersionMilestone.release
     } ?: return null
