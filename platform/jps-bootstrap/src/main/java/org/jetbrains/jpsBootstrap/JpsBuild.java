@@ -2,6 +2,7 @@
 package org.jetbrains.jpsBootstrap;
 
 import com.intellij.openapi.util.io.FileUtilRt;
+import jetbrains.buildServer.messages.serviceMessages.PublishArtifacts;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.GlobalOptions;
@@ -33,6 +34,7 @@ public class JpsBuild {
   private final JpsModel myModel;
   private final Set<String> myModuleNames;
   private final File myDataStorageRoot;
+  private final Path myJpsLogDir;
 
   public JpsBuild(Path communityRoot, JpsModel model, Path jpsBootstrapWorkDir) throws Exception {
     myModel = model;
@@ -54,7 +56,9 @@ public class JpsBuild {
     System.setProperty(JpsGroovycRunner.GROOVYC_IN_PROCESS, "true");
     System.setProperty(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY, "false");
     System.setProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "true");
-    System.setProperty(GlobalOptions.LOG_DIR_OPTION, jpsBootstrapWorkDir.resolve("log").toString());
+
+    myJpsLogDir = jpsBootstrapWorkDir.resolve("log");
+    System.setProperty(GlobalOptions.LOG_DIR_OPTION, myJpsLogDir.toString());
 
     String url = "file://" + FileUtilRt.toSystemIndependentName(jpsBootstrapWorkDir.resolve("out").toString());
     JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(model.getProject()).setOutputUrl(url);
@@ -176,7 +180,8 @@ public class JpsBuild {
     public void assertNoErrors() {
       String firstErrorText = myFirstError.get();
       if (firstErrorText != null) {
-        fatal("Build finished with errors. First error:\n" + firstErrorText);
+        System.out.println(new PublishArtifacts(myJpsLogDir + "=>jps-bootstrap-jps-logs.zip").asString());
+        fatal("Build finished with errors. See TC artifacts for build log. First error:\n" + firstErrorText);
       }
     }
   }
