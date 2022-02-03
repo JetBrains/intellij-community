@@ -8,13 +8,12 @@ import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
+import org.jetbrains.kotlin.psi.KtImportAlias
 import org.jetbrains.kotlin.resolve.BindingContext
 
 class KtDestructuringDeclarationReferenceDescriptorsImpl(
     element: KtDestructuringDeclarationEntry
 ) : KtDestructuringDeclarationReference(element), KtDescriptorsBasedReference {
-    override fun isReferenceTo(element: PsiElement): Boolean =
-        super<KtDescriptorsBasedReference>.isReferenceTo(element)
 
     override fun getTargetDescriptors(context: BindingContext): Collection<DeclarationDescriptor> {
         return listOfNotNull(
@@ -28,6 +27,10 @@ class KtDestructuringDeclarationReferenceDescriptorsImpl(
         .first { it is KtDestructuringDeclarationEntry }
 
     override fun getRangeInElement() = TextRange(0, element.textLength)
+
+    override fun isReferenceToImportAlias(alias: KtImportAlias): Boolean {
+        return super<KtDescriptorsBasedReference>.isReferenceToImportAlias(alias)
+    }
 
     override fun canRename(): Boolean {
         val bindingContext = expression.analyze() //TODO: should it use full body resolve?

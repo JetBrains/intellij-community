@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.references
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.IncorrectOperationException
@@ -17,6 +16,7 @@ import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.intentions.OperatorToFunctionIntention
 import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
+import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.descriptors.JavaPropertyDescriptor
@@ -39,8 +39,14 @@ class KtSimpleNameReferenceDescriptorsImpl(
     expression: KtSimpleNameExpression
 ) : KtSimpleNameReference(expression), KtDescriptorsBasedReference {
 
-    override fun doCanBeReferenceTo(candidateTarget: PsiElement): Boolean =
-        canBeReferenceTo(candidateTarget)
+    override fun canBeReferenceTo(candidateTarget: PsiElement): Boolean {
+        return element.containingFile == candidateTarget.containingFile
+                || ProjectRootsUtil.isInProjectOrLibSource(element, includeScriptsOutsideSourceRoots = true)
+    }
+
+    override fun isReferenceToImportAlias(alias: KtImportAlias): Boolean {
+        return super<KtDescriptorsBasedReference>.isReferenceToImportAlias(alias)
+    }
 
     override fun getTargetDescriptors(context: BindingContext): Collection<DeclarationDescriptor> {
         return SmartList<DeclarationDescriptor>().apply {
@@ -68,14 +74,11 @@ class KtSimpleNameReferenceDescriptorsImpl(
         }
     }
 
-    override fun isReferenceTo(element: PsiElement): Boolean {
-        if (!canBeReferenceTo(element)) return false
-
+    override fun isReferenceToViaExtension(element: PsiElement): Boolean {
         for (extension in element.project.extensionArea.getExtensionPoint(SimpleNameReferenceExtension.EP_NAME).extensions) {
             if (extension.isReferenceTo(this, element)) return true
         }
-
-        return super<KtDescriptorsBasedReference>.isReferenceTo(element)
+        return false
     }
 
     override fun handleElementRename(newElementName: String): PsiElement {
