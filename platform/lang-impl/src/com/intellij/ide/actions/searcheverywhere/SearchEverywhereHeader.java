@@ -453,7 +453,7 @@ public class SearchEverywhereHeader {
     }
   }
 
-  private static class MyScopeChooserAction extends AbstractGotoSEContributor.ScopeChooserAction {
+  private static class MyScopeChooserAction extends ScopeChooserAction {
     private ScopeDescriptor myScope;
     private final Collection<SearchEverywhereContributor<?>> myContributors;
     private final Runnable onChange;
@@ -482,23 +482,24 @@ public class SearchEverywhereHeader {
     }
 
     @Override
-    void onScopeSelected(@NotNull ScopeDescriptor sd) {
+    protected void onScopeSelected(@NotNull ScopeDescriptor sd) {
       doSetScope(sd);
       onChange.run();
     }
 
     @Override
-    @NotNull ScopeDescriptor getSelectedScope() {
+    @NotNull
+    protected ScopeDescriptor getSelectedScope() {
       return myScope;
     }
 
     @Override
-    void onProjectScopeToggled() {
+    protected void onProjectScopeToggled() {
       setEverywhere(!myScope.scopeEquals(myEverywhereScope));
     }
 
     @Override
-    boolean processScopes(@NotNull Processor<? super ScopeDescriptor> processor) {
+    protected boolean processScopes(@NotNull Processor<? super ScopeDescriptor> processor) {
       return ContainerUtil.process(extractScopes(), processor);
     }
 

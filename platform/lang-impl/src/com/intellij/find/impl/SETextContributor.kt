@@ -6,38 +6,68 @@ import com.intellij.find.FindManager
 import com.intellij.find.FindModel
 import com.intellij.find.FindSettings
 import com.intellij.find.impl.SETextRightActionAction.*
+import com.intellij.ide.actions.GotoActionBase
 import com.intellij.ide.actions.SearchEverywhereBaseAction
-import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory
-import com.intellij.ide.actions.searcheverywhere.SearchFieldActionsContributor
-import com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor
+import com.intellij.ide.actions.SearchEverywhereClassifier
+import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor.createContext
 import com.intellij.ide.util.RunOnceUtil
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.CheckboxAction
-import com.intellij.openapi.actionSystem.ex.ComboBoxAction
+import com.intellij.ide.util.scopeChooser.ScopeChooserCombo
+import com.intellij.ide.util.scopeChooser.ScopeDescriptor
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
-import com.intellij.openapi.observable.properties.AtomicProperty
-import com.intellij.openapi.observable.util.bindBooleanStorage
-import com.intellij.openapi.observable.util.bindStorage
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.Key
+import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageViewPresentation
+import com.intellij.util.CommonProcessors
 import com.intellij.util.PlatformUtils
 import com.intellij.util.Processor
-import com.intellij.util.ui.JBUI
-import java.util.function.Supplier
-import javax.swing.JComponent
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.JBIterable
 import javax.swing.ListCellRenderer
 
-class SETextContributor(val project: Project) : WeightedSearchEverywhereContributor<UsageInfo2UsageAdapter>, SearchFieldActionsContributor, DumbAware {
-  val model = FindManager.getInstance(project).findInProjectModel
+class SETextContributor(val event: AnActionEvent) : WeightedSearchEverywhereContributor<UsageInfo2UsageAdapter>,
+                                                    SearchFieldActionsContributor, DumbAware, ScopeSupporting {
+
+  private val project = event.getRequiredData(CommonDataKeys.PROJECT)
+  private val model = FindManager.getInstance(project).findInProjectModel
+
+  private var everywhereScope = getEverywhereScope()
+  private var projectScope: GlobalSearchScope?
+  private var selectedScopeDescriptor: ScopeDescriptor
+  private var psiContext = getPsiContext()
+
+  init {
+    val scopes = createScopes()
+    projectScope = getProjectScope(scopes)
+    selectedScopeDescriptor = getInitialSelectedScope(scopes)
+  }
+
+  private fun getPsiContext() = GotoActionBase.getPsiContext(event)?.let {
+    SmartPointerManager.getInstance(project).createSmartPsiElementPointer(it)
+  }
+
+  private fun getEverywhereScope() =
+    SearchEverywhereClassifier.EP_Manager.getEverywhereScope(project) ?: GlobalSearchScope.everythingScope(project)
+
+  private fun getProjectScope(descriptors: List<ScopeDescriptor>): GlobalSearchScope? {
+    SearchEverywhereClassifier.EP_Manager.getProjectScope(project)?.let { return it }
+
+    GlobalSearchScope.projectScope(project).takeIf { it != everywhereScope }?.let { return it }
+
+    val secondScope = JBIterable.from(descriptors).filter { !it.scopeEquals(everywhereScope) && !it.scopeEquals(null) }.first()
+    return if (secondScope != null) secondScope.scope as GlobalSearchScope? else everywhereScope
+  }
 
   override fun getSearchProviderId() = ID
   override fun getGroupName() = FindBundle.message("search.everywhere.group.name")
@@ -45,9 +75,9 @@ class SETextContributor(val project: Project) : WeightedSearchEverywhereContribu
   override fun showInFindResults() = false
   override fun isShownInSeparateTab() = true
 
-  override fun fetchWeightedElements(pattern: String, progressIndicator: ProgressIndicator,
+  override fun fetchWeightedElements(pattern: String,
+                                     indicator: ProgressIndicator,
                                      consumer: Processor<in FoundItemDescriptor<UsageInfo2UsageAdapter>>) {
-
     FindModel.initStringToFind(model, pattern)
 
     val presentation = FindInProjectUtil.setupProcessPresentation(project, UsageViewPresentation())
@@ -66,59 +96,8 @@ class SETextContributor(val project: Project) : WeightedSearchEverywhereContribu
     return true
   }
 
-  override fun getActions(onChanged: Runnable): List<AnAction> {
-    val fileMaskComboboxProperty = AtomicProperty(FindSettings.getInstance().recentFileMasks.last())
-      .bindStorage("SE.Text.FileMask.last")
-    var fileMaskComboState by fileMaskComboboxProperty
-
-    val fileMaskCheckboxProperty = AtomicBooleanProperty(false).bindBooleanStorage("SE.Text.FileMask.enabled")
-    var fileMaskState by fileMaskCheckboxProperty
-
-    val fileMaskCheckbox = object : CheckboxAction(FindBundle.message("find.popup.filemask")) {
-      override fun isSelected(e: AnActionEvent) = fileMaskState
-      override fun setSelected(e: AnActionEvent, state: Boolean) {
-        fileMaskState = state
-      }
-    }
-
-    class FileMaskComboboxAction : ComboBoxAction() {
-      init {
-        templatePresentation.setText(Supplier { fileMaskComboState })
-      }
-
-      override fun update(e: AnActionEvent) {
-        e.presentation.isEnabled = fileMaskState
-      }
-
-      override fun createCustomComponent(presentation: Presentation, place: String): ComboBoxButton =
-        createComboBoxButton(presentation).apply {
-          putClientProperty("JButton.backgroundColor", JBUI.CurrentTheme.BigPopup.headerBackground())
-          text = fileMaskComboState
-          fileMaskComboboxProperty.afterChange {
-            text = fileMaskComboState
-          }
-        }
-
-      inner class FileMaskAction(val title: @NlsSafe String) : AnAction(title) {
-        override fun actionPerformed(e: AnActionEvent) {
-          fileMaskComboState = title
-        }
-      }
-
-      override fun createPopupActionGroup(button: JComponent?) =
-        DefaultActionGroup(FindSettings.getInstance().recentFileMasks.reversed().map { FileMaskAction(it) })
-    }
-
-    fun update() {
-      model.fileFilter = if (fileMaskState) fileMaskComboState else null
-    }
-
-    fileMaskComboboxProperty.afterChange { update(); onChanged.run() }
-    fileMaskCheckboxProperty.afterChange { update(); onChanged.run() }
-    update()
-
-    return listOf(fileMaskCheckbox, FileMaskComboboxAction())
-  }
+  override fun getActions(onChanged: Runnable): List<AnAction> =
+    listOf(ScopeAction { onChanged.run() }, JComboboxAction(project) { onChanged.run() })
 
   override fun createRightActions(onChanged: Runnable): List<SETextRightActionAction> {
     val word = AtomicBooleanProperty(model.isWholeWordsOnly).apply { afterChange { model.isWholeWordsOnly = it } }
@@ -130,15 +109,68 @@ class SETextContributor(val project: Project) : WeightedSearchEverywhereContribu
 
   override fun getDataForItem(element: UsageInfo2UsageAdapter, dataId: String): UsageInfo2UsageAdapter? = null
 
+  private fun getInitialSelectedScope(scopeDescriptors: List<ScopeDescriptor>): ScopeDescriptor {
+    val scope = SE_TEXT_SELECTED_SCOPE.get(project) ?: return ScopeDescriptor(projectScope)
+
+    return scopeDescriptors.find { scope == it.displayName && !it.scopeEquals(null) } ?: ScopeDescriptor(projectScope)
+  }
+
+  private fun setSelectedScope(scope: ScopeDescriptor) {
+    selectedScopeDescriptor = scope
+    SE_TEXT_SELECTED_SCOPE.set(project, if (scope.scopeEquals(everywhereScope) || scope.scopeEquals(projectScope)) null else scope.displayName)
+    FindSettings.getInstance().customScope = selectedScopeDescriptor.scope?.displayName
+
+    model.customScopeName = selectedScopeDescriptor.scope?.displayName
+    model.customScope = selectedScopeDescriptor.scope
+    model.isCustomScope = true
+  }
+
+  private fun createScopes() = mutableListOf<ScopeDescriptor>().also {
+    ScopeChooserCombo.processScopes(project, createContext(project, psiContext),
+                                    ScopeChooserCombo.OPT_LIBRARIES or ScopeChooserCombo.OPT_EMPTY_SCOPES,
+                                    CommonProcessors.CollectProcessor(it))
+  }
+
+  override fun getScope() = selectedScopeDescriptor
+  override fun getSupportedScopes() = createScopes()
+
+  override fun setScope(scope: ScopeDescriptor) {
+    setSelectedScope(scope)
+  }
+
+  private inner class ScopeAction(val onChanged: () -> Unit) : ScopeChooserAction() {
+    override fun onScopeSelected(descriptor: ScopeDescriptor) {
+      setSelectedScope(descriptor)
+      onChanged()
+    }
+
+    override fun getSelectedScope() = selectedScopeDescriptor
+    override fun isEverywhere() = selectedScopeDescriptor.scopeEquals(everywhereScope)
+    override fun processScopes(processor: Processor<in ScopeDescriptor>) = ContainerUtil.process(createScopes(), processor)
+
+    override fun onProjectScopeToggled() {
+      isEverywhere = !selectedScopeDescriptor.scopeEquals(everywhereScope)
+    }
+
+    override fun setEverywhere(everywhere: Boolean) {
+      setSelectedScope(ScopeDescriptor(if (everywhere) everywhereScope else projectScope))
+      onChanged()
+    }
+
+    override fun canToggleEverywhere() = if (everywhereScope == projectScope) false
+    else selectedScopeDescriptor.scopeEquals(everywhereScope) || selectedScopeDescriptor.scopeEquals(projectScope)
+  }
+
   companion object {
     private const val ID = "Text"
     private const val ADVANCED_OPTION_ID = "se.enable.text.search"
+    private val SE_TEXT_SELECTED_SCOPE = Key.create<String>("SE_TEXT_SELECTED_SCOPE")
 
     private fun enabled() = AdvancedSettings.getBoolean(ADVANCED_OPTION_ID)
 
     class Factory : SearchEverywhereContributorFactory<UsageInfo2UsageAdapter> {
       override fun isAvailable() = enabled()
-      override fun createContributor(event: AnActionEvent) = SETextContributor(event.getRequiredData(CommonDataKeys.PROJECT))
+      override fun createContributor(event: AnActionEvent) = SETextContributor(event)
     }
 
     class SETextAction : SearchEverywhereBaseAction(), DumbAware {
