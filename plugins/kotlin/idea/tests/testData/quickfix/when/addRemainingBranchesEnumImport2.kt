@@ -13,4 +13,3 @@ class Test {
         }
     }
 }
-/* IGNORE_FIR */
