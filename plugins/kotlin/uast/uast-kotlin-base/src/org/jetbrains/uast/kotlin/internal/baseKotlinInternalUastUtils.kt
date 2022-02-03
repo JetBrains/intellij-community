@@ -94,12 +94,9 @@ val KtTypeReference.nameElement: PsiElement?
         (it as? KtUserType)?.referenceExpression?.getReferencedNameElement() ?: it.navigationElement
     }
 
-fun KtClassOrObject.toPsiType(): PsiType {
+internal fun KtClassOrObject.toPsiType(): PsiType {
     val lightClass = toLightClass() ?: return UastErrorType
-    return if (lightClass is PsiAnonymousClass)
-        lightClass.baseClassType
-    else
-        PsiTypesUtil.getClassType(lightClass)
+    return PsiTypesUtil.getClassType(lightClass)
 }
 
 fun PsiElement.getMaybeLightElement(sourcePsi: KtExpression? = null): PsiElement? {
