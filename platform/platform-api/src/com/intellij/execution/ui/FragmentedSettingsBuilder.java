@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.ide.DataManager;
@@ -165,7 +165,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     myLinkLabel.setBorder(JBUI.Borders.emptyLeft(5));
     JPanel linkPanel = new JPanel(new BorderLayout());
     linkPanel.add(myLinkLabel, BorderLayout.CENTER);
-    CustomShortcutSet shortcutSet = KeymapUtil.getMnemonicAsShortcut(TextWithMnemonic.parse(message).getMnemonic());
+    CustomShortcutSet shortcutSet = KeymapUtil.getMnemonicAsShortcut(TextWithMnemonic.parse(message).getMnemonicCode());
     if (shortcutSet != null) {
       List<String> list = ContainerUtil.map(shortcutSet.getShortcuts(), shortcut -> KeymapUtil.getShortcutText(shortcut));
       list.sort(Comparator.comparingInt(String::length));

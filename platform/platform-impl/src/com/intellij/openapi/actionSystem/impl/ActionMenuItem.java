@@ -128,8 +128,8 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   void updateFromPresentation() {
     setVisible(myPresentation.isVisible());
     setEnabled(myPresentation.isEnabled());
-    setMnemonic(myPresentation.getMnemonic());
     setText(myPresentation.getText(myEnableMnemonics));
+    setMnemonic(myPresentation.getMnemonic());
     setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
     updateIcon();
 

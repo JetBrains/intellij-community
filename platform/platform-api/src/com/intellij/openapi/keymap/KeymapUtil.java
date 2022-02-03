@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.*;
@@ -731,9 +731,12 @@ public final class KeymapUtil {
     return filtered.isEmpty() ? null : new CustomShortcutSet(filtered.toArray(Shortcut.EMPTY_ARRAY));
   }
 
+  public static @Nullable CustomShortcutSet getMnemonicAsShortcut(char mnemonic) {
+    return getMnemonicAsShortcut(KeyEvent.getExtendedKeyCodeForChar(mnemonic));
+  }
+
   @Nullable
   public static CustomShortcutSet getMnemonicAsShortcut(int mnemonic) {
-    mnemonic = KeyEvent.getExtendedKeyCodeForChar(mnemonic);
     if (mnemonic != KeyEvent.VK_UNDEFINED) {
       KeyboardShortcut ctrlAltShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, ALT_DOWN_MASK | CTRL_DOWN_MASK), null);
       KeyboardShortcut altShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, ALT_DOWN_MASK), null);

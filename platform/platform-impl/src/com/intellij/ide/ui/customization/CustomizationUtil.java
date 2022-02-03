@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
@@ -32,6 +32,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -69,13 +70,10 @@ public final class CustomizationUtil {
     }
 
     String text = group.getTemplatePresentation().getText();
-    final int mnemonic = group.getTemplatePresentation().getMnemonic();
     if (text != null) {
-      for (int i = 0; i < text.length(); i++) {
-        if (Character.toUpperCase(text.charAt(i)) == mnemonic) {
-          text = text.replaceFirst(String.valueOf(text.charAt(i)), "_" + text.charAt(i));
-          break;
-        }
+      int index = group.getTemplatePresentation().getDisplayedMnemonicIndex();
+      if (0 <= index && index <= text.length()) {
+        text = text.substring(0, index) + UIUtil.MNEMONIC + text.substring(index);
       }
     }
 
