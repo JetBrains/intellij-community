@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.CtrlMouseAction;
+import com.intellij.codeInsight.navigation.CtrlMouseData;
 import com.intellij.codeInsight.navigation.CtrlMouseInfo;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInsight.navigation.action.GotoDeclarationUtil;
@@ -88,6 +89,11 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
   @Override
   public @Nullable CtrlMouseInfo getCtrlMouseInfo(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
     return GotoDeclarationOrUsageHandler2.getCtrlMouseInfo(editor, file, offset);
+  }
+
+  @Override
+  public @Nullable CtrlMouseData getCtrlMouseData(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
+    return GotoDeclarationOrUsageHandler2.getCtrlMouseData(editor, file, offset);
   }
 
   @Override

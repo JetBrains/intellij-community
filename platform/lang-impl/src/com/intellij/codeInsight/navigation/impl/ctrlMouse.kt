@@ -1,10 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("TestOnlyProblems") // KTIJ-19938
+
 package com.intellij.codeInsight.navigation.impl
 
-import com.intellij.codeInsight.navigation.CtrlMouseInfo
-import com.intellij.codeInsight.navigation.MultipleTargetElementsInfo
+import com.intellij.codeInsight.navigation.*
 import com.intellij.model.psi.impl.DeclarationOrReference
 import com.intellij.model.psi.impl.TargetData
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 
@@ -20,6 +22,21 @@ internal fun TargetData.ctrlMouseInfo(): CtrlMouseInfo? {
   }
   else {
     MultipleTargetElementsInfo(ranges)
+  }
+}
+
+internal fun TargetData.ctrlMouseData(project: Project): CtrlMouseData? {
+  val targets = this.targets
+  if (targets.isEmpty()) {
+    return null
+  }
+  val ranges = highlightRanges()
+  val singleTarget = targets.singleOrNull()
+  if (singleTarget == null) {
+    return multipleTargetsCtrlMouseData(ranges)
+  }
+  else {
+    return symbolCtrlMouseData(project, singleTarget.symbol, elementAtOffset(), ranges, this is TargetData.Declared)
   }
 }
 

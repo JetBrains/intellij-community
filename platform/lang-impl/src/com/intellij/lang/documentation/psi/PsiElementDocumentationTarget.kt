@@ -4,6 +4,7 @@
 package com.intellij.lang.documentation.psi
 
 import com.intellij.codeInsight.documentation.DocumentationManager
+import com.intellij.codeInsight.navigation.SingleTargetElementInfo
 import com.intellij.codeInsight.navigation.targetPresentation
 import com.intellij.lang.documentation.*
 import com.intellij.model.Pointer
@@ -54,6 +55,10 @@ class PsiElementDocumentationTarget private constructor(
   override val presentation: TargetPresentation get() = targetPresentation(targetElement)
 
   override val navigatable: Navigatable? get() = targetElement as? Navigatable
+
+  override fun computeDocumentationHint(): String? {
+    return SingleTargetElementInfo.generateInfo(targetElement, sourceElement, isNavigatableQuickDoc(sourceElement, targetElement)).text
+  }
 
   override fun computeDocumentation(): DocumentationResult? {
     val provider = DocumentationManager.getProviderFromElement(targetElement, sourceElement)

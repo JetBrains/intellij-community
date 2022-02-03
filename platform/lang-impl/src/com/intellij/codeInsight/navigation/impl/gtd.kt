@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.impl
 
+import com.intellij.codeInsight.navigation.CtrlMouseData
 import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
@@ -28,6 +29,8 @@ interface GTDActionData {
 
   fun ctrlMouseInfo(): CtrlMouseInfo?
 
+  fun ctrlMouseData(): CtrlMouseData?
+
   fun result(): NavigationActionResult?
 }
 
@@ -51,6 +54,8 @@ internal fun TargetData.toGTDActionData(project: Project): GTDActionData {
 private class TargetGTDActionData(private val project: Project, private val targetData: TargetData) : GTDActionData {
 
   override fun ctrlMouseInfo(): CtrlMouseInfo? = targetData.ctrlMouseInfo()
+
+  override fun ctrlMouseData(): CtrlMouseData? = targetData.ctrlMouseData(project)
 
   override fun result(): NavigationActionResult? {
     //old behaviour: use gtd target provider if element has only a single target

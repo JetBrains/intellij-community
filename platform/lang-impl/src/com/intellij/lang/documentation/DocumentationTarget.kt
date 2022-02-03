@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation
 
 import com.intellij.model.Pointer
 import com.intellij.navigation.TargetPresentation
+import com.intellij.openapi.util.NlsContexts.HintText
 import com.intellij.pom.Navigatable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -39,6 +40,18 @@ interface DocumentationTarget {
     get() = null
 
   /**
+   * TODO consider extracting separate interface ShortDocumentationTarget
+   * TODO consider showing full doc on ctrl+hover
+   *
+   * @return a HTML string to show in the editor hint when this target is highlighted by ctrl+mouse hover,
+   * or `null` if this target doesn't need a hint
+   */
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  @JvmDefault
+  fun computeDocumentationHint(): @HintText String? = null
+
+  /**
    * If the documentation can be computed in the current read action, then the implementation is expected to do so,
    * and return [DocumentationResult.documentation] or [DocumentationResult.externalDocumentation].
    * For example, the implementation may compute the documentation from a `PsiElement` which represents a comment.
@@ -51,5 +64,6 @@ interface DocumentationTarget {
    */
   @RequiresReadLock
   @RequiresBackgroundThread
-  fun computeDocumentation(): DocumentationResult?
+  @JvmDefault
+  fun computeDocumentation(): DocumentationResult? = null
 }

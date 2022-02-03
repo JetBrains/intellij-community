@@ -8,17 +8,15 @@ import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger
-import com.intellij.lang.documentation.DocumentationProvider
+import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.ide.impl.DocumentationManager
 import com.intellij.lang.documentation.ide.impl.injectedThenHost
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.model.Pointer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.MouseShortcut
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ReadConstraint
-import com.intellij.openapi.application.constrainedReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
@@ -41,10 +39,9 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts.HintText
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiManager
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.ScreenUtil.isMovementTowards
@@ -59,6 +56,7 @@ import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
 import kotlin.math.max
@@ -234,14 +232,16 @@ class CtrlMouseHandler2(
 
   private fun computeInReadAction(request: CtrlMouseRequest): CtrlMouseResult? {
     return injectedThenHost(project, request.editor, request.offset) { editor, file, offset ->
-      val ctrlMouseInfo = request.action.getCtrlMouseInfo(editor, file, offset)
-      if (ctrlMouseInfo == null) {
+      val data: CtrlMouseData? = request.action.getCtrlMouseData(editor, file, offset)
+      if (data == null) {
         return@injectedThenHost null
       }
       val result = CtrlMouseResult(
-        ctrlMouseInfo.isNavigatable,
-        ctrlMouseInfo.ranges,
-        ctrlMouseInfo.docInfo,
+        data.isNavigatable,
+        data.ranges,
+        data.hintText,
+        data.target?.createPointer(),
+        data.target?.javaClass,
       )
       if (editor is EditorWindow) {
         val manager = InjectedLanguageManager.getInstance(project)
@@ -266,15 +266,14 @@ class CtrlMouseHandler2(
       }
       clearState()
     }
-    val docInfo = result.docInfo
-    if (!result.isNavigatable && docInfo.text == null) {
+    if (!result.isNavigatable && result.hintText == null) {
       return
     }
     val (editor, offset, _) = request
     if (!checkRanges(result, editor.document)) {
       return
     }
-    val hint = showHint(editor, offset, docInfo)
+    val hint = showHint(editor, offset, result)
     editor.scrollingModel.addVisibleAreaListener(this)
     editor.contentComponent.addKeyListener(this)
     if (result.isNavigatable) {
@@ -300,21 +299,18 @@ class CtrlMouseHandler2(
     }
   }
 
-  private fun showHint(editor: EditorEx, hostOffset: Int, docInfo: CtrlMouseDocInfo): LightweightHint? {
+  private fun showHint(editor: EditorEx, hostOffset: Int, result: CtrlMouseResult): LightweightHint? {
     val skipHint = EditorMouseHoverPopupManager.getInstance().isHintShown ||
                    DocumentationManager.instance(project).isPopupVisible ||
                    ApplicationManager.getApplication().isUnitTestMode
     if (skipHint) {
       return null
     }
-    val text = docInfo.text
+    val text = result.hintText
                ?: return null
-    UIEventLogger.QuickNavigateInfoPopupShown.log(project, if (docInfo.context == null) null else docInfo.context.language)
-    val hyperlinkListener = if (docInfo.docProvider == null || docInfo.context == null) {
-      null
-    }
-    else {
-      HintHyperlinkListener(docInfo.docProvider, docInfo.context)
+    UIEventLogger.QuickNavigateInfoPopupShown2.log(project, result.targetClass!!)
+    val hyperlinkListener = result.targetPointer?.let {
+      HintHyperlinkListener(editor, it)
     }
     val component = HintUtil.createInformationLabel(text, hyperlinkListener, null, null).also {
       it.border = JBUI.Borders.empty(6, 6, 5, 6)
@@ -323,8 +319,8 @@ class CtrlMouseHandler2(
   }
 
   private inner class HintHyperlinkListener(
-    private val myProvider: DocumentationProvider,
-    private val myContext: PsiElement,
+    private val editor: Editor,
+    private val targetPointer: Pointer<out DocumentationTarget>,
   ) : HyperlinkListener {
 
     override fun hyperlinkUpdate(e: HyperlinkEvent) {
@@ -335,12 +331,12 @@ class CtrlMouseHandler2(
       if (!description.startsWith(PSI_ELEMENT_PROTOCOL)) {
         return
       }
-      val elementName = description.substring(PSI_ELEMENT_PROTOCOL.length)
-      DumbService.getInstance(project).withAlternativeResolveEnabled {
-        val targetElement = myProvider.getDocumentationElementForLink(PsiManager.getInstance(project), elementName, myContext)
-        if (targetElement != null) {
+      cs.launch(Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
+        val ok = DocumentationManager.instance(project).activateInlineLinkS(
+          targetPointer::dereference, description, editor, editorPoint(e, editor)
+        )
+        if (ok) {
           clearState()
-          com.intellij.codeInsight.documentation.DocumentationManager.getInstance(project).showJavaDocInfo(targetElement, myContext, null)
         }
       }
     }
@@ -373,7 +369,9 @@ private data class CtrlMouseRequest(
 private data class CtrlMouseResult(
   val isNavigatable: Boolean,
   val ranges: List<TextRange>,
-  val docInfo: CtrlMouseDocInfo,
+  val hintText: @HintText String?,
+  val targetPointer: Pointer<out DocumentationTarget>?,
+  val targetClass: Class<out Any>?, // for stats
 )
 
 private fun getCtrlMouseAction(modifiers: Int): CtrlMouseAction? {
@@ -440,5 +438,12 @@ private fun textAttributes(navigatable: Boolean): TextAttributes? {
   }
   else {
     TextAttributes(null, HintUtil.getInformationColor(), null, null, Font.PLAIN)
+  }
+}
+
+private fun editorPoint(event: HyperlinkEvent, editor: Editor): Point {
+  val inputEvent = event.inputEvent as MouseEvent // link could be activated only with a mouse
+  return Point(inputEvent.locationOnScreen).also {
+    SwingUtilities.convertPointFromScreen(it, editor.contentComponent)
   }
 }

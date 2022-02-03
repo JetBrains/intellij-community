@@ -35,6 +35,7 @@ class UIEventLogger : CounterUsagesCollector() {
     @JvmField val ImplementationViewToolWindowOpened = group.registerEvent("ImplementationViewToolWindowOpened")
     @JvmField val EditorFoldingIconClicked = group.registerEvent("EditorFoldingIconClicked", EventFields.Boolean("expand"), EventFields.Boolean("recursive"))
     @JvmField val QuickNavigateInfoPopupShown = group.registerEvent("QuickNavigateInfoPopupShown", EventFields.Language)
+    @JvmField val QuickNavigateInfoPopupShown2 = group.registerEvent("QuickNavigateInfoPopupShownClass", EventFields.Class("target class"))
     @JvmField val EditorAnnotationClicked = group.registerEvent("EditorAnnotationClicked", EventFields.Class("class"))
     @JvmField val StatusBarWidgetClicked = group.registerEvent("StatusBarWidgetClicked", EventFields.Class("class"))
     @JvmField val StatusBarPopupShown = group.registerEvent("StatusBarPopupShown", EventFields.Class("class"))

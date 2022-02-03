@@ -235,21 +235,35 @@ internal class DocumentationManager(private val project: Project) : Disposable {
   ) {
     EDT.assertIsEdt()
     cs.launch(Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
-      val pauseAutoUpdateHandle = toolWindowManager.getVisibleAutoUpdatingContent()?.toolWindowUI?.pauseAutoUpdate()
-      try {
-        val result = withContext(Dispatchers.Default) {
-          resolveLink(targetSupplier, url)
-        }
-        if (result !is InternalResolveLinkResult.Value) {
-          BrowserUtil.browseAbsolute(url)
-        }
-        else {
-          showDocumentation(result.value, InlinePopupContext(project, editor, popupPosition))
-        }
+      activateInlineLinkS(targetSupplier, url, editor, popupPosition)
+    }
+  }
+
+  /**
+   * @return `true` if the request was handled,
+   * or `false` if nothing happened (e.g. [url] was not resolved, or [targetSupplier] returned `null`)
+   */
+  suspend fun activateInlineLinkS(
+    targetSupplier: () -> DocumentationTarget?,
+    url: String,
+    editor: Editor,
+    popupPosition: Point,
+  ): Boolean = coroutineScope {
+    val pauseAutoUpdateHandle = toolWindowManager.getVisibleAutoUpdatingContent()?.toolWindowUI?.pauseAutoUpdate()
+    try {
+      val result = withContext(Dispatchers.Default) {
+        resolveLink(targetSupplier, url)
       }
-      finally {
-        pauseAutoUpdateHandle?.let(Disposer::dispose)
+      if (result !is InternalResolveLinkResult.Value) {
+        BrowserUtil.browseAbsolute(url)
       }
+      else {
+        showDocumentation(result.value, InlinePopupContext(project, editor, popupPosition))
+        true
+      }
+    }
+    finally {
+      pauseAutoUpdateHandle?.let(Disposer::dispose)
     }
   }
 }

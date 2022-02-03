@@ -1,9 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.impl
 
-import com.intellij.codeInsight.navigation.BaseCtrlMouseInfo
-import com.intellij.codeInsight.navigation.CtrlMouseDocInfo
-import com.intellij.codeInsight.navigation.CtrlMouseInfo
+import com.intellij.codeInsight.navigation.*
 import com.intellij.navigation.DirectNavigationProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -31,6 +29,8 @@ private class DirectNavigationData(
     override fun getDocInfo(): CtrlMouseDocInfo = CtrlMouseDocInfo.EMPTY
     override fun isValid(): Boolean = true
   }
+
+  override fun ctrlMouseData(): CtrlMouseData = rangeOnlyCtrlMouseData(listOf(sourceElement.textRange))
 
   override fun result(): NavigationActionResult? {
     val request = targetElement.psiNavigatable()?.navigationRequest() ?: return null

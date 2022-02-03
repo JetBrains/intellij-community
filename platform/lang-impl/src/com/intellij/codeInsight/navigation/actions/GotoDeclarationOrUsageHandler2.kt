@@ -3,6 +3,7 @@ package com.intellij.codeInsight.navigation.actions
 
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.navigation.CtrlMouseData
 import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyHandler2.gotoDeclaration
 import com.intellij.codeInsight.navigation.impl.*
@@ -33,6 +34,11 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
   @JvmStatic
   fun getCtrlMouseInfo(editor: Editor, file: PsiFile, offset: Int): CtrlMouseInfo? {
     return gotoDeclarationOrUsages(file.project, editor, file, offset)?.ctrlMouseInfo()
+  }
+
+  @JvmStatic
+  fun getCtrlMouseData(editor: Editor, file: PsiFile, offset: Int): CtrlMouseData? {
+    return gotoDeclarationOrUsages(file.project, editor, file, offset)?.ctrlMouseData()
   }
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
