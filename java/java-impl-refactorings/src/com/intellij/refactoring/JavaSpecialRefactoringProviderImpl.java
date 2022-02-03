@@ -15,7 +15,6 @@ import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
 import com.intellij.refactoring.introduceField.InplaceIntroduceFieldPopup;
-import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
@@ -155,10 +154,5 @@ public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactorin
                                                                  @NotNull String methodName,
                                                                  @Nullable JavaSdkVersion javaVersion) throws PrepareFailedException {
     return ExtractLightMethodObjectHandler.extractLightMethodObject(project, originalContext, fragment, methodName, javaVersion);
-  }
-
-  @Override
-  public PsiMethod chooseEnclosingMethod(@NotNull PsiMethod method) {
-    return IntroduceParameterHandler.chooseEnclosingMethod(method);
   }
 }

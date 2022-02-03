@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -28,6 +29,7 @@ import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
+import com.intellij.refactoring.introduceParameter.EnclosingMethodSelectionDialog;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.util.containers.ContainerUtil;
@@ -1123,6 +1125,54 @@ public class CommonJavaRefactoringUtil {
       }
     }
     return false;
+  }
+
+  public static List<PsiMethod> getEnclosingMethods(@NotNull PsiMethod nearest) {
+    List<PsiMethod> enclosingMethods = new ArrayList<>();
+    enclosingMethods.add(nearest);
+    PsiMethod method = nearest;
+    while(true) {
+      method = PsiTreeUtil.getParentOfType(method, PsiMethod.class, true);
+      if (method == null) break;
+      enclosingMethods.add(method);
+    }
+    if (enclosingMethods.size() > 1) {
+      List<PsiMethod> methodsNotImplementingLibraryInterfaces = new ArrayList<>();
+      for(PsiMethod enclosing: enclosingMethods) {
+        PsiMethod[] superMethods = enclosing.findDeepestSuperMethods();
+        boolean libraryInterfaceMethod = false;
+        for(PsiMethod superMethod: superMethods) {
+          libraryInterfaceMethod |= isLibraryInterfaceMethod(superMethod);
+        }
+        if (!libraryInterfaceMethod) {
+          methodsNotImplementingLibraryInterfaces.add(enclosing);
+        }
+      }
+      if (!methodsNotImplementingLibraryInterfaces.isEmpty()) {
+        return methodsNotImplementingLibraryInterfaces;
+      }
+    }
+    return enclosingMethods;
+  }
+
+  @Nullable
+  public static PsiMethod chooseEnclosingMethod(@NotNull PsiMethod method) {
+    final List<PsiMethod> validEnclosingMethods = getEnclosingMethods(method);
+    if (validEnclosingMethods.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
+      final EnclosingMethodSelectionDialog dialog = new EnclosingMethodSelectionDialog(method.getProject(), validEnclosingMethods);
+      if (!dialog.showAndGet()) {
+        return null;
+      }
+      method = dialog.getSelectedMethod();
+    }
+    else if (validEnclosingMethods.size() == 1) {
+      method = validEnclosingMethods.get(0);
+    }
+    return method;
+  }
+
+  private static boolean isLibraryInterfaceMethod(final PsiMethod method) {
+    return method.hasModifierProperty(PsiModifier.ABSTRACT) && !method.getManager().isInProject(method);
   }
 
   public interface SuperTypeVisitor {

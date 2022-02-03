@@ -18,6 +18,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +71,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     final String varName = myReferenceExpression.getReferenceName();
     PsiMethod method = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiMethod.class);
     LOG.assertTrue(method != null);
-    method = JavaSpecialRefactoringProvider.getInstance().chooseEnclosingMethod(method);
+    method = CommonJavaRefactoringUtil.chooseEnclosingMethod(method);
     if (method == null) return;
 
     method = SuperMethodWarningUtil.checkSuperMethod(method);

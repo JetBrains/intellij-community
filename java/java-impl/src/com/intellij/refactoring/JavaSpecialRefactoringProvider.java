@@ -96,8 +96,6 @@ public interface JavaSpecialRefactoringProvider {
 
   // utils which have too many deps
 
-  PsiMethod chooseEnclosingMethod(@NotNull PsiMethod method);
-
   SuggestedNameInfo suggestFieldName(@Nullable PsiType defaultType,
                                      @Nullable final PsiLocalVariable localVariable,
                                      final PsiExpression initializer,

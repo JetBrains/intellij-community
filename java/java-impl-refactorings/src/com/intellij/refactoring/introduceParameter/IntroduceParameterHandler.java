@@ -175,7 +175,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       return false;
     }
 
-    final List<PsiMethod> validEnclosingMethods = getEnclosingMethods(method);
+    final List<PsiMethod> validEnclosingMethods = CommonJavaRefactoringUtil.getEnclosingMethods(method);
     if (validEnclosingMethods.isEmpty()) {
       return false;
     }
@@ -306,54 +306,6 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     /* do nothing */
   }
 
-  public static List<PsiMethod> getEnclosingMethods(@NotNull PsiMethod nearest) {
-    List<PsiMethod> enclosingMethods = new ArrayList<>();
-    enclosingMethods.add(nearest);
-    PsiMethod method = nearest;
-    while(true) {
-      method = PsiTreeUtil.getParentOfType(method, PsiMethod.class, true);
-      if (method == null) break;
-      enclosingMethods.add(method);
-    }
-    if (enclosingMethods.size() > 1) {
-      List<PsiMethod> methodsNotImplementingLibraryInterfaces = new ArrayList<>();
-      for(PsiMethod enclosing: enclosingMethods) {
-        PsiMethod[] superMethods = enclosing.findDeepestSuperMethods();
-        boolean libraryInterfaceMethod = false;
-        for(PsiMethod superMethod: superMethods) {
-          libraryInterfaceMethod |= isLibraryInterfaceMethod(superMethod);
-        }
-        if (!libraryInterfaceMethod) {
-          methodsNotImplementingLibraryInterfaces.add(enclosing);
-        }
-      }
-      if (!methodsNotImplementingLibraryInterfaces.isEmpty()) {
-        return methodsNotImplementingLibraryInterfaces;
-      }
-    }
-    return enclosingMethods;
-  }
-
-
-  @Nullable
-  public static PsiMethod chooseEnclosingMethod(@NotNull PsiMethod method) {
-    final List<PsiMethod> validEnclosingMethods = getEnclosingMethods(method);
-    if (validEnclosingMethods.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
-      final EnclosingMethodSelectionDialog dialog = new EnclosingMethodSelectionDialog(method.getProject(), validEnclosingMethods);
-      if (!dialog.showAndGet()) {
-        return null;
-      }
-      method = dialog.getSelectedMethod();
-    }
-    else if (validEnclosingMethods.size() == 1) {
-      method = validEnclosingMethods.get(0);
-    }
-    return method;
-  }
-
-  private static boolean isLibraryInterfaceMethod(final PsiMethod method) {
-    return method.hasModifierProperty(PsiModifier.ABSTRACT) && !method.getManager().isInProject(method);
-  }
 
   private class Introducer {
 
@@ -540,7 +492,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       if (containingMethod == null) {
         return false;
       }
-      final List<PsiMethod> enclosingMethods = getEnclosingMethods(containingMethod);
+      final List<PsiMethod> enclosingMethods = CommonJavaRefactoringUtil.getEnclosingMethods(containingMethod);
       if (enclosingMethods.isEmpty()) {
         return false;
       }
@@ -548,7 +500,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       final PsiElement[] elementsCopy = getElementsInCopy(project, file, elements);
       final PsiMethod containingMethodCopy = Util.getContainingMethod(elementsCopy[0]);
       LOG.assertTrue(containingMethodCopy != null);
-      final List<PsiMethod> enclosingMethodsInCopy = getEnclosingMethods(containingMethodCopy);
+      final List<PsiMethod> enclosingMethodsInCopy = CommonJavaRefactoringUtil.getEnclosingMethods(containingMethodCopy);
       final MyExtractMethodProcessor processor = new MyExtractMethodProcessor(project, editor, elementsCopy,
                                                                               enclosingMethodsInCopy.get(enclosingMethodsInCopy.size() - 1));
       try {
