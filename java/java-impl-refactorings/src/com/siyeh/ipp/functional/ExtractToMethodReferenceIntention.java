@@ -16,7 +16,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.extractMethod.ControlFlowWrapper;
-import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
@@ -95,7 +94,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
       PsiElement[] elements = body.getStatements();
 
       HashSet<PsiField> usedFields = new HashSet<>();
-      boolean canBeStatic = ExtractMethodProcessor.canBeStatic(targetClass, lambdaExpression, elements, usedFields) && usedFields.isEmpty();
+      boolean canBeStatic = CommonJavaRefactoringUtil.canBeStatic(targetClass, lambdaExpression, elements, usedFields) && usedFields.isEmpty();
       PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(targetClass.getProject());
       PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
 

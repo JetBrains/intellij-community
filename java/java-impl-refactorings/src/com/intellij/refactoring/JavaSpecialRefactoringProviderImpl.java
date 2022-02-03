@@ -11,7 +11,6 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureProcessor;
 import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
 import com.intellij.refactoring.changeSignature.*;
-import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
@@ -26,6 +25,7 @@ import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -141,14 +141,6 @@ public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactorin
                                             boolean forStatic,
                                             @NotNull PsiClass parentClass) {
     return InplaceIntroduceFieldPopup.suggestFieldName(defaultType, localVariable, initializer, forStatic, parentClass);
-  }
-
-  @Override
-  public boolean canBeStatic(PsiClass targetClass,
-                             PsiElement place,
-                             PsiElement[] elements,
-                             Set<? super PsiField> usedFields) {
-    return ExtractMethodProcessor.canBeStatic(targetClass, place, elements, usedFields);
   }
 
   @Override

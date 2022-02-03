@@ -104,8 +104,6 @@ public interface JavaSpecialRefactoringProvider {
                                      final boolean forStatic,
                                      @NotNull final PsiClass parentClass);
 
-  boolean canBeStatic(final PsiClass targetClass, final PsiElement place, final PsiElement[] elements, Set<? super PsiField> usedFields);
-
   PsiExpression inlineVariable(PsiVariable variable,
                                PsiExpression initializer,
                                PsiJavaCodeReferenceElement ref,

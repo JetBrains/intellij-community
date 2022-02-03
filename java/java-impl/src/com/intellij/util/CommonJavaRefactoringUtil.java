@@ -29,6 +29,7 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
+import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -1091,6 +1092,37 @@ public class CommonJavaRefactoringUtil {
         }
       }
     }
+  }
+
+  public static boolean canBeStatic(final PsiClass targetClass, final PsiElement place, final PsiElement[] elements, Set<? super PsiField> usedFields) {
+    if (!PsiUtil.isLocalOrAnonymousClass(targetClass) && (targetClass.getContainingClass() == null || targetClass.hasModifierProperty(PsiModifier.STATIC))) {
+      boolean canBeStatic = true;
+      if (targetClass.isInterface()) {
+        final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(place, PsiMethod.class, false);
+        canBeStatic = containingMethod == null || containingMethod.hasModifierProperty(PsiModifier.STATIC);
+      }
+      if (canBeStatic) {
+        ElementNeedsThis needsThis = new ElementNeedsThis(targetClass) {
+          @Override
+          protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
+            if (classMember instanceof PsiField && !classMember.hasModifierProperty(PsiModifier.STATIC)) {
+              final PsiExpression expression = PsiTreeUtil.getParentOfType(classMemberReference, PsiExpression.class, false);
+              if (expression == null || !PsiUtil.isAccessedForWriting(expression)) {
+                usedFields.add((PsiField)classMember);
+                return;
+              }
+            }
+            super.visitClassMemberReferenceElement(classMember, classMemberReference);
+          }
+        };
+        for (int i = 0; i < elements.length && !needsThis.usesMembers(); i++) {
+          PsiElement element = elements[i];
+          element.accept(needsThis);
+        }
+        return !needsThis.usesMembers();
+      }
+    }
+    return false;
   }
 
   public interface SuperTypeVisitor {
