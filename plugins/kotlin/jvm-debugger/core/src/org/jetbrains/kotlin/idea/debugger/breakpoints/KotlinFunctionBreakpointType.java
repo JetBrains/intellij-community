@@ -9,6 +9,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
@@ -16,11 +18,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerCoreBundle;
+import org.jetbrains.kotlin.platform.TargetPlatform;
 import org.jetbrains.kotlin.psi.*;
 
 import javax.swing.*;
 
 import static org.jetbrains.kotlin.idea.debugger.breakpoints.BreakpointTypeUtilsKt.isBreakpointApplicable;
+import static org.jetbrains.kotlin.idea.project.PlatformKt.getPlatform;
+import static org.jetbrains.kotlin.platform.TargetPlatformKt.isCommon;
+import static org.jetbrains.kotlin.platform.jvm.JvmPlatformKt.isJvm;
 
 // This class is copied from com.intellij.debugger.ui.breakpoints.MethodBreakpoint.
 // Changed parts are marked with '// MODIFICATION: ' comments.
@@ -137,7 +143,7 @@ public class KotlinFunctionBreakpointType
     // MODIFICATION: Start Kotlin implementation
     @Override
     public boolean canPutAt(@NotNull VirtualFile file, int line, @NotNull Project project) {
-        return isBreakpointApplicable(file, line, project, element -> {
+        return isKtFileWithCommonOrJvmPlatform(file, project) && isBreakpointApplicable(file, line, project, element -> {
             if (element instanceof KtConstructor) {
                 return ApplicabilityResult.DEFINITELY_YES;
             }
@@ -167,6 +173,16 @@ public class KotlinFunctionBreakpointType
 
             return ApplicabilityResult.UNKNOWN;
         });
+    }
+
+    private static boolean isKtFileWithCommonOrJvmPlatform(@NotNull VirtualFile file, @NotNull Project project) {
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+        if (!(psiFile instanceof KtFile)) {
+            return false;
+        }
+
+        TargetPlatform platform = getPlatform((KtFile)psiFile);
+        return isCommon(platform) || isJvm(platform);
     }
     // MODIFICATION: End Kotlin implementation
 }
