@@ -58,6 +58,8 @@ class CommitModeManager(private val project: Project) : Disposable {
   internal class MyStartupActivity : VcsStartupActivity {
     override fun runActivity(project: Project) {
       AppUIExecutor.onUiThread().expireWith(project).execute {
+        if (project.isDisposed) return@execute
+        
         val commitModeManager = getInstance(project)
         commitModeManager.subscribeToChanges()
         commitModeManager.updateCommitMode()
