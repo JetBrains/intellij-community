@@ -1,5 +1,5 @@
 // "Opt in for 'A' in containing file 'appendFileAnnotationToAnnotationList.kt'" "true"
-// COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
+// COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_RUNTIME
 @file:[
     JvmName("Foo")

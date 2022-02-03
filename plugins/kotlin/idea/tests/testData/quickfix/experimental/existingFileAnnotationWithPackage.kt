@@ -1,5 +1,5 @@
 // "Opt in for 'B' in containing file 'existingFileAnnotationWithPackage.kt'" "true"
-// COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
+// COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_RUNTIME
 @file:OptIn(A::class)
 

@@ -1,6 +1,6 @@
 // FILE: first.before.kt
 // "Opt in for 'Ann' on 'test'" "true"
-// COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
+// COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_RUNTIME
 // ERROR: This declaration is experimental and its usage must be marked with '@fun.optin.Ann' or '@OptIn(fun.optin.Ann::class)'
 import `fun`.optin.C

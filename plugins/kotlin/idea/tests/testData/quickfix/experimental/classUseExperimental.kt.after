@@ -1,6 +1,6 @@
 // "Opt in for 'MyExperimentalAPI' on containing class 'Bar'" "true"
 // PRIORITY: HIGH
-// COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
+// COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_RUNTIME
 
 package a.b
