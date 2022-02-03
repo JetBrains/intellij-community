@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.diagnostic.Activity;
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.execution.process.WinProcessManager;
 import com.intellij.openapi.application.PathManager;
@@ -586,7 +587,7 @@ public final class EnvironmentUtil {
 
     @Override
     protected @NotNull Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
-      return ForkJoinPool.commonPool().submit(runnable);
+      return ProcessIOExecutorService.INSTANCE.submit(runnable);
     }
 
     @Override
