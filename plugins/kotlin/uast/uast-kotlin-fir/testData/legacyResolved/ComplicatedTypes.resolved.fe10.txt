@@ -1,0 +1,34 @@
+UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> PsiClass:ParameterizedType: ParameterizedType
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang.reflect: reflect
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = reflect) -> PsiPackage:java.lang.reflect: reflect
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = ParameterizedType) -> PsiClass:ParameterizedType: ParameterizedType
+UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> PsiClass:Type: Type
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang.reflect: reflect
+UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = reflect) -> PsiPackage:java.lang.reflect: reflect
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Type) -> PsiClass:Type: Type
+UTypeReferenceExpression (name = kotlin.PublishedApi) -> USimpleNameReferenceExpression (identifier = PublishedApi) -> PsiClass:PublishedApi: PublishedApi
+UTypeReferenceExpression (name = java.lang.reflect.Type) -> USimpleNameReferenceExpression (identifier = Type) -> PsiClass:Type: Type
+    ULocalVariable (name = base) -> UObjectLiteralExpression -> Kotlin_Light_Method:
+    UTypeReferenceExpression (name = TypeBase<T>) -> USimpleNameReferenceExpression (identifier = TypeBase) -> Kotlin_Light_Class:@PublishedApi
+internal open class TypeBase<T>: TypeBase
+    UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
+    UPostfixExpression (operator = !!) -> UQualifiedReferenceExpression -> PsiMethod:getGenericSuperclass: getGenericSuperclass
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiMethod:getJavaClass: getJavaClass
+    UClassLiteralExpression -> USimpleNameReferenceExpression (identifier = base) -> Kotlin_Light_Variable: base
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiMethod:getJavaClass: getJavaClass
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = genericSuperclass) -> PsiMethod:getGenericSuperclass: getGenericSuperclass
+    UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = !!) -> null: null
+    UPostfixExpression (operator = !!) -> UQualifiedReferenceExpression -> PsiMethod:first: first
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiMethod:getActualTypeArguments: getActualTypeArguments
+    UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = superType) -> Kotlin_Light_Variable: superType
+    UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = as) -> null: null
+    UTypeReferenceExpression (name = java.lang.reflect.ParameterizedType) -> USimpleNameReferenceExpression (identifier = ParameterizedType) -> PsiClass:ParameterizedType: ParameterizedType
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = actualTypeArguments) -> PsiMethod:getActualTypeArguments: getActualTypeArguments
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to PsiMethod:first) -> USimpleNameReferenceExpression (identifier = first) -> PsiMethod:first: first
+    UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = !!) -> null: null
