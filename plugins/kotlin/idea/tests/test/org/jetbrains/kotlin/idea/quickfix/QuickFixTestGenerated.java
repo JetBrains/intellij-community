@@ -7435,6 +7435,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/deprecatedSymbolUsage/extensionForGenericClass.kt");
             }
 
+            @TestMetadata("extensionFunCallInLambdaWithReceiver.kt")
+            public void testExtensionFunCallInLambdaWithReceiver() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/extensionFunCallInLambdaWithReceiver.kt");
+            }
+
             @TestMetadata("extensionReceiverWithVarianceType.kt")
             public void testExtensionReceiverWithVarianceType() throws Exception {
                 runTest("testData/quickfix/deprecatedSymbolUsage/extensionReceiverWithVarianceType.kt");

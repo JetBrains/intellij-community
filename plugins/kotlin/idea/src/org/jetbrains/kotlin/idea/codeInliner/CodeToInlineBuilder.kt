@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.SpecifyExplicitLambdaSignatureIntention
+import org.jetbrains.kotlin.idea.intentions.receiverType
 import org.jetbrains.kotlin.idea.references.canBeResolvedViaImport
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -357,8 +358,10 @@ class CodeToInlineBuilder(
                     if (receiver is ImplicitReceiver) {
                         val resolutionScope = expression.getResolutionScope(bindingContext, resolutionFacade)
                         val receiverExpressionToInline = receiver.asExpression(resolutionScope, psiFactory)
-                        if (receiverExpressionToInline != null) {
-                            val receiverType = receiver.type.unCapture()
+                        val receiverType = receiver.type.unCapture()
+                        val receiverIsUnnecessary = (receiverExpressionToInline as? KtThisExpression)?.labelQualifier != null &&
+                                receiverType == targetCallable.receiverType()
+                        if (receiverExpressionToInline != null && !receiverIsUnnecessary) {
                             codeToInline.addPreCommitAction(expressionToResolve) { expr ->
                                 val expressionToReplace = expr.parent as? KtCallExpression ?: expr
                                 val replaced = codeToInline.replaceExpression(
