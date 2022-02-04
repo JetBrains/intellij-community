@@ -8,21 +8,22 @@ import org.junit.Test;
 import java.awt.event.KeyEvent;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 
 public class TextWithMnemonicTest {
   @Test
   public void noMnemonic() {
     TextWithMnemonic hello = TextWithMnemonic.fromPlainText("hello");
-    assertEquals("hello", hello.getText());
     assertEquals("hello", hello.toString());
+    assertTextWithoutSuffix(hello, "hello");
     assertNoMnemonic(hello);
   }
 
   @Test
   public void mnemonicInString() {
     TextWithMnemonic hello = TextWithMnemonic.fromPlainText("hello", 'e');
-    assertEquals("hello", hello.getText());
     assertEquals("h_ello", hello.toString());
+    assertTextWithoutSuffix(hello, "hello");
     assertMnemonic(hello, 1, KeyEvent.VK_E, 'e');
     assertEquals("hello", TextWithMnemonic.fromPlainText("hello", '\0').toString());
   }
@@ -30,47 +31,47 @@ public class TextWithMnemonicTest {
   @Test
   public void parse() {
     TextWithMnemonic hello = TextWithMnemonic.parse("h&ello");
-    assertEquals("hello", hello.getText());
     assertEquals("h_ello", hello.toString());
+    assertTextWithoutSuffix(hello, "hello");
     assertMnemonic(hello, 1, KeyEvent.VK_E, 'e');
   }
 
   @Test
   public void parseUnderscore() {
     TextWithMnemonic hello = TextWithMnemonic.parse("h_ello");
-    assertEquals("hello", hello.getText());
     assertEquals("h_ello", hello.toString());
+    assertTextWithoutSuffix(hello, "hello");
     assertMnemonic(hello, 1, KeyEvent.VK_E, 'e');
   }
 
   @Test
   public void parseJapanese() {
     TextWithMnemonic hello = TextWithMnemonic.parse("hello(&H)");
-    assertEquals("hello", hello.getText());
     assertEquals("hello(_H)", hello.toString());
+    assertText(hello, "hello", "hello(H)");
     assertMnemonic(hello, 6, KeyEvent.VK_H, 'H');
 
     TextWithMnemonic hello2 = TextWithMnemonic.parse("hello (&H)");
-    assertEquals("hello", hello2.getText());
     assertEquals("hello (_H)", hello2.toString());
+    assertText(hello2, "hello", "hello (H)");
     assertMnemonic(hello2, 7, KeyEvent.VK_H, 'H');
   }
 
   @Test
   public void parseJapaneseEllipsis() {
     TextWithMnemonic hello = TextWithMnemonic.parse("hello(&H)...");
-    assertEquals("hello...", hello.getText());
     assertEquals("hello(_H)...", hello.toString());
+    assertText(hello, "hello...", "hello(H)...");
     assertMnemonic(hello, 6, KeyEvent.VK_H, 'H');
 
     TextWithMnemonic hello2 = TextWithMnemonic.parse("hello (&H)…");
-    assertEquals("hello…", hello2.getText());
     assertEquals("hello (_H)…", hello2.toString());
+    assertText(hello2, "hello…", "hello (H)…");
     assertMnemonic(hello2, 7, KeyEvent.VK_H, 'H');
 
     TextWithMnemonic fromPlain = TextWithMnemonic.fromPlainText("hello...", 'x');
-    assertEquals("hello...", fromPlain.getText());
     assertEquals("hello(_X)...", fromPlain.toString());
+    assertText(fromPlain, "hello...", "hello(X)...");
     assertMnemonic(fromPlain, 6, KeyEvent.VK_X, 'X');
   }
   
@@ -107,5 +108,19 @@ public class TextWithMnemonicTest {
     assertEquals(expectedChar, wrapper.getMnemonicChar());
     assertEquals(expectedCode, wrapper.getMnemonicCode());
     assertEquals(expectedIndex, wrapper.getMnemonicIndex());
+  }
+
+  private static void assertText(@NotNull TextWithMnemonic wrapper, @NotNull String expectedText, @NotNull String expectedTextWithSuffix) {
+    assertEquals(expectedText, wrapper.getText());
+    assertEquals(expectedText, wrapper.getText(false));
+    assertEquals(expectedTextWithSuffix, wrapper.getText(true));
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private static void assertTextWithoutSuffix(@NotNull TextWithMnemonic wrapper, @NotNull String expectedText) {
+    String text = wrapper.getText();
+    assertEquals(expectedText, text);
+    assertSame(text, wrapper.getText(false));
+    assertSame(text, wrapper.getText(true));
   }
 }

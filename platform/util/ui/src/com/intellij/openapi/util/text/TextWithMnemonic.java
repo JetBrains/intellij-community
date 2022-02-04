@@ -41,7 +41,7 @@ public final class TextWithMnemonic {
    */
   @NotNull
   public @Nls String getText() {
-    return myText + myMnemonicSuffix.substring(myMnemonicSuffix.length() - getEllipsisLength(myMnemonicSuffix));
+    return getText(false);
   }
 
   /**
@@ -50,7 +50,11 @@ public final class TextWithMnemonic {
    */
   @NotNull
   public @Nls String getText(boolean withMnemonicSuffix) {
-    return withMnemonicSuffix ? myText + myMnemonicSuffix : getText();
+    if (myMnemonicSuffix.isEmpty()) return myText;
+    if (withMnemonicSuffix) return myText + myMnemonicSuffix;
+    int ellipsisLength = getEllipsisLength(myMnemonicSuffix);
+    if (ellipsisLength == 0) return myText;
+    return myText + myMnemonicSuffix.substring(myMnemonicSuffix.length() - ellipsisLength);
   }
 
   /**
