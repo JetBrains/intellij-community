@@ -194,6 +194,9 @@ internal class NewToolbarRootPaneExtension(private val project: Project) : IdeRo
           override fun patchActionsTreeCorrespondingToSchema(root: DefaultMutableTreeNode?) {
             val actionGroup = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR) as? ActionGroup
             fillTreeFromActions(root, actionGroup)
+            for (i in 0 until myActionsTree.rowCount) {
+              myActionsTree.expandRow(i)
+            }
           }
 
           private fun fillTreeFromActions(root: DefaultMutableTreeNode?, actionGroup: ActionGroup?) {
@@ -251,9 +254,10 @@ internal class NewToolbarRootPaneExtension(private val project: Project) : IdeRo
 
   private fun customizeMouseListener() = object : MouseAdapter() {
     override fun mouseClicked(e: MouseEvent?) {
+      if (!SwingUtilities.isRightMouseButton(e)) return
       if (e?.component == null) return
       logger.trace("Customize toolbar mouse event. Component: " + e.component.javaClass + " click location: " + e.x + ", " + e.y +
-      " toolbar bounds: " + this@NewToolbarRootPaneExtension.panel.bounds)
+                   " toolbar bounds: " + this@NewToolbarRootPaneExtension.panel.bounds)
 
       val point = RelativePoint(e.component, Point(e.x, e.y))
       JBPopupFactory.getInstance().createActionGroupPopup(null, DefaultActionGroup(CustomizeToolbarAction()),
