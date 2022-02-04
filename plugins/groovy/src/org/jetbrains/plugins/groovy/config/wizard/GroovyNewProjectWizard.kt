@@ -7,7 +7,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logB
 import com.intellij.ide.wizard.*
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.Project
-import java.util.*
 
 class GroovyNewProjectWizard : LanguageNewProjectWizard {
   override val name: String = "Groovy"
@@ -27,8 +26,8 @@ class GroovyNewProjectWizard : LanguageNewProjectWizard {
     override val buildSystemProperty: GraphProperty<String> by ::stepProperty
     override var buildSystem: String by ::step
 
-    override val groovySdkMavenVersionProperty: GraphProperty<Optional<String>> = propertyGraph.property(Optional.empty())
-    override var groovySdkMavenVersion: Optional<String> by groovySdkMavenVersionProperty
+    override val groovySdkProperty = propertyGraph.property<String?>(null)
+    override var groovySdk by groovySdkProperty
 
     override fun setupProject(project: Project) {
       super.setupProject(project)

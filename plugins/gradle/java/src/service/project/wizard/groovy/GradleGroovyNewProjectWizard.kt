@@ -38,7 +38,9 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
     override fun setupSettingsUI(builder: Panel) {
       super.setupSettingsUI(builder)
-      builder.row(GroovyBundle.message("label.groovy.sdk")) { groovySdkComboBox(groovySdkMavenVersionProperty) }
+      builder.row(GroovyBundle.message("label.groovy.sdk")) {
+        groovySdkComboBox(groovySdkProperty)
+      }
       builder.addSampleCodeCheckbox(addSampleCodeProperty)
     }
 
@@ -47,7 +49,7 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       builder.gradleVersion = suggestGradleVersion()
 
       builder.configureBuildScript {
-        it.withGroovyPlugin(groovySdkMavenVersion.orElse(GROOVY_SDK_FALLBACK_VERSION))
+        it.withGroovyPlugin(groovySdk ?: GROOVY_SDK_FALLBACK_VERSION)
         it.withJUnit()
       }
 
@@ -72,7 +74,7 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       groupIdProperty.afterChange { logGroupIdChanged() }
       artifactIdProperty.afterChange { logArtifactIdChanged() }
       versionProperty.afterChange { logVersionChanged() }
-      groovySdkMavenVersionProperty.afterChange { if (it.isPresent) logGroovyLibrarySelected(context, it.get()) }
+      groovySdkProperty.afterChange { if (it != null) logGroovyLibrarySelected(context, it) }
     }
   }
 }

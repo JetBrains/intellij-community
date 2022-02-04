@@ -5,9 +5,13 @@ import com.intellij.ide.wizard.BuildSystemNewProjectWizardData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.util.Key
-import java.util.*
 
 interface BuildSystemGroovyNewProjectWizardData: BuildSystemNewProjectWizardData {
+
+  val groovySdkProperty : GraphProperty<String?>
+
+  var groovySdk : String?
+
   companion object {
     @JvmStatic val KEY = Key.create<BuildSystemGroovyNewProjectWizardData>(BuildSystemGroovyNewProjectWizardData::class.java.name)
 
@@ -16,8 +20,4 @@ interface BuildSystemGroovyNewProjectWizardData: BuildSystemNewProjectWizardData
     @JvmStatic val NewProjectWizardStep.buildSystemProperty get() = buildSystemData.buildSystemProperty
     @JvmStatic var NewProjectWizardStep.buildSystem get() = buildSystemData.buildSystem; set(it) { buildSystemData.buildSystem = it }
   }
-
-  val groovySdkMavenVersionProperty : GraphProperty<Optional<String>>
-
-  var groovySdkMavenVersion : Optional<String>
 }
