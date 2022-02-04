@@ -60,7 +60,7 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     if (analyzer.analyze(uExpression) != TaintValue.UNKNOWN) return;
     PsiElement target = ((UResolvable)uExpression).resolve();
     TaintNode root = new TaintNode(null, target, reportedElement);
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
       Set<TaintNode> toAnnotate = new HashSet<>();
       toAnnotate = PropagateAnnotationPanel.getSelectedElements(root, toAnnotate);
       if (toAnnotate == null || root.myTaintValue == TaintValue.TAINTED) return;
