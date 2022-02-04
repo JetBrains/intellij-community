@@ -1762,6 +1762,7 @@
     <inspection_tool class="Java8ArraySetAll" enabled="false" level="INFORMATION" enabled_by_default="false" />
     <inspection_tool class="Java8CollectionRemoveIf" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="Java8CollectionsApi" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="Java8ListReplaceAll" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="Java8ListSort" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="Java8MapApi" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="Java8MapForEach" enabled="true" level="WARNING" enabled_by_default="true" />
