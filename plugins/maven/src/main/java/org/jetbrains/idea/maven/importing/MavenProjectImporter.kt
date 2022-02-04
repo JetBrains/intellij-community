@@ -5,9 +5,9 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import org.jetbrains.idea.maven.importing.tree.MavenProjectTreeImporter
 import org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectImporterToWorkspaceModel
 import org.jetbrains.idea.maven.project.*
 
@@ -19,7 +19,6 @@ interface MavenProjectImporter {
     @JvmStatic
     fun createImporter(project: Project,
                        projectsTree: MavenProjectsTree,
-                       fileToModuleMapping: Map<VirtualFile, Module>,
                        projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
                        importModuleGroupsRequired: Boolean,
                        modelsProvider: IdeModifiableModelsProvider,
@@ -29,7 +28,10 @@ interface MavenProjectImporter {
         return MavenProjectImporterToWorkspaceModel(projectsTree, projectsToImportWithChanges, importingSettings,
                                                     VirtualFileUrlManager.getInstance(project), project)
       }
-      return MavenProjectImporterImpl(project, projectsTree, fileToModuleMapping, projectsToImportWithChanges, importModuleGroupsRequired,
+      if (isImportToTreeStructureEnabled()) {
+        return MavenProjectTreeImporter(project, projectsTree, projectsToImportWithChanges, modelsProvider, importingSettings)
+      }
+      return MavenProjectImporterImpl(project, projectsTree, projectsToImportWithChanges, importModuleGroupsRequired,
                                       modelsProvider, importingSettings, dummyModule)
     }
 

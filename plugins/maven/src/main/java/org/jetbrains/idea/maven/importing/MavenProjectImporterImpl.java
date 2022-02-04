@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -68,7 +69,6 @@ class MavenProjectImporterImpl extends MavenProjectImporterBase {
 
   MavenProjectImporterImpl(@NotNull Project p,
                            @NotNull MavenProjectsTree projectsTree,
-                           @NotNull Map<VirtualFile, Module> fileToModuleMapping,
                            @NotNull Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges,
                            boolean importModuleGroupsRequired,
                            @NotNull IdeModifiableModelsProvider modelsProvider,
@@ -76,7 +76,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterBase {
                            @Nullable Module dummyModule) {
     super(projectsTree, importingSettings, projectsToImportWithChanges);
     myProject = p;
-    myFileToModuleMapping = fileToModuleMapping;
+    myFileToModuleMapping = getFileToModuleMapping(p, dummyModule, modelsProvider);
     myImportModuleGroupsRequired = importModuleGroupsRequired;
     myDummyModule = dummyModule;
 
@@ -90,7 +90,8 @@ class MavenProjectImporterImpl extends MavenProjectImporterBase {
     long startTime = System.currentTimeMillis();
     if (MavenUtil.newModelEnabled(myProject)) {
       myModelsProvider = new ModifiableModelsProviderProxyImpl(myProject, myDiff);
-    } else {
+    }
+    else {
       myModelsProvider = new ModifiableModelsProviderProxyWrapper(myIdeModifiableModelsProvider);
     }
     myModuleModel = myModelsProvider.getModuleModelProxy();
@@ -167,7 +168,8 @@ class MavenProjectImporterImpl extends MavenProjectImporterBase {
             }
           }
           configFacets(postTasks, toRun);
-        } finally {
+        }
+        finally {
           MavenUtil.invokeAndWaitWriteAction(myProject, () -> {
             ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
               provider.commit();
@@ -270,6 +272,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterBase {
 
   /**
    * Collects modules that need to change module type
+   *
    * @return the first List in returned Pair contains already mavenized modules, the second List - not mavenized
    */
   private Pair<List<Pair<MavenProject, Module>>, List<Pair<MavenProject, Module>>> collectIncompatibleModulesWithProjects() {
@@ -449,9 +452,12 @@ class MavenProjectImporterImpl extends MavenProjectImporterBase {
     for (Module module : modules) {
       if (module.isDisposed()) continue;
       ExternalSystemModulePropertyManager modulePropertyManager = ExternalSystemModulePropertyManager.getInstance(module);
-      if (modulePropertyManager instanceof ExternalSystemModulePropertyManagerBridge && module instanceof ModuleBridge && ((ModuleBridge)module).getDiff() == null) {
+      if (modulePropertyManager instanceof ExternalSystemModulePropertyManagerBridge &&
+          module instanceof ModuleBridge &&
+          ((ModuleBridge)module).getDiff() == null) {
         ((ExternalSystemModulePropertyManagerBridge)modulePropertyManager).setMavenized(mavenized, storageBuilder);
-      } else {
+      }
+      else {
         modulePropertyManager.setMavenized(mavenized);
       }
     }
@@ -625,4 +631,21 @@ class MavenProjectImporterImpl extends MavenProjectImporterBase {
     return myCreatedModules;
   }
 
+  private static Map<VirtualFile, Module> getFileToModuleMapping(
+    Project project,
+    Module myDummyModule,
+    IdeModifiableModelsProvider modelsProvider) {
+    return MavenProjectsManager.getInstance(project)
+      .getFileToModuleMapping(new MavenModelsProvider() {
+        @Override
+        public Module[] getModules() {
+          return ArrayUtil.remove(modelsProvider.getModules(), myDummyModule);
+        }
+
+        @Override
+        public VirtualFile[] getContentRoots(Module module) {
+          return modelsProvider.getContentRoots(module);
+        }
+      });
+  }
 }

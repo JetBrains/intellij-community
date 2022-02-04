@@ -253,8 +253,6 @@ class MavenImportFlow {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     val projectManager = MavenProjectsManager.getInstance(context.project)
     val projectImporter = MavenProjectImporter.createImporter(context.project, context.readContext.projectsTree,
-                                                              projectManager.getFileToModuleMapping(
-                                                                MavenDefaultModelsProvider(context.project)),
                                                               context.projectsToImport.map {
                                                                 it to MavenProjectChanges.ALL
                                                               }.toMap(), false, modelsProvider,
