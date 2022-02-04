@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.maven
 
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils.runUnderDisposeAwareIndicator
 
 
-class MavenImportListener : StartupActivity {
+class MavenImportStartupActivity : StartupActivity {
 
     override fun runActivity(project: Project) {
         val parentDisposable = KotlinPluginDisposable.getInstance(project)
@@ -28,12 +28,15 @@ class MavenImportListener : StartupActivity {
             }
         )
 
-        MavenProjectsManager.getInstance(project)?.addManagerListener(object : MavenProjectsManager.Listener {
-            override fun projectsScheduled() {
-                runUnderDisposeAwareIndicator(parentDisposable) {
-                    KotlinMigrationProjectService.getInstance(project).onImportAboutToStart()
+        MavenProjectsManager.getInstance(project)?.addManagerListener(
+            object : MavenProjectsManager.Listener {
+                override fun projectsScheduled() {
+                    runUnderDisposeAwareIndicator(parentDisposable) {
+                        KotlinMigrationProjectService.getInstance(project).onImportAboutToStart()
+                    }
                 }
-            }
-        })
+            },
+            parentDisposable,
+        )
     }
 }
