@@ -2874,6 +2874,7 @@
     <inspection_tool class="ReplaceNegatedIsEmptyWithIsNotEmpty" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
     <inspection_tool class="ReplaceNotNullAssertionWithElvisReturn" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
     <inspection_tool class="ReplaceNullCheck" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="ReplaceOnLiteralHasNoEffect" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ReplacePutWithAssignment" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
     <inspection_tool class="ReplaceRangeStartEndInclusiveWithFirstLast" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
     <inspection_tool class="ReplaceRangeToWithUntil" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
@@ -3517,6 +3518,7 @@
           <module name="intellij.xml.dom.impl" />
           <module name="intellij.xml.dom" />
           <module name="intellij.xml.psi" />
+          <module name="intellij.java.impl.refactorings" />
         </modules-set>
         <modules-set>
           <module name="intellij.spring.boot.core" />
@@ -3597,6 +3599,7 @@
           <module name="intellij.platform.lang.core" />
           <module name="intellij.platform.ide.core" />
           <module name="intellij.codeServer.db.connectivity" />
+          <module name="intellij.codeServer.core" />
         </modules-set>
         <modules-set>
           <module name="intellij.xslt.debugger.impl.rt" />
