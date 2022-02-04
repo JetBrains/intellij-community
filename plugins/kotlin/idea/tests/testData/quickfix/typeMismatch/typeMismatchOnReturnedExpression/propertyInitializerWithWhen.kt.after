@@ -1,0 +1,8 @@
+// "Change type of 'foo' to 'Any'" "true"
+class O
+class P
+
+val foo: Any = when {
+    true -> O()
+    else -> P()
+}

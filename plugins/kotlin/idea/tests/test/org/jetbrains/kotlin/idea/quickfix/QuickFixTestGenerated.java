@@ -14176,6 +14176,31 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                     runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/propertyGetterInitializerTypeMismatch.kt");
                 }
 
+                @TestMetadata("propertyGetterWithIf.kt")
+                public void testPropertyGetterWithIf() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/propertyGetterWithIf.kt");
+                }
+
+                @TestMetadata("propertyGetterWithIf2.kt")
+                public void testPropertyGetterWithIf2() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/propertyGetterWithIf2.kt");
+                }
+
+                @TestMetadata("propertyGetterWithIf3.kt")
+                public void testPropertyGetterWithIf3() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/propertyGetterWithIf3.kt");
+                }
+
+                @TestMetadata("propertyInitializerWithIf.kt")
+                public void testPropertyInitializerWithIf() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/propertyInitializerWithIf.kt");
+                }
+
+                @TestMetadata("propertyInitializerWithWhen.kt")
+                public void testPropertyInitializerWithWhen() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/propertyInitializerWithWhen.kt");
+                }
+
                 @TestMetadata("returnedExpressionTypeMismatchFunctionParameterType.kt")
                 public void testReturnedExpressionTypeMismatchFunctionParameterType() throws Exception {
                     runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/returnedExpressionTypeMismatchFunctionParameterType.kt");
