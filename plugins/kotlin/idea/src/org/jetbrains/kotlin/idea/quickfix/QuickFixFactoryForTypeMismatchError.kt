@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.intentions.reflectToRegularFunctionType
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.approximateWithResolvableType
 import org.jetbrains.kotlin.idea.util.getResolutionScope
+import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
@@ -138,7 +139,6 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
             }
         }
 
-
         actions.addAll(WrapWithCollectionLiteralCallFix.create(expectedType, expressionType, diagnosticElement))
 
         ConvertCollectionFix.getConversionTypeOrNull(expressionType, expectedType)?.let {
@@ -194,7 +194,13 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
 
         // Suggest replacing the parameter type `T` with its expected definitely non-nullable subtype `T & Any`.
         // Types that contain DNN types as arguments (like `(Mutable)Collection<T & Any>`) are currently not supported.
-        if (diagnosticElement is KtReferenceExpression && expectedType.isDefinitelyNotNullType) {
+        // The "Change parameter type" action is generated only if the `DefinitelyNonNullableTypes` language feature is enabled:
+        // if it is disabled, the `T & Any` intersection type is resolved as just `T`, so the fix would not have any effect.
+        if (
+            diagnosticElement is KtReferenceExpression &&
+            expectedType.isDefinitelyNotNullType &&
+            diagnosticElement.module?.languageVersionSettings?.supportsFeature(LanguageFeature.DefinitelyNonNullableTypes) == true
+        ) {
             val descriptor = context[BindingContext.REFERENCE_TARGET, diagnosticElement]?.safeAs<CallableDescriptor>()
             when (val declaration = QuickFixUtil.safeGetDeclaration(descriptor)) {
                 is KtParameter -> {
@@ -224,7 +230,6 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
         val expressionParent = diagnosticElement.parent
 
         // Mismatch in returned expression:
-
         val function = if (expressionParent is KtReturnExpression)
             expressionParent.getTargetFunction(context)
         else
