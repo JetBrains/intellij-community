@@ -210,6 +210,7 @@ final class BuildDependenciesDownloader {
       HttpRequest request = HttpRequest.newBuilder()
         .GET()
         .uri(uri)
+        .version(HttpClient.Version.HTTP_1_1) // work-around a client bug for HTTP/2 when Host header is sent twice
         .setHeader("User-Agent", "Build Script Downloader")
         .build();
 
