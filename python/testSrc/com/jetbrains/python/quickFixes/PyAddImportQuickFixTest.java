@@ -368,9 +368,12 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     dumpSdkRoots();
     VirtualFile skeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
     skeletonsDir.refresh(true, true);
-    System.out.println("Under VFS: " + skeletonsDir.findChild("django"));
+    System.out.println("Under VFS (django): " + skeletonsDir.findChild("django"));
+    System.out.println("Under VFS (django/__init__.py): " + skeletonsDir.findFileByRelativePath("django/__init__.py"));
     Path djangoDirPath = skeletonsDir.toNioPath().resolve("django");
-    System.out.println("Under NIO: " + Files.exists(djangoDirPath));
+    System.out.println("Under NIO (django): " + Files.exists(djangoDirPath));
+    Path djangoInitPyPath = skeletonsDir.toNioPath().resolve("django/__init__.py");
+    System.out.println("Under NIO (django/__init__.py): " + Files.exists(djangoInitPyPath));
     GlobalSearchScope projectScope = GlobalSearchScope.allScope(myFixture.getProject());
     System.out.println("Under filename index (django): " + FilenameIndex.getVirtualFilesByName("django", projectScope));
     List<VirtualFile> djangoInitPy = ContainerUtil.filter(FilenameIndex.getVirtualFilesByName("__init__.py", projectScope),
