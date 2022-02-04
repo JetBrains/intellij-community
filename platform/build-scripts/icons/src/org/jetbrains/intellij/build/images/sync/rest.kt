@@ -3,11 +3,12 @@ package org.jetbrains.intellij.build.images.sync
 
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 
 private val client by lazy {
-  OkHttpClient()
+  OkHttpClient.Builder().protocols(listOf(Protocol.HTTP_1_1)).build()
 }
 
 internal fun loadUrl(path: String, conf: Request.Builder.() -> Unit = {}): String {
