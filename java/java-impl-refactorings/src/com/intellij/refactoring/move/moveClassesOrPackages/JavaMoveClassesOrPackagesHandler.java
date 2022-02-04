@@ -120,6 +120,8 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, final MoveCallback callback) {
     if (canMoveOrRearrangePackages(elements) ) {
       final PsiDirectory[] directories = new PsiDirectory[elements.length];
+      //canMoveOrRearrangePackages ensures that all elements are directories
+      //noinspection SuspiciousSystemArraycopy
       System.arraycopy(elements, 0, directories, 0, directories.length);
       if (directories.length > 1 || targetContainer != null) {
         moveAsDirectory(project, targetContainer, callback, directories);
@@ -290,13 +292,6 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
      }
      return true;
    }
-
-  public static boolean hasPackages(PsiDirectory directory) {
-    if (JavaDirectoryService.getInstance().getPackage(directory) != null) {
-      return true;
-    }
-    return false;
-  }
 
 
   @Override
