@@ -3,23 +3,18 @@ package com.intellij.ide.wizard
 
 import com.intellij.ide.actions.CreateFileFromTemplateAction
 import com.intellij.ide.fileTemplates.FileTemplateManager
-import com.intellij.ide.util.EditorHelper
 import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.WebModuleBuilder
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiManager
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.util.PlatformUtils
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.xml.XmlBundle
 
 class HTMLNewProjectWizard : LanguageNewProjectWizard {
@@ -46,7 +41,7 @@ class HTMLNewProjectWizard : LanguageNewProjectWizard {
     override fun setupProject(project: Project) {
       val builder = WebModuleBuilder<Any>().also {
         it.name = parent.name
-        it.contentEntryPath = parent.projectPath.systemIndependentPath
+        it.contentEntryPath = "${parent.path}/${parent.name}"
       }
       builder.commit(project)
 

@@ -12,7 +12,6 @@ import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
 import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.project.Project
-import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.utils.MavenUtil
 
@@ -29,7 +28,7 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       val builder = InternalMavenModuleBuilder().apply {
         moduleJdk = sdk
         name = parentStep.name
-        contentEntryPath = parentStep.projectPath.systemIndependentPath
+        contentEntryPath = "${parentStep.path}/${parentStep.name}"
 
         parentProject = parentData
         aggregatorProject = parentData

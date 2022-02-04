@@ -15,7 +15,6 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.SortedComboBoxModel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.*
-import com.intellij.util.io.systemIndependentPath
 import java.util.Comparator.comparing
 import java.util.function.Function
 import javax.swing.JList
@@ -105,7 +104,7 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
   }
 
   private fun suggestParentByPath(): DataView<Data> {
-    val path = parentStep.projectPath.systemIndependentPath
+    val path = "${parentStep.path}/${parentStep.name}"
     return parents.find { FileUtil.isAncestor(it.location, path, true) } ?: EMPTY_VIEW
   }
 

@@ -44,7 +44,7 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
         override fun setupProject(project: Project) =
             KotlinNewProjectWizard.generateProject(
                 project = project,
-                projectPath = parent.projectPath.systemIndependentPath,
+                projectPath = "${parent.path}/${parent.name}",
                 projectName = parent.name,
                 sdk = sdk,
                 buildSystemType = BuildSystemType.Jps,

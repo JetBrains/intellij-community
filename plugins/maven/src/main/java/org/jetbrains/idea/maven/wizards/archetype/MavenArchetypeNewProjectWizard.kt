@@ -34,7 +34,6 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil.putIfNotNull
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.text.nullize
 import icons.OpenapiIcons
 import org.jetbrains.idea.maven.indices.MavenArchetypeManager
@@ -311,7 +310,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       val builder = InternalMavenModuleBuilder().apply {
         moduleJdk = sdk
         name = parentStep.name
-        contentEntryPath = parentStep.projectPath.systemIndependentPath
+        contentEntryPath = "${parentStep.path}/${parentStep.name}"
 
         parentProject = parentData
         aggregatorProject = parentData

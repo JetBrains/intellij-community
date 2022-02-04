@@ -28,6 +28,7 @@ import com.jetbrains.python.sdk.add.PyAddNewCondaEnvPanel
 import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.pythonSdk
+import java.nio.file.Path
 import kotlin.streams.toList
 
 /**
@@ -108,6 +109,7 @@ class NewPythonProjectStep<P>(parent: P)
 
   private fun commitIntellijModule(project: Project) {
     val moduleName = name
+    val projectPath = Path.of(path, name)
     val moduleBuilder = PythonModuleTypeBase.getInstance().createModuleBuilder().apply {
       name = moduleName
       contentEntryPath = projectPath.toString()
@@ -141,7 +143,7 @@ class NewPythonProjectStep<P>(parent: P)
 }
 
 /**
- * A new Python project wizard step that allows you to get or create a Python SDK for your [projectPath].
+ * A new Python project wizard step that allows you to get or create a Python SDK for your [path]/[name].
  *
  * The resulting SDK is available as [pythonSdk]. The SDK may have not been saved to the project JDK table yet.
  */
@@ -153,7 +155,7 @@ class PythonSdkStep<P>(parent: P)
   override val label: String = PyBundle.message("python.sdk.new.project.environment")
 
   override fun initSteps(): Map<String, NewProjectWizardStep> {
-    val existingSdkPanel = PyAddExistingSdkPanel(null, null, existingSdks(context), projectPath.toString(), null)
+    val existingSdkPanel = PyAddExistingSdkPanel(null, null, existingSdks(context), "$path/$name", null)
     return mapOf(
       "New" to NewEnvironmentStep(this),
       // TODO: Handle remote project creation for remote SDKs
@@ -194,7 +196,7 @@ private class NewEnvironmentStep<P>(parent: P)
 
   override fun initSteps(): Map<String, PythonSdkPanelAdapterStep<NewEnvironmentStep<P>>> {
     val sdks = existingSdks(context)
-    val newProjectPath = projectPath.toString()
+    val newProjectPath = "$path/$name"
     val basePanels = listOf(
       PyAddNewVirtualEnvPanel(null, null, sdks, newProjectPath, context),
       PyAddNewCondaEnvPanel(null, null, sdks, newProjectPath),
@@ -254,7 +256,7 @@ private class PythonSdkPanelAdapterStep<P>(parent: P, val panel: PyAddSdkPanel)
   }
 
   private fun updateNewProjectPath() {
-    panel.newProjectPath = projectPath.toString()
+    panel.newProjectPath = "$path/$name"
   }
 }
 

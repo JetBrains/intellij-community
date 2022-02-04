@@ -14,6 +14,7 @@ import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.EMPTY_LABEL
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
+import java.nio.file.Path
 
 class GitNewProjectWizardStep(
   parent: NewProjectWizardBaseStep
@@ -36,7 +37,7 @@ class GitNewProjectWizardStep(
 
   override fun setupProject(project: Project) {
     if (git) {
-      val projectBaseDirectory = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectPath)
+      val projectBaseDirectory = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path.of(path, name))
       if (projectBaseDirectory != null) {
         runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project) {
           GitRepositoryInitializer.getInstance()!!.initRepository(project, projectBaseDirectory)

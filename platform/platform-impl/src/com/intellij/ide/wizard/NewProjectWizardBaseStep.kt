@@ -30,8 +30,6 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
   override var name by nameProperty
   override var path by pathProperty
 
-  override val projectPath: Path get() = Path.of(path, name)
-
   private fun suggestName(): String {
     val moduleNames = findAllModules().map { it.name }.toSet()
     return FileUtil.createSequentFileName(File(path), "untitled", "") {
@@ -70,7 +68,7 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
 
       onApply {
         context.projectName = name
-        context.setProjectFileDirectory(projectPath, false)
+        context.setProjectFileDirectory(Path.of(path, name), false)
       }
     }
   }
@@ -93,7 +91,7 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
 
     if (validateLocation() == null) {
       val projectPath = try {
-        projectPath
+        Path.of(path, name)
       }
       catch (ex: InvalidPathException) {
         return error(UIBundle.message("label.project.wizard.new.project.directory.invalid", ex.reason))

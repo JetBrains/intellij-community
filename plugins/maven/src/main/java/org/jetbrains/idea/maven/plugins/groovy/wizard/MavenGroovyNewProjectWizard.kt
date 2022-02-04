@@ -12,7 +12,6 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
@@ -46,7 +45,7 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
         moduleJdk = sdk
         name = parentStep.name
         parentProject = parentData
-        contentEntryPath = parentStep.projectPath.systemIndependentPath
+        contentEntryPath = "${parentStep.path}/${parentStep.name}"
         aggregatorProject = parentData
         projectId = MavenId(groupId, artifactId, version)
         isInheritGroupId = parentData?.mavenId?.groupId == groupId

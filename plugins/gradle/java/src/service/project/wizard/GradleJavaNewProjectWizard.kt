@@ -16,7 +16,6 @@ import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.project.Project
-import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
@@ -61,7 +60,7 @@ fun <T> GradleNewProjectWizardStep<T>.generateModuleBuilder(): AbstractGradleMod
   where T : NewProjectWizardStep, T : NewProjectWizardBaseData = InternalGradleModuleBuilder().apply {
   moduleJdk = sdk
   name = parentStep.name
-  contentEntryPath = parentStep.projectPath.systemIndependentPath
+  contentEntryPath = "${parentStep.path}/${parentStep.name}"
 
   isCreatingNewProject = context.isCreatingNewProject
 

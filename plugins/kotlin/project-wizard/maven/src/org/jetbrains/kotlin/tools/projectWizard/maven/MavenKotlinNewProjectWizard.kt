@@ -14,7 +14,6 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData
@@ -47,7 +46,7 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
         override fun setupProject(project: Project) {
             KotlinNewProjectWizard.generateProject(
                 project = project,
-                projectPath = projectPath.systemIndependentPath,
+                projectPath = "$path/$name",
                 projectName = name,
                 sdk = sdk,
                 buildSystemType = BuildSystemType.Maven,
