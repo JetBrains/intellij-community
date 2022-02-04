@@ -14,7 +14,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.refactoring.util.CommonJavaInlineUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -225,7 +225,7 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
     boolean isSingleUsage = value != null && usages.size() == 1;
     if (isSimple || isSingleUsage) {
       for (PsiJavaCodeReferenceElement usage : usages) {
-        PsiExpression inlined = JavaSpecialRefactoringProvider.getInstance().inlineVariable(context.returnedVariable, value, usage, null);
+        PsiExpression inlined = CommonJavaInlineUtil.getInstance().inlineVariable(context.returnedVariable, value, usage, null);
         if (firstInlined == null) firstInlined = inlined;
         highlighter.add(inlined);
       }

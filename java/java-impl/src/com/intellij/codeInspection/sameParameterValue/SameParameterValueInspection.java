@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.refactoring.util.CommonJavaInlineUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringConflictUtil;
 import com.intellij.uast.UastHintedVisitorAdapter;
@@ -339,7 +340,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
             int idx = 0;
             for (PsiReference reference : refsToInline) {
               if (reference instanceof PsiJavaCodeReferenceElement) {
-                exprs[idx++] = JavaSpecialRefactoringProvider.getInstance().inlineVariable(entry.getKey(), defToInline, (PsiJavaCodeReferenceElement)reference, null);
+                exprs[idx++] = CommonJavaInlineUtil.getInstance().inlineVariable(entry.getKey(), defToInline, (PsiJavaCodeReferenceElement)reference, null);
               }
             }
 

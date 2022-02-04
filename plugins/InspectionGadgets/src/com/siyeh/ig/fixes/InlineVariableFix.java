@@ -19,7 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.refactoring.util.CommonJavaInlineUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.HighlightUtils;
@@ -49,8 +49,8 @@ public class InlineVariableFix extends InspectionGadgetsFix {
     final Collection<PsiElement> replacedElements = new ArrayList<>();
     for (PsiReference reference : references) {
 
-      var provider = JavaSpecialRefactoringProvider.getInstance();
-      final PsiExpression expression = provider.inlineVariable(variable, initializer, (PsiJavaCodeReferenceElement)reference, null);
+      var inlineUtil = CommonJavaInlineUtil.getInstance();
+      final PsiExpression expression = inlineUtil.inlineVariable(variable, initializer, (PsiJavaCodeReferenceElement)reference, null);
       replacedElements.add(expression);
     }
 

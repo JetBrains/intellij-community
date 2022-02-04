@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureProcessor;
 import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
@@ -20,8 +19,6 @@ import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.DocCommentPolicy;
-import com.intellij.refactoring.util.InlineUtil;
-import com.intellij.refactoring.util.JavaNameSuggestionUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
@@ -117,14 +114,6 @@ public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactorin
                                  MemberInfo[] membersToMove,
                                  DocCommentPolicy javaDocPolicy) {
     new PullUpProcessor(sourceClass, targetSuperClass, membersToMove, javaDocPolicy).run();
-  }
-
-  @Override
-  public PsiExpression inlineVariable(PsiVariable variable,
-                                      PsiExpression initializer,
-                                      PsiJavaCodeReferenceElement ref,
-                                      PsiExpression thisAccessExpr) throws IncorrectOperationException {
-    return InlineUtil.inlineVariable(variable, initializer, ref, thisAccessExpr);
   }
 
   @Override

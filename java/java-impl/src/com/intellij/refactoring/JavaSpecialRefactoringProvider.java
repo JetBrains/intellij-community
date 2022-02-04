@@ -90,10 +90,5 @@ public interface JavaSpecialRefactoringProvider {
 
   // utils which have too many deps
 
-  PsiExpression inlineVariable(PsiVariable variable,
-                               PsiExpression initializer,
-                               PsiJavaCodeReferenceElement ref,
-                               PsiExpression thisAccessExpr) throws IncorrectOperationException;
-
   void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination) throws IncorrectOperationException;
 }
