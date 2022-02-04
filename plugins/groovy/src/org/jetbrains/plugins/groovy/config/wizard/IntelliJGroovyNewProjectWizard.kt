@@ -19,8 +19,7 @@ import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.observable.properties.transform
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor
@@ -59,7 +58,7 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     IntelliJNewProjectWizardStep<GroovyNewProjectWizard.Step>(parent),
     BuildSystemGroovyNewProjectWizardData by parent {
 
-    val distributionsProperty = propertyGraph.graphProperty<DistributionInfo?> { null }
+    val distributionsProperty = propertyGraph.property<DistributionInfo?>(null)
 
     var distribution by distributionsProperty
 

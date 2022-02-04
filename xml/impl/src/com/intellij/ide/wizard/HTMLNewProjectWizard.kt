@@ -6,7 +6,6 @@ import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.WebModuleBuilder
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -27,7 +26,7 @@ class HTMLNewProjectWizard : LanguageNewProjectWizard {
 
   class Step(private val parent: NewProjectWizardLanguageStep) : AbstractNewProjectWizardStep(parent) {
 
-    private val addSampleCode = propertyGraph.graphProperty { false }
+    private val addSampleCode = propertyGraph.property(false)
 
     override fun setupUI(builder: Panel) {
       with(builder) {

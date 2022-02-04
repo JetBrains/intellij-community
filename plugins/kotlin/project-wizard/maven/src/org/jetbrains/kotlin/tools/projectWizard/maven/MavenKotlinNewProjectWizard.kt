@@ -8,7 +8,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logP
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Panel
@@ -30,7 +29,7 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
         MavenNewProjectWizardStep<KotlinNewProjectWizard.Step>(parent),
         BuildSystemKotlinNewProjectWizardData by parent {
 
-        private val addSampleCodeProperty = propertyGraph.graphProperty { false }
+        private val addSampleCodeProperty = propertyGraph.property(false)
         private val addSampleCode by addSampleCodeProperty
 
         override fun setupSettingsUI(builder: Panel) {

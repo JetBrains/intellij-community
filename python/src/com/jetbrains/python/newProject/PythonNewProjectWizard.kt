@@ -8,7 +8,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -89,8 +88,8 @@ class NewPythonProjectStep<P>(parent: P)
     NewProjectWizardPythonData
   where P : NewProjectWizardStep, P : NewProjectWizardBaseData {
 
-  override val pythonSdkProperty: GraphProperty<Sdk?> = propertyGraph.graphProperty { null }
-  override var pythonSdk: Sdk? by pythonSdkProperty
+  override val pythonSdkProperty = propertyGraph.property<Sdk?>(null)
+  override var pythonSdk by pythonSdkProperty
   override val module: Module?
     get() = intellijModule ?: context.project?.let { ModuleManager.getInstance(it).modules.firstOrNull() }
 
@@ -230,21 +229,17 @@ private class PythonSdkPanelAdapterStep<P>(parent: P, val panel: PyAddSdkPanel)
     NewProjectWizardPythonData by parent
   where P : NewProjectWizardStep, P : NewProjectWizardPythonData {
 
-  val panelChangedProperty = propertyGraph.graphProperty {}
-  var panelChanged by panelChangedProperty
-
   override fun setupUI(builder: Panel) {
     with(builder) {
       row {
         cell(panel)
-          .graphProperty(panelChangedProperty)
+          .validationRequestor { panel.addChangeListener(it) }
           .horizontalAlign(HorizontalAlign.FILL)
           .validationOnInput { panel.validateAll().firstOrNull() }
           .validationOnApply { panel.validateAll().firstOrNull() }
       }
     }
     panel.addChangeListener {
-      panelChanged = Unit
       pythonSdk = panel.sdk
     }
     nameProperty.afterChange { updateNewProjectPath() }

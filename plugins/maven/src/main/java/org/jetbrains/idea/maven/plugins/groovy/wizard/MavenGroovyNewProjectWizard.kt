@@ -9,7 +9,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logS
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.Panel
 import org.jetbrains.idea.maven.model.MavenId
@@ -30,7 +29,7 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     MavenNewProjectWizardStep<GroovyNewProjectWizard.Step>(parent),
     BuildSystemGroovyNewProjectWizardData by parent {
 
-    private val addSampleCodeProperty = propertyGraph.graphProperty { false }
+    private val addSampleCodeProperty = propertyGraph.property(false)
 
     var addSampleCode by addSampleCodeProperty
 

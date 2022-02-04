@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.tools.projectWizard
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
@@ -13,7 +12,6 @@ import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.ui.UIBundle.*
 import com.intellij.ui.dsl.builder.*
-import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 
 internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
@@ -21,8 +19,8 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
     override val name = "IntelliJ"
 
     override fun createStep(parent: KotlinNewProjectWizard.Step) = object : AbstractNewProjectWizardStep(parent) {
-        private val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
-        private val addSampleCodeProperty = propertyGraph.graphProperty { false }
+        private val sdkProperty = propertyGraph.property<Sdk?>(null)
+        private val addSampleCodeProperty = propertyGraph.property(false)
 
         private val sdk by sdkProperty
         private val addSampleCode by addSampleCodeProperty
