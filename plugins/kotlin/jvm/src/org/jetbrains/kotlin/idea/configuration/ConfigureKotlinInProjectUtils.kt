@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.idea.extensions.gradle.RepositoryDescription
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.framework.effectiveKind
 import org.jetbrains.kotlin.idea.quickfix.KotlinAddRequiredModuleFix
+import org.jetbrains.kotlin.idea.search.projectScope
 import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -136,33 +138,47 @@ fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Mo
     }
 
     val disposable = KotlinPluginDisposable.getInstance(project)
-    val kotlinFiles = ReadAction.nonBlocking<Collection<VirtualFile>> {
-        return@nonBlocking FileTypeIndex.getFiles(KotlinFileType.INSTANCE, globalSearchScope)
-    }
-        .expireWith(disposable)
-        .executeSynchronously()
 
-    if (kotlinFiles.isEmpty()) {
+    // nothing to configure if there is no Kotlin files in entire project
+    val anyKotlinFileInProject = disposable.nonBlockingReadAction {
+        FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, project.projectScope())
+    }
+    if (!anyKotlinFileInProject) {
         return emptyList()
     }
 
     val projectFileIndex = ProjectFileIndex.getInstance(project)
+
     val modules =
         if (modulesWithKotlinFacets.isNullOrEmpty()) {
+            val kotlinFiles = disposable.nonBlockingReadAction {
+                FileTypeIndex.getFiles(KotlinFileType.INSTANCE, globalSearchScope)
+            }
+
             kotlinFiles.mapNotNullTo(mutableSetOf()) { ktFile: VirtualFile ->
                 if (projectFileIndex.isInSourceContent(ktFile)) {
                     projectFileIndex.getModuleForFile(ktFile)
                 } else null
             }
         } else {
-            modulesWithKotlinFacets.filterTo(mutableSetOf()) { module ->
-                if (module.isDisposed) return@filterTo false
-                val moduleFileIndex = module.rootManager.fileIndex
-                kotlinFiles.any { moduleFileIndex.isInSourceContent(it) }
+            // filter modules with Kotlin facet AND have at least a single Kotlin file in them
+            disposable.nonBlockingReadAction {
+                modulesWithKotlinFacets.filterTo(mutableSetOf()) { module ->
+                    if (module.isDisposed) return@filterTo false
+
+                    FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, module.moduleScope)
+                }
             }
         }
     return modules
 }
+
+private fun <T> Disposable.nonBlockingReadAction(task: () -> T): T =
+    ReadAction.nonBlocking<T> {
+        task()
+    }
+        .expireWith(this)
+        .executeSynchronously()
 
 /**
  * Returns a list of modules which contain sources in Kotlin, grouped by base module.
