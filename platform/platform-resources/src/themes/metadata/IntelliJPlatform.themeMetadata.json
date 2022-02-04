@@ -511,6 +511,11 @@
       "description": "Badge color indicating the error status"
     },
     {
+      "key": "IconBadge.warningBackground",
+      "since": "2022.1",
+      "description": "Badge color indicating the warning status"
+    },
+    {
       "key": "IconBadge.infoBackground",
       "since": "2022.1",
       "description": "Badge color indicating the info status"

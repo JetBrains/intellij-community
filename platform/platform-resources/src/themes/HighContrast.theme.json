@@ -190,6 +190,7 @@
       "dotX": 16.5,
       "dotY": 3.5,
       "errorBackground": "Actions.Red",
+      "warningBackground": "Actions.Yellow",
       "infoBackground": "Actions.Blue",
       "successBackground": "Actions.Green"
     },
