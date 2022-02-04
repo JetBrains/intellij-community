@@ -66,5 +66,6 @@
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
+    <orderEntry type="module" module-name="intellij.platform.wsl.impl" scope="TEST" />
   </component>
 </module>

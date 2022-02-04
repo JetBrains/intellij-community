@@ -92,9 +92,7 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int
   private suspend fun readPortFromChannel(channel: ByteReadChannel): Int = readToBuffer(channel, 2).short.toUShort().toInt()
 
   init {
-    val file = PathManager.findBinFileWithException("wslproxy").toString()
-    val wspPath = distro.getWslPath(file) ?: throw AssertionError("Can't access $file from Linux")
-    val wslCommandLine = distro.createWslCommandLine(wspPath)
+    val wslCommandLine =  distro.getTool("wslhash")
     val process = Runtime.getRuntime().exec(wslCommandLine.commandLineString)
     val log = Logger.getInstance(WslProxy::class.java)
 

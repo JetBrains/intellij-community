@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.util.Consumer;
 import com.intellij.util.Functions;
@@ -135,11 +134,6 @@ public class WSLDistribution implements AbstractWslDistribution {
     return myVersion;
   }
 
-  @Override
-  public @NotNull GeneralCommandLine createWslCommandLine(String @NotNull ... command) throws ExecutionException {
-    return patchCommandLine(new GeneralCommandLine(command), null, new WSLCommandLineOptions());
-  }
-
   /**
    * Creates a patched command line, executes it on wsl distribution and returns output
    *
@@ -234,20 +228,7 @@ public class WSLDistribution implements AbstractWslDistribution {
     }
   }
 
-  /**
-   * Patches passed command line to make it runnable in WSL context, e.g changes {@code date} to {@code ubuntu run "date"}.<p/>
-   * <p>
-   * Environment variables and working directory are mapped to the chain calls: working dir using {@code cd} and environment variables using {@code export},
-   * e.g {@code bash -c "export var1=val1 && export var2=val2 && cd /some/working/dir && date"}.<p/>
-   * <p>
-   * Method should properly handle quotation and escaping of the environment variables.<p/>
-   *
-   * @param commandLine command line to patch
-   * @param project     current project
-   * @param options     {@link WSLCommandLineOptions} instance
-   * @param <T>         GeneralCommandLine or descendant
-   * @return original {@code commandLine}, prepared to run in WSL context
-   */
+  @Override
   public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                                     @Nullable Project project,
                                                                     @NotNull WSLCommandLineOptions options) throws ExecutionException {
@@ -596,13 +577,7 @@ public class WSLDistribution implements AbstractWslDistribution {
     return Paths.get(WslConstants.UNC_PREFIX + myDescriptor.getMsId());
   }
 
-  /**
-   * @return UNC root for the distribution, e.g. {@code \\wsl$\Ubuntu}
-   * @implNote there is a hack in {@link LocalFileSystemBase#getAttributes(VirtualFile)} which causes all network
-   * virtual files to exists all the time. So we need to check explicitly that root exists. After implementing proper non-blocking check
-   * for the network resource availability, this method may be simplified to findFileByIoFile
-   * @see VfsUtil#findFileByIoFile(File, boolean)
-   */
+  @Override
   @ApiStatus.Experimental
   public @Nullable VirtualFile getUNCRootVirtualFile(boolean refreshIfNeed) {
     if (!Experiments.getInstance().isFeatureEnabled("wsl.p9.support")) {

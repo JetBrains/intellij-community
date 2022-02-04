@@ -6,6 +6,11 @@ This proxy accepts two clients: one for egress (eth0) and one for ingress (loopb
 It then reports IP and port via stdout
 EOF (close stream) written to the stdin kills process.
 
+wslhash
+Calculates hashes for all files in certain folder to implement custom rsync-like functionality. `rsync` may be missing on some WSL distros,
+and also it may be slow: access from WSL to Windows takes a lot of time.
+This tool runs on WSL only, so it is fast. See WslSync.kt
+
 To build tool use Makefile. We link it statically because WSL may lack glibc. Kernel ABI is backward compatible, so use some old Linux
 
 We use musl libc: https://musl.libc.org/

@@ -1,5 +1,6 @@
 <idea-plugin>
   <actions>
+    <action class="com.intellij.execution.wsl.target.WslSyncAction" internal="true"/>
     <action id="TerminalIncreaseFontSize" class="com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction$IncreaseEditorFontSize"
             use-shortcut-of="EditorIncreaseFontSize"/>
     <action id="TerminalDecreaseFontSize" class="com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction$DecreaseEditorFontSize"

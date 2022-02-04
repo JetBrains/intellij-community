@@ -51,5 +51,8 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="library" name="lz4-java" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
   </component>
 </module>
