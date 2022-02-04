@@ -19,7 +19,6 @@ import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor
@@ -90,31 +89,24 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
           }
         })
         cell(comboBox)
-          .validationOnApply { validateGroovySdk() }
-          .bindItem(distributionsProperty.transform(
-            { it?.let(DistributionComboBox.Item::Distribution) ?: DistributionComboBox.Item.NoDistribution },
-            { (it as? DistributionComboBox.Item.Distribution)?.info }
-          ))
-          .validationOnInput { validateGroovySdkPath(it) }
+          .applyToComponent { bindSelectedDistribution(distributionsProperty) }
+          .validationOnInput { validateGroovySdk() }
+          .validationOnApply { validateGroovySdkWithDialog() }
           .columns(COLUMNS_MEDIUM)
       }.bottomGap(BottomGap.SMALL)
     }
 
-    private fun ValidationInfoBuilder.validateGroovySdkPath(comboBox: DistributionComboBox): ValidationInfo? {
-      val localDistribution = comboBox.selectedDistribution as? LocalDistributionInfo ?: return null
-      val path = localDistribution.path
-      if (path.isEmpty()) {
+    private fun ValidationInfoBuilder.validateGroovySdk(): ValidationInfo? {
+      if (isBlankDistribution(distribution)) {
         return error(GroovyBundle.message("dialog.title.validation.path.should.not.be.empty"))
       }
-      else if (isInvalidSdk(localDistribution)) {
+      if (isInvalidSdk(distribution)) {
         return error(GroovyBundle.message("dialog.title.validation.path.does.not.contain.groovy.sdk"))
       }
-      else {
-        return null
-      }
+      return null
     }
 
-    private fun ValidationInfoBuilder.validateGroovySdk(): ValidationInfo? {
+    private fun ValidationInfoBuilder.validateGroovySdkWithDialog(): ValidationInfo? {
       if (isBlankDistribution(distribution)) {
         if (Messages.showDialog(GroovyBundle.message("dialog.title.no.jdk.specified.prompt"),
                                 GroovyBundle.message("dialog.title.no.jdk.specified.title"),

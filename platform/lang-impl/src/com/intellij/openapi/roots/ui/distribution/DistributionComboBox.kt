@@ -115,6 +115,13 @@ class DistributionComboBox(
     }
   }
 
+  fun bindSelectedDistribution(property: ObservableMutableProperty<DistributionInfo?>) {
+    bind(property.transform(
+      { it?.let(Item::Distribution) ?: Item.NoDistribution },
+      { (it as? Item.Distribution)?.info }
+    ))
+  }
+
   private fun bindSelectedDistributionPath(property: ObservableMutableProperty<String>) {
     val mutex = AtomicBoolean()
     property.afterChange { text ->
