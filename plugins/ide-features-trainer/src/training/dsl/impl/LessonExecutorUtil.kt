@@ -216,23 +216,16 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
   }
 
   @Suppress("OverridingDeprecatedMember")
-  override fun <T : Component> triggerByFoundPathAndHighlightImpl(componentClass: Class<T>,
-                                                                  highlightBorder: Boolean,
-                                                                  highlightInside: Boolean,
-                                                                  usePulsation: Boolean,
-                                                                  clearPreviousHighlights: Boolean,
-                                                                  selector: ((candidates: Collection<T>) -> T?)?,
-                                                                  rectangle: TaskRuntimeContext.(T) -> Rectangle?) {
+  override fun <T : Component> triggerByPartOfComponentImpl(componentClass: Class<T>,
+                                                            options: LearningUiHighlightingManager.HighlightingOptions,
+                                                            selector: ((candidates: Collection<T>) -> T?)?,
+                                                            rectangle: TaskRuntimeContext.(T) -> Rectangle?) {
     hasDetection = true
   }
 
   @Suppress("OverridingDeprecatedMember")
   override fun <ComponentType : Component> triggerByUiComponentAndHighlightImpl(componentClass: Class<ComponentType>,
-                                                                                highlightBorder: Boolean,
-                                                                                highlightInside: Boolean,
-                                                                                usePulsation: Boolean,
-                                                                                clearPreviousHighlights: Boolean,
-                                                                                selector: ((candidates: Collection<ComponentType>) -> ComponentType?)?,
+                                                                                options: LearningUiHighlightingManager.HighlightingOptions,                                                                                selector: ((candidates: Collection<ComponentType>) -> ComponentType?)?,
                                                                                 finderFunction: TaskRuntimeContext.(ComponentType) -> Boolean) {
     hasDetection = true
   }

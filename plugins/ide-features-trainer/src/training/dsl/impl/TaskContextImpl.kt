@@ -295,10 +295,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   @Suppress("OverridingDeprecatedMember")
   override fun <ComponentType : Component>
     triggerByUiComponentAndHighlightImpl(componentClass: Class<ComponentType>,
-                                         highlightBorder: Boolean,
-                                         highlightInside: Boolean,
-                                         usePulsation: Boolean,
-                                         clearPreviousHighlights: Boolean,
+                                         options: LearningUiHighlightingManager.HighlightingOptions,
                                          selector: ((candidates: Collection<ComponentType>) -> ComponentType?)?,
                                          finderFunction: TaskRuntimeContext.(ComponentType) -> Boolean) {
     triggerByUiComponentAndHighlight l@{
@@ -306,8 +303,6 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
         finderFunction(it)
       }
       if (component != null) {
-        val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside,
-          usePulsation, clearPreviousHighlights)
         taskInvokeLater(ModalityState.any()) {
           LearningUiHighlightingManager.highlightComponent(component, options)
         }
@@ -317,14 +312,10 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   }
 
   @Suppress("OverridingDeprecatedMember")
-  override fun <T : Component> triggerByFoundPathAndHighlightImpl(componentClass: Class<T>,
-                                                                  highlightBorder: Boolean,
-                                                                  highlightInside: Boolean,
-                                                                  usePulsation: Boolean,
-                                                                  clearPreviousHighlights: Boolean,
-                                                                  selector: ((candidates: Collection<T>) -> T?)?,
-                                                                  rectangle: TaskRuntimeContext.(T) -> Rectangle?) {
-    val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation, clearPreviousHighlights)
+  override fun <T : Component> triggerByPartOfComponentImpl(componentClass: Class<T>,
+                                                            options: LearningUiHighlightingManager.HighlightingOptions,
+                                                            selector: ((candidates: Collection<T>) -> T?)?,
+                                                            rectangle: TaskRuntimeContext.(T) -> Rectangle?) {
     triggerByUiComponentAndHighlight l@{
       val whole = LearningUiUtil.findComponentOrNull(project, componentClass, selector) {
         rectangle(it) != null
