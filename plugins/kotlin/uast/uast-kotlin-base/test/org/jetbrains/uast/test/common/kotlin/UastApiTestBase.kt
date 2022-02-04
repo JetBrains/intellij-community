@@ -646,7 +646,7 @@ interface UastApiTestBase : UastPluginSelection {
             }
         })
         TestCase.assertEquals("""
-                getGenericSuperclass() -> typeArguments: [PsiType:<ErrorType>]
+                getGenericSuperclass() -> typeArguments: []
                 getActualTypeArguments() -> typeArguments: []
                 first() -> typeArguments: []
             """.trimIndent(), render.toString().trimEnd())
