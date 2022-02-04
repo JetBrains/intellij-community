@@ -5,7 +5,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleBuilder
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -52,8 +51,8 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
         textField()
           .bindText(nameProperty)
           .columns(COLUMNS_MEDIUM)
-          .validationOnApply { validateName() }
-          .validationOnInput { validateName() }
+          .validationOnApply { validateNameAndLocation() }
+          .validationOnInput { validateNameAndLocation() }
           .focused()
         installNameGenerators(getBuilderId(), nameProperty)
       }.bottomGap(BottomGap.SMALL)
@@ -84,47 +83,54 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
     return null
   }
 
-  private fun ValidationInfoBuilder.validateName(): ValidationInfo? {
+  private fun ValidationInfoBuilder.validateNameAndLocation(): ValidationInfo? {
     if (name.isEmpty()) {
-      return error(UIBundle.message("label.project.wizard.new.project.missing.name.error", if (context.isCreatingNewProject) 1 else 0))
+      return error(UIBundle.message("label.project.wizard.new.project.missing.name.error", context.isCreatingNewProjectInt))
     }
     if (name in findAllModules().map { it.name }.toSet()) {
-      return error(UIBundle.message("label.project.wizard.new.project.name.exists.error", if (context.isCreatingNewProject) 1 else 0, name))
+      return error(UIBundle.message("label.project.wizard.new.project.name.exists.error", context.isCreatingNewProjectInt, name))
+    }
+
+    if (validateLocation() == null) {
+      val projectPath = try {
+        projectPath
+      }
+      catch (ex: InvalidPathException) {
+        return error(UIBundle.message("label.project.wizard.new.project.directory.invalid", ex.reason))
+      }
+
+      for (project in ProjectManager.getInstance().openProjects) {
+        if (ProjectUtil.isSameProject(projectPath, project)) {
+          return error(UIBundle.message("label.project.wizard.new.project.directory.already.taken.error", project.name))
+        }
+      }
+
+      val file = projectPath.toFile()
+      if (file.exists()) {
+        if (!file.canWrite()) {
+          return error(UIBundle.message("label.project.wizard.new.project.directory.not.writable.error", name))
+        }
+        val children = file.list()
+        if (children == null) {
+          return error(UIBundle.message("label.project.wizard.new.project.file.not.directory.error", name))
+        }
+        if (children.isNotEmpty()) {
+          return warning(UIBundle.message("label.project.wizard.new.project.directory.not.empty.warning", name))
+        }
+      }
     }
     return null
   }
 
   private fun ValidationInfoBuilder.validateLocation(): ValidationInfo? {
     if (path.isEmpty()) {
-      return error(UIBundle.message("label.project.wizard.new.project.missing.path.error", if (context.isCreatingNewProject) 1 else 0))
+      return error(UIBundle.message("label.project.wizard.new.project.missing.path.error", context.isCreatingNewProjectInt))
     }
-
-    val projectPath = try {
-      projectPath
+    try {
+      Path.of(path)
     }
     catch (ex: InvalidPathException) {
       return error(UIBundle.message("label.project.wizard.new.project.directory.invalid", ex.reason))
-    }
-    for (project in ProjectManager.getInstance().openProjects) {
-      if (ProjectUtil.isSameProject(projectPath, project)) {
-        return error(UIBundle.message("label.project.wizard.new.project.directory.already.taken.error", project.name))
-      }
-    }
-
-    val file = projectPath.toFile()
-    if (file.exists()) {
-      if (!file.canWrite()) {
-        return error(UIBundle.message("label.project.wizard.new.project.directory.not.writable.error"))
-      }
-      val children = file.list()
-      if (children == null) {
-        return error(UIBundle.message("label.project.wizard.new.project.file.not.directory.error"))
-      }
-      if (!ApplicationManager.getApplication().isUnitTestMode) {
-        if (children.isNotEmpty()) {
-          return warning(UIBundle.message("label.project.wizard.new.project.directory.not.empty.warning"))
-        }
-      }
     }
     return null
   }
