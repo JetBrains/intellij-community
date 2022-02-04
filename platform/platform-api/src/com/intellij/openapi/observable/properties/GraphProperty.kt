@@ -6,7 +6,6 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * [GraphProperty] is builder of [PropertyGraph].
- * Please, use [ObservableMutableProperty] or [ObservableProperty] instead [GraphProperty] in your API.
  *
  * @see PropertyGraph
  * @see ObservableProperty
