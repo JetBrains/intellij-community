@@ -5,6 +5,11 @@
             interface="org.jetbrains.kotlin.idea.completion.KotlinCompletionExtension"/>
   </extensionPoints>
 
+  <applicationListeners>
+    <listener class="org.jetbrains.kotlin.idea.completion.LookupCancelWatcherListener"
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
+  </applicationListeners>
+
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.completion.LookupCancelWatcher"/>
 
