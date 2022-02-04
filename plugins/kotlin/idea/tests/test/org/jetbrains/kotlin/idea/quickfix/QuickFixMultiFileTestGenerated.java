@@ -2227,6 +2227,19 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
     @TestMetadata("testData/quickfix/typeMismatch")
     public abstract static class TypeMismatch extends AbstractQuickFixMultiFileTest {
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/typeMismatch/definitelyNonNullableTypes")
+        public static class DefinitelyNonNullableTypes extends AbstractQuickFixMultiFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("changeParameterTypeIsDisabledWhenDnnFeatureIsOff.test")
+            public void testChangeParameterTypeIsDisabledWhenDnnFeatureIsOff() throws Exception {
+                runTest("testData/quickfix/typeMismatch/definitelyNonNullableTypes/changeParameterTypeIsDisabledWhenDnnFeatureIsOff.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/typeMismatch/genericVarianceViolation")
         public static class GenericVarianceViolation extends AbstractQuickFixMultiFileTest {
             private void runTest(String testDataFilePath) throws Exception {
