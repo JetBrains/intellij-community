@@ -219,7 +219,7 @@ private fun processFile(localFile: Path,
       CompletableFuture.allOf(
         runAsync { command.inputStream.transferTo(System.out) },
         runAsync { Files.copy(command.errorStream, logFile, StandardCopyOption.REPLACE_EXISTING) }
-      ).get(3, TimeUnit.HOURS)
+      ).get(6, TimeUnit.HOURS)
 
       command.join(1, TimeUnit.MINUTES)
     }
