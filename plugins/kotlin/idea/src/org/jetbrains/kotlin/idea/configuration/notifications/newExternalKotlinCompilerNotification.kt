@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
@@ -19,6 +20,12 @@ import org.jetbrains.kotlin.idea.configuration.findAnyExternalKotlinCompilerVers
 
 @VisibleForTesting
 const val LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME = "kotlin.updates.whats.new.shown.for"
+
+class ExternalKotlinCompilerProjectDataImportListener(private val project: Project) : ProjectDataImportListener {
+    override fun onImportFinished(projectPath: String?) {
+        checkExternalKotlinCompilerVersion(project)
+    }
+}
 
 fun checkExternalKotlinCompilerVersion(project: Project) {
     val bundledKotlinCompilerVersion = bundledKotlinCompilerVersionIfReleased() ?: return

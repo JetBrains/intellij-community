@@ -243,6 +243,13 @@
               topic="com.intellij.openapi.roots.ModuleRootListener"/>
     <listener class="org.jetbrains.kotlin.idea.configuration.KotlinMigrationProjectDataImportListener"
               topic="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener"/>
+
+    <listener class="org.jetbrains.kotlin.idea.KotlinClearPackageCachesListener"
+              topic="com.intellij.openapi.roots.ModuleRootListener"/>
+    <listener class="org.jetbrains.kotlin.idea.KotlinClearPackageCachesListener"
+              topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+    <listener class="org.jetbrains.kotlin.idea.configuration.notifications.ExternalKotlinCompilerProjectDataImportListener"
+              topic="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
