@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
@@ -20,7 +20,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-final class IdeHeartbeatEventReporter implements Disposable {
+public final class IdeHeartbeatEventReporter implements Disposable {
   private static final int UI_RESPONSE_LOGGING_INTERVAL_MS = 100_000;
   private static final int TOLERABLE_UI_LATENCY = 100;
 
@@ -91,13 +91,15 @@ final class IdeHeartbeatEventReporter implements Disposable {
     }
   }
 
-  static final class UILatencyLogger extends CounterUsagesCollector {
-    private static final EventLogGroup GROUP = new EventLogGroup("performance", 60);
+  public static final class UILatencyLogger extends CounterUsagesCollector {
+    private static final EventLogGroup GROUP = new EventLogGroup("performance", 61);
 
     private static final EventId2<Integer, Integer> HEARTBEAT = GROUP.registerEvent(
       "heartbeat", EventFields.Int("system_cpu_load"), EventFields.Int("swap_load"));
     private static final EventId1<Long> LATENCY = GROUP.registerEvent("ui.latency", EventFields.DurationMs);
     private static final EventId1<Long> LAGGING = GROUP.registerEvent("ui.lagging", EventFields.DurationMs);
+    public static final EventId2<Long, String> POPUP_LATENCY =
+      GROUP.registerEvent("popup.latency", EventFields.DurationMs, EventFields.ActionPlace);
 
     @Override
     public EventLogGroup getGroup() {

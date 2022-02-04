@@ -69,7 +69,6 @@
 
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.ActionManager"
                         serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionManagerImpl"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.actionSystem.impl.ActionPopupMenuImpl$PopupPerformanceLogger"/>
     <applicationService serviceInterface="com.intellij.ide.DataManager"
                         serviceImplementation="com.intellij.ide.impl.DataManagerImpl"
                         testServiceImplementation="com.intellij.ide.impl.HeadlessDataManager"/>

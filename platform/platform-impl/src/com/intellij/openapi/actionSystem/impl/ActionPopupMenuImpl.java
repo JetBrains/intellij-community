@@ -1,14 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.diagnostic.IdeHeartbeatEventReporter;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.inspector.UiInspectorUtil;
-import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.EventFields;
-import com.intellij.internal.statistic.eventLog.events.EventId2;
-import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -154,7 +151,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     public void addNotify() {
       super.addNotify();
       long time = System.currentTimeMillis() - IdeEventQueue.getInstance().getPopupTriggerTime();
-      PopupPerformanceLogger.POPUP_LATENCY.log(time, myPlace);
+      IdeHeartbeatEventReporter.UILatencyLogger.POPUP_LATENCY.log(time, myPlace);
       //noinspection RedundantSuppression
       if (Registry.is("ide.diagnostics.show.context.menu.invocation.time")) {
         //noinspection HardCodedStringLiteral
@@ -212,18 +209,6 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
   public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
     if (myFrame == ideFrame) {
       myMenu.setVisible(false);
-    }
-  }
-
-  static class PopupPerformanceLogger extends CounterUsagesCollector {
-    private static final EventLogGroup GROUP = new EventLogGroup("popup.performance", 1);
-
-    static final EventId2<Long, String> POPUP_LATENCY =
-      GROUP.registerEvent("popup.latency", EventFields.DurationMs, EventFields.ActionPlace);
-
-    @Override
-    public EventLogGroup getGroup() {
-      return GROUP;
     }
   }
 }
