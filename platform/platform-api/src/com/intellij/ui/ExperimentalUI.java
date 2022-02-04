@@ -150,6 +150,7 @@ public final class ExperimentalUI {
     paths.put("general/chevron-left.svg", "expui/general/chevronLeft.svg");
     paths.put("general/chevron-right.svg", "expui/general/chevronRight.svg");
     paths.put("general/chevron-up.svg", "expui/general/chevronUp.svg");
+    paths.put("general/filter.svg", "expui/general/filter.svg");
     paths.put("vcs/branch.svg", "expui/toolwindow/vcs.svg");
     paths.put("icons/Docker.svg", "expui/fileTypes/docker.svg");
     paths.put("icons/DockerFile_1.svg", "expui/fileTypes/docker.svg");

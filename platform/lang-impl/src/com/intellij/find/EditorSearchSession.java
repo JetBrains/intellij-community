@@ -8,6 +8,7 @@ import com.intellij.find.editorHeaderActions.*;
 import com.intellij.find.impl.HelpID;
 import com.intellij.find.impl.livePreview.LivePreviewController;
 import com.intellij.find.impl.livePreview.SearchResults;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter;
@@ -15,6 +16,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.DefaultCustomComponentAction;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,13 +34,14 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
@@ -196,21 +199,60 @@ public class EditorSearchSession implements SearchSession,
     FindUsagesCollector.triggerUsedOptionsStats(project, FindUsagesCollector.FIND_IN_FILE, findModel);
   }
 
-  @NotNull
   protected AnAction[] createPrimarySearchActions() {
-    return new AnAction[]{
-      new StatusTextAction(),
-      new PrevOccurrenceAction(),
-      new NextOccurrenceAction(),
+    if (ExperimentalUI.isNewUI()) {
+      return new AnAction[] {
+        new StatusTextAction(),
+        new PrevOccurrenceAction(),
+        new NextOccurrenceAction(),
+        createFilterGroup(),
+        createMoreGroup()
+      };
+    }
+    else {
+      return new AnAction[]{
+        new StatusTextAction(),
+        new PrevOccurrenceAction(),
+        new NextOccurrenceAction(),
+        new FindAllAction(),
+        new Separator(),
+        new AddOccurrenceAction(),
+        new RemoveOccurrenceAction(),
+        new SelectAllAction(),
+        new Separator(),
+        new ToggleSelectionOnlyAction(),
+        new ShowFilterPopupGroup()
+      };
+    }
+  }
+
+  private static AnAction createFilterGroup() {
+    DefaultActionGroup group = new ShowFilterPopupGroup() {
+      @Override
+      protected boolean enableLiveIndicator(@NotNull FindModel model) {
+        return super.enableLiveIndicator(model) || !model.isGlobal();
+      }
+    };
+
+    group.add(new Separator(ApplicationBundle.message("editorsearch.filter.search.scope")), Constraints.FIRST);
+    group.add(new ToggleSelectionOnlyAction(), Constraints.FIRST);
+    return group;
+  }
+
+  private static AnAction createMoreGroup() {
+    DefaultActionGroup group = new DefaultActionGroup(
       new FindAllAction(),
-      new Separator(),
+      new Separator(ApplicationBundle.message("editorsearch.more.multiple.cursors")),
       new AddOccurrenceAction(),
       new RemoveOccurrenceAction(),
-      new SelectAllAction(),
-      new Separator(),
-      new ToggleSelectionOnlyAction(),
-      new ShowFilterPopupGroup()
-    };
+      new SelectAllAction()
+    );
+
+    group.setPopup(true);
+    group.getTemplatePresentation().setText(ApplicationBundle.message("editorsearch.more.popup"));
+    group.getTemplatePresentation().setIcon(AllIcons.Actions.More);
+    group.getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+    return group;
   }
 
   private void saveInitialSelection() {
@@ -360,6 +402,11 @@ public class EditorSearchSession implements SearchSession,
     myFindModel.setMultiline(myComponent.isMultiline());
   }
 
+  @Override
+  public void toggleSearchReplaceMode() {
+    myFindModel.setReplaceState(!myFindModel.isReplaceState());
+  }
+
   @NotNull
   @Override
   public FindModel getFindModel() {
@@ -403,8 +450,15 @@ public class EditorSearchSession implements SearchSession,
 
   private void updateEmptyText() {
     if (myComponent.getSearchTextComponent() instanceof ComponentWithEmptyText) {
-      String emptyText = getEmptyText();
-      ((ComponentWithEmptyText)myComponent.getSearchTextComponent()).getEmptyText().setText(StringUtil.capitalize(emptyText));
+      ComponentWithEmptyText cweText = (ComponentWithEmptyText)myComponent.getSearchTextComponent();
+      String emptyText = StringUtil.capitalize(getEmptyText());
+      cweText.getEmptyText().setText(emptyText);
+    }
+
+    if (ExperimentalUI.isNewUI() && myFindModel.isReplaceState() && myComponent.getReplaceTextComponent() instanceof ComponentWithEmptyText) {
+      ComponentWithEmptyText cweText = (ComponentWithEmptyText)myComponent.getReplaceTextComponent();
+      String emptyText = myFindModel.getStringToReplace().isEmpty() ? ApplicationBundle.message("editorsearch.replace.hint") : "";
+      cweText.getEmptyText().setText(emptyText);
     }
   }
 
@@ -421,7 +475,7 @@ public class EditorSearchSession implements SearchSession,
       checkOption(chosenOptions, myFindModel.isWholeWordsOnly() && !myFindModel.isRegularExpressions(), "find.whole.words");
       checkOption(chosenOptions, myFindModel.isRegularExpressions(), "find.regex");
       if (chosenOptions.isEmpty()) {
-        return "";
+        return ExperimentalUI.isNewUI() ? ApplicationBundle.message("editorsearch.search.hint") : "";
       }
       if (chosenOptions.size() == 1) {
         return FindBundle.message("emptyText.used.option", chosenOptions.get(0));
@@ -552,7 +606,7 @@ public class EditorSearchSession implements SearchSession,
     updateUIWithEmptyResults();
     mySearchResults.clear();
     if (allowedToChangedEditorSelection
-        && !UIUtil.isClientPropertyTrue(myComponent.getSearchTextComponent(), SearchTextArea.JUST_CLEARED_KEY)) {
+        && !ClientProperty.isTrue(myComponent.getSearchTextComponent(), SearchTextArea.JUST_CLEARED_KEY)) {
       restoreInitialCaretPositionAndSelection();
     }
   }
@@ -635,6 +689,7 @@ public class EditorSearchSession implements SearchSession,
         }
       });
       button.addActionListener(this);
+      button.setContentAreaFilled(!ExperimentalUI.isNewUI());
       return button;
     }
 

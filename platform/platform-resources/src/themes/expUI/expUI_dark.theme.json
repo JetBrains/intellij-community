@@ -184,6 +184,8 @@
       "underTabsBorderColor":"Grey3"
     },
 
+    "Editor.searchFieldInsets": "7,10,7,8",
+
     "Link": {
       "activeForeground": "Blue8",
       "hoverForeground": "Blue8",

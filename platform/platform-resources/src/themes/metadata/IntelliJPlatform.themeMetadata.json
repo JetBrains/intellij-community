@@ -244,6 +244,10 @@
       "key": "Editor.shortcutForeground"
     },
     {
+      "key": "Editor.searchFieldInsets",
+      "description": "Additional insets around editor search/replace fields in Experimental UI"
+    },
+    {
       "key": "EditorTabs.background",
       "description": "Background under all tabs in the editor. If value isn't specified the value of DefaultTabs.background will be used",
       "since": "2019.2"
@@ -656,6 +660,10 @@
     },
     {
       "key": "NotificationsToolwindow.Notification.hoverBackground"
+    },
+    {
+      "key" : "OnePixelDivider.background",
+      "description": "One pixel divider color"
     },
     {
       "key": "Panel.mouseShortcutBackground",

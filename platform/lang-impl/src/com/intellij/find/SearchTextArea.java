@@ -16,11 +16,13 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.LightEditActionFactory;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -37,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -88,6 +89,8 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
     }
   };
 
+  private static final Border EMPTY_SCROLL_BORDER = JBUI.Borders.empty(2, 0, 2, 2);
+
   private final JTextArea myTextArea;
   private final boolean mySearchMode;
   private final JPanel myIconsPanel = new NonOpaquePanel();
@@ -98,9 +101,12 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
   private final ActionButton myHistoryPopupButton;
   private boolean myMultilineEnabled = true;
 
+  /**
+   * @deprecated infoMode is not used. Use the other constructor.
+   */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode, boolean infoMode) {
+  public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode, @SuppressWarnings("unused") boolean infoMode) {
     this (textArea, searchMode);
   }
 
@@ -144,14 +150,18 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
       @Override
       protected void setupCorners() {
         super.setupCorners();
-        setBorder(JBUI.Borders.empty(2, 0, 2, 2));
+        super.setBorder(EMPTY_SCROLL_BORDER);
       }
 
       @Override
       public void updateUI() {
         super.updateUI();
-        setBorder(JBUI.Borders.empty(2, 0, 2, 2));
+        super.setBorder(EMPTY_SCROLL_BORDER);
       }
+
+      // Disable external updates e.g. from UIUtil.removeScrollBorder
+      @Override
+      public void setBorder(Border border) {}
     };
     myTextArea.setBorder(new Border() {
       @Override
@@ -210,19 +220,20 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
 
   protected void updateLayout() {
     JPanel historyButtonWrapper = new NonOpaquePanel(new BorderLayout());
-    historyButtonWrapper.setBorder(JBUI.Borders.empty(2, 3, 0, 0));
+    historyButtonWrapper.setBorder(ExperimentalUI.isNewUI() ? JBUI.Borders.empty(2, 3, 0, 8) : JBUI.Borders.empty(2, 3, 0, 0));
     historyButtonWrapper.add(myHistoryPopupButton, BorderLayout.NORTH);
     JPanel iconsPanelWrapper = new NonOpaquePanel(new BorderLayout());
     iconsPanelWrapper.setBorder(JBUI.Borders.emptyTop(2));
     JPanel p = new NonOpaquePanel(new BorderLayout());
     p.add(myIconsPanel, BorderLayout.NORTH);
-    myIconsPanel.setBorder(JBUI.Borders.emptyRight(5));
+    myIconsPanel.setBorder(ExperimentalUI.isNewUI() ? JBUI.Borders.emptyRight(8) : JBUI.Borders.emptyRight(5));
     iconsPanelWrapper.add(p, BorderLayout.WEST);
     iconsPanelWrapper.add(myExtraActionsPanel, BorderLayout.CENTER);
 
     removeAll();
     setLayout(new BorderLayout(JBUIScale.scale(3), 0));
-    setBorder(JBUI.Borders.empty(SystemInfo.isLinux ? JBUI.scale(2) : JBUI.scale(1)));
+    setBorder(JBUI.Borders.empty(JBUI.insets("Editor.searchFieldInsets", JBUI.insets(SystemInfo.isLinux ? 2 : 1))));
+
     add(historyButtonWrapper, BorderLayout.WEST);
     add(myScrollPane, BorderLayout.CENTER);
     add(iconsPanelWrapper, BorderLayout.EAST);
@@ -275,8 +286,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
       buttonsGrid.setBorder(JBUI.Borders.emptyRight(2));
       myExtraActionsPanel.setLayout(new BorderLayout());
       myExtraActionsPanel.add(buttonsGrid, BorderLayout.NORTH);
-      myExtraActionsPanel.setBorder(new CompoundBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 1, 0, 0), JBUI.Borders.emptyLeft(5)));
-      myExtraActionsPanel.setBorder(new PseudoSeparatorBorder());
+      if (!ExperimentalUI.isNewUI()) myExtraActionsPanel.setBorder(new PseudoSeparatorBorder());
     }
     return addedButtons;
   }
@@ -337,7 +347,9 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
   /**
    * @deprecated use this wrapper component with JBTextArea and its getEmptyText() instead
    */
-  public void setInfoText(String info) {}
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  public void setInfoText(@SuppressWarnings("unused") String info) {}
 
   private class ShowHistoryAction extends DumbAwareAction implements LightEditCompatible {
     private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
@@ -351,9 +363,10 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if (myPopupState.isRecentlyHidden()) return; // do not show new popup
+      Project project = e.getProject();
+      if (myPopupState.isRecentlyHidden() || project == null) return; // do not show new popup
       FeatureUsageTracker.getInstance().triggerFeatureUsed("find.recent.search");
-      FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(e.getProject());
+      FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(project);
       String[] recent = mySearchMode ? findInProjectSettings.getRecentFindStrings()
                                      : findInProjectSettings.getRecentReplaceStrings();
       JBList<String> historyList = new JBList<>(ArrayUtil.reverseArray(recent));

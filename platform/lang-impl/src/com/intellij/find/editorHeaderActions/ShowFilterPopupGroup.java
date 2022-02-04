@@ -35,12 +35,16 @@ public class ShowFilterPopupGroup extends DefaultActionGroup implements Shortcut
       return;
     }
     Icon icon = getTemplatePresentation().getIcon();
-    if (icon != null && session.getFindModel().getSearchContext() != FindModel.SearchContext.ANY) {
+    if (icon != null && enableLiveIndicator(session.getFindModel())) {
       e.getPresentation().setIcon(ExecutionUtil.getLiveIndicator(icon));
     }
     else {
       e.getPresentation().setIcon(icon);
     }
+  }
+
+  protected boolean enableLiveIndicator(@NotNull FindModel model) {
+    return model.getSearchContext() != FindModel.SearchContext.ANY;
   }
 
   @Override

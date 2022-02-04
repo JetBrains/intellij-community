@@ -179,6 +179,8 @@
       "hoverInactiveBackground": "Grey13"
     },
 
+    "Editor.searchFieldInsets": "7,10,7,8",
+
     "FileColor": {
       "Yellow": "Yellow11",
       "Green": "Green11"
