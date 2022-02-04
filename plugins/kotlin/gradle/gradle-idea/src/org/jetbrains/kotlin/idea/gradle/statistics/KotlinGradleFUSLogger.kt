@@ -6,7 +6,6 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.io.FileUtil
@@ -29,7 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 
-class KotlinGradleFUSLogger : StartupActivity, DumbAware, Runnable {
+class KotlinGradleFUSLogger : StartupActivity.DumbAware, Runnable {
 
     override fun runActivity(project: Project) {
         AppExecutorUtil.getAppScheduledExecutorService()
