@@ -86,7 +86,6 @@ import javax.accessibility.AccessibleRole;
 import javax.accessibility.AccessibleStateSet;
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
@@ -687,7 +686,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       }
     }
     myUsagePreviewTitle = new SimpleColoredComponent();
-    myUsagePreviewTitle.setBorder(JBUI.Borders.empty(3, 8, 4, 8));
     myUsageViewPresentation = new UsageViewPresentation();
     myUsagePreviewPanel = new UsagePreviewPanel(myProject, myUsageViewPresentation, true) {
       @Override
@@ -804,29 +802,60 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
 
     myIsPinned.set(UISettings.getInstance().getPinFindInPath());
 
+    JBInsets textFieldBorderInsets = JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets();
+    JBInsets textFieldInputInsets = JBUI.CurrentTheme.ComplexPopup.textFieldInputInsets();
     if (ExperimentalUI.isNewUI()) {
+      Color background = JBUI.CurrentTheme.Popup.BACKGROUND;
       Insets headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets();
       int verticalGap = SpacingConfiguration.createIntelliJSpacingConfiguration().getVerticalComponentGap();
       headerInsets.top -= verticalGap;
       headerInsets.bottom -= verticalGap;
-      header.panel.setBorder(JBUI.Borders.empty(headerInsets));
+      header.panel.setBorder(JBUI.Borders.compound(JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 0, 1, 0),
+                                                   JBUI.Borders.empty(headerInsets)));
       header.panel.setBackground(JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND);
       header.cbFileFilter.setOpaque(false);
+      setBackground(background);
+      mySearchTextArea.setOpaque(false);
+      mySearchTextArea.setBorder(JBUI.Borders.compound(JBUI.Borders.empty(textFieldBorderInsets),
+                                                       bottomLineBorder(),
+                                                       JBUI.Borders.empty(textFieldInputInsets)));
+      myReplaceTextArea.setOpaque(false);
+      myReplaceTextArea.setBorder(JBUI.Borders.compound(JBUI.Borders.empty(textFieldBorderInsets),
+                                                       bottomLineBorder(),
+                                                       JBUI.Borders.empty(textFieldInputInsets)));
+      scopesPanel.setOpaque(false);
+      myScopeSelectionToolbar.getComponent().setOpaque(false);
+      myScopeDetailsPanel.setOpaque(false);
+      for (Component component : UIUtil.uiTraverser(myScopeDetailsPanel).traverse()) {
+        if (component instanceof JComponent) {
+          ((JComponent)component).setOpaque(false);
+        }
+      }
+      myUsagePreviewTitle.setBorder(JBUI.Borders.empty(12, 8, 5, 0));
+      myResultsPreviewTable.setBackground(background);
+      previewPanel.setBackground(background);
+      scopesPanel.setBorder(JBUI.Borders.empty(4, textFieldBorderInsets.getUnscaled().left + textFieldInputInsets.getUnscaled().left,
+                                               4, textFieldBorderInsets.getUnscaled().right + textFieldInputInsets.getUnscaled().right));
+      myScopeSelectionToolbar.setBorder(JBUI.Borders.empty());
+      myPreviewSplitter.setBorder(JBUI.Borders.empty(0, textFieldBorderInsets.getUnscaled().left, 0, textFieldBorderInsets.getUnscaled().right));
     } else {
-      header.panel.setBorder(JBUI.Borders.empty(4, 5));
+      header.panel.setBorder(JBUI.Borders.empty(2, 5));
+      mySearchTextArea.setBorder(JBUI.Borders.compound(
+        JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 1, 0),
+        JBUI.Borders.empty(1, 0, 2, 0)));
+      myReplaceTextArea.setBorder(JBUI.Borders.compound(
+        JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 0, 0, 1, 0),
+        JBUI.Borders.empty(1, 0, 2, 0)));
+      scopesPanel.setBorder(JBUI.Borders.empty(3, 5));
+      myUsagePreviewTitle.setBorder(JBUI.Borders.empty(3, 8, 4, 8));
     }
     add(header.panel, "growx, pushx, wrap");
 
-    mySearchTextArea.setBorder(
-      new CompoundBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 1, 0),
-                         JBUI.Borders.empty(1, 0, 2, 0)));
     add(mySearchTextArea, "pushx, growx, wrap");
-    myReplaceTextArea.setBorder(
-      new CompoundBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 0, 0, 1, 0),
-                         JBUI.Borders.empty(1, 0, 2, 0)));
     add(myReplaceTextArea, "pushx, growx, wrap");
-    add(scopesPanel, "pushx, growx, ax left, wrap, gap 4 4 4 4");
-    add(myPreviewSplitter, "pushx, growx, growy, pushy, wrap");
+    add(scopesPanel, "pushx, growx, ax left, wrap");
+    add(myPreviewSplitter, "pushx, growx, growy, pushy, wrap" +
+                           (ExperimentalUI.isNewUI() ? ", gap " + textFieldBorderInsets.left + " " + textFieldBorderInsets.right + " 0 0" : ""));
     add(bottomPanel, "pushx, growx, dock south");
 
     List<Component> focusOrder = new ArrayList<>();
@@ -847,6 +876,10 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
 
       Touchbar.setButtonActions(bottomPanel, null, principalButtons, myOKButton, new DefaultActionGroup(myCaseSensitiveAction, myWholeWordsAction, myRegexAction));
     }
+  }
+
+  private static @NotNull Border bottomLineBorder() {
+    return JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 0, 1, 0);
   }
 
   @Contract("_,!null,_->!null")

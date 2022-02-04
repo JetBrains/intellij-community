@@ -288,6 +288,23 @@ public final class JBUI {
       return inside == null ? outside : outside == null ? inside : new CompoundBorder(outside, inside);
     }
 
+    /**
+     * @param borders list of border to be compound from outside to inside
+     */
+    public static @Nullable Border compound(Border @NotNull ... borders) {
+      Border result = null;
+      for (Border border : borders) {
+        if (border != null) {
+          if (result == null) {
+            result = border;
+          } else {
+            result = new CompoundBorder(result, border);
+          }
+        }
+      }
+      return result;
+    }
+
     public static @NotNull Border merge(@Nullable Border source, @NotNull Border extra, boolean extraIsOutside) {
       if (source == null) return extra;
       return new CompoundBorder(extraIsOutside ? extra : source, extraIsOutside? source : extra);
@@ -806,6 +823,14 @@ public final class JBUI {
 
       public static Insets headerInsets() {
         return insets("ComplexPopup.Header.insets", insets(12, 10, 10, 10));
+      }
+
+      public static JBInsets textFieldBorderInsets() {
+        return insets("ComplexPopup.TextField.borderInsets", insets(0, 12));
+      }
+
+      public static JBInsets textFieldInputInsets() {
+        return insets("ComplexPopup.TextField.inputInsets", insets(10, 8));
       }
     }
 

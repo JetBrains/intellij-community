@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.StateRestoringCheckBox
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
@@ -58,8 +59,10 @@ internal class FindPopupHeader(project: Project, filterContextButton: ActionButt
 
         cell(filterContextButton)
           .gap(RightGap.SMALL)
-        cell(createSeparator())
-          .gap(RightGap.SMALL)
+        if (!ExperimentalUI.isNewUI()) {
+          cell(createSeparator())
+            .gap(RightGap.SMALL)
+        }
         actionButton(pinAction)
       }
     }
