@@ -749,6 +749,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       @Override
       public void run() {
         try {
+          MavenSession mavenSession = getComponent(LegacySupport.class).getSession();
           RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
           if (repositorySession instanceof DefaultRepositorySystemSession) {
             DefaultRepositorySystemSession session = (DefaultRepositorySystemSession)repositorySession;
@@ -764,7 +765,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
           }
 
           List<ProjectBuildingResult> buildingResults = getProjectBuildingResults(request, files);
-          fillModuleCache(repositorySession, buildingResults);
+          fillSessionCache(mavenSession, repositorySession, buildingResults);
 
           for (ProjectBuildingResult buildingResult : buildingResults) {
             MavenProject project = buildingResult.getProject();
@@ -817,16 +818,23 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     return executionResults;
   }
 
-  private static void fillModuleCache(RepositorySystemSession session, List<ProjectBuildingResult> buildingResults) {
+  private static void fillSessionCache(MavenSession mavenSession,
+                                       RepositorySystemSession session,
+                                       List<ProjectBuildingResult> buildingResults) {
     String mavenVersion = System.getProperty(MAVEN_EMBEDDER_VERSION);
     if (VersionComparatorUtil.compare(mavenVersion, "3.3.1") < 0) return;
     if (session instanceof DefaultRepositorySystemSession) {
-      Map<MavenId, Model> cacheMavenModelMap = new HashMap<MavenId, Model>((int)(buildingResults.size() * 1.5));
+      int initialCapacity = (int)(buildingResults.size() * 1.5);
+      Map<MavenId, Model> cacheMavenModelMap = new HashMap<MavenId, Model>(initialCapacity);
+      Map<String, MavenProject> mavenProjectMap = new HashMap<String, MavenProject>(initialCapacity);
       for (ProjectBuildingResult result : buildingResults) {
         if (result.getProblems() != null && !result.getProblems().isEmpty()) continue;
         Model model = result.getProject().getModel();
+        String key = ArtifactUtils.key(model.getGroupId(), model.getArtifactId(), model.getVersion());
+        mavenProjectMap.put(key, result.getProject());
         cacheMavenModelMap.put(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()), model);
       }
+      mavenSession.setProjectMap(mavenProjectMap);
       ((DefaultRepositorySystemSession)session).setWorkspaceReader(
         new Maven3WorkspaceReader(session.getWorkspaceReader(), cacheMavenModelMap));
     }
@@ -962,10 +970,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       }
       catch (NoSuchMethodError ignore) {
       }
-      try {
-        String key = ArtifactUtils.key(project.getGroupId(), project.getArtifactId(), project.getVersion());
-        session.setProjectMap(Collections.singletonMap(key, project));
-      } catch (Exception ignore) {}
       session.setProjects(Collections.singletonList(project));
 
       for (AbstractMavenLifecycleParticipant listener : lifecycleParticipants) {
