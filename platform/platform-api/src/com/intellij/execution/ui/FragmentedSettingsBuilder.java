@@ -165,7 +165,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     myLinkLabel.setBorder(JBUI.Borders.emptyLeft(5));
     JPanel linkPanel = new JPanel(new BorderLayout());
     linkPanel.add(myLinkLabel, BorderLayout.CENTER);
-    CustomShortcutSet shortcutSet = KeymapUtil.getMnemonicAsShortcut(TextWithMnemonic.parse(message).getMnemonicCode());
+    CustomShortcutSet shortcutSet = KeymapUtil.getShortcutsForMnemonicCode(TextWithMnemonic.parse(message).getMnemonicCode());
     if (shortcutSet != null) {
       List<String> list = ContainerUtil.map(shortcutSet.getShortcuts(), shortcut -> KeymapUtil.getShortcutText(shortcut));
       list.sort(Comparator.comparingInt(String::length));
