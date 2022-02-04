@@ -6,8 +6,7 @@ import org.jetbrains.kotlin.idea.base.project.test.projects.RustProject
 import org.jetbrains.kotlin.idea.fir.project.tests.AbstractFirProjectBasedTests
 
 class FirRustPerformanceTest : AbstractFirProjectBasedTests() {
-    override val testPrefix: String = "FIR"
-    override val warmUpOnHelloWorldProject: Boolean = true
+    override val isBenchmark: Boolean = true
 
     fun testRustPlugin() {
         val profile = ProjectBasedTestPreferences(
@@ -16,6 +15,6 @@ class FirRustPerformanceTest : AbstractFirProjectBasedTests() {
             checkForValidity = true,
         )
 
-        test("Rust Plugin", RustProject.project, RustProject.actions, profile)
+        test(RustProject.project, RustProject.actions, profile)
     }
 }

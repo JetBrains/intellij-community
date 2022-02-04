@@ -22,7 +22,8 @@ typealias StatInfos = Map<String, Any>?
 class Stats(
     val name: String = "",
     private val profilerConfig: ProfilerConfig = ProfilerConfig(),
-    private val acceptanceStabilityLevel: Int = 25
+    private val acceptanceStabilityLevel: Int = 25,
+    private val esUploaderConfiguration: EsUploaderConfiguration = ESUploader.FE10EsUploaderConfiguration,
 ) : AutoCloseable {
 
     private val perfTestRawDataMs = mutableListOf<Long>()
@@ -167,7 +168,7 @@ class Stats(
             block()
         }
 
-        flush()
+        flush(benchmarkTransformers = perfTest.benchmarkTransformers)
     }
 
     private fun convertStatInfoIntoMetrics(
@@ -391,7 +392,7 @@ class Stats(
         flush()
     }
 
-    private fun flush() {
+    private fun flush(benchmarkTransformers: List<(Benchmark) -> Benchmark> = emptyList()) {
         if (perfTestRawDataMs.isNotEmpty()) {
             val geomMeanMs = geomMean(perfTestRawDataMs.toList()).toLong()
             Metric(GEOM_MEAN, metricValue = geomMeanMs).writeTeamCityStats(name)
@@ -405,15 +406,19 @@ class Stats(
                     metricValue = it.metricValue,
                     metricError = it.metricError,
                     metrics = it.metrics ?: emptyList()
-                )
+                ).transform(benchmarkTransformers)
 
                 benchmark.writeJson()
-                ESUploader.upload(benchmark)
+                ESUploader.upload(benchmark, esUploaderConfiguration)
             }
         } finally {
             metric = null
         }
         //metrics.writeCSV(name, header)
+    }
+
+    private fun Benchmark.transform(benchmarkTransformers: List<(Benchmark) -> Benchmark> ): Benchmark {
+        return benchmarkTransformers.fold(this) { benchmark, patcher -> patcher(benchmark)}
     }
 
     companion object {

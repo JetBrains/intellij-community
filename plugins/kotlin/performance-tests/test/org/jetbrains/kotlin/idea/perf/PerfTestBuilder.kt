@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.perf
 
 import org.jetbrains.kotlin.idea.perf.profilers.ProfilerConfig
+import org.jetbrains.kotlin.idea.perf.util.Benchmark
 
 data class PerfTest<SV, TV>(
     val name: String,
@@ -17,6 +18,7 @@ data class PerfTest<SV, TV>(
     val test: (TestData<SV, TV>) -> Unit,
     val tearDown: (TestData<SV, TV>) -> Unit,
     val profilerConfig: ProfilerConfig,
+    val benchmarkTransformers: List<(Benchmark) -> Benchmark>,
     val afterTestCheck: (TestData<SV, TV>) -> TestCheckResult
 )
 
@@ -28,6 +30,7 @@ abstract class PerfTestBuilderBase<SV, TV> {
     protected var checkStability: Boolean? = null
     protected var stopAtException: Boolean? = null
     protected var reportCompilerCounters: Boolean? = null
+    protected var benchmarkTransformers: MutableList<(Benchmark) -> Benchmark> = mutableListOf()
     protected var afterTestCheck: ((TestData<SV, TV>) -> TestCheckResult)? = null
 
     fun name(name: String) {
@@ -58,6 +61,10 @@ abstract class PerfTestBuilderBase<SV, TV> {
         this.reportCompilerCounters = reportCompilerCounters
     }
 
+    fun benchmarkTransformer(benchmarkTransformer: (Benchmark) -> Benchmark) {
+        this.benchmarkTransformers += benchmarkTransformer
+    }
+
     fun afterTestCheck(check: (TestData<SV, TV>) -> TestCheckResult) {
         this.afterTestCheck = check
     }
@@ -73,6 +80,7 @@ class PerfTestOverrideBuilder<SV, TV> : PerfTestBuilderBase<SV, TV>() {
             checkStability = checkStability,
             stopAtException =stopAtException ,
             reportCompilerCounters = reportCompilerCounters,
+            benchmarkTransformers = benchmarkTransformers,
             afterTestCheck = afterTestCheck,
         )
 }
@@ -88,6 +96,7 @@ class PerfTestSettingsOverride<SV, TV>(
     val checkStability: Boolean?,
     val reportCompilerCounters: Boolean?,
     val stopAtException: Boolean?,
+    val benchmarkTransformers: List<(Benchmark) -> Benchmark>?,
     val afterTestCheck: ((TestData<SV, TV>) -> TestCheckResult)?
 ) {
     fun applyToPerfTest(perfTest: PerfTest<SV, TV>): PerfTest<SV, TV> {
@@ -99,6 +108,7 @@ class PerfTestSettingsOverride<SV, TV>(
             checkStability = checkStability ?: perfTest.checkStability,
             reportCompilerCounters = reportCompilerCounters ?: perfTest.reportCompilerCounters,
             stopAtException = stopAtException ?: perfTest.stopAtException,
+            benchmarkTransformers = perfTest.benchmarkTransformers + benchmarkTransformers.orEmpty(),
             afterTestCheck = afterTestCheck?.and(perfTest.afterTestCheck) ?: perfTest.afterTestCheck,
         )
     }
@@ -156,6 +166,7 @@ class PerfTestBuilder<SV, TV> : PerfTestBuilderBase<SV, TV>() {
             test = test,
             tearDown = tearDown,
             profilerConfig = profilerConfig,
+            benchmarkTransformers =  benchmarkTransformers,
             afterTestCheck = afterTestCheck!!,
         )
 }

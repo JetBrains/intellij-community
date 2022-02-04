@@ -11,8 +11,6 @@ object ESUploader {
     var username: String? = null
     var password: String? = null
 
-    var indexName = "kotlin_ide_benchmarks"
-
     private val JSON: MediaType = "application/json; charset=utf-8".toMediaType()
     private val client = OkHttpClient()
 
@@ -23,13 +21,14 @@ object ESUploader {
         logMessage { "initialized es details $username @ $host" }
     }
 
-    fun upload(benchmark: Benchmark) {
+    fun upload(benchmark: Benchmark, configuration: EsUploaderConfiguration) {
+        if (configuration !is EsUploaderConfiguration.UploadToEs) return
         if (host == null) {
             logMessage { "ES host is not specified, ${benchmark.id()} would not be uploaded" }
             return
         }
 
-        val url = "$host/$indexName/_doc/${benchmark.id()}"
+        val url = "$host/${configuration.indexName}/_doc/${benchmark.id()}"
         val auth = if (username != null && password != null) {
             Credentials.basic(username!!, password!!);
         } else {
@@ -57,4 +56,14 @@ object ESUploader {
             }
         }
     }
+
+    val FE10EsUploaderConfiguration = EsUploaderConfiguration.UploadToEs(indexName = "kotlin_ide_benchmarks")
+}
+
+sealed class EsUploaderConfiguration {
+    data class UploadToEs(
+        val indexName: String,
+    ) : EsUploaderConfiguration()
+
+    object DoNotUploadToEs : EsUploaderConfiguration()
 }
