@@ -61,22 +61,22 @@ public final class TextWithMnemonic {
   @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public int getMnemonic() {
     char ch = getMnemonicChar();
-    return ch == 0 ? 0 : Character.toUpperCase(ch);
+    return ch == KeyEvent.CHAR_UNDEFINED ? 0 : Character.toUpperCase(ch);
   }
 
   /**
-   * @return an extended key code for a mnemonic character, or {@code KeyEvent.VK_UNDEFINED} if mnemonic is not set
+   * @return an extended key code for a mnemonic character, or {@link KeyEvent#VK_UNDEFINED} if mnemonic is not set
    */
   public int getMnemonicCode() {
     char ch = getMnemonicChar();
-    return ch == 0 ? KeyEvent.VK_UNDEFINED : KeyEvent.getExtendedKeyCodeForChar(ch);
+    return ch == KeyEvent.CHAR_UNDEFINED ? KeyEvent.VK_UNDEFINED : KeyEvent.getExtendedKeyCodeForChar(ch);
   }
 
   /**
-   * @return a mnemonic character, or {@code 0} if mnemonic is not set
+   * @return a mnemonic character, or {@link KeyEvent#CHAR_UNDEFINED} if mnemonic is not set
    */
   public char getMnemonicChar() {
-    if (myMnemonicIndex < 0) return 0;
+    if (myMnemonicIndex < 0) return KeyEvent.CHAR_UNDEFINED;
     int index = myMnemonicIndex - myText.length();
     return index < 0 ? myText.charAt(myMnemonicIndex) : myMnemonicSuffix.charAt(index);
   }
