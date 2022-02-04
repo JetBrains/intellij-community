@@ -47,8 +47,6 @@ internal class SettingsSynchronizer : FrameStateListener, SettingsSyncEnabledSta
   override fun enabledStateChanged(syncEnabled: Boolean) {
     if (syncEnabled) {
       if (!SettingsSyncMain.isAvailable()) {
-        SettingsSyncMain.getInstance()
-        LOG.info("Initializing settings sync")
         executorService.schedule(initializeSyncing(), 0, TimeUnit.SECONDS)
       }
       else {
