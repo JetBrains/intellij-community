@@ -6,9 +6,12 @@ import com.intellij.execution.CommandLineWrapperUtil;
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
+import jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes;
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.apache.commons.cli.*;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -151,6 +154,12 @@ public class JpsBootstrapMain {
     verbose("Module " + module.getName() + " classpath:\n  " + moduleRuntimeClasspath.stream().map(JpsBootstrapMain::fileDebugInfo).collect(Collectors.joining("\n  ")));
 
     writeJavaArgfile(moduleRuntimeClasspath);
+
+    if (underTeamCity) {
+      SetParameterServiceMessage setParameterServiceMessage = new SetParameterServiceMessage(
+        "jps.bootstrap.java.executable", JpsBootstrapJdk.getJavaExecutable(jdkHome).toString());
+      System.out.println(setParameterServiceMessage.asString());
+    }
   }
 
   private void writeJavaArgfile(List<File> moduleRuntimeClasspath) throws IOException {
@@ -275,5 +284,11 @@ public class JpsBootstrapMain {
     consoleHandler.setFormatter(new IdeaLogRecordFormatter(layout, false));
     consoleHandler.setLevel(java.util.logging.Level.WARNING);
     rootLogger.addHandler(consoleHandler);
+  }
+
+  private static class SetParameterServiceMessage extends MessageWithAttributes {
+    public SetParameterServiceMessage(@NotNull String name, @NotNull String value) {
+      super(ServiceMessageTypes.BUILD_SET_PARAMETER, Map.of("name", name, "value", value));
+    }
   }
 }
