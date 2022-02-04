@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VirtualFile
@@ -72,27 +72,24 @@ object IndexableEntityProviderMethods {
     }
   }
 
-  fun createIterators(library: Library): Collection<IndexableFilesIterator> = createIteratorList(library)
-
   fun createIterators(sdk: Sdk): Collection<IndexableFilesIterator> {
     return listOf(SdkIndexableFilesIteratorImpl(sdk))
   }
 
-  private fun createIteratorList(library: Library): List<IndexableFilesIterator> = listOf(LibraryIndexableFilesIteratorImpl(library))
-
   private fun getLibIteratorsByName(libraryTable: LibraryTable, name: String): List<IndexableFilesIterator>? =
-    libraryTable.getLibraryByName(name)?.run { createIteratorList(this) }
+    libraryTable.getLibraryByName(name)?.run { LibraryIndexableFilesIteratorImpl.createIteratorList(this) }
 
-  fun createLibraryIterators(name: String, project: Project): List<IndexableFilesIterator> {
+  fun createLibraryIterators(name: String, project: Project): List<IndexableFilesIterator> = runReadAction {
     val registrar = LibraryTablesRegistrar.getInstance()
-    getLibIteratorsByName(registrar.libraryTable, name)?.also { return it }
+    getLibIteratorsByName(registrar.libraryTable, name)?.also { return@runReadAction it }
     for (customLibraryTable in registrar.customLibraryTables) {
-      getLibIteratorsByName(customLibraryTable, name)?.also { return it }
+      getLibIteratorsByName(customLibraryTable, name)?.also { return@runReadAction it }
     }
     val storage = WorkspaceModel.getInstance(project).entityStorage.current
-    storage.entities(LibraryEntity::class.java).firstOrNull { it.name == name }?.let { storage.libraryMap.getDataByEntity(it) }?.also {
-      return createIteratorList(it)
-    }
-    return emptyList()
+    return@runReadAction storage.entities(LibraryEntity::class.java).firstOrNull { it.name == name }?.let {
+      storage.libraryMap.getDataByEntity(it)
+    }?.run {
+      LibraryIndexableFilesIteratorImpl.createIteratorList(this)
+    } ?: emptyList()
   }
 }
