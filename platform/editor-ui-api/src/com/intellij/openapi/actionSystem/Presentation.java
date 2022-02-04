@@ -311,11 +311,17 @@ public final class Presentation implements Cloneable {
     fireObjectPropertyChange(PROP_SELECTED_ICON, old, mySelectedIcon);
   }
 
+  /**
+   * @return an extended key code for a mnemonic character, or {@code KeyEvent.VK_UNDEFINED} if mnemonic is not set
+   */
   public int getMnemonic() {
     TextWithMnemonic textWithMnemonic = myTextWithMnemonicSupplier.get();
     return textWithMnemonic == null ? 0 : textWithMnemonic.getMnemonicCode();
   }
 
+  /**
+   * @return a mnemonic index in the whole text, or {@code -1} if mnemonic is not set
+   */
   public int getDisplayedMnemonicIndex() {
     TextWithMnemonic textWithMnemonic = myTextWithMnemonicSupplier.get();
     return textWithMnemonic == null ? -1 : textWithMnemonic.getMnemonicIndex();
