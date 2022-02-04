@@ -96,9 +96,4 @@ public interface JavaSpecialRefactoringProvider {
                                PsiExpression thisAccessExpr) throws IncorrectOperationException;
 
   void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination) throws IncorrectOperationException;
-
-  void analyzeAccessibilityConflicts(@NotNull Set<? extends PsiMember> membersToMove,
-                                     @NotNull PsiClass targetClass,
-                                     @NotNull MultiMap<PsiElement, String> conflicts,
-                                     @Nullable String newVisibility);
 }
