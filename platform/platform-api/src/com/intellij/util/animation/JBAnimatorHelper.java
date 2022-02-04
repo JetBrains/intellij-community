@@ -9,6 +9,7 @@ import com.sun.jna.Native;
 import com.sun.jna.win32.StdCallLibrary;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,18 +24,32 @@ public final class JBAnimatorHelper {
   private final @NotNull Set<JBAnimator> requestors;
   private final @NotNull WinMM lib;
 
+  private static @Nullable Throwable exceptionInInitialization = null;
+
+  private static JBAnimatorHelper getInstance() {
+    return JBAnimatorHelperHolder.INSTANCE;
+  }
+
+  /**
+   * Used internally only, do not call it until it's really necessary.
+   */
+  @ApiStatus.Experimental
   public static void requestHighPrecisionTimer(@NotNull JBAnimator requestor) {
     if (isAvailable()) {
-      var helper = JBAnimatorHelperHolder.INSTANCE;
+      var helper = getInstance();
       if (helper.requestors.add(requestor)) {
         helper.lib.timeBeginPeriod(PERIOD);
       }
     }
   }
 
+  /**
+   * Used internally only, do not call it until it's really necessary.
+   */
+  @ApiStatus.Experimental
   public static void cancelHighPrecisionTimer(@NotNull JBAnimator requestor) {
     if (isAvailable()) {
-      var helper = JBAnimatorHelperHolder.INSTANCE;
+      var helper = getInstance();
       if (helper.requestors.remove(requestor)) {
         helper.lib.timeEndPeriod(PERIOD);
       }
@@ -42,18 +57,21 @@ public final class JBAnimatorHelper {
   }
 
   public static boolean isAvailable() {
-    if (!SystemInfoRt.isWindows) {
+    if (!SystemInfoRt.isWindows || exceptionInInitialization != null) {
       return false;
     }
     return PropertiesComponent.getInstance().getBoolean(PROPERTY_NAME, DEFAULT_VALUE);
   }
 
   public static void setAvailable(boolean value) {
+    if (exceptionInInitialization != null) {
+      Logger.getInstance(JBAnimatorHelper.class).error(exceptionInInitialization);
+    }
     if (!SystemInfoRt.isWindows) {
       throw new IllegalArgumentException("This option can be set only on Windows");
     }
     PropertiesComponent.getInstance().setValue(PROPERTY_NAME, value, DEFAULT_VALUE);
-    var helper = JBAnimatorHelperHolder.INSTANCE;
+    var helper = getInstance();
     if (!helper.requestors.isEmpty()) {
       helper.requestors.clear();
       helper.lib.timeEndPeriod(PERIOD);
@@ -72,12 +90,17 @@ public final class JBAnimatorHelper {
   private JBAnimatorHelper() {
     requestors = ConcurrentHashMap.newKeySet();
     WinMM library = null;
-    if (SystemInfoRt.isWindows) try {
-      library = Native.load("winmm", WinMM.class);
-    } catch (UnsatisfiedLinkError e) {
-      Logger.getInstance(getClass()).error(new RuntimeException("Cannot load 'winmm.dll' library"));
+    try {
+      if (SystemInfoRt.isWindows) {
+        library = Native.load("winmm", WinMM.class);
+      }
     } catch (Throwable t) {
-      Logger.getInstance(getClass()).error(t);
+      //should be called only once
+      //noinspection AssignmentToStaticFieldFromInstanceMethod,InstanceofCatchParameter
+      exceptionInInitialization = new RuntimeException(
+        "Cannot load 'winmm.dll' library",
+        t instanceof UnsatisfiedLinkError ? null : t
+      );
     }
     lib = library != null ? library : new WinMM() {
       @Override

@@ -2,6 +2,7 @@
 package com.intellij.util.animation;
 
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.ide.RemoteDesktopService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -135,9 +136,10 @@ public final class JBAnimator implements Disposable {
 
     final var taskId = myRunning.incrementAndGet();
 
-    if (!myIgnorePowerSaveMode && PowerSaveMode.isEnabled() ||
-        Registry.is("ui.no.bangs.and.whistles") ||
-        duration == 0) {
+    if (!myIgnorePowerSaveMode && PowerSaveMode.isEnabled()
+        || Registry.is("ui.no.bangs.and.whistles")
+        || RemoteDesktopService.isRemoteSession()
+        || duration == 0) {
       myService.schedule(() -> {
         if (taskId < myRunning.get()) {
           for (Animation animation : animations) {
