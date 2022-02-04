@@ -37,7 +37,7 @@ public class JpsBootstrapJdk {
       String os;
 
       if (SystemInfo.isMac) {
-        os = "macos";
+        os = "macosx";
       }
       else if (SystemInfo.isLinux) {
         os = "linux";
