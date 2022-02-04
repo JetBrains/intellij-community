@@ -2,14 +2,10 @@
 
 package org.jetbrains.kotlin.idea.maven
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import org.jetbrains.idea.maven.project.MavenImportListener
-import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.kotlin.idea.configuration.KotlinMigrationProjectService
-import org.jetbrains.kotlin.idea.configuration.notifications.checkExternalKotlinCompilerVersion
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils.runUnderDisposeAwareIndicator
 
@@ -18,15 +14,6 @@ class MavenImportStartupActivity : StartupActivity {
 
     override fun runActivity(project: Project) {
         val parentDisposable = KotlinPluginDisposable.getInstance(project)
-        project.messageBus.connect(parentDisposable).subscribe(
-            MavenImportListener.TOPIC,
-            MavenImportListener { _: Collection<MavenProject>, _: List<Module> ->
-                runUnderDisposeAwareIndicator(parentDisposable) {
-                    KotlinMigrationProjectService.getInstance(project).onImportFinished()
-                    checkExternalKotlinCompilerVersion(project)
-                }
-            }
-        )
 
         MavenProjectsManager.getInstance(project)?.addManagerListener(
             object : MavenProjectsManager.Listener {
