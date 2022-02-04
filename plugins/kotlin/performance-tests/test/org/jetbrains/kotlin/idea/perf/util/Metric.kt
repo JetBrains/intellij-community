@@ -4,13 +4,13 @@ package org.jetbrains.kotlin.idea.perf.util
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonUnwrapped
 import org.jetbrains.kotlin.idea.perf.Stats
 import org.jetbrains.kotlin.idea.perf.calcMean
-import java.util.ArrayList
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class Benchmark(
-    val version: Int = 4,
+    val version: Int = 5,
     @set:JsonProperty("agentName")
     var agentName: String?,
     @set:JsonProperty("benchmark")
@@ -38,6 +38,9 @@ data class Benchmark(
     @set:JsonProperty("hasError")
     var hasError: Boolean? = null,
 
+    @JsonUnwrapped
+    var additionalData: BenchmarkAdditionalData? = null,
+
     @set:JsonProperty("metrics")
     var metrics: List<Metric> = ArrayList()
 ) {
@@ -53,7 +56,8 @@ data class Benchmark(
             name?.escapeName(),
             buildId?.toString(),
             warmUp?.let { "warmUp" } ?: null,
-            index?.toString()
+            index?.toString(),
+            additionalData?.getId(),
         ).joinToString(separator = "_")
 
     fun cleanUp() {
@@ -134,4 +138,8 @@ data class Metric(
         rawMetrics = rawMetrics?.filter { it.metricValue != null || (it.metrics?.isNotEmpty() == true) }
         if (rawMetrics?.isEmpty() == true) rawMetrics = null
     }
+}
+
+interface BenchmarkAdditionalData {
+    fun getId(): String
 }

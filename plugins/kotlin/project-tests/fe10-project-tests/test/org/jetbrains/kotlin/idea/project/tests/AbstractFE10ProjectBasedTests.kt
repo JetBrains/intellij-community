@@ -6,15 +6,10 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.analyzer.KotlinModificationTrackerService
 import org.jetbrains.kotlin.idea.base.KotlinPluginKind
-import org.jetbrains.kotlin.idea.base.assertKotlinPluginKind
 import org.jetbrains.kotlin.idea.base.project.test.AbstractProjectBasedTest
 
 abstract class AbstractFE10ProjectBasedTests : AbstractProjectBasedTest() {
-
-    override fun setUp() {
-        super.setUp()
-        assertKotlinPluginKind(KotlinPluginKind.FE10_PLUGIN)
-    }
+    override val pluginKind: KotlinPluginKind = KotlinPluginKind.FE10_PLUGIN
 
     override fun invalidateCaches(project: Project) {
         PsiManager.getInstance(project).dropResolveCaches()

@@ -41,7 +41,7 @@ internal fun uploadAggregateResults(folder: File) {
                         metrics = it.metrics ?: emptyList()
                     )
                     warmUpBenchmark.writeJson()
-                    ESUploader.upload(warmUpBenchmark)
+                    ESUploader.upload(warmUpBenchmark, ESUploader.FE10EsUploaderConfiguration)
                 }
             }
         }
@@ -64,6 +64,6 @@ internal fun uploadAggregateResults(folder: File) {
             .filter { it.synthetic != true && it.warmUp != true }
             .forEach { geomMeanBenchmark.merge(it) }
         geomMeanBenchmark.writeJson()
-        ESUploader.upload(geomMeanBenchmark)
+        ESUploader.upload(geomMeanBenchmark, ESUploader.FE10EsUploaderConfiguration)
     }
 }
