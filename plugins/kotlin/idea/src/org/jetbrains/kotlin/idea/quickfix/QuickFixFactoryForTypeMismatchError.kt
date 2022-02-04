@@ -187,7 +187,8 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
             if (QuickFixUtil.canEvaluateTo(initializer, diagnosticElement)
                 || getter != null && QuickFixUtil.canFunctionOrGetterReturnExpression(getter, diagnosticElement)
             ) {
-                addChangeTypeFix(property, expressionType, ::ChangeVariableTypeFix)
+                val returnType = property.returnType(diagnosticElement, expressionType, context)
+                addChangeTypeFix(property, returnType, ::ChangeVariableTypeFix)
             }
         }
 
@@ -200,24 +201,7 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
         else
             PsiTreeUtil.getParentOfType(diagnosticElement, KtFunction::class.java, true)
         if (function is KtFunction && QuickFixUtil.canFunctionOrGetterReturnExpression(function, diagnosticElement)) {
-            val functionDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, function]
-            val returnedExpressions = function
-                .collectDescendantsOfType<KtReturnExpression> { it.getTargetFunctionDescriptor(context) == functionDescriptor }
-                .map { it.returnedExpression }
-                .plus(function.bodyExpression.takeUnless { it is KtBlockExpression })
-                .mapNotNull { KtPsiUtil.deparenthesize(it) }
-            val returnType = if (returnedExpressions.singleOrNull() == diagnosticElement) {
-               expressionType
-            } else {
-                val returnTypes = returnedExpressions.flatMap {
-                    when (it) {
-                        is KtIfExpression -> it.branches
-                        is KtWhenExpression -> it.entries.map { entry -> entry.expression }
-                        else -> listOf(it)
-                    }
-                }.mapNotNull { it?.getType(context) }.ifEmpty { listOf(expressionType) }
-                returnTypes.singleOrNull() ?: CommonSupertypes.commonSupertype(returnTypes)
-            }
+            val returnType = function.returnType(diagnosticElement, expressionType, context)
             addChangeTypeFix(function, returnType, ChangeCallableReturnTypeFix::ForEnclosing)
         }
 
@@ -296,6 +280,40 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
             }
         }
         return actions
+    }
+
+    private fun KtCallableDeclaration.returnType(
+        diagnosticElement: KtExpression,
+        candidateType: KotlinType,
+        context: BindingContext
+    ): KotlinType {
+        val (initializers, functionOrGetter) = when (this) {
+            is KtNamedFunction -> listOfNotNull(this.initializer) to this
+            is KtProperty -> listOfNotNull(this.initializer, this.getter?.initializer) to this.getter
+            else -> return candidateType
+        }
+        val returnedExpressions = if (functionOrGetter != null) {
+            val descriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, functionOrGetter]
+            functionOrGetter
+                .collectDescendantsOfType<KtReturnExpression> { it.getTargetFunctionDescriptor(context) == descriptor }
+                .mapNotNull { it.returnedExpression }
+                .plus(initializers)
+        } else {
+            initializers
+        }.mapNotNull { KtPsiUtil.deparenthesize(it) }
+
+        return if (returnedExpressions.singleOrNull() == diagnosticElement) {
+            candidateType
+        } else {
+            val returnTypes = returnedExpressions.flatMap {
+                when (it) {
+                    is KtIfExpression -> it.branches
+                    is KtWhenExpression -> it.entries.map { entry -> entry.expression }
+                    else -> listOf(it)
+                }
+            }.mapNotNull { it?.getType(context) }.ifEmpty { listOf(candidateType) }
+            returnTypes.singleOrNull() ?: CommonSupertypes.commonSupertype(returnTypes)
+        }
     }
 
     companion object {
