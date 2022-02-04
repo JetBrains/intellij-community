@@ -8,7 +8,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentUtil;
-import com.intellij.util.FieldAccessor;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -54,9 +54,6 @@ public interface PopupComponent {
     class AwtHeavyweight implements Factory {
       @Override
       public PopupComponent getPopup(Component owner, Component content, int x, int y, JBPopup jbPopup) {
-        if (OurHeavyWeightPopup.isEnabled()) {
-          return new AwtPopupWrapper(new OurHeavyWeightPopup(owner, content, x, y), jbPopup);
-        }
         final PopupFactory factory = PopupFactory.getSharedInstance();
 
         final int oldType = PopupUtil.getPopupType(factory);
@@ -216,15 +213,12 @@ public interface PopupComponent {
 
     @Override
     public @Nullable Window getWindow() {
-      Component c = ourComponentField.get(myPopup);
-      return c instanceof JWindow ? (JWindow)c : null;
+      return myPopup instanceof HeavyWeightPopup ? ObjectUtils.tryCast(((HeavyWeightPopup)myPopup).getWindow(), JWindow.class) : null;
     }
 
     @Override
     public void setRequestFocus(boolean requestFocus) {
     }
-
-    static final FieldAccessor<Popup, Component> ourComponentField = new FieldAccessor<>(Popup.class, "component", Component.class);
   }
 }
 

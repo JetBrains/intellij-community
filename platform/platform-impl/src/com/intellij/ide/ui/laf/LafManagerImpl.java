@@ -48,7 +48,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.components.DefaultLinkButtonUI;
-import com.intellij.ui.popup.OurHeavyWeightPopup;
+import com.intellij.ui.popup.HeavyWeightPopup;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.util.*;
@@ -1099,39 +1099,31 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       final Point point = fixPopupLocation(contents, x, y);
 
       final int popupType = PopupUtil.getPopupType(this);
-      if (popupType == WEIGHT_HEAVY && OurHeavyWeightPopup.isEnabled()) {
-        return new OurHeavyWeightPopup(owner, contents, point.x, point.y);
-      }
       if (popupType >= 0) {
         PopupUtil.setPopupType(myDelegate, popupType);
       }
 
       Popup popup = myDelegate.getPopup(owner, contents, point.x, point.y);
       Window window = ComponentUtil.getWindow(contents);
-      String cleanupKey = "LafManagerImpl.rootPaneCleanup";
       boolean isHeavyWeightPopup = window instanceof RootPaneContainer && window != ComponentUtil.getWindow(owner);
       if (isHeavyWeightPopup) {
-        window.setMinimumSize(null); // clear min-size from prev invocations on JBR11
-      }
-      if (isHeavyWeightPopup && ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
+        popup = new HeavyWeightPopup(popup, window); // disable popup caching by runtime
+
         final JRootPane rootPane = ((RootPaneContainer)window).getRootPane();
         rootPane.setGlassPane(new IdeGlassPaneImpl(rootPane, false));
         rootPane.putClientProperty(WINDOW_ALPHA, 1.0f);
-        rootPane.putClientProperty(cleanupKey, cleanupKey);
         window.addWindowListener(new WindowAdapter() {
           @Override
           public void windowOpened(WindowEvent e) {
             // cleanup will be handled by AbstractPopup wrapper
             if (PopupUtil.getPopupContainerFor(rootPane) != null) {
               window.removeWindowListener(this);
-              rootPane.putClientProperty(cleanupKey, null);
             }
           }
 
           @Override
           public void windowClosed(WindowEvent e) {
             window.removeWindowListener(this);
-            rootPane.putClientProperty(cleanupKey, null);
             DialogWrapper.cleanupRootPane(rootPane);
             DialogWrapper.cleanupWindowListeners(window);
           }
