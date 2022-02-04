@@ -33,7 +33,7 @@ final class BuildDependenciesUtil {
 
       for (ZipArchiveEntry entry : Collections.list(zipFile.getEntries())) {
         Path entryPath = converter.getOutputPath(entry.getName(), entry.isDirectory());
-        if (entryPath == null) return;
+        if (entryPath == null) continue;
 
         if (entry.isDirectory()) {
           Files.createDirectories(entryPath);

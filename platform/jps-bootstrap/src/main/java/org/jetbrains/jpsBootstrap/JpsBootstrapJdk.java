@@ -4,7 +4,6 @@ package org.jetbrains.jpsBootstrap;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.system.CpuArch;
 
-import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,34 +21,30 @@ public class JpsBootstrapJdk {
   // Corretto 11 is not available on macOS aarch64
   private static final URI ZULU_MACOS_AARCH64_URL = URI.create("https://cache-redirector.jetbrains.com/cdn.azul.com/zulu/bin/zulu11.50.19-ca-jdk11.0.12-macosx_aarch64.tar.gz");
 
-  public static Path getJdkHome(Path communityRoot) throws IOException, InterruptedException {
+  public static Path getJdkHome(Path communityRoot) throws Exception {
     if (!JpsBootstrapUtil.underTeamCity) {
       // On local run JDK was already downloaded via jps-bootstrap.{sh,cmd}
       return Path.of(System.getProperty("java.home"));
     }
 
+    OS os = OS.getCurrent();
+    CpuArch arch = CpuArch.CURRENT;
+
+    if (os == OS.MACOSX && CpuArch.isEmulated()) {
+      arch = CpuArch.ARM64;
+    }
+
+    return getJdkHome(communityRoot, os, arch);
+  }
+
+  static Path getJdkHome(Path communityRoot, OS os, CpuArch arch) throws Exception {
     URI jdkUrl;
-    if (SystemInfo.isMac && (CpuArch.isArm64() || CpuArch.isEmulated())) {
+    if (os == OS.MACOSX && arch == CpuArch.ARM64) {
       // Corretto 11 is not available on macOS aarch64
       jdkUrl = ZULU_MACOS_AARCH64_URL;
     }
     else {
-      String os;
-
-      if (SystemInfo.isMac) {
-        os = "macosx";
-      }
-      else if (SystemInfo.isLinux) {
-        os = "linux";
-      }
-      else if (SystemInfo.isWindows) {
-        os = "windows";
-      }
-      else {
-        throw new IllegalStateException("Only Mac/Linux/Windows are supported now");
-      }
-
-      jdkUrl = getCorrettoUrl(os, CpuArch.CURRENT);
+      jdkUrl = getCorrettoUrl(os, arch);
     }
 
     Path jdkArchive = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, jdkUrl);
@@ -61,7 +56,7 @@ public class JpsBootstrapJdk {
     }
 
     Path jdkHome;
-    if (SystemInfo.isMac) {
+    if (os == OS.MACOSX) {
       jdkHome = jdkExtracted.resolve("Contents").resolve("Home");
     }
     else {
@@ -85,10 +80,25 @@ public class JpsBootstrapJdk {
     throw new IllegalStateException("No java executables were found under " + jdkHome);
   }
 
-  private static URI getCorrettoUrl(String os, CpuArch arch) {
+  private static URI getCorrettoUrl(OS os, CpuArch arch) {
     String archString;
-    String ext = os.equals("windows") ? ".zip" : ".tar.gz";
-    String suffix = os.equals("windows") ? "-jdk" : "";
+    String osString;
+    String ext = os == OS.WINDOWS ? ".zip" : ".tar.gz";
+    String suffix = os == OS.WINDOWS ? "-jdk" : "";
+
+    switch (os) {
+      case WINDOWS:
+        osString = "windows";
+        break;
+      case MACOSX:
+        osString = "macosx";
+        break;
+      case LINUX:
+        osString = "linux";
+        break;
+      default:
+        throw new IllegalStateException("Unsupported OS: " + os);
+    }
 
     switch (arch) {
       case X86_64:
@@ -102,6 +112,25 @@ public class JpsBootstrapJdk {
     }
 
     return URI.create("https://cache-redirector.jetbrains.com/corretto.aws/downloads/resources/" +
-      CORRETTO_VERSION + "/amazon-corretto-" + CORRETTO_VERSION + "-" + os + "-" + archString + suffix + ext);
+      CORRETTO_VERSION + "/amazon-corretto-" + CORRETTO_VERSION + "-" + osString + "-" + archString + suffix + ext);
+  }
+
+  enum OS {
+    WINDOWS, MACOSX, LINUX;
+
+    public static OS getCurrent() {
+      if (SystemInfo.isMac) {
+        return MACOSX;
+      }
+      else if (SystemInfo.isLinux) {
+        return LINUX;
+      }
+      else if (SystemInfo.isWindows) {
+        return WINDOWS;
+      }
+      else {
+        throw new IllegalStateException("Only Mac/Linux/Windows are supported now");
+      }
+    }
   }
 }

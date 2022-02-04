@@ -114,7 +114,7 @@ final class BuildDependenciesDownloader {
   private static byte[] getExpectedFlagFileContent(Path archiveFile, Path targetDirectory) throws IOException {
     // Increment this number to force all clients to extract content again
     // e.g. when some issues in extraction code were fixed
-    int codeVersion = 2;
+    int codeVersion = 3;
 
     long numberOfTopLevelEntries;
     try (Stream<Path> pathStream = Files.list(targetDirectory)) {
