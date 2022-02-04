@@ -120,7 +120,6 @@
         <postStartupActivity implementation="org.jetbrains.kotlin.idea.debugger.filter.JvmDebuggerAddFilterStartupActivity"/>
 
         <compilableFileTypesProvider implementation="org.jetbrains.kotlin.idea.compiler.KotlinCompilableFileTypesProvider" />
-        <postStartupActivity implementation="org.jetbrains.kotlin.idea.compiler.KotlinCompilerStartupActivity"/>
 
         <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinAlternativeSourceNotificationProvider"/>
 
@@ -249,4 +248,8 @@
     <projectListeners>
         <listener class="org.jetbrains.kotlin.idea.scratch.ScratchFileModuleInfoProvider" topic="org.jetbrains.kotlin.idea.scratch.ScratchFileListener"/>
     </projectListeners>
+  <applicationListeners>
+    <listener class="org.jetbrains.kotlin.idea.compiler.KotlinCompilationStatusListener"
+              topic="com.intellij.openapi.compiler.CompilationStatusListener"/>
+  </applicationListeners>
 </idea-plugin>
