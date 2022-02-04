@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.util.Pair;
@@ -560,44 +560,43 @@ public final class ExceptionUtil {
 
   @NotNull
   public static List<PsiClassType> getUnhandledCloserExceptions(PsiElement place, @Nullable PsiElement topElement, PsiType type) {
-    List<PsiClassType> ex = type instanceof PsiClassType ? getExceptionsFromClose(type, place.getResolveScope()) : null;
+    List<PsiClassType> ex = getExceptionsFromClose(type, place.getResolveScope());
     return ex != null ? getUnhandledExceptions(place, topElement, PsiSubstitutor.EMPTY, ex.toArray(PsiClassType.EMPTY_ARRAY)) : Collections.emptyList();
   }
 
   private static List<PsiClassType> getExceptionsFromClose(PsiResourceListElement resource) {
-    final PsiType type = resource.getType();
-    return type instanceof PsiClassType ? getExceptionsFromClose(type, resource.getResolveScope()) : null;
+    return getExceptionsFromClose(resource.getType(), resource.getResolveScope());
   }
 
   private static List<PsiClassType> getExceptionsFromClose(PsiType type, GlobalSearchScope scope) {
-    PsiClassType.ClassResolveResult resourceType = PsiUtil.resolveGenericsClassInType(type);
-    PsiClass resourceClass = resourceType.getElement();
-    if (resourceClass == null) return null;
+    List<PsiClassType> ex = null;
+    for (PsiClassType classType : PsiTypesUtil.getClassTypeComponents(type)) {
+      PsiClassType.ClassResolveResult resourceType = PsiUtil.resolveGenericsClassInType(classType);
+      PsiClass resourceClass = resourceType.getElement();
+      if (resourceClass == null) continue;
 
-    PsiMethod[] methods = PsiUtil.getResourceCloserMethodsForType((PsiClassType)type);
-    if (methods != null) {
-      List<PsiClassType> ex = null;
-      for (PsiMethod method : methods) {
-        PsiClass closerClass = method.getContainingClass();
-        if (closerClass != null) {
-          PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(closerClass, resourceClass, resourceType.getSubstitutor());
-          if (substitutor != null) {
-            final PsiClassType[] exceptionTypes = method.getThrowsList().getReferencedTypes();
-            if (exceptionTypes.length == 0) return Collections.emptyList();
+      PsiMethod[] methods = PsiUtil.getResourceCloserMethodsForType(classType);
+      if (methods != null) {
+        for (PsiMethod method : methods) {
+          PsiClass closerClass = method.getContainingClass();
+          if (closerClass != null) {
+            PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(closerClass, resourceClass, resourceType.getSubstitutor());
+            if (substitutor != null) {
+              final PsiClassType[] exceptionTypes = method.getThrowsList().getReferencedTypes();
+              if (exceptionTypes.length == 0) return Collections.emptyList();
 
-            if (ex == null) {
-              ex = collectSubstituted(substitutor, exceptionTypes, scope);
-            }
-            else {
-              retainExceptions(ex, collectSubstituted(substitutor, exceptionTypes, scope));
+              if (ex == null) {
+                ex = collectSubstituted(substitutor, exceptionTypes, scope);
+              }
+              else {
+                retainExceptions(ex, collectSubstituted(substitutor, exceptionTypes, scope));
+              }
             }
           }
         }
       }
-      return ex;
     }
-
-    return null;
+    return ex;
   }
 
   @NotNull
