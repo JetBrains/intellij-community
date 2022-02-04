@@ -185,6 +185,8 @@
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfigurationParameter"
                   extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationParameterDomExtender"/>
 
+    <dom.gotoSuper implementation="org.jetbrains.idea.maven.dom.navigation.MavenGotoSuperHandler"/>
+
     <completion.contributor language="any"
                             implementationClass="org.jetbrains.idea.maven.dom.references.MavenPropertyCompletionContributor"
                             id="Maven" order="after propertiesCompletion, before javaClassReference"/>
