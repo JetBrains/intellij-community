@@ -100,6 +100,10 @@ class CtrlMouseHandler2(
     }
     val editor = e.editor as? EditorEx
                  ?: return
+    if (editor.project != project) {
+      // EditorEventMulticaster sends events from all projects, we only need events in this project
+      return
+    }
     val mouseEvent: MouseEvent = e.mouseEvent
     if (ignoreMovement(mouseEvent.locationOnScreen)) {
       return
