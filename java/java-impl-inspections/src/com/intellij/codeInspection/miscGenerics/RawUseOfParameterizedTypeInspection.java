@@ -14,6 +14,8 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.refactoring.typeMigration.ChangeTypeSignatureHandlerBase;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -373,8 +375,8 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
         final PsiVariable variable = (PsiVariable)element;
         final PsiType type = getSuggestedType(variable);
         if (type != null) {
-          JavaSpecialRefactoringProvider.getInstance()
-            .runHighlightingTypeMigration(project, null, PsiSearchHelper.getInstance(project).getUseScope(variable), variable, type);
+          var handler = CommonJavaRefactoringUtil.getRefactoringSupport().getChangeTypeSignatureHandler();
+          handler.runHighlightingTypeMigrationSilently(project, null, PsiSearchHelper.getInstance(project).getUseScope(variable), variable, type);
         }
       }
     }

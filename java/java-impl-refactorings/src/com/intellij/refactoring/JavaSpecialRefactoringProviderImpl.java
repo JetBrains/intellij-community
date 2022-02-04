@@ -92,19 +92,6 @@ public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactorin
     };
   }
 
-
-  @Override
-  public void runHighlightingTypeMigration(Project project,
-                                           Editor editor,
-                                           SearchScope boundScope,
-                                           PsiElement root,
-                                           PsiType migrationType) {
-    final TypeMigrationRules rules = new TypeMigrationRules(project);
-    rules.setBoundScope(boundScope);
-
-    TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, root, migrationType);
-  }
-
   @Override
   public void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination) throws IncorrectOperationException {
     MoveClassesOrPackagesUtil.moveDirectoryRecursively(dir, destination);

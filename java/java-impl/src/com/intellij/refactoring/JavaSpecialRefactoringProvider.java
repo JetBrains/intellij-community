@@ -69,12 +69,6 @@ public interface JavaSpecialRefactoringProvider {
                                                                        Set<PsiMethod> propagateExceptionsMethods,
                                                                        Runnable callback);
 
-  void runHighlightingTypeMigration(final Project project,
-                                    final Editor editor,
-                                    final SearchScope boundScope,
-                                    final PsiElement root,
-                                    final PsiType migrationType);
-
   BaseRefactoringProcessor getChangeClassSignatureProcessor(Project project, PsiClass aClass, TypeParameterInfo[] newSignature);
 
   LightMethodObjectExtractedData extractLightMethodObject(final Project project,

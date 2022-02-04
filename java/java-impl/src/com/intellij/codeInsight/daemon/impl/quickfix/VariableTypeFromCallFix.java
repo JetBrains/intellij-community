@@ -15,6 +15,7 @@ import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +56,8 @@ public final class VariableTypeFromCallFix implements IntentionAction {
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
     var scope = PsiSearchHelper.getInstance(project).getUseScope(myVar);
-    JavaSpecialRefactoringProvider.getInstance().runHighlightingTypeMigration(project, editor, scope, myVar, myExpressionType);
+    var handler = CommonJavaRefactoringUtil.getRefactoringSupport().getChangeTypeSignatureHandler();
+    handler.runHighlightingTypeMigrationSilently(project, editor, scope, myVar, myExpressionType);
   }
 
   @Override

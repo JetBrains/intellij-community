@@ -10,6 +10,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.JavaBaseRefactoringSupportProvider;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.IntroduceFunctionalParameterHandler;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
@@ -23,8 +24,11 @@ import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceFunctionalVariableHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
+import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
 import com.intellij.refactoring.memberPullUp.JavaPullUpHandler;
 import com.intellij.refactoring.memberPushDown.JavaPushDownHandler;
+import com.intellij.refactoring.typeMigration.ChangeTypeSignatureHandler;
+import com.intellij.refactoring.typeMigration.ChangeTypeSignatureHandlerBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ven
  */
-public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
+public class JavaRefactoringSupportProvider extends JavaBaseRefactoringSupportProvider {
   @Override
   public boolean isSafeDeleteAvailable(@NotNull PsiElement element) {
     return element instanceof PsiClass || element instanceof PsiMethod || element instanceof PsiField ||
@@ -61,8 +65,13 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
   }
 
   @Override
-  public RefactoringActionHandler getIntroduceVariableHandler() {
+  public @NotNull JavaIntroduceVariableHandlerBase getIntroduceVariableHandler() {
     return new IntroduceVariableHandler();
+  }
+
+  @Override
+  public @NotNull ChangeTypeSignatureHandlerBase getChangeTypeSignatureHandler() {
+    return new ChangeTypeSignatureHandler();
   }
 
   @Override

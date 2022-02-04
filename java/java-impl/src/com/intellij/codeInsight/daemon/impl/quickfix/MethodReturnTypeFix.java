@@ -38,9 +38,11 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.JavaBaseRefactoringSupportProvider;
 import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -401,7 +403,8 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
       TypeConversionUtil.getSuperClassSubstitutor(superClass, derivedClass, PsiSubstitutor.EMPTY).putAll(psiSubstitutor);
     var scope = new LocalSearchScope(derivedClass);
     var type = JavaPsiFacade.getElementFactory(project).createType(baseClass, compoundSubstitutor);
-    JavaSpecialRefactoringProvider.getInstance().runHighlightingTypeMigration(project, editor, scope, referenceParameterList, type);
+    var handler = CommonJavaRefactoringUtil.getRefactoringSupport().getChangeTypeSignatureHandler();
+    handler.runHighlightingTypeMigrationSilently(project, editor, scope, referenceParameterList, type);
 
     return false;
   }

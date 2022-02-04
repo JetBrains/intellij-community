@@ -11,8 +11,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.typeMigration.ui.TypeMigrationDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
+public class ChangeTypeSignatureHandler implements ChangeTypeSignatureHandlerBase {
   private static final Logger LOG = Logger.getInstance(ChangeTypeSignatureHandler.class);
 
   @Override
@@ -56,6 +56,17 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
     LOG.assertTrue(elements.length == 1);
     final PsiElement element = elements[0];
     invokeOnElement(project, element);
+  }
+
+  @Override
+  public void runHighlightingTypeMigrationSilently(Project project,
+                                                   Editor editor,
+                                                   SearchScope boundScope,
+                                                   PsiElement root, PsiType migrationType) {
+    final TypeMigrationRules rules = new TypeMigrationRules(project);
+    rules.setBoundScope(boundScope);
+
+    TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, root, migrationType);
   }
 
   private static void invokeOnElement(final Project project, final PsiElement element) {

@@ -6,6 +6,9 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -27,6 +30,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.JavaBaseRefactoringSupportProvider;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceParameter.EnclosingMethodSelectionDialog;
@@ -50,6 +54,12 @@ public class CommonJavaRefactoringUtil {
   private static final List<? extends PsiType> PRIMITIVE_TYPES = Arrays.asList(
       PsiType.BYTE, PsiType.CHAR, PsiType.SHORT, PsiType.INT, PsiType.LONG, PsiType.FLOAT, PsiType.DOUBLE
   );
+
+  @NotNull
+  public static JavaBaseRefactoringSupportProvider getRefactoringSupport() {
+    var provider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+    return (JavaBaseRefactoringSupportProvider)provider;
+  }
 
   @Nullable
   public static PsiType getTypeByExpression(@NotNull PsiExpression expr) {

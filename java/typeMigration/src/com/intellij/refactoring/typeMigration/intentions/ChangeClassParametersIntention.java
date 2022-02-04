@@ -9,6 +9,8 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -18,9 +20,12 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.JavaBaseRefactoringSupportProvider;
 import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.refactoring.typeMigration.ChangeTypeSignatureHandlerBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationBundle;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -122,7 +127,9 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
                 var provider = JavaSpecialRefactoringProvider.getInstance();
                 final PsiSubstitutor substitutor = result.getSubstitutor().put(typeParameter, targetParam);
                 final PsiType targetClassType = elementFactory.createType(baseClass, substitutor);
-                provider.runHighlightingTypeMigration(project, editor, new LocalSearchScope(aClass), ((PsiAnonymousClass)aClass).getBaseClassReference().getParameterList(), targetClassType);
+                var supportProvider = CommonJavaRefactoringUtil.getRefactoringSupport();
+                var handler = supportProvider.getChangeTypeSignatureHandler();
+                handler.runHighlightingTypeMigrationSilently(project, editor, new LocalSearchScope(aClass), ((PsiAnonymousClass)aClass).getBaseClassReference().getParameterList(), targetClassType);
               }
               catch (IncorrectOperationException e) {
                 HintManager.getInstance().showErrorHint(editor, TypeMigrationBundle.message("change.class.parameter.incorrect.type.error.hint"));
