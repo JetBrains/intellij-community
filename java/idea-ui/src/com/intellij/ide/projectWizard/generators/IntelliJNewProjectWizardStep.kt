@@ -16,6 +16,7 @@ import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*

@@ -15,6 +15,7 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.ui.ComponentWithEmptyText
+import org.jetbrains.annotations.NonNls
 import java.awt.Component
 import java.awt.event.*
 import java.io.File
@@ -115,10 +116,11 @@ val <E> ComboBox<E>.collectionModel: CollectionComboBoxModel<E>
 
 fun <T> Iterable<T>.naturalSorted() = sortedWith(Comparator.comparing({ it.toString() }, NaturalComparator.INSTANCE))
 
-fun getPresentablePath(path: String): @NlsSafe String {
+fun getPresentablePath(path: @NonNls String): @NlsSafe String {
   return FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(path.trim()), false)
 }
 
-fun getCanonicalPath(path: String, removeLastSlash: Boolean = true): String {
+@JvmOverloads
+fun getCanonicalPath(path: @NonNls String, removeLastSlash: Boolean = true): @NonNls String {
   return FileUtil.toCanonicalPath(FileUtil.expandUserHome(path.trim()), File.separatorChar, removeLastSlash)
 }

@@ -12,6 +12,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle

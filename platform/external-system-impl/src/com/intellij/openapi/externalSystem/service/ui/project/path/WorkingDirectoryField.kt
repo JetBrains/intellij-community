@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.ui.project.path
 
-import com.intellij.ide.wizard.getCanonicalPath
-import com.intellij.ide.wizard.getPresentablePath
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
@@ -14,11 +12,7 @@ import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.observable.util.whenMousePressed
 import com.intellij.openapi.observable.util.whenTextChanged
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.addKeyboardAction
-import com.intellij.openapi.ui.getKeyStrokes
-import com.intellij.openapi.ui.isTextUnderMouse
-import com.intellij.openapi.ui.BrowseFolderRunnable
-import com.intellij.openapi.ui.TextComponentAccessor
+import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile

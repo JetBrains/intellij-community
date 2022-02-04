@@ -6,8 +6,6 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.ide.wizard.getCanonicalPath
-import com.intellij.ide.wizard.getPresentablePath
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
@@ -16,10 +14,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.observable.properties.comap
+import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.observable.properties.map
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.getCanonicalPath
+import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleListCellRenderer
@@ -96,7 +96,7 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
         val fileChooserDescriptor = createSingleLocalFileDescriptor().withFileFilter { it.isDirectory }
         val fileChosen = { file: VirtualFile -> getPresentablePath(file.path) }
         val title = IdeBundle.message("title.select.project.file.directory", context.presentationName)
-        val property = locationProperty.map { getPresentablePath(it) }.comap { getCanonicalPath(it) }
+        val property = locationProperty.transform(::getPresentablePath, ::getCanonicalPath)
         textFieldWithBrowseButton(property, title, context.project, fileChooserDescriptor, fileChosen)
           .withValidationOnApply { validateLocation() }
           .withValidationOnInput { validateLocation() }
