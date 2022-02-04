@@ -51,6 +51,7 @@ dependencies {
   implementation 'com.jetbrains.intellij.performanceTesting:performance-testing-commands:LATEST-TRUNK-SNAPSHOT'
   testImplementation 'com.jetbrains.intellij.performanceTesting:performance-testing-maven-commands:LATEST-TRUNK-SNAPSHOT'
   testImplementation 'com.jetbrains.intellij.performanceTesting:performance-testing-gradle-commands:LATEST-TRUNK-SNAPSHOT'
+  testImplementation 'com.jetbrains.intellij.dynamicPlugins:dynamic-plugins-performance-testing-commands:LATEST-TRUNK-SNAPSHOT'
 
   testImplementation 'junit:junit:4.13.2'
 
