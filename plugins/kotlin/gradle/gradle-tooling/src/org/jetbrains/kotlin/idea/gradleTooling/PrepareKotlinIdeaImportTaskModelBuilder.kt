@@ -56,7 +56,7 @@ class PrepareKotlinIdeaImportTaskModelBuilder : AbstractModelBuilderService() {
      * enqueued explicitly by the IDE
      */
     private fun Project.findPrepareImportTasksForOlderGradlePlugins(): Set<String> {
-        return setOfNotNull(findRegisteredPodImportTask(), findRunCommonizerTask())
+        return listOfNotNull(findRegisteredPodImportTask(), findRunCommonizerTask()).toSet()
     }
 
     private fun Project.findRegisteredPodImportTask(): String? {
