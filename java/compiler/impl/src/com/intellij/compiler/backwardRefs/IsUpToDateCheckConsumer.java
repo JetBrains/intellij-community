@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @IntellijInternalApi
 public interface IsUpToDateCheckConsumer {
-  ExtensionPointName<IsUpToDateCheckConsumer> EP_NAME = ExtensionPointName.create("com.intellij.compiler.isUpToDateChecker");
+  ExtensionPointName<IsUpToDateCheckConsumer> EP_NAME = ExtensionPointName.create("com.intellij.compiler.isUpToDateCheckConsumer");
 
   /**
    * @param project
