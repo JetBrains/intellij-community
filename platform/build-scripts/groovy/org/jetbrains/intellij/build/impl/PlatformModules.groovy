@@ -214,7 +214,8 @@ final class PlatformModules {
       "intellij.platform.util.xmlDom",
       "intellij.platform.extensions",
       "intellij.platform.tracing.rt",
-      "intellij.platform.boot"
+      "intellij.platform.boot",
+      "intellij.platform.externalProcessAuthHelper.rt"
     ), productLayout, layout)
 
     jar(BaseLayout.APP_JAR, PLATFORM_IMPLEMENTATION_MODULES, productLayout, layout)
