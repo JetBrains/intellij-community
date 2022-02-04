@@ -66,9 +66,14 @@ public final class JavaCompletionSorting {
     }
 
     PsiElement parent = position.getParent();
-    if (parent instanceof PsiReferenceExpression && !(parent instanceof PsiMethodReferenceExpression) &&
-        !ExpressionUtils.isVoidContext((PsiReferenceExpression)parent)) {
-      sorter = sorter.weighBefore("middleMatching", new PreferNonVoid());
+    if (parent instanceof PsiReferenceExpression && !(parent instanceof PsiMethodReferenceExpression)) {
+      PsiExpression context = (PsiReferenceExpression)parent;
+      if (context.getParent() instanceof PsiMethodCallExpression) {
+        context = (PsiExpression)context.getParent();
+      }
+      if (!ExpressionUtils.isVoidContext(context)) {
+        sorter = sorter.weighBefore("middleMatching", new PreferNonVoid());
+      }
     }
 
     List<LookupElementWeigher> afterPriority = new ArrayList<>();

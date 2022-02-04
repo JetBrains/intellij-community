@@ -981,6 +981,13 @@ class Foo {
     assertStringItems "getName", "clone", "toString", "notify", "notifyAll", "finalize"
   }
 
+  @NeedsIndex.ForStandardLibrary
+  void "test void context replace"() {
+    myFixture.configureByText("a.java", "class X { String getName() {return \"\";} void test() {this.n<caret>otify();}}")
+    myFixture.completeBasic()
+    assertStringItems "notify", "notifyAll", "getName", "clone", "toString", "finalize"
+  }
+
   @NeedsIndex.Full
   void "test import nested classes order"() {
     myFixture.addClass("public class Cls { public static class TestImport {}}")
