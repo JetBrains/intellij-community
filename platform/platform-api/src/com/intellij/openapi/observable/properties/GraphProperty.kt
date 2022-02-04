@@ -2,6 +2,7 @@
 package com.intellij.openapi.observable.properties
 
 import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * [GraphProperty] is builder of [PropertyGraph].
@@ -16,12 +17,14 @@ interface GraphProperty<T> : ObservableClearableProperty<T> {
 
   @JvmDefault
   @Deprecated("Use dependsOn with update", ReplaceWith("this.dependsOn(parent) { this.reset(); this.get() }"))
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   fun dependsOn(parent: ObservableClearableProperty<*>) {
     dependsOn(parent) { reset(); get() }
   }
 
   @JvmDefault
   @Deprecated("Please recompile code", level = DeprecationLevel.HIDDEN)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   fun dependsOn(parent: ObservableClearableProperty<*>, update: () -> T) {
     dependsOn(parent, update)
   }

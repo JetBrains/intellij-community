@@ -2,30 +2,37 @@
 package com.intellij.openapi.observable.properties
 
 import com.intellij.openapi.Disposable
+import org.jetbrains.annotations.ApiStatus
 
 @Deprecated("Use transformations from PropertyTransformationUtil",
             ReplaceWith("transform(transform, { it })", "com.intellij.openapi.observable.util.transform"))
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 fun <T> GraphProperty<T>.map(transform: (T) -> T) = transform(transform, { it })
 
 @Deprecated("Use transformations from PropertyTransformationUtil",
             ReplaceWith("transform({ it }, transform)", "com.intellij.openapi.observable.util.transform"))
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 fun <T> GraphProperty<T>.comap(transform: (T) -> T) = transform({ it }, transform)
 
 @Deprecated("Use transformations from PropertyTransformationUtil",
             ReplaceWith("transform(map, comap)", "com.intellij.openapi.observable.util.transform"))
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 fun <S, T> GraphProperty<S>.transform(map: (S) -> T, comap: (T) -> S): GraphProperty<T> =
   GraphPropertyView(this, map, comap)
 
 @Deprecated("Use transformations from PropertyTransformationUtil",
             ReplaceWith("transform(transform, { it })", "com.intellij.openapi.observable.util.transform"))
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 fun <T> ObservableMutableProperty<T>.map(transform: (T) -> T) = transform(transform, { it })
 
 @Deprecated("Use transformations from PropertyTransformationUtil",
             ReplaceWith("transform({ it }, transform)", "com.intellij.openapi.observable.util.transform"))
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 fun <T> ObservableMutableProperty<T>.comap(transform: (T) -> T) = transform({ it }, transform)
 
 @Deprecated("Use transformations from PropertyTransformationUtil",
             ReplaceWith("transform(map, comap)", "com.intellij.openapi.observable.util.transform"))
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 fun <S, T> ObservableMutableProperty<S>.transform(map: (S) -> T, comap: (T) -> S): ObservableMutableProperty<T> =
   ObservableMutablePropertyView(this, map, comap)
 

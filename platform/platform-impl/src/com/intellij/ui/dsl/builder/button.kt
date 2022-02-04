@@ -9,6 +9,7 @@ import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequ
 import com.intellij.ui.dsl.builder.impl.toBindingInternal
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.ThreeStateCheckBox
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import javax.swing.AbstractButton
@@ -19,9 +20,11 @@ fun <T : AbstractButton> Cell<T>.bindSelected(binding: PropertyBinding<Boolean>)
 }
 
 @Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 fun <T : JBCheckBox> Cell<T>.bindSelected(property: GraphProperty<Boolean>) = bindSelected(property)
 
 @Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 fun <T : ThreeStateCheckBox> Cell<T>.bindState(property: GraphProperty<ThreeStateCheckBox.State>) = bindState(property)
 
 fun <T : JBCheckBox> Cell<T>.bindSelected(property: ObservableMutableProperty<Boolean>): Cell<T> {

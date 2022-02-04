@@ -22,9 +22,11 @@ class GraphPropertyImpl<T>(private val propertyGraph: PropertyGraph, initial: ()
 
   companion object {
     @Deprecated("Please use PropertyGraph.property instead", ReplaceWith("property(initial)"))
+    @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
     fun <T> PropertyGraph.graphProperty(initial: T): GraphProperty<T> = property(initial)
 
     @Deprecated("Please use PropertyGraph.lazyProperty instead", ReplaceWith("lazyProperty(initial)"))
+    @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
     fun <T> PropertyGraph.graphProperty(initial: () -> T): GraphProperty<T> = lazyProperty(initial)
   }
 }

@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
 import com.intellij.ui.dsl.builder.impl.toBindingInternal
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KMutableProperty0
 
 fun <T : TextFieldWithBrowseButton> Cell<T>.columns(columns: Int): Cell<T> {
@@ -20,6 +21,7 @@ fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(binding: PropertyBinding<St
 }
 
 @Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(property: GraphProperty<String>) = bindText(property)
 
 fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(property: ObservableMutableProperty<String>): Cell<T> {

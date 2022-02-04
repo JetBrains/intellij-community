@@ -30,10 +30,12 @@ import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.ApiStatus
 import com.intellij.ui.layout.Row as RowV1
 
 
 @Deprecated("Please, migrate on Kotlin UI DSL Version 2")
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 fun RowV1.sdkComboBox(
   sdkModel: ProjectSdksModel,
   sdkProperty: GraphProperty<Sdk?>,
@@ -44,6 +46,7 @@ fun RowV1.sdkComboBox(
 }
 
 @Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 fun Row.sdkComboBox(
   context: WizardContext,
   sdkProperty: GraphProperty<Sdk?>,

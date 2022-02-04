@@ -13,6 +13,7 @@ import com.intellij.openapi.observable.util.lockOrSkip
 import com.intellij.openapi.observable.util.transform
 import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
 import com.intellij.ui.dsl.builder.impl.toBindingInternal
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JTextField
 import javax.swing.text.JTextComponent
@@ -40,6 +41,7 @@ fun <T : JTextComponent> Cell<T>.bindText(binding: PropertyBinding<String>): Cel
 }
 
 @Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 fun <T : JTextComponent> Cell<T>.bindText(property: GraphProperty<String>) = bindText(property)
 
 fun <T : JTextComponent> Cell<T>.bindText(property: ObservableMutableProperty<String>): Cell<T> {
@@ -61,6 +63,7 @@ fun <T : JTextComponent> Cell<T>.bindIntText(binding: PropertyBinding<Int>): Cel
 }
 
 @Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 fun <T : JTextComponent> Cell<T>.bindIntText(property: GraphProperty<Int>): Cell<T> = bindIntText(property)
 
 fun <T : JTextComponent> Cell<T>.bindIntText(property: ObservableMutableProperty<Int>): Cell<T> {

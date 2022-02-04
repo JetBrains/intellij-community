@@ -124,6 +124,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * @deprecated use [validationRequestor] instead
    */
   @Deprecated("Use validationRequestor instead", ReplaceWith("validationRequestor(property::afterPropagation)"))
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   fun graphProperty(property: GraphProperty<*>): Cell<T> =
     validationRequestor(property::afterPropagation)
 

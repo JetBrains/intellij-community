@@ -11,14 +11,21 @@ import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.JLabel
 
 
 val WizardContext.projectOrDefault get() = project ?: ProjectManager.getInstance().defaultProject
 
+@Deprecated("Please use this function from com.intellij.openapi.ui package",
+            ReplaceWith("com.intellij.openapi.ui.getPresentablePath(path)"))
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 fun getPresentablePath(path: String) = com.intellij.openapi.ui.getPresentablePath(path)
 
+@Deprecated("Please use this function from com.intellij.openapi.ui package",
+            ReplaceWith("com.intellij.openapi.ui.getCanonicalPath(path)"))
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 fun getCanonicalPath(path: String, removeLastSlash: Boolean = true) = com.intellij.openapi.ui.getCanonicalPath(path, removeLastSlash)
 
 fun <T1, T2> T1.chain(f1: (T1) -> T2): NewProjectWizardStep

@@ -2,6 +2,7 @@
 package com.intellij.openapi.observable.properties
 
 import com.intellij.openapi.Disposable
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Deprecated. Please don't use this interface directly.
@@ -10,6 +11,7 @@ import com.intellij.openapi.Disposable
  * @see AtomicLazyProperty
  */
 @Deprecated("Use instead ObservableMutableProperty")
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 interface ObservableClearableProperty<T> : ObservableMutableProperty<T> {
 
   fun reset()
