@@ -2,6 +2,7 @@
 
 package com.intellij.util.indexing.impl.storage;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
@@ -18,8 +19,6 @@ import java.util.Set;
 
 /**
  * This storage is needed for indexing yet unsaved data without saving those changes to 'main' backend storage
- *
- * @author Eugene Zhuravlev
  */
 public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
   private static final Logger LOG = Logger.getInstance(TransientChangesIndexStorage.class);
@@ -40,7 +39,7 @@ public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexSt
   public TransientChangesIndexStorage(@NotNull IndexStorage<Key, Value> backend, @NotNull FileBasedIndexExtension<Key, Value> extension) {
     myBackendStorage = (VfsAwareIndexStorage<Key, Value>)backend;
     myIndexId = extension.getName();
-    myMap = IndexStorageUtil.createKeyDescriptorHashedMap(extension.getKeyDescriptor());
+    myMap = ConcurrentCollectionFactory.createConcurrentMap(IndexStorageUtil.adaptKeyDescriptorToStrategy(extension.getKeyDescriptor()));
   }
 
   @NotNull

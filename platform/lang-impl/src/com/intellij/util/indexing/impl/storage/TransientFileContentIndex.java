@@ -163,11 +163,10 @@ public class TransientFileContentIndex<Key, Value> extends VfsAwareMapReduceInde
   @Override
   public void cleanupMemoryStorage() {
     TransientChangesIndexStorage<Key, Value> memStorage = (TransientChangesIndexStorage<Key, Value>)getStorage();
-    ConcurrencyUtil.withLock(getLock().writeLock(), () -> {
-      if (memStorage.clearMemoryMap()) {
-        incrementModificationStamp();
-      }
-    });
+    //no synchronization on index write-lock, should be performed fast as possible since executed in write-action
+    if (memStorage.clearMemoryMap()) {
+      incrementModificationStamp();
+    }
     memStorage.fireMemoryStorageCleared();
   }
 
