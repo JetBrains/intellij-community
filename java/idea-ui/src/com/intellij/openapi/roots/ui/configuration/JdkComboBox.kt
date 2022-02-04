@@ -54,7 +54,7 @@ fun Row.sdkComboBox(
   creationSdkTypeFilter: ((SdkTypeId) -> Boolean)? = null,
   onNewSdkAdded: ((Sdk) -> Unit)? = null
 ) = sdkComboBox(
-  context, sdkProperty as ObservableMutableProperty<Sdk?>, sdkPropertyId,
+  context, sdkProperty, sdkPropertyId,
   sdkTypeFilter, sdkFilter, suggestedSdkItemFilter, creationSdkTypeFilter, onNewSdkAdded
 )
 
@@ -196,9 +196,10 @@ fun setupNewModuleJdk(modifiableRootModel: ModifiableRootModel, selectedJdk: Sdk
     return selectedJdk
   }
 
-  val sdk = selectedJdk ?: getProjectJdk(modifiableRootModel.project)
+  val projectJdk = getProjectJdk(modifiableRootModel.project)
+  val sdk = selectedJdk ?: projectJdk
   if (sdk != null) {
-    if (isCreatingNewProject || (!isCreatingNewProject && sdk == getProjectJdk(modifiableRootModel.project))) {
+    if (isCreatingNewProject || sdk == projectJdk) {
       modifiableRootModel.inheritSdk()
     }
     else {
