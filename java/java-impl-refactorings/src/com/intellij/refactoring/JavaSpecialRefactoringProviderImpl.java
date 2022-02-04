@@ -13,13 +13,10 @@ import com.intellij.refactoring.changeSignature.*;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
-import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.refactoring.util.CanonicalTypes;
-import com.intellij.refactoring.util.DocCommentPolicy;
-import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
@@ -106,14 +103,6 @@ public class JavaSpecialRefactoringProviderImpl implements JavaSpecialRefactorin
     rules.setBoundScope(boundScope);
 
     TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, root, migrationType);
-  }
-
-  @Override
-  public void runPullUpProcessor(@NotNull PsiClass sourceClass,
-                                 PsiClass targetSuperClass,
-                                 MemberInfo[] membersToMove,
-                                 DocCommentPolicy javaDocPolicy) {
-    new PullUpProcessor(sourceClass, targetSuperClass, membersToMove, javaDocPolicy).run();
   }
 
   @Override

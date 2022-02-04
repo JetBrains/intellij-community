@@ -33,7 +33,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.refactoring.memberPullUp.JavaPullUpHandlerBase;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import org.jetbrains.annotations.NotNull;
@@ -134,8 +134,9 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final MemberInfo memberInfo = new MemberInfo(method);
     memberInfo.setChecked(true);
     memberInfo.setToAbstract(true);
-    var provider = JavaSpecialRefactoringProvider.getInstance();
-    provider.runPullUpProcessor(containingClass, baseClass, new MemberInfo[]{memberInfo}, new DocCommentPolicy<>(DocCommentPolicy.ASIS));
+    var handler = (JavaPullUpHandlerBase)LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE).getPullUpHandler();
+    assert handler != null;
+    handler.runSilently(containingClass, baseClass, new MemberInfo[]{memberInfo}, new DocCommentPolicy<>(DocCommentPolicy.ASIS));
   }
 
   @Override

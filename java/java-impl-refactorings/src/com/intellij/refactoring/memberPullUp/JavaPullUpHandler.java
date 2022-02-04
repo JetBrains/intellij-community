@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog.Callback, ElementsHandler, ContextAwareActionHandler {
+public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog.Callback, ElementsHandler, ContextAwareActionHandler, JavaPullUpHandlerBase {
   private PsiClass mySubclass;
   private Project myProject;
 
@@ -58,6 +58,13 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
     else {
       invoke(project, elements.toArray(PsiElement.EMPTY_ARRAY), dataContext);
     }
+  }
+
+  @Override
+  public void runSilently(@NotNull PsiClass sourceClass,
+                          PsiClass targetSuperClass,
+                          MemberInfo[] membersToMove, DocCommentPolicy javaDocPolicy) {
+    new PullUpProcessor(sourceClass, targetSuperClass, membersToMove, javaDocPolicy).run();
   }
 
   private static List<PsiElement> getElements(Editor editor, PsiFile file, boolean stopAtCodeBlock) {
