@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
@@ -83,9 +83,14 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     final Component editorComponent = editor != null ? editor.getEditorComponent() : null;
     if (!(editorComponent instanceof JTextComponent)) return;
     final InputMap inputMap = ((JTextComponent)editorComponent).getInputMap();
-    for (KeyStroke keyStroke : inputMap.allKeys()) {
-      if (DefaultEditorKit.copyAction.equals(inputMap.get(keyStroke))) {
-        comboBox.getInputMap().put(keyStroke, DefaultEditorKit.copyAction);
+    if (inputMap != null) {
+      KeyStroke[] strokes = inputMap.allKeys();
+      if (strokes != null) {
+        for (KeyStroke keyStroke : strokes) {
+          if (DefaultEditorKit.copyAction.equals(inputMap.get(keyStroke))) {
+            comboBox.getInputMap().put(keyStroke, DefaultEditorKit.copyAction);
+          }
+        }
       }
     }
     comboBox.getActionMap().put(DefaultEditorKit.copyAction, new AbstractAction() {
