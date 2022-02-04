@@ -48,7 +48,7 @@ dependencies {
   implementation "org.rauschig:jarchivelib:1.2.0"
   implementation "commons-logging:commons-logging:1.2"
 
-  testImplementation 'com.jetbrains.intellij.performanceTesting:performance-testing-commands:LATEST-TRUNK-SNAPSHOT'
+  implementation 'com.jetbrains.intellij.performanceTesting:performance-testing-commands:LATEST-TRUNK-SNAPSHOT'
   testImplementation 'com.jetbrains.intellij.performanceTesting:performance-testing-maven-commands:LATEST-TRUNK-SNAPSHOT'
   testImplementation 'com.jetbrains.intellij.performanceTesting:performance-testing-gradle-commands:LATEST-TRUNK-SNAPSHOT'
 

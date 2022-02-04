@@ -34,9 +34,9 @@
     <orderEntry type="library" name="Gradle" level="project" />
     <orderEntry type="library" name="commons-io" level="project" />
     <orderEntry type="library" name="commons-lang3" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="kodein-di-jvm" level="project" />
+    <orderEntry type="library" name="kodein-di-jvm" level="project" />
     <orderEntry type="library" name="commons-compress" level="project" />
-    <orderEntry type="module-library" scope="PROVIDED">
+    <orderEntry type="module-library" >
       <library name="rauschig.jarchivelib" type="repository">
         <properties maven-id="org.rauschig:jarchivelib:1.2.0" />
         <CLASSES>
