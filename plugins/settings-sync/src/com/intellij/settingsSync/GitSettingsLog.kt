@@ -153,7 +153,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   private fun applySnapshotAndCommit(refName: String, snapshot: SettingsSnapshot) {
     // todo check repository consistency before each operation: that we're on master, that rb is deleted, that there're no uncommitted changes
 
-    LOG.info("Applying settings changes to branch $refName")
+    LOG.info("Applying settings changes to branch $refName: " + snapshot.fileStates.joinToString(limit = 5) { it.file })
     val addCommand = git.add()
     val message = "Apply changes received from $refName"
     for (fileState in snapshot.fileStates) {
