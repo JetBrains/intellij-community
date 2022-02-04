@@ -485,7 +485,9 @@ public final class HighlightUtil {
         String message = JavaErrorBundle.message("lvti.no.initializer");
         HighlightInfo info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
-        HighlightFixUtil.registerSpecifyVarTypeFix((PsiLocalVariable)variable, info);
+        if (info != null) {
+          HighlightFixUtil.registerSpecifyVarTypeFix((PsiLocalVariable)variable, info);
+        }
         return info;
       }
       if (initializer instanceof PsiFunctionalExpression) {
@@ -506,7 +508,9 @@ public final class HighlightUtil {
         HighlightInfo info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(JavaErrorBundle.message("lvti.null"))
             .range(typeElement).create();
-        HighlightFixUtil.registerSpecifyVarTypeFix((PsiLocalVariable)variable, info);
+        if (info != null) {
+          HighlightFixUtil.registerSpecifyVarTypeFix((PsiLocalVariable)variable, info);
+        }
         return info;
       }
       if (PsiType.VOID.equals(lType)) {
