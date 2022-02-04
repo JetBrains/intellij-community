@@ -252,6 +252,9 @@ internal class NewToolbarRootPaneExtension(private val project: Project) : IdeRo
   private fun customizeMouseListener() = object : MouseAdapter() {
     override fun mouseClicked(e: MouseEvent?) {
       if (e?.component == null) return
+      logger.trace("Customize toolbar mouse event. Component: " + e.component.javaClass + " click location: " + e.x + ", " + e.y +
+      " toolbar bounds: " + this@NewToolbarRootPaneExtension.panel.bounds)
+
       val point = RelativePoint(e.component, Point(e.x, e.y))
       JBPopupFactory.getInstance().createActionGroupPopup(null, DefaultActionGroup(CustomizeToolbarAction()),
                                                           DataManager.getInstance().getDataContext(e.component),
