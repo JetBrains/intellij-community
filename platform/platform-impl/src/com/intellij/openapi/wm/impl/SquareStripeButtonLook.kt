@@ -35,6 +35,20 @@ internal class SquareStripeButtonLook(private val button: ActionButton) : IdeaAc
     paintLookBackground(g, rect, color)
   }
 
+  override fun getState(button: ActionButtonComponent?): Int {
+    if (button is SquareStripeButton) {
+      if (button.isFocused()) {
+        return ActionButtonComponent.SELECTED
+      }
+      if (button.toolWindow.isVisible) {
+        return ActionButtonComponent.PUSHED
+      } else if (!button.isHovered()) {
+        return ActionButtonComponent.NORMAL
+      }
+    }
+    return super.getState(button)
+  }
+
   override fun paintBorder(g: Graphics, component: JComponent, state: Int) {
     if (button is SquareStripeButton && button.isFocused() ||
         state == ActionButtonComponent.NORMAL && !component.isBackgroundSet) {
