@@ -14,9 +14,12 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 interface ObservableClearableProperty<T> : ObservableMutableProperty<T> {
 
-  fun reset()
+  @JvmDefault
+  fun reset() {}
 
-  fun afterReset(listener: () -> Unit)
+  @JvmDefault
+  fun afterReset(listener: () -> Unit) {}
 
-  fun afterReset(listener: () -> Unit, parentDisposable: Disposable)
+  @JvmDefault
+  fun afterReset(listener: () -> Unit, parentDisposable: Disposable) {}
 }

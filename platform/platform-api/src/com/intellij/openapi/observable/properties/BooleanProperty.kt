@@ -20,6 +20,7 @@ interface BooleanProperty : ObservableClearableProperty<Boolean> {
   /**
    * Resets property value to false.
    */
+  @JvmDefault
   override fun reset()
 
   /**
@@ -37,6 +38,7 @@ interface BooleanProperty : ObservableClearableProperty<Boolean> {
   /**
    * Subscribes on reset event.
    */
+  @JvmDefault
   override fun afterReset(listener: () -> Unit)
 
   /**
@@ -44,5 +46,6 @@ interface BooleanProperty : ObservableClearableProperty<Boolean> {
    * @param listener is called only when value is changed from true to false.
    * @param parentDisposable is used to early subscription from property reset events.
    */
+  @JvmDefault
   override fun afterReset(listener: () -> Unit, parentDisposable: Disposable)
 }
