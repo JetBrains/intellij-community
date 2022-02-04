@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches
 
-import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
@@ -11,11 +10,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
-import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.psi.PsiManager
@@ -26,11 +23,9 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService.Companion.DEBUG_LOG_ENABLE_PerModulePackageCache
-import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService.Companion.FULL_DROP_THRESHOLD
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfoByVirtualFile
 import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
-import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -45,78 +40,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
-
-class KotlinPackageContentModificationListener : StartupActivity {
-
-    companion object {
-        val LOG = Logger.getInstance(this::class.java)
-    }
-
-    override fun runActivity(project: Project) {
-        val disposable = KotlinPluginDisposable.getInstance(project)
-        val connection = project.messageBus.connect(disposable)
-        connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-            override fun before(events: MutableList<out VFileEvent>) = onEvents(events, false)
-            override fun after(events: List<VFileEvent>) = onEvents(events, true)
-
-            private fun isRelevant(event: VFileEvent): Boolean = when (event) {
-                is VFilePropertyChangeEvent -> false
-                is VFileCreateEvent -> true
-                is VFileMoveEvent -> true
-                is VFileDeleteEvent -> true
-                is VFileContentChangeEvent -> true
-                is VFileCopyEvent -> true
-                else -> {
-                    LOG.warn("Unknown vfs event: ${event.javaClass}")
-                    false
-                }
-            }
-
-            fun onEvents(events: List<VFileEvent>, isAfter: Boolean) {
-                val service = PerModulePackageCacheService.getInstance(project)
-                val fileManager = PsiManagerEx.getInstanceEx(project).fileManager
-                if (events.size >= FULL_DROP_THRESHOLD) {
-                    service.onTooComplexChange()
-                } else {
-                    events.asSequence()
-                        .filter(::isRelevant)
-                        .filter {
-                            (it.isValid || it !is VFileCreateEvent) && it.file != null
-                        }
-                        .filter {
-                            val vFile = it.file!!
-                            vFile.isDirectory || vFile.isKotlinFileType()
-                        }
-                        .filter {
-                            // It expected that content change events will be duplicated with more precise PSI events and processed
-                            // in KotlinPackageStatementPsiTreeChangePreprocessor, but events might have been missing if PSI view provider
-                            // is absent.
-                            if (it is VFileContentChangeEvent) {
-                                isAfter && fileManager.findCachedViewProvider(it.file) == null
-                            } else {
-                                true
-                            }
-                        }
-                        .filter {
-                            when (val origin = it.requestor) {
-                                is Project -> origin == project
-                                is PsiManager -> origin.project == project
-                                else -> true
-                            }
-                        }
-                        .forEach { event -> service.notifyPackageChange(event) }
-                }
-            }
-        })
-
-        connection.subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
-            override fun rootsChanged(event: ModuleRootEvent) {
-                PerModulePackageCacheService.getInstance(project).onTooComplexChange()
-            }
-        })
-    }
-
-}
 
 class KotlinPackageStatementPsiTreeChangePreprocessor(private val project: Project) : PsiTreeChangePreprocessor {
     override fun treeChanged(event: PsiTreeChangeEventImpl) {
@@ -380,10 +303,10 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
         checkPendingChanges()
 
         val perSourceInfoCache = cache.getOrPut(module) {
-          CollectionFactory.createConcurrentSoftMap()
+            CollectionFactory.createConcurrentSoftMap()
         }
         val cacheForCurrentModuleInfo = perSourceInfoCache.getOrPut(moduleInfo) {
-          CollectionFactory.createConcurrentSoftMap()
+            CollectionFactory.createConcurrentSoftMap()
         }
 
         return cacheForCurrentModuleInfo.getOrPut(packageFqName) {
@@ -410,6 +333,66 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
 
         var Project.DEBUG_LOG_ENABLE_PerModulePackageCache: Boolean
                 by NotNullableUserDataProperty<Project, Boolean>(Key.create("debug.PerModulePackageCache"), false)
+    }
+
+    class PackageCacheBulkFileListener(private val project: Project) : BulkFileListener {
+        override fun before(events: MutableList<out VFileEvent>) = onEvents(events, false)
+        override fun after(events: List<VFileEvent>) = onEvents(events, true)
+
+        private fun isRelevant(event: VFileEvent): Boolean = when (event) {
+            is VFilePropertyChangeEvent -> false
+            is VFileCreateEvent -> true
+            is VFileMoveEvent -> true
+            is VFileDeleteEvent -> true
+            is VFileContentChangeEvent -> true
+            is VFileCopyEvent -> true
+            else -> {
+                LOG.warn("Unknown vfs event: ${event.javaClass}")
+                false
+            }
+        }
+
+        fun onEvents(events: List<VFileEvent>, isAfter: Boolean) {
+            val service = getInstance(project)
+            val fileManager = PsiManagerEx.getInstanceEx(project).fileManager
+            if (events.size >= FULL_DROP_THRESHOLD) {
+                service.onTooComplexChange()
+            } else {
+                events.asSequence()
+                    .filter(::isRelevant)
+                    .filter {
+                        (it.isValid || it !is VFileCreateEvent) && it.file != null
+                    }
+                    .filter {
+                        val vFile = it.file!!
+                        vFile.isDirectory || vFile.isKotlinFileType()
+                    }
+                    .filter {
+                        // It expected that content change events will be duplicated with more precise PSI events and processed
+                        // in KotlinPackageStatementPsiTreeChangePreprocessor, but events might have been missing if PSI view provider
+                        // is absent.
+                        if (it is VFileContentChangeEvent) {
+                            isAfter && fileManager.findCachedViewProvider(it.file) == null
+                        } else {
+                            true
+                        }
+                    }
+                    .filter {
+                        when (val origin = it.requestor) {
+                            is Project -> origin == project
+                            is PsiManager -> origin.project == project
+                            else -> true
+                        }
+                    }
+                    .forEach { event -> service.notifyPackageChange(event) }
+            }
+        }
+    }
+
+    class PackageCacheModuleRootListener(private val project: Project) : ModuleRootListener {
+        override fun rootsChanged(event: ModuleRootEvent) {
+            getInstance(project).onTooComplexChange()
+        }
     }
 }
 

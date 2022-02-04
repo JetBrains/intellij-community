@@ -100,7 +100,6 @@
 
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.PluginStartupActivity"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.versions.KotlinUpdatePluginStartupActivity"/>
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.caches.KotlinPackageContentModificationListener"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.configuration.KotlinMigrationProjectComponent"/>
 
     <lang.importOptimizer
@@ -237,6 +236,13 @@
             defaultValue="true"
             restartRequired="false"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService$PackageCacheBulkFileListener"
+              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+    <listener class="org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService$PackageCacheModuleRootListener"
+              topic="com.intellij.openapi.roots.ModuleRootListener"/>
+  </projectListeners>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <versionInfoProvider implementation="org.jetbrains.kotlin.idea.facet.KotlinVersionInfoProviderByModuleDependencies"/>
