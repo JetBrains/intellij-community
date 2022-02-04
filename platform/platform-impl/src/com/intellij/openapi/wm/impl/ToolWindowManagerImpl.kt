@@ -181,6 +181,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
           }
 
           val toolWindowManager = getInstance(project) as ToolWindowManagerImpl
+
+          val buttonManager = toolWindowManager.buttonManager
+          if (buttonManager is ToolWindowPaneNewButtonManager) {
+            ApplicationManager.getApplication().invokeLater { buttonManager.refreshUI() }
+          }
+
           val toolWindowId = toolWindowManager.activeToolWindowId ?: return
 
           val activeEntry = toolWindowManager.idToEntry.get(toolWindowId) ?: return

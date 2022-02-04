@@ -92,6 +92,11 @@ internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
     right.reset()
   }
 
+  fun refreshUI() {
+    left.repaint()
+    right.repaint()
+  }
+
   private fun findToolbar(anchor: ToolWindowAnchor): ToolWindowToolbar = if (anchor == ToolWindowAnchor.RIGHT) right else left
 
   override fun createStripeButton(toolWindow: ToolWindowImpl, info: WindowInfo, task: RegisterToolWindowTask?): StripeButtonManager {
