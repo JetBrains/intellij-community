@@ -128,7 +128,7 @@ internal fun RecoveryAction.performUnderProgress(recoveryScope: RecoveryScope, f
         }
 
         if (res.problems.isNotEmpty()) {
-          RecoveryWorker.LOG.error("${recoveryAction.actionKey} found and fixed ${res.problems.size} problems, samples: " +
+          RecoveryWorker.LOG.info("${recoveryAction.actionKey} found and fixed ${res.problems.size} problems, samples: " +
                                    res.problems.take(10).joinToString(", ") { it.message })
         }
 
