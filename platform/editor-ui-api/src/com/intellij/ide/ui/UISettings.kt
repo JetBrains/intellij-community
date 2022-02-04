@@ -175,8 +175,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     get() = state.showNavigationBar
     set(value) {
       state.showNavigationBar = value
-      val toolbarSettingsState = ToolbarSettings.getInstance().state!!
-      toolbarSettingsState.showNewMainToolbar = !value && toolbarSettingsState.showNewMainToolbar
     }
 
   var showMembersInNavigationBar: Boolean
