@@ -683,6 +683,31 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/addBraces/addBracesWithBraces.kt");
         }
 
+        @TestMetadata("commentInDoWhileCondition.kt")
+        public void testCommentInDoWhileCondition() throws Exception {
+            runTest("testData/intentions/addBraces/commentInDoWhileCondition.kt");
+        }
+
+        @TestMetadata("commentInForCondition.kt")
+        public void testCommentInForCondition() throws Exception {
+            runTest("testData/intentions/addBraces/commentInForCondition.kt");
+        }
+
+        @TestMetadata("commentInIfCondition.kt")
+        public void testCommentInIfCondition() throws Exception {
+            runTest("testData/intentions/addBraces/commentInIfCondition.kt");
+        }
+
+        @TestMetadata("commentInWhenEntryCondition.kt")
+        public void testCommentInWhenEntryCondition() throws Exception {
+            runTest("testData/intentions/addBraces/commentInWhenEntryCondition.kt");
+        }
+
+        @TestMetadata("commentInWhileCondition.kt")
+        public void testCommentInWhileCondition() throws Exception {
+            runTest("testData/intentions/addBraces/commentInWhileCondition.kt");
+        }
+
         @TestMetadata("doWhileWithComment.kt")
         public void testDoWhileWithComment() throws Exception {
             runTest("testData/intentions/addBraces/doWhileWithComment.kt");
