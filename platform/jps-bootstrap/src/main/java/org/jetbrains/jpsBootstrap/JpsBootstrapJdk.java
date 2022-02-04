@@ -87,6 +87,8 @@ public class JpsBootstrapJdk {
 
   private static URI getCorrettoUrl(String os, CpuArch arch) {
     String archString;
+    String ext = os.equals("windows") ? ".zip" : ".tar.gz";
+    String suffix = os.equals("windows") ? "-jdk" : "";
 
     switch (arch) {
       case X86_64:
@@ -100,6 +102,6 @@ public class JpsBootstrapJdk {
     }
 
     return URI.create("https://cache-redirector.jetbrains.com/corretto.aws/downloads/resources/" +
-      CORRETTO_VERSION + "/amazon-corretto-" + CORRETTO_VERSION + "-" + os + "-" + archString + ".tar.gz");
+      CORRETTO_VERSION + "/amazon-corretto-" + CORRETTO_VERSION + "-" + os + "-" + archString + suffix + ext);
   }
 }
