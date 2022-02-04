@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("TestOnlyProblems") // KTIJ-19938
+
 package com.intellij.lang.documentation.psi
 
 import com.intellij.codeInsight.documentation.DocumentationManager
@@ -66,7 +68,6 @@ class PsiElementDocumentationTarget private constructor(
     return pointer.fetchExternal(targetElement, provider, urls, localDoc?.copy(linkUrls = urls))
   }
 
-  @Suppress("TestOnlyProblems")
   @RequiresReadLock
   private fun localDoc(provider: DocumentationProvider): DocumentationData? {
     val originalPsi = targetElement.getUserData(DocumentationManager.ORIGINAL_ELEMENT_KEY)?.element

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -128,6 +128,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
    * To migrate: compute pointer and presentation on a BG thread, then transfer to the EDT
    * and call {@link DocumentationUtil#documentationComponent(Project, Pointer, TargetPresentation, Disposable)} with the prepared data.
    */
+  @SuppressWarnings("TestOnlyProblems") // KTIJ-19938
   @Deprecated
   public static @NotNull JComponent createAndFetch(
     @NotNull Project project,
