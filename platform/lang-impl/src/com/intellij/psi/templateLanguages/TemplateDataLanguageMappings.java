@@ -32,7 +32,7 @@ public class TemplateDataLanguageMappings extends LanguagePerFileMappings<Langua
   }
 
   @Override
-  protected String serialize(final Language language) {
+  protected String serialize(final @NotNull Language language) {
     return language.getID();
   }
 
