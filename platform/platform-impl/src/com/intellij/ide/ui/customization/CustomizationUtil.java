@@ -69,7 +69,7 @@ public final class CustomizationUtil {
       return group;
     }
 
-    String text = group.getTemplatePresentation().getText();
+    String text = group.getTemplatePresentation().getText(true);
     if (text != null) {
       int index = group.getTemplatePresentation().getDisplayedMnemonicIndex();
       if (0 <= index && index <= text.length()) {
