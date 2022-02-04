@@ -74,7 +74,7 @@ internal object GrazieDynamic : DynamicPluginListener {
   fun loadClass(className: String): Class<*>? {
     return forClassLoader {
       try {
-        Class.forName(className, true, it)
+        Class.forName(className, false, it)
       }
       catch (e: ClassNotFoundException) {
         null
