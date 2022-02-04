@@ -1164,8 +1164,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         notification.expire();
-        scope.setIncludeTestSource(true);
         scope.invalidate();
+        scope.setIncludeTestSource(true);
         analysisRepeater.run();
       }
     });
