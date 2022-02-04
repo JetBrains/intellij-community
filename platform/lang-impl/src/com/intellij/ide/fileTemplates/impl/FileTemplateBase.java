@@ -22,17 +22,14 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.OrderedSet;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -106,7 +103,7 @@ public abstract class FileTemplateBase implements FileTemplate {
 
   @Override
   public final String @NotNull [] getUnsetAttributes(@NotNull Properties properties, @NotNull Project project) throws ParseException {
-    Set<String> attributes = ContainerUtil.set(FileTemplateUtil.calculateAttributes(getText(), properties, false, project));
+    Set<String> attributes = new OrderedSet<>(Arrays.asList(FileTemplateUtil.calculateAttributes(getText(), properties, false, project)));
     attributes.addAll(Arrays.asList(FileTemplateUtil.calculateAttributes(getFileName(), properties, false, project)));
     return ArrayUtil.toStringArray(attributes);
   }
