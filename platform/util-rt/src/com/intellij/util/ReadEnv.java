@@ -1,29 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import java.io.BufferedWriter;
-import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Map;
 
 public final class ReadEnv {
   public static void main(String[] args) throws Exception {
-    if (args.length != 1) throw new Exception("Exactly one argument expected");
-
-    Writer out = new BufferedWriter(new OutputStreamWriter(System.out, "UTF-8"));
+    @SuppressWarnings("UseOfSystemOutOrSystemErr") Writer out = new BufferedWriter(new OutputStreamWriter(System.out, "UTF-8"));
     try {
       for (Map.Entry<String, String> each : System.getenv().entrySet()) {
-        // on Windows Java getenv() includes variables that start from '='.
-        // These variables are not available available in normal command environment.
-
-        // https://stackoverflow.com/questions/30102750/java-system-getenv-environment-names-starting-with
+        // On Windows, the environment may include variables that start with '=' (https://stackoverflow.com/questions/30102750).
+        // Such variables break the output parser and are unimportant, hence are filtered out.
         if (each.getKey().startsWith("=")) continue;
 
         out.write(each.getKey());
-        out.write("=");
+        out.write('=');
         out.write(each.getValue());
-        out.write("\0");
+        out.write('\0');
       }
     }
     finally {
