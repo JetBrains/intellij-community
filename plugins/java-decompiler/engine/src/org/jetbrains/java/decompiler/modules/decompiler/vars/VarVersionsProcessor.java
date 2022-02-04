@@ -110,8 +110,8 @@ public class VarVersionsProcessor {
   }
 
   private static void eliminateNonJavaTypes(VarTypeProcessor typeProcessor) {
-    Map<VarVersionPair, VarType> mapExprentMaxTypes = typeProcessor.getMapExprentMaxTypes();
-    Map<VarVersionPair, VarType> mapExprentMinTypes = typeProcessor.getMapExprentMinTypes();
+    Map<VarVersionPair, VarType> mapExprentMaxTypes = typeProcessor.getMaxExprentTypes();
+    Map<VarVersionPair, VarType> mapExprentMinTypes = typeProcessor.getMinExprentTypes();
 
     for (VarVersionPair paar : new ArrayList<>(mapExprentMinTypes.keySet())) {
       VarType type = mapExprentMinTypes.get(paar);
@@ -135,8 +135,8 @@ public class VarVersionsProcessor {
   }
 
   private static void simpleMerge(VarTypeProcessor typeProcessor, DirectGraph graph, StructMethod mt) {
-    Map<VarVersionPair, VarType> mapExprentMaxTypes = typeProcessor.getMapExprentMaxTypes();
-    Map<VarVersionPair, VarType> mapExprentMinTypes = typeProcessor.getMapExprentMinTypes();
+    Map<VarVersionPair, VarType> mapExprentMaxTypes = typeProcessor.getMaxExprentTypes();
+    Map<VarVersionPair, VarType> mapExprentMinTypes = typeProcessor.getMinExprentTypes();
 
     Map<Integer, Set<Integer>> mapVarVersions = new HashMap<>();
 
@@ -250,7 +250,7 @@ public class VarVersionsProcessor {
                 firstType = secondType;
               }
 
-              typeProcessor.getMapFinalVars().put(firstPair, VarTypeProcessor.VAR_NON_FINAL);
+              typeProcessor.getFinalVariables().put(firstPair, VarProcessor.VAR_NON_FINAL);
 
               lstVersions.remove(j);
               //noinspection AssignmentToForLoopParameter
@@ -267,9 +267,9 @@ public class VarVersionsProcessor {
   }
 
   private void setNewVarIndices(VarTypeProcessor typeProcessor, DirectGraph graph, VarVersionsProcessor previousVersionsProcessor) {
-    final Map<VarVersionPair, VarType> mapExprentMaxTypes = typeProcessor.getMapExprentMaxTypes();
-    Map<VarVersionPair, VarType> mapExprentMinTypes = typeProcessor.getMapExprentMinTypes();
-    Map<VarVersionPair, Integer> mapFinalVars = typeProcessor.getMapFinalVars();
+    final Map<VarVersionPair, VarType> mapExprentMaxTypes = typeProcessor.getMaxExprentTypes();
+    Map<VarVersionPair, VarType> mapExprentMinTypes = typeProcessor.getMinExprentTypes();
+    Map<VarVersionPair, Integer> mapFinalVars = typeProcessor.getFinalVariables();
 
     CounterContainer counters = DecompilerContext.getCounterContainer();
 
@@ -345,12 +345,12 @@ public class VarVersionsProcessor {
   }
 
   public int getVarFinal(VarVersionPair pair) {
-    Integer fin = typeProcessor.getMapFinalVars().get(pair);
-    return fin == null ? VarTypeProcessor.VAR_FINAL : fin;
+    Integer fin = typeProcessor.getFinalVariables().get(pair);
+    return fin == null ? VarProcessor.VAR_FINAL : fin;
   }
 
   public void setVarFinal(VarVersionPair pair, int finalType) {
-    typeProcessor.getMapFinalVars().put(pair, finalType);
+    typeProcessor.getFinalVariables().put(pair, finalType);
   }
 
   public Map<Integer, Integer> getMapOriginalVarIndices() {
