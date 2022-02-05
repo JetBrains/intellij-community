@@ -119,12 +119,30 @@ public final class TextWithMnemonic {
    * Sets mnemonic at given index
    * @param index index, must be within the {@link #getText() text} string.
    * @return a TextWithMnemonic object with mnemonic set at given index
+   * @deprecated use {@link #withMnemonicIndex} or {@link #fromPlainText(String, int)} instead
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public TextWithMnemonic setMnemonicAt(int index) {
     if (index < 0 || index >= myText.length() + myMnemonicSuffix.length()) {
       throw new IndexOutOfBoundsException(String.valueOf(index));
     }
     return index == myMnemonicIndex ? this : new TextWithMnemonic(myText, index, myMnemonicSuffix);
+  }
+
+  /**
+   * @param index mnemonic index within the {@link #getText() text}, or {@code -1} to remove mnemonic
+   * @return new {@code TextWithMnemonic} object with updated mnemonic index, or the same instance otherwise
+   * @throws IndexOutOfBoundsException if mnemonic index cannot be used
+   */
+  public @NotNull TextWithMnemonic withMnemonicIndex(int index) {
+    if (index == myMnemonicIndex) return this;
+    if (index >= -1) {
+      String text = getText();
+      if (index == -1) return fromPlainText(text);
+      if (index < text.length() - getEllipsisLength(text)) return fromPlainText(text, index);
+    }
+    throw new IndexOutOfBoundsException(String.valueOf(index));
   }
 
   /**
@@ -157,6 +175,21 @@ public final class TextWithMnemonic {
                       myMnemonicIndex >= index + target.length() ? myMnemonicIndex - target.length() + replacement.length() :
                       -1;
     return new TextWithMnemonic(resultText, resultIndex, myMnemonicSuffix);
+  }
+
+  /**
+   * Creates new {@code TextWithMnemonic} object from a text provided by
+   * the {@link UIUtil#replaceMnemonicAmpersand replaceMnemonicAmpersand} method.
+   *
+   * @param text a text that may contain a mnemonic specified by the {@link UIUtil#MNEMONIC MNEMONIC} character
+   * @return new {@code TextWithMnemonic} object that may have a mnemonic if it is specified in the given text
+   */
+  public static @NotNull TextWithMnemonic fromMnemonicText(@NotNull @Nls String text) {
+    int pos = text.indexOf(UIUtil.MNEMONIC);
+    if (pos < 0) return fromPlainText(text);
+    String str = text.substring(pos + 1);
+    assert !str.isEmpty() : "unexpected mnemonic marker";
+    return fromPlainText(pos > 0 ? text.substring(0, pos) + str : str, pos);
   }
 
   /**
@@ -196,6 +229,26 @@ public final class TextWithMnemonic {
   }
 
   /**
+   * Creates new {@code TextWithMnemonic} object from a plain text with a mnemonic specified by its index.
+   *
+   * @param text  a plain text
+   * @param index a mnemonic index in the given text, or {@code -1} if it is not needed
+   * @return new {@code TextWithMnemonic} object that may have a mnemonic
+   */
+  public static @NotNull TextWithMnemonic fromPlainText(@NotNull @Nls String text, int index) {
+    if (index < 0) return fromPlainText(text);
+    if (index < text.length()) {
+      // try to extract a mnemonic suffix
+      int pos = text.length() - getEllipsisLength(text) - 3; // the length of "(M)"
+      if (pos >= 0 && index == (pos + 1) && text.charAt(pos) == '(' && text.charAt(pos + 2) == ')') {
+        while (pos > 0 && text.charAt(pos - 1) == ' ') pos--; // skip spaces
+        return new TextWithMnemonic(text.substring(0, pos), index, text.substring(pos));
+      }
+    }
+    return new TextWithMnemonic(text, index, "");
+  }
+
+  /**
    * Parses a text in text-with-mnemonic format.
    * A mnemonic is prepended either with '_', or with '&' or with '\x1B' character.
    * To escape '_' or '&' before the actual mnemonic the character must be duplicated.
@@ -209,7 +262,7 @@ public final class TextWithMnemonic {
   @Contract(pure = true)
   public static TextWithMnemonic parse(@NotNull @Nls String text) {
     if (text.indexOf(UIUtil.MNEMONIC) >= 0) {
-      text = text.replace(UIUtil.MNEMONIC, '&');
+      return fromMnemonicText(text);
     }
 
     if (text.contains("_") || text.contains("&")) {
@@ -233,16 +286,7 @@ public final class TextWithMnemonic {
         }
         plainText.append(ch);
       }
-      String plain = plainText.toString();
-      int length = plain.length() - getEllipsisLength(plain);
-      if (length > 3 && mnemonicIndex == length - 2 && plain.charAt(length - 1) == ')' && plain.charAt(length - 3) == '(') {
-        int pos = length - 3;
-        while (pos > 0 && plain.charAt(pos - 1) == ' ') {
-          pos--;
-        }
-        return new TextWithMnemonic(plain.substring(0, pos), mnemonicIndex, plain.substring(pos));
-      }
-      return new TextWithMnemonic(plain, mnemonicIndex, "");
+      return fromPlainText(plainText.toString(), mnemonicIndex);
     }
     return fromPlainText(text);
   }

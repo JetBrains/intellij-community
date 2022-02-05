@@ -7,8 +7,8 @@ import org.junit.Test;
 
 import java.awt.event.KeyEvent;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
+import static com.intellij.util.ui.UIUtil.MNEMONIC;
+import static org.junit.Assert.*;
 
 public class TextWithMnemonicTest {
   @Test
@@ -17,6 +17,95 @@ public class TextWithMnemonicTest {
     assertEquals("hello", hello.toString());
     assertTextWithoutSuffix(hello, "hello");
     assertNoMnemonic(hello);
+  }
+
+  @Test
+  public void noMnemonicByIndex() {
+    TextWithMnemonic withoutMnemonic = TextWithMnemonic.fromPlainText("hello & goodbye…");
+    assertEquals(withoutMnemonic, TextWithMnemonic.fromMnemonicText("hello & goodbye…"));
+    assertEquals("hello && goodbye…", withoutMnemonic.toString());
+    assertTextWithoutSuffix(withoutMnemonic, "hello & goodbye…");
+    assertNoMnemonic(withoutMnemonic);
+  }
+
+  @Test
+  public void setMnemonicByIndex() {
+    TextWithMnemonic withMnemonic = TextWithMnemonic.fromPlainText("hello & goodbye (X)…", 17);
+    assertEquals(withMnemonic, TextWithMnemonic.fromMnemonicText("hello & goodbye (" + MNEMONIC + "X)…"));
+    assertEquals("hello && goodbye (_X)…", withMnemonic.toString());
+    assertText(withMnemonic, "hello & goodbye…", "hello & goodbye (X)…");
+    assertMnemonic(withMnemonic, 17, KeyEvent.VK_X, 'X');
+  }
+
+  @Test
+  public void withMnemonicIndex() {
+    TextWithMnemonic hello = TextWithMnemonic.fromPlainText("hello");
+    assertTextWithoutSuffix(hello, "hello");
+    assertNoMnemonic(hello);
+
+    assertMnemonicIndexOutOfBounds(hello, Integer.MAX_VALUE);
+    assertMnemonicIndexOutOfBounds(hello, Integer.MIN_VALUE);
+    assertMnemonicIndexOutOfBounds(hello, -2);
+    assertMnemonicIndexOutOfBounds(hello, 5);
+
+    TextWithMnemonic withMnemonic1 = hello.withMnemonicIndex(1);
+    assertTextWithoutSuffix(withMnemonic1, "hello");
+    assertMnemonic(withMnemonic1, 1, KeyEvent.VK_E, 'e');
+    assertSame(withMnemonic1, withMnemonic1.withMnemonicIndex(1));
+    assertNotSame(withMnemonic1, hello);
+
+    TextWithMnemonic withMnemonic3 = withMnemonic1.withMnemonicIndex(3);
+    assertTextWithoutSuffix(withMnemonic3, "hello");
+    assertMnemonic(withMnemonic3, 3, KeyEvent.VK_L, 'l');
+    assertSame(withMnemonic3, withMnemonic3.withMnemonicIndex(3));
+    assertNotSame(withMnemonic3, withMnemonic1);
+
+    TextWithMnemonic withoutMnemonic = withMnemonic3.withMnemonicIndex(-1);
+    assertTextWithoutSuffix(withoutMnemonic, "hello");
+    assertNoMnemonic(withoutMnemonic);
+    assertSame(withoutMnemonic, withoutMnemonic.withMnemonicIndex(-1));
+    assertNotSame(withoutMnemonic, withMnemonic1);
+    assertNotSame(withoutMnemonic, withMnemonic3);
+    assertNotSame(withoutMnemonic, hello);
+    assertEquals(withoutMnemonic, hello);
+  }
+
+  @Test
+  public void withMnemonicIndexEllipsis() {
+    TextWithMnemonic withMnemonic1 = TextWithMnemonic.fromPlainText("hello...", 1);
+    assertTextWithoutSuffix(withMnemonic1, "hello...");
+    assertMnemonic(withMnemonic1, 1, KeyEvent.VK_E, 'e');
+    assertSame(withMnemonic1, withMnemonic1.withMnemonicIndex(1));
+    assertEquals(withMnemonic1, TextWithMnemonic.fromMnemonicText("h" + MNEMONIC + "ello..."));
+
+    assertMnemonicIndexOutOfBounds(withMnemonic1, Integer.MAX_VALUE);
+    assertMnemonicIndexOutOfBounds(withMnemonic1, Integer.MIN_VALUE);
+    assertMnemonicIndexOutOfBounds(withMnemonic1, -2);
+    assertMnemonicIndexOutOfBounds(withMnemonic1, 5);
+
+    TextWithMnemonic withMnemonic3 = withMnemonic1.withMnemonicIndex(3);
+    assertTextWithoutSuffix(withMnemonic3, "hello...");
+    assertMnemonic(withMnemonic3, 3, KeyEvent.VK_L, 'l');
+    assertSame(withMnemonic3, withMnemonic3.withMnemonicIndex(3));
+  }
+
+  @Test
+  public void withMnemonicIndexSuffixEllipsis() {
+    TextWithMnemonic withMnemonic7 = TextWithMnemonic.fromPlainText("hello (X)…", 7);
+    assertText(withMnemonic7, "hello…", "hello (X)…");
+    assertMnemonic(withMnemonic7, 7, KeyEvent.VK_X, 'X');
+    assertSame(withMnemonic7, withMnemonic7.withMnemonicIndex(7));
+    assertEquals(withMnemonic7, TextWithMnemonic.fromMnemonicText("hello (" + MNEMONIC + "X)…"));
+
+    assertMnemonicIndexOutOfBounds(withMnemonic7, Integer.MAX_VALUE);
+    assertMnemonicIndexOutOfBounds(withMnemonic7, Integer.MIN_VALUE);
+    assertMnemonicIndexOutOfBounds(withMnemonic7, -2);
+    assertMnemonicIndexOutOfBounds(withMnemonic7, 5);
+
+    TextWithMnemonic withMnemonic1 = withMnemonic7.withMnemonicIndex(1);
+    assertTextWithoutSuffix(withMnemonic1, "hello…");
+    assertMnemonic(withMnemonic1, 1, KeyEvent.VK_E, 'e');
+    assertSame(withMnemonic1, withMnemonic1.withMnemonicIndex(1));
   }
 
   @Test
@@ -74,7 +163,7 @@ public class TextWithMnemonicTest {
     assertText(fromPlain, "hello...", "hello(X)...");
     assertMnemonic(fromPlain, 6, KeyEvent.VK_X, 'X');
   }
-  
+
   @Test
   public void append() {
     assertEquals("H_ello world!", TextWithMnemonic.parse("H&ello").append(" world!").toString());
@@ -92,7 +181,7 @@ public class TextWithMnemonicTest {
     assertEquals("Hello world!(_H)...", TextWithMnemonic.parse("Hello(&H)...").append(" world!").toString());
     assertEquals("Hello world!  (_H)…", TextWithMnemonic.parse("Hello  (&H)…").append(" world!").toString());
   }
-  
+
   @Test
   public void replaceFirst() {
     assertEquals("_Hello wonderful world!", TextWithMnemonic.parse("&Hello {0} world!").replaceFirst("{0}", "wonderful").toString());
@@ -116,11 +205,18 @@ public class TextWithMnemonicTest {
     assertEquals(expectedTextWithSuffix, wrapper.getText(true));
   }
 
-  @SuppressWarnings("SameParameterValue")
   private static void assertTextWithoutSuffix(@NotNull TextWithMnemonic wrapper, @NotNull String expectedText) {
     String text = wrapper.getText();
     assertEquals(expectedText, text);
     assertSame(text, wrapper.getText(false));
     assertSame(text, wrapper.getText(true));
+  }
+
+  private static void assertMnemonicIndexOutOfBounds(@NotNull TextWithMnemonic wrapper, int invalidIndex) {
+    try {
+      fail("unexpected: " + wrapper.withMnemonicIndex(invalidIndex));
+    }
+    catch (IndexOutOfBoundsException ignored) {
+    }
   }
 }
