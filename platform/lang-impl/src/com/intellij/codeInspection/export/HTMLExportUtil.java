@@ -57,7 +57,7 @@ public final class HTMLExportUtil {
     Runnable showError = () -> Messages.showMessageDialog(
       project,
       InspectionsBundle.message("inspection.export.error.writing.to", file.toString(), message),
-      InspectionsBundle.message("inspection.export.results.error.title"),
+      InspectionsBundle.message("inspection.export.results.title"),
       Messages.getErrorIcon()
     );
     ApplicationManager.getApplication().invokeLater(showError, ModalityState.NON_MODAL);

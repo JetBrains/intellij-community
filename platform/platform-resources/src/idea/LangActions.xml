@@ -1464,6 +1464,15 @@
       <reference ref="TreeNodeExclusion"/>
     </group>
 
+    <group id="InspectionToolWindow.Toolbar" searchable="false">
+      <action id="ExportInspectionResults" class="com.intellij.codeInspection.ui.actions.InspectionResultsExportAction"/>
+    </group>
+
+    <group id="InspectionToolWindow.ExportPopup" searchable="false">
+      <action id="ExportInspectionResultsToHTML" class="com.intellij.codeInspection.ui.actions.ExportToHTMLAction"/>
+      <action id="ExportInspectionResultsToXML" class="com.intellij.codeInspection.ui.actions.ExportToXMLAction"/>
+    </group>
+
     <group id="RunDashboardContentToolbar">
       <!--suppress PluginXmlValidity -->
       <action id="RunDashboard.Run" class="com.intellij.execution.dashboard.actions.RunAction" icon="AllIcons.Actions.Execute" use-shortcut-of="RunClass"/>

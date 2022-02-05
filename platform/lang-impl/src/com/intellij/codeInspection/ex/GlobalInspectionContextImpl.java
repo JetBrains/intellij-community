@@ -157,11 +157,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   }
 
   public void addView(@NotNull InspectionResultsView view) {
-    addView(view, InspectionsBundle.message(view.isSingleInspectionRun() ?
-                                            "inspection.results.for.inspection.toolwindow.title" :
-                                            "inspection.results.for.profile.toolwindow.title",
-                                            view.getCurrentProfileName(), getCurrentScope().getShortenName()), false);
-
+    addView(view, view.getViewTitle(), false);
   }
 
   @Override
