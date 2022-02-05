@@ -58,9 +58,17 @@ object VcsLogContentUtil {
                                   tabDisplayName: Function<U, @NlsContexts.TabTitle String>,
                                   factory: VcsLogUiFactory<out U>,
                                   focus: Boolean): U {
+    val toolWindow = getToolWindowOrThrow(project)
+    return openLogTab(logManager, factory, toolWindow, tabGroupId, tabDisplayName, focus)
+  }
+
+  internal fun <U : VcsLogUiEx> openLogTab(logManager: VcsLogManager,
+                                           factory: VcsLogUiFactory<out U>,
+                                           toolWindow: ToolWindow,
+                                           tabGroupId: TabGroupId,
+                                           tabDisplayName: Function<U, @NlsContexts.TabTitle String>,
+                                           focus: Boolean): U {
     val logUi = logManager.createLogUi(factory, VcsLogTabLocation.TOOL_WINDOW)
-    val toolWindow = getToolWindow(project)
-                     ?: throw IllegalStateException("Could not find tool window for id ${ChangesViewContentManager.TOOLWINDOW_ID}")
     ContentUtilEx.addTabbedContent(toolWindow.contentManager, tabGroupId,
                                    TabDescriptor(VcsLogPanel(logManager, logUi), Supplier { tabDisplayName.apply(logUi) }, logUi), focus)
     if (focus) {
@@ -120,6 +128,12 @@ object VcsLogContentUtil {
     val manager = toolWindow.contentManager
     val component = ContentUtilEx.findContentComponent(manager) { c: JComponent -> ui === getLogUi(c) } ?: return
     ContentUtilEx.updateTabbedContentDisplayName(manager, component)
+  }
+
+  internal fun getToolWindowOrThrow(project: Project): ToolWindow {
+    val toolWindow = getToolWindow(project)
+    if (toolWindow != null) return toolWindow
+    throw IllegalStateException("Could not find tool window for id ${ChangesViewContentManager.TOOLWINDOW_ID}")
   }
 
   internal fun getToolWindow(project: Project): ToolWindow? {
