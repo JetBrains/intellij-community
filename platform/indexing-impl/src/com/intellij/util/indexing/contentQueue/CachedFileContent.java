@@ -1,13 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.contentQueue;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.indexing.impl.IndexDebugProperties;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 public final class CachedFileContent {
+  private static final Logger LOG = Logger.getInstance(CachedFileContent.class);
+
   private final VirtualFile myVirtualFile;
   private byte[] myCachedBytes;
   private long myCachedTimeStamp = -1;
@@ -29,6 +33,18 @@ public final class CachedFileContent {
       }
     }
     return myCachedBytes;
+  }
+
+  public byte @NotNull [] getBytesOrEmpty() {
+    try {
+      return getBytes();
+    }
+    catch (IOException e) {
+      if (IndexDebugProperties.DEBUG) {
+        LOG.info("Failed to load content for file " + myVirtualFile, e);
+      }
+      return ArrayUtilRt.EMPTY_BYTE_ARRAY;
+    }
   }
 
   public void setEmptyContent() {

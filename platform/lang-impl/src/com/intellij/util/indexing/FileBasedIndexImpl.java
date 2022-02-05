@@ -37,7 +37,10 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBinaryFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -79,7 +82,8 @@ import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1401,7 +1405,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         ProgressManager.checkCanceled();
 
         if (fc == null) {
-          fc = (FileContentImpl)FileContentImpl.createByContent(file, () -> getBytesOrNull(content), guessedProject);
+          fc = (FileContentImpl)FileContentImpl.createByContent(file, () -> content.getBytesOrEmpty(), guessedProject);
           fc.setSubstituteFileType(indexedFile.getFileType());
           ProgressManager.checkCanceled();
 
@@ -1493,15 +1497,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         perIndexerUpdateTimes,
         perIndexerDeletionTimes
       ));
-  }
-
-  private static byte @NotNull[] getBytesOrNull(@NotNull CachedFileContent content) {
-    try {
-      return content.getBytes();
-    }
-    catch (IOException e) {
-      return ArrayUtilRt.EMPTY_BYTE_ARRAY;
-    }
   }
 
   @NotNull
@@ -1722,10 +1717,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   public boolean belongsToIndexableFiles(@NotNull VirtualFile file) {
     return ContainerUtil.find(myIndexableSets, pair -> pair.first.isInSet(file)) != null;
-  }
-
-  public boolean containsIndexableSet(@NotNull IndexableFileSet set, @NotNull Project project) {
-    return ContainerUtil.find(myIndexableSets, pair -> pair.first == set && pair.second.equals(project)) != null;
   }
 
   @ApiStatus.Internal
@@ -1957,6 +1948,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         lastModCount = currentModCount;
       }
     });
+
   }
 
   @Override
