@@ -84,6 +84,11 @@
     <editorTabTitleProvider implementation="com.intellij.vcs.log.ui.editor.DefaultVcsLogFileTabTitleProvider"/>
   </extensions>
 
+  <projectListeners>
+    <listener topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"
+              class="com.intellij.vcs.log.impl.VcsLogToolwindowManagerListener"/>
+  </projectListeners>
+
   <actions resource-bundle="messages.VcsLogBundle">
     <group id="Log.Unsorted.KeymapGroup" searchable="false">
       <action class="com.intellij.vcs.log.ui.actions.GoToHashOrRefAction" id="Vcs.Log.GoToRef" icon="AllIcons.Actions.Find"
