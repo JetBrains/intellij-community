@@ -53,7 +53,7 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
       .addKind(GroovyBundle.message("new.class.list.item.annotation"), JetgroovyIcons.Groovy.AnnotationType, GroovyTemplates.GROOVY_ANNOTATION);
 
     if (GroovyConfigUtils.isAtLeastGroovy40(directory)) {
-      builder.addKind(GroovyBundle.message("new.class.list.item.record"), JetgroovyIcons.Groovy.Class, GroovyTemplates.GROOVY_RECORD);
+      builder.addKind(GroovyBundle.message("new.class.list.item.record"), JetgroovyIcons.Groovy.Record, GroovyTemplates.GROOVY_RECORD);
     }
 
     for (FileTemplate template : FileTemplateManager.getInstance(project).getAllTemplates()) {
