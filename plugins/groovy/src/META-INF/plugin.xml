@@ -611,6 +611,8 @@
     <xdebugger.settings implementation="org.jetbrains.plugins.groovy.debugger.GroovyDebuggerSettings"/>
     <langCodeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyLanguageCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyGenerationSettingsProvider"/>
+    <lang.lineWrapStrategy language="Groovy" implementationClass="org.jetbrains.plugins.groovy.formatter.GrLineWrapPositionStrategy"/>
+
 
 
     <typeHierarchyProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.hierarchy.type.GroovyTypeHierarchyProvider"/>
