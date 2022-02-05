@@ -41,7 +41,7 @@ public abstract class FileIncludeProvider {
 
   public boolean acceptFile(@NotNull VirtualFile file, Project project) {
     return acceptFile(file);
-  };
+  }
 
   public abstract void registerFileTypesUsedForIndexing(@NotNull Consumer<? super FileType> fileTypeSink);
 
