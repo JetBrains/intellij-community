@@ -972,6 +972,16 @@ def x = new aaaaaaaa.
 """)
   }
 
+  void testSpacesAfterHardWrapMargin() {
+    groovySettings.RIGHT_MARGIN = 10
+    groovySettings.WRAP_LONG_LINES = true
+    checkFormatting("""\
+aaaa.bb           
+""", """\
+aaaa.bb           
+""")
+  }
+
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class)
     boolean oldvalue = customSettings.USE_FLYING_GEESE_BRACES
