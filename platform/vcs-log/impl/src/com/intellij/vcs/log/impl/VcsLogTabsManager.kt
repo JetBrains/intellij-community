@@ -3,32 +3,30 @@ package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.vcs.log.impl.VcsLogEditorUtil.findVcsLogUi
-import com.intellij.vcs.log.ui.editor.VcsLogVirtualFileSystem.Companion.getInstance
-import com.intellij.vcs.log.impl.VcsLogContentUtil.openLogTab
-import com.intellij.vcs.log.impl.VcsLogContentUtil.updateLogUiName
-import com.intellij.vcs.log.visible.filters.getPresentation
-import com.intellij.vcs.log.impl.VcsProjectLog.ProjectLogListener
-import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.vcs.log.VcsLogFilterCollection
-import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
-import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.ui.content.TabGroupId
-import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.VcsLogUi
 import com.intellij.openapi.util.NlsContexts.TabTitle
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.ui.content.TabGroupId
 import com.intellij.util.ContentUtilEx
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.VcsLogFilterCollection
+import com.intellij.vcs.log.VcsLogUi
+import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.impl.VcsLogContentUtil.openLogTab
+import com.intellij.vcs.log.impl.VcsLogContentUtil.updateLogUiName
+import com.intellij.vcs.log.impl.VcsLogEditorUtil.findVcsLogUi
+import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
+import com.intellij.vcs.log.impl.VcsProjectLog.ProjectLogListener
+import com.intellij.vcs.log.ui.MainVcsLogUi
+import com.intellij.vcs.log.ui.editor.VcsLogVirtualFileSystem
+import com.intellij.vcs.log.visible.filters.getPresentation
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import java.lang.UnsupportedOperationException
 import java.util.*
 
 class VcsLogTabsManager internal constructor(private val project: Project,
@@ -90,7 +88,7 @@ class VcsLogTabsManager internal constructor(private val project: Project,
   }
 
   private fun openEditorLogTab(tabId: String, focus: Boolean, filters: VcsLogFilterCollection?): Array<FileEditor> {
-    val file = getInstance().createVcsLogFile(project, tabId, filters)
+    val file = VcsLogVirtualFileSystem.getInstance().createVcsLogFile(project, tabId, filters)
     return FileEditorManager.getInstance(project).openFile(file, focus, true)
   }
 
@@ -145,7 +143,7 @@ class VcsLogTabsManager internal constructor(private val project: Project,
     }
 
     private fun generateTabId(manager: VcsLogManager): @NonNls String {
-      val existingIds = ContainerUtil.map2Set(manager.logUis) { obj: VcsLogUi -> obj.id }
+      val existingIds = manager.logUis.map { it.id }.toSet()
       var newId: String
       do {
         newId = UUID.randomUUID().toString()
