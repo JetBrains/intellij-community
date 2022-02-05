@@ -109,12 +109,16 @@ class RunToolbarSlotManager(val project: Project) {
       if (value) {
         if (RunToolbarProcess.logNeeded) LOG.info(
           "SM settings: new on top ${runToolbarSettings.getMoveNewOnTop()}; update by selected ${getUpdateMainBySelected()} RunToolbar")
+        clear()
+        val settingsData = runToolbarSettings.getConfigurations()
+        val slotOrder = settingsData.first
+        val configurations = settingsData.second
 
-        val configurations = runToolbarSettings.getConfigurations()
-        configurations.keys.forEachIndexed { index, s ->
+        slotOrder.filter { configurations[it] != null }.forEachIndexed { index, s ->
           if (index == 0) {
             mainSlotData = SlotDate(s)
             mainSlotData.configuration = configurations[s]
+            slotsData[mainSlotData.id] = mainSlotData
           }
           else {
             addSlot(s).configuration = configurations[s]
@@ -172,7 +176,6 @@ class RunToolbarSlotManager(val project: Project) {
     mainSlotData.clear()
     dataIds.clear()
     slotsData.clear()
-    slotsData[mainSlotData.id] = mainSlotData
 
     activeProcesses.clear()
   }
@@ -485,18 +488,27 @@ class RunToolbarSlotManager(val project: Project) {
       }
     }
 
-    val configurations = getConfigurationMap()
+    val slotOrder = getSlotOrder()
+    val configurations = getConfigurationMap(slotOrder)
     if (RunToolbarProcess.logNeeded) LOG.info("MANAGER saveSlotsConfiguration: ${configurations} RunToolbar")
 
-    runToolbarSettings.setConfigurations(configurations)
+    runToolbarSettings.setConfigurations(configurations, slotOrder)
     publishConfigurations(configurations)
   }
 
-  fun getConfigurationMap(): Map<String, RunnerAndConfigurationSettings?> {
+  private fun getSlotOrder(): List<String> {
     val list = mutableListOf<String>()
     list.add(mainSlotData.id)
     list.addAll(dataIds)
-    return list.associateWith { slotsData[it]?.configuration }
+    return list
+  }
+
+  private fun getConfigurationMap(slotOrder: List<String>): Map<String, RunnerAndConfigurationSettings?> {
+    return slotOrder.associateWith { slotsData[it]?.configuration }
+  }
+
+  fun getConfigurationMap(): Map<String, RunnerAndConfigurationSettings?> {
+    return getConfigurationMap(getSlotOrder())
   }
 
   private fun publishConfigurations(slotConfigurations: Map<String, RunnerAndConfigurationSettings?>) {

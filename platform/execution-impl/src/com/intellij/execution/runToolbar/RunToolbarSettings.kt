@@ -15,7 +15,7 @@ class RunToolbarSettings(private val project: Project) : SimplePersistentStateCo
     fun getInstance(project: Project): RunToolbarSettings = project.service()
   }
 
-  fun setConfigurations(map: Map<String, RunnerAndConfigurationSettings?>) {
+  fun setConfigurations(map: Map<String, RunnerAndConfigurationSettings?>, slotOrder: List<String>) {
     val slt = mutableMapOf<String, String>()
     map.filter { it.value != null }.forEach{entry ->  entry.value?.let {
       slt[entry.key] = it.uniqueID
@@ -23,15 +23,23 @@ class RunToolbarSettings(private val project: Project) : SimplePersistentStateCo
 
     state.slots.clear()
     state.slots.putAll(slt)
+
+    state.slotOrder.clear()
+    state.slotOrder.addAll(slotOrder)
   }
 
-  fun getConfigurations(): Map<String, RunnerAndConfigurationSettings> {
+
+  fun getConfigurations(): Pair<List<String>, Map<String, RunnerAndConfigurationSettings>> {
     val runManager = RunManagerImpl.getInstanceImpl(project)
+
+    var slotOrder = mutableListOf<String>()
     val slt = mutableMapOf<String, RunnerAndConfigurationSettings>()
 
-    if(state.slots.isEmpty()) {
+    if(state.slots.isEmpty() || state.slotOrder.isEmpty()) {
       state.installedItems.mapNotNull { runManager.getConfigurationById(it) }.forEach {
-        slt[UUID.randomUUID().toString()] = it
+        val uid = UUID.randomUUID().toString()
+        slotOrder.add(uid)
+        slt[uid] = it
       }
     } else {
       state.slots.forEach { entry ->
@@ -39,9 +47,10 @@ class RunToolbarSettings(private val project: Project) : SimplePersistentStateCo
           slt[entry.key] = it
         }
       }
+      slotOrder = state.slotOrder
     }
 
-    return slt
+    return Pair(slotOrder, slt)
   }
 
   fun getMoveNewOnTop(): Boolean {
@@ -65,6 +74,9 @@ class RunToolbarState : BaseState() {
   @Deprecated("Use slots map instead of installedItems")
   @get:XCollection
   val installedItems by list<String>()
+
+  @get:XCollection
+  val slotOrder by list<String>()
 
   @get:XMap
   var slots by map<String, String>()
