@@ -156,8 +156,7 @@ public final class GitHistoryUtils {
   /**
    * Create a proper list of parameters for `git log` command from a list of hashes.
    *
-   * @param vcs    an instance of {@link GitVcs} class for the repository, could be obtained from the
-   *               corresponding {@link GitRepository} or from a project by calling {@code GitVcs.getInstance(project)}
+   * @param project a {@link Project} instance for which the command is going to be invoked. Used to get Git version.
    * @param hashes a list of hashes to call `git log` for
    * @return a list of parameters that could be fed to a `git log` command
    */
