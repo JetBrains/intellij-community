@@ -781,4 +781,23 @@ public final class Strings {
 
     return StringUtilRt.equal(ts1, ts2, true);
   }
+
+  @Contract(pure = true)
+  public static @NotNull String convertLineSeparators(@NotNull String text) {
+    return StringUtilRt.convertLineSeparators(text);
+  }
+
+  @Contract(pure = true)
+  public static @NotNull String convertLineSeparators(@NotNull String text, boolean keepCarriageReturn) {
+    return StringUtilRt.convertLineSeparators(text, keepCarriageReturn);
+  }
+
+  @Contract(pure = true)
+  public static @NotNull String convertLineSeparators(@NotNull String text, @NotNull String newSeparator) {
+    return StringUtilRt.convertLineSeparators(text, newSeparator);
+  }
+
+  public static @NotNull String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, int @Nullable [] offsetsToKeep) {
+    return StringUtilRt.convertLineSeparators(text, newSeparator, offsetsToKeep);
+  }
 }

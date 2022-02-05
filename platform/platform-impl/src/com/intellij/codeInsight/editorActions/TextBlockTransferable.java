@@ -8,6 +8,7 @@ import com.intellij.openapi.ide.Sizeable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,7 +131,7 @@ public class TextBlockTransferable implements Transferable, Sizeable {
         index = data.getOffsets(offsets, index);
       }
 
-      text = StringUtil.convertLineSeparators(text, newSeparator, offsets);
+      text = Strings.convertLineSeparators(text, newSeparator, offsets);
 
       index = 0;
       for(TextBlockTransferableData data: itemsToUpdate) {

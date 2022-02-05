@@ -32,6 +32,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -258,7 +259,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
         }
       }
     }
-    String result = StringUtil.convertLineSeparators(b.toString(), "\n", offsets);
+    String result = Strings.convertLineSeparators(b.toString(), "\n", offsets);
     return Pair.create(result, offsets[0]);
   }
 
