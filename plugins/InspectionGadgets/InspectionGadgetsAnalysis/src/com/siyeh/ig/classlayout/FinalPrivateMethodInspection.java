@@ -17,6 +17,7 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -65,7 +66,7 @@ public class FinalPrivateMethodInspection extends BaseInspection {
       if (!HighlightUtil.isLegalModifierCombination(method.getModifierList())) {
         return;
       }
-      registerModifierError(PsiModifier.FINAL, method, PsiModifier.FINAL);
+      registerModifierError(PsiModifier.FINAL, method, ProblemHighlightType.LIKE_UNUSED_SYMBOL, PsiModifier.FINAL);
     }
   }
 }

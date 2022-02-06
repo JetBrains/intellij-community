@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -83,7 +84,7 @@ public class UnnecessaryReturnInspection extends BaseInspection {
       super.visitReturnStatement(statement);
       final Ref<Boolean> constructorRef = Ref.create();
       if (isReturnRedundant(statement, ignoreInThenBranch, true, constructorRef)) {
-        registerStatementError(statement, constructorRef.get());
+        registerError(statement, ProblemHighlightType.LIKE_UNUSED_SYMBOL, constructorRef.get());
       }
     }
 

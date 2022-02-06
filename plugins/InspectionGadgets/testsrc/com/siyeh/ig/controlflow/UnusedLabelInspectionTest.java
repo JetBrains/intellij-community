@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,33 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.threading;
+package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.siyeh.ig.redundancy.UnusedLabelInspection;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Bas Leijdekkers
+ * @author Fabrice TIERCELIN
  */
-public class EmptySynchronizedStatementInspectionTest extends LightJavaInspectionTestCase {
+public class UnusedLabelInspectionTest extends LightJavaInspectionTestCase {
 
-  public void testSimple() {
-    doStatementTest("/*Empty 'synchronized (new Object()) {}' statement*/<caret>synchronized (new Object()) {" +
-                    "}/**/");
-    checkQuickFix("Remove unnecessary 'synchronized'", "class X { void m() {\n" +
-                                                       "}}");
-  }
-
-  public void testNotEmpty() {
-    doStatementTest("synchronized (new Object()) {" +
-                    "  System.out.println();" +
-                    "}");
+  public void testUnusedLabel() {
+    doTest();
   }
 
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new EmptySynchronizedStatementInspection();
+    return new UnusedLabelInspection();
   }
 }

@@ -8,7 +8,7 @@ public class UnnecessaryBreak {
           // ...
         } else {
           // ...
-          <warning descr="'break' statement is unnecessary">break</warning> foo;
+          <warning descr="'break foo;' statement is unnecessary">break foo;</warning>
         }
 
         // Code was removed here, making the break unnecessary.
@@ -32,10 +32,10 @@ class Switch {
     void x(E e) {
         switch (e) {
             case A, B, C -> {
-                <warning descr="'break' statement is unnecessary">break</warning>;
+                <warning descr="'break;' statement is unnecessary">break;</warning>
             }
             default -> {
-                <warning descr="'break' statement is unnecessary">break</warning>;
+                <warning descr="'break;' statement is unnecessary">break;</warning>
             }
         }
     }
@@ -46,7 +46,7 @@ class JetbrainsBugReport {
     boolean b = r.nextBoolean();
     label1: if(b) {
       int k = 0;
-      <warning descr="'break' statement is unnecessary">break</warning> label1;
+      <warning descr="'break label1;' statement is unnecessary">break label1;</warning>
     }
     else {
       System.out.println("Example");

@@ -17,6 +17,7 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -150,7 +151,11 @@ public class UnnecessaryInitCauseInspection extends BaseInspection implements Cl
       if (!isCauseConstructorAvailable(newExpression, argument.getType()) || !canExpressionBeMovedBackwards(argument, newExpression)) {
         return;
       }
-      registerMethodCallError(expression);
+      final PsiElement nameToken = methodExpression.getReferenceNameElement();
+      if (nameToken == null) {
+        return;
+      }
+      registerError(nameToken, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
     }
 
     private static boolean canExpressionBeMovedBackwards(final PsiExpression cause, final PsiExpression newLocation) {

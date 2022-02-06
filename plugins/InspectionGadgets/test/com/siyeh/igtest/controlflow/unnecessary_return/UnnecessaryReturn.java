@@ -7,18 +7,18 @@ public class UnnecessaryReturn
 
     public UnnecessaryReturn()
     {
-        <warning descr="'return' is unnecessary as the last statement in a constructor">return</warning>;
+        <warning descr="'return;' is unnecessary as the last statement in a constructor">return;</warning>
     }
 
     public void foo()
     {
-        <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>;
+        <warning descr="'return;' is unnecessary as the last statement in a 'void' method">return;</warning>
     }
     public void foo2()
     {
         {
             {
-                <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>;
+                <warning descr="'return;' is unnecessary as the last statement in a 'void' method">return;</warning>
             }
         }
     }
@@ -27,7 +27,7 @@ public class UnnecessaryReturn
     {
         if(true)
         {
-            <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>;
+            <warning descr="'return;' is unnecessary as the last statement in a 'void' method">return;</warning>
         }
     }
 
@@ -42,11 +42,11 @@ public class UnnecessaryReturn
 }
 class C {
   public C() {
-    <warning descr="'return' is unnecessary as the last statement in a constructor">return</warning>;
+    <warning descr="'return;' is unnecessary as the last statement in a constructor">return;</warning>
   }
 
   public void m1() {
-    <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>;
+    <warning descr="'return;' is unnecessary as the last statement in a 'void' method">return;</warning>
   }
 
   public boolean m2() {
@@ -59,7 +59,7 @@ class C {
     }
     System.out.println("m3()");
     if (f) {
-      <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>;
+      <warning descr="'return;' is unnecessary as the last statement in a 'void' method">return;</warning>
     }
   }
 
@@ -69,7 +69,7 @@ class C {
       return;
     }
     else {
-      <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>;
+      <warning descr="'return;' is unnecessary as the last statement in a 'void' method">return;</warning>
     }
   }
 
@@ -81,7 +81,7 @@ class C {
   }
 
   public void lambda() {
-    Runnable r = () -> { <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>; };
+    Runnable r = () -> { <warning descr="'return;' is unnecessary as the last statement in a 'void' method">return;</warning> };
     System.out.println(r);
 
     Callable<Integer> c = () -> { return 42; };
@@ -119,10 +119,10 @@ class Switch {
     void x(E e) {
         switch (e) {
             case A, B, C -> {
-                <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>;
+                <warning descr="'return;' is unnecessary as the last statement in a 'void' method">return;</warning>
             }
             default -> {
-                <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>;
+                <warning descr="'return;' is unnecessary as the last statement in a 'void' method">return;</warning>
             }
         }
     }
@@ -141,7 +141,7 @@ class Switch {
       case 1:
         return;
       default:
-        <warning descr="'return' is unnecessary as the last statement in a 'void' method">return</warning>;
+        <warning descr="'return;' is unnecessary as the last statement in a 'void' method">return;</warning>
     }
   }
 }

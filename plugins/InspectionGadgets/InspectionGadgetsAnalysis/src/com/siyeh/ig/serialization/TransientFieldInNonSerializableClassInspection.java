@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.serialization;
 
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -58,7 +59,7 @@ public class TransientFieldInNonSerializableClassInspection extends BaseInspecti
       if (SerializationUtils.isSerializable(aClass)) {
         return;
       }
-      registerModifierError(PsiModifier.TRANSIENT, field, field);
+      registerModifierError(PsiModifier.TRANSIENT, field, ProblemHighlightType.LIKE_UNUSED_SYMBOL, field);
     }
   }
 }

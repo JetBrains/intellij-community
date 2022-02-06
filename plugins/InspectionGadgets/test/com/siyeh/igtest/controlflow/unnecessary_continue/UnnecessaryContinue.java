@@ -3,20 +3,20 @@ package com.siyeh.igtest.controlflow.unnecessary_continue;
 public class UnnecessaryContinue {
     public UnnecessaryContinue() {
         for (; ;) {
-        <warning descr="'continue' is unnecessary as the last statement in a loop">continue</warning>;
+        <warning descr="'continue;' is unnecessary as the last statement in a loop">continue;</warning>
         }
     }
 
     public void foo() {
         while (true)
-            <warning descr="'continue' is unnecessary as the last statement in a loop">continue</warning>;
+            <warning descr="'continue;' is unnecessary as the last statement in a loop">continue;</warning>
     }
 
     public void foo2() {
         while (true)
             if (true)
             {
-                <warning descr="'continue' is unnecessary as the last statement in a loop">continue</warning>;
+                <warning descr="'continue;' is unnecessary as the last statement in a loop">continue;</warning>
             }
     }
 
@@ -65,10 +65,10 @@ class Switch {
       for (int i = 0; i < 10; i++)
         switch (e) {
             case A, B, C -> {
-                <warning descr="'continue' is unnecessary as the last statement in a loop">continue</warning>;
+                <warning descr="'continue;' is unnecessary as the last statement in a loop">continue;</warning>
             }
             default -> {
-                <warning descr="'continue' is unnecessary as the last statement in a loop">continue</warning>;
+                <warning descr="'continue;' is unnecessary as the last statement in a loop">continue;</warning>
             }
         }
     }
@@ -92,7 +92,7 @@ class Switch {
                 case 1:
                     continue;
                 default:
-                <warning descr="'continue' is unnecessary as the last statement in a loop">continue</warning>;
+                <warning descr="'continue;' is unnecessary as the last statement in a loop">continue;</warning>
             }
         }
     }

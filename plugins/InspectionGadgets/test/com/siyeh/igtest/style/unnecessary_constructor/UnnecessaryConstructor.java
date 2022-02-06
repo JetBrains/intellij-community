@@ -1,7 +1,7 @@
 public class UnnecessaryConstructor {
-  public <warning descr="No-arg constructor 'UnnecessaryConstructor()' is redundant">UnnecessaryConstructor</warning>() {
+  <warning descr="No-arg constructor 'public UnnecessaryConstructor() { super (); }' is redundant">public UnnecessaryConstructor() {
     super ();
-  }
+  }</warning>
 }
 class A {
   <error descr="Identifier expected">void</error> () {}
@@ -9,5 +9,5 @@ class A {
 
 enum En {
   EnC;
-  private <warning descr="No-arg constructor 'En()' is redundant">En</warning>() {}
+  <warning descr="No-arg constructor 'private En() {}' is redundant">private En() {}</warning>
 }

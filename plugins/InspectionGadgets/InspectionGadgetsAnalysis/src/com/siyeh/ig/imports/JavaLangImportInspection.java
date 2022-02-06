@@ -16,6 +16,7 @@
 package com.siyeh.ig.imports;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiImportStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -68,7 +69,7 @@ public class JavaLangImportInspection extends BaseInspection implements CleanupL
       }
       if (statement.isOnDemand()) {
         if (HardcodedMethodConstants.JAVA_LANG.equals(text)) {
-          registerError(statement);
+          registerError(statement, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
         }
       }
       else {
@@ -83,7 +84,7 @@ public class JavaLangImportInspection extends BaseInspection implements CleanupL
         if (ImportUtils.hasOnDemandImportConflict(text, statement)) {
           return;
         }
-        registerError(statement);
+        registerError(statement, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
       }
     }
   }
