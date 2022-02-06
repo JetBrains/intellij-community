@@ -40,6 +40,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
+  private static final Logger LOG = Logger.getInstance(PyRerunFailedTestsAction.class);
+
   protected PyRerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
     super(componentContainer);
   }
@@ -164,8 +166,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
 
       if (result.isEmpty()) {
         final List<String> locations = ContainerUtil.map(failedTests, AbstractTestProxy::getLocationUrl);
-        Logger.getInstance(FailedPythonTestCommandLineStateBase.class).warn(
-          String.format("Can't resolve specs for the following tests: %s", StringUtil.join(locations, ", ")));
+        LOG.warn(String.format("Can't resolve specs for the following tests: %s", StringUtil.join(locations, ", ")));
       }
       return result;
     }
