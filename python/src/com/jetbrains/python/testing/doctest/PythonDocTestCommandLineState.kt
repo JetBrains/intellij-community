@@ -1,57 +1,29 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.testing.doctest;
+package com.jetbrains.python.testing.doctest
 
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.jetbrains.python.PythonHelper;
-import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.execution.runners.ExecutionEnvironment
+import com.jetbrains.python.PythonHelper
+import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration.TestType.*
+import com.jetbrains.python.testing.PythonTestCommandLineStateBase
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class PythonDocTestCommandLineState extends PythonTestCommandLineStateBase<PythonDocTestRunConfiguration> {
-  private final PythonDocTestRunConfiguration myConfig;
-
-
-  public PythonDocTestCommandLineState(@NotNull PythonDocTestRunConfiguration runConfiguration, @NotNull ExecutionEnvironment env) {
-    super(runConfiguration, env);
-    myConfig = runConfiguration;
+class PythonDocTestCommandLineState(private val myConfig: PythonDocTestRunConfiguration, env: ExecutionEnvironment)
+  : PythonTestCommandLineStateBase<PythonDocTestRunConfiguration?>(myConfig, env) {
+  override fun getRunner(): PythonHelper {
+    return PythonHelper.DOCSTRING
   }
 
-  @Override
-  protected @NotNull PythonHelper getRunner() {
-    return PythonHelper.DOCSTRING;
-  }
-
-  @Override
-  @NotNull
-  protected List<String> getTestSpecs() {
-    List<String> specs = new ArrayList<>();
-
-    switch (myConfig.getTestType()) {
-      case TEST_SCRIPT:
-        specs.add(myConfig.getScriptName());
-        break;
-      case TEST_CLASS:
-        specs.add(myConfig.getScriptName() + "::" + myConfig.getClassName());
-        break;
-      case TEST_METHOD:
-        specs.add(myConfig.getScriptName() + "::" + myConfig.getClassName() + "::" + myConfig.getMethodName());
-        break;
-      case TEST_FOLDER:
-	if (myConfig.usePattern() && !myConfig.getPattern().isEmpty())
-          specs.add(myConfig.getFolderName() + "/" + ";" + myConfig.getPattern());
-        else
-          specs.add(myConfig.getFolderName() + "/");
-          // TODO[kate]:think about delimiter between folderName and Pattern
-        break;
-      case TEST_FUNCTION:
-        specs.add(myConfig.getScriptName() + "::::" + myConfig.getMethodName());
-        break;
-      default:
-        throw new IllegalArgumentException("Unknown test type: " + myConfig.getTestType());
+  override fun getTestSpecs(): List<String> {
+    val specs: MutableList<String> = ArrayList()
+    when (myConfig.testType) {
+      TEST_SCRIPT -> specs.add(myConfig.scriptName)
+      TEST_CLASS -> specs.add(myConfig.scriptName + "::" + myConfig.className)
+      TEST_METHOD -> specs.add(myConfig.scriptName + "::" + myConfig.className + "::" + myConfig.methodName)
+      TEST_FOLDER ->
+        if (myConfig.usePattern() && !myConfig.pattern.isEmpty()) specs.add(myConfig.folderName + "/" + ";" + myConfig.pattern)
+        else specs.add(myConfig.folderName + "/")
+      TEST_FUNCTION -> specs.add(myConfig.scriptName + "::::" + myConfig.methodName)
+      else -> throw IllegalArgumentException("Unknown test type: " + myConfig.testType)
     }
-
-    return specs;
+    return specs
   }
 }
