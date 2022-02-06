@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
@@ -132,7 +133,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
     @NotNull
     @Override
     protected final List<String> getTestSpecs() {
-       // Method could be called on any thread (as any method of this class), and we need read action
+      // Method could be called on any thread (as any method of this class), and we need read action
       return ReadAction.compute(() -> getTestSpecImpl());
     }
 
@@ -162,7 +163,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
       }
 
       if (result.isEmpty()) {
-        final List<String> locations = failedTests.stream().map(AbstractTestProxy::getLocationUrl).collect(Collectors.toList());
+        final List<String> locations = ContainerUtil.map(failedTests, AbstractTestProxy::getLocationUrl);
         Logger.getInstance(FailedPythonTestCommandLineStateBase.class).warn(
           String.format("Can't resolve specs for the following tests: %s", StringUtil.join(locations, ", ")));
       }
