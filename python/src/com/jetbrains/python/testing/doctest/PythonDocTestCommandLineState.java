@@ -13,13 +13,13 @@ public class PythonDocTestCommandLineState extends PythonTestCommandLineStateBas
   private final PythonDocTestRunConfiguration myConfig;
 
 
-  public PythonDocTestCommandLineState(PythonDocTestRunConfiguration runConfiguration, ExecutionEnvironment env) {
+  public PythonDocTestCommandLineState(@NotNull PythonDocTestRunConfiguration runConfiguration, @NotNull ExecutionEnvironment env) {
     super(runConfiguration, env);
     myConfig = runConfiguration;
   }
 
   @Override
-  protected PythonHelper getRunner() {
+  protected @NotNull PythonHelper getRunner() {
     return PythonHelper.DOCSTRING;
   }
 
