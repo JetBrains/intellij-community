@@ -15,7 +15,6 @@ import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -25,6 +24,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PyBundle;
@@ -142,9 +142,9 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
       return ReadAction.compute(() -> getTestSpecImpl());
     }
 
+    @RequiresReadLock
     @NotNull
     private List<String> getTestSpecImpl() {
-      assert ApplicationManager.getApplication().isReadAccessAllowed();
       final List<Pair<Location<?>, AbstractTestProxy>> failedTestLocations = new ArrayList<>();
       final List<AbstractTestProxy> failedTests = getFailedTests(myProject);
       for (final AbstractTestProxy failedTest : failedTests) {
