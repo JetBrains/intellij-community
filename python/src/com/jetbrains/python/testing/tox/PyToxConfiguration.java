@@ -96,16 +96,14 @@ public final class PyToxConfiguration extends AbstractPythonTestRunConfiguration
   @Nullable
   @Override
   public String getTestSpec(@NotNull final Location<?> location, @NotNull final AbstractTestProxy failedTest) {
-
     AbstractTestProxy test = failedTest;
     while (test != null) {
       final String url = test.getLocationUrl();
-      if (url == null) {
-        continue;
-      }
-      final String protocol = VirtualFileManager.extractProtocol(url);
-      if (PyToxTestLocator.PROTOCOL_ID.equals(protocol)) {
-        return VirtualFileManager.extractPath(url);
+      if (url != null) {
+        final String protocol = VirtualFileManager.extractProtocol(url);
+        if (PyToxTestLocator.PROTOCOL_ID.equals(protocol)) {
+          return VirtualFileManager.extractPath(url);
+        }
       }
       test = test.getParent();
     }
