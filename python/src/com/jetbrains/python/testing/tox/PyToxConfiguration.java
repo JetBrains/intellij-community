@@ -88,9 +88,8 @@ public final class PyToxConfiguration extends AbstractPythonTestRunConfiguration
     return new PyToxConfigurationSettings(myProject);
   }
 
-  @Nullable
   @Override
-  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment environment) {
+  public @NotNull RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment environment) {
     return new PyToxCommandLineState(this, environment);
   }
 
