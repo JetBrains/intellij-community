@@ -27,6 +27,7 @@ import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
 import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
 import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.Type;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
@@ -653,23 +654,16 @@ public class ExprProcessor implements CodeConstants {
     return getTypeName(type, true, typePathWriteHelper);
   }
 
-  public static String getTypeName(VarType type, boolean getShort, List<TypeAnnotationWriteHelper> typePathWriteHelper) {
+  public static String getTypeName(VarType type, boolean getShort, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
     int tp = type.getType();
     StringBuilder sb = new StringBuilder();
-    typePathWriteHelper.removeIf(typeAnnotationWriteHelper -> {
-      StructTypePathEntry path = typeAnnotationWriteHelper.getPaths().peek();
-      if (path == null && type.getArrayDim() == 0) { // nested type
-        typeAnnotationWriteHelper.writeTo(sb);
-        return true;
+    typeAnnWriteHelpers = typeAnnWriteHelpers.stream().filter(typeAnnWriteHelper -> {
+      if (typeAnnWriteHelper.getAnnotation().isForDeepestArrayComponent(type.getArrayDim())) {
+        typeAnnWriteHelper.writeTo(sb);
+        return false;
       }
-      if (path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.ARRAY.getId() &&
-          typeAnnotationWriteHelper.getPaths().size() == type.getArrayDim()
-      ) {
-        typeAnnotationWriteHelper.writeTo(sb);
-        return true;
-      }
-      return false;
-    });
+      return true;
+    }).collect(Collectors.toList());
     if (tp <= CodeConstants.TYPE_BOOLEAN) {
       sb.append(typeNames[tp]);
       return sb.toString();
@@ -698,14 +692,14 @@ public class ExprProcessor implements CodeConstants {
         return UNDEFINED_TYPE_STRING;
       }
       String[] nestedClasses = ret.split("\\.");
-      writeNestedClass(sb, nestedClasses, typePathWriteHelper);
+      writeNestedClass(sb, nestedClasses, typeAnnWriteHelpers);
       return sb.toString();
     }
 
     throw new RuntimeException("invalid type");
   }
 
-  public static void writeNestedClass(StringBuilder sb, String[] nestedClasses, List<TypeAnnotationWriteHelper> typeAnnWriteHelper) {
+  public static void writeNestedClass(StringBuilder sb, String[] nestedClasses, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
     List<ClassesProcessor.ClassNode> enclosingClasses = enclosingClassList();
     for (int i = 0; i < nestedClasses.length; i++) {
       String nestedType = nestedClasses[i];
@@ -717,7 +711,9 @@ public class ExprProcessor implements CodeConstants {
       if (i == 0) { // first annotation can be written already
         if (!sb.toString().isEmpty()) shouldWrite= true; // write if annotation exists
       } else {
-        shouldWrite |= writeNestedTypeAnnotations(sb, typeAnnWriteHelper); // if writing annotation, also write nested type
+        List<TypeAnnotationWriteHelper> notWrittenTypeAnnotations = writeNestedTypeAnnotations(sb, typeAnnWriteHelpers);
+        shouldWrite |= (notWrittenTypeAnnotations.size() != typeAnnWriteHelpers.size());
+        typeAnnWriteHelpers = notWrittenTypeAnnotations;
       }
       if (shouldWrite) {
         sb.append(nestedType);
@@ -744,63 +740,67 @@ public class ExprProcessor implements CodeConstants {
   /**
    * @return Whether a nested type annotation was written.
    */
-  public static boolean writeNestedTypeAnnotations(StringBuilder sb, List<TypeAnnotationWriteHelper> typePathWriteHelper) {
-    var wroteAnnotation = new Object() { boolean value = false; };
-    typePathWriteHelper.removeIf(typeAnnotationWriteHelper -> {
+  public static List<TypeAnnotationWriteHelper> writeNestedTypeAnnotations(
+    StringBuilder sb,
+    List<TypeAnnotationWriteHelper> typePathWriteHelper
+  ) {
+    return typePathWriteHelper.stream().filter(typeAnnotationWriteHelper -> {
       StructTypePathEntry path = typeAnnotationWriteHelper.getPaths().peek();
       if (path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.NESTED.getId()) {
         typeAnnotationWriteHelper.getPaths().pop();
         if (typeAnnotationWriteHelper.getPaths().isEmpty()) {
           typeAnnotationWriteHelper.writeTo(sb);
-          wroteAnnotation.value = true;
-          return true;
+          return false;
         }
       }
-      return false;
-    });
-    return wroteAnnotation.value;
+      return true;
+    }).collect(Collectors.toList());
   }
 
   public static String getCastTypeName(VarType type, List<TypeAnnotationWriteHelper> typePathWriteHelper) {
     return getCastTypeName(type, true, typePathWriteHelper);
   }
 
-  public static String getCastTypeName(VarType type, boolean getShort, List<TypeAnnotationWriteHelper> typePathWriteHelper) {
-    List<TypeAnnotationWriteHelper> arrayPaths = new ArrayList<>();
-    List<TypeAnnotationWriteHelper> notArrayPath = typePathWriteHelper.stream().filter(stack -> {
+  public static String getCastTypeName(VarType type, boolean getShort, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
+    List<TypeAnnotationWriteHelper> arrayTypeAnnWriteHelpers = arrayPath(type, typeAnnWriteHelpers);
+    List<TypeAnnotationWriteHelper> nonArrayTypeAnnWriteHelpers = nonArrayPath(type, typeAnnWriteHelpers);
+    StringBuilder sb = new StringBuilder(getTypeName(type, getShort, nonArrayTypeAnnWriteHelpers));
+    writeArray(sb, type.getArrayDim(), arrayTypeAnnWriteHelpers);
+    return sb.toString();
+  }
+
+
+  public static List<TypeAnnotationWriteHelper> arrayPath(Type type, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
+    return typeAnnWriteHelpers.stream()
+      .filter(typeAnnWriteHelper -> typeAnnWriteHelper.getPaths().size() < type.getArrayDim())
+      .collect(Collectors.toList());
+  }
+
+  public static List<TypeAnnotationWriteHelper> nonArrayPath(Type type, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
+    return typeAnnWriteHelpers.stream().filter(stack -> {
       boolean isArrayPath = stack.getPaths().size() < type.getArrayDim();
       if (stack.getPaths().size() > type.getArrayDim()) {
         for (int i = 0; i < type.getArrayDim(); i++) {
           stack.getPaths().poll(); // remove all trailing
         }
       }
-      if (isArrayPath) {
-        arrayPaths.add(stack);
-      }
       return !isArrayPath;
     }).collect(Collectors.toList());
-    StringBuilder sb = new StringBuilder(getTypeName(type, getShort, notArrayPath));
-    writeArray(sb, type.getArrayDim(), arrayPaths);
-    return sb.toString();
   }
 
-  public static void writeArray(StringBuilder sb, int arrayDim, List<TypeAnnotationWriteHelper> typePathWriteStack) {
+
+  public static void writeArray(StringBuilder sb, int arrayDim, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
     for (int i = 0; i < arrayDim; i++) {
-      var ref = new Object() {
-        boolean firstIteration = true;
-      };
-      final int it = i;
-      typePathWriteStack.removeIf(writeHelper -> {
-        if (it == writeHelper.getPaths().size()) {
-          if (ref.firstIteration) {
+      boolean firstIteration = true;
+      for (TypeAnnotationWriteHelper typeAnnotationWriteHelper : typeAnnWriteHelpers) {
+        if (i == typeAnnotationWriteHelper.getPaths().size()) {
+          if (firstIteration) {
             sb.append(' ');
-            ref.firstIteration = false;
+            firstIteration = false;
           }
-          writeHelper.writeTo(sb);
-          return true;
+          typeAnnotationWriteHelper.writeTo(sb);
         }
-        return false;
-      });
+      }
       sb.append("[]");
     }
   }
