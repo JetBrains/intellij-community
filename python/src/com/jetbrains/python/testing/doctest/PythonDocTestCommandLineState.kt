@@ -8,22 +8,19 @@ import com.jetbrains.python.testing.PythonTestCommandLineStateBase
 
 class PythonDocTestCommandLineState(private val myConfig: PythonDocTestRunConfiguration, env: ExecutionEnvironment)
   : PythonTestCommandLineStateBase<PythonDocTestRunConfiguration?>(myConfig, env) {
-  override fun getRunner(): PythonHelper {
-    return PythonHelper.DOCSTRING
-  }
+  override fun getRunner(): PythonHelper = PythonHelper.DOCSTRING
 
-  override fun getTestSpecs(): List<String> {
-    val specs: MutableList<String> = ArrayList()
-    when (myConfig.testType) {
-      TEST_SCRIPT -> specs.add(myConfig.scriptName)
-      TEST_CLASS -> specs.add(myConfig.scriptName + "::" + myConfig.className)
-      TEST_METHOD -> specs.add(myConfig.scriptName + "::" + myConfig.className + "::" + myConfig.methodName)
-      TEST_FOLDER ->
-        if (myConfig.usePattern() && !myConfig.pattern.isEmpty()) specs.add(myConfig.folderName + "/" + ";" + myConfig.pattern)
-        else specs.add(myConfig.folderName + "/")
-      TEST_FUNCTION -> specs.add(myConfig.scriptName + "::::" + myConfig.methodName)
-      else -> throw IllegalArgumentException("Unknown test type: " + myConfig.testType)
-    }
-    return specs
+  override fun getTestSpecs(): List<String> = listOf(myConfig.buildTestSpec())
+
+  companion object {
+    private fun PythonDocTestRunConfiguration.buildTestSpec(): String =
+      when (testType) {
+        TEST_SCRIPT -> scriptName
+        TEST_CLASS -> "$scriptName::$className"
+        TEST_METHOD -> "$scriptName::$className::$methodName"
+        TEST_FOLDER -> if (usePattern() && !pattern.isEmpty()) "$folderName/;$pattern" else "$folderName/"
+        TEST_FUNCTION -> "$scriptName::::$methodName"
+        else -> throw IllegalArgumentException("Unknown test type: $testType")
+      }
   }
 }
