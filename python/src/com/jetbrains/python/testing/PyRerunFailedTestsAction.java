@@ -58,7 +58,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
 
   private class MyTestRunProfile extends MyRunProfile {
 
-    MyTestRunProfile(RunConfigurationBase configuration) {
+    MyTestRunProfile(@NotNull RunConfigurationBase configuration) {
       super(configuration);
     }
 
@@ -84,18 +84,21 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
         }
         return ((TestRunConfigurationReRunResponsible)configuration).rerunTests(executor, env, failedTestElements);
       }
-      return new FailedPythonTestCommandLineStateBase(configuration, env,
-                                                      (PythonTestCommandLineStateBase<?>)configuration.getState(executor, env));
+      RunProfileState state = configuration.getState(executor, env);
+      if (state != null) {
+        return new FailedPythonTestCommandLineStateBase(configuration, env, (PythonTestCommandLineStateBase<?>)state);
+      }
+      return null;
     }
   }
 
   private class FailedPythonTestCommandLineStateBase extends PythonTestCommandLineStateBase<AbstractPythonTestRunConfiguration<?>> {
-    private final PythonTestCommandLineStateBase<?> myState;
-    private final Project myProject;
+    private final @NotNull PythonTestCommandLineStateBase<?> myState;
+    private final @NotNull Project myProject;
 
-    FailedPythonTestCommandLineStateBase(AbstractPythonTestRunConfiguration<?> configuration,
-                                         ExecutionEnvironment env,
-                                         PythonTestCommandLineStateBase<?> state) {
+    FailedPythonTestCommandLineStateBase(@NotNull AbstractPythonTestRunConfiguration<?> configuration,
+                                         @Nullable ExecutionEnvironment env,
+                                         @NotNull PythonTestCommandLineStateBase<?> state) {
       super(configuration, env);
       myState = state;
       myProject = configuration.getProject();
@@ -123,7 +126,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
     }
 
     @Override
-    public @NotNull ExecutionResult execute(Executor executor, @NotNull PythonScriptTargetedCommandLineBuilder converter)
+    public @NotNull ExecutionResult execute(@NotNull Executor executor, @NotNull PythonScriptTargetedCommandLineBuilder converter)
       throws ExecutionException {
       // Insane rerun tests with out of spec.
       if (getTestSpecs().isEmpty()) {
