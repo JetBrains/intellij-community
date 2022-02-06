@@ -497,77 +497,82 @@ public final class UITheme {
   }
 
   public static Object parseValue(String key, @NotNull String value, @NotNull ClassLoader classLoader) {
-    switch (value) {
-      case "null":
-        return null;
-      case "true":
-        return Boolean.TRUE;
-      case "false":
-        return Boolean.FALSE;
-    }
+    try {
+      switch (value) {
+        case "null":
+          return null;
+        case "true":
+          return Boolean.TRUE;
+        case "false":
+          return Boolean.FALSE;
+      }
 
-    if (value.endsWith(".png") || value.endsWith(".svg")) {
-      Icon icon = ImageDataByPathLoader.findIconFromThemePath(value, classLoader);
-      if (icon != null) {
-        return icon;
+      if (value.endsWith(".png") || value.endsWith(".svg")) {
+        Icon icon = ImageDataByPathLoader.findIconFromThemePath(value, classLoader);
+        if (icon != null) {
+          return icon;
+        }
       }
-    }
 
-    if (key.endsWith("Insets") || key.endsWith(".insets") || key.endsWith("padding")) {
-      return parseInsets(value);
-    }
-    else if (key.endsWith("Border") || key.endsWith("border")) {
-      try {
-        String[] ints = value.split(",");
-        if (ints.length == 4) {
-          return new BorderUIResource.EmptyBorderUIResource(parseInsets(value));
+      if (key.endsWith("Insets") || key.endsWith(".insets") || key.endsWith("padding")) {
+        return parseInsets(value);
+      }
+      else if (key.endsWith("Border") || key.endsWith("border")) {
+        try {
+          String[] ints = value.split(",");
+          if (ints.length == 4) {
+            return new BorderUIResource.EmptyBorderUIResource(parseInsets(value));
+          }
+          else if (ints.length == 5) {
+            return JBUI.asUIResource(JBUI.Borders.customLine(ColorHexUtil.fromHex(ints[4]),
+                                                             Integer.parseInt(ints[0]),
+                                                             Integer.parseInt(ints[1]),
+                                                             Integer.parseInt(ints[2]),
+                                                             Integer.parseInt(ints[3])));
+          }
+          Color color = ColorHexUtil.fromHexOrNull(value);
+          if (color == null) {
+            Class<?> aClass = classLoader.loadClass(value);
+            Constructor<?> constructor = aClass.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            return constructor.newInstance();
+          }
+          else {
+            return JBUI.asUIResource(JBUI.Borders.customLine(color, 1));
+          }
         }
-        else if (ints.length == 5) {
-          return JBUI.asUIResource(JBUI.Borders.customLine(ColorHexUtil.fromHex(ints[4]),
-                                                           Integer.parseInt(ints[0]),
-                                                           Integer.parseInt(ints[1]),
-                                                           Integer.parseInt(ints[2]),
-                                                           Integer.parseInt(ints[3])));
-        }
-        Color color = ColorHexUtil.fromHexOrNull(value);
-        if (color == null) {
-          Class<?> aClass = classLoader.loadClass(value);
-          Constructor<?> constructor = aClass.getDeclaredConstructor();
-          constructor.setAccessible(true);
-          return constructor.newInstance();
-        }
-        else {
-          return JBUI.asUIResource(JBUI.Borders.customLine(color, 1));
+        catch (Exception e) {
+          LOG.warn(e);
         }
       }
-      catch (Exception e) {
-        LOG.warn(e);
+      else if (key.endsWith("Size")) {
+        return parseSize(value);
+      }
+      else if (key.endsWith("Width") || key.endsWith("Height")) {
+        return getIntegerOrFloat(value, key);
+      }
+      else if (key.endsWith("grayFilter")) {
+        return parseGrayFilter(value);
+      }
+      else if (value.startsWith("AllIcons.")) {
+        return IconLoader.getReflectiveIcon(value, UITheme.class.getClassLoader());
+      }
+      else if (!value.startsWith("#") && getIntegerOrFloat(value, null) != null) {
+        return getIntegerOrFloat(value, key);
+      }
+      else {
+        Color color = parseColor(value);
+        if (color != null) {
+          return new ColorUIResource(color);
+        }
+        Integer intVal = getInteger(value, null);
+        if (intVal != null) {
+          return intVal;
+        }
       }
     }
-    else if (key.endsWith("Size")) {
-      return parseSize(value);
-    }
-    else if (key.endsWith("Width") || key.endsWith("Height")) {
-      return getIntegerOrFloat(value, key);
-    }
-    else if (key.endsWith("grayFilter")) {
-      return parseGrayFilter(value);
-    }
-    else if (value.startsWith("AllIcons.")) {
-      return IconLoader.getReflectiveIcon(value, UITheme.class.getClassLoader());
-    }
-    else if (!value.startsWith("#") && getIntegerOrFloat(value, null) != null) {
-      return getIntegerOrFloat(value, key);
-    }
-    else {
-      Color color = parseColor(value);
-      if (color != null) {
-        return new ColorUIResource(color);
-      }
-      Integer intVal = getInteger(value, null);
-      if (intVal != null) {
-        return intVal;
-      }
+    catch (Exception e) {
+      LOG.warn("Can't parse '" + value +"' for key '" + key + "'");
     }
 
     return value;
