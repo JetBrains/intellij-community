@@ -25,6 +25,7 @@ import org.jetbrains.java.decompiler.struct.attr.*;
 import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.Type;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.gen.generics.*;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -745,10 +746,9 @@ public class ClassWriter {
               buffer.append(", ");
             }
 
-            int arrayDim;
-            if (descriptor != null) arrayDim = descriptor.parameterTypes.get(paramCount).getArrayDim(); else arrayDim =
-              md.params[i].getArrayDim();
-            appendParameterAnnotations(buffer, mt, arrayDim, paramCount);
+            Type paramType;
+            if (descriptor != null) paramType = descriptor.parameterTypes.get(paramCount); else paramType = md.params[i];
+            appendParameterAnnotations(buffer, mt, paramType.getArrayDim(), paramCount);
 
             VarVersionPair pair = new VarVersionPair(index, 0);
             if (methodWrapper.varproc.isParameterFinal(pair) ||
@@ -759,21 +759,21 @@ public class ClassWriter {
             String typeName;
             boolean isVarArg = i == lastVisibleParameterIndex && mt.hasModifier(CodeConstants.ACC_VARARGS);
             List<TypeAnnotation> typeParamAnnotations = TargetInfo.FormalParameterTarget.extract(typeAnnotations, i);
-            if (descriptor != null) {
-              GenericType parameterType = descriptor.parameterTypes.get(paramCount);
-              isVarArg &= parameterType.getArrayDim() > 0;
+            if (paramType instanceof GenericType) {
+              GenericType genParamType = (GenericType) paramType;
+              isVarArg &= genParamType.getArrayDim() > 0;
               if (isVarArg) {
-                parameterType = parameterType.decreaseArrayDim();
+                genParamType = genParamType.decreaseArrayDim();
               }
-              typeName = GenericMain.getGenericCastTypeName(parameterType, TypeAnnotationWriteHelper.create(typeParamAnnotations));
+              typeName = GenericMain.getGenericCastTypeName(genParamType, TypeAnnotationWriteHelper.create(typeParamAnnotations));
             }
             else {
-              VarType parameterType = md.params[i];
-              isVarArg &= parameterType.getArrayDim() > 0;
+              VarType varParamType = (VarType) paramType;
+              isVarArg &= varParamType.getArrayDim() > 0;
               if (isVarArg) {
-                parameterType = parameterType.decreaseArrayDim();
+                varParamType = varParamType.decreaseArrayDim();
               }
-              typeName = ExprProcessor.getCastTypeName(parameterType, TypeAnnotationWriteHelper.create(typeParamAnnotations));
+              typeName = ExprProcessor.getCastTypeName(varParamType, TypeAnnotationWriteHelper.create(typeParamAnnotations));
             }
 
             if (ExprProcessor.UNDEFINED_TYPE_STRING.equals(typeName) &&
