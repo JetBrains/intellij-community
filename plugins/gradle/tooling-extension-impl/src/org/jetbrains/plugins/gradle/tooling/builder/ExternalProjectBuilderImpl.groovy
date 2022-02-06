@@ -32,6 +32,9 @@ import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil
 import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
+
 import static org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider
 import static org.jetbrains.plugins.gradle.tooling.builder.ModelBuildersDataProviders.TASKS_PROVIDER
 
@@ -46,11 +49,11 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   public static final boolean is51OrBetter = is4OrBetter && gradleBaseVersion >= GradleVersion.version("5.1")
   public static final boolean is74OrBetter = gradleBaseVersion >= GradleVersion.version("7.4")
 
-  static final DataProvider<Map<Project, ExternalProject>> PROJECTS_PROVIDER = new DataProvider<Map<Project, ExternalProject>>() {
+  static final DataProvider<ConcurrentMap<Project, ExternalProject>> PROJECTS_PROVIDER = new DataProvider<ConcurrentMap<Project, ExternalProject>>() {
     @NotNull
     @Override
-    Map<Project, ExternalProject> create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter) {
-      return new HashMap<Project, ExternalProject>()
+    ConcurrentMap<Project, ExternalProject> create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter) {
+      return new ConcurrentHashMap<Project, ExternalProject>()
     }
   }
 
@@ -75,7 +78,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   @Nullable
   private static Object doBuild(final String modelName,
                                 final Project project,
-                                Map<Project, ExternalProject> cache,
+                                ConcurrentMap<Project, ExternalProject> cache,
                                 TasksFactory tasksFactory,
                                 SourceSetCachedFinder sourceSetFinder) {
     ExternalProject externalProject = cache[project]
@@ -119,9 +122,8 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       }
     }
     defaultExternalProject.setChildProjects(childProjects)
-    cache.put(project, defaultExternalProject)
-
-    defaultExternalProject
+    def calculatedProject = cache.putIfAbsent(project, defaultExternalProject)
+    return calculatedProject != null ? calculatedProject : defaultExternalProject
   }
 
   static void addArtifactsData(final Project project, DefaultExternalProject externalProject) {

@@ -28,6 +28,9 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.tooling.MessageReporter
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
+
 import static java.util.Collections.unmodifiableMap
 import static org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.isIsNewDependencyResolutionApplicable
@@ -47,16 +50,16 @@ class SourceSetCachedFinder {
       return createArtifactsMap(gradle)
     }
   }
-  private static final DataProvider<Map<String, Set<File>>> SOURCES_DATA_KEY = new DataProvider<Map<String, Set<File>>>() {
+  private static final DataProvider<ConcurrentMap<String, Set<File>>> SOURCES_DATA_KEY = new DataProvider<ConcurrentMap<String, Set<File>>>() {
     @NotNull
     @Override
-    Map<String, Set<File>> create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter) {
-      return new HashMap<String, Set<File>>()
+    ConcurrentMap<String, Set<File>> create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter) {
+      return new ConcurrentHashMap<String, Set<File>>()
     }
   }
 
   private ArtifactsMap myArtifactsMap
-  private Map<String, Set<File>> mySourcesMap
+  private ConcurrentMap<String, Set<File>> mySourcesMap
 
   SourceSetCachedFinder(@NotNull ModelBuilderContext context) {
     init(context)
@@ -73,10 +76,12 @@ class SourceSetCachedFinder {
       def sourceSet = myArtifactsMap.myArtifactsMap[path]
       if (sourceSet != null) {
         sources = sourceSet.getAllJava().getSrcDirs()
-        mySourcesMap[path] = sources
+        def calculatedSources = mySourcesMap.putIfAbsent(path, sources)
+        return calculatedSources != null ? calculatedSources : sources
+      } else {
+        return null
       }
     }
-    return sources
   }
 
   SourceSet findByArtifact(String artifactPath) {
@@ -117,7 +122,7 @@ class SourceSetCachedFinder {
         }
       }
     }
-    return new ArtifactsMap(unmodifiableMap(artifactsMap), unmodifiableMap(sourceSetOutputDirsToArtifactsMap))
+    return new ArtifactsMap(artifactsMap, sourceSetOutputDirsToArtifactsMap)
   }
 
   private static List<Project> exposeIncludedBuilds(Gradle gradle, List<Project> projects) {
@@ -157,8 +162,8 @@ class SourceSetCachedFinder {
     private final Map<String, String> mySourceSetOutputDirsToArtifactsMap
 
     ArtifactsMap(Map<String, SourceSet> artifactsMap, Map<String, String> sourceSetOutputDirsToArtifactsMap) {
-      myArtifactsMap = artifactsMap
-      mySourceSetOutputDirsToArtifactsMap = sourceSetOutputDirsToArtifactsMap
+      myArtifactsMap = unmodifiableMap(artifactsMap)
+      mySourceSetOutputDirsToArtifactsMap = unmodifiableMap(sourceSetOutputDirsToArtifactsMap)
     }
   }
 }
