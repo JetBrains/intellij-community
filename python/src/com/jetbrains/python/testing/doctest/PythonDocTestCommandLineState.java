@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PythonDocTestCommandLineState extends PythonTestCommandLineStateBase {
+public class PythonDocTestCommandLineState extends PythonTestCommandLineStateBase<PythonDocTestRunConfiguration> {
   private final PythonDocTestRunConfiguration myConfig;
 
 
