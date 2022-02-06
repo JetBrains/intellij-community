@@ -39,10 +39,12 @@ class ShShellcheckTestUtil {
       return;
     }
 
-    HttpRequest request = HttpRequest.newBuilder().uri(URI.create(getShellcheckDistributionLink())).build();
-    Path archive = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build()
-      .send(request, HttpResponse.BodyHandlers.ofFile(directory.resolve("shellcheck.tgz")))
-      .body();
+    String link = getShellcheckDistributionLink();
+    HttpRequest request = HttpRequest.newBuilder().uri(URI.create(link)).build();
+    HttpResponse<Path> response = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build()
+      .send(request, HttpResponse.BodyHandlers.ofFile(directory.resolve("shellcheck.tgz")));
+    LOG.info("Getting " + link + ", status code: " + response.statusCode());
+    Path archive = response.body();
     String path = decompressShellcheck(archive.toFile(), directory.toFile());
     if (!path.isEmpty()) {
       NioFiles.setExecutable(Path.of(path));
