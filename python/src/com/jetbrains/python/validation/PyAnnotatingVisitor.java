@@ -38,11 +38,7 @@ public class PyAnnotatingVisitor implements Annotator {
       try {
         annotator = (PyAnnotator)cls.newInstance();
       }
-      catch (InstantiationException e) {
-        LOGGER.error(e);
-        continue;
-      }
-      catch (IllegalAccessException e) {
+      catch (InstantiationException | IllegalAccessException e) {
         LOGGER.error(e);
         continue;
       }

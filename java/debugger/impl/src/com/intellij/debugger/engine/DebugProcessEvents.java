@@ -279,9 +279,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
               }
             });
           }
-          catch (InternalException e) {
-            LOG.debug(e);
-          }
           catch (InterruptedException | ProcessCanceledException | VMDisconnectedException e) {
             throw e;
           }

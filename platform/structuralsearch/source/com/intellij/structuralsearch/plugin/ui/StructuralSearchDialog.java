@@ -920,11 +920,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
                                         mySearchCriteriaEdit));
         }
       }
-      catch (UnsupportedPatternException e) {
-        removeMatchHighlights();
-        errors.add(new ValidationInfo(e.getMessage(), mySearchCriteriaEdit));
-      }
-      catch (NoMatchFoundException e) {
+      catch (UnsupportedPatternException | NoMatchFoundException e) {
         removeMatchHighlights();
         errors.add(new ValidationInfo(e.getMessage(), mySearchCriteriaEdit));
       }
@@ -932,10 +928,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         try {
           Replacer.checkReplacementPattern(getProject(), myConfiguration.getReplaceOptions());
         }
-        catch (UnsupportedPatternException e) {
-          errors.add(new ValidationInfo(e.getMessage(), myReplaceCriteriaEdit));
-        }
-        catch (MalformedPatternException e) {
+        catch (UnsupportedPatternException | MalformedPatternException e) {
           errors.add(new ValidationInfo(e.getMessage(), myReplaceCriteriaEdit));
         }
       }
