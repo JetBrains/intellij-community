@@ -1,212 +1,161 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.testing;
+package com.jetbrains.python.testing
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
-import com.intellij.execution.Location;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.RunConfigurationBase;
-import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.target.TargetEnvironment;
-import com.intellij.execution.target.TargetEnvironmentRequest;
-import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.TestFrameworkRunningModel;
-import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
-import com.intellij.execution.testframework.sm.runner.SMTestLocator;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComponentContainer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.HelperPackage;
-import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.run.AbstractPythonRunConfiguration;
-import com.jetbrains.python.run.CommandLinePatcher;
-import com.jetbrains.python.run.PythonScriptExecution;
-import com.jetbrains.python.run.PythonScriptTargetedCommandLineBuilder;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.execution.ExecutionException
+import com.intellij.execution.ExecutionResult
+import com.intellij.execution.Executor
+import com.intellij.execution.Location
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.RunConfigurationBase
+import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.testframework.AbstractTestProxy
+import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction
+import com.intellij.execution.testframework.sm.runner.SMTestLocator
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComponentContainer
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.psi.PsiElement
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.jetbrains.python.HelperPackage
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.run.AbstractPythonRunConfiguration
+import com.jetbrains.python.run.CommandLinePatcher
+import com.jetbrains.python.run.PythonScriptExecution
+import com.jetbrains.python.run.PythonScriptTargetedCommandLineBuilder
+import java.util.function.Function
 
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
-  private static final Logger LOG = Logger.getInstance(PyRerunFailedTestsAction.class);
-
-  protected PyRerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
-    super(componentContainer);
+class PyRerunFailedTestsAction(componentContainer: ComponentContainer) : AbstractRerunFailedTestsAction(componentContainer) {
+  override fun getRunProfile(environment: ExecutionEnvironment): MyRunProfile? {
+    val model = model ?: return null
+    return MyTestRunProfile(model.properties.configuration as AbstractPythonRunConfiguration<*>)
   }
 
-  @Override
-  @Nullable
-  protected MyRunProfile getRunProfile(@NotNull ExecutionEnvironment environment) {
-    final TestFrameworkRunningModel model = getModel();
-    if (model == null) {
-      return null;
-    }
-    return new MyTestRunProfile((AbstractPythonRunConfiguration<?>)model.getProperties().getConfiguration());
-  }
+  private inner class MyTestRunProfile(configuration: RunConfigurationBase<*>) : MyRunProfile(configuration) {
+    override fun getModules(): Array<Module> = (peer as AbstractPythonRunConfiguration<*>).modules
 
-  private class MyTestRunProfile extends MyRunProfile {
-
-    MyTestRunProfile(@NotNull RunConfigurationBase configuration) {
-      super(configuration);
-    }
-
-    @Override
-    public Module @NotNull [] getModules() {
-      return ((AbstractPythonRunConfiguration<?>)getPeer()).getModules();
-    }
-
-    @Nullable
-    @Override
-    public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
-      final AbstractPythonTestRunConfiguration<?> configuration = ((AbstractPythonTestRunConfiguration<?>)getPeer());
+    @Throws(ExecutionException::class)
+    override fun getState(executor: Executor, env: ExecutionEnvironment): RunProfileState? {
+      val configuration = peer as AbstractPythonTestRunConfiguration<*>
 
       // If configuration wants to take care about rerun itself
-      if (configuration instanceof TestRunConfigurationReRunResponsible) {
+      if (configuration is TestRunConfigurationReRunResponsible) {
         // TODO: Extract method
-        final Set<PsiElement> failedTestElements = new HashSet<>();
-        for (final AbstractTestProxy proxy : getFailedTests(getProject())) {
-          final Location<?> location = proxy.getLocation(getProject(), GlobalSearchScope.allScope(getProject()));
+        val failedTestElements = mutableSetOf<PsiElement>()
+        for (proxy in getFailedTests(project)) {
+          val location = proxy.getLocation(project, GlobalSearchScope.allScope(project))
           if (location != null) {
-            failedTestElements.add(location.getPsiElement());
+            failedTestElements.add(location.psiElement)
           }
         }
-        return ((TestRunConfigurationReRunResponsible)configuration).rerunTests(executor, env, failedTestElements);
+        return (configuration as TestRunConfigurationReRunResponsible).rerunTests(executor, env, failedTestElements)
       }
-      RunProfileState state = configuration.getState(executor, env);
-      if (state != null) {
-        return new FailedPythonTestCommandLineStateBase(configuration, env, (PythonTestCommandLineStateBase<?>)state);
-      }
-      return null;
+      val state = configuration.getState(executor, env) ?: return null
+      return FailedPythonTestCommandLineStateBase(configuration, env, state as PythonTestCommandLineStateBase<*>)
     }
   }
 
-  private class FailedPythonTestCommandLineStateBase extends PythonTestCommandLineStateBase<AbstractPythonTestRunConfiguration<?>> {
-    private final @NotNull PythonTestCommandLineStateBase<?> myState;
-    private final @NotNull Project myProject;
+  private inner class FailedPythonTestCommandLineStateBase(configuration: AbstractPythonTestRunConfiguration<*>,
+                                                           env: ExecutionEnvironment?,
+                                                           private val state: PythonTestCommandLineStateBase<*>)
+    : PythonTestCommandLineStateBase<AbstractPythonTestRunConfiguration<*>>(configuration, env) {
+    private val project: Project
 
-    FailedPythonTestCommandLineStateBase(@NotNull AbstractPythonTestRunConfiguration<?> configuration,
-                                         @Nullable ExecutionEnvironment env,
-                                         @NotNull PythonTestCommandLineStateBase<?> state) {
-      super(configuration, env);
-      myState = state;
-      myProject = configuration.getProject();
+    init {
+      project = configuration.project
     }
 
-    @Override
-    protected HelperPackage getRunner() {
-      return myState.getRunner();
-    }
+    override fun getRunner(): HelperPackage = state.runner
 
-    @Nullable
-    @Override
-    protected SMTestLocator getTestLocator() {
-      return myState.getTestLocator();
-    }
+    override fun getTestLocator(): SMTestLocator? = state.testLocator
 
-    @Override
-    public ExecutionResult execute(Executor executor, PythonProcessStarter processStarter, CommandLinePatcher... patchers)
-      throws ExecutionException {
+    @Throws(ExecutionException::class)
+    override fun execute(executor: Executor, processStarter: PythonProcessStarter, vararg patchers: CommandLinePatcher): ExecutionResult {
       // Insane rerun tests with out of spec.
-      if (getTestSpecs().isEmpty()) {
-        throw new ExecutionException(PyBundle.message("runcfg.tests.cant_rerun"));
+      if (testSpecs.isEmpty()) {
+        throw ExecutionException(PyBundle.message("runcfg.tests.cant_rerun"))
       }
-      return super.execute(executor, processStarter, patchers);
+      return super.execute(executor, processStarter, *patchers)
     }
 
-    @Override
-    public @NotNull ExecutionResult execute(@NotNull Executor executor, @NotNull PythonScriptTargetedCommandLineBuilder converter)
-      throws ExecutionException {
+    @Throws(ExecutionException::class)
+    override fun execute(executor: Executor, converter: PythonScriptTargetedCommandLineBuilder): ExecutionResult {
       // Insane rerun tests with out of spec.
-      if (getTestSpecs().isEmpty()) {
-        throw new ExecutionException(PyBundle.message("runcfg.tests.cant_rerun"));
+      if (testSpecs.isEmpty()) {
+        throw ExecutionException(PyBundle.message("runcfg.tests.cant_rerun"))
       }
-      return super.execute(executor, converter);
+      return super.execute(executor, converter)
     }
 
-    @NotNull
-    @Override
-    protected final List<String> getTestSpecs() {
+    override fun getTestSpecs(): List<String> {
       // Method could be called on any thread (as any method of this class), and we need read action
-      return ReadAction.compute(() -> getTestSpecImpl());
+      return ReadAction.compute(ThrowableComputable<List<String>, RuntimeException> { getTestSpecImpl() })
     }
 
     @RequiresReadLock
-    @NotNull
-    private List<String> getTestSpecImpl() {
-      final List<Pair<Location<?>, AbstractTestProxy>> failedTestLocations = new ArrayList<>();
-      final List<AbstractTestProxy> failedTests = getFailedTests(myProject);
-      for (final AbstractTestProxy failedTest : failedTests) {
-        if (failedTest.isLeaf()) {
-          final Location<?> location = failedTest.getLocation(myProject, myConsoleProperties.getScope());
+    private fun getTestSpecImpl(): List<String> {
+      val failedTestLocations = mutableListOf<Pair<Location<*>, AbstractTestProxy>>()
+      val failedTests = getFailedTests(project)
+      for (failedTest in failedTests) {
+        if (failedTest.isLeaf) {
+          val location = failedTest.getLocation(project, myConsoleProperties.scope)
           if (location != null) {
-            failedTestLocations.add(Pair.create(location, failedTest));
+            failedTestLocations.add(Pair.create(location, failedTest))
           }
         }
       }
-
-      final List<String> result;
-      final AbstractPythonTestRunConfiguration<?> configuration = getConfiguration();
-      if (configuration instanceof PyRerunAwareConfiguration) {
-        result = ((PyRerunAwareConfiguration)configuration).getTestSpecsForRerun(myConsoleProperties.getScope(), failedTestLocations);
-      }
-      else {
-        result = failedTestLocations.stream()
-          .map(o -> configuration.getTestSpec(o.first, o.second))
-          .filter(Objects::nonNull).distinct().collect(Collectors.toList());
-      }
-
+      val result: List<String> =
+        if (configuration is PyRerunAwareConfiguration) {
+          (configuration as PyRerunAwareConfiguration).getTestSpecsForRerun(myConsoleProperties.scope, failedTestLocations)
+        }
+        else {
+          failedTestLocations.mapNotNull { configuration.getTestSpec(it.first, it.second) }
+        }
       if (result.isEmpty()) {
-        final List<String> locations = ContainerUtil.map(failedTests, AbstractTestProxy::getLocationUrl);
-        LOG.warn(String.format("Can't resolve specs for the following tests: %s", StringUtil.join(locations, ", ")));
+        val locations = failedTests.map { it.locationUrl }
+        LOG.warn("Can't resolve specs for the following tests: ${locations.joinToString(separator = ", ")}")
       }
-      return result;
+      return result
     }
 
-    @Override
-    protected void addAfterParameters(GeneralCommandLine cmd) {
-      myState.addAfterParameters(cmd);
+    override fun addAfterParameters(cmd: GeneralCommandLine) {
+      state.addAfterParameters(cmd)
     }
 
-    @Override
-    protected void addBeforeParameters(GeneralCommandLine cmd) {
-      myState.addBeforeParameters(cmd);
+    override fun addBeforeParameters(cmd: GeneralCommandLine) {
+      state.addBeforeParameters(cmd)
     }
 
-    @Override
-    protected void addBeforeParameters(@NotNull PythonScriptExecution testScriptExecution) {
-      myState.addBeforeParameters(testScriptExecution);
+    override fun addBeforeParameters(testScriptExecution: PythonScriptExecution) {
+      state.addBeforeParameters(testScriptExecution)
     }
 
-    @Override
-    protected void addAfterParameters(@NotNull TargetEnvironmentRequest targetEnvironmentRequest,
-                                      @NotNull PythonScriptExecution testScriptExecution) {
-      myState.addAfterParameters(targetEnvironmentRequest, testScriptExecution);
+    override fun addAfterParameters(targetEnvironmentRequest: TargetEnvironmentRequest,
+                                    testScriptExecution: PythonScriptExecution) {
+      state.addAfterParameters(targetEnvironmentRequest, testScriptExecution)
     }
 
-    @Override
-    public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
-      super.customizeEnvironmentVars(envs, passParentEnvs);
-      myState.customizeEnvironmentVars(envs, passParentEnvs);
+    override fun customizeEnvironmentVars(envs: Map<String, String>, passParentEnvs: Boolean) {
+      super.customizeEnvironmentVars(envs, passParentEnvs)
+      state.customizeEnvironmentVars(envs, passParentEnvs)
     }
 
-    @Override
-    public void customizePythonExecutionEnvironmentVars(@NotNull TargetEnvironmentRequest targetEnvironmentRequest,
-                                                        @NotNull Map<String, Function<TargetEnvironment, String>> envs,
-                                                        boolean passParentEnvs) {
-      super.customizePythonExecutionEnvironmentVars(targetEnvironmentRequest, envs, passParentEnvs);
-      myState.customizePythonExecutionEnvironmentVars(targetEnvironmentRequest, envs, passParentEnvs);
+    override fun customizePythonExecutionEnvironmentVars(targetEnvironmentRequest: TargetEnvironmentRequest,
+                                                         envs: Map<String, Function<TargetEnvironment, String>>,
+                                                         passParentEnvs: Boolean) {
+      super.customizePythonExecutionEnvironmentVars(targetEnvironmentRequest, envs, passParentEnvs)
+      state.customizePythonExecutionEnvironmentVars(targetEnvironmentRequest, envs, passParentEnvs)
     }
+  }
+
+  companion object {
+    private val LOG = logger<PyRerunFailedTestsAction>()
   }
 }
