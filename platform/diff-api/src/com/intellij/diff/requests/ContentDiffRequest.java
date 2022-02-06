@@ -42,7 +42,7 @@ public abstract class ContentDiffRequest extends DiffRequest {
   @NotNull
   @Override
   public List<VirtualFile> getFilesToRefresh() {
-    List<VirtualFile> files = ContainerUtil.map(getContents(), content -> {
+    List<VirtualFile> files = ContainerUtil.mapNotNull(getContents(), content -> {
       return content instanceof FileContent ? ((FileContent)content).getFile() : null;
     });
     return ContainerUtil.filter(files, file -> file.isInLocalFileSystem());
