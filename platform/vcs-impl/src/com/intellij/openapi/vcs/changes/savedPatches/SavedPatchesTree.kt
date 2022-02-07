@@ -58,11 +58,11 @@ class SavedPatchesTree(project: Project,
   override fun rebuildTree() {
     val wasEmpty = VcsTreeModelData.all(this).userObjectsStream().isEmpty()
 
+    val modelBuilder = TreeModelBuilder(project, groupingSupport.grouping)
     if (savedPatchesProviders.any { !it.isEmpty() }) {
-      val modelBuilder = TreeModelBuilder(project, groupingSupport.grouping)
       savedPatchesProviders.forEach { provider -> provider.buildPatchesTree(modelBuilder) }
-      updateTreeModel(modelBuilder.build())
     }
+    updateTreeModel(modelBuilder.build())
 
     if (!VcsTreeModelData.all(this).userObjectsStream().isEmpty() && wasEmpty) {
       expandDefaults()
