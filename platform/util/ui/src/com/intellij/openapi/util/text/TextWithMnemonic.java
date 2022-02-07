@@ -2,10 +2,7 @@
 package com.intellij.openapi.util.text;
 
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
 import java.awt.event.KeyEvent;
 import java.util.regex.Matcher;
@@ -15,6 +12,7 @@ import java.util.regex.Pattern;
  * An immutable object which represents a text string with mnemonic character.
  */
 public final class TextWithMnemonic {
+  public static final TextWithMnemonic EMPTY = new TextWithMnemonic("", -1, "");
   public static final Pattern MNEMONIC = Pattern.compile(" ?\\(_?[A-Z]\\)");
 
   @NotNull private final @Nls String myText;
@@ -119,7 +117,7 @@ public final class TextWithMnemonic {
    * Sets mnemonic at given index
    * @param index index, must be within the {@link #getText() text} string.
    * @return a TextWithMnemonic object with mnemonic set at given index
-   * @deprecated use {@link #withMnemonicIndex} or {@link #fromPlainText(String, int)} instead
+   * @deprecated use {@link #withMnemonicIndex} or {@link #fromPlainTextWithIndex(String, int)} instead
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
@@ -140,7 +138,7 @@ public final class TextWithMnemonic {
     if (index >= -1) {
       String text = getText();
       if (index == -1) return fromPlainText(text);
-      if (index < text.length() - getEllipsisLength(text)) return fromPlainText(text, index);
+      if (index < text.length() - getEllipsisLength(text)) return fromPlainTextWithIndex(text, index);
     }
     throw new IndexOutOfBoundsException(String.valueOf(index));
   }
@@ -178,21 +176,19 @@ public final class TextWithMnemonic {
   }
 
   /**
-   * Creates new {@code TextWithMnemonic} object from a text provided by
-   * the {@link UIUtil#replaceMnemonicAmpersand replaceMnemonicAmpersand} method.
-   *
-   * @param text a text that may contain a mnemonic specified by the {@link UIUtil#MNEMONIC MNEMONIC} marker
-   * @return new {@code TextWithMnemonic} object that may have a mnemonic if it is specified in the given text
+   * @param text a text with a mnemonic specified by the {@link UIUtil#MNEMONIC MNEMONIC} marker
+   * @return new {@code TextWithMnemonic} object, or {@code null} if mnemonic is not specified in the given text
    * @throws IllegalArgumentException if the given text contains marker at wrong position, or if it contains several markers
+   * @see UIUtil#replaceMnemonicAmpersand
    */
   @ApiStatus.Internal
-  public static @NotNull TextWithMnemonic fromMnemonicText(@NotNull @Nls String text) {
+  public static @Nullable TextWithMnemonic fromMnemonicText(@NotNull @Nls String text) {
     int pos = text.indexOf(UIUtil.MNEMONIC);
-    if (pos < 0) return fromPlainText(text);
+    if (pos < 0) return null;
     String str = text.substring(pos + 1);
     if (str.isEmpty()) throw new IllegalArgumentException("unexpected mnemonic marker in " + text);
     if (str.indexOf(UIUtil.MNEMONIC) >= 0) throw new IllegalArgumentException("several mnemonic markers in " + text);
-    return fromPlainText(pos > 0 ? text.substring(0, pos) + str : str, pos);
+    return fromPlainTextWithIndex(pos > 0 ? text.substring(0, pos) + str : str, pos);
   }
 
   /**
@@ -203,7 +199,7 @@ public final class TextWithMnemonic {
   @NotNull
   @Contract(pure = true)
   public static TextWithMnemonic fromPlainText(@NotNull @Nls String text) {
-    return new TextWithMnemonic(text, -1, "");
+    return text.isEmpty() ? EMPTY : new TextWithMnemonic(text, -1, "");
   }
 
   /**
@@ -238,7 +234,7 @@ public final class TextWithMnemonic {
    * @param index a mnemonic index in the given text, or {@code -1} if it is not needed
    * @return new {@code TextWithMnemonic} object that may have a mnemonic
    */
-  public static @NotNull TextWithMnemonic fromPlainText(@NotNull @Nls String text, int index) {
+  public static @NotNull TextWithMnemonic fromPlainTextWithIndex(@NotNull @Nls String text, int index) {
     if (index < 0) return fromPlainText(text);
     if (index < text.length()) {
       // try to extract a mnemonic suffix
@@ -264,9 +260,8 @@ public final class TextWithMnemonic {
   @NotNull
   @Contract(pure = true)
   public static TextWithMnemonic parse(@NotNull @Nls String text) {
-    if (text.indexOf(UIUtil.MNEMONIC) >= 0) {
-      return fromMnemonicText(text);
-    }
+    TextWithMnemonic mnemonic = text.isEmpty() ? EMPTY : fromMnemonicText(text);
+    if (mnemonic != null) return mnemonic;
 
     if (text.contains("_") || text.contains("&")) {
       @Nls StringBuilder plainText = new StringBuilder();
@@ -289,7 +284,7 @@ public final class TextWithMnemonic {
         }
         plainText.append(ch);
       }
-      return fromPlainText(plainText.toString(), mnemonicIndex);
+      return fromPlainTextWithIndex(plainText.toString(), mnemonicIndex);
     }
     return fromPlainText(text);
   }

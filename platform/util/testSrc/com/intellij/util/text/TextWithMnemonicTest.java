@@ -12,6 +12,18 @@ import static org.junit.Assert.*;
 
 public class TextWithMnemonicTest {
   @Test
+  public void empty() {
+    TextWithMnemonic empty = TextWithMnemonic.EMPTY;
+    assertEquals("", empty.toString());
+    assertTextWithoutSuffix(empty, "");
+    assertNoMnemonic(empty);
+    assertSame(empty, TextWithMnemonic.parse(""));
+    assertSame(empty, TextWithMnemonic.fromPlainText(""));
+    assertSame(empty, TextWithMnemonic.fromPlainTextWithIndex("", -1));
+    assertSame(empty, TextWithMnemonic.parse("(&X)").withMnemonicIndex(-1));
+  }
+
+  @Test
   public void noMnemonic() {
     TextWithMnemonic hello = TextWithMnemonic.fromPlainText("hello");
     assertEquals("hello", hello.toString());
@@ -20,17 +32,16 @@ public class TextWithMnemonicTest {
   }
 
   @Test
-  public void noMnemonicByIndex() {
+  public void fromPlainText() {
     TextWithMnemonic withoutMnemonic = TextWithMnemonic.fromPlainText("hello & goodbye…");
-    assertEquals(withoutMnemonic, TextWithMnemonic.fromMnemonicText("hello & goodbye…"));
     assertEquals("hello && goodbye…", withoutMnemonic.toString());
     assertTextWithoutSuffix(withoutMnemonic, "hello & goodbye…");
     assertNoMnemonic(withoutMnemonic);
   }
 
   @Test
-  public void setMnemonicByIndex() {
-    TextWithMnemonic withMnemonic = TextWithMnemonic.fromPlainText("hello & goodbye (X)…", 17);
+  public void fromPlainTextWithIndex() {
+    TextWithMnemonic withMnemonic = TextWithMnemonic.fromPlainTextWithIndex("hello & goodbye (X)…", 17);
     assertEquals(withMnemonic, TextWithMnemonic.fromMnemonicText("hello & goodbye (" + MNEMONIC + "X)…"));
     assertEquals("hello && goodbye (_X)…", withMnemonic.toString());
     assertText(withMnemonic, "hello & goodbye…", "hello & goodbye (X)…");
@@ -72,7 +83,7 @@ public class TextWithMnemonicTest {
 
   @Test
   public void withMnemonicIndexEllipsis() {
-    TextWithMnemonic withMnemonic1 = TextWithMnemonic.fromPlainText("hello...", 1);
+    TextWithMnemonic withMnemonic1 = TextWithMnemonic.fromPlainTextWithIndex("hello...", 1);
     assertTextWithoutSuffix(withMnemonic1, "hello...");
     assertMnemonic(withMnemonic1, 1, KeyEvent.VK_E, 'e');
     assertSame(withMnemonic1, withMnemonic1.withMnemonicIndex(1));
@@ -91,7 +102,7 @@ public class TextWithMnemonicTest {
 
   @Test
   public void withMnemonicIndexSuffixEllipsis() {
-    TextWithMnemonic withMnemonic7 = TextWithMnemonic.fromPlainText("hello (X)…", 7);
+    TextWithMnemonic withMnemonic7 = TextWithMnemonic.fromPlainTextWithIndex("hello (X)…", 7);
     assertText(withMnemonic7, "hello…", "hello (X)…");
     assertMnemonic(withMnemonic7, 7, KeyEvent.VK_X, 'X');
     assertSame(withMnemonic7, withMnemonic7.withMnemonicIndex(7));
@@ -166,7 +177,7 @@ public class TextWithMnemonicTest {
 
   @Test
   public void fromMnemonicText() {
-    assertEquals("hello && goodbye", TextWithMnemonic.fromMnemonicText("hello & goodbye").toString());
+    assertNull(TextWithMnemonic.fromMnemonicText("hello & goodbye")); // does not contain the MNEMONIC marker
     assertEquals("hello && _goodbye", TextWithMnemonic.fromMnemonicText("hello & " + MNEMONIC + "goodbye").toString());
     assertEquals("_hello & goodbye", TextWithMnemonic.fromMnemonicText(MNEMONIC + "hello & goodbye").toString());
     assertIllegalMnemonicText(MNEMONIC + "hello & " + MNEMONIC + "goodbye");
