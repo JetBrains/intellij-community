@@ -427,8 +427,6 @@ public final class CustomizationUtil {
 
   @Nullable
   public static PopupHandler installToolbarCustomizationHandler(@NotNull ActionToolbarImpl toolbar) {
-    if(!toolbar.isCustomizationSupported()) return null;
-
     ActionGroup actionGroup = toolbar.getActionGroup();
     String groupID = ActionManager.getInstance().getId(actionGroup instanceof CustomisedActionGroup
                                                        ? ((CustomisedActionGroup)actionGroup).getOrigin() : actionGroup);

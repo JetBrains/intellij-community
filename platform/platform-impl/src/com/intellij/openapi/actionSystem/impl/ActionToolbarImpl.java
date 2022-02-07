@@ -217,10 +217,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     // and panel will be automatically hidden.
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.COMPONENT_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
     setMiniModeInner(false);
-    myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(this);
+    if(isCustomizationSupported()) {
+      myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(this);
+    }
   }
 
-  public Boolean isCustomizationSupported() {
+  protected Boolean isCustomizationSupported() {
     return true;
   }
 
