@@ -359,6 +359,34 @@ public class HighLevelQuickFixMultiFileTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/quickfix/autoImports/invisible")
+    public static class Invisible extends AbstractHighLevelQuickFixMultiFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotation.before.Main.kt")
+        public void testAnnotation() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/invisible/annotation.before.Main.kt");
+        }
+
+        @TestMetadata("class.before.Main.kt")
+        public void testClass() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/invisible/class.before.Main.kt");
+        }
+
+        @TestMetadata("fun.before.Main.kt")
+        public void testFun() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/invisible/fun.before.Main.kt");
+        }
+
+        @TestMetadata("property.before.Main.kt")
+        public void testProperty() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/invisible/property.before.Main.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/quickfix/autoImports/mismatchingArgs")
     public static class MismatchingArgs extends AbstractHighLevelQuickFixMultiFileTest {
         private void runTest(String testDataFilePath) throws Exception {
