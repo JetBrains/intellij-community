@@ -39,22 +39,22 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * @author ven
  */
-public final class InlineUtil {
+public final class InlineUtil implements CommonJavaInlineUtil {
   private static final Logger LOG = Logger.getInstance(InlineUtil.class);
 
   private InlineUtil() {}
 
   @NotNull
   public static PsiExpression inlineVariable(PsiVariable variable, PsiExpression initializer, PsiJavaCodeReferenceElement ref) throws IncorrectOperationException {
-    return inlineVariable(variable, initializer, ref, null);
+    return CommonJavaInlineUtil.getInstance().inlineVariable(variable, initializer, ref, null);
   }
 
+  @Override
   @NotNull
-  public static PsiExpression inlineVariable(PsiVariable variable,
-                                             PsiExpression initializer,
-                                             PsiJavaCodeReferenceElement ref,
-                                             PsiExpression thisAccessExpr)
-    throws IncorrectOperationException {
+  public PsiExpression inlineVariable(@NotNull PsiVariable variable,
+                                      @NotNull PsiExpression initializer,
+                                      @NotNull PsiJavaCodeReferenceElement ref,
+                                      @Nullable PsiExpression thisAccessExpr) throws IncorrectOperationException {
     final PsiElement parent = ref.getParent();
     if (parent instanceof PsiResourceExpression) {
       LOG.error("Unable to inline resource reference");

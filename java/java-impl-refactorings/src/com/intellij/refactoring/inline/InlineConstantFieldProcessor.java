@@ -208,7 +208,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
 
     PsiExpression thisAccessExpr = expr instanceof PsiReferenceExpression ? ((PsiReferenceExpression)expr).getQualifierExpression() : null;
     PsiExpression invalidationCopy = thisAccessExpr != null ? (PsiExpression)thisAccessExpr.copy() : null;
-    InlineUtil.inlineVariable(myField, initializer1, (PsiJavaCodeReferenceElement)expr, invalidationCopy);
+    CommonJavaInlineUtil.getInstance().inlineVariable(myField, initializer1, (PsiJavaCodeReferenceElement)expr, invalidationCopy);
   }
 
   @NotNull
