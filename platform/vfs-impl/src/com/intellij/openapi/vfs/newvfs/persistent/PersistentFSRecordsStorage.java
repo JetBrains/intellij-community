@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.IntPredicate;
+import java.util.function.IntBinaryOperator;
 
 public final class PersistentFSRecordsStorage {
   private static final int PARENT_OFFSET = 0;
@@ -284,7 +284,7 @@ public final class PersistentFSRecordsStorage {
     return myFile.isDirty();
   }
 
-  boolean processByName(@NotNull IntPredicate nameFilter, @NotNull IntPredicate idProcessor) throws IOException {
+  boolean processAllNames(@NotNull IntBinaryOperator operator) throws IOException {
     return read(() -> {
       ProgressManager.checkCanceled();
       myFile.force();
@@ -297,8 +297,10 @@ public final class PersistentFSRecordsStorage {
             ProgressManager.checkCanceled();
             offset = id == 1 ? RECORD_SIZE : 0; // skip header
             for (; offset < limit; offset += RECORD_SIZE) {
-              if (nameFilter.test(buffer.getInt(offset + 4)) && // name offset is 4
-                  !idProcessor.test(id)) return false;
+              int nameId = buffer.getInt(offset + 4); // name offset is 4
+              if (nameId != 0 && operator.applyAsInt(nameId, id) != 0) {
+                return false;
+              }
               id ++;
             }
             buffer.position(0);
