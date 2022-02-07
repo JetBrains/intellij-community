@@ -28,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult.*;
 import static com.intellij.psi.PsiModifier.ABSTRACT;
@@ -863,7 +865,7 @@ public class SwitchBlockHighlightingModel {
         GlobalSearchScope fileScope = GlobalSearchScope.fileScope(psiClass.getContainingFile());
         return new ArrayList<>(DirectClassInheritorsSearch.search(psiClass, fileScope).findAll());
       }
-      return ContainerUtil.map(permitsList.getReferencedTypes(), type -> type.resolve());
+      return Stream.of(permitsList.getReferencedTypes()).map(type -> type.resolve()).filter(Objects::nonNull).collect(Collectors.toSet());
     }
 
     @Nullable
