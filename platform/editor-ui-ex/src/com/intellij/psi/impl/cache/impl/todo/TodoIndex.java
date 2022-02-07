@@ -9,10 +9,7 @@ import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +48,7 @@ public final class TodoIndex extends SingleEntryFileBasedIndexExtension<Map<Todo
       DataInputOutputUtil.writeINT(out, size);
       if (size <= 0) return;
       for (TodoIndexEntry entry : value.keySet()) {
-        out.writeUTF(entry.pattern);
+        IOUtil.writeUTF(out, entry.pattern);
         out.writeBoolean(entry.caseSensitive);
         DataInputOutputUtil.writeINT(out, value.get(entry));
       }
@@ -63,7 +60,7 @@ public final class TodoIndex extends SingleEntryFileBasedIndexExtension<Map<Todo
       if (size == 0) return Collections.emptyMap();
       Map<TodoIndexEntry, Integer> map = new HashMap<>(size);
       for (int i = 0; i < size; i++) {
-        String pattern = in.readUTF();
+        String pattern = IOUtil.readUTF(in);
         boolean caseSensitive = in.readBoolean();
         TodoIndexEntry entry = new TodoIndexEntry(pattern, caseSensitive);
         map.put(entry, DataInputOutputUtil.readINT(in));
@@ -109,8 +106,7 @@ public final class TodoIndex extends SingleEntryFileBasedIndexExtension<Map<Todo
 
   @Override
   public int getVersion() {
-    // composite indexer
-    return 12;
+    return 13;
   }
 
   @NotNull
