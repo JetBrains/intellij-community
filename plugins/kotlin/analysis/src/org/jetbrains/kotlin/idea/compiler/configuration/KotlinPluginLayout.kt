@@ -37,6 +37,9 @@ sealed interface KotlinPluginLayout {
     val standaloneCompilerVersion: String
         @NlsSafe get() = kotlinc.resolve("build.txt").readText().trim()
 
+    val lastStableKnownCompilerVersion: String
+        @NlsSafe get() = "1.6.10-release-952"
+
     /**
      * Version of the compiler's analyzer bundled into the Kotlin IDE plugin ('kotlin-compiler-for-ide' and so on).
      * Used solely for IDE code insight. Might have a pre-release version higher than `standaloneCompilerVersion`.
