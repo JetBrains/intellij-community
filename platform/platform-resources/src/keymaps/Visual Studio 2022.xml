@@ -68,7 +68,7 @@
     <keyboard-shortcut first-keystroke="F2"/><!--File.Rename-->
   </action>
   <action id="GotoAction">
-    <keyboard-shortcut second-keystroke="control Q"/><!--Window.QuickLaunch-->
+    <keyboard-shortcut first-keystroke="control Q"/><!--Window.QuickLaunch-->
   </action>
   <action id="NewElementSamePlace">
     <keyboard-shortcut first-keystroke="control shift A"/><!--Project.AddNewItem-->
