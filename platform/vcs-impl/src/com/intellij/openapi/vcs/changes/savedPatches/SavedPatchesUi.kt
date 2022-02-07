@@ -52,6 +52,10 @@ class SavedPatchesUi(project: Project, private val providers: List<SavedPatchesP
       addToCenter(changesBrowser)
       addToBottom(bottomToolbar.component.apply { border = IdeBorderFactory.createBorder(SideBorder.TOP) })
     }
+    providers.forEach { provider -> provider.subscribeToPatchesListChanges(this) {
+      treeChangesSplitter.secondComponent.isVisible = providers.any { !it.isEmpty() }
+    }}
+    treeChangesSplitter.secondComponent.isVisible = providers.any { !it.isEmpty() }
 
     treeDiffSplitter = OnePixelSplitter("vcs.saved.patches.diff.splitter", 0.5f)
     treeDiffSplitter.firstComponent = treeChangesSplitter
