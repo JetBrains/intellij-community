@@ -26,6 +26,12 @@ import com.siyeh.ig.psiutils.SideEffectChecker.mayHaveSideEffects
 
 class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
 
+  companion object {
+    private val isSilentMode = ApplicationManager.getApplication().isUnitTestMode
+    var changeSignatureDefault: Boolean? = true.takeIf { isSilentMode }
+    var replaceDuplicatesDefault: Boolean? = true.takeIf { isSilentMode }
+  }
+
   private var duplicatesFinder: JavaDuplicatesFinder? = null
 
   private var callsToReplace: List<SmartPsiElementPointer<PsiElement>>? = null
@@ -103,14 +109,17 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
       val dialog = SignatureSuggesterPreviewDialog(method, parametrizedExtraction.method, oldMethodCall, newMethodCall, parametrizedDuplicatesNumber)
       return dialog.showAndGet()
     }
-
-    val changeSignature = parametrizedDuplicatesNumber > 0 && (isSilentMode || confirmChangeSignature())
+    val confirmChange: () -> Boolean = changeSignatureDefault?.let { default -> {default} } ?: ::confirmChangeSignature
+    val changeSignature = parametrizedDuplicatesNumber > 0 && confirmChange()
     duplicates = if (changeSignature) duplicatesWithUnifiedParameters else exactDuplicates
     val parameters = if (changeSignature) updatedParameters else options.inputParameters
     val extractedElements = if (changeSignature) parametrizedExtraction else MethodExtractor.ExtractedElements(calls, method)
 
-    duplicates = confirmDuplicates(project, editor, duplicates)
-    if (duplicates.isEmpty()) return
+    duplicates = when (replaceDuplicatesDefault) {
+      null -> confirmDuplicates (project, editor, duplicates)
+      true -> duplicates
+      false -> emptyList()
+    }
 
     val replacedMethod = runWriteAction {
       replacePsiRange(calls, extractedElements.callElements)
@@ -152,8 +161,6 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     return firstRange.intersects(secondRange)
   }
 
-  private val isSilentMode = ApplicationManager.getApplication().isUnitTestMode
-
   private fun findNewParameters(parameters: List<InputParameter>, duplicates: List<Duplicate>): List<InputParameter> {
     return duplicates
       .fold(parameters) { updatedParameters, duplicate -> updateParameters(updatedParameters, duplicate.changedExpressions) }
@@ -161,7 +168,6 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
 
   private fun confirmDuplicates(project: Project, editor: Editor, duplicates: List<Duplicate>): List<Duplicate> {
     if (duplicates.isEmpty()) return duplicates
-    if (isSilentMode) return duplicates
     val initialPosition = editor.caretModel.logicalPosition
     val confirmedDuplicates = mutableListOf<Duplicate>()
     duplicates.forEach { duplicate ->

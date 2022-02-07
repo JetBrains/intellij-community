@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
+import com.intellij.refactoring.extractMethod.newImpl.inplace.DuplicatesMethodExtractor
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
@@ -204,6 +205,26 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
 
   fun testChangedVariableDeclaredOnce(){
     doTest()
+  }
+
+  fun testDuplicatedWithDeclinedChangeSignature(){
+    val default = DuplicatesMethodExtractor.changeSignatureDefault
+    try {
+      DuplicatesMethodExtractor.changeSignatureDefault = false
+      doTest()
+    } finally {
+      DuplicatesMethodExtractor.changeSignatureDefault = default
+    }
+  }
+
+  fun testDuplicatedButDeclined(){
+    val default = DuplicatesMethodExtractor.replaceDuplicatesDefault
+    try {
+      DuplicatesMethodExtractor.replaceDuplicatesDefault = false
+      doTest()
+    } finally {
+      DuplicatesMethodExtractor.replaceDuplicatesDefault = default
+    }
   }
 
   fun testRefactoringListener(){
