@@ -356,6 +356,11 @@
     <backspaceHandlerDelegate implementation="org.jetbrains.kotlin.idea.editor.KotlinBackspaceHandler"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.kotlin.idea.editor.KotlinStringTemplateBackspaceHandler"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.kotlin.idea.editor.KotlinRawStringBackspaceHandler"/>
+
+    <registryKey key="kotlin.lazy.import.suggestions"
+                 description="Calculate import quick fix suggestion lazy."
+                 defaultValue="false"
+                 restartRequired="true"/>
   </extensions>
 
   <!-- Tips and Tricks -->
