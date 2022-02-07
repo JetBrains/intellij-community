@@ -127,9 +127,11 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   override fun withGroovyPlugin(version: String): BSB = apply {
     withPlugin("groovy")
     withMavenCentral()
-    val majorVersion = version.split(".").firstOrNull()?.let(Integer::valueOf) ?: 0
-    val repository = if (majorVersion >= 4) "org.apache.groovy" else "org.codehaus.groovy"
-    addImplementationDependency("$repository:groovy-all:$version")
+    if (isSupportedGroovyApache(version)) {
+      addImplementationDependency("org.apache.groovy:groovy:$version")
+    } else {
+      addImplementationDependency("org.codehaus.groovy:groovy-all:$version")
+    }
   }
 
   override fun withApplicationPlugin(
