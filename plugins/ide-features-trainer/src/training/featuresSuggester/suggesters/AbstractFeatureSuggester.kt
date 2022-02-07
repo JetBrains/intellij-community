@@ -2,6 +2,12 @@
 
 package training.featuresSuggester.suggesters
 
+import com.intellij.idea.ActionsBundle
+import com.intellij.internal.statistic.local.ActionsLocalSummary
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.components.service
+import com.intellij.openapi.keymap.KeymapUtil
+import org.jetbrains.annotations.Nls
 import training.featuresSuggester.*
 import training.featuresSuggester.settings.FeatureSuggesterSettings
 import java.util.concurrent.TimeUnit
@@ -21,7 +27,7 @@ abstract class AbstractFeatureSuggester : FeatureSuggester {
   override fun isSuggestionNeeded() = !isSuggestingActionUsedRecently() && !isSuggestionShownRecently()
 
   private fun isSuggestingActionUsedRecently(): Boolean {
-    val summary = actionsLocalSummary().getActionStatsById(suggestingActionId) ?: return false
+    val summary = service<ActionsLocalSummary>().getActionStatsById(suggestingActionId) ?: return false
     val lastTimeUsed = summary.lastUsedTimestamp
     val oldestWorkingDayStart = FeatureSuggesterSettings.instance().getOldestWorkingDayStartMillis(minSuggestingIntervalDays)
     return lastTimeUsed > oldestWorkingDayStart
@@ -43,5 +49,22 @@ abstract class AbstractFeatureSuggester : FeatureSuggester {
       DocumentationSuggestion(fullMessage, id, suggestingDocUrl!!)
     }
     else error("Suggester must implement 'suggestingTipFileName' or 'suggestingDocLink' property.")
+  }
+
+  private fun isRedoOrUndoRunning(): Boolean {
+    val commandName = CommandProcessor.getInstance().currentCommandName
+    return commandName != null && (commandName.startsWith(ActionsBundle.message("action.redo.description", ""))
+                                   || commandName.startsWith(ActionsBundle.message("action.undo.description", "")))
+  }
+
+  @Nls
+  fun getShortcutText(actionId: String): String {
+    val shortcut = KeymapUtil.getShortcutText(actionId)
+    return if (shortcut == "<no shortcut>") {
+      FeatureSuggesterBundle.message("shortcut.not.found.message")
+    }
+    else {
+      FeatureSuggesterBundle.message("shortcut", shortcut)
+    }
   }
 }

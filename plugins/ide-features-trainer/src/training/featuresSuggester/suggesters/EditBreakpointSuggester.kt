@@ -4,7 +4,11 @@ import com.google.common.collect.EvictingQueue
 import com.intellij.lang.Language
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.XSourcePosition.isOnTheSameLine
-import training.featuresSuggester.*
+import training.featuresSuggester.FeatureSuggesterBundle
+import training.featuresSuggester.NoSuggestion
+import training.featuresSuggester.SuggestingUtils.findBreakpointOnPosition
+import training.featuresSuggester.Suggestion
+import training.featuresSuggester.TipSuggestion
 import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.DebugSessionPausedAction
 import training.util.WeakReferenceDelegator
