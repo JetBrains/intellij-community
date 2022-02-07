@@ -28,13 +28,11 @@ class ExternalKotlinCompilerProjectDataImportListener(private val project: Proje
 }
 
 fun checkExternalKotlinCompilerVersion(project: Project) {
-    val bundledKotlinCompilerVersion = bundledKotlinCompilerVersionIfReleased() ?: return
-    if (shouldSkip(bundledKotlinCompilerVersion)) return
+    val bundledKotlinCompilerVersion = bundledCompilerVersionIfReleased() ?: return
+    if (!newExternalKotlinCompilerShouldBePromoted(bundledKotlinCompilerVersion, project::findExternalCompilerVersion)) return
 
-    val externalKotlinCompilerVersion = runReadAction { project.findAnyExternalKotlinCompilerVersion() }?.plainVersion ?: return
-    if (externalKotlinCompilerVersion >= bundledKotlinCompilerVersion) return
     invokeLater {
-        disableNewNotificationsForVersion(bundledKotlinCompilerVersion)
+        bundledKotlinCompilerVersion.disableNewNotifications()
     }
 
     NotificationGroupManager.getInstance()
@@ -49,7 +47,9 @@ fun checkExternalKotlinCompilerVersion(project: Project) {
         .notify(project)
 }
 
-private fun bundledKotlinCompilerVersionIfReleased(): KotlinVersion? {
+private fun Project.findExternalCompilerVersion(): KotlinVersion? = runReadAction { findAnyExternalKotlinCompilerVersion() }?.plainVersion
+
+private fun bundledCompilerVersionIfReleased(): KotlinVersion? {
     val kotlinCompilerVersion = KotlinCompilerVersion.getVersion() ?: return null
     val kotlinVersionVerbose = KotlinVersionVerbose.parse(kotlinCompilerVersion)?.takeIf {
         it.milestone == KotlinVersionVerbose.KotlinVersionMilestone.release
@@ -58,17 +58,37 @@ private fun bundledKotlinCompilerVersionIfReleased(): KotlinVersion? {
     return kotlinVersionVerbose.plainVersion
 }
 
-private fun disableNewNotificationsForVersion(kotlinVersion: KotlinVersion): Unit = runWriteAction {
-    PropertiesComponent.getInstance().setValue(LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME, kotlinVersion.toString())
+private fun KotlinVersion.disableNewNotifications(): Unit = runWriteAction {
+    PropertiesComponent.getInstance().setValue(LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME, toString())
 }
 
-private fun shouldSkip(bundledKotlinCompilerVersion: KotlinVersion): Boolean {
+@get:VisibleForTesting
+val KotlinVersion.dropHotfixPart: KotlinVersion
+    get() = KotlinVersion(
+        major = major,
+        minor = minor,
+        patch = patch.div(10).let { if (it == 1) 0 else it } * 10,
+    )
+
+@VisibleForTesting
+fun newExternalKotlinCompilerShouldBePromoted(
+    bundledCompilerVersion: KotlinVersion,
+    externalCompilerVersion: () -> KotlinVersion?,
+): Boolean {
+    val downgradedBundledKotlinCompilerVersion = bundledCompilerVersion.dropHotfixPart
+    val lastBundledVersion = findLastBundledCompilerVersion()
+    if (lastBundledVersion != null && lastBundledVersion >= downgradedBundledKotlinCompilerVersion) return false
+
+    val externalKotlinCompilerVersion = externalCompilerVersion() ?: return false
+    return externalKotlinCompilerVersion < downgradedBundledKotlinCompilerVersion
+}
+
+private fun findLastBundledCompilerVersion(): KotlinVersion? {
     val lastVersionValue = runReadAction {
         PropertiesComponent.getInstance().getValue(LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME)
-    } ?: return false
+    } ?: return null
 
-    val lastVersion = KotlinVersionVerbose.parse(lastVersionValue)?.plainVersion ?: return false
-    return lastVersion >= bundledKotlinCompilerVersion
+    return KotlinVersionVerbose.parse(lastVersionValue)?.plainVersion
 }
 
 private fun createWhatIsNewAction(kotlinVersion: KotlinVersion): AnAction = BrowseNotificationAction(
