@@ -10,6 +10,9 @@ import java.io.File
 @RunWith(JUnit38ClassRunner::class)
 open class FindUsagesMultiModuleTest : AbstractFindUsagesMultiModuleTest() {
 
+    protected fun getTestdataFile(): File =
+        File(testDataPath + getTestName(true).removePrefix("test"))
+
     fun testFindActualInterface() {
         doTest()
     }
@@ -35,7 +38,7 @@ open class FindUsagesMultiModuleTest : AbstractFindUsagesMultiModuleTest() {
     }
 
     private fun doTest() {
-        setupMppProjectFromDirStructure(File(testDataPath + getTestName(true).removePrefix("test")))
+        setupMppProjectFromDirStructure(getTestdataFile())
         doFindUsagesTest()
     }
 }
