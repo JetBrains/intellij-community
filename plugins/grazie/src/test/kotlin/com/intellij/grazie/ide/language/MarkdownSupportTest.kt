@@ -5,6 +5,8 @@ import com.intellij.grazie.GrazieTestBase
 
 
 class MarkdownSupportTest : GrazieTestBase() {
+  override val additionalEnabledRules: Set<String> = setOf("LanguageTool.EN.UPPERCASE_SENTENCE_START")
+
   fun `test grammar check in file`() {
     runHighlightTestForFile("ide/language/markdown/Example.md")
   }
