@@ -6,11 +6,11 @@ import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration.TestType.*
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase
 
-class PythonDocTestCommandLineState(private val myConfig: PythonDocTestRunConfiguration, env: ExecutionEnvironment)
-  : PythonTestCommandLineStateBase<PythonDocTestRunConfiguration?>(myConfig, env) {
+class PythonDocTestCommandLineState(config: PythonDocTestRunConfiguration, env: ExecutionEnvironment)
+  : PythonTestCommandLineStateBase<PythonDocTestRunConfiguration>(config, env) {
   override fun getRunner(): PythonHelper = PythonHelper.DOCSTRING
 
-  override fun getTestSpecs(): List<String> = listOf(myConfig.buildTestSpec())
+  override fun getTestSpecs(): List<String> = listOf(configuration.buildTestSpec())
 
   companion object {
     private fun PythonDocTestRunConfiguration.buildTestSpec(): String =
