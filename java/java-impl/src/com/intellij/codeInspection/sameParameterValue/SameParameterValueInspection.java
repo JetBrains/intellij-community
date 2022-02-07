@@ -319,7 +319,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       Map<PsiParameter, Collection<PsiReference>> paramsToInline = new HashMap<>();
       for (PsiMethod psiMethod : methods) {
         PsiParameter psiParameter = psiMethod.getParameterList().getParameters()[parameterIndex];
-        RefactoringConflictsUtil.getInstance().analyzeMethodConflictsAfterParameterDelete(conflicts, psiMethod, psiParameter);
+        RefactoringConflictsUtil.getInstance().analyzeMethodConflictsAfterParameterDelete(psiMethod, psiParameter, conflicts);
         final Collection<PsiReference> refsToInline = ReferencesSearch.search(psiParameter).findAll();
         for (PsiReference reference : refsToInline) {
           PsiElement referenceElement = reference.getElement();

@@ -414,7 +414,8 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       copy.setModifierProperty(modifier.toPsiModifier(), true);
 
       if (member instanceof PsiMethod) {
-        RefactoringConflictsUtil.getInstance().analyzeHierarchyConflictsAfterMethodModifierChange((PsiMethod)member, conflicts, modifier.toPsiModifier());
+        RefactoringConflictsUtil.getInstance().analyzeHierarchyConflictsAfterMethodModifierChange((PsiMethod)member,
+                                                                                                  modifier.toPsiModifier(), conflicts);
       }
 
       final Query<PsiReference> search = ReferencesSearch.search(member, useScope);

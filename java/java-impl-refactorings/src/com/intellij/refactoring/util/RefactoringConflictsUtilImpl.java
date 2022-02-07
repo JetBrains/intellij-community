@@ -44,27 +44,27 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
 
   @Override
   public void analyzeHierarchyConflictsAfterMethodModifierChange(@NotNull PsiMethod method,
-                                                                 @NotNull MultiMap<PsiElement, @Nls String> conflicts,
-                                                                 @NotNull @PsiModifier.ModifierConstant String modifier) {
+                                                                 @NotNull @PsiModifier.ModifierConstant String modifier,
+                                                                 @NotNull MultiMap<PsiElement, @Nls String> conflicts) {
     JavaChangeSignatureUsageProcessor.ConflictSearcher.searchForHierarchyConflicts(method, conflicts, modifier);
   }
 
   @Override
-  public void analyzeAccessibilityConflictsAfterMemberMove(@NotNull Set<? extends PsiMember> membersToMove,
-                                                           @NotNull PsiClass targetClass,
+  public void analyzeAccessibilityConflictsAfterMemberMove(@NotNull PsiClass targetClass,
                                                            @NotNull MultiMap<PsiElement, String> conflicts,
-                                                           @Nullable String newVisibility) {
-    analyzeAccessibilityConflictsAfterMemberMove(membersToMove, targetClass, conflicts, newVisibility, targetClass, null, Conditions.alwaysTrue());
+                                                           @Nullable String newVisibility, @NotNull Set<? extends PsiMember> membersToMove) {
+    analyzeAccessibilityConflictsAfterMemberMove(membersToMove, targetClass, newVisibility, targetClass, null, Conditions.alwaysTrue(),
+                                                 conflicts);
   }
 
   @Override
   public void analyzeAccessibilityConflictsAfterMemberMove(@NotNull Set<? extends PsiMember> membersToMove,
                                                            @Nullable PsiClass targetClass,
-                                                           @NotNull MultiMap<PsiElement, String> conflicts,
                                                            @Nullable String newVisibility,
                                                            @NotNull PsiElement context,
                                                            @Nullable Set<? extends PsiMethod> abstractMethods,
-                                                           @NotNull Condition<? super PsiReference> ignorePredicate) {
+                                                           @NotNull Condition<? super PsiReference> ignorePredicate,
+                                                           @NotNull MultiMap<PsiElement, String> conflicts) {
     if (VisibilityUtil.ESCALATE_VISIBILITY.equals(newVisibility)) { //Still need to check for access object
       newVisibility = PsiModifier.PUBLIC;
     }
@@ -243,11 +243,11 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
   }
 
   @Override
-  public void analyzeModuleConflicts(final Project project,
-                                     final Collection<? extends PsiElement> scopes,
-                                     final UsageInfo[] usages,
-                                     final VirtualFile vFile,
-                                     final MultiMap<PsiElement, String> conflicts) {
+  public void analyzeModuleConflicts(@NotNull Project project,
+                                     @Nullable Collection<? extends PsiElement> scopes,
+                                     UsageInfo[] usages,
+                                     @NotNull VirtualFile vFile,
+                                     @NotNull MultiMap<PsiElement, @Nls String> conflicts) {
     if (scopes == null) return;
     for (final PsiElement scope : scopes) {
       if (scope instanceof PsiPackage) return;
@@ -395,7 +395,9 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
   }
 
   @Override
-  public void analyzeMethodConflictsAfterParameterDelete(MultiMap<PsiElement, String> conflicts, PsiMethod method, PsiParameter parameter) {
+  public void analyzeMethodConflictsAfterParameterDelete(@NotNull PsiMethod method,
+                                                         @NotNull PsiParameter parameter,
+                                                         @NotNull MultiMap<PsiElement, @Nls String> conflicts) {
     JavaSafeDeleteProcessor.collectMethodConflicts(conflicts, method, parameter);
   }
 }

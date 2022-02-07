@@ -97,13 +97,14 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     members.add(myMethod);
     if (myTargetVariable instanceof PsiField) members.add((PsiMember)myTargetVariable);
     if (!myTargetClass.isInterface()) {
-      RefactoringConflictsUtil.getInstance().analyzeAccessibilityConflictsAfterMemberMove(members, myTargetClass, conflicts, myNewVisibility);
+      RefactoringConflictsUtil.getInstance().analyzeAccessibilityConflictsAfterMemberMove(myTargetClass, conflicts, myNewVisibility,
+                                                                                          members);
     }
     else {
       for (final UsageInfo usage : usages) {
         if (usage instanceof InheritorUsageInfo) {
           RefactoringConflictsUtil.getInstance().analyzeAccessibilityConflictsAfterMemberMove(
-            members, ((InheritorUsageInfo)usage).getInheritor(), conflicts, myNewVisibility);
+            ((InheritorUsageInfo)usage).getInheritor(), conflicts, myNewVisibility, members);
         }
       }
     }

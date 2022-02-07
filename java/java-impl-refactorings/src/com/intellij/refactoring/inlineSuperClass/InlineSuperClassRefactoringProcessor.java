@@ -260,8 +260,9 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
             Set<PsiMember> movedMembers = new HashSet<>(pushDownConflicts.getMovedMembers());
             movedMembers.addAll(Arrays.asList(mySuperClass.getConstructors()));
             RefactoringConflictsUtil.getInstance()
-              .analyzeAccessibilityConflictsAfterMemberMove(movedMembers, targetClass, conflicts, null, targetClass, pushDownConflicts.getAbstractMembers(),
-                                                            Conditions.alwaysTrue());
+              .analyzeAccessibilityConflictsAfterMemberMove(movedMembers, targetClass, null, targetClass,
+                                                            pushDownConflicts.getAbstractMembers(), Conditions.alwaysTrue(), conflicts
+              );
           }
         }
       }
