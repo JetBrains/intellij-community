@@ -58,13 +58,14 @@ class GroupedListFactory extends SEResultsListFactory {
         }
         AppUIUtil.targetToDevice(component, list);
         component.setPreferredSize(UIUtil.updateListRowHeight(component.getPreferredSize()));
-        if (!header.getSelectedTab().isSingleContributor() && groupedModel.isGroupFirstItem(index)) {
-          //noinspection ConstantConditions
-          component = myGroupTitleRenderer.withDisplayedData(contributor.getFullGroupName(), component);
-        }
 
         if (ExperimentalUI.isNewUI()) {
           component.setBackground(isSelected ? UIUtil.getListSelectionBackground(true) : JBUI.CurrentTheme.Popup.BACKGROUND);
+        }
+
+        if (!header.getSelectedTab().isSingleContributor() && groupedModel.isGroupFirstItem(index)) {
+          //noinspection ConstantConditions
+          component = myGroupTitleRenderer.withDisplayedData(contributor.getFullGroupName(), component);
         }
 
         return component;
@@ -76,7 +77,7 @@ class GroupedListFactory extends SEResultsListFactory {
 
   private static class GroupTitleRenderer extends CellRendererPanel {
 
-    final SimpleColoredComponent titleLabel = new SimpleColoredComponent();
+    private final SimpleColoredComponent titleLabel = new SimpleColoredComponent();
 
     GroupTitleRenderer() {
       setLayout(new BorderLayout());
@@ -87,7 +88,7 @@ class GroupedListFactory extends SEResultsListFactory {
         .addToCenter(separatorComponent)
         .addToLeft(titleLabel)
         .withBorder(JBUI.Borders.empty(1, 7))
-        .withBackground(UIUtil.getListBackground());
+        .withBackground(ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.BACKGROUND : UIUtil.getListBackground());
       add(topPanel, BorderLayout.NORTH);
     }
 

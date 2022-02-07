@@ -56,7 +56,7 @@ internal class PsiElementBackgroundListCellRenderer(
     val locationText = presentation.locationText
     if (locationText != null) {
       val spacer = JPanel()
-      spacer.background = bg
+      spacer.isOpaque = false
       spacer.border = BorderFactory.createEmptyBorder(0, 2, 0, 2)
       myComponent.add(spacer, BorderLayout.CENTER)
 
@@ -68,7 +68,7 @@ internal class PsiElementBackgroundListCellRenderer(
                                                   cellHasFocus: Boolean): Component {
           val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
           foreground = if (isSelected) UIUtil.getListSelectionForeground(cellHasFocus) else UIUtil.getInactiveTextColor()
-          background = bg
+          isOpaque = false
           icon = presentation.locationIcon
           text = locationText
           border = BorderFactory.createEmptyBorder(0, 0, 0, UIUtil.getListCellHPadding())
@@ -90,7 +90,7 @@ internal class PsiElementBackgroundListCellRenderer(
                                          index: Int,
                                          selected: Boolean,
                                          hasFocus: Boolean) {
-        background = bg
+        isOpaque = false
         icon = presentation.icon
 
         val nameAttributes = presentation.presentableTextAttributes?.let(SimpleTextAttributes::fromTextAttributes)
