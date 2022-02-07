@@ -13,7 +13,6 @@ import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.slf4j.Logger;
-import org.slf4j.impl.JDK14LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,6 +62,5 @@ public class GradleBuildProcessParametersProvider extends BuildProcessParameters
     classpath.add(PathUtil.getJarPathForClass(GroovyObject.class));
     classpath.add(PathUtil.getJarPathForClass(Gson.class));
     classpath.add(PathUtil.getJarPathForClass(Logger.class));
-    classpath.add(PathUtil.getJarPathForClass(JDK14LoggerFactory.class));
   }
 }
