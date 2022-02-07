@@ -28,14 +28,17 @@ import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.refactoring.JavaBaseRefactoringSupportProvider;
 import com.intellij.refactoring.memberPullUp.JavaPullUpHandlerBase;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,7 +102,9 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
         //check visibility
         var supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
         var handler = supportProvider.getExtractInterfaceHandler();
-        assert handler != null;
+        if (handler == null)  {
+          throw new IllegalStateException("Handler is null, supportProvider class = " + supportProvider.getClass());
+        }
         handler.invoke(project, new PsiElement[]{containingClass}, null);
       }
       else if (classesToPullUp.size() == 1) {
@@ -134,8 +139,11 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final MemberInfo memberInfo = new MemberInfo(method);
     memberInfo.setChecked(true);
     memberInfo.setToAbstract(true);
-    var handler = (JavaPullUpHandlerBase)LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE).getPullUpHandler();
-    assert handler != null;
+    var supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+    var handler = (JavaPullUpHandlerBase)supportProvider.getPullUpHandler();
+    if (handler == null)  {
+      throw new IllegalStateException("Handler is null, supportProvider class = " + supportProvider.getClass());
+    }
     handler.runSilently(containingClass, baseClass, new MemberInfo[]{memberInfo}, new DocCommentPolicy<>(DocCommentPolicy.ASIS));
   }
 
