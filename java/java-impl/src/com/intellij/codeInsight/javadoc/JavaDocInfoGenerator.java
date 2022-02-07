@@ -1413,7 +1413,7 @@ public class JavaDocInfoGenerator {
     appendStyledSpan(buffer, getHighlightingManager().getParenthesesAttributes(), "(");
     PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiFile file = method.getContainingFile();
-    int indent = isTooltip ? 0 : file != null ? CodeStyle.getIndentSize(file) : 4;
+    int indent = getIndent(isTooltip, file);
     if (parameters.length > 0 && !isTooltip) {
       buffer.append(BR_TAG);
     }
@@ -1449,6 +1449,10 @@ public class JavaDocInfoGenerator {
         }
       }
     }
+  }
+  
+  private static int getIndent(boolean isTooltip, PsiFile file) {
+    return isTooltip ? 0 : file != null && !(file instanceof PsiCompiledFile)  ? CodeStyle.getIndentSize(file) : 4;
   }
 
   private PsiDocComment getMethodDocComment(PsiMethod method) {
