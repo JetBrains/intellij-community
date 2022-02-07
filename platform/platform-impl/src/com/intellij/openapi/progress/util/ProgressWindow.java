@@ -4,7 +4,6 @@ package com.intellij.openapi.progress.util;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -21,7 +20,6 @@ import com.intellij.openapi.util.NlsContexts.ProgressDetails;
 import com.intellij.openapi.util.NlsContexts.ProgressText;
 import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -167,8 +165,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       }
       else if (isPopupWasShown()) {
         Disposer.dispose(this);
-        IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
-        focusManager.doWhenFocusSettlesDown(() -> focusManager.requestDefaultFocus(true), ModalityState.defaultModalityState());
       }
     }, getModalityState(), myDelayInMillis, TimeUnit.MILLISECONDS);
   }

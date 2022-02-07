@@ -481,9 +481,6 @@
     <applicationService serviceInterface="com.intellij.openapi.options.advanced.AdvancedSettings"
                         serviceImplementation="com.intellij.openapi.options.advanced.AdvancedSettingsImpl"/>
 
-    <!-- IdeFocusManager doesn't return project level in headless or unit-test mode, instead, global implementation is used -->
-    <projectService serviceInterface="com.intellij.openapi.wm.IdeFocusManager" serviceImplementation="com.intellij.openapi.wm.impl.IdeFocusManagerImpl" preload="notHeadless"/>
-
     <projectService serviceImplementation="com.intellij.ide.actions.DirectoryPathMatcherService" />
 
     <registryKey key="lists.use.open.in.right.splitter" defaultValue="true" description="Add icon 'open In right splitter' to recent files menu"/>
