@@ -92,7 +92,7 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int
   private suspend fun readPortFromChannel(channel: ByteReadChannel): Int = readToBuffer(channel, 2).short.toUShort().toInt()
 
   init {
-    val wslCommandLine =  distro.getTool("wslhash")
+    val wslCommandLine =  distro.getTool("wslproxy")
     val process = Runtime.getRuntime().exec(wslCommandLine.commandLineString)
     val log = Logger.getInstance(WslProxy::class.java)
 
