@@ -10,7 +10,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -24,15 +26,41 @@ import java.nio.file.Path
 
 
 class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent), NewProjectWizardBaseData {
-  override val nameProperty = propertyGraph.lazyProperty { suggestName() }
-  override val pathProperty = propertyGraph.lazyProperty { context.projectFileDirectory }
+  override val nameProperty = propertyGraph.lazyProperty(::suggestName)
+  override val pathProperty = propertyGraph.lazyProperty(::suggestLocation)
 
   override var name by nameProperty
   override var path by pathProperty
 
+  private fun suggestLocation(): String {
+    val location = context.projectFileDirectory
+    if (context.isCreatingNewProject) {
+      return location
+    }
+    if (isModuleDirectory(location)) {
+      return location
+    }
+    val parentLocation = File(location).parent
+    if (parentLocation == null) {
+      return location
+    }
+    return getCanonicalPath(parentLocation)
+  }
+
   private fun suggestName(): String {
+    val location = context.projectFileDirectory
+    if (context.isCreatingNewProject) {
+      return suggestUniqueName(location)
+    }
+    if (FileUtil.pathsEqual(location, path)) {
+      return suggestUniqueName(location)
+    }
+    return File(location).name
+  }
+
+  private fun suggestUniqueName(location: String): String {
     val moduleNames = findAllModules().map { it.name }.toSet()
-    return FileUtil.createSequentFileName(File(path), "untitled", "") {
+    return FileUtil.createSequentFileName(File(location), "untitled", "") {
       !it.exists() && it.name !in moduleNames
     }
   }
@@ -41,6 +69,12 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
     val project = context.project ?: return emptyList()
     val moduleManager = ModuleManager.getInstance(project)
     return moduleManager.modules.toList()
+  }
+
+  private fun isModuleDirectory(path: String): Boolean {
+    return findAllModules().asSequence()
+      .flatMap { it.rootManager.contentRoots.asSequence() }
+      .any { it.isDirectory && FileUtil.pathsEqual(it.path, path) }
   }
 
   override fun setupUI(builder: Panel) {
