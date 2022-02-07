@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicabilityRange
 import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicatorInputProvider
 import org.jetbrains.kotlin.idea.fir.api.applicator.applicabilityRanges
 import org.jetbrains.kotlin.idea.fir.api.applicator.inputProvider
-import org.jetbrains.kotlin.idea.inspections.findExistingEditor
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -27,12 +26,14 @@ class HLUseExpressionBodyIntention : AbstractHLIntention<KtDeclarationWithBody, 
 
     class Input : HLApplicatorInput
 
-    override val applicabilityRange: HLApplicabilityRange<KtDeclarationWithBody> = applicabilityRanges {
-        val returnExpression =
-            it.bodyBlockExpression?.singleStatementOrNull as? KtReturnExpression ?: return@applicabilityRanges emptyList()
-        if (returnExpression.returnedExpression == null) return@applicabilityRanges emptyList()
-        listOf(TextRange(0, returnExpression.returnKeyword.endOffset - it.startOffset), it.rBraceOffSetTextRange)
-    }
+    override val applicabilityRange: HLApplicabilityRange<KtDeclarationWithBody> =
+        applicabilityRanges(fun(declaration: KtDeclarationWithBody): List<TextRange> {
+            val returnExpression = declaration.singleReturnExpressionOrNull ?: return emptyList()
+            return listOf(
+                TextRange(0, returnExpression.returnKeyword.endOffset - declaration.startOffset),
+                declaration.rBraceOffSetTextRange
+            )
+        })
 
     override val inputProvider: HLApplicatorInputProvider<KtDeclarationWithBody, Input> = inputProvider { Input() }
 
@@ -47,79 +48,76 @@ class HLUseExpressionBodyIntention : AbstractHLIntention<KtDeclarationWithBody, 
                 // Check if either property accessor or named function
                 if (declaration !is KtNamedFunction && declaration !is KtPropertyAccessor) return@isApplicableByPsi false
 
-                //Check if a named function has explicit type
+                // Check if a named function has explicit type
                 if (declaration is KtNamedFunction && !declaration.hasDeclaredReturnType()) return@isApplicableByPsi false
 
-                // Checking if function has block with single statement
-                val blockExpression = declaration.bodyBlockExpression ?: return@isApplicableByPsi false
-                if (blockExpression.singleStatementOrNull == null) return@isApplicableByPsi false
+                // Check if function has block with single non-empty KtReturnExpression
+                val returnedExpression = declaration.singleReturnedExpressionOrNull ?: return@isApplicableByPsi false
 
-                // Checking if the single statement is nonempty KtReturnExpression
-                val returnExpression = blockExpression.singleStatementOrNull as? KtReturnExpression ?: return@isApplicableByPsi false
-                if (returnExpression.returnedExpression == null ||
-                    returnExpression.returnedExpression?.anyDescendantOfType<KtReturnExpression>() == true)
-                    return@isApplicableByPsi false
+                // Check if the returnedExpression actually always returns (early return is possible)
+                // TODO: take into consideration other cases (???)
+                if (returnedExpression.anyDescendantOfType<KtReturnExpression>()) return@isApplicableByPsi false
 
                 true
             }
-            applyTo { declaration, _ ->
-                declaration.replaceBodyWithSingleExpression()
+            applyToWithEditorRequired { declaration, _, _, editor ->
+                val newFunctionBody = declaration.replaceWithPreservingComments()
+                editor.correctRightMargin(declaration, newFunctionBody)
+                if (declaration is KtNamedFunction) editor.selectFunctionColonType(declaration)
             }
         }
 
-        private fun KtDeclarationWithBody.replaceBodyWithSingleExpression() {
+        private fun KtDeclarationWithBody.replaceWithPreservingComments(): KtExpression {
+            val bodyBlock = bodyBlockExpression ?: return this
+            val returnedExpression = singleReturnedExpressionOrNull ?: return this
 
-            val kotlinFactory = KtPsiFactory(this)
-            val newFunctionBody = commentSafeReplace()
-            findExistingEditor().let {
-                it?.rightMarginCorrect(this, newFunctionBody, kotlinFactory)
-
-                if (this is KtNamedFunction)
-                    it?.selectFunctionColonType(this)
-            }
-        }
-
-        private fun KtDeclarationWithBody.commentSafeReplace(): KtExpression {
-            val returnedExpression = (bodyBlockExpression?.singleStatementOrNull as? KtReturnExpression)?.returnedExpression ?: return this
-
-            val commentSaver = CommentSaver(bodyBlockExpression!!)
+            val commentSaver = CommentSaver(bodyBlock)
 
             val factory = KtPsiFactory(this)
             val eq = addBefore(factory.createEQ(), bodyBlockExpression)
             addAfter(factory.createWhiteSpace(), eq)
 
-            // Safe to use "!!" as isApplicable checks for its presence
-            val newBody = bodyBlockExpression!!.replaced(returnedExpression)
+            val newBody = bodyBlock.replaced(returnedExpression)
 
             commentSaver.restore(newBody)
 
             return newBody
         }
 
-        private fun Editor.rightMarginCorrect(functionDecl: KtDeclarationWithBody, newFunctionBody: KtExpression, kotlinFactory: KtPsiFactory) {
-            val startOffset = newFunctionBody.startOffset
+        /**
+         * This function guarantees that the function with its old body replaced by returned expression
+         * will have this expression placed on the next line to the function's signature or property accessor's 'get() =' statement
+         * in case it goes beyond IDEA editor's right margin
+         * @param[declaration] the PSI element used as an anchor, as no indexes are built for newly generated body yet
+         * @param[newBody] the new "= <returnedExpression>" like body, which replaces the old one
+         */
+        private fun Editor.correctRightMargin(
+            declaration: KtDeclarationWithBody, newBody: KtExpression) {
+            val kotlinFactory = KtPsiFactory(declaration)
+            val startOffset = newBody.startOffset
             val startLine = document.getLineNumber(startOffset)
             val rightMargin = settings.getRightMargin(project)
             if (document.getLineEndOffset(startLine) - document.getLineStartOffset(startLine) >= rightMargin) {
-                functionDecl.addBefore(kotlinFactory.createNewLine(), newFunctionBody)
+                declaration.addBefore(kotlinFactory.createNewLine(), newBody)
             }
         }
 
         private fun Editor.selectFunctionColonType(newFunctionBody: KtNamedFunction) {
-            newFunctionBody.run {
-                selectionModel.setSelection(colon!!.startOffset, typeReference!!.endOffset)
-                caretModel.moveToOffset(typeReference!!.endOffset)
-            }
+            val colon = newFunctionBody.colon ?: return
+            val typeReference = newFunctionBody.typeReference ?: return
+            selectionModel.setSelection(colon.startOffset, typeReference.endOffset)
+            caretModel.moveToOffset(typeReference.endOffset)
         }
 
-        private val KtBlockExpression.singleStatementOrNull: KtExpression?
-            get() = if (this.statements.size != 1) null else this.firstStatement
+        private val KtDeclarationWithBody.singleReturnExpressionOrNull: KtReturnExpression?
+            get() = bodyBlockExpression?.statements?.firstOrNull() as? KtReturnExpression
+
+        private val KtDeclarationWithBody.singleReturnedExpressionOrNull: KtExpression?
+            get() = singleReturnExpressionOrNull?.returnedExpression
 
         private val KtDeclarationWithBody.rBraceOffSetTextRange: TextRange
-            get() = bodyBlockExpression!!.let {
-                TextRange(
-                    it.rBrace?.startOffset!! - startOffset, it.rBrace!!.endOffset - startOffset
-                )
+            get() = bodyBlockExpression.let {
+                TextRange(it?.rBrace?.startOffset?.minus(startOffset) ?: 0, it?.rBrace?.endOffset?.minus(startOffset) ?: 0)
             }
     }
 }
