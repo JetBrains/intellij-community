@@ -20,7 +20,6 @@ import com.intellij.ide.ui.customization.CustomizeActionGroupPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -49,7 +48,6 @@ import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.xmlb.annotations.*
@@ -849,7 +847,7 @@ private class ExecutionReasonableHistoryManager : StartupActivity.DumbAware {
         if (reason.isRunningState()) {
           RunManager.getInstance(env.project).selectedConfiguration = conf
         }
-      } ?: logger<RunToolbarWidget>().error(java.lang.IllegalStateException("No setting for ${env.configurationSettings}"))
+      } ?: logger<RunToolbarWidget>().error(java.lang.IllegalStateException("No setting for ${env.runnerAndConfigurationSettings}"))
       ActivityTracker.getInstance().inc()
     }
   }
