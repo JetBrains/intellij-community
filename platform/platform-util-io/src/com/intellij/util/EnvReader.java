@@ -86,7 +86,6 @@ public class EnvReader extends EnvironmentUtil.ShellEnvReader {
     callArgs.add(PathManager.getJarPathForClass(ReadEnv.class));
     callArgs.add(ReadEnv.class.getCanonicalName());
 
-    callArgs.add("");
     callArgs.add("||");
     callArgs.add("exit"); // NON-NLS
     callArgs.add("/B"); // NON-NLS
