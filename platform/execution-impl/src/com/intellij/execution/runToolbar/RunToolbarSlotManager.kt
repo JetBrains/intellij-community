@@ -13,7 +13,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.AppUIUtil
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.Topic
 import java.util.*
@@ -27,11 +29,10 @@ class RunToolbarSlotManager(val project: Project) {
     @JvmField
     @Topic.ProjectLevel
     val RUN_TOOLBAR_SLOT_CONFIGURATION_MAP_TOPIC = Topic("RunToolbarWidgetSlotConfigurationMapChanged",
-                                                                RunToolbarSlotsConfigurationListener::class.java)
+                                                         RunToolbarSlotsConfigurationListener::class.java)
   }
 
   private val runToolbarSettings = RunToolbarSettings.getInstance(project)
-  private var connection: MessageBusConnection? = null
 
   private val slotListeners = mutableListOf<SlotListener>()
 
@@ -100,6 +101,8 @@ class RunToolbarSlotManager(val project: Project) {
     }
   }
 
+  private var activeDisposable: CheckedDisposable? = null
+
   internal var active: Boolean = false
     set(value) {
       if (field == value) return
@@ -108,8 +111,13 @@ class RunToolbarSlotManager(val project: Project) {
 
       if (value) {
         if (RunToolbarProcess.logNeeded) LOG.info(
-          "SM settings: new on top ${runToolbarSettings.getMoveNewOnTop()}; update by selected ${getUpdateMainBySelected()} RunToolbar")
+          "ACTIVE SM settings: new on top ${runToolbarSettings.getMoveNewOnTop()}; update by selected ${getUpdateMainBySelected()} RunToolbar")
         clear()
+
+        val disp = Disposer.newCheckedDisposable()
+        Disposer.register(project, disp)
+        activeDisposable = disp
+
         val settingsData = runToolbarSettings.getConfigurations()
         val slotOrder = settingsData.first
         val configurations = settingsData.second
@@ -127,8 +135,7 @@ class RunToolbarSlotManager(val project: Project) {
 
         if (RunToolbarProcess.logNeeded) LOG.info("SM restoreRunConfigurations: ${configurations.values} RunToolbar")
 
-        val con = project.messageBus.connect()
-        connection = con
+        val con = project.messageBus.connect(disp)
 
         con.subscribe(RunManagerListener.TOPIC, object : RunManagerListener {
           override fun runConfigurationSelected(settings: RunnerAndConfigurationSettings?) {
@@ -150,8 +157,17 @@ class RunToolbarSlotManager(val project: Project) {
         listeners.forEach { it.enabled() }
       }
       else {
+        activeDisposable?.let {
+          if (!it.isDisposed)
+            Disposer.dispose(it)
+          activeDisposable = null
+        }
+
         listeners.forEach { it.disabled() }
         clear()
+        if (RunToolbarProcess.logNeeded) LOG.info(
+          "INACTIVE SM RunToolbar")
+
       }
 
       slotListeners.forEach { it.rebuildPopup() }
@@ -169,10 +185,6 @@ class RunToolbarSlotManager(val project: Project) {
   }
 
   private fun clear() {
-    connection?.let {
-      it.disconnect()
-      connection = null
-    }
     mainSlotData.clear()
     dataIds.clear()
     slotsData.clear()
@@ -201,7 +213,6 @@ class RunToolbarSlotManager(val project: Project) {
       addListener(RunToolbarShortcutHelper(project))
 
       Disposer.register(project) {
-        connection?.disconnect()
         listeners.clear()
         stateListeners.clear()
         slotListeners.clear()
@@ -470,7 +481,9 @@ class RunToolbarSlotManager(val project: Project) {
   }
 
   internal fun configurationChanged(slotId: String, configuration: RunnerAndConfigurationSettings?) {
-    project.messageBus.syncPublisher(RUN_TOOLBAR_SLOT_CONFIGURATION_MAP_TOPIC).configurationChanged(slotId, configuration)
+    AppUIUtil.invokeLaterIfProjectAlive(project) {
+      project.messageBus.syncPublisher(RUN_TOOLBAR_SLOT_CONFIGURATION_MAP_TOPIC).configurationChanged(slotId, configuration)
+    }
     saveSlotsConfiguration()
   }
 
@@ -512,7 +525,9 @@ class RunToolbarSlotManager(val project: Project) {
   }
 
   private fun publishConfigurations(slotConfigurations: Map<String, RunnerAndConfigurationSettings?>) {
-    project.messageBus.syncPublisher(RUN_TOOLBAR_SLOT_CONFIGURATION_MAP_TOPIC).slotsConfigurationChanged(slotConfigurations)
+    AppUIUtil.invokeLaterIfProjectAlive(project) {
+      project.messageBus.syncPublisher(RUN_TOOLBAR_SLOT_CONFIGURATION_MAP_TOPIC).slotsConfigurationChanged(slotConfigurations)
+    }
   }
 }
 
