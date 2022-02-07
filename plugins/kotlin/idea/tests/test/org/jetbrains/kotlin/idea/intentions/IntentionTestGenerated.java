@@ -5113,6 +5113,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertEnumToSealedClass/entriesOnly.kt");
         }
 
+        @TestMetadata("hasComments.kt")
+        public void testHasComments() throws Exception {
+            runTest("testData/intentions/convertEnumToSealedClass/hasComments.kt");
+        }
+
         @TestMetadata("hasCompanion.kt")
         public void testHasCompanion() throws Exception {
             runTest("testData/intentions/convertEnumToSealedClass/hasCompanion.kt");
