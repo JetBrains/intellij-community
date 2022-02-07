@@ -84,6 +84,7 @@ final class JarPackager {
         "gson",
         "Log4J",
         "Slf4j",
+        "slf4j-jdk14",
         // see getBuildProcessApplicationClasspath - used in JPS
         "lz4-java",
         "maven-resolver-provider",
