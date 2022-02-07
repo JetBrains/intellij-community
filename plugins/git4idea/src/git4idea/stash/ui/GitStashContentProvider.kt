@@ -1,10 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
@@ -18,6 +21,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.content.Content
 import git4idea.i18n.GitBundle
 import git4idea.stash.GitStashTracker
@@ -37,9 +41,7 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
     project.service<GitStashTracker>().scheduleRefresh()
 
     disposable = Disposer.newDisposable("Git Stash Content Provider")
-    val savedPatchesUi = SavedPatchesUi(project, listOf(GitStashProvider(project), ShelfProvider(project)),
-                                        isVertical(), isEditorDiffPreview(),
-                                        ::returnFocusToToolWindow, disposable!!)
+    val savedPatchesUi = GitSavedPatchesUi()
     project.messageBus.connect(disposable!!).subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
       override fun toolWindowMappingChanged() {
         savedPatchesUi.updateLayout(isVertical(), isEditorDiffPreview())
@@ -49,6 +51,21 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
       override fun stateChanged(toolWindowManager: ToolWindowManager) = savedPatchesUi.updateLayout(isVertical(), isEditorDiffPreview())
     })
     return savedPatchesUi
+  }
+
+  private inner class GitSavedPatchesUi : SavedPatchesUi(project, listOf(GitStashProvider(project), ShelfProvider(project)),
+                                                         isVertical(), isEditorDiffPreview(),
+                                                         ::returnFocusToToolWindow, disposable!!) {
+    init {
+      tree.emptyText
+        .appendLine(GitBundle.message("stash.empty.text.action.link"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+                    ActionUtil.createActionListener("Git.Stash.Silently", this, SAVED_PATCHES_UI_PLACE))
+        .appendLine("")
+        .appendLine(AllIcons.General.ContextHelp, GitBundle.message("stash.empty.text.help.link"),
+                    SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+          HelpManager.getInstance().invokeHelp("reference.VersionControl.Git.StashAndShelf")
+        }
+    }
   }
 
   private fun isVertical() = ChangesViewContentManager.getToolWindowFor(project, TAB_NAME)?.anchor?.isHorizontal == false

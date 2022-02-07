@@ -18,12 +18,12 @@ import java.awt.Component
 import javax.swing.JPanel
 import javax.swing.JTree
 
-class SavedPatchesUi(project: Project, private val providers: List<SavedPatchesProvider<*>>,
-                     isVertical: Boolean, isEditorDiffPreview: Boolean,
-                     focusMainUi: (Component?) -> Unit, disposable: Disposable) :
+open class SavedPatchesUi(project: Project, private val providers: List<SavedPatchesProvider<*>>,
+                          isVertical: Boolean, isEditorDiffPreview: Boolean,
+                          focusMainUi: (Component?) -> Unit, disposable: Disposable) :
   JPanel(BorderLayout()), Disposable, DataProvider {
 
-  private val tree: SavedPatchesTree
+  protected val tree: SavedPatchesTree
   internal val changesBrowser: SavedPatchesChangesBrowser
   private val treeChangesSplitter: TwoKeySplitter
   private val treeDiffSplitter: OnePixelSplitter
