@@ -23,7 +23,9 @@ import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurationValidationTask;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyRequirementParser;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
@@ -284,7 +286,13 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
               super.configurationCreatedAndWillLaunch(configuration);
               configuration.getTarget().setTarget("test_pytest_parametrized.test_eval");
               configuration.getTarget().setTargetType(PyRunTargetVariant.PYTHON);
-              configuration.setAdditionalArguments("--debug");
+              if (isPyTestVersionAtLeast(configuration, "7.0.0")) {
+                // Since 7.0.0 we need to provide argument for debug
+                configuration.setAdditionalArguments("--debug log.txt");
+              }
+              else {
+                configuration.setAdditionalArguments("--debug");
+              }
               configuration.setMetaInfo("test_eval[three plus file-8]");
             }
           };
@@ -303,6 +311,16 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                                            "...(three plus file-8)(-)\n", runner.getFormattedTestTree());
         }
       });
+  }
+
+  private static boolean isPyTestVersionAtLeast(@NotNull PyTestConfiguration configuration, @NotNull String version) {
+    try {
+      var packages = PyPackageManager.getInstance(configuration.getSdk()).refreshAndGetPackages(false);
+      return PyPsiPackageUtil.findPackage(packages, "pytest").matches(PyRequirementParser.fromLine("pytest>=" + version));
+    }
+    catch (ExecutionException e) {
+      throw new RuntimeException(e);
+    }
   }
 
 
