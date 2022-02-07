@@ -18,6 +18,7 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.panels.OpaquePanel
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.FontUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -26,53 +27,56 @@ import java.awt.FlowLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-interface CombinedDiffBlock : Disposable {
-  val content: CombinedDiffBlockContent
+interface CombinedBlockId
+
+interface CombinedDiffBlock<ID: CombinedBlockId> : Disposable {
+  val id: ID
 
   val header: JComponent
   val body: JComponent
   val component: JComponent
 
-  fun updateBlockContent(newContent: CombinedDiffBlockContent) {}
+  fun updateBlockContent(newContent: JComponent) {}
 }
 
 interface CombinedDiffGlobalBlockHeaderProvider {
   val globalHeader: JComponent
 }
 
-class CombinedDiffBlockContent(val viewer: FrameDiffTool.DiffViewer, val path: FilePath, val fileStatus: FileStatus)
+class CombinedDiffBlockContent(val viewer: FrameDiffTool.DiffViewer, val blockId: CombinedBlockId)
 
-interface CombinedDiffBlockFactory {
+interface CombinedDiffBlockFactory<ID: CombinedBlockId> {
   companion object {
     private val EP_COMBINED_DIFF_BLOCK_FACTORY =
-      ExtensionPointName<CombinedDiffBlockFactory>("com.intellij.diff.tools.combined.diffBlockFactory")
+      ExtensionPointName<CombinedDiffBlockFactory<*>>("com.intellij.diff.tools.combined.diffBlockFactory")
 
-    fun findApplicable(content: CombinedDiffBlockContent): CombinedDiffBlockFactory? {
-      return EP_COMBINED_DIFF_BLOCK_FACTORY.findFirstSafe { it.isApplicable(content) }
+    @Suppress("UNCHECKED_CAST")
+    fun <ID: CombinedBlockId> findApplicable(content: CombinedDiffBlockContent): CombinedDiffBlockFactory<ID>? {
+      return EP_COMBINED_DIFF_BLOCK_FACTORY.findFirstSafe { it.isApplicable(content) } as? CombinedDiffBlockFactory<ID>
     }
   }
 
   fun isApplicable(content: CombinedDiffBlockContent): Boolean
-  fun createBlock(content: CombinedDiffBlockContent, withBorder: Boolean): CombinedDiffBlock
+  fun createBlock(content: CombinedDiffBlockContent, withBorder: Boolean): CombinedDiffBlock<ID>
 }
 
-class CombinedSimpleDiffBlockFactory : CombinedDiffBlockFactory {
+class CombinedSimpleDiffBlockFactory : CombinedDiffBlockFactory<CombinedPathBlockId> {
   override fun isApplicable(content: CombinedDiffBlockContent) = true //default factory
-
-  override fun createBlock(content: CombinedDiffBlockContent, withBorder: Boolean): CombinedDiffBlock =
-    CombinedSimpleDiffBlock(content, withBorder)
+  override fun createBlock(content: CombinedDiffBlockContent, withBorder: Boolean): CombinedDiffBlock<CombinedPathBlockId> =
+    with(content.blockId as CombinedPathBlockId) { CombinedSimpleDiffBlock(content.viewer.component, path, fileStatus, withBorder) }
 }
 
-private class CombinedSimpleDiffHeader(block: CombinedDiffBlock, path: FilePath, withBorder: Boolean) : BorderLayoutPanel() {
+private class CombinedSimpleDiffHeader(blockId: CombinedPathBlockId, withBorder: Boolean) : BorderLayoutPanel() {
   init {
     if (withBorder) {
       border = IdeBorderFactory.createBorder(SideBorder.TOP)
     }
 
-    addToCenter(buildToolbar(path, block).component)
+    addToCenter(buildToolbar(blockId).component)
   }
 
-  private fun buildToolbar(path: FilePath, block: CombinedDiffBlock): ActionToolbar {
+  private fun buildToolbar(blockId: CombinedPathBlockId): ActionToolbar {
+    val path = blockId.path
     val toolbarGroup = DefaultActionGroup()
     toolbarGroup.add(CombinedOpenInEditorAction(path))
     toolbarGroup.addSeparator()
@@ -81,8 +85,8 @@ private class CombinedSimpleDiffHeader(block: CombinedDiffBlock, path: FilePath,
     val toolbar = ActionManager.getInstance().createActionToolbar("CombinedDiffBlockHeaderToolbar", toolbarGroup, true)
     toolbar.targetComponent = this
     toolbar.component.background = UIUtil.getListBackground()
-    toolbarGroup.add(CombinedPrevNextFileAction(block, toolbar.component, false))
-    toolbarGroup.add(CombinedPrevNextFileAction(block, toolbar.component, true))
+    toolbarGroup.add(CombinedPrevNextFileAction(blockId, toolbar.component, false))
+    toolbarGroup.add(CombinedPrevNextFileAction(blockId, toolbar.component, true))
 
     return toolbar
   }
@@ -126,25 +130,25 @@ private class CombinedSimpleDiffHeader(block: CombinedDiffBlock, path: FilePath,
   }
 }
 
-private class CombinedSimpleDiffBlock(initialContent: CombinedDiffBlockContent, withBorder: Boolean) :
-  JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true)), CombinedDiffBlock, CombinedDiffGlobalBlockHeaderProvider {
+data class CombinedPathBlockId(val path: FilePath, val fileStatus: FileStatus) : CombinedBlockId
 
-  override var content = initialContent
-    private set
+private class CombinedSimpleDiffBlock(initialContent: JComponent, path: FilePath, status: FileStatus, withBorder: Boolean) :
+  JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true)),
+  CombinedDiffBlock<CombinedPathBlockId>, CombinedDiffGlobalBlockHeaderProvider {
 
-  override val globalHeader = CombinedSimpleDiffHeader(this, content.path, false)
-  override val header = CombinedSimpleDiffHeader(this, content.path, withBorder)
-  override val body get() = content.viewer.component
+  override val id = CombinedPathBlockId(path, status)
+
+  override val globalHeader = CombinedSimpleDiffHeader(id, false)
+  override val header = CombinedSimpleDiffHeader(id, withBorder)
+  override val body = Wrapper(initialContent)
 
   init {
     add(header)
     add(body)
   }
 
-  override fun updateBlockContent(newContent: CombinedDiffBlockContent) {
-    remove(body)
-    content = newContent
-    add(body)
+  override fun updateBlockContent(newContent: JComponent) {
+    body.setContent(newContent)
   }
 
   override val component = this

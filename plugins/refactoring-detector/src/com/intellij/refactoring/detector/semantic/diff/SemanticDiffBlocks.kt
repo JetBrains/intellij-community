@@ -16,14 +16,14 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import javax.swing.JPanel
 
-internal class SemanticDiffFragmentBlockFactory : CombinedDiffBlockFactory {
+internal class SemanticDiffFragmentBlockFactory : CombinedDiffBlockFactory<CombinedPathBlockId> {
   override fun isApplicable(content: CombinedDiffBlockContent): Boolean {
     val viewer = (content.viewer as? DiffViewerBase) ?: return false
 
     return viewer.request is SemanticFragmentDiffRequest
   }
 
-  override fun createBlock(content: CombinedDiffBlockContent, withBorder: Boolean): CombinedDiffBlock {
+  override fun createBlock(content: CombinedDiffBlockContent, withBorder: Boolean): CombinedDiffBlock<CombinedPathBlockId> {
     val request = (content.viewer as DiffViewerBase).request as SemanticFragmentDiffRequest
 
     return SemanticCombinedDiffBlock(request.title, content, request.closeAction)
@@ -31,9 +31,11 @@ internal class SemanticDiffFragmentBlockFactory : CombinedDiffBlockFactory {
 
 }
 
-internal class SemanticCombinedDiffBlock(val title: String, override val content: CombinedDiffBlockContent, onCloseAction: () -> Unit) :
+internal class SemanticCombinedDiffBlock(val title: String, val content: CombinedDiffBlockContent, onCloseAction: () -> Unit) :
   JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true)),
-  CombinedDiffBlock, CombinedDiffGlobalBlockHeaderProvider {
+  CombinedDiffBlock<CombinedPathBlockId>, CombinedDiffGlobalBlockHeaderProvider {
+
+  override val id get() = content.blockId as CombinedPathBlockId
 
   override val globalHeader = SemanticCombinedDiffHeader(title, content.viewer) { onCloseAction(); Disposer.dispose(this) }
   override val header = SemanticCombinedDiffHeader(title, content.viewer) { onCloseAction(); Disposer.dispose(this) }

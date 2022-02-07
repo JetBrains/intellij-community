@@ -29,7 +29,14 @@ internal class CombinedChangeDiffRequestProducer(val producers: List<ChangeDiffR
     val requests = producers
       .asSequence()
       .map(::createChildRequest)
-      .sortedWith { r1, r2 -> filePathComparator.compare(r1.path, r2.path) }
+      .sortedWith { r1, r2 ->
+        val id1 = r1.blockId
+        val id2 = r2.blockId
+        when {
+          id1 is CombinedPathBlockId && id2 is CombinedPathBlockId -> filePathComparator.compare(id1.path, id2.path)
+          else -> -1
+        }
+       }
       .toList()
 
     return CombinedDiffRequest(name, requests)
@@ -37,7 +44,8 @@ internal class CombinedChangeDiffRequestProducer(val producers: List<ChangeDiffR
 
   private fun createChildRequest(producer: ChangeDiffRequestProducer): CombinedDiffRequest.ChildDiffRequest {
     val change = producer.change
-    return CombinedDiffRequest.ChildDiffRequest(producer, ChangesUtil.getFilePath(change), change.fileStatus)
+    val blockId = CombinedPathBlockId(ChangesUtil.getFilePath(change), change.fileStatus)
+    return CombinedDiffRequest.ChildDiffRequest(producer, blockId)
   }
 }
 
@@ -50,7 +58,7 @@ internal class CombinedChangeDiffRequestProcessor(project: Project?,
   private inner class MyGoToChangePopupAction : PresentableGoToChangePopupAction.Default<ChangeDiffRequestProducer>() {
     override fun getChanges(): ListSelection<out ChangeDiffRequestProducer> {
       val changes = requestProducer.producers
-      val selected = viewer?.getCurrentBlockContent()
+      val selected = viewer?.getCurrentBlockId() as? CombinedPathBlockId
       val selectedIndex = when {
         selected != null -> changes.indexOfFirst { it.fileStatus == selected.fileStatus && it.filePath == selected.path }
         else -> -1

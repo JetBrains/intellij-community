@@ -27,8 +27,6 @@ import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.FileStatus
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.update.ComparableObject
@@ -162,9 +160,8 @@ open class CombinedDiffRequestProcessor(project: Project?,
     private fun calculateTotalDifferences(): Int {
       val combinedViewer = viewer ?: return 0
 
-      return combinedViewer.diffBlocks
+      return combinedViewer.diffViewers
         .asSequence()
-        .map { it.content.viewer}
         .sumOf { (it as? DifferencesCounter)?.getTotalDifferences() ?: 1 }
     }
   }
@@ -173,41 +170,39 @@ open class CombinedDiffRequestProcessor(project: Project?,
   // Lazy loading logic
   //
 
-  override fun blocksVisible(blocks: Collection<CombinedDiffBlock>, blockToSelect: CombinedDiffBlock?) {
-    val visibleLazyViewers = blocks.filter { it.content.viewer is CombinedLazyDiffViewer }
-    if (visibleLazyViewers.isNotEmpty()) {
-      contentLoadingQueue.queue(LoadBlockContentRequest(visibleLazyViewers, blockToSelect))
+  override fun blocksVisible(blocks: Collection<CombinedDiffBlock<*>>, blockToSelect: CombinedDiffBlock<*>?) {
+    val combinedViewer = viewer ?: return
+    val blocksWithoutContent = blocks.filter { combinedViewer.diffViewers[it.id] is CombinedLazyDiffViewer }
+    if (blocksWithoutContent.isNotEmpty()) {
+      contentLoadingQueue.queue(LoadBlockContentRequest(blocksWithoutContent, blockToSelect))
     }
   }
 
-  private data class PathAndStatus(val path: FilePath, val status: FileStatus)
-
-  private inner class LoadBlockContentRequest(private val blocks: Collection<CombinedDiffBlock>,
-                                              private val blockToSelect: CombinedDiffBlock?) :
-    Update(ComparableObject.Impl(*blocks.map { PathAndStatus(it.content.path, it.content.fileStatus) }.toTypedArray())) {
+  private inner class LoadBlockContentRequest(private val blocks: Collection<CombinedDiffBlock<*>>,
+                                              private val blockToSelect: CombinedDiffBlock<*>?) :
+    Update(ComparableObject.Impl(*blocks.map(CombinedDiffBlock<*>::id).toTypedArray())) {
 
     override fun run() {
       loadVisibleContent(blocks, blockToSelect)
     }
   }
 
-  private fun loadVisibleContent(visibleBlocks: Collection<CombinedDiffBlock>, blockToSelect: CombinedDiffBlock?) {
+  private fun loadVisibleContent(visibleBlocks: Collection<CombinedDiffBlock<*>>, blockToSelect: CombinedDiffBlock<*>?) {
     val combinedViewer = viewer ?: return
 
     runInEdt { showProgressBar(true) }
 
     val indicator = EmptyProgressIndicator()
     for (block in visibleBlocks) {
-      val content = block.content
-      val lazyDiffViewer = content.viewer as? CombinedLazyDiffViewer ?: continue
+      val blockId = block.id
+      val lazyDiffViewer = combinedViewer.diffViewers[blockId] as? CombinedLazyDiffViewer ?: continue
       val childDiffRequest =
         runBlockingCancellable(indicator) { runUnderIndicator { loadRequest(lazyDiffViewer.requestProducer, indicator) } }
 
       childDiffRequest.putUserData(DiffUserDataKeysEx.EDITORS_HIDE_TITLE, true)
 
       runInEdt {
-        CombinedDiffViewerBuilder.buildBlockContent(combinedViewer, context, childDiffRequest,
-                                                    content.path, content.fileStatus)?.let { newContent ->
+        CombinedDiffViewerBuilder.buildBlockContent(combinedViewer, context, childDiffRequest, blockId)?.let { newContent ->
           combinedViewer.updateBlockContent(block, newContent)
           childDiffRequest.onAssigned(true)
         }
@@ -232,7 +227,7 @@ open class CombinedDiffRequestProcessor(project: Project?,
   //
 
   @RequiresEdt
-  fun addChildRequest(requestData: NewChildDiffRequestData, childRequestProducer: DiffRequestProducer): CombinedDiffBlock? {
+  fun addChildRequest(requestData: NewChildDiffRequestData, childRequestProducer: DiffRequestProducer): CombinedDiffBlock<*>? {
     val combinedViewer = viewer ?: return null
     val combinedRequest = request ?: return null
     val indicator = EmptyProgressIndicator()
@@ -242,7 +237,7 @@ open class CombinedDiffRequestProcessor(project: Project?,
       }
 
     val position = requestData.position
-    val childRequest = CombinedDiffRequest.ChildDiffRequest(childRequestProducer, requestData.path, requestData.fileStatus)
+    val childRequest = CombinedDiffRequest.ChildDiffRequest(childRequestProducer, requestData.blockId)
 
     combinedRequest.addChild(childRequest, position)
 
@@ -266,8 +261,8 @@ open class CombinedDiffRequestProcessor(project: Project?,
                                 context: DiffContext,
                                 diffRequestData: NewChildDiffRequestData,
                                 request: DiffRequest,
-                                needTakeTool: (FrameDiffTool) -> Boolean = { true }): CombinedDiffBlock? {
-        val content = buildBlockContent(viewer, context, request, diffRequestData.path, diffRequestData.fileStatus, needTakeTool)
+                                needTakeTool: (FrameDiffTool) -> Boolean = { true }): CombinedDiffBlock<*>? {
+        val content = buildBlockContent(viewer, context, request, diffRequestData.blockId, needTakeTool)
                       ?: return null
         return viewer.insertChildBlock(content, diffRequestData.position)
       }
@@ -279,7 +274,7 @@ open class CombinedDiffRequestProcessor(project: Project?,
               for ((index, childRequest) in request.getChildRequests().withIndex()) {
                 ProgressManager.checkCanceled()
                 runInEdt {
-                  val content = buildLoadingBlockContent(childRequest.producer, childRequest.path, childRequest.fileStatus)
+                  val content = buildLoadingBlockContent(childRequest.producer, childRequest.blockId)
                   viewer.addChildBlock(content, index > 0)
                 }
               }
@@ -294,8 +289,7 @@ open class CombinedDiffRequestProcessor(project: Project?,
       internal fun buildBlockContent(viewer: CombinedDiffViewer,
                                      context: DiffContext,
                                      request: DiffRequest,
-                                     path: FilePath,
-                                     fileStatus: FileStatus,
+                                     blockId: CombinedBlockId,
                                      needTakeTool: (FrameDiffTool) -> Boolean = { true }): CombinedDiffBlockContent? {
         val diffSettings = getSettings(context.getUserData(DiffUserDataKeys.PLACE))
         val diffTools = DiffManagerEx.getInstance().diffTools
@@ -323,13 +317,11 @@ open class CombinedDiffRequestProcessor(project: Project?,
           }
         }
 
-        return CombinedDiffBlockContent(childViewer, path, fileStatus)
+        return CombinedDiffBlockContent(childViewer, blockId)
       }
 
-      private fun buildLoadingBlockContent(producer: DiffRequestProducer,
-                                           path: FilePath,
-                                           fileStatus: FileStatus): CombinedDiffBlockContent {
-        return CombinedDiffBlockContent(CombinedLazyDiffViewer(producer), path, fileStatus)
+      private fun buildLoadingBlockContent(producer: DiffRequestProducer, blockId: CombinedBlockId): CombinedDiffBlockContent {
+        return CombinedDiffBlockContent(CombinedLazyDiffViewer(producer), blockId)
       }
 
       private fun findSubstitutor(tool: FrameDiffTool, context: DiffContext, request: DiffRequest): FrameDiffTool {
