@@ -183,9 +183,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
           val toolWindowManager = getInstance(project) as ToolWindowManagerImpl
 
-          val buttonManager = toolWindowManager.buttonManager
+          val buttonManager = toolWindowManager.toolWindowPane?.buttonManager
           if (buttonManager is ToolWindowPaneNewButtonManager) {
-            ApplicationManager.getApplication().invokeLater { buttonManager.refreshUI() }
+            ApplicationManager.getApplication().invokeLater(buttonManager::refreshUi, project.disposed)
           }
 
           val toolWindowId = toolWindowManager.activeToolWindowId ?: return
@@ -202,8 +202,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
           }
 
           // let's check that it is a toolwindow who loses the focus
-          if (isInActiveToolWindow(event.source, activeEntry.toolWindow) && !isInActiveToolWindow(event.oppositeComponent,
-                                                                                                  activeEntry.toolWindow)) {
+          if (isInActiveToolWindow(event.source, activeEntry.toolWindow) &&
+              !isInActiveToolWindow(event.oppositeComponent, activeEntry.toolWindow)) {
             // a toolwindow lost focus
             val focusGoesToPopup = JBPopupFactory.getInstance().getParentBalloonFor(event.oppositeComponent) != null
             if (!focusGoesToPopup) {

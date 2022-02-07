@@ -92,7 +92,7 @@ internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
     right.reset()
   }
 
-  fun refreshUI() {
+  fun refreshUi() {
     left.repaint()
     right.repaint()
   }
