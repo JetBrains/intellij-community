@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
+import org.junit.platform.commons.support.ReflectionSupport;
 import org.junit.platform.commons.util.AnnotationUtils;
 import org.junit.platform.commons.util.ReflectionUtils;
 import org.junit.platform.engine.DiscoverySelector;
@@ -132,19 +133,14 @@ public class JUnit5TestRunnerUtil {
       }
 
       DiscoverySelector selector = createSelector(suiteClassNames[0], packageNameRef);
-      if (selector instanceof MethodSelector) {
-        try {
-          ((MethodSelector)selector).getJavaMethod();
-        }
-        catch (Throwable e) {
-          DiscoverySelector classSelector = createClassSelector(((MethodSelector)selector).getClassName());
-          DiscoverySelector methodSelector = classSelector instanceof NestedClassSelector
-                                ? DiscoverySelectors.selectMethod(((NestedClassSelector)classSelector).getNestedClassName(),
-                                                                  ((MethodSelector)selector).getMethodName())
-                                : selector;
-          builder.filters(createMethodFilter(Collections.singletonList(methodSelector)));
-          selector = classSelector;
-        }
+      if (selector instanceof MethodSelector && !loadMethodByReflection((MethodSelector)selector)) {
+        DiscoverySelector classSelector = createClassSelector(((MethodSelector)selector).getClassName());
+        DiscoverySelector methodSelector = classSelector instanceof NestedClassSelector
+                                           ? DiscoverySelectors.selectMethod(((NestedClassSelector)classSelector).getNestedClassName(),
+                                                                             ((MethodSelector)selector).getMethodName())
+                                           : selector;
+        builder.filters(createMethodFilter(Collections.singletonList(methodSelector)));
+        selector = classSelector;
       }
       assert selector != null : "selector by class name is never null";
       return builder.selectors(selector).build();
@@ -153,15 +149,20 @@ public class JUnit5TestRunnerUtil {
     return null;
   }
 
+  private static boolean loadMethodByReflection(MethodSelector selector) {
+    try {
+      Class<?> aClass = Class.forName(selector.getClassName());
+      return ReflectionSupport.findMethod(aClass, selector.getMethodName(), selector.getMethodParameterTypes()).isPresent();
+    }
+    catch (ClassNotFoundException e) {
+      return false;
+    }
+  }
+
   private static boolean hasBrokenSelector(List<DiscoverySelector> selectors) {
     for (DiscoverySelector selector : selectors) {
-      if (selector instanceof MethodSelector) {
-        try {
-          ((MethodSelector)selector).getJavaMethod();
-        }
-        catch (Throwable e) {
-          return true;
-        }
+      if (selector instanceof MethodSelector && !loadMethodByReflection((MethodSelector)selector)) {
+        return true;
       }
     }
 
