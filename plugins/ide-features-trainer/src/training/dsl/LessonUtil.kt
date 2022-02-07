@@ -364,7 +364,7 @@ fun TaskContext.proceedLink(additionalAbove: Int = 0) {
   val gotIt = CompletableFuture<Boolean>()
   runtimeText {
     removeAfterDone = true
-    textProperties = TaskTextProperties(UISettings.instance.taskInternalParagraphAbove + additionalAbove, 12)
+    textProperties = TaskTextProperties(UISettings.getInstance().taskInternalParagraphAbove + additionalAbove, 12)
     LessonsBundle.message("proceed.to.the.next.step", LearningUiManager.addCallback { gotIt.complete(true) })
   }
   addStep(gotIt)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor
 
 import com.intellij.accessibility.AccessibilityUtils
@@ -326,7 +326,7 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
     if (wasModified) {
       clearAllIdentifierHighlighters()
       reinitAllEditors()
-      UISettings.instance.fireUISettingsChanged()
+      UISettings.getInstance().fireUISettingsChanged()
       restartDaemons()
       ApplicationManager.getApplication().messageBus.syncPublisher(EditorOptionsListener.OPTIONS_PANEL_TOPIC).changesApplied()
     }

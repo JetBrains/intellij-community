@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.UISettings
@@ -37,7 +37,7 @@ internal fun Row.closeButtonPositionComboBox() {
 internal fun closeButtonPlacementOptionDescription(): Collection<BooleanOptionDescription> = items.map { asOptionDescriptor(it) }
 
 private fun set(s: String?) {
-  val ui = UISettings.instance.state
+  val ui = UISettings.getInstance().state
   ui.showCloseButton = s != NONE
   if (s != NONE) {
     ui.closeTabButtonOnTheRight = s == RIGHT
@@ -56,13 +56,13 @@ private fun asOptionDescriptor(s: String): BooleanOptionDescription {
                       else -> RIGHT
                     })
       }
-      UISettings.instance.fireUISettingsChanged()
+      UISettings.getInstance().fireUISettingsChanged()
     }
   }
 }
 
 private fun getCloseButtonPlacement(): String {
-  val ui = UISettings.instance.state
+  val ui = UISettings.getInstance().state
   return when {
     !ui.showCloseButton -> NONE
     java.lang.Boolean.getBoolean("closeTabButtonOnTheLeft") || !ui.closeTabButtonOnTheRight -> LEFT

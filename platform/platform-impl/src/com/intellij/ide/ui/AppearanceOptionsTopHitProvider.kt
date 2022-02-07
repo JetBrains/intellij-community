@@ -21,7 +21,7 @@ internal val viewOptionGroupName
   get() = message("appearance.view.option.group")
 
 private val settings
-  get() = UISettings.instance
+  get() = UISettings.getInstance()
 private val notificationSettings
   get() = NotificationsConfigurationImpl.getInstanceImpl()
 
@@ -64,8 +64,8 @@ internal class AppearanceOptionsTopHitProvider : OptionsSearchTopHitProvider.App
     fun option(@Label option: String, propertyName: String, configurableId: String): BooleanOptionDescription {
       return object : PublicMethodBasedOptionDescription(option, configurableId,
                                                          "get" + Strings.capitalize(propertyName),
-                                                         "set" + Strings.capitalize(propertyName), Supplier { UISettings.instance.state }) {
-        override fun fireUpdated() = UISettings.instance.fireUISettingsChanged()
+                                                         "set" + Strings.capitalize(propertyName), Supplier { UISettings.getInstance().state }) {
+        override fun fireUpdated() = UISettings.getInstance().fireUISettingsChanged()
       }
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -50,7 +50,7 @@ class CompletionFileLogger(private val installationUID: String,
     event.isOneLineMode = lookup.editor.isOneLineMode
     event.isAutoPopup = CompletionUtil.getCurrentCompletionParameters()?.isAutoPopup
     event.fillCompletionParameters()
-    event.additionalDetails["alphabetical"] = UISettings.instance.sortLookupElementsLexicographically.toString()
+    event.additionalDetails["alphabetical"] = UISettings.getInstance().sortLookupElementsLexicographically.toString()
     if (lookupStorage != null) {
       if (lookupStorage.mlUsed() && CompletionMLRankingSettings.getInstance().isShowDiffEnabled) {
         event.additionalDetails["diff"] = "1"

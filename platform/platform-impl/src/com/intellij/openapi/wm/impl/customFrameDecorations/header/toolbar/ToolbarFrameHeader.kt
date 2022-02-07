@@ -6,7 +6,10 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.ui.FixedSizeButton
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.IconLoader
@@ -46,7 +49,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
     layout = GridBagLayout()
     val gb = GridBag().anchor(WEST)
 
-    updateLayout(UISettings.instance)
+    updateLayout(UISettings.getInstance())
 
     productIcon.border = JBUI.Borders.empty(V, 0, V, 0)
     add(productIcon, gb.nextLine().next().anchor(WEST).insetLeft(H))

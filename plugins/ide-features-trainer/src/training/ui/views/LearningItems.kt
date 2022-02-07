@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui.views
 
 import com.intellij.ide.plugins.newui.VerticalLayout
@@ -33,7 +33,7 @@ class LearningItems(private val project: Project) : JPanel() {
 
   init {
     name = "learningItems"
-    layout = VerticalLayout(0, UISettings.instance.let { it.panelWidth - (it.westInset + it.eastInset) })
+    layout = VerticalLayout(0, UISettings.getInstance().let { it.panelWidth - (it.westInset + it.eastInset) })
     isOpaque = false
     isFocusable = false
   }
@@ -74,7 +74,7 @@ class LearningItems(private val project: Project) : JPanel() {
     result.border = EmptyBorder(JBUI.scale(7), JBUI.scale(7), JBUI.scale(6), JBUI.scale(7))
     val checkmarkIconLabel = createLabelIcon(if (lesson.passed) FeaturesTrainerIcons.Img.GreenCheckmark else EmptyIcon.ICON_16)
     result.add(createLabelIcon(EmptyIcon.ICON_16))
-    result.add(scaledRigid(UISettings.instance.expandAndModuleGap, 0))
+    result.add(scaledRigid(UISettings.getInstance().expandAndModuleGap, 0))
     result.add(checkmarkIconLabel)
 
     result.add(rigid(4, 0))
@@ -106,7 +106,7 @@ class LearningItems(private val project: Project) : JPanel() {
       updateItems()
     }
     val result = LearningItemPanel(clickAction)
-    result.background = UISettings.instance.backgroundColor
+    result.background = UISettings.getInstance().backgroundColor
     result.layout = BoxLayout(result, BoxLayout.X_AXIS)
     result.border = EmptyBorder(JBUI.scale(8), JBUI.scale(7), JBUI.scale(10), JBUI.scale(7))
     result.alignmentX = LEFT_ALIGNMENT
@@ -123,7 +123,7 @@ class LearningItems(private val project: Project) : JPanel() {
     result.add(expandPanel)
 
     val name = JLabel(module.name)
-    name.font = UISettings.instance.modulesFont
+    name.font = UISettings.getInstance().modulesFont
     if (!iftPluginIsUsing || expanded.contains(module) || !module.lessons.any { it.isNewLesson() }) {
       modulePanel.add(name)
     } else {
@@ -138,11 +138,11 @@ class LearningItems(private val project: Project) : JPanel() {
 
       modulePanel.add(nameLine)
     }
-    modulePanel.add(scaledRigid(0, UISettings.instance.progressModuleGap))
+    modulePanel.add(scaledRigid(0, UISettings.getInstance().progressModuleGap))
 
     if (expanded.contains(module)) {
       modulePanel.add(JLabel("<html>${module.description}</html>").also {
-        it.font = UISettings.instance.getFont(-1)
+        it.font = UISettings.getInstance().getFont(-1)
         it.foreground = UIUtil.getLabelForeground()
       })
     }
@@ -150,7 +150,7 @@ class LearningItems(private val project: Project) : JPanel() {
       modulePanel.add(createModuleProgressLabel(module))
     }
 
-    result.add(scaledRigid(UISettings.instance.expandAndModuleGap, 0))
+    result.add(scaledRigid(UISettings.getInstance().expandAndModuleGap, 0))
     result.add(modulePanel)
     result.add(Box.createHorizontalGlue())
     return result
@@ -163,8 +163,8 @@ class LearningItems(private val project: Project) : JPanel() {
     val progressLabel = JBLabel(progressStr)
     progressLabel.name = "progressLabel"
     val hasNotPassedLesson = module.lessons.any { !it.passed }
-    progressLabel.foreground = if (hasNotPassedLesson) UISettings.instance.moduleProgressColor else UISettings.instance.completedColor
-    progressLabel.font = UISettings.instance.getFont(-1)
+    progressLabel.foreground = if (hasNotPassedLesson) UISettings.getInstance().moduleProgressColor else UISettings.getInstance().completedColor
+    progressLabel.font = UISettings.getInstance().getFont(-1)
     progressLabel.alignmentX = LEFT_ALIGNMENT
     return progressLabel
   }

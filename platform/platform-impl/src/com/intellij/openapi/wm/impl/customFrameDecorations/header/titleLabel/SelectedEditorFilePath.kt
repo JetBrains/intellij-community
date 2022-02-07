@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.UISettings.Companion.instance
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -114,10 +113,11 @@ internal open class SelectedEditorFilePath {
   }
 
   private fun updateTitlePaths() {
-    projectTitle.active = instance.fullPathsInWindowHeader || multipleSameNamed
+    val uiSettings = UISettings.getInstance()
+    projectTitle.active = uiSettings.fullPathsInWindowHeader || multipleSameNamed
     classTitle.active = captionInTitle || classPathNeeded
 
-    classTitle.fullPath = instance.fullPathsInWindowHeader || classPathNeeded
+    classTitle.fullPath = uiSettings.fullPathsInWindowHeader || classPathNeeded
     updatePath()
   }
 
@@ -366,7 +366,7 @@ internal open class SelectedEditorFilePath {
   }
 
   private fun shrinkSimplePaths(simplePaths: List<TitlePart>, simpleWidth: Int): String? {
-    isClipped = simplePaths.sumBy { it.longWidth } > simpleWidth
+    isClipped = simplePaths.sumOf { it.longWidth } > simpleWidth
 
     for (i in simplePaths.size - 1 downTo 0) {
       var beforeWidth = 0

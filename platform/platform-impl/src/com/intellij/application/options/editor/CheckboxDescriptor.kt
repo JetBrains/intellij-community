@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.UISettings
@@ -24,7 +24,7 @@ class CheckboxDescriptor(@NlsContexts.Checkbox val name: String,
 
   fun asUiOptionDescriptor(): BooleanOptionDescription {
     return asOptionDescriptor {
-      UISettings.instance.fireUISettingsChanged()
+      UISettings.getInstance().fireUISettingsChanged()
     }
   }
 

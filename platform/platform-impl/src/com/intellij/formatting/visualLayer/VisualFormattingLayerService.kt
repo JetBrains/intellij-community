@@ -27,7 +27,7 @@ abstract class VisualFormattingLayerService : EditorFactoryListener, DocumentLis
     get() = RegistryManager.getInstance().`is`(REGISTRY_KEY)
 
   val enabledBySettings: Boolean
-    get() = UISettings.instance.showVisualFormattingLayer
+    get() = UISettings.getInstance().showVisualFormattingLayer
 
   var enabledGlobally: Boolean = false
 

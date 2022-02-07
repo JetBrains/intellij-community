@@ -141,7 +141,7 @@ internal class SettingsSyncTest {
 
     initSettingsSync()
 
-    UISettings.instance.initModifyAndSave {
+    UISettings.getInstance().initModifyAndSave {
       recentFilesLimit = 1000
     }
 

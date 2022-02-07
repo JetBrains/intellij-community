@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.layout
 
 import com.intellij.ide.ui.UISettings
@@ -77,14 +77,14 @@ class TabsLayoutSettingsUi {
 
       builder.onApply {
         getSelectedInfo(comboBox)?.let{
-          UISettings.instance.selectedTabsLayoutInfoId = it.id
+          UISettings.getInstance().selectedTabsLayoutInfoId = it.id
         }
       }
 
       builder.onReset {
         val savedSelectedInfoId = calculateSavedSelectedInfoId()
         val selectedInfo = getSelectedInfo(comboBox)
-        val isWrongSelected = selectedInfo == null || selectedInfo.id != UISettings.instance.selectedTabsLayoutInfoId
+        val isWrongSelected = selectedInfo == null || selectedInfo.id != UISettings.getInstance().selectedTabsLayoutInfoId
         for (info in TabsLayoutSettingsHolder.instance.installedInfos) {
           if (isWrongSelected && info.id == savedSelectedInfoId) {
             comboBox.selectedItem = info
@@ -103,7 +103,7 @@ class TabsLayoutSettingsUi {
     }
 
     private fun calculateSavedSelectedInfoId(): String? {
-      var savedSelectedInfoId = UISettings.instance.selectedTabsLayoutInfoId
+      var savedSelectedInfoId = UISettings.getInstance().selectedTabsLayoutInfoId
       if (StringUtil.isEmpty(savedSelectedInfoId)) {
         savedSelectedInfoId = TabsLayoutSettingsHolder.instance.defaultInfo.id
       }

@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl
 import com.intellij.ide.RemoteDesktopService
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.UISettings.Companion.instance
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -110,7 +109,7 @@ class ToolWindowsPane internal constructor(frame: JFrame,
     horizontalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"))
     horizontalSplitter.background = Color.gray
     updateInnerMinSize(registryValue)
-    val uiSettings = instance
+    val uiSettings = UISettings.getInstance()
     isWideScreen = uiSettings.wideScreenSupport
     leftHorizontalSplit = uiSettings.leftHorizontalSplit
     rightHorizontalSplit = uiSettings.rightHorizontalSplit
@@ -493,7 +492,7 @@ class ToolWindowsPane internal constructor(frame: JFrame,
       splitter.addPropertyChangeListener { evt: PropertyChangeEvent ->
         if (Splitter.PROP_ORIENTATION != evt.propertyName) return@addPropertyChangeListener
         val isSplitterHorizontalNow = !splitter.isVertical
-        val settings = instance
+        val settings = UISettings.getInstance()
         if (anchor == ToolWindowAnchor.LEFT) {
           if (settings.leftHorizontalSplit != isSplitterHorizontalNow) {
             settings.leftHorizontalSplit = isSplitterHorizontalNow
@@ -568,7 +567,7 @@ class ToolWindowsPane internal constructor(frame: JFrame,
   }
 
   private fun addSlidingComponent(component: JComponent, info: WindowInfo, dirtyMode: Boolean) {
-    if (dirtyMode || !instance.animateWindows || RemoteDesktopService.isRemoteSession()) {
+    if (dirtyMode || !UISettings.getInstance().animateWindows || RemoteDesktopService.isRemoteSession()) {
       // not animated
       layeredPane.add(component, PALETTE_LAYER)
       layeredPane.setBoundsInPaletteLayer(component, info.anchor, info.weight)
@@ -617,7 +616,7 @@ class ToolWindowsPane internal constructor(frame: JFrame,
   }
 
   private fun removeSlidingComponent(component: Component, info: WindowInfo, dirtyMode: Boolean) {
-    val uiSettings = instance
+    val uiSettings = UISettings.getInstance()
     if (!dirtyMode && uiSettings.animateWindows && !RemoteDesktopService.isRemoteSession()) {
       val bounds = component.bounds
       // Prepare top image. This image is scrolling over bottom image. It contains
@@ -735,7 +734,7 @@ class ToolWindowsPane internal constructor(frame: JFrame,
       }
     }
 
-    internal fun setBoundsInPaletteLayer(component: Component, anchor: ToolWindowAnchor, w: Float) {
+    fun setBoundsInPaletteLayer(component: Component, anchor: ToolWindowAnchor, w: Float) {
       var weight = w
       if (weight < .0f) {
         weight = WindowInfoImpl.DEFAULT_WEIGHT
@@ -769,6 +768,6 @@ class ToolWindowsPane internal constructor(frame: JFrame,
 
   internal fun setStripesOverlaid(value: Boolean) {
     state.isStripesOverlaid = value
-    updateToolStripesVisibility(instance)
+    updateToolStripesVisibility(UISettings.getInstance())
   }
 }

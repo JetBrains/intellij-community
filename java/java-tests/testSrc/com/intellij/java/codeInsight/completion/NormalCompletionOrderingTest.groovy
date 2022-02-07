@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.java.codeInsight.completion
 
@@ -774,7 +772,7 @@ class ContainerUtil extends ContainerUtilRt {
 
   @NeedsIndex.Full
   void testPreselectClosestExactPrefixItem() {
-    UISettings.instance.setSortLookupElementsLexicographically(true)
+    UISettings.getInstance().setSortLookupElementsLexicographically(true)
     myFixture.addClass 'package pack1; public class SameNamed {}'
     myFixture.addClass 'package pack2; public class SameNamed {}'
     checkPreferredItems 1, 'SameNamed', 'SameNamed'

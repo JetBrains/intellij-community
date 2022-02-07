@@ -76,7 +76,7 @@ internal class ToolWindowPaneOldButtonManager : ToolWindowButtonManager {
       leftStripe.bounds = leftBounds
       rightStripe.bounds = rightBounds
       bottomStripe.bounds = bottomBounds
-      val uiSettings = UISettings.instance
+      val uiSettings = UISettings.getInstance()
       if (uiSettings.hideToolStripes || uiSettings.presentationMode) {
         layeredPane.setBounds(0, 0, size.width, size.height)
       }

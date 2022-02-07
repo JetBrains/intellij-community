@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -51,7 +51,7 @@ import java.awt.event.KeyEvent
 import javax.swing.*
 
 private val settings: UISettings
-  get() = UISettings.instance
+  get() = UISettings.getInstance()
 private val generalSettings
   get() = GeneralSettings.getInstance()
 private val lafManager
@@ -393,7 +393,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       LafManager.getInstance().updateUI()
     }
     if (uiSettingsChanged) {
-      UISettings.instance.fireUISettingsChanged()
+      UISettings.getInstance().fireUISettingsChanged()
       EditorFactory.getInstance().refreshAllEditors()
     }
   }

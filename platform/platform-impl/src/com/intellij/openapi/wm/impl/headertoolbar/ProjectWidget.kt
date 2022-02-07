@@ -51,7 +51,7 @@ internal class ProjectWidgetFactory : MainToolbarProjectWidgetFactory {
 
 private class ProjectWidgetUpdater(val proj: Project, val widget: ProjectWidget) : FileEditorManagerListener, UISettingsListener, ProjectManagerListener {
   private var file: VirtualFile? by Delegates.observable(null) { _, _, _ -> updateText() }
-  private var settings: UISettings by Delegates.observable(UISettings.instance) { _, _, _ -> updateText() }
+  private var settings: UISettings by Delegates.observable(UISettings.getInstance()) { _, _, _ -> updateText() }
 
   private val swingExecutor: Executor = Executor { run -> SwingUtilities.invokeLater(run) }
 

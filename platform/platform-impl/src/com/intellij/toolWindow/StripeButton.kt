@@ -274,7 +274,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
 
   private fun updateText(toolWindow: ToolWindowImpl) {
     var text = toolWindow.stripeTitle
-    if (UISettings.instance.showToolWindowsNumbers) {
+    if (UISettings.getInstance().showToolWindowsNumbers) {
       val mnemonic = ActivateToolWindowAction.getMnemonicForToolWindow(toolWindow.id)
       if (mnemonic != -1) {
         text = mnemonic.toChar().toString() + ": " + text

@@ -29,7 +29,7 @@ internal class EditorTabsConfigurable : BoundSearchableConfigurable(
   private lateinit var myOneRowCheckbox: JCheckBox
 
   override fun createPanel(): DialogPanel {
-    val ui = UISettings.instance.state
+    val ui = UISettings.getInstance().state
     return panel {
       group(message("group.tab.appearance")) {
 
@@ -131,7 +131,7 @@ internal class EditorTabsConfigurable : BoundSearchableConfigurable(
     super.apply()
 
     if (uiSettingsChanged) {
-      UISettings.instance.fireUISettingsChanged()
+      UISettings.getInstance().fireUISettingsChanged()
     }
   }
 

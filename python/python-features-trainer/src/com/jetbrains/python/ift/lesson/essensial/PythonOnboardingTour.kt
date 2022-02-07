@@ -100,7 +100,7 @@ class PythonOnboardingTour :
   private val demoConfigurationName: String = "welcome"
   private val demoFileName: String = "$demoConfigurationName.py"
 
-  private val uiSettings get() = UISettings.instance
+  private val uiSettings get() = UISettings.getInstance()
 
   override val properties = LessonProperties(
     canStartInDumbMode = true,

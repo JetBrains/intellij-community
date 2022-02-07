@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mouse
 
 import com.intellij.ide.IdeBundle
@@ -12,8 +12,9 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.dialog
-import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.bindIntValue
+import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -25,14 +26,16 @@ import com.intellij.util.animation.animation
 import com.intellij.util.animation.components.BezierPainter
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.UIUtil
-import java.awt.*
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
 import java.awt.geom.Path2D
 import java.awt.geom.Point2D
 import java.util.concurrent.TimeUnit
 
 internal class MouseWheelSmoothScrollOptionsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val settings = UISettings.instance.state
+    val settings = UISettings.getInstance().state
     val points = settings.animatedScrollingCurvePoints
     val myBezierPainter = BezierPainterWithAnimation(
       (points shr 24 and 0xFF) / 200.0,

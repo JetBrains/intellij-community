@@ -10,7 +10,7 @@ class VisualFormattingLayerStartup : StartupActivity {
 
   override fun runActivity(project: Project) {
     val service = VisualFormattingLayerService.getInstance()
-    service.enabledGlobally = UISettings.instance.showVisualFormattingLayer
+    service.enabledGlobally = UISettings.getInstance().showVisualFormattingLayer
     service.addEditorFactoryListener()
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui
 
 import com.intellij.ide.util.TipAndTrickBean
@@ -45,7 +45,7 @@ class IftTipAndTrickPromoter : TipAndTrickPromotionFactory {
   private fun createOpenLessonPanel(project: Project, lesson: Lesson, tip: TipAndTrickBean): JPanel {
     val container = RoundedPanel(8)
     container.layout = BoxLayout(container, BoxLayout.X_AXIS)
-    container.background = UISettings.instance.shortcutBackgroundColor
+    container.background = UISettings.getInstance().shortcutBackgroundColor
 
     val promotionLabel = JLabel(LearnBundle.message("tip.and.trick.promotion.label"))
     promotionLabel.icon = FeaturesTrainerIcons.Img.FeatureTrainerBanner

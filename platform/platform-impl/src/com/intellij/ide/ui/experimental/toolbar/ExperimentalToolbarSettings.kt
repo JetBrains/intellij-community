@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.experimental.toolbar
 
 import com.intellij.application.options.RegistryManager
@@ -40,7 +40,7 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
 
       ToolbarSettings.getInstance().isVisible = booleanValue
 
-      val uiSettings = UISettings.instance
+      val uiSettings = UISettings.getInstance()
       uiSettings.showNavigationBar = !booleanValue && uiSettings.showNavigationBar
       uiSettings.fireUISettingsChanged()
     }
@@ -73,9 +73,9 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
   private fun hideClassicMainToolbarAndNavbarIfVisible() {
     if (isVisible) {
       logger.info("Hiding Main Toolbar (Classic) because the new toolbar is visible.")
-      UISettings.instance.showMainToolbar = false
+      UISettings.getInstance().showMainToolbar = false
       logger.info("Hiding NavBar because the new toolbar is visible.")
-      UISettings.instance.showNavigationBar = false
+      UISettings.getInstance().showNavigationBar = false
     }
   }
 }
