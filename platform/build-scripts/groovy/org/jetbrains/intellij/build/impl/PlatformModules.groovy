@@ -128,6 +128,7 @@ final class PlatformModules {
   public static final Map<String, PackMode> CUSTOM_PACK_MODE = Map.of(
     // jna uses native lib
     "jna", PackMode.STANDALONE_MERGED,
+    "lz4-java", PackMode.STANDALONE_MERGED,
     "jetbrains-annotations-java5", PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
     "intellij-coverage", PackMode.STANDALONE_SEPARATE,
     )
