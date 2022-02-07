@@ -3,6 +3,7 @@ package com.intellij.grazie.ide.ui.search
 
 import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.ide.ui.components.dsl.msg
+import com.intellij.grazie.ide.ui.grammar.tabs.rules.component.allRules
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.ide.ui.search.SearchableOptionContributor
@@ -32,5 +33,13 @@ private class GrazieSearchableOptionContributor : SearchableOptionContributor() 
       processor.addGrammarOptions(language.displayName, hit = msg("grazie.settings.grammar.scope.file-types.text"))
     }
     processor.addGrammarOptions("grazie", null, null)
+
+    val categories = HashSet<String>()
+    for (rule in allRules().values.flatten()) {
+      processor.addGrammarOptions(rule.presentableName, hit = msg("grazie.settings.grammar.scope.rules.text"))
+      if (categories.add(rule.category)) {
+        processor.addGrammarOptions(rule.category, hit = msg("grazie.settings.grammar.scope.rules.text"))
+      }
+    }
   }
 }
