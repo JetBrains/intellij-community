@@ -5,10 +5,10 @@
             interface="org.jetbrains.kotlin.idea.completion.KotlinCompletionExtension"/>
   </extensionPoints>
 
-  <applicationListeners>
+  <projectListeners>
     <listener class="org.jetbrains.kotlin.idea.completion.LookupCancelWatcherListener"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
-  </applicationListeners>
+  </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
     <editorFactoryListener implementation="org.jetbrains.kotlin.idea.completion.LookupCancelWatcher"/>
