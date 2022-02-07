@@ -63,9 +63,6 @@ import java.awt.event.MouseListener;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.codeInsight.intention.impl.IntentionShortcutUtils.getWrappedActionId;
-import static com.intellij.codeInsight.intention.impl.IntentionShortcutUtils.invokeAsAction;
-
 /**
  * @author max
  * @author Mike
@@ -84,6 +81,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   static class IntentionPopup implements Popup, Disposable.Parent {
     private final CachedIntentions myCachedIntentions;
+    @NotNull
     private final Editor myEditor;
     private final PsiFile myFile;
     private final Project myProject;
@@ -622,13 +620,13 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     for (var shortcut : shortcuts.getShortcuts()) {
       if (shortcut instanceof KeyboardShortcut) {
         KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
-        ((WizardPopup)that.myPopup).registerAction(getWrappedActionId(intention),
+        ((WizardPopup)that.myPopup).registerAction(IntentionShortcutUtils.getWrappedActionId(intention),
                                                    keyboardShortcut.getFirstKeyStroke(),
                                                    new AbstractAction() {
                                                      @Override
                                                      public void actionPerformed(ActionEvent e) {
                                                        that.close();
-                                                       invokeAsAction(intention, that.myEditor, that.myFile);
+                                                       IntentionShortcutUtils.invokeAsAction(intention, that.myEditor, that.myFile);
                                                      }
                                                    });
       }

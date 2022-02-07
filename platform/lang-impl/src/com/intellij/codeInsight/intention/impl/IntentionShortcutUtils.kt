@@ -10,7 +10,7 @@ import com.intellij.codeInsight.intention.IntentionShortcuts.WRAPPER_PREFIX
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 
-fun IntentionAction.invokeAsAction(editor: Editor?, file: PsiFile) {
+fun IntentionAction.invokeAsAction(editor: Editor, file: PsiFile) {
   ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, this, CodeInsightBundle.message("intention.action.wrapper.name", familyName))
 }
 
