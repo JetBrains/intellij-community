@@ -244,18 +244,16 @@
                       interface="org.jetbrains.kotlin.idea.platform.testintegration.LightTestFramework" dynamic="true"/>
     </extensionPoints>
     <resource-bundle>messages.KotlinBundle</resource-bundle>
-    <projectListeners>
-      <listener class="org.jetbrains.kotlin.idea.scratch.ScratchFileModuleInfoProvider"
-                topic="org.jetbrains.kotlin.idea.scratch.ScratchFileListener"/>
-      <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
-                topic="com.intellij.openapi.roots.ModuleRootListener"/>
-      <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
-                topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
-      <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
-                topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
-    </projectListeners>
-  <applicationListeners>
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.scratch.ScratchFileModuleInfoProvider"
+              topic="org.jetbrains.kotlin.idea.scratch.ScratchFileListener"/>
+    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
+              topic="com.intellij.openapi.roots.ModuleRootListener"/>
+    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
+              topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
+    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
+              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
     <listener class="org.jetbrains.kotlin.idea.compiler.KotlinCompilationStatusListener"
               topic="com.intellij.openapi.compiler.CompilationStatusListener"/>
-  </applicationListeners>
+  </projectListeners>
 </idea-plugin>
