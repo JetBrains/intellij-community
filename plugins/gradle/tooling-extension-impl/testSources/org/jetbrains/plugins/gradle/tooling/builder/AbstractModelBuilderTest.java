@@ -146,9 +146,8 @@ public abstract class AbstractModelBuilderTest {
     }
 
     ((DefaultGradleConnector)connector).daemonMaxIdleTime(daemonMaxIdleTime, TimeUnit.SECONDS);
-    ProjectConnection connection = connector.connect();
 
-    try {
+    try (ProjectConnection connection = connector.connect()) {
       boolean isCompositeBuildsSupported = _gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
       final ProjectImportAction projectImportAction = new ProjectImportAction(false, isCompositeBuildsSupported);
       projectImportAction.addProjectImportModelProvider(new ClassSetImportModelProvider(getModels(),
@@ -166,9 +165,6 @@ public abstract class AbstractModelBuilderTest {
       buildActionExecutor.setJvmArguments("-Xmx128m", "-XX:MaxPermSize=64m");
       allModels = buildActionExecutor.run();
       assertNotNull(allModels);
-    }
-    finally {
-      connection.close();
     }
   }
 
