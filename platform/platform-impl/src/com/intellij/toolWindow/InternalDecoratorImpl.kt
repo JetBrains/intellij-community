@@ -524,6 +524,7 @@ class InternalDecoratorImpl internal constructor(
 
   val toolWindowId: String
     get() = toolWindow.id
+
   var headerComponent: JComponent?
     get() {
       val component = notificationHeader.targetComponent
@@ -532,9 +533,12 @@ class InternalDecoratorImpl internal constructor(
     set(notification) {
       notificationHeader.setContent(notification)
     }
+
   val headerScreenBounds: Rectangle?
     get() {
-      if (!header.isShowing) return null
+      if (!header.isShowing) {
+        return null
+      }
       val bounds = header.bounds
       bounds.location = header.locationOnScreen
       return bounds
@@ -545,9 +549,11 @@ class InternalDecoratorImpl internal constructor(
     if (isSplitUnsplitInProgress()) {
       return
     }
-    if (disposable != null) {
-      Disposer.dispose(disposable!!)
+
+    disposable?.let {
+      Disposer.dispose(it)
     }
+
     val divider = divider
     disposable = Disposer.newCheckedDisposable()
     HOVER_STATE_LISTENER.addTo(this, disposable!!)
@@ -566,6 +572,7 @@ class InternalDecoratorImpl internal constructor(
     if (isSplitUnsplitInProgress()) {
       return
     }
+
     val disposable = disposable
     if (disposable != null && !disposable.isDisposed) {
       this.disposable = null

@@ -7,7 +7,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.ThreeComponentsSplitter
 import com.intellij.openapi.util.Pair
@@ -46,6 +46,8 @@ import javax.swing.LayoutFocusTraversalPolicy
 import kotlin.math.max
 import kotlin.math.min
 
+private val LOG = logger<ToolWindowsPane>()
+
 /**
  * This panel contains all tool stripes and JLayeredPane at the center area. All tool windows are
  * located inside this layered pane.
@@ -57,7 +59,6 @@ class ToolWindowsPane internal constructor(frame: JFrame,
                                            parentDisposable: Disposable,
                                            @field:JvmField internal val buttonManager: ToolWindowButtonManager) : JBLayeredPane(), UISettingsListener {
   companion object {
-    private val LOG = Logger.getInstance(ToolWindowsPane::class.java)
     const val TEMPORARY_ADDED = "TEMPORARY_ADDED"
 
     //The size of topmost 'resize' area when toolwindow caption is used for both resize and drag
@@ -122,7 +123,7 @@ class ToolWindowsPane internal constructor(frame: JFrame,
     updateToolStripesVisibility(uiSettings)
 
     // layered pane
-    layeredPane = MyLayeredPane(if (isWideScreen) horizontalSplitter else verticalSplitter)
+    layeredPane = MyLayeredPane(if (isWideScreen) horizontalSplitter else verticalSplitter, frame = frame)
 
     // compose layout
     buttonManager.addToToolWindowPane(this)
@@ -574,7 +575,7 @@ class ToolWindowsPane internal constructor(frame: JFrame,
     }
     else {
       // Prepare top image. This image is scrolling over bottom image.
-      val topImage: Image = layeredPane.topImage
+      val topImage = layeredPane.topImage
       val bounds = component.bounds
       UIUtil.useSafely(topImage.graphics) { topGraphics ->
         component.putClientProperty(TEMPORARY_ADDED, java.lang.Boolean.TRUE)
@@ -654,120 +655,121 @@ class ToolWindowsPane internal constructor(frame: JFrame,
     }
   }
 
-  private class ImageRef(image: BufferedImage) : SoftReference<BufferedImage?>(image) {
-    private var strongRef: BufferedImage?
-
-    init {
-      strongRef = image
-    }
-
-    override fun get(): BufferedImage? {
-      val img = strongRef ?: super.get()
-      // drop on first request
-      strongRef = null
-      return img
-    }
-  }
-
-  private class ImageCache(imageProvider: Function<in ScaleContext, ImageRef>) : ScaleContext.Cache<ImageRef?>(imageProvider) {
-    fun get(ctx: ScaleContext): BufferedImage {
-      val ref = getOrProvide(ctx)
-      val image = SoftReference.dereference(ref)
-      if (image != null) return image
-      clear() // clear to recalculate the image
-      return get(ctx) // first recalculated image will be non-null
-    }
-  }
-
-  private inner class MyLayeredPane(splitter: JComponent) : JBLayeredPane() {
-    private val imageProvider: Function<ScaleContext, ImageRef> = Function {
-      val width = max(max(1, width), frame.width)
-      val height = max(max(1, height), frame.height)
-      ImageRef(ImageUtil.createImage(graphicsConfiguration, width, height, BufferedImage.TYPE_INT_RGB))
-    }
-
-    /*
-     * These images are used to perform animated showing and hiding of components.
-     * They are the member for performance reason.
-     */
-    private val bottomImageCache = ImageCache(imageProvider)
-    private val topImageCache = ImageCache(imageProvider)
-
-    init {
-      isOpaque = false
-      add(splitter, DEFAULT_LAYER)
-    }
-
-    val bottomImage: Image
-      get() = bottomImageCache.get(ScaleContext.create(this))
-    val topImage: Image
-      get() = topImageCache.get(ScaleContext.create(this))
-
-    /**
-     * When component size becomes larger then bottom and top images should be enlarged.
-     */
-    override fun doLayout() {
-      val width = width
-      val height = height
-      if (width < 0 || height < 0) {
-        return
-      }
-
-      // Resize component at the DEFAULT layer. It should be only on component in that layer
-      var components = getComponentsInLayer(DEFAULT_LAYER)
-      LOG.assertTrue(components.size <= 1)
-      for (component in components) {
-        component.setBounds(0, 0, getWidth(), getHeight())
-      }
-      // Resize components at the PALETTE layer
-      components = getComponentsInLayer(PALETTE_LAYER)
-      for (component in components) {
-        if (component !is InternalDecoratorImpl) {
-          continue
-        }
-        val info = component.toolWindow.windowInfo
-        val rootWidth = rootPane.width
-        val rootHeight = rootPane.height
-        val weight = if (info.anchor.isHorizontal) getAdjustedRatio(component.getHeight(), rootHeight, 1)
-        else getAdjustedRatio(component.getWidth(), rootWidth, 1)
-        setBoundsInPaletteLayer(component, info.anchor, weight)
-      }
-    }
-
-    fun setBoundsInPaletteLayer(component: Component, anchor: ToolWindowAnchor, w: Float) {
-      var weight = w
-      if (weight < .0f) {
-        weight = WindowInfoImpl.DEFAULT_WEIGHT
-      }
-      else if (weight > 1.0f) {
-        weight = 1.0f
-      }
-      val rootHeight = rootPane.height
-      val rootWidth = rootPane.width
-      when (anchor) {
-        ToolWindowAnchor.TOP -> {
-          component.setBounds(0, 0, width, (rootHeight * weight).toInt())
-        }
-        ToolWindowAnchor.LEFT -> {
-          component.setBounds(0, 0, (rootWidth * weight).toInt(), height)
-        }
-        ToolWindowAnchor.BOTTOM -> {
-          val height = (rootHeight * weight).toInt()
-          component.setBounds(0, getHeight() - height, width, height)
-        }
-        ToolWindowAnchor.RIGHT -> {
-          val width = (rootWidth * weight).toInt()
-          component.setBounds(getWidth() - width, 0, width, height)
-        }
-        else -> {
-          LOG.error("unknown anchor $anchor")
-        }
-      }
-    }
-  }
-
   internal fun setStripesOverlaid(value: Boolean) {
     state.isStripesOverlaid = value
     updateToolStripesVisibility(UISettings.getInstance())
+  }
+}
+
+private class ImageRef(image: BufferedImage) : SoftReference<BufferedImage?>(image) {
+  private var strongRef: BufferedImage?
+
+  init {
+    strongRef = image
+  }
+
+  override fun get(): BufferedImage? {
+    val img = strongRef ?: super.get()
+    // drop on first request
+    strongRef = null
+    return img
+  }
+}
+
+private class ImageCache(imageProvider: Function<in ScaleContext, ImageRef>) : ScaleContext.Cache<ImageRef?>(imageProvider) {
+  fun get(ctx: ScaleContext): BufferedImage {
+    val ref = getOrProvide(ctx)
+    val image = SoftReference.dereference(ref)
+    if (image != null) return image
+    clear() // clear to recalculate the image
+    return get(ctx) // first recalculated image will be non-null
+  }
+}
+
+private class MyLayeredPane(splitter: JComponent, frame: JFrame) : JBLayeredPane() {
+  private val imageProvider: Function<ScaleContext, ImageRef> = Function {
+    val width = max(max(1, width), frame.width)
+    val height = max(max(1, height), frame.height)
+    ImageRef(ImageUtil.createImage(graphicsConfiguration, width, height, BufferedImage.TYPE_INT_RGB))
+  }
+
+  /*
+   * These images are used to perform animated showing and hiding of components.
+   * They are the member for performance reason.
+   */
+  private val bottomImageCache = ImageCache(imageProvider)
+  private val topImageCache = ImageCache(imageProvider)
+
+  init {
+    isOpaque = false
+    super.add(splitter, DEFAULT_LAYER)
+  }
+
+  val bottomImage: Image
+    get() = bottomImageCache.get(ScaleContext.create(this))
+  val topImage: Image
+    get() = topImageCache.get(ScaleContext.create(this))
+
+  /**
+   * When component size becomes larger than bottom and top images should be enlarged.
+   */
+  override fun doLayout() {
+    val width = width
+    val height = height
+    if (width < 0 || height < 0) {
+      return
+    }
+
+    // Resize component at the DEFAULT layer. It should be only on component in that layer
+    var components = getComponentsInLayer(DEFAULT_LAYER)
+    LOG.assertTrue(components.size <= 1)
+    for (component in components) {
+      component.setBounds(0, 0, getWidth(), getHeight())
+    }
+    // Resize components at the PALETTE layer
+    components = getComponentsInLayer(PALETTE_LAYER)
+    for (component in components) {
+      if (component !is InternalDecoratorImpl) {
+        continue
+      }
+
+      val info = component.toolWindow.windowInfo
+      val rootWidth = rootPane.width
+      val rootHeight = rootPane.height
+      val weight = if (info.anchor.isHorizontal) getAdjustedRatio(component.getHeight(), rootHeight, 1)
+      else getAdjustedRatio(component.getWidth(), rootWidth, 1)
+      setBoundsInPaletteLayer(component, info.anchor, weight)
+    }
+  }
+
+  fun setBoundsInPaletteLayer(component: Component, anchor: ToolWindowAnchor, w: Float) {
+    var weight = w
+    if (weight < .0f) {
+      weight = WindowInfoImpl.DEFAULT_WEIGHT
+    }
+    else if (weight > 1.0f) {
+      weight = 1.0f
+    }
+    val rootHeight = rootPane.height
+    val rootWidth = rootPane.width
+    when (anchor) {
+      ToolWindowAnchor.TOP -> {
+        component.setBounds(0, 0, width, (rootHeight * weight).toInt())
+      }
+      ToolWindowAnchor.LEFT -> {
+        component.setBounds(0, 0, (rootWidth * weight).toInt(), height)
+      }
+      ToolWindowAnchor.BOTTOM -> {
+        val height = (rootHeight * weight).toInt()
+        component.setBounds(0, getHeight() - height, width, height)
+      }
+      ToolWindowAnchor.RIGHT -> {
+        val width = (rootWidth * weight).toInt()
+        component.setBounds(getWidth() - width, 0, width, height)
+      }
+      else -> {
+        LOG.error("unknown anchor $anchor")
+      }
+    }
   }
 }
