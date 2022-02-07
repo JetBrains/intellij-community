@@ -276,7 +276,8 @@ final class KotlinPluginBuilder {
               )
               break
             case KotlinPluginKind.AC_KMM:
-              text = replace(text, "<plugin id=\"com.intellij.java\"/>", "<plugin id=\"com.intellij.kotlinNative.platformDeps\"/>")
+              text = replace(text, "<plugin id=\"com.intellij.java\"/>", "<plugin id=\"com.intellij.kotlinNative.platformDeps\"/>\n" +
+                                                                         "<plugin id=\"com.intellij.modules.appcode\"/>")
               break
             default:
               throw new IllegalStateException("Unknown kind = $kind")
