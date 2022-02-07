@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -55,7 +56,8 @@ public final class ExperimentalUI {
   }
 
   private static boolean isEnabled(@NonNls @NotNull String key) {
-    return ApplicationManager.getApplication().isEAP() && (isNewUI() || EarlyAccessRegistryManager.INSTANCE.getBoolean(key));
+    Application app = ApplicationManager.getApplication();
+    return app != null && app.isEAP() && (isNewUI() || EarlyAccessRegistryManager.INSTANCE.getBoolean(key));
   }
 
   @SuppressWarnings("unused")
