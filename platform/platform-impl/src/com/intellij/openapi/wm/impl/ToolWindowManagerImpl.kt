@@ -387,7 +387,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
   private fun resetHoldState() {
     currentState = KeyState.WAITING
-    processHoldState()
+    toolWindowPane?.setStripesOverlaid(value = false)
   }
 
   private fun processState(pressed: Boolean) {
@@ -397,7 +397,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       }
       else if (currentState == KeyState.RELEASED) {
         currentState = KeyState.HOLD
-        processHoldState()
+        toolWindowPane?.setStripesOverlaid(value = true)
       }
     }
     else {
@@ -409,10 +409,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
         resetHoldState()
       }
     }
-  }
-
-  private fun processHoldState() {
-    toolWindowPane?.setStripesOverlaid(currentState == KeyState.HOLD)
   }
 
   fun init(frameHelper: ProjectFrameHelper) {

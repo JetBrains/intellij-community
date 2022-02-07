@@ -4,6 +4,7 @@
 package com.intellij.toolWindow
 
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
@@ -47,12 +48,13 @@ internal class ToolWindowPaneOldButtonManager : ToolWindowButtonManager {
     topStripe.isVisible = visible
     bottomStripe.isVisible = visible
 
-    val overlaid = !showButtons && state.isStripesOverlaid
-
-    leftStripe.setOverlaid(overlaid)
-    rightStripe.setOverlaid(overlaid)
-    topStripe.setOverlaid(overlaid)
-    bottomStripe.setOverlaid(overlaid)
+    if (!Registry.`is`("disable.toolwindow.overlay")) {
+      val overlaid = !showButtons && state.isStripesOverlaid
+      leftStripe.setOverlaid(overlaid)
+      rightStripe.setOverlaid(overlaid)
+      topStripe.setOverlaid(overlaid)
+      bottomStripe.setOverlaid(overlaid)
+    }
 
     return oldVisible != visible
   }
