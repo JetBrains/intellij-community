@@ -70,6 +70,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private static final String LOADING_LABEL = "LOADING_LABEL";
   private static final String SUPPRESS_ACTION_COMPONENT_WARNING = "ActionToolbarImpl.suppressCustomComponentWarning";
   private static final String SUPPRESS_TARGET_COMPONENT_WARNING = "ActionToolbarImpl.suppressTargetComponentWarning";
+  public static final String DO_NOT_ADD_CUSTOMIZATION_HANDLER = "ActionToolbarImpl.suppressTargetComponentWarning";
 
   static {
     JBUIScale.addUserScaleChangeListener(__ -> {
@@ -390,7 +391,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   protected void addImpl(Component comp, Object constraints, int index) {
     super.addImpl(comp, constraints, index);
-    if (myPopupHandler != null && !ContainerUtil.exists(comp.getMouseListeners(), listener -> listener instanceof PopupHandler)) {
+    if (myPopupHandler != null && !ContainerUtil.exists(comp.getMouseListeners(), listener -> listener instanceof PopupHandler) &&
+        getClientProperty(DO_NOT_ADD_CUSTOMIZATION_HANDLER) == null) {
       UIUtil.uiTraverser(comp).traverse().forEach(component -> component.addMouseListener(myPopupHandler));
     }
   }
