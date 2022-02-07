@@ -1347,7 +1347,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       if (value instanceof JBColor) {
         String name = ((JBColor)value).getName();
         if (!StringUtil.isEmpty(name)) {
-          sb.append(" name: " + name);
+          sb.append(" name: ").append(name);
         }
       }
       setText(sb.toString());
