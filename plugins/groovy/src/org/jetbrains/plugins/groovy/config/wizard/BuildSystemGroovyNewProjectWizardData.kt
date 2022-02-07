@@ -4,13 +4,14 @@ package org.jetbrains.plugins.groovy.config.wizard
 import com.intellij.ide.wizard.BuildSystemNewProjectWizardData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.roots.ui.distribution.DistributionInfo
 import com.intellij.openapi.util.Key
 
 interface BuildSystemGroovyNewProjectWizardData: BuildSystemNewProjectWizardData {
 
-  val groovySdkProperty : GraphProperty<String?>
+  val groovySdkProperty : GraphProperty<DistributionInfo?>
 
-  var groovySdk : String?
+  var groovySdk : DistributionInfo?
 
   companion object {
     @JvmStatic val KEY = Key.create<BuildSystemGroovyNewProjectWizardData>(BuildSystemGroovyNewProjectWizardData::class.java.name)

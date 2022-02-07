@@ -12,14 +12,15 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logV
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 import org.jetbrains.plugins.gradle.service.project.wizard.generateModuleBuilder
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.config.wizard.*
-import org.jetbrains.plugins.groovy.config.wizard.GroovyNewProjectWizardUsageCollector.Companion.logGroovyLibrarySelected
 
 class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
@@ -40,8 +41,8 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     override fun setupSettingsUI(builder: Panel) {
       super.setupSettingsUI(builder)
       builder.row(GroovyBundle.message("label.groovy.sdk")) {
-        groovySdkComboBox(groovySdkProperty)
-      }
+        groovySdkComboBox(context, groovySdkProperty)
+      }.bottomGap(BottomGap.SMALL)
       builder.addSampleCodeCheckbox(addSampleCodeProperty)
     }
 
@@ -50,7 +51,18 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       builder.gradleVersion = suggestGradleVersion()
 
       builder.configureBuildScript {
-        it.withGroovyPlugin(groovySdk ?: GROOVY_SDK_FALLBACK_VERSION)
+        when (val groovySdk = groovySdk) {
+          null -> it.withPlugin("groovy")
+          is FrameworkLibraryDistributionInfo -> it.withGroovyPlugin(groovySdk.version.versionString)
+          is LocalDistributionInfo -> {
+            it.withPlugin("groovy")
+            it.withMavenCentral()
+            it.addImplementationDependency(it.call("fileTree", groovySdk.path) {
+              call("include", "*.jar")
+              call("include", "*/*.jar")
+            })
+          }
+        }
         it.withJUnit()
       }
 
@@ -77,7 +89,7 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       groupIdProperty.afterChange { logGroupIdChanged() }
       artifactIdProperty.afterChange { logArtifactIdChanged() }
       versionProperty.afterChange { logVersionChanged() }
-      groovySdkProperty.afterChange { if (it != null) logGroovyLibrarySelected(context, it) }
+      groovySdkProperty.afterChange { logGroovySdkSelected(context, it) }
     }
   }
 }
