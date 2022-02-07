@@ -583,7 +583,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
         }
         if (descriptor != null && descriptor.getRequiredProperties() != null) {
           for (RequiredProperty property : descriptor.getRequiredProperties()) {
-            result.put(property.getKey(), property.getDefaultValue());
+            result.put(property.getKey(), property.getDefaultValue() != null ? property.getDefaultValue() : "");
           }
         }
       }
