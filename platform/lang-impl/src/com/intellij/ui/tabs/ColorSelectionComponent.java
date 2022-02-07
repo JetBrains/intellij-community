@@ -27,9 +27,11 @@ import java.util.Objects;
  * @author gregsh
  */
 public class ColorSelectionComponent extends JPanel {
-  private final Map<@NlsContexts.Button String, ColorButton> myColorToButtonMap = new LinkedHashMap<>();
+  private final Map<String, ColorButton> myColorToButtonMap = new LinkedHashMap<>();
   private final ButtonGroup myButtonGroup = new ButtonGroup();
   private ChangeListener myChangeListener;
+
+  private final static String CUSTOM_COLOR_ID = "Custom";
 
   public ColorSelectionComponent() {
     super(new GridLayout(1, 0, 5, 5));
@@ -67,18 +69,18 @@ public class ColorSelectionComponent extends JPanel {
     CustomColorButton customButton = new CustomColorButton();
     myButtonGroup.add(customButton);
     add(customButton);
-    myColorToButtonMap.put(customButton.getText(), customButton);
+    myColorToButtonMap.put(CUSTOM_COLOR_ID, customButton);
   }
 
-  public void addColorButton(@NotNull @NlsContexts.Button String name, @NotNull Color color) {
+  public void addColorButton(@NotNull @NonNls String colorID, @NotNull @NlsContexts.Button String name, @NotNull Color color) {
     ColorButton colorButton = new ColorButton(name, color);
     myButtonGroup.add(colorButton);
     add(colorButton);
-    myColorToButtonMap.put(name, colorButton);
+    myColorToButtonMap.put(colorID, colorButton);
   }
 
   public void setCustomButtonColor(@NotNull Color color) {
-    CustomColorButton button = (CustomColorButton)myColorToButtonMap.get(IdeBundle.message("settings.file.color.custom.name"));
+    CustomColorButton button = (CustomColorButton)myColorToButtonMap.get(CUSTOM_COLOR_ID);
     button.setColor(color);
     button.setSelected(true);
     button.repaint();
@@ -102,7 +104,7 @@ public class ColorSelectionComponent extends JPanel {
 
   public void initDefault(@NotNull FileColorManager manager, @Nullable @NlsContexts.Button String selectedColorName) {
     for (String id : manager.getColorIDs()) {
-      addColorButton(manager.getColorName(id), Objects.requireNonNull(manager.getColor(id)));
+      addColorButton(id, manager.getColorName(id), Objects.requireNonNull(manager.getColor(id)));
     }
     addCustomColorButton();
     setSelectedColor(selectedColorName);
