@@ -220,6 +220,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(this);
   }
 
+  public Boolean isCustomizationSupported() {
+    return true;
+  }
+
   @Override
   public void updateUI() {
     super.updateUI();
