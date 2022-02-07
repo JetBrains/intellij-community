@@ -41,12 +41,16 @@ class ShelfProvider(private val project: Project) : SavedPatchesProvider<Shelved
     })
   }
 
+  private fun visibleLists() = shelveManager.allLists.filter { l -> !l.isDeleted && !l.isRecycled }
+
+  override fun isEmpty() = visibleLists().isEmpty()
+
   override fun buildPatchesTree(modelBuilder: TreeModelBuilder) {
-    val shelvesList = shelveManager.allLists.sortedByDescending { it.DATE }
+    val shelvesList = visibleLists().sortedByDescending { it.DATE }
 
     val shelvesRoot = SavedPatchesTree.TagWithCounterChangesBrowserNode(VcsBundle.message("shelf.root.node.title"))
     modelBuilder.insertSubtreeRoot(shelvesRoot)
-    for (shelve in shelvesList.filter { l -> !l.isDeleted && !l.isRecycled }) {
+    for (shelve in shelvesList) {
       modelBuilder.insertSubtreeRoot(ShelvedChangeListChangesBrowserNode(ShelfObject(shelve)), shelvesRoot)
     }
   }

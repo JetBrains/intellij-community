@@ -34,6 +34,7 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.stash.GitStashCache
 import git4idea.stash.GitStashTracker
 import git4idea.stash.GitStashTrackerListener
+import git4idea.stash.isNotEmpty
 import git4idea.ui.StashInfo
 import git4idea.ui.StashInfo.Companion.subject
 import org.jetbrains.annotations.Nls
@@ -58,6 +59,8 @@ class GitStashProvider(val project: Project) : SavedPatchesProvider<StashInfo> {
       }
     }, disposable)
   }
+
+  override fun isEmpty() = !stashTracker.isNotEmpty()
 
   override fun buildPatchesTree(modelBuilder: TreeModelBuilder) {
     val stashesMap = stashTracker.stashes

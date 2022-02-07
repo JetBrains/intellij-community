@@ -20,7 +20,9 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.Content
 import git4idea.i18n.GitBundle
-import git4idea.stash.*
+import git4idea.stash.GitStashTracker
+import git4idea.stash.isStashToolWindowEnabled
+import git4idea.stash.stashToolWindowRegistryOption
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
@@ -103,25 +105,16 @@ internal class GitStashStartupActivity : StartupActivity.DumbAware {
   override fun runActivity(project: Project) {
     ApplicationManager.getApplication().invokeLater({
         val gitStashTracker = project.service<GitStashTracker>()
-        val stashTrackerIsNotEmpty = gitStashTracker.isNotEmpty()
-        gitStashTracker.addListener(object : GitStashTrackerListener {
-          private var hasStashes = stashTrackerIsNotEmpty
-          override fun stashesUpdated() {
-            if (hasStashes != gitStashTracker.isNotEmpty()) {
-              hasStashes = gitStashTracker.isNotEmpty()
-              project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-            }
-          }
-        }, gitStashTracker)
         stashToolWindowRegistryOption().addListener(object : RegistryValueListener {
           override fun afterValueChanged(value: RegistryValue) {
             gitStashTracker.scheduleRefresh()
             project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
           }
         }, gitStashTracker)
-        if (stashTrackerIsNotEmpty) {
-          project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-        }
       }) { project.isDisposed }
   }
+}
+
+fun isStashToolWindowAvailable(project: Project): Boolean {
+  return isStashToolWindowEnabled(project)
 }

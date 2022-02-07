@@ -19,6 +19,7 @@ interface SavedPatchesProvider<S> {
   val popAction: AnAction
 
   fun subscribeToPatchesListChanges(disposable: Disposable, listener: () -> Unit)
+  fun isEmpty(): Boolean
   fun buildPatchesTree(modelBuilder: TreeModelBuilder)
 
   interface PatchObject<S> {
