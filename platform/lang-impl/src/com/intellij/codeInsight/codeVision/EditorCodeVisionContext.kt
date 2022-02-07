@@ -74,6 +74,10 @@ open class EditorCodeVisionContext(
     hasPendingLenses = false
   }
 
+  fun discardPending(){
+    hasPendingLenses = false
+  }
+
 
   protected fun resubmitThings() {
     val viewService = ServiceManager.getService(
@@ -125,6 +129,10 @@ open class EditorCodeVisionContext(
     if (selectedLens < 0 || selectedLens > submittedGroupings.lastIndex)
       return
     submittedGroupings[selectedLens].second(caretOffset)
+  }
+
+  fun hasProviderCodeVision(id: String): Boolean {
+    return frontendResults.mapNotNull { it.getUserData(codeVisionEntryOnHighlighterKey) }.any { it.providerId == id }
   }
 }
 

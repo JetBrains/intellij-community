@@ -264,14 +264,22 @@ open class CodeVisionHost(val project: Project) {
         if (singleLensProvider != null && singleLensProvider != it.id) return@forEach
         ProgressManager.checkCanceled()
         if (project.isDisposed) return@executeOnPooledThread
-        if (lifeSettingModel.disabledCodeVisionProviderIds.contains(it.groupId)) return@forEach
+        if (lifeSettingModel.disabledCodeVisionProviderIds.contains(it.groupId)) {
+          if (editor.lensContextOrThrow.hasProviderCodeVision(it.groupId)) {
+            shouldResetCodeVision = false
+          }
+          return@forEach
+        }
         if(!it.shouldRecomputeForEditor(editor, precalculatedUiThings[it.id])) return@forEach
         shouldResetCodeVision = false
         val result = it.computeForEditor(editor, precalculatedUiThings[it.id])
         results.addAll(result)
       }
 
-      if(shouldResetCodeVision) return@executeOnPooledThread
+      if(shouldResetCodeVision) {
+        editor.lensContextOrThrow.discardPending()
+        return@executeOnPooledThread
+      }
 
       if (!inTestSyncMode) {
         application.invokeLater {
