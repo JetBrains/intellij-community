@@ -294,7 +294,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
         if (bounds != null && isIconHovered(e.getPoint(), bounds)) {
           var value = getModel().getElementAt(index);
           var handler = findDropFrameHandler(XDebuggerFramesList.this);
-          if (value instanceof XStackFrame && handler != null) {
+          if (value instanceof XStackFrame && handler != null && handler.canDrop((XStackFrame)value)) {
             handler.drop((XStackFrame)value);
             e.consume();
           }
@@ -343,7 +343,9 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       stackFrame.customizePresentation(this);
 
       // override icon which is set by customizePresentation if needed
-      if (hovered && canDropSomething) {
+      if ((hovered && canDropSomething)
+          || (selected && hoveredIndex < 0 && canDropSelectedFrame(list)))
+      {
         setIcon(myPopFrameIcon);
         if (iconHovered && selected) {
           myPopFrameIcon.setBackground(ColorUtil.withAlpha(UIUtil.getListSelectionForeground(true), 0.2));
@@ -352,6 +354,25 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
         }
         myPopFrameIcon.setSelected(selected);
       }
+    }
+
+    private boolean canDropSelectedFrame(JList list) {
+      if (!(list instanceof XDebuggerFramesList)) {
+        return false;
+      }
+      var selectedValue = list.getSelectedValue();
+      if (!(selectedValue instanceof XStackFrame)) {
+        return false;
+      }
+      try {
+        var dropFrameHandler = findDropFrameHandler((XDebuggerFramesList)list);
+        if (dropFrameHandler == null) {
+          return false;
+        }
+        return dropFrameHandler.canDrop((XStackFrame)selectedValue);
+      } catch (Throwable ignore) {
+      }
+      return false;
     }
 
     public boolean isIconHovered(@Nullable Point p, @Nullable Rectangle bounds) {
