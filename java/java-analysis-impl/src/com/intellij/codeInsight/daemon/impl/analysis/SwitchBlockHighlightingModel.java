@@ -278,7 +278,7 @@ public class SwitchBlockHighlightingModel {
     }
   }
 
-  @NotNull
+  @Nullable
   HighlightInfo createDuplicateInfo(@Nullable Object duplicateKey, @NotNull PsiElement duplicateElement) {
     String description = duplicateKey == myDefaultValue ? JavaErrorBundle.message("duplicate.default.switch.label") :
                          JavaErrorBundle.message("duplicate.switch.label", duplicateKey);
@@ -318,6 +318,7 @@ public class SwitchBlockHighlightingModel {
     results.add(info);
   }
 
+  @Nullable
   HighlightInfo createCompletenessInfoForSwitch(boolean hasAnyCaseLabels) {
     String messageKey;
     boolean isSwitchExpr = myBlock instanceof PsiExpression;
@@ -349,6 +350,7 @@ public class SwitchBlockHighlightingModel {
     return null;
   }
 
+  @Nullable
   private static HighlightInfo createError(@NotNull PsiElement range, @NlsSafe @NotNull String message) {
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create();
   }
@@ -555,7 +557,7 @@ public class SwitchBlockHighlightingModel {
     }
 
     @Override
-    @NotNull
+    @Nullable
     HighlightInfo createDuplicateInfo(@Nullable Object duplicateKey, @NotNull PsiElement duplicateElement) {
       String description;
       if (duplicateKey == myDefaultValue) {
