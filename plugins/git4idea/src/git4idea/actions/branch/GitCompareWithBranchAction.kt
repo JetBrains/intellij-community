@@ -10,8 +10,7 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopupActions.*
 
-internal class GitCompareWithBranchAction
-  : GitSingleBranchAction() {
+internal class GitCompareWithBranchAction : GitSingleBranchAction(GitBundle.messagePointer("branches.compare.with.current")) {
 
   override val disabledForCurrent = true
 

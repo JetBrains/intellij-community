@@ -19,8 +19,7 @@ import git4idea.ui.branch.GitCheckoutAndRebaseRemoteBranchWorkflow
 import git4idea.ui.branch.hasTrackingConflicts
 import java.util.*
 
-class GitCheckoutWithRebaseAction
-  : GitSingleBranchAction() {
+class GitCheckoutWithRebaseAction : GitSingleBranchAction(GitBundle.messagePointer("branches.checkout.and.rebase.onto.current")) {
 
   override val disabledForCurrent = true
 

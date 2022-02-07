@@ -3,6 +3,7 @@ package git4idea.actions.branch
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsActions
 import git4idea.GitBranch
 import git4idea.GitRemoteBranch
 import git4idea.branch.GitBranchPair
@@ -12,8 +13,10 @@ import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopupActions
 import git4idea.ui.branch.GitBranchPopupActions.addTooltipText
 import git4idea.update.GitUpdateExecutionProcess
+import java.util.function.Supplier
 
-sealed class GitPullBranchAction(private val updateMethod: UpdateMethod) : GitSingleBranchAction() {
+sealed class GitPullBranchAction(dynamicText: Supplier<@NlsActions.ActionText String>,
+                                 private val updateMethod: UpdateMethod) : GitSingleBranchAction(dynamicText) {
 
   override val disabledForLocal = true
 
@@ -38,7 +41,8 @@ sealed class GitPullBranchAction(private val updateMethod: UpdateMethod) : GitSi
     }
   }
 
-  class WithMerge : GitPullBranchAction(UpdateMethod.MERGE) {
+  class WithMerge : GitPullBranchAction(GitBundle.messagePointer("branches.action.pull.into.branch.using.merge.selected"),
+                                        UpdateMethod.MERGE) {
 
     override fun updateIfEnabledAndVisible(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
       with(e.presentation) {
@@ -53,7 +57,8 @@ sealed class GitPullBranchAction(private val updateMethod: UpdateMethod) : GitSi
     }
   }
 
-  class WithRebase : GitPullBranchAction(UpdateMethod.REBASE) {
+  class WithRebase : GitPullBranchAction(GitBundle.messagePointer("branches.action.pull.into.branch.using.rebase.selected"),
+                                         UpdateMethod.REBASE) {
 
     override fun updateIfEnabledAndVisible(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
       with(e.presentation) {

@@ -10,8 +10,7 @@ import git4idea.log.GitRefManager
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopupActions.*
 
-internal class GitMergeBranchAction
-  : GitSingleBranchAction() {
+internal class GitMergeBranchAction : GitSingleBranchAction(GitBundle.messagePointer("branches.merge.into.current")) {
 
   override val disabledForCurrent = true
 

@@ -9,7 +9,7 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopupActions.*
 
-class GitRebaseBranchAction : GitSingleBranchAction() {
+class GitRebaseBranchAction : GitSingleBranchAction(GitBundle.messagePointer("branches.rebase.current.onto.selected")) {
 
   override val disabledForCurrent = true
 

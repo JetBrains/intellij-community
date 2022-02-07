@@ -10,8 +10,7 @@ import git4idea.ui.branch.GitBranchPopupActions.addTooltipText
 import git4idea.ui.branch.GitBranchPopupActions.getSelectedBranchFullPresentation
 import git4idea.ui.branch.createOrCheckoutNewBranch
 
-class GitCheckoutAsNewBranch
-  : GitSingleBranchAction() {
+class GitCheckoutAsNewBranch : GitSingleBranchAction(GitBundle.messagePointer("branches.new.branch.from.branch.current")) {
 
   override fun updateIfEnabledAndVisible(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
     with(e.presentation) {
