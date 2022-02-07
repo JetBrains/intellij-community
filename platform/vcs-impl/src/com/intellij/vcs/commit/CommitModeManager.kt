@@ -14,6 +14,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
@@ -57,9 +58,12 @@ internal class NonModalCommitCustomization : ApplicationInitializedListener {
 class CommitModeManager(private val project: Project) : Disposable {
   internal class MyStartupActivity : VcsStartupActivity {
     override fun runActivity(project: Project) {
+      @Suppress("TestOnlyProblems")
+      if (project is ProjectEx && project.isLight) {
+        return
+      }
+
       AppUIExecutor.onUiThread().expireWith(project).execute {
-        if (project.isDisposed) return@execute
-        
         val commitModeManager = getInstance(project)
         commitModeManager.subscribeToChanges()
         commitModeManager.updateCommitMode()
