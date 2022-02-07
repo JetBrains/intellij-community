@@ -118,8 +118,7 @@ public class ReflectionAccessMethodBuilder {
 
   public ReflectionAccessMethodBuilder addParameters(@NotNull PsiParameterList parameterList) {
     PsiParameter[] parameters = parameterList.getParameters();
-    for (int i = 0; i < parameters.length; i++) {
-      PsiParameter parameter = parameters[i];
+    for (PsiParameter parameter : parameters) {
       PsiType parameterType = parameter.getType();
       PsiType erasedType = TypeConversionUtil.erasure(parameterType);
       String typeName = typeName(parameterType, erasedType);
