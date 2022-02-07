@@ -32,6 +32,7 @@ public interface LookupUsageDescriptor {
    * @deprecated use {@link LookupUsageDescriptor#getAdditionalUsageData(com.intellij.codeInsight.lookup.Lookup)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   default void fillUsageData(@NotNull Lookup lookup, @NotNull FeatureUsageData usageData) {
     getAdditionalUsageData(lookup).forEach(pair -> pair.addData(usageData));
   }
