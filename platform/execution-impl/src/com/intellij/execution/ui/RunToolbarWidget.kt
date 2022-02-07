@@ -30,6 +30,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -92,8 +93,6 @@ internal class RunToolbarWidget(val project: Project) : JBPanel<RunToolbarWidget
     add(createRunActionToolbar().component.apply {
       isOpaque = false
     }, VerticalLayout.CENTER)
-
-    ExecutionReasonableHistoryManager.register(project)
   }
 
   private fun createRunActionToolbar(): ActionToolbar {
@@ -830,34 +829,13 @@ class RunConfigurationStartHistory(val project: Project) : PersistentStateCompon
  * Registers one [ExecutionReasonableHistory] per project and
  * disposes it with the project.
  */
-private object ExecutionReasonableHistoryManager {
-  private val registeredListeners = mutableMapOf<Project, ExecutionReasonableHistory>()
-
-  @RequiresEdt
-  fun register(project: Project) {
-    if (!registeredListeners.containsKey(project)) {
-      registeredListeners[project] = ExecutionReasonableHistory(
-        project,
-        onHistoryChanged = ::processHistoryChanged,
-        onAnyChange = ::configurationHistoryStateChanged
-      )
-      Disposer.register(project) {
-        ApplicationManager.getApplication().invokeLater {
-          unregister(project)
-        }
-      }
-    }
-  }
-
-  /**
-   * Unregister [ExecutionReasonableHistory] of the project and dispose it.
-   *
-   * Shouldn't be called directly because it clears runtime history,
-   * that isn't persisted in [RunConfigurationStartHistory].
-   */
-  @RequiresEdt
-  fun unregister(project: Project) {
-    registeredListeners.remove(project)?.let(Disposer::dispose)
+private class ExecutionReasonableHistoryManager : StartupActivity.DumbAware {
+  override fun runActivity(project: Project) {
+    ExecutionReasonableHistory(
+      project,
+      onHistoryChanged = ::processHistoryChanged,
+      onAnyChange = ::configurationHistoryStateChanged
+    )
   }
 
   private fun processHistoryChanged(latest: ReasonableHistory.Elem<ExecutionEnvironment, RunState>?) {

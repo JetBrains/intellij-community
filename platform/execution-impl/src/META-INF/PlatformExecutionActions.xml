@@ -56,6 +56,7 @@
     <projectToolbarWidget implementation="com.intellij.execution.ui.RunToolbarWidgetFactory"/>
     <projectService serviceImplementation="com.intellij.execution.ui.RunConfigurationStartHistory"/>
     <customizableActionGroupProvider implementation="com.intellij.execution.ui.RunToolbarWidgetCustomizableActionGroupProvider"/>
+    <postStartupActivity implementation="com.intellij.execution.ui.ExecutionReasonableHistoryManager" order="last"/>
   </extensions>
   <project-components>
     <component>
