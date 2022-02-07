@@ -33,6 +33,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
@@ -184,9 +185,11 @@ public final class MadTestingUtil {
   }
 
   public static void enableDefaultInspections(@NotNull Project project) {
-    InspectionProfileImpl.INIT_INSPECTIONS = true;
     InspectionProfileImpl profile = new InspectionProfileImpl("defaultInspections");
-    replaceProfile(project, profile);
+    InspectionsKt.runInInitMode(() -> {
+      replaceProfile(project, profile);
+      return null;
+    });
   }
 
   private static void replaceProfile(@NotNull Project project, InspectionProfileImpl profile) {
