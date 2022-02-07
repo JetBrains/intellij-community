@@ -17,5 +17,3 @@ class KotlinClearPackageCachesListener(private val project: Project) : DynamicPl
 
     private fun clearPackageCaches(): Unit = KotlinJavaPsiFacade.getInstance(project).clearPackageCaches()
 }
-
-
