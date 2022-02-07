@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
@@ -1052,17 +1052,23 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public @NotNull IntentionAction createReceiverParameterTypeFix(@NotNull PsiReceiverParameter receiverParameter,
                                                                  @NotNull PsiType enclosingClassType) {
-    return new VariableTypeFix(receiverParameter, enclosingClassType) {
-      @Override
-      public @NotNull String getText() {
-        return QuickFixBundle.message("fix.receiver.parameter.type.text");
-      }
+    return new ReceiverParameterTypeFix(receiverParameter, enclosingClassType);
+  }
 
-      @Override
-      public @NotNull String getFamilyName() {
-        return QuickFixBundle.message("fix.receiver.parameter.type.family");
-      }
-    };
+  private final static class ReceiverParameterTypeFix extends SetVariableTypeFix {
+    private ReceiverParameterTypeFix(@NotNull PsiReceiverParameter receiverParameter, @NotNull PsiType enclosingClassType) {
+      super(receiverParameter, enclosingClassType);
+    }
+
+    @Override
+    public @NotNull String getText() {
+      return QuickFixBundle.message("fix.receiver.parameter.type.text");
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return QuickFixBundle.message("fix.receiver.parameter.type.family");
+    }
   }
 
   @Override
