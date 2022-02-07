@@ -127,7 +127,7 @@ class ToolWindowsPane internal constructor(frame: JFrame,
 
     // compose layout
     buttonManager.addToToolWindowPane(this)
-    add(layeredPane, DEFAULT_LAYER)
+    add(layeredPane, DEFAULT_LAYER, -1)
     focusTraversalPolicy = LayoutFocusTraversalPolicy()
     if (Registry.`is`("ide.new.tool.window.dnd")) {
       ToolWindowDragHelper(parentDisposable, this).start()
@@ -350,7 +350,7 @@ class ToolWindowsPane internal constructor(frame: JFrame,
         verticalSplitter.innerComponent = horizontalSplitter
       }
       layeredPane.remove(if (isWideScreen) verticalSplitter else horizontalSplitter)
-      layeredPane.add(if (isWideScreen) horizontalSplitter else verticalSplitter, DEFAULT_LAYER)
+      layeredPane.add(if (isWideScreen) horizontalSplitter else verticalSplitter, DEFAULT_LAYER, -1)
       setDocumentComponent(documentComponent)
     }
     if (leftHorizontalSplit != uiSettings.leftHorizontalSplit) {
@@ -570,7 +570,7 @@ class ToolWindowsPane internal constructor(frame: JFrame,
   private fun addSlidingComponent(component: JComponent, info: WindowInfo, dirtyMode: Boolean) {
     if (dirtyMode || !UISettings.getInstance().animateWindows || RemoteDesktopService.isRemoteSession()) {
       // not animated
-      layeredPane.add(component, PALETTE_LAYER)
+      layeredPane.add(component, PALETTE_LAYER, -1)
       layeredPane.setBoundsInPaletteLayer(component, info.anchor, info.weight)
     }
     else {
@@ -580,7 +580,7 @@ class ToolWindowsPane internal constructor(frame: JFrame,
       UIUtil.useSafely(topImage.graphics) { topGraphics ->
         component.putClientProperty(TEMPORARY_ADDED, java.lang.Boolean.TRUE)
         try {
-          layeredPane.add(component, PALETTE_LAYER)
+          layeredPane.add(component, PALETTE_LAYER, -1)
           layeredPane.moveToFront(component)
           layeredPane.setBoundsInPaletteLayer(component, info.anchor, info.weight)
           component.paint(topGraphics)
@@ -602,13 +602,13 @@ class ToolWindowsPane internal constructor(frame: JFrame,
 
       // start animation.
       val surface = Surface(topImage, bottomImage, PaintUtil.negate(bottomImageOffset), 1, info.anchor, UISettings.ANIMATION_DURATION)
-      layeredPane.add(surface, PALETTE_LAYER)
+      layeredPane.add(surface, PALETTE_LAYER, -1)
       surface.bounds = bounds
       layeredPane.validate()
       layeredPane.repaint()
       surface.runMovement()
       layeredPane.remove(surface)
-      layeredPane.add(component, PALETTE_LAYER)
+      layeredPane.add(component, PALETTE_LAYER, -1)
     }
     if (!dirtyMode) {
       layeredPane.validate()
@@ -638,7 +638,7 @@ class ToolWindowsPane internal constructor(frame: JFrame,
 
       // Remove component from the layered pane and start animation.
       val surface = Surface(topImage, bottomImage, PaintUtil.negate(bottomImageOffset), -1, info.anchor, UISettings.ANIMATION_DURATION)
-      layeredPane.add(surface, PALETTE_LAYER)
+      layeredPane.add(surface, PALETTE_LAYER, -1)
       surface.bounds = bounds
       layeredPane.validate()
       layeredPane.repaint()
@@ -702,7 +702,7 @@ private class MyLayeredPane(splitter: JComponent, frame: JFrame) : JBLayeredPane
 
   init {
     isOpaque = false
-    super.add(splitter, DEFAULT_LAYER)
+    add(splitter, DEFAULT_LAYER, -1)
   }
 
   val bottomImage: Image

@@ -33,10 +33,10 @@ internal class ToolWindowPaneOldButtonManager : ToolWindowButtonManager {
   }
 
   override fun addToToolWindowPane(pane: JComponent) {
-    pane.add(topStripe, JLayeredPane.POPUP_LAYER)
-    pane.add(leftStripe, JLayeredPane.POPUP_LAYER)
-    pane.add(bottomStripe, JLayeredPane.POPUP_LAYER)
-    pane.add(rightStripe, JLayeredPane.POPUP_LAYER)
+    pane.add(topStripe, JLayeredPane.POPUP_LAYER, -1)
+    pane.add(leftStripe, JLayeredPane.POPUP_LAYER, -1)
+    pane.add(bottomStripe, JLayeredPane.POPUP_LAYER, -1)
+    pane.add(rightStripe, JLayeredPane.POPUP_LAYER, -1)
   }
 
   override fun updateToolStripesVisibility(showButtons: Boolean, state: ToolWindowPaneState): Boolean {
