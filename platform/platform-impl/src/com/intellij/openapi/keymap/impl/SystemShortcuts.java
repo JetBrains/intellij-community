@@ -6,7 +6,10 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -373,15 +376,11 @@ public final class SystemShortcuts {
   private void readSystem() {
     myKeyStroke2SysShortcut.clear();
 
-    if (!SystemInfo.isMac || !SystemInfo.isJetBrainsJvm) {
+    if (!SystemInfo.isMac || !SystemInfo.isJetBrainsJvm || !Registry.is("read.system.shortcuts")) {
       return;
     }
 
     try {
-      if (!Registry.is("read.system.shortcuts")) {
-        return;
-      }
-
       if (ourShkClass == null) {
         ourShkClass = ReflectionUtil.forName("java.awt.desktop.SystemHotkey");
       }
@@ -431,19 +430,21 @@ public final class SystemShortcuts {
         myKeyStroke2SysShortcut.put(sysKS, shk);
 
         if (DEBUG_SYSTEM_SHORTCUTS) {
-          debugInfo.append(shk.toString()).append(";\n");
+          debugInfo.append(shk).append(";\n");
         }
       }
       if (DEBUG_SYSTEM_SHORTCUTS) {
         Logger.getInstance(SystemShortcuts.class).info("system shortcuts:\n" + debugInfo);
       }
+    }
+    catch (Throwable e) {
+      Logger.getInstance(SystemShortcuts.class).debug(e);
+    }
+    finally {
       if (SystemInfo.isMacOSBigSur) {
         addCustomShortcut(KeyEvent.VK_OPEN_BRACKET, InputEvent.META_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, "Select Next Tab Window");
         addCustomShortcut(KeyEvent.VK_CLOSE_BRACKET, InputEvent.META_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, "Select Previous Tab Window");
       }
-    }
-    catch (Throwable e) {
-      Logger.getInstance(SystemShortcuts.class).debug(e);
     }
   }
 
