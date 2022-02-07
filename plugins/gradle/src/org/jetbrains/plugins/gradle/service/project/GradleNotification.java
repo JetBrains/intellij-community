@@ -11,9 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  */
 public class GradleNotification {
-  public static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Gradle Notification Group",
-                                                                                    NotificationDisplayType.STICKY_BALLOON,
-                                                                                    true);
+  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Gradle Notification Group");
 
   /** @deprecated use {@code NOTIFICATION_GROUP.createNotification(...).notify(project)} */
   @Deprecated
