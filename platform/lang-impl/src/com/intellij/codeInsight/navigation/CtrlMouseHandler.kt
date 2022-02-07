@@ -308,9 +308,7 @@ class CtrlMouseHandler2(
     }
     val text = result.hintText
                ?: return null
-    result.targetClass?.let {
-      QuickNavigateInfoPopupShown2.log(project, it)
-    }
+    QuickNavigateInfoPopupShown2.log(project, result.targetClass)
     val hyperlinkListener = result.targetPointer?.let {
       HintHyperlinkListener(editor, it)
     }

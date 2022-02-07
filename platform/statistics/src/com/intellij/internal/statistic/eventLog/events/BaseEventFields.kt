@@ -194,9 +194,12 @@ abstract class StringListEventField(override val name: String) : ListEventField<
   }
 }
 
-data class ClassEventField(override val name: String) : PrimitiveEventField<Class<*>>() {
+data class ClassEventField(override val name: String): PrimitiveEventField<Class<*>?>() {
 
-  override fun addData(fuData: FeatureUsageData, value: Class<*>) {
+  override fun addData(fuData: FeatureUsageData, value: Class<*>?) {
+    if (value == null) {
+      return
+    }
     val pluginInfo = getPluginInfo(value)
     fuData.addData(name, if (pluginInfo.isSafeToReport()) value.name else "third.party")
   }
@@ -299,4 +302,3 @@ class ObjectListEventField(override val name: String, vararg val fields: EventFi
     fuData.addListObjectData(name, value.map { it.buildObjectData(fields) })
   }
 }
-

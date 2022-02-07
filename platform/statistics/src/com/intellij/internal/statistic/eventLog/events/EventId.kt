@@ -33,7 +33,7 @@ class EventId(
   override fun getFields(): List<EventField<*>> = emptyList()
 }
 
-class EventId1<T>(
+class EventId1<in T>(
   private val group: EventLogGroup,
   eventId: String,
   private val field1: EventField<T>,
@@ -60,7 +60,7 @@ class EventId1<T>(
   override fun getFields(): List<EventField<*>> = listOf(field1)
 }
 
-class EventId2<T1, T2>(
+class EventId2<in T1, in T2>(
   private val group: EventLogGroup,
   eventId: String,
   private val field1: EventField<T1>,
@@ -89,7 +89,7 @@ class EventId2<T1, T2>(
   override fun getFields(): List<EventField<*>> = listOf(field1, field2)
 }
 
-class EventId3<T1, T2, T3>(
+class EventId3<in T1, in T2, in T3>(
   private val group: EventLogGroup,
   eventId: String,
   private val field1: EventField<T1>,

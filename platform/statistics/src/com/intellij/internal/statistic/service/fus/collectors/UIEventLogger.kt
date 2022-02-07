@@ -108,7 +108,7 @@ val EditorFoldingIconClicked: EventId2<Boolean, Boolean> = uiEventGroup.register
 val QuickNavigateInfoPopupShown: EventId1<Language?> = uiEventGroup.registerEvent("QuickNavigateInfoPopupShown", EventFields.Language)
 
 @JvmField
-val QuickNavigateInfoPopupShown2: EventId1<Class<*>> = uiEventGroup.registerEvent(
+val QuickNavigateInfoPopupShown2: EventId1<Class<*>?> = uiEventGroup.registerEvent(
   "QuickNavigateInfoPopupShownClass",
   EventFields.Class("target_class")
 )
