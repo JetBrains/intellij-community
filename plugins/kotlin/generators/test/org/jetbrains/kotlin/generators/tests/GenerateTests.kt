@@ -677,14 +677,29 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractFormatterTest> {
             model("formatter", pattern = Patterns.forRegex("""^([^\.]+)\.after\.kt.*$"""))
-            model("formatter/trailingComma", pattern = Patterns.forRegex("""^([^\.]+)\.call\.after\.kt.*$"""), testMethodName = "doTestCallSite", testClassName = "FormatterCallSite")
+            model(
+                "formatter/trailingComma",
+                pattern = Patterns.forRegex("""^([^\.]+)\.call\.after\.kt.*$"""),
+                testMethodName = "doTestCallSite",
+                testClassName = "FormatterCallSite"
+            )
             model("formatter", pattern = Patterns.forRegex("""^([^\.]+)\.after\.inv\.kt.*$"""), testMethodName = "doTestInverted", testClassName = "FormatterInverted")
-            model("formatter/trailingComma", pattern = Patterns.forRegex("""^([^\.]+)\.call\.after\.inv\.kt.*$"""), testMethodName = "doTestInvertedCallSite", testClassName = "FormatterInvertedCallSite")
+            model(
+                "formatter/trailingComma",
+                pattern = Patterns.forRegex("""^([^\.]+)\.call\.after\.inv\.kt.*$"""),
+                testMethodName = "doTestInvertedCallSite",
+                testClassName = "FormatterInvertedCallSite"
+            )
         }
 
         testClass<AbstractTypingIndentationTestBase> {
             model("indentationOnNewline", pattern = Patterns.forRegex("""^([^\.]+)\.after\.kt.*$"""), testMethodName = "doNewlineTest", testClassName = "DirectSettings")
-            model("indentationOnNewline", pattern = Patterns.forRegex("""^([^\.]+)\.after\.inv\.kt.*$"""), testMethodName = "doNewlineTestWithInvert", testClassName = "InvertedSettings")
+            model(
+                "indentationOnNewline",
+                pattern = Patterns.forRegex("""^([^\.]+)\.after\.inv\.kt.*$"""),
+                testMethodName = "doNewlineTestWithInvert",
+                testClassName = "InvertedSettings"
+            )
         }
 
         testClass<AbstractDiagnosticMessageTest> {
@@ -745,8 +760,18 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractLightTestRunLineMarkersTest> {
-            model("codeInsight/lineMarker/runMarkers", pattern = Patterns.forRegex("^((jUnit|test).*)\\.kt$"), testMethodName = "doLightTest", testClassName="WithLightTestFramework")
-            model("codeInsight/lineMarker/runMarkers", pattern = Patterns.forRegex("^((jUnit|test).*)\\.kt$"), testMethodName = "doPureTest", testClassName="WithoutLightTestFramework")
+            model(
+                "codeInsight/lineMarker/runMarkers",
+                pattern = Patterns.forRegex("^((jUnit|test).*)\\.kt$"),
+                testMethodName = "doLightTest",
+                testClassName = "WithLightTestFramework"
+            )
+            model(
+                "codeInsight/lineMarker/runMarkers",
+                pattern = Patterns.forRegex("^((jUnit|test).*)\\.kt$"),
+                testMethodName = "doPureTest",
+                testClassName = "WithoutLightTestFramework"
+            )
         }
 
         testClass<AbstractLineMarkersTestInLibrarySources> {
@@ -798,8 +823,8 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractAutoImportTest> {
-            model("editor/autoImport", testMethodName = "doTest", testClassName="WithAutoImport", pattern = DIRECTORY, isRecursive = false)
-            model("editor/autoImport", testMethodName = "doTestWithoutAutoImport", testClassName="WithoutAutoImport", pattern = DIRECTORY, isRecursive = false)
+            model("editor/autoImport", testMethodName = "doTest", testClassName = "WithAutoImport", pattern = DIRECTORY, isRecursive = false)
+            model("editor/autoImport", testMethodName = "doTestWithoutAutoImport", testClassName = "WithoutAutoImport", pattern = DIRECTORY, isRecursive = false)
         }
 
         testClass<AbstractJvmOptimizeImportsTest> {
@@ -992,10 +1017,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
             model("outOfBlockProjectWide")
         }
-//
-//      testClass<AbstractFileStructureAndOutOfBlockModificationTrackerConsistencyTest> {
-//          model("outOfBlockProjectWide")
-//      }
+        //
+        //      testClass<AbstractFileStructureAndOutOfBlockModificationTrackerConsistencyTest> {
+        //          model("outOfBlockProjectWide")
+        //      }
 
         testClass<AbstractSessionsInvalidationTest> {
             model("sessionInvalidation", pattern = DIRECTORY, isRecursive = false)
@@ -1008,17 +1033,17 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-   /* testGroup("idea/idea-fir-performance-tests/tests", "idea") {
-        testClass<AbstractFirHighlightingPerformanceTest> {
-            model("testData/highlighter")
-        }
-    }
+    /* testGroup("idea/idea-fir-performance-tests/tests", "idea") {
+         testClass<AbstractFirHighlightingPerformanceTest> {
+             model("testData/highlighter")
+         }
+     }
 
-    testGroup("idea/idea-fir-performance-tests/tests", "idea/idea-completion/testData") {
-        testClass<AbstractHighLevelPerformanceBasicCompletionHandlerTest> {
-            model("handlers/basic", testMethod = "doPerfTest", pattern = KT_WITHOUT_DOTS)
-        }
-    }*/
+     testGroup("idea/idea-fir-performance-tests/tests", "idea/idea-completion/testData") {
+         testClass<AbstractHighLevelPerformanceBasicCompletionHandlerTest> {
+             model("handlers/basic", testMethod = "doPerfTest", pattern = KT_WITHOUT_DOTS)
+         }
+     }*/
 
     testGroup("fir", testDataPath = "../idea/tests/testData") {
         testClass<AbstractFirReferenceResolveTest> {
@@ -1084,6 +1109,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("intentions/importMember", pattern = pattern)
             model("intentions/convertToBlockBody", pattern = pattern)
             model("intentions/addWhenRemainingBranches", pattern = pattern)
+            model("inspectionsLocal/useExpressionBody", pattern = pattern)
         }
 
         testClass<AbstractFirShortenRefsTest> {
@@ -1514,7 +1540,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractPerformanceTypingIndentationTest> {
             model("indentationOnNewline", pattern = Patterns.forRegex("""^([^\.]+)\.after\.kt.*$"""), testMethodName = "doNewlineTest", testClassName = "DirectSettings")
-            model("indentationOnNewline", pattern = Patterns.forRegex("""^([^\.]+)\.after\.inv\.kt.*$"""), testMethodName = "doNewlineTestWithInvert", testClassName = "InvertedSettings")
+            model(
+                "indentationOnNewline",
+                pattern = Patterns.forRegex("""^([^\.]+)\.after\.inv\.kt.*$"""),
+                testMethodName = "doNewlineTestWithInvert",
+                testClassName = "InvertedSettings"
+            )
         }
     }
 
