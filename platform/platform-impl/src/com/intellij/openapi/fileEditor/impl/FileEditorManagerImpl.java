@@ -922,13 +922,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     FileEditorProvider[] newProviders;
     AsyncFileEditorProvider.Builder[] builders;
     if (compositeRef.isNull()) {
+      if (!canOpenFile(file)) return EditorComposite.retrofit(null);
+
       // File is not opened yet. In this case we have to create editors
       // and select the created EditorComposite.
       newProviders = FileEditorProviderManager.getInstance().getProviders(myProject, file);
-      if (newProviders.length == 0) {
-        return Pair.createNonNull(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
-      }
-
       builders = new AsyncFileEditorProvider.Builder[newProviders.length];
       for (int i = 0; i < newProviders.length; i++) {
         try {
@@ -964,8 +962,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       });
     });
 
-    EditorComposite composite = compositeRef.get();
-    return EditorComposite.retrofit(composite);
+    return EditorComposite.retrofit(compositeRef.get());
   }
 
   private @Nullable EditorComposite openFileImpl4Edt(@NotNull EditorWindow window,
@@ -980,12 +977,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     EditorComposite composite = window.getComposite(file);
     boolean newEditor = composite == null;
     if (newEditor) {
-      getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER).beforeFileOpened(this, file);
-
       LOG.assertTrue(newProviders != null && builders != null);
       composite = createComposite(file, newProviders, builders);
       if (composite == null) return null;
 
+      getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER).beforeFileOpened(this, file);
       myOpenedComposites.add(composite);
     }
 
@@ -1096,7 +1092,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     return createComposite(file, editorWithProviders);
   }
 
-  @Contract("_, _ -> new")
   protected @Nullable EditorComposite createComposite(@NotNull VirtualFile file,
                                                       @NotNull List<FileEditorWithProvider> editorWithProviders) {
     for (FileEditorWithProvider editorWithProvider : editorWithProviders) {
@@ -1171,10 +1166,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Nullable
   EditorComposite newEditorComposite(@NotNull VirtualFile file) {
-    FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
-    FileEditorProvider[] providers = editorProviderManager.getProviders(myProject, file);
-    if (providers.length == 0) return null;
+    if (!canOpenFile(file)) return null;
 
+    FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(myProject, file);
     EditorComposite newComposite = createComposite(file, providers, new AsyncFileEditorProvider.Builder[providers.length]);
     if (newComposite == null) return null;
 
