@@ -42,15 +42,19 @@ internal object ListUtils {
     else null
 
 
+  /** Returns the range from withing the start of the [lineNumber]
+   * that may be copied to the next line to create a subsequent list item there */
   fun Document.getLineIndentRange(lineNumber: Int): TextRange {
     val lineStart = getLineStartOffset(lineNumber)
-    val nonWsStart = CharArrayUtil.shiftForward(charsSequence, lineStart, " \t")
+    val nonWsStart = CharArrayUtil.shiftForward(charsSequence, lineStart, " \t>")
 
     return TextRange.create(lineStart, nonWsStart)
   }
 
   /**
-   * Returns the indent at line [lineNumber], with all tabs replaced with spaces.
+   * Returns the prefix of the line [lineNumber] that may be copied to the next line to create a subsequent list item there
+   * with all tabs replaced with spaces.
+   * May contain spaces, tabs and '>' characters.
    * Returns `null` if [file] is null and failed to guess it.
    */
   fun Document.getLineIndentSpaces(lineNumber: Int, file: PsiFile? = null): String? {
@@ -63,6 +67,11 @@ internal object ListUtils {
     val tabSize = CodeStyle.getFacade(psiFile).tabSize
     val indentStr = getText(getLineIndentRange(lineNumber))
     return indentStr.replace("\t", " ".repeat(tabSize))
+  }
+
+  /** Returns the number of spaces after the last '>' in the indent */
+  fun Document.getLineIndentInnerSpacesLength(lineNumber: Int, file: PsiFile? = null): Int? {
+    return getLineIndentSpaces(lineNumber, file)?.takeLastWhile { it == ' ' }?.length
   }
 
   val MarkdownList.items get() = children.filterIsInstance<MarkdownListItem>()
