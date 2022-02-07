@@ -39,14 +39,14 @@ val ProgressResumed: EventId = uiEventGroup.registerEvent("ProgressResumed")
 @JvmField
 val BreadcrumbShowTooltip: EventId1<Language?> = uiEventGroup.registerEvent(
   "BreadcrumbShowTooltip",
-  EventFields.Language
+  EventFields.Language,
 )
 
 @JvmField
 val BreadcrumbNavigate: EventId2<Language?, Boolean> = uiEventGroup.registerEvent(
   "BreadcrumbNavigate",
   EventFields.Language,
-  EventFields.Boolean("with_selection")
+  EventFields.Boolean("with_selection"),
 )
 
 @JvmField
@@ -64,22 +64,31 @@ val DumbModeBalloonCancelled: EventId = uiEventGroup.registerEvent("DumbModeBall
 @JvmField
 val DumbModeBalloonProceededToActions: EventId1<Long> = uiEventGroup.registerEvent(
   "DumbModeBalloonProceededToActions",
-  EventFields.Long("duration_ms")
+  EventFields.Long("duration_ms"),
 )
 
 @JvmField
-val IncrementalSearchActivated: EventId1<Class<*>> = uiEventGroup.registerEvent("IncrementalSearchActivated", EventFields.Class("class"))
+val IncrementalSearchActivated: EventId1<Class<*>> = uiEventGroup.registerEvent(
+  "IncrementalSearchActivated",
+  EventFields.Class("class"),
+)
 
 @JvmField
-val IncrementalSearchKeyTyped: EventId1<Class<*>> = uiEventGroup.registerEvent("IncrementalSearchKeyTyped", EventFields.Class("class"))
+val IncrementalSearchKeyTyped: EventId1<Class<*>> = uiEventGroup.registerEvent(
+  "IncrementalSearchKeyTyped",
+  EventFields.Class("class"),
+)
 
 @JvmField
-val IncrementalSearchCancelled: EventId1<Class<*>> = uiEventGroup.registerEvent("IncrementalSearchCancelled", EventFields.Class("class"))
+val IncrementalSearchCancelled: EventId1<Class<*>> = uiEventGroup.registerEvent(
+  "IncrementalSearchCancelled",
+  EventFields.Class("class"),
+)
 
 @JvmField
 val IncrementalSearchNextPrevItemSelected: EventId1<Class<*>> = uiEventGroup.registerEvent(
   "IncrementalSearchNextPrevItemSelected",
-  EventFields.Class("class")
+  EventFields.Class("class"),
 )
 
 @JvmField
@@ -101,26 +110,38 @@ val ImplementationViewToolWindowOpened: EventId = uiEventGroup.registerEvent("Im
 val EditorFoldingIconClicked: EventId2<Boolean, Boolean> = uiEventGroup.registerEvent(
   "EditorFoldingIconClicked",
   EventFields.Boolean("expand"),
-  EventFields.Boolean("recursive")
+  EventFields.Boolean("recursive"),
 )
 
 @JvmField
-val QuickNavigateInfoPopupShown: EventId1<Language?> = uiEventGroup.registerEvent("QuickNavigateInfoPopupShown", EventFields.Language)
+val QuickNavigateInfoPopupShown: EventId1<Language?> = uiEventGroup.registerEvent(
+  "QuickNavigateInfoPopupShown",
+  EventFields.Language,
+)
 
 @JvmField
 val QuickNavigateInfoPopupShown2: EventId1<Class<*>?> = uiEventGroup.registerEvent(
   "QuickNavigateInfoPopupShownClass",
-  EventFields.Class("target_class")
+  EventFields.Class("target_class"),
 )
 
 @JvmField
-val EditorAnnotationClicked: EventId1<Class<*>> = uiEventGroup.registerEvent("EditorAnnotationClicked", EventFields.Class("class"))
+val EditorAnnotationClicked: EventId1<Class<*>> = uiEventGroup.registerEvent(
+  "EditorAnnotationClicked",
+  EventFields.Class("class"),
+)
 
 @JvmField
-val StatusBarWidgetClicked: EventId1<Class<*>> = uiEventGroup.registerEvent("StatusBarWidgetClicked", EventFields.Class("class"))
+val StatusBarWidgetClicked: EventId1<Class<*>> = uiEventGroup.registerEvent(
+  "StatusBarWidgetClicked",
+  EventFields.Class("class"),
+)
 
 @JvmField
-val StatusBarPopupShown: EventId1<Class<*>> = uiEventGroup.registerEvent("StatusBarPopupShown", EventFields.Class("class"))
+val StatusBarPopupShown: EventId1<Class<*>> = uiEventGroup.registerEvent(
+  "StatusBarPopupShown",
+  EventFields.Class("class"),
+)
 
 internal class UIEventLoggerC : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = uiEventGroup
