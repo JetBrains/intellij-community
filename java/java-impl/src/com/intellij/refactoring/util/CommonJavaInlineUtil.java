@@ -14,6 +14,14 @@ public interface CommonJavaInlineUtil {
   }
 
 
+  /**
+   * Inlines single occurence of variable
+   * @param variable variable to inline
+   * @param initializer initializer of variable
+   * @param ref reference to inline
+   * @param thisAccessExpr qualifier of the reference
+   * @return replaced expression
+   */
   PsiExpression inlineVariable(@NotNull PsiVariable variable,
                                @NotNull PsiExpression initializer,
                                @NotNull PsiJavaCodeReferenceElement ref,
