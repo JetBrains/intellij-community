@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalVirtualFile;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.SortedListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBPanel;
@@ -123,7 +124,6 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     FileLookup.LookupFilter filter =
       f -> myDescriptor.isFileVisible(new CoreLocalVirtualFile(FS, ((LocalFsFinder.IoFile)f).getFile()), myShowHiddenFiles);
     new FileTextFieldImpl(pathEditor, finder, filter, FileChooserFactoryImpl.getMacroMap(), this);
-    Insets pathInsets = myPath.getInsets(), pathBorder = myPath.getBorder().getBorderInsets(myPath);
 
     myModel = new SortedListModel<>(FsItem.COMPARATOR);
     myList = new JBList<>(myModel);
@@ -154,10 +154,9 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     new ListSpeedSearch<>(myList, rec -> rec.name);
 
     var scrollPane = ScrollPaneFactory.createScrollPane(myList);
+    var pathInsets = myPath.getInsets();
     @SuppressWarnings("UseDPIAwareInsets") var scrollInsets = new Insets(JBUI.scale(5) - pathInsets.bottom, pathInsets.left, 0, pathInsets.right);
-    scrollPane.setBorder(BorderFactory.createCompoundBorder(
-      BorderFactory.createLineBorder(UIUtil.getBoundsColor()),
-      BorderFactory.createEmptyBorder(pathBorder.top, pathBorder.left, pathBorder.bottom, pathBorder.right)));
+    scrollPane.setBorder(BorderFactory.createLineBorder(UIUtil.getBoundsColor()));
 
     add(label, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.01, CENTER, HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
     add(toolBar.getComponent(), new GridBagConstraints(0, 1, 1, 1, 1.0, 0.01, CENTER, HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
@@ -668,14 +667,13 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     };
   }
 
-  private static final class MyListCellRenderer extends JLabel implements ListCellRenderer<FsItem> {
+  private static final class MyListCellRenderer extends SimpleListCellRenderer<FsItem> {
     @Override
-    public Component getListCellRendererComponent(JList<? extends FsItem> list, FsItem value, int index, boolean selected, boolean focused) {
+    public void customize(@NotNull JList<? extends FsItem> list, FsItem value, int index, boolean selected, boolean focused) {
       setIcon(value.icon);
       setText(value.name);
       setForeground(selected ? UIUtil.getListSelectionForeground(focused) : UIUtil.getListForeground());
       setEnabled(value.selectable);
-      return this;
     }
   }
 
