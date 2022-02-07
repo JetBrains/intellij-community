@@ -54,6 +54,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   }
 
   override fun removeNotify() {
+    super.removeNotify()
     Disposer.dispose(disposable)
   }
 
