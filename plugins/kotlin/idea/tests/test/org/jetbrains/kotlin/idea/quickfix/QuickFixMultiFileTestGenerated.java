@@ -72,6 +72,34 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
     @TestMetadata("testData/quickfix/autoImports")
     public abstract static class AutoImports extends AbstractQuickFixMultiFileTest {
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/autoImports/invisible")
+        public static class Invisible extends AbstractQuickFixMultiFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("annotation.before.Main.kt")
+            public void testAnnotation() throws Exception {
+                runTest("testData/quickfix/autoImports/invisible/annotation.before.Main.kt");
+            }
+
+            @TestMetadata("class.before.Main.kt")
+            public void testClass() throws Exception {
+                runTest("testData/quickfix/autoImports/invisible/class.before.Main.kt");
+            }
+
+            @TestMetadata("fun.before.Main.kt")
+            public void testFun() throws Exception {
+                runTest("testData/quickfix/autoImports/invisible/fun.before.Main.kt");
+            }
+
+            @TestMetadata("property.before.Main.kt")
+            public void testProperty() throws Exception {
+                runTest("testData/quickfix/autoImports/invisible/property.before.Main.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/autoImports/kt21515")
         public static class Kt21515 extends AbstractQuickFixMultiFileTest {
             private void runTest(String testDataFilePath) throws Exception {
