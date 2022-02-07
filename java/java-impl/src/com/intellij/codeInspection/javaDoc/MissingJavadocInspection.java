@@ -34,7 +34,7 @@ public class MissingJavadocInspection extends LocalInspectionTool {
   public boolean IGNORE_ACCESSORS = false;
   public Options PACKAGE_SETTINGS = new Options();
   public Options MODULE_SETTINGS = new Options();
-  public Options TOP_LEVEL_CLASS_SETTINGS = new Options();
+  public Options TOP_LEVEL_CLASS_SETTINGS = new Options("@param");
   public Options INNER_CLASS_SETTINGS = new Options();
   public Options METHOD_SETTINGS = new Options("@return@param@throws or @exception");
   public Options FIELD_SETTINGS = new Options();
@@ -406,7 +406,7 @@ public class MissingJavadocInspection extends LocalInspectionTool {
     }
   }
 
-  static void checkMissingTypeParamTags(@NotNull PsiTypeParameterListOwner owner,
+  private static void checkMissingTypeParamTags(@NotNull PsiTypeParameterListOwner owner,
                                         PsiDocTag @NotNull [] tags,
                                         @NotNull PsiElement toHighlight,
                                         @NotNull ProblemsHolder holder) {
