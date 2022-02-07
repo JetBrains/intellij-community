@@ -397,7 +397,8 @@ idea.fatal.error.notification=disabled
 
   private DistributionJARsBuilder compilePlatformAndPluginModules(@NotNull Set<PluginLayout> pluginsToPublish) {
     DistributionJARsBuilder distBuilder = new DistributionJARsBuilder(buildContext, pluginsToPublish)
-    compileModules(distBuilder.getModulesForPluginsToPublish())
+    compileModules(distBuilder.getModulesForPluginsToPublish()
+                     + ["intellij.idea.community.build.tasks", "intellij.platform.images.build"])
 
     // we need this to ensure that all libraries which may be used in the distribution are resolved,
     // even if product modules don't depend on them (e.g. JUnit5)
