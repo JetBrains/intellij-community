@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
+import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper
@@ -36,6 +37,7 @@ import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider
 import com.intellij.refactoring.suggested.range
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import com.intellij.util.SmartList
 import org.jetbrains.annotations.Nls
 
 class InplaceMethodExtractor(private val editor: Editor,
@@ -160,6 +162,11 @@ class InplaceMethodExtractor(private val editor: Editor,
     return targetClass
   }
 
+  override fun collectRefs(referencesSearchScope: SearchScope?): MutableCollection<PsiReference> {
+    val reference = call?.reference ?: return SmartList()
+    return SmartList(reference)
+  }
+
   override fun revertState() {
     super.revertState()
     WriteCommandAction.runWriteCommandAction(myProject) {
@@ -174,7 +181,11 @@ class InplaceMethodExtractor(private val editor: Editor,
 
   override fun afterTemplateStart() {
     setActiveExtractor(editor, this)
-    val templateState = TemplateManagerImpl.getTemplateState(myEditor) ?: return
+    val templateState = TemplateManagerImpl.getTemplateState(myEditor)
+    if (templateState == null) {
+      Disposer.dispose(disposable)
+      throw IllegalStateException("Failed to start code template.")
+    }
     Disposer.register(templateState) { SuggestedRefactoringProvider.getInstance(myProject).reset() }
     Disposer.register(templateState, disposable)
     super.afterTemplateStart()
