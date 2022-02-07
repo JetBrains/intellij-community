@@ -8,7 +8,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.util.toUiPathProperty
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
@@ -17,7 +16,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.getPresentablePath
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -31,25 +30,10 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
-  private val defaultBaseDir: String
-    get() = when (context.isCreatingNewProject) {
-      true -> parent.path
-      false -> context.project?.guessProjectDir()?.path ?: ""
-    }
-
-  private val pathFromParent = { "${parent.path}/${parent.name}" }
-  private val pathFromModuleName = {
-    val path = defaultBaseDir
-    when (moduleName != parent.name) {
-      true -> "$path/${parent.name}/$moduleName"
-      false -> "$path/${parent.name}"
-    }
-  }
-
   val sdkProperty = propertyGraph.property<Sdk?>(null)
-  val moduleNameProperty = propertyGraph.lazyProperty { parent.name }
-  val contentRootProperty = propertyGraph.lazyProperty(pathFromParent)
-  val moduleFileLocationProperty = propertyGraph.lazyProperty(pathFromParent)
+  val moduleNameProperty = propertyGraph.lazyProperty(::suggestModuleName)
+  val contentRootProperty = propertyGraph.lazyProperty(::suggestContentRoot)
+  val moduleFileLocationProperty = propertyGraph.lazyProperty(::suggestModuleFilePath)
   val addSampleCodeProperty = propertyGraph.property(false)
 
   final override var sdk by sdkProperty
@@ -61,19 +45,36 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   private var userDefinedContentRoot: Boolean = false
   private var userDefinedModuleFileLocation: Boolean = false
 
+  private fun suggestName(): String {
+    return File(FileUtil.toSystemDependentName(contentRoot)).name
+  }
+
+  private fun suggestLocation(): String {
+    return FileUtil.toCanonicalPath(File(FileUtil.toSystemDependentName(contentRoot)).parent)
+  }
+
+  private fun suggestModuleName(): String {
+    return parent.name
+  }
+
+  private fun suggestContentRoot(): String {
+    return "${parent.path}/${parent.name}"
+  }
+
+  private fun suggestModuleFilePath(): String {
+    return contentRoot
+  }
+
   init {
-    moduleNameProperty.dependsOn(parent.nameProperty) { parent.name }
+    moduleNameProperty.dependsOn(parent.nameProperty, ::suggestModuleName)
 
-    contentRootProperty.dependsOn(parent.pathProperty, pathFromParent)
-    contentRootProperty.dependsOn(parent.nameProperty, pathFromParent)
-    moduleFileLocationProperty.dependsOn(parent.pathProperty, pathFromParent)
-    moduleFileLocationProperty.dependsOn(parent.nameProperty, pathFromParent)
+    contentRootProperty.dependsOn(parent.nameProperty, ::suggestContentRoot)
+    contentRootProperty.dependsOn(parent.pathProperty, ::suggestContentRoot)
 
-    contentRootProperty.dependsOn(moduleNameProperty, pathFromModuleName)
-    moduleFileLocationProperty.dependsOn(moduleNameProperty, pathFromModuleName)
+    moduleFileLocationProperty.dependsOn(contentRootProperty, ::suggestModuleFilePath)
 
-    moduleNameProperty.dependsOn(contentRootProperty) { File(contentRoot).name }
-    moduleFileLocationProperty.dependsOn(contentRootProperty) { contentRoot }
+    parent.nameProperty.dependsOn(contentRootProperty, ::suggestName)
+    parent.pathProperty.dependsOn(contentRootProperty, ::suggestLocation)
   }
 
   override fun setupUI(builder: Panel) {
@@ -89,35 +90,35 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
           .bindSelected(addSampleCodeProperty)
       }.topGap(TopGap.SMALL)
       collapsibleGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings")) {
-        if (context.isCreatingNewProject) {
-          row(UIBundle.message("label.project.wizard.new.project.module.name")) {
-            textField()
-              .bindText(moduleNameProperty)
-              .horizontalAlign(HorizontalAlign.FILL)
-              .validationOnInput { validateModuleName() }
-              .validationOnApply { validateModuleName() }
-          }.bottomGap(BottomGap.SMALL)
-          row(UIBundle.message("label.project.wizard.new.project.content.root")) {
-            textFieldWithBrowseButton(UIBundle.message("label.project.wizard.new.project.content.root.title"), context.project,
-              FileChooserDescriptorFactory.createSingleFolderDescriptor()) { file: VirtualFile -> getPresentablePath(file.path) }
-              .bindText(contentRootProperty.toUiPathProperty())
-              .horizontalAlign(HorizontalAlign.FILL)
-              .validationOnApply { validateContentRoot() }
-              .apply {
-                component.textField.addKeyListener(object : KeyListener {
-                  override fun keyTyped(e: KeyEvent?) {}
-                  override fun keyPressed(e: KeyEvent?) {
-                    userDefinedContentRoot = true
-                  }
+        row(UIBundle.message("label.project.wizard.new.project.module.name")) {
+          textField()
+            .bindText(moduleNameProperty)
+            .horizontalAlign(HorizontalAlign.FILL)
+            .validationOnInput { validateModuleName() }
+            .validationOnApply { validateModuleName() }
+        }.bottomGap(BottomGap.SMALL)
+        row(UIBundle.message("label.project.wizard.new.project.content.root")) {
+          val browseDialogTitle = UIBundle.message("label.project.wizard.new.project.content.root.title")
+          val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+          textFieldWithBrowseButton(browseDialogTitle, context.project, fileChooserDescriptor) { getPresentablePath(it.path) }
+            .bindText(contentRootProperty.toUiPathProperty())
+            .horizontalAlign(HorizontalAlign.FILL)
+            .validationOnApply { validateContentRoot() }
+            .apply {
+              component.textField.addKeyListener(object : KeyListener {
+                override fun keyTyped(e: KeyEvent?) {}
+                override fun keyPressed(e: KeyEvent?) {
+                  userDefinedContentRoot = true
+                }
 
-                  override fun keyReleased(e: KeyEvent?) {}
-                })
-              }
-          }.bottomGap(BottomGap.SMALL)
-        }
+                override fun keyReleased(e: KeyEvent?) {}
+              })
+            }
+        }.bottomGap(BottomGap.SMALL)
         row(UIBundle.message("label.project.wizard.new.project.module.file.location")) {
-          textFieldWithBrowseButton(UIBundle.message("label.project.wizard.new.project.module.file.location.title"), context.project,
-            FileChooserDescriptorFactory.createSingleFolderDescriptor()) { file: VirtualFile -> getPresentablePath(file.path) }
+          val browseDialogTitle = UIBundle.message("label.project.wizard.new.project.module.file.location.title")
+          val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+          textFieldWithBrowseButton(browseDialogTitle, context.project, fileChooserDescriptor) { getPresentablePath(it.path) }
             .bindText(moduleFileLocationProperty.toUiPathProperty())
             .horizontalAlign(HorizontalAlign.FILL)
             .validationOnApply { validateModuleFileLocation() }
