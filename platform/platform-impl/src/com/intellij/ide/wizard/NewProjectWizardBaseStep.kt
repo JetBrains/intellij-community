@@ -97,9 +97,11 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
         return error(UIBundle.message("label.project.wizard.new.project.directory.invalid", ex.reason))
       }
 
-      for (project in ProjectManager.getInstance().openProjects) {
-        if (ProjectUtil.isSameProject(projectPath, project)) {
-          return error(UIBundle.message("label.project.wizard.new.project.directory.already.taken.error", project.name))
+      if (context.isCreatingNewProject) {
+        for (project in ProjectManager.getInstance().openProjects) {
+          if (ProjectUtil.isSameProject(projectPath, project)) {
+            return error(UIBundle.message("label.project.wizard.new.project.directory.already.taken.error", project.name))
+          }
         }
       }
 
