@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.io.BaseDataReader;
 import git4idea.config.GitExecutable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,6 +96,23 @@ public class GitLineHandler extends GitTextHandler {
 
   public void setIgnoreAuthenticationMode(@NotNull AuthenticationMode authenticationMode) {
     myIgnoreAuthenticationRequest = authenticationMode;
+  }
+
+  /** @deprecated Please use overload {@link #setIgnoreAuthenticationMode(AuthenticationMode)}*/
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  public void setIgnoreAuthenticationMode(@NotNull GitAuthenticationMode authenticationMode) {
+    switch (authenticationMode) {
+      case NONE:
+        myIgnoreAuthenticationRequest = AuthenticationMode.NONE;
+        break;
+      case SILENT:
+        myIgnoreAuthenticationRequest = AuthenticationMode.SILENT;
+        break;
+      case FULL:
+        myIgnoreAuthenticationRequest = AuthenticationMode.FULL;
+        break;
+    }
   }
 
   @Nullable
