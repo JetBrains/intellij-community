@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.java.codeInspection;
 
@@ -8,7 +8,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class CapturingCleanerInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+public class CapturingCleaner18InspectionTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testCapturingCleaner() {doTest();}
 
@@ -26,12 +26,12 @@ public class CapturingCleanerInspectionTest extends LightJavaCodeInsightFixtureT
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_9;
+    return JAVA_18;
   }
 
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/cleanerCapturingThis/before18";
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/cleanerCapturingThis/18";
   }
 }
