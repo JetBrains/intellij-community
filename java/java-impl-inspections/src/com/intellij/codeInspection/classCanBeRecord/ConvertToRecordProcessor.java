@@ -21,7 +21,7 @@ import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
-import com.intellij.refactoring.util.RefactoringConflictUtil;
+import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -153,7 +153,7 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
         renameMethodProcessor.findExistingNameConflicts(renameMethodInfo.myMethod, renameMethodInfo.myNewName, conflicts, myAllRenames);
       }
     }
-    RefactoringConflictUtil.getInstance()
+    RefactoringConflictsUtil.getInstance()
       .analyzeAccessibilityConflictsAfterMemberMove(conflictingFields, myRecordCandidate.getPsiClass(), conflicts, PRIVATE);
 
     if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {

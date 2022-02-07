@@ -13,7 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.util.RefactoringConflictUtil;
+import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +77,7 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
                                      @NotNull MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
     final VirtualFile targetDirFile = PsiUtilCore.getVirtualFile(myTargetDirectory);
     if (targetDirFile == null) return;
-    RefactoringConflictUtil.getInstance()
+    RefactoringConflictsUtil.getInstance()
       .analyzeModuleConflicts(myPackage.getManager().getProject(), elements, usages, targetDirFile, conflicts);
   }
 

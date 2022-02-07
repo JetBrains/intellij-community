@@ -13,7 +13,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.util.RefactoringConflictUtil;
+import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -79,7 +79,7 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
   @Override
   public void analyzeModuleConflicts(@NotNull final Collection<? extends PsiElement> elements,
                                      @NotNull MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
-    RefactoringConflictUtil.getInstance()
+    RefactoringConflictsUtil.getInstance()
       .analyzeModuleConflicts(getTargetPackage().getManager().getProject(), elements, usages, mySourceRoot, conflicts);
   }
 

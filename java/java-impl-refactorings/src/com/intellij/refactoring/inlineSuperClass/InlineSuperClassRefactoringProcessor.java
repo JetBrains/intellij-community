@@ -259,7 +259,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
           if (myCurrentInheritor == null) { //superclass to be removed
             Set<PsiMember> movedMembers = new HashSet<>(pushDownConflicts.getMovedMembers());
             movedMembers.addAll(Arrays.asList(mySuperClass.getConstructors()));
-            RefactoringConflictUtil.getInstance()
+            RefactoringConflictsUtil.getInstance()
               .analyzeAccessibilityConflictsAfterMemberMove(movedMembers, targetClass, conflicts, null, targetClass, pushDownConflicts.getAbstractMembers(),
                                                             Conditions.alwaysTrue());
           }

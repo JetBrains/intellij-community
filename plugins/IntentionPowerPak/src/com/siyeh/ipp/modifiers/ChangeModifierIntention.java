@@ -49,7 +49,7 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.RefactoringConflictUtil;
+import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -414,7 +414,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       copy.setModifierProperty(modifier.toPsiModifier(), true);
 
       if (member instanceof PsiMethod) {
-        RefactoringConflictUtil.getInstance().searchForHierarchyConflicts((PsiMethod)member, conflicts, modifier.toPsiModifier());
+        RefactoringConflictsUtil.getInstance().analyzeHierarchyConflictsAfterMethodModifierChange((PsiMethod)member, conflicts, modifier.toPsiModifier());
       }
 
       final Query<PsiReference> search = ReferencesSearch.search(member, useScope);

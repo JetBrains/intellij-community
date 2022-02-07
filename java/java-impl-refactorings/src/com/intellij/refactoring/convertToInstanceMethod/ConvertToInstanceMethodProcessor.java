@@ -172,13 +172,13 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
     MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final Set<PsiMember> methods = Collections.singleton(myMethod);
     //check that method to call would be still accessible from the call places
-    RefactoringConflictUtil.getInstance().analyzeAccessibilityConflictsAfterMemberMove(methods, myTargetClass, conflicts, myNewVisibility);
+    RefactoringConflictsUtil.getInstance().analyzeAccessibilityConflictsAfterMemberMove(methods, myTargetClass, conflicts, myNewVisibility);
     //additionally check that body of method contains only accessible in the inheritors references
     if (myTargetClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(myTargetClass)) {
       for (final UsageInfo usage : usagesIn) {
         if (usage instanceof ImplementingClassUsageInfo) {
           PsiClass targetClass = ((ImplementingClassUsageInfo)usage).getPsiClass();
-          RefactoringConflictUtil.getInstance().checkUsedElementsAfterMove(myMethod, myMethod, methods, null, targetClass, targetClass, conflicts);
+          RefactoringConflictsUtilImpl.analyzeUsedElementsAfterMove(myMethod, myMethod, methods, null, targetClass, targetClass, conflicts);
         }
       }
     }

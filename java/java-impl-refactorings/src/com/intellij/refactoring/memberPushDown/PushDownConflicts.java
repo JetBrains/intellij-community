@@ -25,7 +25,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.RefactoringConflictUtil;
+import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
@@ -181,7 +181,7 @@ public class PushDownConflicts {
         }
       }
     }
-    RefactoringConflictUtil.getInstance().analyzeAccessibilityConflictsAfterMemberMove(myMovedMembers, targetClass, myConflicts, null, context, myAbstractMembers,
+    RefactoringConflictsUtil.getInstance().analyzeAccessibilityConflictsAfterMemberMove(myMovedMembers, targetClass, myConflicts, null, context, myAbstractMembers,
                                                            ref -> !InheritanceUtil.hasEnclosingInstanceInScope(myClass, ref.getElement(), true, false));
 
   }

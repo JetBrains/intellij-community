@@ -302,7 +302,7 @@ public final class MoveClassesOrPackagesImpl {
       final Collection<? extends PsiElement> scopes = Arrays.asList(directories);
       final VirtualFile vFile = PsiUtilCore.getVirtualFile(selectedTarget);
       if (vFile != null) {
-        RefactoringConflictUtil.getInstance().analyzeModuleConflicts(project, scopes, UsageInfo.EMPTY_ARRAY, vFile, conflicts);
+        RefactoringConflictsUtil.getInstance().analyzeModuleConflicts(project, scopes, UsageInfo.EMPTY_ARRAY, vFile, conflicts);
       }
     });
     if (!ProgressManager.getInstance()

@@ -15,7 +15,7 @@ import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
-import com.intellij.refactoring.util.RefactoringConflictUtil;
+import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
@@ -110,7 +110,7 @@ public final class PullUpConflictsUtil {
         }
       }
     }
-    RefactoringConflictUtil.getInstance()
+    RefactoringConflictsUtil.getInstance()
       .analyzeAccessibilityConflictsAfterMemberMove(movedMembers, superClass, conflicts, VisibilityUtil.ESCALATE_VISIBILITY, targetRepresentativeElement,
                                                     abstrMethods, Conditions.alwaysTrue());
     if (superClass != null) {
@@ -151,7 +151,7 @@ public final class PullUpConflictsUtil {
     }
     final VirtualFile vFile = PsiUtilCore.getVirtualFile(targetDirectory);
     if (vFile != null) {
-      RefactoringConflictUtil.getInstance()
+      RefactoringConflictsUtil.getInstance()
         .analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList, UsageInfo.EMPTY_ARRAY, vFile, conflicts);
     }
 

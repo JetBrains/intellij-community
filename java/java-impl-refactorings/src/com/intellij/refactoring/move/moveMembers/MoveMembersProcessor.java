@@ -21,7 +21,7 @@ import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveMemberViewDescriptor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.RefactoringConflictUtil;
+import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -357,7 +357,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
     final VirtualFile vFile = PsiUtilCore.getVirtualFile(myTargetClass);
     if (vFile != null) {
-      RefactoringConflictUtil.getInstance().analyzeModuleConflicts(myProject, myMembersToMove, usages, vFile, conflicts);
+      RefactoringConflictsUtil.getInstance().analyzeModuleConflicts(myProject, myMembersToMove, usages, vFile, conflicts);
     }
 
     return showConflicts(conflicts, usages);
