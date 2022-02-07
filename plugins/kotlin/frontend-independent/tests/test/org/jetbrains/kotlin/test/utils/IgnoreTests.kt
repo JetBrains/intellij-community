@@ -10,8 +10,7 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.useLines
-import kotlin.io.path.writeLines
+import kotlin.io.path.*
 
 object IgnoreTests {
     private const val INSERT_DIRECTIVE_AUTOMATICALLY = false // TODO use environment variable instead
@@ -90,7 +89,6 @@ object IgnoreTests {
             test()
             return
         }
-
         val testIsEnabled = directive.isEnabledInFile(testFile)
 
         try {
@@ -201,13 +199,18 @@ object IgnoreTests {
         return isEnabledIfDirectivePresent(isDirectivePresent)
     }
 
-    private fun containsDirective(file: Path, directive: EnableOrDisableTestDirective): Boolean =
-        file.useLines { lines -> lines.any { it.isLineWithDirective(directive) } }
+    private fun containsDirective(file: Path, directive: EnableOrDisableTestDirective): Boolean {
+        if (file.notExists()) return false
+        return file.useLines { lines -> lines.any { it.isLineWithDirective(directive) } }
+    }
 
     private fun String.isLineWithDirective(directive: EnableOrDisableTestDirective): Boolean =
         substringBefore(':').trim() == directive.directiveText.trim()
 
     private fun Path.insertDirective(directive: EnableOrDisableTestDirective, directivePosition: DirectivePosition) {
+        if (notExists()) {
+            createFile()
+        }
         toFile().apply {
             val originalText = readText()
             val textWithDirective = when (directivePosition) {
