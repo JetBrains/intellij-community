@@ -2,11 +2,12 @@
 package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 
 
 class MarkdownSupportTest : GrazieTestBase() {
+  override val additionalEnabledRules: Set<String> = setOf("LanguageTool.EN.UPPERCASE_SENTENCE_START")
+
   override fun setUp() {
     super.setUp()
     // IDEA-228789 markdown change PSI/document/model during highlighting
