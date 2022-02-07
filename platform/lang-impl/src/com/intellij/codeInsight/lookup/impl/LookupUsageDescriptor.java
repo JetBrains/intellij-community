@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,18 +31,34 @@ public interface LookupUsageDescriptor {
   String getExtensionKey();
 
   /**
-   * @deprecated use {@link LookupUsageDescriptor#getAdditionalUsageData(com.intellij.codeInsight.lookup.Lookup)}
+   * @deprecated use {@link LookupUsageDescriptor#getAdditionalUsageData(LookupResultDescriptor)}
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   default void fillUsageData(@NotNull Lookup lookup, @NotNull FeatureUsageData usageData) {
-    getAdditionalUsageData(lookup).forEach(pair -> pair.addData(usageData));
+    LookupResultDescriptor lookupResultDescriptor = new LookupResultDescriptor() {
+      @Override
+      public @NotNull Lookup getLookup() {
+        return lookup;
+      }
+
+      @Override
+      public @Nullable LookupElement getSelectedItem() {
+        return null;
+      }
+
+      @Override
+      public LookupUsageTracker.FinishType getFinishType() {
+        return null;
+      }
+    };
+    getAdditionalUsageData(lookupResultDescriptor).forEach(pair -> pair.addData(usageData));
   }
 
   /**
    * The method is triggered after the lookup usage finishes. Use it to fill usageData with information to collect.
    */
-  default List<EventPair<?>> getAdditionalUsageData(@NotNull Lookup lookup) {
+  default List<EventPair<?>> getAdditionalUsageData(@NotNull LookupResultDescriptor lookupResultDescriptor) {
     return Collections.emptyList();
   }
 }

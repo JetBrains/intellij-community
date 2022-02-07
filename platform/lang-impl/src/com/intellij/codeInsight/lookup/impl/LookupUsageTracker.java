@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.completion.BaseCompletionService;
@@ -141,7 +141,7 @@ public final class LookupUsageTracker {
 
       LookupUsageDescriptor.EP_NAME.forEachExtensionSafe(usageDescriptor -> {
         if (PluginInfoDetectorKt.getPluginInfo(usageDescriptor.getClass()).isSafeToReport()) {
-          List<EventPair<?>> data = usageDescriptor.getAdditionalUsageData(myLookup);
+          List<EventPair<?>> data = usageDescriptor.getAdditionalUsageData(new MyLookupResultDescriptor(myLookup, currentItem, finishType));
           if(!data.isEmpty()) {
             ADDITIONAL.addData(featureUsageData, new ObjectEventData(data));
           } else {
@@ -225,7 +225,7 @@ public final class LookupUsageTracker {
     }
   }
 
-  private enum FinishType {
+  public enum FinishType {
     TYPED, EXPLICIT, CANCELED_EXPLICITLY, CANCELED_BY_TYPING
   }
 
@@ -245,6 +245,35 @@ public final class LookupUsageTracker {
         default:
           return OTHER;
       }
+    }
+  }
+
+  private static class MyLookupResultDescriptor implements LookupResultDescriptor {
+    private final Lookup myLookup;
+    private final LookupElement mySelectedItem;
+    private final FinishType myFinishType;
+
+    private MyLookupResultDescriptor(Lookup lookup,
+                                     LookupElement item,
+                                     FinishType type) {
+      myLookup = lookup;
+      mySelectedItem = item;
+      myFinishType = type;
+    }
+
+    @Override
+    public @NotNull Lookup getLookup() {
+      return myLookup;
+    }
+
+    @Override
+    public @Nullable LookupElement getSelectedItem() {
+      return mySelectedItem;
+    }
+
+    @Override
+    public FinishType getFinishType() {
+      return myFinishType;
     }
   }
 }

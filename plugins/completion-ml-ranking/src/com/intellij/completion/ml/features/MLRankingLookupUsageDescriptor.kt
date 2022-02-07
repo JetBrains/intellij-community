@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.features
 
-import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.lookup.impl.LookupResultDescriptor
 import com.intellij.codeInsight.lookup.impl.LookupUsageDescriptor
 import com.intellij.completion.ml.features.MLRankingCompletionCollectorExtension.Companion.mlUsed
 import com.intellij.completion.ml.features.MLRankingCompletionCollectorExtension.Companion.totalMlTime
@@ -13,7 +13,8 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 class MLRankingLookupUsageDescriptor : LookupUsageDescriptor {
   override fun getExtensionKey(): String = "ml"
 
-  override fun getAdditionalUsageData(lookup: Lookup): List<EventPair<*>> {
+  override fun getAdditionalUsageData(lookupResultDescriptor: LookupResultDescriptor): List<EventPair<*>> {
+    val lookup = lookupResultDescriptor.lookup
     val data = mutableListOf<EventPair<*>>()
     if (lookup.isCompletion && lookup is LookupImpl) {
       val storage = LookupStorage.get(lookup)
