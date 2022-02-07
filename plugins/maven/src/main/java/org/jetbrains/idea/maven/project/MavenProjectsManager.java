@@ -266,7 +266,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
           fireActivated();
           listenForExternalChanges();
         }
-        if (!Registry.is("maven.new.import")) {
+        if (!MavenUtil.isLinearImportEnabled()) {
           scheduleUpdateAllProjects(isNew);
         }
       });
@@ -868,7 +868,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void forceUpdateAllProjectsOrFindAllAvailablePomFiles() {
-    if (Registry.is("maven.new.import")) {
+    if (MavenUtil.isLinearImportEnabled()) {
       MavenImportingManager.getInstance(myProject)
         .openProjectAndImport(new FilesList(collectAllAvailablePomFiles()), getImportingSettings(), getGeneralSettings());
       return;
@@ -882,7 +882,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   private Promise<Void> doScheduleUpdateProjects(final Collection<MavenProject> projects,
                                                       final boolean forceUpdate,
                                                       final boolean forceImportAndResolve) {
-    if (Registry.is("maven.new.import")){
+    if (MavenUtil.isLinearImportEnabled()){
       return MavenImportingManager.getInstance(myProject)
         .openProjectAndImport(new FilesList(ContainerUtil.map(projects, MavenProject::getFile)), getImportingSettings(), getGeneralSettings()).then(it -> null);
     }
@@ -925,7 +925,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @ApiStatus.Internal
   public Promise<?> waitForImportCompletion() {
-    if(Registry.is("maven.new.import")) return MavenImportingManager.getInstance(myProject).getImportFinishPromise();
+    if(MavenUtil.isLinearImportEnabled()) return MavenImportingManager.getInstance(myProject).getImportFinishPromise();
 
     AsyncPromise<?> promise = new AsyncPromise<>();
     MavenUtil.runInBackground(myProject, SyncBundle.message("maven.sync.waiting.for.completion"), false, indicator -> {

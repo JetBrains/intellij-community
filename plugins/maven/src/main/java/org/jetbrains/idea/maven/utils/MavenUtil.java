@@ -300,7 +300,7 @@ public class MavenUtil {
   }
 
   public static boolean isNoBackgroundMode() {
-    if (shouldRunTasksAsynchronouslyInTests() || Registry.is("maven.new.import")) {
+    if (shouldRunTasksAsynchronouslyInTests() || isLinearImportEnabled()) {
       return false;
     }
     return (ApplicationManager.getApplication().isUnitTestMode()
@@ -1586,5 +1586,9 @@ public class MavenUtil {
       MavenLog.LOG.warn("resolve remote repo error", e);
     }
     return repositories;
+  }
+
+  public static boolean isLinearImportEnabled(){
+    return Registry.is("maven.new.import");
   }
 }

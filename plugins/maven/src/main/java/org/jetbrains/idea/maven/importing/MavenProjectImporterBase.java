@@ -83,7 +83,7 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
   protected static void configureMavenProjectsInBackground(@NotNull Collection<MavenProject> projects,
                                                            @NotNull Map<MavenProject, Module> mavenProjectToModule,
                                                            @NotNull Project project) {
-    if (Registry.is("maven.new.import")) return;
+    if (MavenUtil.isLinearImportEnabled()) return;
 
     MavenUtil.runInBackground(project, MavenProjectBundle.message("command.name.configuring.projects"), false, indicator -> {
       configureMavenProjects(projects, mavenProjectToModule, project, indicator);

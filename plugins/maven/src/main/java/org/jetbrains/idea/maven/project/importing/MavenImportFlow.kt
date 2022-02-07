@@ -251,7 +251,6 @@ class MavenImportFlow {
   fun commitToWorkspaceModel(context: MavenResolvedContext): MavenImportedContext {
     val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(context.project)
     ApplicationManager.getApplication().assertIsNonDispatchThread()
-    val projectManager = MavenProjectsManager.getInstance(context.project)
     val projectImporter = MavenProjectImporter.createImporter(context.project, context.readContext.projectsTree,
                                                               context.projectsToImport.map {
                                                                 it to MavenProjectChanges.ALL

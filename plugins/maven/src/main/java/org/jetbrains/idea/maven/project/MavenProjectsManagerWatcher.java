@@ -25,6 +25,7 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -105,7 +106,7 @@ public class MavenProjectsManagerWatcher {
    * if project is closed)
    */
   public Promise<Void> scheduleUpdateAll(boolean force, final boolean forceImportAndResolve) {
-    if(Registry.is("maven.new.import")) {
+    if(MavenUtil.isLinearImportEnabled()) {
       return Promises.resolvedPromise();
     }
 
@@ -128,7 +129,7 @@ public class MavenProjectsManagerWatcher {
                                       boolean force,
                                       final boolean forceImportAndResolve) {
 
-    if (Registry.is("maven.new.import")) {
+    if (MavenUtil.isLinearImportEnabled()) {
       return Promises.resolvedPromise();
     }
     final AsyncPromise<Void> promise = new AsyncPromise<>();

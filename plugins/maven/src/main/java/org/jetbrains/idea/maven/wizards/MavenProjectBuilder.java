@@ -152,7 +152,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     MavenUtil.setupProjectSdk(project);
 
 
-    if (Registry.is("maven.new.import")) {
+    if (MavenUtil.isLinearImportEnabled()) {
       Module dummyModule = createDummyModule(project);
       VirtualFile rootPath = LocalFileSystem.getInstance().findFileByNioFile(getRootPath());
       MavenImportingManager.getInstance(project).openProjectAndImport(

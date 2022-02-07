@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
@@ -186,6 +187,7 @@ public class MavenProjectTreeImporter extends MavenProjectImporterBase {
   private void configureMavenProjects(MavenModuleImportContext moduleImportContext) {
     List<MavenModuleConfigurer> configurers = MavenModuleConfigurer.getConfigurers();
     List<MavenModuleImportData> allModules = moduleImportContext.allModules;
+    if (MavenUtil.isLinearImportEnabled()) return;
     MavenUtil.runInBackground(myProject, MavenProjectBundle.message("command.name.configuring.projects"), false, indicator -> {
       float count = 0;
       long startTime = System.currentTimeMillis();
