@@ -832,6 +832,8 @@ public final class JBUI {
       public static JBInsets textFieldInputInsets() {
         return insets("ComplexPopup.TextField.inputInsets", insets(10, 8));
       }
+
+      public static final int TEXT_FIELD_SEPARATOR_HEIGHT = 1;
     }
 
     public static final class Popup {
