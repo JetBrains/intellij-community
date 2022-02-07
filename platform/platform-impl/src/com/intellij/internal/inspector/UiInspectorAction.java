@@ -1344,6 +1344,12 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       sb.append(StringUtil.toUpperCase(hex));
 
       if (value instanceof UIResource) sb.append(" UIResource");
+      if (value instanceof JBColor) {
+        String name = ((JBColor)value).getName();
+        if (!StringUtil.isEmpty(name)) {
+          sb.append(" name: " + name);
+        }
+      }
       setText(sb.toString());
       setIcon(createColorIcon(value));
     }
