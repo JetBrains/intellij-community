@@ -23,7 +23,7 @@ public final class TextWithMnemonic {
    */
   private final int myMnemonicIndex;
   /**
-   * A text that can be appended to myText to display a mnemonic that doesn't belong to the text naturally. 
+   * A text that can be appended to myText to display a mnemonic that doesn't belong to the text naturally.
    * Ex: "Help (P)" - " (P)" will be extracted into a suffix.
    */
   private final @NotNull @Nls String myMnemonicSuffix;
@@ -147,7 +147,7 @@ public final class TextWithMnemonic {
 
   /**
    * Appends given text to the current text.
-   * 
+   *
    * @param textToAppend text to append. Appended text is treated as a plain text, without mnemonic, so mnemonic position is unchanged.
    * @return TextWithMnemonic object which text is the concatenation of this object text and supplied text.
    */
@@ -159,7 +159,7 @@ public final class TextWithMnemonic {
 
   /**
    * Replaces the first occurrence of given target text with the given replacement text.
-   * 
+   *
    * @param target the target text to be replaced
    * @param replacement the replacement text which is treated as a plain text, without mnemonic.
    * @return TextWithMnemonic object. The resulting mnemonic position could be adjusted if the mnemonic was located after the replacement.
@@ -171,7 +171,7 @@ public final class TextWithMnemonic {
       return this;
     }
     String resultText = myText.substring(0, index) + replacement + myText.substring(index + target.length());
-    int resultIndex = myMnemonicIndex < index ? myMnemonicIndex : 
+    int resultIndex = myMnemonicIndex < index ? myMnemonicIndex :
                       myMnemonicIndex >= index + target.length() ? myMnemonicIndex - target.length() + replacement.length() :
                       -1;
     return new TextWithMnemonic(resultText, resultIndex, myMnemonicSuffix);
@@ -181,20 +181,23 @@ public final class TextWithMnemonic {
    * Creates new {@code TextWithMnemonic} object from a text provided by
    * the {@link UIUtil#replaceMnemonicAmpersand replaceMnemonicAmpersand} method.
    *
-   * @param text a text that may contain a mnemonic specified by the {@link UIUtil#MNEMONIC MNEMONIC} character
+   * @param text a text that may contain a mnemonic specified by the {@link UIUtil#MNEMONIC MNEMONIC} marker
    * @return new {@code TextWithMnemonic} object that may have a mnemonic if it is specified in the given text
+   * @throws IllegalArgumentException if the given text contains marker at wrong position, or if it contains several markers
    */
+  @ApiStatus.Internal
   public static @NotNull TextWithMnemonic fromMnemonicText(@NotNull @Nls String text) {
     int pos = text.indexOf(UIUtil.MNEMONIC);
     if (pos < 0) return fromPlainText(text);
     String str = text.substring(pos + 1);
-    assert !str.isEmpty() : "unexpected mnemonic marker";
+    if (str.isEmpty()) throw new IllegalArgumentException("unexpected mnemonic marker in " + text);
+    if (str.indexOf(UIUtil.MNEMONIC) >= 0) throw new IllegalArgumentException("several mnemonic markers in " + text);
     return fromPlainText(pos > 0 ? text.substring(0, pos) + str : str, pos);
   }
 
   /**
    * Creates a TextWithMnemonic object from a plain text without mnemonic.
-   * @param text a plain text to create a TextWithMnemonic object from 
+   * @param text a plain text to create a TextWithMnemonic object from
    * @return new TextWithMnemonic object which has no mnemonic
    */
   @NotNull
@@ -207,7 +210,7 @@ public final class TextWithMnemonic {
    * Creates a TextWithMnemonic object from a plain text without mnemonic.
    * @param text a plain text to create a TextWithMnemonic object from
    * @param mnemonicChar mnemonic character (0 = absent mnemonic)
-   * @return new TextWithMnemonic object which has given mnemonic character. 
+   * @return new TextWithMnemonic object which has given mnemonic character.
    * If the text doesn't contain the supplied character then mnemonicChar is appended in parentheses.
    */
   @NotNull
@@ -252,9 +255,9 @@ public final class TextWithMnemonic {
    * Parses a text in text-with-mnemonic format.
    * A mnemonic is prepended either with '_', or with '&' or with '\x1B' character.
    * To escape '_' or '&' before the actual mnemonic the character must be duplicated.
-   * The characters after the actual mnemonic should not be escaped. 
+   * The characters after the actual mnemonic should not be escaped.
    * E.g. "A__b_c__d" in text-with-mnemonic format will be displayed as "A_bc__d" with mnemonic 'c'.
-   * 
+   *
    * @param text text to parse
    * @return TextWithMnemonic object which corresponds to the parsed text.
    */

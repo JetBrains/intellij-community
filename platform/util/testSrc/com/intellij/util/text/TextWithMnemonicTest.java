@@ -165,6 +165,23 @@ public class TextWithMnemonicTest {
   }
 
   @Test
+  public void fromMnemonicText() {
+    assertEquals("hello && goodbye", TextWithMnemonic.fromMnemonicText("hello & goodbye").toString());
+    assertEquals("hello && _goodbye", TextWithMnemonic.fromMnemonicText("hello & " + MNEMONIC + "goodbye").toString());
+    assertEquals("_hello & goodbye", TextWithMnemonic.fromMnemonicText(MNEMONIC + "hello & goodbye").toString());
+    assertIllegalMnemonicText(MNEMONIC + "hello & " + MNEMONIC + "goodbye");
+    assertIllegalMnemonicText("hello" + MNEMONIC);
+  }
+
+  private static void assertIllegalMnemonicText(@NotNull String illegalText) {
+    try {
+      fail("unexpected: " + TextWithMnemonic.fromMnemonicText(illegalText));
+    }
+    catch (IllegalArgumentException ignored) {
+    }
+  }
+
+  @Test
   public void append() {
     assertEquals("H_ello world!", TextWithMnemonic.parse("H&ello").append(" world!").toString());
   }
