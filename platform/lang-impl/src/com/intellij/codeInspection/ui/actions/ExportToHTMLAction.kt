@@ -11,7 +11,7 @@ import com.intellij.ui.dsl.builder.bindSelected
 import java.nio.file.Path
 
 class ExportToHTMLAction : InspectionResultsExportActionBase(InspectionsBundle.messagePointer("inspection.action.export.html.title"),
-                                                             InspectionsBundle.messagePointer("inspection.action.export.html.title"),
+                                                             InspectionsBundle.messagePointer("inspection.action.export.html.description"),
                                                              AllIcons.FileTypes.Html) {
   override val progressTitle: String = InspectionsBundle.message("inspection.generating.html.progress.title")
 
