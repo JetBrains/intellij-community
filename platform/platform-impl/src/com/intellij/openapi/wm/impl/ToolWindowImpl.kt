@@ -83,7 +83,8 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   private var contentUi: ToolWindowContentUi? = null
 
-  private var decorator: InternalDecoratorImpl? = null
+  internal var decorator: InternalDecoratorImpl? = null
+    private set
 
   private var hideOnEmptyContent = false
   var isPlaceholderMode = false
@@ -128,7 +129,7 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
   }
 
-  internal fun getOrCreateDecoratorComponent(): JComponent {
+  internal fun getOrCreateDecoratorComponent(): InternalDecoratorImpl {
     ensureContentManagerInitialized()
     return decorator!!
   }

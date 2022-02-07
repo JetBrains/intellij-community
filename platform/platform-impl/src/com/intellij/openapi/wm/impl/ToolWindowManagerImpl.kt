@@ -82,9 +82,9 @@ private typealias Mutation = ((WindowInfoImpl) -> Unit)
 @ApiStatus.Internal
 @State(name = "ToolWindowManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(val project: Project,
-                                                                     @field:JvmField internal val isNewUi: Boolean,
-                                                                     private val explicitButtonManager: ToolWindowButtonManager?,
-                                                                     private val isEdtRequired: Boolean)
+                                                                               @field:JvmField internal val isNewUi: Boolean,
+                                                                               private val explicitButtonManager: ToolWindowButtonManager?,
+                                                                               private val isEdtRequired: Boolean)
   : ToolWindowManagerEx(), PersistentStateComponent<Element?>, Disposable {
   private val dispatcher = EventDispatcher.create(ToolWindowManagerListener::class.java)
 
@@ -108,6 +108,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   @Suppress("LeakingThis")
   private val toolWindowSetInitializer = ToolWindowSetInitializer(project, this)
 
+  @Suppress("TestOnlyProblems")
   constructor(project: Project) : this(project, isNewUi = ExperimentalUI.isNewUI(), explicitButtonManager = null, isEdtRequired = true)
 
   init {
@@ -302,9 +303,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
             if (event.place == ActionPlaces.TOOLWINDOW_POPUP) {
               val toolWindowManager = getInstance(event.project!!) as ToolWindowManagerImpl
-              val toolWindowId = toolWindowManager.lastActiveToolWindowId ?: return
-              val activeEntry = toolWindowManager.idToEntry[toolWindowId] ?: return
-              activeEntry.toolWindow.decorator.headerToolbar.component.isVisible = true
+              val activeEntry = toolWindowManager.idToEntry.get(toolWindowManager.lastActiveToolWindowId ?: return) ?: return
+              (activeEntry.toolWindow.decorator ?: return).headerToolbar.component.isVisible = true
             }
           }
         }
@@ -335,8 +335,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     focusManager.doWhenFocusSettlesDown(ExpirableRunnable.forProject(project) {
       for (entry in idToEntry.values) {
         if (entry.readOnlyWindowInfo.isVisible) {
-          entry.toolWindow.decoratorComponent?.repaint()
-          entry.toolWindow.decorator.updateActiveAndHoverState()
+          val decorator = entry.toolWindow.decorator ?: continue
+          decorator.repaint()
+          decorator.updateActiveAndHoverState()
         }
       }
     })
@@ -598,7 +599,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       activateToolWindow(toolWindow.id, null, autoFocusContents = true)
     }
     activeStack.push(idToEntry.get(toolWindow.id) ?: return)
-    toolWindow.decorator.headerToolbar.component.isVisible = true
+    toolWindow.decorator?.headerToolbar?.component?.isVisible = true
   }
 
   // mutate operation must use info from layout and not from decorator
@@ -685,11 +686,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
    * @return windowed decorator for the tool window with specified `ID`.
    */
   private fun getWindowedDecorator(id: String) = idToEntry.get(id)?.windowedDecorator
-
-  /**
-   * @return tool button for the window with specified `ID`.
-   */
-  internal fun getStripeButton(id: String) = idToEntry.get(id)?.stripeButton
 
   override fun getIdsOn(anchor: ToolWindowAnchor) = getVisibleToolWindowsOn(anchor).map { it.id }.toList()
 
@@ -1257,7 +1253,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     }
 
     val anchor = entry.readOnlyWindowInfo.anchor
-    val position = Ref.create(Balloon.Position.below)
+    val position = Ref(Balloon.Position.below)
     when {
       ToolWindowAnchor.TOP == anchor -> position.set(Balloon.Position.below)
       ToolWindowAnchor.BOTTOM == anchor -> position.set(Balloon.Position.above)
@@ -1309,7 +1305,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     }
   }
 
-  fun notifySquareButtonByBalloon(options: ToolWindowBalloonShowOptions) {
+  private fun notifySquareButtonByBalloon(options: ToolWindowBalloonShowOptions) {
     val entry = idToEntry.get(options.toolWindowId)!!
     val existing = entry.balloon
     if (existing != null) {
@@ -1773,7 +1769,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
   private fun addFloatingDecorator(entry: ToolWindowEntry, info: WindowInfo) {
     val frame = frame!!.frame
-    val floatingDecorator = FloatingDecorator(frame!!, entry.toolWindow.getOrCreateDecoratorComponent() as InternalDecoratorImpl)
+    val decorator = entry.toolWindow.getOrCreateDecoratorComponent()
+    val floatingDecorator = FloatingDecorator(frame!!, decorator)
     floatingDecorator.apply(info)
 
     entry.floatingDecorator = floatingDecorator
@@ -1783,7 +1780,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       floatingDecorator.bounds = Rectangle(bounds)
     }
     else {
-      val decorator = entry.toolWindow.decorator
       // place new frame at the center of main frame if there are no floating bounds
       var size = decorator.size
       if (size.width == 0 || size.height == 0) {

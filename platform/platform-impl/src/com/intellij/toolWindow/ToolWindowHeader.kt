@@ -21,7 +21,6 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.DoubleClickListener
-import com.intellij.ui.ExperimentalUI.isNewUI
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.migLayout.*
@@ -74,7 +73,7 @@ abstract class ToolWindowHeader internal constructor(
   private fun setPopupShowing(showing: Boolean) {
     if (isPopupShowing != showing) {
       isPopupShowing = showing
-      toolWindow.decorator.updateActiveAndHoverState()
+      toolWindow.decorator?.updateActiveAndHoverState()
     }
   }
 
@@ -113,12 +112,12 @@ abstract class ToolWindowHeader internal constructor(
     )
 
     @Suppress("LeakingThis")
-    toolbar.setTargetComponent(this)
+    toolbar.targetComponent = this
     toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     toolbar.setReservePlaceAutoPopupIcon(false)
     val component = toolbar.component
     component.border = JBUI.Borders.empty(2, 0)
-    if (isNewUI()) {
+    if (toolWindow.toolWindowManager.isNewUi) {
       component.border = JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerToolbarLeftRightInsets())
     }
     component.isOpaque = false
@@ -164,7 +163,7 @@ abstract class ToolWindowHeader internal constructor(
     )
 
     isOpaque = true
-    if (isNewUI()) {
+    if (toolWindow.toolWindowManager.isNewUi) {
       border = JBUI.Borders.empty()
     }
 
@@ -272,7 +271,7 @@ abstract class ToolWindowHeader internal constructor(
     val drawTopLine = type != ToolWindowType.FLOATING && !ClientProperty.isTrue(nearestDecorator, InternalDecoratorImpl.INACTIVE_LOOK)
     var drawBottomLine = true
 
-    if (isNewUI()) {
+    if (toolWindow.toolWindowManager.isNewUi) {
       val scrolled = ClientProperty.isTrue(nearestDecorator, SimpleToolWindowPanel.SCROLLED_STATE)
       drawBottomLine = (toolWindow.anchor == ToolWindowAnchor.BOTTOM
                         || (toolWindow.windowInfo.contentUiType == ToolWindowContentUiType.TABBED && toolWindow.contentManager.contentCount > 1)
@@ -338,7 +337,7 @@ abstract class ToolWindowHeader internal constructor(
     val size = super.getPreferredSize()
     val insets = insets
     var height = JBUI.scale(SingleHeightTabs.UNSCALED_PREF_HEIGHT) - insets.top - insets.bottom
-    if (isNewUI()) {
+    if (toolWindow.toolWindowManager.isNewUi) {
       height = JBUI.scale(JBUI.CurrentTheme.ToolWindow.headerHeight()) - insets.top - insets.bottom
     }
     return Dimension(size.width, height)
