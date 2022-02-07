@@ -668,9 +668,9 @@ public final class FileSystemUtil {
         PointerByReference resultPtr = new PointerByReference(), errorPtr = new PointerByReference();
         Pointer result;
         if (!cf.CFURLCopyResourcePropertyForKey(url, CoreFoundation.kCFURLVolumeSupportsCaseSensitiveNamesKey, resultPtr, errorPtr)) {
-          Pointer error = errorPtr.getValue();
-          String description = error != null ? cf.CFErrorGetDomain(error).stringValue() + '/' + cf.CFErrorGetCode(error) : "error";
           if (LOG.isDebugEnabled()) {
+            Pointer error = errorPtr.getValue();
+            String description = error != null ? cf.CFErrorGetDomain(error).stringValue() + '/' + cf.CFErrorGetCode(error) : "error";
             LOG.debug("CFURLCopyResourcePropertyForKey(" + path + "): " + description);
           }
         }
