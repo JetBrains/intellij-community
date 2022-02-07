@@ -5,8 +5,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
-import com.intellij.openapi.project.ex.ProjectEx
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.impl.PsiDocumentManagerImpl
@@ -24,18 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.isWhiteSpaceOrNewLine
 
 @SkipSlowTestLocally
 class ExtractInlinedMethodPropertyTest : BaseUnivocityTest() {
-
-  override fun tearDown() {
-    try {
-      Disposer.dispose((myProject as ProjectEx).earlyDisposable)
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
-  }
 
   override fun setUp() {
     super.setUp()
