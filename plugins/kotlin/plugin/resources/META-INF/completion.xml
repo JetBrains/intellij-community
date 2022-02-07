@@ -11,7 +11,7 @@
   </applicationListeners>
 
   <extensions defaultExtensionNs="com.intellij">
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.completion.LookupCancelWatcher"/>
+    <editorFactoryListener implementation="org.jetbrains.kotlin.idea.completion.LookupCancelWatcher"/>
 
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.completion.CompletionDummyIdentifierProviderService"
