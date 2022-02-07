@@ -10,8 +10,7 @@ import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils.runUnderDisposeAwareIndicator
 
 
-class MavenImportStartupActivity : StartupActivity {
-
+class MavenImportStartupActivity : StartupActivity.DumbAware {
     override fun runActivity(project: Project) {
         val parentDisposable = KotlinPluginDisposable.getInstance(project)
 
