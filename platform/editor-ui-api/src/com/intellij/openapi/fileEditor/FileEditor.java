@@ -131,7 +131,7 @@ public interface FileEditor extends UserDataHolder, Disposable {
    * Returns the file for which {@link FileEditorProvider#createEditor)} was called.
    * The default implementation is temporary, and shall be dropped in the future.
    */
-  default @Nullable VirtualFile getFile() {
+  default VirtualFile getFile() {
     PluginException.reportDeprecatedDefault(getClass(), "getFile", "A proper @NotNull implementation required");
     return FILE_KEY.get(this);
   }
