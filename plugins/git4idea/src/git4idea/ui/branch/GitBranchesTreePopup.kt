@@ -18,15 +18,13 @@ import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.speedSearch.SpeedSearch
-import com.intellij.ui.tree.StructureTreeModel
-import com.intellij.ui.tree.TreeVisitor
+import com.intellij.ui.tree.TreePathUtil
 import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.concurrency.Invoker
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
-import git4idea.GitBranch
+import git4idea.GitIcons
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.*
@@ -41,9 +39,9 @@ import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionAdapter
-import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.swing.*
+import javax.swing.tree.DefaultTreeCellRenderer
 import javax.swing.tree.TreeCellRenderer
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
@@ -67,15 +65,9 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
   }
 
   override fun createContent(): JComponent {
-    val treeDisposable = Disposer.newDisposable().also {
+    val filteringTreeModel = FilteringTreeModel(treeStep.treeModel).also {
       Disposer.register(this, it)
     }
-
-    val treeModel = StructureTreeModel(treeStep.treeStructure,
-                                       null,
-                                       Invoker.forEventDispatchThread(treeDisposable),
-                                       treeDisposable)
-    val filteringTreeModel = FilteringTreeModel(treeModel)
 
     tree = Tree(filteringTreeModel).also {
       configureTreePresentation(it)
@@ -85,7 +77,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
     speedSearch.installSupplyTo(tree, false)
 
     @OptIn(FlowPreview::class)
-    with(uiScope(treeDisposable)) {
+    with(uiScope(this)) {
       val filterStateFlow = MutableStateFlow(Any())
       launch {
         filterStateFlow.drop(1).debounce(100).collect {
@@ -164,17 +156,11 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
   override fun getInputMap(): InputMap = tree.inputMap
 
   override fun afterShow() {
-    TreeUtil.expand(tree, TreeVisitor { path ->
-      val userObject = TreeUtil.getUserObject(path.lastPathComponent)
-
-      //TODO: move to tree step, pre-build the path
-      if (userObject is AbstractTreeNode<*> && userObject.value is GitBranch && (userObject.value as GitBranch).name == "master") {
-        return@TreeVisitor TreeVisitor.Action.INTERRUPT
-      }
-      TreeVisitor.Action.CONTINUE
-    }, Consumer {
-      tree.selectionPath = it
-    })
+    val preSelectedPath = treeStep.preSelectedPath?.let(TreePathUtil::convertCollectionToTreePath)
+    if (preSelectedPath == null) return
+    TreeUtil.promiseMakeVisible(tree, preSelectedPath).onSuccess {
+      tree.selectionPath = preSelectedPath
+    }
   }
 
   override fun isResizable(): Boolean = true
@@ -298,6 +284,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
                                               leaf: Boolean,
                                               row: Int,
                                               hasFocus: Boolean): Component {
+      (value as? AbstractTreeNode<*>)?.update()
       nodeRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, true)
 
       val userObject = TreeUtil.getUserObject(value)
