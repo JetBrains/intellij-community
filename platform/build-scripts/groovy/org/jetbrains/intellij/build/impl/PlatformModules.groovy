@@ -215,6 +215,9 @@ final class PlatformModules {
       "intellij.platform.extensions",
       "intellij.platform.tracing.rt",
       "intellij.platform.boot",
+    ), productLayout, layout)
+
+    jar("externalProcess-rt.jar", List.of(
       "intellij.platform.externalProcessAuthHelper.rt"
     ), productLayout, layout)
 
