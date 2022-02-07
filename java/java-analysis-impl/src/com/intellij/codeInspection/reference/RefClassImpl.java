@@ -251,23 +251,25 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   public void buildReferences() {
     UClass uClass = getUastElement();
     if (uClass != null) {
+      final PsiElement classSourcePsi = uClass.getSourcePsi();
+      final RefJavaUtil refUtil = RefJavaUtil.getInstance();
       if (uClass instanceof UAnonymousClass) {
         UObjectLiteralExpression objectAccess = UastUtils.getParentOfType(uClass, UObjectLiteralExpression.class);
-        if (objectAccess != null && objectAccess.getDeclaration().getSourcePsi() == uClass.getSourcePsi()) {
-          RefJavaUtil.getInstance().addReferencesTo(uClass, this, objectAccess.getValueArguments().toArray(UElementKt.EMPTY_ARRAY));
+        if (objectAccess != null && objectAccess.getDeclaration().getSourcePsi() == classSourcePsi) {
+          refUtil.addReferencesTo(uClass, this, objectAccess.getValueArguments().toArray(UElementKt.EMPTY_ARRAY));
         }
       }
 
       for (UClassInitializer classInitializer : uClass.getInitializers()) {
-        RefJavaUtil.getInstance().addReferencesTo(uClass, this, classInitializer.getUastBody());
+        refUtil.addReferencesTo(uClass, this, classInitializer.getUastBody());
       }
 
-      RefJavaUtil.getInstance().addReferencesTo(uClass, this, uClass.getUAnnotations().toArray(UElementKt.EMPTY_ARRAY));
+      refUtil.addReferencesTo(uClass, this, uClass.getUAnnotations().toArray(UElementKt.EMPTY_ARRAY));
 
       for (PsiTypeParameter parameter : uClass.getJavaPsi().getTypeParameters()) {
         UElement uTypeParameter = UastContextKt.toUElement(parameter);
         if (uTypeParameter != null) {
-          RefJavaUtil.getInstance().addReferencesTo(uClass, this, uTypeParameter);
+          refUtil.addReferencesTo(uClass, this, uTypeParameter);
         }
       }
 
@@ -275,7 +277,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
       for (UField uField : uFields) {
         final UExpression initializer = uField.getUastInitializer();
         if (initializer != null) {
-          RefJavaUtil.getInstance().addReferencesTo(uClass, this, initializer);
+          refUtil.addReferencesTo(uClass, this, initializer);
         }
       }
 
@@ -293,7 +295,13 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
         }
       }
 
-      RefJavaUtil.getInstance().addReferencesTo(uClass, this, uClass.getUastSuperTypes().toArray(UElementKt.EMPTY_ARRAY));
+      UMethod[] uMethods = uClass.getMethods();
+      for (UMethod uMethod : uMethods) {
+        if (uMethod.getSourcePsi() == classSourcePsi) {
+          refUtil.addReferencesTo(uClass, this, uMethod.getUastBody());
+        }
+      }
+      refUtil.addReferencesTo(uClass, this, uClass.getUastSuperTypes().toArray(UElementKt.EMPTY_ARRAY));
 
       getRefManager().fireBuildReferences(this);
     }

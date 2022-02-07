@@ -20,6 +20,10 @@ public class UnusedDeclarationKtTest20 extends AbstractUnusedDeclarationTest {
     doTest();
   }
 
+  public void testReferenceFromSuperTypeList() {
+    doTest();
+  }
+
   public void testReachableFromMain() {
     myTool.ADD_MAINS_TO_ENTRIES = true;
     doTest();
