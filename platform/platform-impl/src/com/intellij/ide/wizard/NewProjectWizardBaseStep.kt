@@ -49,18 +49,15 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
 
   private fun suggestName(): String {
     val location = context.projectFileDirectory
-    if (context.isCreatingNewProject) {
-      return suggestUniqueName(location)
+    if (FileUtil.pathsEqual(File(location).parent, path)) {
+      return File(location).name
     }
-    if (FileUtil.pathsEqual(location, path)) {
-      return suggestUniqueName(location)
-    }
-    return File(location).name
+    return suggestUniqueName()
   }
 
-  private fun suggestUniqueName(location: String): String {
+  private fun suggestUniqueName(): String {
     val moduleNames = findAllModules().map { it.name }.toSet()
-    return FileUtil.createSequentFileName(File(location), "untitled", "") {
+    return FileUtil.createSequentFileName(File(path), "untitled", "") {
       !it.exists() && it.name !in moduleNames
     }
   }
@@ -75,6 +72,10 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
     return findAllModules().asSequence()
       .flatMap { it.rootManager.contentRoots.asSequence() }
       .any { it.isDirectory && FileUtil.pathsEqual(it.path, path) }
+  }
+
+  init {
+    nameProperty.dependsOn(pathProperty, ::suggestUniqueName)
   }
 
   override fun setupUI(builder: Panel) {
