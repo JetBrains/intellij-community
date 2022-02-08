@@ -382,12 +382,6 @@ private class StackedCompositeBindingContextTrace(
         filtered
     }
 
-    override fun setCallback(callback: DiagnosticSink.DiagnosticsCallback) {
-        if (diagnosticsCallback == null) {
-            super.setCallback(callback)
-        }
-    }
-
     inner class StackedCompositeBindingContext : BindingContext {
         var cachedDiagnostics: Diagnostics? = null
 
@@ -524,11 +518,9 @@ private object KotlinResolveDataProvider {
 
             val targetPlatform = moduleInfo.platform
 
+            var callbackSet = false
             try {
-                trace.resetCallback()
-                callback?.let {
-                    trace.setCallback(it)
-                }
+                callbackSet = callback?.let(trace::setCallbackIfNotSet) ?: false
                 /*
                 Note that currently we *have* to re-create LazyTopDownAnalyzer with custom trace in order to disallow resolution of
                 bodies in top-level trace (trace from DI-container).
@@ -556,7 +548,9 @@ private object KotlinResolveDataProvider {
 
                 lazyTopDownAnalyzer.analyzeDeclarations(TopDownAnalysisMode.TopLevelDeclarations, listOf(analyzableElement))
             } finally {
-                trace.resetCallback()
+                if (callbackSet) {
+                    trace.resetCallback()
+                }
             }
 
             return AnalysisResult.success(trace.bindingContext, moduleDescriptor)
