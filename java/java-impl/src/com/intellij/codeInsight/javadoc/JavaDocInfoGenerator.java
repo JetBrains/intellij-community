@@ -718,9 +718,6 @@ public class JavaDocInfoGenerator {
       buffer.append(DocumentationMarkup.SECTIONS_START);
     }
 
-    if (!isRendered()) {
-      new NonCodeAnnotationGenerator(aClass, buffer).explainAnnotations(isRendered(), doHighlightSignatures());
-    }
     buffer.append(DocumentationMarkup.SECTIONS_END);
   }
 
@@ -926,7 +923,6 @@ public class JavaDocInfoGenerator {
 
     if (!isRendered()) {
       JavaDocColorUtil.appendColorPreview(field, buffer);
-      new NonCodeAnnotationGenerator(field, buffer).explainAnnotations(isRendered(), doHighlightSignatures());
     }
 
     buffer.append(DocumentationMarkup.SECTIONS_END);
@@ -1267,9 +1263,6 @@ public class JavaDocInfoGenerator {
       }
     }
 
-    buffer.append(DocumentationMarkup.SECTIONS_START);
-    new NonCodeAnnotationGenerator(parameter, buffer).explainAnnotations(isRendered(), doHighlightSignatures());
-    buffer.append(DocumentationMarkup.SECTIONS_END);
   }
 
   public String generateMethodParameterJavaDoc() {
@@ -1398,10 +1391,6 @@ public class JavaDocInfoGenerator {
       generateSeeAlsoSection(buffer, comment);
       generateAuthorAndVersionSections(buffer, comment);
       generateUnknownTagsSections(buffer, comment);
-    }
-
-    if (!isRendered()) {
-      new NonCodeAnnotationGenerator(method, buffer).explainAnnotations(isRendered(), doHighlightSignatures());
     }
 
     buffer.append(DocumentationMarkup.SECTIONS_END);

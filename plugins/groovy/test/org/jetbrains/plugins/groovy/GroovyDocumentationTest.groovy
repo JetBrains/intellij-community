@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy
 
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
@@ -102,7 +102,7 @@ a<caret>a
 List<String> ss = []
 ss.collect { i<caret>t }
 ''', '''\
-<div class='definition'><pre><a href="psi_element://java.lang.Object"><code><span style="color:#0000ff;">Object</span></code></a> <span style="color:#000000;">it</span></pre></div><table class='sections'></table><p style='padding-left:8px;'><span style="color: #909090">[Inferred type]</span> <a href="psi_element://java.lang.String"><code><span style="color:#0000ff;">String</span></code></a>'''
+<div class='definition'><pre><a href="psi_element://java.lang.Object"><code><span style="color:#0000ff;">Object</span></code></a> <span style="color:#000000;">it</span></pre></div><p style='padding-left:8px;'><span style="color: #909090">[Inferred type]</span> <a href="psi_element://java.lang.String"><code><span style="color:#0000ff;">String</span></code></a>'''
   }
 
   void 'test code tag'() {
