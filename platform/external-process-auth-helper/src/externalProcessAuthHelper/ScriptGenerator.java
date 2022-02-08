@@ -1,9 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalProcessAuthHelper;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -15,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -23,10 +20,6 @@ import java.util.ArrayList;
  * are removed after application ends.
  */
 public class ScriptGenerator {
-  /**
-   * The script prefix
-   */
-  private final String myPrefix;
   /**
    * The scripts may class
    */
@@ -41,13 +34,9 @@ public class ScriptGenerator {
   private final ArrayList<String> myInternalParameters = new ArrayList<>();
 
   /**
-   * A constructor
-   *
-   * @param prefix    the script prefix
    * @param mainClass the script main class
    */
-  public ScriptGenerator(@NotNull @NonNls String prefix, @NotNull Class mainClass) {
-    myPrefix = prefix;
+  public ScriptGenerator(@NotNull Class mainClass) {
     myMainClass = mainClass;
     addClasses(myMainClass);
     addClasses(ExternalApp.class);
@@ -78,37 +67,6 @@ public class ScriptGenerator {
   public ScriptGenerator addInternal(@NonNls String... parameters) {
     ContainerUtil.addAll(myInternalParameters, parameters);
     return this;
-  }
-
-  @NotNull
-  private static File generateBatch(@NotNull @NonNls String fileName, @NotNull @NonNls String commandLine) throws IOException {
-    @NonNls StringBuilder sb = new StringBuilder();
-    sb.append("@echo off").append("\n");
-    sb.append(commandLine).append(" %*").append("\n");
-    return createTempExecutable(fileName + ".bat", sb.toString());
-  }
-
-  @NotNull
-  private static File generateShell(@NotNull @NonNls String fileName, @NotNull @NonNls String commandLine) throws IOException {
-    @NonNls StringBuilder sb = new StringBuilder();
-    sb.append("#!/bin/sh").append("\n");
-    sb.append(commandLine).append(" \"$@\"").append("\n");
-    return createTempExecutable(fileName + ".sh", sb.toString());
-  }
-
-  @NotNull
-  private static File createTempExecutable(@NotNull @NonNls String fileName, @NotNull @NonNls String content) throws IOException {
-    File file = new File(PathManager.getTempPath(), fileName);
-    FileUtil.writeToFile(file, content);
-    FileUtil.setExecutable(file);
-    return file;
-  }
-
-  @NotNull
-  public File generate(boolean useBatchFile, @Nullable CustomScriptCommandLineBuilder customBuilder) throws IOException {
-    String commandLine = commandLine(customBuilder);
-    return useBatchFile ? generateBatch(myPrefix, commandLine)
-                        : generateShell(myPrefix, commandLine);
   }
 
   /**

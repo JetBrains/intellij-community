@@ -79,8 +79,9 @@ public abstract class XmlRpcHandlerService<T> implements Disposable {
       String id = scriptId + (useBatchFile ? "-bat" : ""); //NON-NLS
       File scriptPath = myScriptPaths.get(id);
       if (scriptPath == null || !scriptPath.exists()) {
-        ScriptGenerator generator = new ScriptGenerator(myScriptTempFilePrefix + "-" + scriptId, myScriptMainClass);
-        scriptPath = generator.generate(useBatchFile, customCmdBuilder);
+        ScriptGenerator generator = new ScriptGenerator(myScriptMainClass);
+        String commandLine = generator.commandLine(customCmdBuilder);
+        scriptPath = ScriptGeneratorUtil.createTempScript(commandLine, myScriptTempFilePrefix + "-" + scriptId, useBatchFile);
         myScriptPaths.put(id, scriptPath);
       }
       return scriptPath;
