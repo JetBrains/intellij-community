@@ -61,7 +61,8 @@ public class PackageScope extends GlobalSearchScope {
     VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (!myIncludeSubpackages) {
       if (myDirs.contains(dir)) return true;
-    } else {
+    }
+    else {
       while (dir != null) {
         if (myDirs.contains(dir)) return true;
         dir = dir.getParent();
@@ -73,7 +74,9 @@ public class PackageScope extends GlobalSearchScope {
       if (psiFile instanceof PsiClassOwner) {
         final String packageName = ((PsiClassOwner)psiFile).getPackageName();
         if (myPackageQualifiedName.equals(packageName) ||
-            packageName.startsWith(myPackageQNamePrefix)) return true;
+            packageName.startsWith(myPackageQNamePrefix)) {
+          return true;
+        }
       }
     }
     return false;
@@ -91,7 +94,6 @@ public class PackageScope extends GlobalSearchScope {
 
   @Override
   public String toString() {
-    //noinspection HardCodedStringLiteral
     return "package scope: " + myPackage +
            ", includeSubpackages = " + myIncludeSubpackages;
   }
