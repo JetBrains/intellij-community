@@ -110,7 +110,7 @@
 
       "focusColor": "Blue6",
 
-      "separatorColor": "Grey4",
+      "separatorColor": "Grey3",
       "separatorForeground": "Grey7"
     },
 
@@ -186,6 +186,8 @@
 
     "Editor.searchFieldInsets": "7,10,7,8",
 
+    "Label.errorForeground": "Red6",
+
     "Link": {
       "activeForeground": "Blue8",
       "hoverForeground": "Blue8",
@@ -214,10 +216,14 @@
       }
     },
 
+    "OnePixelDivider.background": "Grey3",
+
     "Popup": {
       "Advertiser": {
         "borderInsets": "6,20,6,20",
-        "foreground": "Grey7",
+        "foreground": "Grey8",
+        "background": "Grey3",
+        "borderColor": "Grey3",
         "fontSizeOffset": {
           "os.default": -1,
           "os.windows": 0
@@ -225,10 +231,13 @@
       },
       "Header": {
         "activeBackground": "Grey2",
-        "inactiveBackground": "Grey3"
+        "inactiveBackground": "Grey2",
+        "inactiveForeground": "Grey7"
       },
       "borderWidth": 0.5
     },
+
+    "ComplexPopup.Header.background": "Grey3",
 
     "CompletionPopup": {
       "foreground": "Grey10",
@@ -244,13 +253,27 @@
     "ToolBar.verticalToolbarInsets": "7,4,7,4",
     "ToolBar.horizontalToolbarInsets": "4,7,4,7",
 
+    "SearchField": {
+      "errorForeground": "Red6",
+      "errorBackground": "Red2"
+    },
+
     "SearchEverywhere": {
       "Tab": {
         "selectedBackground": "Blue2",
         "selectedForeground": "Grey14"
       },
-      "Advertiser.foreground": "Grey7"
+      "Advertiser": {
+        "foreground": "Grey8",
+        "background": "Grey3"
+      }
     },
+
+    "SearchMatch": {
+      "startBackground": "Yellow5",
+      "endBackground": "Yellow5"
+    },
+
 
     "StatusBar": {
       "Widget": {

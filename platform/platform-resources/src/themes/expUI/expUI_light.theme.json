@@ -186,6 +186,8 @@
       "Green": "Green11"
     },
 
+    "Label.errorForeground": "#d92b2b",
+
     "Link": {
       "activeForeground": "Blue4",
       "hoverForeground": "Blue4",
@@ -235,6 +237,8 @@
     },
 
     "Popup": {
+      "background": "Grey13",
+      "borderWidth": 0.5,
       "Advertiser": {
         "borderInsets": "6,20,6,20",
         "foreground": "Grey7",
@@ -244,10 +248,10 @@
         }
       },
       "Header": {
-        "activeBackground": "Grey12",
-        "inactiveBackground": "Grey11"
-      },
-      "borderWidth": 0.5
+        "activeBackground": "Grey13",
+        "inactiveBackground": "Grey13",
+        "inactiveForeground": "Grey7"
+      }
     },
 
     "CompletionPopup": {
@@ -264,10 +268,20 @@
     "ToolBar.verticalToolbarInsets": "7,4,7,4",
     "ToolBar.horizontalToolbarInsets": "4,7,4,7",
 
+    "SearchField": {
+      "errorForeground": "#d92b2b",
+      "errorBackground": "Red10"
+    },
+
     "SearchEverywhere": {
       "Tab.selectedBackground": "Blue13",
       "SearchField.background": "Grey13",
       "Advertiser.foreground": "Grey7"
+    },
+
+    "SearchMatch": {
+      "startBackground": "Yellow9",
+      "endBackground": "Yellow9"
     },
 
     "StatusBar": {
@@ -337,6 +351,8 @@
         "pressedBackground": "Grey1"
       }
     },
+
+    "OnePixelDivider.background": "Grey11",
 
     "TitlePane": {
       "Button": {
