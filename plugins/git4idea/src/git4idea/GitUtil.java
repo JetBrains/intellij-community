@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -67,7 +66,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
@@ -734,32 +732,6 @@ public final class GitUtil {
     diff.setSilent(true);
     final String output = Git.getInstance().runCommand(diff).getOutputOrThrow();
     return !output.trim().isEmpty();
-  }
-
-  /**
-   * git shortlog -s --since="%since%"
-   * @return Pair with number of commits and number of committers
-   * @param project project
-   * @param repo repository
-   * @param since "2 days ago" or other examples from https://github.com/git/git/blob/master/date.c#L131
-   */
-  public static Pair<Integer, Integer> commitsSummarySince(@NotNull Project project, @NotNull GitRepository repo, @NotNull String since) throws VcsException {
-    GitLineHandler handler = new GitLineHandler(project, repo.getRoot(), GitCommand.SHORTLOG);
-    handler.setSilent(true);
-    handler.addParameters("-s", "--since=\"" + since + "\"", repo.getCurrentBranchName());
-    String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
-    List<String> lines = output.lines().filter(it -> !it.isBlank()).collect(Collectors.toList());
-    int commits = 0;
-    for (String line : lines) {
-      String[] split = line.trim().split("\\W");
-      if (split.length == 0) throw new VcsException("Wrong format or response '" + line + "'");
-      try {
-        commits += Integer.parseInt(split[0]);
-      } catch (NumberFormatException e) {
-        throw new VcsException("Wrong format or response '" + line + "'", e);
-      }
-    }
-    return Pair.create(commits, lines.size());
   }
 
   @Nullable
