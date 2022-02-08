@@ -228,13 +228,13 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
    * Sets new "pinned" state
    */
   void setPinned(final boolean pinned) {
-    if (pinned == myPinned) return;
+    boolean oldPinned = myPinned;
     myPinned = pinned;
-    Container parent = getComponent().getParent();
-    if (parent instanceof JComponent) {
-      ((JComponent)parent).putClientProperty(JBTabsImpl.PINNED, myPinned ? Boolean.TRUE : null);
+    ObjectUtils.consumeIfCast(myComponent.getParent(), JComponent.class,
+                              c -> ClientProperty.put(c, JBTabsImpl.PINNED, myPinned ? Boolean.TRUE : null));
+    if (pinned != oldPinned) {
+      myDispatcher.getMulticaster().isPinnedChanged(pinned);
     }
-    myDispatcher.getMulticaster().isPinnedChanged(pinned);
   }
 
   public boolean isPreview() {
