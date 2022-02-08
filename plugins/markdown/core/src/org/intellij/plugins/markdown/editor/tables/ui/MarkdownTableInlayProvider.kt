@@ -56,6 +56,9 @@ internal class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings> {
   override val name: String
     get() = MarkdownBundle.message("markdown.table.inlay.kind.name")
 
+  override val description: String
+    get() = MarkdownBundle.message("markdown.table.inlay.kind.description")
+
   override val key: SettingsKey<NoSettings>
     get() = settingsKey
 
