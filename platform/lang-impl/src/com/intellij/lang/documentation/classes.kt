@@ -8,6 +8,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.function.Supplier
 
+internal data class LinkData(
+  val externalUrl: String? = null,
+  val linkUrls: List<String> = emptyList(),
+)
+
 internal class AsyncDocumentation(
   val supplier: AsyncSupplier<DocumentationResult.Data?>
 ) : DocumentationResult

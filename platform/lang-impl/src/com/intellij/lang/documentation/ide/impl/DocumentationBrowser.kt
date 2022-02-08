@@ -151,7 +151,7 @@ internal class DocumentationBrowser private constructor(
     val result = state.result
     if (!result.isCompleted || result.isCancelled) return null
     @Suppress("EXPERIMENTAL_API_USAGE")
-    return result.getCompleted()?.externalUrl
+    return result.getCompleted()?.links?.externalUrl
   }
 
   private class HistorySnapshot(

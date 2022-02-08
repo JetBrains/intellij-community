@@ -10,8 +10,7 @@ import java.awt.Image
 data class DocumentationResultData internal constructor(
   val html: @Nls String,
   val anchor: String? = null,
-  val externalUrl: String? = null,
-  val linkUrls: List<String> = emptyList(),
+  internal val links: LinkData = LinkData(),
   val imageResolver: DocumentationImageResolver? = null,
 ) : Data {
 
@@ -28,6 +27,6 @@ data class DocumentationResultData internal constructor(
   }
 
   override fun externalUrl(externalUrl: String?): Data {
-    return copy(externalUrl = externalUrl)
+    return copy(links = links.copy(externalUrl = externalUrl))
   }
 }

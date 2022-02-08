@@ -71,7 +71,7 @@ class PsiElementDocumentationTarget private constructor(
     if (urls == null || urls.isEmpty()) {
       return localDoc
     }
-    return pointer.fetchExternal(targetElement, provider, urls, localDoc?.copy(linkUrls = urls))
+    return pointer.fetchExternal(targetElement, provider, urls, localDoc?.copy(links = localDoc.links.copy(linkUrls = urls)))
   }
 
   @RequiresReadLock
@@ -132,7 +132,7 @@ class PsiElementDocumentationTarget private constructor(
           html = doc,
           imageResolver = imageResolver,
           anchor = anchor,
-          externalUrl = url,
+          links = LinkData(externalUrl = url),
         )
       }
       localDoc
