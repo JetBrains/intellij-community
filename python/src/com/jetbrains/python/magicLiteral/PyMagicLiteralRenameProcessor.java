@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
-import com.intellij.refactoring.rename.RenamePsiElementProcessorBase;
 import com.intellij.usageView.UsageInfo;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -16,9 +15,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Supports renaming for magic literals.
  * <strong>Install it</strong> as {@link RenamePsiElementProcessor#EP_NAME}
+ *
  * @author Ilya.Kazakevich
  */
-class PyMagicLiteralRenameProcessor extends RenamePsiElementProcessorBase {
+class PyMagicLiteralRenameProcessor extends RenamePsiElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull final PsiElement element) {
     return (PyMagicLiteralTools.couldBeMagicLiteral(element));
