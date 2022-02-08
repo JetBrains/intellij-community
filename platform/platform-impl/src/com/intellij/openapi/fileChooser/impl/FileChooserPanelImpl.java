@@ -49,6 +49,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -668,8 +669,11 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   }
 
   private static final class MyListCellRenderer extends SimpleListCellRenderer<FsItem> {
+    private final Border myPadding = JBUI.Borders.empty(UIUtil.getListCellVPadding(), 3);  // a constant from `DarculaComboBoxUI`
+
     @Override
     public void customize(@NotNull JList<? extends FsItem> list, FsItem value, int index, boolean selected, boolean focused) {
+      setBorder(myPadding);
       setIcon(value.icon);
       setText(value.name);
       setForeground(selected ? UIUtil.getListSelectionForeground(focused) : UIUtil.getListForeground());
