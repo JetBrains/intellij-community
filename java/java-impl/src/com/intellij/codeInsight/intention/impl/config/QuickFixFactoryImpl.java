@@ -716,11 +716,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
           SetInspectionOptionFix.createFix(UnusedSymbolLocalInspectionBase.SHORT_NAME,
                                            "myCheckParameterExcludingHierarchy",
                                            JavaErrorBundle.message("parameter.excluding.hierarchy.disable.text"), false,
-              in -> {
-                return in instanceof UnusedDeclarationInspectionBase
-                       ? ((UnusedDeclarationInspectionBase)in).getSharedLocalInspectionTool()
-                       : in;
-              })
+              profileEntry -> profileEntry instanceof UnusedDeclarationInspectionBase
+                     ? ((UnusedDeclarationInspectionBase)profileEntry).getSharedLocalInspectionTool()
+                     : profileEntry)
             .applyFix(project, file);
         }
       };
@@ -882,7 +880,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     PsiImportList importList = ((PsiJavaFile)file).getImportList();
     final TextRange importsRange = importList == null ? TextRange.EMPTY_RANGE : importList.getTextRange();
     //noinspection UnnecessaryLocalVariable
-    boolean hasErrorsExceptUnresolvedImports = !DaemonCodeAnalyzerEx
+    boolean hasErrorsBesideUnresolvedImports = !DaemonCodeAnalyzerEx
       .processHighlights(document, file.getProject(), HighlightSeverity.ERROR, 0, document.getTextLength(), error -> {
         if (error.type instanceof LocalInspectionsPass.InspectionHighlightInfoType) return true;
         int infoStart = error.getActualStartOffset();
@@ -891,7 +889,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
         return importsRange.containsRange(infoStart, infoEnd) && error.type.equals(HighlightInfoType.WRONG_REF);
       });
 
-    return hasErrorsExceptUnresolvedImports;
+    return hasErrorsBesideUnresolvedImports;
   }
 
   @NotNull
