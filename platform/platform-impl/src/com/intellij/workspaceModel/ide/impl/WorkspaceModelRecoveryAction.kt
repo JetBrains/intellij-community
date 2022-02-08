@@ -4,12 +4,12 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.cache.AsyncRecoveryResult
 import com.intellij.ide.actions.cache.ProjectRecoveryScope
-import com.intellij.ide.actions.cache.RecoveryScope
 import com.intellij.ide.actions.cache.RecoveryAction
+import com.intellij.ide.actions.cache.RecoveryScope
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.platform.PlatformProjectOpenProcessor
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -28,7 +28,7 @@ class WorkspaceModelRecoveryAction : RecoveryAction {
     val file = Paths.get(project.basePath!!)
     WorkspaceModelCacheImpl.invalidateCaches()
     ApplicationManager.getApplication().invokeAndWait {
-      ProjectManagerEx.getInstanceEx().closeAndDispose(project)
+      ProjectManager.getInstance().closeAndDispose(project)
     }
     val result = CompletableFuture<AsyncRecoveryResult>()
     ApplicationManager.getApplication().invokeLater({

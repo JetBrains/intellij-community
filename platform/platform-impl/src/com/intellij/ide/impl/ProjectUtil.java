@@ -107,10 +107,10 @@ public final class ProjectUtil extends ProjectUtilCore {
     RecentProjectsManager.getInstance().setLastProjectCreationLocation(PathUtil.toSystemIndependentName(path));
   }
 
-  /** @deprecated Use {@link ProjectManagerEx#closeAndDispose(Project)} */
+  /** @deprecated Use {@link ProjectManager#closeAndDispose(Project)} */
   @Deprecated
   public static boolean closeAndDispose(@NotNull Project project) {
-    return ProjectManagerEx.getInstanceEx().closeAndDispose(project);
+    return ProjectManager.getInstance().closeAndDispose(project);
   }
 
   public static Project openOrImport(@NotNull Path path, Project projectToClose, boolean forceOpenInNewFrame) {
