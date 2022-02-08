@@ -127,12 +127,12 @@ public class MavenUtil {
   public static final String CLIENT_EXPLODED_ARTIFACT_SUFFIX = CLIENT_ARTIFACT_SUFFIX + " exploded";
   protected static final String PROP_FORCED_M2_HOME = "idea.force.m2.home";
 
-
   @SuppressWarnings("unchecked")
   private static final Pair<Pattern, String>[] SUPER_POM_PATHS = new Pair[]{
     Pair.create(Pattern.compile("maven-\\d+\\.\\d+\\.\\d+-uber\\.jar"), "org/apache/maven/project/" + MavenConstants.SUPER_POM_XML),
     Pair.create(Pattern.compile("maven-model-builder-\\d+\\.\\d+\\.\\d+\\.jar"), "org/apache/maven/model/" + MavenConstants.SUPER_POM_XML)
   };
+
   public static final String MAVEN_NEW_PROJECT_MODEL_KEY = "maven.new.project.model";
 
   private static volatile Map<String, String> ourPropertiesFromMvnOpts;
@@ -213,9 +213,9 @@ public class MavenUtil {
 
   @TestOnly
   public static List<Runnable> getUncompletedRunnables() {
-    List<Runnable> result = new ArrayList<>();
+    List<Runnable> result;
     synchronized (runnables) {
-      result.addAll(runnables);
+      result = new ArrayList<>(runnables);
     }
     return result;
   }
@@ -281,22 +281,21 @@ public class MavenUtil {
   }
 
   public static void runWhenInitialized(@NotNull Project project, @NotNull Runnable runnable) {
-
-    if (project.isDisposed()) return;
+    if (project.isDisposed()) {
+      return;
+    }
 
     if (isNoBackgroundMode()) {
       startTestRunnable(runnable);
       runAndFinishTestRunnable(runnable);
-      return;
     }
-
-    if (!project.isInitialized()) {
+    else if (project.isInitialized()) {
+      runDumbAware(project, runnable);
+    }
+    else {
       startTestRunnable(runnable);
       StartupManager.getInstance(project).runAfterOpened(() -> runAndFinishTestRunnable(runnable));
-      return;
     }
-
-    runDumbAware(project, runnable);
   }
 
   public static boolean isNoBackgroundMode() {
