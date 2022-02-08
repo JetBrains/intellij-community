@@ -26,25 +26,24 @@ internal fun KtAnalysisSession.collectCallCandidates(callElement: KtElement): Li
     val fileSymbol = callElement.containingKtFile.getFileSymbol()
 
     return candidates.filter {
-        require(it.calls.size == 1) { "collectAllCandidates() should only have 1 candidate per KtCallInfo" }
         filterCandidate(it, callElement, fileSymbol, receiver)
     }.map {
-        val functionCall = it.calls.single() as KtFunctionCall<*>
+        val functionCall = it.candidate as KtFunctionCall<*>
         CandidateWithMapping(
             functionCall.partiallyAppliedSymbol.signature,
             functionCall.argumentMapping,
-            isSuccessful = it is KtSuccessCallInfo
+            isApplicableBestCandidate = it is KtApplicableCallCandidateInfo && it.isInBestCandidates
         )
     }
 }
 
 private fun KtAnalysisSession.filterCandidate(
-    call: KtCallInfo,
+    candidateInfo: KtCallCandidateInfo,
     callElement: KtElement,
     fileSymbol: KtFileSymbol,
     receiver: KtExpression?
 ): Boolean {
-    val candidateCall = call.calls.single()
+    val candidateCall = candidateInfo.candidate
     if (candidateCall !is KtFunctionCall<*>) return false
     val candidateSymbol = candidateCall.partiallyAppliedSymbol.signature.symbol
     return filterCandidate(candidateSymbol, callElement, fileSymbol, receiver)
@@ -94,5 +93,5 @@ internal fun KtAnalysisSession.filterCandidate(
 internal data class CandidateWithMapping(
     val candidate: KtFunctionLikeSignature<KtFunctionLikeSymbol>,
     val argumentMapping: LinkedHashMap<KtExpression, KtVariableLikeSignature<KtValueParameterSymbol>>,
-    val isSuccessful: Boolean,
+    val isApplicableBestCandidate: Boolean,
 )
