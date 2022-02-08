@@ -7,7 +7,7 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
-import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter;
+import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
@@ -34,7 +34,7 @@ public final class ExternalToolWindowManager {
   public static void handle(@NotNull Project project) {
     for (final ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
       final AbstractExternalSystemSettings settings = manager.getSettingsProvider().fun(project);
-      settings.subscribe(new ExternalSystemSettingsListenerAdapter() {
+      settings.subscribe(new ExternalSystemSettingsListener<>() {
         @Override
         public void onProjectsLinked(@NotNull Collection linked) {
 
