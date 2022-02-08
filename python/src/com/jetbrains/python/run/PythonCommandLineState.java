@@ -337,7 +337,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     PythonExecution pythonExecution = buildPythonExecution(helpersAwareTargetRequest);
     pythonExecution.setWorkingDir(getPythonExecutionWorkingDir(targetEnvironmentRequest));
     initEnvironment(myConfig.getProject(), pythonExecution, myConfig, createRemotePathMapper(), isDebug(), helpersAwareTargetRequest);
-    customizePythonExecutionEnvironmentVars(targetEnvironmentRequest, pythonExecution.getEnvs(), myConfig.isPassParentEnvs());
+    customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, pythonExecution.getEnvs(), myConfig.isPassParentEnvs());
     PythonScripts.ensureProjectDirIsOnTarget(targetEnvironmentRequest, myConfig.getProject());
     return pythonExecution;
   }
@@ -664,7 +664,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
   }
 
-  protected void customizePythonExecutionEnvironmentVars(@NotNull TargetEnvironmentRequest targetEnvironment,
+  protected void customizePythonExecutionEnvironmentVars(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest,
                                                          @NotNull Map<String, Function<TargetEnvironment, String>> envs,
                                                          boolean passParentEnvs) {
   }
