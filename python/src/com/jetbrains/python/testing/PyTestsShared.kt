@@ -425,8 +425,10 @@ internal interface PyTestConfigurationWithCustomSymbol {
  */
 abstract class PyAbstractTestConfiguration(project: Project,
                                            private val testFactory: PyAbstractTestFactory<*>)
-  : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, testFactory, testFactory.packageRequired), PyRerunAwareConfiguration,
-    RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
+  : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, testFactory, testFactory.packageRequired),
+    PyRerunAwareConfiguration,
+    RefactoringListenerProvider,
+    SMRunnerConsolePropertiesProvider {
 
   override fun createTestConsoleProperties(executor: Executor): SMTRunnerConsoleProperties =
     PythonTRunnerConsoleProperties(this, executor, true, PyTestsLocator).also { properties ->
