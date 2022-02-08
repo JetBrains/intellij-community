@@ -32,7 +32,7 @@ class KotlinDeclarationScopeOptimizer : ScopeOptimizer {
 
         // it is possible to create new kotlin private class from java - so have to look up in the same module as well
         val minimalScope = findModuleOrLibraryScope(containingFile) ?: element.useScope
-        val scopeWithoutKotlin = minimalScope.excludeKotlinSources()
+        val scopeWithoutKotlin = minimalScope.excludeKotlinSources(containingFile.project)
         val psiPackage = containingFile.psiPackage
         val jvmScope = if (psiPackage != null && scopeWithoutKotlin is GlobalSearchScope)
             PackageScope.packageScope(psiPackage, /* includeSubpackages = */ false, scopeWithoutKotlin)

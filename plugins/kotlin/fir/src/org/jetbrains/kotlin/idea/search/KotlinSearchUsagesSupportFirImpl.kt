@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search
 
@@ -156,7 +156,7 @@ class KotlinSearchUsagesSupportFirImpl : KotlinSearchUsagesSupport {
         processor: (PsiMethod) -> Boolean
     ): Boolean {
         if (method !is KtFakeLightMethod) {
-            val query = OverridingMethodsSearch.search(method, scope.excludeKotlinSources(), true)
+            val query = OverridingMethodsSearch.search(method, scope.excludeKotlinSources(method.project), true)
             val continueSearching = query.forEach(Processor { processor(it) })
             if (!continueSearching) {
                 return false

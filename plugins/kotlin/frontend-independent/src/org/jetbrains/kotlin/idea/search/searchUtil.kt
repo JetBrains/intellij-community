@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search
 
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -75,12 +74,15 @@ fun GlobalSearchScope.restrictToKotlinSources() = restrictByFileType(KotlinFileT
 
 fun SearchScope.restrictToKotlinSources() = restrictByFileType(KotlinFileType.INSTANCE)
 
-fun SearchScope.excludeKotlinSources(): SearchScope = excludeFileTypes(KotlinFileType.INSTANCE)
+fun SearchScope.excludeKotlinSources(project: Project): SearchScope = excludeFileTypes(project, KotlinFileType.INSTANCE)
 
-fun SearchScope.excludeFileTypes(vararg fileTypes: FileType): SearchScope {
+fun Project.everythingScopeExcludeFileTypes(vararg fileTypes: FileType): GlobalSearchScope {
+    return GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.everythingScope(this), *fileTypes).not()
+}
+
+fun SearchScope.excludeFileTypes(project: Project, vararg fileTypes: FileType): SearchScope {
     return if (this is GlobalSearchScope) {
-        val includedFileTypes = FileTypeRegistry.getInstance().registeredFileTypes.filter { it !in fileTypes }.toTypedArray()
-        GlobalSearchScope.getScopeRestrictedByFileTypes(this, *includedFileTypes)
+        this.intersectWith(project.everythingScopeExcludeFileTypes(*fileTypes))
     } else {
         this as LocalSearchScope
         val filteredElements = scope.filter { it.containingFile.fileType !in fileTypes }
