@@ -21,13 +21,11 @@ import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.Strings
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.ui.HyperlinkLabel
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.lang.JavaVersion
-import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.DevKitFileTemplatesFactory
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk
@@ -130,19 +128,20 @@ class DevKitModuleBuilder : StarterModuleBuilder() {
   private inner class DevKitInitialStep(contextProvider: StarterContextProvider) : StarterInitialStep(contextProvider) {
     private val typeProperty: GraphProperty<PluginType> = propertyGraph.graphProperty { PluginType.PLUGIN }
 
-    override fun addFieldsBefore(layout: LayoutBuilder) {
+    override fun addFieldsBefore(layout: Panel) {
       layout.row(DevKitBundle.message("module.builder.type")) {
-        segmentedButton(listOf(PluginType.PLUGIN, PluginType.THEME), typeProperty) { it.messagePointer.get() }
-      }.largeGapAfter()
+        segmentedButton(listOf(PluginType.PLUGIN, PluginType.THEME)) { it.messagePointer.get() }
+          .bind(typeProperty)
+      }.bottomGap(BottomGap.SMALL)
 
       starterContext.putUserData(PLUGIN_TYPE_KEY, PluginType.PLUGIN)
 
       typeProperty.afterChange { pluginType ->
         starterContext.putUserData(PLUGIN_TYPE_KEY, pluginType)
 
-        languageRow.visible = pluginType == PluginType.PLUGIN
-        groupRow.visible = pluginType == PluginType.PLUGIN
-        artifactRow.visible = pluginType == PluginType.PLUGIN
+        languageRow.visible(pluginType == PluginType.PLUGIN)
+        groupRow.visible(pluginType == PluginType.PLUGIN)
+        artifactRow.visible(pluginType == PluginType.PLUGIN)
 
         // Theme / Plugin projects require different SDK type
         sdkComboBox.selectedJdk = null
@@ -151,7 +150,7 @@ class DevKitModuleBuilder : StarterModuleBuilder() {
       }
     }
 
-    override fun addFieldsAfter(layout: LayoutBuilder) {
+    override fun addFieldsAfter(layout: Panel) {
       layout.row {
         hyperLink(DevKitBundle.message("module.builder.how.to.link"),
                   "https://plugins.jetbrains.com/docs/intellij/intellij-platform.html")
@@ -168,13 +167,6 @@ class DevKitModuleBuilder : StarterModuleBuilder() {
         }
       }
     }
-  }
-
-  private fun Row.hyperLink(@Nls title: String, @NlsSafe url: String) {
-    val hyperlinkLabel = HyperlinkLabel(title)
-    hyperlinkLabel.setHyperlinkTarget(url)
-    hyperlinkLabel.toolTipText = url
-    this.component(hyperlinkLabel)
   }
 
   private enum class PluginType(
