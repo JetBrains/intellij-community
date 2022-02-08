@@ -4,6 +4,7 @@ package com.intellij.lang.documentation
 import com.intellij.lang.documentation.DocumentationResult.Data
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
+import java.awt.Image
 
 @VisibleForTesting
 data class DocumentationResultData internal constructor(
@@ -18,8 +19,8 @@ data class DocumentationResultData internal constructor(
     return copy(html = html)
   }
 
-  override fun imageResolver(imageResolver: DocumentationImageResolver?): Data {
-    return copy(imageResolver = imageResolver)
+  override fun images(images: Map<String, Image>): Data {
+    return copy(imageResolver = DocumentationImageResolver(images.toMap()::get))
   }
 
   override fun anchor(anchor: String?): Data {

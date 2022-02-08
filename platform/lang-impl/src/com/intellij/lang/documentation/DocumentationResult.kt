@@ -4,6 +4,7 @@ package com.intellij.lang.documentation
 import com.intellij.util.AsyncSupplier
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.Nls
+import java.awt.Image
 import java.util.function.Supplier
 
 @Experimental
@@ -14,9 +15,9 @@ sealed interface DocumentationResult {
     fun html(html: @Nls String): Data
 
     /**
-     * @param imageResolver allows resolving images by their URL in `<img src="url">` tags
+     * @param images map from `url` of `<img src="url">` tag to an image
      */
-    fun imageResolver(imageResolver: DocumentationImageResolver?): Data
+    fun images(images: Map<String, Image>): Data
 
     /**
      * The scrolling is only executed on the initial showing, the anchor does not have an effect on [updates].
