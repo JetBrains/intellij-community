@@ -147,11 +147,12 @@ internal class DocumentationUI(
       showMessage(CodeInsightBundle.message("no.documentation.found"))
       return
     }
-    imageResolver = data.imageResolver
+    val content = data.content
+    imageResolver = content.imageResolver
     val presentation = request.presentation
     val locationChunk = getDefaultLocationChunk(presentation)
     val linkChunk = linkChunk(presentation.presentableText, data.links)
-    val decorated = decorate(data.html, locationChunk, linkChunk)
+    val decorated = decorate(content.html, locationChunk, linkChunk)
     val scrollingPosition = data.anchor?.let(ScrollingPosition::Anchor) ?: ScrollingPosition.Reset
     update(decorated, scrollingPosition)
   }

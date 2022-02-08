@@ -6,7 +6,14 @@ import com.intellij.openapi.progress.withJob
 import com.intellij.util.AsyncSupplier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.Nls
+import java.awt.Image
 import java.util.function.Supplier
+
+internal data class DocumentationContentData internal constructor(
+  val html: @Nls String,
+  val imageResolver: DocumentationImageResolver?,
+) : DocumentationContent
 
 internal data class LinkData(
   val externalUrl: String? = null,
@@ -35,4 +42,11 @@ internal fun <X> Supplier<X>.asAsyncSupplier(): AsyncSupplier<X> = {
       this@asAsyncSupplier.get()
     }
   }
+}
+
+internal fun imageResolver(map: Map<String, Image>): DocumentationImageResolver? {
+  if (map.isEmpty()) {
+    return null
+  }
+  return DocumentationImageResolver(map.toMap()::get)
 }

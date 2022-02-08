@@ -2,24 +2,28 @@
 package com.intellij.lang.documentation
 
 import com.intellij.lang.documentation.DocumentationResult.Data
-import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Image
 
 @VisibleForTesting
 data class DocumentationResultData internal constructor(
-  val html: @Nls String,
-  val anchor: String? = null,
+  internal val content: DocumentationContentData,
   internal val links: LinkData = LinkData(),
-  val imageResolver: DocumentationImageResolver? = null,
+  val anchor: String? = null,
 ) : Data {
 
+  val html: String get() = content.html
+
   override fun html(html: String): Data {
-    return copy(html = html)
+    return content(content.copy(html = html))
   }
 
   override fun images(images: Map<String, Image>): Data {
-    return copy(imageResolver = DocumentationImageResolver(images.toMap()::get))
+    return content(content.copy(imageResolver = imageResolver(images)))
+  }
+
+  override fun content(content: DocumentationContent): Data {
+    return copy(content = content as DocumentationContentData)
   }
 
   override fun anchor(anchor: String?): Data {

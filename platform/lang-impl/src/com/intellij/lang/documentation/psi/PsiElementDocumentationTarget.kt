@@ -79,8 +79,10 @@ class PsiElementDocumentationTarget private constructor(
     val html = localDocHtml(provider)
                ?: return null
     return DocumentationResultData(
-      html = html,
-      imageResolver = pointer.imageResolver,
+      content = DocumentationContentData(
+        html = html,
+        imageResolver = pointer.imageResolver,
+      ),
       anchor = pointer.anchor,
     )
   }
@@ -129,8 +131,10 @@ class PsiElementDocumentationTarget private constructor(
                   ?: continue
         LOG.debug("Fetched documentation from $url")
         return@Supplier DocumentationResultData(
-          html = doc,
-          imageResolver = imageResolver,
+          content = DocumentationContentData(
+            html = doc,
+            imageResolver = imageResolver,
+          ),
           anchor = anchor,
           links = LinkData(externalUrl = url),
         )

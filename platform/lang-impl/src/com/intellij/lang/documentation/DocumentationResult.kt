@@ -20,6 +20,11 @@ sealed interface DocumentationResult {
     fun images(images: Map<String, Image>): Data
 
     /**
+     * @param content [html] with [images]
+     */
+    fun content(content: DocumentationContent): Data
+
+    /**
      * The scrolling is only executed on the initial showing, the anchor does not have an effect on [updates].
      *
      * @param anchor element `id` or link `name` in the [html] to scroll to,
@@ -41,7 +46,15 @@ sealed interface DocumentationResult {
      */
     @JvmStatic
     fun documentation(html: @Nls String): Data {
-      return DocumentationResultData(html)
+      return documentation(DocumentationContent.content(html))
+    }
+
+    /**
+     * @param content see [Data.content]
+     */
+    @JvmStatic
+    fun documentation(content: DocumentationContent): Data {
+      return DocumentationResultData(content as DocumentationContentData)
     }
 
     /**
