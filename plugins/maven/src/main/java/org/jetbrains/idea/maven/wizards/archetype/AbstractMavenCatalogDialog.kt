@@ -44,7 +44,7 @@ abstract class AbstractMavenCatalogDialog(private val project: Project) : Dialog
   override fun createCenterPanel() = panel {
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.label")) {
       val title = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.title")
-      val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      val descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
       textFieldWithBrowseButton(title, project, descriptor)
         .bindText(locationProperty.trim())
         .applyToComponent { emptyText.text = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.hint") }

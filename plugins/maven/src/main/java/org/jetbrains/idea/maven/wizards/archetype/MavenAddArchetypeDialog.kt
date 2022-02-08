@@ -89,7 +89,7 @@ class MavenAddArchetypeDialog(private val project: Project) : DialogWrapper(proj
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.label")) {
       val title = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.title")
-      val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      val descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
       textFieldWithBrowseButton(title, project, descriptor)
         .bindText(catalogLocationProperty.trim())
         .applyToComponent { emptyText.text = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.hint") }
