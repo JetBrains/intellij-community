@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl
+package com.intellij.toolWindow
 
 import com.intellij.ide.RemoteDesktopService
 import com.intellij.ide.ui.LafManagerListener
@@ -19,13 +19,13 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.ex.ToolWindowEx
+import com.intellij.openapi.wm.impl.AbstractDroppableStripe
+import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getAdjustedRatio
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getRegisteredMutableInfoOrLogError
-import com.intellij.openapi.wm.impl.ToolWindowsPane.Resizer.LayeredPane
-import com.intellij.openapi.wm.impl.ToolWindowsPane.Resizer.Splitter.FirstComponent
-import com.intellij.openapi.wm.impl.ToolWindowsPane.Resizer.Splitter.LastComponent
+import com.intellij.openapi.wm.impl.WindowInfoImpl
 import com.intellij.reference.SoftReference
-import com.intellij.toolWindow.*
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.paint.PaintUtil
@@ -36,6 +36,7 @@ import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.*
+import java.awt.geom.Point2D
 import java.awt.image.BufferedImage
 import java.beans.PropertyChangeEvent
 import java.util.*
@@ -46,7 +47,7 @@ import javax.swing.LayoutFocusTraversalPolicy
 import kotlin.math.max
 import kotlin.math.min
 
-private val LOG = logger<ToolWindowsPane>()
+private val LOG = logger<ToolWindowPane>()
 
 /**
  * This panel contains all tool stripes and JLayeredPane at the center area. All tool windows are
@@ -55,9 +56,9 @@ private val LOG = logger<ToolWindowsPane>()
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-class ToolWindowsPane internal constructor(frame: JFrame,
-                                           parentDisposable: Disposable,
-                                           @field:JvmField internal val buttonManager: ToolWindowButtonManager) : JBLayeredPane(), UISettingsListener {
+class ToolWindowPane internal constructor(frame: JFrame,
+                                          parentDisposable: Disposable,
+                                          @field:JvmField internal val buttonManager: ToolWindowButtonManager) : JBLayeredPane(), UISettingsListener {
   companion object {
     const val TEMPORARY_ADDED = "TEMPORARY_ADDED"
 
@@ -309,10 +310,12 @@ class ToolWindowsPane internal constructor(frame: JFrame,
       component = getComponentAt(window.anchor)
       if (component != null) {
         resizer = if (window.anchor.isHorizontal) {
-          if (verticalSplitter.firstComponent === component) FirstComponent(verticalSplitter) else LastComponent(verticalSplitter)
+          if (verticalSplitter.firstComponent === component) Resizer.Splitter.FirstComponent(verticalSplitter)
+          else Resizer.Splitter.LastComponent(verticalSplitter)
         }
         else {
-          if (horizontalSplitter.firstComponent === component) FirstComponent(horizontalSplitter) else LastComponent(horizontalSplitter)
+          if (horizontalSplitter.firstComponent === component) Resizer.Splitter.FirstComponent(horizontalSplitter)
+          else Resizer.Splitter.LastComponent(horizontalSplitter)
         }
       }
     }
@@ -326,10 +329,10 @@ class ToolWindowsPane internal constructor(frame: JFrame,
       }
       if (component != null) {
         resizer = when (window.anchor) {
-          ToolWindowAnchor.TOP -> LayeredPane.Top(component)
-          ToolWindowAnchor.BOTTOM -> LayeredPane.Bottom(component)
-          ToolWindowAnchor.LEFT -> LayeredPane.Left(component)
-          ToolWindowAnchor.RIGHT -> LayeredPane.Right(component)
+          ToolWindowAnchor.TOP -> Resizer.LayeredPane.Top(component)
+          ToolWindowAnchor.BOTTOM -> Resizer.LayeredPane.Bottom(component)
+          ToolWindowAnchor.LEFT -> Resizer.LayeredPane.Left(component)
+          ToolWindowAnchor.RIGHT -> Resizer.LayeredPane.Right(component)
           else -> null
         }
       }
@@ -769,6 +772,126 @@ private class MyLayeredPane(splitter: JComponent, frame: JFrame) : JBLayeredPane
       }
       else -> {
         LOG.error("unknown anchor $anchor")
+      }
+    }
+  }
+}
+
+private class Surface(private val myTopImage: Image,
+                      private val myBottomImage: Image,
+                      bottomImageOffset: Point2D,
+                      private val  direction: Int,
+                      private val anchor: ToolWindowAnchor,
+                      private val desiredTimeToComplete: Int) : JComponent() {
+  private val bottomImageOffset = bottomImageOffset.clone() as Point2D
+  private var offset = 0
+
+  init {
+    isOpaque = true
+  }
+
+  fun runMovement() {
+    if (!isShowing) {
+      return
+    }
+
+    val bounds = bounds
+    val distance = if (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT) bounds.width else bounds.height
+    var count = 0
+    offset = 0
+    // first paint requires more time than next ones
+    paintImmediately(0, 0, width, height)
+    val startTime = System.currentTimeMillis()
+    while (true) {
+      paintImmediately(0, 0, width, height)
+      val timeSpent = System.currentTimeMillis() - startTime
+      count++
+      if (timeSpent >= desiredTimeToComplete) {
+        break
+      }
+      val onePaintTime = timeSpent.toDouble() / count
+      var iterations = ((desiredTimeToComplete - timeSpent) / onePaintTime).toInt()
+      iterations = Math.max(1, iterations)
+      offset += (distance - offset) / iterations
+    }
+  }
+
+  override fun paint(g: Graphics) {
+    val bounds = bounds
+    (g as Graphics2D).translate(bottomImageOffset.x, bottomImageOffset.y)
+    when (anchor) {
+      ToolWindowAnchor.LEFT -> {
+        if (direction == 1) {
+          g.setClip(null)
+          g.clipRect(offset, 0, bounds.width - offset, bounds.height)
+          UIUtil.drawImage(g, myBottomImage, 0, 0, null)
+          g.setClip(null)
+          g.clipRect(0, 0, offset, bounds.height)
+          UIUtil.drawImage(g, myTopImage, offset - bounds.width, 0, null)
+        }
+        else {
+          g.setClip(null)
+          g.clipRect(bounds.width - offset, 0, offset, bounds.height)
+          UIUtil.drawImage(g, myBottomImage, 0, 0, null)
+          g.setClip(null)
+          g.clipRect(0, 0, bounds.width - offset, bounds.height)
+          UIUtil.drawImage(g, myTopImage, -offset, 0, null)
+        }
+        myTopImage.flush()
+      }
+      ToolWindowAnchor.RIGHT -> {
+        if (direction == 1) {
+          g.setClip(null)
+          g.clipRect(0, 0, bounds.width - offset, bounds.height)
+          UIUtil.drawImage(g, myBottomImage, 0, 0, null)
+          g.setClip(null)
+          g.clipRect(bounds.width - offset, 0, offset, bounds.height)
+          UIUtil.drawImage(g, myTopImage, bounds.width - offset, 0, null)
+        }
+        else {
+          g.setClip(null)
+          g.clipRect(0, 0, offset, bounds.height)
+          UIUtil.drawImage(g, myBottomImage, 0, 0, null)
+          g.setClip(null)
+          g.clipRect(offset, 0, bounds.width - offset, bounds.height)
+          UIUtil.drawImage(g, myTopImage, offset, 0, null)
+        }
+      }
+      ToolWindowAnchor.TOP -> {
+        if (direction == 1) {
+          g.setClip(null)
+          g.clipRect(0, offset, bounds.width, bounds.height - offset)
+          UIUtil.drawImage(g, myBottomImage, 0, 0, null)
+          g.setClip(null)
+          g.clipRect(0, 0, bounds.width, offset)
+          UIUtil.drawImage(g, myTopImage, 0, -bounds.height + offset, null)
+        }
+        else {
+          g.setClip(null)
+          g.clipRect(0, bounds.height - offset, bounds.width, offset)
+          UIUtil.drawImage(g, myBottomImage, 0, 0, null)
+          g.setClip(null)
+          g.clipRect(0, 0, bounds.width, bounds.height - offset)
+          UIUtil.drawImage(g, myTopImage, 0, -offset, null)
+        }
+      }
+      ToolWindowAnchor.BOTTOM -> {
+        if (direction == 1) {
+          g.setClip(null)
+          g.clipRect(0, 0, bounds.width, bounds.height - offset)
+          UIUtil.drawImage(g, myBottomImage, 0, 0, null)
+          g.setClip(null)
+          g.clipRect(0, bounds.height - offset, bounds.width, offset)
+          UIUtil.drawImage(g, myTopImage, 0, bounds.height - offset, null)
+        }
+        else {
+          g.setClip(null)
+          g.clipRect(0, 0, bounds.width, offset)
+          UIUtil.drawImage(g, myBottomImage, 0, 0, null)
+          g.setClip(null)
+          g.clipRect(0, offset, bounds.width, bounds.height - offset)
+          UIUtil.drawImage(g, myTopImage, 0, offset, null)
+        }
       }
     }
   }

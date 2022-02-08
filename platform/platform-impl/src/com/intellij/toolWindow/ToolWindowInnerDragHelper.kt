@@ -4,7 +4,6 @@ package com.intellij.toolWindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.openapi.wm.impl.IdeRootPane
-import com.intellij.openapi.wm.impl.ToolWindowsPane
 import com.intellij.openapi.wm.impl.content.BaseLabel
 import com.intellij.openapi.wm.impl.content.ContentTabLabel
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
@@ -18,7 +17,6 @@ import com.intellij.ui.content.Content.TEMPORARY_REMOVED_KEY
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.tabs.TabsUtil
 import com.intellij.util.IconUtil
-import org.jetbrains.annotations.NotNull
 import java.awt.Image
 import java.awt.Point
 import java.awt.Rectangle
@@ -30,8 +28,7 @@ import javax.swing.JDialog
 import javax.swing.JLabel
 import javax.swing.SwingUtilities
 
-internal class ToolWindowInnerDragHelper(parent: @NotNull Disposable, val pane: @NotNull ToolWindowsPane)
-  : MouseDragHelper<ToolWindowsPane>(parent, pane) {
+internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindowPane) : MouseDragHelper<ToolWindowPane>(parent, pane) {
   private var sourceDecorator = null as InternalDecoratorImpl?
   private var myInitialIndex = -1
   private var myCurrentDecorator = null as InternalDecoratorImpl?
@@ -185,7 +182,7 @@ internal class ToolWindowInnerDragHelper(parent: @NotNull Disposable, val pane: 
     }
   }
 
-  fun stopDrag() {
+  private fun stopDrag() {
     if (myDraggingTab == null) return
     (myDraggingTab!!.content as ContentImpl).putUserData(TEMPORARY_REMOVED_KEY, null)
     sourceDecorator?.isSplitUnsplitInProgress = false
@@ -208,6 +205,7 @@ internal class ToolWindowInnerDragHelper(parent: @NotNull Disposable, val pane: 
     if (sourceDecorator == null || sourceDecorator?.contentManager?.contentCount == 0 || myDialog == null) {
       return
     }
+
     val manager = myDraggingTab!!.content.manager
     if (manager != null) {
       with(myDraggingTab!!.content as ContentImpl) {
@@ -218,7 +216,8 @@ internal class ToolWindowInnerDragHelper(parent: @NotNull Disposable, val pane: 
             sourceDecorator!!.isSplitUnsplitInProgress = true
             manager.removeContent(this, false)
             sourceDecorator!!.setDropInfoIndex(index, myDraggingTab!!.width)
-          } finally {
+          }
+          finally {
             sourceDecorator!!.isSplitUnsplitInProgress = false
           }
         }
@@ -253,7 +252,8 @@ internal class ToolWindowInnerDragHelper(parent: @NotNull Disposable, val pane: 
       if (currentDropIndex != -1) {
         myCurrentDecorator!!.setDropInfoIndex(currentDropIndex, myDialog!!.width)
         highlighter.bounds = Rectangle()
-      } else {
+      }
+      else {
         myCurrentDecorator?.setDropInfoIndex(-1, 0)
         highlighter.bounds = dropArea
       }

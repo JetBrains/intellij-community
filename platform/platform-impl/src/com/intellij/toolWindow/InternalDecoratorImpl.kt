@@ -19,7 +19,6 @@ import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.FloatingDecorator
 import com.intellij.openapi.wm.impl.InternalDecorator
 import com.intellij.openapi.wm.impl.ToolWindowImpl
-import com.intellij.openapi.wm.impl.ToolWindowsPane
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.Wrapper
@@ -642,7 +641,7 @@ class InternalDecoratorImpl internal constructor(
       }
       SwingUtilities.convertPointFromScreen(point, divider)
       return Math.abs(
-        if (decorator.toolWindow.windowInfo.anchor.isHorizontal) point.y else point.x) <= ToolWindowsPane.headerResizeArea
+        if (decorator.toolWindow.windowInfo.anchor.isHorizontal) point.y else point.x) <= ToolWindowPane.headerResizeArea
     }
 
     private fun updateCursor(event: MouseEvent, isInDragZone: Boolean) {

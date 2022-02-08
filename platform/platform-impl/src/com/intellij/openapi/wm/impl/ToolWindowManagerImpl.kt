@@ -95,7 +95,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   private val idToEntry = HashMap<String, ToolWindowEntry>()
   private val activeStack = ActiveStack()
   private val sideStack = SideStack()
-  internal var toolWindowPane: ToolWindowsPane? = null
+  internal var toolWindowPane: ToolWindowPane? = null
     private set
 
   private var frame: ProjectFrameHelper? = null
@@ -482,7 +482,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     toolWindowPane.repaint()
   }
 
-  private fun getToolWindowPaneIfInitialized(): ToolWindowsPane {
+  private fun getToolWindowPaneIfInitialized(): ToolWindowPane {
     return toolWindowPane ?: throw IllegalStateException("You must not register toolwindow programmatically so early. " +
                                                          "Rework code or use ToolWindowManager.invokeLater")
   }
@@ -1129,7 +1129,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     layout = newLayout
   }
 
-  internal fun setLayout(newLayout: DesktopLayout, toolWindowPane: ToolWindowsPane) {
+  internal fun setLayout(newLayout: DesktopLayout, toolWindowPane: ToolWindowPane) {
     if (idToEntry.isEmpty()) {
       layout = newLayout
       return
