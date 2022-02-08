@@ -10,9 +10,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
-import training.dsl.LearningBalloonConfig
-import training.dsl.TaskContext
-import training.dsl.TaskRuntimeContext
+import training.dsl.*
 import training.learn.ActionsRecorder
 import training.ui.LearningUiHighlightingManager
 import training.ui.LessonMessagePane
@@ -213,6 +211,11 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
 
   override fun addStep(step: CompletableFuture<Boolean>) {
     hasDetection = true
+  }
+
+  override fun triggerUI(parameters: HighlightTriggerParametersContext.() -> Unit): HighlightingTriggerMethods {
+    hasDetection = true
+    return super.triggerUI(parameters)
   }
 
   @Suppress("OverridingDeprecatedMember")

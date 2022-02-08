@@ -12,6 +12,8 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.ui.tree.TreeVisitor
+import com.intellij.util.ui.tree.TreeUtil
 import org.assertj.swing.exception.ComponentLookupException
 import org.assertj.swing.exception.WaitTimedOutError
 import org.intellij.lang.annotations.Language
@@ -290,6 +292,57 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
         thisLogger().error("Test execution error", e)
       }
     })
+  }
+
+  override fun triggerUI(parameters: HighlightTriggerParametersContext.() -> Unit): HighlightingTriggerMethods {
+    val p = HighlightTriggerParametersContext()
+    p.apply(parameters)
+    val options = LearningUiHighlightingManager.HighlightingOptions(p.highlightBorder,
+                                                                    p.highlightInside,
+                                                                    p.usePulsation,
+                                                                    p.clearPreviousHighlights)
+    return object : HighlightingTriggerMethods() {
+      override fun treeItem(checkPath: TaskRuntimeContext.(tree: JTree, path: TreePath) -> Boolean) {
+        triggerByFoundPathAndHighlight(options) { tree ->
+          TreeUtil.visitVisibleRows(tree, TreeVisitor { path ->
+            if (checkPath(tree, path)) TreeVisitor.Action.INTERRUPT else TreeVisitor.Action.CONTINUE
+          })
+        }
+      }
+
+      override fun listItem(checkList: TaskRuntimeContext.(item: Any) -> Boolean) {
+        triggerByFoundListItemAndHighlight(options) { ui: JList<*> ->
+          LessonUtil.findItem(ui) { checkList(it) }
+        }
+      }
+
+      @Suppress("OverridingDeprecatedMember")
+      override fun <ComponentType : Component> explicitComponentDetection(
+        componentClass: Class<ComponentType>,
+        selector: ((candidates: Collection<ComponentType>) -> ComponentType?)?,
+        finderFunction: TaskRuntimeContext.(ComponentType) -> Boolean
+      ) {
+        @Suppress("DEPRECATION")
+        triggerByUiComponentAndHighlightImpl(
+          componentClass,
+          options,
+          selector,
+          finderFunction
+        )
+      }
+
+      @Suppress("OverridingDeprecatedMember")
+      override fun <ComponentType : Component> explicitComponentPartDetection(componentClass: Class<ComponentType>,
+                                                                              rectangle: TaskRuntimeContext.(ComponentType) -> Rectangle?) {
+        @Suppress("DEPRECATION")
+        triggerByPartOfComponentImpl(
+          componentClass,
+          options,
+          null,
+          rectangle
+        )
+      }
+    }
   }
 
   @Suppress("OverridingDeprecatedMember")
