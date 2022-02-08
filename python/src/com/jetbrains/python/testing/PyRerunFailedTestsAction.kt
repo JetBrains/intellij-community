@@ -30,6 +30,7 @@ import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.CommandLinePatcher
 import com.jetbrains.python.run.PythonScriptExecution
 import com.jetbrains.python.run.PythonScriptTargetedCommandLineBuilder
+import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import java.util.function.Function
 
 class PyRerunFailedTestsAction(componentContainer: ComponentContainer) : AbstractRerunFailedTestsAction(componentContainer) {
@@ -147,11 +148,11 @@ class PyRerunFailedTestsAction(componentContainer: ComponentContainer) : Abstrac
       state.customizeEnvironmentVars(envs, passParentEnvs)
     }
 
-    override fun customizePythonExecutionEnvironmentVars(targetEnvironmentRequest: TargetEnvironmentRequest,
+    override fun customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,
                                                          envs: Map<String, Function<TargetEnvironment, String>>,
                                                          passParentEnvs: Boolean) {
-      super.customizePythonExecutionEnvironmentVars(targetEnvironmentRequest, envs, passParentEnvs)
-      state.customizePythonExecutionEnvironmentVars(targetEnvironmentRequest, envs, passParentEnvs)
+      super.customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, envs, passParentEnvs)
+      state.customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, envs, passParentEnvs)
     }
   }
 

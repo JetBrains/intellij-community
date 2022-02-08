@@ -18,6 +18,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.execution.ParametersListUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelper
+import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.testing.PyTestSharedForm.create
 
@@ -45,10 +46,10 @@ class PyPyTestExecutionEnvironment(configuration: PyTestConfiguration, environme
     envs[PYTEST_RUN_CONFIG] = "True"
   }
 
-  override fun customizePythonExecutionEnvironmentVars(targetEnvironmentRequest: TargetEnvironmentRequest,
+  override fun customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,
                                                        envs: MutableMap<String, TargetEnvironmentFunction<String>>,
                                                        passParentEnvs: Boolean) {
-    super.customizePythonExecutionEnvironmentVars(targetEnvironmentRequest, envs, passParentEnvs)
+    super.customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, envs, passParentEnvs)
     envs[PYTEST_RUN_CONFIG] = constant("True")
   }
 }
