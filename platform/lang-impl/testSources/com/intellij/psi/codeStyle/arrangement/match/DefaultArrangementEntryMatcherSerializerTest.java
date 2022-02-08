@@ -1,17 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement.match;
-
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.CLASS;
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.FIELD;
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.METHOD;
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.FINAL;
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PRIVATE;
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC;
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.STATIC;
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.SYNCHRONIZED;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import com.intellij.psi.codeStyle.arrangement.DefaultArrangementSettingsSerializer;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
@@ -20,12 +8,17 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*;
+import static org.junit.Assert.*;
 
 /**
  * @author Denis Zhdanov
