@@ -177,14 +177,14 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
    * <p>
    * The part of the legacy implementation based on {@link GeneralCommandLine}.
    */
-  protected void addBeforeParameters(GeneralCommandLine cmd) {}
+  protected void addBeforeParameters(GeneralCommandLine cmd) { }
 
   /**
    * To be deprecated.
    * <p>
    * The part of the legacy implementation based on {@link GeneralCommandLine}.
    */
-  protected void addAfterParameters(GeneralCommandLine cmd) {}
+  protected void addAfterParameters(GeneralCommandLine cmd) { }
 
   /**
    * To be deprecated.
@@ -200,7 +200,7 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
     addAfterParameters(cmd);
   }
 
-  protected void addBeforeParameters(@NotNull PythonScriptExecution testScriptExecution) {}
+  protected void addBeforeParameters(@NotNull PythonScriptExecution testScriptExecution) { }
 
   /**
    * Adds test specs (like method, class, script, etc) to list of runner parameters.
@@ -211,7 +211,7 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
   }
 
   protected void addAfterParameters(@NotNull TargetEnvironmentRequest targetEnvironmentRequest,
-                                    @NotNull PythonScriptExecution testScriptExecution) {}
+                                    @NotNull PythonScriptExecution testScriptExecution) { }
 
   @Override
   public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
