@@ -342,7 +342,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     List<AnAction> rightAligned = new ArrayList<>();
     for (int i = 0; i < actions.size(); i++) {
       AnAction action = actions.get(i);
-      if (action instanceof RightAlignedToolbarAction) {
+      if (isAlignmentEnabled() && action instanceof RightAlignedToolbarAction) {
         rightAligned.add(action);
         continue;
       }
@@ -391,6 +391,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
       add(button);
     }
+  }
+
+  protected boolean isAlignmentEnabled() {
+    return true;
   }
 
   @Override

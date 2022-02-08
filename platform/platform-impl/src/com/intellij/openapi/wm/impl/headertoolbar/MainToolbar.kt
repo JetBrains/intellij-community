@@ -5,6 +5,8 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -13,6 +15,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.ui.JBUI
+import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
@@ -67,9 +70,14 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   private fun createActionsBar(): JComponent? {
     val group = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_ACTIONS) as ActionGroup?
     return group?.let {
-      val toolbar = ActionToolbar(it.getChildren(null).asList())
-      toolbar.border = JBUI.Borders.emptyRight(8)
-      toolbar
+      val toolbar = TitleActionToolbar(ActionPlaces.MAIN_TOOLBAR, it, true)
+      toolbar.setMinimumButtonSize(Dimension(40, 40))
+      toolbar.targetComponent = null
+      toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+      val comp = toolbar.component
+      comp.border = JBUI.Borders.emptyRight(8)
+      comp.isOpaque = false
+      comp
     }
   }
 
