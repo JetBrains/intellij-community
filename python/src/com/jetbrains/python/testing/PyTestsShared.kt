@@ -530,15 +530,13 @@ abstract class PyAbstractTestConfiguration(project: Project,
     }
   }
 
-  override fun getTestSpecsForRerun(scope: com.intellij.psi.search.GlobalSearchScope,
-                                    locations: MutableList<Pair<Location<*>, AbstractTestProxy>>): List<String> {
-    val result = java.util.ArrayList<String>()
+  override fun getTestSpecsForRerun(scope: GlobalSearchScope,
+                                    locations: MutableList<Pair<Location<*>, AbstractTestProxy>>): List<String> =
     // Set used to remove duplicate targets
-    locations.map { it.first }.distinctBy { it.psiElement }.map { getPythonTestSpecByLocation(it) }.forEach {
-      result.addAll(it)
-    }
-    return result + generateRawArguments(true)
-  }
+    locations
+      .map { it.first }
+      .distinctBy { it.psiElement }
+      .flatMap { getPythonTestSpecByLocation(it) } + generateRawArguments(true)
 
   fun getTestSpec(): List<String> = target.generateArgumentsLine(this) + generateRawArguments()
 
