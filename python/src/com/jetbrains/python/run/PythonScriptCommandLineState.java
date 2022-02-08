@@ -177,9 +177,9 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   }
 
   @Override
-  public void customizePythonExecutionEnvironmentVars(@NotNull TargetEnvironmentRequest targetEnvironment,
-                                                      @NotNull Map<String, Function<TargetEnvironment, String>> envs,
-                                                      boolean passParentEnvs) {
+  protected void customizePythonExecutionEnvironmentVars(@NotNull TargetEnvironmentRequest targetEnvironment,
+                                                         @NotNull Map<String, Function<TargetEnvironment, String>> envs,
+                                                         boolean passParentEnvs) {
     super.customizePythonExecutionEnvironmentVars(targetEnvironment, envs, passParentEnvs);
     if (emulateTerminal()) {
       if (!SystemInfo.isWindows) {

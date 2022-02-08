@@ -220,9 +220,9 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
   }
 
   @Override
-  public void customizePythonExecutionEnvironmentVars(@NotNull TargetEnvironmentRequest targetEnvironmentRequest,
-                                                      @NotNull Map<String, Function<TargetEnvironment, String>> envs,
-                                                      boolean passParentEnvs) {
+  protected void customizePythonExecutionEnvironmentVars(@NotNull TargetEnvironmentRequest targetEnvironmentRequest,
+                                                         @NotNull Map<String, Function<TargetEnvironment, String>> envs,
+                                                         boolean passParentEnvs) {
     super.customizePythonExecutionEnvironmentVars(targetEnvironmentRequest, envs, passParentEnvs);
     String pycharmHelperPath = PythonHelpersLocator.getHelperPath("pycharm");
     Function<TargetEnvironment, String> targetPycharmHelpersPath =

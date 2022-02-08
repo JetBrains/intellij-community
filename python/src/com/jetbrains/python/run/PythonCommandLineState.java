@@ -664,9 +664,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
   }
 
-  public void customizePythonExecutionEnvironmentVars(@NotNull TargetEnvironmentRequest targetEnvironment,
-                                                      @NotNull Map<String, Function<TargetEnvironment, String>> envs,
-                                                      boolean passParentEnvs) {
+  protected void customizePythonExecutionEnvironmentVars(@NotNull TargetEnvironmentRequest targetEnvironment,
+                                                         @NotNull Map<String, Function<TargetEnvironment, String>> envs,
+                                                         boolean passParentEnvs) {
   }
 
   /**
