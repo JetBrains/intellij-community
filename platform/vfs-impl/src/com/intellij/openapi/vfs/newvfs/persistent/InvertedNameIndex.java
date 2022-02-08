@@ -16,7 +16,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntPredicate;
 import java.util.function.Supplier;
 
-final class ReverseNameIndex {
+final class InvertedNameIndex {
 
   private static final Int2IntMap ourSingleData = new Int2IntOpenHashMap();
   private static final Int2ObjectMap<int[]> ourMultiData = new Int2ObjectOpenHashMap<>();
