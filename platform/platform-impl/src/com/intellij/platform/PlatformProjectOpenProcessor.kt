@@ -49,14 +49,11 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @JvmField
     val PROJECT_NEWLY_OPENED = Key.create<Boolean>("PROJECT_NEWLY_OPENED")
 
-    fun Project.isOpenedByPlatformProcessor(): Boolean =
-      getUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR) == true
+    fun Project.isOpenedByPlatformProcessor(): Boolean = getUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR) == true
 
-    fun Project.isConfiguredByPlatformProcessor(): Boolean =
-      getUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR) == true
+    fun Project.isConfiguredByPlatformProcessor(): Boolean = getUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR) == true
 
-    fun Project.isNewProject(): Boolean =
-      getUserData(PROJECT_NEWLY_OPENED) == true
+    fun Project.isNewProject(): Boolean = getUserData(PROJECT_NEWLY_OPENED) == true
 
     @JvmStatic
     fun getInstance() = getInstanceIfItExists()!!

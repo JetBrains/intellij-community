@@ -5,16 +5,11 @@
     <keymapExtension implementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemKeymapExtension"/>
 
     <!--Generic services-->
-    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager"/>
-    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.RemoteExternalSystemCommunicationManager"/>
-    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.InProcessExternalSystemCommunicationManager"/>
     <applicationService
         serviceInterface="com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager"
         serviceImplementation="com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper"
                         serviceImplementation="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapperImpl"/>
-    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager"/>
-    <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager"/>
     <externalSystemNotificationExtension
         implementation="com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtensionImpl"/>
 
@@ -36,7 +31,6 @@
     <projectService
       serviceInterface="com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware"
       serviceImplementation="com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware"/>
-    <projectService serviceImplementation="com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware"/>
     <editorFloatingToolbarProvider
       id="ExternalSystem.ProjectRefreshFloatingProvider"
       order="after DefaultFloatingToolbarProvider"
@@ -118,10 +112,6 @@
 
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider"
                         serviceImplementation="com.intellij.openapi.externalSystem.service.execution.DefaultExternalSystemJdkProvider"/>
-
-    <applicationService
-      serviceImplementation="com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtensionManager"/>
-
 
     <!--Experimental-->
     <externalSystemWorkspaceContributor implementation="com.intellij.openapi.externalSystem.importing.JpsDependencyContributor"/>
