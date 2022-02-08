@@ -160,7 +160,7 @@ private fun contentUpdater(target: DocumentationTarget, url: String): ContentUpd
 }
 
 @TestOnly
-fun computeDocumentation(targetPointer: Pointer<out DocumentationTarget>): DocumentationResultData? {
+fun computeDocumentationBlocking(targetPointer: Pointer<out DocumentationTarget>): DocumentationResultData? {
   return runBlockingCancellable {
     withContext(Dispatchers.Default) {
       computeDocumentationAsync(targetPointer).await()
