@@ -477,5 +477,7 @@
     <extensionPoint name="semanticRootProvider" interface="com.intellij.openapi.vfs.newvfs.persistent.RootSemanticAddressProvider"/>
 
     <extensionPoint name="persistentFsConnectionListener" interface="com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener"/>
+
+    <extensionPoint name="beforeRunStartupTasks" interface="com.intellij.execution.startup.BeforeRunStartupTasks" area="IDEA_PROJECT"/>
   </extensionPoints>
 </idea-plugin>
