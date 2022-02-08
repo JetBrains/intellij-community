@@ -18,14 +18,14 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
@@ -38,14 +38,9 @@ import org.jetbrains.kotlin.idea.debugger.test.preference.*
 import org.jetbrains.kotlin.idea.debugger.test.util.BreakpointCreator
 import org.jetbrains.kotlin.idea.debugger.test.util.KotlinOutputChecker
 import org.jetbrains.kotlin.idea.debugger.test.util.LogPropagator
-import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM3
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
-import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.platform.js.JsPlatforms
-import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.test.TargetBackend
 import org.junit.ComparisonFailure
 import java.io.File
@@ -55,15 +50,6 @@ internal const val TEST_LIBRARY_NAME = "TestLibrary"
 internal const val COMMON_MODULE_NAME = "common"
 internal const val JVM_MODULE_NAME = "jvm"
 
-/**
- * This class creates project structure as follows:
- * |
- * | src/ <- jvm source root
- * |   ...
- * | common/ <- common source root
- * |   ...
- * The 'src' module has a compilation dependency on the 'common' module.
- */
 abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
     private lateinit var testAppDirectory: File
     private lateinit var jvmSourcesOutputDirectory: File
@@ -187,9 +173,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
 
         val environment = ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
             .runnerSettings(debuggerRunnerSettings)
-            .runProfile(object : MockConfiguration() {
-                override fun getProject() = myProject
-            })
+            .runProfile(MockConfiguration(myProject))
             .build()
 
         val javaCommandLineState: JavaCommandLineState = object : JavaCommandLineState(environment) {
@@ -300,21 +284,8 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
 
     override fun setUpModule() {
         super.setUpModule()
-        val jvmSrcPath = testAppPath + File.separator + "src"
-        val commonSrcPath = testAppPath + File.separator + COMMON_MODULE_NAME
-        val commonSrcDir = findVirtualFile(commonSrcPath) ?: error("Couldn't find common sources directory: $commonSrcPath")
-        val commonModule = createModule(COMMON_MODULE_NAME)
-        doWriteAction {
-            PsiTestUtil.addSourceRoot(commonModule, commonSrcDir)
-            ModuleRootModificationUtil.addDependency(myModule, commonModule, DependencyScope.COMPILE, false)
-            commonModule.createMultiplatformFacetM3(COMMON_MODULE_TARGET_PLATFORM, true, emptyList(), listOf(commonSrcPath))
-            myModule.createMultiplatformFacetM3(JvmPlatforms.jvm8, true, listOf(COMMON_MODULE_NAME), listOf(jvmSrcPath))
-        }
         attachLibraries()
     }
-
-    private fun findVirtualFile(path: String): VirtualFile? =
-        LocalFileSystem.getInstance().findFileByPath(path.replace(File.separatorChar, '/'))
 
     override fun setUpProject() {
         LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(appDataPath))
@@ -392,17 +363,6 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         }
 
         return super.getData(dataId)
-    }
-
-    companion object {
-        private val COMMON_MODULE_TARGET_PLATFORM =
-            TargetPlatform(
-                setOf(
-                    JvmPlatforms.jvm8.single(),
-                    JsPlatforms.defaultJsPlatform.single(),
-                    NativePlatforms.unspecifiedNativePlatform.single()
-                )
-            )
     }
 }
 

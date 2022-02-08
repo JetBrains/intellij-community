@@ -1309,11 +1309,6 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
             runTest("testData/evaluation/multipleBreakpoints/constructors.kt");
         }
 
-        @TestMetadata("evaluateInCommonCode.kt")
-        public void testEvaluateInCommonCode() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/evaluateInCommonCode.kt");
-        }
-
         @TestMetadata("exceptions.kt")
         public void testExceptions() throws Exception {
             runTest("testData/evaluation/multipleBreakpoints/exceptions.kt");
