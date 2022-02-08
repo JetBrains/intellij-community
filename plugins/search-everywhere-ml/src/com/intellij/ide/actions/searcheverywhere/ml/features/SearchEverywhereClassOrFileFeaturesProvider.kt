@@ -192,7 +192,7 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: 
 
       // Parents of some files may still not be directories
       val openedFileDirectory = openedFile.parent?.takeIf { it.isDirectory }
-      val foundFileDirectory = if (file.isDirectory) file else file.parent.takeIf { it.isDirectory }
+      val foundFileDirectory = if (file.isDirectory) file else file.parent?.takeIf { it.isDirectory }
 
       val openedFilePackageName = openedFileDirectory?.let { fileIndex.getPackageNameByDirectory(it) }
       val foundFilePackageName = foundFileDirectory?.let { fileIndex.getPackageNameByDirectory(it) }
