@@ -5,68 +5,77 @@ import com.intellij.ide.starters.local.StarterModuleBuilder.Companion.setupTestM
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_11
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4
 import com.intellij.ide.starters.shared.KOTLIN_STARTER_LANGUAGE
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.Verifier
 
+//JAVA 11 is used since it is the oldest JDK supported by IDEA
 class ComposeModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
     @Test
     fun testDesktopProject() {
-        ComposeModuleBuilder().setupTestModule(fixture.module) {
-            language = KOTLIN_STARTER_LANGUAGE
-            isCreatingNewProject = true
-            putUserData(ComposeModuleBuilder.COMPOSE_CONFIG_TYPE_KEY, ComposePWInitialStep.ComposeConfigurationType.SINGLE_PLATFORM)
-            putUserData(ComposeModuleBuilder.COMPOSE_PLATFORM_KEY, ComposePWInitialStep.ComposePlatform.DESKTOP)
-        }
+        init(ComposePWInitialStep.ComposeConfigurationType.SINGLE_PLATFORM, ComposePWInitialStep.ComposePlatform.DESKTOP)
+        fixture.testDataPath += "/plugins/kotlin/project-wizard-compose/testData/etalons/desktop/"
 
-        fixture.testDataPath = fixture.testDataPath + "/plugins/kotlin/project-wizard-compose/testData/etalons/desktop/";
-        commonTestPart()
-        fixture.checkResultByFile("src/jvmMain/kotlin/Main.kt", "src/jvmMain/kotlin/Main.kt", true)
+        fixture.checkResultEx("src/jvmMain/kotlin/Main.kt")
     }
 
     @Test
     fun testWebProject() {
-        ComposeModuleBuilder().setupTestModule(fixture.module) {
-            language = KOTLIN_STARTER_LANGUAGE
-            isCreatingNewProject = true
-            putUserData(ComposeModuleBuilder.COMPOSE_CONFIG_TYPE_KEY, ComposePWInitialStep.ComposeConfigurationType.SINGLE_PLATFORM)
-            putUserData(ComposeModuleBuilder.COMPOSE_PLATFORM_KEY, ComposePWInitialStep.ComposePlatform.WEB)
-        }
+        init(ComposePWInitialStep.ComposeConfigurationType.SINGLE_PLATFORM, ComposePWInitialStep.ComposePlatform.WEB)
+        fixture.testDataPath += "/plugins/kotlin/project-wizard-compose/testData/etalons/web/"
 
-        fixture.testDataPath = fixture.testDataPath + "/plugins/kotlin/project-wizard-compose/testData/etalons/web/";
-        commonTestPart()
-        fixture.checkResultByFile("src/jsMain/kotlin/Main.kt", "src/jsMain/kotlin/Main.kt", true)
-        fixture.checkResultByFile("src/jsMain/resources/index.html", "src/jsMain/resources/index.html", true)
+        fixture.checkResultEx("src/jsMain/kotlin/Main.kt")
+        fixture.checkResultEx("src/jsMain/resources/index.html")
     }
 
     @Test
     fun testMppProject() {
-        ComposeModuleBuilder().setupTestModule(fixture.module) {
-            language = KOTLIN_STARTER_LANGUAGE
-            isCreatingNewProject = true
-            putUserData(ComposeModuleBuilder.COMPOSE_CONFIG_TYPE_KEY, ComposePWInitialStep.ComposeConfigurationType.MULTI_PLATFORM)
-            putUserData(ComposeModuleBuilder.COMPOSE_PLATFORM_KEY, ComposePWInitialStep.ComposePlatform.DESKTOP) //actially doesn't matter
-        }
+        init(ComposePWInitialStep.ComposeConfigurationType.MULTI_PLATFORM, ComposePWInitialStep.ComposePlatform.DESKTOP)
+        fixture.testDataPath += "/plugins/kotlin/project-wizard-compose/testData/etalons/mpp/"
 
-        fixture.testDataPath = fixture.testDataPath + "/plugins/kotlin/project-wizard-compose/testData/etalons/mpp/";
-        commonTestPart()
-        fixture.checkResultByFile("android/build.gradle.kts", "android/build.gradle.kts", true)
-        fixture.checkResultByFile("android/src/main/AndroidManifest.xml", "android/src/main/AndroidManifest.xml", true)
-        fixture.checkResultByFile("android/src/main/java/com/example/android/MainActivity.kt", "android/src/main/java/com/example/android/MainActivity.kt", true)
-        fixture.checkResultByFile("common/build.gradle.kts", "common/build.gradle.kts", true)
-        fixture.checkResultByFile("common/src/androidMain/kotlin/com/example/common/platform.kt", "common/src/androidMain/kotlin/com/example/common/platform.kt", true)
-        fixture.checkResultByFile("common/src/androidMain/AndroidManifest.xml", "common/src/androidMain/AndroidManifest.xml", true)
-        fixture.checkResultByFile("common/src/commonMain/kotlin/com/example/common/platform.kt", "common/src/commonMain/kotlin/com/example/common/platform.kt", true)
-        fixture.checkResultByFile("common/src/commonMain/kotlin/com/example/common/App.kt", "common/src/commonMain/kotlin/com/example/common/App.kt", true)
-        fixture.checkResultByFile("common/src/desktopMain/kotlin/com/example/common/platform.kt", "common/src/desktopMain/kotlin/com/example/common/platform.kt", true)
-        fixture.checkResultByFile("common/src/desktopMain/kotlin/com/example/common/DesktopApp.kt", "common/src/desktopMain/kotlin/com/example/common/DesktopApp.kt", true)
-        fixture.checkResultByFile("desktop/build.gradle.kts", "desktop/build.gradle.kts", true)
-        fixture.checkResultByFile("desktop/src/jvmMain/kotlin/Main.kt", "desktop/src/jvmMain/kotlin/Main.kt", true)
+        listOf("android/build.gradle.kts",
+               "android/src/main/AndroidManifest.xml",
+               "android/src/main/java/com/example/android/MainActivity.kt",
+               "common/build.gradle.kts",
+               "common/src/androidMain/kotlin/com/example/common/platform.kt",
+               "common/src/androidMain/AndroidManifest.xml",
+               "common/src/commonMain/kotlin/com/example/common/platform.kt",
+               "common/src/commonMain/kotlin/com/example/common/App.kt",
+               "common/src/desktopMain/kotlin/com/example/common/platform.kt",
+               "common/src/desktopMain/kotlin/com/example/common/DesktopApp.kt",
+               "desktop/build.gradle.kts",
+               "desktop/src/jvmMain/kotlin/Main.kt"
+        ).forEach {fixture.checkResultEx(it)}
     }
 
 
     fun commonTestPart() {
-        fixture.checkResultByFile("gradle.properties", "gradle.properties", true)
-        fixture.checkResultByFile("gradle/wrapper/gradle-wrapper.properties", "gradle/wrapper/gradle-wrapper.properties", true)
-        fixture.checkResultByFile("settings.gradle.kts", "settings.gradle.kts", true)
-        fixture.checkResultByFile("build.gradle.kts", "build.gradle.kts", true)
+        listOf("gradle.properties",
+               "gradle/wrapper/gradle-wrapper.properties",
+               "settings.gradle.kts",
+               "build.gradle.kts"
+        ).forEach {fixture.checkResultEx(it)}
+    }
+
+    fun init(configType: ComposePWInitialStep.ComposeConfigurationType, platform : ComposePWInitialStep.ComposePlatform ) {
+        ComposeModuleBuilder().setupTestModule(fixture.module) {
+            language = KOTLIN_STARTER_LANGUAGE
+            isCreatingNewProject = true
+            putUserData(ComposeModuleBuilder.COMPOSE_CONFIG_TYPE_KEY, configType)
+            putUserData(ComposeModuleBuilder.COMPOSE_PLATFORM_KEY, platform)
+        }
+    }
+
+    private fun JavaCodeInsightTestFixture.checkResultEx(path : String) {
+        checkResultByFile(path, path, true)
+    }
+
+    //this check is called as a part of each test rule (in the end)
+    @get:Rule
+    val verifier = object: Verifier() {
+        override fun verify() {
+            commonTestPart()
+        }
     }
 }
