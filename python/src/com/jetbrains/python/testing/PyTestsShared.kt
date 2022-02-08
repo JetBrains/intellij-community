@@ -531,7 +531,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
   }
 
   override fun getTestSpecsForRerun(scope: GlobalSearchScope,
-                                    locations: MutableList<Pair<Location<*>, AbstractTestProxy>>): List<String> =
+                                    locations: List<Pair<Location<*>, AbstractTestProxy>>): List<String> =
     // Set used to remove duplicate targets
     locations
       .map { it.first }
