@@ -83,14 +83,11 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
     CombinedEditorSettingsAction(TextDiffViewerUtil.getTextSettings(context), ::foldingModels, ::editors)
 
   internal fun updateBlockContent(block: CombinedDiffBlock<*>, newContent: CombinedDiffBlockContent) {
-    val oldViewer = diffViewers[block.id]
     val newViewer = newContent.viewer
+    diffViewers.remove(block.id)?.also(Disposer::dispose)
     diffViewers[block.id] = newViewer
     block.updateBlockContent(newViewer.component)
     newViewer.init()
-    if (oldViewer != null) {
-      Disposer.dispose(oldViewer)
-    }
   }
 
   internal fun addChildBlock(content: CombinedDiffBlockContent, needBorder: Boolean) {
@@ -142,13 +139,11 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
 
     val diffBlock = diffBlockFactory.createBlock(content, needBorder)
     val blockId = diffBlock.id
-    Disposer.register(diffBlock, viewer)
     Disposer.register(diffBlock, Disposable {
-      if (diffBlocks.remove(blockId) != null) {
-        contentPanel.remove(diffBlock.component)
-        diffViewers.remove(blockId)
-        diffBlocksPositions.remove(blockId)
-      }
+      diffBlocks.remove(blockId)
+      contentPanel.remove(diffBlock.component)
+      diffViewers.remove(blockId)?.also(Disposer::dispose)
+      diffBlocksPositions.remove(blockId)
     })
     Disposer.register(this, diffBlock)
 
