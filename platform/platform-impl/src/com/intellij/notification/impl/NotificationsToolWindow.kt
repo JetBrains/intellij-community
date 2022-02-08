@@ -1386,6 +1386,8 @@ internal class ApplicationNotificationModel {
   }
 
   fun addNotification(project: Project?, notification: Notification) {
+    val runnables = ArrayList<Runnable>()
+
     synchronized(myLock) {
       if (project == null) {
         if (myProjectToModel.isEmpty()) {
@@ -1393,7 +1395,7 @@ internal class ApplicationNotificationModel {
         }
         else {
           for ((_project, model) in myProjectToModel.entries) {
-            model.addNotification(_project, notification, myNotifications)
+            model.addNotification(_project, notification, myNotifications, runnables)
           }
         }
       }
@@ -1406,8 +1408,12 @@ internal class ApplicationNotificationModel {
           }
           ProjectNotificationModel()
         }
-        model.addNotification(project, notification, myNotifications)
+        model.addNotification(project, notification, myNotifications, runnables)
       }
+    }
+
+    for (runnable in runnables) {
+      runnable.run()
     }
   }
 
@@ -1435,23 +1441,34 @@ internal class ApplicationNotificationModel {
   }
 
   fun expire(notification: Notification) {
+    val runnables = ArrayList<Runnable>()
+
     synchronized(myLock) {
       myNotifications.remove(notification)
       for (model in myProjectToModel.values) {
-        model.expire(notification)
+        model.expire(notification, runnables)
       }
+    }
+
+    for (runnable in runnables) {
+      runnable.run()
     }
   }
 
   fun expireAll() {
     val notifications = ArrayList<Notification>()
+    val runnables = ArrayList<Runnable>()
 
     synchronized(myLock) {
       notifications.addAll(myNotifications)
       myNotifications.clear()
       for (model in myProjectToModel.values) {
-        model.expireAll(notifications)
+        model.expireAll(notifications, runnables)
       }
+    }
+
+    for (runnable in runnables) {
+      runnable.run()
     }
 
     for (notification in notifications) {
@@ -1470,21 +1487,27 @@ private class ProjectNotificationModel {
     myContent = content
   }
 
-  fun addNotification(project: Project, notification: Notification, appNotifications: List<Notification>) {
+  fun addNotification(project: Project,
+                      notification: Notification,
+                      appNotifications: List<Notification>,
+                      runnables: MutableList<Runnable>) {
     if (myContent == null) {
       myNotifications.add(notification)
 
-      EventLog.getLogModel(project).setStatusMessage(notification)
+      val notifications = ArrayList(appNotifications)
+      notifications.addAll(myNotifications)
 
-      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)
-      if (toolWindow != null) {
-        val notifications = ArrayList(appNotifications)
-        notifications.addAll(myNotifications)
-        UIUtil.invokeLaterIfNeeded { toolWindow.setIcon(IdeNotificationArea.getActionCenterNotificationIcon(notifications)) }
-      }
+      runnables.add(Runnable {
+        EventLog.getLogModel(project).setStatusMessage(notification)
+
+        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)
+        if (toolWindow != null) {
+          UIUtil.invokeLaterIfNeeded { toolWindow.setIcon(IdeNotificationArea.getActionCenterNotificationIcon(notifications)) }
+        }
+      })
     }
     else {
-      UIUtil.invokeLaterIfNeeded { myContent!!.add(notification) }
+      runnables.add(Runnable { UIUtil.invokeLaterIfNeeded { myContent!!.add(notification) } })
     }
   }
 
@@ -1504,18 +1527,18 @@ private class ProjectNotificationModel {
     return myContent!!.getNotifications()
   }
 
-  fun expire(notification: Notification) {
+  fun expire(notification: Notification, runnables: MutableList<Runnable>) {
     myNotifications.remove(notification)
     if (myContent != null) {
-      UIUtil.invokeLaterIfNeeded { myContent!!.expire(notification) }
+      runnables.add(Runnable { UIUtil.invokeLaterIfNeeded { myContent!!.expire(notification) } })
     }
   }
 
-  fun expireAll(notifications: MutableList<Notification>) {
+  fun expireAll(notifications: MutableList<Notification>, runnables: MutableList<Runnable>) {
     notifications.addAll(myNotifications)
     myNotifications.clear()
     if (myContent != null) {
-      UIUtil.invokeLaterIfNeeded { myContent!!.expire(null) }
+      runnables.add(Runnable { UIUtil.invokeLaterIfNeeded { myContent!!.expire(null) } })
     }
   }
 }
