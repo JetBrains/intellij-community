@@ -12,15 +12,14 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
 
-internal class CombinedLazyDiffViewer(val requestProducer: DiffRequestProducer) : DiffViewer {
+internal class CombinedLazyDiffViewer(val requestProducer: DiffRequestProducer, size: Dimension? = null) : DiffViewer {
 
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this)
     .apply {
       add(JBUI.Panels.simplePanel()
             .apply {
-              val height = HEIGHT.get()
               background = UIUtil.getListBackground()
-              preferredSize = Dimension(height, height)
+              preferredSize = if (size != null) size else HEIGHT.get().let { height -> Dimension(height, height) }
             })
     }
 

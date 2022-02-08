@@ -10,6 +10,7 @@ import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings.Companion.getSetti
 import com.intellij.diff.impl.ui.DifferencesLabel
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.combined.CombinedDiffRequest.NewChildDiffRequestData
+import com.intellij.diff.tools.combined.CombinedDiffRequestProcessor.CombinedDiffViewerBuilder.Companion.buildLoadingBlockContent
 import com.intellij.diff.tools.fragmented.UnifiedDiffTool
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable
 import com.intellij.diff.util.DiffUserDataKeys
@@ -34,6 +35,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.awt.Dimension
 
 private val LOG = logger<CombinedDiffRequestProcessor>()
 
@@ -43,7 +45,7 @@ interface CombinedDiffRequestProducer : DiffRequestProducer {
 
 open class CombinedDiffRequestProcessor(project: Project?,
                                         private val requestProducer: CombinedDiffRequestProducer) :
-  CacheDiffRequestProcessor.Simple(project, DiffUtil.createUserDataHolder(DiffUserDataKeysEx.DIFF_NEW_TOOLBAR, true)), BlockListener {
+  CacheDiffRequestProcessor.Simple(project, DiffUtil.createUserDataHolder(DiffUserDataKeysEx.DIFF_NEW_TOOLBAR, true)) {
 
   init {
     @Suppress("LeakingThis")
@@ -170,11 +172,34 @@ open class CombinedDiffRequestProcessor(project: Project?,
   // Lazy loading logic
   //
 
-  override fun blocksVisible(blocks: Collection<CombinedDiffBlock<*>>, blockToSelect: CombinedDiffBlock<*>?) {
-    val combinedViewer = viewer ?: return
-    val blocksWithoutContent = blocks.filter { combinedViewer.diffViewers[it.id] is CombinedLazyDiffViewer }
-    if (blocksWithoutContent.isNotEmpty()) {
-      contentLoadingQueue.queue(LoadBlockContentRequest(blocksWithoutContent, blockToSelect))
+  private fun installBlockListener(viewer: CombinedDiffViewer) {
+    viewer.addBlockListener(MyBlockListener())
+  }
+
+  private inner class MyBlockListener : BlockListener {
+
+    override fun blocksHidden(blocks: Collection<CombinedDiffBlock<*>>) {
+      val combinedViewer = viewer ?: return
+      val combinedRequest = request ?: return
+
+      for (block in blocks) {
+        val blockId = block.id
+        val childViewer = combinedViewer.diffViewers[blockId]
+        if (childViewer is CombinedLazyDiffViewer) continue
+        val index = combinedViewer.diffBlocksPositions[blockId] ?: continue
+        val childRequest = combinedRequest.getChildRequest(index) ?: continue
+
+        val loadingBlockContent = buildLoadingBlockContent(childRequest.producer, blockId, childViewer?.component?.size)
+        combinedViewer.updateBlockContent(block, loadingBlockContent)
+      }
+    }
+
+    override fun blocksVisible(blocks: Collection<CombinedDiffBlock<*>>, blockToSelect: CombinedDiffBlock<*>?) {
+      val combinedViewer = viewer ?: return
+      val blocksWithoutContent = blocks.filter { combinedViewer.diffViewers[it.id] is CombinedLazyDiffViewer }
+      if (blocksWithoutContent.isNotEmpty()) {
+        contentLoadingQueue.queue(LoadBlockContentRequest(blocksWithoutContent, blockToSelect))
+      }
     }
   }
 
@@ -252,7 +277,7 @@ open class CombinedDiffRequestProcessor(project: Project?,
       if (request !is CombinedDiffRequest) return
       if (viewer !is CombinedDiffViewer) return
 
-      context.getUserData(COMBINED_DIFF_PROCESSOR)?.let { processor -> viewer.addBlockListener(processor) }
+      context.getUserData(COMBINED_DIFF_PROCESSOR)?.let { processor -> processor.installBlockListener(viewer) }
       buildCombinedDiffChildViewers(viewer, request)
     }
 
@@ -320,8 +345,10 @@ open class CombinedDiffRequestProcessor(project: Project?,
         return CombinedDiffBlockContent(childViewer, blockId)
       }
 
-      private fun buildLoadingBlockContent(producer: DiffRequestProducer, blockId: CombinedBlockId): CombinedDiffBlockContent {
-        return CombinedDiffBlockContent(CombinedLazyDiffViewer(producer), blockId)
+      internal fun buildLoadingBlockContent(producer: DiffRequestProducer,
+                                            blockId: CombinedBlockId,
+                                            size: Dimension? = null): CombinedDiffBlockContent {
+        return CombinedDiffBlockContent(CombinedLazyDiffViewer(producer, size), blockId)
       }
 
       private fun findSubstitutor(tool: FrameDiffTool, context: DiffContext, request: DiffRequest): FrameDiffTool {

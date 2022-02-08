@@ -20,6 +20,8 @@ class CombinedDiffRequest(private val title: @Nls String?, requests: List<ChildD
 
   data class InsertPosition(val blockId: CombinedBlockId, val above: Boolean)
 
+  fun getChildRequest(index: Int) = _requests.getOrNull(index)
+
   fun getChildRequests() = _requests.toList()
 
   fun addChild(childRequest: ChildDiffRequest, position: InsertPosition) {

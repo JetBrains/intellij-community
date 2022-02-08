@@ -82,6 +82,8 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
   private val combinedEditorSettingsAction =
     CombinedEditorSettingsAction(TextDiffViewerUtil.getTextSettings(context), ::foldingModels, ::editors)
 
+  private var blockToSelect: CombinedDiffBlock<*>? = null
+
   internal fun updateBlockContent(block: CombinedDiffBlock<*>, newContent: CombinedDiffBlockContent) {
     val newViewer = newContent.viewer
     diffViewers.remove(block.id)?.also(Disposer::dispose)
@@ -186,22 +188,25 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
     val viewRect = scrollPane.viewport.viewRect
     var viewPortHeight = viewRect.height
     val insideViewport: (CombinedDiffBlock<*>) -> Boolean = { it.component.bounds.intersects(viewRect) }
-    val notInsideViewport: (CombinedDiffBlock<*>) -> Boolean = { !insideViewport(it) }
 
-    val visibleBlocks =
+    val (visibleBlocks, hiddenBlocks) =
       if (takeFirst) {
-        diffBlocks.values.takeWhile {
+        getAllBlocks().partition {
           viewPortHeight -= it.component.preferredSize.height
           viewPortHeight > 0
         }
       }
       else {
-        getAllBlocks().dropWhile(notInsideViewport).takeWhile(insideViewport).toList()
+        getAllBlocks().partition(insideViewport)
       }
 
     if (visibleBlocks.isNotEmpty()) {
+      blockListeners.multicaster.blocksHidden(hiddenBlocks)
+    }
+
+    if (visibleBlocks.isNotEmpty()) {
       updateGlobalBlockHeader(visibleBlocks, viewRect)
-      blockListeners.multicaster.blocksVisible(visibleBlocks, null)
+      blockListeners.multicaster.blocksVisible(visibleBlocks, blockToSelect)
     }
   }
 
@@ -273,16 +278,6 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
 
   private fun selectDiffBlock(index: Int, block: CombinedDiffBlock<*>, scrollPolicy: ScrollPolicy, onSelected: () -> Unit) {
     val viewer = diffViewers[block.id] ?: return
-    if (viewer is CombinedLazyDiffViewer) {
-      val visibleCount = scrollPane.viewport.viewRect.height / CombinedLazyDiffViewer.HEIGHT.get()
-      val startVisibleIndex = index - visibleCount
-
-      if (startVisibleIndex >= 0) {
-        val visibleBlocks = getAllBlocks().drop(startVisibleIndex + 1).take(visibleCount).toList()
-        blockListeners.multicaster.blocksVisible(visibleBlocks, block)
-        return
-      }
-    }
 
     val componentToFocus =
       with(viewer) {
@@ -298,6 +293,7 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
     focusManager.requestFocus(componentToFocus, true)
     focusManager.doWhenFocusSettlesDown {
       onSelected()
+      blockToSelect = block
       scrollSupport.scroll(index, block, scrollPolicy)
     }
   }
@@ -307,6 +303,7 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
   }
 
   internal fun contentChanged() {
+    blockToSelect = null
     combinedEditorSettingsAction.installGutterPopup()
     combinedEditorSettingsAction.applyDefaults()
     editors.forEach { editor -> editor.settings.additionalLinesCount = 0 }
@@ -391,5 +388,6 @@ internal val DiffViewer?.isEditorBased: Boolean
           this !is TwosideBinaryDiffViewer
 
 internal interface BlockListener : EventListener {
+  fun blocksHidden(blocks: Collection<CombinedDiffBlock<*>>)
   fun blocksVisible(blocks: Collection<CombinedDiffBlock<*>>, blockToSelect: CombinedDiffBlock<*>?)
 }
