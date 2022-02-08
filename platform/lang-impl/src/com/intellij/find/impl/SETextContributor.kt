@@ -25,9 +25,11 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.usages.UsageInfo2UsageAdapter
+import com.intellij.usages.UsageInfoAdapter
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.util.CommonProcessors
 import com.intellij.util.PlatformUtils
@@ -81,8 +83,11 @@ class SETextContributor(val event: AnActionEvent) : WeightedSearchEverywhereCont
     FindModel.initStringToFind(model, pattern)
 
     val presentation = FindInProjectUtil.setupProcessPresentation(project, UsageViewPresentation())
-    FindInProjectExecutor.getInstance().findUsages(project, ProgressIndicatorBase(), presentation, model, emptySet()) {
-      consumer.process(FoundItemDescriptor<UsageInfo2UsageAdapter>(it as UsageInfo2UsageAdapter, 1500))
+    val progressIndicator = indicator as? ProgressIndicatorEx ?: ProgressIndicatorBase()
+
+     FindInProjectUtil.findUsages(model, project, progressIndicator, presentation, emptySet()) {
+      val usage = (UsageInfo2UsageAdapter.CONVERTER.`fun`(it) as UsageInfo2UsageAdapter).also { it.presentation.icon }
+      consumer.process(FoundItemDescriptor<UsageInfo2UsageAdapter>(usage, 1500))
       true
     }
   }
