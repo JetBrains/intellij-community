@@ -3,6 +3,7 @@ package com.intellij.externalProcessAuthHelper;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,5 +40,13 @@ public class ScriptGeneratorUtil {
     throws IOException {
     return useBatchFile ? createBatchScript(fileNamePrefix, commandLine)
                         : createShellScript(fileNamePrefix, commandLine);
+  }
+
+  /**
+   * @return jar or directory that contains the class for the classpath
+   */
+  @NotNull
+  public static File getJarFileFor(@NotNull Class<?> clazz) {
+    return new File(PathUtil.getJarPathForClass(clazz));
   }
 }
