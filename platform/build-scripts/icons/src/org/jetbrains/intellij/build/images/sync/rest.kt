@@ -18,7 +18,7 @@ internal fun loadUrl(path: String, conf: Request.Builder.() -> Unit = {}): Strin
 }
 
 internal fun post(path: String, body: String, mediaType: MediaType?, conf: Request.Builder.() -> Unit = {}): String {
-  val requestBuilder = Request.Builder().url(path).put(body.toRequestBody(mediaType))
+  val requestBuilder = Request.Builder().url(path).post(body.toRequestBody(mediaType))
   requestBuilder.conf()
   return rest(requestBuilder.build())
 }
