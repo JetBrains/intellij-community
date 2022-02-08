@@ -27,6 +27,8 @@ class JComboboxAction(val project: Project, onChanged: () -> Unit) : AnAction(),
   private val emptyText = FindBundle.message("se.text.header.action.all.filetypes")
   private val findModel = FindManager.getInstance(project).findInProjectModel
 
+  val saveMask: () -> Unit = { FindSettings.getInstance().fileMask = getMask() }
+
   private val rebuild = {
     findModel.fileFilter = getMask()
     onChanged()
@@ -42,7 +44,6 @@ class JComboboxAction(val project: Project, onChanged: () -> Unit) : AnAction(),
       selectedItem = FindSettings.getInstance().fileMask ?: emptyText
       findModel.fileFilter = FindSettings.getInstance().fileMask
       addActionListener(ActionListener {
-        FindSettings.getInstance().fileMask = getMask()
         rebuild()
       })
     }

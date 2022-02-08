@@ -14,6 +14,7 @@ import com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor.creat
 import com.intellij.ide.util.RunOnceUtil
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -29,7 +30,6 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.usages.UsageInfo2UsageAdapter
-import com.intellij.usages.UsageInfoAdapter
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.util.CommonProcessors
 import com.intellij.util.PlatformUtils
@@ -39,7 +39,7 @@ import com.intellij.util.containers.JBIterable
 import javax.swing.ListCellRenderer
 
 class SETextContributor(val event: AnActionEvent) : WeightedSearchEverywhereContributor<UsageInfo2UsageAdapter>,
-                                                    SearchFieldActionsContributor, DumbAware, ScopeSupporting {
+                                                    SearchFieldActionsContributor, DumbAware, ScopeSupporting, Disposable {
 
   private val project = event.getRequiredData(CommonDataKeys.PROJECT)
   private val model = FindManager.getInstance(project).findInProjectModel
@@ -48,6 +48,8 @@ class SETextContributor(val event: AnActionEvent) : WeightedSearchEverywhereCont
   private var projectScope: GlobalSearchScope?
   private var selectedScopeDescriptor: ScopeDescriptor
   private var psiContext = getPsiContext()
+
+  private lateinit var onDispose: () -> Unit
 
   init {
     val scopes = createScopes()
@@ -102,7 +104,7 @@ class SETextContributor(val event: AnActionEvent) : WeightedSearchEverywhereCont
   }
 
   override fun getActions(onChanged: Runnable): List<AnAction> =
-    listOf(ScopeAction { onChanged.run() }, JComboboxAction(project) { onChanged.run() })
+    listOf(ScopeAction { onChanged.run() }, JComboboxAction(project) { onChanged.run() }.also { onDispose = it.saveMask })
 
   override fun createRightActions(onChanged: Runnable): List<SETextRightActionAction> {
     val word = AtomicBooleanProperty(model.isWholeWordsOnly).apply { afterChange { model.isWholeWordsOnly = it } }
@@ -164,6 +166,10 @@ class SETextContributor(val event: AnActionEvent) : WeightedSearchEverywhereCont
 
     override fun canToggleEverywhere() = if (everywhereScope == projectScope) false
     else selectedScopeDescriptor.scopeEquals(everywhereScope) || selectedScopeDescriptor.scopeEquals(projectScope)
+  }
+
+  override fun dispose() {
+    if (this::onDispose.isInitialized) onDispose()
   }
 
   companion object {
