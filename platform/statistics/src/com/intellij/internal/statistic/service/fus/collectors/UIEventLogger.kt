@@ -120,8 +120,8 @@ val QuickNavigateInfoPopupShown: EventId1<Language?> = uiEventGroup.registerEven
 )
 
 @JvmField
-val QuickNavigateInfoPopupShown2: EventId1<Class<*>?> = uiEventGroup.registerEvent(
-  "QuickNavigateInfoPopupShownClass",
+val CtrlMouseHintShown: EventId1<Class<*>?> = uiEventGroup.registerEvent(
+  "CtrlMouseHintShown",
   EventFields.Class("target_class"),
 )
 
