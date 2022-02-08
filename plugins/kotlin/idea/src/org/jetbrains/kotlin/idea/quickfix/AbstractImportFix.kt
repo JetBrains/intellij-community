@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.ImportFilter
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
+import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
@@ -11,6 +13,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
@@ -232,7 +235,11 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
 
         final override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             return try {
-                createImportAction(diagnostic)
+                createImportAction(diagnostic)?.apply {
+                    if (AbstractImportFixInfo.isHintsEnabled(diagnostic.psiFile)) {
+                        computeSuggestions()
+                    }
+                }
             }
             catch(ex: KotlinExceptionWithAttachments) {
                 // Sometimes fails with
@@ -781,9 +788,17 @@ object AbstractImportFixInfo {
     @Volatile
     internal var IGNORE_MODULE_ERROR = false
 
+    private val lazyImportSuggestionCalculation = Registry.`is`("kotlin.lazy.import.suggestions", false)
+
     @TestOnly
     fun ignoreModuleError(disposable: Disposable) {
         IGNORE_MODULE_ERROR = true
         Disposer.register(disposable) { IGNORE_MODULE_ERROR = false }
+    }
+
+    fun isHintsEnabled(file: PsiFile): Boolean {
+        return !lazyImportSuggestionCalculation ||
+                DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled ||
+                ShowAutoImportPass.isAddUnambiguousImportsOnTheFlyEnabled(file)
     }
 }
