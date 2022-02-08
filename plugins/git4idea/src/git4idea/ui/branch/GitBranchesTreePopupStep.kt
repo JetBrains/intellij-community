@@ -130,6 +130,8 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
     private fun getNodeValue(node: Any?) = (TreeUtil.getUserObject(node) as? AbstractTreeNode<*>)?.value
 
     private class BranchesTreeModel(private val project: Project, private val repository: GitRepository) : AbstractTreeModel() {
+      private val branchManager = project.service<GitBranchManager>()
+
       private val repositoryNode = Repository()
 
       private val structureCache = mutableMapOf<Any, List<AbstractTreeNode<*>>>()
@@ -184,6 +186,10 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
 
       private inner class Repository : Node<GitRepository>(project, repository) {
 
+        init {
+          myName = value.toString()
+        }
+
         override fun getChildren(): Collection<AbstractTreeNode<*>> {
           val result = mutableListOf<Node<*>>()
 
@@ -215,6 +221,10 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
       private inner class Action(action: PopupFactoryImpl.ActionItem)
         : Node<PopupFactoryImpl.ActionItem>(project, action) {
 
+        init {
+          myName = value.text
+        }
+
         override fun getChildren(): Collection<AbstractTreeNode<*>> = emptyList()
 
         override fun update(presentation: PresentationData) {
@@ -227,6 +237,10 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
 
       private inner class LocalBranches : Node<String>(project, "Local") {
 
+        init {
+          myName = value
+        }
+
         override fun getChildren() = groupBranches(repository.branches.localBranches.map { it.name.split('/') to it })
 
         override fun update(presentation: PresentationData) {
@@ -235,6 +249,10 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
       }
 
       private inner class RemoteBranches : Node<String>(project, "Remote") {
+
+        init {
+          myName = value
+        }
 
         override fun getChildren() = groupBranches(repository.branches.remoteBranches.map { it.name.split('/') to it })
 
@@ -246,6 +264,10 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
       private inner class Folder(folderName: String, private val branchesSupplier: () -> List<PathAndBranch>)
         : Node<String>(project, folderName) {
 
+        init {
+          myName = value
+        }
+
         override fun getChildren() = groupBranches(branchesSupplier())
 
         override fun update(presentation: PresentationData) {
@@ -256,6 +278,10 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
 
       private inner class Branch(branch: GitBranch, private val displayName: String)
         : Node<GitBranch>(project, branch) {
+
+        init {
+          myName = displayName
+        }
 
         override fun getChildren(): Collection<AbstractTreeNode<*>> = emptyList()
 
@@ -279,28 +305,35 @@ class GitBranchesTreePopupStep(private val project: Project, private val reposit
         override fun shouldPostprocess() = false
       }
 
-      private fun groupBranches(branches: List<PathAndBranch>): List<Node<*>> {
-        val result = mutableListOf<Node<*>>()
+      private val BRANCH_NODES_COMPARATOR = compareBy<Branch> {
+        !branchManager.isFavorite(GitBranchType.of(it.value), repository, it.value.name)
+      } then compareBy { it.name }
+
+      private fun groupBranches(branchesMapping: List<PathAndBranch>): List<Node<*>> {
+
+        val branches = mutableListOf<Branch>()
         val groupsByPrefix = mutableMapOf<String, List<PathAndBranch>>()
 
-        for ((pathParts, branch) in branches) {
+        for ((pathParts, branch) in branchesMapping) {
+          val firstPathPart = pathParts.first()
           if (pathParts.size <= 1) {
-            result.add(Branch(branch, pathParts.first()))
+            branches.add(Branch(branch, firstPathPart))
             continue
           }
 
-          groupsByPrefix.compute(pathParts.first()) { _, currentList ->
+          groupsByPrefix.compute(firstPathPart) { _, currentList ->
             (currentList ?: mutableListOf()) + (pathParts to branch)
           }
         }
 
+        val folders = mutableListOf<Folder>()
         for ((prefix, branchesWithPaths) in groupsByPrefix) {
-          result.add(Folder(prefix) {
+          folders.add(Folder(prefix) {
             branchesWithPaths.map { (path, branch) -> path.tail() to branch }
           })
         }
 
-        return result
+        return branches.sortedWith(BRANCH_NODES_COMPARATOR) + folders.sortedWith(compareBy { it.value })
       }
     }
   }
