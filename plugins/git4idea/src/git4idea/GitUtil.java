@@ -738,10 +738,10 @@ public final class GitUtil {
 
   /**
    * git shortlog -s --since="%since%"
-   * @return Pair with number of commits and number of commiters
-   * @param since "2 days ago" or other examples from https://github.com/git/git/blob/master/date.c#L131
+   * @return Pair with number of commits and number of committers
    * @param project project
    * @param repo repository
+   * @param since "2 days ago" or other examples from https://github.com/git/git/blob/master/date.c#L131
    */
   public static Pair<Integer, Integer> commitsSummarySince(@NotNull Project project, @NotNull GitRepository repo, @NotNull String since) throws VcsException {
     GitLineHandler handler = new GitLineHandler(project, repo.getRoot(), GitCommand.SHORTLOG);
@@ -754,7 +754,7 @@ public final class GitUtil {
       String[] split = line.trim().split("\\W");
       if (split.length == 0) throw new VcsException("Wrong format or response '" + line + "'");
       try {
-        commits += Integer.valueOf(split[0]);
+        commits += Integer.parseInt(split[0]);
       } catch (NumberFormatException e) {
         throw new VcsException("Wrong format or response '" + line + "'", e);
       }
