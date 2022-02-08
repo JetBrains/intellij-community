@@ -23,8 +23,8 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
-import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 
 fun KtElement.getElementTextInContext(): String {
     val context = parentOfType<KtImportDirective>()
@@ -127,17 +127,19 @@ val KtFile.psiPackage: PsiPackage? get() = JavaPsiFacade.getInstance(project).fi
 
 val KtNamedFunction.jvmName: String? get() = findJvmName()
 val KtPropertyAccessor.jvmName: String? get() = findJvmName()
-val KtValVarKeywordOwner.jvmSetterName: String? get() = when (this) {
-    is KtProperty -> setter?.jvmName ?: findJvmName(AnnotationUseSiteTarget.PROPERTY_SETTER)
-    is KtParameter -> findJvmName(AnnotationUseSiteTarget.PROPERTY_SETTER)
-    else -> null
-}
+val KtValVarKeywordOwner.jvmSetterName: String?
+    get() = when (this) {
+        is KtProperty -> setter?.jvmName ?: findJvmName(AnnotationUseSiteTarget.PROPERTY_SETTER)
+        is KtParameter -> findJvmName(AnnotationUseSiteTarget.PROPERTY_SETTER)
+        else -> null
+    }
 
-val KtValVarKeywordOwner.jvmGetterName: String? get() = when (this) {
-    is KtProperty -> getter?.jvmName ?: findJvmName(AnnotationUseSiteTarget.PROPERTY_GETTER)
-    is KtParameter -> findJvmName(AnnotationUseSiteTarget.PROPERTY_GETTER)
-    else -> null
-}
+val KtValVarKeywordOwner.jvmGetterName: String?
+    get() = when (this) {
+        is KtProperty -> getter?.jvmName ?: findJvmName(AnnotationUseSiteTarget.PROPERTY_GETTER)
+        is KtParameter -> findJvmName(AnnotationUseSiteTarget.PROPERTY_GETTER)
+        else -> null
+    }
 
 fun KtCallableDeclaration.numberOfArguments(countReceiver: Boolean = false): Int =
     valueParameters.size + (1.takeIf { countReceiver && receiverTypeReference != null } ?: 0)
